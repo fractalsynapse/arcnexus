@@ -70,3 +70,11 @@ retains artifact hashes and schema identities when present, without inventing ve
 for ordinary modules. Missing local schema references fail validation; unsupported
 external analysis remains explicitly unresolved. Candidate files never replace the
 captured source used for this architectural view.
+
+Captured compiler configuration supplies module aliases and output-to-source mapping
+for public API analysis. Cross-owner imports must use a declared entry point and an
+exposed symbol; a named API declaration does not expose the module's other exports.
+Type-only imports and local re-exports participate in the derived relationship view.
+Namespace access is checked against the symbols actually used; escaping or dynamic
+namespace access cannot bypass a narrowed public surface. Import and consumer views
+are generated from the captured source, never authored lists.
