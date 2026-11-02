@@ -36,7 +36,10 @@ class ChecklistRecoveryScenarios {
       record.commands.some((command) => command.stage === 'red-test' && command.exitCode !== 0),
     );
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'after');
-    assert.match(readFileSync(f.calls, 'utf8'), /General owner requests remain available/);
+    assert.match(
+      readFileSync(f.calls, 'utf8'),
+      /Populate requests whenever another eligible owner must act/,
+    );
   }
 
   /** Identical invalid completion claims eventually require diagnosis instead of fabricating success. */

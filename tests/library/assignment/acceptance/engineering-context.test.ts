@@ -24,9 +24,9 @@ class EngineeringContextScenarios {
     assert.doesNotMatch(prompt, /secret-check-command/);
   }
 
-  /** Historical execution context must not advertise a bridge that its retained configuration lacks. */
+  /** Historical evidence cannot be rendered as a new engineering activation. */
   async historical(): Promise<void> {
-    assert.doesNotMatch(await this.context(4), /source\.edit/);
+    await assert.rejects(this.context(4), /version.five.*migrat/i);
   }
 
   /** Loads production context assembly with captured authority and a distinct frozen host check. */
@@ -56,7 +56,6 @@ const scenarios = new EngineeringContextScenarios();
 test('engineering context explains the only maintained-source write route', () =>
   scenarios.checked());
 
-test('historical engineering context does not advertise unavailable checked editing', () =>
-  scenarios.historical());
+test('historical authority cannot create a new engineering context', () => scenarios.historical());
 
 registerSuite({ component: 'assignment', level: 'acceptance', tags: ['deterministic'] });

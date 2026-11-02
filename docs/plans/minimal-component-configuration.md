@@ -105,7 +105,47 @@ classes/methods. Report local, CI and live evidence separately. Record before/af
 field and distinct-command counts. Complete through issue-linked staging review/CI;
 never weaken frozen acceptance or publish automatically.
 
-## Current delivery status (2026-11-02)
+## Current implementation and qualification status (2026-11-02)
+
+The six implementation slices are delivered. ArcNexus uses minimal v5 definitions,
+one shared operation executor, source-read-only model execution and checked editing.
+Active fixtures use the same paths. Historical configuration remains available only
+for inspection, migration and explicit rejection; legacy assignment, initialization,
+operation and workspace execution adapters have been removed.
+
+Migration supports complete v4 families, including finite dependency recipes with
+known owners, and is idempotent for valid migrated families. Mixed schemas, ambiguous
+ownership/API associations or command equivalence, obsolete budgets and missing
+execution policy produce diagnostics rather than guessed authority. Unsupported
+runtime confinement fails preflight. These are explicit input/support boundaries.
+
+All six live gates have retained demonstrations: [checked engineering and actual
+ArcNexus self-development](../library/assignment/checked-engineering-qualification.md),
+[dynamic multi-owner discovery](../library/task-intake/multi-owner-qualification.md),
+and [workdays, pause, mode coordination and recovery](../library/workday/checked-workday-qualification.md).
+The fresh `28498b6` engineering run additionally qualifies the final harness cleanup.
+Host-loss evidence distinguishes safe-checkpoint recovery from interruption at the
+managed launch boundary; it does not claim that an unobserved command body ran.
+
+Final integrated/native suites and current-head CI are still in progress. The
+architecture selection passed 149 cases with four native skips and no failures.
+Formatting, lint, type checking, build, ownership and guidance validation passed.
+Phase three remains blocked until final qualification and review are recorded.
+
+The final authored configuration contains 21 components, 211 top-level fields and
+367 recursive keys, compared with 456 fields and 1,100 keys before migration. All
+96 inline component commands are removed. There are 21 operation definitions and
+18 distinct command/argument pairs; full execution semantics, including context and
+policy, distinguish definitions whose command text matches. No implementation
+inventory or consumer graph is manually maintained.
+
+## Historical delivery observations
+
+The dated observations below preserve intermediate successes, failed experiments
+and then-open work. Their present-tense status statements describe those checkpoints;
+they do not supersede the current status above.
+
+### Initial minimal delivery
 
 Minimal catalog loading, shared finite/service/HTTP operations, checked edits,
 confinement, derived API relationships/cache and captured director identity are
@@ -497,3 +537,15 @@ historical response-schema reading while rejecting index-based regression execut
 Specification and expected-red capture now have only the minimal execution path.
 The dependency lifecycle test first failed at the prior blanket rejection; later
 qualification exposed and retained the two composed-catalog defects above.
+
+### Final qualification corrections
+
+The first final integrated run stopped in assignment acceptance: an old context test
+still required historical authority to render an executable prompt. Context rendering
+now explicitly rejects that authority, consistent with the already-qualified session
+and model guards. A new rejection assertion first failed against the preceding build.
+The separate native run found one assertion tied to removed prompt wording; the same
+case completed its real specification, failed regression, continuation and implementation
+successfully. Its routing assertion now checks the current request instruction. Neither
+initial run is counted as a final passing suite; affected cases and integrated checks
+must be rerun after these corrections.

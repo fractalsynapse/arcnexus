@@ -124,3 +124,29 @@ improvement delivered through the stable runtime, not a scripted fixture respons
 The preceding failed attempts remain retained as failed evidence. Live qualification
 does not complete the outstanding executable legacy-path retirement or establish
 integrated checks/CI for later implementation revisions; phase three remains blocked.
+
+## Final runtime refresh after legacy-path retirement
+
+A fresh real task under implementation `28498b6` completed on 2026-11-02 after
+removal of the writable harness, inline initializer and separate session-loop paths.
+Task `52d85da2-713e-4285-aaa3-37c7763ab384` used the unchanged qualification source
+`69870d8b4ef83e2a96cc1c86a2f53ee4bd9f0cd5` in a new isolated repository. The attached
+CLI exited 0 and the source checkout remained clean. Its frozen runner `runner-jepZfa`
+has hash `5b18e23ac0f980820102a3215695111da325fafff38587be41ae2fe1e4314ac1`.
+
+Evidence root:
+`/home/adrian/.local/state/arcnexus-qualification-109/final-engineering-28498b6`.
+The actual three-file patch is `verified.diff`, SHA-256
+`454a827db5a894758ef31706813dc6e454850b2e5e50acb822b3de0313b3a1da`.
+Candidate `c15bf00d53f3604bb92270e5d63822043933bffe` adds the documented
+`doubleMeaning()` function and its public-module regression while preserving 42.
+
+Worker `38a35a96-49ce-4758-9bc3-d7a98baeef9c` used Luna. Its host evidence records
+baseline exit 0, expected-red exit 1 because `doubleMeaning` was not exported,
+then verification, frozen regression and captured acceptance exit 0. The checked
+specification edit preceded the failure; implementation followed it. Independent
+Astra verifier `c383cfe1-a4fb-4bbf-babe-14ac2ad6f699` accepted all five assignment
+criteria without deficiencies. Final Astra director `de493781-596e-4088-94c9-026441b22f3d`
+accepted all six goal criteria and independently reran the declared test operation.
+This refresh qualifies the changed production harness; it is separate from the earlier
+multi-owner/workday and real ArcNexus self-development demonstrations.
