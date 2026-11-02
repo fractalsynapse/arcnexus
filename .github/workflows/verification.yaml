@@ -47,6 +47,11 @@ jobs:
           if [[ -d "$HOME/.local/state/arcnexus" ]]; then
             find "$HOME/.local/state/arcnexus" -type f -name '*.log' -exec tail -n 40 -- {} +
           fi
+          for directory in /tmp/arcnexus-op-*/qualification; do
+            if [[ -d "$directory" ]]; then
+              find "$directory" -type f -name '*.log' -exec tail -n 40 -- {} +
+            fi
+          done
       - name: Validate architectural ownership
         run: node dist/cli.js validate --project .
       - name: Smoke-test CLI
