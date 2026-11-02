@@ -42,7 +42,12 @@ export class ApplicationSettings {
   /** Refuses unknown persisted settings rather than silently interpreting architectural policy. */
   private read(): { volume?: string } {
     if (!existsSync(this.path)) return {};
-    const data: unknown = JSON.parse(readFileSync(this.path, 'utf8'));
+    let data: unknown;
+    try {
+      data = JSON.parse(readFileSync(this.path, 'utf8'));
+    } catch {
+      throw new InputError('Unreadable or malformed application configuration: ' + this.path);
+    }
     if (!data || typeof data !== 'object' || Array.isArray(data))
       throw new InputError('Invalid application configuration');
     if (Object.keys(data).some((key) => key !== 'volume'))

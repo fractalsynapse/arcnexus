@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, renameSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test, type TestContext } from 'node:test';
@@ -37,7 +37,11 @@ class PortfolioFixture extends MinimalCatalogFixture {
       cwd: tmpdir(),
       encoding: 'utf8',
       maxBuffer: 16 * 1024 * 1024,
-      env: { ...process.env, ARCNEXUS_VOLUME: this.volume },
+      env: {
+        ...process.env,
+        ARCNEXUS_VOLUME: this.volume,
+        XDG_CONFIG_HOME: join(this.volume, 'configuration'),
+      },
     });
   }
 
@@ -134,6 +138,31 @@ test('registered package validation runs outside the source checkout without sta
   assert.equal(result.base, f.git('rev-parse', 'HEAD'));
   assert.equal(existsSync(join(f.volume, 'state')), false);
   assert.equal(f.command('validate', 'platform/package', '--project', f.root).status, 2);
+});
+
+test('application settings persist only allowlisted fields and expose environment precedence', (t) => {
+  const f = new PortfolioFixture(t);
+  const configured = f.volume + '-configured';
+  const result = f.value('config', 'update', 'volume', configured);
+  assert.equal(result.configuredValue, configured);
+  assert.equal(result.source, 'environment');
+  assert.equal(result.value, f.volume);
+  assert.equal(f.command('config', 'update', 'purpose', 'Unapproved intent').status, 2);
+  assert.equal(f.value('config', 'get', 'volume').value, f.volume);
+  const saved = JSON.parse(
+    readFileSync(join(f.volume, 'configuration/arcnexus/config.json'), 'utf8'),
+  );
+  assert.deepEqual(saved, { volume: configured });
+});
+
+test('malformed application settings fail preflight without replacing the configuration', (t) => {
+  const f = new PortfolioFixture(t);
+  f.value('config', 'update', 'volume', f.volume);
+  const path = join(f.volume, 'configuration/arcnexus/config.json');
+  writeFileSync(path, '{invalid');
+  assert.equal(f.command('config', 'get', 'volume').status, 2);
+  assert.equal(f.command('config', 'update', 'volume', f.volume).status, 2);
+  assert.equal(readFileSync(path, 'utf8'), '{invalid');
 });
 
 registerSuite({ component: 'portfolio', level: 'acceptance', tags: ['deterministic'] });
