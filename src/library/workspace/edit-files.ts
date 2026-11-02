@@ -31,7 +31,17 @@ export const editHash = (bytes: string | Buffer) =>
   createHash('sha256').update(bytes).digest('hex');
 
 /** Identifies a rejected pre-transaction byte precondition; no journal or source mutation exists. */
-export class StaleEditError extends Error {}
+export class StaleEditError extends Error {
+  /** Carries only authorized precondition evidence captured before transaction creation. */
+  constructor(
+    message: string,
+    readonly path: string,
+    readonly expectedSha256: string | null,
+    readonly currentSha256: string | null,
+  ) {
+    super(message + ': ' + path);
+  }
+}
 
 /** Validates source paths and applies only recorded byte transitions without following aliases. */
 export class EditFiles {
@@ -41,12 +51,16 @@ export class EditFiles {
   /** Captures the before image after validating explicit create/update/delete semantics. */
   prepare(change: CheckedChange): PreparedEdit {
     const before = this.read(change.path);
+    const current = before === null ? null : editHash(Buffer.from(before, 'base64'));
     if ((before === null) !== (change.operation === 'create'))
-      throw new StaleEditError(`Stale create/update/delete state: ${change.path}`);
-    if (
-      (before === null ? null : editHash(Buffer.from(before, 'base64'))) !== change.expectedSha256
-    )
-      throw new StaleEditError(`Stale content hash: ${change.path}`);
+      throw new StaleEditError(
+        'Stale create/update/delete state',
+        change.path,
+        change.expectedSha256,
+        current,
+      );
+    if (current !== change.expectedSha256)
+      throw new StaleEditError('Stale content hash', change.path, change.expectedSha256, current);
     const path = join(this.workspace, change.path);
     return {
       path: change.path,

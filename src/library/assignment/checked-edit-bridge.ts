@@ -47,6 +47,9 @@ export class CheckedEditBridge {
       const rejection = {
         status: 'rejected',
         error: error.message,
+        path: error.path,
+        expectedSha256: error.expectedSha256,
+        currentSha256: error.currentSha256,
         recovery:
           'No edits were applied. Reread the current bytes, compute SHA-256 and retry the complete batch.',
       };

@@ -67,6 +67,9 @@ class EditAuthorityScenarios {
     const result = bridge.call('source.edit', request) as any;
     assert.equal(result.status, 'rejected');
     assert.match(result.error, /Stale content hash/);
+    assert.equal(result.path, 'owned/second.ts');
+    assert.equal(result.expectedSha256, digest('before'));
+    assert.equal(result.currentSha256, digest('second'));
     assert.deepEqual(this.contents(state), ['before', 'second']);
     assert.deepEqual(readdirSync(join(state.dir, 'checked-edits')), []);
     request.changes[1]!.expectedSha256 = digest('second');
