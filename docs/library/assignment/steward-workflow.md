@@ -145,3 +145,12 @@ different changes returns a recoverable rejection before writing anything, while
 original journal and receipt remain immutable. A corrected batch with a fresh ID still
 passes full authority, hash and recovery checks. An original committed retry returns
 its original receipt without replaying edits over subsequent changes.
+
+For minimal components, engineering context explicitly describes the checked write
+route before the first turn. Native patch and shell writes to maintained source are
+intentionally unavailable. Stewards discover `source.edit` on the ArcNexus MCP server,
+read current bytes, compute their SHA-256 hashes and submit a fresh transaction identity
+for each distinct batch. An identical retry may reuse that identity. The same context
+retains ownership narrowing and stage restrictions: planning, coordination, research and
+review do not gain source-edit permission merely because the tool is discoverable.
+A denied native write is not evidence that the checked edit route is unavailable.
