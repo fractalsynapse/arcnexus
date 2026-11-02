@@ -66,14 +66,7 @@ export class OwnershipValidator {
     const components = Object.values(catalog.components).filter(
       (c) => c.type === 'platform' || c.repository === catalog.primaryRepository,
     );
-    const owners = components
-      .filter((c) => c.ownership)
-      .map((c) => ({
-        component: c.id,
-        paths: c.ownership!.paths,
-        publicModules: c.ownership!.publicModules,
-        directoryExceptions: c.ownership!.directoryExceptions.map((e) => e.path),
-      }));
+    const owners = this.repositoryOwners(catalog);
     const exclusions = components
       .filter((c) => c.type === 'platform')
       .flatMap((c) => c.coverageExclusions ?? []);
@@ -86,6 +79,32 @@ export class OwnershipValidator {
       if (/\.[cm]?[jt]sx?$/.test(file)) this.imports(file, owner, policy);
     }
     assertImportCycles(this.graph);
+  }
+
+  /** Combines local implementation roots with definitions physically declared in this repository. */
+  private repositoryOwners(catalog: Catalog): Owner[] {
+    const owners = Object.values(catalog.components)
+      .filter((c) => c.type === 'platform' || c.repository === catalog.primaryRepository)
+      .filter((c) => c.ownership)
+      .map((c) => ({
+        component: c.id,
+        paths: c.ownership!.paths,
+        publicModules: c.ownership!.publicModules,
+        directoryExceptions: c.ownership!.directoryExceptions.map((e) => e.path),
+      }));
+    for (const component of Object.values(catalog.components))
+      if (
+        component.repository !== catalog.primaryRepository &&
+        component.definition &&
+        component.definition.repository === catalog.primaryRepository
+      )
+        owners.push({
+          component: component.id,
+          paths: [component.definition.path],
+          publicModules: [],
+          directoryExceptions: [],
+        });
+    return owners;
   }
 
   /** Rejects ownership roots whose intersection would create competing leaf owners. */
@@ -124,6 +143,7 @@ export class OwnershipValidator {
           throw new Error(`Public module outside ownership: ${module}`);
         if (!files.includes(module)) throw new Error(`Missing public module: ${module}`);
       }
+      if (component.repository !== catalog.primaryRepository && component.definition) continue;
       for (const directory of component.access.writeDirectories) {
         if (owner.directoryExceptions.includes(directory)) continue;
         if (!owner.paths.some((p) => covers(directory, p)))

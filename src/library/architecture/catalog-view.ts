@@ -34,6 +34,7 @@ function ownerView(component: Component) {
   return {
     type: component.type,
     policy: component.policy,
+    definition: component.definition,
     operationPlan: component.operationPlan,
     repository: component.repository,
     packageRoot: component.repositoryRoot ?? null,

@@ -54,14 +54,8 @@ export class ComponentV5Resolver {
 
   /** Adds implicit definition ownership and resolves intentional public entry points. */
   private owner(c: Component): void {
-    const definition = this.catalog.configurationSources.find(
-      (s) => (s.value as Component).id === c.id && s.path.startsWith('architecture/components/'),
-    );
-    if (!definition) throw new InputError(`Missing component definition: ${c.id}`);
     const paths = (c.owns ?? []).map((p) => this.policy.path(c, p));
-    if (covered(definition.path, paths))
-      throw new InputError(`Definition ownership is implicit; remove duplicate owns path: ${c.id}`);
-    paths.push(definition.path);
+    this.definition(c, paths);
     c.api = (c.api ?? []).map((entry) => ({
       ...entry,
       ...(entry.module ? { module: this.policy.path(c, entry.module) } : {}),
@@ -80,6 +74,23 @@ export class ComponentV5Resolver {
       implicitOwnedPaths: [...paths],
     };
     this.inventory(c);
+  }
+
+  /** Anchors implicit definition ownership to the catalog repository without widening local writes. */
+  private definition(c: Component, paths: string[]): void {
+    const source = this.catalog.configurationSources.find(
+      (s) => (s.value as Component).id === c.id && s.path.startsWith('architecture/components/'),
+    );
+    if (!source) throw new InputError(`Missing component definition: ${c.id}`);
+    c.definition = {
+      repository: this.catalog.primaryRepository!,
+      path: source.path,
+      sourceHash: source.sourceHash,
+    };
+    if (c.repository !== c.definition.repository) return;
+    if (covered(source.path, paths))
+      throw new InputError(`Definition ownership is implicit; remove duplicate owns path: ${c.id}`);
+    paths.push(source.path);
   }
 
   /** Captures exact owned file hashes, leaving unknown artifacts visible and owned. */

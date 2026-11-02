@@ -218,6 +218,19 @@ class CatalogLoader {
         grants.validate(component);
     const ownership = new OwnershipValidator(this.repository, this.base).validate(this.catalog);
     if (ownership) this.catalog.configurationSources.push(ownership);
+    this.boundOwnership();
+  }
+
+  /** Applies exact minimal ownership to every captured binding without reinterpreting historical catalogs. */
+  private boundOwnership(): void {
+    if (Object.values(this.catalog.components).some((c) => c.schemaVersion !== 5)) return;
+    for (const [id, revision] of Object.entries(this.catalog.repositoryRevisions ?? {})) {
+      if (id === this.catalog.primaryRepository) continue;
+      new OwnershipValidator(revision.source, revision.base).validate({
+        ...this.catalog,
+        primaryRepository: id,
+      });
+    }
   }
 
   /** Enumerates supported definition files in the captured repository revision. */

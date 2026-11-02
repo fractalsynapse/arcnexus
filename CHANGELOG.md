@@ -14,6 +14,8 @@
 
 ### Fixed
 
+- Keep implicit definition ownership anchored to its catalog repository and validate every bound minimal repository (#143).
+
 - Reject legacy environment recipes before starting a new minimal task or workday host (#142).
 
 - Reject obsolete execution budgets before applying a configuration migration (#141).

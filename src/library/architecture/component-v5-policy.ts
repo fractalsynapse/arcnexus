@@ -4,6 +4,7 @@ import { ancestry, covered, scopePath } from './component-paths.js';
 import { InputError } from './config.js';
 
 export interface ComponentV5Fields {
+  definition?: { repository: string; path: string; sourceHash: string };
   observedImports?: import('./api-imports.js').ModuleRelationship[];
   observedConsumers?: import('./api-imports.js').ModuleRelationship[];
   publicApi?: import('./public-api.js').PublicSurface[];
