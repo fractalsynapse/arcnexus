@@ -63,3 +63,8 @@ resulting shared definitions produces the same definitions and no further identi
 changes. This extraction does not invent typed context substitutions from similar
 owner names; any such substitution must additionally prove equal resolved arguments
 and execution semantics for every affected owner.
+
+Service identities also identify independently managed leases. Equal commands do not
+prove that two authored services are interchangeable. Migration preserves distinct
+service identities and their HTTP associations, even when their process arguments
+match. Finite command deduplication must not collapse those separate lifecycles.
