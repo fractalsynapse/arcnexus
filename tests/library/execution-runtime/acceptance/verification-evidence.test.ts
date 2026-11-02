@@ -12,12 +12,13 @@ import { GeneralFixture } from '../../testing/support/general-fixture.js';
 /** Verifies the independent model receives immutable host change evidence through a constrained tool. */
 class VerificationEvidenceScenarios {
   /** Both owner and whole-goal assessments can inspect accumulated tracked and untracked changes. */
-  async inspect(t: TestContext, goal: boolean): Promise<void> {
+  async inspect(t: TestContext, goal: boolean, retryPage = false): Promise<void> {
     const { f, context, record } = await this.fixture(t, goal);
     await new Direction(f.state, context, new AbortController().signal).verify(
       record,
       'a',
-      'READ_HOST_EVIDENCE: confirm exact candidate changes',
+      'READ_HOST_EVIDENCE: confirm exact candidate changes ' +
+        (retryPage ? 'RETRY_INVALID_PAGE' : ''),
       goal ? [] : { criteria: ['Scope is observed'] },
       goal,
     );
@@ -103,6 +104,9 @@ for (const goal of [false, true])
       (goal ? 'the accumulated goal' : 'an owner delivery'),
     (t) => scenarios.inspect(t, goal),
   );
+
+test('verification retries an invalid page without losing pinned evidence', (t) =>
+  scenarios.inspect(t, false, true));
 
 test('verification artifact access rejects arbitrary host paths', (t) => scenarios.forbidden(t));
 

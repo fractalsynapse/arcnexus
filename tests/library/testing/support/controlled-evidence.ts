@@ -9,20 +9,11 @@ export class ControlledEvidence {
   constructor(private readonly trace: string) {}
 
   /** Reads all advertised evidence pages without using native Git or arbitrary host paths. */
-  async inspect(args: string[], forbidden: boolean): Promise<void> {
-    const option = (key: string) =>
-      JSON.parse(
-        args
-          .find((arg) => arg.startsWith('mcp_servers.arcnexus.' + key + '='))!
-          .split('=')
-          .slice(1)
-          .join('='),
-      );
-    const client = new Client({ name: 'controlled-verifier', version: '1' }, { capabilities: {} });
+  async inspect(args: string[], forbidden: boolean, retryPage = false): Promise<void> {
+    const client = this.client();
     try {
-      await client.connect(
-        new StdioClientTransport({ command: option('command'), args: option('args') }),
-      );
+      await client.connect(this.transport(args));
+      if (retryPage) await this.rejectedPage(client);
       if (forbidden) {
         await this.read(client, '../report.json');
         return;
@@ -35,6 +26,36 @@ export class ControlledEvidence {
     } finally {
       await client.close();
     }
+  }
+
+  /** Builds the SDK client independently from the captured command transport. */
+  private client(): Client {
+    return new Client({ name: 'controlled-verifier', version: '1' }, { capabilities: {} });
+  }
+
+  /** Resolves the host-supplied bridge command without substituting test filesystem access. */
+  private transport(args: string[]): StdioClientTransport {
+    const option = (key: string) =>
+      JSON.parse(
+        args
+          .find((arg) => arg.startsWith('mcp_servers.arcnexus.' + key + '='))!
+          .split('=')
+          .slice(1)
+          .join('='),
+      );
+    return new StdioClientTransport({ command: option('command'), args: option('args') });
+  }
+
+  /** A malformed transport page must be rejected without ending the verifier activation. */
+  private async rejectedPage(client: Client): Promise<void> {
+    const reply: any = await client.callTool({
+      name: 'verification.evidence',
+      arguments: { artifact: 'manifest', offset: 0, length: 100000 },
+    });
+    const rejection = JSON.parse(reply.content[0].text);
+    if (reply.isError || rejection.status !== 'rejected' || rejection.maximumLength !== 32768)
+      throw new Error('Invalid page did not return recoverable bounds');
+    if ('content' in rejection) throw new Error('Rejected page exposed content');
   }
 
   /** Follows explicit page offsets until the host reports complete evidence, retaining all content. */

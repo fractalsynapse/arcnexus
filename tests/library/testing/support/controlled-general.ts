@@ -31,7 +31,11 @@ export class ControlledGeneral {
       prompt.startsWith('Independent read-only verification.') &&
       prompt.includes('READ_HOST_EVIDENCE')
     )
-      await new ControlledEvidence(this.calls).inspect(args, prompt.includes('FORBIDDEN_ARTIFACT'));
+      await new ControlledEvidence(this.calls).inspect(
+        args,
+        prompt.includes('FORBIDDEN_ARTIFACT'),
+        prompt.includes('RETRY_INVALID_PAGE'),
+      );
     const result = prompt.startsWith('ArcNexus task direction.')
       ? this.direction(prompt)
       : this.worker(prompt);

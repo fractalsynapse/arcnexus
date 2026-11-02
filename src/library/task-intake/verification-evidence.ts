@@ -102,7 +102,17 @@ export class VerificationEvidence {
       throw new Error('Invalid verification evidence arguments');
     const artifact = this.artifacts.get(String(request.artifact));
     if (!artifact) throw new Error('Unknown verification artifact');
-    const { offset, length } = this.page(request, artifact.content.length);
+    const page = this.page(request, artifact.content.length);
+    if (!page)
+      return {
+        status: 'rejected',
+        error: 'Invalid verification evidence page',
+        minimumOffset: 0,
+        maximumOffset: artifact.content.length,
+        minimumLength: 1,
+        maximumLength: 32768,
+      };
+    const { offset, length } = page;
     const content = artifact.content.slice(offset, offset + length);
     const nextOffset = offset + content.length;
     return {
@@ -120,7 +130,7 @@ export class VerificationEvidence {
   private page(
     request: Record<string, unknown>,
     total: number,
-  ): { offset: number; length: number } {
+  ): { offset: number; length: number } | undefined {
     const offset = request.offset ?? 0;
     const length = request.length ?? 8192;
     if (
@@ -131,7 +141,7 @@ export class VerificationEvidence {
       Number(length) < 1 ||
       Number(length) > 32768
     )
-      throw new Error('Invalid verification evidence page');
+      return undefined;
     return { offset: Number(offset), length: Number(length) };
   }
 
