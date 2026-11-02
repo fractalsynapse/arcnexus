@@ -1,0 +1,11 @@
+schemaVersion: 6
+id: portfolio
+type: library
+parentId: cli-package
+purpose: Resolve registered platforms and packages in a persistent managed project volume
+owns:
+  - src/library/portfolio
+  - tests/library/portfolio
+  - docs/library/portfolio
+api:
+  - module: src/library/portfolio/portfolio.ts
