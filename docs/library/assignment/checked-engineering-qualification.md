@@ -63,3 +63,20 @@ criteria and duplicate review routing (issue 117); those failed tasks remain ret
 This successful engineering task does not establish that separate routing defect as
 fixed. Deterministic suites, repository static checks and CI are reported separately.
 The other five live gates and the full executable configuration migration remain open.
+
+## Later qualification updates
+
+The [real workday and recovery run](../workday/checked-workday-qualification.md)
+subsequently established minimal-plan live gates 3 and 4 at a safe checkpoint.
+Multi-owner discovery, deliberate unauthorized live writes and ArcNexus self-improvement
+remain outstanding; the earlier statement about five remaining gates describes this
+first task's checkpoint.
+
+After correcting director acceptance boundaries, the exact original read-only prompt
+completed as task `ba0f2a23-e19c-4199-bc1f-d88ad3ae9565` with one reader assignment,
+independent verifier `2b21e10f-bb44-42bf-b62a-318c91a6bf53`, final director assessment
+`6a6cc9a8-03fd-4ed1-9f3f-6136dd456fcd` and CLI exit 0. Its source revision stayed
+`514abab86a413f4d4dc00ac2f8add38791e32923`. Evidence is in
+`readonly-20261102T025840Z/task-host-checkpoints.log` and the referenced reports.
+The previous task that repeatedly awaited its own future review was cancelled and
+retained; it prompted the structural continuation-loop guard in issue 119.
