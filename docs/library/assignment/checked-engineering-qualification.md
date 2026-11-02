@@ -68,8 +68,8 @@ The other five live gates and the full executable configuration migration remain
 
 The [real workday and recovery run](../workday/checked-workday-qualification.md)
 subsequently established minimal-plan live gates 3 and 4 at a safe checkpoint.
-Multi-owner discovery, deliberate unauthorized live writes and ArcNexus self-improvement
-remain outstanding; the earlier statement about five remaining gates describes this
+The later workday audit also established native owned/cross-owner write denial
+(live gate 5). Multi-owner discovery and ArcNexus self-improvement remain outstanding; the earlier statement about five remaining gates describes this
 first task's checkpoint.
 
 After correcting director acceptance boundaries, the exact original read-only prompt

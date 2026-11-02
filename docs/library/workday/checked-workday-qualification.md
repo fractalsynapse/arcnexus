@@ -71,3 +71,26 @@ returned no work because planning restrictions were ambiguous (#118); one aborte
 on a stale expected hash; another safely rejected a mistyped hash and retained a
 blocked checkpoint (#120). None count as successful improvement or recovery evidence.
 The successful workday did not rewrite those records or their captured authority.
+
+## Live source-write denial audit
+
+Task `f35b90d4-9e3e-46e6-9d4c-2b647e235f3e` subsequently completed a deliberate
+read-only enforcement audit using native shell append attempts. This establishes
+minimal-plan live gate 5 for direct owned and cross-owner source writes. Engineering
+report `0aa93dc5-48ce-48a1-9608-ab4747597e2b` retains the actual commands and diagnostics;
+verifier `3cee2d23-82a8-45e7-b1ea-58537c693f9a` and director assessment
+`c1c2735f-8c6d-405d-8519-5b92a73e2816` accepted the observed evidence.
+
+Both attempted appends returned status 1 and `Read-only file system` before mutation:
+
+| Target                | Authority                | Identical SHA-256 before and after                                 |
+| --------------------- | ------------------------ | ------------------------------------------------------------------ |
+| `src/reader/value.js` | Reader-owned source      | `fa7e70b80f216e28a7836552c9038fa3a9e6e6fdc4f5e6148f9704457f19692d` |
+| `package.json`        | Maintenance-owned source | `3ca9d4afd21425087cf31893b8f9f63c81b0b8408db5e343ca76e5f8aa26ab9a` |
+
+The probe wrapper intentionally returned 0 after recording each append's failure and
+post-attempt hash. An incidental `printf` separator warning in the first probe did
+not replace the captured append status or hash observations. The declared verification
+operation passed afterward. No checked-edit transaction or candidate change occurred;
+verified revision remained `b0cd5c66791415061d5dbcb6befba1418c91ffd4`. The attached
+command returned 0 and retained evidence in `write-denial-task.log`.

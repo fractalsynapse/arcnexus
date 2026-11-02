@@ -115,12 +115,13 @@ completed with an actual diff, expected-red and passing host checks, independent
 verification and final director assessment. A [real workday](../library/workday/checked-workday-qualification.md)
 also completed a self-directed improvement, preserved its unfinished checkpoint across
 pause/host loss/resume, and automatically yielded to and resumed after a task. Minimal
-live gates 1, 3 and 4 have evidence, with host loss qualified at a safe checkpoint.
+live gates 1, 3, 4 and 5 have evidence, with host loss qualified at a safe checkpoint
+and native owned/cross-owner write attempts denied before mutation.
 
 Migration policy reduction preserves resolved authority in built-program tests.
 The `config migrate` CLI, complete executable configuration/fixture migration,
-formatter transformations, removal of legacy execution branches and live gates 2,
-5 and 6 remain unfinished. Broader phase-3 inbox and active-operation crash gates
+formatter transformations, removal of legacy execution branches and live gates 2
+and 6 remain unfinished. Broader phase-3 inbox and active-operation crash gates
 still require live evidence. Phase 3 remains blocked. Direct implementation work
 remains bootstrap work; the successful qualification changed a fixture package,
 not ArcNexus itself. Configuration reduction counts must be measured after migration.
