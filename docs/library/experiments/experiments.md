@@ -215,3 +215,7 @@ shared package test operation supplies engineering feedback and mandatory host
 verification; ordinary `.test.mjs` filenames provide test classification without
 per-component inventories. Materialization retains compiled runnable payloads and
 requires the declared fixture origin before execution.
+
+The product build clears obsolete compiled fixture payloads before recompiling.
+Renaming a maintained test must not leave the former generated test in a newly
+materialized package or execute both copies of the same acceptance scenario.
