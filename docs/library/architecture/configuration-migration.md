@@ -125,3 +125,11 @@ automatic test selection until they have a declared suite. The retired execution
 file is removed from maintenance ownership, and purpose text is not repeated as an
 identical objective. These changes do not add engineering operations or grant
 container write authority.
+
+### New run configuration gate
+
+New task and workday hosts require every captured component to use version five.
+They reject an older component family with a `config migrate` diagnostic before
+creating a host or dispatching an activation. There is no fallback to the retired
+`architecture/execution` defaults file. Read-only historical inspection and migration
+continue to read old declarations; neither path grants execution authority.
