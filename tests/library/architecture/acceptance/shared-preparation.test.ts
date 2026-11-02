@@ -8,6 +8,29 @@ import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises shared setup operations through actual workspace preparation and installed confinement. */
 class SharedPreparationScenarios {
+  /** Keeps real child IPC usable when durable evidence lives below a long application state path. */
+  ipc(t: TestContext): void {
+    const f = this.fixture(t);
+    f.put(
+      'package/src/prepare.cjs',
+      "const f=require('fs'),p=require('path');const d=f.mkdtempSync(p.join(require('os').tmpdir(),'ipc-'));const sock=p.join(d,'host.sock');const s=require('net').createServer();s.listen(sock,()=>{f.statSync(sock);s.close(()=>{f.writeFileSync('package/generated/proof','ipc');f.rmSync(d,{recursive:true});});});",
+    );
+    f.put('architecture/operations/prepare.json', { ...this.operation(), network: true });
+    f.commit();
+    const { result, report } = this.execute(f, t);
+    assert.equal(
+      result.status,
+      0,
+      result.stderr + readFileSync(report.operationInvocations.at(-1).result.log, 'utf8'),
+    );
+    assert.equal(readFileSync(join(report.workspace, 'package/generated/proof'), 'utf8'), 'ipc');
+    assert.ok(report.operationTemporaryRoot);
+    t.after(() => rmSync(report.operationTemporaryRoot, { recursive: true, force: true }));
+    t.after(() =>
+      rmSync(report.operationTemporaryRoot + '-configuration', { recursive: true, force: true }),
+    );
+  }
+
   /** Resolves setup automatically, writes generated evidence, and preserves maintained source. */
   prepare(t: TestContext): void {
     const f = this.fixture(t);
@@ -186,6 +209,12 @@ class SharedPreparationScenarios {
 }
 
 const scenarios = new SharedPreparationScenarios();
+
+test(
+  'shared operation temporary storage supports real private IPC',
+  { skip: !process.env.ARCNEXUS_TEST_CODEX && 'Requires installed confinement' },
+  (t) => scenarios.ipc(t),
+);
 
 test(
   'minimal package prepares through captured shared operations',

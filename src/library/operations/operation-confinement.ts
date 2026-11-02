@@ -1,7 +1,8 @@
 import type { Component } from '../architecture/components.js';
 import { randomUUID } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import type { ResolvedAssignment } from '../architecture/assignment.js';
 import { toolDirectories, type Bindings } from '../architecture/bindings.js';
 import { save, type RecordData } from '../workspace/state.js';
@@ -44,11 +45,21 @@ export class OperationConfinement {
       maintainedPaths: catalog
         .filter((c) => c.repository === owner.repository)
         .flatMap((c) => c.allowedWritePaths),
-      temporaryRoot: join(this.root, 'runs', this.record.id, 'operation-tmp'),
+      temporaryRoot: this.temporaryRoot(),
       executable: bindings?.tools.codex ?? 'codex',
       network: op.network,
       toolDirectories: [...toolDirectories(this.record), this.record.commonDir],
     });
+  }
+
+  /** Records private temporary storage outside long evidence paths before any managed process starts. */
+  private temporaryRoot(): string {
+    if (typeof this.record.operationTemporaryRoot === 'string')
+      return this.record.operationTemporaryRoot;
+    const path = mkdtempSync(join(tmpdir(), 'arcnexus-op-'));
+    this.record.operationTemporaryRoot = path;
+    save(this.root, this.record);
+    return path;
   }
 
   /** Proves source denial on disposable probe files before any real operation can run. */
