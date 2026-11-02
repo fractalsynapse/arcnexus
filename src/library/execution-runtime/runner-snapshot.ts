@@ -52,7 +52,9 @@ export class RunnerSnapshot {
     const stat = statSync(input);
     if (stat.isDirectory())
       for (const name of readdirSync(input)) this.permissions(source, target, join(path, name));
-    chmodSync(join(target, path), stat.mode & 0o777);
+    const copied = join(target, path);
+    if ((statSync(copied).mode & 0o777) !== (stat.mode & 0o777))
+      chmodSync(copied, stat.mode & 0o777);
   }
 
   /** Hashes names, executable modes and file bytes, following the same dependency links as capture. */
