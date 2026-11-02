@@ -160,3 +160,10 @@ assignments within captured owner authority. The host validates and executes tho
 assignments separately through the checked-edit workflow. The planning activation
 cannot edit source, commit, publish or invoke nested model delegation. An actionable
 owned objective must not be dismissed merely because planning itself is read-only.
+
+Automatic host checkpoint requirements belong to task-level completion. The director
+must not copy a future independent review into the worker's delivery acceptance:
+the worker submits its findings before that review can run. The host still requires
+independent verification, and the final director assesses the original goal against
+its retained result. This separation removes a circular worker/reviewer dependency;
+it does not waive captured criteria in an existing assignment.
