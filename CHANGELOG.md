@@ -22,6 +22,8 @@
 
 ### Fixed
 
+- Follow the transferred ArcNexus upstream at `fractalsynapse/arcnexus` in active configuration and repository links (#148).
+
 - Preserve captured dependency states and verified delivery context when engineering resumes under the shared scheduler (#147).
 
 - Derive root-owned inventories from actual tracked files and validate generated outputs in each operation’s repository (#145, #146).
