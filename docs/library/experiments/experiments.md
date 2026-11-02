@@ -235,3 +235,9 @@ stable captured regression operation identities. They do not prescribe historica
 `verificationIndex` values, removed owner-specific test commands or compiled test
 paths as editable source. Historical manifests and their assignment documents remain
 unchanged so retained evidence can still be interpreted against its original request.
+
+Prompt campaign capture also retains the primary repository URL from committed
+composition authority. A case may clone bytes from a local source path, but resets
+that clone's origin to the captured declared identity before normal task preflight.
+This performs no fetch or publication and leaves the caller's repository unchanged.
+The URL is derived snapshot evidence, not another maintained campaign field (#140).
