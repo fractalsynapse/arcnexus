@@ -293,3 +293,12 @@ ignored documentation/configuration formats are quiet, while actual lint finding
 still fail. Lint remains read-only, and source edits use the checked edit tool.
 This replaces repeated authored owner directory lists and does not grant source
 write authority or remove required host verification.
+
+An unknown or unavailable operation ID is a rejected selection, not an executed
+check. The host returns an actionable response directing the worker to
+`operations.list`; host-only verification IDs never become agent capabilities.
+This pre-dispatch rejection preserves already running authorized work and its
+pending observation handle. Repeated identical selections use the existing progress
+diagnosis. Real execution failures, cancellation and uncertain operation state retain
+their lifecycle behavior. This closes the #139 live failure where a mistaken
+host-only selection cancelled an unrelated pending lint operation.
