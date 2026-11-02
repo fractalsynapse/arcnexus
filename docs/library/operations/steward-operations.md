@@ -278,3 +278,18 @@ At invocation, the host discovers current owned suites under the captured profil
 validates mandatory test identities, and expands their paths before dispatch. A
 still-empty or missing selection fails before any prerequisite runs. Required host
 checkpoints retain eager context validation.
+
+### Inherited project test and lint availability
+
+ArcNexus declares `component-tests` and `component-lint` once as inherited agent
+operations. Owners retain only additional required verification or specialized
+operations. Test execution resolves current owned suites; owners without a suite
+retain pending availability and cannot invoke an empty test selection.
+
+The shared lint command receives captured `ownedPaths` as separate arguments. It
+checks owned code and configuration supported by the repository ESLint policy;
+non-code ownership paths do not become invented lint targets. Unmatched paths and
+ignored documentation/configuration formats are quiet, while actual lint findings
+still fail. Lint remains read-only, and source edits use the checked edit tool.
+This replaces repeated authored owner directory lists and does not grant source
+write authority or remove required host verification.
