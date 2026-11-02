@@ -270,3 +270,11 @@ mounts. This grants neither access to all of `/run` nor writes to resolver or so
 files. Network-disabled operations gain no extra resolver rule. Installed-runtime
 qualification covers resolver readability and write denial; successful host DNS
 alone does not establish confined network availability.
+
+Agent-available test operations may be declared before an owner has its first
+suite. Catalog loading retains their captured definition and pending selected-test
+context; it never turns an empty selection into an unrestricted runner invocation.
+At invocation, the host discovers current owned suites under the captured profile,
+validates mandatory test identities, and expands their paths before dispatch. A
+still-empty or missing selection fails before any prerequisite runs. Required host
+checkpoints retain eager context validation.

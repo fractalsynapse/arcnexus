@@ -127,3 +127,11 @@ component catalog. Retained test and operation evidence preserves the full captu
 authority used for execution; reducing console output never narrows verification
 or changes the selected command context. The npm compatibility runner uses the
 same projection.
+
+ArcNexus’s declared test operations invoke the test runner directly through the
+shared executor. They do not recursively invoke the test CLI from inside a managed
+operation. Preparation is expressed as operation prerequisites. The CLI remains the
+caller-facing selection path. Repository-wide verification uses the compiled test
+file pattern as a literal Node argument, preserving the project working directory
+and shell-free argument handling. Node 22 documents this supported
+[glob argument form](https://nodejs.org/download/release/v22.22.1/docs/api/test.html#running-tests-from-the-command-line).
