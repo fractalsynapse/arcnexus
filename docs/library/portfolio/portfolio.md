@@ -66,3 +66,7 @@ Schema 4 retains its original HTTPS requirement and remains supported. Inspectio
 preparation, test selection, cleanup and migration recognize schema 5 without changing
 historical evidence or inventing an upstream. File URLs used to materialize source
 belong to the host's journal, not duplicated architectural configuration.
+
+Recovery may finish registration from a recorded successful clone checkpoint when
+its committed revision remains unchanged. This validates the retained catalog and
+performs no new Git clone. Pending/uncertain commands remain blocked for reconciliation.

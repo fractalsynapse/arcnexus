@@ -241,7 +241,7 @@ export class WorkspaceCleanup {
       'architecture/environment',
     ).value;
     const operations =
-      (source as { schemaVersion: number }).schemaVersion === 4
+      (source as { schemaVersion: number }).schemaVersion >= 4
         ? Object.values(loadCatalog(workspace, base).operations)
         : [];
     return environment(source, operations);

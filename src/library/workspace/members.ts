@@ -44,7 +44,10 @@ export function resolveMembers(
 ): Member[] {
   try {
     if (!env.workspace) return [];
-    if (git(source, 'remote', 'get-url', 'origin').trim() !== env.workspace.primary.repository)
+    if (
+      env.workspace.primary.repository &&
+      git(source, 'remote', 'get-url', 'origin').trim() !== env.workspace.primary.repository
+    )
       throw new InputError('Primary repository origin identity mismatch');
     const resolver = new MemberResolver(source, base, workspace, bindings);
     return env.workspace.dependencies.map((definition) => resolver.resolve(definition));

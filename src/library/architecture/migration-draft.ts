@@ -89,7 +89,7 @@ export class MigrationDraft {
     if (versions.size !== 1) throw new Error('Migrate mixed component authority explicitly');
     if (!declarations.every((source) => (source.value as Declaration).schemaVersion >= 5))
       return false;
-    if (this.environment.schemaVersion !== 4)
+    if (this.environment.schemaVersion < 4)
       throw new Error('Migrate mixed environment authority explicitly');
     for (const [group, version] of [
       ['operations', 4],

@@ -36,7 +36,8 @@ export class TestOperationPlanning {
       /architecture\/environment\.(json|ya?ml)$/.test(s.path),
     );
     const env = environment(source?.value, Object.values(this.catalog.operations));
-    if (env.schemaVersion !== 4) throw new InputError('Shared tests require environment schema 4');
+    if (env.schemaVersion < 4)
+      throw new InputError('Shared tests require environment schema 4 or 5');
     return { catalog: Object.values(this.catalog.components), environment: env, steps };
   }
 

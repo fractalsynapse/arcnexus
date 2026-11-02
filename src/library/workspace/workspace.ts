@@ -93,9 +93,9 @@ export async function prepareWorkspace(
   signal: AbortSignal,
 ): Promise<void> {
   signal.throwIfAborted();
-  if (record.environment.schemaVersion !== 4)
+  if (record.environment.schemaVersion < 4)
     throw new InputError(
-      'Preparation requires environment schema 4; migrate legacy recipes before execution',
+      'Preparation requires environment schema 4 or 5; migrate legacy recipes before execution',
     );
   git(record.source, 'worktree', 'add', '-b', record.branch, record.workspace, record.base);
   observe(root, record, 'workspace.created', { workspace: record.workspace, base: record.base });

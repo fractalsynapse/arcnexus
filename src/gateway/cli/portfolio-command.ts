@@ -8,10 +8,11 @@ export class PortfolioCommand {
   constructor(
     private readonly positionals: string[],
     private readonly values: CliValues,
+    private readonly signal: AbortSignal,
   ) {}
 
   /** Opens read-only services for queries and guarantees database closure on every result. */
-  run(): void {
+  async run(): Promise<void> {
     const [kind, action, id, repository] = this.positionals;
     if (kind !== 'platform' && kind !== 'package') throw new InputError('Invalid portfolio kind');
     if (Object.keys(this.values).some((key) => key !== 'json'))
@@ -24,7 +25,7 @@ export class PortfolioCommand {
       else if (action === 'get' && id && this.positionals.length === 3)
         result = service.get(kind, id);
       else if (action === 'create' && id && repository && this.positionals.length === 4)
-        result = service.register(kind, id, repository);
+        result = await service.create(kind, id, repository, this.signal);
       else if (action === 'remove' && id && this.positionals.length === 3)
         result = service.remove(kind, id);
       else throw new InputError('Expected ' + kind + ' list|get|create <id> <repository>|remove');

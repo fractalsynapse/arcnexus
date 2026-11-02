@@ -93,7 +93,7 @@ class CliApplication {
     switch (this.command) {
       case 'platform':
       case 'package':
-        return new PortfolioCommand(this.positionals, this.values).run();
+        return new PortfolioCommand(this.positionals, this.values, this.controller.signal).run();
       case 'config':
         return new ConfigCommand(this.positionals, this.values).run();
       case 'run':

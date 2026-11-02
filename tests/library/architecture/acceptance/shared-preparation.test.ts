@@ -32,8 +32,8 @@ class SharedPreparationScenarios {
   }
 
   /** Resolves setup automatically, writes generated evidence, and preserves maintained source. */
-  prepare(t: TestContext): void {
-    const f = this.fixture(t);
+  prepare(t: TestContext, local = false): void {
+    const f = this.fixture(t, local);
     const { result, report, state } = this.execute(f, t);
     assert.equal(result.status, 0, result.stderr);
     assert.equal(readFileSync(join(report.workspace, 'package/generated/proof'), 'utf8'), 'sample');
@@ -137,13 +137,15 @@ class SharedPreparationScenarios {
   }
 
   /** Captures a minimal package with one shared setup definition and no environment commands. */
-  private fixture(t: TestContext): ComponentV5Fixture {
+  private fixture(t: TestContext, local = false): ComponentV5Fixture {
     const f = new ComponentV5Fixture(t, 6);
-    f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
+    if (!local) f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     f.put('architecture/environment.json', {
-      schemaVersion: 4,
+      schemaVersion: local ? 5 : 4,
       workspace: {
-        primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
+        primary: local
+          ? { id: 'sample' }
+          : { id: 'sample', repository: 'https://example.invalid/sample.git' },
         dependencies: [],
       },
     });
@@ -234,6 +236,16 @@ test(
   (t) => scenarios.denies(t),
 );
 
+test(
+  'local-only package prepares and cleans up without an invented upstream',
+  { skip: !process.env.ARCNEXUS_TEST_CODEX && 'Requires installed confinement' },
+  (t) => scenarios.prepare(t, true),
+);
+
 test('shared preparation rejects obsolete profile budgets', (t) => scenarios.budget(t));
 
-registerSuite({ component: 'architecture', level: 'acceptance', tags: ['live'] });
+registerSuite({
+  component: 'architecture',
+  level: 'acceptance',
+  tags: ['native-host', 'deterministic'],
+});

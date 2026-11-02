@@ -4,6 +4,8 @@
 
 ### Added
 
+- Materialize existing repositories into the project volume with supervised Git, recoverable registration, and local-only repository identity (#148).
+
 - Register existing platforms and packages in a persistent project volume with qualified identities and non-destructive removal (#148).
 
 - Migrate active component standards to schema six while preserving historical pattern evidence (#148).
