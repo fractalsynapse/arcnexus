@@ -10,3 +10,9 @@ assignment can start it, observe readiness, run the check, inspect logs, stop it
 and report evidence without source edits. Qualification setup materializes the compiled
 fixture payload and configuration into a clean local Git repository. Run that target;
 do not execute the uncompiled fixture source directory as an ArcNexus subproject.
+
+Use `https://example.invalid/http-sample.git` as the materialized repository origin
+and commit the baseline. Platform policy supplies the profiles and operation usages;
+the HTTP owner maintains the complete small package. Runtime and loopback probes
+are finite shared operations. Service startup remains an explicit managed agent
+action, while syntax checking is independently required for delivery.

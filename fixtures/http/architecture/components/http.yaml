@@ -1,36 +1,20 @@
-schemaVersion: 3
+schemaVersion: 5
 id: http
 type: gateway
-repository: http-sample
-role: systems-engineer
-executionProfile: luna
+parentId: http-package
 purpose: Provide a local HTTP readiness endpoint
-path: server.mjs
 objectives:
   - Return a ready JSON response at /health
 constraints:
   - Loopback only; no external infrastructure
-interfaces:
-  - GET /health
-documentation:
-  - README.md
-tests: []
-relatedIds: []
-questions: []
-patterns: []
-allowedWritePaths:
+owns:
   - server.mjs
   - README.md
-access:
-  readPaths:
-    - .
-  writeDirectories:
-    - .
-verification:
-  - command: node
-    args:
-      - --check
-      - server.mjs
-operationIds:
-  - serve
-  - health
+  - architecture/environment.yaml
+  - architecture/roles
+  - architecture/execution-profiles
+  - architecture/operations
+  - architecture/components/platform.yaml
+  - architecture/components/package.yaml
+api:
+  - module: server.mjs

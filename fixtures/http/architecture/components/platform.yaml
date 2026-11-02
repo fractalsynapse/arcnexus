@@ -1,0 +1,23 @@
+schemaVersion: 5
+id: platform
+type: platform
+purpose: Maintain the http fixture under captured authority
+role: systems-engineer
+executionProfile: luna
+reads:
+  - .
+operations:
+  check-runtime:
+    - preflight
+  syntax-check:
+    - agent
+    - verify
+  serve:
+    - agent
+  health:
+    - agent
+director:
+  component: http
+  profile: astra
+reviewerProfile: astra
+defaultPackage: http-package

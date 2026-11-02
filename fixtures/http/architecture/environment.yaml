@@ -1,7 +1,6 @@
-schemaVersion: 3
-prerequisites:
-  - command: node
-    args:
-      - --version
-setup: []
-generatedDirectories: []
+schemaVersion: 4
+workspace:
+  primary:
+    id: http-sample
+    repository: https://example.invalid/http-sample.git
+  dependencies: []

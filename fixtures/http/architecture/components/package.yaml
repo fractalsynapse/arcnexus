@@ -1,0 +1,5 @@
+schemaVersion: 5
+id: http-package
+type: package
+parentId: platform
+purpose: Provide the http campaign target
