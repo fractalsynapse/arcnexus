@@ -138,3 +138,10 @@ The read-only migration capture still validates executable profile requirements.
 A historical profile containing removed time, turn, operation or corrective-attempt
 budgets must be corrected explicitly before preview or write; migration cannot
 silently retain those budgets in a candidate that normal execution would reject.
+
+New task/workday startup validates the execution family together: version-five
+components require environment schema 4, whose repository composition contains no
+inline prerequisites or setup recipes. A legacy environment cannot opt a minimal
+component into the old preparation adapter. Startup must reject this mixed family
+before creating a host or invoking operations, and identify the environment migration
+needed. Historical catalog inspection remains read-only and available.
