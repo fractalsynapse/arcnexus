@@ -40,6 +40,32 @@ assignment context and does not inspect test files or reorder the captured array
 When historical records have no captured test selection, the section says
 `unavailable`. An explicitly captured empty suite list says `No tests captured.`
 
+## Interpreting test and qualification evidence
+
+For a test run, read the total together with passed, failed, and skipped counts.
+The total is not the number of passing cases: skipped cases did not execute and
+provide no passing evidence. A process can exit zero when every executed case
+passes even though qualification cases were skipped; zero therefore does not show
+that those skipped cases passed. Check the selection and skip reasons as well as
+the exit status.
+
+Evidence categories answer different questions:
+
+- Deterministic tests exercise defined scenarios reproducibly, often with controlled
+  fixtures. They show the covered behavior under those conditions.
+- Native enforcement checks exercise real host controls, such as process, permission,
+  or isolation boundaries. They show those controls in the tested environment.
+- Live model qualification records an actual model-driven run through the intended
+  workflow. It shows end-to-end behavior for that run and configuration.
+- CI evidence shows the configured checks passed for a particular revision in CI.
+  It does not establish live model behavior or native enforcement unless those checks
+  actually exercise them.
+
+These categories are complementary. Deterministic tests cannot establish live
+qualification; live runs do not replace repeatable regression coverage; and neither
+a local check nor another evidence category substitutes for CI on the revision
+being assessed.
+
 ## General execution projections
 
 The execution report JSON at `report` is a projection of one durable run. `run.id`
