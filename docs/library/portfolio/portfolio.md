@@ -56,3 +56,13 @@ are volume-relative; moving the entire volume preserves identities and reads.
 
 This increment does not yet create projects without architectural input, apply
 templates, change remote destinations or compose separate platform/package repositories.
+
+Managed local projects use environment schema 5. It retains the shared-operation
+composition contract and permits omitting the primary repository URL when there is
+no declared upstream. A present primary URL remains an enforced origin constraint;
+absence grants no publication destination. The registered repository UUID and
+captured Git revision supply local identity. Dependency origins remain explicit.
+Schema 4 retains its original HTTPS requirement and remains supported. Inspection,
+preparation, test selection, cleanup and migration recognize schema 5 without changing
+historical evidence or inventing an upstream. File URLs used to materialize source
+belong to the host's journal, not duplicated architectural configuration.
