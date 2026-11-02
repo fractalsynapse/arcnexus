@@ -1,3 +1,4 @@
+import { PublicApiCatalog } from './public-api.js';
 import { normalizeOperation } from '../operations/operation-definition.js';
 import { ComponentOperationPlans } from './component-operation-plans.js';
 import { ancestry, covered, scopePath } from './component-paths.js';
@@ -194,6 +195,7 @@ class CatalogLoader {
     new ArchitectureReferences(this.repository, this.base, this.catalog).resolve();
     for (const path of this.files('composition-profiles')) this.composition(path);
     this.ownership();
+    new PublicApiCatalog(this.catalog).resolve();
     return this.catalog;
   }
 

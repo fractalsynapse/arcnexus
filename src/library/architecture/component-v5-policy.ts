@@ -4,6 +4,7 @@ import { ancestry, covered, scopePath } from './component-paths.js';
 import { InputError } from './config.js';
 
 export interface ComponentV5Fields {
+  publicApi?: import('./public-api.js').PublicSurface[];
   operationPlan?: Record<string, import('../operations/operations.js').Operation[]>;
   fileClassification?: import('./file-classification.js').FileClassification[];
   root?: string;
