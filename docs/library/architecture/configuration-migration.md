@@ -28,3 +28,20 @@ Acceptance compares resolved policies before and after reduction and exercises
 nested packages, absent defaults, narrower reads and differing operation usages.
 This reduction is one migration stage; it does not by itself authorize applying
 an unvalidated migration or establish completion of the maintenance CLI.
+
+## Component declaration conversion
+
+Component conversion keeps stable identity and architectural intent, maps exact
+ownership to `owns`, and converts intentional public modules and schema contracts
+to `api`. It preserves contract compatibility promises as constraints. It removes
+only the executable owner's own definition from explicit ownership, because that
+ownership is implicit in v5. A broader ownership root covering that definition
+requires an explicit diagnostic rather than silently shrinking future authority.
+
+Executable recipes must be resolved into shared operation usages before component
+conversion can discard inline commands. Classification exceptions and historical
+excluded-file ownership must likewise be resolved by the migration coordinator.
+Unresolved recipe, classification, contract or ownership choices prevent a writable
+migration. Container definitions never gain descendant ownership. The converter
+validates both the old declaration and the generated v5 declaration and leaves
+its input unchanged; already-v5 declarations remain unchanged.
