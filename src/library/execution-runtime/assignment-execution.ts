@@ -65,6 +65,7 @@ export class AssignmentExecution {
     return this.store.inbox(assignmentId).map(({ id, key: _retryKey, ...request }) => ({
       ...request,
       requestId: id,
+      replies: request.replies.map(({ id: _receipt, ...reply }: any) => reply),
     }));
   }
 
@@ -219,7 +220,7 @@ export class AssignmentExecution {
           reviews: new DeliveryEvidence(this.root).capture(dependency),
         })),
       ) +
-      '\nIf accepted intent is insufficient, return inboxActions with action=require_delivery, the existing requestId from General inbox requests (not the dependency assignment ID), and an explanation. Do not create another request or restate accepted scope; this action strengthens only the existing milestone.';
+      '\nIf accepted intent is insufficient, return inboxActions with action=require_delivery, the existing requestId from General inbox requests (not the dependency assignment ID), and an explanation. Use only the envelope’s availableActions; incoming requests and outgoing dependencies have different reply authority. Completed delivery needs no acknowledgment. Do not create another request or restate accepted scope; this action strengthens only the existing milestone.';
   }
 
   /** Incorporates verified deliveries without losing incomplete owner changes or frozen evidence. */

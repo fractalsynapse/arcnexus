@@ -57,6 +57,9 @@ class CoordinationEvidenceScenarios {
         envelopes++;
         assert.equal('key' in request, false);
         assert.equal('id' in request, false);
+        assert.equal(request.direction, request.from === assignment.id ? 'outgoing' : 'incoming');
+        assert.ok(Array.isArray(request.availableActions));
+        if (request.recipientStatus === 'completed') assert.deepEqual(request.availableActions, []);
         assert.ok(host.store.inbox(assignment.id).some((entry) => entry.id === request.requestId));
       }
     }

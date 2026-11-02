@@ -50,6 +50,27 @@ class DeliveryWaitScenarios {
     assert.throws(() => store.respond(a.id, [{ ...action, text: 'Another wait' }]), /terminal/);
   }
 
+  /** Context distinguishes sender authority, pending questions and already delivered dependencies. */
+  context(t: TestContext): void {
+    const { store, a, b, action } = this.fixture(t);
+    const envelope = (id: string): any => store.inbox(id)[0];
+    assert.equal(envelope(a.id).direction, 'outgoing');
+    assert.equal(envelope(b.id).direction, 'incoming');
+    assert.deepEqual(envelope(a.id).availableActions, ['require_delivery']);
+    assert.deepEqual(envelope(b.id).availableActions, ['reject', 'clarify']);
+    store.respond(b.id, [{ ...action, action: 'clarify', text: 'Which format?' }]);
+    assert.deepEqual(envelope(a.id).availableActions, ['answer', 'require_delivery']);
+    assert.deepEqual(envelope(b.id).availableActions, ['reject']);
+    store.respond(a.id, [{ ...action, action: 'answer', text: 'JSON' }]);
+    store.respond(a.id, [action]);
+    assert.deepEqual(envelope(a.id).availableActions, []);
+    assert.equal(envelope(a.id).requiredMilestone, 'delivered');
+    store.complete(b.id, ['independent verification']);
+    assert.equal(envelope(a.id).recipientStatus, 'completed');
+    assert.deepEqual(envelope(a.id).availableActions, []);
+    assert.deepEqual(envelope(b.id).availableActions, []);
+  }
+
   /** Creates accepted intent with a stable request identity and isolated durable storage. */
   private fixture(t: TestContext) {
     const directory = mkdtempSync(join(tmpdir(), 'arcnexus-delivery-wait-'));
@@ -86,5 +107,8 @@ test('delivery milestone cycle rejection rolls back the entire transition', (t) 
 
 test('delivery waits enforce requester authority and respect completed work', (t) =>
   scenarios.authority(t));
+
+test('inbox context exposes only applicable assignment-relative actions', (t) =>
+  scenarios.context(t));
 
 registerSuite({ component: 'execution-runtime', level: 'acceptance', tags: ['deterministic'] });
