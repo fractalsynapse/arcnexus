@@ -98,4 +98,8 @@ const scenario = new HostLossScenario();
 test('host loss stops managed execution and retains an interrupted task without replay', (t) =>
   scenario.run(t));
 
-registerSuite({ component: 'execution-runtime', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'execution-runtime',
+  level: 'acceptance',
+  tags: ['deterministic', 'host-lifecycle'],
+});

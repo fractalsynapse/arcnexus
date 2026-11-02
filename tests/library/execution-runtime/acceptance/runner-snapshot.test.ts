@@ -68,4 +68,8 @@ const scenario = new RunnerSnapshotScenario();
 test('background execution survives replacement of its originating installation', (t) =>
   scenario.run(t));
 
-registerSuite({ component: 'execution-runtime', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'execution-runtime',
+  level: 'acceptance',
+  tags: ['deterministic', 'host-lifecycle'],
+});

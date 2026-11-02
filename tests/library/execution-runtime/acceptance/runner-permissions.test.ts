@@ -52,4 +52,8 @@ const scenarios = new RunnerPermissionsScenarios();
 test('runner capture preserves empty directory modes under a different umask', (t) =>
   scenarios.preserves(t));
 
-registerSuite({ component: 'execution-runtime', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'execution-runtime',
+  level: 'acceptance',
+  tags: ['deterministic', 'host-lifecycle'],
+});

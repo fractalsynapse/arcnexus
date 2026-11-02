@@ -78,4 +78,8 @@ const scenarios = new GeneralCliScenarios();
 test('option-free CLI hosts workdays and routes a prompt through three dynamic owners', (t) =>
   scenarios.lifecycle(t));
 
-registerSuite({ component: 'execution-runtime', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'execution-runtime',
+  level: 'acceptance',
+  tags: ['deterministic', 'host-lifecycle'],
+});
