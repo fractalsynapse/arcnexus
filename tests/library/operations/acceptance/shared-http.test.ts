@@ -57,6 +57,83 @@ class SharedHttpScenarios {
     assert.ok((record.services as any[]).every((service) => service.endpointClosed));
   }
 
+  /** An unavailable host-check selection cannot cancel an already authorized pending service start. */
+  async rejectedSelection(t: TestContext): Promise<void> {
+    const { root, record } = this.fixture(t, 200);
+    const resolved = record.resolvedAssignment as any;
+    resolved.operations = resolved.context[0].operationPlan.agent.filter(
+      (op: Operation) => op.id === 'server',
+    );
+    resolved.executionProfile = {};
+    record.stage = 'testing';
+    this.baseline(record);
+    const bridge = operationBridge(root, record, AbortSignal.timeout(30_000), () => {});
+    const pending = bridge.call('services.start', { id: 'server' });
+    void pending.catch(() => {});
+    try {
+      const rejected = (await bridge.call('operations.run', { id: 'check' })) as any;
+      assert.equal(rejected.status, 'rejected');
+      assert.deepEqual(rejected.availableOperationIds, ['server']);
+      assert.match(rejected.recovery, /operations.list/);
+      await pending;
+      assert.ok((record.services as any[]).some((service) => service.status === 'ready'));
+      assert.ok(
+        !(record.operationInvocations as any[]).some((entry) => entry.operationId === 'check'),
+      );
+    } finally {
+      await Promise.allSettled([pending]);
+      await bridge.close();
+    }
+    assert.equal(readFileSync(join(record.workspace, 'canary'), 'utf8'), 'original');
+    assert.ok((record.services as any[]).every((service) => service.endpointClosed));
+  }
+
+  /** Equivalent unavailable selections are diagnosed without executing or granting the requested capability. */
+  async rejectedLoop(t: TestContext): Promise<void> {
+    const { root, record } = this.fixture(t, 200);
+    const resolved = record.resolvedAssignment as any;
+    resolved.operations = [];
+    resolved.executionProfile = {};
+    record.stage = 'testing';
+    this.baseline(record);
+    const bridge = operationBridge(root, record, new AbortController().signal, () => {});
+    try {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const result = (await bridge.call('operations.run', { id: 'host-only' })) as any;
+        assert.equal(result.status, 'rejected');
+        if (attempt === 2) assert.match(result.loopWarning, /Three equivalent/);
+      }
+      await assert.rejects(bridge.call('operations.run', { id: 'host-only' }), /Loop requires/);
+    } finally {
+      await bridge.close();
+    }
+    assert.equal(record.status, 'needs_attention');
+    assert.equal((record.operations as unknown[]).length, 0);
+  }
+
+  /** Captures a real immutable baseline for repeated-selection progress fingerprints. */
+  private baseline(record: RecordData): void {
+    const result = spawnSync(
+      'git',
+      [
+        '-C',
+        record.workspace,
+        '-c',
+        'user.name=Test',
+        '-c',
+        'user.email=test@example.invalid',
+        'commit',
+        '-qm',
+        'Captured operations',
+      ],
+      { encoding: 'utf8' },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    record.base = spawnSync('git', ['-C', record.workspace, 'rev-parse', 'HEAD'], {
+      encoding: 'utf8',
+    }).stdout.trim();
+  }
+
   /** Rejects cycles through managed-service preparation before any prerequisite side effect. */
   async cycle(t: TestContext): Promise<void> {
     const { root, record, check } = this.fixture(t, 200, true);
@@ -169,4 +246,15 @@ test('shared service bridge remains usable across assignment turns', installed, 
   scenarios.turns(t),
 );
 
-registerSuite({ component: 'operations', level: 'acceptance', tags: ['deterministic'] });
+test('repeated unavailable operation selections require diagnosis', (t) =>
+  scenarios.rejectedLoop(t));
+
+test('unavailable operation selection preserves authorized pending work', installed, (t) =>
+  scenarios.rejectedSelection(t),
+);
+
+registerSuite({
+  component: 'operations',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

@@ -1,16 +1,21 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
+import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { cli } from '../../testing/support/workflow-fixture.js';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
 /** Exercises exact public commands through the real background-host construction path. */
 class GeneralCliScenarios {
   /** Starts an idle workday, runs a dynamically expanded task, and preserves explicit pause intent. */
   async lifecycle(t: TestContext): Promise<void> {
     const general = new GeneralFixture(t);
+    const context = new ExecutionContext().resolve(general.fixture.repo);
+    assert.ok(
+      Object.values(context.catalog.components).every((owner) => owner.schemaVersion === 5),
+    );
     const command = this.command(general);
     const started = JSON.parse(command('workday', 'start'));
     assert.equal(started.workday.status, 'running');
@@ -81,5 +86,5 @@ test('option-free CLI hosts workdays and routes a prompt through three dynamic o
 registerSuite({
   component: 'execution-runtime',
   level: 'acceptance',
-  tags: ['deterministic', 'host-lifecycle'],
+  tags: ['native-host', 'deterministic', 'host-lifecycle'],
 });

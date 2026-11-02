@@ -57,6 +57,12 @@ jobs:
           sudo systemd-run --uid="$(id -u)" --gid="$(id -g)" \
             --property=Delegate=yes --working-directory="$PWD" \
             --setenv="PATH=$PATH" --wait --pipe --collect npm test
+      - name: Qualify native project hosts
+        run: |
+          sudo systemd-run --uid="$(id -u)" --gid="$(id -g)" \
+            --property=Delegate=yes --working-directory="$PWD" \
+            --setenv="PATH=$PATH" --setenv=ARCNEXUS_TEST_CODEX=/usr/local/bin/codex \
+            --wait --pipe --collect node scripts/release/native-host-tests.mjs
       - name: Retain failed operation diagnostics
         if: failure()
         run: |

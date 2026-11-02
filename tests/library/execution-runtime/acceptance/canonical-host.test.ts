@@ -2,12 +2,12 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { ExecutionLease } from '../../../../dist/library/coordination-store/execution-store.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { cli } from '../../testing/support/workflow-fixture.js';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
 /** Prevents a second scheduler even when it is launched with a different IPC endpoint. */
 class CanonicalHostScenario {
@@ -42,5 +42,5 @@ test('alternate IPC endpoints cannot acquire another canonical project lease', (
 registerSuite({
   component: 'execution-runtime',
   level: 'acceptance',
-  tags: ['deterministic', 'canonical-host'],
+  tags: ['native-host', 'deterministic', 'canonical-host'],
 });

@@ -5,9 +5,9 @@ import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { TestProcess, waitFor } from '../../testing/support/test-process.js';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 import { cli } from '../../testing/support/workflow-fixture.js';
 
 /** Exercises prompt campaigns through ordinary task execution without a participant manifest. */
@@ -17,9 +17,12 @@ class PromptCampaignScenarios {
     const fixture = this.fixture(t);
     const { f, output } = fixture;
     const result = this.execute(fixture);
-    assert.equal(result.status, 0, result.stderr);
     const report = JSON.parse(readFileSync(join(output, 'campaign.json'), 'utf8'));
+    const log = join(output, 'chain/execution.log');
+    const diagnostics = existsSync(log) ? readFileSync(log, 'utf8') : '';
+    assert.equal(result.status, 0, result.stderr + JSON.stringify(report) + diagnostics);
     assert.equal(report.evidenceMode, 'simulation');
+    assert.equal(report.input.cases[0].origin, 'https://example.invalid/sample.git');
     assert.equal(report.cases[0].task.run.status, 'completed');
     assert.equal(report.cases[0].task.counts.verified, 3);
     assert.deepEqual(
@@ -238,4 +241,8 @@ test('prompt campaign rejects supervising code mutation during execution', (t) =
 test('prompt campaign captures every case before executing the first', (t) =>
   scenarios.capturedInputs(t));
 
-registerSuite({ component: 'experiments', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'experiments',
+  level: 'acceptance',
+  tags: ['native-host', 'deterministic'],
+});

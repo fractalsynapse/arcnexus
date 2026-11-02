@@ -14,6 +14,8 @@
 
 ### Fixed
 
+- Preserve future owned paths in minimal read-only activations, valid pending operations after rejected selections, and declared repository identity in campaign clones (#138, #139, #140).
+
 - Keep one canonical project host when temporary-storage or evidence-root settings change (#137).
 
 ### Changed

@@ -55,6 +55,23 @@ class WorkflowTests {
     assert.doesNotMatch(tests.run, /--scope|\|\| true/);
   }
 
+  /** Confined skips require a separate native host gate, without inference or privilege escalation for workers. */
+  nativeHosts(): void {
+    const steps = this.read('verification').jobs.repository.steps;
+    const native = steps.find((step: any) => step.name === 'Qualify native project hosts');
+    assert.ok(native, 'Native host coverage must not disappear behind confined skips');
+    assert.equal(native.if, undefined);
+    assert.notEqual(native['continue-on-error'], true);
+    assert.match(native.run, /--property=Delegate=yes/);
+    assert.match(native.run, /--uid="\$\(id -u\)"/);
+    assert.match(native.run, /ARCNEXUS_TEST_CODEX=\/usr\/local\/bin\/codex/);
+    assert.match(native.run, /node scripts\/release\/native-host-tests.mjs/);
+    const selection = readFileSync('scripts/release/native-host-tests.mjs', 'utf8');
+    assert.match(selection, /'test', 'inspect'/);
+    assert.match(selection, /'native-host'/);
+    assert.match(selection, /selected no suites/);
+  }
+
   /** Shared verification pins actions and contains no write or publication capability. */
   verification(): void {
     const workflow = this.read('verification');
@@ -85,6 +102,9 @@ const suite = new WorkflowTests();
 
 test('hosted execution provisions confinement and delegated supervision', () =>
   suite.confinement());
+
+test('native host qualification remains a required separate caller gate', () =>
+  suite.nativeHosts());
 
 test('delivery lifecycle triggers and concurrency remain distinct', () => suite.lifecycles());
 

@@ -4,10 +4,10 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { cli, type WorkflowFixture } from '../../testing/support/workflow-fixture.js';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
 /** Kills the actual background host while its managed harness is active and inspects recovery. */
 class HostLossScenario {
@@ -101,5 +101,5 @@ test('host loss stops managed execution and retains an interrupted task without 
 registerSuite({
   component: 'execution-runtime',
   level: 'acceptance',
-  tags: ['deterministic', 'host-lifecycle'],
+  tags: ['native-host', 'deterministic', 'host-lifecycle'],
 });

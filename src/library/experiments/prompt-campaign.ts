@@ -121,6 +121,7 @@ export class PromptExperimentRunner {
       source,
     );
     git(source, 'checkout', '--detach', item.base);
+    if (item.origin) git(source, 'remote', 'set-url', 'origin', item.origin);
     mkdirSync(join(source, '.git/arcnexus'), { recursive: true, mode: 0o700 });
     writeFileSync(join(source, '.git/arcnexus/bindings.yaml'), JSON.stringify(item.bindings), {
       mode: 0o600,

@@ -4,7 +4,7 @@ import { digest } from '../architecture/assignment.js';
 import { ExecutionContext } from '../architecture/execution-context.js';
 import type { Bindings } from '../architecture/bindings.js';
 import { ConfigurationReader } from '../architecture/configuration.js';
-import { InputError } from '../architecture/config.js';
+import { InputError, type Environment } from '../architecture/config.js';
 import { validateSchema } from '../architecture/schema.js';
 import { git } from '../operations/process.js';
 
@@ -29,6 +29,7 @@ interface CampaignBindings {
 }
 
 export interface PromptExperimentCase extends PromptCase {
+  origin?: string;
   base: string;
   cwd: string;
   bindings: Bindings;
@@ -93,6 +94,11 @@ export class PromptExperimentResolver {
       throw new InputError('Prompt campaign requires the pinned current source commit');
     if (git(context.source, 'status', '--porcelain').trim())
       throw new InputError('Prompt campaign requires a clean source checkout');
+    const environment = new ConfigurationReader().definition(
+      context.source,
+      context.base,
+      'architecture/environment',
+    ).value as Environment;
     const { configurationSource: _source, ...captured } = context.bindings;
     const tools = { ...captured.tools, ...bindings.tools };
     if (bindings.codexPath) tools.codex = bindings.codexPath;
@@ -102,6 +108,7 @@ export class PromptExperimentResolver {
     return {
       ...item,
       project: context.source,
+      origin: environment.workspace?.primary.repository,
       base: context.base,
       cwd: relative(context.source, resolve(project.path)),
       bindings: { ...captured, tools },

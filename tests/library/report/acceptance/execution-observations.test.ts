@@ -2,13 +2,13 @@ import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
 import { ExecutionEvidence } from '../../../../dist/library/report/report.js';
 import { observe } from '../../../../dist/library/report/timeline.js';
 import { ExecutionStore } from '../../../../dist/library/coordination-store/execution-store.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import type { RecordData } from '../../../../dist/library/workspace/state.js';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
 /** Checks private observation boundaries without treating omitted evidence as successful verification. */
 class ExecutionObservationScenarios {
@@ -115,4 +115,4 @@ test('independent evidence rejects a foreign assignment timeline', (t) => scenar
 test('verification artifact observations preserve page provenance without recursive payloads', (t) =>
   scenarios.artifact(t));
 
-registerSuite({ component: 'report', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({ component: 'report', level: 'acceptance', tags: ['native-host', 'deterministic'] });

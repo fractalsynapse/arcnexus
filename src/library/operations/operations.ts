@@ -64,6 +64,14 @@ export function operationBridge(
   };
 }
 
+/** Identifies a denied selection before any operation is queued or executed. */
+class OperationSelectionError extends Error {
+  /** Retains the requested identity for actionable feedback without granting its authority. */
+  constructor(readonly operationId: string) {
+    super('Unknown or denied operation: ' + operationId);
+  }
+}
+
 /** Authorizes declared commands and services, accounts for calls, and retains their evidence. */
 class OperationRuntime {
   private readonly resolved: ResolvedAssignment;
@@ -127,7 +135,13 @@ class OperationRuntime {
   /** Accounts for and authorizes a tool request before execution. */
   async call(name: string, args: unknown): Promise<unknown> {
     if (name === 'operations.list') return this.list(args);
-    const op = this.authorize(name, args);
+    let op: Operation;
+    try {
+      op = this.authorize(name, args);
+    } catch (error) {
+      if (error instanceof OperationSelectionError) return this.rejected(error);
+      throw error;
+    }
     if (op.kind === 'service' && !name.startsWith('services.'))
       throw new Error('Use services.start for service operations');
     const number = Number(this.record.operationCalls);
@@ -181,7 +195,7 @@ class OperationRuntime {
       throw new Error('Operation requires only an ID');
     const id = (args as { id: string }).id,
       op = resolved.operations.find((op) => op.id === id);
-    if (!op) throw new Error('Unknown or denied operation: ' + id);
+    if (!op) throw new OperationSelectionError(id);
     const stage = String(record.stage);
     this.assertActivity(op, stage);
     observe(root, record, 'operation.authorized', {
@@ -191,6 +205,27 @@ class OperationRuntime {
       number: record.operationCalls,
     });
     return op;
+  }
+
+  /** Preserves pending authorized work while diagnosing repeated unavailable selections. */
+  private rejected(error: OperationSelectionError): unknown {
+    const { root, record } = this;
+    const action = { activity: record.stage, operation: error.operationId, phase: 'selection' };
+    const progress = new ProgressObserver(root, record);
+    const candidate = materialCandidate(record);
+    progress.before(action, candidate);
+    const loopWarning = progress.failed(action, error.message, candidate);
+    const result = {
+      status: 'rejected',
+      error: error.message,
+      availableOperationIds: this.resolved.operations.map((operation) => operation.id),
+      recovery:
+        'No operation was queued. Use operations.list for captured agent capabilities; host-only verification IDs are unavailable. Observe pending work with its existing execution.wait requestId.',
+      ...(loopWarning ? { loopWarning } : {}),
+    };
+    observe(root, record, 'operation.selection_rejected', result);
+    save(root, record);
+    return result;
   }
 
   /** Requires the requested activity to be allowed by the captured role. */

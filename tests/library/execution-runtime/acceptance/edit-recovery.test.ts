@@ -3,14 +3,14 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
 import { digest } from '../../../../dist/library/architecture/assignment.js';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import { createWorkspace, prepareWorkspace } from '../../../../dist/library/workspace/workspace.js';
 import { save, type RecordData } from '../../../../dist/library/workspace/state.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
 /** Exercises actual host restart around retained source-edit intent without replaying model work. */
 class EditRecoveryScenarios {
@@ -114,4 +114,8 @@ test('host restart finishes known edit transactions without replaying uncertain 
 test('host restart retains conflicting bytes and records edit recovery attention', (t) =>
   scenarios.recovers(t, true));
 
-registerSuite({ component: 'execution-runtime', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'execution-runtime',
+  level: 'acceptance',
+  tags: ['native-host', 'deterministic'],
+});

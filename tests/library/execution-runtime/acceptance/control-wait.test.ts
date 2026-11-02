@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { createServer, type Socket } from 'node:net';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
 import { HostClient } from '../../../../dist/library/execution-runtime/host-client.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
 /** Exercises the actual host client against delayed and disconnected private control endpoints. */
 class ControlWaitScenarios {
@@ -63,4 +63,8 @@ test('control reports a disconnected host before its response', { timeout: 5000 
   scenarios.disconnected(t),
 );
 
-registerSuite({ component: 'execution-runtime', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'execution-runtime',
+  level: 'acceptance',
+  tags: ['native-host', 'deterministic'],
+});

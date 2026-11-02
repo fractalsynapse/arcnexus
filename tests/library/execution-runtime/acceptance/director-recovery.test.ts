@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
 /** Requires the director to address uncovered goal criteria without discarding verified owner work. */
 class DirectorRecoveryScenarios {
@@ -58,4 +58,8 @@ test('director repairs missing goal coverage with additional verified assignment
 test('director diagnoses blocked work without claiming its delivery', (t) =>
   scenarios.diagnosis(t));
 
-registerSuite({ component: 'execution-runtime', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'execution-runtime',
+  level: 'acceptance',
+  tags: ['native-host', 'deterministic'],
+});

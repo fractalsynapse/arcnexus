@@ -153,7 +153,7 @@ export class CodexConfiguration {
       allowedWritePaths: readOnly
         ? []
         : (resolved?.allowedWritePaths ?? component?.allowedWritePaths),
-      access: readOnly ? readOnlyAccess(record.workspace, declared) : declared,
+      access: readOnly && !this.checked ? readOnlyAccess(record.workspace, declared) : declared,
       inherited:
         context?.slice(0, -1).map((item) => ({
           access: item.access,
