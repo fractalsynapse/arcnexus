@@ -1,14 +1,35 @@
 import assert from 'node:assert/strict';
-import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { join, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { test, type TestContext } from 'node:test';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { captureInitialization } from '../../../../dist/library/architecture/initialization.js';
+import { MigrationFixture } from '../support/migration-fixture.js';
 import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises the platform as the only authored source of new execution defaults. */
 class PlatformExecutionScenarios {
+  /** Rejects historical executable authority before a public task or workday creates a host. */
+  retiredExecution(t: TestContext): void {
+    const fixture = new MigrationFixture(t);
+    for (const args of [
+      ['task', 'run', 'Inspect component purpose'],
+      ['workday', 'start'],
+    ]) {
+      const result = spawnSync(process.execPath, [resolve('dist/cli.js'), ...args], {
+        cwd: fixture.root,
+        encoding: 'utf8',
+        env: { ...process.env, ARCNEXUS_STATE_DIR: fixture.root + '-state' },
+        timeout: 15_000,
+      });
+      assert.equal(result.status, 2, result.stderr);
+      assert.match(result.stderr, /version.five.*config migrate/i);
+    }
+    assert.equal(fixture.migrate().status, 0);
+  }
+
   /** Resolves prompt/workday defaults and director identity without a second execution file. */
   singleSource(t: TestContext): void {
     const fixture = this.fixture(t);
@@ -153,6 +174,9 @@ class PlatformExecutionScenarios {
 }
 
 const scenarios = new PlatformExecutionScenarios();
+
+test('new task and workday execution rejects legacy authority while migration remains available', (t) =>
+  scenarios.retiredExecution(t));
 
 test('v5 execution resolves platform defaults and captured director profile', (t) =>
   scenarios.singleSource(t));

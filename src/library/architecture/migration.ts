@@ -9,7 +9,7 @@ import { git } from '../operations/process.js';
 import { digest, resolveBase } from './assignment.js';
 import { ancestry, covered, loadCatalog, type Catalog } from './components.js';
 import { InputError } from './config.js';
-import { ExecutionContext, type ProjectExecution } from './execution-context.js';
+import { captureMigrationAuthority, type MigrationAuthority } from './migration-authority.js';
 import { MigrationDraft } from './migration-draft.js';
 import { PlatformExecution } from './platform-execution.js';
 
@@ -30,7 +30,7 @@ export class ConfigurationMigration {
     try {
       const { source, base } = resolveBase(this.cwd);
       if (write) this.clean(source, base);
-      const context = new ExecutionContext().resolve(this.cwd);
+      const context = captureMigrationAuthority(this.cwd);
       const changes = this.changes(context, new MigrationDraft(context).create());
       if (!changes.length) return { diff: '', changes: 0, applied: false };
       return this.candidate(context, changes, write);
@@ -49,7 +49,7 @@ export class ConfigurationMigration {
   }
 
   /** Produces exact before hashes and omits files whose serialized content is unchanged. */
-  private changes(context: ProjectExecution, draft: Map<string, unknown | null>): Change[] {
+  private changes(context: MigrationAuthority, draft: Map<string, unknown | null>): Change[] {
     const tracked = new Set(
       git(context.source, 'ls-tree', '-r', '--name-only', context.base).split('\n'),
     );
@@ -76,7 +76,7 @@ export class ConfigurationMigration {
   }
 
   /** Keeps candidate changes and checked-application journals outside editable source and retained run databases. */
-  private candidate(context: ProjectExecution, changes: Change[], write: boolean) {
+  private candidate(context: MigrationAuthority, changes: Change[], write: boolean) {
     const project = join(stateRoot(), 'configuration-migrations', context.key);
     const directory = join(project, randomUUID());
     mkdirSync(directory, { recursive: true, mode: 0o700 });
@@ -101,7 +101,7 @@ export class ConfigurationMigration {
 
   /** Validates the assembled candidate and captures the exact source diff before caller integration is possible. */
   private validateCandidate(
-    context: ProjectExecution,
+    context: MigrationAuthority,
     workspace: string,
     directory: string,
   ): string {

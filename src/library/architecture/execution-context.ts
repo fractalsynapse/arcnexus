@@ -3,8 +3,7 @@ import { realpathSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 import { digest, resolveAssignment, resolveBase, type Assignment } from './assignment.js';
 import { loadProjectBindings, type Bindings } from './bindings.js';
-import { ancestry, scopePath, loadCatalog, type Catalog, type Component } from './components.js';
-import { ConfigurationReader } from './configuration.js';
+import { ancestry, loadCatalog, type Catalog, type Component } from './components.js';
 import { InputError } from './config.js';
 import { git } from '../operations/process.js';
 
@@ -118,42 +117,12 @@ export class ExecutionContext {
 
   /** Reads declarative director/reviewer profiles without selecting models in scheduling code. */
   private defaults(source: string, base: string, catalog: Catalog) {
-    if (Object.values(catalog.components).some((c) => c.schemaVersion === 5))
-      return new PlatformExecution(catalog).defaults(source, base);
-    const value = new ConfigurationReader().definition(source, base, 'architecture/execution')
-      .value as Record<string, unknown>;
-    this.validateDefaults(value);
-    if (typeof value.directorProfile !== 'string' || typeof value.reviewerProfile !== 'string')
+    const retired = Object.values(catalog.components).filter((c) => c.schemaVersion !== 5);
+    if (retired.length)
       throw new InputError(
-        'architecture/execution.yaml must declare directorProfile and reviewerProfile',
+        `New execution requires version-five components; run arcnexus config migrate: ${retired.map((c) => c.id).join(', ')}`,
       );
-    return {
-      verificationInputs: ((value.verificationInputs ?? []) as string[]).map(scopePath),
-      directorProfile: value.directorProfile,
-      reviewerProfile: value.reviewerProfile,
-      defaultPackage: typeof value.defaultPackage === 'string' ? value.defaultPackage : undefined,
-    };
-  }
-
-  /** Rejects unsupported settings, including obsolete work budgets, instead of silently ignoring them. */
-  private validateDefaults(value: Record<string, unknown>): void {
-    const allowed = ['directorProfile', 'reviewerProfile', 'defaultPackage', 'verificationInputs'];
-    for (const key of Object.keys(value))
-      if (!allowed.includes(key))
-        throw new InputError(
-          `Unsupported execution setting: ${key}; remove obsolete work budgets and unknown keys`,
-        );
-    if (
-      value.defaultPackage !== undefined &&
-      (typeof value.defaultPackage !== 'string' || !value.defaultPackage.trim())
-    )
-      throw new InputError('defaultPackage must be a nonempty declared package ID');
-    const inputs = value.verificationInputs;
-    if (
-      inputs !== undefined &&
-      (!Array.isArray(inputs) || inputs.some((path) => typeof path !== 'string' || !path.trim()))
-    )
-      throw new InputError('verificationInputs must be an array of captured source paths');
+    return new PlatformExecution(catalog).defaults(source, base);
   }
 
   /** Selects the deepest containing package; equal candidates require an explicit default. */

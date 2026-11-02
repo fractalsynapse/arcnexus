@@ -3,7 +3,7 @@ import { git } from '../operations/process.js';
 import { classifyComponentPath, type Component } from './components.js';
 import { covered } from './component-paths.js';
 import { ConfigurationReader, isConfiguration, type ConfigurationSource } from './configuration.js';
-import type { ProjectExecution } from './execution-context.js';
+import type { MigrationAuthority } from './migration-authority.js';
 import { MigrationComponent } from './migration-component.js';
 import { MigrationPolicies } from './migration-policies.js';
 import { MigrationRecipes } from './migration-recipes.js';
@@ -28,7 +28,7 @@ export class MigrationDraft {
   private readonly environment: Declaration;
 
   /** Captures every authored recipe and keeps generated operations separate from editable source. */
-  constructor(private readonly context: ProjectExecution) {
+  constructor(private readonly context: MigrationAuthority) {
     const reader = new ConfigurationReader();
     this.sources = git(
       context.source,
