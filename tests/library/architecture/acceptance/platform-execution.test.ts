@@ -14,20 +14,46 @@ class PlatformExecutionScenarios {
   /** Rejects historical executable authority before a public task or workday creates a host. */
   retiredExecution(t: TestContext): void {
     const fixture = new MigrationFixture(t);
+    this.assertStartupRejected(fixture.root, /version.five.*config migrate/i);
+    assert.equal(fixture.migrate().status, 0);
+  }
+
+  /** Rejects mixed executable families before either public mode can create a host. */
+  legacyEnvironment(t: TestContext): void {
+    const fixture = this.fixture(t);
+    const path = 'architecture/environment.json';
+    const current = JSON.parse(readFileSync(join(fixture.root, path), 'utf8'));
+    fixture.put(path, {
+      ...current,
+      schemaVersion: 3,
+      prerequisites: [],
+      setup: [{ command: 'node', args: ['--version'] }],
+      generatedDirectories: [],
+    });
+    fixture.commit();
+    assert.throws(
+      () => new ExecutionContext().resolve(fixture.root),
+      /environment.*schema.*4.*migrat/i,
+    );
+    this.assertStartupRejected(fixture.root, /environment.*schema.*4.*migrat/i);
+    assert.equal(fixture.run('validate').status, 0);
+  }
+
+  /** Checks both option-free entry points without allowing a stalled host to hang qualification. */
+  private assertStartupRejected(root: string, diagnostic: RegExp): void {
     for (const args of [
-      ['task', 'run', 'Inspect component purpose'],
+      ['task', 'run', 'Inspect purpose'],
       ['workday', 'start'],
     ]) {
       const result = spawnSync(process.execPath, [resolve('dist/cli.js'), ...args], {
-        cwd: fixture.root,
+        cwd: root,
         encoding: 'utf8',
-        env: { ...process.env, ARCNEXUS_STATE_DIR: fixture.root + '-state' },
+        env: { ...process.env, ARCNEXUS_STATE_DIR: root + '-state' },
         timeout: 15_000,
       });
       assert.equal(result.status, 2, result.stderr);
-      assert.match(result.stderr, /version.five.*config migrate/i);
+      assert.match(result.stderr, diagnostic);
     }
-    assert.equal(fixture.migrate().status, 0);
   }
 
   /** Resolves prompt/workday defaults and director identity without a second execution file. */
@@ -177,6 +203,9 @@ const scenarios = new PlatformExecutionScenarios();
 
 test('new task and workday execution rejects legacy authority while migration remains available', (t) =>
   scenarios.retiredExecution(t));
+
+test('minimal host startup rejects legacy environment execution recipes', (t) =>
+  scenarios.legacyEnvironment(t));
 
 test('v5 execution resolves platform defaults and captured director profile', (t) =>
   scenarios.singleSource(t));

@@ -14,6 +14,8 @@
 
 ### Fixed
 
+- Reject legacy environment recipes before starting a new minimal task or workday host (#142).
+
 - Reject obsolete execution budgets before applying a configuration migration (#141).
 
 - Preserve future owned paths in minimal read-only activations, valid pending operations after rejected selections, and declared repository identity in campaign clones (#138, #139, #140).
@@ -22,7 +24,7 @@
 
 ### Changed
 
-- Require minimal version-five authority for new project hosts and shared-operation test execution; retain legacy declarations solely for inspection and explicit migration (#109).
+- Require minimal version-five authority for new task/workday hosts and shared-operation test execution; preserve historical inspection and explicit migration (#109).
 
 - Retire component, fixed-owner workday and proposal execution commands; preserve historical inspection and route prompt campaigns through the shared host (#106).
 

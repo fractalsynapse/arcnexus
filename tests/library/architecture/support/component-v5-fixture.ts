@@ -27,10 +27,7 @@ export class ComponentV5Fixture {
   /** Supplies profile/role authority and a primary repository without inline execution recipes. */
   private environment(): void {
     this.put('architecture/environment.json', {
-      schemaVersion: 3,
-      prerequisites: [],
-      setup: [],
-      generatedDirectories: [],
+      schemaVersion: 4,
       workspace: {
         primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
         dependencies: [],

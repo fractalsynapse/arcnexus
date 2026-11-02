@@ -1,3 +1,4 @@
+import { ConfigurationReader } from './configuration.js';
 import { PlatformExecution } from './platform-execution.js';
 import { realpathSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
@@ -121,6 +122,15 @@ export class ExecutionContext {
     if (retired.length)
       throw new InputError(
         `New execution requires version-five components; run arcnexus config migrate: ${retired.map((c) => c.id).join(', ')}`,
+      );
+    const environment = new ConfigurationReader().definition(
+      source,
+      base,
+      'architecture/environment',
+    ).value as { schemaVersion: number };
+    if (environment.schemaVersion !== 4)
+      throw new InputError(
+        'New execution requires environment schema 4; migrate inline setup to shared operations',
       );
     return new PlatformExecution(catalog).defaults(source, base);
   }
