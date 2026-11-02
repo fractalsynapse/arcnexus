@@ -213,3 +213,11 @@ matching the reply schema. Internal retry keys remain in host persistence and
 chronology evidence; they are not alternative reply identities. Resume rebuilds
 this projection from the store, and acknowledgements validate the durable identity
 and sender authority. Never reinterpret an arbitrary key as a request ID.
+
+### Control transport waiting
+
+Initial endpoint discovery retains a bounded stale-endpoint probe. Once a caller
+sends a control request, it waits for that request's response or an explicit socket
+disconnection. Checkpoint elapsed time is not a control failure, and the client
+never replays a mutation whose outcome is uncertain. Task cancellation continues
+through the attached task identity; process supervision still governs host loss.
