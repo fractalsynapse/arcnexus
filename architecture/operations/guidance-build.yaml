@@ -1,4 +1,4 @@
-schemaVersion: 3
+schemaVersion: 4
 id: guidance-build
 purpose: Run the captured guidance validator build
 kind: command
@@ -6,20 +6,17 @@ repository: arcnexus
 cwd: .
 category: build
 activities:
-  - testing
   - implementation
   - review
+  - testing
 command: npm
 args:
   - run
   - build
 generatedDirectories:
-  - dist
   - .fixture-build
   - .tool-build
+  - dist
 artifacts: []
-probes:
-  - command: node
-    args:
-      - -e
-      - console.log(process.version);if(require('child_process').spawnSync(process.execPath,['--version']).status!==0)process.exit(1)
+prerequisites:
+  - migrated-probe-3a85da8f1f18f009

@@ -1,11 +1,10 @@
-schemaVersion: 1
+schemaVersion: 2
 id: node
 adapter: node
 outputRoot: .test-build
 preparation:
-  - command: npm
-    args: [run, build]
-    purpose: production
-  - command: npm
-    args: [run, build:tests]
-    purpose: tests
+  - purpose: production
+    operation: migrated-recipe-a7573c70ed1a3dfa
+  - purpose: tests
+    operation: migrated-recipe-51b1b212512a2d1a
+run: migrated-test-node

@@ -1,82 +1,29 @@
+schemaVersion: 5
 id: coordination-store
 type: library
-purpose: Persist transactional project runs, assignments, inbox dependencies and ordered evidence
-path: src/library/coordination-store
+parentId: cli-package
+purpose: Persist transactional project runs, assignments, inbox dependencies and
+  ordered evidence
 objectives:
-  - Persist transactional project runs, assignments, inbox dependencies and ordered evidence
+  - Persist transactional project runs, assignments, inbox dependencies and
+    ordered evidence
 constraints:
   - Preserve captured authority and evidence
-verification:
-  - command: npm
-    args:
-      - run
-      - check
-  - command: npm
-    args:
-      - test
-  - command: node
-    args:
-      - dist/cli.js
-      - guidance
-      - validate
-      - --project
-      - .
-  - command: npm
-    args:
-      - run
-      - format:check
-  - command: npm
-    args:
-      - run
-      - lint
-questions: []
-access:
-  readPaths:
-    - .
-  writeDirectories:
-    - src/library/coordination-store
-    - tests/library/coordination-store
-    - docs/library/coordination-store
-    - architecture/components
-schemaVersion: 4
-role: systems-engineer
-executionProfile: luna
-interfaces:
-  - Atomic SQLite coordination transitions
-relatedIds:
-  - assignment
-  - workspace
-  - report
-parentId: cli-package
-operationIds:
-  - coordination-store-lint
-  - coordination-store-tests
-patternIds:
-  - readable-typescript
-ownership:
-  paths:
-    - src/library/coordination-store
-    - tests/library/coordination-store
-    - docs/library/coordination-store
-    - architecture/components/coordination-store.yaml
-  publicModules:
-    - src/library/coordination-store/workday-store.ts
-    - src/library/coordination-store/execution-store.ts
-    - src/library/coordination-store/execution-types.ts
-  directoryExceptions:
-    - path: architecture/components
-      reason: Directory-only sandbox grants; only this component definition is
-        writable under captured exact-path checks
-discovery:
-  source:
-    - src/library/coordination-store
-  documentation:
-    - docs/library/coordination-store
-  tests:
-    - tests/library/coordination-store
-  exclude: []
-provides: []
-consumes:
-  - id: test-profile
-    version: "1"
 testProfile: node
+operations:
+  coordination-store-lint:
+    - agent
+  coordination-store-tests:
+    - agent
+  migrated-recipe-43b539fb85a57c26:
+    - verify
+  migrated-recipe-df6d67ddacf5bf0c:
+    - verify
+owns:
+  - src/library/coordination-store
+  - tests/library/coordination-store
+  - docs/library/coordination-store
+api:
+  - module: src/library/coordination-store/workday-store.ts
+  - module: src/library/coordination-store/execution-store.ts
+  - module: src/library/coordination-store/execution-types.ts

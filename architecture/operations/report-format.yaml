@@ -1,4 +1,4 @@
-schemaVersion: 3
+schemaVersion: 4
 id: report-format
 purpose: Read-only formatting feedback before evaluating report method sizes
 kind: command
@@ -6,11 +6,11 @@ repository: arcnexus
 cwd: .
 category: lint
 activities:
-  - research
   - documentation
-  - testing
   - implementation
+  - research
   - review
+  - testing
 command: node
 args:
   - node_modules/prettier/bin/prettier.cjs
@@ -19,4 +19,4 @@ args:
   - tests/library/report
 generatedDirectories: []
 artifacts: []
-probes: []
+prerequisites: []

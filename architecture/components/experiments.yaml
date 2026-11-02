@@ -1,131 +1,58 @@
+schemaVersion: 5
 id: experiments
 type: library
+parentId: cli-package
 purpose: Resolve and execute repeatable experiments with honestly labeled evidence
-path: src/library/experiments
 objectives:
   - Resolve and execute repeatable experiments with honestly labeled evidence
-  - Migrate prompt-driven campaigns to the shared task execution host without fixed participants
+  - Migrate prompt-driven campaigns to the shared task execution host without
+    fixed participants
 constraints:
   - Preserve captured assignment authority; candidate instructions cannot expand
     permissions
   - Caller owns commits and integration
-verification:
-  - command: npm
-    args:
-      - run
-      - test:experiments
-  - command: node
-    args:
-      - dist/cli.js
-      - guidance
-      - validate
-      - --project
-      - .
-  - command: npm
-    args:
-      - run
-      - format:check
-  - command: npm
-    args:
-      - run
-      - lint
-questions: []
-access:
-  readPaths:
-    - .
-  writeDirectories:
-    - src/library/experiments
-    - tests/library/experiments
-    - docs/library/experiments
-    - experiments
-    - qualification
-    - fixtures
-    - docs/acceptance
-    - scripts
-    - architecture/components
-schemaVersion: 4
-role: systems-engineer
-executionProfile: luna
-interfaces: []
-relatedIds: []
-parentId: cli-package
-operationIds:
-  - experiments-lint
-  - experiments-tests
-patternIds:
-  - readable-typescript
-ownership:
-  paths:
-    - src/library/experiments
-    - tests/library/experiments
-    - docs/library/experiments
-    - experiments
-    - qualification
-    - fixtures
-    - docs/acceptance
-    - scripts/check-permissions.mjs
-    - scripts/check-report.mjs
-    - scripts/check-sample.mjs
-    - scripts/live-sample.mjs
-    - scripts/qualification
-    - scripts/qualify.mjs
-    - architecture/components/experiments.yaml
-  publicModules:
-    - src/library/experiments/experiment-config.ts
-    - src/library/experiments/experiments.ts
-  directoryExceptions:
-    - path: scripts
-      reason: Historical compatibility launchers are exact owned paths; other owners
-        maintain their grouped script directories
-    - path: architecture/components
-      reason: Directory-only sandbox grants; only this component definition is
-        writable under captured exact-path checks
-discovery:
-  source:
-    - src/library/experiments
-  documentation:
-    - docs/library/experiments
-    - docs/acceptance
-  tests:
-    - tests/library/experiments
-  exclude: []
-provides:
-  - id: campaign
-    version: "1"
-    kind: json-schema
-    path: src/library/experiments/schemas/campaign.json
-    compatibility: Preserve supported historical versions and captured execution readers
-  - id: experiment-bindings
-    version: "1"
-    kind: json-schema
-    path: src/library/experiments/schemas/experiment-bindings.json
-    compatibility: Preserve supported historical versions and captured execution readers
-  - id: experiment-v2
-    version: "1"
-    kind: json-schema
-    path: src/library/experiments/schemas/experiment-v2.json
-    compatibility: Preserve supported historical versions and captured execution readers
-  - id: experiment
-    version: "1"
-    kind: json-schema
-    path: src/library/experiments/schemas/experiment.json
-    compatibility: Preserve supported historical versions and captured execution readers
-  - id: experiment-v3
-    version: "1"
-    kind: json-schema
-    path: src/library/experiments/schemas/experiment-v3.json
-    compatibility: Prompt-driven cases preserve shared task authority and evidence
-consumes:
-  - id: experiment-v3
-    version: "1"
-  - id: experiment
-    version: "1"
-  - id: experiment-v2
-    version: "1"
-  - id: experiment-bindings
-    version: "1"
-  - id: campaign
-    version: "1"
-  - id: test-profile
-    version: "1"
+  - "campaign (src/library/experiments/schemas/campaign.json): Preserve
+    supported historical versions and captured execution readers"
+  - "experiment-bindings
+    (src/library/experiments/schemas/experiment-bindings.json): Preserve
+    supported historical versions and captured execution readers"
+  - "experiment-v2 (src/library/experiments/schemas/experiment-v2.json):
+    Preserve supported historical versions and captured execution readers"
+  - "experiment (src/library/experiments/schemas/experiment.json): Preserve
+    supported historical versions and captured execution readers"
+  - "experiment-v3 (src/library/experiments/schemas/experiment-v3.json):
+    Prompt-driven cases preserve shared task authority and evidence"
 testProfile: node
+operations:
+  experiments-lint:
+    - agent
+  experiments-tests:
+    - agent
+  migrated-recipe-bdad07a41af09a66:
+    - verify
+  migrated-recipe-43b539fb85a57c26:
+    - verify
+  migrated-recipe-df6d67ddacf5bf0c:
+    - verify
+owns:
+  - src/library/experiments
+  - tests/library/experiments
+  - docs/library/experiments
+  - experiments
+  - qualification
+  - fixtures
+  - docs/acceptance
+  - scripts/check-permissions.mjs
+  - scripts/check-report.mjs
+  - scripts/check-sample.mjs
+  - scripts/live-sample.mjs
+  - scripts/qualification
+  - scripts/qualify.mjs
+api:
+  - module: src/library/experiments/experiment-config.ts
+  - module: src/library/experiments/experiments.ts
+  - schema: src/library/experiments/schemas/campaign.json
+  - schema: src/library/experiments/schemas/experiment-bindings.json
+  - schema: src/library/experiments/schemas/experiment-v2.json
+  - schema: src/library/experiments/schemas/experiment.json
+  - schema: src/library/experiments/schemas/experiment-v3.json

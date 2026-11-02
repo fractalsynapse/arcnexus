@@ -1,0 +1,21 @@
+repository: arcnexus
+cwd: .
+category: cli-check
+activities: []
+generatedDirectories:
+  - .fixture-build
+  - .test-build
+  - .tool-build
+  - dist
+  - node_modules
+artifacts: []
+network: true
+schemaVersion: 4
+id: migrated-test-node
+purpose: Run selected node tests
+kind: command
+prerequisites: []
+command: node
+args:
+  - --test
+  - context: selectedTestFiles

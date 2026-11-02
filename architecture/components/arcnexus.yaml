@@ -1,7 +1,7 @@
+schemaVersion: 5
 id: arcnexus
 type: platform
 purpose: Enable architecture-directed self-development
-path: .
 objectives:
   - Produce independently verifiable bounded work
 constraints:
@@ -10,36 +10,43 @@ constraints:
   - No automatic commits, integration or publishing; model delegation is
     disabled, and only captured workday participants may be dispatched by the
     host
-verification:
-  - command: npm
-    args:
-      - run
-      - check
-  - command: npm
-    args:
-      - test
-  - command: node
-    args:
-      - dist/cli.js
-      - guidance
-      - validate
-      - --project
-      - .
-questions: []
-access:
-  readPaths:
-    - .
-  writeDirectories: []
-schemaVersion: 4
 role: systems-engineer
 executionProfile: luna
-interfaces: []
-relatedIds: []
-operationIds: []
-initialization:
-  schemaVersion: 3
-  componentId: task-intake
-patternIds:
+reads:
+  - .
+patterns:
   - readable-typescript
-provides: []
-consumes: []
+operations:
+  migrated-recipe-f1691da2bfa5a18c:
+    - verify
+  migrated-recipe-719d77e27c5d9798:
+    - verify
+  migrated-recipe-f36c9dcd75620b35:
+    - verify
+  migrated-recipe-eddf6384eb12cd8d:
+    - preflight
+  migrated-recipe-c6b0f27327a0cc0c:
+    - preflight
+  migrated-recipe-e09c2ec5bc9f2e64:
+    - preflight
+  migrated-recipe-e58bdff3c39641d2:
+    - setup
+  migrated-recipe-a7573c70ed1a3dfa:
+    - setup
+director:
+  component: task-intake
+  profile: astra
+reviewerProfile: astra
+defaultPackage: cli-package
+verificationInputs:
+  - package.json
+  - package-lock.json
+  - scripts
+  - tests
+  - architecture/test-profiles
+  - eslint.config.ts
+  - tsconfig.json
+  - tsconfig.build.json
+  - tsconfig.tests.json
+  - tsconfig.fixtures.json
+  - tsconfig.tooling.json

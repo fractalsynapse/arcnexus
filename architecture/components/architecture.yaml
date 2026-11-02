@@ -1,127 +1,61 @@
+schemaVersion: 5
 id: architecture
 type: library
+parentId: cli-package
 purpose: Resolve architectural definitions and immutable assignment inputs;
   execution is owned by the assignment component
-path: src/library/architecture
 objectives:
   - Make actual execution outcomes easy to inspect
 constraints:
   - Preserve captured authority and evidence
-verification:
-  - command: npm
-    args:
-      - run
-      - check
-  - command: npm
-    args:
-      - test
-  - command: node
-    args:
-      - dist/cli.js
-      - guidance
-      - validate
-      - --project
-      - .
-  - command: npm
-    args:
-      - run
-      - format:check
-  - command: npm
-    args:
-      - run
-      - lint
-questions: []
-access:
-  readPaths:
-    - .
-  writeDirectories:
-    - src/library/architecture
-    - tests/library/architecture
-    - docs/library/architecture
-    - architecture/components
-schemaVersion: 4
-role: systems-engineer
-executionProfile: luna
-interfaces:
-  - "loadCatalog: immutable graph validation"
-  - "resolveAssignment: captured authority and deterministic digest"
-relatedIds:
-  - assignment
-parentId: cli-package
-operationIds:
-  - architecture-lint
-  - architecture-tests
-patternIds:
-  - readable-typescript
-ownership:
-  paths:
-    - src/library/architecture
-    - tests/library/architecture
-    - docs/library/architecture
-    - architecture/components/architecture.yaml
-  publicModules:
-    - src/library/architecture/migration.ts
-    - src/library/architecture/execution-context.ts
-    - src/library/architecture/assignment.ts
-    - src/library/architecture/bindings.ts
-    - src/library/architecture/components.ts
-    - src/library/architecture/file-classification.ts
-    - src/library/architecture/config.ts
-    - src/library/architecture/configuration.ts
-    - src/library/architecture/initialization.ts
-    - src/library/architecture/permissions.ts
-    - src/library/architecture/schema.ts
-    - src/library/architecture/build-schemas.ts
-    - src/library/architecture/catalog-view.ts
-  directoryExceptions:
-    - path: architecture/components
-      reason: Directory-only sandbox grants; only this component definition is
-        writable under captured exact-path checks
-discovery:
-  source:
-    - src/library/architecture
-  documentation:
-    - docs/library/architecture
-  tests:
-    - tests/library/architecture
-  exclude: []
-provides:
-  - id: component-v4
-    version: "1"
-    kind: json-schema
-    path: src/library/architecture/schemas/component-v4.json
-    compatibility: Preserve supported historical versions and captured execution readers
-  - id: component
-    version: "1"
-    kind: json-schema
-    path: src/library/architecture/schemas/component.json
-    compatibility: Preserve supported historical versions and captured execution readers
-  - id: composition-profile
-    version: "1"
-    kind: json-schema
-    path: src/library/architecture/schemas/composition-profile.json
-    compatibility: Preserve supported historical versions and captured execution readers
-  - id: execution-profile
-    version: "1"
-    kind: json-schema
-    path: src/library/architecture/schemas/execution-profile.json
-    compatibility: Preserve supported historical versions and captured execution readers
-  - id: ownership
-    version: "1"
-    kind: json-schema
-    path: src/library/architecture/schemas/ownership.json
-    compatibility: Preserve supported historical versions and captured execution readers
-  - id: pattern
-    version: "1"
-    kind: json-schema
-    path: src/library/architecture/schemas/pattern.json
-    compatibility: Preserve supported historical versions and captured execution readers
-  - id: role
-    version: "1"
-    kind: json-schema
-    path: src/library/architecture/schemas/role.json
-    compatibility: Preserve supported historical versions and captured execution readers
-consumes:
-  - id: test-profile
-    version: "1"
+  - "component-v4 (src/library/architecture/schemas/component-v4.json): Preserve
+    supported historical versions and captured execution readers"
+  - "component (src/library/architecture/schemas/component.json): Preserve
+    supported historical versions and captured execution readers"
+  - "composition-profile
+    (src/library/architecture/schemas/composition-profile.json): Preserve
+    supported historical versions and captured execution readers"
+  - "execution-profile
+    (src/library/architecture/schemas/execution-profile.json): Preserve
+    supported historical versions and captured execution readers"
+  - "ownership (src/library/architecture/schemas/ownership.json): Preserve
+    supported historical versions and captured execution readers"
+  - "pattern (src/library/architecture/schemas/pattern.json): Preserve supported
+    historical versions and captured execution readers"
+  - "role (src/library/architecture/schemas/role.json): Preserve supported
+    historical versions and captured execution readers"
 testProfile: node
+operations:
+  architecture-lint:
+    - agent
+  architecture-tests:
+    - agent
+  migrated-recipe-43b539fb85a57c26:
+    - verify
+  migrated-recipe-df6d67ddacf5bf0c:
+    - verify
+owns:
+  - src/library/architecture
+  - tests/library/architecture
+  - docs/library/architecture
+api:
+  - module: src/library/architecture/migration.ts
+  - module: src/library/architecture/execution-context.ts
+  - module: src/library/architecture/assignment.ts
+  - module: src/library/architecture/bindings.ts
+  - module: src/library/architecture/components.ts
+  - module: src/library/architecture/file-classification.ts
+  - module: src/library/architecture/config.ts
+  - module: src/library/architecture/configuration.ts
+  - module: src/library/architecture/initialization.ts
+  - module: src/library/architecture/permissions.ts
+  - module: src/library/architecture/schema.ts
+  - module: src/library/architecture/build-schemas.ts
+  - module: src/library/architecture/catalog-view.ts
+  - schema: src/library/architecture/schemas/component-v4.json
+  - schema: src/library/architecture/schemas/component.json
+  - schema: src/library/architecture/schemas/composition-profile.json
+  - schema: src/library/architecture/schemas/execution-profile.json
+  - schema: src/library/architecture/schemas/ownership.json
+  - schema: src/library/architecture/schemas/pattern.json
+  - schema: src/library/architecture/schemas/role.json

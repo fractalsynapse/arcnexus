@@ -1,4 +1,4 @@
-schemaVersion: 3
+schemaVersion: 4
 id: steward-tests
 purpose: Run shared component suites for steward
 kind: command
@@ -6,10 +6,10 @@ repository: arcnexus
 cwd: .
 category: cli-check
 activities:
-  - research
-  - testing
   - implementation
+  - research
   - review
+  - testing
 command: node
 args:
   - dist/cli.js
@@ -20,13 +20,10 @@ args:
   - .
   - --json
 generatedDirectories:
-  - dist
   - .fixture-build
   - .test-build
   - .tool-build
+  - dist
 artifacts: []
-probes:
-  - command: node
-    args:
-      - -e
-      - console.log(process.version);if(require('child_process').spawnSync(process.execPath,['-e','process.exit(0)']).status!==0)process.exit(1)
+prerequisites:
+  - migrated-probe-1e7d5605e777d725

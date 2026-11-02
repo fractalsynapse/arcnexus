@@ -1,95 +1,44 @@
+schemaVersion: 5
 id: task-intake
 type: library
+parentId: cli-package
 purpose: Direct prompt tasks and independently assess goals and deliveries
-path: src/library/task-intake
 objectives:
   - Interpret requests and identify accountable existing owners
   - Report missing responsibilities and architectural questions precisely
-  - Retain goal acceptance and reconsider decomposition without a participant ceiling
+  - Retain goal acceptance and reconsider decomposition without a participant
+    ceiling
 constraints:
   - Never silently broaden a captured assignment or grant write authority
-  - Director and verifier activations are source-read-only and cannot apply architecture proposals
-verification:
-  - command: npm
-    args:
-      - run
-      - test:task-intake
-  - command: npm
-    args:
-      - run
-      - lint
-      - --
-      - src/library/task-intake
-      - tests/library/task-intake
-questions: []
-access:
-  readPaths:
-    - .
-  writeDirectories:
-    - src/library/task-intake
-    - tests/library/task-intake
-    - docs/library/task-intake
-    - architecture/components
-schemaVersion: 4
-role: systems-engineer
-executionProfile: luna
-interfaces:
-  - Planned initialization result and task proposal contract
-relatedIds:
-  - architecture-maintenance
-  - assignment
-  - workday
-parentId: cli-package
-operationIds:
-  - task-intake-lint
-  - task-intake-tests
-patternIds:
-  - readable-typescript
-ownership:
-  paths:
-    - src/library/task-intake
-    - tests/library/task-intake
-    - docs/library/task-intake
-    - architecture/components/task-intake.yaml
-  publicModules:
-    - src/library/task-intake/direction.ts
-    - src/library/task-intake/initializer.ts
-    - src/library/task-intake/tasks.ts
-  directoryExceptions:
-    - path: architecture/components
-      reason: Directory-only sandbox grants; only this component definition is
-        writable under captured exact-path checks
-discovery:
-  source:
-    - src/library/task-intake
-  documentation:
-    - docs/library/task-intake
-  tests:
-    - tests/library/task-intake
-  exclude: []
-provides:
-  - id: director-result
-    version: "1"
-    kind: json-schema
-    path: src/library/task-intake/schemas/director-result.json
-    compatibility: General run proposals and safe retained continuations; preserve initializer history
-  - id: verification-result
-    version: "1"
-    kind: json-schema
-    path: src/library/task-intake/schemas/verification-result.json
-    compatibility: Indexed independent acceptance evidence; preserve historical agent-result reports
-  - id: initializer-result
-    version: "1"
-    kind: json-schema
-    path: src/library/task-intake/schemas/initializer-result.json
-    compatibility: Preserve supported historical versions and captured execution readers
-consumes:
-  - id: director-result
-    version: "1"
-  - id: verification-result
-    version: "1"
-  - id: initializer-result
-    version: "1"
-  - id: test-profile
-    version: "1"
+  - Director and verifier activations are source-read-only and cannot apply
+    architecture proposals
+  - "director-result (src/library/task-intake/schemas/director-result.json):
+    General run proposals and safe retained continuations; preserve initializer
+    history"
+  - "verification-result
+    (src/library/task-intake/schemas/verification-result.json): Indexed
+    independent acceptance evidence; preserve historical agent-result reports"
+  - "initializer-result
+    (src/library/task-intake/schemas/initializer-result.json): Preserve
+    supported historical versions and captured execution readers"
 testProfile: node
+operations:
+  task-intake-lint:
+    - agent
+  task-intake-tests:
+    - agent
+  migrated-recipe-ed0f29cceb358c85:
+    - verify
+  migrated-recipe-712e56e123d7b39c:
+    - verify
+owns:
+  - src/library/task-intake
+  - tests/library/task-intake
+  - docs/library/task-intake
+api:
+  - module: src/library/task-intake/direction.ts
+  - module: src/library/task-intake/initializer.ts
+  - module: src/library/task-intake/tasks.ts
+  - schema: src/library/task-intake/schemas/director-result.json
+  - schema: src/library/task-intake/schemas/verification-result.json
+  - schema: src/library/task-intake/schemas/initializer-result.json
