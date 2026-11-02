@@ -3,8 +3,10 @@
 Current task execution uses the [general runtime director](../execution-runtime/execution.md)
 and `task run "<prompt>"`. It retains goal state, selects any eligible owners and
 uses captured Astra direction/review profiles. The proposal execution path below
-is retired; historical proposals remain inspectable. Low-level session characterization
-retains the earlier initialization contract without exposing a second CLI run mode.
+is retired; historical proposals remain inspectable. Low-level session initialization also uses declared version-five authority and shared
+verification operations. The final retirement slice removes its deadline and inline
+command adapters; old snapshots remain evidence, not executable authority. There is
+no fallback initializer model and no second CLI run mode.
 
 Issue #65 defines the following contract; delivery is complete only after the
 built-program acceptance and live qualification gates pass.
