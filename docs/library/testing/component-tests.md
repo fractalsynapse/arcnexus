@@ -54,8 +54,8 @@ and runner invocation uses source-read-only confinement and retains its captured
 definition, context and output through the common operation executor. Required
 verification remains a separate checkpoint from an engineering test invocation.
 
-Preparation references must be available through the owner's `setup` or `refresh`
-usage, and its runner through `agent` or `verify`. Missing references, incompatible
+The captured test profile authorizes its preparation and runner references without
+requiring duplicate component usages. Missing references, incompatible
 profiles, services in finite checkpoints and mixed old/new test profiles fail before
 execution. Repeated equivalent preparations run once per test checkpoint; changing
 candidate inputs requires a new checkpoint. These rules also apply to test code and
@@ -72,7 +72,7 @@ descriptors because Node's test coordinator initializes its reporter before prel
 A diagnostic-size watchdog retains the existing output limit; source/network
 restrictions and cancellation supervision remain in force.
 
-The shared Node profile declares fixed preparation commands and the compiled output
+The shared Node profile declares preparation operation references and the compiled output
 root. The service runs preparation once, then invokes Node with the selected compiled
 files. `npm test` first builds the production service, then delegates to it with the
 production preparation step marked caller-prepared. It does not recursively invoke
@@ -85,9 +85,10 @@ stops supervised processes and retains partial evidence. No default execution ti
 is introduced. Exit codes are 0 for success, 1 for preparation/test failure, 2 for
 invalid input/selection, and 130 for cancellation.
 
-Fixed test commands can execute candidate code at the existing trusted host-command
-boundary. This is not complete OS isolation. Independently captured acceptance and
-frozen regression checks remain mandatory; selectable suites do not replace them.
+Test execution accepts only minimal components and version-two operation profiles.
+Historical inline profiles remain inspectable for migration but cannot execute through
+a second unconfined runner. Independently captured acceptance and frozen regression
+checks remain mandatory; selectable suites do not replace them.
 
 Assignments capture suite identities and the shared profile's original bytes and
 hashes before preparation. Final host checks reject deletion or selection-metadata
