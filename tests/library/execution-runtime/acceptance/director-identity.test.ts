@@ -44,6 +44,10 @@ class DirectorIdentityScenarios {
     assert.ok(direction.every((r) => r.context.at(-1).id === 'c'));
     const planning = direction.find((r) => r.activationRole === 'director')!;
     const prompt = readFileSync(join(root, 'runs', planning.id, 'prompt.txt'), 'utf8');
+    assert.match(
+      prompt,
+      /may propose future engineering assignments within captured owner authority/,
+    );
     assert.match(prompt, /combined stdout\/stderr/);
     assert.match(prompt, /automatically runs independent delivery verification/);
     assert.match(prompt, /independent review of this task is covered by the built-in reviewer/);
