@@ -16,7 +16,7 @@ class MinimalFixtureScenarios {
     const context = new ExecutionContext().resolve(repo);
     assert.deepEqual(context.owners, [name]);
     assert.ok(
-      Object.values(context.catalog.components).every((entry) => entry.schemaVersion === 5),
+      Object.values(context.catalog.components).every((entry) => entry.schemaVersion === 6),
     );
     assert.equal(context.directorProfile, 'astra');
     assert.equal(context.reviewerProfile, 'astra');

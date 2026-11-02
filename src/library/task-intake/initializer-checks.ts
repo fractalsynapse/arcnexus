@@ -19,9 +19,9 @@ export class InitializerChecks {
 
   /** Runs captured intake verification before model activation. */
   async verify(signal: AbortSignal): Promise<void> {
-    if (this.snapshot.context.some((owner) => owner.schemaVersion !== 5))
+    if (this.snapshot.context.some((owner) => owner.schemaVersion !== 6))
       throw new InputError(
-        'Initializer checks require version-five authority; migrate configuration',
+        'Initializer checks require version-six authority; migrate configuration',
       );
     const before = candidateDigest(this.record);
     await prepareCapabilities(this.root, this.record, signal);

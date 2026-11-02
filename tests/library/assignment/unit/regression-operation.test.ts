@@ -18,7 +18,7 @@ class RegressionScenarios {
   async selection(): Promise<void> {
     const { RegressionOperation } = await this.runtime();
     const operation = this.operation();
-    const component = { schemaVersion: 5, id: 'owner', verification: [operation] };
+    const component = { schemaVersion: 6, id: 'owner', verification: [operation] };
     const selection = new RegressionOperation(component, {});
     assert.equal(selection.select({ operationId: 'tests' }), operation);
     component.verification.unshift({ ...operation, id: 'lint' });
@@ -26,7 +26,7 @@ class RegressionScenarios {
     assert.throws(() => selection.select({ verificationIndex: 0 }), /operationId/);
     assert.throws(() => selection.select({ operationId: 'unknown' }), /captured verification/);
     component.schemaVersion = 4;
-    assert.throws(() => selection.select({ verificationIndex: 1 }), /version.five/);
+    assert.throws(() => selection.select({ verificationIndex: 1 }), /version.six/);
   }
 
   /** A failed prerequisite cannot establish expected-red evidence for the selected test operation. */
@@ -43,7 +43,7 @@ class RegressionScenarios {
       status: 'failed',
     };
     const record: any = { operationInvocations: [invocation] };
-    const selection = new RegressionOperation({ schemaVersion: 5, id: 'owner' }, record);
+    const selection = new RegressionOperation({ schemaVersion: 6, id: 'owner' }, record);
     assert.throws(() => selection.capture(operation, result), /selected regression operation/);
     invocation.operationId = 'tests';
     record.operationInvocations.push({ operationId: 'service', status: 'completed' });

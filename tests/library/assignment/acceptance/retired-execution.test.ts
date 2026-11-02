@@ -9,14 +9,14 @@ import { minimalWorkflowFixture } from '../../testing/support/workflow-fixture.j
 class RetiredAssignmentScenarios {
   /** Rejects an old owner before reading source or materializing any acceptance input. */
   owner(): void {
-    this.reject({ context: [{ schemaVersion: 4 }] }, /version.five.*migrat/i);
+    this.reject({ context: [{ schemaVersion: 4 }] }, /version.six.*migrat/i);
   }
 
   /** Direct library entry cannot restore a quota hidden in a captured historical profile. */
   budget(): void {
     this.reject(
       {
-        context: [{ schemaVersion: 5 }],
+        context: [{ schemaVersion: 6 }],
         executionProfile: { id: 'legacy', schemaVersion: 2, maxTurns: 1 },
       },
       /obsolete work budget maxTurns/,

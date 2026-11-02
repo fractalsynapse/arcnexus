@@ -34,15 +34,14 @@ export class TestDiscovery {
     const paths = new Set<string>();
     const excluded = component.discovery?.exclude ?? [];
     const roots =
-      component.schemaVersion === 5
+      component.schemaVersion >= 5
         ? component.allowedWritePaths
         : (component.discovery?.tests ?? []);
     for (const root of roots) this.walk(root, paths, excluded);
     return [...paths]
       .sort()
       .filter(
-        (path) =>
-          component.schemaVersion !== 5 || classifyComponentPath(component, path) === 'tests',
+        (path) => component.schemaVersion < 5 || classifyComponentPath(component, path) === 'tests',
       )
       .map((path) => this.suite(component, path, outputRoot));
   }

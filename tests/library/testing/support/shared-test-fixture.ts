@@ -35,7 +35,7 @@ export class SharedTestFixture extends MinimalTestFixture {
       (value) => (value.owns = ['tests/unit', 'tests/regression']),
     );
     this.put('architecture/components/other.yaml', {
-      schemaVersion: 5,
+      schemaVersion: 6,
       id: 'other',
       type: 'library',
       parentId: 'package',

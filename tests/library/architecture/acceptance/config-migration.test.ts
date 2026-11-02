@@ -23,7 +23,7 @@ class ConfigMigrationScenarios {
     const sample = JSON.parse(
       readFileSync(join(fixture.root, 'architecture/components/sample.json'), 'utf8'),
     );
-    assert.equal(sample.schemaVersion, 5);
+    assert.equal(sample.schemaVersion, 6);
     assert.equal(sample.id, 'sample');
     assert.deepEqual(sample.owns, ['package']);
     fixture.commit();

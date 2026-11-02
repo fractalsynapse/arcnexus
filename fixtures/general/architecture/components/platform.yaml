@@ -1,4 +1,4 @@
-schemaVersion: 5
+schemaVersion: 6
 id: platform
 type: platform
 purpose: Maintain a verified greeting package through its existing owners

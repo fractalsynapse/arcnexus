@@ -11,7 +11,7 @@ export class PlatformExecution {
   /** Requires unambiguous platform authority and rejects the retired duplicate defaults file. */
   defaults(source: string, base: string) {
     const platforms = Object.values(this.catalog.components).filter((c) => c.type === 'platform');
-    if (platforms.length !== 1 || platforms[0]!.schemaVersion !== 5)
+    if (platforms.length !== 1 || platforms[0]!.schemaVersion < 5)
       throw new InputError('Version-five execution requires one authoritative platform');
     const retired = git(
       source,

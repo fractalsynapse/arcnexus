@@ -136,7 +136,7 @@ export class MinimalWorkflowPolicy {
 
   /** Supplies only the architectural fields meaningful to the selected fixture component. */
   private definition(id: string, type: string, fields: object): object {
-    return { schemaVersion: 5, id, type, purpose: 'Own ' + id + ' responsibilities', ...fields };
+    return { schemaVersion: 6, id, type, purpose: 'Own ' + id + ' responsibilities', ...fields };
   }
 
   /** Writes fixture declarations before their authority revision is committed. */

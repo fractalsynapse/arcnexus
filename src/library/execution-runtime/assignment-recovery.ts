@@ -43,7 +43,7 @@ export class AssignmentRecovery {
       { context?: Array<{ schemaVersion: number }> } | undefined;
     if (
       record.id !== assignment.data.recordId ||
-      (authority?.context?.at(-1)?.schemaVersion === 5 && record.assignmentId !== assignment.id)
+      (authority?.context?.at(-1)?.schemaVersion === 6 && record.assignmentId !== assignment.id)
     )
       throw new Error('Assignment evidence identity changed');
   }

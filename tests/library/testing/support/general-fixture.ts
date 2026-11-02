@@ -76,7 +76,7 @@ import(${JSON.stringify(module)}).then(({ControlledGeneral}) => new ControlledGe
       writeFileSync(
         join(f.repo, `architecture/components/${id}.json`),
         JSON.stringify({
-          schemaVersion: 5,
+          schemaVersion: 6,
           id,
           type: 'library',
           parentId: 'package',
@@ -114,7 +114,7 @@ import(${JSON.stringify(module)}).then(({ControlledGeneral}) => new ControlledGe
   private package(): void {
     const definitions = {
       platform: {
-        schemaVersion: 5,
+        schemaVersion: 6,
         id: 'platform',
         type: 'platform',
         purpose: 'Controlled host acceptance',
@@ -128,7 +128,7 @@ import(${JSON.stringify(module)}).then(({ControlledGeneral}) => new ControlledGe
         defaultPackage: 'package',
       },
       package: {
-        schemaVersion: 5,
+        schemaVersion: 6,
         id: 'package',
         type: 'package',
         parentId: 'platform',

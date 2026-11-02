@@ -94,7 +94,7 @@ class SharedTestScenarios {
   profileAuthority(t: TestContext): void {
     const f = new SharedTestFixture(t);
     f.put('architecture/components/empty.yaml', {
-      schemaVersion: 5,
+      schemaVersion: 6,
       id: 'empty',
       type: 'library',
       parentId: 'package',

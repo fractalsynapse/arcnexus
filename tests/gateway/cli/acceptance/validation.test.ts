@@ -30,7 +30,7 @@ class ValidationFixture {
 
   /** Provides inherited execution identity without requiring model execution for validation. */
   private catalog(): void {
-    const common = { schemaVersion: 5, purpose: 'Validate bounded architecture' };
+    const common = { schemaVersion: 6, purpose: 'Validate bounded architecture' };
     this.put('architecture/components/platform.json', {
       ...common,
       id: 'platform',
@@ -52,7 +52,7 @@ class ValidationFixture {
   /** Assigns maintained files without repeating implicit definition ownership. */
   private owner(): void {
     this.put('architecture/components/owner.json', {
-      schemaVersion: 5,
+      schemaVersion: 6,
       purpose: 'Maintain architecture and guidance',
       id: 'owner',
       type: 'foundation',

@@ -1,4 +1,4 @@
-schemaVersion: 5
+schemaVersion: 6
 id: cli
 type: gateway
 parentId: greetings

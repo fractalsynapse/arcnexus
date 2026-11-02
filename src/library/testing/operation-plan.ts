@@ -23,7 +23,7 @@ export class TestOperationPlanning {
     const owners = [...new Set(suites.map((s) => s.component))].map(
       (id) => this.catalog.components[id]!,
     );
-    if (profiles.some((p) => p.schemaVersion !== 2) || owners.some((c) => c.schemaVersion !== 5))
+    if (profiles.some((p) => p.schemaVersion !== 2) || owners.some((c) => c.schemaVersion !== 6))
       throw new InputError(
         'Shared test operations require minimal components and unmixed version-two profiles',
       );

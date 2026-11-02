@@ -15,10 +15,8 @@ export class RegressionOperation {
 
   /** Resolves current stable identities; historical index evidence is inspectable but never executable. */
   select(regression: AgentResult['regression']): VerificationCheck {
-    if (this.component.schemaVersion !== 5)
-      throw new Error(
-        'Regression execution requires version-five authority; migrate configuration',
-      );
+    if (this.component.schemaVersion !== 6)
+      throw new Error('Regression execution requires version-six authority; migrate configuration');
     if (!regression) throw new Error('Missing regression checkpoint');
     if (!('operationId' in regression)) throw new Error('Regression requires operationId');
     const operation = this.component.verification.find(
@@ -33,8 +31,8 @@ export class RegressionOperation {
 
   /** Rejects prerequisite failures and freezes the selected operation's actual host invocation context. */
   capture(command: VerificationCheck, result: CommandResult): void {
-    if (this.component.schemaVersion !== 5)
-      throw new Error('Regression capture requires version-five authority');
+    if (this.component.schemaVersion !== 6)
+      throw new Error('Regression capture requires version-six authority');
     const operation = command as Operation;
     const invocations = this.record.operationInvocations as Array<Record<string, any>> | undefined;
     const invocation = invocations?.findLast((entry) => entry.result?.log === result.log);

@@ -45,7 +45,7 @@ relevant responsibilities. Architecture need not mirror directories or individua
 functions. Add concepts only when a real behavior cannot be represented clearly.
 
 Each component needs a stable identity, purpose, location/scope, lasting objectives,
-constraints, open questions, and applicable reusable patterns. Include contracts
+constraints, open questions, and applicable reusable standards. Include contracts
 and relationships when needed. A steward's role and execution configuration can
 be inherited rather than copied into bespoke prompts.
 
@@ -94,7 +94,7 @@ before the current slice needs them. Basic applicable architectural context and 
 remain relevant from the first execution; phase four expands governance rather than
 postponing all architectural guidance until then.
 
-## Reusable patterns
+## Reusable standards
 
 - **Direct steward:** select responsibility → give objective → execute → inspect evidence.
 - **Small vertical slice:** specify new/changed observable behavior → failing
@@ -113,7 +113,7 @@ postponing all architectural guidance until then.
   Candidate changes to instructions or tests cannot retroactively redefine the
   active assignment's authority or accepted behavior.
 
-Patterns start as short guidance. Extract reusable templates from successful use;
+Standards start as short guidance. Extract reusable templates from successful use;
 do not build a pattern framework in advance.
 
 ## Questions to resolve at the relevant phase
@@ -144,7 +144,7 @@ three-owner goal with an owner discovered during execution.
 1. Single steward and real CLI engineering result.
 2. General agent execution, persistent workdays and director-led tasks; live qualification.
 3. Minimal architecture/direct-steward/workday UI, after the phase-two gate below.
-4. Expanded inheritance, reusable patterns, and conformance checks.
+4. Expanded inheritance, reusable standards, and conformance checks.
 5. Multi-project composition and release coordination.
 
 Begin self-development as early as the working runtime permits; the first three

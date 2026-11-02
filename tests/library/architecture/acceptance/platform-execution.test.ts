@@ -14,7 +14,7 @@ class PlatformExecutionScenarios {
   /** Rejects historical executable authority before a public task or workday creates a host. */
   retiredExecution(t: TestContext): void {
     const fixture = new MigrationFixture(t);
-    this.assertStartupRejected(fixture.root, /version.five.*config migrate/i);
+    this.assertStartupRejected(fixture.root, /version.six.*config migrate/i);
     assert.equal(fixture.migrate().status, 0);
   }
 
@@ -97,7 +97,7 @@ class PlatformExecutionScenarios {
       /outside captured package/,
     );
     const change = execution.assignment(context, 'sample', { ...value, kind: 'change' });
-    assert.equal(change.context.at(-1)?.schemaVersion, 5);
+    assert.equal(change.context.at(-1)?.schemaVersion, 6);
     assert.equal(change.executionProfile.id, 'luna');
     assert.deepEqual(change.context.at(-1)?.access.writeDirectories, []);
     assert.equal(execution.assignment(context, 'sample', value).executionProfile.id, 'luna');
@@ -165,14 +165,14 @@ class PlatformExecutionScenarios {
 
   /** Missing execution requirements never trigger implicit model or initializer selection. */
   missing(t: TestContext): void {
-    const fixture = new ComponentV5Fixture(t);
+    const fixture = new ComponentV5Fixture(t, 6);
     fixture.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     assert.throws(() => new ExecutionContext().resolve(fixture.root), /director.*reviewer/i);
   }
 
   /** Supplies explicit director/reviewer profiles once on the platform and leaves the leaf minimal. */
   private fixture(t: TestContext): ComponentV5Fixture {
-    const fixture = new ComponentV5Fixture(t);
+    const fixture = new ComponentV5Fixture(t, 6);
     fixture.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     fixture.put(
       'architecture/components/platform.json',

@@ -7,7 +7,7 @@ import { registerSuite } from '../../../../dist/library/testing/suite.js';
 class EngineeringContextScenarios {
   /** Minimal engineering discovers checked edits and preserves stage, scope and transaction restrictions. */
   async checked(): Promise<void> {
-    const prompt = await this.context(5);
+    const prompt = await this.context(6);
     assert.match(prompt, /source\.edit/);
     assert.match(prompt, /tool search/);
     assert.match(prompt, /SHA-256/);
@@ -26,7 +26,8 @@ class EngineeringContextScenarios {
 
   /** Historical evidence cannot be rendered as a new engineering activation. */
   async historical(): Promise<void> {
-    await assert.rejects(this.context(4), /version.five.*migrat/i);
+    await assert.rejects(this.context(4), /version.six.*migrat/i);
+    await assert.rejects(this.context(5), /version.six.*migrat/i);
   }
 
   /** Loads production context assembly with captured authority and a distinct frozen host check. */

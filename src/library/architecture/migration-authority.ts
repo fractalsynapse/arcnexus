@@ -27,7 +27,7 @@ export function captureMigrationAuthority(cwd: string): MigrationAuthority {
   );
   const bindings = loadProjectBindings(source);
   const catalog = loadCatalog(source, base, bindings);
-  const defaults = Object.values(catalog.components).every((c) => c.schemaVersion === 5)
+  const defaults = Object.values(catalog.components).every((c) => c.schemaVersion >= 5)
     ? new PlatformExecution(catalog).defaults(source, base)
     : legacyDefaults(source, base);
   new ExecutionContext().validateProfiles(catalog, [

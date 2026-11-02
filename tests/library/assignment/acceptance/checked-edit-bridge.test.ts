@@ -130,7 +130,7 @@ class EditAuthorityScenarios {
       scope: ['owned'],
       assignment: { kind: 'change' },
       frozen: [],
-      component: { schemaVersion: 5, allowedWritePaths: ['owned'], fileClassification: [] },
+      component: { schemaVersion: 6, allowedWritePaths: ['owned'], fileClassification: [] },
       journal: () => {},
       safe: () => {},
     } as unknown as SessionState;

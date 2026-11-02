@@ -12,6 +12,7 @@ import { InputError } from './config.js';
 import { captureMigrationAuthority, type MigrationAuthority } from './migration-authority.js';
 import { MigrationDraft } from './migration-draft.js';
 import { PlatformExecution } from './platform-execution.js';
+import { standardPath } from './migration-standards.js';
 
 interface Change {
   path: string;
@@ -130,7 +131,7 @@ export class ConfigurationMigration {
       const next = after.components[old.id];
       if (
         !next ||
-        JSON.stringify([...old.allowedWritePaths].sort()) !==
+        JSON.stringify(old.allowedWritePaths.map(standardPath).sort()) !==
           JSON.stringify([...next.allowedWritePaths].sort())
       )
         throw new InputError('Migration changes exact ownership; resolve explicitly: ' + old.id);
@@ -138,9 +139,10 @@ export class ConfigurationMigration {
         if (old[key] !== next[key])
           throw new InputError('Migration changes effective ' + key + ': ' + old.id);
       if (
-        old.access.readPaths.some((path) => !covered(path, next.access.readPaths)) ||
+        old.access.readPaths.some((path) => !covered(standardPath(path), next.access.readPaths)) ||
         next.access.readPaths.some(
-          (path) => !covered(path, [...old.access.readPaths, ...old.allowedWritePaths]),
+          (path) =>
+            !covered(path, [...old.access.readPaths, ...old.allowedWritePaths].map(standardPath)),
         )
       )
         throw new InputError('Migration changes effective reads: ' + old.id);

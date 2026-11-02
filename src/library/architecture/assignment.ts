@@ -298,7 +298,7 @@ class AssignmentResolver {
   /** Selects only operations authorized by both component and assignment. */
   private operations(executionProfile: ExecutionProfile): Operation[] {
     const { assignment, component, catalog, env } = this;
-    if (component.schemaVersion === 5) {
+    if (component.schemaVersion >= 5) {
       if (assignment.operationIds)
         throw new InputError('Assignments cannot substitute captured operation usages');
       return (component.operationPlan?.agent ?? []).filter((op) =>

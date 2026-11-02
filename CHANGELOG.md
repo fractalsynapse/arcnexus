@@ -4,6 +4,8 @@
 
 ### Added
 
+- Migrate active component standards to schema six while preserving historical pattern evidence (#148).
+
 - Include tracked agent guidance findings in architectural validation without requiring optional skills (#148).
 
 - Validate minimal version-five component declarations with inherited policies, derived ownership and file classification, shared operation plans, and checked-edit runtime foundations (#109).

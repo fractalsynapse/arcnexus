@@ -62,7 +62,7 @@ class EditRecoveryScenarios {
     await prepareWorkspace(f.state, record, new AbortController().signal);
     record.assignmentId = assignment.id;
     record.executionRunId = run.id;
-    record.resolvedAssignment = { digest: 'captured-authority', context: [{ schemaVersion: 5 }] };
+    record.resolvedAssignment = { digest: 'captured-authority', context: [{ schemaVersion: 6 }] };
     record.operationInvocations = [{ id: 'uncertain', status: 'running' }];
     record.safeCheckpoint = false;
     save(f.state, record);

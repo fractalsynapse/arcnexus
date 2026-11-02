@@ -39,8 +39,8 @@ export function specificationFiles(
 
 /** Applies the captured classifier to proposed files without inventing documentation or test evidence. */
 function specificationPaths(component: Component, observed: ReturnType<typeof changes>) {
-  if (component.schemaVersion !== 5)
-    throw new Error('Specification capture requires version-five authority');
+  if (component.schemaVersion !== 6)
+    throw new Error('Specification capture requires version-six authority');
   const documentation = observed
     .filter((c) => classifyComponentPath(component, c.path) === 'documentation')
     .map((c) => c.path);

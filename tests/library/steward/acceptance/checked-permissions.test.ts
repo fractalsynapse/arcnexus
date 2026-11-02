@@ -56,7 +56,7 @@ class CheckedPermissionScenarios {
       workspace,
       context: [
         {
-          schemaVersion: 5,
+          schemaVersion: 6,
           access: { readPaths: ['.'], writeDirectories: [] },
           allowedWritePaths: ['source.txt'],
         },

@@ -7,7 +7,7 @@ export function compiledTestPath(component: Component, source: string, outputRoo
   relativePath(source);
   relativePath(outputRoot);
   const root =
-    posix.join(component.schemaVersion === 5 ? component.repositoryRoot! : '.', 'tests') + '/';
+    posix.join(component.schemaVersion >= 5 ? component.repositoryRoot! : '.', 'tests') + '/';
   if (!source.startsWith(root) || !source.endsWith('.test.ts'))
     throw new Error(`Unsupported test source root or extension: ${source}`);
   return posix.join(outputRoot, source.slice(root.length).replace(/\.ts$/, '.js'));

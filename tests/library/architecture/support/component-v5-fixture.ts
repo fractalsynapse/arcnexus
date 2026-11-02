@@ -10,7 +10,10 @@ export class ComponentV5Fixture {
   readonly root = mkdtempSync(join(tmpdir(), 'component-v5-'));
 
   /** Captures a clean source revision and removes only this fixture after the scenario. */
-  constructor(t: TestContext) {
+  constructor(
+    t: TestContext,
+    private readonly version: 5 | 6 = 5,
+  ) {
     t.after(() => rmSync(this.root, { recursive: true, force: true }));
     this.git('init', '-b', 'main');
     this.git('config', 'user.name', 'Test');
@@ -104,7 +107,7 @@ export class ComponentV5Fixture {
 
   /** Builds a declaration whose absent fields must be inherited or derived. */
   component(id: string, type: string, extra: object = {}): any {
-    return { schemaVersion: 5, id, type, purpose: 'Own bounded behavior', ...extra };
+    return { schemaVersion: this.version, id, type, purpose: 'Own bounded behavior', ...extra };
   }
 
   /** Writes source or JSON without interpreting candidate content as current authority. */
