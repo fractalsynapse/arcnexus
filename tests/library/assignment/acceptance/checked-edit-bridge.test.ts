@@ -78,6 +78,36 @@ class EditAuthorityScenarios {
     assert.equal(readdirSync(join(state.dir, 'checked-edits')).length, 1);
   }
 
+  /** Distinct edits cannot reuse an identity, while original receipts never replay earlier bytes. */
+  identities(t: TestContext): void {
+    const state = this.fixture(t);
+    state.options.record.stage = 'implementation';
+    const bridge = new CheckedEditBridge(state);
+    const original = this.request('owned/file.ts');
+    const receipt = bridge.call('source.edit', original);
+    const next = {
+      ...original,
+      changes: [
+        {
+          ...original.changes[0]!,
+          expectedSha256: digest('after'),
+          content: 'later',
+        },
+      ],
+    };
+    const rejected = bridge.call('source.edit', next) as any;
+    assert.equal(rejected.status, 'rejected');
+    assert.match(rejected.recovery, /fresh.*ID/i);
+    const path = join(state.options.record.workspace, 'owned/file.ts');
+    assert.equal(readFileSync(path, 'utf8'), 'after');
+    assert.equal(readdirSync(join(state.dir, 'checked-edits')).length, 1);
+    next.id = 'another-edit';
+    assert.equal((bridge.call('source.edit', next) as any).status, 'committed');
+    assert.deepEqual(bridge.call('source.edit', original), receipt);
+    assert.equal(readFileSync(path, 'utf8'), 'later');
+    assert.equal(readdirSync(join(state.dir, 'checked-edits')).length, 2);
+  }
+
   /** Observes both batch members so a partial application cannot satisfy the rejection assertions. */
   private contents(state: SessionState): string[] {
     return ['owned/file.ts', 'owned/second.ts'].map((path) =>
@@ -124,5 +154,8 @@ test('checked edit bridge permits correction while freezing accepted regression'
 
 test('stale checked edits return rejection and permit a corrected atomic batch', (t) =>
   scenarios.stale(t));
+
+test('checked edit identity conflicts recover without replacing or replaying prior transactions', (t) =>
+  scenarios.identities(t));
 
 registerSuite({ component: 'assignment', level: 'acceptance', tags: ['deterministic'] });

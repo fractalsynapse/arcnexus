@@ -19,6 +19,14 @@ import {
 
 export { StaleEditError } from './edit-files.js';
 
+/** Rejects a different batch reusing a durable transaction identity before any source change. */
+export class EditIdentityError extends Error {
+  /** Names the conflicting receipt without replacing its captured request or authority. */
+  constructor(readonly transactionId: string) {
+    super('Edit identity reused for different changes: ' + transactionId);
+  }
+}
+
 interface EditTransaction {
   id: string;
   requestHash: string;
@@ -130,8 +138,7 @@ export class CheckedEdits {
   /** Keeps a reused transaction identity bound to its original request and captured authority. */
   private retry(path: string, requestHash: string) {
     const transaction = this.load(path);
-    if (transaction.requestHash !== requestHash)
-      throw new Error('Edit identity reused for different changes');
+    if (transaction.requestHash !== requestHash) throw new EditIdentityError(transaction.id);
     return transaction.status === 'committed'
       ? this.receipt(transaction)
       : this.finish(path, transaction);

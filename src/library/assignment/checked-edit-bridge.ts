@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { checkedEditAuthority } from './edit-recovery.js';
 import { covered, classifyComponentPath } from '../architecture/components.js';
 import type { BridgeTool } from '../steward/bridge.js';
-import { CheckedEdits, StaleEditError } from '../workspace/checked-edits.js';
+import { CheckedEdits, EditIdentityError, StaleEditError } from '../workspace/checked-edits.js';
 import type { SessionState } from './session-state.js';
 
 /** Exposes checked source mutation only through the active assignment's host-bound connection. */
@@ -25,7 +25,7 @@ export class CheckedEditBridge {
       {
         name: 'source.edit',
         description:
-          'Apply an idempotent batch of owned source edits. Read bytes first and supply current SHA-256 hashes. This is the only source write route.',
+          'Apply an idempotent batch of owned source edits. Use a fresh unique transaction ID for each distinct batch, not an owner or assignment ID; reuse it only for an identical retry. Read bytes first and supply current SHA-256 hashes. This is the only source write route.',
         inputSchema: readSchema('checked-edits'),
       },
     ];
@@ -43,26 +43,32 @@ export class CheckedEditBridge {
     try {
       receipt = this.edits.apply(args);
     } catch (error) {
-      if (!(error instanceof StaleEditError)) throw error;
-      const rejection = {
-        status: 'rejected',
-        error: error.message,
-        path: error.path,
-        expectedSha256: error.expectedSha256,
-        currentSha256: error.currentSha256,
-        recovery:
-          'No edits were applied. Reread the current bytes, compute SHA-256 and retry the complete batch.',
-      };
-      this.state.journal(
-        String(this.state.options.record.stage),
-        'source.edit_rejected',
-        rejection,
-      );
-      return rejection;
+      if (error instanceof StaleEditError || error instanceof EditIdentityError)
+        return this.rejected(error);
+      throw error;
     }
     this.state.journal(String(this.state.options.record.stage), 'source.edited', receipt);
     this.state.safe();
     return receipt;
+  }
+
+  /** Reports safe pre-transaction conflicts without relaxing authorization or uncertain recovery failures. */
+  private rejected(error: StaleEditError | EditIdentityError): unknown {
+    const conflict =
+      error instanceof StaleEditError
+        ? {
+            path: error.path,
+            expectedSha256: error.expectedSha256,
+            currentSha256: error.currentSha256,
+          }
+        : { id: error.transactionId };
+    const recovery =
+      error instanceof StaleEditError
+        ? 'No edits were applied. Reread the current bytes, compute SHA-256 and retry the complete batch.'
+        : 'No edits were applied. Use a fresh unique transaction ID for a different batch; reuse an ID only for an identical retry.';
+    const rejection = { status: 'rejected', error: error.message, ...conflict, recovery };
+    this.state.journal(String(this.state.options.record.stage), 'source.edit_rejected', rejection);
+    return rejection;
   }
 
   /** Enforces narrowing, workflow stage and frozen regression authority before any file is modified. */

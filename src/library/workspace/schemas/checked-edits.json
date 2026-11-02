@@ -6,7 +6,8 @@
   "properties": {
     "id": {
       "type": "string",
-      "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+      "pattern": "^[a-zA-Z0-9_-]{1,128}$",
+      "description": "Unique edit transaction ID. Use a fresh ID for every distinct batch; reuse only for an identical retry. This is not an owner or assignment ID."
     },
     "changes": {
       "type": "array",
