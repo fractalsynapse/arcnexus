@@ -4,6 +4,8 @@ import { closeSync, fstatSync, ftruncateSync, openSync, writeSync, writeFileSync
 import { fileURLToPath } from 'node:url';
 import type { Command } from '../architecture/config.js';
 
+export { ProcessScope } from './process-scope.js';
+
 export function git(cwd: string, ...args: string[]): string {
   const result = spawnSync('git', ['-C', cwd, ...args], {
     encoding: 'utf8',

@@ -1,3 +1,4 @@
+import { homedir } from 'node:os';
 import { SourceConfinement } from '../operations/confinement.js';
 import { readSchema } from '../architecture/schema.js';
 import { existsSync, appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -51,8 +52,13 @@ export class CodexConfiguration {
 
   readonly settings;
 
+  private readonly checked: boolean;
+
   /** Derives explicit SDK settings, result schema and sandbox authority from captured inputs. */
   constructor(readonly input: CodexInput) {
+    this.checked =
+      (input.record.context as Array<{ schemaVersion: number }> | undefined)?.at(-1)
+        ?.schemaVersion === 5;
     this.dir = join(input.root, 'runs', input.record.id);
     this.launcher = join(this.dir, 'codex-launcher');
     this.pidFile = join(this.dir, 'codex.pid');
@@ -159,10 +165,7 @@ export class CodexConfiguration {
   /** Builds the explicit directory policy used by the Codex sandbox. */
   private permissionPolicy(authority: ReturnType<CodexConfiguration['authority']>) {
     const { record } = this.input;
-    if (
-      (record.context as Array<{ schemaVersion: number }> | undefined)?.at(-1)?.schemaVersion === 5
-    )
-      return this.checkedPermissions(authority);
+    if (this.checked) return this.checkedPermissions(authority);
     return preparePermissions(
       record.workspace,
       authority.access,
@@ -176,6 +179,24 @@ export class CodexConfiguration {
 
   /** Constructs the restricted environment used by the Codex launcher. */
   private environment(): Record<string, string> {
+    const env = this.inheritedEnvironment();
+    const { executable, record } = this.input;
+    env.ARCNEXUS_CODEX_EXECUTABLE = executable.includes('/') ? resolve(executable) : executable;
+    env.ARCNEXUS_CODEX_PID = this.pidFile;
+    env.ARCNEXUS_NODE = process.execPath;
+    env.ARCNEXUS_CODEX_SUPERVISOR = fileURLToPath(
+      new URL('./codex-supervisor.js', import.meta.url),
+    );
+    if (this.checked) env.ARCNEXUS_CONFINED_SCOPE = '1';
+    env.ARCNEXUS_HOST_PID = String(process.pid);
+    env.ARCNEXUS_HOST_START = processStart(process.pid)!;
+    env.TMPDIR = this.permissions.tmpDirectory;
+    env.PATH = targetEnvironment(record).PATH!;
+    return env;
+  }
+
+  /** Inherits only declared process settings without forwarding arbitrary caller environment variables. */
+  private inheritedEnvironment(): Record<string, string> {
     const env: Record<string, string> = {};
     for (const name of [
       'HOME',
@@ -192,17 +213,6 @@ export class CodexConfiguration {
       'XDG_DATA_HOME',
     ])
       if (process.env[name]) env[name] = process.env[name]!;
-    const { executable, record } = this.input;
-    env.ARCNEXUS_CODEX_EXECUTABLE = executable.includes('/') ? resolve(executable) : executable;
-    env.ARCNEXUS_CODEX_PID = this.pidFile;
-    env.ARCNEXUS_NODE = process.execPath;
-    env.ARCNEXUS_CODEX_SUPERVISOR = fileURLToPath(
-      new URL('./codex-supervisor.js', import.meta.url),
-    );
-    env.ARCNEXUS_HOST_PID = String(process.pid);
-    env.ARCNEXUS_HOST_START = processStart(process.pid)!;
-    env.TMPDIR = this.permissions.tmpDirectory;
-    env.PATH = targetEnvironment(record).PATH!;
     return env;
   }
 
@@ -215,6 +225,7 @@ export class CodexConfiguration {
       temporaryRoot: join(this.dir, 'tmp'),
       executable: this.input.executable,
       toolDirectories: toolDirectories(this.input.record),
+      protectedPaths: [resolve(process.env.CODEX_HOME ?? join(homedir(), '.codex'))],
     });
     return {
       configOverrides: adapter.overrides,
@@ -332,6 +343,7 @@ export class CodexConfiguration {
       signal,
       {
         env: { ...this.env, CODEX_HOME: home },
+        processScope: this.checked,
         timeoutMs: milliseconds(this.profile?.commandTimeoutSeconds),
       },
     );

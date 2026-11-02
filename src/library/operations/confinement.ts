@@ -13,11 +13,12 @@ export interface ConfinementAuthority {
   temporaryRoot: string;
   executable: string;
   toolDirectories?: string[];
+  protectedPaths?: string[];
 }
 
 /** Builds an enforced read-only source policy with narrowly declared disposable output mounts. */
 export class SourceConfinement {
-  readonly filesystem: Record<string, 'read' | 'write'> = {
+  readonly filesystem: Record<string, 'read' | 'write' | 'deny'> = {
     ':minimal': 'read',
     '/sys/fs/cgroup': 'read',
   };
@@ -48,6 +49,7 @@ export class SourceConfinement {
       this.filesystem[path] = 'write';
     }
     this.configurationHome();
+    for (const path of authority.protectedPaths ?? []) this.protect(path);
     this.overrides = this.configuration();
   }
 
@@ -59,6 +61,15 @@ export class SourceConfinement {
     this.validateSegments(path);
     mkdirSync(path, { recursive: true, mode: 0o700 });
     this.filesystem[path] = 'read';
+  }
+
+  /** Denies host-private authority independently of implicit runtime configuration-home grants. */
+  private protect(path: string): void {
+    const absolute = resolve(path);
+    this.validateSegments(absolute);
+    if (this.inside(this.workspace, absolute) || this.inside(absolute, this.workspace))
+      throw new Error('Private execution authority overlaps source');
+    this.filesystem[absolute] = 'deny';
   }
 
   /** Prevents executable bindings from implicitly granting filesystem-wide read access. */

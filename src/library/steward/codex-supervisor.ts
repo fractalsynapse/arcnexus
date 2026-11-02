@@ -1,3 +1,4 @@
+import { ProcessScope } from '../operations/process.js';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { processStart } from '../operations/service-state.js';
@@ -10,6 +11,8 @@ class CodexSupervisor {
 
   private child!: ChildProcess;
 
+  private scope?: ProcessScope;
+
   private killTimer?: NodeJS.Timeout;
 
   private monitor?: NodeJS.Timeout;
@@ -17,11 +20,7 @@ class CodexSupervisor {
   /** Executes this lifecycle through its configured collaborators and propagates failures. */
   run(): void {
     if (process.argv[2] !== 'exec' || !this.alive()) process.exit(64);
-    this.child = spawn(
-      process.env.ARCNEXUS_CODEX_EXECUTABLE!,
-      ['exec', '--ignore-user-config', ...process.argv.slice(3)],
-      { detached: true, stdio: 'inherit' },
-    );
+    this.launch();
     if (this.child.pid)
       writeFileSync(process.env.ARCNEXUS_CODEX_PID!, String(this.child.pid), { mode: 0o600 });
     this.monitor = setInterval(() => {
@@ -32,7 +31,27 @@ class CodexSupervisor {
     this.child.on('error', () => {
       process.exitCode = 1;
     });
-    this.child.on('close', (code) => this.close(code));
+    this.child.once('exit', () => this.scope?.kill());
+    this.child.on('close', (code) => {
+      void this.close(code);
+    });
+  }
+
+  /** Creates the qualified descendant scope before starting the model executable. */
+  private launch(): void {
+    this.scope = process.env.ARCNEXUS_CONFINED_SCOPE === '1' ? new ProcessScope() : undefined;
+    if (this.scope)
+      writeFileSync(
+        process.env.ARCNEXUS_CODEX_PID! + '.scope.json',
+        JSON.stringify({ path: this.scope.path }),
+        { mode: 0o600 },
+      );
+    const command = {
+      command: process.env.ARCNEXUS_CODEX_EXECUTABLE!,
+      args: ['exec', '--ignore-user-config', ...process.argv.slice(3)],
+    };
+    const captured = this.scope?.command(command) ?? command;
+    this.child = spawn(captured.command, captured.args, { detached: true, stdio: 'inherit' });
   }
 
   /** Checks whether the supervising parent still owns this execution. */
@@ -56,14 +75,16 @@ class CodexSupervisor {
   /** Stops managed work and retains its final lifecycle evidence. */
   private stop(): void {
     if (!this.child.pid) return;
-    this.signal('SIGTERM');
+    if (this.scope) this.scope.kill();
+    else this.signal('SIGTERM');
     this.killTimer ??= setTimeout(() => this.signal('SIGKILL'), 300);
   }
 
   /** Releases resources owned by this instance. */
-  private close(code: number | null): void {
+  private async close(code: number | null): Promise<void> {
     clearInterval(this.monitor);
     clearTimeout(this.killTimer);
+    await this.scope?.close();
     this.signal('SIGKILL');
     process.exitCode = code ?? 1;
   }
