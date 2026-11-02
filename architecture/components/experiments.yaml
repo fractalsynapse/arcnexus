@@ -26,7 +26,7 @@ testProfile: node
 operations:
   experiments-lint:
     - agent
-  experiments-tests:
+  component-tests:
     - agent
   migrated-recipe-bdad07a41af09a66:
     - verify

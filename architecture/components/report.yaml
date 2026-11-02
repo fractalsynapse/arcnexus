@@ -12,7 +12,7 @@ constraints:
   - Keep the supervising runner unchanged
 testProfile: node
 operations:
-  report-tests:
+  component-tests:
     - agent
   report-lint:
     - agent

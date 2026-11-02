@@ -16,7 +16,7 @@ testProfile: node
 operations:
   workday-lint:
     - agent
-  workday-tests:
+  component-tests:
     - agent
   migrated-recipe-43b539fb85a57c26:
     - verify

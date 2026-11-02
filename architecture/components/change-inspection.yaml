@@ -16,7 +16,7 @@ testProfile: node
 operations:
   change-inspection-lint:
     - agent
-  change-inspection-tests:
+  component-tests:
     - agent
   migrated-recipe-43b539fb85a57c26:
     - verify

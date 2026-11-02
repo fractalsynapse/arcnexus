@@ -118,13 +118,30 @@ pause/host loss/resume, and automatically yielded to and resumed after a task. M
 live gates 1, 3, 4 and 5 have evidence, with host loss qualified at a safe checkpoint
 and native owned/cross-owner write attempts denied before mutation.
 
-Migration policy reduction preserves resolved authority in built-program tests.
-The `config migrate` CLI, complete executable configuration/fixture migration,
-formatter transformations, removal of legacy execution branches and live gates 2
-and 6 remain unfinished. Broader phase-3 inbox and active-operation crash gates
-still require live evidence. Phase 3 remains blocked. Direct implementation work
-remains bootstrap work; the successful qualification changed a fixture package,
-not ArcNexus itself. Configuration reduction counts must be measured after migration.
+The maintenance CLI now previews and applies a fully validated migration through
+checked transactions; an immediate second invocation makes no changes. ArcNexus's
+21 definitions have migrated to v5, its environment and operations to version 4,
+and its test profile to version 2. The duplicate execution configuration is removed.
+Four historical qualification records now have explicit maintenance ownership and
+unchanged bytes. Migration still rejects mixed families and dependency-local inline
+recipes requiring unresolved conversion; it does not silently guess their authority.
+
+The first real migration reduced component top-level fields from 456 to 228 and
+recursive object keys from 1,100 to 415. All 96 inline component commands disappeared.
+Across architecture configuration, authored command objects fell from 159 to 57;
+distinct command/argv pairs changed from 53 to 54 because the previously hardcoded
+Node runner became explicit. A subsequent checked catalog comparison consolidated 17 owner-specific test
+commands into one `ownerId` template, preserving every resolved execution field
+for all 17 owners and reducing operation definitions from 57 to 41. Lint/formatter
+consolidation remains open; these are not final no-duplication counts.
+
+The [live multi-owner attempts](../library/task-intake/multi-owner-qualification.md)
+retain unsuccessful outcomes and the discovered tool-guidance defects. Complete
+fixture/campaign migration, formatter transformations, removal of legacy execution
+branches and live gates 2 and 6 remain unfinished. Broader phase-3 inbox and
+active-operation crash gates still require live evidence. Phase 3 remains blocked.
+Direct implementation work remains bootstrap work; the successful qualification
+changed a fixture package, not ArcNexus itself.
 
 ## Earlier implementation checkpoints
 

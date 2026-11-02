@@ -14,7 +14,7 @@ testProfile: node
 operations:
   guidance-build:
     - agent
-  guidance-tests:
+  component-tests:
     - agent
   guidance-validation-lint:
     - agent

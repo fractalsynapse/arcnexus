@@ -11,7 +11,7 @@ testProfile: node
 operations:
   execution-runtime-lint:
     - agent
-  execution-runtime-tests:
+  component-tests:
     - agent
   migrated-recipe-43b539fb85a57c26:
     - verify

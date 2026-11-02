@@ -1,6 +1,6 @@
 schemaVersion: 4
-id: architecture-tests
-purpose: Run shared component suites for architecture
+id: component-tests
+purpose: Run the active owner’s selected component suites
 kind: command
 repository: arcnexus
 cwd: .
@@ -15,7 +15,7 @@ args:
   - dist/cli.js
   - test
   - run
-  - architecture
+  - context: ownerId
   - --project
   - .
   - --json
