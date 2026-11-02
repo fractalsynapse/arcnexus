@@ -302,3 +302,16 @@ pending observation handle. Repeated identical selections use the existing progr
 diagnosis. Real execution failures, cancellation and uncertain operation state retain
 their lifecycle behavior. This closes the #139 live failure where a mistaken
 host-only selection cancelled an unrelated pending lint operation.
+
+## Executable-family retirement (#109)
+
+The retirement slice removes the legacy command and service dispatch branches.
+New operation bridges and direct service startup require captured schema-4 operations;
+invalid historical executable authority is rejected before launching children. Every
+command, HTTP check and service action goes through `OperationExecution`, including
+prerequisite ordering, confinement and retained invocation evidence. Inline capability
+probes are no longer executed; finite shared preflight/prerequisite operations cover
+that responsibility. Bridge connectivity remains a transport qualification.
+
+Operation call counts remain metrics. They never become execution quotas. Historical
+operation definitions and report fields remain readable without making them executable.
