@@ -61,3 +61,12 @@ path or a declared identity in that registry. The loader expands those reference
 so shared result fields have one authored definition. References must resolve to
 packaged registry entries; unregistered remote identities, cycles and external fragments are
 rejected. Target-owned files cannot supply runtime response contracts.
+
+Minimal public API inspection derives exported symbols and signatures with the
+TypeScript compiler from captured source, including local re-exports and type-only
+exports. `api` modules and schema artifacts must belong to the declaring owner.
+Named exports must resolve; schema-to-code links require a named export. The catalog
+retains artifact hashes and schema identities when present, without inventing versions
+for ordinary modules. Missing local schema references fail validation; unsupported
+external analysis remains explicitly unresolved. Candidate files never replace the
+captured source used for this architectural view.
