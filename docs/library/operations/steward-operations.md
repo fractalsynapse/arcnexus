@@ -233,3 +233,9 @@ Qualification must exercise detached descendants, cancellation, parent loss and
 normal exit using the installed runtime. A closed launcher without a closed endpoint
 is unresolved evidence, not successful cleanup. See issue #114 for the observed
 installed-runtime escape and its acceptance criteria.
+
+Runtime diagnostic support is captured outside target generated-output trees in
+private, read-only configuration storage. Rebuilding a target that is ArcNexus
+itself must not mount the active support file inside the output being cleared.
+An existing support snapshot with different bytes is an integrity error; candidate
+builds cannot replace the active snapshot.

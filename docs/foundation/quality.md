@@ -81,8 +81,9 @@ Delivery verification is shared by `development.yaml`, `staging.yaml` and
 
 ## Confined build output
 
-Production builds clear entries inside the declared `dist` output root while
-preserving the directory itself. The root may be a writable sandbox mount beneath
+Production builds remove stale files and links inside the declared `dist` output
+root while preserving its directory structure. The root and empty nested runtime
+directories may be sandbox mounts beneath
 read-only maintained source. Stale output links are removed without following them;
 a missing root is created before compilation. Build failures retain their actual
 compiler evidence and cannot grant write access to the source parent.
