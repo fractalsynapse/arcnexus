@@ -205,3 +205,11 @@ directories, including empty generated directories. The destination hash and a
 second source hash must still match the initial capture. An active umask cannot
 make an unchanged installation appear to be a concurrent rebuild, and permission
 normalization must not relax the source-change or byte-integrity checks.
+
+### Correlated model inbox context
+
+Model-facing inbox envelopes expose the durable request identity as `requestId`,
+matching the reply schema. Internal retry keys remain in host persistence and
+chronology evidence; they are not alternative reply identities. Resume rebuilds
+this projection from the store, and acknowledgements validate the durable identity
+and sender authority. Never reinterpret an arbitrary key as a request ID.
