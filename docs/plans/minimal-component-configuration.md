@@ -409,3 +409,11 @@ operation preflight, and a denied research write leaves maintained bytes unchang
 The obsolete private-harness operation-budget case and its unused legacy fixture
 were retired. Historical inspection remains separately covered. Foundation lint-tool
 and remaining context/initializer/report fixture qualification is still in progress.
+
+Twenty-four context, initializer, report, lint, parent-loss and checkpoint cases
+passed with native confinement and no skips. Direction now comes from the platform
+profile in these fixtures; the historical model-override behavior is no longer used
+for execution. Lint qualification copies only its installed dependency closure into
+an explicitly bound read-only tool directory, rather than granting access to an
+uncaptured host installation. Historical proposal, manifest and report readers keep
+their separate inspection fixtures.

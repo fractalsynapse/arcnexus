@@ -1,3 +1,4 @@
+import { nativeHostTest } from '../../testing/support/general-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -5,7 +6,11 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
 import { test } from 'node:test';
-import { cli, workflowFixture } from '../../testing/support/workflow-fixture.js';
+import {
+  cli,
+  workflowFixture,
+  minimalWorkflowFixture,
+} from '../../testing/support/workflow-fixture.js';
 
 /** Exercises workdays behavior through observable scenarios. */
 class WorkdaysTests {
@@ -48,7 +53,7 @@ class WorkdaysTests {
 
   /** Verifies that standalone execution retains host checked checkpoint evidence. */
   standaloneExecutionRetainsHostCheckedCheckpointEvidence(t: TestContext) {
-    const f = workflowFixture(t),
+    const f = minimalWorkflowFixture(t),
       r = f.run();
     assert.equal(r.status, 0, r.stderr);
     const report = JSON.parse(r.stdout),
@@ -124,7 +129,12 @@ test('built workday inspect captures two disjoint owners without state or infere
 test('workday inspection rejects overlap invalid edges and unsupported versions', (t: any) =>
   suite.workdayInspectionRejectsOverlapInvalidEdgesAndUnsupportedVersions(t));
 
-test('standalone execution retains host-checked checkpoint evidence', (t: any) =>
-  suite.standaloneExecutionRetainsHostCheckedCheckpointEvidence(t));
+nativeHostTest('standalone execution retains host-checked checkpoint evidence', (t: any) =>
+  suite.standaloneExecutionRetainsHostCheckedCheckpointEvidence(t),
+);
 
-registerSuite({ component: 'workday', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'workday',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

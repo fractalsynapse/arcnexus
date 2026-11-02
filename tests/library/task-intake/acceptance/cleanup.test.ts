@@ -3,8 +3,12 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, type TestContext } from 'node:test';
-import { cli, workflowFixture } from '../../testing/support/workflow-fixture.js';
+import type { TestContext } from 'node:test';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
+import {
+  cli,
+  minimalWorkflowFixture as workflowFixture,
+} from '../../testing/support/workflow-fixture.js';
 
 /** Exercises initialization cleanup behavior through observable scenarios. */
 class InitializationCleanupTests {
@@ -44,4 +48,8 @@ test('cleanup refuses an incomplete initialization record', (t) =>
 test('cleanup includes initializer-owned service resources', (t) =>
   suite.refusesUnresolvedInitialization(t, true));
 
-registerSuite({ component: 'task-intake', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'task-intake',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

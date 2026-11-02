@@ -4,8 +4,11 @@ import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
-import { test } from 'node:test';
-import { stewardEntry, workflowFixture } from '../../testing/support/workflow-fixture.js';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
+import {
+  stewardEntry,
+  minimalWorkflowFixture as workflowFixture,
+} from '../../testing/support/workflow-fixture.js';
 
 /** Exercises context behavior through observable scenarios. */
 class ContextTests {
@@ -21,14 +24,12 @@ class ContextTests {
       readFileSync(join(f.repo, 'verify.cjs'), 'utf8') +
         "if(require('child_process').spawnSync('target-node',['-e','process.exit(0)']).status!==0)throw new Error('NESTED_TOOL_UNAVAILABLE');",
     );
-    f.component.verification[0].command = 'target-node';
-    writeFileSync(join(f.repo, 'architecture/components/sample.json'), JSON.stringify(f.component));
+    const path = join(f.repo, 'architecture/operations/verify.yaml');
+    const operation = JSON.parse(readFileSync(path, 'utf8'));
+    operation.command = 'target-node';
+    writeFileSync(path, JSON.stringify(operation));
     f.commit();
-    const binding = join(f.root, 'bindings.json');
-    writeFileSync(
-      binding,
-      JSON.stringify({ schemaVersion: 1, repositories: {}, tools: { 'target-node': tool } }),
-    );
+    const binding = this.bindTool(f, tool);
     f.configure({ suppliedTool: true });
     const r = f.run('--kind', 'research', '--bindings', binding);
     assert.equal(r.status, 0, r.stderr);
@@ -36,6 +37,15 @@ class ContextTests {
     assert.equal(record.settings.filesystem[bin], 'read');
     assert.ok(calls(f)[0].prompt.includes(tool));
     assert.ok(calls(f)[0].args.some((a: any) => a.includes(JSON.stringify(bin) + '="read"')));
+  }
+
+  /** Extends native confinement bindings with the caller's executable without dropping existing tools. */
+  private bindTool(f: any, tool: string): string {
+    const binding = join(f.root, 'bindings.json');
+    const value = JSON.parse(readFileSync(join(f.root, 'minimal-bindings.json'), 'utf8'));
+    value.tools['target-node'] = tool;
+    writeFileSync(binding, JSON.stringify(value));
+    return binding;
   }
 
   /** Verifies that review receives first parent diff with hash no unrelated history. */
@@ -46,40 +56,55 @@ class ContextTests {
     const r = f.run('--kind', 'review');
     assert.equal(r.status, 0, r.stderr);
     const record = JSON.parse(r.stdout),
-      prompt = calls(f)[0].prompt;
+      prompt = calls(f).at(-1).prompt;
     assert.match(prompt, /PINNED_REVIEW_CHANGE/);
     assert.match(prompt, /Host review evidence/);
-    assert.equal(record.turns[0].reviewEvidence.basis, 'base-first-parent');
-    assert.match(record.turns[0].reviewEvidence.sha256, /^[a-f0-9]{64}$/);
+    assert.equal(record.turns.at(-1).reviewEvidence.basis, 'base-first-parent');
+    assert.match(record.turns.at(-1).reviewEvidence.sha256, /^[a-f0-9]{64}$/);
   }
 
   /** Verifies that root revision review and candidate review both receive readable changes. */
   rootRevisionReviewAndCandidateReviewBothReceiveReadableChanges(t: TestContext) {
     for (const kind of ['review', 'change']) {
-      const f = workflowFixture(t),
-        r = f.run('--kind', kind);
+      const f = workflowFixture(t);
+      f.git('checkout', '--orphan', 'root-review');
+      f.git('commit', '-m', 'Root minimal authority');
+      const r = f.run('--kind', kind);
       assert.equal(r.status, 0, r.stderr);
       const p = calls(f).at(-1).prompt;
       assert.match(p, /Host review evidence/);
-      assert.match(p, kind === 'review' ? /Own sample behavior/ : /BOUNDARY_EXPECTED/);
+      assert.match(p, kind === 'review' ? /Own sample responsibilities/ : /BOUNDARY_EXPECTED/);
     }
   }
 
   /** Verifies that revision review evidence excludes paths outside declared read authority. */
   revisionReviewEvidenceExcludesPathsOutsideDeclaredReadAuthority(t: TestContext) {
     const f = workflowFixture(t);
-    f.component.access = { readPaths: ['docs'], writeDirectories: ['docs', 'tests'] };
-    f.component.allowedWritePaths = ['docs', 'tests'];
-    writeFileSync(join(f.repo, 'architecture/components/sample.json'), JSON.stringify(f.component));
+    this.narrowReview(f);
     f.commit();
     writeFileSync(join(f.repo, 'source.txt'), 'SECRET_OUTSIDE_READ_SCOPE');
     writeFileSync(join(f.repo, 'docs/behavior.md'), 'VISIBLE_CHANGE');
     f.commit();
     const r = f.run('--kind', 'review');
     assert.equal(r.status, 0, r.stderr);
-    const prompt = calls(f)[0].prompt;
+    const prompt = calls(f).at(-1).prompt;
     assert.match(prompt, /VISIBLE_CHANGE/);
     assert.doesNotMatch(prompt, /SECRET_OUTSIDE_READ_SCOPE/);
+  }
+
+  /** Separates the hidden file's owner and uses a finite check that needs no hidden source access. */
+  private narrowReview(f: any): void {
+    f.component.reads = ['docs'];
+    f.component.owns = ['docs', 'tests', 'new.txt'];
+    writeFileSync(join(f.repo, 'architecture/components/sample.json'), JSON.stringify(f.component));
+    const path = join(f.repo, 'architecture/components/dependency.json');
+    const dependency = JSON.parse(readFileSync(path, 'utf8'));
+    dependency.owns.push('source.txt');
+    writeFileSync(path, JSON.stringify(dependency));
+    const operationPath = join(f.repo, 'architecture/operations/verify.yaml');
+    const operation = JSON.parse(readFileSync(operationPath, 'utf8'));
+    operation.args = ['-e', 'process.exit(0)'];
+    writeFileSync(operationPath, JSON.stringify(operation));
   }
 
   /** Verifies that specification delegates unavailable sandbox checks to the authoritative host. */
@@ -112,21 +137,7 @@ class ContextTests {
       assignment = join(f.root, 'documentation.json');
     this.documentationAssignment(assignment);
     f.configure({ documentationOnly: true });
-    const r = spawnSync(
-      process.execPath,
-      [
-        stewardEntry,
-        'run',
-        'sample',
-        '--assignment',
-        assignment,
-        '--project',
-        f.repo,
-        '--codex-path',
-        f.executable,
-      ],
-      { encoding: 'utf8', env: f.env, timeout: 30 * 60 * 1000 },
-    );
+    const r = this.runDocumentation(f, assignment);
     assert.equal(r.status, 0, r.stderr);
     const report = JSON.parse(r.stdout);
     assert.deepEqual(
@@ -137,12 +148,33 @@ class ContextTests {
     assert.equal(report.status, 'completed');
   }
 
+  /** Runs an explicit documentation assignment through the assembled session with captured native bindings. */
+  private runDocumentation(f: any, assignment: string) {
+    return spawnSync(
+      process.execPath,
+      [
+        stewardEntry,
+        'run',
+        'sample',
+        '--assignment',
+        assignment,
+        '--project',
+        f.repo,
+        '--bindings',
+        join(f.root, 'minimal-bindings.json'),
+        '--codex-path',
+        f.executable,
+      ],
+      { encoding: 'utf8', env: f.env, timeout: 30 * 60 * 1000 },
+    );
+  }
+
   /** Writes a documentation-only assignment so behavior checkpoints must be explicitly skipped. */
   private documentationAssignment(assignment: string): void {
     writeFileSync(
       assignment,
       JSON.stringify({
-        schemaVersion: 1,
+        schemaVersion: 3,
         kind: 'change',
         changeType: 'documentation',
         objective: 'Update documentation',
@@ -183,4 +215,8 @@ test('specification exposes both required source changes in the actual turn prom
 test('documentation-only specification requires real documentation edits through the built CLI', (t: any) =>
   suite.documentationOnlySpecificationRequiresRealDocumentationEditsThroughTheBuiltCLI(t));
 
-registerSuite({ component: 'steward', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'steward',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});
