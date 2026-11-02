@@ -1,6 +1,13 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { workflowFixture } from './workflow-fixture.js';
+import { workflowFixture, minimalWorkflowFixture } from './workflow-fixture.js';
+
+/** Reuses the single shared verification definition for native agent-operation acceptance. */
+export function minimalOperationFixture(t: any, mode = 'success'): any {
+  const fixture = minimalWorkflowFixture(t, mode);
+  fixture.configure({ operations: join(fixture.root, 'operations.jsonl'), operationId: 'verify' });
+  return fixture;
+}
 
 export function operationFixture(t: any, mode: any = 'success'): any {
   const f = workflowFixture(t, mode),

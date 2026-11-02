@@ -15,6 +15,7 @@ export interface WorkflowOptions {
   calls: string;
   planning?: boolean;
   operations?: string;
+  operationId?: string;
   operationRepeats?: number;
   parallelOperations?: boolean;
   managedService?: boolean;

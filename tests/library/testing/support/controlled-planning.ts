@@ -128,7 +128,7 @@ export class ControlledPlanning {
     const reply = this.options.managedService
       ? await this.withClient(turn, (client) => this.service(client))
       : await this.call(turn, 'operations.run', {
-          id: this.options.mode === 'denied' ? 'unknown' : 'test',
+          id: this.options.mode === 'denied' ? 'unknown' : (this.options.operationId ?? 'test'),
         });
     appendFileSync(this.options.operations!, JSON.stringify(reply) + '\n');
   }

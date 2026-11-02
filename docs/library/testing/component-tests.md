@@ -162,3 +162,15 @@ transactions for specification and implementation and uses stable operation IDs 
 expected-red evidence. Scripted model responses are deterministic test inputs; they
 are not live model qualification. Remaining legacy session scenarios are migration
 work, not an alternate public execution mode.
+
+The workspace fixtures now use minimal authority for both standalone and composed
+preparation. Dependency cancellation waits for observed command output, then checks
+retained child invocation evidence; it no longer uses an execution deadline as its
+cancellation mechanism. Native-host selection includes these cases explicitly.
+
+Assignment fixture migration preserves observable engineering and protection checks
+while retiring obsolete caller quota behavior. The old workflow test requiring an
+explicit attempt allowance is removed because that feature is intentionally retired.
+The minimal limits suite instead demonstrates 25 successful operation calls and a
+fourth implementation attempt; progress cases retain diagnosis and termination of
+unchanged failures. Historical profile inspection remains read-only coverage.

@@ -367,3 +367,17 @@ All six minimal-plan live gates now have retained demonstrations at their record
 revisions. This does not remove the remaining legacy execution branches or qualify
 later implementation changes; completion and phase three remain blocked on those
 requirements and final integrated verification/review/CI.
+
+Issue #143 corrects cross-repository definition accountability without adding authored
+fields: dependency components retain their primary-catalog definition identity, and
+write scopes remain local to the implementation repository. Bound repositories now
+receive exact maintained-file ownership validation. Four focused cases and 28 current/
+historical ownership cases passed; the built architecture selection passed 147 of
+151 cases, four explicitly skipped, in `ded56393-f786-41a0-8538-b2aef5d2c9ef`.
+
+Composed preparation has moved to the same shared-operation fixture. Seventeen native
+cases passed initially; the inherited-read-policy assertion was updated and its native
+rerun passed. Active dependency cancellation retains child invocation evidence. Nine
+minimal quota/progress cases also pass with no skips. The main assignment workflow
+fixture is still undergoing migration and qualification. CI at `7cef823` is pending;
+these focused local results are not final integrated completion evidence.

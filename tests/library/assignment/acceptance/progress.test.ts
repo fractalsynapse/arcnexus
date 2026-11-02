@@ -1,10 +1,11 @@
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, type TestContext } from 'node:test';
-import { workflowFixture } from '../../testing/support/workflow-fixture.js';
-import { operationFixture } from '../../testing/support/operations-fixture.js';
+import type { TestContext } from 'node:test';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
+import { minimalWorkflowFixture as workflowFixture } from '../../testing/support/workflow-fixture.js';
+import { minimalOperationFixture as operationFixture } from '../../testing/support/operations-fixture.js';
 
 /** Exercises progress behavior through observable scenarios. */
 class ProgressTests {
@@ -23,12 +24,7 @@ class ProgressTests {
   /** Verifies that repeated unverified implementation cycles stop with retained corrective work. */
   repeatedCheckpoints(t: TestContext): void {
     const fixture = workflowFixture(t, 'exhaust');
-    const path = join(fixture.repo, 'architecture/execution-profiles/luna.yaml');
-    const profile = JSON.parse(readFileSync(path, 'utf8'));
-    profile.maxTurns = 20;
-    writeFileSync(path, JSON.stringify(profile));
-    fixture.commit();
-    const result = fixture.run('--max-attempts', '5');
+    const result = fixture.run();
     assert.equal(result.status, 1, result.stderr);
     const record = JSON.parse(result.stdout);
     assert.equal(record.outcome, 'needs_attention');
@@ -61,4 +57,8 @@ test('repeated unverified implementation cycles stop with retained corrective wo
 test('repeated exposed SDK command failures stop the stream with retained raw events', (t) =>
   suite.observedShell(t));
 
-registerSuite({ component: 'assignment', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'assignment',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});
