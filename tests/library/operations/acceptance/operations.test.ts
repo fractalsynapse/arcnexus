@@ -38,12 +38,32 @@ class OperationsTests {
     assert.match(readFileSync(join(f.root, 'operations.jsonl'), 'utf8'), /BOUNDARY_EXPECTED/);
   }
 
-  /** Verifies the scenario rejects unauthorized operation requests. */
-  rejectsUnauthorizedOperationRequests(t: TestContext, mode: any) {
-    const f = fixture(t, mode),
-      r = f.run();
-    assert.equal(r.status, 1, r.stderr);
-    assert.match(r.stderr, mode === 'denied' ? /operation/i : /budget/i);
+  /** Returns rejected selections through the bridge without running an unauthorized command. */
+  rejectsUnauthorizedOperationRequests(t: TestContext): void {
+    const f = fixture(t, 'denied');
+    const result = f.run();
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout).operations ?? [], []);
+    const replies = readFileSync(join(f.root, 'operations.jsonl'), 'utf8')
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line));
+    assert.equal(replies.length, 3);
+    for (const reply of replies) {
+      const rejection = JSON.parse(reply.content[0].text);
+      assert.equal(rejection.status, 'rejected');
+      assert.match(rejection.error, /Unknown or denied operation: unknown/);
+      assert.deepEqual(rejection.availableOperationIds, ['test']);
+      assert.match(rejection.recovery, /No operation was queued/);
+    }
+  }
+
+  /** Retains the historical private harness interpretation without enabling old profiles for new hosts. */
+  historicalBudget(t: TestContext): void {
+    const f = fixture(t, 'budget');
+    const result = f.run();
+    assert.equal(result.status, 1, result.stderr);
+    assert.match(result.stderr, /budget/i);
   }
 
   /** Verifies that inspect captures operations and rejects assignment widening. */
@@ -180,9 +200,11 @@ const suite = new OperationsTests();
 test('production SDK bridge returns real red and green operation feedback', (t: any) =>
   suite.productionSDKBridgeReturnsRealRedAndGreenOperationFeedback(t));
 
-for (const mode of ['denied', 'budget'])
-  test(`host stops ${mode} operation requests`, (t: any) =>
-    suite.rejectsUnauthorizedOperationRequests(t, mode));
+test('host returns recoverable operation rejection without executing denied work', (t) =>
+  suite.rejectsUnauthorizedOperationRequests(t));
+
+test('historical private harness retains its captured budget interpretation', (t) =>
+  suite.historicalBudget(t));
 
 test('inspect captures operations and rejects assignment widening', (t: any) =>
   suite.inspectCapturesOperationsAndRejectsAssignmentWidening(t));

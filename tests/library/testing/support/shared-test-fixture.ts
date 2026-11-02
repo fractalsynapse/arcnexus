@@ -23,6 +23,8 @@ export class SharedTestFixture extends MinimalTestFixture {
       'build.cjs',
       "const f=require('fs');f.cpSync('tests','.test-build',{recursive:true});for(const p of f.readdirSync('.test-build',{recursive:true}))if(p.endsWith('.ts'))f.renameSync('.test-build/'+p,'.test-build/'+p.replace(/\\.ts$/,'.js'));f.appendFileSync('.test-build/prepared','once\\n');",
     );
+    if (process.env.ARCNEXUS_TEST_CODEX)
+      this.put('.git/arcnexus/bindings.yaml', JSON.parse(readFileSync(this.bindings(), 'utf8')));
     this.commit();
   }
 
@@ -47,8 +49,28 @@ export class SharedTestFixture extends MinimalTestFixture {
     this.commit();
   }
 
+  /** Gives an unselected owner a failing shared preparation without affecting the selected profile. */
+  override unusedProfile(): void {
+    this.anotherOwner();
+    this.extend('architecture/components/other.yaml', (value) => (value.testProfile = 'other'));
+    this.operation('unused', ['-e', 'process.exit(9)']);
+    this.put('architecture/test-profiles/other.yaml', {
+      schemaVersion: 2,
+      id: 'other',
+      adapter: 'node',
+      outputRoot: '.test-build',
+      preparation: [{ operation: 'unused', purpose: 'tests' }],
+      run: 'suites',
+    });
+    this.commit();
+  }
+
   /** Gives operation definitions one maintenance owner while the profile alone authorizes test execution. */
   private configuration(): void {
+    this.extend('architecture/components/platform.yaml', (value) => {
+      value.director = { component: 'sample', profile: 'luna' };
+      value.reviewerProfile = 'luna';
+    });
     this.extend('architecture/components/maintenance.yaml', (value) =>
       value.owns.push('architecture/operations'),
     );
@@ -70,7 +92,7 @@ export class SharedTestFixture extends MinimalTestFixture {
   }
 
   /** Defines one finite command with explicitly declared generated output and host context tokens. */
-  private operation(id: string, args: unknown[]): void {
+  operation(id: string, args: unknown[]): void {
     this.put(`architecture/operations/${id}.yaml`, {
       schemaVersion: 4,
       id,

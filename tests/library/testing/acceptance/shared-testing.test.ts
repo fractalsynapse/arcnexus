@@ -1,11 +1,12 @@
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, symlinkSync } from 'node:fs';
+import { cpSync, existsSync, readFileSync, symlinkSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join, resolve } from 'node:path';
 import { test, type TestContext } from 'node:test';
-import { TestProcess, waitFor } from '../support/test-process.js';
-import { ComponentTestFixture } from '../support/component-test-fixture.js';
+import { TestProcess } from '../support/test-process.js';
+import { SharedTestFixture as ComponentTestFixture } from '../support/shared-test-fixture.js';
+import { nativeHostTest } from '../support/general-fixture.js';
 
 /** Exercises static selection and supervised test execution through the built gateway. */
 class SharedTestingTests {
@@ -30,7 +31,7 @@ class SharedTestingTests {
     const selection = JSON.parse(result.stdout);
     assert.equal(selection.suites.length, 1);
     assert.match(selection.suites[0].source, /small/);
-    assert.equal(existsSync(join(f.repo, 'prepared')), false);
+    assert.equal(existsSync(join(f.repo, '.test-build/prepared')), false);
   }
 
   /** Verifies that test selection combines regression category and explicit integration level. */
@@ -49,7 +50,7 @@ class SharedTestingTests {
     const evidence = JSON.parse(result.stdout);
     assert.equal(evidence.status, 'passed');
     assert.equal(evidence.commands.length, 2);
-    assert.equal(readFileSync(join(f.repo, 'prepared'), 'utf8'), 'built\n');
+    assert.equal(readFileSync(join(f.repo, '.test-build/prepared'), 'utf8'), 'once\n');
     assert.match(readFileSync(evidence.commands[1].log, 'utf8'), /# pass 2/);
     assert.equal(existsSync(join(evidence.evidence, 'result.json')), true);
   }
@@ -88,18 +89,10 @@ class SharedTestingTests {
   /** Shared test results retain a late build diagnostic within the model-facing bound. */
   retainsLateDiagnostic(t: TestContext): void {
     const f = new ComponentTestFixture(t);
-    f.profile({
-      preparation: [
-        {
-          command: process.execPath,
-          purpose: 'tests',
-          args: [
-            '-e',
-            "require('fs').writeSync(1,'passing output\\n'.repeat(12000));console.error('Error: LATE_BUILD_FAILURE');process.exit(1)",
-          ],
-        },
-      ],
-    });
+    f.operation('compile', [
+      '-e',
+      "require('fs').writeSync(1,'passing output\\n'.repeat(12000));console.error('Error: LATE_BUILD_FAILURE');process.exit(1)",
+    ]);
     f.commit();
     const result = f.run('run');
     assert.equal(result.status, 1, result.stderr);
@@ -114,26 +107,17 @@ class SharedTestingTests {
   retainsBuildFailure(t: TestContext): void {
     const f = new ComponentTestFixture(t);
     f.put('tests/support/invalid.ts', 'const value: string = 42;');
-    f.profile({
-      preparation: [
-        {
-          command: process.execPath,
-          args: [
-            resolve('node_modules/typescript/bin/tsc'),
-            '--noEmit',
-            '--skipLibCheck',
-            'tests/support/invalid.ts',
-          ],
-          purpose: 'tests',
-        },
-      ],
+    const compiler = '.test-build/compiler/tsc.js';
+    cpSync(resolve('node_modules/typescript/lib'), join(f.repo, '.test-build/compiler'), {
+      recursive: true,
     });
+    f.operation('compile', [compiler, '--noEmit', '--skipLibCheck', 'tests/support/invalid.ts']);
     f.commit();
     const result = f.run('run');
     assert.equal(result.status, 1, result.stderr);
     const evidence = JSON.parse(result.stdout);
     assert.equal(evidence.status, 'failed');
-    assert.equal(evidence.commands[0].exitCode, 2);
+    assert.equal(evidence.commands[0].exitCode, 2, evidence.output);
     assert.match(readFileSync(evidence.commands[0].log, 'utf8'), /TS2322/);
     assert.match(evidence.output, /TS2322/);
   }
@@ -141,6 +125,11 @@ class SharedTestingTests {
   /** Verifies that captures mandatory selection. */
   capturesMandatorySelection(t: TestContext): void {
     const f = new ComponentTestFixture(t);
+    f.extend(
+      'architecture/components/sample.yaml',
+      (value) => (value.operations = { suites: ['verify'] }),
+    );
+    f.commit();
     const result = spawnSync(
       process.execPath,
       [resolve('dist/cli.js'), 'inspect', 'sample', 'Improve tests', '--project', f.repo, '--json'],
@@ -162,20 +151,24 @@ class SharedTestingTests {
     const f = new ComponentTestFixture(t);
     f.put(
       'build.cjs',
-      "require('fs').writeFileSync('prepared',String(process.pid));setInterval(()=>{},1000)",
+      "require('fs').writeFileSync('.test-build/prepared',String(process.pid));setInterval(()=>{},1000)",
     );
     const child = new TestProcess(
       t,
       [resolve('dist/cli.js'), 'test', 'run', '--project', f.repo, '--json'],
       { ...process.env, ARCNEXUS_STATE_DIR: f.state },
     );
-    await waitFor(() => existsSync(join(f.repo, 'prepared')), 'test preparation starts');
+    await child.waitForReady(
+      () => existsSync(join(f.repo, '.test-build/prepared')),
+      'test preparation starts',
+    );
     child.child.kill('SIGINT');
     assert.equal(await child.closed, 130, child.stderr);
     const report = JSON.parse(child.stdout);
     assert.equal(report.status, 'cancelled');
-    const pid = Number(readFileSync(join(f.repo, 'prepared'), 'utf8'));
-    assert.throws(() => process.kill(pid, 0), /ESRCH/);
+    const scope = report.commands[0].processScope;
+    assert.equal(typeof scope, 'string');
+    assert.equal(existsSync(scope), false, 'cancelled preparation leaves no managed process scope');
     assert.equal(existsSync(join(report.evidence, 'result.json')), true);
   }
 
@@ -212,20 +205,25 @@ class SharedTestingTests {
 
 const suite = new SharedTestingTests();
 
-test('an explicitly configured test timeout is failure rather than caller cancellation', (t) =>
-  suite.explicitTimeoutIsFailure(t));
+nativeHostTest(
+  'an explicitly configured test timeout is failure rather than caller cancellation',
+  (t) => suite.explicitTimeoutIsFailure(t),
+);
 
-test('npm compatibility runner prints retained test output for CI diagnosis', (t) =>
-  suite.printsNpmEvidence(t));
+nativeHostTest('npm compatibility runner prints retained test output for CI diagnosis', (t) =>
+  suite.printsNpmEvidence(t),
+);
 
-test('test runner prepares only profiles selected by intersecting filters', (t) =>
-  suite.preparesSelectedProfilesOnly(t));
+nativeHostTest('test runner prepares only profiles selected by intersecting filters', (t) =>
+  suite.preparesSelectedProfilesOnly(t),
+);
 
 test('assignment inspection captures mandatory suite identities and profile hashes', (t) =>
   suite.capturesMandatorySelection(t));
 
-test('test cancellation stops preparation and retains evidence', (t) =>
-  suite.cancelsPreparation(t));
+nativeHostTest('test cancellation stops preparation and retains evidence', (t) =>
+  suite.cancelsPreparation(t),
+);
 
 test('test inspection intersects tags without executing modules or preparation', (t) =>
   suite.selectsWithoutExecution(t));
@@ -233,17 +231,25 @@ test('test inspection intersects tags without executing modules or preparation',
 test('test selection combines regression category and explicit integration level', (t) =>
   suite.selectsRegressionLevel(t));
 
-test('shared test runner prepares once and retains real Node results', (t) =>
-  suite.executesOnce(t));
+nativeHostTest('shared test runner prepares once and retains real Node results', (t) =>
+  suite.executesOnce(t),
+);
 
-test('shared test runner retains compilation failure evidence', (t) =>
-  suite.retainsBuildFailure(t));
+nativeHostTest('shared test runner retains compilation failure evidence', (t) =>
+  suite.retainsBuildFailure(t),
+);
 
 test('test inspection rejects unsupported runner profiles', (t) =>
   suite.rejectsUnsupportedProfile(t));
 
 test('test discovery rejects symlink traversal', (t) => suite.rejectsSymlinkTraversal(t));
 
-test('shared test feedback preserves late diagnostics', (t) => suite.retainsLateDiagnostic(t));
+nativeHostTest('shared test feedback preserves late diagnostics', (t) =>
+  suite.retainsLateDiagnostic(t),
+);
 
-registerSuite({ component: 'testing', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'testing',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

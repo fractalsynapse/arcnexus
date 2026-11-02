@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
+import { ComponentTestFixture } from '../support/component-test-fixture.js';
 import { MinimalTestFixture } from '../support/minimal-test-fixture.js';
 
 /** Exercises derived test selection through the built CLI without executing candidate modules. */
 class MinimalDiscoveryScenarios {
   /** Keeps inspection available during migration while refusing the legacy unconfined execution path. */
-  rejectsLegacyExecution(t: TestContext): void {
-    const f = new MinimalTestFixture(t);
+  rejectsLegacyExecution(t: TestContext, minimal = true): void {
+    const f = minimal ? new MinimalTestFixture(t) : new ComponentTestFixture(t);
     const result = f.run('run', 'sample');
     assert.equal(result.status, 2);
     assert.match(result.stderr, /Migrate test profile to schemaVersion 2/);
@@ -39,6 +40,9 @@ class MinimalDiscoveryScenarios {
 }
 
 const scenarios = new MinimalDiscoveryScenarios();
+
+test('historical components cannot execute inline test commands', (t) =>
+  scenarios.rejectsLegacyExecution(t, false));
 
 test('minimal components cannot run tests through legacy inline commands', (t) =>
   scenarios.rejectsLegacyExecution(t));

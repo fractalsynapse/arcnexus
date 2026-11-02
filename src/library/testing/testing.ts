@@ -1,16 +1,11 @@
 import { diagnosticExcerpt } from '../operations/diagnostics.js';
-import {
-  loadProjectBindings,
-  bindingEnvironment,
-  boundCommand,
-  type Bindings,
-} from '../architecture/bindings.js';
+import { loadProjectBindings, type Bindings } from '../architecture/bindings.js';
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { loadCatalog, type Catalog, type Component } from '../architecture/components.js';
 import { InputError } from '../architecture/config.js';
-import { execute, git, type CommandResult } from '../operations/process.js';
+import { git, type CommandResult } from '../operations/process.js';
 import { stateRoot } from '../workspace/state.js';
 import { TestDiscovery, matches, type DiscoveredSuite, type TestFilters } from './discovery.js';
 import { loadTestProfile, type TestProfile } from './profile.js';
@@ -127,9 +122,9 @@ export class ComponentTesting {
     signal: AbortSignal,
     productionBuilt = false,
   ): Promise<TestExecution> {
-    if (selection.requiresSharedOperations && !selection.operationPlan)
+    if (!selection.operationPlan)
       throw new InputError(
-        'Migrate test profile to schemaVersion 2 before executing minimal components',
+        'Migrate test profile to schemaVersion 2 and minimal components with arcnexus config migrate',
       );
     const result = this.record(selection, productionBuilt);
     try {
@@ -154,27 +149,9 @@ export class ComponentTesting {
     signal: AbortSignal,
     productionBuilt: boolean,
   ): Promise<void> {
-    if (!result.selection.operationPlan) return this.legacy(result, signal, productionBuilt);
     const execution = new SharedTestExecution(result, signal);
     this.save(result);
     await execution.run(productionBuilt);
-  }
-
-  /** Preserves existing test profiles during explicit migration to shared operations. */
-  private async legacy(
-    result: TestExecution,
-    signal: AbortSignal,
-    productionBuilt: boolean,
-  ): Promise<void> {
-    await this.prepare(result, signal, productionBuilt);
-    await this.command(
-      result,
-      {
-        command: result.selection.bindings.tools.node ?? process.execPath,
-        args: ['--test', ...result.selection.suites.map((suite) => suite.compiled)],
-      },
-      signal,
-    );
   }
 
   /** Creates the evidence record before subsequent lifecycle work begins. */
@@ -202,54 +179,6 @@ export class ComponentTesting {
       throw new InputError(`Invalid test level: ${filters.level}`);
     if (filters.category && filters.category !== 'regression')
       throw new InputError(`Invalid test category: ${filters.category}`);
-  }
-
-  /** Establishes the prerequisites required by the subsequent execution. */
-  private async prepare(
-    result: TestExecution,
-    signal: AbortSignal,
-    productionBuilt: boolean,
-  ): Promise<void> {
-    const seen = new Set<string>();
-    for (const profile of result.selection.profiles) {
-      if (profile.schemaVersion !== 1)
-        throw new InputError('Shared test profile cannot execute legacy commands');
-      for (const step of profile.preparation) {
-        const identity = JSON.stringify(step);
-        if (seen.has(identity) || (productionBuilt && step.purpose === 'production')) continue;
-        seen.add(identity);
-        await this.command(result, step, signal);
-      }
-    }
-  }
-
-  /** Runs fixed preparation or test commands and persists output even on failure. */
-  private async command(
-    result: TestExecution,
-    command: { command: string; args: string[] },
-    signal: AbortSignal,
-  ): Promise<void> {
-    const log = join(result.evidence, `${result.commands.length}.log`);
-    try {
-      result.commands.push(
-        await execute(
-          boundCommand(result.selection.bindings, command),
-          result.selection.project,
-          log,
-          signal,
-          {
-            env: { ...bindingEnvironment(result.selection.bindings), NODE_TEST_CONTEXT: undefined },
-          },
-        ),
-      );
-    } catch (error) {
-      const commandResult = (error as { commandResult?: CommandResult }).commandResult;
-      if (commandResult) result.commands.push(commandResult);
-      throw error;
-    } finally {
-      this.captureOutput(result, log);
-      this.save(result);
-    }
   }
 
   /** Retains a bounded excerpt while keeping the complete command log separately. */
