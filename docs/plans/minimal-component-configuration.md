@@ -549,3 +549,10 @@ case completed its real specification, failed regression, continuation and imple
 successfully. Its routing assertion now checks the current request instruction. Neither
 initial run is counted as a final passing suite; affected cases and integrated checks
 must be rerun after these corrections.
+
+The full native matrix subsequently exposed issue #147: session cleanup had removed
+`record.coordinationContext`, which still carries the general scheduler's dependency
+states and verified delivery evidence. Accepted-intent, cycle recovery, multi-owner
+CLI and director-completion scenarios failed. The one-owner live refresh does not
+qualify multi-owner continuation. Restore this captured shared-runtime context without
+restoring legacy action schemas or recursive execution, then rerun the affected matrix.

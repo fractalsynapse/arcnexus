@@ -96,3 +96,9 @@ and observed command, and return its exact diagnostic for another specification
 activation. Implementation remains unavailable until literal expected-failure
 matching succeeds. Repeated equivalent mismatches require progress diagnosis;
 transport, cancellation, authority and uncertain-operation failures remain unsafe.
+
+The general scheduler supplies dependency assignment states, accepted-intent warnings
+and verified-delivery evidence through the retained coordination context. Every
+engineering continuation must receive that captured context alongside correlated inbox
+requests. Its historical field name does not make it a legacy recursive handoff API.
+Removing old session controls must preserve this shared-runtime delivery contract.
