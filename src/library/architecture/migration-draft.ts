@@ -1,7 +1,7 @@
 import { posix } from 'node:path';
 import { git } from '../operations/process.js';
 import { classifyComponentPath, type Component } from './components.js';
-import { covered } from './component-paths.js';
+import { ancestry, covered } from './component-paths.js';
 import { ConfigurationReader, isConfiguration, type ConfigurationSource } from './configuration.js';
 import type { MigrationAuthority } from './migration-authority.js';
 import { MigrationComponent } from './migration-component.js';
@@ -10,6 +10,8 @@ import { MigrationRecipes } from './migration-recipes.js';
 import { validateSchema } from './schema.js';
 
 type Declaration = Record<string, any>;
+
+type Lifecycle = Record<string, Record<string, string[]>>;
 
 /** Builds a proposed configuration family without executing commands or modifying source. */
 export class MigrationDraft {
@@ -114,7 +116,9 @@ export class MigrationDraft {
       cwd: '.',
       category: 'cli-check',
       activities: [],
-      generatedDirectories: [...(this.environment.generatedDirectories ?? [])],
+      generatedDirectories: [
+        ...(this.repositoryEnvironment(repository).generatedDirectories ?? []),
+      ],
       artifacts: [],
       network: true,
     };
@@ -127,7 +131,7 @@ export class MigrationDraft {
       const owner = this.context.catalog.components[raw.id]!;
       this.verification.set(
         raw.id,
-        raw.verification.map((command) =>
+        this.verificationCommands(raw).map((command) =>
           this.recipes.add(
             command,
             this.commandContext(owner.repository || undefined),
@@ -138,28 +142,56 @@ export class MigrationDraft {
     }
   }
 
-  /** Preserves primary lifecycle order and diagnoses dependency recipes requiring explicit repository policy. */
-  private lifecycle(): Record<string, string[]> {
+  /** Anchors inherited legacy commands to each executable owner's repository before operation conversion. */
+  private verificationCommands(component: Component): Component['verification'] {
+    if (['platform', 'package'].includes(component.type)) return [];
+    return ancestry(this.context.catalog, component.id).flatMap((owner) => owner.verification);
+  }
+
+  /** Resolves recipe outputs in their declaring repository, never from a different member. */
+  private repositoryEnvironment(repository: string): Declaration {
+    if (repository === this.context.catalog.primaryRepository) return this.environment;
+    const member = this.environment.workspace.dependencies.find(
+      (item: Declaration) => item.id === repository,
+    );
+    if (!member) throw new Error('Unknown recipe repository: ' + repository);
+    return member;
+  }
+
+  /** Converts each repository's finite recipes while requiring existing accountable execution owners. */
+  private lifecycle(): Lifecycle {
     if (!this.environment.workspace)
       throw new Error('Declare primary repository identity before migration');
+    const primary = this.context.catalog.primaryRepository!;
+    const result: Lifecycle = { [primary]: this.lifecycleRecipes(primary, this.environment) };
     for (const dependency of this.environment.workspace.dependencies ?? []) {
-      if (
-        dependency.prerequisites?.length ||
-        dependency.setup?.length ||
-        dependency.generatedDirectories?.length
-      )
-        throw new Error(
-          'Resolve dependency lifecycle operations before migration: ' + dependency.id,
-        );
+      result[dependency.id] = this.lifecycleRecipes(dependency.id, dependency);
       delete dependency.prerequisites;
       delete dependency.setup;
       delete dependency.generatedDirectories;
     }
+    return result;
+  }
+
+  /** Preserves ordered references and rejects output-only policy that has no operation to carry it. */
+  private lifecycleRecipes(repository: string, declaration: Declaration): Record<string, string[]> {
+    const recipes = [...(declaration.prerequisites ?? []), ...(declaration.setup ?? [])];
+    const owners = Object.values(this.context.catalog.components).filter(
+      (owner) => owner.repository === repository && !['platform', 'package'].includes(owner.type),
+    );
+    if (recipes.length && !owners.length)
+      throw new Error(repository + ' lifecycle requires a declared executable owner');
+    if (
+      !recipes.length &&
+      declaration.generatedDirectories?.length &&
+      repository !== this.context.catalog.primaryRepository
+    )
+      throw new Error(repository + ' generated outputs require explicit operation policy');
     return Object.fromEntries(
       ['prerequisites', 'setup'].map((key) => [
         key === 'prerequisites' ? 'preflight' : 'setup',
-        (this.environment[key] ?? []).map((command: unknown) =>
-          this.recipes.add(command, this.commandContext(), 'Project ' + key),
+        (declaration[key] ?? []).map((command: unknown) =>
+          this.recipes.add(command, this.commandContext(repository), repository + ' ' + key),
         ),
       ]),
     );
@@ -208,13 +240,17 @@ export class MigrationDraft {
     for (const source of sources) {
       const raw = source.value as Component;
       const owner = this.context.catalog.components[raw.id]!;
-      this.components[raw.id] = new MigrationComponent().convert(raw, {
-        definitionPath: source.path,
-        packageRoot: owner.repositoryRoot ?? '.',
-        operationIdentities: identities,
-        verification: this.verification.get(raw.id)!.map((id) => identities[id]!),
-        ...(raw.type === 'platform' ? { execution: this.execution(raw) } : {}),
-      });
+      this.components[raw.id] = new MigrationComponent().convert(
+        { ...raw, verification: this.verificationCommands(raw) },
+        {
+          definitionPath: source.path,
+          definitionInOwnerRepository: owner.repository === this.context.catalog.primaryRepository,
+          packageRoot: owner.repositoryRoot ?? '.',
+          operationIdentities: identities,
+          verification: this.verification.get(raw.id)!.map((id) => identities[id]!),
+          ...(raw.type === 'platform' ? { execution: this.execution(raw) } : {}),
+        },
+      );
     }
     this.classification();
   }
@@ -259,18 +295,11 @@ export class MigrationDraft {
     }
   }
 
-  /** Adds required primary lifecycle operations only where repository identity permits them. */
-  private attachLifecycle(
-    lifecycle: Record<string, string[]>,
-    identities: Record<string, string>,
-  ): void {
+  /** Adds required lifecycle operations only to owners in the declaring repository. */
+  private attachLifecycle(lifecycle: Lifecycle, identities: Record<string, string>): void {
     for (const owner of Object.values(this.context.catalog.components)) {
-      if (
-        ['platform', 'package'].includes(owner.type) ||
-        owner.repository !== this.context.catalog.primaryRepository
-      )
-        continue;
-      for (const [usage, ids] of Object.entries(lifecycle))
+      if (['platform', 'package'].includes(owner.type)) continue;
+      for (const [usage, ids] of Object.entries(lifecycle[owner.repository!] ?? {}))
         for (const id of ids) this.usage(owner.id, identities[id]!, usage);
     }
   }

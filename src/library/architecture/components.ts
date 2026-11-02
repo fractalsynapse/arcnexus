@@ -113,8 +113,13 @@ export function validateOperations(
   for (const op of operations) {
     if (profile.schemaVersion < 2 || !profile.operationCategories?.includes(op.category))
       throw new InputError('Operation category not permitted by execution profile: ' + op.id);
+    const outputs =
+      env.workspace && op.repository !== env.workspace.primary.id
+        ? (env.workspace.dependencies.find((member) => member.id === op.repository)
+            ?.generatedDirectories ?? [])
+        : env.generatedDirectories;
     for (const path of op.generatedDirectories)
-      if (!env.generatedDirectories.includes(path))
+      if (!outputs.includes(path))
         throw new InputError('Operation generated directory is not declared disposable: ' + path);
     if (
       op.kind === 'http' &&

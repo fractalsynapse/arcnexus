@@ -5,6 +5,7 @@ import { validateSchema } from './schema.js';
 
 interface ConversionContext {
   definitionPath: string;
+  definitionInOwnerRepository?: boolean;
   packageRoot: string;
   operationIdentities: Record<string, string>;
   verification: string[];
@@ -79,6 +80,7 @@ export class MigrationComponent {
     scopePath(context.definitionPath);
     return input.ownership!.paths.filter((path) => {
       scopePath(path);
+      if (context.definitionInOwnerRepository === false) return true;
       const resolved = posix.join(context.packageRoot, path);
       if (resolved === context.definitionPath) return false;
       if (covered(context.definitionPath, [resolved]))

@@ -14,6 +14,8 @@
 
 ### Fixed
 
+- Derive root-owned inventories from actual tracked files and validate generated outputs in each operation’s repository (#145, #146).
+
 - Keep implicit definition ownership anchored to its catalog repository and validate every bound minimal repository (#143).
 
 - Reject legacy environment recipes before starting a new minimal task or workday host (#142).

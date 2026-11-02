@@ -101,7 +101,9 @@ export class ComponentV5Resolver {
     if (!revision) return;
     const artifacts = new RevisionArtifacts(revision.source, revision.base);
     c.allowedWritePaths.forEach((p) => artifacts.validatePath(p));
-    const files = git(revision.source, 'ls-tree', '-r', '--name-only', revision.base).split('\n');
+    const files = git(revision.source, 'ls-tree', '-r', '--name-only', revision.base)
+      .split('\n')
+      .filter(Boolean);
     for (const path of files.filter((p) => covered(p, c.allowedWritePaths))) {
       const kind = classifyComponentPath(c, path);
       c.inventory.push({ path, kind, sha256: artifacts.read(path).sha256 });

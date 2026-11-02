@@ -14,7 +14,7 @@ class RegressionScenarios {
     }
   }
 
-  /** Stable IDs survive reordering, while legacy indexes remain limited to historical configuration. */
+  /** Stable IDs survive reordering, while legacy index evidence cannot become a new execution. */
   async selection(): Promise<void> {
     const { RegressionOperation } = await this.runtime();
     const operation = this.operation();
@@ -26,7 +26,7 @@ class RegressionScenarios {
     assert.throws(() => selection.select({ verificationIndex: 0 }), /operationId/);
     assert.throws(() => selection.select({ operationId: 'unknown' }), /captured verification/);
     component.schemaVersion = 4;
-    assert.equal(selection.select({ verificationIndex: 1 }), operation);
+    assert.throws(() => selection.select({ verificationIndex: 1 }), /version.five/);
   }
 
   /** A failed prerequisite cannot establish expected-red evidence for the selected test operation. */

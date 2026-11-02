@@ -39,18 +39,14 @@ export function specificationFiles(
 
 /** Applies the captured classifier to proposed files without inventing documentation or test evidence. */
 function specificationPaths(component: Component, observed: ReturnType<typeof changes>) {
-  const documentation =
-    component.schemaVersion === 5
-      ? observed
-          .filter((c) => classifyComponentPath(component, c.path) === 'documentation')
-          .map((c) => c.path)
-      : component.documentation;
-  const testPaths =
-    component.schemaVersion === 5
-      ? observed
-          .filter((c) => classifyComponentPath(component, c.path) === 'tests')
-          .map((c) => c.path)
-      : component.tests;
+  if (component.schemaVersion !== 5)
+    throw new Error('Specification capture requires version-five authority');
+  const documentation = observed
+    .filter((c) => classifyComponentPath(component, c.path) === 'documentation')
+    .map((c) => c.path);
+  const testPaths = observed
+    .filter((c) => classifyComponentPath(component, c.path) === 'tests')
+    .map((c) => c.path);
   return { documentation, testPaths };
 }
 

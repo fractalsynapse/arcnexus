@@ -480,3 +480,20 @@ validated against primary generated-output roots. Each operation must resolve ou
 policy in its own declared repository; identical directory spellings in two repositories
 are independent grants. The migration regression uses dependency-only `output` to
 prevent the previous same-spelling fixture from concealing this error.
+
+### Dependency migration and final regression selection qualification
+
+Dependency-local finite recipes now migrate when their repository has an existing
+executable owner. Inherited historical checks are resolved in each owner's repository
+before deduplication and policy hoisting. Foreign definition ownership remains anchored
+to the catalog repository. Repository-root inventory and repository-specific output
+validation fixes close the observed #145/#146 defects. A built CLI acceptance proves
+validated application, dependency-only output preservation, no primary setup grant and
+second-invocation idempotence. Missing owners still produce a decision diagnostic.
+
+Nine focused deterministic cases passed with no skips: six whole-configuration
+migration cases and three regression-selection/evidence cases. The latter preserves
+historical response-schema reading while rejecting index-based regression execution.
+Specification and expected-red capture now have only the minimal execution path.
+The dependency lifecycle test first failed at the prior blanket rejection; later
+qualification exposed and retained the two composed-catalog defects above.

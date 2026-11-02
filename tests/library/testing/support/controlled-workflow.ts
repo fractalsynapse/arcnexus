@@ -361,6 +361,11 @@ export class ControlledWorkflow {
         evidence: ['source.txt'],
         acceptanceCriteria: ['Contract supports behavior'],
         reason: 'Outside this assignment',
+        assignmentId: null,
+        milestone: 'delivered',
+        kind: 'change',
+        changeType: 'behavior',
+        allowedWritePaths: null,
       },
     ];
   }
