@@ -91,11 +91,11 @@ export class CodexTools {
   /** Releases resources owned by this instance. */
   async close(): Promise<void> {
     const { operations } = this.configuration.input;
+    operations?.disconnect();
     try {
-      await operations?.close();
-    } finally {
-      operations?.disconnect();
       await this.bridge?.close();
+    } finally {
+      await operations?.close();
     }
   }
 }

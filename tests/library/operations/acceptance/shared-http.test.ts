@@ -46,6 +46,7 @@ class SharedHttpScenarios {
     try {
       for (let turn = 0; turn < 2; turn++) {
         await bridge.call('services.start', { id: 'server' });
+        bridge.disconnect();
         await bridge.close();
       }
     } finally {
