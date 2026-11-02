@@ -4,6 +4,7 @@ import { loadProjectBindings, type Bindings } from './bindings.js';
 import { loadCatalog, scopePath, type Catalog } from './components.js';
 import { ConfigurationReader } from './configuration.js';
 import { InputError } from './config.js';
+import { ExecutionContext } from './execution-context.js';
 import { PlatformExecution } from './platform-execution.js';
 import { git } from '../operations/process.js';
 
@@ -29,6 +30,11 @@ export function captureMigrationAuthority(cwd: string): MigrationAuthority {
   const defaults = Object.values(catalog.components).every((c) => c.schemaVersion === 5)
     ? new PlatformExecution(catalog).defaults(source, base)
     : legacyDefaults(source, base);
+  new ExecutionContext().validateProfiles(catalog, [
+    ...Object.keys(catalog.profiles),
+    defaults.directorProfile,
+    defaults.reviewerProfile,
+  ]);
   return { source, base, key: digest(commonDir).slice(0, 24), bindings, catalog, ...defaults };
 }
 

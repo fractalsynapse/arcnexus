@@ -35,6 +35,19 @@ class ConfigMigrationScenarios {
     assert.match(repeated.stdout, /No configuration changes/);
   }
 
+  /** Refuses obsolete executable budgets before a migration can publish unusable minimal authority. */
+  obsoleteBudget(t: TestContext): void {
+    const fixture = new MigrationFixture(t);
+    const path = 'architecture/execution-profiles/luna.json';
+    const profile = JSON.parse(readFileSync(join(fixture.root, path), 'utf8'));
+    fixture.put(path, { ...profile, schemaVersion: 2, maxOperationCalls: 2 });
+    fixture.commit();
+    const result = fixture.migrate('--write');
+    assert.equal(result.status, 2, result.stderr);
+    assert.match(result.stderr, /obsolete.*maxOperationCalls/);
+    assert.equal(fixture.git('status', '--porcelain'), '');
+  }
+
   /** Unowned historical files require an explicit owner decision instead of a guessed writable migration. */
   excludedOwnership(t: TestContext): void {
     const fixture = new MigrationFixture(t);
@@ -66,6 +79,9 @@ class ConfigMigrationScenarios {
 }
 
 const scenarios = new ConfigMigrationScenarios();
+
+test('config migration rejects obsolete executable profile budgets before writing source', (t) =>
+  scenarios.obsoleteBudget(t));
 
 test('config migrate previews and applies validated minimal declarations idempotently', (t) =>
   scenarios.previewAndWrite(t));
