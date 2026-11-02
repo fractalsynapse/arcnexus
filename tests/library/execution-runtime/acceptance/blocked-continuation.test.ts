@@ -151,7 +151,7 @@ class BlockedContinuationScenarios {
     const prompt = JSON.parse(readFileSync(f.calls, 'utf8').trim().split('\n').at(-1)!).prompt;
     assert.match(prompt, /accepted intent is not verified delivery/);
     assert.doesNotMatch(prompt, /Verified dependency deliveries:/);
-    assert.match(prompt, /explicitly request milestone=delivered/);
+    assert.match(prompt, /action=require_delivery, the existing requestId/);
   }
 
   /** Captures one real planned supplier activation before introducing a retained blocker. */
