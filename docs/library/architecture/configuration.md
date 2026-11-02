@@ -78,3 +78,10 @@ Type-only imports and local re-exports participate in the derived relationship v
 Namespace access is checked against the symbols actually used; escaping or dynamic
 namespace access cannot bypass a narrowed public surface. Import and consumer views
 are generated from the captured source, never authored lists.
+
+Effective policy evidence identifies the declarations contributing inherited reads,
+constraints, patterns and required operation usages, alongside scalar defaults.
+Implicit readability of owned paths is reported separately from authored read policy.
+Derived public catalogs may reuse an application-owned in-memory snapshot only when
+the source revision, ownership, public declarations, file digests and analyzer version
+match. Each caller receives an isolated copy; reuse cannot mutate active authority.
