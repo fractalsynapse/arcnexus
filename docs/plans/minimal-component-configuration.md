@@ -474,3 +474,9 @@ Dependency migration exposed issue #145: root-owned inventories included the emp
 terminator from Git's file listing as if it were a maintained file. Root ownership
 is valid for a separate bound repository; inventory must contain actual tracked
 paths only. The dependency migration acceptance retains this regression case.
+
+Issue #146 records a second composed-policy defect: dependency operations were
+validated against primary generated-output roots. Each operation must resolve output
+policy in its own declared repository; identical directory spellings in two repositories
+are independent grants. The migration regression uses dependency-only `output` to
+prevent the previous same-spelling fixture from concealing this error.
