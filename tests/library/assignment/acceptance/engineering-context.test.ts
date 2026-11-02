@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { readSchema } from '../../../../dist/library/architecture/schema.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Verifies the assembled context communicates the usable write route without expanding authority. */
@@ -10,6 +11,11 @@ class EngineeringContextScenarios {
     assert.match(prompt, /source\.edit/);
     assert.match(prompt, /tool search/);
     assert.match(prompt, /SHA-256/);
+    assert.match(prompt, /relative to the workspace, never absolute/);
+    assert.match(
+      readSchema('checked-edits').properties.changes.items.properties.path.description,
+      /relative.*never absolute/,
+    );
     assert.match(prompt, /fresh unique transaction ID/);
     assert.match(prompt, /planning, coordination, research and review remain read-only/);
     assert.match(prompt, /Native patch and shell writes.*intentionally unavailable/);

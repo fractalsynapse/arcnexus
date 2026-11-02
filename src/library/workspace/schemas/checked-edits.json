@@ -19,7 +19,8 @@
         "properties": {
           "path": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "Owned path relative to the assignment workspace, never absolute. Omit the workspace directory prefix; traversal is forbidden."
           },
           "operation": {
             "enum": ["create", "update", "delete"]
