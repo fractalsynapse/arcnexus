@@ -43,7 +43,7 @@ class WorkdayExperimentsTests {
       JSON.parse(r.stdout)
         .operations.map((o: any) => o.id)
         .sort(),
-      ['component-lint', 'component-tests', 'guidance-build'],
+      ['component-format', 'component-lint', 'component-tests', 'guidance-build'],
     );
   }
 

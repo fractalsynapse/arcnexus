@@ -37,6 +37,8 @@ operations:
     - agent
   component-lint:
     - agent
+  component-format:
+    - agent
 director:
   component: task-intake
   profile: astra

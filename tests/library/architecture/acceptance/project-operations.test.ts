@@ -32,11 +32,29 @@ class ProjectOperationScenarios {
       assert.ok(!component.operations?.['component-tests']?.includes('agent'));
     }
   }
+
+  /** Formatting shares one read-only command and derives each owner's proposal paths. */
+  formatting(): void {
+    const { catalog, owners } = new ExecutionContext().resolve(process.cwd());
+    for (const id of owners) {
+      const owner = catalog.components[id]!;
+      const formatter = owner.operationPlan!.agent!.find((op) => op.id === 'component-format');
+      assert.ok(formatter && formatter.kind === 'command', id + ' needs checked formatting');
+      assert.deepEqual(formatter.args, [
+        'scripts/foundation/format-proposal.mjs',
+        ...owner.allowedWritePaths,
+      ]);
+      assert.deepEqual(formatter.generatedDirectories, []);
+    }
+  }
 }
 
 const scenarios = new ProjectOperationScenarios();
 
 test('real project inherits one shared lint and test availability definition per owner', () =>
   scenarios.inherited());
+
+test('real project derives checked formatting proposals from inherited ownership', () =>
+  scenarios.formatting());
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });
