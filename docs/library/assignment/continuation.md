@@ -7,8 +7,10 @@ stage or reset evidence. The requesting stage continues after verified delivery.
 Host checks finish before a stage checkpoint is declared safe for pause.
 
 A retained activation must match captured authority and candidate identity before
-continuing. Model claims never bypass specification or final verification. Existing
-standalone workflows continue to use the same stage implementations.
+continuing. Model claims never bypass specification or final verification. The final retirement slice routes the standalone session API through this same
+durable stage dispatcher, eliminating its separate complete-workflow loop. A session
+that yields an inbox dependency returns to its scheduler; it never recursively runs
+the recipient. Reopening requires current minimal authority and a validated checkpoint.
 
 Behavior-preserving refactors declare `changeType: refactor`. Their preparation
 checkpoint references the existing contract, adds characterization coverage only
