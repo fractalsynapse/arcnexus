@@ -121,7 +121,8 @@
             "type": ["string", "null"]
           },
           "milestone": {
-            "enum": ["accepted", "delivered"]
+            "enum": ["delivered", "accepted"],
+            "description": "Use delivered for code, tests, documentation or other verified artifacts. Accepted means intent only."
           },
           "kind": {
             "enum": ["change", "research", "review", null]
@@ -315,7 +316,7 @@
             "type": "string"
           },
           "action": {
-            "enum": ["accept", "reject", "clarify", "answer"]
+            "enum": ["accept", "reject", "clarify", "answer", "require_delivery"]
           },
           "text": {
             "type": "string",

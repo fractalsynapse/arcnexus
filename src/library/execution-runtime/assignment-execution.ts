@@ -219,7 +219,7 @@ export class AssignmentExecution {
           reviews: new DeliveryEvidence(this.root).capture(dependency),
         })),
       ) +
-      '\nIf accepted intent is insufficient, explicitly request milestone=delivered with the existing assignmentId and matching owner, objective, acceptance criteria and scope. The host does not silently strengthen an accepted milestone.';
+      '\nIf accepted intent is insufficient, return inboxActions with action=require_delivery, the existing requestId from General inbox requests (not the dependency assignment ID), and an explanation. Do not create another request or restate accepted scope; this action strengthens only the existing milestone.';
   }
 
   /** Incorporates verified deliveries without losing incomplete owner changes or frozen evidence. */
