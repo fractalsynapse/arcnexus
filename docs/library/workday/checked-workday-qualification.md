@@ -127,3 +127,30 @@ input behavior. `verified-documentation.diff`, `caller-tests.log` and
 The subsequent unchanged stewardship pass became idle. This qualifies a real
 self-directed improvement with inbox service and requester resumption; it does not
 claim ArcNexus self-development or active-operation crash recovery.
+
+### Active managed-operation host loss
+
+After that delivery, real task `8a8a25de-03ee-490f-a19e-5b6753e236fb` requested a
+read-only documentation audit. Its director selected CLI and the workday paused for
+the task. During assignment `8d470dd6-9e50-4bf5-9bb2-07ac9a6de4f1`, the qualification
+caller observed `package-tests` invocation `ce109dad-c4d9-4e55-8672-15aaf5f0f2f5`
+in `running` state and killed host PID 2325297. The observed managed children were
+the command supervisor and process-scope launcher; this injection does not claim
+that the npm test body had begun executing.
+
+Both observed child PIDs and their captured process scope disappeared. Ordinary
+`workday status` recovered the same supervisor hash, marked the task/assignment and
+invocation interrupted, and retained the reason `Operation completion is uncertain`.
+The operation identity occurred exactly once after recovery and was not replayed.
+The verified candidate remained `fccac168fbec71419c227ad503e8e9dcbebfba68`, source
+remained clean, and no partial research output was promoted. `workday resume`
+resumed the valid workday checkpoint and reached idle without restarting the
+interrupted task. The task remains honestly unsuccessful, with retained evidence.
+
+`active-loss-injection.json`, `recovered-status.json`, `resumed-status.json` and
+`active-loss-verification.json` retain observed processes, invocation identity,
+recovery state and unchanged candidate. Assignment execution report
+`5250d336-5483-4dcb-9f97-773362d8bc2d` preserves the completed preflight and uncertain
+baseline operation. This establishes live managed-operation interruption and
+validated unrelated-workday recovery, not successful completion of the interrupted
+audit. The workday was subsequently stopped with its verified candidate retained.
