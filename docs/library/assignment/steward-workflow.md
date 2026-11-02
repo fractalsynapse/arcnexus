@@ -154,3 +154,7 @@ for each distinct batch. An identical retry may reuse that identity. The same co
 retains ownership narrowing and stage restrictions: planning, coordination, research and
 review do not gain source-edit permission merely because the tool is discoverable.
 A denied native write is not evidence that the checked edit route is unavailable.
+
+Checked edit paths are relative to the assignment workspace, never absolute paths.
+Context and tool metadata must state this explicitly; a displayed absolute workspace
+location is for reading and command context, not the spelling of `changes[].path`.
