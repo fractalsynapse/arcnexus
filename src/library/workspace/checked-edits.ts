@@ -17,6 +17,8 @@ import {
   type PreparedEdit,
 } from './edit-files.js';
 
+export { StaleEditError } from './edit-files.js';
+
 interface EditTransaction {
   id: string;
   requestHash: string;

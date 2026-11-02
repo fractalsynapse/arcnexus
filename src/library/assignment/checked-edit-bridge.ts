@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { checkedEditAuthority } from './edit-recovery.js';
 import { covered, classifyComponentPath } from '../architecture/components.js';
 import type { BridgeTool } from '../steward/bridge.js';
-import { CheckedEdits } from '../workspace/checked-edits.js';
+import { CheckedEdits, StaleEditError } from '../workspace/checked-edits.js';
 import type { SessionState } from './session-state.js';
 
 /** Exposes checked source mutation only through the active assignment's host-bound connection. */
@@ -39,7 +39,24 @@ export class CheckedEditBridge {
   /** Applies only this bridge's tool, retaining a host journal and exact content receipts. */
   call(name: string, args: unknown): unknown {
     if (name !== 'source.edit') throw new Error('Unknown edit tool');
-    const receipt = this.edits.apply(args);
+    let receipt;
+    try {
+      receipt = this.edits.apply(args);
+    } catch (error) {
+      if (!(error instanceof StaleEditError)) throw error;
+      const rejection = {
+        status: 'rejected',
+        error: error.message,
+        recovery:
+          'No edits were applied. Reread the current bytes, compute SHA-256 and retry the complete batch.',
+      };
+      this.state.journal(
+        String(this.state.options.record.stage),
+        'source.edit_rejected',
+        rejection,
+      );
+      return rejection;
+    }
     this.state.journal(String(this.state.options.record.stage), 'source.edited', receipt);
     this.state.safe();
     return receipt;

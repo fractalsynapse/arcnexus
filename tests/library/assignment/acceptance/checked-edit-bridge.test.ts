@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
@@ -56,6 +56,32 @@ class EditAuthorityScenarios {
     );
   }
 
+  /** Stale batches reject every member and permit a corrected request without aborting the tool scope. */
+  stale(t: TestContext): void {
+    const state = this.fixture(t);
+    state.options.record.stage = 'implementation';
+    const bridge = new CheckedEditBridge(state);
+    const request = this.request('owned/file.ts');
+    writeFileSync(join(state.options.record.workspace, 'owned/second.ts'), 'second');
+    request.changes.push({ ...request.changes[0]!, path: 'owned/second.ts' });
+    const result = bridge.call('source.edit', request) as any;
+    assert.equal(result.status, 'rejected');
+    assert.match(result.error, /Stale content hash/);
+    assert.deepEqual(this.contents(state), ['before', 'second']);
+    assert.deepEqual(readdirSync(join(state.dir, 'checked-edits')), []);
+    request.changes[1]!.expectedSha256 = digest('second');
+    assert.equal((bridge.call('source.edit', request) as any).status, 'committed');
+    assert.deepEqual(this.contents(state), ['after', 'after']);
+    assert.equal(readdirSync(join(state.dir, 'checked-edits')).length, 1);
+  }
+
+  /** Observes both batch members so a partial application cannot satisfy the rejection assertions. */
+  private contents(state: SessionState): string[] {
+    return ['owned/file.ts', 'owned/second.ts'].map((path) =>
+      readFileSync(join(state.options.record.workspace, path), 'utf8'),
+    );
+  }
+
   /** Creates a minimal host state with authority unavailable to the incoming edit arguments. */
   private fixture(t: TestContext): SessionState {
     const root = mkdtempSync(join(tmpdir(), 'edit-authority-'));
@@ -92,5 +118,8 @@ test('checked edit bridge enforces bound owner and workflow stage', (t) => scena
 
 test('checked edit bridge permits correction while freezing accepted regression', (t) =>
   scenarios.correction(t));
+
+test('stale checked edits return rejection and permit a corrected atomic batch', (t) =>
+  scenarios.stale(t));
 
 registerSuite({ component: 'assignment', level: 'acceptance', tags: ['deterministic'] });
