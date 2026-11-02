@@ -1,5 +1,5 @@
 import type { Component } from '../architecture/components.js';
-import type { Command } from '../architecture/config.js';
+import type { VerificationCheck } from '../architecture/config.js';
 import type { Operation } from '../operations/operations.js';
 import type { CommandResult } from '../operations/process.js';
 import type { AgentResult } from '../steward/codex.js';
@@ -14,15 +14,17 @@ export class RegressionOperation {
   ) {}
 
   /** Supports historical index evidence while requiring stable operation identities for minimal components. */
-  select(regression: AgentResult['regression']): Command {
+  select(regression: AgentResult['regression']): VerificationCheck {
     if (!regression) throw new Error('Missing regression checkpoint');
     if (this.component.schemaVersion === 5) {
       if (!('operationId' in regression)) throw new Error('Regression requires operationId');
       const operation = this.component.verification.find(
         (command) => (command as Operation).id === regression.operationId,
       ) as Operation | undefined;
-      if (!operation || operation.schemaVersion !== 4 || operation.kind !== 'command')
-        throw new Error('Regression operation is not a captured verification command');
+      if (!operation || operation.schemaVersion !== 4 || operation.kind === 'service')
+        throw new Error(
+          'Regression operation is not a captured verification operation (finite required)',
+        );
       return operation;
     }
     const command =
@@ -34,11 +36,11 @@ export class RegressionOperation {
   }
 
   /** Rejects prerequisite failures and freezes the selected operation's actual host invocation context. */
-  capture(command: Command, result: CommandResult): void {
+  capture(command: VerificationCheck, result: CommandResult): void {
     if (this.component.schemaVersion !== 5) return;
     const operation = command as Operation;
     const invocations = this.record.operationInvocations as Array<Record<string, any>> | undefined;
-    const invocation = invocations?.at(-1);
+    const invocation = invocations?.findLast((entry) => entry.result?.log === result.log);
     if (
       !invocation ||
       invocation.operationId !== operation.id ||

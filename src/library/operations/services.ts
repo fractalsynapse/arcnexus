@@ -103,12 +103,14 @@ export class ServiceManager {
 
   /** Starts managed work and records the state needed for its later shutdown. */
   async start(op: Operation): Promise<ServiceRecord> {
+    this.signal.throwIfAborted();
     if (op.kind !== 'service' || !op.service) throw new Error('Not a service operation');
     if (this.child) throw new Error('Only one active service lease is permitted');
     this.confinement =
       op.schemaVersion === 4
         ? await new OperationConfinement(this.root, this.record, this.signal).prepare(op)
         : undefined;
+    this.signal.throwIfAborted();
     const record = this.createRecord(op.id);
     const child = this.launch(op, record);
     const timeout = new AbortController();
@@ -167,6 +169,7 @@ export class ServiceManager {
         this.confinement?.environment(operationEnvironment(this.record)) ??
         operationEnvironment(this.record),
       port: op.service!.port,
+      processScope: !!this.confinement,
     });
     return child;
   }
@@ -218,7 +221,11 @@ export class ServiceManager {
     service: ServiceDefinition,
     signal: AbortSignal,
   ): Promise<boolean> {
-    if (!record.pid || !record.port || !ownedLoopbackListener(record.pid, record.port))
+    if (
+      !record.pid ||
+      !record.port ||
+      !ownedLoopbackListener(record.pid, record.port, record.processScope)
+    )
       return false;
     try {
       const response = await localRequest(record.port, service.readinessPath, signal);
@@ -230,17 +237,23 @@ export class ServiceManager {
     }
   }
 
+  /** Returns lease identity without requiring a live endpoint, so failed listeners can still be cleaned up. */
+  lease(id: string): ServiceRecord {
+    if (!this.current || this.current.id !== id) throw new Error('Service lease unavailable');
+    return this.current;
+  }
+
   /** Returns the retained service state without restarting it. */
   status(id: string): ServiceRecord {
-    if (!this.current || this.current.id !== id) throw new Error('Service lease unavailable');
-    if (this.current.status !== 'ready') return this.current;
+    const current = this.lease(id);
+    if (current.status !== 'ready') return current;
     if (
-      !this.current.pid ||
-      !this.current.port ||
-      !ownedLoopbackListener(this.current.pid, this.current.port)
+      !current.pid ||
+      !current.port ||
+      !ownedLoopbackListener(current.pid, current.port, current.processScope)
     )
       throw new Error('Service lease is no longer listening');
-    return this.current;
+    return current;
   }
 
   /** Returns a bounded excerpt of retained service output. */

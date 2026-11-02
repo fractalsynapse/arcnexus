@@ -68,7 +68,11 @@ export class InitializerChecks {
   }
 
   /** Executes one intake check with cancellation and retained command evidence. */
-  private command(command: import('../architecture/config.js').Command, signal: AbortSignal) {
+  private command(
+    command: import('../architecture/config.js').VerificationCheck,
+    signal: AbortSignal,
+  ) {
+    if (!('command' in command)) throw new Error('Legacy verification requires a command');
     return execute(
       targetCommand(this.record, command),
       this.record.workspace,

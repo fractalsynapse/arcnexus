@@ -89,10 +89,19 @@ export class OperationOrder {
     const operation = Object.hasOwn(this.operations, id) ? this.operations[id] : undefined;
     if (!operation) throw new Error(`Unknown prerequisite operation: ${id}`);
     this.active.add(id);
-    (operation.prerequisites ?? []).forEach((dependency) => this.visit(dependency));
+    this.dependencies(operation).forEach((dependency) => this.visit(dependency));
     this.active.delete(id);
     this.completed.add(id);
     this.ordered.push(operation);
+  }
+
+  /** Includes finite service preparation in HTTP ordering without treating service startup as a finite check. */
+  private dependencies(operation: Operation): string[] {
+    if (operation.kind !== 'http') return operation.prerequisites ?? [];
+    const service = this.operations[operation.http.serviceId];
+    if (service?.kind !== 'service')
+      throw new Error(`Missing HTTP service operation: ${operation.http.serviceId}`);
+    return [...(operation.prerequisites ?? []), ...(service.prerequisites ?? [])];
   }
 }
 

@@ -71,6 +71,8 @@ class OperationRuntime {
 
   private active: AbortController | undefined;
 
+  private readonly lifecycle = new AbortController();
+
   private pending?: Promise<unknown>;
 
   private generation = 0;
@@ -85,7 +87,8 @@ class OperationRuntime {
     private readonly inspect: () => void,
   ) {
     this.resolved = record.resolvedAssignment as ResolvedAssignment;
-    this.services = new ServiceManager(root, record, signal);
+    this.signal = AbortSignal.any([signal, this.lifecycle.signal]);
+    this.services = new ServiceManager(root, record, this.signal);
     record.operations ??= [];
     record.operationCalls ??= 0;
   }
@@ -93,6 +96,7 @@ class OperationRuntime {
   /** Releases resources owned by this instance. */
   async close(): Promise<void> {
     this.generation++;
+    this.lifecycle.abort(new Error('Operation turn completed'));
     this.active?.abort(new Error('Operation turn completed'));
     try {
       await this.pending;
@@ -105,6 +109,7 @@ class OperationRuntime {
   /** Stops managed work when its operation bridge loses its owner. */
   disconnect(): void {
     this.generation++;
+    this.lifecycle.abort(new Error('Operation bridge disconnected'));
     this.active?.abort(new Error('Operation bridge disconnected'));
     void this.services.stop().catch(() => {});
   }
@@ -113,17 +118,13 @@ class OperationRuntime {
   async call(name: string, args: unknown): Promise<unknown> {
     if (name === 'operations.list') return this.list(args);
     const op = this.authorize(name, args);
-    if (name.startsWith('services.')) {
-      const result = await this.service(name, op);
-      this.inspect();
-      return result;
-    }
-    if (op.kind === 'service') throw new Error('Use services.start for service operations');
+    if (op.kind === 'service' && !name.startsWith('services.'))
+      throw new Error('Use services.start for service operations');
     const number = Number(this.record.operationCalls);
     observe(this.root, this.record, 'operation.queued', { id: op.id, number });
     const generation = this.generation;
     const execution = (this.pending ?? Promise.resolve()).then(() =>
-      this.perform(op, number, generation),
+      name.startsWith('services.') ? this.service(name, op) : this.perform(op, number, generation),
     );
     this.pending = execution;
     return execution;
@@ -211,6 +212,17 @@ class OperationRuntime {
 
   /** Routes declared service lifecycle actions through the service manager. */
   private async service(name: string, op: Operation): Promise<unknown> {
+    this.signal.throwIfAborted();
+    if (op.schemaVersion === 4) {
+      const result = await new OperationExecution(
+        this.root,
+        this.record,
+        this.signal,
+        this.services,
+      ).service(op, name);
+      this.inspect();
+      return result;
+    }
     switch (name) {
       case 'services.start':
         return this.services.start(op);
@@ -289,8 +301,8 @@ class OperationRuntime {
   /** Executes the fixed command and retains its output and exit evidence. */
   private async command(op: Operation, cwd: string, signal: AbortSignal): Promise<CommandResult> {
     const { root, record, resolved } = this;
-    if (op.schemaVersion === 4 && op.kind === 'command')
-      return new OperationExecution(root, record, signal).run(op, 'agent');
+    if (op.schemaVersion === 4)
+      return new OperationExecution(root, record, signal, this.services).run(op, 'agent');
     const log = join(root, 'runs', record.id, `operation-${this.activeNumber}.log`);
     if (op.kind === 'http')
       return this.services.check(

@@ -1,3 +1,4 @@
+import { ProcessScope } from './process-scope.js';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { closeSync, openSync, renameSync, writeFileSync, writeSync } from 'node:fs';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -10,11 +11,14 @@ interface Start {
   cwd: string;
   env: NodeJS.ProcessEnv;
   port: number;
+  processScope?: boolean;
 }
 
 /** Owns the foreground service process and stops its group after parent loss. */
 class ServiceSupervisor {
   private child?: ChildProcess;
+
+  private scope?: ProcessScope;
 
   private record?: ServiceRecord;
 
@@ -67,7 +71,8 @@ class ServiceSupervisor {
     record.error ??= reason === 'lease ended' ? undefined : reason;
     this.persist();
     const pid = this.child?.pid;
-    if (pid) await this.stopGroup(pid);
+    if (this.scope) await this.scope.close();
+    else if (pid) await this.stopGroup(pid);
     record.endpointClosed = record.port ? await endpointClosed(record.port) : true;
     record.status =
       (!pid || !groupMembers(pid).length) && record.endpointClosed ? 'stopped' : 'unresolved';
@@ -105,7 +110,11 @@ class ServiceSupervisor {
     this.requestedPort = message.port;
     this.persist();
     this.fd = openSync(this.record.log, 'wx', 0o600);
-    this.child = spawn(message.command, message.args, {
+    this.scope = message.processScope ? new ProcessScope() : undefined;
+    this.record.processScope = this.scope?.path;
+    this.persist();
+    const command = this.scope?.command(message) ?? message;
+    this.child = spawn(command.command, command.args, {
       cwd: message.cwd,
       env: { ...message.env, ARCNEXUS_HOST: '127.0.0.1', ARCNEXUS_PORT: String(message.port) },
       detached: true,
@@ -119,7 +128,7 @@ class ServiceSupervisor {
     this.child.on('error', (error) => {
       void this.stop(String(error));
     });
-    this.child.on('close', (code) => {
+    this.child.on('exit', (code) => {
       if (!this.stopping) void this.stop(`Service exited unexpectedly (${code})`);
     });
   }

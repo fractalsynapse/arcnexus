@@ -47,6 +47,36 @@ export class OperationCheckpoint {
       });
   }
 
+  /** Resolves finite preparation for an explicit service start without executing the service as a checkpoint. */
+  prerequisites(operation: Operation): Operation[] {
+    return this.dependencies(operation).filter((entry) => entry.id !== operation.id);
+  }
+
+  /** Requires service authority in the owner's captured agent operation plan. */
+  service(operation: Operation): Operation {
+    const owner = operationOwner(this.record, operation);
+    const captured = owner.operationPlan?.agent?.find((entry) => entry.id === operation.id);
+    if (
+      operation.kind !== 'service' ||
+      captured?.kind !== 'service' ||
+      captured.definitionDigest !== operation.definitionDigest ||
+      operation.schemaVersion !== 4
+    )
+      throw new Error('Missing captured agent service authority');
+    return new OperationArguments().capture(captured, operation.resolvedContext!);
+  }
+
+  /** Captures the managed service dependency named by a finite HTTP operation. */
+  serviceFor(operation: Operation): Operation {
+    if (operation.kind !== 'http') throw new Error('HTTP service reference required');
+    const owner = operationOwner(this.record, operation);
+    const service = owner.operationPlan?.agent?.find(
+      (entry) => entry.id === operation.http.serviceId,
+    );
+    if (!service) throw new Error(`Missing captured agent service: ${operation.http.serviceId}`);
+    return this.service(new OperationArguments().capture(service, operation.resolvedContext!));
+  }
+
   /** Expands prerequisites only from the captured owner's declared operation plan. */
   private dependencies(operation: Operation): Operation[] {
     const owner = operationOwner(this.record, operation);
@@ -56,6 +86,7 @@ export class OperationCheckpoint {
     if (captured && captured.definitionDigest !== operation.definitionDigest)
       throw new Error(`Operation definition changed: ${operation.id}`);
     registry[operation.id] = operation;
+    if (operation.kind === 'http') this.serviceFor(operation);
     return new OperationOrder(registry)
       .resolve([operation.id])
       .map((entry) =>
@@ -69,7 +100,7 @@ export class OperationCheckpoint {
   /** Refuses unresolved, unbounded or legacy operations before partial lifecycle execution. */
   private validate(operation: Operation): void {
     if (
-      operation.kind !== 'command' ||
+      operation.kind === 'service' ||
       operation.schemaVersion !== 4 ||
       operation.argumentTokens ||
       !operation.definitionDigest ||

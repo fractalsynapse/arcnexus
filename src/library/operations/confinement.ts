@@ -17,7 +17,10 @@ export interface ConfinementAuthority {
 
 /** Builds an enforced read-only source policy with narrowly declared disposable output mounts. */
 export class SourceConfinement {
-  readonly filesystem: Record<string, 'read' | 'write'> = { ':minimal': 'read' };
+  readonly filesystem: Record<string, 'read' | 'write'> = {
+    ':minimal': 'read',
+    '/sys/fs/cgroup': 'read',
+  };
 
   readonly overrides: string[];
 

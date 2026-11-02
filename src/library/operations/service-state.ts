@@ -8,6 +8,7 @@ export interface ServiceRecord {
   status: string;
   supervisorPid: number;
   pid?: number;
+  processScope?: string;
   startTime?: string;
   port?: number;
   log: string;
@@ -37,9 +38,11 @@ export function processStart(pid: number): string | undefined {
   }
 }
 
-export function ownedLoopbackListener(pid: number, port: number): boolean {
+export function ownedLoopbackListener(pid: number, port: number, scope?: string): boolean {
   const inodes = new Set<string>();
-  for (const member of groupMembers(pid)) {
+  for (const member of scope
+    ? readFileSync(join(scope, 'cgroup.procs'), 'utf8').trim().split(/\s+/).map(Number)
+    : groupMembers(pid)) {
     try {
       for (const fd of readdirSync(`/proc/${member}/fd`)) {
         try {

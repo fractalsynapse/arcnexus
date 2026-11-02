@@ -12,7 +12,13 @@ import { ArchitectureReferences } from './references.js';
 import { validateInitialization } from './initialization.js';
 import type { Operation } from '../operations/operations.js';
 import { git } from '../operations/process.js';
-import { commands, environment, InputError, type Command, type Environment } from './config.js';
+import {
+  commands,
+  environment,
+  InputError,
+  type VerificationCheck,
+  type Environment,
+} from './config.js';
 import { ConfigurationReader, isConfiguration, type ConfigurationSource } from './configuration.js';
 import { DirectoryGrants } from './directory-grants.js';
 import { OwnershipValidator } from './ownership.js';
@@ -36,7 +42,7 @@ export interface Component extends ComponentV4Fields, ComponentV5Fields {
   constraints: string[];
   access: AccessPolicy;
   allowedWritePaths: string[];
-  verification: Command[];
+  verification: VerificationCheck[];
   parentId?: string;
   questions: string[];
   patterns: string[];

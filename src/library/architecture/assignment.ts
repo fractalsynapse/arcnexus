@@ -19,7 +19,14 @@ import {
   type ExecutionProfile,
   type Role,
 } from './components.js';
-import { commands, environment, InputError, type Command, type Environment } from './config.js';
+import {
+  commands,
+  environment,
+  InputError,
+  type Command,
+  type VerificationCheck,
+  type Environment,
+} from './config.js';
 import { ConfigurationReader } from './configuration.js';
 import { validateSchema } from './schema.js';
 
@@ -73,7 +80,7 @@ export interface ResolvedAssignment {
   compositionProfile?: CompositionProfile;
   executionProfile: ExecutionProfile;
   allowedWritePaths: string[];
-  verification: Command[];
+  verification: VerificationCheck[];
   artifacts: Array<{ path: string; sha256: string; content: string }>;
   pendingChecks: string[];
   digest: string;
@@ -96,7 +103,7 @@ export function resolveBase(repository: string, ref = 'HEAD'): { source: string;
 }
 
 export interface AssignmentOptions {
-  additionalVerification?: Command[];
+  additionalVerification?: VerificationCheck[];
   capturedCatalog?: Catalog;
   initializerModel?: string;
   value?: unknown;
@@ -298,7 +305,9 @@ class AssignmentResolver {
     if (component.schemaVersion === 5) {
       if (assignment.operationIds)
         throw new InputError('Assignments cannot substitute captured operation usages');
-      return component.operationPlan?.agent ?? [];
+      return (component.operationPlan?.agent ?? []).filter((op) =>
+        component.operations?.[op.id]?.includes('agent'),
+      );
     }
     const requestedOperations = assignment.operationIds ?? component.operationIds ?? [];
     if (requestedOperations.some((id) => !(component.operationIds ?? []).includes(id)))

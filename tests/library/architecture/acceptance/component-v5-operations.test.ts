@@ -87,6 +87,45 @@ class SharedOperationScenarios {
     assert.match(fixture.run('validate').stderr, /finite/);
   }
 
+  /** A finite HTTP check references one explicitly available managed service without inventing a command. */
+  http(t: TestContext, declared = true): void {
+    const fixture = this.httpFixture(t, declared);
+    const result = fixture.run('validate');
+    if (!declared) return assert.match(result.stderr, /declared (agent )?service/);
+    assert.equal(result.status, 0, result.stderr);
+    const check = JSON.parse(result.stdout).owners.sample.operationPlan.verify[0];
+    assert.equal(check.kind, 'http');
+    assert.equal(check.http.serviceId, 'server');
+    assert.equal(check.command, undefined);
+  }
+
+  /** Captures the HTTP definition and its optional service usage as one owned configuration. */
+  private httpFixture(t: TestContext, declared: boolean): ComponentV5Fixture {
+    const fixture = this.fixture(t);
+    fixture.put(
+      'architecture/components/package.json',
+      fixture.component('package', 'package', {
+        parentId: 'platform',
+        root: 'package',
+        operations: { check: ['verify'], ...(declared ? { server: ['agent'] } : {}) },
+      }),
+    );
+    const { command: _command, args: _args, ...base } = this.operation();
+    fixture.put('architecture/operations/check.json', {
+      ...base,
+      kind: 'http',
+      http: { serviceId: 'server', path: '/', expectedStatus: 200 },
+    });
+    fixture.put('architecture/operations/server.json', {
+      ...this.operation(),
+      id: 'server',
+      kind: 'service',
+      service: { port: 0, readinessPath: '/', expectedStatus: 200 },
+    });
+    fixture.commit();
+    return fixture;
+  }
+
   /** Owns shared definitions explicitly and declares operation usages once at the package. */
   private fixture(t: TestContext): ComponentV5Fixture {
     const fixture = new ComponentV5Fixture(t);
@@ -140,5 +179,11 @@ test('v5 mandatory operation usages require finite actions', (t) => scenarios.se
 
 test('effective policy retains accumulated declaration provenance and implicit owned reads', (t) =>
   scenarios.provenance(t));
+
+test('v5 captures finite HTTP verification with a declared managed service', (t) =>
+  scenarios.http(t));
+
+test('v5 refuses HTTP verification without managed service authority', (t) =>
+  scenarios.http(t, false));
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });

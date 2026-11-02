@@ -123,7 +123,9 @@ function captureDirector(
   const profile = catalog.profiles[platform.director!.profile]!;
   if (model && model !== profile.model)
     throw new InputError('Director model must come from the captured platform profile');
-  const operations = component.operationPlan?.agent ?? [];
+  const operations = (component.operationPlan?.agent ?? []).filter((op) =>
+    component.operations?.[op.id]?.includes('agent'),
+  );
   if (operations.some((op) => !profile.operationCategories?.includes(op.category)))
     throw new InputError('Director operation category outside captured profile');
   return {

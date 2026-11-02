@@ -10,6 +10,8 @@ export interface Command {
   args: string[];
 }
 
+export type VerificationCheck = Command | Operation;
+
 export interface Dependency {
   id: string;
   repository: string;

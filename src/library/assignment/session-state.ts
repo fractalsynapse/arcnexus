@@ -18,7 +18,7 @@ import {
 } from '../architecture/assignment.js';
 import { targetCommand } from '../architecture/bindings.js';
 import { covered } from '../architecture/components.js';
-import { milliseconds, InputError, type Command } from '../architecture/config.js';
+import { milliseconds, InputError, type VerificationCheck } from '../architecture/config.js';
 import { changes, checkScope } from '../change-inspection/changes.js';
 import { operationEnvironment } from '../operations/operations.js';
 import { execute, git, type CommandResult } from '../operations/process.js';
@@ -217,7 +217,7 @@ export class SessionState {
   }
 
   /** Runs a complete verification checkpoint with shared preparation and retained partial evidence. */
-  async checks(commands: Command[], stage: string): Promise<void> {
+  async checks(commands: VerificationCheck[], stage: string): Promise<void> {
     if (this.component.schemaVersion !== 5) {
       for (const command of commands) await this.command(command, stage);
       return;
@@ -248,7 +248,7 @@ export class SessionState {
   }
 
   /** Runs one captured host command and retains its result under the assignment. */
-  async command(c: Command, stage: string): Promise<CommandResult> {
+  async command(c: VerificationCheck, stage: string): Promise<CommandResult> {
     this.options.record.stage = stage;
     this.journal(stage, 'started', c);
     try {
@@ -269,14 +269,14 @@ export class SessionState {
   }
 
   /** Routes captured operations through the same service used by engineering and setup. */
-  private async executeCommand(c: Command, stage: string): Promise<CommandResult> {
+  private async executeCommand(c: VerificationCheck, stage: string): Promise<CommandResult> {
     if ((c as Operation).schemaVersion === 4)
       return new OperationExecution(
         this.options.root,
         this.options.record,
         this.options.signal,
       ).run(c as Operation, stage);
-    if (this.component.schemaVersion === 5)
+    if (this.component.schemaVersion === 5 || !('command' in c))
       throw new Error('Version-five execution requires a captured shared operation');
     return execute(
       targetCommand(this.options.record, c),

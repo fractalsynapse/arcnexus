@@ -63,7 +63,11 @@ export class OperationConfinement {
       source,
       log,
       this.signal,
-      { env: probe.environment(operationEnvironment(this.record)), fileOutput: true },
+      {
+        env: probe.environment(operationEnvironment(this.record)),
+        fileOutput: true,
+        processScope: true,
+      },
     );
     if (
       readFileSync(join(source, 'canary'), 'utf8') !== 'original' ||

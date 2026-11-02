@@ -21,11 +21,18 @@ export class ComponentOperationPlans {
       const context = this.context(c);
       for (const usage of ['preflight', 'setup', 'refresh', 'verify', 'agent'])
         c.operationPlan[usage] = this.plan(c, context, usage);
-      c.verification = c.operationPlan.verify!.map((op) => {
-        if (op.kind === 'http')
-          throw new InputError(`HTTP verification requires a managed service checkpoint: ${op.id}`);
-        return op;
-      });
+      c.verification = c.operationPlan.verify!;
+      this.services(c);
+    }
+  }
+
+  /** Requires a declared agent-managed service for every captured finite HTTP checkpoint. */
+  private services(component: Component): void {
+    for (const op of Object.values(component.operationPlan!).flat()) {
+      if (op.kind !== 'http') continue;
+      const service = this.catalog.operations[op.http.serviceId];
+      if (service?.kind !== 'service' || !component.operations?.[service.id]?.includes('agent'))
+        throw new InputError(`HTTP operation requires declared agent service: ${op.id}`);
     }
   }
 

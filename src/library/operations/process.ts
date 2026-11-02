@@ -1,5 +1,6 @@
+import { ProcessScope } from './process-scope.js';
 import { fork, spawn, spawnSync, type ChildProcess } from 'node:child_process';
-import { closeSync, fstatSync, ftruncateSync, openSync, writeSync } from 'node:fs';
+import { closeSync, fstatSync, ftruncateSync, openSync, writeSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { Command } from '../architecture/config.js';
 
@@ -21,6 +22,7 @@ export interface CommandResult extends Command {
   durationMs: number;
   exitCode: number | null;
   log: string;
+  processScope?: string;
 }
 
 export interface CommandOptions {
@@ -30,6 +32,7 @@ export interface CommandOptions {
   stderr?: string;
   killGraceMs?: number;
   fileOutput?: boolean;
+  processScope?: boolean;
 }
 
 export async function executeDirect(
@@ -56,6 +59,8 @@ class DirectCommand {
   private readonly result: CommandResult;
 
   private child!: ChildProcess;
+
+  private scope?: ProcessScope;
 
   private failure?: Error;
 
@@ -95,18 +100,13 @@ class DirectCommand {
   /** Executes this lifecycle through its configured collaborators and propagates failures. */
   run(): Promise<CommandResult> {
     return new Promise((resolve, reject) => {
-      this.child = spawn(this.command.command, this.command.args, {
-        cwd: this.cwd,
-        env: this.options.env,
-        detached: true,
-        stdio: [
-          'ignore',
-          this.options.fileOutput ? this.fd : 'pipe',
-          this.options.fileOutput ? this.fd : 'pipe',
-        ],
-      });
-      this.child.stdout?.on('data', (chunk) => this.capture(chunk, this.stdout));
-      this.child.stderr?.on('data', (chunk) => this.capture(chunk, this.stderr));
+      try {
+        this.launch();
+      } catch (error) {
+        this.failure = new Error(String(error));
+        void this.finish(null, resolve, reject);
+        return;
+      }
       this.watchOutput();
       if (this.options.timeoutMs !== undefined)
         this.timer = setTimeout(
@@ -118,8 +118,35 @@ class DirectCommand {
       this.child.on('error', (error) => {
         this.failure = error;
       });
-      this.child.on('close', (code) => this.finish(code, resolve, reject));
+      this.child.once('exit', () => this.scope?.kill());
+      this.child.on('close', (code) => {
+        void this.finish(code, resolve, reject);
+      });
     });
+  }
+
+  /** Creates containment before starting the captured executable and wiring diagnostic streams. */
+  private launch(): void {
+    this.scope = this.options.processScope ? new ProcessScope() : undefined;
+    this.result.processScope = this.scope?.path;
+    if (this.scope)
+      writeFileSync(this.result.log + '.scope.json', JSON.stringify({ path: this.scope.path }), {
+        flag: 'wx',
+        mode: 0o600,
+      });
+    const command = this.scope?.command(this.command) ?? this.command;
+    this.child = spawn(command.command, command.args, {
+      cwd: this.cwd,
+      env: this.options.env,
+      detached: true,
+      stdio: [
+        'ignore',
+        this.options.fileOutput ? this.fd : 'pipe',
+        this.options.fileOutput ? this.fd : 'pipe',
+      ],
+    });
+    this.child.stdout?.on('data', (chunk) => this.capture(chunk, this.stdout));
+    this.child.stderr?.on('data', (chunk) => this.capture(chunk, this.stderr));
   }
 
   /** Bounds regular-descriptor diagnostics without requiring socket-backed child stdio. */
@@ -132,11 +159,16 @@ class DirectCommand {
   }
 
   /** Finalizes the current lifecycle while preserving its recorded outcome. */
-  private finish(
+  private async finish(
     code: number | null,
     resolve: (result: CommandResult) => void,
     reject: (error: Error) => void,
-  ): void {
+  ): Promise<void> {
+    try {
+      await this.scope?.close();
+    } catch (error) {
+      this.failure ??= new Error(String(error));
+    }
     this.closed(code);
     if (!this.failure && code === 0) return resolve(this.result);
     const failure = this.failure ?? new Error(`Command failed (${code}): ${this.command.command}`);
@@ -146,14 +178,15 @@ class DirectCommand {
   /** Requests managed process termination and schedules forced cleanup if necessary. */
   private terminate(reason: Error): void {
     this.failure ??= reason;
-    if (!this.child.pid) return;
-    this.kill('SIGTERM');
+    if (!this.child?.pid) return;
+    if (this.scope) this.scope.kill();
+    else this.kill('SIGTERM');
     this.killTimer ??= setTimeout(() => this.kill('SIGKILL'), this.options.killGraceMs ?? 300);
   }
 
   /** Sends the cleanup signal to the managed process group. */
   private kill(signal: NodeJS.Signals): void {
-    if (!this.child.pid) return;
+    if (!this.child?.pid) return;
     try {
       process.kill(-this.child.pid, signal);
     } catch {

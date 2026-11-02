@@ -46,6 +46,7 @@ class RegressionScenarios {
     const selection = new RegressionOperation({ schemaVersion: 5, id: 'owner' }, record);
     assert.throws(() => selection.capture(operation, result), /selected regression operation/);
     invocation.operationId = 'tests';
+    record.operationInvocations.push({ operationId: 'service', status: 'completed' });
     selection.capture(operation, result);
     assert.equal(record.regressionInvocation.id, 'invocation');
     assert.deepEqual(record.regressionInvocation.context, { ownerId: 'owner' });
