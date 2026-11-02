@@ -68,3 +68,11 @@ Service identities also identify independently managed leases. Equal commands do
 prove that two authored services are interchangeable. Migration preserves distinct
 service identities and their HTTP associations, even when their process arguments
 match. Finite command deduplication must not collapse those separate lifecycles.
+
+Inline lifecycle and verification commands are extracted with an explicit repository,
+working directory, output policy, activity availability, operation category and network
+policy supplied by the migration coordinator. Equal command text in different contexts
+must remain distinct. The extractor never infers network access, output permissions or
+activity availability from a command name. Generated operation IDs are bound to the full
+normalized definition; a conflicting authored ID blocks migration. Preparation purposes
+remain attached to references rather than duplicating the executable definition.
