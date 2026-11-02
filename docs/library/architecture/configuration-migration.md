@@ -76,3 +76,9 @@ must remain distinct. The extractor never infers network access, output permissi
 activity availability from a command name. Generated operation IDs are bound to the full
 normalized definition; a conflicting authored ID blocks migration. Preparation purposes
 remain attached to references rather than duplicating the executable definition.
+
+When distinct prerequisite IDs resolve to the same finite operation, retain its first
+position once in the migrated prerequisite list. This applies to extracted probes too;
+deduplication must not turn a valid dependency graph into a duplicate-reference schema
+error. Canonical identity ordering uses code-point order and does not depend on the
+machine's locale.
