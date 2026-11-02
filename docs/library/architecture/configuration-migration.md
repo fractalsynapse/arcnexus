@@ -93,3 +93,9 @@ validates the candidate catalog before source application. Preview reports the a
 configuration diff and diagnostics. Application requires an unchanged clean checkout,
 uses checked content hashes, and never changes the source branch or staging index.
 Neither command resumes retained hosts or upgrades captured authority in place.
+
+Migrated test profiles retain the sole preparation/runner references used by the
+testing service. Migration does not generate duplicate component operation usages
+from those references or infer agent availability from them. This preserves useful
+inherited test conventions for owners that have no suites yet, while test selection
+and operation context are validated when the testing service is invoked.

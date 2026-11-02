@@ -106,3 +106,17 @@ flag and the complete retained log reference. Declared operations therefore deli
 actual compiler/test diagnostics to the steward without requiring access to the
 private report directory. A caller-configured timeout is a failed execution; explicit
 cancellation remains exit 130.
+
+### One authority for profile execution
+
+A captured test profile authorizes its referenced finite runner and preparation
+operations for the testing service. Components do not repeat those references in
+`operations` merely to make the profile usable. Component operation usages still
+control agent tools and mandatory assignment lifecycle checks independently.
+
+The testing service resolves the actual validated suite selection before expanding
+runner arguments. A component may inherit test conventions before it owns a suite;
+that must not trigger an empty runner invocation during catalog loading. Referenced
+operations must still match the owner's repository, role activities and execution
+profile categories, use supported finite definitions, and obey captured output and
+source-read-only confinement policies. A missing reference fails before dispatch.
