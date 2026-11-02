@@ -350,3 +350,20 @@ now inspect retained operation invocations. Formatting, lint, types, build, owne
 and guidance passed. The first affected CLI run correctly refused the uncommitted
 suite-metadata change (`Candidate changed mandatory test selection`); qualification
 must capture the new native-host tag in a committed revision before rerunning.
+
+
+The committed workspace selection passed 23 of 41 cases with 18 native skips,
+run `a1d2bd83-11b5-4de5-960f-bf1aaa67a66f`; the separate native workspace run
+passed those 18 cases without skips. Issue #142 closes another mixed-family startup
+path: minimal components cannot pair with legacy environment recipes. Forty focused
+architecture/migration cases passed, and the final six startup cases passed after
+test-helper cleanup. The broader architecture selection is being refreshed.
+
+The real self-development task above completed with CLI exit 0, independent
+assignment verification and director goal assessment. Its exact 26-line documentation
+diff was caller-integrated as `b216058`; full evidence and limitations are recorded
+in the [self-development ledger](../library/assignment/checked-engineering-qualification.md).
+All six minimal-plan live gates now have retained demonstrations at their recorded
+revisions. This does not remove the remaining legacy execution branches or qualify
+later implementation changes; completion and phase three remain blocked on those
+requirements and final integrated verification/review/CI.

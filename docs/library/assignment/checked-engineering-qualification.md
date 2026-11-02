@@ -80,3 +80,47 @@ independent verifier `2b21e10f-bb44-42bf-b62a-318c91a6bf53`, final director asse
 `readonly-20261102T025840Z/task-host-checkpoints.log` and the referenced reports.
 The previous task that repeatedly awaited its own future review was cancelled and
 retained; it prompted the structural continuation-loop guard in issue 119.
+
+## Real ArcNexus self-development delivery (2026-11-02)
+
+Minimal-plan live gate 6 now has a completed production-wiring demonstration.
+Task `d62115a1-2969-42d8-9351-8da587f564f0` ran against source and frozen
+supervisor revision `5c97c155f37dc562cfeae801423c987866f58c6b`. The supervisor
+installation `/home/adrian/.anx109/qualification-final-5c97c15` was not rebuilt or
+modified during execution. The attached CLI exited 0 after final director acceptance.
+
+The report steward (Luna) used checked transaction
+`report-doc-evidence-guidance-20261102-01` to add 26 lines to
+`docs/library/report/report.md`. It explains totals versus passing/skipped counts,
+why exit zero does not qualify skipped cases, and the distinct limits of deterministic,
+native-enforcement, live-model and revision-specific CI evidence. No implementation,
+test, architectural authority or supervising runtime changed.
+
+Retained evidence is beneath
+`/home/adrian/.local/state/arcnexus-qualification-109/self-development-20261102T064500Z`:
+
+- Task output: `task-verified-supervisor.log`.
+- Worker report: `state/runs/44f48dad-cfec-4752-bd3e-bc5b5acefbcc/report.json`.
+- Independent Astra review: `state/runs/c8212b37-3f0d-4bc2-b4bd-0b80d9641ab3/report.json`;
+  all six assignment criteria accepted, no deficiencies.
+- Final Astra director assessment:
+  `state/runs/e007d947-d3d2-4879-92c9-8d6cbc396e72/report.json`;
+  all seven goal criteria accepted, no deficiencies.
+- Actual patch: `verified-self-development.diff`, SHA-256
+  `e07583387e825e42a5e85a809822134f12f64ce38c4270c4fb3c321c63ea59d8`.
+- Verified application-owned candidate: `e84f31e864bd358d056050e832b895d7a37b2129`.
+
+Observed host checks passed: type checks, builds, full tests, report component tests,
+guidance validation, formatting and lint. The full test result was 582 total,
+462 passed, zero failed and 120 skipped; report tests were 25 total, 16 passed,
+zero failed and nine skipped. Neither reviewer counted skips as passes or inferred
+CI success. Source-edit evidence and rejected host-only operation requests remained
+visible; rejected operations did not execute.
+
+The caller inspected the complete actual diff, matched its hash to both assessments,
+confirmed that only the report document changed, and applied that exact patch in
+commit `b216058`. The steward did not commit or publish. This is an actual ArcNexus
+improvement delivered through the stable runtime, not a scripted fixture response.
+The preceding failed attempts remain retained as failed evidence. Live qualification
+does not complete the outstanding executable legacy-path retirement or establish
+integrated checks/CI for later implementation revisions; phase three remains blocked.
