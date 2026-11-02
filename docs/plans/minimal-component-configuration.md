@@ -115,7 +115,7 @@ completed with an actual diff, expected-red and passing host checks, independent
 verification and final director assessment. A [real workday](../library/workday/checked-workday-qualification.md)
 also completed a self-directed improvement, preserved its unfinished checkpoint across
 pause/host loss/resume, and automatically yielded to and resumed after a task. Minimal
-live gates 1, 3, 4 and 5 have evidence, with host loss qualified at a safe checkpoint
+live gates 1, 2, 3, 4 and 5 have evidence, with host loss qualified at a safe checkpoint
 and native owned/cross-owner write attempts denied before mutation.
 
 The maintenance CLI now previews and applies a fully validated migration through
@@ -133,10 +133,10 @@ distinct command/argv pairs changed from 53 to 54 because the previously hardcod
 Node runner became explicit. A subsequent checked catalog comparison consolidated 17 owner-specific test
 commands, then shared direct Node execution replaced recursive test CLI wrappers
 in both agent and host checks. Build and test compilation remain prerequisites.
-The current configuration has 211 component top-level fields, 394 recursive keys,
-one inherited test profile, 36 operation definitions and 33 distinct command/argv
-pairs. Lint/formatter consolidation remains open; these are not final no-duplication
-counts. Empty agent test selections remain pending until invocation; mandatory
+The current configuration has 211 component top-level fields, 367 recursive keys,
+one inherited test profile, 21 operation definitions and 18 distinct command/argv
+pairs. Shared lint and checked formatting are delivered; migration and removal of
+legacy executable paths remain necessary before final no-duplication claims. Empty agent test selections remain pending until invocation; mandatory
 verification still rejects empty context before any prerequisite executes.
 
 Real-project preparation now passes confined prerequisites, dependency installation
@@ -157,9 +157,10 @@ now verifies direct full and focused checks. A fresh integrated pass is in progr
 no final integrated or current-head CI success is claimed here.
 
 The [live multi-owner attempts](../library/task-intake/multi-owner-qualification.md)
-retain unsuccessful outcomes and the discovered tool-guidance defects. Complete
-fixture/campaign migration, removal of legacy execution branches and live gates 2
-and 6 remain unfinished; formatter transformations were delivered in the subsequent
+retain unsuccessful outcomes and the discovered tool-guidance defects. A subsequent
+three-owner documentation task completed with independent reviews and director
+acceptance. Complete fixture/campaign migration, removal of legacy execution branches
+and live gate 6 remain unfinished; formatter transformations were delivered in the subsequent
 checkpoint below. Broader phase-3 inbox and
 active-operation crash gates still require live evidence. Phase 3 remains blocked.
 Direct implementation work remains bootstrap work; the successful qualification
@@ -199,8 +200,8 @@ Hosted CI initially lacked delegated process ownership and then the distribution
 namespace profile. The subsequent diagnostic exposed npm PATH selecting an
 undeclared local runtime. Shared binding discovery and tool-aware preflight now
 address that discrepancy; hosted qualification remains separate from local probes.
-Live multi-owner and ArcNexus self-development attempts remain unsuccessful so far,
-with evidence retained rather than acceptance waived. The latest self-development
+The three-owner documentation task subsequently completed; earlier failed attempts
+remain retained. ArcNexus self-development has not yet delivered verified changes. The latest self-development
 baseline reached 570 tests: 536 passed, eight failed and 26 skipped, with inode
 exhaustion recorded in several failures. A fresh run uses private disk-backed
 storage and a stable supervisor. No live gate is claimed from that pending run.

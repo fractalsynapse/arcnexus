@@ -87,4 +87,35 @@ Further retained attempts exposed integration defects rather than qualifying the
 A new documentation goal uses the shipped v5 general fixture and requires three
 owners discovered from its public catalog. It is a separate live objective, not a
 reinterpretation of any failed feature task. Its evidence root is
-`multi-owner-v5-docs-20261102T083000Z`. Completion is pending.
+`multi-owner-v5-docs-20261102T083000Z`. It completed with CLI exit 0.
+
+
+## Completed three-owner documentation goal
+
+Task `41813446-0730-428f-97a5-3c8ebb98f914` started with only `cli` selected by
+the director. CLI requested service and names; service independently discovered
+names through its API/catalog context and issued a nested request. All three durable
+requests required verified delivery. The two names assignments remained distinct
+because their acceptance differed; neither was silently merged or granted another
+owner's write access. Four assignments completed across three owners.
+
+The immutable supervising runtime hash was
+`5ce10b986e9b6b8c48d0dc4be5aea8de3ea4aec4fdda8ec610afc2d24d2a03c8`, captured
+from installation revision `e94d44022b219106421ee17ed466c7a54b40481f`.
+The source baseline was `a1c7de55c6d262cb594933ea77430dd93a9284cb`; the final
+candidate was `ddf868af68af24724f84d3c0cfc1cec5b7742eab`.
+
+Independent reviewer records are `ca939de9-4a43-4747-9ceb-7b1969bf6200` and
+`b3760cd1-a759-4e2a-9cb3-9e19c4f8a5f3` (names),
+`51b053d3-93f9-4463-a8af-83c10dccecfd` (service), and
+`ca0ac59b-4bb7-452f-af25-10a9027b5627` (CLI). Final director record
+`d9500a91-83fd-420a-a2c4-26e0854b1aab` verified every criterion with no deficiencies.
+
+The retained `verified-documentation.diff` changes only `cli/README.md`,
+`service/README.md` and `names/README.md`: 32 insertions and three deletions.
+Its SHA-256 is `6c016f890d50e4387d75c37f4515a250f5f4888f55364dd17c271517acec6d1c`.
+A caller inspection confirmed the concrete examples match the implementations;
+an additional `npm test` against the assembled candidate passed all three tests
+with no skips. Source/test bytes are unchanged. This satisfies the live dynamically
+discovered multi-owner goal; it does not qualify the previously unsuccessful shout
+feature or the separate ArcNexus self-development gate.
