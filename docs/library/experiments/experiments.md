@@ -229,3 +229,9 @@ verification. Its loopback probe is a referenced prerequisite rather than an inl
 recipe. Materialize compiled payloads, declare the fixture repository's origin and
 commit before invoking normal task/workday commands. Historical campaign manifests
 and evidence retain their original interpretation.
+
+Active prompt campaigns reference the inherited `component-tests` operation and
+stable captured regression operation identities. They do not prescribe historical
+`verificationIndex` values, removed owner-specific test commands or compiled test
+paths as editable source. Historical manifests and their assignment documents remain
+unchanged so retained evidence can still be interpreted against its original request.
