@@ -29,7 +29,12 @@ jobs:
       - name: Install product dependencies
         run: npm ci
       - name: Install confinement runtime
-        run: sudo npm install --global --prefix /usr/local --ignore-scripts @openai/codex@0.163.0-alpha.10.2
+        run: |
+          sudo npm install --global --prefix /usr/local --ignore-scripts @openai/codex@0.163.0-alpha.10.2
+          sudo apt-get update
+          sudo apt-get install -y bubblewrap apparmor-profiles apparmor-utils
+          sudo install -m 0644 /usr/share/apparmor/extra-profiles/bwrap-userns-restrict /etc/apparmor.d/bwrap-userns-restrict
+          sudo apparmor_parser -r /etc/apparmor.d/bwrap-userns-restrict
       - name: Check formatting
         run: npm run format:check
       - name: Lint maintained code

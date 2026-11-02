@@ -38,6 +38,9 @@ class WorkflowTests {
     assert.ok(install, 'CI must provision its enforcement runtime');
     assert.match(install.run, /@openai\/codex@0\.163\.0-alpha\.10\.2/);
     assert.match(install.run, /--prefix \/usr\/local/);
+    assert.match(install.run, /apt-get install -y bubblewrap apparmor-profiles apparmor-utils/);
+    assert.match(install.run, /apparmor_parser -r/);
+    assert.doesNotMatch(install.run, /sysctl/);
     const tests = steps.find((step: any) => step.name === 'Test built CLI');
     assert.match(tests.run, /systemd-run/);
     assert.match(tests.run, /--property=Delegate=yes/);
