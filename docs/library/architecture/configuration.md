@@ -85,3 +85,17 @@ Implicit readability of owned paths is reported separately from authored read po
 Derived public catalogs may reuse an application-owned in-memory snapshot only when
 the source revision, ownership, public declarations, file digests and analyzer version
 match. Each caller receives an isolated copy; reuse cannot mutate active authority.
+
+Task direction captures both the director component identity and its execution
+profile from the platform declaration. Initial planning, reconsideration and final
+goal assessment use that identity; the first engineering owner is not a substitute.
+A declared platform director may assess a selected package outside its own package
+under its captured read boundary. This exception applies only to read-only direction
+with the declared director profile; it never makes that component an eligible
+engineering recipient for the selected package. Workday stewardship retains each
+steward's own identity and inherited engineering profile.
+
+Minimal read-only research and review may execute after confinement qualification.
+Source-changing engineering remains gated until checked-edit production acceptance
+is complete. Historical configuration adapters retain their existing read-only
+interpretation during this staged migration.
