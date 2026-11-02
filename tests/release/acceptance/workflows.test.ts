@@ -41,6 +41,9 @@ class WorkflowTests {
     assert.match(install.run, /apt-get install -y bubblewrap apparmor-profiles apparmor-utils/);
     assert.match(install.run, /apparmor_parser -r/);
     assert.doesNotMatch(install.run, /sysctl/);
+    const bindings = steps.find((step: any) => step.name === 'Bind verified machine executables');
+    assert.match(bindings.run, /\.git\/arcnexus\/bindings\.yaml/);
+    assert.match(bindings.run, /codex: '\/usr\/local\/bin\/codex'/);
     const tests = steps.find((step: any) => step.name === 'Test built CLI');
     assert.match(tests.run, /systemd-run/);
     assert.match(tests.run, /--property=Delegate=yes/);

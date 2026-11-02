@@ -104,6 +104,7 @@ export class OperationConfinement {
       outputs: ['output'],
       temporaryRoot: join(root, 'private'),
       executable: (this.record.bindings as Bindings | undefined)?.tools.codex ?? 'codex',
+      toolDirectories: toolDirectories(this.record),
     });
     return { source, root, probe };
   }

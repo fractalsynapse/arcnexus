@@ -1,8 +1,8 @@
 import { PlatformExecution } from './platform-execution.js';
-import { existsSync, realpathSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { realpathSync } from 'node:fs';
+import { relative, resolve } from 'node:path';
 import { digest, resolveAssignment, resolveBase, type Assignment } from './assignment.js';
-import { loadBindings, type Bindings } from './bindings.js';
+import { loadProjectBindings, type Bindings } from './bindings.js';
 import { ancestry, scopePath, loadCatalog, type Catalog, type Component } from './components.js';
 import { ConfigurationReader } from './configuration.js';
 import { InputError } from './config.js';
@@ -67,8 +67,7 @@ export class ExecutionContext {
     const commonDir = realpathSync(
       git(source, 'rev-parse', '--path-format=absolute', '--git-common-dir').trim(),
     );
-    const path = join(commonDir, 'arcnexus', 'bindings.yaml');
-    const bindings = loadBindings(existsSync(path) ? path : undefined);
+    const bindings = loadProjectBindings(source);
     return { source, base, commonDir, bindings };
   }
 

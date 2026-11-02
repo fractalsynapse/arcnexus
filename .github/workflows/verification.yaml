@@ -35,6 +35,17 @@ jobs:
           sudo apt-get install -y bubblewrap apparmor-profiles apparmor-utils
           sudo install -m 0644 /usr/share/apparmor/extra-profiles/bwrap-userns-restrict /etc/apparmor.d/bwrap-userns-restrict
           sudo apparmor_parser -r /etc/apparmor.d/bwrap-userns-restrict
+      - name: Bind verified machine executables
+        run: |
+          node --input-type=module <<'NODE'
+          import { mkdirSync, writeFileSync } from 'node:fs';
+          mkdirSync('.git/arcnexus', { recursive: true });
+          writeFileSync('.git/arcnexus/bindings.yaml', JSON.stringify({
+            schemaVersion: 1,
+            tools: { node: process.execPath, codex: '/usr/local/bin/codex' },
+            repositories: {},
+          }));
+          NODE
       - name: Check formatting
         run: npm run format:check
       - name: Lint maintained code

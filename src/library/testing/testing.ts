@@ -1,6 +1,6 @@
 import { diagnosticExcerpt } from '../operations/diagnostics.js';
 import {
-  loadBindings,
+  loadProjectBindings,
   bindingEnvironment,
   boundCommand,
   type Bindings,
@@ -56,13 +56,9 @@ export function testSelectionView(selection: TestSelection) {
 /** Selects owner-declared suites and executes their fixed Node profile with retained evidence. */
 export class ComponentTesting {
   /** Resolves the requested view without modifying candidate source. */
-  inspect(
-    project: string,
-    filters: TestFilters = {},
-    bindings: Bindings = loadBindings(),
-  ): TestSelection {
+  inspect(project: string, filters: TestFilters = {}, bindings?: Bindings): TestSelection {
     try {
-      return this.selection(project, filters, bindings);
+      return this.selection(project, filters, bindings ?? loadProjectBindings(project));
     } catch (error) {
       throw error instanceof InputError ? error : new InputError(String(error));
     }

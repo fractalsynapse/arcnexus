@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  constants,
+  copyFileSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
@@ -43,6 +52,24 @@ class ExecutionScenarios {
       readFileSync(join(root, 'runs/run', verify.artifacts[0].artifact), 'utf8'),
       'changed',
     );
+  }
+
+  /** Qualification reads the same explicitly bound external executable bundle as the operation. */
+  async externalBinding(t: TestContext): Promise<void> {
+    const { root, record } = this.fixture(t);
+    const tools = join(root, 'tools');
+    mkdirSync(tools);
+    const executable = join(tools, 'codex');
+    copyFileSync(process.env.ARCNEXUS_TEST_CODEX!, executable, constants.COPYFILE_FICLONE);
+    chmodSync(executable, 0o755);
+    (record.bindings as any).tools.codex = executable;
+    await new OperationExecution(root, record, new AbortController().signal).run(
+      this.operation(),
+      'verify',
+    );
+    assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'original');
+    assert.equal(readFileSync(join(record.workspace, 'generated/result'), 'utf8'), 'original');
+    assert.equal(typeof record.confinementQualified, 'string');
   }
 
   /** Refuses uncertain operations without repeating their source or output effects. */
@@ -119,5 +146,13 @@ test('shared executor retains distinct agent and final verification evidence', l
 );
 
 test('shared executor refuses to replay uncertain operation intent', (t) => scenarios.uncertain(t));
+
+test(
+  'installed confinement qualifies an executable bound outside system paths',
+  {
+    skip: !process.env.ARCNEXUS_TEST_CODEX,
+  },
+  (t) => scenarios.externalBinding(t),
+);
 
 registerSuite({ component: 'operations', level: 'acceptance', tags: ['live'] });

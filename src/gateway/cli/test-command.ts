@@ -24,7 +24,7 @@ export class TestCommand {
         category: this.values.category as string | undefined,
         tags: this.tags,
       },
-      loadBindings(this.values.bindings as string | undefined),
+      this.values.bindings ? loadBindings(this.values.bindings as string) : undefined,
     );
     const result = action === 'run' ? await service.run(selection, this.signal) : selection;
     const view =
