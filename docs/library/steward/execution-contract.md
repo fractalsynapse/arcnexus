@@ -75,3 +75,9 @@ ends that turn's operations and service leases; it does not cancel the retained
 assignment or prevent subsequent turns. Scope qualification and controlled model
 protocol fixtures do not satisfy real model-driven qualification gates. Engineering
 remains gated until production wiring is qualified with the checked edit protocol.
+
+The native Codex host may retain authentication and thread state in its configured
+home, but sandboxed agent commands must not read or modify that private authority.
+The checked permission profile explicitly denies that location; it does not rely
+on the runtime's implicit treatment of configuration storage. Installed-runtime
+qualification uses disposable configuration canaries, never real credentials.
