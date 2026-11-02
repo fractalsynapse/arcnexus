@@ -31,6 +31,24 @@ class WorkflowTests {
     assert.equal(production.jobs.verify.with.distribution, true);
   }
 
+  /** Hosted tests retain ordinary-user confinement and delegated descendant supervision. */
+  confinement(): void {
+    const steps = this.read('verification').jobs.repository.steps;
+    const install = steps.find((step: any) => step.name === 'Install confinement runtime');
+    assert.ok(install, 'CI must provision its enforcement runtime');
+    assert.match(install.run, /@openai\/codex@0\.163\.0-alpha\.10\.2/);
+    assert.match(install.run, /--prefix \/usr\/local/);
+    const tests = steps.find((step: any) => step.name === 'Test built CLI');
+    assert.match(tests.run, /systemd-run/);
+    assert.match(tests.run, /--property=Delegate=yes/);
+    assert.match(tests.run, /--uid="\$\(id -u\)"/);
+    assert.match(tests.run, /--gid="\$\(id -g\)"/);
+    assert.match(tests.run, /--setenv="PATH=\$PATH"/);
+    assert.match(tests.run, /--wait --pipe --collect/);
+    assert.match(tests.run, /npm test/);
+    assert.doesNotMatch(tests.run, /--scope|\|\| true/);
+  }
+
   /** Shared verification pins actions and contains no write or publication capability. */
   verification(): void {
     const workflow = this.read('verification');
@@ -58,6 +76,9 @@ class WorkflowTests {
 }
 
 const suite = new WorkflowTests();
+
+test('hosted execution provisions confinement and delegated supervision', () =>
+  suite.confinement());
 
 test('delivery lifecycle triggers and concurrency remain distinct', () => suite.lifecycles());
 

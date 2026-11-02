@@ -28,6 +28,8 @@ jobs:
           cache: npm
       - name: Install product dependencies
         run: npm ci
+      - name: Install confinement runtime
+        run: sudo npm install --global --prefix /usr/local --ignore-scripts @openai/codex@0.163.0-alpha.10.2
       - name: Check formatting
         run: npm run format:check
       - name: Lint maintained code
@@ -35,7 +37,10 @@ jobs:
       - name: Check TypeScript
         run: npm run check
       - name: Test built CLI
-        run: npm test
+        run: |
+          sudo systemd-run --uid="$(id -u)" --gid="$(id -g)" \
+            --property=Delegate=yes --working-directory="$PWD" \
+            --setenv="PATH=$PATH" --wait --pipe --collect npm test
       - name: Validate architectural ownership
         run: node dist/cli.js validate --project .
       - name: Smoke-test CLI
