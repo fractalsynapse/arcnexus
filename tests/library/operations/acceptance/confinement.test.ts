@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test, type TestContext } from 'node:test';
@@ -8,6 +8,31 @@ import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Qualifies actual subprocess filesystem enforcement through the assembled adapter. */
 class ConfinementScenarios {
+  /** Pins diagnostic support outside replaceable target output and rejects changed private snapshots. */
+  async capturesSupport(t: TestContext): Promise<void> {
+    const root = this.fixture(t);
+    const module = await import(resolve('dist/library/operations/confinement.js'));
+    const authority = {
+      workspace: root,
+      reads: ['.'],
+      outputs: ['generated'],
+      temporaryRoot: root + '-private',
+      executable: 'codex',
+    };
+    const adapter = new module.SourceConfinement(authority);
+    const support = join(root + '-private-configuration', 'node-stdio.mjs');
+    assert.equal(adapter.environment().NODE_OPTIONS, '--require ' + JSON.stringify(support));
+    assert.equal(
+      readFileSync(support, 'utf8'),
+      readFileSync(resolve('dist/library/operations/node-stdio.js'), 'utf8'),
+    );
+    assert.equal(adapter.filesystem[resolve('dist/library/operations/node-stdio.js')], undefined);
+    new module.SourceConfinement(authority);
+    chmodSync(support, 0o600);
+    writeFileSync(support, 'changed');
+    assert.throws(() => new module.SourceConfinement(authority), /Runtime support.*changed/);
+  }
+
   /** Loads the installed adapter without turning absent support into a skipped success. */
   async prevents(t: TestContext): Promise<void> {
     const root = this.fixture(t);
@@ -54,6 +79,9 @@ class ConfinementScenarios {
 }
 
 const scenarios = new ConfinementScenarios();
+
+test('confinement captures immutable runtime support outside generated target output', (t) =>
+  scenarios.capturesSupport(t));
 
 test(
   'installed confinement allows generated output and prevents source mutation',

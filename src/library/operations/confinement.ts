@@ -1,8 +1,16 @@
-import { existsSync, lstatSync, mkdirSync, realpathSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  writeFileSync,
+} from 'node:fs';
 import { join, relative, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { relativePath, type Command } from '../architecture/config.js';
 import { git } from './process.js';
+
+const diagnosticSupport = readFileSync(new URL('./node-stdio.js', import.meta.url), 'utf8');
 
 export interface ConfinementAuthority {
   workspace: string;
@@ -42,7 +50,6 @@ export class SourceConfinement {
     const outputs = authority.outputs.map((path) => this.output(path));
     for (const path of authority.reads) this.read(path);
     for (const path of authority.toolDirectories ?? []) this.tool(path);
-    this.tool(fileURLToPath(new URL('./node-stdio.js', import.meta.url)));
     for (const path of [...outputs, this.temporaryRoot]) {
       this.validateSegments(path);
       mkdirSync(path, { recursive: true, mode: 0o700 });
@@ -60,7 +67,19 @@ export class SourceConfinement {
       throw new Error('Private configuration must be outside source');
     this.validateSegments(path);
     mkdirSync(path, { recursive: true, mode: 0o700 });
+    this.captureSupport(join(path, 'node-stdio.mjs'));
     this.filesystem[path] = 'read';
+  }
+
+  /** Keeps trusted support independent of candidate builds and refuses altered or aliased snapshots. */
+  private captureSupport(path: string): void {
+    this.validateSegments(path);
+    if (existsSync(path)) {
+      if (lstatSync(path).nlink !== 1 || readFileSync(path, 'utf8') !== diagnosticSupport)
+        throw new Error('Runtime support snapshot changed: ' + path);
+      return;
+    }
+    writeFileSync(path, diagnosticSupport, { flag: 'wx', mode: 0o400 });
   }
 
   /** Denies host-private authority independently of implicit runtime configuration-home grants. */
@@ -110,7 +129,8 @@ export class SourceConfinement {
       CODEX_HOME: this.temporaryRoot + '-configuration',
       TMPDIR: this.temporaryRoot,
       NODE_OPTIONS:
-        '--require ' + JSON.stringify(fileURLToPath(new URL('./node-stdio.js', import.meta.url))),
+        '--require ' +
+        JSON.stringify(join(this.temporaryRoot + '-configuration', 'node-stdio.mjs')),
     };
   }
 
