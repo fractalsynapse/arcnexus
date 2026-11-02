@@ -260,3 +260,12 @@ production operation sandbox. Mode repair is necessary only when copying changed
 a mode; it must not issue redundant source-write operations against already correct
 snapshot entries. The `host-lifecycle` test selection exercises background startup,
 host-loss recovery and installation replacement through the shared executor.
+
+Canonical host ownership is independent of temporary-storage and evidence-root
+settings. The IPC endpoint uses a fixed private per-user directory under `/tmp`;
+`TMPDIR` selects operation storage only. The exclusive host lease lives in the
+canonical Git common directory, so another socket or linked worktree cannot start
+another scheduler. Changes to temporary-storage settings must attach to the same
+host and preserve its captured authority. Live task
+`1be5cdf7-5c9f-4ccd-917d-a5150206b2bb` exposed the former duplicate-host defect;
+its failed evidence remains retained and is not automatically replayed (#137).
