@@ -4,6 +4,8 @@
 
 ### Added
 
+- Target registered or local packages with `test inspect/run` and explicit component selection through the shared test executor (#148).
+
 - Materialize existing repositories into the project volume with supervised Git, recoverable registration, and local-only repository identity (#148).
 
 - Register existing platforms and packages in a persistent project volume with qualified identities and non-destructive removal (#148).

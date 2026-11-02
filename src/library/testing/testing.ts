@@ -3,7 +3,7 @@ import { loadProjectBindings, type Bindings } from '../architecture/bindings.js'
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { loadCatalog, type Catalog, type Component } from '../architecture/components.js';
+import { ancestry, loadCatalog, type Catalog, type Component } from '../architecture/components.js';
 import { InputError } from '../architecture/config.js';
 import { git, type CommandResult } from '../operations/process.js';
 import { stateRoot } from '../workspace/state.js';
@@ -16,6 +16,7 @@ export interface TestSelection {
   project: string;
   bindings: Bindings;
   revision: string;
+  packageId?: string;
   inference: false;
   suites: DiscoveredSuite[];
   profiles: TestProfile[];
@@ -64,7 +65,7 @@ export class ComponentTesting {
     project = resolve(project);
     const revision = git(project, 'rev-parse', 'HEAD').trim();
     const catalog = loadCatalog(project, revision, bindings);
-    const owners = this.owners(catalog, filters.component);
+    const owners = this.owners(catalog, filters.component, filters.package);
     const { profiles, suites } = this.discover(project, revision, owners);
     const selected = suites.filter((suite) => matches(suite, filters));
     if (!selected.length) throw new InputError('No tests match the required selection');
@@ -72,6 +73,7 @@ export class ComponentTesting {
       project,
       bindings,
       revision,
+      ...(filters.package ? { packageId: filters.package } : {}),
       inference: false,
       suites: selected,
       profiles: [...profiles.values()].filter((profile) =>
@@ -99,8 +101,8 @@ export class ComponentTesting {
   }
 
   /** Selects executable test owners without granting inherited container profiles their own suites. */
-  private owners(catalog: Catalog, id?: string) {
-    const owners = Object.values(catalog.components).filter((owner) =>
+  private owners(catalog: Catalog, id?: string, packageId?: string) {
+    const owners = this.packageOwners(catalog, packageId).filter((owner) =>
       id
         ? owner.id === id
         : Boolean(owner.testProfile) && !['platform', 'package'].includes(owner.type),
@@ -112,6 +114,19 @@ export class ComponentTesting {
       if (!owner.testProfile) throw new InputError(`No test profile for ${owner.id}`);
     }
     return owners;
+  }
+
+  /** Restricts discovery to the selected package before inspecting suites or resolving commands. */
+  private packageOwners(catalog: Catalog, packageId?: string): Component[] {
+    const components = Object.values(catalog.components);
+    if (!packageId) return components;
+    const pkg = catalog.components[packageId];
+    if (pkg?.type !== 'package') throw new InputError('Unknown test package: ' + packageId);
+    if (pkg.repository !== catalog.primaryRepository)
+      throw new InputError('Package tests require its registered source repository');
+    return components.filter((component) =>
+      ancestry(catalog, component.id).some((parent) => parent.id === packageId),
+    );
   }
 
   /** Executes this lifecycle through its configured collaborators and propagates failures. */
@@ -173,6 +188,9 @@ export class ComponentTesting {
 
   /** Rejects unsupported selection filters before discovering or running tests. */
   private filters(filters: TestFilters): void {
+    for (const key of ['package', 'component', 'level', 'category'] as const)
+      if (filters[key] !== undefined && !filters[key]!.trim())
+        throw new InputError('Empty test filter: ' + key);
     if (filters.level && !['unit', 'integration', 'acceptance'].includes(filters.level))
       throw new InputError(`Invalid test level: ${filters.level}`);
     if (filters.category && filters.category !== 'regression')
