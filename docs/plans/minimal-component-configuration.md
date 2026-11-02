@@ -229,8 +229,14 @@ The native-host selection at `da95467` passed 91/91 with no skips in
 `3c49fe16-5611-4f27-853b-0ca0fefb807b`. CI run `41423162844` failed on the same
 obsolete bridge assertion: denied operation selection is now recoverable. The
 replacement checks zero executed operations and structured rejection, and passes
-through the real bridge. The complete affected operations suite and integrated
-rerun at `5c97c15` are pending; the earlier CI failure is not a current-head pass.
+through the real bridge. The complete affected operations selection passed 41 of 57 cases (16 native skips),
+run `3bd3a63a-c15b-4aba-9c49-2efe709f7318`. The frozen `5c97c15` integrated run
+`d5871042-8bdf-42cf-80ea-03fcd1180556` passed 462 of 582 cases, with 120 explicit
+skips and no failures. A separate native-host selection passed 103/103 without skips
+(`/tmp/arcnexus-109-native-5c97c15.log`); this is not a claim that every skipped case
+was covered. [CI at that revision](https://github.com/treeseed-ai/arcnexus/actions/runs/41426260359/job/125213487007)
+passed, including its 103 native cases. Later fixture and migration changes still
+require their integrated verification.
 Formatting, lint, types, build, ownership and guidance passed for this slice.
 
 The canonical-host fix (#137) prevents different temporary/evidence roots from
@@ -328,3 +334,19 @@ runtime qualifier now requires stdout/stderr sentinels as well as filesystem den
 These were controlled fixture checks, not live task/workday qualification. Later
 checkpoints delivered dynamic test-context refresh, shared operation lifecycle and
 the derived API catalog. Current outstanding work is listed above.
+
+The planning fixture now exercises minimal authority and checked source edits:
+14/14 planning cases and two engineering/research characterizations passed with native
+confinement and no skips. These use scripted responses and are deterministic evidence.
+Issue #141 restored migration's obsolete-profile validation; its four migration cases
+pass, including rejection before source mutation. A new live self-development task
+`d62115a1-2969-42d8-9351-8da587f564f0` uses the frozen verified `5c97c15` supervisor;
+its result remains pending and does not yet satisfy the self-development gate.
+
+The standalone workspace suite now uses minimal authority and shared operations.
+Its 18 cases passed with native confinement and no skips, including setup source-write
+prevention and parent-loss kernel-scope cleanup. The former command-array assertions
+now inspect retained operation invocations. Formatting, lint, types, build, ownership
+and guidance passed. The first affected CLI run correctly refused the uncommitted
+suite-metadata change (`Candidate changed mandatory test selection`); qualification
+must capture the new native-host tag in a committed revision before rerunning.

@@ -20,7 +20,6 @@ export interface TestSelection {
   suites: DiscoveredSuite[];
   profiles: TestProfile[];
   operationPlan?: TestOperationPlan;
-  requiresSharedOperations?: boolean;
 }
 
 export interface TestExecution {
@@ -74,7 +73,6 @@ export class ComponentTesting {
       bindings,
       revision,
       inference: false,
-      requiresSharedOperations: owners.some((owner) => owner.schemaVersion === 5),
       suites: selected,
       profiles: [...profiles.values()].filter((profile) =>
         selected.some((suite) => suite.profile === profile.id),
