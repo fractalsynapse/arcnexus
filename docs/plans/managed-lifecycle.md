@@ -124,3 +124,14 @@ skills option for callers whose declared policy requires an inventory.
 Bootstrap this cross-owner wiring directly: guidance-validation owns metadata checks,
 architecture owns catalog validation, and CLI composes their public results. Retire the
 standalone guidance command after migrating its tests and declared operations/CI.
+
+## Standards migration contract
+
+Component schema six uses `standards`; schema-five `patterns` remains historical
+inspection/migration input only after active fixtures migrate. Standard definitions
+retain their existing identity and artifact/check contract under `architecture/standards`.
+The v4 recipe migration feeds the same final v6 conversion; v5 converts without
+re-authoring operations. Preview and write preserve owner scope by renaming exact
+standard-directory/file ownership declarations with their artifacts. Mixed old/new
+references or conflicting destinations require an explicit decision. Current catalogs
+and prompts expose standards only; historical snapshots retain their original vocabulary.
