@@ -40,11 +40,32 @@ class CoordinationEvidenceScenarios {
     assert.equal(execution.source.head, context.base);
     assert.equal(execution.source.status, '');
     this.requestsPrecedeWork(execution);
-    this.observations(execution, f.calls);
+    this.observations(execution, f.calls, host);
+  }
+
+  /** Model envelopes use the reply schema identity, never the store's internal retry key. */
+  private inboxIdentity(host: ProjectHost, runId: string): void {
+    let envelopes = 0;
+    for (const assignment of host.store.assignments(runId)) {
+      const record = JSON.parse(
+        readFileSync(
+          join(host.root, 'runs', String(assignment.data.recordId), 'report.json'),
+          'utf8',
+        ),
+      );
+      for (const request of record.inboxContext ?? []) {
+        envelopes++;
+        assert.equal('key' in request, false);
+        assert.equal('id' in request, false);
+        assert.ok(host.store.inbox(assignment.id).some((entry) => entry.id === request.requestId));
+      }
+    }
+    assert.ok(envelopes > 0);
   }
 
   /** Retained SDK reads and host-check output reach the verifier as distinct evidence classes. */
-  private observations(execution: any, calls: string): void {
+  private observations(execution: any, calls: string, host: ProjectHost): void {
+    this.inboxIdentity(host, execution.run.id);
     this.deliveries(execution, calls);
     const record = execution.assignments.find((a: any) => a.owner === 'a').record;
     const observations = record.observations;

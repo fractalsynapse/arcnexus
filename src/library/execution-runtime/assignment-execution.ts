@@ -36,7 +36,7 @@ export class AssignmentExecution {
     const record = await this.record(assignment);
     this.acknowledge(assignment, record);
     this.dependencyContext(assignment, record);
-    record.inboxContext = this.store.inbox(assignment.id);
+    record.inboxContext = this.inbox(assignment.id);
     record.continuationFeedback = [
       assignment.data.continuationReason,
       record.continuationLoopWarning,
@@ -58,6 +58,14 @@ export class AssignmentExecution {
     if (!record.pendingRequests && !record.pendingInboxActions) await session.step();
     const result = await this.outcome(assignment, record, session);
     return { ...result, receipt: (record.checkpoint as { sha256: string }).sha256 };
+  }
+
+  /** Exposes one durable reply identity while keeping internal retry keys out of model context. */
+  private inbox(assignmentId: string): unknown[] {
+    return this.store.inbox(assignmentId).map(({ id, key: _retryKey, ...request }) => ({
+      ...request,
+      requestId: id,
+    }));
   }
 
   /** Clears only outputs whose scheduler acknowledgement is durable; unacknowledged outputs replay. */
