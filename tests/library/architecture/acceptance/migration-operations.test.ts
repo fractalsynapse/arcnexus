@@ -52,6 +52,17 @@ class OperationMigrationScenarios {
 
   /** Equal service commands still represent distinct leases and separately targeted HTTP checks. */
   async services(): Promise<void> {
+    const result = await this.migrate(this.serviceDefinitions());
+    assert.equal(result.definitions.length, 4);
+    assert.equal(result.identities['server-b'], 'server-b');
+    assert.equal(
+      result.definitions.find((entry: any) => entry.id === 'http-b').http.serviceId,
+      'server-b',
+    );
+  }
+
+  /** Captures two independent leases with otherwise identical process and HTTP definitions. */
+  private serviceDefinitions(): any[] {
     const server = {
       ...this.operation('server-a'),
       kind: 'service',
@@ -71,18 +82,12 @@ class OperationMigrationScenarios {
         expectedStatus: 200,
       },
     };
-    const result = await this.migrate([
+    return [
       server,
       { ...server, id: 'server-b' },
       http,
       { ...http, id: 'http-b', http: { ...http.http, serviceId: 'server-b' } },
-    ]);
-    assert.equal(result.definitions.length, 4);
-    assert.equal(result.identities['server-b'], 'server-b');
-    assert.equal(
-      result.definitions.find((entry: any) => entry.id === 'http-b').http.serviceId,
-      'server-b',
-    );
+    ];
   }
 
   /** Cycles, missing references and obsolete deadlines produce diagnostics before returning definitions. */
