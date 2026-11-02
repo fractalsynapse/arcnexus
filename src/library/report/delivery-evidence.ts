@@ -10,13 +10,19 @@ export class DeliveryEvidence {
   constructor(private readonly root: string) {}
 
   /** Projects only completed deliveries and keeps missing or mismatched verification explicit. */
-  capture(assignment: ExecutionAssignment): unknown[] {
+  capture(assignment: ExecutionAssignment, observations = true): unknown[] {
     if (assignment.status !== 'completed') return [];
-    return assignment.evidence.map((reference) => this.reference(assignment, reference));
+    return assignment.evidence.map((reference) =>
+      this.reference(assignment, reference, observations),
+    );
   }
 
   /** Reads only a matching verifier report within the private run directory. */
-  private reference(assignment: ExecutionAssignment, reference: string): unknown {
+  private reference(
+    assignment: ExecutionAssignment,
+    reference: string,
+    observations: boolean,
+  ): unknown {
     try {
       const id = basename(dirname(reference));
       const directory = join(this.root, 'runs', id);
@@ -25,7 +31,7 @@ export class DeliveryEvidence {
       if (!lstatSync(reference).isFile()) throw new Error('Verification is not a regular file');
       const record = JSON.parse(readFileSync(reference, 'utf8')) as RecordData;
       this.validate(record, assignment, id);
-      return this.project(record, directory);
+      return this.project(record, directory, observations);
     } catch (error) {
       return { evidenceUnavailable: true, reason: String(error) };
     }
@@ -46,7 +52,7 @@ export class DeliveryEvidence {
   }
 
   /** Separates the independent assessment, reviewed candidate and observed checks from worker claims. */
-  private project(record: RecordData, directory: string) {
+  private project(record: RecordData, directory: string, observations: boolean) {
     const reviewed = record.verificationEvidence as Record<string, unknown> | undefined;
     if (!reviewed?.candidateDigest) throw new Error('Reviewed candidate identity is unavailable');
     return {
@@ -62,7 +68,9 @@ export class DeliveryEvidence {
       },
       acceptanceCriteria: record.acceptanceCriteria,
       assessment: record.agent,
-      observations: new ExecutionObservations(directory).capture(record),
+      observations: observations
+        ? new ExecutionObservations(directory).capture(record)
+        : { retainedIn: 'independent-verifier-report', recordId: record.id },
     };
   }
 }

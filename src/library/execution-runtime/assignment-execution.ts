@@ -207,20 +207,39 @@ export class AssignmentExecution {
     const delivered = dependencies.filter((dependency) => dependency.status === 'completed');
     record.coordinationContext =
       'Dependency assignment states (accepted intent is not verified delivery): ' +
-      JSON.stringify(dependencies) +
+      JSON.stringify(dependencies.map((item) => this.dependency(item))) +
       '\nRequired dependency milestones: ' +
       JSON.stringify(assignment.data.milestones ?? {}) +
-      (delivered.length ? '\nVerified dependency deliveries: ' + JSON.stringify(delivered) : '') +
+      (delivered.length
+        ? '\nVerified dependency deliveries: ' +
+          JSON.stringify(delivered.map((item) => this.dependency(item)))
+        : '') +
       '\nVerified dependency assessments: ' +
       JSON.stringify(
         delivered.map((dependency) => ({
           assignmentId: dependency.id,
           owner: dependency.owner,
           deliveredRevision: dependency.data.deliveredRevision,
-          reviews: new DeliveryEvidence(this.root).capture(dependency),
+          reviews: new DeliveryEvidence(this.root).capture(dependency, false),
         })),
       ) +
       '\nIf accepted intent is insufficient, return inboxActions with action=require_delivery, the existing requestId from General inbox requests (not the dependency assignment ID), and an explanation. Use only the envelope’s availableActions; incoming requests and outgoing dependencies have different reply authority. Completed delivery needs no acknowledgment. Do not create another request or restate accepted scope; this action strengthens only the existing milestone.';
+  }
+
+  /** Projects actionable dependency facts without recursively copying activation or raw evidence state. */
+  private dependency(item: ExecutionAssignment) {
+    return {
+      id: item.id,
+      owner: item.owner,
+      objective: item.objective,
+      acceptance: item.acceptance,
+      status: item.status,
+      dependencies: item.dependencies,
+      evidence: item.evidence,
+      accepted: item.data.accepted === true,
+      deliveredRevision: item.data.deliveredRevision,
+      reason: item.data.reason,
+    };
   }
 
   /** Incorporates verified deliveries without losing incomplete owner changes or frozen evidence. */
