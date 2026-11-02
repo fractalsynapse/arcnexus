@@ -81,6 +81,7 @@ export class CodexConfiguration {
     }
     if (this.input.record.generalExecution) schema.required = Object.keys(schema.properties);
     this.restrictActivities(schema);
+    this.restrictRegression(schema);
     const plan = this.input.record.plan as Plan | undefined;
     if ((this.profile?.schemaVersion ?? 1) >= 2 && plan)
       schema.properties.planUpdates.items.properties.id.enum = plan.items.map((item) => item.id);
@@ -89,6 +90,15 @@ export class CodexConfiguration {
       schema.required.push('coordination');
     }
     return schema;
+  }
+
+  /** Advertises stable operation identities only when the captured owner uses minimal configuration. */
+  private restrictRegression(schema: any): void {
+    const resolved = this.input.record.resolvedAssignment as ResolvedAssignment | undefined;
+    const key = resolved?.context.at(-1)?.schemaVersion === 5 ? 'operationId' : 'verificationIndex';
+    schema.properties.regression.anyOf = schema.properties.regression.anyOf.filter(
+      (entry: any) => entry.type === 'null' || Object.hasOwn(entry.properties ?? {}, key),
+    );
   }
 
   /** Advertises only activities authorized by the captured role, including checklist declarations. */

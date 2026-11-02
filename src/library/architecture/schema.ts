@@ -1,5 +1,5 @@
 import { Ajv2020 } from 'ajv/dist/2020.js';
-import { readFileSync } from 'node:fs';
+import { PackagedSchemas } from './packaged-schemas.js';
 
 const ajv = new Ajv2020({ strict: true, allErrors: true });
 
@@ -7,11 +7,7 @@ const validators = new Map<string, ReturnType<typeof ajv.compile>>();
 
 /** Loads trusted, packaged schemas rather than target-authored configuration. */
 export function readSchema(name: string): any {
-  const registry = JSON.parse(
-    readFileSync(new URL('./schema-registry.json', import.meta.url), 'utf8'),
-  );
-  if (!Object.hasOwn(registry, name)) throw new Error(`Unknown runtime schema: ${name}`);
-  return JSON.parse(readFileSync(new URL(registry[name], import.meta.url), 'utf8'));
+  return new PackagedSchemas().read(name);
 }
 
 export function validateSchema<T>(name: string, value: unknown): T {

@@ -1,3 +1,4 @@
+import { RegressionOperation } from './regression-operation.js';
 import { digest } from '../architecture/assignment.js';
 import { SpecificationValidationError } from './specification-error.js';
 import { logExcerpt } from './attempts.js';
@@ -61,11 +62,10 @@ export class SessionVerification {
   /** Matches the observed failure to the steward’s declared diagnostic. */
   private async regression(spec: AgentResult): Promise<void> {
     this.state.regression = spec.regression;
-    if (
-      !this.state.regression ||
-      !this.state.component.verification[this.state.regression.verificationIndex]
-    )
-      throw new Error('Missing/invalid regression checkpoint');
+    if (!this.state.regression) throw new Error('Missing regression checkpoint');
+    new RegressionOperation(this.state.component, this.state.options.record).select(
+      this.state.regression,
+    );
     const failed = await this.expectedFailure();
     this.state.safe();
     if (
@@ -87,11 +87,10 @@ export class SessionVerification {
   /** Runs the declared regression and retains its diagnostic for the red checkpoint. */
   private async expectedFailure(): Promise<CommandResult | undefined> {
     let failed: CommandResult | undefined;
+    const selection = new RegressionOperation(this.state.component, this.state.options.record);
+    const command = selection.select(this.state.regression);
     try {
-      await this.state.command(
-        this.state.component.verification[this.state.regression!.verificationIndex]!,
-        'red-test',
-      );
+      await this.state.command(command, 'red-test');
     } catch (error) {
       this.state.options.signal.throwIfAborted();
       if (
@@ -102,6 +101,7 @@ export class SessionVerification {
         failed = error.commandResult as CommandResult;
       else throw error;
     }
+    if (failed) selection.capture(command, failed);
     return failed;
   }
 
@@ -132,7 +132,9 @@ export class SessionVerification {
     if (this.state.regression)
       await withFrozenTests(this.state.options.record, this.state.frozen, async () => {
         await this.state.command(
-          this.state.component.verification[this.state.regression!.verificationIndex]!,
+          new RegressionOperation(this.state.component, this.state.options.record).select(
+            this.state.regression,
+          ),
           'frozen-regression',
         );
         this.state.safe();

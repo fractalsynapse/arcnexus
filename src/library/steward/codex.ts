@@ -26,7 +26,12 @@ export interface AgentResult {
   blockers: string[];
   findings: Array<{ summary: string; evidence: string[]; uncertainty: string }>;
   activities: Array<{ activity: string; status: string; summary: string; sources: string[] }>;
-  regression: { verificationIndex: number; exitCode: number; outputIncludes: string } | null;
+  regression:
+    | (({ verificationIndex: number } | { operationId: string }) & {
+        exitCode: number;
+        outputIncludes: string;
+      })
+    | null;
   reviewFindings: string[];
   requests: Array<{
     assignmentId?: string | null;
