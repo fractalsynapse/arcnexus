@@ -68,11 +68,13 @@ export class ControlledWorkflow {
       return;
     }
     if (this.args[0] === 'sandbox') {
-      process.exitCode = this.options.nativeExecutable
-        ? (cp.spawnSync(this.options.nativeExecutable, this.args, { stdio: 'inherit' }).status ?? 1)
-        : this.options.mode === 'preflight-fail'
+      process.exitCode =
+        this.options.mode === 'preflight-fail'
           ? 9
-          : 0;
+          : this.options.nativeExecutable
+            ? (cp.spawnSync(this.options.nativeExecutable, this.args, { stdio: 'inherit' })
+                .status ?? 1)
+            : 0;
       return;
     }
     this.validateInvocation();
@@ -119,6 +121,8 @@ export class ControlledWorkflow {
       changes: [...this.edits.values()],
     });
     this.edits.clear();
+    if (['implementation', 'correction'].includes(turn.stage))
+      this.candidateMutations(this.options.mode);
   }
 
   /** Simulates an explicit missing retained thread before any turn activity or side effect. */
@@ -263,9 +267,10 @@ export class ControlledWorkflow {
     const mode = this.options.mode;
     const broken =
       mode === 'exhaust' ||
+      mode === 'weak-test' ||
       (this.options.repairAfter !== undefined &&
         turn.count - (this.options.planning ? 2 : 1) <= this.options.repairAfter) ||
-      (['repair', 'weak-test'].includes(mode) && turn.stage === 'implementation');
+      (mode === 'repair' && turn.stage === 'implementation');
     this.write('source.txt', broken ? 'broken' : 'after');
     turn.result.activities = [
       {
@@ -277,7 +282,7 @@ export class ControlledWorkflow {
     ];
     if (mode === 'verify-timeout' && turn.stage === 'implementation')
       fs.writeFileSync('tests/marker', 'hang');
-    this.candidateMutations(mode);
+    if (!this.options.checkedEdits) this.candidateMutations(mode);
   }
 
   /** Introduces selected Git, path or instruction violations for host inspection. */
@@ -340,7 +345,7 @@ export class ControlledWorkflow {
       },
     ];
     if (this.options.mode === 'review-write') fs.writeFileSync('source.txt', 'review mutation');
-    if (this.options.mode === 'review-repair' && turn.count === 3)
+    if (this.options.mode === 'review-repair' && turn.count === (this.options.planning ? 4 : 3))
       turn.result.reviewFindings = ['Needs a corrective pass'];
   }
 

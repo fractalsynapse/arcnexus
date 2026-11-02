@@ -381,3 +381,16 @@ rerun passed. Active dependency cancellation retains child invocation evidence. 
 minimal quota/progress cases also pass with no skips. The main assignment workflow
 fixture is still undergoing migration and qualification. CI at `7cef823` is pending;
 these focused local results are not final integrated completion evidence.
+
+The assignment workflow, cancellation and continuation fixtures now use minimal
+captured authority, shared operations and native confinement. Eleven continuation/
+checklist recovery cases passed without skips. The workflow run passed 23 of 24 cases;
+the remaining frozen-regression assertion was strengthened and passed separately.
+Issue #144 records why a generic command-failure assertion was insufficient: the
+updated case proves ordinary verification accepts a weakened candidate test while
+the captured original regression still rejects the implementation. Twelve of thirteen
+steward cases passed initially, and the corrected preflight fault-injection case passed
+separately. Obsolete deadline/attempt-allowance cases were removed deliberately;
+cancellation, unbounded correction and progress diagnosis remain covered. Types and
+scoped lint passed. CI at `7cef823` is green; these later fixture changes still require
+integrated verification at their own revision.

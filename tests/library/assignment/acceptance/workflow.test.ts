@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
-import { test } from 'node:test';
-import { workflowFixture } from '../../testing/support/workflow-fixture.js';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
+import { minimalWorkflowFixture as workflowFixture } from '../../testing/support/workflow-fixture.js';
 
 /** Exercises workflow behavior through observable scenarios. */
 class WorkflowTests {
-  /** Verifies that built cliperforms three checked turns on one thread. */
-  builtCLIPerformsThreeCheckedTurnsOnOneThread(t: TestContext) {
+  /** Verifies that planning and engineering preserve the retained model thread. */
+  builtCLIPerformsPlannedCheckedTurnsOnOneThread(t: TestContext) {
     const f = workflowFixture(t),
       r = f.run();
     assert.equal(r.status, 0, r.stderr);
@@ -17,10 +17,10 @@ class WorkflowTests {
     assert.equal(v.outcome, 'ready_for_integration');
     assert.deepEqual(
       v.turns.map((x: any) => x.activity),
-      ['specification', 'implementation', 'review'],
+      ['planning', 'specification', 'implementation', 'review'],
     );
     assert.equal(v.implementationAttempts, 1);
-    assert.equal(v.usage.input_tokens, 30);
+    assert.equal(v.usage.input_tokens, 40);
     assert.equal(readFileSync(join(v.workspace, 'source.txt'), 'utf8'), 'after');
     assert.ok(existsSync(join(f.state, 'runs', v.id, 'activities.jsonl')));
     const calls = readFileSync(f.calls, 'utf8')
@@ -39,13 +39,13 @@ class WorkflowTests {
     const v = JSON.parse(r.stdout);
     assert.equal(v.outcome, kind + '_completed');
     assert.equal(v.changes.length, 0);
-    assert.equal(v.turns.length, 1);
+    assert.equal(v.turns.length, 2);
   }
 
   /** Verifies the scenario rejects invalid workflow result. */
   rejectsInvalidWorkflowResult(t: TestContext, mode: any) {
     const f = workflowFixture(t, mode),
-      r = f.run('--max-attempts', '2');
+      r = f.run();
     assert.equal(r.status, 1, r.stderr);
     assert.notEqual(JSON.parse(r.stdout).status, 'completed');
   }
@@ -63,7 +63,7 @@ class WorkflowTests {
     );
     f.configure({ requiredFeedback: 'LATE_ACTUAL_FAILURE' });
     f.commit();
-    const result = f.run('--max-attempts', '2');
+    const result = f.run();
     assert.equal(result.status, 0, result.stderr);
     const calls = readFileSync(f.calls, 'utf8')
       .trim()
@@ -74,51 +74,55 @@ class WorkflowTests {
     assert.match(correction.prompt, /Full retained log:/);
   }
 
-  /** Verifies that genuine repair is opt in and preserves frozen tests and cumulative usage. */
-  genuineRepairIsOptInAndPreservesFrozenTestsAndCumulativeUsage(t: TestContext) {
+  /** Verifies that automatic repair preserves frozen tests and cumulative usage. */
+  automaticRepairPreservesFrozenTestsAndCumulativeUsage(t: TestContext) {
     const f = workflowFixture(t, 'repair'),
-      r = f.run('--max-attempts', '2');
+      r = f.run();
     assert.equal(r.status, 0, r.stderr);
     const v = JSON.parse(r.stdout);
     assert.deepEqual(
       v.turns.map((x: any) => x.activity),
-      ['specification', 'implementation', 'correction', 'review'],
+      ['planning', 'specification', 'implementation', 'correction', 'review'],
     );
     assert.equal(v.implementationAttempts, 2);
-    assert.equal(v.usage.input_tokens, 40);
+    assert.equal(v.usage.input_tokens, 50);
     assert.deepEqual(
       v.turns.map((x: any) => x.usage.input_tokens),
-      [10, 10, 10, 10],
+      [10, 10, 10, 10, 10],
     );
   }
 
-  /** Verifies that explicit failure stops and failed correction exhausts two attempts. */
-  explicitFailureStopsAndFailedCorrectionExhaustsTwoAttempts(t: TestContext) {
-    for (const [mode, args, turns] of [
-      ['repair', ['--max-attempts', '1'], 2],
-      ['exhaust', ['--max-attempts', '2'], 3],
-    ] as Array<[string, string[], number]>) {
-      const f = workflowFixture(t, mode),
-        r = f.run(...args);
-      assert.equal(r.status, 1);
-      assert.equal(JSON.parse(r.stdout).turns.length, turns);
-    }
-  }
-
-  /** Verifies that review can request one corrective pass within five turns. */
-  reviewCanRequestOneCorrectivePassWithinFiveTurns(t: TestContext) {
+  /** Verifies that review can request correction without an attempt allowance. */
+  reviewCanRequestCorrectionWithoutAnAttemptAllowance(t: TestContext) {
     const f = workflowFixture(t, 'review-repair'),
-      r = f.run('--max-attempts', '2');
+      r = f.run();
     assert.equal(r.status, 0, r.stderr);
-    assert.equal(JSON.parse(r.stdout).turns.length, 5);
+    assert.equal(JSON.parse(r.stdout).turns.length, 6);
   }
 
   /** Verifies that a weakened current test cannot replace frozen acceptance. */
   aWeakenedCurrentTestCannotReplaceFrozenAcceptance(t: TestContext) {
-    const f = workflowFixture(t, 'weak-test'),
-      r = f.run('--max-attempts', '1');
+    const f = workflowFixture(t, 'weak-test');
+    writeFileSync(
+      join(f.repo, 'verify.cjs'),
+      "if(require('fs').existsSync('tests/regression.cjs'))require('./tests/regression.cjs');",
+    );
+    f.commit();
+    const r = f.run();
     assert.equal(r.status, 1);
-    assert.match(r.stderr, /Command failed/);
+    const record = JSON.parse(r.stdout);
+    assert.equal(record.outcome, 'needs_attention');
+    assert.equal(
+      readFileSync(join(record.workspace, 'tests/regression.cjs'), 'utf8'),
+      '// weakened test',
+    );
+    const failures = record.operationInvocations.filter(
+      (invocation: any) =>
+        invocation.purpose === 'frozen-regression' && invocation.result?.exitCode === 1,
+    );
+    assert.ok(failures.length >= 3);
+    for (const invocation of failures)
+      assert.match(readFileSync(invocation.result.log, 'utf8'), /BOUNDARY_EXPECTED/);
   }
 
   /** Verifies that blocked work returns avalidated owner request. */
@@ -183,7 +187,7 @@ class WorkflowTests {
   /** Verifies that candidate guidance cannot authorize edits outside captured scope. */
   candidateGuidanceCannotAuthorizeEditsOutsideCapturedScope(t: TestContext) {
     const f = workflowFixture(t);
-    f.component.allowedWritePaths.push('AGENTS.md');
+    f.component.owns.push('AGENTS.md');
     writeFileSync(join(f.repo, 'architecture/components/sample.json'), JSON.stringify(f.component));
     f.commit();
     f.configure({ guidanceExpansion: true });
@@ -195,8 +199,8 @@ class WorkflowTests {
 
 const suite = new WorkflowTests();
 
-test('built CLI performs three checked turns on one thread', (t: any) =>
-  suite.builtCLIPerformsThreeCheckedTurnsOnOneThread(t));
+test('built CLI performs planned checked turns on one thread', (t: any) =>
+  suite.builtCLIPerformsPlannedCheckedTurnsOnOneThread(t));
 
 for (const kind of ['research', 'review'])
   test(`${kind} succeeds without edits`, (t: any) => suite.completesReadOnlyAssignment(t, kind));
@@ -216,14 +220,11 @@ for (const mode of [
 ])
   test(`host rejects ${mode}`, (t: any) => suite.rejectsInvalidWorkflowResult(t, mode));
 
-test('genuine repair is opt-in and preserves frozen tests and cumulative usage', (t: any) =>
-  suite.genuineRepairIsOptInAndPreservesFrozenTestsAndCumulativeUsage(t));
+test('automatic repair preserves frozen tests and cumulative usage', (t: any) =>
+  suite.automaticRepairPreservesFrozenTestsAndCumulativeUsage(t));
 
-test('explicit attempt limits stop failed implementation and correction', (t: any) =>
-  suite.explicitFailureStopsAndFailedCorrectionExhaustsTwoAttempts(t));
-
-test('review can request one corrective pass within five turns', (t: any) =>
-  suite.reviewCanRequestOneCorrectivePassWithinFiveTurns(t));
+test('review can request correction without an attempt allowance', (t: any) =>
+  suite.reviewCanRequestCorrectionWithoutAnAttemptAllowance(t));
 
 test('a weakened current test cannot replace frozen acceptance', (t: any) =>
   suite.aWeakenedCurrentTestCannotReplaceFrozenAcceptance(t));
@@ -246,4 +247,8 @@ test('candidate guidance cannot authorize edits outside captured scope', (t: any
 test('late host diagnostics reach the corrective steward', (t) =>
   suite.lateFailureReachesCorrection(t));
 
-registerSuite({ component: 'assignment', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'assignment',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

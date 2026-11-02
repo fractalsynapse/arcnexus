@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
+import { loadBindings } from '../../../../dist/library/architecture/bindings.js';
 import { resolveAssignment } from '../../../../dist/library/architecture/assignment.js';
 import { StewardSession } from '../../../../dist/library/assignment/steward.js';
 import { createWorkspace } from '../../../../dist/library/workspace/workspace.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { workflowFixture } from '../../testing/support/workflow-fixture.js';
+import { minimalWorkflowFixture as workflowFixture } from '../../testing/support/workflow-fixture.js';
 
 /** Reproduces real specification edits followed by an invalid completed-turn checklist update. */
 class ChecklistRecoveryScenarios {
@@ -126,9 +128,11 @@ class ChecklistRecoveryScenarios {
     const f = workflowFixture(t, mode);
     this.configure(f, mode);
     for (const name of ['runs', 'workspaces']) mkdirSync(join(f.state, name), { recursive: true });
-    const record = createWorkspace(f.state, { project: f.repo });
+    const bindings = loadBindings(join(f.root, 'minimal-bindings.json'));
+    const record = createWorkspace(f.state, { project: f.repo, bindings });
     record.resolvedAssignment = resolveAssignment(f.repo, record.base, 'sample', {
       objective: 'Improve behavior',
+      bindings,
     });
     record.directionAccepted = true;
     const step = () =>
@@ -146,31 +150,13 @@ class ChecklistRecoveryScenarios {
 
   /** Captures an unlimited profile with the deterministic planning-aware harness. */
   private configure(f: ReturnType<typeof workflowFixture>, mode: string): void {
-    const module = new URL('../../testing/support/controlled-workflow.js', import.meta.url).href;
-    const options = { mode, calls: f.calls, planning: true };
-    writeFileSync(
-      f.executable,
-      `#!/usr/bin/env node\nimport(${JSON.stringify(module)}).then(({ControlledWorkflow}) => new ControlledWorkflow(${JSON.stringify(options)}).run());\n`,
-      { mode: 0o755 },
-    );
-    writeFileSync(
-      join(f.repo, 'architecture/execution-profiles/luna.yaml'),
-      JSON.stringify({
-        schemaVersion: 3,
-        id: 'luna',
-        model: 'gpt-6-luna',
-        reasoning: 'medium',
-        webSearch: 'disabled',
-        operationCategories: [],
-      }),
-    );
     if (mode.startsWith('restricted-')) {
       const path = join(f.repo, 'architecture/roles/engineer.yaml');
       const role = JSON.parse(readFileSync(path, 'utf8'));
       role.activities = role.activities.filter((activity: string) => activity !== 'release');
       writeFileSync(path, JSON.stringify(role));
+      f.commit();
     }
-    f.commit();
   }
 }
 
@@ -200,4 +186,8 @@ test('completed expected-regression mismatch can correct on its retained specifi
 test('equivalent expected-regression mismatches require diagnosis', (t) =>
   scenarios.regressionLoop(t));
 
-registerSuite({ component: 'assignment', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'assignment',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});
