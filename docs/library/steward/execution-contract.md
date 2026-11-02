@@ -73,8 +73,10 @@ preflight rather than enabling a less restricted execution path.
 Model source changes use the assignment-bound `source.edit` bridge. Turn cleanup
 ends that turn's operations and service leases; it does not cancel the retained
 assignment or prevent subsequent turns. Scope qualification and controlled model
-protocol fixtures do not satisfy real model-driven qualification gates. Engineering
-remains gated until production wiring is qualified with the checked edit protocol.
+protocol fixtures do not satisfy real model-driven qualification gates. The
+[first real checked-engineering task](../assignment/checked-engineering-qualification.md)
+completed through production wiring; the broader migration and remaining live gates
+remain incomplete.
 
 The native Codex host may retain authentication and thread state in its configured
 home, but sandboxed agent commands must not read or modify that private authority.

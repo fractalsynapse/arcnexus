@@ -48,7 +48,7 @@ and profile), `reviewerProfile`, `defaultPackage`, and `verificationInputs`.
 New execution rejects a simultaneous `architecture/execution` file. Director models
 and reasoning come from the selected profile; absent configuration never selects a
 hidden model or initializer. Version-five catalogs and shared-operation preparation
-are implemented while full engineering execution remains gated.
+feed the checked engineering workflow.
 
 Environment schema 4 retains repository composition only. Operation schema 4 holds
 fixed commands, prerequisite references, disposable outputs and artifacts once;
@@ -95,7 +95,8 @@ with the declared director profile; it never makes that component an eligible
 engineering recipient for the selected package. Workday stewardship retains each
 steward's own identity and inherited engineering profile.
 
-Minimal read-only research and review may execute after confinement qualification.
-Source-changing engineering remains gated until checked-edit production acceptance
-is complete. Historical configuration adapters retain their existing read-only
-interpretation during this staged migration.
+Minimal research, review and change assignments may execute after confinement
+qualification. The [first real checked-engineering task](../assignment/checked-engineering-qualification.md)
+completed with independent verification. The remaining migration and live gates are
+still open. Legacy executable configurations remain supported during this staged
+migration; retiring them is unfinished. Historical reports remain read-only evidence.

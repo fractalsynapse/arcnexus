@@ -43,9 +43,10 @@ and private temporary storage. Run intent is flushed before dispatch; uncertain
 operations are not automatically replayed. Cleanup derives disposable outputs from
 immutable operation definitions and retains the original reports.
 
-This preparation path is implemented. Full v5 engineering remains gated pending
-refresh, test preparation and verification integration; it is not yet the production
-configuration family. The following describes the existing legacy preparation path.
+Shared preparation, refresh, test preparation and verification are integrated with
+version-five checked engineering. A [real engineering task](../assignment/checked-engineering-qualification.md)
+completed through that path. ArcNexus's own declarations still require migration;
+the following describes its existing legacy preparation configuration.
 
 Commit `architecture/environment.yaml` in the target repository:
 
