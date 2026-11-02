@@ -219,3 +219,13 @@ requires the declared fixture origin before execution.
 The product build clears obsolete compiled fixture payloads before recompiling.
 Renaming a maintained test must not leave the former generated test in a newly
 materialized package or execute both copies of the same acceptance scenario.
+
+The shipped identity and HTTP campaign targets use the same minimal configuration
+family as general. Each has one platform policy declaration, one package identity
+and one executable owner of its complete small repository. Public modules remain
+explicit; setup, runtime probes and verification are shared operation references.
+HTTP service startup stays agent-only and finite syntax checking remains mandatory
+verification. Its loopback probe is a referenced prerequisite rather than an inline
+recipe. Materialize compiled payloads, declare the fixture repository's origin and
+commit before invoking normal task/workday commands. Historical campaign manifests
+and evidence retain their original interpretation.
