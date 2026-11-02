@@ -107,3 +107,16 @@ patterns or out-of-owner artifacts fail validation. Referenced checks must belon
 to the pattern owner’s declared operation usages; the reference itself grants no
 additional execution or write authority. Inspection includes the captured hashes,
 and steward context receives the immutable artifact text.
+
+### Model context and captured authority
+
+Model-facing component context is a projection of the revision-bound catalog. It
+retains identity, architectural intent, effective read/write boundaries, public API
+symbols and schema links, cross-owner and unresolved relationships, and policy
+provenance. Command definitions, file hashes, internal imports and duplicated
+resolved operation plans stay in the immutable catalog and execution records;
+they are not repeated in every component prompt. Verification references identify
+captured host checks, and agent operation discovery remains host-controlled.
+The projection does not replace any authority, selection or completion check.
+Director, engineering and reviewer prompts use the same projection. No acceptance
+criterion or evidence is truncated to fit transport limits.
