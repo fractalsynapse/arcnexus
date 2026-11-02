@@ -221,3 +221,18 @@ sends a control request, it waits for that request's response or an explicit soc
 disconnection. Checkpoint elapsed time is not a control failure, and the client
 never replays a mutation whose outcome is uncertain. Task cancellation continues
 through the attached task identity; process supervision still governs host loss.
+
+### Strengthening an existing delivery wait
+
+A requester can return a correlated inbox action `require_delivery` with the
+existing `requestId` and an explanation. The host strengthens that existing edge
+to verified delivery without requiring another copy of the recipient's objective,
+acceptance criteria or write scope. It creates no assignment and does not relax
+shared-request matching. The host checks sender authority and blocking cycles in
+the same transaction; a rejected wait leaves the previous milestone and replies
+unchanged. Retries do not duplicate work, and unrelated ready assignments continue.
+Only actual verified delivery releases the wait; an acknowledgement cannot do so.
+
+Dependency acceptance describes the recipient's bounded contribution. The overall
+goal supplies context, but an owner's delivery must not depend on future requester
+integration. The director assesses that assembled goal separately.
