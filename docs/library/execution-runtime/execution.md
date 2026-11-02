@@ -245,3 +245,12 @@ supplier delivery requires no acknowledgment or additional `require_delivery`
 action. Reply validation remains transactional and authoritative even when retained
 model context has become stale. Internal reply receipt identities stay out of the
 model-facing projection, alongside request retry keys.
+
+Dependency continuations carry assignment identity, owner, objective, acceptance,
+status, required milestone and delivered candidate identity. Independent delivery
+assessments retain their complete criterion conclusions and reviewed candidate
+identity. They do not inline raw tool observations, command logs, retained thread
+state or prior activation payloads. Full delivery evidence remains in the private
+reports and in the independent verifier's paged evidence artifacts. This projection
+prevents recursive evidence growth; it does not truncate acceptance criteria or
+impose an execution quota.
