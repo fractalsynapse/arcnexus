@@ -120,3 +120,8 @@ captured host checks, and agent operation discovery remains host-controlled.
 The projection does not replace any authority, selection or completion check.
 Director, engineering and reviewer prompts use the same projection. No acceptance
 criterion or evidence is truncated to fit transport limits.
+
+Captured configuration source values remain the parsed authored data, paired with
+their original text and hashes. Effective component resolution uses separate
+objects. Inheritance, inventories and operation planning must never write derived
+fields into retained authored values or make inherited policy appear leaf-authored.
