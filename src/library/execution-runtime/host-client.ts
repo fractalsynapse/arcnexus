@@ -111,7 +111,10 @@ export class HostClient {
     return new Promise((resolve, reject) => {
       const socket = connect(this.socket);
       let data = '';
-      socket.setTimeout(5000, () => socket.destroy(new Error('Host control transport timed out')));
+      if (request.action === 'identity')
+        socket.setTimeout(5000, () =>
+          socket.destroy(new Error('Host discovery transport timed out')),
+        );
       socket.on('connect', () => socket.write(JSON.stringify(request) + '\n'));
       socket.on('error', reject);
       socket.on('data', (chunk) => {
