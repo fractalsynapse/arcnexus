@@ -1,3 +1,4 @@
+import { createHash, randomUUID } from 'node:crypto';
 import { ControlledInitializer } from './controlled-initializer.js';
 import * as cp from 'node:child_process';
 import * as fs from 'node:fs';
@@ -5,6 +6,8 @@ import { ControlledPlanning } from './controlled-planning.js';
 
 export interface WorkflowOptions {
   mode: string;
+  checkedEdits?: boolean;
+  nativeExecutable?: string;
   repairAfter?: number;
   requiredFeedback?: string;
   observedShellFailures?: number;
@@ -44,6 +47,16 @@ export interface WorkflowTurn {
 export class ControlledWorkflow {
   private args = process.argv.slice(2);
 
+  private readonly edits = new Map<
+    string,
+    {
+      path: string;
+      operation: string;
+      expectedSha256: string | null;
+      content: string;
+    }
+  >();
+
   /** Retains the selected scripted workflow and its invocation evidence destination. */
   constructor(private options: WorkflowOptions) {}
 
@@ -54,7 +67,11 @@ export class ControlledWorkflow {
       return;
     }
     if (this.args[0] === 'sandbox') {
-      process.exitCode = this.options.mode === 'preflight-fail' ? 9 : 0;
+      process.exitCode = this.options.nativeExecutable
+        ? (cp.spawnSync(this.options.nativeExecutable, this.args, { stdio: 'inherit' }).status ?? 1)
+        : this.options.mode === 'preflight-fail'
+          ? 9
+          : 0;
       return;
     }
     this.validateInvocation();
@@ -68,8 +85,39 @@ export class ControlledWorkflow {
       return;
     }
     this.execute(turn);
+    await this.flush(turn);
     if (this.options.planning) await new ControlledPlanning(this.options).apply(turn);
     this.emit(turn);
+  }
+
+  /** Captures expected bytes for ordinary edits; legacy scenarios remain unchanged during migration. */
+  private write(path: string, content: string): void {
+    if (!this.options.checkedEdits) {
+      fs.writeFileSync(path, content);
+      return;
+    }
+    const prior = this.edits.get(path);
+    const exists = fs.existsSync(path);
+    this.edits.set(path, {
+      path,
+      operation: prior?.operation ?? (exists ? 'update' : 'create'),
+      expectedSha256: prior
+        ? prior.expectedSha256
+        : exists
+          ? createHash('sha256').update(fs.readFileSync(path)).digest('hex')
+          : null,
+      content,
+    });
+  }
+
+  /** Submits one atomic source transaction through the production MCP bridge before observing checks. */
+  private async flush(turn: WorkflowTurn): Promise<void> {
+    if (!this.edits.size) return;
+    await new ControlledPlanning(this.options).sourceEdit(turn, {
+      id: randomUUID(),
+      changes: [...this.edits.values()],
+    });
+    this.edits.clear();
   }
 
   /** Simulates an explicit missing retained thread before any turn activity or side effect. */
@@ -148,7 +196,7 @@ export class ControlledWorkflow {
     if (this.options.suppliedTool) this.probeSuppliedTool(turn.prompt);
     if (this.options.refactor) {
       if (['implementation', 'correction'].includes(turn.stage))
-        fs.writeFileSync('source.txt', 'before\n');
+        this.write('source.txt', 'before\n');
     } else if (this.options.documentationOnly) this.documentation(turn);
     else {
       if (turn.stage === 'specification' && this.options.mode !== 'no-changes')
@@ -163,13 +211,13 @@ export class ControlledWorkflow {
 
   /** Writes documentation and a failing regression, with optional checkpoint violations. */
   private specification(turn: WorkflowTurn): void {
-    fs.writeFileSync('docs/behavior.md', 'Source must become after');
-    fs.writeFileSync(
+    this.write('docs/behavior.md', 'Source must become after');
+    this.write(
       'tests/regression.cjs',
       "if(require('fs').readFileSync('source.txt','utf8')!=='after')throw new Error('BOUNDARY_EXPECTED');",
     );
     turn.result.regression = {
-      verificationIndex: 0,
+      ...(this.options.checkedEdits ? { operationId: 'verify' } : { verificationIndex: 0 }),
       exitCode: 1,
       outputIncludes: 'BOUNDARY_EXPECTED',
     };
@@ -217,7 +265,7 @@ export class ControlledWorkflow {
       (this.options.repairAfter !== undefined &&
         turn.count - (this.options.planning ? 2 : 1) <= this.options.repairAfter) ||
       (['repair', 'weak-test'].includes(mode) && turn.stage === 'implementation');
-    fs.writeFileSync('source.txt', broken ? 'broken' : 'after');
+    this.write('source.txt', broken ? 'broken' : 'after');
     turn.result.activities = [
       {
         activity: 'implementation',
@@ -383,6 +431,6 @@ export class ControlledWorkflow {
     if (turn.stage !== 'specification') return;
     if (!turn.prompt.includes('Make actual file edits now'))
       throw new Error('DOCUMENTATION_EDIT_CHECKPOINT_MISSING');
-    fs.writeFileSync('docs/behavior.md', 'Updated documentation');
+    this.write('docs/behavior.md', 'Updated documentation');
   }
 }

@@ -1,3 +1,4 @@
+import { MinimalWorkflowPolicy } from './minimal-workflow-policy.js';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -14,6 +15,13 @@ export const stewardEntry = fileURLToPath(new URL('./steward-entry.js', import.m
 
 export function workflowFixture(t: TestContext, mode = 'success'): WorkflowFixture {
   return new WorkflowFixture(t, mode);
+}
+
+/** Materializes the same scripted workflow under minimal authority and actual native confinement. */
+export function minimalWorkflowFixture(t: TestContext, mode = 'success'): WorkflowFixture {
+  const fixture = new WorkflowFixture(t, mode);
+  new MinimalWorkflowPolicy(fixture).apply();
+  return fixture;
 }
 
 /** Exercises workflow fixture behavior through observable scenarios. */

@@ -154,3 +154,11 @@ another kernel process scope. Caller qualification selects the same suites with
 own delegated scope. This adds no product execution bypass and grants the tested
 workers no additional source permissions. Report the confined and native results
 separately; skipped native cases are not qualification evidence.
+
+Assignment planning characterization now uses minimal fixture authority too. Ordinary
+scripted engineering writes pass through `source.edit`, and shared regression checks
+run under the installed native confinement adapter. The fixture records two checked
+transactions for specification and implementation and uses stable operation IDs for
+expected-red evidence. Scripted model responses are deterministic test inputs; they
+are not live model qualification. Remaining legacy session scenarios are migration
+work, not an alternate public execution mode.

@@ -26,6 +26,13 @@ export class ControlledPlanning {
     new ControlledChecklist(this.options.mode).apply(turn);
   }
 
+  /** Uses host-bound ownership and stage validation for every normal minimal-workflow source edit. */
+  async sourceEdit(turn: WorkflowTurn, request: Record<string, unknown>): Promise<void> {
+    const reply = await this.call(turn, 'source.edit', request);
+    if (reply.isError || JSON.parse(reply.content[0].text).status !== 'committed')
+      throw new Error(JSON.stringify(reply));
+  }
+
   /** Rejects response schemas incompatible with the controlled strict-output contract. */
   private strictSchema(schema: any): void {
     if (!schema || typeof schema !== 'object') return;
