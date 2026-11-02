@@ -120,3 +120,10 @@ that must not trigger an empty runner invocation during catalog loading. Referen
 operations must still match the owner's repository, role activities and execution
 profile categories, use supported finite definitions, and obey captured output and
 source-read-only confinement policies. A missing reference fails before dispatch.
+
+CLI inspection and run output project selected suites, profiles, resolved operation
+steps and captured owner identities. They do not repeat the complete effective
+component catalog. Retained test and operation evidence preserves the full captured
+authority used for execution; reducing console output never narrows verification
+or changes the selected command context. The npm compatibility runner uses the
+same projection.
