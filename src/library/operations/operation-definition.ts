@@ -18,28 +18,48 @@ export interface OperationContext {
 /** Resolves fixed host inputs without evaluating shell syntax or accepting caller substitutions. */
 export class OperationArguments {
   /** Expands list inputs into distinct argv entries and rejects unavailable execution context. */
-  resolve(tokens: ArgumentToken[], context: OperationContext): string[] {
+  resolve(
+    tokens: ArgumentToken[],
+    context: OperationContext,
+    pending: ContextInput[] = [],
+  ): string[] {
     return tokens.flatMap((token) => {
       if (typeof token === 'string') return [token];
       const value = context[token.context];
       if (value === undefined) throw new Error(`Missing operation context: ${token.context}`);
       const entries = Array.isArray(value) ? value : [value];
-      if (!entries.length || entries.some((entry) => !entry || entry.includes('\0')))
+      if (
+        (!entries.length && !pending.includes(token.context)) ||
+        entries.some((entry) => !entry || entry.includes('\0'))
+      )
         throw new Error(`Empty or unsafe operation context: ${token.context}`);
       return entries;
     });
   }
 
   /** Captures resolved arguments and the exact definition identity independently of invocation purpose. */
-  capture(operation: Operation, context: OperationContext): Operation {
+  capture(operation: Operation, context: OperationContext, deferEmptySelection = false): Operation {
     if (operation.schemaVersion !== 4) return operation;
     const definitionDigest = operation.definitionDigest!;
     const definitionArguments = operation.argumentTokens ?? operation.definitionArguments ?? [];
-    const args = this.resolve(definitionArguments, this.paths(context, operation.cwd));
+    const pendingContext: ContextInput[] =
+      deferEmptySelection &&
+      context.selectedTestFiles?.length === 0 &&
+      definitionArguments.some(
+        (token) => typeof token !== 'string' && token.context === 'selectedTestFiles',
+      )
+        ? ['selectedTestFiles']
+        : [];
+    const args = this.resolve(
+      definitionArguments,
+      this.paths(context, operation.cwd),
+      pendingContext,
+    );
     return {
       ...operation,
       args,
       argumentTokens: undefined,
+      pendingContext: pendingContext.length ? pendingContext : undefined,
       definitionArguments,
       definitionDigest,
       resolvedContext: context,

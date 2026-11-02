@@ -16,6 +16,45 @@ import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises current test selection without allowing candidate configuration to redefine authority. */
 class CurrentTestScenarios {
+  /** An initially empty owner runs its first new suite, but an empty request cannot dispatch prerequisites. */
+  async firstSuite(t: TestContext): Promise<void> {
+    const { root, record, op, owner } = this.emptyFixture(t);
+    const context = { ...op.resolvedContext!, selectedTestFiles: [] };
+    const arguments_ = new OperationArguments();
+    const compile = arguments_.capture(
+      this.operation('compile', ['-e', 'process.exit(7)']),
+      context,
+    );
+    const available = arguments_.capture(
+      this.operation('test', undefined, ['compile']),
+      context,
+      true,
+    );
+    owner.operationPlan = { agent: [compile, available] };
+    const execution = new OperationExecution(root, record, new AbortController().signal);
+    await assert.rejects(execution.run(available, 'agent'), /Empty or unsafe operation context/);
+    assert.equal(record.operationInvocations, undefined);
+    this.put(record.workspace, 'first', this.suite(''));
+    owner.operationPlan.agent = [arguments_.capture(this.operation(), context, true)];
+    await execution.run(owner.operationPlan.agent[0], 'agent');
+    const report = JSON.parse(readFileSync(join(root, 'runs/run/report.json'), 'utf8'));
+    assert.deepEqual(report.operationInvocations[0].arguments, [
+      '--test',
+      '.test-build/unit/first.test.js',
+    ]);
+  }
+
+  /** Removes the initial suite to model a captured owner with no tests before engineering. */
+  private emptyFixture(t: TestContext) {
+    const fixture = this.fixture(t);
+    rmSync(join(fixture.record.workspace, 'tests/unit/base.test.ts'));
+    rmSync(join(fixture.record.workspace, '.test-build/unit/base.test.js'));
+    const owner = (fixture.record.resolvedAssignment as any).context[0];
+    owner.capturedTests = [];
+    owner.inventory = [];
+    return { ...fixture, owner };
+  }
+
   /** A standalone host test executes its compilation prerequisite once before observing the current suite. */
   async prerequisites(t: TestContext): Promise<void> {
     const { root, record, op } = this.fixture(t);
@@ -194,6 +233,12 @@ class CurrentTestScenarios {
 }
 
 const scenarios = new CurrentTestScenarios();
+
+test(
+  'agent test availability discovers the first suite and never runs an empty prerequisite plan',
+  { skip: !process.env.ARCNEXUS_TEST_CODEX },
+  (t) => scenarios.firstSuite(t),
+);
 
 test(
   'standalone verification executes prerequisites and checkpoints deduplicate preparation',

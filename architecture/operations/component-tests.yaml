@@ -12,13 +12,8 @@ activities:
   - testing
 command: node
 args:
-  - dist/cli.js
-  - test
-  - run
-  - context: ownerId
-  - --project
-  - .
-  - --json
+  - --test
+  - context: selectedTestFiles
 generatedDirectories:
   - .fixture-build
   - .test-build
@@ -26,4 +21,6 @@ generatedDirectories:
   - dist
 artifacts: []
 prerequisites:
-  - migrated-probe-1e7d5605e777d725
+  - migrated-recipe-a7573c70ed1a3dfa
+  - migrated-recipe-51b1b212512a2d1a
+network: true

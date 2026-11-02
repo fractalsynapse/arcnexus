@@ -78,7 +78,7 @@ export class ComponentOperationPlans {
         throw new InputError(`Operation activity outside role: ${op.id}`);
       if (!this.catalog.profiles[c.executionProfile]!.operationCategories?.includes(op.category))
         throw new InputError(`Operation category not permitted: ${op.id}`);
-      return new OperationArguments().capture(op, context);
+      return new OperationArguments().capture(op, context, usage === 'agent');
     });
   }
 }

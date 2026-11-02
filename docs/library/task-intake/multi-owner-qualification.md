@@ -24,6 +24,21 @@ Evidence roots are beneath `/home/adrian/.local/state/arcnexus-qualification-109
 | `91695d0d-8ead-49c2-8e62-7bf7e39c6772` | `multi-owner-guidance-20261102T043036Z` | `needs_input`; workers discovered the checked edit tool but submitted absolute paths, correctly rejected before mutation. |
 | `a8d94f1b-c0ae-493e-b27a-f2288bab9377` | Same guidance root | `needs_input`; relative checked edits worked, but implementation attempted to change a frozen names regression. The host rejected it and the director requested a specification restart decision. |
 
+The subsequent additive-compatibility task `13a34943-9913-4269-ba87-5b70d48b30b7`
+used the same guidance root and clean source authority. It activated gateway, names
+and formatter, and independently verified the names and first formatter deliveries.
+The formatter delivery did not satisfy the whole uppercase-greeting goal. Follow-up
+assignments encountered invalid verification pagination and an unknown durable
+request identity. The director retained `needs_input` rather than accepting a plan
+that would replace a frozen assertion. Issue [#128](https://github.com/treeseed-ai/arcnexus/issues/128)
+tracks these observed failures. The log is `task-additive-preserved-modes.log`;
+this attempt does not satisfy the live gate.
+
+Two earlier additive submissions stopped before model dispatch because stable runner
+capture did not preserve empty-directory permissions. Issue
+[#126](https://github.com/treeseed-ai/arcnexus/issues/126) records the reproduced
+failure and repair; those submissions are not model executions.
+
 The failed directory-binding preflight before the third task is retained separately
 in that root's `task.log`; it is not a model execution. Subsequent task logs are
 `task-guidance.log` and `task-relative-paths.log`. The second task's log is

@@ -1,10 +1,58 @@
 import assert from 'node:assert/strict';
+import { rmSync } from 'node:fs';
+import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises shared operation planning through the assembled catalog loader. */
 class SharedOperationScenarios {
+  /** Retains an available test tool before the first suite while rejecting empty required checkpoints. */
+  firstSuite(t: TestContext, required: boolean): void {
+    const f = this.fixture(t);
+    this.testProfile(f);
+    rmSync(join(f.root, 'package/tests/value.test.ts'));
+    f.put(
+      'architecture/components/package.json',
+      f.component('package', 'package', {
+        parentId: 'platform',
+        root: 'package',
+        testProfile: 'node',
+        operations: { check: [required ? 'verify' : 'agent'] },
+      }),
+    );
+    f.put('architecture/operations/check.json', {
+      ...this.operation(),
+      args: ['--test', { context: 'selectedTestFiles' }],
+    });
+    f.commit();
+    const result = f.run('validate');
+    if (required) return assert.match(result.stderr, /Empty or unsafe operation context/);
+    assert.equal(result.status, 0, result.stderr);
+    const operation = JSON.parse(result.stdout).owners.sample.operationPlan.agent[0];
+    assert.deepEqual(operation.pendingContext, ['selectedTestFiles']);
+    assert.deepEqual(operation.resolvedContext.selectedTestFiles, []);
+  }
+
+  /** Gives the captured test convention its own maintenance paths and shared runner reference. */
+  private testProfile(f: ComponentV5Fixture): void {
+    f.put(
+      'architecture/components/operation-owner.json',
+      f.component('operation-owner', 'library', {
+        parentId: 'maintenance-package',
+        owns: ['architecture/operations', 'architecture/test-profiles'],
+      }),
+    );
+    f.put('architecture/test-profiles/node.json', {
+      schemaVersion: 2,
+      id: 'node',
+      adapter: 'node',
+      outputRoot: '.test-build',
+      preparation: [],
+      run: 'check',
+    });
+  }
+
   /** Resolves one command for different owners without dropping mandatory ancestor usages. */
   shared(t: TestContext): void {
     const fixture = this.fixture(t);
@@ -169,6 +217,12 @@ class SharedOperationScenarios {
 }
 
 const scenarios = new SharedOperationScenarios();
+
+test('v5 agent test availability can precede the first owned suite', (t) =>
+  scenarios.firstSuite(t, false));
+
+test('v5 required checks reject an empty captured test selection', (t) =>
+  scenarios.firstSuite(t, true));
 
 test('v5 shares command definitions and retains inherited verification', (t) =>
   scenarios.shared(t));

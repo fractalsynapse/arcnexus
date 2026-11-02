@@ -89,12 +89,16 @@ export class OperationCheckpoint {
     if (operation.kind === 'http') this.serviceFor(operation);
     return new OperationOrder(registry)
       .resolve([operation.id])
-      .map((entry) =>
-        currentOperationContext(
-          this.record,
-          new OperationArguments().capture(entry, operation.resolvedContext!),
-        ),
-      );
+      .map((entry) => this.capture(entry, operation));
+  }
+
+  /** Refreshes assignment selection before requiring all invocation inputs to be executable. */
+  private capture(entry: Operation, requested: Operation): Operation {
+    const refreshed = currentOperationContext(this.record, {
+      ...entry,
+      resolvedContext: requested.resolvedContext,
+    });
+    return new OperationArguments().capture(refreshed, refreshed.resolvedContext!);
   }
 
   /** Refuses unresolved, unbounded or legacy operations before partial lifecycle execution. */
@@ -103,6 +107,7 @@ export class OperationCheckpoint {
       operation.kind === 'service' ||
       operation.schemaVersion !== 4 ||
       operation.argumentTokens ||
+      operation.pendingContext?.length ||
       !operation.definitionDigest ||
       !operation.resolvedContext
     )

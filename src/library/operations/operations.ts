@@ -22,6 +22,7 @@ export type Operation = {
   prerequisites?: string[];
   network?: boolean;
   argumentTokens?: import('./operation-definition.js').ArgumentToken[];
+  pendingContext?: import('./operation-definition.js').ContextInput[];
   definitionArguments?: import('./operation-definition.js').ArgumentToken[];
   selectedTests?: import('../testing/captured-tests.js').DiscoveredSuite[];
   definitionDigest?: string;

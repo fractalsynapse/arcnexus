@@ -12,9 +12,12 @@ artifacts: []
 network: true
 schemaVersion: 4
 id: migrated-recipe-719d77e27c5d9798
-purpose: Verify architecture-maintenance
+purpose: Verify all repository suites
 kind: command
-prerequisites: []
-command: npm
+prerequisites:
+  - migrated-recipe-a7573c70ed1a3dfa
+  - migrated-recipe-51b1b212512a2d1a
+command: node
 args:
-  - test
+  - --test
+  - .test-build/**/*.test.js
