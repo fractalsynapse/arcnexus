@@ -1,6 +1,6 @@
 # Minimal component configuration — issue 109
 
-Status: accepted implementation intent; not a claim of shipped v5 support.
+Status: implementation and qualification in progress; phase 3 remains blocked.
 
 ## Contract
 
@@ -158,11 +158,52 @@ no final integrated or current-head CI success is claimed here.
 
 The [live multi-owner attempts](../library/task-intake/multi-owner-qualification.md)
 retain unsuccessful outcomes and the discovered tool-guidance defects. Complete
-fixture/campaign migration, formatter transformations, removal of legacy execution
-branches and live gates 2 and 6 remain unfinished. Broader phase-3 inbox and
+fixture/campaign migration, removal of legacy execution branches and live gates 2
+and 6 remain unfinished; formatter transformations were delivered in the subsequent
+checkpoint below. Broader phase-3 inbox and
 active-operation crash gates still require live evidence. Phase 3 remains blocked.
 Direct implementation work remains bootstrap work; the successful qualification
 changed a fixture package, not ArcNexus itself.
+
+### Subsequent integrated checkpoint
+
+ArcNexus now has 21 v5 components with 211 top-level fields and 367 recursive keys,
+compared with the original 457/1,104 baseline. Its 21 shared operation definitions
+contain 18 distinct command/argument pairs. These include newly explicit execution
+and formatting behavior, so distinct-command counts are not an equivalence claim.
+One inherited lint definition replaces 17 owner-specific definitions. The checked
+formatter returns hashed edits through the existing source-edit protocol; two
+assembled command cases and a real confined operation invocation passed.
+
+The shipped general fixture now uses five minimal container/owner definitions
+(three executable owners), 43 top-level fields, 50 recursive keys and two shared
+operations. Its assembled catalog/campaign/test acceptance passed. Other historical
+fixtures and remaining legacy executable library branches still require migration
+or retirement; their presence is not counted as completion of the plan.
+
+Current focused evidence includes 17 inbox/action cases, 16 delivery-context and
+continuation cases, six local-binding/workflow cases and five binding/executor
+cases including native confinement. All four host-lifecycle cases passed through
+the production test executor in run `388ec80e-bd32-4da2-85e7-835830743b94`.
+The preceding rerun passed three and failed recovery with temporary-filesystem inode
+exhaustion; the successful rerun used private temporary storage on the main disk.
+
+The integrated run `a08a10be-f03f-4ad1-99da-570713f21b1b` passed architecture
+139/143 (four skipped), assignment 95/96 (one skipped), CLI 7/7 and coordination
+1/1, then stopped in runtime with four failures. The stale delivery-wait assertion
+and runner-mode failures were subsequently repaired and checked in focused suites.
+A full passing integrated run is still required. Formatting, lint, types, build,
+ownership and guidance passed at `ab8f509`; later changes need final verification.
+
+Hosted CI initially lacked delegated process ownership and then the distribution
+namespace profile. The subsequent diagnostic exposed npm PATH selecting an
+undeclared local runtime. Shared binding discovery and tool-aware preflight now
+address that discrepancy; hosted qualification remains separate from local probes.
+Live multi-owner and ArcNexus self-development attempts remain unsuccessful so far,
+with evidence retained rather than acceptance waived. The latest self-development
+baseline reached 570 tests: 536 passed, eight failed and 26 skipped, with inode
+exhaustion recorded in several failures. A fresh run uses private disk-backed
+storage and a stable supervisor. No live gate is claimed from that pending run.
 
 ## Earlier implementation checkpoints
 

@@ -66,3 +66,25 @@ waiving the regression checkpoint. Its log is in
 in the earlier guidance root. This is neither a fresh candidate nor a qualification
 of the caller installation's newer runtime. Subsequent qualification uses a separate
 cloned repository identity, its original declared origin, and a fresh candidate.
+
+
+Further retained attempts exposed integration defects rather than qualifying the gate:
+
+- `d6b7cbea-ffd4-4401-bc64-2bedeed95fb0` in
+  `multi-owner-correlation-20261102T065000Z` verified names but ended `needs_input`:
+  strengthening an accepted wait required restating an exact contract, and supplier
+  acceptance included downstream integration. Issue #132 added correlated delivery waits.
+- `e03552da-84e3-4c97-b820-3c473ee93cbb` in
+  `multi-owner-bounded-20261102T073000Z` verified four supplier assignments but ended
+  `needs_input` before gateway completion. Unauthorized inbox responses prompted #134;
+  recursively embedded observations grew the continuation to 14,918,720 characters
+  and prompted #135. Full observations remain retained; continuation projections now
+  contain task facts and independent assessments without those raw payloads.
+- `4a5256c9-0030-4b3b-ab54-9f94797ad7c4` in
+  `multi-owner-context-20261102T081500Z` retained `needs_input` after frozen-regression,
+  exact shared-scope and checklist-evidence failures. None was waived.
+
+A new documentation goal uses the shipped v5 general fixture and requires three
+owners discovered from its public catalog. It is a separate live objective, not a
+reinterpretation of any failed feature task. Its evidence root is
+`multi-owner-v5-docs-20261102T083000Z`. Completion is pending.
