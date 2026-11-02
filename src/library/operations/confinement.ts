@@ -50,6 +50,7 @@ export class SourceConfinement {
     const outputs = authority.outputs.map((path) => this.output(path));
     for (const path of authority.reads) this.read(path);
     for (const path of authority.toolDirectories ?? []) this.tool(path);
+    if (authority.network && existsSync('/etc/resolv.conf')) this.tool('/etc/resolv.conf');
     for (const path of [...outputs, this.temporaryRoot]) {
       this.validateSegments(path);
       mkdirSync(path, { recursive: true, mode: 0o700 });
