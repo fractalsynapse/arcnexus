@@ -94,3 +94,36 @@ not replace the captured append status or hash observations. The declared verifi
 operation passed afterward. No checked-edit transaction or candidate change occurred;
 verified revision remained `b0cd5c66791415061d5dbcb6befba1418c91ffd4`. The attached
 command returned 0 and retained evidence in `write-denial-task.log`.
+
+## Verified workday inbox delivery
+
+A separate real workday `cdbad9b8-4421-461e-9d0d-8c337adfa830` ran against the
+minimal greeting fixture at source `b25a61939711b61490e5c7d763db666ad1281b29`.
+Evidence is retained under
+`/home/adrian/.local/state/arcnexus-qualification-109/workday-inbox-20261102T100000Z`.
+The supervising installation was `da95467`; its captured runner hash is
+`7a9ed0dfe51bb325b5350f24ae4699854fd70feae9087b4775834606e4f2968f`.
+
+Luna stewardship proposed a documentation assignment for CLI owner `cli`, based on
+its declared purpose and objective. The CLI assignment
+`165d2f39-db9e-466e-97fd-ccdaede8bc7d` requested a verified service API document
+through request `c0a581ca-346c-48cf-925c-0cc431c87274` and waited. That request
+activated service assignment `39492953-3989-4128-987c-461ca5c44d02`. Both assignments
+used checked edits and the inherited shared package verification operation.
+
+Service worker `0c10e5b3-49ad-416a-b1e0-17bab92cdafa` delivered its README;
+independent Astra verifier `0c571426-354c-4026-a9fd-9dcee77ad9bd` accepted both
+criteria. The CLI resumed only after verified delivery, read that document and
+finished its own README. Worker `7e8d5ed5-ecd1-4cdf-a607-32a181c08ea4` and verifier
+`6785fce6-df8f-4425-9c92-08a98dd0b720` retain the continuation and acceptance of all
+four criteria. No task director participated in this workday delivery.
+
+Candidate `fccac168fbec71419c227ad503e8e9dcbebfba68` changes only `cli/README.md`
+and `service/README.md`. Caller inspection checked the exact diff, reran package
+tests (3/3, no skips) and executed every documented example plus the stated invalid
+input behavior. `verified-documentation.diff`, `caller-tests.log` and
+`caller-examples.log` retain those observations. The diff SHA-256 is
+`4dc9d61432d264c54a795b3b8e278a63616d3418d5c5f8ed913192897c62b803`.
+The subsequent unchanged stewardship pass became idle. This qualifies a real
+self-directed improvement with inbox service and requester resumption; it does not
+claim ArcNexus self-development or active-operation crash recovery.

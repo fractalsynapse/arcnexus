@@ -237,9 +237,12 @@ The canonical-host fix (#137) prevents different temporary/evidence roots from
 creating competing hosts for one repository. A subsequent self-development task
 `fdc2f5b7-8928-4b1e-a3c1-1e928ed99c0b` is retained against `da95467`; it cannot
 change that baseline to the later assertion repair. It has no verified delivery.
-A separate live workday `cdbad9b8-4421-461e-9d0d-8c337adfa830` has routed a real
-CLI-to-service inbox request; verified delivery and requester resumption are pending.
-Neither pending run closes a qualification gate. Phase three remains blocked.
+A separate live workday `cdbad9b8-4421-461e-9d0d-8c337adfa830` completed a real
+CLI-to-service inbox delivery and requester resumption, with both independent reviews
+and caller diff/example checks retained in the [workday ledger](../library/workday/checked-workday-qualification.md).
+The self-development run ended `needs_input` after the obsolete assertion failed its
+captured baseline (466 passed, one failed, 113 skipped). No edits or independent
+delivery qualify from that run. Phase three remains blocked.
 
 ## Earlier implementation checkpoints
 
