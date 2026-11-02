@@ -437,3 +437,15 @@ suite with `/usr/lib/chatgpt/resources/codex` passed all four. Both binaries rep
 `0.163.0-alpha.10.2`; this is a tool-location qualification difference, not evidence
 that the failed configuration worked. Types, build and scoped lint passed. Assignment
 and harness retirement remain separate work.
+
+### Dependency lifecycle migration intent
+
+The migration command must extract dependency-local prerequisite and setup recipes
+when that repository already has declared executable owners. Preserve repository
+identity, repository-root working directory, generated outputs and recipe order;
+attach required usages only to owners in that repository. Primary recipes remain
+primary. Dependency output declarations without a finite recipe cannot be discarded
+or invented as commands: retain an actionable diagnostic requiring explicit operation
+policy. A repository with recipes but no executable owner likewise requires an
+architectural decision. Preview remains read-only and successful migration remains
+idempotent.
