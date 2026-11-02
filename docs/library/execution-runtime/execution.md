@@ -199,3 +199,9 @@ Missing or mismatched identity requires attention and a new run; retain the old
 candidate and evidence without importing the new source revision. Historical terminal
 outcomes remain readable. A still-running original host may observe source drift,
 but its captured authority and candidate never change silently.
+
+Supervising-runner snapshots preserve source permission modes on copied files and
+directories, including empty generated directories. The destination hash and a
+second source hash must still match the initial capture. An active umask cannot
+make an unchanged installation appear to be a concurrent rebuild, and permission
+normalization must not relax the source-change or byte-integrity checks.
