@@ -82,3 +82,14 @@ position once in the migrated prerequisite list. This applies to extracted probe
 deduplication must not turn a valid dependency graph into a duplicate-reference schema
 error. Canonical identity ordering uses code-point order and does not depend on the
 machine's locale.
+
+## Maintenance command boundary
+
+The architecture library exposes migration planning and application through its
+`migration.ts` public module. The CLI supplies the current directory and the explicit
+write choice; it cannot supply replacement operation definitions or owner identities.
+Migration validates the captured source catalog, constructs an isolated candidate and
+validates the candidate catalog before source application. Preview reports the actual
+configuration diff and diagnostics. Application requires an unchanged clean checkout,
+uses checked content hashes, and never changes the source branch or staging index.
+Neither command resumes retained hosts or upgrades captured authority in place.
