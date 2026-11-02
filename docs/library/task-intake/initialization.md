@@ -153,3 +153,10 @@ merely to duplicate these checkpoints. Substantive research/review work requeste
 by the caller remains assignable normally. Captured criteria are immutable within
 an accepted assignment; discovering an impossible criterion retains the gap and
 requires a new authorized decision, never a silent waiver.
+
+Read-only direction describes the current planning activation, not the work it may
+propose. A director or self-directed steward may propose subsequent engineering
+assignments within captured owner authority. The host validates and executes those
+assignments separately through the checked-edit workflow. The planning activation
+cannot edit source, commit, publish or invoke nested model delegation. An actionable
+owned objective must not be dismissed merely because planning itself is read-only.
