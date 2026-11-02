@@ -83,3 +83,9 @@ home, but sandboxed agent commands must not read or modify that private authorit
 The checked permission profile explicitly denies that location; it does not rely
 on the runtime's implicit treatment of configuration storage. Installed-runtime
 qualification uses disposable configuration canaries, never real credentials.
+
+Minimal read-only policy and review activations use the same captured source
+confinement as engineering. Future owned paths remain valid authority without being
+created or mounted before they exist. Existing ancestors are checked for aliases;
+no maintained-source write permission is granted. Historical directory-permission
+conversion must not run ahead of this minimal confinement path (#138).
