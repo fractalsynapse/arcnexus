@@ -17,6 +17,8 @@ class BuildApplication {
     writeFileSync('dist/cli.js', "#!/usr/bin/env node\nimport './gateway/cli/cli.js';\n", {
       mode: 0o755,
     });
+    mkdirSync('.fixture-build', { recursive: true });
+    this.clear('.fixture-build');
     this.compile(['-p', 'tsconfig.fixtures.json']);
   }
 

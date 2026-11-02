@@ -1,6 +1,6 @@
-{
-  'schemaVersion': 3,
-  'prerequisites': [{ 'command': 'node', 'args': ['--version'] }],
-  'setup': [],
-  'generatedDirectories': [],
-}
+schemaVersion: 4
+workspace:
+  primary:
+    id: greetings
+    repository: https://example.invalid/greetings.git
+  dependencies: []

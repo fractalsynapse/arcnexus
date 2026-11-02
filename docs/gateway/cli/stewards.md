@@ -18,11 +18,12 @@ input error. Linked worktrees share project execution ownership.
 
 ## Captured project configuration
 
-Commit component definitions, their containing package, role/profile declarations,
-environment setup and trusted verification commands. Declare
-`architecture/execution.yaml` with `directorProfile`, `reviewerProfile`, an optional
-`defaultPackage`, and any additional `verificationInputs`. The
-[general fixture](../../../fixtures/general/README.md) supplies a complete example.
+Commit minimal v5 component definitions, their containing package, shared operations
+and role/profile declarations. The platform declares its director component/profile,
+reviewer profile, optional default package and trusted verification inputs. Shared
+operations provide setup and checks; environment configuration describes repository
+composition. The [general fixture](../../../fixtures/general/README.md) supplies a
+complete example without a separate execution configuration file.
 Models belong to profiles, rather than scheduling code. ArcNexus uses Luna engineering
 and Astra director/reviewer profiles.
 

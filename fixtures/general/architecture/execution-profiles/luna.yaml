@@ -4,5 +4,5 @@
   'model': 'gpt-6-luna',
   'reasoning': 'medium',
   'webSearch': 'disabled',
-  'operationCategories': ['unit-test'],
+  'operationCategories': ['unit-test', 'cli-check'],
 }
