@@ -78,3 +78,11 @@ review criteria; lint cannot decide whether an explanation is useful.
 
 Delivery verification is shared by `development.yaml`, `staging.yaml` and
 `production.yaml`. See [delivery verification](../release/verification.md).
+
+## Confined build output
+
+Production builds clear entries inside the declared `dist` output root while
+preserving the directory itself. The root may be a writable sandbox mount beneath
+read-only maintained source. Stale output links are removed without following them;
+a missing root is created before compilation. Build failures retain their actual
+compiler evidence and cannot grant write access to the source parent.
