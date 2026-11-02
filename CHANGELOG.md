@@ -26,7 +26,7 @@
 
 ### Changed
 
-- Require minimal version-five authority for new task/workday hosts and shared-operation test execution; preserve historical inspection and explicit migration (#109).
+- Require minimal version-five authority for new task/workday hosts, workspace preparation and shared-operation test execution; preserve historical inspection and explicit migration (#109).
 
 - Retire component, fixed-owner workday and proposal execution commands; preserve historical inspection and route prompt campaigns through the shared host (#106).
 

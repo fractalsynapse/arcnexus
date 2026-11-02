@@ -417,3 +417,13 @@ for execution. Lint qualification copies only its installed dependency closure i
 an explicitly bound read-only tool directory, rather than granting access to an
 uncaptured host installation. Historical proposal, manifest and report readers keep
 their separate inspection fixtures.
+
+Workspace preparation now rejects legacy environments before candidate creation and
+executes primary/member setup only through shared operations. Its obsolete execution
+deadline was removed; the test command retains its explicitly requested watchdog.
+Both new rejection cases failed against the prior built program and now pass.
+The broader workspace/composition/testing run passed 48 of 49 cases; correcting the
+legacy inspection fixture's missing generated-output declaration made the remaining
+case pass in the final two-case rerun. Types, build and scoped lint passed. Historical
+inspection and cleanup remain available; this slice does not yet retire assignment
+or operation adapters.

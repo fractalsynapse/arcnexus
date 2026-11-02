@@ -1,4 +1,3 @@
-import { capturedCommandTimeout } from '../architecture/config.js';
 import { createHash } from 'node:crypto';
 import {
   existsSync,
@@ -10,14 +9,9 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { join } from 'node:path';
-import { targetCommand, targetEnvironment, type Bindings } from '../architecture/bindings.js';
-import {
-  InputError,
-  type Command,
-  type Dependency,
-  type Environment,
-} from '../architecture/config.js';
-import { execute, git } from '../operations/process.js';
+import type { Bindings } from '../architecture/bindings.js';
+import { InputError, type Dependency, type Environment } from '../architecture/config.js';
+import { git } from '../operations/process.js';
 import { assertOutputs } from './outputs.js';
 import { save, type RecordData } from './state.js';
 
@@ -196,7 +190,7 @@ export async function prepareMembers(
   root: string,
   record: RecordData,
   signal: AbortSignal,
-  prepare?: (member: Member) => Promise<void>,
+  prepare: (member: Member) => Promise<void>,
 ): Promise<void> {
   for (const member of (record.members ?? []) as Member[]) {
     signal.throwIfAborted();
@@ -212,39 +206,10 @@ export async function prepareMembers(
     git(member.source, 'worktree', 'add', '--detach', member.workspace, member.base);
     member.status = 'created';
     save(root, record);
-    if (prepare) await prepare(member);
-    for (const command of [...member.definition.prerequisites, ...member.definition.setup]) {
-      await prepareMemberCommand(root, record, member, command, signal);
-    }
+    await prepare(member);
     registered(member);
     assertOutputs(member.workspace, memberEnvironment(member));
     member.status = 'prepared';
-    save(root, record);
-  }
-}
-
-async function prepareMemberCommand(
-  root: string,
-  record: RecordData,
-  member: Member,
-  command: Command,
-  signal: AbortSignal,
-): Promise<void> {
-  try {
-    record.commands.push(
-      await execute(
-        targetCommand(record, command),
-        member.workspace,
-        join(root, 'runs', record.id, `command-${record.commands.length}.log`),
-        signal,
-        { env: targetEnvironment(record), timeoutMs: capturedCommandTimeout(record) },
-      ),
-    );
-  } catch (error) {
-    if (error && typeof error === 'object' && 'commandResult' in error)
-      record.commands.push(error.commandResult as RecordData['commands'][number]);
-    throw error;
-  } finally {
     save(root, record);
   }
 }

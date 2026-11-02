@@ -25,7 +25,10 @@ export class WorkspaceOperations {
     authorityBase: string,
     packageId?: string,
   ): void {
-    if (record.environment.schemaVersion !== 4) return;
+    if (record.environment.schemaVersion !== 4)
+      throw new InputError(
+        'Preparation requires environment schema 4; migrate legacy recipes before execution',
+      );
     const catalog = loadCatalog(record.source, authorityBase, record.bindings as Bindings);
     this.validate(catalog);
     record.operationCatalog = Object.values(catalog.components);

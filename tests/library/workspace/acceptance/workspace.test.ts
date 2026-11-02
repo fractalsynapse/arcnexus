@@ -102,13 +102,39 @@ class WorkspaceTests {
     assert.equal(f.run('cleanup', record.id).status, 0);
   }
 
-  /** Verifies that overall timeout retains afailed record. */
-  overallTimeoutRetainsAFailedRecord(t: TestContext) {
+  /** Rejects executable legacy preparation while retaining static configuration inspection. */
+  rejectsLegacyPreparation(t: TestContext): void {
+    const f = fixture(t);
+    const path = join(f.repo, 'architecture/environment.yaml');
+    writeFileSync(
+      path,
+      JSON.stringify({
+        ...JSON.parse(readFileSync(path, 'utf8')),
+        schemaVersion: 3,
+        prerequisites: [],
+        generatedDirectories: ['generated'],
+        setup: [
+          { command: 'node', args: ['-e', "require('fs').writeFileSync('source.txt','bad')"] },
+        ],
+      }),
+    );
+    f.commit();
+    const result = f.prepare();
+    assert.equal(result.status, 2, result.stderr);
+    assert.match(result.stderr, /environment.*schema.*4.*migrat/i);
+    assert.equal(result.stdout, '');
+    assert.equal(readFileSync(join(f.repo, 'source.txt'), 'utf8'), 'original\n');
+    const inspected = f.run('validate', '--project', f.repo);
+    assert.equal(inspected.status, 0, inspected.stderr);
+  }
+
+  /** Rejects retired execution deadlines before preparation begins. */
+  rejectsRetiredPreparationDeadline(t: TestContext) {
     const f = fixture(t, [{ command: 'node', args: ['-e', 'setInterval(()=>{},1000)'] }]);
     const r = f.prepare('--timeout-seconds', '0.2');
-    assert.equal(r.status, 1);
-    assert.match(r.stderr, /timed out/i);
-    assert.equal(JSON.parse(r.stdout).status, 'failed');
+    assert.equal(r.status, 2);
+    assert.match(r.stderr, /execution deadlines.*retired/i);
+    assert.equal(r.stdout, '');
   }
 
   /** Verifies that sigintcancels command and releases lock. */
@@ -414,8 +440,8 @@ test('setup source mutation is prevented before cleanup', (t: any) =>
 test('cleanup refuses unknown ignored files and untracked files', (t: any) =>
   suite.cleanupRefusesUnknownIgnoredFilesAndUntrackedFiles(t));
 
-test('overall timeout retains a failed record', (t: any) =>
-  suite.overallTimeoutRetainsAFailedRecord(t));
+test('preparation rejects retired execution deadlines', (t: any) =>
+  suite.rejectsRetiredPreparationDeadline(t));
 
 test('SIGINT cancels command and releases lock', (t: any) =>
   suite.SIGINTCancelsCommandAndReleasesLock(t));
@@ -454,3 +480,6 @@ registerSuite({
   level: 'acceptance',
   tags: ['deterministic', 'native-host'],
 });
+
+test('preparation rejects legacy recipes before candidate creation', (t) =>
+  suite.rejectsLegacyPreparation(t));

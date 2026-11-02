@@ -54,9 +54,8 @@ fail before the contents change; its failed workspace may then be cleaned safely
 Generated directories may already exist when an operation starts.
 
 Historical environment and report readers remain available for evidence inspection.
-Some internal execution adapters still accept legacy recipes during fixture migration;
-they are not the configuration contract for new task/workday runs. Their removal is
-an outstanding completion gate. New execution has no time or operation budgets.
+Assignment and operation adapter retirement is tracked separately in the implementation
+plan; workspace preparation itself has no legacy recipe execution branch. New execution has no time or operation budgets.
 Test watchdogs bound qualification processes, not valid application work.
 
 Records capture configuration, base, source, branch, timestamps and operation results.
