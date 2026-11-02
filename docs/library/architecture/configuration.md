@@ -125,3 +125,11 @@ Captured configuration source values remain the parsed authored data, paired wit
 their original text and hashes. Effective component resolution uses separate
 objects. Inheritance, inventories and operation planning must never write derived
 fields into retained authored values or make inherited policy appear leaf-authored.
+
+Component test inspection/execution and npm's shared test entry discover the same
+`.git/arcnexus/bindings.yaml` machine bindings as task/workday execution. Explicit
+maintenance-command bindings take precedence. Linked worktrees use their canonical
+Git common directory. The captured binding source and digest remain execution
+evidence; npm's transient PATH does not replace an explicitly bound executable.
+Confinement qualification exposes the same declared tool directories read-only as
+the operation it qualifies, including runtimes installed outside system directories.
