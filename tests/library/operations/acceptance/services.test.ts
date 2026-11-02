@@ -74,7 +74,7 @@ class ServicesTests {
     const child = this.startResearch(t, f);
     let record: any, directory: string | undefined;
     try {
-      await waitFor(() => {
+      await child.waitForReady(() => {
         const captured = this.serviceRecord(f);
         record = captured.record;
         directory = captured.directory;

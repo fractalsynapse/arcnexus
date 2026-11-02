@@ -67,11 +67,11 @@ export function operationBridge(
 class OperationRuntime {
   private readonly resolved: ResolvedAssignment;
 
-  private readonly services: ServiceManager;
+  private services: ServiceManager;
 
   private active: AbortController | undefined;
 
-  private readonly lifecycle = new AbortController();
+  private lifecycle = new AbortController();
 
   private pending?: Promise<unknown>;
 
@@ -87,8 +87,11 @@ class OperationRuntime {
     private readonly inspect: () => void,
   ) {
     this.resolved = record.resolvedAssignment as ResolvedAssignment;
-    this.signal = AbortSignal.any([signal, this.lifecycle.signal]);
-    this.services = new ServiceManager(root, record, this.signal);
+    this.services = new ServiceManager(
+      root,
+      record,
+      AbortSignal.any([signal, this.lifecycle.signal]),
+    );
     record.operations ??= [];
     record.operationCalls ??= 0;
   }
@@ -103,6 +106,12 @@ class OperationRuntime {
     } finally {
       this.pending = undefined;
       await this.services.stop();
+      this.lifecycle = new AbortController();
+      this.services = new ServiceManager(
+        this.root,
+        this.record,
+        AbortSignal.any([this.signal, this.lifecycle.signal]),
+      );
     }
   }
 
@@ -212,12 +221,13 @@ class OperationRuntime {
 
   /** Routes declared service lifecycle actions through the service manager. */
   private async service(name: string, op: Operation): Promise<unknown> {
-    this.signal.throwIfAborted();
+    const signal = AbortSignal.any([this.signal, this.lifecycle.signal]);
+    signal.throwIfAborted();
     if (op.schemaVersion === 4) {
       const result = await new OperationExecution(
         this.root,
         this.record,
-        this.signal,
+        signal,
         this.services,
       ).service(op, name);
       this.inspect();

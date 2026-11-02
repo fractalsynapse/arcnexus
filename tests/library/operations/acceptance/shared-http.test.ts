@@ -9,7 +9,7 @@ import {
   normalizeOperation,
   OperationArguments,
 } from '../../../../dist/library/operations/operation-definition.js';
-import type { Operation } from '../../../../dist/library/operations/operations.js';
+import { operationBridge, type Operation } from '../../../../dist/library/operations/operations.js';
 import type { RecordData } from '../../../../dist/library/workspace/state.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
@@ -33,6 +33,27 @@ class SharedHttpScenarios {
     assert.equal(invocation.result.exitCode, expected === 200 ? 0 : 1);
     assert.match(readFileSync(invocation.result.log, 'utf8'), /captured service/);
     assert.ok(report.operationInvocations.some((entry: any) => entry.operationId === 'server'));
+  }
+
+  /** A completed turn closes its lease without cancelling the next turn of the same assignment. */
+  async turns(t: TestContext): Promise<void> {
+    const { root, record } = this.fixture(t, 200);
+    const resolved = record.resolvedAssignment as any;
+    resolved.operations = resolved.context[0].operationPlan.agent;
+    resolved.executionProfile = {};
+    record.stage = 'testing';
+    const bridge = operationBridge(root, record, AbortSignal.timeout(30000), () => {});
+    try {
+      for (let turn = 0; turn < 2; turn++) {
+        await bridge.call('services.start', { id: 'server' });
+        await bridge.close();
+      }
+    } finally {
+      await bridge.close();
+    }
+    assert.equal(readFileSync(join(record.workspace, 'generated/count'), 'utf8'), 'xx');
+    assert.equal((record.services as any[]).length, 2);
+    assert.ok((record.services as any[]).every((service) => service.endpointClosed));
   }
 
   /** Rejects cycles through managed-service preparation before any prerequisite side effect. */
@@ -142,5 +163,9 @@ test(
 
 test('shared HTTP preparation rejects implicit service cycles before dispatch', (t) =>
   scenarios.cycle(t));
+
+test('shared service bridge remains usable across assignment turns', installed, (t) =>
+  scenarios.turns(t),
+);
 
 registerSuite({ component: 'operations', level: 'acceptance', tags: ['deterministic'] });
