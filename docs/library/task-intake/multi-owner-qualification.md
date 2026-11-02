@@ -31,13 +31,13 @@ and formatter, and independently verified the names and first formatter deliveri
 The formatter delivery did not satisfy the whole uppercase-greeting goal. Follow-up
 assignments encountered invalid verification pagination and an unknown durable
 request identity. The director retained `needs_input` rather than accepting a plan
-that would replace a frozen assertion. Issue [#128](https://github.com/treeseed-ai/arcnexus/issues/128)
+that would replace a frozen assertion. Issue [#128](https://github.com/fractalsynapse/arcnexus/issues/128)
 tracks these observed failures. The log is `task-additive-preserved-modes.log`;
 this attempt does not satisfy the live gate.
 
 Two earlier additive submissions stopped before model dispatch because stable runner
 capture did not preserve empty-directory permissions. Issue
-[#126](https://github.com/treeseed-ai/arcnexus/issues/126) records the reproduced
+[#126](https://github.com/fractalsynapse/arcnexus/issues/126) records the reproduced
 failure and repair; those submissions are not model executions.
 
 The failed directory-binding preflight before the third task is retained separately
@@ -45,9 +45,9 @@ in that root's `task.log`; it is not a model execution. Subsequent task logs are
 `task-guidance.log` and `task-relative-paths.log`. The second task's log is
 `task-identity-recovery.log`.
 
-Issue [#121](https://github.com/treeseed-ai/arcnexus/issues/121) made conflicting edit
+Issue [#121](https://github.com/fractalsynapse/arcnexus/issues/121) made conflicting edit
 identities recoverable without replaying a different batch. Issue
-[#122](https://github.com/treeseed-ai/arcnexus/issues/122) added explicit checked-tool
+[#122](https://github.com/fractalsynapse/arcnexus/issues/122) added explicit checked-tool
 discovery and relative-path guidance to captured engineering context. These direct
 bootstrap repairs do not convert an unsuccessful live task into a successful gate.
 

@@ -5,7 +5,7 @@ TypeScript, mandatory initialization, task proposals and progress-driven executi
 TreeSeed retains its existing layout and is inspected through compatibility readers.
 All live inference uses `gpt-6-luna` with medium reasoning; there is no Astra fallback.
 
-All three live demonstrations passed. [PR #70](https://github.com/treeseed-ai/arcnexus/pull/70)
+All three live demonstrations passed. [PR #70](https://github.com/fractalsynapse/arcnexus/pull/70)
 records final CI and staging integration. Simulated scenarios do not satisfy the live gate.
 The [machine-readable index](pre-phase-three.json) hashes retained reports and artifacts.
 

@@ -37,7 +37,7 @@ blocked because nested CLI tests hit EPERM inside the Codex sandbox. Host checks
 passed that candidate independently. Its workspace and original blocked record
 remain unchanged. The fresh successful run explicitly handed unavailable sandbox
 tests to the supervising runtime; no assertions or host verification were relaxed.
-[Issue #14](https://github.com/treeseed-ai/arcnexus/issues/14) proposes clarifying
+[Issue #14](https://github.com/fractalsynapse/arcnexus/issues/14) proposes clarifying
 that distinction in shared guidance based on the observed extra-run cost.
 
 ## Cleanup evidence correction through the same loop

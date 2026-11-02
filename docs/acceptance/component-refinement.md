@@ -79,7 +79,7 @@ an explicit follow-up in #77 rather than silently changing every owner.
 
 The successful candidate passed the full 334-test suite before review and again
 at final verification, with frozen tests and independent acceptance passing both
-times. Runtime CI [41285165421](https://github.com/treeseed-ai/arcnexus/actions/runs/41285165421)
+times. Runtime CI [41285165421](https://github.com/fractalsynapse/arcnexus/actions/runs/41285165421)
 passed 333 tests at the pinned pre-improvement revision. Final-head development CI
 and actual staging verification are recorded on PR #76 and issue #73.
 

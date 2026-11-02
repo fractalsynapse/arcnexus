@@ -20,7 +20,7 @@ TreeSeed base is `4718e56e2b310b0a08a2da52de2e08796e75a240`.
 
 | Case | Result | Evidence |
 | --- | --- | --- |
-| ArcNexus report improvement | Passed; 3 turns, 1 implementation attempt, 478.911 seconds | `b53b8418-c6dc-4df5-b941-ad7f504c0744`; integrated in [PR #37](https://github.com/treeseed-ai/arcnexus/pull/37) without caller implementation fixes |
+| ArcNexus report improvement | Passed; 3 turns, 1 implementation attempt, 478.911 seconds | `b53b8418-c6dc-4df5-b941-ad7f504c0744`; integrated in [PR #37](https://github.com/fractalsynapse/arcnexus/pull/37) without caller implementation fixes |
 | TreeSeed diagnostics | Failed before inference | `7427b631-9d5e-4c69-80f7-c4d9f71fc4fb`; declared cache outputs were discovered as third-party tests |
 | Deliberate corrective repair | Passed; 4 turns, 2 implementation attempts, 601.408 seconds | `106038cc-97ef-4295-8c51-55c4bc8d6fd8`; injected outcome substitution failed the unchanged independent check, Luna edited real code, then that check passed |
 | TreeSeed boundary request | Failed before inference | `330ffeb7-b000-4d75-8617-cb4f86de2dba`; same setup defect, no owner-escalation claim |
@@ -86,7 +86,7 @@ Review run `56d950d0-484d-4398-8f2c-9190f0aa69a3` produced useful source finding
 could not attribute the pinned change because external Git metadata was hidden.
 Its request also used the parent instead of the active component as requester;
 the host correctly rejected that malformed boundary claim. It is not a passed review.
-[ArcNexus #38](https://github.com/treeseed-ai/arcnexus/issues/38) supplies resolved
+[ArcNexus #38](https://github.com/fractalsynapse/arcnexus/issues/38) supplies resolved
 tool commands/environment, read-only tool directories and host-captured review diffs
 with provenance, retaining the sandbox and exact write checks.
 
@@ -148,7 +148,7 @@ detached; the merged task branch is deleted. Separate isolated host checks also
 proved inconsistent-baseline rejection and unchanged CLI-only identity fields.
 
 The final runtime refinement is integrated in
-[ArcNexus #39](https://github.com/treeseed-ai/arcnexus/pull/39), with 111 deterministic
+[ArcNexus #39](https://github.com/fractalsynapse/arcnexus/pull/39), with 111 deterministic
 Node tests, six Python tests and CI green. The evidence follow-up also makes every
 source module's executable ownership observable through built `inspect` commands.
 

@@ -135,3 +135,10 @@ re-authoring operations. Preview and write preserve owner scope by renaming exac
 standard-directory/file ownership declarations with their artifacts. Mixed old/new
 references or conflicting destinations require an explicit decision. Current catalogs
 and prompts expose standards only; historical snapshots retain their original vocabulary.
+
+## Upstream relocation
+
+The architect transferred ArcNexus to `https://github.com/fractalsynapse/arcnexus.git`.
+Update the active origin constraint and repository links to that location. Stable
+repository identity, issue/PR numbers and captured historical execution evidence remain
+unchanged; new runs capture the updated committed repository declaration.
