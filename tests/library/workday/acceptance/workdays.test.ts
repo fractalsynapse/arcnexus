@@ -61,7 +61,8 @@ class WorkdaysTests {
     assert.ok(existsSync(p));
     const c = JSON.parse(String(readFileSync(p)));
     assert.equal(c.threadId, 'workflow-thread');
-    assert.equal(c.activity, 'review');
+    assert.equal(c.activity, 'finished');
+    assert.equal(c.status, 'completed');
     assert.equal(c.implementationAttempts, 1);
     assert.ok(c.frozenTests.length);
     assert.equal(c.authorityHash, report.resolvedAssignment.digest);

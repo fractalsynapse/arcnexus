@@ -1,6 +1,7 @@
 # Minimal configuration multi-owner qualification
 
-The live multi-owner gate remains **unmet**. These production-wiring attempts used
+The live multi-owner gate has a completed three-owner demonstration recorded below.
+The unsuccessful attempts in the first sections remain historical evidence. They used
 real director, engineering and independent verifier activations, with the installed
 `codex-cli 0.163.0-alpha.10.2`, Node 22.22.1 and bubblewrap 0.11.1. The fixture had
 four eligible owners: maintenance, gateway, formatter and names. Engineering used
@@ -119,3 +120,33 @@ an additional `npm test` against the assembled candidate passed all three tests
 with no skips. Source/test bytes are unchanged. This satisfies the live dynamically
 discovered multi-owner goal; it does not qualify the previously unsuccessful shout
 feature or the separate ArcNexus self-development gate.
+
+## Final runtime refresh after dependency-context repair
+
+Task `915a0117-d23e-4d81-9cad-4fc863455b3b` completed through the real production
+CLI under implementation `b7dc0b3`, after issue #147 restored shared scheduler
+context. The director selected only `cli`. CLI requested service documentation;
+service discovered and requested names documentation. The resulting chain was
+`cli → service → names`, with three distinct assignments and verified delivery
+before each dependent resumed. All three used checked edits within their own README.
+
+The source baseline was `a1c7de55c6d262cb594933ea77430dd93a9284cb`; candidate
+`df43af4e6e1f43cc7ca4f8aea6ef4e6f3323b936` changes only the three README files.
+Implementation and test bytes are unchanged. The source checkout stayed clean and
+the attached command exited 0. An additional caller-run `npm test` against the
+assembled candidate passed all three tests, with no skips.
+
+Retained evidence is under
+`/home/adrian/.local/state/arcnexus-qualification-109/final-multi-owner-b7dc0b3`.
+The actual `verified.diff` has SHA-256
+`764b58221fdeb84ca4890f8a2f625c6a3d2c4f70bf69dbb70b7bde19e999ffd4`.
+Frozen supervisor `runner-zXg0Uf` has hash
+`81d0e8bc0e23f5ef5970acfdfcda7f3c9874ce316e6fd96a552ab947997603cd`.
+
+Independent Astra reviews accepted names (two criteria,
+`70d2ff53-5c97-421a-8dea-68216a8b633f`), service (two criteria,
+`929d9247-d9d4-48de-ba6a-e94258750dbc`) and CLI (six criteria,
+`818e4a76-b9ca-44d1-9ad7-e80976c90d96`). Final Astra director assessment
+`04e07e55-ac73-4bfa-9cb1-5034d4625408` accepted all eleven goal criteria without
+deficiencies. The worker reports and request chronology retain the actual dynamic
+activation sequence; this is separate from the scripted native regression matrix.

@@ -1,6 +1,7 @@
 # Minimal component configuration — issue 109
 
-Status: implementation and qualification in progress; phase 3 remains blocked.
+Status: implementation and local/live qualification complete. Staging integration
+requires green current-head CI on PR #110; phase-three work has not begun.
 
 ## Contract
 
@@ -123,14 +124,18 @@ All six live gates have retained demonstrations: [checked engineering and actual
 ArcNexus self-development](../library/assignment/checked-engineering-qualification.md),
 [dynamic multi-owner discovery](../library/task-intake/multi-owner-qualification.md),
 and [workdays, pause, mode coordination and recovery](../library/workday/checked-workday-qualification.md).
-The fresh `28498b6` engineering run additionally qualifies the final harness cleanup.
+The fresh `28498b6` engineering run qualifies the harness cleanup; the later
+`b7dc0b3` three-owner run qualifies the repaired dependency-context path.
 Host-loss evidence distinguishes safe-checkpoint recovery from interruption at the
 managed launch boundary; it does not claim that an unobserved command body ran.
 
-Final integrated/native suites and current-head CI are still in progress. The
+The final production implementation `b7dc0b3` passed the full confined suite: 596
+cases, 313 passed, 283 skipped, zero failures. Every skipped case has a separate
+passing native result, including focused reruns after observed corrections. The
 architecture selection passed 149 cases with four native skips and no failures.
 Formatting, lint, type checking, build, ownership and guidance validation passed.
-Phase three remains blocked until final qualification and review are recorded.
+Current-head CI is an independent integration gate on [PR #110](https://github.com/treeseed-ai/arcnexus/pull/110).
+No skipped test, failed initial run or local result substitutes for that gate.
 
 The final authored configuration contains 21 components, 211 top-level fields and
 367 recursive keys, compared with 456 fields and 1,100 keys before migration. All
@@ -556,3 +561,47 @@ states and verified delivery evidence. Accepted-intent, cycle recovery, multi-ow
 CLI and director-completion scenarios failed. The one-owner live refresh does not
 qualify multi-owner continuation. Restore this captured shared-runtime context without
 restoring legacy action schemas or recursive execution, then rerun the affected matrix.
+
+
+## Final implementation verification
+
+Production implementation `b7dc0b308d9e3c2ca166dfe12aa671307b11b380` passed the
+complete declared `arcnexus test run --project .` suite. Retained run
+`5c78e6a5-0d72-4afd-b445-f1340a0caf2f` contains every command log and immutable
+selection; totals across its component invocations are **596 tests: 313 passed,
+283 skipped, zero failed/cancelled**. The skips require a caller-owned native process
+scope and are not treated as passes.
+
+Separate native qualification retains the initial 51-suite run (260 passed,
+ten unsuccessful results, including the deliberately interrupted known-broken
+campaign file). Corrections were verified with fourteen dependency/director cases,
+one checklist recovery case, three checkpoint/request cases and all seven campaign
+cases. A further 33 native enforcement cases passed without skips. They cover setup,
+source-write denial, supervision, selected-test execution and checked permissions.
+The recorded coverage comparison finds a passing native result for all 283 distinct
+skipped case names, with no missing or duplicate skipped names. The initial failed
+matrix remains failed evidence; these are focused correction runs, not a claim that
+its first invocation passed.
+
+Raw final logs and the coverage comparison are retained under
+`/home/adrian/.local/state/arcnexus-qualification-109/final-validation`.
+The final field recount is 211 top-level fields and 367 recursive keys in 21
+components. The 21 authored operations also produce 21 definitions under full-semantic
+normalization: matching command text does not conceal duplicate execution definitions.
+
+Manual review covered executable-family guards, inherited verification, foreign
+repository ownership/output grants, checked-source confinement, durable dependency
+continuation and historical readers. GitHub returned no effective staging rules and
+reported the branch unprotected; no submitted reviews or approvals were fabricated.
+CI is reported separately by the current PR-head check. The release procedure still
+requires that check before integration. Later ledger/test-assertion changes do not
+alter the qualified production implementation.
+
+Remaining support boundaries are explicit: only supported configuration families can
+execute or migrate; ambiguous architectural authority requires a decision; unsupported
+analysis remains unknown; unsupported confinement fails preflight. Kernel enforcement
+is qualified here on Linux with delegated cgroup v2 and the installed Codex runtime.
+New source authority requires a new run. Conflicts and uncertain operations retain
+evidence rather than being overwritten or replayed. Candidate publication and source
+integration remain caller responsibilities. These boundaries do not waive any live
+gate; the six requested live demonstrations are linked above.

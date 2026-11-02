@@ -175,3 +175,10 @@ a task interrupting and returning control to a workday; cancellation and validat
 host-loss recovery; and an independently verified ArcNexus improvement delivered
 through a stable supervising runtime. Keep the actual diff, reviews and reports.
 No simulation or completed checklist can substitute for a live case or missing evidence.
+
+
+The phase-two configuration prerequisite is [minimal component configuration](plans/minimal-component-configuration.md):
+one authored source for architectural intent, inherited execution policy and public
+boundaries; derived inventories and relationships; shared supervised operations; and
+source-read-only agents using checked edits. Its qualification ledger distinguishes
+confined tests, native enforcement, real model deliveries and current-head CI.
