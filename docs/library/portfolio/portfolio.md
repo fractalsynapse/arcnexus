@@ -70,3 +70,11 @@ belong to the host's journal, not duplicated architectural configuration.
 Recovery may finish registration from a recorded successful clone checkpoint when
 its committed revision remains unchanged. This validates the retained catalog and
 performs no new Git clone. Pending/uncertain commands remain blocked for reconciliation.
+
+## Package targeting
+
+The portfolio service resolves a registered package reference or unambiguous local
+package to an explicit source revision and package identity. Local discovery reuses
+the architecture package-selection rules; it does not require director activation.
+Read-only callers receive that target without starting a host, changing directories or
+creating absent volume storage. Test commands consume it through shared test services.
