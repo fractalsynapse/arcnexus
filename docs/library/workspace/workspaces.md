@@ -85,3 +85,16 @@ Removal writes `cleanup.json` atomically with `cleanupStatus: "removed"` and
 `removedAt` (an ISO timestamp). This lifecycle receipt is separate from execution
 evidence and is not rewritten on retries. An absent legacy workspace succeeds
 without creating a receipt or changing its existing reports.
+
+## Final execution-family retirement (#109)
+
+The final retirement slice makes the maintenance `prepare` command and the public
+workspace library require environment schema 4 and minimal component authority before
+creating a candidate. Historical records remain inspectable and cleanable; reopening
+them must not execute their inline setup or prerequisite recipes. Primary and dependency
+preparation use only captured shared operations. A retained legacy preparation record
+must be rejected before creating a worktree or launching a child.
+
+Execution deadlines are retired from preparation as well as task/workday execution.
+`prepare --timeout-seconds ...` returns invalid input before starting work. SIGINT and
+host-loss supervision remain available; the test runner's explicit watchdog is separate.
