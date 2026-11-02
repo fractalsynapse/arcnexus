@@ -78,8 +78,8 @@ export class WorkspaceOperations {
   /** Refuses mixed executable families and obsolete profile budgets before dispatch. */
   private static validate(catalog: Catalog): void {
     const components = Object.values(catalog.components);
-    if (components.some((c) => c.schemaVersion !== 5))
-      throw new InputError('Environment schema 4 requires version-five component definitions');
+    if (components.some((c) => c.schemaVersion !== 6))
+      throw new InputError('Environment schema 4 requires version-six component definitions');
     new ExecutionContext().validateProfiles(
       catalog,
       components

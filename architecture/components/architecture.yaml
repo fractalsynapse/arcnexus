@@ -1,4 +1,4 @@
-schemaVersion: 5
+schemaVersion: 6
 id: architecture
 type: library
 parentId: cli-package
@@ -8,22 +8,22 @@ objectives:
   - Make actual execution outcomes easy to inspect
 constraints:
   - Preserve captured authority and evidence
-  - 'component-v4 (src/library/architecture/schemas/component-v4.json): Preserve
-    supported historical versions and captured execution readers'
-  - 'component (src/library/architecture/schemas/component.json): Preserve
-    supported historical versions and captured execution readers'
-  - 'composition-profile
+  - "component-v4 (src/library/architecture/schemas/component-v4.json): Preserve
+    supported historical versions and captured execution readers"
+  - "component (src/library/architecture/schemas/component.json): Preserve
+    supported historical versions and captured execution readers"
+  - "composition-profile
     (src/library/architecture/schemas/composition-profile.json): Preserve
-    supported historical versions and captured execution readers'
-  - 'execution-profile
+    supported historical versions and captured execution readers"
+  - "execution-profile
     (src/library/architecture/schemas/execution-profile.json): Preserve
-    supported historical versions and captured execution readers'
-  - 'ownership (src/library/architecture/schemas/ownership.json): Preserve
-    supported historical versions and captured execution readers'
-  - 'pattern (src/library/architecture/schemas/pattern.json): Preserve supported
-    historical versions and captured execution readers'
-  - 'role (src/library/architecture/schemas/role.json): Preserve supported
-    historical versions and captured execution readers'
+    supported historical versions and captured execution readers"
+  - "ownership (src/library/architecture/schemas/ownership.json): Preserve
+    supported historical versions and captured execution readers"
+  - "pattern (src/library/architecture/schemas/pattern.json): Preserve supported
+    historical versions and captured execution readers"
+  - "role (src/library/architecture/schemas/role.json): Preserve supported
+    historical versions and captured execution readers"
 operations:
   migrated-recipe-43b539fb85a57c26:
     - verify
@@ -34,6 +34,7 @@ owns:
   - tests/library/architecture
   - docs/library/architecture
 api:
+  - module: src/library/architecture/validation.ts
   - module: src/library/architecture/migration.ts
   - module: src/library/architecture/execution-context.ts
   - module: src/library/architecture/assignment.ts

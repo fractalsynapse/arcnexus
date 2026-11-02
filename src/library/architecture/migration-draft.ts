@@ -8,6 +8,7 @@ import { MigrationComponent } from './migration-component.js';
 import { MigrationPolicies } from './migration-policies.js';
 import { MigrationRecipes } from './migration-recipes.js';
 import { validateSchema } from './schema.js';
+import { StandardsMigration } from './migration-standards.js';
 
 type Declaration = Record<string, any>;
 
@@ -50,7 +51,7 @@ export class MigrationDraft {
     ) as Declaration;
     this.recipes = new MigrationRecipes([
       ...this.group('operations').map((source) => source.value),
-      ...(this.group('components').every((s) => (s.value as Declaration).schemaVersion === 5)
+      ...(this.group('components').every((s) => (s.value as Declaration).schemaVersion >= 5)
         ? []
         : this.runners()),
     ]);
@@ -59,7 +60,8 @@ export class MigrationDraft {
   /** Resolves references before reducing policy; final catalog validation remains mandatory before applying this draft. */
   create(): Map<string, unknown | null> {
     const declarations = this.group('components');
-    if (this.migrated(declarations)) return this.files;
+    if (this.migrated(declarations))
+      return new StandardsMigration(this.sources, this.files).create();
     if (declarations.some((s) => (s.value as Declaration).schemaVersion !== 4))
       throw new Error('Component migration requires one unmixed version-four family');
     this.extractVerification(declarations);
@@ -76,12 +78,16 @@ export class MigrationDraft {
       workspace: this.environment.workspace,
     });
     this.files.set(this.source('architecture/execution').path, null);
-    return this.files;
+    return new StandardsMigration(this.sources, this.files).create();
   }
 
   /** Recognizes a complete new configuration family without silently accepting executable leftovers. */
   private migrated(declarations: ConfigurationSource[]): boolean {
-    if (!declarations.every((source) => (source.value as Declaration).schemaVersion === 5))
+    const versions = new Set(
+      declarations.map((source) => (source.value as Declaration).schemaVersion),
+    );
+    if (versions.size !== 1) throw new Error('Migrate mixed component authority explicitly');
+    if (!declarations.every((source) => (source.value as Declaration).schemaVersion >= 5))
       return false;
     if (this.environment.schemaVersion !== 4)
       throw new Error('Migrate mixed environment authority explicitly');

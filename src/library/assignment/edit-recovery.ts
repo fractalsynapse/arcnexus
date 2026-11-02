@@ -16,7 +16,7 @@ export function checkedEditAuthority(record: RecordData): string {
 export function recoverAssignmentEdits(root: string, record: RecordData): boolean {
   const resolved = record.resolvedAssignment as ResolvedAssignment | undefined;
   const directory = join(root, 'runs', record.id, 'checked-edits');
-  if (resolved?.context.at(-1)?.schemaVersion !== 5 || !existsSync(directory)) return false;
+  if (resolved?.context.at(-1)?.schemaVersion !== 6 || !existsSync(directory)) return false;
   try {
     assertEditIdentity(record);
     const transactions = new CheckedEdits(

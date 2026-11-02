@@ -1,4 +1,5 @@
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
+import { GuidanceValidator } from '../../../../dist/library/guidance-validation/guidance.js';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
@@ -102,13 +103,13 @@ class GuidanceTests {
     assert.equal(f.run().status, 1);
   }
 
-  /** Verifies that untracked skills do not satisfy tracked inventory. */
+  /** Verifies that absent optional tracked skills are valid. */
   untrackedSkillsDoNotSatisfyTrackedInventory(t: TestContext) {
     const f = fixture(t);
     f.skill(valid, false);
     const r = f.run();
-    assert.equal(r.status, 1);
-    assert.match(r.stderr, /No tracked skills/);
+    assert.equal(r.status, 0);
+    assert.deepEqual(JSON.parse(r.stdout).skills, []);
   }
 
   /** Verifies that untracked invalid skill does not invalidate tracked skills. */
@@ -165,6 +166,16 @@ const suite = new GuidanceTests();
 const cli = resolve('dist/cli.js'),
   valid = '---\nname: example\ndescription: Useful guidance\n---\n# Example\n';
 
+const guidanceProgram = `
+import { GuidanceValidator } from ${JSON.stringify(new URL('../../../../dist/library/guidance-validation/guidance.js', import.meta.url).href)};
+try {
+  const report = new GuidanceValidator().validate(process.argv[1]);
+  console.log(JSON.stringify(report));
+  for (const item of report.diagnostics) console.error(item.path + ': ' + item.message);
+  process.exitCode = report.status === 'valid' ? 0 : 1;
+} catch (error) { console.error(String(error)); process.exitCode = 2; }
+`;
+
 function fixture(t: any): any {
   const repo = mkdtempSync(join(tmpdir(), 'arcnexus-guidance-'));
   t.after(() => rmSync(repo, { recursive: true, force: true }));
@@ -184,7 +195,7 @@ function fixture(t: any): any {
   const skill = (text: any = valid, track: any = true) =>
     write('.agents/skills/example/SKILL.md', text, track);
   const run = (...args: any) =>
-    spawnSync(process.execPath, [cli, 'guidance', 'validate', '--project', repo, ...args], {
+    spawnSync(process.execPath, ['--input-type=module', '-e', guidanceProgram, repo, ...args], {
       encoding: 'utf8',
     });
   return { repo, git, write, skill, run };
@@ -204,8 +215,15 @@ test('guidance validates optional references as tracked regular repository files
 test('guidance rejects references traversing a tracked symlink parent', (t: any) =>
   suite.guidanceRejectsReferencesTraversingATrackedSymlinkParent(t));
 
-test('untracked skills do not satisfy tracked inventory', (t: any) =>
+test('absent optional tracked skills are valid', (t: any) =>
   suite.untrackedSkillsDoNotSatisfyTrackedInventory(t));
+
+test('explicit required guidance rejects an empty tracked skill inventory', (t) => {
+  const f = fixture(t);
+  const report = new GuidanceValidator().validate(f.repo, { requireSkills: true });
+  assert.equal(report.status, 'invalid');
+  assert.equal(report.diagnostics[0]?.code, 'empty_inventory');
+});
 
 test('untracked invalid skill does not invalidate tracked skills', (t: any) =>
   suite.untrackedInvalidSkillDoesNotInvalidateTrackedSkills(t));

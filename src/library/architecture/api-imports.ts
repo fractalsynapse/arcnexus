@@ -57,7 +57,7 @@ export class ApiImports {
 
   /** Named API entries expose only their selected exports, including when namespace values escape. */
   private boundary(owner: Component, source: string, path: string, symbols: string[]): void {
-    if (owner.schemaVersion !== 5) {
+    if (owner.schemaVersion < 5) {
       if (!owner.ownership?.publicModules.includes(path))
         throw new Error(`Private cross-owner import: ${source} -> ${path}`);
       return;

@@ -1,3 +1,4 @@
+import { GuidanceValidator } from '../../guidance-validation/guidance.js';
 import assert from 'node:assert/strict';
 import {
   mkdtempSync,
@@ -67,13 +68,8 @@ class GuidanceReferenceAcceptance {
       '---\nname: example\ndescription: Example\n' + field + '---\n# Example\n',
     );
     this.git('add', '.agents/skills/example/SKILL.md');
-    const result = spawnSync(
-      process.execPath,
-      [this.cli, 'guidance', 'validate', '--project', this.root, '--json'],
-      { encoding: 'utf8' },
-    );
-    assert.equal(result.status, expected, label + ': ' + result.stdout + result.stderr);
-    const value = JSON.parse(result.stdout);
+    const value = new GuidanceValidator().validate(this.root);
+    assert.equal(value.status === 'valid' ? 0 : 1, expected, label);
     if (expected === 1)
       assert.ok(
         value.diagnostics.some(
@@ -115,11 +111,9 @@ class GuidanceReferenceAcceptance {
     const guide = readFileSync(path, 'utf8');
     for (const pattern of [/references/i, /track/i, /readab/i, /integrat/i])
       assert.match(guide, pattern);
-    const result = spawnSync(
-      process.execPath,
-      [this.cli, 'guidance', 'validate', '--project', '.'],
-      { encoding: 'utf8' },
-    );
+    const result = spawnSync(process.execPath, [this.cli, 'validate', '--project', '.'], {
+      encoding: 'utf8',
+    });
     assert.equal(result.status, 0, result.stderr);
   }
 }

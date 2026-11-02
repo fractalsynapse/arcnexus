@@ -19,7 +19,7 @@ as equal-looking relative strings. Reduction cannot widen a child, cross reposit
 identity, or re-anchor a path at another package root. Identical required operation
 usages may move to an ancestor only when every child already requires them. An
 owner-specific usage cannot become mandatory for a sibling. Repeated inherited
-constraints and patterns may be removed locally; objectives, questions, ownership
+constraints and standards may be removed locally; objectives, questions, ownership
 and public boundaries never move.
 
 Reduction is deterministic, preserves declaration order where meaningful, leaves
@@ -149,3 +149,17 @@ inline prerequisites or setup recipes. A legacy environment cannot opt a minimal
 component into the old preparation adapter. Startup must reject this mixed family
 before creating a host or invoking operations, and identify the environment migration
 needed. Historical catalog inspection remains read-only and available.
+
+## Standards and schema six
+
+The final migration target is component schema six. Version-five `patterns` become
+`standards`; referenced definitions move from `architecture/patterns` to
+`architecture/standards` with matching exact ownership/read path updates. Identity,
+artifact content and declared check identities are preserved. Conflicting destinations
+and mixed authored families produce diagnostics. Already-v6 families are unchanged.
+
+The v4 converter retains a minimal v5 intermediate for its existing recipe/policy
+checks; the maintenance command applies the same final standards conversion before
+validating or writing. No intermediate executable compatibility path is introduced.
+Preview leaves source unchanged, write requires a clean checkout, and a second
+successful invocation produces no changes. Historical evidence is never rewritten.

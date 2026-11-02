@@ -13,7 +13,6 @@ activities:
 command: node
 args:
   - dist/cli.js
-  - guidance
   - validate
   - --project
   - .

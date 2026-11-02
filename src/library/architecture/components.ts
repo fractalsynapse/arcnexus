@@ -33,7 +33,7 @@ export { classifyComponentPath } from './file-classification.js';
 
 export interface Component extends ComponentV4Fields, ComponentV5Fields {
   initialization?: { schemaVersion: 3; componentId: string };
-  schemaVersion: 1 | 2 | 3 | 4 | 5;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6;
   operationIds?: string[];
   id: string;
   type: string;
@@ -141,7 +141,7 @@ function read<T>(
   try {
     const version = (source.value as { schemaVersion?: number }).schemaVersion;
     return validateSchema<T>(
-      schema === 'component' && (version === 4 || version === 5)
+      schema === 'component' && (version === 4 || version === 5 || version === 6)
         ? `component-v${version}`
         : schema === 'operation' && version === 4
           ? 'operation-v4'
@@ -228,7 +228,7 @@ class CatalogLoader {
 
   /** Applies exact minimal ownership to every captured binding without reinterpreting historical catalogs. */
   private boundOwnership(): void {
-    if (Object.values(this.catalog.components).some((c) => c.schemaVersion !== 5)) return;
+    if (Object.values(this.catalog.components).some((c) => c.schemaVersion < 5)) return;
     for (const [id, revision] of Object.entries(this.catalog.repositoryRevisions ?? {})) {
       if (id === this.catalog.primaryRepository) continue;
       new OwnershipValidator(revision.source, revision.base).validate({
@@ -265,7 +265,7 @@ class CatalogLoader {
           catalog.configurationSources,
         );
         if (
-          Number(value.schemaVersion) !== 5 &&
+          Number(value.schemaVersion) < 5 &&
           path.replace(/\.(json|ya?ml)$/, '') !== `architecture/${directory}/${value.id}`
         )
           throw new InputError(`Identity must match filename: ${path}`);
@@ -346,7 +346,7 @@ class CatalogComponentValidator {
     for (const p of [...c.allowedWritePaths, ...c.documentation, ...c.tests]) scopePath(p);
     commands(c.verification);
     if (
-      c.schemaVersion !== 5 &&
+      c.schemaVersion < 5 &&
       c.allowedWritePaths.some((p) => !covered(p, c.access.writeDirectories))
     )
       throw new InputError(`Uncovered writable scope: ${c.id}`);
@@ -355,8 +355,8 @@ class CatalogComponentValidator {
   /** Checks referenced operations against the component profile and environment. */
   private operations(c: Component): void {
     const { catalog, env } = this;
-    if (c.schemaVersion === 5 && ['platform', 'package'].includes(c.type)) return;
-    const ids = c.schemaVersion === 5 ? Object.keys(c.operations ?? {}) : (c.operationIds ?? []);
+    if (c.schemaVersion >= 5 && ['platform', 'package'].includes(c.type)) return;
+    const ids = c.schemaVersion >= 5 ? Object.keys(c.operations ?? {}) : (c.operationIds ?? []);
     for (const id of ids) {
       const op = catalog.operations[id];
       if (!Object.hasOwn(catalog.operations, id) || op?.repository !== c.repository)

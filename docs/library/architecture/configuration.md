@@ -80,7 +80,7 @@ namespace access cannot bypass a narrowed public surface. Import and consumer vi
 are generated from the captured source, never authored lists.
 
 Effective policy evidence identifies the declarations contributing inherited reads,
-constraints, patterns and required operation usages, alongside scalar defaults.
+constraints, standards and required operation usages, alongside scalar defaults.
 Implicit readability of owned paths is reported separately from authored read policy.
 Derived public catalogs may reuse an application-owned in-memory snapshot only when
 the source revision, ownership, public declarations, file digests and analyzer version
@@ -95,18 +95,17 @@ with the declared director profile; it never makes that component an eligible
 engineering recipient for the selected package. Workday stewardship retains each
 steward's own identity and inherited engineering profile.
 
-Minimal research, review and change assignments may execute after confinement
-qualification. The [first real checked-engineering task](../assignment/checked-engineering-qualification.md)
-completed with independent verification. The remaining migration and live gates are
-still open. Legacy executable configurations remain supported during this staged
-migration; retiring them is unfinished. Historical reports remain read-only evidence.
+New execution requires component schema six. Historical v4/v5 definitions remain
+available for inspection and explicit migration, not as alternate execution authority.
+The [configuration migration](configuration-migration.md) upgrades supported families
+without changing historical reports or a running supervisor's captured authority.
 
-Inherited v5 pattern identities resolve to captured standards and example artifacts
-using the same revision-bound reference loader as historical definitions. Missing
-patterns or out-of-owner artifacts fail validation. Referenced checks must belong
-to the pattern owner’s declared operation usages; the reference itself grants no
-additional execution or write authority. Inspection includes the captured hashes,
-and steward context receives the immutable artifact text.
+Inherited `standards` identities resolve definitions in `architecture/standards` and
+capture owned documentation/examples at the architectural revision. Missing standards,
+out-of-owner artifacts and checks outside the standard owner's declared operations
+fail validation. References do not grant execution or write authority. Inspection
+includes captured hashes; model context receives immutable artifact text. Historical
+pattern snapshots retain their original names and interpretation.
 
 ### Model context and captured authority
 

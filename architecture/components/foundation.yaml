@@ -1,4 +1,4 @@
-schemaVersion: 5
+schemaVersion: 6
 id: foundation
 type: foundation
 parentId: cli-package
@@ -29,5 +29,5 @@ owns:
   - tsconfig.tests.json
   - tsconfig.fixtures.json
   - tsconfig.tooling.json
-  - architecture/patterns/readable-typescript.yaml
+  - architecture/standards/readable-typescript.yaml
   - tsconfig.build.json

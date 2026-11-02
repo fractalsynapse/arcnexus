@@ -16,7 +16,7 @@ class GeneralFixtureScenarios {
     const context = new ExecutionContext().resolve(repo);
     assert.deepEqual(context.owners.sort(), ['cli', 'names', 'service']);
     assert.ok(
-      Object.values(context.catalog.components).every((owner) => owner.schemaVersion === 5),
+      Object.values(context.catalog.components).every((owner) => owner.schemaVersion === 6),
     );
     assert.equal(context.directorProfile, 'astra');
     assert.equal(context.reviewerProfile, 'astra');

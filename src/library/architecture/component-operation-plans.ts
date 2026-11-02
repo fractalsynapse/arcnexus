@@ -16,7 +16,7 @@ export class ComponentOperationPlans {
   /** Resolves every executable component independently of the number of participating owners. */
   resolve(): void {
     for (const c of Object.values(this.catalog.components)) {
-      if (c.schemaVersion !== 5 || ['platform', 'package'].includes(c.type)) continue;
+      if (c.schemaVersion < 5 || ['platform', 'package'].includes(c.type)) continue;
       c.operationPlan = {};
       const context = this.context(c);
       for (const usage of ['preflight', 'setup', 'refresh', 'verify', 'agent'])

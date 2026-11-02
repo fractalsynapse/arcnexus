@@ -1,4 +1,4 @@
-schemaVersion: 5
+schemaVersion: 6
 id: change-inspection
 type: library
 parentId: cli-package
@@ -10,8 +10,8 @@ constraints:
   - Do not change sandbox permissions or verification requirements
   - Caller owns commits and integration
   - Do not edit architecture or unrelated files
-  - 'candidate-changes (src/library/change-inspection/changes.ts): Preserve
-    path/change-kind evidence and exact scope and symlink rejection semantics'
+  - "candidate-changes (src/library/change-inspection/changes.ts): Preserve
+    path/change-kind evidence and exact scope and symlink rejection semantics"
 operations:
   migrated-recipe-43b539fb85a57c26:
     - verify

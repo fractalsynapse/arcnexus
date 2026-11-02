@@ -7,14 +7,14 @@ import { registerSuite } from '../../../../dist/library/testing/suite.js';
 class RetiredIntakeScenarios {
   /** Historical initializer components remain inspectable but cannot initialize a new session. */
   async owner(): Promise<void> {
-    await this.reject({ context: [{ schemaVersion: 4 }] }, /version.five.*migrat/i);
+    await this.reject({ context: [{ schemaVersion: 4 }] }, /version.six.*migrat/i);
   }
 
   /** Captured legacy deadlines require migration instead of arming a hidden timer. */
   async deadline(): Promise<void> {
     await this.reject(
       {
-        context: [{ schemaVersion: 5 }],
+        context: [{ schemaVersion: 6 }],
         profile: { id: 'old', schemaVersion: 2, timeoutSeconds: 1 },
       },
       /obsolete work budget timeoutSeconds/,

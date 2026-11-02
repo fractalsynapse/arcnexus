@@ -18,7 +18,7 @@ detailed implementation plan.
 | 1. Single steward | Delivered: managed workspace/setup, SDK execution, verification, evidence and guarded cleanup. See the [implementation sequence](plans/phase-one.md), [live sample](acceptance/live-sample.md) and [self-development evidence](acceptance/self-development.md). |
 | 2. Two stewards | Delivered: bounded requests, verified delivery, partial-change parking and same-thread continuation, proven by a live contract fixture and real guidance/validator self-management. See [workdays](library/workday/workdays.md) and [retained evidence](acceptance/workdays.md). |
 | 3. Minimal UI | Planned: architect selects a component, directs work and reviews evidence through the same runtime. |
-| 4. Expanded governance | Planned: deepen inherited patterns, contract validation and conformance checks based on actual use. |
+| 4. Expanded governance | Planned: deepen inherited standards, contract validation and conformance checks based on actual use. |
 | 5. Multi-project operation | Planned: prove one real package relationship before broad composition and release coordination. |
 
 Pre-phase-three preparation adds YAML catalogs, mirrored owner directories, compact
@@ -70,7 +70,7 @@ Milestone | What you build | What must actually work
 **1. Single steward** | Codex execution, component definition, CLI | Give a component an objective; Codex changes code and runs tests
 **2. Two stewards** | Structured inbox and execution handoff | One steward requests a contract change; another responds; work continues
 **3. Architecture Studio UI** | React interface and Hono API | Select components, direct stewards, run workdays, review results
-**4. Architectural governance** | Parent inheritance, patterns, constraints, verification | Stewards consistently follow architecture and deviations are reported
+**4. Architectural governance** | Parent inheritance, standards, constraints, verification | Stewards consistently follow architecture and deviations are reported
 **5. Multi-project operation** | Package composition, profiles, release management | Coordinate engineering work across packages and repositories
 
 I would not start the next milestone until the current milestone works end-to-end.
@@ -464,9 +464,9 @@ It also means that changing a package constraint automatically changes the archi
 
 You should not need to rewrite any agent prompts.
 
-### Add reusable patterns
+### Add reusable standards
 
-Patterns can initially be JSON files in a shared directory.
+Standards can initially be JSON files in a shared directory.
 
 For example:
 
@@ -478,17 +478,17 @@ architecture/
         identity.json
         api.json
 
-    patterns/
+    standards/
         hono-api.json
         library-testing.json
         service-contract.json
 ```
 
-A component references the patterns it uses.
+A component references the standards it uses.
 
 The runtime includes the applicable pattern definitions in its context.
 
-Later, patterns can contain templates, tests, and validation rules.
+Later, standards can contain templates, tests, and validation rules.
 
 But the initial implementation should only need references and descriptions.
 

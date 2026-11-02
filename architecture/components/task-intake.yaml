@@ -1,4 +1,4 @@
-schemaVersion: 5
+schemaVersion: 6
 id: task-intake
 type: library
 parentId: cli-package
@@ -12,15 +12,15 @@ constraints:
   - Never silently broaden a captured assignment or grant write authority
   - Director and verifier activations are source-read-only and cannot apply
     architecture proposals
-  - 'director-result (src/library/task-intake/schemas/director-result.json):
+  - "director-result (src/library/task-intake/schemas/director-result.json):
     General run proposals and safe retained continuations; preserve initializer
-    history'
-  - 'verification-result
+    history"
+  - "verification-result
     (src/library/task-intake/schemas/verification-result.json): Indexed
-    independent acceptance evidence; preserve historical agent-result reports'
-  - 'initializer-result
+    independent acceptance evidence; preserve historical agent-result reports"
+  - "initializer-result
     (src/library/task-intake/schemas/initializer-result.json): Preserve
-    supported historical versions and captured execution readers'
+    supported historical versions and captured execution readers"
 operations:
   component-tests:
     - verify

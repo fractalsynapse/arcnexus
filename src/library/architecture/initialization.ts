@@ -67,7 +67,7 @@ function lineage(catalog: Catalog, component: Component): Component[] {
 
 export function validateInitialization(catalog: Catalog): void {
   for (const component of Object.values(catalog.components)) {
-    if (component.schemaVersion === 5 && component.type === 'platform') {
+    if (component.schemaVersion >= 5 && component.type === 'platform') {
       if (component.director || component.reviewerProfile)
         new PlatformExecution(catalog).director(component);
       continue;
@@ -96,7 +96,7 @@ export function captureInitialization(
   model?: string,
 ): InitializationSnapshot {
   const platform = lineage(catalog, owner).find((component) => component.type === 'platform');
-  if (platform?.schemaVersion === 5) return captureDirector(catalog, platform, model);
+  if (platform && platform.schemaVersion >= 5) return captureDirector(catalog, platform, model);
   model ??= 'gpt-6-luna';
   const identity = platform?.initialization?.componentId;
   const component = identity ? catalog.components[identity]! : fallback(owner.repository);

@@ -124,10 +124,10 @@ export class ExecutionContext {
 
   /** Reads declarative director/reviewer profiles without selecting models in scheduling code. */
   private defaults(source: string, base: string, catalog: Catalog) {
-    const retired = Object.values(catalog.components).filter((c) => c.schemaVersion !== 5);
+    const retired = Object.values(catalog.components).filter((c) => c.schemaVersion !== 6);
     if (retired.length)
       throw new InputError(
-        `New execution requires version-five components; run arcnexus config migrate: ${retired.map((c) => c.id).join(', ')}`,
+        `New execution requires version-six components; run arcnexus config migrate: ${retired.map((c) => c.id).join(', ')}`,
       );
     const environment = new ConfigurationReader().definition(
       source,

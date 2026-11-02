@@ -44,15 +44,21 @@ export class ArchitectureReferences {
   resolve(): void {
     const contracts = this.contracts();
     for (const component of Object.values(this.catalog.components)) {
+      if (component.schemaVersion === 6) {
+        component.standardSnapshots = (component.standards ?? []).map((id) =>
+          this.guidance(id, 'standard'),
+        );
+        continue;
+      }
       if (component.schemaVersion === 5) {
-        component.patternSnapshots = component.patterns.map((id) => this.pattern(id));
+        component.patternSnapshots = component.patterns.map((id) => this.guidance(id));
         continue;
       }
       if (component.schemaVersion !== 4) continue;
       component.providedSnapshots = [...contracts.values()].filter(
         (entry) => entry.owner === component.id,
       );
-      component.patternSnapshots = (component.patternIds ?? []).map((id) => this.pattern(id));
+      component.patternSnapshots = (component.patternIds ?? []).map((id) => this.guidance(id));
       component.contractSnapshots = (component.consumes ?? []).map((reference) => {
         const contract = contracts.get(reference.id);
         if (!contract || contract.version !== reference.version)
@@ -86,25 +92,27 @@ export class ArchitectureReferences {
   }
 
   /** Loads the referenced standard and optional supporting artifacts. */
-  private pattern(id: string) {
+  private guidance(id: string, kind: 'pattern' | 'standard' = 'pattern') {
     relativePath(id);
     if (id.includes('/')) throw new Error(`Invalid pattern identity: ${id}`);
     const source = new ConfigurationReader().definition(
       this.repository,
       this.base,
-      `architecture/patterns/${id}`,
+      `architecture/${kind}s/${id}`,
     );
-    const pattern = validateSchema<PatternDefinition>('pattern', source.value);
+    const pattern = validateSchema<PatternDefinition>(kind, source.value);
     if (pattern.id !== id) throw new Error(`Pattern identity mismatch: ${id}`);
     const owner = this.catalog.components[pattern.owner];
     if (!owner) throw new Error(`Missing pattern owner: ${pattern.owner}`);
     for (const operation of pattern.operationIds)
       if (
-        owner.schemaVersion === 5
+        owner.schemaVersion >= 5
           ? !owner.operations?.[operation]?.length
           : !owner.operationIds?.includes(operation)
       )
-        throw new Error(`Pattern check outside owner's operations: ${operation}`);
+        throw new Error(
+          `${kind === 'standard' ? 'Standard' : 'Pattern'} check outside owner's operations: ${operation}`,
+        );
     if (!this.catalog.configurationSources.some((entry) => entry.path === source.path))
       this.catalog.configurationSources.push(source);
     const artifacts = [pattern.document, ...pattern.examples].map((p) =>

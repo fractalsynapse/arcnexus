@@ -105,9 +105,9 @@ export class SessionState {
 
   /** Requires current minimal authority and rejects retired profile budgets before filesystem access. */
   private validateAuthority(): void {
-    if (this.resolved.context.some((component) => component.schemaVersion !== 5))
+    if (this.resolved.context.some((component) => component.schemaVersion !== 6))
       throw new InputError(
-        'New assignments require version-five authority; migrate historical configuration',
+        'New assignments require version-six authority; migrate historical configuration',
       );
     const execution = new ExecutionContext();
     execution.validateProfile(this.resolved.executionProfile);

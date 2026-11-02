@@ -66,7 +66,7 @@ export class MinimalTestFixture extends ComponentTestFixture {
   /** Writes one architectural declaration without legacy location or discovery duplication. */
   private definition(id: string, type: string, fields: object): void {
     this.put(`architecture/components/${id}.yaml`, {
-      schemaVersion: 5,
+      schemaVersion: 6,
       id,
       type,
       purpose: 'Own test selection',

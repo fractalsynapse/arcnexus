@@ -14,7 +14,7 @@ class GeneralCliScenarios {
     const general = new GeneralFixture(t);
     const context = new ExecutionContext().resolve(general.fixture.repo);
     assert.ok(
-      Object.values(context.catalog.components).every((owner) => owner.schemaVersion === 5),
+      Object.values(context.catalog.components).every((owner) => owner.schemaVersion === 6),
     );
     const command = this.command(general);
     const started = JSON.parse(command('workday', 'start'));

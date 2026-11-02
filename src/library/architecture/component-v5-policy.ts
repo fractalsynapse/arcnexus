@@ -4,6 +4,11 @@ import { ancestry, covered, scopePath } from './component-paths.js';
 import { InputError } from './config.js';
 
 export interface ComponentV5Fields {
+  standards?: string[];
+  standardSnapshots?: Array<{
+    id: string;
+    artifacts: import('./references.js').ReferenceArtifact[];
+  }>;
   definition?: { repository: string; path: string; sourceHash: string };
   observedImports?: import('./api-imports.js').ModuleRelationship[];
   observedConsumers?: import('./api-imports.js').ModuleRelationship[];
@@ -72,7 +77,10 @@ export class ComponentV5Policy {
 
   /** Records every contributing declaration while deduplicating required inherited policy values. */
   private accumulate(component: Component, lineage: Component[]): void {
-    for (const key of ['constraints', 'patterns'] as const) {
+    for (const key of [
+      'constraints',
+      component.schemaVersion === 6 ? 'standards' : 'patterns',
+    ] as const) {
       component[key] = [...new Set(lineage.flatMap((entry) => entry[key] ?? []))];
       component.policy![key] = {
         value: [...component[key]],

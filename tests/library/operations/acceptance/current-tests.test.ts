@@ -167,7 +167,7 @@ class CurrentTestScenarios {
   private owner(text: string) {
     return {
       id: 'owner',
-      schemaVersion: 5,
+      schemaVersion: 6,
       repository: 'sample',
       repositoryRoot: '.',
       testProfile: 'node',

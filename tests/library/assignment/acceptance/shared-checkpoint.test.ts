@@ -58,7 +58,7 @@ class SharedCheckpointScenarios {
   /** Supplies captured authority and persistent journal state for the actual assignment dispatch method. */
   private session(root: string, workspace: string, owner: unknown): SessionState {
     return Object.assign(Object.create(SessionState.prototype), {
-      component: { schemaVersion: 5 },
+      component: { schemaVersion: 6 },
       dir: join(root, 'runs/run'),
       turns: [],
       activities: [],

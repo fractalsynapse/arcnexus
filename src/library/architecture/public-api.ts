@@ -31,7 +31,7 @@ export class PublicApiCatalog {
       const owners = Object.values(this.catalog.components).filter(
         (c) => c.repository === repository,
       );
-      const minimal = owners.filter((c) => c.schemaVersion === 5);
+      const minimal = owners.filter((c) => c.schemaVersion >= 5);
       if (!minimal.length) continue;
       const cache = new DerivedApiCache(revision, owners);
       if (cache.restore(minimal)) continue;

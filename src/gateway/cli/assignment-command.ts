@@ -1,9 +1,8 @@
-import { catalogView } from '../../library/architecture/catalog-view.js';
+import { ArchitectureValidation } from '../../library/architecture/validation.js';
 import type { CliValues } from './arguments.js';
 import { InputError } from '../../library/architecture/config.js';
 import { resolveAssignment, resolveBase } from '../../library/architecture/assignment.js';
 import { loadBindings } from '../../library/architecture/bindings.js';
-import { loadCatalog } from '../../library/architecture/components.js';
 
 /** Resolves immutable assignments and presents their captured authority. */
 export class AssignmentCommand {
@@ -19,13 +18,13 @@ export class AssignmentCommand {
     const { values, positionals } = this;
     if (!values.project || positionals.length !== 1)
       throw new InputError('validate requires --project');
-    const { source, base } = resolveBase(values.project, values.base);
-    const catalog = loadCatalog(
-      source,
-      base,
+    const report = new ArchitectureValidation().validate(
+      values.project,
+      values.base,
       values.bindings ? loadBindings(values.bindings) : undefined,
     );
-    console.log(JSON.stringify({ base, ...catalogView(catalog), status: 'valid' }));
+    console.log(JSON.stringify(report));
+    if (report.status !== 'valid') process.exitCode = 1;
     return;
   }
 

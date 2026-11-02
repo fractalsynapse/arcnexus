@@ -9,14 +9,14 @@ class RetiredModelScenarios {
   owner(): void {
     assert.throws(
       () => new CodexConfiguration({ record: { context: [{ schemaVersion: 4 }] } } as any),
-      /version.five.*migrat/i,
+      /version.six.*migrat/i,
     );
   }
 
   /** An absent profile must not silently select model or permission defaults. */
   profile(): void {
     assert.throws(
-      () => new CodexConfiguration({ record: { context: [{ schemaVersion: 5 }] } } as any),
+      () => new CodexConfiguration({ record: { context: [{ schemaVersion: 6 }] } } as any),
       /captured execution profile/i,
     );
   }

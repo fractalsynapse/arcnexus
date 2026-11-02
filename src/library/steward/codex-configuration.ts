@@ -63,9 +63,9 @@ export class CodexConfiguration {
   /** Rejects historical permissions and missing policy before creating executable SDK configuration. */
   private capturedAuthority(): ResolvedAssignment {
     const context = this.input.record.context as Array<{ schemaVersion: number }> | undefined;
-    if (!context?.length || context.some((component) => component.schemaVersion !== 5))
+    if (!context?.length || context.some((component) => component.schemaVersion !== 6))
       throw new InputError(
-        'Model execution requires version-five authority; migrate historical configuration',
+        'Model execution requires version-six authority; migrate historical configuration',
       );
     const resolved = this.input.record.resolvedAssignment as ResolvedAssignment | undefined;
     if (!resolved?.executionProfile)

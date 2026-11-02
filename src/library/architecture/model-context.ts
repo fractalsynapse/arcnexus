@@ -3,7 +3,7 @@ import type { Component } from './components.js';
 
 /** Projects architectural intent and discovery without repeating immutable execution inventories. */
 export function componentContext(component: Component): unknown {
-  if (component.schemaVersion !== 5) return component;
+  if (component.schemaVersion < 5) return component;
   const {
     inventory: _inventory,
     capturedTests: _tests,

@@ -43,9 +43,9 @@ export interface InitializeInput {
 
 export async function initializeExecution(input: InitializeInput): Promise<void> {
   const snapshot = input.resolved.initialization;
-  if (!snapshot.context.length || snapshot.context.some((owner) => owner.schemaVersion !== 5))
+  if (!snapshot.context.length || snapshot.context.some((owner) => owner.schemaVersion !== 6))
     throw new InputError(
-      'Initializer execution requires version-five authority; migrate configuration',
+      'Initializer execution requires version-six authority; migrate configuration',
     );
   new ExecutionContext().validateProfile(snapshot.profile);
   await new Initializer(input).run();

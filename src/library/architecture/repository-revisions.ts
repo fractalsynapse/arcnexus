@@ -18,7 +18,7 @@ export function repositoryRevisions(
 ): void {
   const packages = Object.values(catalog.components).filter((c) => c.type === 'package');
   for (const component of packages)
-    if (component.schemaVersion === 5 && !component.repository)
+    if (component.schemaVersion >= 5 && !component.repository)
       component.repository = environment.workspace?.primary.id ?? '';
   const identities = [...new Set(packages.map((c) => c.repository))];
   if (!packages.some((c) => c.schemaVersion >= 4)) return;

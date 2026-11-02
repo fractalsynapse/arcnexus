@@ -1,4 +1,4 @@
-schemaVersion: 5
+schemaVersion: 6
 id: testing
 type: library
 parentId: cli-package
@@ -9,8 +9,8 @@ objectives:
 constraints:
   - Do not weaken independent acceptance to make candidate work pass
   - Keep generated output separate from maintained source
-  - 'test-profile (src/library/testing/schemas/test-profile.json): Node profile
-    version 1 uses fixed commands and literal suite metadata'
+  - "test-profile (src/library/testing/schemas/test-profile.json): Node profile
+    version 1 uses fixed commands and literal suite metadata"
 operations:
   migrated-recipe-43b539fb85a57c26:
     - verify
