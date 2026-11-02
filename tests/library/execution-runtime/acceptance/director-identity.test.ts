@@ -46,6 +46,7 @@ class DirectorIdentityScenarios {
     const prompt = readFileSync(join(root, 'runs', planning.id, 'prompt.txt'), 'utf8');
     assert.match(prompt, /combined stdout\/stderr/);
     assert.match(prompt, /automatically runs independent delivery verification/);
+    assert.match(prompt, /independent review of this task is covered by the built-in reviewer/);
   }
 }
 
