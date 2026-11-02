@@ -41,6 +41,12 @@ jobs:
           sudo systemd-run --uid="$(id -u)" --gid="$(id -g)" \
             --property=Delegate=yes --working-directory="$PWD" \
             --setenv="PATH=$PATH" --wait --pipe --collect npm test
+      - name: Retain failed operation diagnostics
+        if: failure()
+        run: |
+          if [[ -d "$HOME/.local/state/arcnexus" ]]; then
+            rg --files --hidden "$HOME/.local/state/arcnexus" -g '*.log' -0 | xargs -0 -r tail -n 40 --
+          fi
       - name: Validate architectural ownership
         run: node dist/cli.js validate --project .
       - name: Smoke-test CLI
