@@ -45,7 +45,7 @@ jobs:
         if: failure()
         run: |
           if [[ -d "$HOME/.local/state/arcnexus" ]]; then
-            rg --files --hidden "$HOME/.local/state/arcnexus" -g '*.log' -0 | xargs -0 -r tail -n 40 --
+            find "$HOME/.local/state/arcnexus" -type f -name '*.log' -exec tail -n 40 -- {} +
           fi
       - name: Validate architectural ownership
         run: node dist/cli.js validate --project .
