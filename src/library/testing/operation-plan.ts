@@ -67,19 +67,27 @@ export class TestOperationPlanning {
     );
   }
 
-  /** Validates required usages and finite prerequisite definitions before resolving any arguments. */
+  /** Validates captured profile references against owner policy before resolving host-selected arguments. */
   private operations(owner: Component, step: { operation: string; purpose: string }): Operation[] {
-    const usages = step.purpose === 'test-run' ? ['agent', 'verify'] : ['setup', 'refresh'];
-    if (
-      !usages.some((usage) => owner.operationPlan?.[usage]?.some((op) => op.id === step.operation))
-    )
-      throw new InputError(
-        `Test operation ${step.operation} requires owner usage ${usages.join(' or ')}`,
-      );
     const definitions = new OperationOrder(this.catalog.operations).resolve([step.operation]);
-    for (const definition of definitions)
+    for (const definition of definitions) {
       if (definition.kind !== 'command' || definition.schemaVersion !== 4)
         throw new InputError(`Finite shared test command required: ${definition.id}`);
+      if (definition.repository !== owner.repository)
+        throw new InputError(`Test operation repository mismatch: ${definition.id}`);
+      if (
+        !definition.activities.every((activity) =>
+          this.catalog.roles[owner.role]!.activities.includes(activity),
+        )
+      )
+        throw new InputError(`Test operation activity outside role: ${definition.id}`);
+      if (
+        !this.catalog.profiles[owner.executionProfile]!.operationCategories?.includes(
+          definition.category,
+        )
+      )
+        throw new InputError(`Test operation category not permitted: ${definition.id}`);
+    }
     return definitions;
   }
 }

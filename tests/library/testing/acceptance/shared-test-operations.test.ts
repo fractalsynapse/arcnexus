@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
@@ -88,14 +88,52 @@ class SharedTestScenarios {
     );
   }
 
+  /** Inherited test conventions remain valid for an owner with no suites and no redundant usages. */
+  profileAuthority(t: TestContext): void {
+    const f = new SharedTestFixture(t);
+    f.put('architecture/components/empty.yaml', {
+      schemaVersion: 5,
+      id: 'empty',
+      type: 'library',
+      parentId: 'package',
+      purpose: 'Future test owner',
+      owns: ['empty'],
+    });
+    f.commit();
+    const result = f.run('inspect', 'sample');
+    assert.equal(result.status, 0, result.stderr);
+    const selection = JSON.parse(result.stdout);
+    assert.deepEqual(
+      selection.operationPlan.steps.map((step: any) => step.operation.id),
+      ['compile', 'suites'],
+    );
+  }
+
+  /** Profile references cannot bypass the captured operation category or activity policy. */
+  restricted(t: TestContext, restriction: string): void {
+    const f = new SharedTestFixture(t);
+    if (restriction === 'category')
+      f.extend(
+        'architecture/execution-profiles/luna.yaml',
+        (value) => (value.operationCategories = []),
+      );
+    else if (restriction === 'activity')
+      f.extend('architecture/roles/engineer.yaml', (value) => (value.activities = ['research']));
+    else f.extend('architecture/operations/compile.yaml', (value) => (value.repository = 'other'));
+    f.commit();
+    const result = f.run('inspect', 'sample');
+    assert.equal(result.status, 2, result.stderr);
+    assert.match(result.stderr, /category|activity|repository/i);
+  }
+
   /** Rejects a test profile that references an operation unavailable to its owner. */
   unavailable(t: TestContext): void {
     const f = new SharedTestFixture(t);
-    f.extend('architecture/components/package.yaml', (value) => delete value.operations.compile);
+    rmSync(join(f.repo, 'architecture/operations/compile.yaml'));
     f.commit();
     const result = f.run('inspect', 'sample');
     assert.equal(result.status, 2);
-    assert.match(result.stderr, /compile.*setup|preparation.*compile/i);
+    assert.match(result.stderr, /Unknown prerequisite operation: compile/);
   }
 }
 
@@ -127,5 +165,13 @@ test(
 
 test('shared test preparation rejects unavailable operation references before dispatch', (t) =>
   scenarios.unavailable(t));
+
+test('captured test profiles need no duplicate component usages and allow empty owners', (t) =>
+  scenarios.profileAuthority(t));
+
+for (const restriction of ['category', 'activity', 'repository'])
+  test('test profile operation enforces captured ' + restriction, (t) =>
+    scenarios.restricted(t, restriction),
+  );
 
 registerSuite({ component: 'testing', level: 'acceptance', tags: ['deterministic'] });

@@ -47,14 +47,10 @@ export class SharedTestFixture extends MinimalTestFixture {
     this.commit();
   }
 
-  /** Gives operation definitions one maintenance owner and inherits their usages at package level. */
+  /** Gives operation definitions one maintenance owner while the profile alone authorizes test execution. */
   private configuration(): void {
     this.extend('architecture/components/maintenance.yaml', (value) =>
       value.owns.push('architecture/operations'),
-    );
-    this.extend(
-      'architecture/components/package.yaml',
-      (value) => (value.operations = { compile: ['setup'], suites: ['agent', 'verify'] }),
     );
     this.put('architecture/environment.yaml', {
       schemaVersion: 4,

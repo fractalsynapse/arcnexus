@@ -1,6 +1,6 @@
 # Configuration migration
 
-`config migrate` will preview a validated change set; `--write` will apply it to a
+`config migrate` previews a validated change set; `--write` applies it to a
 clean checkout without committing or publishing. Historical reports and retained
 run authority are not migration inputs to rewrite. The migration must stop with
 specific diagnostics where ownership, contract associations or operation semantics
@@ -99,3 +99,10 @@ testing service. Migration does not generate duplicate component operation usage
 from those references or infer agent availability from them. This preserves useful
 inherited test conventions for owners that have no suites yet, while test selection
 and operation context are validated when the testing service is invoked.
+
+The current command migrates a complete version-four component family and leaves an
+already migrated family unchanged. Mixed configuration families and dependency-local
+inline lifecycle recipes produce explicit diagnostics; their automatic conversion is
+not yet delivered. Historical excluded files require an explicit owner before a writable
+migration can pass catalog validation. These are remaining migration limits, not claims
+that the full configuration-refactor plan is complete.

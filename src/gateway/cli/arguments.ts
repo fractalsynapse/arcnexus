@@ -4,6 +4,7 @@ import { InputError } from '../../library/architecture/config.js';
 export const help = `ArcNexus
   workday start|pause|resume|stop|status
   task run "<prompt>"
+  config migrate [--write]
   test inspect|run [component-id] --project <repository> [--level unit|integration|acceptance] [--category regression] [--tag <tag>] [--json]
 Inspection, evidence and diagnostics:
   inspect <component-id> <objective> --project <repository> [--kind change|research|review] [--json]
@@ -24,6 +25,7 @@ Composed workspace inspection/preparation: --bindings <file>
 `;
 
 const cliOptions = {
+  write: { type: 'boolean' },
   level: { type: 'string' },
   category: { type: 'string' },
   tag: { type: 'string', multiple: true },
@@ -60,6 +62,8 @@ export function argumentsForCommand() {
       (parsed.values.level || parsed.values.category || parsed.values.tag)
     )
       throw new InputError('Test filters require the test command');
+    if (parsed.values.write !== undefined && parsed.positionals[0] !== 'config')
+      throw new InputError('--write requires config migrate');
     return parsed;
   } catch (error) {
     throw new InputError(String(error));

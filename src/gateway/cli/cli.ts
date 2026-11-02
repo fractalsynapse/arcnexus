@@ -1,3 +1,4 @@
+import { ConfigCommand } from './config-command.js';
 import { AssignmentCommand } from './assignment-command.js';
 import { ObservationCommand } from './observation-command.js';
 import { GuidanceCommand } from './guidance-command.js';
@@ -92,6 +93,8 @@ class CliApplication {
   /** Routes a validated command to its adapter and preserves shared cancellation. */
   private async dispatch(): Promise<void> {
     switch (this.command) {
+      case 'config':
+        return new ConfigCommand(this.positionals, this.values).run();
       case 'run':
         throw new InputError('Component execution is retired; use task run "<prompt>"');
       case 'test':
