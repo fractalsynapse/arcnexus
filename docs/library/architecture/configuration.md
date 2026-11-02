@@ -41,7 +41,6 @@ patterns, contracts and discovered inventories. Versions 1–3 preserve their ex
 interpretation. Empty version-three/four container permissions express containment,
 not a deny-all ceiling. Container nodes cannot execute assignments.
 
-
 ## Minimal configuration migration (#109)
 
 Version-five platform declarations are the single source for `director` (component
@@ -56,3 +55,9 @@ fixed commands, prerequisite references, disposable outputs and artifacts once;
 component usages capture owner-specific plans. See [workspace preparation](../workspace/workspaces.md)
 and the [accepted migration plan](../../plans/minimal-component-configuration.md)
 for current scope and the qualification gates still outstanding.
+
+Trusted packaged result schemas may reference other packaged schema files by relative
+path. The loader expands those references before validation and model configuration,
+so shared result fields have one authored definition. References must resolve to
+packaged registry entries; remote references, cycles and external fragments are
+rejected. Target-owned files cannot supply runtime response contracts.
