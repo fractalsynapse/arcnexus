@@ -394,3 +394,8 @@ separately. Obsolete deadline/attempt-allowance cases were removed deliberately;
 cancellation, unbounded correction and progress diagnosis remain covered. Types and
 scoped lint passed. CI at `7cef823` is green; these later fixture changes still require
 integrated verification at their own revision.
+
+Seven prior-evidence cases now pass under minimal authority and native confinement.
+The setup-race case uses a generated-output gate: the caller changes its historical
+file while confined setup waits, and the session still receives the original captured
+bytes. Setup no longer writes outside its workspace to manufacture that race.
