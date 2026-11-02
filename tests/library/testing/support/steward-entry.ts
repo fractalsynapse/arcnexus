@@ -27,8 +27,6 @@ class StewardEntry {
 
   private unlock?: () => void;
 
-  private timer?: NodeJS.Timeout;
-
   private readonly cancel = () => this.controller.abort(new Error('Cancelled'));
 
   /** Retains signal/exit evidence around the same assembled session used by project execution. */
@@ -40,7 +38,6 @@ class StewardEntry {
     } catch (error) {
       this.failure(error);
     } finally {
-      clearTimeout(this.timer);
       this.finalize();
       this.unlock?.();
       process.off('SIGINT', this.cancel);
@@ -61,7 +58,6 @@ class StewardEntry {
       issue: values.issue,
     });
     this.record.resolvedAssignment = resolved;
-    this.watchdog(resolved.executionProfile.timeoutSeconds);
     await runSteward(
       this.root,
       this.record,
@@ -70,19 +66,8 @@ class StewardEntry {
       resolved.executionProfile.model,
       values['codex-path'] ?? 'codex',
       this.controller.signal,
-      values['max-attempts']
-        ? Number(values['max-attempts'])
-        : resolved.executionProfile.maxAttempts,
     );
-  }
-
-  /** Applies only an explicitly requested characterization watchdog to its test subprocess. */
-  private watchdog(seconds?: number): void {
-    if (seconds === undefined) return;
-    this.timer = setTimeout(
-      () => this.controller.abort(new Error('Operation timed out')),
-      seconds * 1000,
-    );
+    if (this.record.status !== 'completed') process.exitCode = 1;
   }
 
   /** Resolves committed component authority before any workspace is created. */
@@ -98,7 +83,6 @@ class StewardEntry {
       executionProfile: values['execution-profile'],
       model: values.model,
       initializerModel: values['initializer-model'],
-      timeoutSeconds: values['timeout-seconds'] ? Number(values['timeout-seconds']) : undefined,
     });
     return { source, base, bindings, resolved };
   }
@@ -117,8 +101,6 @@ class StewardEntry {
       'execution-profile',
       'initializer-model',
       'codex-path',
-      'max-attempts',
-      'timeout-seconds',
     ];
     const options = Object.fromEntries(names.map((name) => [name, { type: 'string' as const }]));
     const result = parseArgs({ allowPositionals: true, options });
@@ -129,8 +111,6 @@ class StewardEntry {
       positionals.length !== (values.assignment ? 2 : 3)
     )
       throw new InputError('Session test requires component, objective and --project');
-    if (values['max-attempts'] && !/^[1-9]\d*$/.test(values['max-attempts']))
-      throw new InputError('Invalid explicit test attempts');
     return result;
   }
 

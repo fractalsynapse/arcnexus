@@ -138,22 +138,14 @@ export class CodexExecution<T extends object = AgentResult> {
 
   /** Parses and validates the structured result returned by the model. */
   private result(): T {
-    const { record } = this.input;
-    const { dir, profile } = this.configuration;
+    const { dir } = this.configuration;
     writeFileSync(join(dir, 'agent-result.raw.txt'), this.final, { mode: 0o600 });
     const result = validateSchema<T>(
-      this.input.responseContract ??
-        (record.generalExecution
-          ? 'general-agent-result'
-          : record.workdayId
-            ? 'workday-agent-result'
-            : 'agent-result'),
+      this.input.responseContract ?? 'general-agent-result',
       JSON.parse(this.final),
     );
-    if (!this.input.responseContract) this.checkCoordination(result as AgentResult);
     if (
       !this.input.responseContract &&
-      (profile?.schemaVersion ?? 1) >= 2 &&
       (!Object.hasOwn(result, 'plan') || !Array.isArray((result as AgentResult).planUpdates))
     )
       throw new Error('Planned response requires plan and planUpdates');
@@ -161,24 +153,6 @@ export class CodexExecution<T extends object = AgentResult> {
       mode: 0o600,
     });
     return result;
-  }
-
-  /** Checks handoff data against the current coordination state. */
-  private checkCoordination(result: AgentResult): void {
-    if (
-      !this.input.record.workdayId ||
-      !result.coordination ||
-      this.configuration.coordinationActions.includes(result.coordination.action)
-    )
-      return;
-    const error = new Error(
-      'Coordination action unavailable at this checkpoint' +
-        (result.coordination.action === 'request'
-          ? '; nested/reverse dependency needs architectural escalation'
-          : ''),
-    );
-    if (result.coordination.action === 'request') error.name = 'WorkdayBlocked';
-    throw error;
   }
 
   /** Terminates the managed process group so descendants do not outlive their owner. */

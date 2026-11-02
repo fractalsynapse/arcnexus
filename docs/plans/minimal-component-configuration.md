@@ -449,3 +449,23 @@ or invented as commands: retain an actionable diagnostic requiring explicit oper
 policy. A repository with recipes but no executable owner likewise requires an
 architectural decision. Preview remains read-only and successful migration remains
 idempotent.
+
+### Final execution adapter retirement
+
+Standalone assignments now advance the same persisted stages used by the project
+scheduler. Inbox requests yield a safe waiting checkpoint instead of recursively
+running recipients. The obsolete complete-session loop, recursive handoff controls,
+assignment/turn/checklist quotas, writable model configuration and initializer
+inline-command/deadline branches are removed. Captured non-v5 authority and obsolete
+profiles fail before filesystem preparation. Initializer checks use shared confined
+operations; elapsed duration remains evidence, not a cancellation policy.
+
+The initial assignment retirement acceptance failed three cases against the prior
+binary; the initializer and model guards each failed two cases before implementation.
+After implementation, 25 focused cases passed with no skips using the native
+0.163.0-alpha.10.2 sandbox executable. This includes actual confined context/tool
+visibility, standalone durable checkpoints, initializer cancellation/resource cleanup
+and pre-execution rejection of historical authority. Type checking, build and scoped
+lint passed. This is deterministic/native integration evidence, not a new live model
+goal demonstration. The broader integrated suite, final CI and final review remain
+required for the complete revision.

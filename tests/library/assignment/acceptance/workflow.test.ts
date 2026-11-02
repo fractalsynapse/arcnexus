@@ -125,13 +125,15 @@ class WorkflowTests {
       assert.match(readFileSync(invocation.result.log, 'utf8'), /BOUNDARY_EXPECTED/);
   }
 
-  /** Verifies that blocked work returns avalidated owner request. */
-  blockedWorkReturnsAValidatedOwnerRequest(t: TestContext) {
+  /** Retains a valid owner request for deterministic scheduler delivery without calling it a failed activation. */
+  ownerRequestYieldsSafeWaitingCheckpoint(t: TestContext) {
     const f = workflowFixture(t, 'blocked'),
       r = f.run();
     assert.equal(r.status, 1);
     const v = JSON.parse(r.stdout);
-    assert.equal(v.outcome, 'blocked');
+    assert.equal(v.outcome, 'waiting');
+    assert.equal(v.safeCheckpoint, true);
+    assert.equal(v.pendingRequests[0].ownerId, 'dependency');
     assert.equal(v.requests[0].ownerId, 'dependency');
     assert.equal(v.turns.length, 1);
   }
@@ -229,8 +231,8 @@ test('review can request correction without an attempt allowance', (t: any) =>
 test('a weakened current test cannot replace frozen acceptance', (t: any) =>
   suite.aWeakenedCurrentTestCannotReplaceFrozenAcceptance(t));
 
-test('blocked work returns a validated owner request', (t: any) =>
-  suite.blockedWorkReturnsAValidatedOwnerRequest(t));
+test('owner request yields a safe waiting checkpoint', (t: any) =>
+  suite.ownerRequestYieldsSafeWaitingCheckpoint(t));
 
 test('unchanged change assignment is explicitly no_changes', (t: any) =>
   suite.unchangedChangeAssignmentIsExplicitlyNoChanges(t));

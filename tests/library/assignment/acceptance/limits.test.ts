@@ -64,9 +64,7 @@ class ExecutionLimitTests {
     assert.equal(result.status, 0, result.stderr);
     const record = JSON.parse(result.stdout);
     assert.equal(record.implementationAttempts, 1);
-    assert.ok(
-      Object.values(record.executionLimits).every((value) => value === undefined || value === null),
-    );
+    assert.equal(record.executionLimits, undefined);
   }
 }
 

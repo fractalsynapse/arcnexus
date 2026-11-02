@@ -29,21 +29,6 @@ export interface StewardCheckpoint {
   usage: unknown;
 }
 
-export interface SessionControl {
-  initialized?: boolean;
-  prepared: boolean;
-  context: string;
-  inspect: () => void;
-  elapsedMs: () => number;
-  actions: (activity: string) => string[];
-  chargeTurn: (kind: 'engineering' | 'coordination') => void;
-  onResult: (
-    session: StewardSession,
-    activity: string,
-    result: AgentResult,
-  ) => Promise<{ again: boolean; feedback: string }>;
-}
-
 /** Retains one Codex thread across planned, corrective and handoff continuations. */
 export class StewardSession {
   private state?: SessionState;
@@ -52,7 +37,7 @@ export class StewardSession {
 
   private verification?: SessionVerification;
 
-  /** Retains captured execution inputs and optional handoff control without starting inference. */
+  /** Retains captured execution inputs and accepted initialization without starting inference. */
   constructor(
     private readonly root: string,
     private readonly record: RecordData,
@@ -61,15 +46,16 @@ export class StewardSession {
     private readonly model: string,
     private readonly executable: string,
     private readonly signal: AbortSignal,
-    private readonly maxAttempts?: number,
-    private readonly control?: SessionControl,
     private readonly initialization?: InitializationEvidence,
   ) {}
 
-  /** Executes this lifecycle through its configured collaborators and propagates failures. */
+  /** Runs durable stages until completion or an inbox yield; recipients remain the scheduler’s responsibility. */
   async run(): Promise<void> {
-    await this.initializeSession();
-    await new SessionWorkflow(this.state!, this.turns!, this.verification!).run();
+    while (this.record.nextStage !== 'finished') {
+      await this.step();
+      if (this.record.status === 'blocked') throw new Error(String(this.record.error));
+      if (this.record.pendingRequests || this.record.pendingInboxActions) return;
+    }
   }
 
   /** Advances one durable stage, preserving continuation when an owner request yields. */
@@ -81,7 +67,7 @@ export class StewardSession {
 
   /** Reconstructs stage services and establishes prerequisites only on the initial activation. */
   private async initializeSession(): Promise<void> {
-    const { root, record, id, objective, model, executable, signal, maxAttempts, control } = this;
+    const { root, record, id, objective, model, executable, signal } = this;
     const retained = Boolean(record.continuation);
     if (retained) validateContinuation(root, record);
     this.state = new SessionState({
@@ -92,13 +78,10 @@ export class StewardSession {
       model,
       executable,
       signal,
-      maxAttempts,
-      control,
-      session: this,
     });
     if (!retained) await this.prepare();
     if (this.initialization) this.acceptInitialization();
-    if (!retained && !control?.initialized && !this.initialization && !record.directionAccepted)
+    if (!retained && !this.initialization && !record.directionAccepted)
       await initializeExecution({
         root,
         record,
@@ -108,7 +91,7 @@ export class StewardSession {
         signal,
       });
     this.verification = new SessionVerification(this.state);
-    this.turns = new SessionTurn(this.state, this.verification);
+    this.turns = new SessionTurn(this.state);
   }
 
   /** Answers an inbox clarification without advancing or resetting the suspended engineering stage. */
@@ -157,15 +140,13 @@ export class StewardSession {
 
   /** Establishes the prerequisites required by the subsequent execution. */
   private async prepare(): Promise<void> {
-    if (!this.control?.prepared) await prepareWorkspace(this.root, this.record, this.signal);
+    await prepareWorkspace(this.root, this.record, this.signal);
     if (existsSync(join(this.record.workspace, '.codex/config.toml')))
       throw new Error('Setup introduced Codex configuration');
-    if (!this.control?.prepared) {
-      await prepareCapabilities(this.root, this.record, this.signal);
-      await this.state!.checks(this.state!.component.verification, 'baseline');
-      assertIdentity(this.record);
-      assertOutputs(this.record.workspace, this.record.environment);
-    }
+    await prepareCapabilities(this.root, this.record, this.signal);
+    await this.state!.checks(this.state!.component.verification, 'baseline');
+    assertIdentity(this.record);
+    assertOutputs(this.record.workspace, this.record.environment);
   }
 }
 
@@ -177,7 +158,6 @@ export async function runSteward(
   model: string,
   executable: string,
   signal: AbortSignal,
-  maxAttempts?: number,
   initialization?: InitializationEvidence,
 ): Promise<void> {
   await new StewardSession(
@@ -188,8 +168,6 @@ export async function runSteward(
     model,
     executable,
     signal,
-    maxAttempts,
-    undefined,
     initialization,
   ).run();
 }

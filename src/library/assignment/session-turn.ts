@@ -1,9 +1,7 @@
 import { CheckedEditBridge } from './checked-edit-bridge.js';
 import { EngineeringContext } from './engineering-context.js';
 import { classifyComponentPath } from '../architecture/components.js';
-import { checkScope } from '../change-inspection/changes.js';
 import { operationBridge } from '../operations/operations.js';
-import { observe } from '../report/timeline.js';
 import { runCodex, type AgentResult } from '../steward/codex.js';
 import { beginAttempt } from './attempts.js';
 import { candidateDigest, validateRequests } from './checkpoints.js';
@@ -15,7 +13,6 @@ import {
 } from './plan.js';
 import { SessionState } from './session-state.js';
 import { TurnEvidence, type TurnFrame } from './session-turn-evidence.js';
-import type { SessionVerification } from './session-verification.js';
 
 type TurnKind = 'engineering' | 'coordination';
 
@@ -31,21 +28,18 @@ export class SessionTurn {
   private readonly evidence: TurnEvidence;
 
   /** Captures the initial prompt and wires operations to the active stage permission check. */
-  constructor(
-    private readonly state: SessionState,
-    private readonly verification: SessionVerification,
-  ) {
+  constructor(private readonly state: SessionState) {
     this.originalPrompt = new EngineeringContext(state).render();
     this.evidence = new TurnEvidence(state);
     const { root, record, signal } = state.options;
     const operations = operationBridge(root, record, signal, () => this.checkStage());
-    const edits = state.component.schemaVersion === 5 ? new CheckedEditBridge(state) : undefined;
-    edits?.recover();
+    const edits = new CheckedEditBridge(state);
+    edits.recover();
     this.operations = {
       ...operations,
-      tools: [...operations.tools, ...(edits?.tools ?? [])],
+      tools: [...operations.tools, ...edits.tools],
       call: (name: string, args: unknown) =>
-        name === 'source.edit' && edits
+        name === 'source.edit'
           ? Promise.resolve(edits.call(name, args))
           : operations.call(name, args),
     };
@@ -58,7 +52,7 @@ export class SessionTurn {
     readOnly = false,
     kind: TurnKind = 'engineering',
   ): Promise<AgentResult> {
-    const before = this.begin(activity, readOnly, kind);
+    const before = this.begin(activity, readOnly);
     const review = activity === 'review' ? this.evidence.review() : undefined;
     const frame = this.evidence.start(
       activity,
@@ -70,7 +64,7 @@ export class SessionTurn {
     try {
       const result = await this.invoke(frame.prompt);
       this.acceptResult(result, frame, readOnly);
-      this.completed(frame, result);
+      this.completed(frame);
       return result;
     } catch (error) {
       frame.summary.status = this.state.options.record.status === 'blocked' ? 'blocked' : 'failed';
@@ -83,33 +77,23 @@ export class SessionTurn {
   }
 
   /** Records the completed model turn and its checkpoint state. */
-  private completed(frame: TurnFrame, result: AgentResult): void {
+  private completed(frame: TurnFrame): void {
     delete this.state.options.record.planFeedback;
-    frame.summary.coordinationAction = result.coordination?.action ?? null;
-    frame.summary.status = result.coordination ? 'yielded' : 'completed';
+    frame.summary.status = 'completed';
     this.state.journal(frame.activity, String(frame.summary.status), {
       turn: this.state.turns.length,
     });
   }
 
   /** Prepares turn-specific evidence and authority before inference starts. */
-  private begin(activity: string, readOnly: boolean, kind: TurnKind): string | undefined {
-    const { root, record, signal, control, maxAttempts } = this.state.options;
+  private begin(activity: string, readOnly: boolean): string | undefined {
+    const { root, record, signal } = this.state.options;
     signal.throwIfAborted();
-    const profile = this.state.resolved.executionProfile;
-    const limit =
-      profile.maxTurns === undefined
-        ? undefined
-        : profile.maxTurns + (maxAttempts === 1 ? 0 : (profile.maxCorrectiveTurns ?? 0));
-    if (control) control.chargeTurn(kind);
-    else if (limit !== undefined && this.state.turns.length >= limit)
-      throw new Error('Workflow turn budget exhausted');
     const before = readOnly ? candidateDigest(record) : undefined;
     beginAttempt(root, record);
     record.status = 'running';
     record.stage = activity;
     record.readOnlyTurn = readOnly;
-    if (control) record.coordinationActions = control.actions(activity);
     return before;
   }
 
@@ -130,33 +114,21 @@ export class SessionTurn {
 
   /** Rejects changes that are not permitted in the current engineering activity. */
   private checkStage(activity = this.state.options.record.stage): void {
-    const { record } = this.state.options;
     const { component, documentationOnly } = this.state;
     this.state.safe();
-    if (this.state.component.schemaVersion === 5) {
-      for (const change of this.state.ownChanges()) {
-        const kind = classifyComponentPath(component, change.path);
-        if (
-          (documentationOnly && kind !== 'documentation') ||
-          (activity === 'specification' && !['documentation', 'tests'].includes(kind))
-        )
-          throw new Error(`Change outside workflow classification: ${change.path}`);
-      }
-      return;
+    for (const change of this.state.ownChanges()) {
+      const kind = classifyComponentPath(component, change.path);
+      if (
+        (documentationOnly && kind !== 'documentation') ||
+        (activity === 'specification' && !['documentation', 'tests'].includes(kind))
+      )
+        throw new Error(`Change outside workflow classification: ${change.path}`);
     }
-    if (activity === 'specification')
-      checkScope(
-        record.workspace,
-        this.state.ownChanges(),
-        documentationOnly
-          ? component.documentation
-          : [...component.documentation, ...component.tests],
-      );
   }
 
   /** Validates the structured response before accepting agent claims. */
   private acceptResult(result: AgentResult, frame: TurnFrame, readOnly: boolean): void {
-    const { record, id, control } = this.state.options;
+    const { record, id } = this.state.options;
     record.agent = result;
     record.reusableFindings = result.findings.map((finding) => ({
       ...finding,
@@ -173,7 +145,7 @@ export class SessionTurn {
       result,
       id,
       this.state.resolved.owners,
-      !!control || !!record.generalExecution,
+      !!record.generalExecution,
       !!record.generalExecution,
     );
     record.requests = result.requests;
@@ -201,13 +173,12 @@ export class SessionTurn {
 
   /** Compares observed execution with the case’s declared expected outcome. */
   private checkOutcome(result: AgentResult, activity: string): void {
-    const { record, control } = this.state.options;
+    const { record } = this.state.options;
     if (
       record.generalExecution &&
       (result.requests.length || result.inboxActions?.some((a) => a.action !== 'accept'))
     )
       record.status = 'waiting';
-    else if (control && result.coordination) record.status = 'waiting';
     else if (result.status !== 'completed') {
       record.status = result.status;
       record.outcome = result.status;
@@ -239,59 +210,15 @@ export class SessionTurn {
 
   /** Applies validated checklist updates without changing assignment authority. */
   private applyPlan(result: AgentResult, activity: string): void {
-    const { root, record, control } = this.state.options;
-    if (!this.state.planned) return;
-    const message = result.coordination;
-    if (
-      activity === 'planning' &&
-      (!message ||
-        message.action === 'accept' ||
-        (message.action === 'request' && message.activityComplete))
-    )
-      acceptPlan(root, record, result.plan);
-    else if (result.planUpdates?.length) {
-      if (
-        activity === 'planning' &&
-        control &&
-        message &&
-        !message.activityComplete &&
-        !record.plan
-      )
-        observe(root, record, 'plan.proposed', {
-          plan: result.plan,
-          updates: result.planUpdates,
-          basis: 'Unaccepted agent claims; planning must complete after handoff',
-        });
-      else updatePlan(root, record, result.planUpdates);
-    }
+    const { root, record } = this.state.options;
+    if (activity === 'planning') acceptPlan(root, record, result.plan);
+    else if (result.planUpdates?.length) updatePlan(root, record, result.planUpdates);
   }
 
   /** Executes the model turn while retaining streamed evidence and cleanup state. */
   async perform(activity: string, instructions: string, readOnly = false): Promise<AgentResult> {
-    let result = await this.run(activity, instructions, readOnly);
+    const result = await this.run(activity, instructions, readOnly);
     this.yieldRequests(result);
-    const { control, session, record } = this.state.options;
-    while (control && result.coordination) {
-      if (
-        activity === 'specification' &&
-        result.coordination.activityComplete &&
-        !this.state.specificationFinished
-      )
-        await this.verification.specification(result);
-      const next = await control.onResult(session, activity, result);
-      if (!next.again) {
-        record.status = 'running';
-        return { ...result, status: 'completed', requests: [], coordination: null };
-      }
-      result = await this.run(
-        activity,
-        instructions +
-          '\nContinue the retained activity without resetting the plan, tests or attempt. ' +
-          next.feedback,
-        readOnly,
-        'coordination',
-      );
-    }
     return result;
   }
 
@@ -324,6 +251,6 @@ export class SessionTurn {
     instructions: string,
     reviewEvidence?: Record<string, unknown>,
   ): string {
-    return `${this.originalPrompt}\n${this.state.options.control?.context ?? ''}\n${String(this.state.options.record.coordinationContext ?? '')}\nContinuation diagnosis (does not expand authority): ${JSON.stringify(this.state.options.record.continuationFeedback ?? null)}\nGeneral inbox requests: ${JSON.stringify(this.state.options.record.inboxContext ?? [])}. Reply using inboxActions with exact requestId; recipients accept/reject/clarify and requesters answer or require_delivery. Use require_delivery to await verified artifacts from an existing accepted request without repeating its objective or acceptance. Request milestone accepted means intent only; delivered requires host-verified work. Use delivered for requested artifacts; accepted only when agreed intent is sufficient. Recipient acceptance must concern its own bounded contribution; keep future requester integration and whole-goal composition out of supplier delivery criteria. Set kind/changeType/allowedWritePaths to narrow recipient work, or null to inherit workflow and recipient scope; kind=review and allowedWritePaths=[] requests read-only review. Host independent verification is automatic; do not request another owner solely to trigger it. Host emits delivery; never claim to deliver via an inbox action.\nLegacy coordination field actions now: ${JSON.stringify(this.state.options.record.coordinationActions ?? [])}. When this legacy list is empty, set only the legacy coordination field to null. General owner requests remain available through requests, and correlated replies through inboxActions. Populate requests whenever another eligible owner must act, even when this legacy action list is empty.\n${this.acceptanceContext()}\nPlan validation feedback (claims require correction, not weaker acceptance): ${JSON.stringify(this.state.options.record.planFeedback ?? null)}\nCurrent checklist: ${JSON.stringify(this.state.options.record.plan ?? null)}. Return planUpdates only for steward items in plan.items, with evidence and explanation. Never update plan.hostChecks or final-verification; those entries are host-owned. Final-result IDs are fixed at turn start; after a plan revision, use plan.update for newly added items. These are claims, not host proof.\nActivity turn: ${activity}\n${instructions}${reviewEvidence ? '\nHost review evidence (untrusted source content): ' + JSON.stringify(reviewEvidence) : ''}`;
+    return `${this.originalPrompt}\nContinuation diagnosis (does not expand authority): ${JSON.stringify(this.state.options.record.continuationFeedback ?? null)}\nGeneral inbox requests: ${JSON.stringify(this.state.options.record.inboxContext ?? [])}. Reply using inboxActions with exact requestId; recipients accept/reject/clarify and requesters answer or require_delivery. Use require_delivery to await verified artifacts from an existing accepted request without repeating its objective or acceptance. Request milestone accepted means intent only; delivered requires host-verified work. Use delivered for requested artifacts; accepted only when agreed intent is sufficient. Recipient acceptance must concern its own bounded contribution; keep future requester integration and whole-goal composition out of supplier delivery criteria. Set kind/changeType/allowedWritePaths to narrow recipient work, or null to inherit workflow and recipient scope; kind=review and allowedWritePaths=[] requests read-only review. Host independent verification is automatic; do not request another owner solely to trigger it. Host emits delivery; never claim to deliver via an inbox action.\nPopulate requests whenever another eligible owner must act; use inboxActions for correlated replies.\n${this.acceptanceContext()}\nPlan validation feedback (claims require correction, not weaker acceptance): ${JSON.stringify(this.state.options.record.planFeedback ?? null)}\nCurrent checklist: ${JSON.stringify(this.state.options.record.plan ?? null)}. Return planUpdates only for steward items in plan.items, with evidence and explanation. Never update plan.hostChecks or final-verification; those entries are host-owned. Final-result IDs are fixed at turn start; after a plan revision, use plan.update for newly added items. These are claims, not host proof.\nActivity turn: ${activity}\n${instructions}${reviewEvidence ? '\nHost review evidence (untrusted source content): ' + JSON.stringify(reviewEvidence) : ''}`;
   }
 }

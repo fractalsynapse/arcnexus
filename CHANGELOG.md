@@ -26,6 +26,8 @@
 
 ### Changed
 
+- Use one durable assignment dispatcher and source-read-only model path; reject historical execution budgets and initialize through shared confined operations (#109).
+
 - Route command, HTTP and service execution through shared operations, rejecting legacy executable definitions while retaining historical evidence readers (#109).
 
 - Require minimal version-five authority for new task/workday hosts, workspace preparation and shared-operation test execution; preserve historical inspection and explicit migration (#109).

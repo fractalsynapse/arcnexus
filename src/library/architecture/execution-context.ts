@@ -4,7 +4,13 @@ import { realpathSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 import { digest, resolveAssignment, resolveBase, type Assignment } from './assignment.js';
 import { loadProjectBindings, type Bindings } from './bindings.js';
-import { ancestry, loadCatalog, type Catalog, type Component } from './components.js';
+import {
+  ancestry,
+  loadCatalog,
+  type Catalog,
+  type Component,
+  type ExecutionProfile,
+} from './components.js';
 import { InputError } from './config.js';
 import { git } from '../operations/process.js';
 
@@ -151,9 +157,22 @@ export class ExecutionContext {
     throw new InputError('Ambiguous or missing package; declare defaultPackage on the platform');
   }
 
-  /** Rejects obsolete work budgets rather than silently changing their meaning. */
+  /** Validates every selected profile through the same executable-policy boundary. */
   validateProfiles(catalog: Catalog, ids: string[]): void {
-    const obsolete = [
+    for (const id of ids) {
+      const profile = catalog.profiles[id];
+      if (!profile) throw new InputError('Unknown execution profile: ' + id);
+      this.validateProfile(profile);
+    }
+  }
+
+  /** Rejects obsolete work budgets before any library or project host starts managed execution. */
+  validateProfile(profile: ExecutionProfile): void {
+    if (profile.schemaVersion < 2)
+      throw new InputError(
+        `Migrate profile ${profile.id} to a planned execution schema (version 2 or 3)`,
+      );
+    for (const key of [
       'timeoutSeconds',
       'commandTimeoutSeconds',
       'maxOperationCalls',
@@ -161,17 +180,8 @@ export class ExecutionContext {
       'maxCorrectiveTurns',
       'maxChecklistCalls',
       'maxAttempts',
-    ];
-    for (const id of ids) {
-      const profile = catalog.profiles[id];
-      if (!profile) throw new InputError('Unknown execution profile: ' + id);
-      if (profile.schemaVersion < 2)
-        throw new InputError(
-          `Migrate profile ${id} to a planned execution schema (version 2 or 3)`,
-        );
-      for (const key of obsolete)
-        if (Object.hasOwn(profile, key))
-          throw new InputError(`Remove obsolete work budget ${key} from profile ${id}`);
-    }
+    ])
+      if (Object.hasOwn(profile, key))
+        throw new InputError(`Remove obsolete work budget ${key} from profile ${profile.id}`);
   }
 }

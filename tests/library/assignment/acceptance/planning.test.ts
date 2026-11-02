@@ -61,7 +61,10 @@ class PlanningTests {
     const f = planned(t, mode),
       r = f.run();
     assert.equal(r.status, 1, r.stderr);
-    assert.equal(JSON.parse(r.stdout).turns.length, 1);
+    const record = JSON.parse(r.stdout);
+    assert.equal(record.turns.length, mode === 'invalid-plan' ? 4 : 1);
+    assert.ok(record.turns.every((turn: any) => turn.activity === 'planning'));
+    assert.equal(record.status, mode === 'invalid-plan' ? 'needs_attention' : 'failed');
   }
 
   /** Verifies that status rejects escaping run ids. */
@@ -142,7 +145,7 @@ class PlanningTests {
     f.configure({ missingEvidence: true });
     const r = f.run();
     assert.equal(r.status, 1, r.stderr);
-    assert.match(r.stderr, /completion requires evidence/);
+    this.assertDiagnosed(r, /completion requires evidence/);
   }
 
   /** Verifies that timeline reader reports truncation and historical absence. */
@@ -183,7 +186,7 @@ class PlanningTests {
     f.configure({ forgedCompletion: true });
     const bad = f.run();
     assert.equal(bad.status, 1);
-    assert.match(bad.stderr, /Unknown checklist item/);
+    this.assertDiagnosed(bad, /Unknown checklist item/);
   }
 
   /** Verifies that planning prompt states activity membership and host diagnoses omitted selection. */
@@ -192,7 +195,16 @@ class PlanningTests {
     f.configure({ omittedActivity: true });
     const r = f.run();
     assert.equal(r.status, 1);
-    assert.match(r.stderr, /Checklist item work activity research is absent from plan.activities/);
+    this.assertDiagnosed(r, /Checklist item work activity research is absent from plan.activities/);
+  }
+
+  /** Retains the actual rejected claim while repeated unchanged corrections become needs_attention. */
+  private assertDiagnosed(result: { stdout: string; stderr: string }, diagnostic: RegExp): void {
+    const record = JSON.parse(result.stdout);
+    assert.equal(record.status, 'needs_attention');
+    assert.match(record.planFeedback, diagnostic);
+    assert.match(result.stderr, /Loop requires a different action/);
+    assert.ok(!record.turns.some((turn: any) => turn.activity === 'implementation'));
   }
 }
 

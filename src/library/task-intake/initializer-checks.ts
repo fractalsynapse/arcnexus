@@ -1,14 +1,10 @@
+import { InputError } from '../architecture/config.js';
 import { OperationExecution } from '../operations/operation-execution.js';
 import type { Operation } from '../operations/operations.js';
 import { prepareCapabilities } from '../operations/probes.js';
-import { join } from 'node:path';
-import { targetCommand } from '../architecture/bindings.js';
-import { milliseconds } from '../architecture/config.js';
 import type { InitializationSnapshot } from '../architecture/initialization.js';
 import { candidateDigest } from '../change-inspection/changes.js';
-import { operationEnvironment } from '../operations/operations.js';
-import { execute, type CommandResult } from '../operations/process.js';
-import { observe } from '../report/timeline.js';
+import type { CommandResult } from '../operations/process.js';
 import { save, type RecordData } from '../workspace/state.js';
 import { assertIdentity, assertOutputs } from '../workspace/workspace.js';
 
@@ -23,28 +19,14 @@ export class InitializerChecks {
 
   /** Runs captured intake verification before model activation. */
   async verify(signal: AbortSignal): Promise<void> {
+    if (this.snapshot.context.some((owner) => owner.schemaVersion !== 5))
+      throw new InputError(
+        'Initializer checks require version-five authority; migrate configuration',
+      );
     const before = candidateDigest(this.record);
     await prepareCapabilities(this.root, this.record, signal);
     this.unchanged(before);
-    if (this.snapshot.context.at(-1)!.schemaVersion === 5) return this.shared(signal, before);
-    for (const command of this.snapshot.context.at(-1)!.verification) {
-      observe(this.root, this.record, 'initializer.check.started', command);
-      try {
-        const result = await this.command(command, signal);
-        this.record.commands.push({ ...result, stage: 'initializer-verification' });
-        observe(this.root, this.record, 'initializer.check.completed', result);
-      } catch (error) {
-        if (error && typeof error === 'object' && 'commandResult' in error)
-          this.record.commands.push({
-            ...(error.commandResult as CommandResult),
-            stage: 'initializer-verification',
-          });
-        throw error;
-      } finally {
-        save(this.root, this.record);
-        this.unchanged(before);
-      }
-    }
+    await this.shared(signal, before);
   }
 
   /** Runs minimal intake verification with source confinement and one prerequisite checkpoint. */
@@ -65,29 +47,6 @@ export class InitializerChecks {
       save(this.root, this.record);
       this.unchanged(before);
     }
-  }
-
-  /** Executes one intake check with cancellation and retained command evidence. */
-  private command(
-    command: import('../architecture/config.js').VerificationCheck,
-    signal: AbortSignal,
-  ) {
-    if (!('command' in command)) throw new Error('Legacy verification requires a command');
-    return execute(
-      targetCommand(this.record, command),
-      this.record.workspace,
-      join(
-        this.root,
-        'runs',
-        this.record.id,
-        `initializer-check-${this.record.commands.length}.log`,
-      ),
-      signal,
-      {
-        env: operationEnvironment(this.record),
-        timeoutMs: milliseconds(this.snapshot.profile.commandTimeoutSeconds),
-      },
-    );
   }
 
   /** Rejects unexpected source changes after a read-only or preparation activity. */

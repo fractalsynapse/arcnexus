@@ -61,6 +61,16 @@ class CheckedPermissionScenarios {
           allowedWritePaths: ['source.txt'],
         },
       ],
+      resolvedAssignment: {
+        executionProfile: {
+          schemaVersion: 3,
+          id: 'test',
+          model: 'test',
+          reasoning: 'medium',
+          webSearch: 'disabled',
+          operationCategories: [],
+        },
+      },
       turns: [],
       commands: [],
       bindings: { tools: {} },
