@@ -204,3 +204,14 @@ Long finite-command excerpts retain startup context, a potential failure diagnos
 window, and trailing output within 16 KiB. The complete log remains a separate
 artifact. This is diagnostic selection, not a claim to infer the root cause; callers
 must retain and inspect full evidence when the excerpt is insufficient.
+
+Shared service startup and HTTP checks use the same captured definition/context ledger
+as command execution. Service startup runs finite prerequisites first and records its
+managed lease; status, logs and stop retain that lease identity. Startup remains an
+explicit managed service action, not an indefinite lifecycle check. Agent HTTP calls
+use their explicitly started lease. A required host HTTP checkpoint owns a fresh lease
+for its captured `serviceId`, runs its finite preparation, checks the endpoint and
+verifies shutdown in `finally`. That service must be declared in the owner's agent
+operations. Host verification never accepts an engineering call as evidence for a later
+candidate. Missing service authority, failed startup and uncertain interruption remain
+visible failures; no unmanaged command or writable-source fallback is available.
