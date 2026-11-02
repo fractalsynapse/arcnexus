@@ -127,3 +127,9 @@ Qualification must retain actual model tool observations, edit receipts, expecte
 failing regression output, passing host checks, independent assessment and the
 candidate diff. Enabling resolution or passing deterministic tests alone does not
 establish the live checked-engineering gate.
+
+A stale expected hash or create/delete precondition rejected before journaling is a
+recoverable edit-tool result. It reports rejection without writing any member of the
+batch; the worker must reread exact bytes and submit a corrected request. It does not
+abort an otherwise valid turn. Authority violations and uncertain journal/filesystem
+recovery remain fatal and never fall back to direct writes or unconditional overwrite.
