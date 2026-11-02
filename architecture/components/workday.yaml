@@ -7,16 +7,12 @@ objectives:
   - Select fair self-directed stewardship turns from the eligible package catalog
 constraints:
   - Preserve captured authority and evidence
-  - "workday-agent-result
+  - 'workday-agent-result
     (src/library/workday/schemas/workday-agent-result.json): Preserve supported
-    historical versions and captured execution readers"
-  - "workday (src/library/workday/schemas/workday.json): Preserve supported
-    historical versions and captured execution readers"
+    historical versions and captured execution readers'
+  - 'workday (src/library/workday/schemas/workday.json): Preserve supported
+    historical versions and captured execution readers'
 operations:
-  workday-lint:
-    - agent
-  component-tests:
-    - agent
   migrated-recipe-43b539fb85a57c26:
     - verify
   migrated-recipe-df6d67ddacf5bf0c:

@@ -10,10 +10,6 @@ objectives:
 constraints:
   - Preserve captured authority and evidence
 operations:
-  coordination-store-lint:
-    - agent
-  component-tests:
-    - agent
   migrated-recipe-43b539fb85a57c26:
     - verify
   migrated-recipe-df6d67ddacf5bf0c:

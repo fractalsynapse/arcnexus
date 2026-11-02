@@ -1,6 +1,6 @@
 schemaVersion: 4
-id: task-intake-lint
-purpose: Read-only lint feedback for task intake implementation and tests
+id: component-lint
+purpose: Read-only lint feedback for the active owner
 kind: command
 repository: arcnexus
 cwd: .
@@ -14,8 +14,9 @@ activities:
 command: node
 args:
   - node_modules/eslint/bin/eslint.js
-  - src/library/task-intake
-  - tests/library/task-intake
+  - --no-error-on-unmatched-pattern
+  - --no-warn-ignored
+  - context: ownedPaths
 generatedDirectories: []
 artifacts: []
 prerequisites: []

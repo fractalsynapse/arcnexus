@@ -14,10 +14,7 @@ operations:
   guidance-build:
     - agent
   component-tests:
-    - agent
     - verify
-  guidance-validation-lint:
-    - agent
   migrated-recipe-a7573c70ed1a3dfa:
     - verify
   migrated-recipe-43b539fb85a57c26:

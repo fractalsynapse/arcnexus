@@ -11,10 +11,6 @@ constraints:
   - Do not weaken independent acceptance to make candidate work pass
   - Keep generated output separate from maintained source
 operations:
-  release-lint:
-    - agent
-  component-tests:
-    - agent
   migrated-recipe-43b539fb85a57c26:
     - verify
   migrated-recipe-df6d67ddacf5bf0c:

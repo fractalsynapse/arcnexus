@@ -9,16 +9,12 @@ objectives:
 constraints:
   - Never infer setup commands or broaden captured operation authority
   - Preserve caller cancellation and resource ownership checks
-  - "operation (src/library/operations/schemas/operation.json): Preserve
-    supported historical versions and captured execution readers"
-  - "command-diagnostics (src/library/operations/diagnostics.ts): Keep
+  - 'operation (src/library/operations/schemas/operation.json): Preserve
+    supported historical versions and captured execution readers'
+  - 'command-diagnostics (src/library/operations/diagnostics.ts): Keep
     model-facing excerpts within 16 KiB and preserve complete raw logs
-    separately"
+    separately'
 operations:
-  operations-lint:
-    - agent
-  component-tests:
-    - agent
   migrated-recipe-43b539fb85a57c26:
     - verify
   migrated-recipe-df6d67ddacf5bf0c:

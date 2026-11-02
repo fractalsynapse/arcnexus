@@ -23,10 +23,7 @@ constraints:
   - 'experiment-v3 (src/library/experiments/schemas/experiment-v3.json):
     Prompt-driven cases preserve shared task authority and evidence'
 operations:
-  experiments-lint:
-    - agent
   component-tests:
-    - agent
     - verify
   migrated-recipe-43b539fb85a57c26:
     - verify

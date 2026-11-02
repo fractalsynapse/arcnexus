@@ -11,10 +11,6 @@ constraints:
   - Do not edit architecture or weaken host verification
   - Implement only approved execution settings
 operations:
-  steward-lint:
-    - agent
-  component-tests:
-    - agent
   migrated-recipe-43b539fb85a57c26:
     - verify
   migrated-recipe-df6d67ddacf5bf0c:

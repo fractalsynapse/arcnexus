@@ -6,4 +6,4 @@ applicability: Maintained application, tooling and test code
 document: docs/foundation/typescript-standard.md
 examples: []
 operationIds:
-  - foundation-lint
+  - component-lint

@@ -12,10 +12,7 @@ constraints:
   - Keep the supervising runner unchanged
 operations:
   component-tests:
-    - agent
     - verify
-  report-lint:
-    - agent
   report-format:
     - agent
   migrated-recipe-43b539fb85a57c26:

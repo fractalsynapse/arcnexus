@@ -10,15 +10,11 @@ constraints:
   - No changes to source checkout or unrelated worktrees
   - Retain all existing cleanup safety guards
   - Do not weaken captured verification or edit architectural definitions
-  - "bindings (src/library/workspace/schemas/bindings.json): Preserve supported
-    historical versions and captured execution readers"
-  - "environment (src/library/workspace/schemas/environment.json): Preserve
-    supported historical versions and captured execution readers"
+  - 'bindings (src/library/workspace/schemas/bindings.json): Preserve supported
+    historical versions and captured execution readers'
+  - 'environment (src/library/workspace/schemas/environment.json): Preserve
+    supported historical versions and captured execution readers'
 operations:
-  workspace-lint:
-    - agent
-  component-tests:
-    - agent
   migrated-recipe-43b539fb85a57c26:
     - verify
   migrated-recipe-df6d67ddacf5bf0c:

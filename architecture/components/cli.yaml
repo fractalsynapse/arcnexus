@@ -11,10 +11,6 @@ constraints:
   - Caller owns commits and integration
   - Do not edit architecture or unrelated files
 operations:
-  cli-lint:
-    - agent
-  component-tests:
-    - agent
   migrated-recipe-43b539fb85a57c26:
     - verify
   migrated-recipe-df6d67ddacf5bf0c:

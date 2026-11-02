@@ -33,6 +33,10 @@ operations:
     - setup
   migrated-recipe-a7573c70ed1a3dfa:
     - setup
+  component-tests:
+    - agent
+  component-lint:
+    - agent
 director:
   component: task-intake
   profile: astra

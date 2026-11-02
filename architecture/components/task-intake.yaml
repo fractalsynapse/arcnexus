@@ -22,10 +22,7 @@ constraints:
     (src/library/task-intake/schemas/initializer-result.json): Preserve
     supported historical versions and captured execution readers'
 operations:
-  task-intake-lint:
-    - agent
   component-tests:
-    - agent
     - verify
   migrated-recipe-712e56e123d7b39c:
     - verify
