@@ -42,6 +42,17 @@ export interface TestExecution {
   operationEvidence?: string;
 }
 
+/** Projects resolved selections without duplicating the full captured execution catalog in console output. */
+export function testSelectionView(selection: TestSelection) {
+  const { operationPlan, ...view } = selection;
+  if (!operationPlan) return view;
+  const { catalog, ...plan } = operationPlan;
+  return {
+    ...view,
+    operationPlan: { ...plan, ownerIds: catalog.map((owner) => owner.id) },
+  };
+}
+
 /** Selects owner-declared suites and executes their fixed Node profile with retained evidence. */
 export class ComponentTesting {
   /** Resolves the requested view without modifying candidate source. */

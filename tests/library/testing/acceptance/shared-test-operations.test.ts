@@ -72,9 +72,11 @@ class SharedTestScenarios {
     assert.equal(result.status, 0, result.stderr + result.stdout);
     const report = JSON.parse(result.stdout);
     assert.equal(report.status, 'passed');
+    assert.equal(report.selection.operationPlan.catalog, undefined);
     assert.equal(readFileSync(join(f.repo, 'build.cjs'), 'utf8'), original);
     assert.equal(readFileSync(join(f.repo, '.test-build/prepared'), 'utf8'), 'once\n');
     const evidence = JSON.parse(readFileSync(report.operationEvidence, 'utf8'));
+    assert.ok(evidence.operationCatalog.some((owner: any) => owner.id === 'sample'));
     assert.deepEqual(
       evidence.operationInvocations.map((op: any) => op.operationId),
       ['compile', 'suites'],

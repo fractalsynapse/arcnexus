@@ -1,6 +1,6 @@
 import { loadBindings } from '../../library/architecture/bindings.js';
 import { InputError } from '../../library/architecture/config.js';
-import { ComponentTesting } from '../../library/testing/testing.js';
+import { ComponentTesting, testSelectionView } from '../../library/testing/testing.js';
 
 /** Adapts component test requests to the shared selection and execution service. */
 export class TestCommand {
@@ -14,6 +14,29 @@ export class TestCommand {
 
   /** Executes this lifecycle through its configured collaborators and propagates failures. */
   async run(): Promise<void> {
+    const { action, project } = this.validate();
+    const service = new ComponentTesting();
+    const selection = service.inspect(
+      project,
+      {
+        component: this.positionals[2],
+        level: this.values.level as string | undefined,
+        category: this.values.category as string | undefined,
+        tags: this.tags,
+      },
+      loadBindings(this.values.bindings as string | undefined),
+    );
+    const result = action === 'run' ? await service.run(selection, this.signal) : selection;
+    const view =
+      'selection' in result
+        ? { ...result, selection: testSelectionView(result.selection) }
+        : testSelectionView(result);
+    console.log(JSON.stringify(view, null, this.values.json ? undefined : 2));
+    if ('exitCode' in result) process.exitCode = result.exitCode;
+  }
+
+  /** Rejects invalid actions and options before resolving captured test selection. */
+  private validate(): { action: string; project: string } {
     const action = this.positionals[1];
     if (
       !['inspect', 'run'].includes(action ?? '') ||
@@ -28,19 +51,6 @@ export class TestCommand {
       )
     )
       throw new InputError('Unsupported test command option');
-    const service = new ComponentTesting();
-    const selection = service.inspect(
-      this.values.project,
-      {
-        component: this.positionals[2],
-        level: this.values.level as string | undefined,
-        category: this.values.category as string | undefined,
-        tags: this.tags,
-      },
-      loadBindings(this.values.bindings as string | undefined),
-    );
-    const result = action === 'run' ? await service.run(selection, this.signal) : selection;
-    console.log(JSON.stringify(result, null, this.values.json ? undefined : 2));
-    if ('exitCode' in result) process.exitCode = result.exitCode;
+    return { action: action!, project: this.values.project };
   }
 }
