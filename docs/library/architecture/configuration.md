@@ -100,3 +100,10 @@ qualification. The [first real checked-engineering task](../assignment/checked-e
 completed with independent verification. The remaining migration and live gates are
 still open. Legacy executable configurations remain supported during this staged
 migration; retiring them is unfinished. Historical reports remain read-only evidence.
+
+Inherited v5 pattern identities resolve to captured standards and example artifacts
+using the same revision-bound reference loader as historical definitions. Missing
+patterns or out-of-owner artifacts fail validation. Referenced checks must belong
+to the pattern owner’s declared operation usages; the reference itself grants no
+additional execution or write authority. Inspection includes the captured hashes,
+and steward context receives the immutable artifact text.
