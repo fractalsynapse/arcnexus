@@ -469,3 +469,8 @@ and pre-execution rejection of historical authority. Type checking, build and sc
 lint passed. This is deterministic/native integration evidence, not a new live model
 goal demonstration. The broader integrated suite, final CI and final review remain
 required for the complete revision.
+
+Dependency migration exposed issue #145: root-owned inventories included the empty
+terminator from Git's file listing as if it were a maintained file. Root ownership
+is valid for a separate bound repository; inventory must contain actual tracked
+paths only. The dependency migration acceptance retains this regression case.
