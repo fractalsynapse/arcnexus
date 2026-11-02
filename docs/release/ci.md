@@ -75,3 +75,26 @@ Repository-aware inspection uses the declared canonical HTTPS origin identity.
 After checkout, CI normalizes `origin` to `https://github.com/<owner>/<repo>.git`
 before invoking built-CLI catalog checks. GitHub checkout's suffixless remote is
 not the repository's declared URL; no fetch or authentication change is required.
+
+## Confined execution prerequisites
+
+Issue #133 adds explicit hosted-runner preparation for the production operation
+executor. Install the pinned public Codex runtime under `/usr/local`, where the
+read-only system tool boundary can expose its executable bundle. This runtime is
+used for local sandbox enforcement; CI does not authenticate or perform inference.
+
+Run the built-program test command as the ordinary runner user in a transient
+systemd service with `Delegate=yes`. The service owns a writable cgroup subtree
+so the existing executor can supervise and terminate all managed descendants.
+Keep source confinement and process qualification mandatory: unavailable delegation
+or runtime enforcement fails the job rather than selecting another executor.
+Forward the Node tool path explicitly, wait for the service exit status, and collect
+its output. The job watchdog remains an infrastructure safeguard, not an agent
+execution budget.
+
+These prerequisites follow systemd's
+[transient service interface](https://www.freedesktop.org/software/systemd/man/latest/systemd-run.html)
+and [delegation contract](https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html).
+The initial pinned runtime is
+[Codex 0.163.0-alpha.10.2](https://github.com/openai/codex/releases/tag/rust-v0.163.0-alpha.10.2).
+Local sandbox probes and the hosted CI result must be reported separately.
