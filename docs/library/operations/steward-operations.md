@@ -172,6 +172,12 @@ The steward must perform its selected permitted work and update the checklist in
 that turn, or report a precise blocker. Activity names are not promises of additional
 model turns. Incomplete checklist claims fail rather than silently adding a turn.
 
+Shared checkpoints also cover initializer verification, assignment baselines, final
+verification, frozen acceptance and refactor characterization. Each checkpoint orders
+and deduplicates prerequisites once; a later checkpoint reruns required checks against
+the current candidate. Every completed or failed invocation retains its result even
+when a later operation fails.
+
 ## Required host operation route
 
 ArcNexus configures its MCP bridge as required: model execution must not silently
