@@ -19,8 +19,7 @@ export class CapturedVerification {
     const inputs = this.inputs();
     if (!inputs.some((input) => this.changed(input))) return;
     await withFrozenTests(record, inputs, async () => {
-      for (const command of this.state.component.verification)
-        await this.state.command(command, 'captured-acceptance');
+      await this.state.checks(this.state.component.verification, 'captured-acceptance');
     });
     this.state.safe();
   }

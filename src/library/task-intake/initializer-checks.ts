@@ -1,3 +1,5 @@
+import { OperationExecution } from '../operations/operation-execution.js';
+import type { Operation } from '../operations/operations.js';
 import { prepareCapabilities } from '../operations/probes.js';
 import { join } from 'node:path';
 import { targetCommand } from '../architecture/bindings.js';
@@ -24,6 +26,7 @@ export class InitializerChecks {
     const before = candidateDigest(this.record);
     await prepareCapabilities(this.root, this.record, signal);
     this.unchanged(before);
+    if (this.snapshot.context.at(-1)!.schemaVersion === 5) return this.shared(signal, before);
     for (const command of this.snapshot.context.at(-1)!.verification) {
       observe(this.root, this.record, 'initializer.check.started', command);
       try {
@@ -41,6 +44,26 @@ export class InitializerChecks {
         save(this.root, this.record);
         this.unchanged(before);
       }
+    }
+  }
+
+  /** Runs minimal intake verification with source confinement and one prerequisite checkpoint. */
+  private async shared(signal: AbortSignal, before: string): Promise<void> {
+    const offset = (this.record.operationInvocations as unknown[] | undefined)?.length ?? 0;
+    const operations = this.snapshot.context.at(-1)!.verification as Operation[];
+    try {
+      await new OperationExecution(this.root, this.record, signal).checkpoint(
+        operations,
+        'initializer-verification',
+      );
+    } finally {
+      const invocations = this.record.operationInvocations as
+        Array<{ result?: CommandResult }> | undefined;
+      for (const invocation of invocations?.slice(offset) ?? [])
+        if (invocation.result)
+          this.record.commands.push({ ...invocation.result, stage: 'initializer-verification' });
+      save(this.root, this.record);
+      this.unchanged(before);
     }
   }
 

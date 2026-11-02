@@ -15,8 +15,7 @@ export class RefactorCheckpoint {
   async prepare(): Promise<void> {
     const { record } = this.state.options;
     this.state.safe();
-    for (const command of this.state.component.verification)
-      await this.state.command(command, 'characterization-before');
+    await this.state.checks(this.state.component.verification, 'characterization-before');
     const paths = git(record.workspace, 'ls-files', '--cached', '--others', '--exclude-standard')
       .trim()
       .split('\n')
@@ -37,8 +36,7 @@ export class RefactorCheckpoint {
   async verify(): Promise<void> {
     if (!this.state.options.record.characterization) return;
     await withFrozenTests(this.state.options.record, this.state.frozen, async () => {
-      for (const command of this.state.component.verification)
-        await this.state.command(command, 'characterization-after');
+      await this.state.checks(this.state.component.verification, 'characterization-after');
       this.state.safe();
     });
   }

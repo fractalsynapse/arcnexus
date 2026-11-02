@@ -216,6 +216,37 @@ export class SessionState {
     assertGeneratedOutputs(this.options.record.workspace, this.options.record.environment);
   }
 
+  /** Runs a complete verification checkpoint with shared preparation and retained partial evidence. */
+  async checks(commands: Command[], stage: string): Promise<void> {
+    if (this.component.schemaVersion !== 5) {
+      for (const command of commands) await this.command(command, stage);
+      return;
+    }
+    const { root, record, signal } = this.options;
+    const offset = (record.operationInvocations as unknown[] | undefined)?.length ?? 0;
+    record.stage = stage;
+    this.journal(stage, 'started', commands);
+    try {
+      await new OperationExecution(root, record, signal).checkpoint(commands as Operation[], stage);
+      this.journal(stage, 'completed', { checks: commands.length });
+    } catch (error) {
+      this.journal(stage, 'failed', String(error));
+      throw error;
+    } finally {
+      this.checkResults(offset, stage);
+      save(root, record);
+    }
+  }
+
+  /** Projects observed invocation results without losing earlier checks when a later command fails. */
+  private checkResults(offset: number, stage: string): void {
+    const { record } = this.options;
+    const invocations = record.operationInvocations as
+      Array<{ result?: CommandResult }> | undefined;
+    for (const invocation of invocations?.slice(offset) ?? [])
+      if (invocation.result) record.commands.push({ ...invocation.result, stage });
+  }
+
   /** Runs one captured host command and retains its result under the assignment. */
   async command(c: Command, stage: string): Promise<CommandResult> {
     this.options.record.stage = stage;

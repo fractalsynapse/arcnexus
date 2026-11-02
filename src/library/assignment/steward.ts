@@ -162,7 +162,7 @@ export class StewardSession {
       throw new Error('Setup introduced Codex configuration');
     if (!this.control?.prepared) {
       await prepareCapabilities(this.root, this.record, this.signal);
-      for (const c of this.state!.component.verification) await this.state!.command(c, 'baseline');
+      await this.state!.checks(this.state!.component.verification, 'baseline');
       assertIdentity(this.record);
       assertOutputs(this.record.workspace, this.record.environment);
     }

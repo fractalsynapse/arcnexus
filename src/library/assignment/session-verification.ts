@@ -116,11 +116,11 @@ export class SessionVerification {
     )
       return;
     assertCapturedTests(this.state.component, this.state.options.record.workspace);
-    for (const c of this.state.component.verification) await this.state.command(c, 'verification');
+    await this.state.checks(this.state.component.verification, 'verification');
     assertCapturedTests(this.state.component, this.state.options.record.workspace);
     this.state.safe();
     await this.verifyFrozen();
-    for (const c of this.state.hostChecks) await this.state.command(c, 'acceptance');
+    await this.state.checks(this.state.hostChecks, 'acceptance');
     this.assertCandidate();
     record.finalVerifiedDigest = candidateDigest(record);
     record.finalVerifiedBase = record.base;
