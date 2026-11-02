@@ -133,3 +133,17 @@ Git common directory. The captured binding source and digest remain execution
 evidence; npm's transient PATH does not replace an explicitly bound executable.
 Confinement qualification exposes the same declared tool directories read-only as
 the operation it qualifies, including runtimes installed outside system directories.
+
+### Definition ownership across repository bindings
+
+An executable definition belongs to its declaring catalog repository even when its
+component implements a package in a bound dependency repository. The derived catalog
+retains that definition's repository, path and captured hash. Its accountable owner
+is still the component; the definition is not a phantom writable path in the dependency.
+An activation's write scope remains confined to its captured implementation repository.
+This does not grant dependency owners engineering eligibility in the primary package.
+
+For minimal catalogs, ownership validation covers every locally bound captured
+repository, not just the primary source. Every tracked maintained file must have one
+owner in that repository. Unbound inventories remain explicitly unavailable. No extra
+authored definition path or parallel ownership declaration is required.
