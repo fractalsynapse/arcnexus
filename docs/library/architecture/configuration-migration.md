@@ -106,3 +106,14 @@ inline lifecycle recipes produce explicit diagnostics; their automatic conversio
 not yet delivered. Historical excluded files require an explicit owner before a writable
 migration can pass catalog validation. These are remaining migration limits, not claims
 that the full configuration-refactor plan is complete.
+
+### ArcNexus bootstrap ownership decision
+
+The four immutable qualification records currently at the top of `docs` belong to
+`architecture-maintenance`, alongside the central charter, development guidance and
+historical retrospective. Remove their coverage exclusions and assign these exact files:
+`experiment-qualification.json`, `guidance-qualification.json`,
+`operations-qualification.json` and `workday-qualification.json`. Their bytes and
+historical-reader interpretation remain unchanged. This resolves an explicit ownership
+decision before migration; the generic migrator must continue to reject unowned evidence
+instead of guessing an owner from a filename.
