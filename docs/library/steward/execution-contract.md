@@ -59,3 +59,19 @@ prompt change and had an incorrect SDK-argument test expectation. The supervisin
 reviewer completed those gaps, bounded provenance reads and removed duplicated
 schema data. That blocked attempt remains unchanged; the live research run above
 validates the assembled implementation, not the incomplete candidate.
+
+## Minimal-configuration model containment
+
+Version-five engineering, director and reviewer activations retain the same
+captured read-only source policy. The model supervisor must place the complete
+Codex process tree in the host's delegated process scope before activation, and
+verify cleanup after normal exit, cancellation or host loss. Detached shell
+sessions cannot outlive the activation. The scope identity is retained outside
+candidate source alongside PID evidence; a missing containment capability fails
+preflight rather than enabling a less restricted execution path.
+
+Model source changes use the assignment-bound `source.edit` bridge. Turn cleanup
+ends that turn's operations and service leases; it does not cancel the retained
+assignment or prevent subsequent turns. Scope qualification and controlled model
+protocol fixtures do not satisfy real model-driven qualification gates. Engineering
+remains gated until production wiring is qualified with the checked edit protocol.
