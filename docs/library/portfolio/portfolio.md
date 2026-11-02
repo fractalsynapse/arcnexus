@@ -28,3 +28,11 @@ Acceptance begins with built CLI registration/list/get from outside a repository
 shared repository identity, restart/volume relocation, ambiguity, stale revision and
 non-destructive removal. No test may substitute an independent fake portfolio backend
 for the production application service.
+
+Registered packages can be validated from any directory with `validate platform/package`.
+The service resolves the registered committed source and includes tracked guidance
+findings in the same validation report. A unique short package reference is accepted;
+ambiguous references fail. With no package argument, validation uses the current local
+repository. Validation does not start an execution host or mutate registrations.
+The existing `--project` path form remains a temporary migration adapter and cannot
+be combined with a registered package argument.
