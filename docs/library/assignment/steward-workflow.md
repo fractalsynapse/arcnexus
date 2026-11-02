@@ -108,3 +108,22 @@ proposed failing assertion/exit expectation and an evidence-backed limitation. T
 host then runs the captured command and must observe that exact failure before
 implementation. The steward must not claim verification it could not perform;
 missing or mismatched host evidence still stops the workflow.
+
+## Version-five checked engineering
+
+Version-five change assignments use the ordinary persisted engineering stages and
+shared operation checkpoints. Assignment resolution no longer rejects them solely
+because their component uses minimal configuration. Before model execution, the
+installed confinement adapter must qualify successfully; unsupported enforcement
+still fails closed. The model and managed operations receive read-only source.
+
+The assignment-bound `source.edit` tool is the only source mutation route. Planning,
+research, review and handoff cannot edit. Specification edits remain limited to
+owned documentation and regression files; implementation cannot modify the frozen
+regression. Every batch checks current hashes, complete scope and workflow stage
+before applying any change, and retains an idempotent journal outside source.
+
+Qualification must retain actual model tool observations, edit receipts, expected
+failing regression output, passing host checks, independent assessment and the
+candidate diff. Enabling resolution or passing deterministic tests alone does not
+establish the live checked-engineering gate.
