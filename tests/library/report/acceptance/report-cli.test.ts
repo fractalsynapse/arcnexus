@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
-import { test } from 'node:test';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
 import { markdownReport as typedMarkdownReport } from '../../../../dist/library/report/report.js';
-import { workflowFixture } from '../../testing/support/workflow-fixture.js';
+import { minimalWorkflowFixture as workflowFixture } from '../../testing/support/workflow-fixture.js';
 
 const markdownReport: (record: any) => string = typedMarkdownReport;
 
@@ -68,7 +68,7 @@ class ReportCliTests {
       assert.ok(md.includes('## ' + heading), heading);
     assert.ok(data.commands.some((c: any) => c.stage === 'verification'));
     assert.match(md, /verification/);
-    assert.match(md, /Actual turns: 3/);
+    assert.match(md, /Actual turns: 4/);
     assert.match(md, /not complete effective Codex context/);
     assert.match(markdownReport(record), /Usage completeness: unavailable/);
   }
@@ -82,4 +82,4 @@ test('built CLI run renders observed changes from the production workflow', (t: 
 test('built CLI report includes coordination evidence and explicit historical absence', (t: any) =>
   suite.builtCLIReportIncludesCoordinationEvidenceAndExplicitHistoricalAbsence(t));
 
-registerSuite({ component: 'report', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({ component: 'report', level: 'acceptance', tags: ['deterministic', 'native-host'] });

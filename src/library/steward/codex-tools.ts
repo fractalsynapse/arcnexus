@@ -36,7 +36,6 @@ export class CodexTools {
 
   /** Creates the MCP transport exposing the parent-authorized capability set. */
   async open(): Promise<object> {
-    if ((this.configuration.profile?.schemaVersion ?? 1) < 2) return {};
     const { operations, responseContract } = this.configuration.input;
     this.bridge = await openBridge(
       [...(operations?.tools ?? []), ...(responseContract ? [] : [planTool])],
@@ -46,7 +45,7 @@ export class CodexTools {
     return this.bridge.config as object;
   }
 
-  /** Routes tool calls through pending-call handling without resetting execution limits. */
+  /** Routes tool calls through pending-call handling while preserving cancellation and evidence. */
   private async call(name: string, args: unknown): Promise<unknown> {
     const { operations, root, record } = this.configuration.input;
     try {
@@ -69,9 +68,6 @@ export class CodexTools {
   private update(args: unknown) {
     const { root, record } = this.configuration.input;
     record.planUpdateCalls = Number(record.planUpdateCalls ?? 0) + 1;
-    const limit = this.configuration.profile?.maxChecklistCalls;
-    if (limit !== undefined && Number(record.planUpdateCalls) > limit)
-      throw new Error('Plan update budget exhausted');
     if (record.stage === 'planning') throw new Error('Plan updates require an accepted plan');
     if (
       !args ||
@@ -91,11 +87,11 @@ export class CodexTools {
   /** Releases resources owned by this instance. */
   async close(): Promise<void> {
     const { operations } = this.configuration.input;
+    operations?.disconnect();
     try {
-      await operations?.close();
-    } finally {
-      operations?.disconnect();
       await this.bridge?.close();
+    } finally {
+      await operations?.close();
     }
   }
 }

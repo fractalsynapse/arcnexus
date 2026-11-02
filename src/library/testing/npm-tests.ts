@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { ComponentTesting } from './testing.js';
+import { ComponentTesting, testSelectionView } from './testing.js';
 
 /** Delegates npm's already-built production artifact to the shared test service. */
 async function main(): Promise<void> {
@@ -12,7 +12,7 @@ async function main(): Promise<void> {
     const selection = service.inspect(process.cwd(), { component: process.argv[2] });
     const result = await service.run(selection, controller.signal, true);
     for (const command of result.commands) process.stdout.write(readFileSync(command.log));
-    console.log(JSON.stringify(result));
+    console.log(JSON.stringify({ ...result, selection: testSelectionView(result.selection) }));
     process.exitCode = result.exitCode;
   } catch (error) {
     console.error(String(error));

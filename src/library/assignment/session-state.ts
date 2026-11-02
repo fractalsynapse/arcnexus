@@ -1,3 +1,6 @@
+import { ExecutionContext } from '../architecture/execution-context.js';
+import { OperationExecution } from '../operations/operation-execution.js';
+import type { Operation } from '../operations/operations.js';
 import {
   appendFileSync,
   closeSync,
@@ -14,18 +17,16 @@ import {
   materializeEvidence,
   type ResolvedAssignment,
 } from '../architecture/assignment.js';
-import { targetCommand } from '../architecture/bindings.js';
 import { covered } from '../architecture/components.js';
-import { milliseconds, InputError, type Command } from '../architecture/config.js';
+import { InputError, type VerificationCheck } from '../architecture/config.js';
 import { changes, checkScope } from '../change-inspection/changes.js';
-import { operationEnvironment } from '../operations/operations.js';
-import { execute, git, type CommandResult } from '../operations/process.js';
+import { git, type CommandResult } from '../operations/process.js';
 import { observe } from '../report/timeline.js';
 import { type AgentResult } from '../steward/codex.js';
 import { save, type RecordData } from '../workspace/state.js';
 import { assertGeneratedOutputs, assertIdentity } from '../workspace/workspace.js';
 import { candidateDigest, type FrozenTest } from './checkpoints.js';
-import type { SessionControl, StewardCheckpoint, StewardSession } from './steward.js';
+import type { StewardCheckpoint } from './steward.js';
 
 export interface SessionOptions {
   root: string;
@@ -35,9 +36,6 @@ export interface SessionOptions {
   model: string;
   executable: string;
   signal: AbortSignal;
-  maxAttempts?: number;
-  control?: SessionControl;
-  session: StewardSession;
 }
 
 /** Holds immutable assignment authority and mutable checkpoint state for one steward. */
@@ -72,23 +70,21 @@ export class SessionState {
 
   /** Validates captured authority, materializes independent checks and initializes checkpoint state. */
   constructor(readonly options: SessionOptions) {
-    const { root, record, maxAttempts } = options;
+    const { root, record } = options;
     const resolved = record.resolvedAssignment as ResolvedAssignment | undefined;
     if (!resolved) throw new InputError('A captured assignment is required');
-    if (maxAttempts !== undefined && (!Number.isSafeInteger(maxAttempts) || maxAttempts < 1))
-      throw new InputError('Invalid maximum attempts');
     this.resolved = resolved;
     this.component = { ...resolved.context.at(-1)!, verification: resolved.verification };
+    this.validateAuthority();
     this.assignment = resolved.assignment;
     this.documentationOnly = this.assignment.changeType === 'documentation';
     this.scope = this.assignmentScope();
     this.validate();
     this.dir = join(root, 'runs', record.id);
     this.hostChecks = materializeChecks(resolved, join(this.dir, 'acceptance'));
-    this.planned = resolved.executionProfile.schemaVersion >= 2;
+    this.planned = true;
     if (options.record.continuation) this.restore();
     else this.initialize();
-    this.captureLimits();
   }
 
   /** Hydrates the retained stage without resetting plan, usage, attempts or frozen tests. */
@@ -107,51 +103,29 @@ export class SessionState {
     this.safe();
   }
 
-  /** Records only configured limits; absent values remain visibly unbounded. */
-  private captureLimits(): void {
-    const profile = this.resolved.executionProfile;
-    const { root, record, maxAttempts } = this.options;
-    record.executionLimits = {
-      timeoutSeconds: profile.timeoutSeconds ?? null,
-      commandTimeoutSeconds: profile.commandTimeoutSeconds ?? null,
-      maxTurns: profile.maxTurns ?? null,
-      maxCorrectiveTurns: profile.maxCorrectiveTurns ?? null,
-      maxOperationCalls: profile.maxOperationCalls ?? null,
-      maxChecklistCalls: profile.maxChecklistCalls ?? null,
-      maxAttempts: maxAttempts ?? null,
-    };
-    observe(root, record, 'execution.limits', record.executionLimits);
-    save(root, record);
-  }
-
-  /** Intersects assignment authority with the activity-specific writable roots. */
-  private assignmentScope(): string[] {
-    const { assignment, documentationOnly, resolved, component } = this;
-    return assignment.kind === 'change'
-      ? documentationOnly
-        ? [...new Set([...resolved.allowedWritePaths, ...component.documentation])].filter(
-            (p) => covered(p, component.documentation) && covered(p, resolved.allowedWritePaths),
-          )
-        : resolved.allowedWritePaths
-      : [];
-  }
-
-  /** Rejects inputs that violate the captured configuration contract. */
-  private validate(): void {
-    const { assignment, component, documentationOnly } = this;
-    const { record } = this.options;
-    if (
-      assignment.kind === 'change' &&
-      ((assignment.changeType !== 'refactor' && !component.documentation.length) ||
-        (!documentationOnly && !component.tests.length))
-    )
+  /** Requires current minimal authority and rejects retired profile budgets before filesystem access. */
+  private validateAuthority(): void {
+    if (this.resolved.context.some((component) => component.schemaVersion !== 5))
       throw new InputError(
-        'Change workflow requires declared documentation and regression test scope',
+        'New assignments require version-five authority; migrate historical configuration',
       );
+    const execution = new ExecutionContext();
+    execution.validateProfile(this.resolved.executionProfile);
+    execution.validateProfile(this.resolved.initialization.profile);
+  }
+
+  /** Intersects assignment authority with whether the workflow permits maintained-source changes. */
+  private assignmentScope(): string[] {
+    return this.assignment.kind === 'change' ? this.resolved.allowedWritePaths : [];
+  }
+
+  /** Rejects target configuration that could override the stable supervising harness. */
+  private validate(): void {
+    const { record } = this.options;
     if (
       git(record.source, 'ls-tree', '-r', '--name-only', record.base)
         .split('\n')
-        .some((p) => p === '.codex/config.toml' || p.endsWith('/.codex/config.toml'))
+        .some((path) => path === '.codex/config.toml' || path.endsWith('/.codex/config.toml'))
     )
       throw new InputError('Target Codex configuration is unsupported');
   }
@@ -198,34 +172,43 @@ export class SessionState {
   /** Checks candidate identity and exact scope before further execution. */
   safe() {
     assertIdentity(this.options.record);
-    if (this.options.control) {
-      this.options.control.inspect();
-      checkScope(
-        this.options.record.workspace,
-        changes(this.options.record).filter((c) =>
-          covered(c.path, this.resolved.allowedWritePaths),
-        ),
-        this.scope,
-      );
-    } else checkScope(this.options.record.workspace, changes(this.options.record), this.scope);
+    checkScope(this.options.record.workspace, changes(this.options.record), this.scope);
     assertGeneratedOutputs(this.options.record.workspace, this.options.record.environment);
   }
 
+  /** Runs a complete verification checkpoint with shared preparation and retained partial evidence. */
+  async checks(commands: VerificationCheck[], stage: string): Promise<void> {
+    const { root, record, signal } = this.options;
+    const offset = (record.operationInvocations as unknown[] | undefined)?.length ?? 0;
+    record.stage = stage;
+    this.journal(stage, 'started', commands);
+    try {
+      await new OperationExecution(root, record, signal).checkpoint(commands as Operation[], stage);
+      this.journal(stage, 'completed', { checks: commands.length });
+    } catch (error) {
+      this.journal(stage, 'failed', String(error));
+      throw error;
+    } finally {
+      this.checkResults(offset, stage);
+      save(root, record);
+    }
+  }
+
+  /** Projects observed invocation results without losing earlier checks when a later command fails. */
+  private checkResults(offset: number, stage: string): void {
+    const { record } = this.options;
+    const invocations = record.operationInvocations as
+      Array<{ result?: CommandResult }> | undefined;
+    for (const invocation of invocations?.slice(offset) ?? [])
+      if (invocation.result) record.commands.push({ ...invocation.result, stage });
+  }
+
   /** Runs one captured host command and retains its result under the assignment. */
-  async command(c: Command, stage: string): Promise<CommandResult> {
+  async command(c: VerificationCheck, stage: string): Promise<CommandResult> {
     this.options.record.stage = stage;
     this.journal(stage, 'started', c);
     try {
-      const result = await execute(
-        targetCommand(this.options.record, c),
-        this.options.record.workspace,
-        join(this.dir, `command-${this.options.record.commands.length}.log`),
-        this.options.signal,
-        {
-          timeoutMs: milliseconds(this.resolved.executionProfile.commandTimeoutSeconds),
-          env: operationEnvironment(this.options.record),
-        },
-      );
+      const result = await this.executeCommand(c, stage);
       result.stage = stage;
       this.options.record.commands.push(result);
       this.journal(stage, 'completed', result);
@@ -241,6 +224,16 @@ export class SessionState {
     }
   }
 
+  /** Routes captured operations through the same service used by engineering and setup. */
+  private async executeCommand(c: VerificationCheck, stage: string): Promise<CommandResult> {
+    if ((c as Operation).schemaVersion !== 4)
+      throw new Error('Version-five execution requires a captured shared operation');
+    return new OperationExecution(this.options.root, this.options.record, this.options.signal).run(
+      c as Operation,
+      stage,
+    );
+  }
+
   /** Persists thread, plan and verification state for continuation. */
   checkpoint(): void {
     persistCheckpoint(this.dir, this.options.record, this.checkpointData());
@@ -248,7 +241,7 @@ export class SessionState {
 
   /** Builds the serializable continuation state without resetting execution counters. */
   private checkpointData(): StewardCheckpoint {
-    const { record, control } = this.options;
+    const { record } = this.options;
     return {
       schemaVersion: 1,
       authorityHash: this.resolved.digest,
@@ -261,7 +254,7 @@ export class SessionState {
       implementationAttempts: record.implementationAttempts ?? 0,
       operationCalls: record.operationCalls ?? 0,
       planUpdateCalls: record.planUpdateCalls ?? 0,
-      activeMs: control?.elapsedMs() ?? Date.now() - Date.parse(record.startedAt),
+      activeMs: Date.now() - Date.parse(record.startedAt),
       candidateDigest: candidateDigest(record),
       turns: record.turns,
       usage: record.usage ?? null,

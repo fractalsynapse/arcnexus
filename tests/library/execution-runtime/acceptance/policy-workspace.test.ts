@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import { CandidateSnapshots } from '../../../../dist/library/workspace/candidates.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
 /** Ensures read-only policy sees pinned candidate contents rather than mutable delivery bookkeeping. */
 class PolicyWorkspaceScenarios {
@@ -58,7 +58,7 @@ class PolicyWorkspaceScenarios {
     const f = new GeneralFixture(t).fixture;
     const path = join(f.repo, 'architecture/components/b.json');
     const component = JSON.parse(readFileSync(path, 'utf8'));
-    component.access.writeDirectories.push('future/tests');
+    component.owns.push('future/tests');
     writeFileSync(path, JSON.stringify(component));
     f.commit();
     const host = new ProjectHost(f.state, new ExecutionContext().resolve(f.repo));
@@ -97,4 +97,8 @@ test('policy materialization reads the pinned candidate independently of deliver
 test('read-only stewardship permits absent future owner directories without creating them', (t) =>
   scenarios.futureDirectory(t));
 
-registerSuite({ component: 'execution-runtime', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'execution-runtime',
+  level: 'acceptance',
+  tags: ['native-host', 'deterministic'],
+});

@@ -5,9 +5,12 @@ import { spawn } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
-import { test } from 'node:test';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
 import { waitFor } from '../../testing/support/test-process.js';
-import { stewardEntry, workflowFixture } from '../../testing/support/workflow-fixture.js';
+import {
+  stewardEntry,
+  minimalWorkflowFixture as workflowFixture,
+} from '../../testing/support/workflow-fixture.js';
 
 /** Exercises parent loss behavior through observable scenarios. */
 class ParentLossTests {
@@ -50,6 +53,8 @@ class ParentLossTests {
         'Bounded change',
         '--project',
         f.repo,
+        '--bindings',
+        join(f.root, 'minimal-bindings.json'),
         '--codex-path',
         f.executable,
       ],
@@ -73,4 +78,8 @@ const suite = new ParentLossTests();
 test('built SDK launcher stops Codex after hard host loss', (t: any) =>
   suite.builtSDKLauncherStopsCodexAfterHardHostLoss(t));
 
-registerSuite({ component: 'steward', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'steward',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

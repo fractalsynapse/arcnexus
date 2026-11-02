@@ -40,3 +40,110 @@ Version-four ownership is defined in each component. See the
 patterns, contracts and discovered inventories. Versions 1–3 preserve their existing
 interpretation. Empty version-three/four container permissions express containment,
 not a deny-all ceiling. Container nodes cannot execute assignments.
+
+## Minimal configuration migration (#109)
+
+Version-five platform declarations are the single source for `director` (component
+and profile), `reviewerProfile`, `defaultPackage`, and `verificationInputs`.
+New execution rejects a simultaneous `architecture/execution` file. Director models
+and reasoning come from the selected profile; absent configuration never selects a
+hidden model or initializer. Version-five catalogs and shared-operation preparation
+feed the checked engineering workflow.
+
+Environment schema 4 retains repository composition only. Operation schema 4 holds
+fixed commands, prerequisite references, disposable outputs and artifacts once;
+component usages capture owner-specific plans. See [workspace preparation](../workspace/workspaces.md)
+and the [accepted migration plan](../../plans/minimal-component-configuration.md)
+for current scope and the qualification gates still outstanding.
+
+Trusted packaged result schemas may reference other packaged schema files by relative
+path or a declared identity in that registry. The loader expands those references before validation and model configuration,
+so shared result fields have one authored definition. References must resolve to
+packaged registry entries; unregistered remote identities, cycles and external fragments are
+rejected. Target-owned files cannot supply runtime response contracts.
+
+Minimal public API inspection derives exported symbols and signatures with the
+TypeScript compiler from captured source, including local re-exports and type-only
+exports. `api` modules and schema artifacts must belong to the declaring owner.
+Named exports must resolve; schema-to-code links require a named export. The catalog
+retains artifact hashes and schema identities when present, without inventing versions
+for ordinary modules. Missing local schema references fail validation; unsupported
+external analysis remains explicitly unresolved. Candidate files never replace the
+captured source used for this architectural view.
+
+Captured compiler configuration supplies module aliases and output-to-source mapping
+for public API analysis. Cross-owner imports must use a declared entry point and an
+exposed symbol; a named API declaration does not expose the module's other exports.
+Type-only imports and local re-exports participate in the derived relationship view.
+Namespace access is checked against the symbols actually used; escaping or dynamic
+namespace access cannot bypass a narrowed public surface. Import and consumer views
+are generated from the captured source, never authored lists.
+
+Effective policy evidence identifies the declarations contributing inherited reads,
+constraints, patterns and required operation usages, alongside scalar defaults.
+Implicit readability of owned paths is reported separately from authored read policy.
+Derived public catalogs may reuse an application-owned in-memory snapshot only when
+the source revision, ownership, public declarations, file digests and analyzer version
+match. Each caller receives an isolated copy; reuse cannot mutate active authority.
+
+Task direction captures both the director component identity and its execution
+profile from the platform declaration. Initial planning, reconsideration and final
+goal assessment use that identity; the first engineering owner is not a substitute.
+A declared platform director may assess a selected package outside its own package
+under its captured read boundary. This exception applies only to read-only direction
+with the declared director profile; it never makes that component an eligible
+engineering recipient for the selected package. Workday stewardship retains each
+steward's own identity and inherited engineering profile.
+
+Minimal research, review and change assignments may execute after confinement
+qualification. The [first real checked-engineering task](../assignment/checked-engineering-qualification.md)
+completed with independent verification. The remaining migration and live gates are
+still open. Legacy executable configurations remain supported during this staged
+migration; retiring them is unfinished. Historical reports remain read-only evidence.
+
+Inherited v5 pattern identities resolve to captured standards and example artifacts
+using the same revision-bound reference loader as historical definitions. Missing
+patterns or out-of-owner artifacts fail validation. Referenced checks must belong
+to the pattern owner’s declared operation usages; the reference itself grants no
+additional execution or write authority. Inspection includes the captured hashes,
+and steward context receives the immutable artifact text.
+
+### Model context and captured authority
+
+Model-facing component context is a projection of the revision-bound catalog. It
+retains identity, architectural intent, effective read/write boundaries, public API
+symbols and schema links, cross-owner and unresolved relationships, and policy
+provenance. Command definitions, file hashes, internal imports and duplicated
+resolved operation plans stay in the immutable catalog and execution records;
+they are not repeated in every component prompt. Verification references identify
+captured host checks, and agent operation discovery remains host-controlled.
+The projection does not replace any authority, selection or completion check.
+Director, engineering and reviewer prompts use the same projection. No acceptance
+criterion or evidence is truncated to fit transport limits.
+
+Captured configuration source values remain the parsed authored data, paired with
+their original text and hashes. Effective component resolution uses separate
+objects. Inheritance, inventories and operation planning must never write derived
+fields into retained authored values or make inherited policy appear leaf-authored.
+
+Component test inspection/execution and npm's shared test entry discover the same
+`.git/arcnexus/bindings.yaml` machine bindings as task/workday execution. Explicit
+maintenance-command bindings take precedence. Linked worktrees use their canonical
+Git common directory. The captured binding source and digest remain execution
+evidence; npm's transient PATH does not replace an explicitly bound executable.
+Confinement qualification exposes the same declared tool directories read-only as
+the operation it qualifies, including runtimes installed outside system directories.
+
+### Definition ownership across repository bindings
+
+An executable definition belongs to its declaring catalog repository even when its
+component implements a package in a bound dependency repository. The derived catalog
+retains that definition's repository, path and captured hash. Its accountable owner
+is still the component; the definition is not a phantom writable path in the dependency.
+An activation's write scope remains confined to its captured implementation repository.
+This does not grant dependency owners engineering eligibility in the primary package.
+
+For minimal catalogs, ownership validation covers every locally bound captured
+repository, not just the primary source. Every tracked maintained file must have one
+owner in that repository. Unbound inventories remain explicitly unavailable. No extra
+authored definition path or parallel ownership declaration is required.

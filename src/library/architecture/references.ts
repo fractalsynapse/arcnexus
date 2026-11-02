@@ -44,6 +44,10 @@ export class ArchitectureReferences {
   resolve(): void {
     const contracts = this.contracts();
     for (const component of Object.values(this.catalog.components)) {
+      if (component.schemaVersion === 5) {
+        component.patternSnapshots = component.patterns.map((id) => this.pattern(id));
+        continue;
+      }
       if (component.schemaVersion !== 4) continue;
       component.providedSnapshots = [...contracts.values()].filter(
         (entry) => entry.owner === component.id,
@@ -95,7 +99,11 @@ export class ArchitectureReferences {
     const owner = this.catalog.components[pattern.owner];
     if (!owner) throw new Error(`Missing pattern owner: ${pattern.owner}`);
     for (const operation of pattern.operationIds)
-      if (!owner.operationIds?.includes(operation))
+      if (
+        owner.schemaVersion === 5
+          ? !owner.operations?.[operation]?.length
+          : !owner.operationIds?.includes(operation)
+      )
         throw new Error(`Pattern check outside owner's operations: ${operation}`);
     if (!this.catalog.configurationSources.some((entry) => entry.path === source.path))
       this.catalog.configurationSources.push(source);

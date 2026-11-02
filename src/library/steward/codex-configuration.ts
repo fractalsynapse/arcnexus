@@ -1,20 +1,18 @@
+import { ExecutionContext } from '../architecture/execution-context.js';
+import { homedir } from 'node:os';
+import { SourceConfinement } from '../operations/confinement.js';
 import { readSchema } from '../architecture/schema.js';
 import { existsSync, appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ResolvedAssignment } from '../architecture/assignment.js';
-import { milliseconds } from '../architecture/config.js';
+import { InputError } from '../architecture/config.js';
 import { targetEnvironment, toolDirectories } from '../architecture/bindings.js';
-import {
-  preparePermissions,
-  readOnlyAccess,
-  type AccessPolicy,
-} from '../architecture/permissions.js';
+import type { AccessPolicy } from '../architecture/permissions.js';
 import type { Plan } from '../assignment/plan.js';
 import type { OperationBridge } from '../operations/operations.js';
 import { execute, git } from '../operations/process.js';
 import { processStart } from '../operations/service-state.js';
-import type { Member } from '../workspace/members.js';
 import { save, type RecordData } from '../workspace/state.js';
 import { persistExecutionEvidence } from './evidence.js';
 
@@ -42,8 +40,6 @@ export class CodexConfiguration {
 
   readonly schema;
 
-  readonly coordinationActions: string[];
-
   readonly permissions;
 
   readonly env: Record<string, string>;
@@ -52,14 +48,11 @@ export class CodexConfiguration {
 
   /** Derives explicit SDK settings, result schema and sandbox authority from captured inputs. */
   constructor(readonly input: CodexInput) {
+    const resolved = this.capturedAuthority();
     this.dir = join(input.root, 'runs', input.record.id);
     this.launcher = join(this.dir, 'codex-launcher');
     this.pidFile = join(this.dir, 'codex.pid');
-    const resolved = input.record.resolvedAssignment as ResolvedAssignment | undefined;
-    this.profile = resolved?.executionProfile;
-    this.coordinationActions = Array.isArray(input.record.coordinationActions)
-      ? (input.record.coordinationActions as string[])
-      : [];
+    this.profile = resolved.executionProfile;
     this.schema = this.resultSchema();
     const authority = this.authority(resolved);
     this.permissions = this.permissionPolicy(authority);
@@ -67,27 +60,39 @@ export class CodexConfiguration {
     this.settings = this.executionSettings(authority);
   }
 
+  /** Rejects historical permissions and missing policy before creating executable SDK configuration. */
+  private capturedAuthority(): ResolvedAssignment {
+    const context = this.input.record.context as Array<{ schemaVersion: number }> | undefined;
+    if (!context?.length || context.some((component) => component.schemaVersion !== 5))
+      throw new InputError(
+        'Model execution requires version-five authority; migrate historical configuration',
+      );
+    const resolved = this.input.record.resolvedAssignment as ResolvedAssignment | undefined;
+    if (!resolved?.executionProfile)
+      throw new InputError('Model execution requires a captured execution profile');
+    new ExecutionContext().validateProfile(resolved.executionProfile);
+    return resolved;
+  }
+
   /** Returns the structured result contract expected from the current model turn. */
   private resultSchema() {
     if (this.input.responseContract) return readSchema(this.input.responseContract);
-    const schema = readSchema(
-      this.input.record.generalExecution ? 'general-agent-result' : 'agent-result',
-    );
-    if ((this.profile?.schemaVersion ?? 1) >= 2) schema.required = Object.keys(schema.properties);
-    else {
-      delete schema.properties.plan;
-      delete schema.properties.planUpdates;
-    }
-    if (this.input.record.generalExecution) schema.required = Object.keys(schema.properties);
+    const schema = readSchema('general-agent-result');
+    schema.required = Object.keys(schema.properties);
     this.restrictActivities(schema);
+    this.restrictRegression(schema);
     const plan = this.input.record.plan as Plan | undefined;
-    if ((this.profile?.schemaVersion ?? 1) >= 2 && plan)
+    if (plan)
       schema.properties.planUpdates.items.properties.id.enum = plan.items.map((item) => item.id);
-    if (this.input.record.workdayId) {
-      schema.properties.coordination = this.coordinationSchema();
-      schema.required.push('coordination');
-    }
     return schema;
+  }
+
+  /** Advertises stable operation identities only when the captured owner uses minimal configuration. */
+  private restrictRegression(schema: any): void {
+    const key = 'operationId';
+    schema.properties.regression.anyOf = schema.properties.regression.anyOf.filter(
+      (entry: any) => entry.type === 'null' || Object.hasOwn(entry.properties ?? {}, key),
+    );
   }
 
   /** Advertises only activities authorized by the captured role, including checklist declarations. */
@@ -102,28 +107,6 @@ export class CodexConfiguration {
     plan.properties.items.items.properties.activity.enum = activities;
   }
 
-  /** Builds the structured response contract for the current coordination turn. */
-  private coordinationSchema() {
-    if (!this.coordinationActions.length) return { type: 'null' };
-    return {
-      anyOf: [
-        { type: 'null' },
-        {
-          type: 'object',
-          properties: {
-            action: { enum: this.coordinationActions },
-            contract: { type: 'string', enum: [this.input.record.coordinationContract] },
-            requestId: { type: ['string', 'null'] },
-            text: { type: 'string' },
-            activityComplete: { type: 'boolean' },
-          },
-          required: ['action', 'contract', 'requestId', 'text', 'activityComplete'],
-          additionalProperties: false,
-        },
-      ],
-    };
-  }
-
   /** Builds execution permissions from captured assignment authority. */
   private authority(resolved: ResolvedAssignment | undefined) {
     const { record } = this.input;
@@ -136,7 +119,7 @@ export class CodexConfiguration {
       allowedWritePaths: readOnly
         ? []
         : (resolved?.allowedWritePaths ?? component?.allowedWritePaths),
-      access: readOnly ? readOnlyAccess(record.workspace, declared) : declared,
+      access: declared,
       inherited:
         context?.slice(0, -1).map((item) => ({
           access: item.access,
@@ -145,22 +128,26 @@ export class CodexConfiguration {
     };
   }
 
-  /** Builds the explicit directory policy used by the Codex sandbox. */
-  private permissionPolicy(authority: ReturnType<CodexConfiguration['authority']>) {
-    const { record } = this.input;
-    return preparePermissions(
-      record.workspace,
-      authority.access,
-      authority.allowedWritePaths,
-      join(this.dir, 'tmp'),
-      authority.inherited,
-      ((record.members ?? []) as Member[]).map((m) => m.workspace),
-      toolDirectories(record),
-    );
-  }
-
   /** Constructs the restricted environment used by the Codex launcher. */
   private environment(): Record<string, string> {
+    const env = this.inheritedEnvironment();
+    const { executable, record } = this.input;
+    env.ARCNEXUS_CODEX_EXECUTABLE = executable.includes('/') ? resolve(executable) : executable;
+    env.ARCNEXUS_CODEX_PID = this.pidFile;
+    env.ARCNEXUS_NODE = process.execPath;
+    env.ARCNEXUS_CODEX_SUPERVISOR = fileURLToPath(
+      new URL('./codex-supervisor.js', import.meta.url),
+    );
+    env.ARCNEXUS_CONFINED_SCOPE = '1';
+    env.ARCNEXUS_HOST_PID = String(process.pid);
+    env.ARCNEXUS_HOST_START = processStart(process.pid)!;
+    env.TMPDIR = this.permissions.tmpDirectory;
+    env.PATH = targetEnvironment(record).PATH!;
+    return env;
+  }
+
+  /** Inherits only declared process settings without forwarding arbitrary caller environment variables. */
+  private inheritedEnvironment(): Record<string, string> {
     const env: Record<string, string> = {};
     for (const name of [
       'HOME',
@@ -177,39 +164,43 @@ export class CodexConfiguration {
       'XDG_DATA_HOME',
     ])
       if (process.env[name]) env[name] = process.env[name]!;
-    const { executable, record } = this.input;
-    env.ARCNEXUS_CODEX_EXECUTABLE = executable.includes('/') ? resolve(executable) : executable;
-    env.ARCNEXUS_CODEX_PID = this.pidFile;
-    env.ARCNEXUS_NODE = process.execPath;
-    env.ARCNEXUS_CODEX_SUPERVISOR = fileURLToPath(
-      new URL('./codex-supervisor.js', import.meta.url),
-    );
-    env.ARCNEXUS_HOST_PID = String(process.pid);
-    env.ARCNEXUS_HOST_START = processStart(process.pid)!;
-    env.TMPDIR = this.permissions.tmpDirectory;
-    env.PATH = targetEnvironment(record).PATH!;
     return env;
+  }
+
+  /** Gives the model read-only source access; checked edits remain exclusively host-owned. */
+  private permissionPolicy(authority: ReturnType<CodexConfiguration['authority']>) {
+    const adapter = new SourceConfinement({
+      workspace: this.input.record.workspace,
+      reads: authority.access.readPaths,
+      outputs: [],
+      temporaryRoot: join(this.dir, 'tmp'),
+      executable: this.input.executable,
+      toolDirectories: toolDirectories(this.input.record),
+      protectedPaths: [resolve(process.env.CODEX_HOME ?? join(homedir(), '.codex'))],
+    });
+    return {
+      configOverrides: adapter.overrides,
+      tmpDirectory: adapter.temporaryRoot,
+      filesystem: adapter.filesystem,
+      createdDirectories: [],
+    };
   }
 
   /** Builds explicit SDK settings independently of personal user configuration. */
   private executionSettings(authority: ReturnType<CodexConfiguration['authority']>) {
     return {
-      coordinationActions: this.input.record.workdayId ? this.coordinationActions : undefined,
       evidenceMode: this.input.record.evidenceMode ?? 'unspecified',
       model: this.input.model,
-      reasoning: this.profile?.reasoning ?? 'medium',
+      reasoning: this.profile.reasoning,
       permissionProfile: 'arcnexus',
       access: authority.access,
       allowedWritePaths: authority.allowedWritePaths,
       filesystem: this.permissions.filesystem,
       approval: 'never',
       network: false,
-      webSearch: this.profile?.webSearch ?? 'live',
+      webSearch: this.profile.webSearch,
       nestedDelegation: false,
-      managedTools:
-        (this.profile?.schemaVersion ?? 1) >= 2
-          ? ['plan.update', ...(this.input.operations?.tools.map((t) => t.name) ?? [])]
-          : [],
+      managedTools: ['plan.update', ...(this.input.operations?.tools.map((t) => t.name) ?? [])],
       executable: this.env.ARCNEXUS_CODEX_EXECUTABLE!,
     };
   }
@@ -299,7 +290,7 @@ export class CodexConfiguration {
       signal,
       {
         env: { ...this.env, CODEX_HOME: home },
-        timeoutMs: milliseconds(this.profile?.commandTimeoutSeconds),
+        processScope: true,
       },
     );
   }

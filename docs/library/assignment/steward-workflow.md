@@ -6,11 +6,21 @@ inference. There are no implicit execution or corrective quotas; the numeric lim
 below describe earlier defaults or explicitly captured legacy configurations. Planned
 stages and host checkpoints remain required, and repeated failures require diagnosis.
 
-
 Increment two (#31) implements this contract. One Luna thread performs bounded
 work. Activities are research, documentation, testing, implementation, review and
 release/handoff; they are not separate agents. The host records transitions in
 `activities.jsonl` and per-turn evidence in `turns/<number>/` outside the candidate.
+
+## Minimal configuration regression evidence
+
+Version-five components select the expected failing regression by a stable `operationId`
+from captured `verify` usages. The host resolves arguments and prerequisites from
+captured authority, observes the selected operation's failure, and retains its
+invocation identity, definition digest, resolved context and selected test hashes.
+A prerequisite failure cannot satisfy the regression expectation. Final frozen
+regression checking resolves the same operation identity against captured authority.
+Historical evidence using `verificationIndex` keeps its original interpretation;
+new version-five execution rejects index-based expectations.
 
 ## Assignment planning
 
@@ -98,3 +108,53 @@ proposed failing assertion/exit expectation and an evidence-backed limitation. T
 host then runs the captured command and must observe that exact failure before
 implementation. The steward must not claim verification it could not perform;
 missing or mismatched host evidence still stops the workflow.
+
+## Version-five checked engineering
+
+Version-five change assignments use the ordinary persisted engineering stages and
+shared operation checkpoints. Assignment resolution no longer rejects them solely
+because their component uses minimal configuration. Before model execution, the
+installed confinement adapter must qualify successfully; unsupported enforcement
+still fails closed. The model and managed operations receive read-only source.
+
+The assignment-bound `source.edit` tool is the only source mutation route. Planning,
+research, review and handoff cannot edit. Specification edits remain limited to
+owned documentation and regression files; implementation cannot modify the frozen
+regression. Every batch checks current hashes, complete scope and workflow stage
+before applying any change, and retains an idempotent journal outside source.
+
+Qualification must retain actual model tool observations, edit receipts, expected
+failing regression output, passing host checks, independent assessment and the
+candidate diff. Enabling resolution or passing deterministic tests alone does not
+establish the live checked-engineering gate.
+
+A stale expected hash or create/delete precondition rejected before journaling is a
+recoverable edit-tool result. It reports rejection without writing any member of the
+batch; the worker must reread exact bytes and submit a corrected request. It does not
+abort an otherwise valid turn. Authority violations and uncertain journal/filesystem
+recovery remain fatal and never fall back to direct writes or unconditional overwrite.
+
+A stale rejection includes the authorized path, submitted hash and currently observed
+hash. These identify a mismatch precisely without returning another owner's bytes.
+The worker must still inspect the file and preserve the expected-hash precondition;
+the host rechecks it on every corrected request. Rejection never creates a transaction.
+
+Edit IDs identify transactions, not owners or assignments. A distinct batch uses a
+fresh unique ID; only an identical retry may reuse one. Reusing an existing ID with
+different changes returns a recoverable rejection before writing anything, while the
+original journal and receipt remain immutable. A corrected batch with a fresh ID still
+passes full authority, hash and recovery checks. An original committed retry returns
+its original receipt without replaying edits over subsequent changes.
+
+For minimal components, engineering context explicitly describes the checked write
+route before the first turn. Native patch and shell writes to maintained source are
+intentionally unavailable. Stewards discover `source.edit` on the ArcNexus MCP server,
+read current bytes, compute their SHA-256 hashes and submit a fresh transaction identity
+for each distinct batch. An identical retry may reuse that identity. The same context
+retains ownership narrowing and stage restrictions: planning, coordination, research and
+review do not gain source-edit permission merely because the tool is discoverable.
+A denied native write is not evidence that the checked edit route is unavailable.
+
+Checked edit paths are relative to the assignment workspace, never absolute paths.
+Context and tool metadata must state this explicitly; a displayed absolute workspace
+location is for reading and command context, not the spelling of `changes[].path`.

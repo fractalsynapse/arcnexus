@@ -1,3 +1,4 @@
+import { ConfigCommand } from './config-command.js';
 import { AssignmentCommand } from './assignment-command.js';
 import { ObservationCommand } from './observation-command.js';
 import { GuidanceCommand } from './guidance-command.js';
@@ -40,15 +41,13 @@ class CliApplication {
 
   private command = '';
 
-  private seconds?: number;
-
   private record?: RecordData;
 
   private root?: string;
 
   private unlock?: () => void;
 
-  private timer?: NodeJS.Timeout;
+  private testWatchdog?: NodeJS.Timeout;
 
   private readonly controller = new AbortController();
 
@@ -92,11 +91,13 @@ class CliApplication {
   /** Routes a validated command to its adapter and preserves shared cancellation. */
   private async dispatch(): Promise<void> {
     switch (this.command) {
+      case 'config':
+        return new ConfigCommand(this.positionals, this.values).run();
       case 'run':
         throw new InputError('Component execution is retired; use task run "<prompt>"');
       case 'test':
         this.validateExecution();
-        this.startTimer();
+        this.startTestWatchdog();
         return new TestCommand(
           this.positionals,
           this.values,
@@ -137,22 +138,21 @@ class CliApplication {
       return;
     }
     const root = this.acquire();
-    this.startTimer(input.resolved?.executionProfile.timeoutSeconds);
     if (this.command === 'cleanup')
       new WorkspaceCommand(this.values).cleanup(root, this.positionals[1]!);
     else await this.execute(input, root);
   }
 
-  /** Installs a cancellation deadline only when the caller explicitly configured one. */
-  private startTimer(seconds?: number): void {
-    const timeout = seconds ?? this.seconds;
-    if (timeout !== undefined)
-      this.timer = setTimeout(
+  /** Bounds only caller-requested test qualification; agent and workspace execution have no deadline. */
+  private startTestWatchdog(): void {
+    const seconds = this.values['timeout-seconds'];
+    if (seconds !== undefined)
+      this.testWatchdog = setTimeout(
         () =>
           this.controller.abort(
             Object.assign(new Error('Operation timed out'), { name: 'TimeoutError' }),
           ),
-        timeout * 1000,
+        Number(seconds) * 1000,
       );
   }
 
@@ -168,13 +168,8 @@ class CliApplication {
     const { values, positionals, command } = this;
     if (!['prepare', 'cleanup', 'validate', 'inspect', 'status', 'follow'].includes(command ?? ''))
       throw new InputError(help);
-    if (
-      values['max-attempts'] !== undefined &&
-      (command !== 'run' ||
-        !/^[1-9]\d*$/.test(values['max-attempts']) ||
-        !Number.isSafeInteger(Number(values['max-attempts'])))
-    )
-      throw new InputError('--max-attempts is run-only and requires a positive integer');
+    if (values['max-attempts'] !== undefined)
+      throw new InputError('Execution attempt budgets are retired');
     if (command === 'prepare' && (!values.project || positionals.length !== 1))
       throw new InputError('prepare requires --project');
     if (
@@ -194,8 +189,10 @@ class CliApplication {
     const { values } = this;
     if (values.issue && !/^[1-9]\d*$/.test(values.issue))
       throw new InputError('Invalid issue number');
-    const seconds = (this.seconds =
-      values['timeout-seconds'] === undefined ? undefined : Number(values['timeout-seconds']));
+    if (values['timeout-seconds'] !== undefined && !['inspect', 'test'].includes(this.command))
+      throw new InputError('Execution deadlines are retired; test watchdogs belong to test run');
+    const seconds =
+      values['timeout-seconds'] === undefined ? undefined : Number(values['timeout-seconds']);
     if (seconds === undefined) return;
     if (!Number.isFinite(seconds) || seconds <= 0 || seconds > 2_147_483)
       throw new InputError('Invalid timeout');
@@ -232,7 +229,7 @@ class CliApplication {
 
   /** Releases resources owned by this instance. */
   private close(): void {
-    if (this.timer) clearTimeout(this.timer);
+    clearTimeout(this.testWatchdog);
     try {
       if (this.record && this.root) finalize(this.root, this.record);
     } finally {

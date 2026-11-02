@@ -3,10 +3,14 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
 import { observe } from '../../../../dist/library/report/timeline.js';
-import { operationFixture } from '../../testing/support/operations-fixture.js';
-import { cli, workflowFixture } from '../../testing/support/workflow-fixture.js';
+import { minimalOperationFixture as operationFixture } from '../../testing/support/operations-fixture.js';
+import {
+  cli,
+  minimalWorkflowFixture as workflowFixture,
+} from '../../testing/support/workflow-fixture.js';
 
 /** Exercises progress projection behavior through observable scenarios. */
 class ProgressProjectionTests {
@@ -50,11 +54,15 @@ class ProgressProjectionTests {
 
   /** Prepares a real workspace, then records an unfinished initialization for viewer assertions. */
   private preparingRecord(f: ReturnType<typeof workflowFixture>): any {
-    const prepared = spawnSync(process.execPath, [cli, 'prepare', '--project', f.repo], {
-      encoding: 'utf8',
-      env: f.env,
-      timeout: 30 * 60 * 1000,
-    });
+    const prepared = spawnSync(
+      process.execPath,
+      [cli, 'prepare', '--project', f.repo, '--bindings', join(f.root, 'minimal-bindings.json')],
+      {
+        encoding: 'utf8',
+        env: f.env,
+        timeout: 30 * 60 * 1000,
+      },
+    );
     assert.equal(prepared.status, 0, prepared.stderr);
     const record = JSON.parse(prepared.stdout);
     record.status = 'initializing';
@@ -100,4 +108,8 @@ test('parent status exposes the currently observed initializer command', (t) =>
 test('status clears a finished operation before the next activity transition', (t) =>
   suite.finishedOperation(t));
 
-registerSuite({ component: 'report', level: 'acceptance', tags: ['deterministic', 'regression'] });
+registerSuite({
+  component: 'report',
+  level: 'acceptance',
+  tags: ['deterministic', 'regression', 'native-host'],
+});

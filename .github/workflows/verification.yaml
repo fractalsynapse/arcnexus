@@ -28,6 +28,24 @@ jobs:
           cache: npm
       - name: Install product dependencies
         run: npm ci
+      - name: Install confinement runtime
+        run: |
+          sudo npm install --global --prefix /usr/local --ignore-scripts @openai/codex@0.163.0-alpha.10.2
+          sudo apt-get update
+          sudo apt-get install -y bubblewrap apparmor-profiles apparmor-utils
+          sudo install -m 0644 /usr/share/apparmor/extra-profiles/bwrap-userns-restrict /etc/apparmor.d/bwrap-userns-restrict
+          sudo apparmor_parser -r /etc/apparmor.d/bwrap-userns-restrict
+      - name: Bind verified machine executables
+        run: |
+          node --input-type=module <<'NODE'
+          import { mkdirSync, writeFileSync } from 'node:fs';
+          mkdirSync('.git/arcnexus', { recursive: true });
+          writeFileSync('.git/arcnexus/bindings.yaml', JSON.stringify({
+            schemaVersion: 1,
+            tools: { node: process.execPath, codex: '/usr/local/bin/codex' },
+            repositories: {},
+          }));
+          NODE
       - name: Check formatting
         run: npm run format:check
       - name: Lint maintained code
@@ -35,7 +53,27 @@ jobs:
       - name: Check TypeScript
         run: npm run check
       - name: Test built CLI
-        run: npm test
+        run: |
+          sudo systemd-run --uid="$(id -u)" --gid="$(id -g)" \
+            --property=Delegate=yes --working-directory="$PWD" \
+            --setenv="PATH=$PATH" --wait --pipe --collect npm test
+      - name: Qualify native project hosts
+        run: |
+          sudo systemd-run --uid="$(id -u)" --gid="$(id -g)" \
+            --property=Delegate=yes --working-directory="$PWD" \
+            --setenv="PATH=$PATH" --setenv=ARCNEXUS_TEST_CODEX=/usr/local/bin/codex \
+            --wait --pipe --collect node scripts/release/native-host-tests.mjs
+      - name: Retain failed operation diagnostics
+        if: failure()
+        run: |
+          if [[ -d "$HOME/.local/state/arcnexus" ]]; then
+            find "$HOME/.local/state/arcnexus" -type f -name '*.log' -exec tail -n 40 -- {} +
+          fi
+          for directory in /tmp/arcnexus-op-*/qualification; do
+            if [[ -d "$directory" ]]; then
+              find "$directory" -type f -name '*.log' -exec tail -n 40 -- {} +
+            fi
+          done
       - name: Validate architectural ownership
         run: node dist/cli.js validate --project .
       - name: Smoke-test CLI

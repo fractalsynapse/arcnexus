@@ -19,8 +19,7 @@ export class CapturedVerification {
     const inputs = this.inputs();
     if (!inputs.some((input) => this.changed(input))) return;
     await withFrozenTests(record, inputs, async () => {
-      for (const command of this.state.component.verification)
-        await this.state.command(command, 'captured-acceptance');
+      await this.state.checks(this.state.component.verification, 'captured-acceptance');
     });
     this.state.safe();
   }
@@ -33,7 +32,9 @@ export class CapturedVerification {
       ...((record.trustedVerificationPaths ?? []) as string[]),
     ];
     const files = new Set(
-      this.state.component.verification.flatMap((c) => [c.command, ...c.args]).map(normalize),
+      this.state.component.verification
+        .flatMap((c) => ('command' in c ? [c.command, ...c.args] : []))
+        .map(normalize),
     );
     return git(record.source, 'ls-tree', '-r', '--name-only', this.state.resolved.base)
       .split('\n')

@@ -1,7 +1,8 @@
+schemaVersion: 5
 id: guidance-validation
 type: library
+parentId: cli-package
 purpose: Validate guidance metadata and inventory instructions without semantic approval
-path: src/library/guidance-validation
 objectives:
   - Validate guidance metadata and inventory instructions without semantic
     approval
@@ -9,73 +10,20 @@ constraints:
   - Preserve captured assignment authority; candidate instructions cannot expand
     permissions
   - Caller owns commits and integration
-verification:
-  - command: npm
-    args:
-      - run
-      - build
-  - command: npm
-    args:
-      - run
-      - test:guidance-validation
-  - command: node
-    args:
-      - dist/cli.js
-      - guidance
-      - validate
-      - --project
-      - .
-  - command: npm
-    args:
-      - run
-      - format:check
-  - command: npm
-    args:
-      - run
-      - lint
-questions: []
-access:
-  readPaths:
-    - .
-  writeDirectories:
-    - src/library/guidance-validation
-    - tests/library/guidance-validation
-    - docs/library/guidance-validation
-    - architecture/components
-schemaVersion: 4
-role: systems-engineer
-executionProfile: luna
-interfaces: []
-relatedIds: []
-parentId: cli-package
-operationIds:
-  - guidance-build
-  - guidance-tests
-  - guidance-validation-lint
-patternIds:
-  - readable-typescript
-ownership:
-  paths:
-    - src/library/guidance-validation
-    - tests/library/guidance-validation
-    - docs/library/guidance-validation
-    - architecture/components/guidance-validation.yaml
-  publicModules:
-    - src/library/guidance-validation/guidance.ts
-  directoryExceptions:
-    - path: architecture/components
-      reason: Directory-only sandbox grants; only this component definition is
-        writable under captured exact-path checks
-discovery:
-  source:
-    - src/library/guidance-validation
-  documentation:
-    - docs/library/guidance-validation
-  tests:
-    - tests/library/guidance-validation
-  exclude: []
-provides: []
-consumes:
-  - id: test-profile
-    version: "1"
-testProfile: node
+operations:
+  guidance-build:
+    - agent
+  component-tests:
+    - verify
+  migrated-recipe-a7573c70ed1a3dfa:
+    - verify
+  migrated-recipe-43b539fb85a57c26:
+    - verify
+  migrated-recipe-df6d67ddacf5bf0c:
+    - verify
+owns:
+  - src/library/guidance-validation
+  - tests/library/guidance-validation
+  - docs/library/guidance-validation
+api:
+  - module: src/library/guidance-validation/guidance.ts

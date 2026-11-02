@@ -43,12 +43,12 @@ class WorkdayExperimentsTests {
       JSON.parse(r.stdout)
         .operations.map((o: any) => o.id)
         .sort(),
-      ['guidance-build', 'guidance-tests', 'guidance-validation-lint'],
+      ['component-format', 'component-lint', 'component-tests', 'guidance-build'],
     );
   }
 
-  /** Verifies that guidance inspection preserves explicit writable skill directory grant. */
-  guidanceInspectionPreservesExplicitWritableSkillDirectoryGrant() {
+  /** Verifies that guidance inspection preserves checked skill ownership without direct write grants. */
+  guidanceInspectionPreservesCheckedSkillOwnership() {
     const r = spawnSync(
       process.execPath,
       [
@@ -64,7 +64,8 @@ class WorkdayExperimentsTests {
     );
     assert.equal(r.status, 0, String(r.error ?? r.stderr));
     const owner = JSON.parse(r.stdout).context.find((c: any) => c.id === 'agent-guidance');
-    assert.ok(owner.access.writeDirectories.includes('.agents/skills'));
+    assert.ok(owner.allowedWritePaths.includes('.agents/skills'));
+    assert.deepEqual(owner.access.writeDirectories, []);
   }
 }
 
@@ -165,7 +166,7 @@ test('built experiment inspection captures both workday participants without inf
 test('real validator owner receives declared build and regression operations', () =>
   suite.realValidatorOwnerReceivesDeclaredBuildAndRegressionOperations());
 
-test('guidance inspection preserves explicit writable skill-directory grant', () =>
-  suite.guidanceInspectionPreservesExplicitWritableSkillDirectoryGrant());
+test('guidance inspection preserves checked skill ownership without direct write grants', () =>
+  suite.guidanceInspectionPreservesCheckedSkillOwnership());
 
 registerSuite({ component: 'experiments', level: 'acceptance', tags: ['deterministic'] });

@@ -16,26 +16,6 @@ export class SessionWorkflow {
     private readonly verification: SessionVerification,
   ) {}
 
-  /** Executes this lifecycle through its configured collaborators and propagates failures. */
-  async run(): Promise<void> {
-    const { root, record } = this.state.options;
-    try {
-      await this.planning();
-      if (this.state.assignment.kind !== 'change') await this.research();
-      else await this.change();
-      if (this.state.planned) completePlan(root, record);
-      record.status = 'completed';
-      record.stage = 'finished';
-      this.state.journal('workflow', 'completed', { outcome: record.outcome });
-    } catch (error) {
-      this.failure(error);
-      throw error;
-    } finally {
-      record.readOnlyTurn = false;
-      save(root, record);
-    }
-  }
-
   /** Runs one stage and durably records the next dispatch point, including dependency yields. */
   async step(): Promise<void> {
     const { root, record } = this.state.options;
@@ -144,7 +124,7 @@ export class SessionWorkflow {
   /** Reviews the assembled candidate and schedules correction or verified completion. */
   private async advanceReview(): Promise<void> {
     const { record } = this.state.options;
-    const feedback = await this.review(Number(record.implementationAttempts));
+    const feedback = await this.review();
     if (feedback !== undefined) {
       record.correctiveFeedback = feedback;
       record.nextStage = 'implementation';
@@ -204,37 +184,9 @@ export class SessionWorkflow {
           ? 'Reference the existing behavior contract and inspect characterization coverage. Add or strengthen tests only where needed, without implementation edits. Do not manufacture changed documentation or a failing regression: the host requires passing captured checks before implementation. Return regression=null and evidence for the covered behavior.'
           : this.state.documentationOnly
             ? 'Make actual file edits now in the assigned documentation/skill scope. Update the documentation itself, preserving applicable existing content; a prose-only description in your response does not satisfy this checkpoint. Do not edit implementation or tests. Set regression=null and explain why behavioral testing is skipped.'
-            : "Research as needed. Make an actual edit to at least one of this component's declared documentation files describing the new behavior, AND add/update a failing regression in its declared test scope. The host rejects this checkpoint if either kind of change is missing; reading another owner's documentation is insufficient. Do not edit implementation. For a completed behavioral specification, regression must not be null. Return regression with verificationIndex selecting a captured command, expected nonzero exitCode and literal outputIncludes naming the expected failing assertion. Prefer the matching declared host operation to observe the test output before submitting its expectation. If sandbox restrictions prevent running the regression, return completed preparation with the proposed regression expectation and an evidence-backed finding describing the limitation; do not claim it was verified. The host must observe the exact expected failure before implementation. Return blocked only when the assignment itself requires unavailable authority or a decision, not solely because the host must execute a check. Return before implementation."),
+            : `Research as needed. Make an actual edit to at least one of this component's declared documentation files describing the new behavior, AND add/update a failing regression in its declared test scope. The host rejects this checkpoint if either kind of change is missing; reading another owner's documentation is insufficient. Do not edit implementation. For a completed behavioral specification, regression must not be null. Return regression with operationId selecting a captured verify operation, expected nonzero exitCode and literal outputIncludes naming the expected failing assertion. Prefer the matching declared host operation to observe the test output before submitting its expectation. If sandbox restrictions prevent running the regression, return completed preparation with the proposed regression expectation and an evidence-backed finding describing the limitation; do not claim it was verified. The host must observe the exact expected failure before implementation. Return blocked only when the assignment itself requires unavailable authority or a decision, not solely because the host must execute a check. Return before implementation.`),
     );
     if (!this.state.specificationFinished) await this.verification.specification(spec);
-  }
-
-  /** Coordinates the behavior-change stages and their host checkpoints. */
-  private async change(): Promise<void> {
-    await this.specification();
-    let feedback = '';
-    for (
-      let attempt = 1;
-      this.state.options.maxAttempts === undefined || attempt <= this.state.options.maxAttempts;
-      attempt++
-    ) {
-      await this.implement(attempt, feedback);
-      const failed = await this.checkImplementation(attempt);
-      if (failed !== undefined) {
-        feedback = failed;
-        continue;
-      }
-      const reviewed = await this.review(attempt);
-      if (reviewed !== undefined) {
-        feedback = reviewed;
-        continue;
-      }
-      await this.verification.final();
-      this.markAttempt({ status: 'completed' });
-      this.state.options.record.outcome = 'ready_for_integration';
-      return;
-    }
-    throw new Error('Implementation attempts exhausted');
   }
 
   /** Runs implementation and any justified correction within retained attempt state. */
@@ -260,13 +212,12 @@ export class SessionWorkflow {
       return undefined;
     } catch (error) {
       this.state.safe();
-      const { signal, record, maxAttempts } = this.state.options;
+      const { signal, record } = this.state.options;
       signal.throwIfAborted();
       if (
         record.status === 'no_changes' ||
         !(error instanceof Error) ||
-        !error.message.startsWith('Command failed (') ||
-        attempt === maxAttempts
+        !error.message.startsWith('Command failed (')
       )
         throw error;
       const failed = record.commands.at(-1)!;
@@ -282,21 +233,19 @@ export class SessionWorkflow {
   }
 
   /** Runs source-read-only review and requires final host verification. */
-  private async review(attempt: number): Promise<string | undefined> {
+  private async review(): Promise<string | undefined> {
     const review = await this.turns.perform(
       'review',
       `Review the candidate diff without editing source. Host check results (captured evidence): ${JSON.stringify(this.state.options.record.commands.map(({ command, args, exitCode, durationMs }) => ({ command, args, exitCode, durationMs })))}. The earlier expected red-test failure was a specification checkpoint. Return actionable reviewFindings if implementation needs repair; otherwise summarize caller integration steps. Record caller handoff as review within captured role activities; do not claim release authority or publish.`,
       true,
     );
     if (!review.reviewFindings.length) return undefined;
-    if (attempt === this.state.options.maxAttempts)
-      throw new Error(`Review requires repair: ${review.reviewFindings.join('; ')}`);
     const feedback = review.reviewFindings.join('\n');
     this.markAttempt({ status: 'failed', feedback });
     return new SessionProgress(this.state).failure('review-checkpoint', feedback);
   }
 
-  /** Records an implementation attempt before work can consume its allowance. */
+  /** Records observed implementation attempts as evidence without enforcing a quota. */
   private markAttempt(detail: Record<string, unknown>): void {
     Object.assign((this.state.options.record.attempts as Array<object>).at(-1)!, {
       ...detail,
@@ -304,11 +253,9 @@ export class SessionWorkflow {
     });
   }
 
-  /** Records failed checkpoint evidence for bounded correction or terminal reporting. */
+  /** Records failed checkpoint evidence for corrective diagnosis or terminal reporting. */
   private failure(error: unknown): void {
-    const { record, signal, control } = this.state.options;
-    if (control && error instanceof Error && error.name === 'WorkdayBlocked')
-      record.status = 'blocked';
+    const { record, signal } = this.state.options;
     if (!['blocked', 'no_changes', 'needs_attention'].includes(record.status))
       record.status =
         signal.aborted && String(signal.reason) === 'Error: Cancelled' ? 'cancelled' : 'failed';

@@ -1,31 +1,4 @@
-prerequisites:
-  - command: node
-    args:
-      - -e
-      - if(process.versions.node.split('.')[0]!=='22')process.exit(1)
-  - command: git
-    args:
-      - --version
-  - command: setsid
-    args:
-      - --version
-setup:
-  - command: npm
-    args:
-      - ci
-      - --no-audit
-      - --no-fund
-  - command: npm
-    args:
-      - run
-      - build
-generatedDirectories:
-  - node_modules
-  - dist
-  - .test-build
-  - .fixture-build
-  - .tool-build
-schemaVersion: 3
+schemaVersion: 4
 workspace:
   primary:
     id: arcnexus

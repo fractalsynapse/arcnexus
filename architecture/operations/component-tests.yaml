@@ -1,0 +1,26 @@
+schemaVersion: 4
+id: component-tests
+purpose: Run the active owner’s selected component suites
+kind: command
+repository: arcnexus
+cwd: .
+category: cli-check
+activities:
+  - implementation
+  - research
+  - review
+  - testing
+command: node
+args:
+  - --test
+  - context: selectedTestFiles
+generatedDirectories:
+  - .fixture-build
+  - .test-build
+  - .tool-build
+  - dist
+artifacts: []
+prerequisites:
+  - migrated-recipe-a7573c70ed1a3dfa
+  - migrated-recipe-51b1b212512a2d1a
+network: true

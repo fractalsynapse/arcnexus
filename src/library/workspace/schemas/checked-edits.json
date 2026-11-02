@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "changes"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_-]{1,128}$",
+      "description": "Unique edit transaction ID. Use a fresh ID for every distinct batch; reuse only for an identical retry. This is not an owner or assignment ID."
+    },
+    "changes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "operation", "expectedSha256"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Owned path relative to the assignment workspace, never absolute. Omit the workspace directory prefix; traversal is forbidden."
+          },
+          "operation": {
+            "enum": ["create", "update", "delete"]
+          },
+          "expectedSha256": {
+            "type": ["string", "null"],
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "content": {
+            "type": ["string", "null"]
+          }
+        }
+      }
+    }
+  }
+}

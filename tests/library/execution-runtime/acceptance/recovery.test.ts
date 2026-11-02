@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
 import { join } from 'node:path';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
@@ -7,7 +7,7 @@ import { ExecutionLease } from '../../../../dist/library/coordination-store/exec
 import { StewardshipPolicy } from '../../../../dist/library/workday/workday.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
 /** Exercises host ownership and recovery without substituting model claims for observed delivery. */
 class RecoveryScenarios {
@@ -88,17 +88,28 @@ class RecoveryScenarios {
   /** Obsolete executable settings fail preflight instead of silently changing scheduling semantics. */
   defaults(t: TestContext): void {
     const f = new GeneralFixture(t).fixture;
-    const path = join(f.repo, 'architecture/execution.yaml');
-    const original = readFileSync(path, 'utf8');
-    writeFileSync(path, original + 'maxTurns: 5\n');
+    const path = join(f.repo, 'architecture/components/platform.json');
+    const original = JSON.parse(readFileSync(path, 'utf8'));
+    writeFileSync(path, JSON.stringify({ ...original, maxTurns: 5 }));
     f.commit();
-    assert.throws(
-      () => new ExecutionContext().resolve(f.repo),
-      /Unsupported execution setting: maxTurns/,
+    assert.throws(() => new ExecutionContext().resolve(f.repo), /additional properties|maxTurns/);
+    writeFileSync(path, JSON.stringify({ ...original, defaultPackage: 42 }));
+    f.commit();
+    assert.throws(() => new ExecutionContext().resolve(f.repo), /defaultPackage/);
+  }
+
+  /** Gives the package a distinct finite check while retaining one accountable script owner. */
+  private packageOperation(f: GeneralFixture['fixture']): void {
+    const path = join(f.repo, 'architecture/operations/verify.yaml');
+    const operation = JSON.parse(readFileSync(path, 'utf8'));
+    writeFileSync(
+      join(f.repo, 'architecture/operations/package-check.yaml'),
+      JSON.stringify({ ...operation, id: 'package-check', args: ['package-check.cjs'] }),
     );
-    writeFileSync(path, original.replace('defaultPackage: package', 'defaultPackage: 42'));
-    f.commit();
-    assert.throws(() => new ExecutionContext().resolve(f.repo), /defaultPackage must be/);
+    const ownerPath = join(f.repo, 'architecture/components/a.json');
+    const owner = JSON.parse(readFileSync(ownerPath, 'utf8'));
+    owner.owns.push('package-check.cjs');
+    writeFileSync(ownerPath, JSON.stringify(owner));
   }
 
   /** A failing captured package check prevents engineering even when the owner's checks pass. */
@@ -106,7 +117,8 @@ class RecoveryScenarios {
     const f = new GeneralFixture(t).fixture;
     const path = join(f.repo, 'architecture/components/package.json');
     const component = JSON.parse(readFileSync(path, 'utf8'));
-    component.verification = [{ command: 'node', args: ['package-check.cjs'] }];
+    component.operations = { 'package-check': ['verify'] };
+    this.packageOperation(f);
     writeFileSync(path, JSON.stringify(component));
     writeFileSync(join(f.repo, 'package-check.cjs'), 'process.exit(17);');
     f.commit();
@@ -183,4 +195,8 @@ test('obsolete and malformed execution defaults fail preflight', (t) => scenario
 test('general execution observes captured package checks in addition to owner checks', (t) =>
   scenarios.packageChecks(t));
 
-registerSuite({ component: 'execution-runtime', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'execution-runtime',
+  level: 'acceptance',
+  tags: ['native-host', 'deterministic'],
+});

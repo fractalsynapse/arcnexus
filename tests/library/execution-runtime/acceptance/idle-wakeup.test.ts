@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
 /** Checks durable inbox wakeups against actual idle stewardship without overriding user controls. */
 class IdleWakeupScenarios {
@@ -70,4 +70,8 @@ test('idle workdays wake on persisted inbox requests and otherwise remain quiet'
 for (const action of ['pause', 'stop'])
   test('inbox wakeups preserve an explicit ' + action, (t) => scenarios.controlled(t, action));
 
-registerSuite({ component: 'execution-runtime', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'execution-runtime',
+  level: 'acceptance',
+  tags: ['native-host', 'deterministic'],
+});

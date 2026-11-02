@@ -1,0 +1,19 @@
+schemaVersion: 4
+id: check-runtime
+purpose: Check the declared runtime
+kind: command
+repository: identity
+cwd: .
+category: cli-check
+activities:
+  - research
+  - documentation
+  - testing
+  - implementation
+  - review
+generatedDirectories: []
+artifacts: []
+prerequisites: []
+command: node
+args:
+  - --version

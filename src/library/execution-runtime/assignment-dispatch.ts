@@ -7,7 +7,7 @@ import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/ex
 import type { DirectorResult } from '../task-intake/direction.js';
 import { save, type RecordData } from '../workspace/state.js';
 import { ProgressObserver } from '../report/progress.js';
-import { candidateDigest } from '../change-inspection/changes.js';
+import { materialCandidate } from '../change-inspection/changes.js';
 
 /** Validates proposed work and retained continuations before changing scheduling readiness. */
 export class AssignmentDispatch {
@@ -83,8 +83,17 @@ export class AssignmentDispatch {
   private diagnose(record: RecordData, assignment: ExecutionAssignment): void {
     record.continuationLoopWarning = new ProgressObserver(this.root, record).failed(
       { activity: 'retained-blocker' },
-      String(assignment.data.reason),
-      candidateDigest(record),
+      'Retained assignment remains blocked without material checkpoint progress',
+      JSON.stringify({
+        candidate: materialCandidate(record),
+        stage: record.nextStage ?? record.stage,
+        specificationFinished: record.specificationFinished ?? false,
+        dependencies: this.store.inbox(assignment.id).map((request) => ({
+          ...request,
+          replies: request.replies.filter((reply) => reply.actor !== assignment.id),
+        })),
+        milestones: assignment.data.milestones,
+      }),
     );
     save(this.root, record);
   }

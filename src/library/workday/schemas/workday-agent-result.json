@@ -72,31 +72,7 @@
       }
     },
     "regression": {
-      "anyOf": [
-        {
-          "type": "object",
-          "properties": {
-            "verificationIndex": {
-              "type": "integer",
-              "minimum": 0
-            },
-            "exitCode": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 255
-            },
-            "outputIncludes": {
-              "type": "string",
-              "minLength": 1
-            }
-          },
-          "required": ["verificationIndex", "exitCode", "outputIncludes"],
-          "additionalProperties": false
-        },
-        {
-          "type": "null"
-        }
-      ]
+      "$ref": "https://arcnexus.local/schemas/regression-expectation-v1"
     },
     "reviewFindings": {
       "type": "array",

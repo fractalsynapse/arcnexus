@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import {
   constants,
+  chmodSync,
   cpSync,
   mkdirSync,
   mkdtempSync,
@@ -28,12 +29,14 @@ export class RunnerSnapshot {
     mkdirSync(parent, { recursive: true, mode: 0o700 });
     const directory = mkdtempSync(join(parent, 'runner-'));
     const hash = this.hash(installation);
-    for (const name of this.inputs)
+    for (const name of this.inputs) {
       cpSync(join(installation, name), join(directory, name), {
         recursive: true,
         dereference: true,
         mode: constants.COPYFILE_FICLONE,
       });
+      this.permissions(installation, directory, name);
+    }
     if (this.hash(installation) !== hash || this.hash(directory) !== hash)
       throw new Error(
         'Supervising installation changed during capture; retry after its build finishes',
@@ -41,6 +44,17 @@ export class RunnerSnapshot {
     const runner = { directory, hash };
     writeFileSync(join(directory, 'runner.json'), JSON.stringify(runner), { mode: 0o600 });
     return runner;
+  }
+
+  /** Preserves empty-directory modes that recursive copying otherwise derives from the caller's umask. */
+  private permissions(source: string, target: string, path: string): void {
+    const input = join(source, path);
+    const stat = statSync(input);
+    if (stat.isDirectory())
+      for (const name of readdirSync(input)) this.permissions(source, target, join(path, name));
+    const copied = join(target, path);
+    if ((statSync(copied).mode & 0o777) !== (stat.mode & 0o777))
+      chmodSync(copied, stat.mode & 0o777);
   }
 
   /** Hashes names, executable modes and file bytes, following the same dependency links as capture. */

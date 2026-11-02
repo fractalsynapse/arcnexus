@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
 /** Carries retained noninteractive questions into a new prompt without silently resuming old work. */
 class TaskReferenceScenario {
@@ -41,4 +41,8 @@ const scenario = new TaskReferenceScenario();
 test('a subsequent prompt gives the director explicitly referenced retained task context', (t) =>
   scenario.run(t));
 
-registerSuite({ component: 'execution-runtime', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'execution-runtime',
+  level: 'acceptance',
+  tags: ['native-host', 'deterministic'],
+});

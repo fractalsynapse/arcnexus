@@ -1,0 +1,22 @@
+schemaVersion: 4
+id: component-lint
+purpose: Read-only lint feedback for the active owner
+kind: command
+repository: arcnexus
+cwd: .
+category: lint
+activities:
+  - documentation
+  - implementation
+  - research
+  - review
+  - testing
+command: node
+args:
+  - node_modules/eslint/bin/eslint.js
+  - --no-error-on-unmatched-pattern
+  - --no-warn-ignored
+  - context: ownedPaths
+generatedDirectories: []
+artifacts: []
+prerequisites: []

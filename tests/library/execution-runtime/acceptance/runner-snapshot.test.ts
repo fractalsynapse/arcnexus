@@ -2,10 +2,10 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { cpSync, mkdirSync, readFileSync, readdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { cli } from '../../testing/support/workflow-fixture.js';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
 /** Replaces a disposable installation after startup to prove the host retains its own runner. */
 class RunnerSnapshotScenario {
@@ -68,4 +68,8 @@ const scenario = new RunnerSnapshotScenario();
 test('background execution survives replacement of its originating installation', (t) =>
   scenario.run(t));
 
-registerSuite({ component: 'execution-runtime', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'execution-runtime',
+  level: 'acceptance',
+  tags: ['native-host', 'deterministic', 'host-lifecycle'],
+});

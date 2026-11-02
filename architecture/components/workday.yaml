@@ -1,98 +1,29 @@
+schemaVersion: 5
 id: workday
 type: library
+parentId: cli-package
 purpose: Select fair self-directed stewardship turns from the eligible package catalog
-path: src/library/workday
 objectives:
   - Select fair self-directed stewardship turns from the eligible package catalog
 constraints:
   - Preserve captured authority and evidence
-verification:
-  - command: npm
-    args:
-      - run
-      - check
-  - command: npm
-    args:
-      - test
-  - command: node
-    args:
-      - dist/cli.js
-      - guidance
-      - validate
-      - --project
-      - .
-  - command: npm
-    args:
-      - run
-      - format:check
-  - command: npm
-    args:
-      - run
-      - lint
-questions: []
-access:
-  readPaths:
-    - .
-  writeDirectories:
-    - src/library/workday
-    - tests/library/workday
-    - docs/library/workday
-    - architecture/components
-schemaVersion: 4
-role: systems-engineer
-executionProfile: luna
-interfaces:
-  - Self-directed stewardship policy and historical workday evidence inspection
-relatedIds:
-  - assignment
-  - workspace
-  - report
-parentId: cli-package
-operationIds:
-  - workday-lint
-  - workday-tests
-patternIds:
-  - readable-typescript
-ownership:
-  paths:
-    - src/library/workday
-    - tests/library/workday
-    - docs/library/workday
-    - architecture/components/workday.yaml
-  publicModules:
-    - src/library/workday/workday-config.ts
-    - src/library/workday/workday-view.ts
-    - src/library/workday/workday.ts
-  directoryExceptions:
-    - path: architecture/components
-      reason: Directory-only sandbox grants; only this component definition is
-        writable under captured exact-path checks
-discovery:
-  source:
-    - src/library/workday
-  documentation:
-    - docs/library/workday
-  tests:
-    - tests/library/workday
-  exclude: []
-provides:
-  - id: workday-agent-result
-    version: "1"
-    kind: json-schema
-    path: src/library/workday/schemas/workday-agent-result.json
-    compatibility: Preserve supported historical versions and captured execution readers
-  - id: workday
-    version: "1"
-    kind: json-schema
-    path: src/library/workday/schemas/workday.json
-    compatibility: Preserve supported historical versions and captured execution readers
-consumes:
-  - id: workday
-    version: "1"
-  - id: workday-agent-result
-    version: "1"
-  - id: test-profile
-    version: "1"
-  - id: candidate-changes
-    version: "1"
-testProfile: node
+  - 'workday-agent-result
+    (src/library/workday/schemas/workday-agent-result.json): Preserve supported
+    historical versions and captured execution readers'
+  - 'workday (src/library/workday/schemas/workday.json): Preserve supported
+    historical versions and captured execution readers'
+operations:
+  migrated-recipe-43b539fb85a57c26:
+    - verify
+  migrated-recipe-df6d67ddacf5bf0c:
+    - verify
+owns:
+  - src/library/workday
+  - tests/library/workday
+  - docs/library/workday
+api:
+  - module: src/library/workday/workday-config.ts
+  - module: src/library/workday/workday-view.ts
+  - module: src/library/workday/workday.ts
+  - schema: src/library/workday/schemas/workday-agent-result.json
+  - schema: src/library/workday/schemas/workday.json

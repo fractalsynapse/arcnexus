@@ -1,0 +1,21 @@
+repository: arcnexus
+cwd: .
+category: cli-check
+activities: []
+generatedDirectories:
+  - .fixture-build
+  - .test-build
+  - .tool-build
+  - dist
+  - node_modules
+artifacts: []
+network: true
+schemaVersion: 4
+id: migrated-recipe-a7573c70ed1a3dfa
+purpose: Verify guidance-validation
+kind: command
+prerequisites: []
+command: npm
+args:
+  - run
+  - build

@@ -69,7 +69,7 @@ export type ActivationResult = { receipt?: string } & (
       kind: 'responses';
       actions: Array<{
         requestId: string;
-        action: 'accept' | 'reject' | 'clarify' | 'answer';
+        action: 'accept' | 'reject' | 'clarify' | 'answer' | 'require_delivery';
         text: string;
       }>;
     }

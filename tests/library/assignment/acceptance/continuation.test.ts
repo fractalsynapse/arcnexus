@@ -1,13 +1,15 @@
 import assert from 'node:assert/strict';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
+import { loadBindings, type Bindings } from '../../../../dist/library/architecture/bindings.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { resolveAssignment } from '../../../../dist/library/architecture/assignment.js';
 import { StewardSession } from '../../../../dist/library/assignment/steward.js';
 import { createWorkspace } from '../../../../dist/library/workspace/workspace.js';
 import type { RecordData } from '../../../../dist/library/workspace/state.js';
-import { workflowFixture } from '../../testing/support/workflow-fixture.js';
+import { minimalWorkflowFixture as workflowFixture } from '../../testing/support/workflow-fixture.js';
 
 /** Reconstructs sessions between real SDK-boundary turns against a controlled executable. */
 class ContinuationScenarios {
@@ -16,10 +18,7 @@ class ContinuationScenarios {
     const f = workflowFixture(t);
     f.configure({ missingThread });
     this.prepareState(f.state);
-    let record = createWorkspace(f.state, { project: f.repo });
-    record.resolvedAssignment = resolveAssignment(f.repo, record.base, 'sample', {
-      objective: 'Improve behavior',
-    });
+    let record = this.record(f);
     const stages: unknown[] = [];
     for (let index = 0; index < 4; index++) {
       const session = new StewardSession(
@@ -44,15 +43,11 @@ class ContinuationScenarios {
   /** Requires passing characterization before and after a refactor without fabricated specification edits. */
   async refactor(t: TestContext): Promise<void> {
     const f = workflowFixture(t);
-    writeFileSync(
-      join(f.repo, 'tests/baseline.cjs'),
-      "require('node:assert/strict').equal(require('node:fs').readFileSync('source.txt','utf8').trim(),'before');",
-    );
-    writeFileSync(join(f.repo, 'verify.cjs'), "require('./tests/baseline.cjs');");
+    this.refactorContract(f);
     f.configure({ refactor: true });
     f.commit();
     this.prepareState(f.state);
-    const record = createWorkspace(f.state, { project: f.repo });
+    const record = this.record(f);
     this.refactorAuthority(record, f.repo);
     record.directionAccepted = true;
     for (let stage = 0; stage < 4; stage++)
@@ -66,6 +61,17 @@ class ContinuationScenarios {
         new AbortController().signal,
       ).step();
     this.assertRefactor(record);
+  }
+
+  /** Routes characterization directly through its captured operation instead of a private cross-owner import. */
+  private refactorContract(f: ReturnType<typeof workflowFixture>): void {
+    writeFileSync(
+      join(f.repo, 'tests/baseline.cjs'),
+      "require('node:assert/strict').equal(require('node:fs').readFileSync('source.txt','utf8').trim(),'before');",
+    );
+    const path = join(f.repo, 'architecture/operations/verify.yaml');
+    const operation = JSON.parse(readFileSync(path, 'utf8'));
+    writeFileSync(path, JSON.stringify({ ...operation, args: ['tests/baseline.cjs'] }));
   }
 
   /** Checks distinct before/after characterization evidence and unchanged documentation. */
@@ -85,6 +91,7 @@ class ContinuationScenarios {
   /** Captures the unchanged behavioral contract before any refactor stage. */
   private refactorAuthority(record: RecordData, repository: string): void {
     record.resolvedAssignment = resolveAssignment(repository, record.base, 'sample', {
+      bindings: record.bindings as Bindings,
       value: {
         schemaVersion: 3,
         kind: 'change',
@@ -102,9 +109,20 @@ class ContinuationScenarios {
     assert.equal(record.status, 'completed');
     assert.deepEqual(stages, ['specification', 'implementation', 'review', 'finished']);
     assert.equal(record.implementationAttempts, 1);
-    assert.equal((record.turns as unknown[]).length, 3);
+    assert.equal((record.turns as unknown[]).length, 4);
     assert.ok((record.frozenTests as unknown[]).length);
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'after');
+  }
+
+  /** Captures the same local binding and minimal authority used by a production prepared assignment. */
+  private record(f: ReturnType<typeof workflowFixture>): RecordData {
+    const bindings = loadBindings(join(f.root, 'minimal-bindings.json'));
+    const record = createWorkspace(f.state, { project: f.repo, bindings });
+    record.resolvedAssignment = resolveAssignment(f.repo, record.base, 'sample', {
+      objective: 'Improve behavior',
+      bindings,
+    });
+    return record;
   }
 
   /** Establishes the state directories normally created by the CLI entry point. */
@@ -124,4 +142,8 @@ test('a confirmed missing thread receives a fresh validated continuation', (t) =
 test('refactor retains passing characterization without changed specification', (t) =>
   scenarios.refactor(t));
 
-registerSuite({ component: 'assignment', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'assignment',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

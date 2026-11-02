@@ -52,9 +52,11 @@ class CapturedVerificationScenarios {
       resolved: { base: f.git('rev-parse', 'HEAD') },
       component: { tests: [], verification: [check] },
       safe: () => {},
-      command: async () => {
-        observed();
-        execFileSync(check.command, check.args, { cwd: f.repo, stdio: 'pipe' });
+      checks: async (commands: Array<{ command: string; args: string[] }>) => {
+        for (const command of commands) {
+          observed();
+          execFileSync(command.command, command.args, { cwd: f.repo, stdio: 'pipe' });
+        }
       },
     } as any);
   }

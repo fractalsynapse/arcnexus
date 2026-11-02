@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
+import { minimalWorkflowFixture } from '../../testing/support/workflow-fixture.js';
 import { spawnSync } from 'node:child_process';
-import { lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { lstatSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 export const cli = resolve('dist/cli.js');
@@ -23,42 +23,44 @@ export function cleanupIntent(record: any) {
   };
 }
 
+/** Reuses minimal architectural authority and supplies shared setup operations for workspace cases. */
 export function fixture(t: any, setup: any = []): any {
-  const root = mkdtempSync(join(tmpdir(), 'arcnexus-test-'));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
-  const repo = join(root, 'repo'),
-    state = join(root, 'state');
-  mkdirSync(join(repo, 'architecture'), { recursive: true });
-  const git = (...args: any) => {
-    const r = spawnSync('git', ['-C', repo, ...args], { encoding: 'utf8' });
-    assert.equal(r.status, 0, r.stderr);
-    return r.stdout.trim();
+  const f = minimalWorkflowFixture(t);
+  writeFileSync(join(f.repo, 'source.txt'), 'original\n');
+  writeFileSync(join(f.repo, '.gitignore'), 'generated/\n.env\n');
+  writeEnvironment(f.repo, setup);
+  f.commit();
+  const bindings = join(f.root, 'minimal-bindings.json');
+  const run = (...args: string[]) =>
+    spawnSync(process.execPath, [cli, ...args, '--bindings', bindings], {
+      env: f.env,
+      encoding: 'utf8',
+      timeout: 30 * 60 * 1000,
+    });
+  return {
+    ...f,
+    bindings,
+    run,
+    prepare: (...args: string[]) => run('prepare', '--project', f.repo, ...args),
   };
-  git('init', '-b', 'main');
-  git('config', 'user.email', 'test@example.invalid');
-  git('config', 'user.name', 'Test');
-  writeFileSync(join(repo, '.gitignore'), 'generated/\n.env\n');
-  writeFileSync(join(repo, 'source.txt'), 'original\n');
-  writeEnvironment(repo, setup);
-  git('add', '.');
-  git('commit', '-m', 'fixture');
-  const env = { ...process.env, ARCNEXUS_STATE_DIR: state };
-  const run = (...args: any) =>
-    spawnSync(process.execPath, [cli, ...args], { env, encoding: 'utf8' });
-  const prepare = (...args: any) => run('prepare', '--project', repo, ...args);
-  return { root, repo, state, git, env, run, prepare };
 }
 
+/** Captures each explicit test recipe as an operation without inferring command equivalence. */
 export function writeEnvironment(repo: string, setup: any[]): void {
-  writeFileSync(
-    join(repo, 'architecture/environment.yaml'),
-    JSON.stringify({
-      schemaVersion: 1,
-      prerequisites: [],
-      setup,
-      generatedDirectories: ['generated'],
-    }),
+  const path = join(repo, 'architecture/components/platform.json');
+  const platform = JSON.parse(readFileSync(path, 'utf8'));
+  const template = JSON.parse(
+    readFileSync(join(repo, 'architecture/operations/verify.yaml'), 'utf8'),
   );
+  for (const [index, command] of setup.entries()) {
+    const id = `setup-${index}`;
+    writeFileSync(
+      join(repo, `architecture/operations/${id}.yaml`),
+      JSON.stringify({ ...template, ...command, id }),
+    );
+    platform.operations[id] = ['setup'];
+  }
+  writeFileSync(path, JSON.stringify(platform));
 }
 
 export function evidence(f: any, record: any): any {
@@ -73,4 +75,21 @@ export function evidence(f: any, record: any): any {
       }
     },
   };
+}
+
+/** Finds only a descendant launcher of the test's known host, using host rather than sandbox PIDs. */
+export function managedScope(pid: number): string | undefined {
+  try {
+    const args = readFileSync(`/proc/${pid}/cmdline`, 'utf8').split('\0');
+    const launcher = args.findIndex((arg) => arg.endsWith('/scope-launcher.js'));
+    if (launcher >= 0) return args[launcher + 1];
+    const children = readFileSync(`/proc/${pid}/task/${pid}/children`, 'utf8').trim();
+    for (const child of children.split(/\s+/).filter(Boolean)) {
+      const scope = managedScope(Number(child));
+      if (scope) return scope;
+    }
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+  }
+  return undefined;
 }

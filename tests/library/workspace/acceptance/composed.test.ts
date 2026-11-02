@@ -1,11 +1,13 @@
+import { TestProcess } from '../../testing/support/test-process.js';
+import { composed } from '../support/composed-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
-import { test } from 'node:test';
-import { cli, workflowFixture } from '../../testing/support/workflow-fixture.js';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
+import { cli, stewardEntry } from '../../testing/support/workflow-fixture.js';
 
 /** Exercises composed behavior through observable scenarios. */
 class ComposedTests {
@@ -64,7 +66,11 @@ class ComposedTests {
       writeFileSync(join(f.repo, 'packages/dependency/owned'), 'source');
       f.git('add', '-f', 'packages');
     }
-    if (kind === 'generated-overlap') f.environment.generatedDirectories = ['packages'];
+    if (kind === 'generated-overlap') {
+      const path = join(f.repo, 'architecture/operations/verify.yaml');
+      const operation = JSON.parse(readFileSync(path, 'utf8'));
+      writeFileSync(path, JSON.stringify({ ...operation, generatedDirectories: ['packages'] }));
+    }
     if (kind === 'missing-binding')
       writeFileSync(f.bindings, JSON.stringify({ schemaVersion: 1, repositories: {}, tools: {} }));
     f.commit();
@@ -78,22 +84,29 @@ class ComposedTests {
       r = f.run('--bindings', f.bindings);
     assert.equal(r.status, 0, r.stderr);
     const v = JSON.parse(r.stdout);
-    assert.equal(v.settings.filesystem[v.members[0].workspace], 'read');
+    assert.equal(v.settings.filesystem[v.workspace], 'read');
+    assert.equal(v.members[0].workspace, join(v.workspace, 'packages/dependency'));
+    assert.ok(
+      Object.entries(v.settings.filesystem).every(
+        ([path, grant]) => grant !== 'write' || !path.startsWith(v.workspace + '/'),
+      ),
+    );
     assert.ok(v.members[0].inventoryDigest);
   }
 
   /** Verifies that failed dependency preparation retains ownership and supports safe cleanup. */
   failedDependencyPreparationRetainsOwnershipAndSupportsSafeCleanup(t: TestContext) {
     const f = composed(t);
-    f.environment.workspace.dependencies[0].setup = [
-      { command: 'node', args: ['-e', 'process.exit(6)'] },
-    ];
+    f.setup({ command: 'node', args: ['-e', 'process.exit(6)'] });
     f.commit();
     const r = f.prepare();
     assert.equal(r.status, 1);
     const v = JSON.parse(r.stdout);
     assert.equal(v.members[0].status, 'created');
-    assert.equal(v.commands.at(-1).exitCode, 6);
+    const child = JSON.parse(
+      readFileSync(join(f.state, 'runs', v.id + '-dependency', 'report.json'), 'utf8'),
+    );
+    assert.equal(child.operationInvocations.at(-1).result.exitCode, 6);
     assert.ok(existsSync(v.members[0].workspace));
     assert.equal(f.cleanup(v.id).status, 0);
   }
@@ -149,9 +162,20 @@ class ComposedTests {
   /** Verifies that assignment cannot activate acomponent owned by adependency repository. */
   assignmentCannotActivateAComponentOwnedByADependencyRepository(t: TestContext) {
     const f = composed(t);
-    f.environment.workspace.primary.id = 'different-owner';
-    f.commit();
-    const r = f.run('--bindings', f.bindings);
+    const r = spawnSync(
+      process.execPath,
+      [
+        stewardEntry,
+        'run',
+        'dependency',
+        'Inspect dependency',
+        '--project',
+        f.repo,
+        '--bindings',
+        f.bindings,
+      ],
+      { env: f.env, encoding: 'utf8', timeout: 15_000 },
+    );
     assert.equal(r.status, 2);
     assert.match(r.stderr, /primary repository/);
   }
@@ -166,114 +190,47 @@ class ComposedTests {
     assert.equal(f.dg('status', '--porcelain'), '');
   }
 
-  /** Verifies that dependency setup timeout retains partial records and can be cleaned. */
-  dependencySetupTimeoutRetainsPartialRecordsAndCanBeCleaned(t: TestContext) {
+  /** Cancels only after the confined dependency command is running and retains its invocation evidence. */
+  async dependencySetupCancellationRetainsPartialRecords(t: TestContext) {
     const f = composed(t);
-    f.environment.workspace.dependencies[0].setup = [
-      { command: 'node', args: ['-e', 'setInterval(()=>{},1000)'] },
-    ];
+    f.setup({ command: 'node', args: ['-e', 'console.log("READY");setInterval(()=>{},1000)'] });
     f.commit();
-    const r = spawnSync(
-      process.execPath,
-      [cli, 'prepare', '--project', f.repo, '--bindings', f.bindings, '--timeout-seconds', '0.5'],
-      { env: f.env, encoding: 'utf8' },
+    const child = new TestProcess(
+      t,
+      [cli, 'prepare', '--project', f.repo, '--bindings', f.bindings],
+      f.env,
     );
-    assert.equal(r.status, 1);
-    const v = JSON.parse(r.stdout);
-    assert.equal(v.members[0].status, 'created');
-    assert.ok(v.commands.at(-1).durationMs > 0);
-    assert.equal(f.cleanup(v.id).status, 0);
+    await child.waitForReady(() => this.dependencyReady(f), 'Dependency setup must be running');
+    child.kill('SIGINT');
+    assert.equal(await child.closed, 130, child.stderr);
+    const record = JSON.parse(child.stdout);
+    assert.equal(record.members[0].status, 'created');
+    const retained = JSON.parse(
+      readFileSync(join(f.state, 'runs', record.id + '-dependency', 'report.json'), 'utf8'),
+    );
+    assert.equal(retained.operationInvocations.at(-1).status, 'cancelled');
+    assert.ok(retained.operationInvocations.at(-1).result.durationMs > 0);
+    assert.equal(f.cleanup(record.id).status, 0);
+  }
+
+  /** Observes a captured child invocation's actual output before the cancellation checkpoint. */
+  private dependencyReady(f: any): boolean {
+    for (const id of readdirSync(join(f.state, 'runs'))) {
+      if (!id.endsWith('-dependency')) continue;
+      const directory = join(f.state, 'runs', id);
+      for (const name of readdirSync(directory))
+        if (
+          name.startsWith('invocation-') &&
+          name.endsWith('.log') &&
+          readFileSync(join(directory, name), 'utf8').includes('READY')
+        )
+          return true;
+    }
+    return false;
   }
 }
 
 const suite = new ComposedTests();
-
-function composed(t: any): any {
-  const f = workflowFixture(t),
-    { dependency, dg } = createDependency(f.root);
-  f.git('remote', 'add', 'origin', 'https://example.invalid/primary.git');
-  writeFileSync(join(f.repo, '.gitignore'), 'packages/\n');
-  const environment = workspaceEnvironment(dg('rev-parse', 'HEAD'));
-  const bindings = writeBindings(f.root, dependency);
-  const commit = () => {
-    writeFileSync(join(f.repo, 'architecture/environment.yaml'), JSON.stringify(environment));
-    if (f.git('status', '--porcelain')) f.commit();
-  };
-  commit();
-  const prepare = () =>
-    spawnSync(process.execPath, [cli, 'prepare', '--project', f.repo, '--bindings', bindings], {
-      env: f.env,
-      encoding: 'utf8',
-    });
-  const cleanup = (id: any) =>
-    spawnSync(process.execPath, [cli, 'cleanup', id], { env: f.env, encoding: 'utf8' });
-  return { ...f, dependency, dg, environment, bindings, commit, prepare, cleanup };
-}
-
-function createDependency(root: string) {
-  const dependency = join(root, 'dependency');
-  mkdirSync(dependency);
-  const dg = (...args: any) => {
-    const r = spawnSync('git', ['-C', dependency, ...args], { encoding: 'utf8' });
-    assert.equal(r.status, 0, r.stderr);
-    return r.stdout.trim();
-  };
-  dg('init', '-b', 'main');
-  dg('config', 'user.name', 'Test');
-  dg('config', 'user.email', 'test@example.invalid');
-  dg('remote', 'add', 'origin', 'https://example.invalid/dependency.git');
-  writeFileSync(join(dependency, 'source.txt'), 'dependency');
-  writeFileSync(join(dependency, '.gitignore'), 'generated/\nunknown/\n');
-  dg('add', '.');
-  dg('commit', '-m', 'dependency');
-  return { dependency, dg };
-}
-
-function writeBindings(root: string, dependency: string): string {
-  const bindings = join(root, 'bindings.json');
-  writeFileSync(
-    bindings,
-    JSON.stringify({
-      schemaVersion: 1,
-      repositories: { dependency },
-      tools: { node: process.execPath },
-    }),
-  );
-  return bindings;
-}
-
-function workspaceEnvironment(commit: string): any {
-  return {
-    schemaVersion: 1,
-    prerequisites: [],
-    setup: [],
-    generatedDirectories: [],
-    workspace: {
-      primary: { id: 'sample', repository: 'https://example.invalid/primary.git' },
-      dependencies: [dependencyDefinition(commit)],
-    },
-  };
-}
-
-function dependencyDefinition(commit: string) {
-  return {
-    id: 'dependency',
-    repository: 'https://example.invalid/dependency.git',
-    commit,
-    path: 'packages/dependency',
-    prerequisites: [],
-    setup: [
-      {
-        command: 'node',
-        args: [
-          '-e',
-          "require('fs').mkdirSync('generated');require('fs').writeFileSync('generated/cwd',process.cwd())",
-        ],
-      },
-    ],
-    generatedDirectories: ['generated'],
-  };
-}
 
 test('built prepare creates pinned dependency worktrees and guarded cleanup preserves originals', (t: any) =>
   suite.builtPrepareCreatesPinnedDependencyWorktreesAndGuardedCleanupPreservesOriginals(t));
@@ -313,7 +270,11 @@ test('assignment cannot activate a component owned by a dependency repository', 
 test('dependency changes by a controlled executable fail the host boundary check', (t: any) =>
   suite.dependencyChangesByAControlledExecutableFailTheHostBoundaryCheck(t));
 
-test('dependency setup timeout retains partial records and can be cleaned', (t: any) =>
-  suite.dependencySetupTimeoutRetainsPartialRecordsAndCanBeCleaned(t));
+test('dependency setup cancellation retains partial records and can be cleaned', (t: any) =>
+  suite.dependencySetupCancellationRetainsPartialRecords(t));
 
-registerSuite({ component: 'workspace', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'workspace',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

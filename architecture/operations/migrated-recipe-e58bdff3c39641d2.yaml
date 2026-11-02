@@ -1,0 +1,22 @@
+repository: arcnexus
+cwd: .
+category: cli-check
+activities: []
+generatedDirectories:
+  - .fixture-build
+  - .test-build
+  - .tool-build
+  - dist
+  - node_modules
+artifacts: []
+network: true
+schemaVersion: 4
+id: migrated-recipe-e58bdff3c39641d2
+purpose: Project setup
+kind: command
+prerequisites: []
+command: npm
+args:
+  - ci
+  - --no-audit
+  - --no-fund

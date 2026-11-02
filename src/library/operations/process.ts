@@ -1,7 +1,10 @@
+import { ProcessScope } from './process-scope.js';
 import { fork, spawn, spawnSync, type ChildProcess } from 'node:child_process';
-import { closeSync, openSync, writeSync } from 'node:fs';
+import { closeSync, fstatSync, ftruncateSync, openSync, writeSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { Command } from '../architecture/config.js';
+
+export { ProcessScope } from './process-scope.js';
 
 export function git(cwd: string, ...args: string[]): string {
   const result = spawnSync('git', ['-C', cwd, ...args], {
@@ -21,6 +24,7 @@ export interface CommandResult extends Command {
   durationMs: number;
   exitCode: number | null;
   log: string;
+  processScope?: string;
 }
 
 export interface CommandOptions {
@@ -29,6 +33,8 @@ export interface CommandOptions {
   stdout?: string;
   stderr?: string;
   killGraceMs?: number;
+  fileOutput?: boolean;
+  processScope?: boolean;
 }
 
 export async function executeDirect(
@@ -56,11 +62,15 @@ class DirectCommand {
 
   private child!: ChildProcess;
 
+  private scope?: ProcessScope;
+
   private failure?: Error;
 
   private killTimer?: NodeJS.Timeout;
 
   private timer?: NodeJS.Timeout;
+
+  private outputTimer?: NodeJS.Timeout;
 
   private outputBytes = 0;
 
@@ -74,6 +84,8 @@ class DirectCommand {
     private readonly signal: AbortSignal,
     private readonly options: CommandOptions,
   ) {
+    if (options.fileOutput && (options.stdout || options.stderr))
+      throw new Error('File diagnostic capture cannot use separate stream destinations');
     this.fd = openSync(log, 'wx', 0o600);
     this.stdout = options.stdout ? openSync(options.stdout, 'wx', 0o600) : undefined;
     this.stderr = options.stderr ? openSync(options.stderr, 'wx', 0o600) : undefined;
@@ -90,14 +102,14 @@ class DirectCommand {
   /** Executes this lifecycle through its configured collaborators and propagates failures. */
   run(): Promise<CommandResult> {
     return new Promise((resolve, reject) => {
-      this.child = spawn(this.command.command, this.command.args, {
-        cwd: this.cwd,
-        env: this.options.env,
-        detached: true,
-        stdio: ['ignore', 'pipe', 'pipe'],
-      });
-      this.child.stdout!.on('data', (chunk) => this.capture(chunk, this.stdout));
-      this.child.stderr!.on('data', (chunk) => this.capture(chunk, this.stderr));
+      try {
+        this.launch();
+      } catch (error) {
+        this.failure = new Error(String(error));
+        void this.finish(null, resolve, reject);
+        return;
+      }
+      this.watchOutput();
       if (this.options.timeoutMs !== undefined)
         this.timer = setTimeout(
           () => this.terminate(new Error('Command timed out')),
@@ -108,16 +120,57 @@ class DirectCommand {
       this.child.on('error', (error) => {
         this.failure = error;
       });
-      this.child.on('close', (code) => this.finish(code, resolve, reject));
+      this.child.once('exit', () => this.scope?.kill());
+      this.child.on('close', (code) => {
+        void this.finish(code, resolve, reject);
+      });
     });
   }
 
+  /** Creates containment before starting the captured executable and wiring diagnostic streams. */
+  private launch(): void {
+    this.scope = this.options.processScope ? new ProcessScope() : undefined;
+    this.result.processScope = this.scope?.path;
+    if (this.scope)
+      writeFileSync(this.result.log + '.scope.json', JSON.stringify({ path: this.scope.path }), {
+        flag: 'wx',
+        mode: 0o600,
+      });
+    const command = this.scope?.command(this.command) ?? this.command;
+    this.child = spawn(command.command, command.args, {
+      cwd: this.cwd,
+      env: this.options.env,
+      detached: true,
+      stdio: [
+        'ignore',
+        this.options.fileOutput ? this.fd : 'pipe',
+        this.options.fileOutput ? this.fd : 'pipe',
+      ],
+    });
+    this.child.stdout?.on('data', (chunk) => this.capture(chunk, this.stdout));
+    this.child.stderr?.on('data', (chunk) => this.capture(chunk, this.stderr));
+  }
+
+  /** Bounds regular-descriptor diagnostics without requiring socket-backed child stdio. */
+  private watchOutput(): void {
+    if (!this.options.fileOutput) return;
+    this.outputTimer = setInterval(() => {
+      if (!this.failure && fstatSync(this.fd).size > 64 * 1024 * 1024)
+        this.terminate(new Error('Command output limit exceeded'));
+    }, 10);
+  }
+
   /** Finalizes the current lifecycle while preserving its recorded outcome. */
-  private finish(
+  private async finish(
     code: number | null,
     resolve: (result: CommandResult) => void,
     reject: (error: Error) => void,
-  ): void {
+  ): Promise<void> {
+    try {
+      await this.scope?.close();
+    } catch (error) {
+      this.failure ??= new Error(String(error));
+    }
     this.closed(code);
     if (!this.failure && code === 0) return resolve(this.result);
     const failure = this.failure ?? new Error(`Command failed (${code}): ${this.command.command}`);
@@ -127,14 +180,15 @@ class DirectCommand {
   /** Requests managed process termination and schedules forced cleanup if necessary. */
   private terminate(reason: Error): void {
     this.failure ??= reason;
-    if (!this.child.pid) return;
-    this.kill('SIGTERM');
+    if (!this.child?.pid) return;
+    if (this.scope) this.scope.kill();
+    else this.kill('SIGTERM');
     this.killTimer ??= setTimeout(() => this.kill('SIGKILL'), this.options.killGraceMs ?? 300);
   }
 
   /** Sends the cleanup signal to the managed process group. */
   private kill(signal: NodeJS.Signals): void {
-    if (!this.child.pid) return;
+    if (!this.child?.pid) return;
     try {
       process.kill(-this.child.pid, signal);
     } catch {
@@ -157,7 +211,12 @@ class DirectCommand {
   /** Finalizes retained output and command status after subprocess completion. */
   private closed(code: number | null): void {
     clearTimeout(this.timer);
+    clearInterval(this.outputTimer);
     this.signal.removeEventListener('abort', this.abort);
+    if (this.options.fileOutput && fstatSync(this.fd).size > 64 * 1024 * 1024) {
+      this.failure ??= new Error('Command output limit exceeded');
+      ftruncateSync(this.fd, 64 * 1024 * 1024);
+    }
     closeSync(this.fd);
     if (this.stdout !== undefined) closeSync(this.stdout);
     if (this.stderr !== undefined) closeSync(this.stderr);

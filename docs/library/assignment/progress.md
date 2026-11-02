@@ -1,16 +1,15 @@
 # Progress-driven execution
 
-Issue #65 replaces implicit execution budgets with optional caller-selected limits.
-Migrated ArcNexus configuration has no default assignment/workday deadline, command,
-setup, verification, HTTP or service-readiness timeout, turn/call quota or corrective
-attempt quota. Existing explicitly declared limits remain visible and enforced;
-missing legacy fields do not acquire hidden defaults. Historical reports remain readable.
+New execution has no assignment/workday deadline, turn quota, operation-call quota
+or corrective-attempt quota. Executable configuration containing retired budget
+fields must be migrated explicitly before a new run starts. Historical report fields
+remain readable; their presence does not make an old execution resumable.
 
 Planned stages, expected-red verification, frozen checks, owner boundaries, independent
 acceptance and review remain mandatory. Corrective work must have recorded findings and
-a concrete repair objective. Waiting, handoff and checklist changes do not reset explicit
-limits. Absent limits display as “not configured.” Cancellation, parent supervision,
-service leases, output-size limits and process-group shutdown remain enforced. Shutdown
+a concrete repair objective. Elapsed time and operation/attempt counts are evidence,
+not execution limits. Cancellation, parent supervision, service leases, transport
+safeguards, output-size limits and process-group shutdown remain enforced. Shutdown
 grace is resource cleanup, not a work budget. Silent work remains visible and cancellable.
 
 ## Loop guards
@@ -40,7 +39,7 @@ Codex documents a default per-tool MCP transport timeout separately from executi
 Long managed operations must survive transport response windows: bounded waits may
 return an in-progress operation reference, which the steward observes until completion.
 A response window does not terminate the command or service. Pending work is still
-subject to cancellation, turn leases, parent loss and explicitly selected execution limits.
+subject to cancellation, turn leases and parent loss.
 See the [official Codex configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference).
 
 Test harnesses use explicit watchdogs to prevent stalled CI. Those limits are test
@@ -49,3 +48,12 @@ infrastructure, never runtime defaults.
 The current-command projection clears a managed operation when its recorded
 `operation.finished` event arrives, even while the steward continues thinking in
 the same activity. A finished command must not appear to still be running.
+
+Director continuations of blocked work use a structural progress baseline: material
+candidate content, the retained workflow checkpoint and correlated dependency input.
+Changing the blocker wording or the director's diagnosis does not reset that baseline.
+Three blocked continuations at the same baseline require diagnosis; another unchanged
+continuation becomes `needs_attention`. New source/checkpoint progress or a changed
+correlated dependency input can establish a different baseline. This guard applies to
+blocked continuation dispatch, never ordinary dependency waiting or operation polling.
+The original blocker text remains in assignment and model evidence.

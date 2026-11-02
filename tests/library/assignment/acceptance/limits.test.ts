@@ -1,11 +1,16 @@
+import { nativeHostTest } from '../../testing/support/general-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
-import { operationFixture } from '../../testing/support/operations-fixture.js';
-import { cli, workflowFixture } from '../../testing/support/workflow-fixture.js';
+import { minimalOperationFixture as operationFixture } from '../../testing/support/operations-fixture.js';
+import {
+  cli,
+  workflowFixture,
+  minimalWorkflowFixture,
+} from '../../testing/support/workflow-fixture.js';
 
 /** Exercises execution limit behavior through observable scenarios. */
 class ExecutionLimitTests {
@@ -39,12 +44,6 @@ class ExecutionLimitTests {
   /** Verifies that unconfigured turn and attempt quotas permit a verified fourth implementation attempt. */
   continuingWork(t: TestContext, operations: boolean): void {
     const fixture = operationFixture(t);
-    const path = join(fixture.repo, 'architecture/execution-profiles/luna.yaml');
-    const profile = JSON.parse(readFileSync(path, 'utf8'));
-    for (const key of ['maxTurns', 'maxCorrectiveTurns', 'maxOperationCalls', 'maxAttempts'])
-      delete profile[key];
-    writeFileSync(path, JSON.stringify(profile));
-    fixture.commit();
     fixture.configure(
       operations ? { operationRepeats: 25 } : { repairAfter: 3, operations: undefined },
     );
@@ -58,12 +57,14 @@ class ExecutionLimitTests {
     }
   }
 
-  /** Verifies that caller may explicitly select more than the former two-attempt ceiling. */
-  explicitAttempts(t: TestContext): void {
-    const fixture = workflowFixture(t);
-    const result = fixture.run('--max-attempts', '3');
+  /** Completes a minimal assignment without caller-authored quota settings. */
+  noCallerQuotas(t: TestContext): void {
+    const fixture = minimalWorkflowFixture(t);
+    const result = fixture.run();
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(JSON.parse(result.stdout).implementationAttempts, 1);
+    const record = JSON.parse(result.stdout);
+    assert.equal(record.implementationAttempts, 1);
+    assert.equal(record.executionLimits, undefined);
   }
 }
 
@@ -73,13 +74,21 @@ for (const version of [1, 2, 3])
   test(`schema ${version} missing execution limits remain unconfigured`, (t) =>
     suite.absent(t, version));
 
-test('caller may explicitly select more than the former two-attempt ceiling', (t) =>
-  suite.explicitAttempts(t));
+nativeHostTest('minimal execution completes without caller-authored quotas', (t) =>
+  suite.noCallerQuotas(t),
+);
 
-test('unconfigured operation quota permits more than twenty-four successful calls', (t) =>
-  suite.continuingWork(t, true));
+nativeHostTest('unconfigured operation quota permits more than twenty-four successful calls', (t) =>
+  suite.continuingWork(t, true),
+);
 
-test('unconfigured turn and attempt quotas permit a verified fourth implementation attempt', (t) =>
-  suite.continuingWork(t, false));
+nativeHostTest(
+  'unconfigured turn and attempt quotas permit a verified fourth implementation attempt',
+  (t) => suite.continuingWork(t, false),
+);
 
-registerSuite({ component: 'assignment', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'assignment',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

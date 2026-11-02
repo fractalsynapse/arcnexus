@@ -1,0 +1,5 @@
+schemaVersion: 5
+id: identity-package
+type: package
+parentId: platform
+purpose: Provide the identity campaign target

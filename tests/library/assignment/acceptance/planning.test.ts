@@ -6,9 +6,14 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
-import { test } from 'node:test';
+import { test as nodeTest } from 'node:test';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
 import { openBridge } from '../../../../dist/library/steward/bridge.js';
-import { cli, workflowFixture } from '../../testing/support/workflow-fixture.js';
+import {
+  cli,
+  workflowFixture,
+  minimalWorkflowFixture,
+} from '../../testing/support/workflow-fixture.js';
 
 /** Exercises planning behavior through observable scenarios. */
 class PlanningTests {
@@ -56,7 +61,10 @@ class PlanningTests {
     const f = planned(t, mode),
       r = f.run();
     assert.equal(r.status, 1, r.stderr);
-    assert.equal(JSON.parse(r.stdout).turns.length, 1);
+    const record = JSON.parse(r.stdout);
+    assert.equal(record.turns.length, mode === 'invalid-plan' ? 4 : 1);
+    assert.ok(record.turns.every((turn: any) => turn.activity === 'planning'));
+    assert.equal(record.status, mode === 'invalid-plan' ? 'needs_attention' : 'failed');
   }
 
   /** Verifies that status rejects escaping run ids. */
@@ -117,10 +125,10 @@ class PlanningTests {
     assert.equal(v.changes.length, 0);
   }
 
-  /** Verifies that planning preserves the single corrective allowance and cumulative usage. */
-  planningPreservesTheSingleCorrectiveAllowanceAndCumulativeUsage(t: TestContext) {
+  /** Verifies that planning preserves corrective work and cumulative usage. */
+  planningPreservesCorrectionAndCumulativeUsage(t: TestContext) {
     const f = planned(t, 'repair'),
-      r = f.run('--max-attempts', '2');
+      r = f.run();
     assert.equal(r.status, 0, r.stderr);
     const v = JSON.parse(r.stdout);
     assert.deepEqual(
@@ -137,7 +145,7 @@ class PlanningTests {
     f.configure({ missingEvidence: true });
     const r = f.run();
     assert.equal(r.status, 1, r.stderr);
-    assert.match(r.stderr, /completion requires evidence/);
+    this.assertDiagnosed(r, /completion requires evidence/);
   }
 
   /** Verifies that timeline reader reports truncation and historical absence. */
@@ -178,7 +186,7 @@ class PlanningTests {
     f.configure({ forgedCompletion: true });
     const bad = f.run();
     assert.equal(bad.status, 1);
-    assert.match(bad.stderr, /Unknown checklist item/);
+    this.assertDiagnosed(bad, /Unknown checklist item/);
   }
 
   /** Verifies that planning prompt states activity membership and host diagnoses omitted selection. */
@@ -187,22 +195,24 @@ class PlanningTests {
     f.configure({ omittedActivity: true });
     const r = f.run();
     assert.equal(r.status, 1);
-    assert.match(r.stderr, /Checklist item work activity research is absent from plan.activities/);
+    this.assertDiagnosed(r, /Checklist item work activity research is absent from plan.activities/);
+  }
+
+  /** Retains the actual rejected claim while repeated unchanged corrections become needs_attention. */
+  private assertDiagnosed(result: { stdout: string; stderr: string }, diagnostic: RegExp): void {
+    const record = JSON.parse(result.stdout);
+    assert.equal(record.status, 'needs_attention');
+    assert.match(record.planFeedback, diagnostic);
+    assert.match(result.stderr, /Loop requires a different action/);
+    assert.ok(!record.turns.some((turn: any) => turn.activity === 'implementation'));
   }
 }
 
 const suite = new PlanningTests();
 
-function planned(t: any, mode: any = 'success'): any {
-  const f = workflowFixture(t, mode);
-  const path = join(f.repo, 'architecture/execution-profiles/luna.yaml');
-  const profile = JSON.parse(String(readFileSync(path)));
-  profile.schemaVersion = 2;
-  profile.maxTurns = 4;
-  writeFileSync(path, JSON.stringify(profile));
-  f.commit();
-  f.configure({ planning: true });
-  return f;
+/** Captures planned engineering under the same minimal authority as normal task/workday assignments. */
+function planned(t: TestContext, mode = 'success') {
+  return minimalWorkflowFixture(t, mode);
 }
 
 test('built CLI captures a read-only plan and observable checklist before execution', (t: any) =>
@@ -212,23 +222,25 @@ for (const mode of ['invalid-plan', 'planning-write'])
   test(`stops ${mode} before implementation`, (t: any) =>
     suite.rejectsInvalidPlanBeforeImplementation(t, mode));
 
-test('status rejects escaping run IDs', () => suite.statusRejectsEscapingRunIDs());
+nodeTest('status rejects escaping run IDs', () => suite.statusRejectsEscapingRunIDs());
 
-test('real stdio MCP bridge updates host checklist during a turn', (t: any) =>
-  suite.realStdioMCPBridgeUpdatesHostChecklistDuringATurn(t));
+nodeTest('real stdio MCP bridge updates host checklist during a turn', (t: any) =>
+  suite.realStdioMCPBridgeUpdatesHostChecklistDuringATurn(t),
+);
 
 for (const kind of ['research', 'review'])
   test(`planned ${kind} uses two source-read-only turns`, (t: any) =>
     suite.usesTwoReadOnlyTurns(t, kind));
 
-test('planning preserves the single corrective allowance and cumulative usage', (t: any) =>
-  suite.planningPreservesTheSingleCorrectiveAllowanceAndCumulativeUsage(t));
+test('planning preserves corrective work and cumulative usage', (t: any) =>
+  suite.planningPreservesCorrectionAndCumulativeUsage(t));
 
 test('checklist completion without evidence stops the assignment', (t: any) =>
   suite.checklistCompletionWithoutEvidenceStopsTheAssignment(t));
 
-test('timeline reader reports truncation and historical absence', (t: any) =>
-  suite.timelineReaderReportsTruncationAndHistoricalAbsence(t));
+nodeTest('timeline reader reports truncation and historical absence', (t: any) =>
+  suite.timelineReaderReportsTruncationAndHistoricalAbsence(t),
+);
 
 test('built production SDK passes explicit MCP bridge configuration to the executable', (t: any) =>
   suite.builtProductionSDKPassesExplicitMCPBridgeConfigurationToTheExecutable(t));
@@ -242,4 +254,8 @@ test('built SDK schema constrains final updates to steward items and rejects for
 test('planning prompt states activity membership and host diagnoses omitted selection', (t: any) =>
   suite.planningPromptStatesActivityMembershipAndHostDiagnosesOmittedSelection(t));
 
-registerSuite({ component: 'assignment', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'assignment',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

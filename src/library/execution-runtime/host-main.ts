@@ -23,7 +23,7 @@ class HostServer {
     private readonly context: ProjectExecution,
     private readonly socket: string,
   ) {
-    this.lease = new ExecutionLease(socket + '.lease.sqlite');
+    this.lease = new ExecutionLease(join(context.commonDir, 'arcnexus', 'host.lease.sqlite'));
     this.host = new ProjectHost(root, context);
   }
 

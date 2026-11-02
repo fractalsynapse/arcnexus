@@ -36,7 +36,7 @@ export class AssignmentExecution {
     const record = await this.record(assignment);
     this.acknowledge(assignment, record);
     this.dependencyContext(assignment, record);
-    record.inboxContext = this.store.inbox(assignment.id);
+    record.inboxContext = this.inbox(assignment.id);
     record.continuationFeedback = [
       assignment.data.continuationReason,
       record.continuationLoopWarning,
@@ -58,6 +58,15 @@ export class AssignmentExecution {
     if (!record.pendingRequests && !record.pendingInboxActions) await session.step();
     const result = await this.outcome(assignment, record, session);
     return { ...result, receipt: (record.checkpoint as { sha256: string }).sha256 };
+  }
+
+  /** Exposes one durable reply identity while keeping internal retry keys out of model context. */
+  private inbox(assignmentId: string): unknown[] {
+    return this.store.inbox(assignmentId).map(({ id, key: _retryKey, ...request }) => ({
+      ...request,
+      requestId: id,
+      replies: request.replies.map(({ id: _receipt, ...reply }: any) => reply),
+    }));
   }
 
   /** Clears only outputs whose scheduler acknowledgement is durable; unacknowledged outputs replay. */
@@ -145,11 +154,23 @@ export class AssignmentExecution {
     }
     const run = this.store.run(assignment.runId);
     const base = String(run.data.candidateRevision ?? this.context.base);
+    const record = this.capture(assignment, base);
+    this.store.updateAssignment(assignment.id, 'running', {
+      recordId: record.id,
+      candidateBase: base,
+    });
+    save(this.root, record);
+    return record;
+  }
+
+  /** Captures assignment authority and associates a fresh workspace with its durable execution identity. */
+  private capture(assignment: ExecutionAssignment, base: string): RecordData {
     const value = this.value(assignment);
     const resolved = new ExecutionContext().assignment(this.context, assignment.owner, value);
     const record = createWorkspace(this.root, {
       project: this.context.source,
       authorityBase: this.context.base,
+      packageId: this.context.packageId,
       base,
       bindings: this.context.bindings,
     });
@@ -159,11 +180,6 @@ export class AssignmentExecution {
     record.resolvedAssignment = resolved;
     record.directionAccepted = true;
     record.trustedVerificationPaths = this.context.verificationInputs;
-    this.store.updateAssignment(assignment.id, 'running', {
-      recordId: record.id,
-      candidateBase: base,
-    });
-    save(this.root, record);
     return record;
   }
 
@@ -191,20 +207,39 @@ export class AssignmentExecution {
     const delivered = dependencies.filter((dependency) => dependency.status === 'completed');
     record.coordinationContext =
       'Dependency assignment states (accepted intent is not verified delivery): ' +
-      JSON.stringify(dependencies) +
+      JSON.stringify(dependencies.map((item) => this.dependency(item))) +
       '\nRequired dependency milestones: ' +
       JSON.stringify(assignment.data.milestones ?? {}) +
-      (delivered.length ? '\nVerified dependency deliveries: ' + JSON.stringify(delivered) : '') +
+      (delivered.length
+        ? '\nVerified dependency deliveries: ' +
+          JSON.stringify(delivered.map((item) => this.dependency(item)))
+        : '') +
       '\nVerified dependency assessments: ' +
       JSON.stringify(
         delivered.map((dependency) => ({
           assignmentId: dependency.id,
           owner: dependency.owner,
           deliveredRevision: dependency.data.deliveredRevision,
-          reviews: new DeliveryEvidence(this.root).capture(dependency),
+          reviews: new DeliveryEvidence(this.root).capture(dependency, false),
         })),
       ) +
-      '\nIf accepted intent is insufficient, explicitly request milestone=delivered with the existing assignmentId and matching owner, objective, acceptance criteria and scope. The host does not silently strengthen an accepted milestone.';
+      '\nIf accepted intent is insufficient, return inboxActions with action=require_delivery, the existing requestId from General inbox requests (not the dependency assignment ID), and an explanation. Use only the envelope’s availableActions; incoming requests and outgoing dependencies have different reply authority. Completed delivery needs no acknowledgment. Do not create another request or restate accepted scope; this action strengthens only the existing milestone.';
+  }
+
+  /** Projects actionable dependency facts without recursively copying activation or raw evidence state. */
+  private dependency(item: ExecutionAssignment) {
+    return {
+      id: item.id,
+      owner: item.owner,
+      objective: item.objective,
+      acceptance: item.acceptance,
+      status: item.status,
+      dependencies: item.dependencies,
+      evidence: item.evidence,
+      accepted: item.data.accepted === true,
+      deliveredRevision: item.data.deliveredRevision,
+      reason: item.data.reason,
+    };
   }
 
   /** Incorporates verified deliveries without losing incomplete owner changes or frozen evidence. */
@@ -244,10 +279,14 @@ export class AssignmentExecution {
     const next = createWorkspace(this.root, {
       project: this.context.source,
       authorityBase: this.context.base,
+      packageId: this.context.packageId,
       base: current,
       bindings: this.context.bindings,
     });
     next.environment = record.environment;
+    next.resolvedAssignment = record.resolvedAssignment;
+    next.assignmentId = assignment.id;
+    next.executionRunId = assignment.runId;
     this.store.updateAssignment(assignment.id, 'running', {
       reconciliation: { recordId: next.id, workspace: next.workspace, current, revision },
     });

@@ -1,3 +1,5 @@
+import { InputError } from '../architecture/config.js';
+import { ExecutionContext } from '../architecture/execution-context.js';
 import { InitializerChecks } from './initializer-checks.js';
 import { operationBridge } from '../operations/operations.js';
 import { randomUUID } from 'node:crypto';
@@ -20,7 +22,7 @@ export interface InitializationEvidence {
   runId: string;
   componentId: string;
   model: string;
-  reasoning: 'medium';
+  reasoning: InitializationSnapshot['reasoning'];
   turns: number;
   threadId?: unknown;
   usage?: unknown;
@@ -40,23 +42,13 @@ export interface InitializeInput {
 }
 
 export async function initializeExecution(input: InitializeInput): Promise<void> {
-  const controller = new AbortController();
-  const seconds = input.resolved.initialization.profile.timeoutSeconds;
-  const timer =
-    seconds === undefined
-      ? undefined
-      : setTimeout(
-          () => controller.abort(new Error('Initializer deadline exhausted')),
-          seconds * 1000,
-        );
-  try {
-    await new Initializer({
-      ...input,
-      signal: AbortSignal.any([input.signal, controller.signal]),
-    }).run();
-  } finally {
-    clearTimeout(timer);
-  }
+  const snapshot = input.resolved.initialization;
+  if (!snapshot.context.length || snapshot.context.some((owner) => owner.schemaVersion !== 5))
+    throw new InputError(
+      'Initializer execution requires version-five authority; migrate configuration',
+    );
+  new ExecutionContext().validateProfile(snapshot.profile);
+  await new Initializer(input).run();
 }
 
 /** Runs one read-only intake turn before any downstream assignment activation. */
@@ -81,7 +73,7 @@ class Initializer {
       runId: this.child.id,
       componentId: this.snapshot.componentId,
       model: this.snapshot.model,
-      reasoning: 'medium',
+      reasoning: this.snapshot.reasoning,
       turns: 0,
       durationMs: 0,
     };

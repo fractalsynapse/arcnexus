@@ -1,4 +1,4 @@
-schemaVersion: 3
+schemaVersion: 4
 purpose: Exercise a managed local HTTP service
 repository: http-sample
 cwd: .
@@ -10,10 +10,11 @@ activities:
   - review
 generatedDirectories: []
 artifacts: []
-probes: []
 id: health
 kind: http
 http:
   serviceId: serve
   path: /health
   expectedStatus: 200
+network: true
+prerequisites: []

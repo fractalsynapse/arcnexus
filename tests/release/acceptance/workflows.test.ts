@@ -31,6 +31,47 @@ class WorkflowTests {
     assert.equal(production.jobs.verify.with.distribution, true);
   }
 
+  /** Hosted tests retain ordinary-user confinement and delegated descendant supervision. */
+  confinement(): void {
+    const steps = this.read('verification').jobs.repository.steps;
+    const install = steps.find((step: any) => step.name === 'Install confinement runtime');
+    assert.ok(install, 'CI must provision its enforcement runtime');
+    assert.match(install.run, /@openai\/codex@0\.163\.0-alpha\.10\.2/);
+    assert.match(install.run, /--prefix \/usr\/local/);
+    assert.match(install.run, /apt-get install -y bubblewrap apparmor-profiles apparmor-utils/);
+    assert.match(install.run, /apparmor_parser -r/);
+    assert.doesNotMatch(install.run, /sysctl/);
+    const bindings = steps.find((step: any) => step.name === 'Bind verified machine executables');
+    assert.match(bindings.run, /\.git\/arcnexus\/bindings\.yaml/);
+    assert.match(bindings.run, /codex: '\/usr\/local\/bin\/codex'/);
+    const tests = steps.find((step: any) => step.name === 'Test built CLI');
+    assert.match(tests.run, /systemd-run/);
+    assert.match(tests.run, /--property=Delegate=yes/);
+    assert.match(tests.run, /--uid="\$\(id -u\)"/);
+    assert.match(tests.run, /--gid="\$\(id -g\)"/);
+    assert.match(tests.run, /--setenv="PATH=\$PATH"/);
+    assert.match(tests.run, /--wait --pipe --collect/);
+    assert.match(tests.run, /npm test/);
+    assert.doesNotMatch(tests.run, /--scope|\|\| true/);
+  }
+
+  /** Confined skips require a separate native host gate, without inference or privilege escalation for workers. */
+  nativeHosts(): void {
+    const steps = this.read('verification').jobs.repository.steps;
+    const native = steps.find((step: any) => step.name === 'Qualify native project hosts');
+    assert.ok(native, 'Native host coverage must not disappear behind confined skips');
+    assert.equal(native.if, undefined);
+    assert.notEqual(native['continue-on-error'], true);
+    assert.match(native.run, /--property=Delegate=yes/);
+    assert.match(native.run, /--uid="\$\(id -u\)"/);
+    assert.match(native.run, /ARCNEXUS_TEST_CODEX=\/usr\/local\/bin\/codex/);
+    assert.match(native.run, /node scripts\/release\/native-host-tests.mjs/);
+    const selection = readFileSync('scripts/release/native-host-tests.mjs', 'utf8');
+    assert.match(selection, /'test', 'inspect'/);
+    assert.match(selection, /'native-host'/);
+    assert.match(selection, /selected no suites/);
+  }
+
   /** Shared verification pins actions and contains no write or publication capability. */
   verification(): void {
     const workflow = this.read('verification');
@@ -58,6 +99,12 @@ class WorkflowTests {
 }
 
 const suite = new WorkflowTests();
+
+test('hosted execution provisions confinement and delegated supervision', () =>
+  suite.confinement());
+
+test('native host qualification remains a required separate caller gate', () =>
+  suite.nativeHosts());
 
 test('delivery lifecycle triggers and concurrency remain distinct', () => suite.lifecycles());
 

@@ -1,5 +1,21 @@
 # Steward operations and evidence
 
+Shared operation argument tokens retain their captured definition separately from
+each invocation's resolved arguments. Path inputs are anchored to the repository and
+resolved relative to the operation working directory. During an assignment, a test
+operation discovers current owned suites using captured classification and profile
+rules, including newly created regression suites, while enforcing mandatory captured
+test identities. Invocation evidence retains the selected source hashes. Candidate
+configuration cannot replace the operation, owner or profile. Explicit CLI test
+filters retain their validated selection rather than expanding to all owner tests.
+
+Finite shared-operation checkpoints resolve prerequisites before dispatch and execute
+each equivalent resolved operation once. Equivalence includes the effective read
+boundary as well as command arguments, working directory, outputs and definition.
+A new checkpoint re-executes its checks. Host regression checks and engineering calls
+use this same ordering; a requested test cannot run against stale generated output
+merely because it was selected separately from its preparation prerequisite.
+
 Plans/timeline (#41), declared operations (#42), managed local services/probes
 (#45), and selected history/live qualification (#48) are available. Their retained
 qualification evidence is linked below.
@@ -156,6 +172,12 @@ The steward must perform its selected permitted work and update the checklist in
 that turn, or report a precise blocker. Activity names are not promises of additional
 model turns. Incomplete checklist claims fail rather than silently adding a turn.
 
+Shared checkpoints also cover initializer verification, assignment baselines, final
+verification, frozen acceptance and refactor characterization. Each checkpoint orders
+and deduplicates prerequisites once; a later checkpoint reruns required checks against
+the current candidate. Every completed or failed invocation retains its result even
+when a later operation fails.
+
 ## Required host operation route
 
 ArcNexus configures its MCP bridge as required: model execution must not silently
@@ -182,3 +204,114 @@ Long finite-command excerpts retain startup context, a potential failure diagnos
 window, and trailing output within 16 KiB. The complete log remains a separate
 artifact. This is diagnostic selection, not a claim to infer the root cause; callers
 must retain and inspect full evidence when the excerpt is insufficient.
+
+Shared service startup and HTTP checks use the same captured definition/context ledger
+as command execution. Service startup runs finite prerequisites first and records its
+managed lease; status, logs and stop retain that lease identity. Startup remains an
+explicit managed service action, not an indefinite lifecycle check. Agent HTTP calls
+use their explicitly started lease. A required host HTTP checkpoint owns a fresh lease
+for its captured `serviceId`, runs its finite preparation, checks the endpoint and
+verifies shutdown in `finally`. That service must be declared in the owner's agent
+operations. Host verification never accepts an engineering call as evidence for a later
+candidate. Missing service authority, failed startup and uncertain interruption remain
+visible failures; no unmanaged command or writable-source fallback is available.
+
+### Confined descendant lifetime
+
+Source-read-only operations must also contain descendants that create a new
+session or process group. The installed sandbox launcher does this itself; killing
+only its original process group cannot establish cancellation. A private delegated Linux cgroup ties the whole confined process tree to its
+supervised launcher, including normal launcher exit and parent loss. The child joins
+the group before launching executable work; cleanup uses the kernel group kill
+operation, independent of process/session IDs. Unsupported containment fails before
+dispatch. Nested PID namespaces were rejected by the installed AppArmor profile;
+ArcNexus does not change that machine policy.
+Readiness validates listener ownership through that retained process tree, never by
+port alone. Source-write enforcement remains the inner captured sandbox policy.
+
+Qualification must exercise detached descendants, cancellation, parent loss and
+normal exit using the installed runtime. A closed launcher without a closed endpoint
+is unresolved evidence, not successful cleanup. See issue #114 for the observed
+installed-runtime escape and its acceptance criteria.
+
+Runtime diagnostic support is captured outside target generated-output trees in
+private, read-only configuration storage. Rebuilding a target that is ArcNexus
+itself must not mount the active support file inside the output being cleared.
+An existing support snapshot with different bytes is an integrity error; candidate
+builds cannot replace the active snapshot.
+
+### Disposable output roots
+
+The installed runtime protects special child directories within writable roots.
+For validated untracked output roots and private temporary storage, the confinement
+adapter explicitly permits their disposable `.agents`, `.codex`, `.aws` and `.git`
+children so installers can replace generated contents. It validates child path
+segments before granting them. This is derived runtime policy, not authored
+component exceptions. Maintained source, its Git metadata and private configuration
+remain read-only; generated output cannot become active runtime configuration.
+
+The [named permissions documentation](https://learn.chatgpt.com/docs/permissions)
+describes explicit rule overrides. ArcNexus additionally qualifies actual cleanup
+and source denial against the installed executable. The observed npm failure and
+exact runtime probe are recorded in issue #123; they are not a claim about every
+Codex version or platform.
+
+Managed operations allocate a short private temporary directory independently of
+the durable evidence path and record that location before execution. Long evidence
+roots must not force child Unix IPC addresses beyond transport limits. Retained
+records reuse their captured temporary location; uncertain operations remain
+non-replayable. Bridge startup rejects an overlong encoded address before binding
+and releases its listener and directory whenever startup fails. Test watchdogs
+remain finite; these transport safeguards do not impose agent execution budgets.
+
+Network-enabled operations retain read-only access to the canonical system DNS
+resolver file when `/etc/resolv.conf` is a symlink outside the runtime’s minimal
+mounts. This grants neither access to all of `/run` nor writes to resolver or source
+files. Network-disabled operations gain no extra resolver rule. Installed-runtime
+qualification covers resolver readability and write denial; successful host DNS
+alone does not establish confined network availability.
+
+Agent-available test operations may be declared before an owner has its first
+suite. Catalog loading retains their captured definition and pending selected-test
+context; it never turns an empty selection into an unrestricted runner invocation.
+At invocation, the host discovers current owned suites under the captured profile,
+validates mandatory test identities, and expands their paths before dispatch. A
+still-empty or missing selection fails before any prerequisite runs. Required host
+checkpoints retain eager context validation.
+
+### Inherited project test and lint availability
+
+ArcNexus declares `component-tests` and `component-lint` once as inherited agent
+operations. Owners retain only additional required verification or specialized
+operations. Test execution resolves current owned suites; owners without a suite
+retain pending availability and cannot invoke an empty test selection.
+
+The shared lint command receives captured `ownedPaths` as separate arguments. It
+checks owned code and configuration supported by the repository ESLint policy;
+non-code ownership paths do not become invented lint targets. Unmatched paths and
+ignored documentation/configuration formats are quiet, while actual lint findings
+still fail. Lint remains read-only, and source edits use the checked edit tool.
+This replaces repeated authored owner directory lists and does not grant source
+write authority or remove required host verification.
+
+An unknown or unavailable operation ID is a rejected selection, not an executed
+check. The host returns an actionable response directing the worker to
+`operations.list`; host-only verification IDs never become agent capabilities.
+This pre-dispatch rejection preserves already running authorized work and its
+pending observation handle. Repeated identical selections use the existing progress
+diagnosis. Real execution failures, cancellation and uncertain operation state retain
+their lifecycle behavior. This closes the #139 live failure where a mistaken
+host-only selection cancelled an unrelated pending lint operation.
+
+## Executable-family retirement (#109)
+
+The retirement slice removes the legacy command and service dispatch branches.
+New operation bridges and direct service startup require captured schema-4 operations;
+invalid historical executable authority is rejected before launching children. Every
+command, HTTP check and service action goes through `OperationExecution`, including
+prerequisite ordering, confinement and retained invocation evidence. Inline capability
+probes are no longer executed; finite shared preflight/prerequisite operations cover
+that responsibility. Bridge connectivity remains a transport qualification.
+
+Operation call counts remain metrics. They never become execution quotas. Historical
+operation definitions and report fields remain readable without making them executable.

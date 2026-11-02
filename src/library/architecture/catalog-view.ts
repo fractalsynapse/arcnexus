@@ -33,6 +33,9 @@ export function catalogView(catalog: Catalog) {
 function ownerView(component: Component) {
   return {
     type: component.type,
+    policy: component.policy,
+    definition: component.definition,
+    operationPlan: component.operationPlan,
     repository: component.repository,
     packageRoot: component.repositoryRoot ?? null,
     ownershipBasis: component.ownership ? 'component-definition' : 'legacy-write-scope-only',
@@ -40,9 +43,21 @@ function ownerView(component: Component) {
     writeScope: component.allowedWritePaths,
     directoryGrants: component.access.writeDirectories,
     directoryExceptions: component.ownership?.directoryExceptions ?? [],
+    imports: component.observedImports ?? [],
+    consumers: component.observedConsumers ?? [],
+    publicApi: component.publicApi ?? [],
     publicModules: component.ownership?.publicModules ?? [],
     inventory: component.inventory ?? null,
     inventoryAvailability: component.inventoryAvailability ?? 'legacy',
+    ...contractView(component),
+    testProfile: component.testProfile ?? null,
+    capturedTests: component.capturedTests ?? [],
+  };
+}
+
+/** Projects captured legacy contracts and patterns without repeating their source artifacts. */
+function contractView(component: Component) {
+  return {
     patterns:
       component.patternSnapshots?.map((pattern) => ({
         id: pattern.id,
@@ -52,7 +67,5 @@ function ownerView(component: Component) {
       component.providedSnapshots?.map(({ artifact: _artifact, ...contract }) => contract) ?? [],
     consumes:
       component.contractSnapshots?.map(({ artifact: _artifact, ...contract }) => contract) ?? [],
-    testProfile: component.testProfile ?? null,
-    capturedTests: component.capturedTests ?? [],
   };
 }

@@ -1,0 +1,9 @@
+schemaVersion: 3
+id: astra
+model: gpt-6-astra
+reasoning: medium
+webSearch: disabled
+operationCategories:
+  - cli-check
+  - unit-test
+  - http-check

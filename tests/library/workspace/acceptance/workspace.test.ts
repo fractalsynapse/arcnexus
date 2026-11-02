@@ -1,7 +1,12 @@
-import { cleanupIntent, fixture, evidence, cli } from '../support/workspace-fixture.js';
+import {
+  cleanupIntent,
+  fixture,
+  evidence,
+  cli,
+  managedScope,
+} from '../support/workspace-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
 import {
   existsSync,
   lstatSync,
@@ -16,9 +21,8 @@ import {
 
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
-import { test } from 'node:test';
-import { groupMembers } from '../../../../dist/library/operations/service-state.js';
-import { TestProcess, waitFor, killProcessGroup } from '../../testing/support/test-process.js';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
+import { TestProcess, waitFor } from '../../testing/support/test-process.js';
 
 /** Exercises workspace behavior through observable scenarios. */
 class WorkspaceTests {
@@ -29,7 +33,7 @@ class WorkspaceTests {
         command: 'node',
         args: [
           '-e',
-          "require('fs').mkdirSync('generated');require('fs').writeFileSync('generated/cwd',process.cwd())",
+          "require('fs').mkdirSync('generated',{recursive:true});require('fs').writeFileSync('generated/cwd',process.cwd())",
         ],
       },
     ]);
@@ -68,22 +72,19 @@ class WorkspaceTests {
     const record = JSON.parse(r.stdout);
     assert.equal(record.status, 'failed');
     assert.ok(existsSync(record.workspace));
-    assert.match(
-      readFileSync(join(f.state, 'runs', record.id, 'command-0.log'), 'utf8'),
-      /setup broke/,
-    );
+    assert.match(readFileSync(record.operationInvocations[0].result.log, 'utf8'), /setup broke/);
   }
 
-  /** Verifies that setup source mutation is rejected and cleanup refuses to lose it. */
-  setupSourceMutationIsRejectedAndCleanupRefusesToLoseIt(t: TestContext) {
+  /** Verifies that setup source mutation is prevented before cleanup. */
+  setupSourceMutationIsPreventedBeforeCleanup(t: TestContext) {
     const f = fixture(t, [
       { command: 'node', args: ['-e', "require('fs').writeFileSync('source.txt','changed')"] },
     ]);
     const r = f.prepare();
     assert.equal(r.status, 1);
     const record = JSON.parse(r.stdout);
-    assert.equal(f.run('cleanup', record.id).status, 1);
-    assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'changed');
+    assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'original\n');
+    assert.equal(f.run('cleanup', record.id).status, 0);
   }
 
   /** Verifies that cleanup refuses unknown ignored files and untracked files. */
@@ -101,13 +102,39 @@ class WorkspaceTests {
     assert.equal(f.run('cleanup', record.id).status, 0);
   }
 
-  /** Verifies that overall timeout retains afailed record. */
-  overallTimeoutRetainsAFailedRecord(t: TestContext) {
+  /** Rejects executable legacy preparation while retaining static configuration inspection. */
+  rejectsLegacyPreparation(t: TestContext): void {
+    const f = fixture(t);
+    const path = join(f.repo, 'architecture/environment.yaml');
+    writeFileSync(
+      path,
+      JSON.stringify({
+        ...JSON.parse(readFileSync(path, 'utf8')),
+        schemaVersion: 3,
+        prerequisites: [],
+        generatedDirectories: ['generated'],
+        setup: [
+          { command: 'node', args: ['-e', "require('fs').writeFileSync('source.txt','bad')"] },
+        ],
+      }),
+    );
+    f.commit();
+    const result = f.prepare();
+    assert.equal(result.status, 2, result.stderr);
+    assert.match(result.stderr, /environment.*schema.*4.*migrat/i);
+    assert.equal(result.stdout, '');
+    assert.equal(readFileSync(join(f.repo, 'source.txt'), 'utf8'), 'original\n');
+    const inspected = f.run('validate', '--project', f.repo);
+    assert.equal(inspected.status, 0, inspected.stderr);
+  }
+
+  /** Rejects retired execution deadlines before preparation begins. */
+  rejectsRetiredPreparationDeadline(t: TestContext) {
     const f = fixture(t, [{ command: 'node', args: ['-e', 'setInterval(()=>{},1000)'] }]);
     const r = f.prepare('--timeout-seconds', '0.2');
-    assert.equal(r.status, 1);
-    assert.match(r.stderr, /timed out/i);
-    assert.equal(JSON.parse(r.stdout).status, 'failed');
+    assert.equal(r.status, 2);
+    assert.match(r.stderr, /execution deadlines.*retired/i);
+    assert.equal(r.stdout, '');
   }
 
   /** Verifies that sigintcancels command and releases lock. */
@@ -115,60 +142,57 @@ class WorkspaceTests {
     const f = fixture(t, [
       { command: 'node', args: ['-e', 'console.log("READY");setInterval(()=>{},1000)'] },
     ]);
-    const child = spawn(process.execPath, [cli, 'prepare', '--project', f.repo], { env: f.env });
-    let output = '';
-    child.stdout.on('data', (b: any) => (output += b));
-    const exited = new Promise((r: any) => child.once('close', r));
-    t.after(() => child.kill('SIGKILL'));
-    let ready = false;
-    const deadline = Date.now() + 10000;
-    while (Date.now() < deadline) {
-      try {
-        const run = join(f.state, 'runs', readdirSync(join(f.state, 'runs'))[0]!);
-        ready = readdirSync(run)
-          .filter((n: any) => n.startsWith('command-'))
-          .some((n: any) => readFileSync(join(run, n), 'utf8').includes('READY'));
-      } catch {}
-      if (ready) break;
-      await new Promise((r: any) => setTimeout(r, 20));
-    }
-    assert.ok(ready, 'setup command must be running before cancellation');
+    const child = new TestProcess(
+      t,
+      [cli, 'prepare', '--project', f.repo, '--bindings', f.bindings],
+      f.env,
+    );
+    await child.waitForReady(
+      () => this.setupIsReady(f),
+      'Setup must be running before cancellation',
+    );
     child.kill('SIGINT');
-    const code = await exited;
-    assert.equal(code, 130);
-    assert.equal(JSON.parse(output).status, 'cancelled');
+    assert.equal(await child.closed, 130);
+    assert.equal(JSON.parse(child.stdout).status, 'cancelled');
     assert.equal(existsSync(join(f.state, 'active.lock')), false);
+  }
+
+  /** Observes actual command output rather than sleeping through a possibly failed launch. */
+  private setupIsReady(f: any): boolean {
+    for (const id of readdirSync(join(f.state, 'runs'))) {
+      const run = join(f.state, 'runs', id);
+      if (
+        readdirSync(run).some(
+          (name) =>
+            name.startsWith('invocation-') &&
+            name.endsWith('.log') &&
+            readFileSync(join(run, name), 'utf8').includes('READY'),
+        )
+      )
+        return true;
+    }
+    return false;
   }
 
   /** Verifies that invalid configuration and missing prerequisite fail at their respective stages. */
   invalidConfigurationAndMissingPrerequisiteFailAtTheirRespectiveStages(t: TestContext) {
     const f = fixture(t);
-    writeFileSync(
-      join(f.repo, 'architecture/environment.yaml'),
-      JSON.stringify({
-        schemaVersion: 1,
-        prerequisites: [],
-        setup: [],
-        generatedDirectories: ['../escape'],
-      }),
-    );
+    const path = join(f.repo, 'architecture/operations/verify.yaml');
+    const operation = JSON.parse(readFileSync(path, 'utf8'));
+    writeFileSync(path, JSON.stringify({ ...operation, generatedDirectories: ['../escape'] }));
     f.git('add', '.');
     f.git('commit', '-m', 'invalid');
     assert.equal(f.prepare().status, 2);
-    writeFileSync(
-      join(f.repo, 'architecture/environment.yaml'),
-      JSON.stringify({
-        schemaVersion: 1,
-        prerequisites: [{ command: 'arcnexus-nonexistent-tool', args: [] }],
-        setup: [],
-        generatedDirectories: [],
-      }),
-    );
+    writeFileSync(path, JSON.stringify({ ...operation, command: 'arcnexus-nonexistent-tool' }));
+    const platformPath = join(f.repo, 'architecture/components/platform.json');
+    const platform = JSON.parse(readFileSync(platformPath, 'utf8'));
+    platform.operations.verify = ['preflight'];
+    writeFileSync(platformPath, JSON.stringify(platform));
     f.git('add', '.');
     f.git('commit', '-m', 'missing tool');
     const r = f.prepare();
     assert.equal(r.status, 1);
-    assert.equal(JSON.parse(r.stdout).commands.length, 1);
+    assert.equal(JSON.parse(r.stdout).operationInvocations.length, 1);
   }
 
   /** Verifies that lock prevents overlapping operations and ownership tampering refuses cleanup. */
@@ -319,34 +343,44 @@ class WorkspaceTests {
         args: ['-e', "console.log('COMMAND_PID='+process.pid);setInterval(()=>{},1000)"],
       },
     ]);
-    const child = new TestProcess(t, [cli, 'prepare', '--project', f.repo], f.env);
-    let captured: { pid: number; record: string; log: string } | undefined;
-    t.after(() => killProcessGroup(captured?.pid));
-    await waitFor(() => {
-      captured = this.runningSetup(f);
+    const child = new TestProcess(
+      t,
+      [cli, 'prepare', '--project', f.repo, '--bindings', f.bindings],
+      f.env,
+    );
+    let captured: { scope: string; record: string; log: string } | undefined;
+    await child.waitForReady(() => {
+      captured = this.runningSetup(f, child.child.pid!);
       return !!captured;
     }, 'Command must reach observable running state');
     assert.ok(captured);
     child.kill('SIGKILL');
     await child.closed;
     await waitFor(
-      () => groupMembers(captured!.pid).length === 0,
+      () => !existsSync(captured!.scope),
       'Parent-loss supervisor must stop command group',
       5000,
     );
-    assert.deepEqual(groupMembers(captured.pid), []);
+    assert.equal(existsSync(captured.scope), false);
     assert.match(readFileSync(captured.log, 'utf8'), /COMMAND_PID=/);
     assert.equal(JSON.parse(readFileSync(captured.record, 'utf8')).finishedAt, undefined);
   }
 
-  /** Finds a retained setup command PID after its log announces process startup. */
-  private runningSetup(f: any): { pid: number; record: string; log: string } | undefined {
+  /** Correlates a running command log with the kernel scope owned by this test's CLI. */
+  private runningSetup(
+    f: any,
+    pid: number,
+  ): { scope: string; record: string; log: string } | undefined {
+    const scope = managedScope(pid);
+    if (!scope) return undefined;
     for (const id of readdirSync(join(f.state, 'runs'))) {
-      const directory = join(f.state, 'runs', id),
-        log = join(directory, 'command-0.log');
-      if (!existsSync(log)) continue;
-      const match = readFileSync(log, 'utf8').match(/COMMAND_PID=(\d+)/);
-      if (match) return { pid: Number(match[1]), log, record: join(directory, 'report.json') };
+      const directory = join(f.state, 'runs', id);
+      for (const name of readdirSync(directory)) {
+        if (!name.startsWith('invocation-') || !name.endsWith('.log')) continue;
+        const log = join(directory, name);
+        if (readFileSync(log, 'utf8').includes('COMMAND_PID='))
+          return { scope, log, record: join(directory, 'report.json') };
+      }
     }
     return undefined;
   }
@@ -400,14 +434,14 @@ test('dirty source is rejected without preparation', (t: any) =>
 test('setup failure retains evidence and workspace', (t: any) =>
   suite.setupFailureRetainsEvidenceAndWorkspace(t));
 
-test('setup source mutation is rejected and cleanup refuses to lose it', (t: any) =>
-  suite.setupSourceMutationIsRejectedAndCleanupRefusesToLoseIt(t));
+test('setup source mutation is prevented before cleanup', (t: any) =>
+  suite.setupSourceMutationIsPreventedBeforeCleanup(t));
 
 test('cleanup refuses unknown ignored files and untracked files', (t: any) =>
   suite.cleanupRefusesUnknownIgnoredFilesAndUntrackedFiles(t));
 
-test('overall timeout retains a failed record', (t: any) =>
-  suite.overallTimeoutRetainsAFailedRecord(t));
+test('preparation rejects retired execution deadlines', (t: any) =>
+  suite.rejectsRetiredPreparationDeadline(t));
 
 test('SIGINT cancels command and releases lock', (t: any) =>
   suite.SIGINTCancelsCommandAndReleasesLock(t));
@@ -441,4 +475,11 @@ test('cleanup reconciles primary removal only with durable matching intent', (t:
 test('cleanup refuses unexplained disappearance and replacement after intent', (t: any) =>
   suite.cleanupRefusesUnexplainedDisappearanceAndReplacementAfterIntent(t));
 
-registerSuite({ component: 'workspace', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'workspace',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});
+
+test('preparation rejects legacy recipes before candidate creation', (t) =>
+  suite.rejectsLegacyPreparation(t));

@@ -1,34 +1,25 @@
+schemaVersion: 5
 id: identity
 type: library
+parentId: identity-package
 purpose: Predictable identity and session helpers
-path: src
 objectives:
   - Small deterministic functions with explicit boundaries
 constraints:
   - Keep normalizeIdentity behavior unchanged
   - No added dependencies
-allowedWritePaths:
+owns:
+  - .gitignore
   - src
   - tests
+  - package.json
+  - package-lock.json
   - README.md
-verification:
-  - command: npm
-    args:
-      - test
-access:
-  readPaths:
-    - .
-  writeDirectories:
-    - .
-schemaVersion: 3
-repository: identity
-role: systems-engineer
-executionProfile: luna
-interfaces: []
-documentation:
-  - README.md
-tests: []
-relatedIds: []
-questions: []
-patterns: []
-operationIds: []
+  - architecture/environment.yaml
+  - architecture/roles
+  - architecture/execution-profiles
+  - architecture/operations
+  - architecture/components/platform.yaml
+  - architecture/components/package.yaml
+api:
+  - module: src/identity.mjs

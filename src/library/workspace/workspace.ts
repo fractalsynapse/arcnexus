@@ -1,16 +1,11 @@
-import { capturedCommandTimeout } from '../architecture/config.js';
+import { WorkspaceOperations } from './operation-preparation.js';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, realpathSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import {
-  loadBindings,
-  targetCommand,
-  targetEnvironment,
-  type Bindings,
-} from '../architecture/bindings.js';
+import { loadBindings, type Bindings } from '../architecture/bindings.js';
 import { environment, InputError, type Environment } from '../architecture/config.js';
 import { ConfigurationReader } from '../architecture/configuration.js';
-import { execute, git } from '../operations/process.js';
+import { git } from '../operations/process.js';
 import { observe } from '../report/timeline.js';
 import { WorkspaceCleanup } from './cleanup.js';
 import {
@@ -29,6 +24,7 @@ export interface PrepareOptions {
   project: string;
   base?: string;
   authorityBase?: string;
+  packageId?: string;
   issue?: string;
   bindings?: Bindings;
 }
@@ -60,6 +56,12 @@ export function createWorkspace(root: string, options: PrepareOptions): RecordDa
   };
   record.bindings = options.bindings ?? loadBindings();
   captureConfiguration(record, options);
+  WorkspaceOperations.capture(
+    record,
+    options.project,
+    options.authorityBase ?? record.base,
+    options.packageId,
+  );
   mkdirSync(join(root, 'runs', id), { mode: 0o700 });
   save(root, record);
   observe(root, record, 'run.created', { base, branch, workspace: record.workspace });
@@ -91,12 +93,16 @@ export async function prepareWorkspace(
   signal: AbortSignal,
 ): Promise<void> {
   signal.throwIfAborted();
+  if (record.environment.schemaVersion !== 4)
+    throw new InputError(
+      'Preparation requires environment schema 4; migrate legacy recipes before execution',
+    );
   git(record.source, 'worktree', 'add', '-b', record.branch, record.workspace, record.base);
   observe(root, record, 'workspace.created', { workspace: record.workspace, base: record.base });
-  await prepareMembers(root, record, signal);
+  const shared = new WorkspaceOperations(root, record, signal);
+  await prepareMembers(root, record, signal, (member) => shared.member(member));
   observe(root, record, 'workspace.members', { members: record.members });
-  for (const command of [...record.environment.prerequisites, ...record.environment.setup])
-    await prepareCommand(root, record, signal, command);
+  await shared.primary();
   freezeMembers(root, record);
   assertIdentity(record);
   assertOutputs(record.workspace, record.environment);
@@ -137,31 +143,6 @@ function inspectSource(options: PrepareOptions) {
     throw new InputError(String(error));
   }
   return { source, base, env, commonDir };
-}
-
-async function prepareCommand(
-  root: string,
-  record: RecordData,
-  signal: AbortSignal,
-  command: import('../architecture/config.js').Command,
-): Promise<void> {
-  const log = join(root, 'runs', record.id, `command-${record.commands.length}.log`);
-  observe(root, record, 'setup.started', { command, workspace: record.workspace });
-  try {
-    record.commands.push(
-      await execute(targetCommand(record, command), record.workspace, log, signal, {
-        env: targetEnvironment(record),
-        timeoutMs: capturedCommandTimeout(record),
-      }),
-    );
-  } catch (error) {
-    if (error && typeof error === 'object' && 'commandResult' in error)
-      record.commands.push(error.commandResult as RecordData['commands'][number]);
-    throw error;
-  } finally {
-    observe(root, record, 'setup.result', record.commands.at(-1) ?? { status: 'interrupted' });
-    save(root, record);
-  }
 }
 
 function assertNoSubmodules(source: string, base: string): void {

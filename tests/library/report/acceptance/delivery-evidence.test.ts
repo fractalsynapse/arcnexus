@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
 import { ExecutionEvidence } from '../../../../dist/library/report/report.js';
 import { ExecutionStore } from '../../../../dist/library/coordination-store/execution-store.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
 /** Protects independent dependency assessments from foreign or unverified report substitution. */
 class DeliveryEvidenceScenarios {
@@ -64,4 +64,4 @@ for (const field of [
 ])
   test('delivery evidence rejects mismatched ' + field, (t) => scenarios.rejects(t, field));
 
-registerSuite({ component: 'report', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({ component: 'report', level: 'acceptance', tags: ['native-host', 'deterministic'] });

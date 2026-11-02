@@ -1,13 +1,14 @@
 import { spawnSync } from 'node:child_process';
-import { rmSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 /** Builds a clean distribution and generated compatibility entry point. */
 class BuildApplication {
   /** Rebuilds production output, packages trusted schemas and compiles executable fixtures. */
   async run(): Promise<void> {
-    rmSync('dist', { recursive: true, force: true });
+    mkdirSync('dist', { recursive: true });
+    this.clear('dist');
     this.compile([]);
     const schemas = await import(
       pathToFileURL(resolve('dist/library/architecture/build-schemas.js')).href
@@ -16,7 +17,18 @@ class BuildApplication {
     writeFileSync('dist/cli.js', "#!/usr/bin/env node\nimport './gateway/cli/cli.js';\n", {
       mode: 0o755,
     });
+    mkdirSync('.fixture-build', { recursive: true });
+    this.clear('.fixture-build');
     this.compile(['-p', 'tsconfig.fixtures.json']);
+  }
+
+  /** Removes stale files and links without replacing directories that may be sandbox mounts. */
+  private clear(directory: string): void {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const path = join(directory, entry.name);
+      if (entry.isDirectory()) this.clear(path);
+      else rmSync(path, { force: true });
+    }
   }
 
   /** Runs the pinned TypeScript compiler and fails the build on process or compilation errors. */

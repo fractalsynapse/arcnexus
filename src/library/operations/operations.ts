@@ -1,22 +1,30 @@
+import { OperationExecution } from './operation-execution.js';
 import { readDiagnosticExcerpt } from './diagnostics.js';
 import { materialCandidate } from '../change-inspection/changes.js';
 import { ProgressObserver } from '../report/progress.js';
-import { lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { realpathSync } from 'node:fs';
+import { OperationArtifacts } from './operation-artifacts.js';
 import { join, relative } from 'node:path';
-import { digest, type ResolvedAssignment } from '../architecture/assignment.js';
-import { targetCommand } from '../architecture/bindings.js';
-import { milliseconds, minimumLimit, type Command } from '../architecture/config.js';
+import { type ResolvedAssignment } from '../architecture/assignment.js';
+import type { Command } from '../architecture/config.js';
 import { observe } from '../report/timeline.js';
 import type { BridgeTool } from '../steward/bridge.js';
 import { save, type RecordData } from '../workspace/state.js';
-import { operationEnvironment } from './environment.js';
-import { execute, type CommandResult } from './process.js';
+import type { CommandResult } from './process.js';
 import { ServiceManager, type HttpDefinition, type ServiceDefinition } from './services.js';
 
 export { operationEnvironment } from './environment.js';
 
 export type Operation = {
-  schemaVersion: 2 | 3;
+  schemaVersion: 2 | 3 | 4;
+  prerequisites?: string[];
+  network?: boolean;
+  argumentTokens?: import('./operation-definition.js').ArgumentToken[];
+  pendingContext?: import('./operation-definition.js').ContextInput[];
+  definitionArguments?: import('./operation-definition.js').ArgumentToken[];
+  selectedTests?: import('../testing/captured-tests.js').DiscoveredSuite[];
+  definitionDigest?: string;
+  resolvedContext?: import('./operation-definition.js').OperationContext;
   id: string;
   purpose: string;
   repository: string;
@@ -54,13 +62,23 @@ export function operationBridge(
   };
 }
 
+/** Identifies a denied selection before any operation is queued or executed. */
+class OperationSelectionError extends Error {
+  /** Retains the requested identity for actionable feedback without granting its authority. */
+  constructor(readonly operationId: string) {
+    super('Unknown or denied operation: ' + operationId);
+  }
+}
+
 /** Authorizes declared commands and services, accounts for calls, and retains their evidence. */
 class OperationRuntime {
   private readonly resolved: ResolvedAssignment;
 
-  private readonly services: ServiceManager;
+  private services: ServiceManager;
 
   private active: AbortController | undefined;
+
+  private lifecycle = new AbortController();
 
   private pending?: Promise<unknown>;
 
@@ -76,7 +94,13 @@ class OperationRuntime {
     private readonly inspect: () => void,
   ) {
     this.resolved = record.resolvedAssignment as ResolvedAssignment;
-    this.services = new ServiceManager(root, record, signal);
+    if (this.resolved.operations.some((operation) => operation.schemaVersion !== 4))
+      throw new Error('Operation execution requires schema 4; migrate historical definitions');
+    this.services = new ServiceManager(
+      root,
+      record,
+      AbortSignal.any([signal, this.lifecycle.signal]),
+    );
     record.operations ??= [];
     record.operationCalls ??= 0;
   }
@@ -84,18 +108,26 @@ class OperationRuntime {
   /** Releases resources owned by this instance. */
   async close(): Promise<void> {
     this.generation++;
+    this.lifecycle.abort(new Error('Operation turn completed'));
     this.active?.abort(new Error('Operation turn completed'));
     try {
       await this.pending;
     } finally {
       this.pending = undefined;
       await this.services.stop();
+      this.lifecycle = new AbortController();
+      this.services = new ServiceManager(
+        this.root,
+        this.record,
+        AbortSignal.any([this.signal, this.lifecycle.signal]),
+      );
     }
   }
 
   /** Stops managed work when its operation bridge loses its owner. */
   disconnect(): void {
     this.generation++;
+    this.lifecycle.abort(new Error('Operation bridge disconnected'));
     this.active?.abort(new Error('Operation bridge disconnected'));
     void this.services.stop().catch(() => {});
   }
@@ -103,18 +135,20 @@ class OperationRuntime {
   /** Accounts for and authorizes a tool request before execution. */
   async call(name: string, args: unknown): Promise<unknown> {
     if (name === 'operations.list') return this.list(args);
-    const op = this.authorize(name, args);
-    if (name.startsWith('services.')) {
-      const result = await this.service(name, op);
-      this.inspect();
-      return result;
+    let op: Operation;
+    try {
+      op = this.authorize(name, args);
+    } catch (error) {
+      if (error instanceof OperationSelectionError) return this.rejected(error);
+      throw error;
     }
-    if (op.kind === 'service') throw new Error('Use services.start for service operations');
+    if (op.kind === 'service' && !name.startsWith('services.'))
+      throw new Error('Use services.start for service operations');
     const number = Number(this.record.operationCalls);
     observe(this.root, this.record, 'operation.queued', { id: op.id, number });
     const generation = this.generation;
     const execution = (this.pending ?? Promise.resolve()).then(() =>
-      this.perform(op, number, generation),
+      name.startsWith('services.') ? this.service(name, op) : this.perform(op, number, generation),
     );
     this.pending = execution;
     return execution;
@@ -143,7 +177,6 @@ class OperationRuntime {
     if (args && Object.keys(args).length) throw new Error('Operation listing accepts no arguments');
     return {
       operations: this.resolved.operations,
-      budget: this.resolved.executionProfile.maxOperationCalls ?? null,
       used: this.record.operationCalls,
     };
   }
@@ -161,7 +194,7 @@ class OperationRuntime {
       throw new Error('Operation requires only an ID');
     const id = (args as { id: string }).id,
       op = resolved.operations.find((op) => op.id === id);
-    if (!op) throw new Error('Unknown or denied operation: ' + id);
+    if (!op) throw new OperationSelectionError(id);
     const stage = String(record.stage);
     this.assertActivity(op, stage);
     observe(root, record, 'operation.authorized', {
@@ -171,6 +204,27 @@ class OperationRuntime {
       number: record.operationCalls,
     });
     return op;
+  }
+
+  /** Preserves pending authorized work while diagnosing repeated unavailable selections. */
+  private rejected(error: OperationSelectionError): unknown {
+    const { root, record } = this;
+    const action = { activity: record.stage, operation: error.operationId, phase: 'selection' };
+    const progress = new ProgressObserver(root, record);
+    const candidate = materialCandidate(record);
+    progress.before(action, candidate);
+    const loopWarning = progress.failed(action, error.message, candidate);
+    const result = {
+      status: 'rejected',
+      error: error.message,
+      availableOperationIds: this.resolved.operations.map((operation) => operation.id),
+      recovery:
+        'No operation was queued. Use operations.list for captured agent capabilities; host-only verification IDs are unavailable. Observe pending work with its existing execution.wait requestId.',
+      ...(loopWarning ? { loopWarning } : {}),
+    };
+    observe(root, record, 'operation.selection_rejected', result);
+    save(root, record);
+    return result;
   }
 
   /** Requires the requested activity to be allowed by the captured role. */
@@ -189,37 +243,28 @@ class OperationRuntime {
 
   /** Validates tool request data before executing any operation. */
   private request(args: unknown): void {
-    const { root, record, resolved } = this;
+    const { root, record } = this;
     record.operationCalls = Number(record.operationCalls) + 1;
     observe(root, record, 'operation.requested', { number: record.operationCalls, args });
     save(root, record);
-    if (
-      resolved.executionProfile.maxOperationCalls !== undefined &&
-      Number(record.operationCalls) > resolved.executionProfile.maxOperationCalls
-    )
-      throw new Error('Operation request budget exhausted');
   }
 
   /** Routes declared service lifecycle actions through the service manager. */
   private async service(name: string, op: Operation): Promise<unknown> {
-    switch (name) {
-      case 'services.start':
-        return this.services.start(op);
-      case 'services.status':
-        return this.services.status(op.id);
-      case 'services.logs':
-        return this.services.logs(op.id);
-      case 'services.stop':
-        this.services.status(op.id);
-        await this.services.stop();
-        return { status: 'stopped' };
-      default:
-        throw new Error('Unknown service action');
-    }
+    const signal = AbortSignal.any([this.signal, this.lifecycle.signal]);
+    signal.throwIfAborted();
+    const result = await new OperationExecution(
+      this.root,
+      this.record,
+      signal,
+      this.services,
+    ).service(op, name);
+    this.inspect();
+    return result;
   }
 
   /** Records the authorized operation start and its execution context. */
-  private begin(op: Operation): { cwd: string; combined: AbortSignal; start: number } {
+  private begin(op: Operation): { combined: AbortSignal; start: number } {
     const cwd = realpathSync(join(this.record.workspace, op.cwd));
     const path = relative(this.record.workspace, cwd);
     if (path.startsWith('..') || path.startsWith('/'))
@@ -234,16 +279,16 @@ class OperationRuntime {
       cwd,
     });
     save(this.root, this.record);
-    return { cwd, combined, start };
+    return { combined, start };
   }
 
   /** Executes a declared finite operation and retains its command evidence. */
   private async finite(op: Operation) {
-    const { cwd, combined, start } = this.begin(op);
+    const { combined, start } = this.begin(op);
     const outcome: { result?: CommandResult } = {};
     let artifacts: unknown[] = [];
     try {
-      outcome.result = await this.execute(op, cwd, combined, outcome);
+      outcome.result = await this.execute(op, combined, outcome);
       const result = outcome.result;
       this.inspect();
       artifacts = op.artifacts.map((path) => this.artifact(path));
@@ -263,12 +308,14 @@ class OperationRuntime {
   /** Runs the requested action through the configured execution boundary. */
   private async execute(
     op: Operation,
-    cwd: string,
     signal: AbortSignal,
     outcome: { result?: CommandResult },
   ): Promise<CommandResult | undefined> {
     try {
-      return await this.command(op, cwd, signal);
+      return await new OperationExecution(this.root, this.record, signal, this.services).run(
+        op,
+        'agent',
+      );
     } catch (error) {
       if (error && typeof error === 'object' && 'commandResult' in error)
         outcome.result = error.commandResult as CommandResult;
@@ -277,46 +324,9 @@ class OperationRuntime {
     }
   }
 
-  /** Executes the fixed command and retains its output and exit evidence. */
-  private async command(op: Operation, cwd: string, signal: AbortSignal): Promise<CommandResult> {
-    const { root, record, resolved } = this;
-    const log = join(root, 'runs', record.id, `operation-${this.activeNumber}.log`);
-    if (op.kind === 'http')
-      return this.services.check(
-        op,
-        log,
-        op.timeoutSeconds === undefined
-          ? signal
-          : AbortSignal.any([
-              signal,
-              AbortSignal.timeout(Math.max(1, Math.floor(op.timeoutSeconds * 1000))),
-            ]),
-      );
-    const command = targetCommand(record, {
-      command: op.command,
-      args: op.args.map((a) => (a === '{workspace}' ? record.workspace : a)),
-    });
-    return execute(command, cwd, log, signal, {
-      env: operationEnvironment(record),
-      timeoutMs: milliseconds(
-        minimumLimit(op.timeoutSeconds, resolved.executionProfile.commandTimeoutSeconds),
-      ),
-    });
-  }
-
   /** Validates and records declared result artifacts produced by the operation. */
   private artifact(path: string) {
-    const { root, record } = this;
-    const source = join(record.workspace, path);
-    if (!lstatSync(source).isFile() || realpathSync(source) !== source)
-      throw new Error('Operation artifact must be a regular non-symlink file');
-    const bytes = readFileSync(source);
-    if (bytes.length > 64 * 1024 * 1024) throw new Error('Operation artifact limit exceeded');
-    const dir = join(root, 'runs', record.id, 'operation-artifacts', String(this.activeNumber));
-    mkdirSync(dir, { recursive: true, mode: 0o700 });
-    const sha256 = digest(bytes);
-    writeFileSync(join(dir, sha256), bytes, { mode: 0o600 });
-    return { path, sha256, artifact: relative(join(root, 'runs', record.id), join(dir, sha256)) };
+    return new OperationArtifacts(this.root, this.record).capture(path, String(this.activeNumber));
   }
 
   /** Finalizes the current lifecycle while preserving its recorded outcome. */

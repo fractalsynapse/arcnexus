@@ -192,7 +192,7 @@ export class ExecutionStore {
   /** Commits replies and newly discovered dependencies as one recoverable activation outcome. */
   exchange(from: string, requests: OwnerRequest[], actions: InboxDecision[]): void {
     this.db.transaction('inbox.exchanged', { from, requests, actions }, () => {
-      for (const action of actions) new InboxDecisions(this.db).apply(from, action);
+      this.decisions(from, actions);
       for (const request of requests) this.route(from, request);
       this.wake(this.assignment(from).runId);
     });
@@ -284,13 +284,14 @@ export class ExecutionStore {
   }
 
   /** Lists request envelopes addressed to or sent by this assignment. */
-  inbox(id: string): Array<InboxRequest & { replies: Array<InboxDecision & { actor: string }> }> {
+  inbox(id: string) {
     const replies = this.db.all<InboxDecision & { actor: string }>('reply');
     return this.db
       .all<InboxRequest>('request')
       .filter((r) => r.from === id || r.assignmentId === id)
       .map((request) => ({
         ...request,
+        ...new InboxDecisions(this.db).context(id, request),
         replies: replies.filter((reply) => reply.requestId === request.id),
       }));
   }
@@ -308,11 +309,21 @@ export class ExecutionStore {
   /** Commits correlated decisions and dependent readiness together. */
   respond(id: string, decisions: InboxDecision[]): void {
     this.db.transaction('inbox.responses', { id, decisions }, () => {
-      for (const decision of decisions) new InboxDecisions(this.db).apply(id, decision);
+      this.decisions(id, decisions);
       const actor = this.assignment(id);
       if (actor.status === 'running') this.db.put('assignment', { ...actor, status: 'ready' });
       this.wake(actor.runId);
     });
+  }
+
+  /** Checks strengthened waits inside the same transaction as their correlated replies. */
+  private decisions(actor: string, decisions: InboxDecision[]): void {
+    for (const decision of decisions) {
+      if (!new InboxDecisions(this.db).apply(actor, decision)) continue;
+      if (decision.action !== 'require_delivery') continue;
+      const request = this.db.get<InboxRequest>('request', decision.requestId);
+      this.connect(this.assignment(actor), this.assignment(request.assignmentId));
+    }
   }
 
   /** Distinguishes accepted intent from verified delivery for each dependency edge. */

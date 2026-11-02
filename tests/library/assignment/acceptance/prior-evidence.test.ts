@@ -1,28 +1,39 @@
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
-import { test } from 'node:test';
-import { operationFixture } from '../../testing/support/operations-fixture.js';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
+import { TestProcess } from '../../testing/support/test-process.js';
+import { minimalWorkflowFixture as operationFixture } from '../../testing/support/workflow-fixture.js';
 import { cli, stewardEntry } from '../../testing/support/workflow-fixture.js';
 
 /** Exercises prior evidence behavior through observable scenarios. */
 class PriorEvidenceTests {
   /** Verifies that built clisnapshots selected historical text before setup and supplies identical inspected context. */
-  builtCLISnapshotsSelectedHistoricalTextBeforeSetupAndSuppliesIdenticalInspectedContext(
+  async builtCLISnapshotsSelectedHistoricalTextBeforeSetupAndSuppliesIdenticalInspectedContext(
     t: TestContext,
   ) {
     const f = operationFixture(t),
       a = assignment(f);
-    this.replaceHistoryDuringSetup(f, a.history);
+    this.setupGate(f);
     const inspected = invoke(f, a, 'inspect');
     assert.equal(inspected.status, 0, inspected.stderr);
-    const r = invoke(f, a);
-    assert.equal(r.status, 0, r.stderr);
-    const record = JSON.parse(r.stdout),
-      resolved = JSON.parse(inspected.stdout);
+    const child = new TestProcess(t, argumentsFor(f, a), f.env);
+    await child.waitForReady(
+      () => this.setupReady(f) !== undefined,
+      'Shared setup must reach its gate',
+    );
+    const workspace = this.setupReady(f)!;
+    writeFileSync(a.history, 'REPLACED');
+    writeFileSync(join(workspace, 'generated/release'), 'continue');
+    assert.equal(await child.closed, 0, child.stderr);
+    this.assertCaptured(f, JSON.parse(child.stdout), JSON.parse(inspected.stdout));
+  }
+
+  /** Checks retained bytes, model context and inspection against the original capture. */
+  private assertCaptured(f: any, record: any, resolved: any): void {
     assert.equal(record.resolvedAssignment.digest, resolved.digest);
     assert.match(record.resolvedAssignment.priorEvidence[0].content, /PRIOR_FINDING_42/);
     assert.equal(
@@ -37,18 +48,34 @@ class PriorEvidenceTests {
     assert.match(readFileSync(join(dir, 'timeline.jsonl'), 'utf8'), /workspace.prepared/);
   }
 
-  /** Verifies that replace history during setup. */
-  private replaceHistoryDuringSetup(f: any, history: string): void {
-    const envPath = join(f.repo, 'architecture/environment.yaml'),
-      env = JSON.parse(String(readFileSync(envPath)));
-    env.setup = [
-      {
-        command: process.execPath,
-        args: ['-e', `require('fs').writeFileSync(${JSON.stringify(history)},'REPLACED')`],
-      },
+  /** Makes setup wait at an observable generated-output gate without granting access to caller files. */
+  private setupGate(f: any): void {
+    const path = join(f.repo, 'architecture/components/platform.json');
+    const platform = JSON.parse(readFileSync(path, 'utf8'));
+    platform.operations['setup-gate'] = ['setup'];
+    writeFileSync(path, JSON.stringify(platform));
+    const operation = JSON.parse(
+      readFileSync(join(f.repo, 'architecture/operations/verify.yaml'), 'utf8'),
+    );
+    operation.id = 'setup-gate';
+    operation.args = [
+      '-e',
+      "const fs=require('fs');fs.mkdirSync('generated',{recursive:true});fs.writeFileSync('generated/ready','ready');const timer=setInterval(()=>{if(fs.existsSync('generated/release'))clearInterval(timer)},25)",
     ];
-    writeFileSync(envPath, JSON.stringify(env));
+    writeFileSync(
+      join(f.repo, 'architecture/operations/setup-gate.yaml'),
+      JSON.stringify(operation),
+    );
     f.commit();
+  }
+
+  /** Locates only this fixture's materialized workspace once its confined setup has actually started. */
+  private setupReady(f: any): string | undefined {
+    const root = join(f.state, 'workspaces');
+    if (!existsSync(root)) return;
+    return readdirSync(root)
+      .map((id) => join(root, id))
+      .find((workspace) => existsSync(join(workspace, 'generated/ready')));
   }
 
   /** Verifies the scenario rejects invalid historical input. */
@@ -75,9 +102,18 @@ class PriorEvidenceTests {
     );
     assert.equal(r.status, 0, String(r.error ?? r.stderr));
     const commands = JSON.parse(r.stdout).verification;
-    assert.ok(commands.some((c: any) => c.command === 'npm' && c.args.join(' ') === 'test'));
     assert.ok(
-      commands.some((c: any) => c.command === 'npm' && c.args.join(' ') === 'run test:report'),
+      commands.some(
+        (c: any) => c.command === 'node' && c.args.join(' ') === '--test .test-build/**/*.test.js',
+      ),
+    );
+    assert.ok(
+      commands.some(
+        (c: any) =>
+          c.id === 'component-tests' &&
+          c.command === 'node' &&
+          c.args.includes('.test-build/library/report/unit/report.test.js'),
+      ),
       'focused report regression is captured',
     );
   }
@@ -90,7 +126,7 @@ function assignment(f: any): any {
     path = join(f.root, 'assignment.json');
   writeFileSync(history, 'PRIOR_FINDING_42: verify boundaries.');
   const value = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     kind: 'research',
     objective: 'Inspect prior finding',
     expectedOutcome: 'Evidence-backed conclusion',
@@ -109,21 +145,28 @@ function assignment(f: any): any {
   return { history, path, value };
 }
 
-function invoke(f: any, a: any, command: any = 'run'): any {
-  return spawnSync(
-    process.execPath,
-    [
-      command === 'run' ? stewardEntry : cli,
-      command,
-      'sample',
-      '--assignment',
-      a.path,
-      '--project',
-      f.repo,
-      ...(command === 'run' ? ['--codex-path', f.executable] : ['--json']),
-    ],
-    { encoding: 'utf8', env: f.env, timeout: 30 * 60 * 1000 },
-  );
+/** Supplies identical captured bindings to inspection and the assembled session. */
+function argumentsFor(f: any, a: any, command = 'run'): string[] {
+  return [
+    command === 'run' ? stewardEntry : cli,
+    command,
+    'sample',
+    '--assignment',
+    a.path,
+    '--project',
+    f.repo,
+    '--bindings',
+    join(f.root, 'minimal-bindings.json'),
+    ...(command === 'run' ? ['--codex-path', f.executable] : ['--json']),
+  ];
+}
+
+function invoke(f: any, a: any, command = 'run'): any {
+  return spawnSync(process.execPath, argumentsFor(f, a, command), {
+    encoding: 'utf8',
+    env: f.env,
+    timeout: 30 * 60 * 1000,
+  });
 }
 
 test('built CLI snapshots selected historical text before setup and supplies identical inspected context', (t: any) =>
@@ -136,4 +179,8 @@ for (const mode of ['missing', 'oversized', 'non-text', 'duplicate', 'version-on
 test('built inspect exposes focused report regression alongside full repository verification', () =>
   suite.builtInspectExposesFocusedReportRegressionAlongsideFullRepositoryVerification());
 
-registerSuite({ component: 'assignment', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'assignment',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

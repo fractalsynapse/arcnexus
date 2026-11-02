@@ -199,3 +199,80 @@ Missing or mismatched identity requires attention and a new run; retain the old
 candidate and evidence without importing the new source revision. Historical terminal
 outcomes remain readable. A still-running original host may observe source drift,
 but its captured authority and candidate never change silently.
+
+Supervising-runner snapshots preserve source permission modes on copied files and
+directories, including empty generated directories. The destination hash and a
+second source hash must still match the initial capture. An active umask cannot
+make an unchanged installation appear to be a concurrent rebuild, and permission
+normalization must not relax the source-change or byte-integrity checks.
+
+### Correlated model inbox context
+
+Model-facing inbox envelopes expose the durable request identity as `requestId`,
+matching the reply schema. Internal retry keys remain in host persistence and
+chronology evidence; they are not alternative reply identities. Resume rebuilds
+this projection from the store, and acknowledgements validate the durable identity
+and sender authority. Never reinterpret an arbitrary key as a request ID.
+
+### Control transport waiting
+
+Initial endpoint discovery retains a bounded stale-endpoint probe. Once a caller
+sends a control request, it waits for that request's response or an explicit socket
+disconnection. Checkpoint elapsed time is not a control failure, and the client
+never replays a mutation whose outcome is uncertain. Task cancellation continues
+through the attached task identity; process supervision still governs host loss.
+
+### Strengthening an existing delivery wait
+
+A requester can return a correlated inbox action `require_delivery` with the
+existing `requestId` and an explanation. The host strengthens that existing edge
+to verified delivery without requiring another copy of the recipient's objective,
+acceptance criteria or write scope. It creates no assignment and does not relax
+shared-request matching. The host checks sender authority and blocking cycles in
+the same transaction; a rejected wait leaves the previous milestone and replies
+unchanged. Retries do not duplicate work, and unrelated ready assignments continue.
+Only actual verified delivery releases the wait; an acknowledgement cannot do so.
+
+Dependency acceptance describes the recipient's bounded contribution. The overall
+goal supplies context, but an owner's delivery must not depend on future requester
+integration. The director assesses that assembled goal separately.
+
+Model-facing inbox context also identifies each envelope as incoming or outgoing
+relative to the active assignment, and includes current requester/recipient states,
+the effective required milestone and currently available reply actions. These are
+projections of the durable request, not owner-wide reply permissions. Completed
+supplier delivery requires no acknowledgment or additional `require_delivery`
+action. Reply validation remains transactional and authoritative even when retained
+model context has become stale. Internal reply receipt identities stay out of the
+model-facing projection, alongside request retry keys.
+
+Dependency continuations carry assignment identity, owner, objective, acceptance,
+status, required milestone and delivered candidate identity. Independent delivery
+assessments retain their complete criterion conclusions and reviewed candidate
+identity. They do not inline raw tool observations, command logs, retained thread
+state or prior activation payloads. Full delivery evidence remains in the private
+reports and in the independent verifier's paged evidence artifacts. This projection
+prevents recursive evidence growth; it does not truncate acceptance criteria or
+impose an execution quota.
+
+Runner capture preserves source bytes and executable/directory modes under the
+production operation sandbox. Mode repair is necessary only when copying changed
+a mode; it must not issue redundant source-write operations against already correct
+snapshot entries. The `host-lifecycle` test selection exercises background startup,
+host-loss recovery and installation replacement through the shared executor.
+
+Canonical host ownership is independent of temporary-storage and evidence-root
+settings. The IPC endpoint uses a fixed private per-user directory under `/tmp`;
+`TMPDIR` selects operation storage only. The exclusive host lease lives in the
+canonical Git common directory, so another socket or linked worktree cannot start
+another scheduler. Changes to temporary-storage settings must attach to the same
+host and preserve its captured authority. Live task
+`1be5cdf7-5c9f-4ccd-917d-a5150206b2bb` exposed the former duplicate-host defect;
+its failed evidence remains retained and is not automatically replayed (#137).
+
+The #137 local regression passes alternate-socket lease rejection, and all four
+`host-lifecycle` cases pass through the shared executor, including a second CLI
+with both another evidence root and another `TMPDIR`. Evidence is retained at
+`test-runs/b256161f-80b7-48ab-9a49-d9b04d777f52`. Formatting, lint, strict checking,
+build, ownership validation and guidance validation pass locally. This is deterministic
+qualification; a new live self-development task must still produce its own delivery.

@@ -1,0 +1,21 @@
+schemaVersion: 5
+id: platform
+type: platform
+purpose: Maintain the identity fixture under captured authority
+role: systems-engineer
+executionProfile: luna
+reads:
+  - .
+operations:
+  check-runtime:
+    - preflight
+  package-tests:
+    - agent
+    - verify
+  install-dependencies:
+    - setup
+director:
+  component: identity
+  profile: astra
+reviewerProfile: astra
+defaultPackage: identity-package

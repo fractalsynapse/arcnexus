@@ -18,7 +18,7 @@ class CliTests {
     assert.equal(this.run('unknown-command').status, 2);
   }
 
-  /** Verifies that cLI gateway owns its test directory without project-wide write access. */
+  /** Verifies that the CLI gateway owns its test directory without project-wide write access. */
   ownsItsTests(): void {
     const result = this.run(
       'inspect',
@@ -31,8 +31,9 @@ class CliTests {
     assert.equal(result.status, 0, String(result.error ?? result.stderr));
     const owner = JSON.parse(result.stdout).context.at(-1);
     assert.ok(owner.allowedWritePaths.includes('tests/gateway/cli'));
-    assert.ok(owner.access.writeDirectories.includes('src/gateway/cli'));
-    assert.ok(!owner.access.writeDirectories.includes('.'));
+    assert.ok(owner.allowedWritePaths.includes('src/gateway/cli'));
+    assert.deepEqual(owner.access.writeDirectories, []);
+    assert.ok(!owner.allowedWritePaths.includes('.'));
     assert.ok(!owner.allowedWritePaths.includes('src/cli.ts'));
   }
 

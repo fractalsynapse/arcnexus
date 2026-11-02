@@ -1,7 +1,8 @@
+schemaVersion: 5
 id: steward
 type: library
+parentId: cli-package
 purpose: Adapt the Codex harness with explicit execution permissions and evidence
-path: src/library/steward
 objectives:
   - Research and implement bounded objectives with independently verified
     evidence
@@ -9,82 +10,15 @@ constraints:
   - Caller owns commits and integration
   - Do not edit architecture or weaken host verification
   - Implement only approved execution settings
-verification:
-  - command: npm
-    args:
-      - run
-      - check
-  - command: npm
-    args:
-      - test
-  - command: node
-    args:
-      - dist/cli.js
-      - guidance
-      - validate
-      - --project
-      - .
-  - command: npm
-    args:
-      - run
-      - format:check
-  - command: npm
-    args:
-      - run
-      - lint
-access:
-  readPaths:
-    - .
-  writeDirectories:
-    - src/library/steward
-    - tests/library/steward
-    - docs/library/steward
-    - architecture/components
-schemaVersion: 4
-role: systems-engineer
-executionProfile: luna
-interfaces:
-  - "runCodex: explicit SDK permissions and structured result"
-relatedIds:
-  - architecture
-questions: []
-parentId: cli-package
-operationIds:
-  - steward-lint
-  - steward-tests
-patternIds:
-  - readable-typescript
-ownership:
-  paths:
-    - src/library/steward
-    - tests/library/steward
-    - docs/library/steward
-    - architecture/components/steward.yaml
-  publicModules:
-    - src/library/steward/bridge.ts
-    - src/library/steward/codex.ts
-  directoryExceptions:
-    - path: architecture/components
-      reason: Directory-only sandbox grants; only this component definition is
-        writable under captured exact-path checks
-discovery:
-  source:
-    - src/library/steward
-  documentation:
-    - docs/library/steward
-  tests:
-    - tests/library/steward
-  exclude: []
-provides: []
-consumes:
-  - id: director-result
-    version: "1"
-  - id: verification-result
-    version: "1"
-  - id: agent-result
-    version: "1"
-  - id: initializer-result
-    version: "1"
-  - id: test-profile
-    version: "1"
-testProfile: node
+operations:
+  migrated-recipe-43b539fb85a57c26:
+    - verify
+  migrated-recipe-df6d67ddacf5bf0c:
+    - verify
+owns:
+  - src/library/steward
+  - tests/library/steward
+  - docs/library/steward
+api:
+  - module: src/library/steward/bridge.ts
+  - module: src/library/steward/codex.ts

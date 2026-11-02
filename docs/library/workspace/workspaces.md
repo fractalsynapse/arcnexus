@@ -17,40 +17,55 @@ After a hard interruption, inspect the lock's PID and retained record; only afte
 confirming the process is gone may the caller remove the stale lock. No automatic
 recovery is attempted. State is private to the current OS user.
 
-Commit `architecture/environment.yaml` in the target repository:
+## Shared-operation preparation (migration in progress)
+
+Environment schema 4 contains repository composition only:
 
 ```yaml
-schemaVersion: 3
-prerequisites:
-  - command: node
-    args:
-      - --version
-setup:
-  - command: npm
-    args:
-      - ci
-generatedDirectories:
-  - node_modules
-  - dist
+schemaVersion: 4
+workspace:
+  primary:
+    id: app
+    repository: https://example.invalid/app.git
+  dependencies: []
 ```
 
-Schema versions 1, 2 and 3 remain readable; use version 3 for new configuration.
-All three arrays are required. Commands run without a shell from the worktree root,
-using installed host tools and normal environment credentials. Setup commands are
-trusted project code and can use the network. They must not change tracked files;
-new outputs must be ignored by Git and inside declared generated directories.
-Paths must be relative, normalized and cannot name `.git` or escape the workspace.
-Submodules are unsupported in this initial slice. No system runtimes are installed.
+Version-five components inherit `operations` usages. Preparation runs their captured
+`preflight` operations followed by `setup`, expanding fixed host context inputs and
+ordering prerequisites. Identical resolved operations run once per checkpoint.
+Generated-output roots come from those operation definitions; environment setup
+recipes and duplicate output-root declarations are rejected. Mounted repositories
+receive their own captured owner context and retained operation evidence.
 
-Records snapshot the configuration, base, source, branch, timestamps and command
-results. Full stdout/stderr is retained in per-command logs. Failed and cancelled
-workspaces remain available. Commands and preparation have no implicit deadline. Optional captured command
-limits and `--timeout-seconds` are enforced when explicitly supplied.
-SIGINT exits 130; invalid/preflight input exits 2; operational failures exit 1.
-Successful preparation exits 0 and prints the record, including workspace ID/path.
-Cleanup refuses changed tracked/untracked files and unknown ignored files (including
-secret files). It deletes only declared ignored generated outputs with the worktree.
-Concurrent external edits during cleanup are unsupported; stop editors/builders first.
+The installed confinement adapter must prove source and configuration-home writes
+are denied before setup executes. Setup can write only its declared generated roots
+and private temporary storage. Run intent is flushed before dispatch; uncertain
+operations are not automatically replayed. Cleanup derives disposable outputs from
+immutable operation definitions and retains the original reports.
+
+Shared preparation, refresh, test preparation and verification use the same operation
+executor under version-five checked engineering. ArcNexus's own declarations now
+use this configuration family. See the [real engineering qualification](../assignment/checked-engineering-qualification.md).
+
+The workspace acceptance suite is being migrated to minimal component fixtures and
+native confinement. It must preserve preparation, cancellation, parent-loss and
+cleanup evidence coverage. A setup script attempting a maintained-source write must
+fail before the contents change; its failed workspace may then be cleaned safely.
+Generated directories may already exist when an operation starts.
+
+Historical environment and report readers remain available for evidence inspection.
+Assignment and operation adapter retirement is tracked separately in the implementation
+plan; workspace preparation itself has no legacy recipe execution branch. New execution has no time or operation budgets.
+Test watchdogs bound qualification processes, not valid application work.
+
+Records capture configuration, base, source, branch, timestamps and operation results.
+Full stdout/stderr is retained in invocation logs. Failed and cancelled workspaces
+remain available. SIGINT exits 130; invalid/preflight input exits 2; operational
+failures exit 1. Successful preparation exits 0 and prints the workspace record.
+Cleanup refuses changed tracked files, untracked files and unknown ignored files
+(including secrets). It deletes only declared ignored generated outputs with the
+worktree. Concurrent external edits during cleanup are unsupported; stop editors
+and builders first.
 
 Git worktree operations follow the [Git documentation](https://git-scm.com/docs/git-worktree).
 
@@ -69,3 +84,16 @@ Removal writes `cleanup.json` atomically with `cleanupStatus: "removed"` and
 `removedAt` (an ISO timestamp). This lifecycle receipt is separate from execution
 evidence and is not rewritten on retries. An absent legacy workspace succeeds
 without creating a receipt or changing its existing reports.
+
+## Final execution-family retirement (#109)
+
+The final retirement slice makes the maintenance `prepare` command and the public
+workspace library require environment schema 4 and minimal component authority before
+creating a candidate. Historical records remain inspectable and cleanable; reopening
+them must not execute their inline setup or prerequisite recipes. Primary and dependency
+preparation use only captured shared operations. A retained legacy preparation record
+must be rejected before creating a worktree or launching a child.
+
+Execution deadlines are retired from preparation as well as task/workday execution.
+`prepare --timeout-seconds ...` returns invalid input before starting work. SIGINT and
+host-loss supervision remain available; the test runner's explicit watchdog is separate.

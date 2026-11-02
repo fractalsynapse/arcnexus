@@ -3,8 +3,10 @@
 Current task execution uses the [general runtime director](../execution-runtime/execution.md)
 and `task run "<prompt>"`. It retains goal state, selects any eligible owners and
 uses captured Astra direction/review profiles. The proposal execution path below
-is retired; historical proposals remain inspectable. Low-level session characterization
-retains the earlier initialization contract without exposing a second CLI run mode.
+is retired; historical proposals remain inspectable. Low-level session initialization also uses declared version-five authority and shared
+verification operations. The final retirement slice removes its deadline and inline
+command adapters; old snapshots remain evidence, not executable authority. There is
+no fallback initializer model and no second CLI run mode.
 
 Issue #65 defines the following contract; delivery is complete only after the
 built-program acceptance and live qualification gates pass.
@@ -111,6 +113,10 @@ length and hashes so partial output cannot masquerade as the complete evidence.
 Owner assessment compares against its assignment candidate base. Whole-goal
 assessment compares the assembled candidate against captured source authority.
 The candidate digest is pinned before capture and checked after assessment.
+An invalid page offset or length returns a structured rejection with the valid
+bounds. It exposes no artifact content and allows the reviewer to retry the same
+pinned artifact. Unknown artifact identities remain denied; pagination mistakes
+cannot turn missing evidence into acceptance or terminate an otherwise valid review.
 Unavailable native Git metadata does not require broader verifier filesystem access.
 
 Blocked-task direction receives current run identity and host-retained assignment
@@ -138,3 +144,32 @@ establish what the harness reported executing, while declared host checks remain
 separate evidence class. Neither tool output nor agent messages grant authority.
 Missing or partial logs remain explicit gaps. Never follow an evidence reference into
 another run or accept arbitrary private filesystem paths.
+
+## Acceptance grounded in host capabilities
+
+The director derives acceptance from caller outcomes and captured authority. It
+must not invent unavailable evidence formats or additional process deliverables.
+Declared operations retain exit status, resolved invocation context and combined
+stdout/stderr logs. Separate streams are not promised. An explicit caller need
+for unavailable evidence remains a substantive capability question.
+
+The host automatically runs independent delivery verification and a separate final
+goal assessment. Direction does not create another engineering review assignment
+merely to duplicate these checkpoints. Substantive research/review work requested
+by the caller remains assignable normally. Captured criteria are immutable within
+an accepted assignment; discovering an impossible criterion retains the gap and
+requires a new authorized decision, never a silent waiver.
+
+Read-only direction describes the current planning activation, not the work it may
+propose. A director or self-directed steward may propose subsequent engineering
+assignments within captured owner authority. The host validates and executes those
+assignments separately through the checked-edit workflow. The planning activation
+cannot edit source, commit, publish or invoke nested model delegation. An actionable
+owned objective must not be dismissed merely because planning itself is read-only.
+
+Automatic host checkpoint requirements belong to task-level completion. The director
+must not copy a future independent review into the worker's delivery acceptance:
+the worker submits its findings before that review can run. The host still requires
+independent verification, and the final director assesses the original goal against
+its retained result. This separation removes a circular worker/reviewer dependency;
+it does not waive captured criteria in an existing assignment.

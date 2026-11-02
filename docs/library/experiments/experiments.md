@@ -204,3 +204,40 @@ introduce an implicit single-attempt quota.
 
 The preceding legacy formats describe archived evidence. They cannot execute
 through the current CLI. Filenames ending in `.historical.yaml` retain their recipes.
+
+The shipped general greeting fixture uses minimal v5 components and the same shared
+operation model as production tasks. A platform declares engineering defaults and
+Astra director/reviewer profiles once; its three executable owners remain CLI,
+service and names. The CLI owner also maintains the package's shared scaffolding
+and container definitions. Each leaf's own definition is implicitly owned.
+Public module entries describe the actual CLI → service → names imports. One
+shared package test operation supplies engineering feedback and mandatory host
+verification; ordinary `.test.mjs` filenames provide test classification without
+per-component inventories. Materialization retains compiled runnable payloads and
+requires the declared fixture origin before execution.
+
+The product build clears obsolete compiled fixture payloads before recompiling.
+Renaming a maintained test must not leave the former generated test in a newly
+materialized package or execute both copies of the same acceptance scenario.
+
+The shipped identity and HTTP campaign targets use the same minimal configuration
+family as general. Each has one platform policy declaration, one package identity
+and one executable owner of its complete small repository. Public modules remain
+explicit; setup, runtime probes and verification are shared operation references.
+HTTP service startup stays agent-only and finite syntax checking remains mandatory
+verification. Its loopback probe is a referenced prerequisite rather than an inline
+recipe. Materialize compiled payloads, declare the fixture repository's origin and
+commit before invoking normal task/workday commands. Historical campaign manifests
+and evidence retain their original interpretation.
+
+Active prompt campaigns reference the inherited `component-tests` operation and
+stable captured regression operation identities. They do not prescribe historical
+`verificationIndex` values, removed owner-specific test commands or compiled test
+paths as editable source. Historical manifests and their assignment documents remain
+unchanged so retained evidence can still be interpreted against its original request.
+
+Prompt campaign capture also retains the primary repository URL from committed
+composition authority. A case may clone bytes from a local source path, but resets
+that clone's origin to the captured declared identity before normal task preflight.
+This performs no fetch or publication and leaves the caller's repository unchanged.
+The URL is derived snapshot evidence, not another maintained campaign field (#140).

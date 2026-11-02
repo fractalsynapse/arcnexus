@@ -41,7 +41,7 @@ export class OwnershipValidator {
       .trim()
       .split('\n');
     files.forEach((file) => this.files.add(file));
-    if (Object.values(catalog.components).some((c) => c.schemaVersion === 4)) {
+    if (Object.values(catalog.components).some((c) => c.schemaVersion >= 4)) {
       this.versionFour(catalog, files);
       return;
     }
@@ -57,7 +57,7 @@ export class OwnershipValidator {
       const owner = this.owner(file, policy);
       if (/\.[cm]?[jt]sx?$/.test(file)) this.imports(file, owner, policy);
     }
-    this.assertAcyclic();
+    assertImportCycles(this.graph);
     return source;
   }
 
@@ -66,7 +66,25 @@ export class OwnershipValidator {
     const components = Object.values(catalog.components).filter(
       (c) => c.type === 'platform' || c.repository === catalog.primaryRepository,
     );
-    const owners = components
+    const owners = this.repositoryOwners(catalog);
+    const exclusions = components
+      .filter((c) => c.type === 'platform')
+      .flatMap((c) => c.coverageExclusions ?? []);
+    exclusions.forEach((e) => e.path !== '.' && relativePath(e.path));
+    const policy: OwnershipPolicy = { schemaVersion: 1, maintainedPaths: ['.'], owners };
+    this.overlaps(owners);
+    this.validateOwners(policy, catalog, files);
+    for (const file of files.filter((p) => !exclusions.some((e) => covers(p, e.path)))) {
+      const owner = this.owner(file, policy);
+      if (/\.[cm]?[jt]sx?$/.test(file)) this.imports(file, owner, policy);
+    }
+    assertImportCycles(this.graph);
+  }
+
+  /** Combines local implementation roots with definitions physically declared in this repository. */
+  private repositoryOwners(catalog: Catalog): Owner[] {
+    const owners = Object.values(catalog.components)
+      .filter((c) => c.type === 'platform' || c.repository === catalog.primaryRepository)
       .filter((c) => c.ownership)
       .map((c) => ({
         component: c.id,
@@ -74,18 +92,19 @@ export class OwnershipValidator {
         publicModules: c.ownership!.publicModules,
         directoryExceptions: c.ownership!.directoryExceptions.map((e) => e.path),
       }));
-    const exclusions = components
-      .filter((c) => c.type === 'platform')
-      .flatMap((c) => c.coverageExclusions ?? []);
-    exclusions.forEach((e) => e.path !== '.' && relativePath(e.path));
-    const policy: OwnershipPolicy = { schemaVersion: 1, maintainedPaths: ['.'], owners };
-    this.validateOwners(policy, catalog, files);
-    this.overlaps(owners);
-    for (const file of files.filter((p) => !exclusions.some((e) => covers(p, e.path)))) {
-      const owner = this.owner(file, policy);
-      if (/\.[cm]?[jt]sx?$/.test(file)) this.imports(file, owner, policy);
-    }
-    this.assertAcyclic();
+    for (const component of Object.values(catalog.components))
+      if (
+        component.repository !== catalog.primaryRepository &&
+        component.definition &&
+        component.definition.repository === catalog.primaryRepository
+      )
+        owners.push({
+          component: component.id,
+          paths: [component.definition.path],
+          publicModules: [],
+          directoryExceptions: [],
+        });
+    return owners;
   }
 
   /** Rejects ownership roots whose intersection would create competing leaf owners. */
@@ -124,6 +143,7 @@ export class OwnershipValidator {
           throw new Error(`Public module outside ownership: ${module}`);
         if (!files.includes(module)) throw new Error(`Missing public module: ${module}`);
       }
+      if (component.repository !== catalog.primaryRepository && component.definition) continue;
       for (const directory of component.access.writeDirectories) {
         if (owner.directoryExceptions.includes(directory)) continue;
         if (!owner.paths.some((p) => covers(directory, p)))
@@ -196,22 +216,22 @@ export class OwnershipValidator {
       throw new Error(`Private cross-owner import: ${file} -> ${target}`);
     if (!typeOnly) edges.push(target);
   }
+}
 
-  /** Rejects cycles before recursive dependency traversal can proceed. */
-  private assertAcyclic(): void {
-    const active = new Set<string>(),
-      complete = new Set<string>();
-    const visit = (file: string): void => {
-      if (active.has(file))
-        throw new Error(`Runtime import cycle: ${[...active, file].join(' -> ')}`);
-      if (complete.has(file)) return;
-      active.add(file);
-      for (const next of this.graph.get(file) ?? []) visit(next);
-      active.delete(file);
-      complete.add(file);
-    };
-    for (const file of this.graph.keys()) visit(file);
-  }
+/** Rejects runtime cycles in a captured module graph without treating type-only references as execution. */
+export function assertImportCycles(graph: Map<string, string[]>): void {
+  const active = new Set<string>(),
+    complete = new Set<string>();
+  const visit = (file: string): void => {
+    if (active.has(file))
+      throw new Error(`Runtime import cycle: ${[...active, file].join(' -> ')}`);
+    if (complete.has(file)) return;
+    active.add(file);
+    for (const next of graph.get(file) ?? []) visit(next);
+    active.delete(file);
+    complete.add(file);
+  };
+  for (const file of graph.keys()) visit(file);
 }
 
 function moduleReferences(file: string, text: string) {

@@ -1,89 +1,30 @@
+schemaVersion: 5
 id: report
 type: library
-purpose: Project honest run, assignment and verification evidence without changing authority
-path: src/library/report
+parentId: cli-package
+purpose: Project honest run, assignment and verification evidence without
+  changing authority
 objectives:
   - Make actual execution outcomes easy to inspect
 constraints:
   - Preserve JSON evidence and existing report fields
   - Use the captured execution record without inspecting mutable target files
   - Keep the supervising runner unchanged
-verification:
-  - command: npm
-    args:
-      - run
-      - format:check
-  - command: npm
-    args:
-      - run
-      - lint
-  - command: npm
-    args:
-      - run
-      - test:report
-  - command: npm
-    args:
-      - run
-      - check
-  - command: node
-    args:
-      - dist/cli.js
-      - guidance
-      - validate
-      - --project
-      - .
-  - command: npm
-    args:
-      - test
-questions: []
-access:
-  readPaths:
-    - .
-  writeDirectories:
-    - src/library/report
-    - tests/library/report
-    - docs/library/report
-    - architecture/components
-schemaVersion: 4
-role: systems-engineer
-executionProfile: luna
-interfaces:
-  - "saveMarkdown: render captured execution record"
-relatedIds: []
-parentId: cli-package
-operationIds:
-  - report-tests
-  - report-lint
-  - report-format
-patternIds:
-  - readable-typescript
-ownership:
-  paths:
-    - src/library/report
-    - tests/library/report
-    - docs/library/report
-    - architecture/components/report.yaml
-  publicModules:
-    - src/library/report/report.ts
-    - src/library/report/timeline.ts
-    - src/library/report/progress.ts
-    - src/library/report/workday-report.ts
-  directoryExceptions:
-    - path: architecture/components
-      reason: Directory-only sandbox grants; only this component definition is
-        writable under captured exact-path checks
-discovery:
-  source:
-    - src/library/report
-  documentation:
-    - docs/library/report
-  tests:
-    - tests/library/report
-  exclude: []
-provides: []
-consumes:
-  - id: test-profile
-    version: "1"
-  - id: candidate-changes
-    version: "1"
-testProfile: node
+operations:
+  component-tests:
+    - verify
+  report-format:
+    - agent
+  migrated-recipe-43b539fb85a57c26:
+    - verify
+  migrated-recipe-df6d67ddacf5bf0c:
+    - verify
+owns:
+  - src/library/report
+  - tests/library/report
+  - docs/library/report
+api:
+  - module: src/library/report/report.ts
+  - module: src/library/report/timeline.ts
+  - module: src/library/report/progress.ts
+  - module: src/library/report/workday-report.ts

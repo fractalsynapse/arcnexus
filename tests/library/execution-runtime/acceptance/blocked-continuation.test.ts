@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
 /** Exercises director diagnosis without losing retained plans or bypassing uncertain checkpoints. */
 class BlockedContinuationScenarios {
@@ -64,7 +64,11 @@ class BlockedContinuationScenarios {
   async loop(t: TestContext): Promise<void> {
     const { host, run, supplier } = await this.fixture(t);
     for (let failure = 0; failure < 4; failure++) {
-      host.store.fail(supplier.id, 'blocked', 'Equivalent unresolved dependency');
+      host.store.fail(
+        supplier.id,
+        'blocked',
+        `Unresolved dependency, explanation variant ${failure}`,
+      );
       await host.tick();
     }
     assert.equal(host.store.run(run.id).status, 'needs_attention');
@@ -72,6 +76,25 @@ class BlockedContinuationScenarios {
     const record = this.record(host, supplier.id);
     assert.equal(record.progress.warnings.length, 1);
     assert.equal(record.status, 'needs_attention');
+  }
+
+  /** A correlated answer supplies new input without granting an unconditional retry allowance. */
+  async answered(t: TestContext): Promise<void> {
+    const { host, run, root, supplier } = await this.fixture(t);
+    for (let failure = 0; failure < 3; failure++) {
+      host.store.fail(supplier.id, 'blocked', 'Unresolved supplier question');
+      await host.tick();
+    }
+    const requestId = host.store.inbox(supplier.id)[0]!.id;
+    host.store.respond(supplier.id, [{ requestId, action: 'clarify', text: 'Which evidence?' }]);
+    host.store.respond(root.id, [
+      { requestId, action: 'answer', text: 'Use the captured supplier output.' },
+    ]);
+    host.store.fail(supplier.id, 'blocked', 'Apply the received clarification');
+    await host.tick();
+    assert.equal(host.store.run(run.id).status, 'running');
+    assert.equal(host.store.assignment(supplier.id).status, 'ready');
+    assert.equal(this.record(host, supplier.id).progress.warnings.length, 1);
   }
 
   /** A real worker cycle is diagnosed and continued without creating a replacement owner or invented delivery. */
@@ -128,7 +151,7 @@ class BlockedContinuationScenarios {
     const prompt = JSON.parse(readFileSync(f.calls, 'utf8').trim().split('\n').at(-1)!).prompt;
     assert.match(prompt, /accepted intent is not verified delivery/);
     assert.doesNotMatch(prompt, /Verified dependency deliveries:/);
-    assert.match(prompt, /explicitly request milestone=delivered/);
+    assert.match(prompt, /action=require_delivery, the existing requestId/);
   }
 
   /** Captures one real planned supplier activation before introducing a retained blocker. */
@@ -179,4 +202,11 @@ test('completed worker blockers preserve safe checkpoints through director conti
 test('accepted dependency context cannot masquerade as verified delivery', (t) =>
   scenarios.acceptedContext(t));
 
-registerSuite({ component: 'execution-runtime', level: 'acceptance', tags: ['deterministic'] });
+test('new correlated dependency input permits diagnosed continuation', (t) =>
+  scenarios.answered(t));
+
+registerSuite({
+  component: 'execution-runtime',
+  level: 'acceptance',
+  tags: ['native-host', 'deterministic'],
+});

@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
-import { test } from 'node:test';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
 import { endpointClosed } from '../../../../dist/library/operations/service-state.js';
-import { operationFixture } from '../../testing/support/operations-fixture.js';
+import { minimalOperationFixture as operationFixture } from '../../testing/support/operations-fixture.js';
 import { TestProcess, waitFor } from '../../testing/support/test-process.js';
 import { stewardEntry } from '../../testing/support/workflow-fixture.js';
 
@@ -15,7 +15,7 @@ class ServicesTests {
   builtCLIProbesStartsOwnedHTTPServiceChecksItAndEndsItsLease(t: TestContext) {
     const f = fixture(t),
       r = f.run('--kind', 'research');
-    assert.equal(r.status, 0, r.stderr);
+    assert.equal(r.status, 0, r.stderr + serviceLogs(r.stdout));
     const v = JSON.parse(r.stdout);
     assert.ok(v.probes.length);
     assert.equal(v.services[0].status, 'stopped');
@@ -52,19 +52,16 @@ class ServicesTests {
   /** Verifies that probe mutation stops before any planning or execution. */
   probeMutationStopsBeforeAnyPlanningOrExecution(t: TestContext) {
     const f = fixture(t);
-    const path = join(f.repo, 'architecture/operations/test.json'),
-      op = JSON.parse(String(readFileSync(path)));
-    op.probes = [
-      {
-        command: process.execPath,
-        args: ['-e', "require('fs').writeFileSync('source.txt','changed')"],
-      },
-    ];
+    const path = join(f.repo, 'architecture/operations/service-probe.yaml');
+    const op = JSON.parse(readFileSync(path, 'utf8'));
+    op.args = ['-e', "require('fs').writeFileSync('source.txt','changed')"];
     writeFileSync(path, JSON.stringify(op));
     f.commit();
     const r = f.run('--kind', 'research');
     assert.equal(r.status, 1);
-    assert.equal(JSON.parse(r.stdout).turns.length, 0);
+    const record = JSON.parse(r.stdout);
+    assert.equal(record.turns.length, 0);
+    assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'before');
   }
 
   /** Verifies the scenario stops services after interruption. */
@@ -74,7 +71,7 @@ class ServicesTests {
     const child = this.startResearch(t, f);
     let record: any, directory: string | undefined;
     try {
-      await waitFor(() => {
+      await child.waitForReady(() => {
         const captured = this.serviceRecord(f);
         record = captured.record;
         directory = captured.directory;
@@ -102,6 +99,8 @@ class ServicesTests {
         'research',
         '--project',
         f.repo,
+        '--bindings',
+        join(f.root, 'minimal-bindings.json'),
         '--codex-path',
         f.executable,
       ],
@@ -223,7 +222,7 @@ class ServicesTests {
     assert.match(r.stderr, /unexpectedly/);
   }
 
-  /** Verifies that inspect refuses httpoperation narrowing that removes its service. */
+  /** Verifies that inspection rejects assignment replacement of captured service usages. */
   async inspectRefusesHTTPOperationNarrowingThatRemovesItsService(t: TestContext) {
     const { spawnSync } = await import('node:child_process'),
       { cli } = await import('../../testing/support/workflow-fixture.js');
@@ -232,7 +231,7 @@ class ServicesTests {
     writeFileSync(
       path,
       JSON.stringify({
-        schemaVersion: 2,
+        schemaVersion: 3,
         kind: 'research',
         objective: 'Inspect',
         expectedOutcome: 'Evidence',
@@ -247,55 +246,84 @@ class ServicesTests {
       { encoding: 'utf8' },
     );
     assert.equal(r.status, 2);
-    assert.match(r.stderr, /requires a declared service/);
+    assert.match(r.stderr, /cannot substitute captured operation usages/);
   }
+}
+
+/** Includes real service diagnostics when native startup fails before readiness. */
+function serviceLogs(stdout: string): string {
+  const record = JSON.parse(stdout);
+  return (record.services ?? [])
+    .map((service: any) => readFileSync(service.log, 'utf8'))
+    .join('\n');
 }
 
 const suite = new ServicesTests();
 
-function fixture(t: any, mode: any = 'success'): any {
+/** Captures service startup, its finite probe and HTTP check as distinct shared operations. */
+function fixture(t: any, mode = 'success'): any {
   const f = operationFixture(t);
   writeFileSync(join(f.repo, 'server.mjs'), readFileSync('.fixture-build/http/server.mjs'));
-  const path = join(f.repo, 'architecture/operations/test.json'),
-    op = JSON.parse(String(readFileSync(path)));
-  Object.assign(op, {
+  f.component.owns.push('server.mjs');
+  writeFileSync(join(f.repo, 'architecture/components/sample.json'), JSON.stringify(f.component));
+  const template = JSON.parse(
+    readFileSync(join(f.repo, 'architecture/operations/verify.yaml'), 'utf8'),
+  );
+  const op = {
+    ...template,
+    id: 'test',
     kind: 'service',
+    network: true,
     args: ['server.mjs'],
+    prerequisites: ['service-probe'],
     service: { port: 0, readinessPath: '/health', expectedStatus: 200, startupTimeoutSeconds: 2 },
-    probes: [
-      {
-        command: process.execPath,
-        args: [
-          '-e',
-          "console.log(process.version);if(require('child_process').spawnSync(process.execPath,['-e','process.exit(0)']).status!==0)process.exit(1)",
-        ],
-      },
-    ],
-  });
-  if (mode === 'probe-fail') op.probes[0].args = ['-e', 'process.exit(9)'];
+  };
   if (mode === 'not-ready') op.service.readinessPath = '/absent';
   if (mode === 'crash') op.args = ['-e', 'process.exit(2)'];
-  writeFileSync(path, JSON.stringify(op));
+  writeFileSync(join(f.repo, 'architecture/operations/test.json'), JSON.stringify(op));
+  registerServiceProbe(f, template, mode);
   registerHttpCheck(f, op);
   f.commit();
   f.configure({ managedService: true });
   return f;
 }
 
+/** Shares the finite capability probe between preflight and explicit service prerequisites. */
+function registerServiceProbe(f: any, template: any, mode: string): void {
+  const probe = {
+    ...template,
+    id: 'service-probe',
+    args: [
+      '-e',
+      "console.log(process.version);if(require('child_process').spawnSync(process.execPath,['-e','process.exit(0)']).status!==0)process.exit(1)",
+    ],
+  };
+  if (mode === 'probe-fail') probe.args = ['-e', 'process.exit(9)'];
+  writeFileSync(join(f.repo, 'architecture/operations/service-probe.yaml'), JSON.stringify(probe));
+  const path = join(f.repo, 'architecture/components/platform.json');
+  const platform = JSON.parse(readFileSync(path, 'utf8'));
+  platform.operations = {
+    verify: ['verify'],
+    'service-probe': ['preflight'],
+    test: ['agent'],
+    'http-check': ['agent'],
+  };
+  writeFileSync(path, JSON.stringify(platform));
+}
+
+/** Declares the HTTP dependency without duplicating its service command or capability recipe. */
 function registerHttpCheck(f: any, op: any): void {
   const check = {
     ...op,
     id: 'http-check',
     kind: 'http',
+    prerequisites: [],
     http: { serviceId: 'test', path: '/health', expectedStatus: 200 },
-    probes: [],
   };
   delete check.service;
   delete check.command;
   delete check.args;
   writeFileSync(join(f.repo, 'architecture/operations/http-check.json'), JSON.stringify(check));
-  f.component.operationIds = ['test', 'http-check'];
-  writeFileSync(join(f.repo, 'architecture/components/sample.json'), JSON.stringify(f.component));
 }
 
 test('built CLI probes, starts owned HTTP service, checks it and ends its lease', (t: any) =>
@@ -327,7 +355,11 @@ test('HTTP checks reject external paths and never follow redirects', () =>
 test('an unexpected service exit cannot be reported as successful lease completion', (t: any) =>
   suite.anUnexpectedServiceExitCannotBeReportedAsSuccessfulLeaseCompletion(t));
 
-test('inspect refuses HTTP operation narrowing that removes its service', (t: any) =>
+test('inspection rejects assignment replacement of captured service usages', (t: any) =>
   suite.inspectRefusesHTTPOperationNarrowingThatRemovesItsService(t));
 
-registerSuite({ component: 'operations', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'operations',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

@@ -1,9 +1,16 @@
-import { existsSync, realpathSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
-import { digest, resolveAssignment, resolveBase, type Assignment } from './assignment.js';
-import { loadBindings, type Bindings } from './bindings.js';
-import { ancestry, scopePath, loadCatalog, type Catalog, type Component } from './components.js';
 import { ConfigurationReader } from './configuration.js';
+import { PlatformExecution } from './platform-execution.js';
+import { realpathSync } from 'node:fs';
+import { relative, resolve } from 'node:path';
+import { digest, resolveAssignment, resolveBase, type Assignment } from './assignment.js';
+import { loadProjectBindings, type Bindings } from './bindings.js';
+import {
+  ancestry,
+  loadCatalog,
+  type Catalog,
+  type Component,
+  type ExecutionProfile,
+} from './components.js';
 import { InputError } from './config.js';
 import { git } from '../operations/process.js';
 
@@ -17,6 +24,7 @@ export interface ProjectExecution {
   catalog: Catalog;
   bindings: Bindings;
   directorProfile: string;
+  directorComponent?: string;
   reviewerProfile: string;
   executable: string;
   verificationInputs: string[];
@@ -31,17 +39,16 @@ export function executionIdentity(context: ProjectExecution): string {
 export class ExecutionContext {
   /** Discovers repository, committed authority and machine bindings; ambiguous packages fail. */
   resolve(cwd: string): ProjectExecution {
-    const { source, base } = resolveBase(cwd);
-    const commonDir = realpathSync(
-      git(source, 'rev-parse', '--path-format=absolute', '--git-common-dir').trim(),
-    );
-    const path = join(commonDir, 'arcnexus', 'bindings.yaml');
-    const bindings = loadBindings(existsSync(path) ? path : undefined);
+    const { source, base, commonDir, bindings } = this.discovery(cwd);
     const catalog = loadCatalog(source, base, bindings);
-    const config = this.defaults(source, base);
-    const selected = this.package(catalog, relative(source, resolve(cwd)), config.defaultPackage);
+    const config = this.defaults(source, base, catalog);
+    const selected = this.selectPackage(
+      catalog,
+      relative(source, resolve(cwd)),
+      config.defaultPackage,
+    );
     const owners = this.owners(catalog, selected.id);
-    this.profiles(catalog, [
+    this.validateProfiles(catalog, [
       ...owners.map((id) => catalog.components[id]!.executionProfile),
       config.directorProfile,
       config.reviewerProfile,
@@ -60,6 +67,16 @@ export class ExecutionContext {
     };
   }
 
+  /** Resolves canonical repository identity and machine bindings without reading mutable authority. */
+  private discovery(cwd: string) {
+    const { source, base } = resolveBase(cwd);
+    const commonDir = realpathSync(
+      git(source, 'rev-parse', '--path-format=absolute', '--git-common-dir').trim(),
+    );
+    const bindings = loadProjectBindings(source);
+    return { source, base, commonDir, bindings };
+  }
+
   /** Selects executable descendants while containers contribute inherited context only. */
   private owners(catalog: Catalog, packageId: string): string[] {
     const owners = Object.values(catalog.components)
@@ -75,7 +92,12 @@ export class ExecutionContext {
 
   /** Resolves an assignment solely against the source authority captured for the run. */
   assignment(context: ProjectExecution, owner: string, value: Assignment, profile?: string) {
-    if (!context.owners.includes(owner)) throw new InputError('Owner is outside captured package');
+    const director =
+      owner === context.directorComponent &&
+      value.kind === 'research' &&
+      profile === context.directorProfile;
+    if (!context.owners.includes(owner) && !director)
+      throw new InputError('Owner is outside captured package');
     return resolveAssignment(context.source, context.base, owner, {
       value,
       capturedCatalog: context.catalog,
@@ -101,45 +123,26 @@ export class ExecutionContext {
   }
 
   /** Reads declarative director/reviewer profiles without selecting models in scheduling code. */
-  private defaults(source: string, base: string) {
-    const value = new ConfigurationReader().definition(source, base, 'architecture/execution')
-      .value as Record<string, unknown>;
-    this.validateDefaults(value);
-    if (typeof value.directorProfile !== 'string' || typeof value.reviewerProfile !== 'string')
+  private defaults(source: string, base: string, catalog: Catalog) {
+    const retired = Object.values(catalog.components).filter((c) => c.schemaVersion !== 5);
+    if (retired.length)
       throw new InputError(
-        'architecture/execution.yaml must declare directorProfile and reviewerProfile',
+        `New execution requires version-five components; run arcnexus config migrate: ${retired.map((c) => c.id).join(', ')}`,
       );
-    return {
-      verificationInputs: ((value.verificationInputs ?? []) as string[]).map(scopePath),
-      directorProfile: value.directorProfile,
-      reviewerProfile: value.reviewerProfile,
-      defaultPackage: typeof value.defaultPackage === 'string' ? value.defaultPackage : undefined,
-    };
-  }
-
-  /** Rejects unsupported settings, including obsolete work budgets, instead of silently ignoring them. */
-  private validateDefaults(value: Record<string, unknown>): void {
-    const allowed = ['directorProfile', 'reviewerProfile', 'defaultPackage', 'verificationInputs'];
-    for (const key of Object.keys(value))
-      if (!allowed.includes(key))
-        throw new InputError(
-          `Unsupported execution setting: ${key}; remove obsolete work budgets and unknown keys`,
-        );
-    if (
-      value.defaultPackage !== undefined &&
-      (typeof value.defaultPackage !== 'string' || !value.defaultPackage.trim())
-    )
-      throw new InputError('defaultPackage must be a nonempty declared package ID');
-    const inputs = value.verificationInputs;
-    if (
-      inputs !== undefined &&
-      (!Array.isArray(inputs) || inputs.some((path) => typeof path !== 'string' || !path.trim()))
-    )
-      throw new InputError('verificationInputs must be an array of captured source paths');
+    const environment = new ConfigurationReader().definition(
+      source,
+      base,
+      'architecture/environment',
+    ).value as { schemaVersion: number };
+    if (environment.schemaVersion !== 4)
+      throw new InputError(
+        'New execution requires environment schema 4; migrate inline setup to shared operations',
+      );
+    return new PlatformExecution(catalog).defaults(source, base);
   }
 
   /** Selects the deepest containing package; equal candidates require an explicit default. */
-  private package(catalog: Catalog, path: string, defaultId?: string): Component {
+  selectPackage(catalog: Catalog, path: string, defaultId?: string): Component {
     const packages = Object.values(catalog.components).filter(
       (c) =>
         c.type === 'package' &&
@@ -151,14 +154,25 @@ export class ExecutionContext {
     if (selected.length === 1) return selected[0]!;
     const fallback = selected.find((c) => c.id === defaultId);
     if (fallback) return fallback;
-    throw new InputError(
-      'Ambiguous or missing package; declare defaultPackage in architecture/execution.yaml',
-    );
+    throw new InputError('Ambiguous or missing package; declare defaultPackage on the platform');
   }
 
-  /** Rejects obsolete work budgets rather than silently changing their meaning. */
-  private profiles(catalog: Catalog, ids: string[]): void {
-    const obsolete = [
+  /** Validates every selected profile through the same executable-policy boundary. */
+  validateProfiles(catalog: Catalog, ids: string[]): void {
+    for (const id of ids) {
+      const profile = catalog.profiles[id];
+      if (!profile) throw new InputError('Unknown execution profile: ' + id);
+      this.validateProfile(profile);
+    }
+  }
+
+  /** Rejects obsolete work budgets before any library or project host starts managed execution. */
+  validateProfile(profile: ExecutionProfile): void {
+    if (profile.schemaVersion < 2)
+      throw new InputError(
+        `Migrate profile ${profile.id} to a planned execution schema (version 2 or 3)`,
+      );
+    for (const key of [
       'timeoutSeconds',
       'commandTimeoutSeconds',
       'maxOperationCalls',
@@ -166,17 +180,8 @@ export class ExecutionContext {
       'maxCorrectiveTurns',
       'maxChecklistCalls',
       'maxAttempts',
-    ];
-    for (const id of ids) {
-      const profile = catalog.profiles[id];
-      if (!profile) throw new InputError('Unknown execution profile: ' + id);
-      if (profile.schemaVersion < 2)
-        throw new InputError(
-          `Migrate profile ${id} to a planned execution schema (version 2 or 3)`,
-        );
-      for (const key of obsolete)
-        if (Object.hasOwn(profile, key))
-          throw new InputError(`Remove obsolete work budget ${key} from profile ${id}`);
-    }
+    ])
+      if (Object.hasOwn(profile, key))
+        throw new InputError(`Remove obsolete work budget ${key} from profile ${profile.id}`);
   }
 }

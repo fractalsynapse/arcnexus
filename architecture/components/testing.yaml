@@ -1,107 +1,43 @@
+schemaVersion: 5
 id: testing
 type: library
+parentId: cli-package
 purpose: Discover, select and execute component tests through shared infrastructure
-path: src/library/testing
 objectives:
   - Keep builds and deterministic tests reproducible
   - Maintain formatting, linting, CI and shared test infrastructure
 constraints:
   - Do not weaken independent acceptance to make candidate work pass
   - Keep generated output separate from maintained source
-verification:
-  - command: npm
-    args:
-      - run
-      - check
-  - command: npm
-    args:
-      - test
-  - command: node
-    args:
-      - dist/cli.js
-      - guidance
-      - validate
-      - --project
-      - .
-  - command: npm
-    args:
-      - run
-      - format:check
-  - command: npm
-    args:
-      - run
-      - lint
-questions: []
-access:
-  readPaths:
-    - .
-  writeDirectories:
-    - src/library/testing
-    - tests/library/testing
-    - docs/library/testing
-    - scripts/library/testing
-    - architecture/test-profiles
-    - architecture/components
-schemaVersion: 4
-role: systems-engineer
-executionProfile: luna
-interfaces:
-  - npm run build, npm run check and npm test
-  - Stable dist/cli.js executable entry point
-relatedIds: []
-parentId: cli-package
-operationIds:
-  - testing-lint
-  - testing-tests
-patternIds:
-  - readable-typescript
-ownership:
-  paths:
-    - src/library/testing
-    - tests/library/testing
-    - docs/library/testing
-    - scripts/library/testing
-    - architecture/test-profiles
-    - architecture/components/testing.yaml
-  publicModules:
-    - src/library/testing/testing.ts
-    - src/library/testing/suite.ts
-    - tests/library/testing/support/catalog-fixture.ts
-    - tests/library/testing/support/controlled-initializer.ts
-    - tests/library/testing/support/controlled-planning.ts
-    - tests/library/testing/support/controlled-workday.ts
-    - tests/library/testing/support/controlled-workflow.ts
-    - tests/library/testing/support/fixture-payloads.ts
-    - tests/library/testing/support/handoff-fixture.ts
-    - tests/library/testing/support/operations-fixture.ts
-    - tests/library/testing/support/test-process.ts
-    - tests/library/testing/support/workflow-fixture.ts
-    - tests/library/testing/support/structured-output-check.ts
-    - tests/library/testing/support/general-fixture.ts
-    - tests/library/testing/support/controlled-general.ts
-    - tests/library/testing/support/controlled-evidence.ts
-    - src/library/testing/captured-tests.ts
-  directoryExceptions:
-    - path: architecture/components
-      reason: Directory-only sandbox grants; only this component definition is
-        writable under captured exact-path checks
-discovery:
-  source:
-    - src/library/testing
-  documentation:
-    - docs/library/testing
-  tests:
-    - tests/library/testing
-  exclude: []
-provides:
-  - id: test-profile
-    version: "1"
-    kind: json-schema
-    path: src/library/testing/schemas/test-profile.json
-    compatibility: Node profile version 1 uses fixed commands and literal suite metadata
-consumes:
-  - id: test-profile
-    version: "1"
-  - id: command-diagnostics
-    version: "1"
-testProfile: node
+  - 'test-profile (src/library/testing/schemas/test-profile.json): Node profile
+    version 1 uses fixed commands and literal suite metadata'
+operations:
+  migrated-recipe-43b539fb85a57c26:
+    - verify
+  migrated-recipe-df6d67ddacf5bf0c:
+    - verify
+owns:
+  - src/library/testing
+  - tests/library/testing
+  - docs/library/testing
+  - scripts/library/testing
+  - architecture/test-profiles
+api:
+  - module: src/library/testing/testing.ts
+  - module: src/library/testing/suite.ts
+  - module: tests/library/testing/support/catalog-fixture.ts
+  - module: tests/library/testing/support/controlled-initializer.ts
+  - module: tests/library/testing/support/controlled-planning.ts
+  - module: tests/library/testing/support/controlled-workday.ts
+  - module: tests/library/testing/support/controlled-workflow.ts
+  - module: tests/library/testing/support/fixture-payloads.ts
+  - module: tests/library/testing/support/handoff-fixture.ts
+  - module: tests/library/testing/support/operations-fixture.ts
+  - module: tests/library/testing/support/test-process.ts
+  - module: tests/library/testing/support/workflow-fixture.ts
+  - module: tests/library/testing/support/structured-output-check.ts
+  - module: tests/library/testing/support/general-fixture.ts
+  - module: tests/library/testing/support/controlled-general.ts
+  - module: tests/library/testing/support/controlled-evidence.ts
+  - module: src/library/testing/captured-tests.ts
+  - schema: src/library/testing/schemas/test-profile.json

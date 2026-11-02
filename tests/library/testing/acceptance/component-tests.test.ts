@@ -18,6 +18,8 @@ class ComponentTestCommandTests {
       ),
     );
     assert.equal(selection.inference, false);
+    assert.equal(selection.operationPlan.catalog, undefined);
+    assert.ok(selection.operationPlan.ownerIds.includes('report'));
   }
 
   /** Verifies that component test CLI rejects an empty required selection. */

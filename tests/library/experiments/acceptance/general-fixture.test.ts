@@ -15,6 +15,9 @@ class GeneralFixtureScenarios {
     const { root, repo } = this.fixture(t);
     const context = new ExecutionContext().resolve(repo);
     assert.deepEqual(context.owners.sort(), ['cli', 'names', 'service']);
+    assert.ok(
+      Object.values(context.catalog.components).every((owner) => owner.schemaVersion === 5),
+    );
     assert.equal(context.directorProfile, 'astra');
     assert.equal(context.reviewerProfile, 'astra');
     assert.ok(
@@ -27,7 +30,8 @@ class GeneralFixtureScenarios {
     assert.equal(input.cases.length, 1);
     assert.match(input.cases[0].prompt, /Start only with cli/);
     assert.equal(existsSync(join(repo, '.git/arcnexus')), false);
-    this.command(repo, ['node', '--test', 'cli/test.mjs', 'service/test.mjs', 'names/test.mjs']);
+    assert.equal(existsSync(join(repo, 'names/test.mjs')), false);
+    this.command(repo, ['node', '--test']);
   }
 
   /** Resolves the shipped prompt campaign through the assembled public CLI without starting inference. */
@@ -63,6 +67,7 @@ class GeneralFixtureScenarios {
     const repo = join(root, 'repo');
     materializeFixture('general', repo);
     this.command(repo, ['git', 'init', '-q']);
+    this.command(repo, ['git', 'remote', 'add', 'origin', 'https://example.invalid/greetings.git']);
     this.command(repo, ['git', 'config', 'user.name', 'Test']);
     this.command(repo, ['git', 'config', 'user.email', 'test@example.invalid']);
     this.command(repo, ['git', 'add', '.']);

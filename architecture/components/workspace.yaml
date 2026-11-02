@@ -1,96 +1,33 @@
+schemaVersion: 5
 id: workspace
 type: library
-purpose: Isolate assignments and reconcile verified candidate snapshots while preserving evidence
-path: src/library/workspace
+parentId: cli-package
+purpose: Isolate assignments and reconcile verified candidate snapshots while
+  preserving evidence
 objectives:
   - Preserve original run evidence across workspace lifecycle operations
 constraints:
   - No changes to source checkout or unrelated worktrees
   - Retain all existing cleanup safety guards
   - Do not weaken captured verification or edit architectural definitions
-verification:
-  - command: npm
-    args:
-      - run
-      - check
-  - command: npm
-    args:
-      - test
-  - command: node
-    args:
-      - dist/cli.js
-      - guidance
-      - validate
-      - --project
-      - .
-  - command: npm
-    args:
-      - run
-      - format:check
-  - command: npm
-    args:
-      - run
-      - lint
-questions: []
-access:
-  readPaths:
-    - .
-  writeDirectories:
-    - src/library/workspace
-    - tests/library/workspace
-    - docs/library/workspace
-    - architecture/components
-schemaVersion: 4
-role: systems-engineer
-executionProfile: luna
-interfaces:
-  - "createWorkspace/prepareWorkspace/cleanup: owned lifecycle"
-relatedIds: []
-parentId: cli-package
-operationIds:
-  - workspace-lint
-  - workspace-tests
-patternIds:
-  - readable-typescript
-ownership:
-  paths:
-    - src/library/workspace
-    - tests/library/workspace
-    - docs/library/workspace
-    - architecture/components/workspace.yaml
-  publicModules:
-    - src/library/workspace/candidates.ts
-    - src/library/workspace/members.ts
-    - src/library/workspace/state.ts
-    - src/library/workspace/workspace.ts
-  directoryExceptions:
-    - path: architecture/components
-      reason: Directory-only sandbox grants; only this component definition is
-        writable under captured exact-path checks
-discovery:
-  source:
-    - src/library/workspace
-  documentation:
-    - docs/library/workspace
-  tests:
-    - tests/library/workspace
-  exclude: []
-provides:
-  - id: bindings
-    version: "1"
-    kind: json-schema
-    path: src/library/workspace/schemas/bindings.json
-    compatibility: Preserve supported historical versions and captured execution readers
-  - id: environment
-    version: "1"
-    kind: json-schema
-    path: src/library/workspace/schemas/environment.json
-    compatibility: Preserve supported historical versions and captured execution readers
-consumes:
-  - id: environment
-    version: "1"
-  - id: bindings
-    version: "1"
-  - id: test-profile
-    version: "1"
-testProfile: node
+  - 'bindings (src/library/workspace/schemas/bindings.json): Preserve supported
+    historical versions and captured execution readers'
+  - 'environment (src/library/workspace/schemas/environment.json): Preserve
+    supported historical versions and captured execution readers'
+operations:
+  migrated-recipe-43b539fb85a57c26:
+    - verify
+  migrated-recipe-df6d67ddacf5bf0c:
+    - verify
+owns:
+  - src/library/workspace
+  - tests/library/workspace
+  - docs/library/workspace
+api:
+  - module: src/library/workspace/checked-edits.ts
+  - module: src/library/workspace/candidates.ts
+  - module: src/library/workspace/members.ts
+  - module: src/library/workspace/state.ts
+  - module: src/library/workspace/workspace.ts
+  - schema: src/library/workspace/schemas/bindings.json
+  - schema: src/library/workspace/schemas/environment.json

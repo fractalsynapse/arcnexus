@@ -1,11 +1,6 @@
-schemaVersion: 1
+schemaVersion: 2
 id: node
 adapter: node
 outputRoot: .test-build
-preparation:
-  - command: npm
-    args: [run, build]
-    purpose: production
-  - command: npm
-    args: [run, build:tests]
-    purpose: tests
+preparation: []
+run: component-tests

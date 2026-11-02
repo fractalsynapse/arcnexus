@@ -1,3 +1,5 @@
+import { OperationConfinement } from './operation-confinement.js';
+import type { SourceConfinement } from './confinement.js';
 import { fork, type ChildProcess } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
@@ -73,6 +75,8 @@ function collectResponse(
 export class ServiceManager {
   private child?: ChildProcess;
 
+  private confinement?: SourceConfinement;
+
   private current?: ServiceRecord;
 
   private stopped?: Promise<void>;
@@ -99,8 +103,15 @@ export class ServiceManager {
 
   /** Starts managed work and records the state needed for its later shutdown. */
   async start(op: Operation): Promise<ServiceRecord> {
+    this.signal.throwIfAborted();
+    if (op.schemaVersion !== 4)
+      throw new Error('Service execution requires schema 4; migrate historical definitions');
     if (op.kind !== 'service' || !op.service) throw new Error('Not a service operation');
     if (this.child) throw new Error('Only one active service lease is permitted');
+    this.confinement = await new OperationConfinement(this.root, this.record, this.signal).prepare(
+      op,
+    );
+    this.signal.throwIfAborted();
     const record = this.createRecord(op.id);
     const child = this.launch(op, record);
     const timeout = new AbortController();
@@ -146,6 +157,24 @@ export class ServiceManager {
       stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
       env: operationEnvironment(this.record),
     });
+    this.watch(child, record);
+    const command = targetCommand(this.record, {
+      command: op.command,
+      args: op.args.map((a) => (a === '{workspace}' ? this.record.workspace : a)),
+    });
+    child.send({
+      record,
+      ...this.confinement!.command(command, cwd),
+      cwd,
+      env: this.confinement!.environment(operationEnvironment(this.record)),
+      port: op.service!.port,
+      processScope: !!this.confinement,
+    });
+    return child;
+  }
+
+  /** Retains the managed lease and subscribes to supervisor evidence before dispatch. */
+  private watch(child: ChildProcess, record: ServiceRecord): void {
     this.child = child;
     this.current = record;
     child.on('error', () => {});
@@ -154,18 +183,6 @@ export class ServiceManager {
       if (message.record) this.update(message.record);
     });
     this.watchCancellation(child);
-    const command = targetCommand(this.record, {
-      command: op.command,
-      args: op.args.map((a) => (a === '{workspace}' ? this.record.workspace : a)),
-    });
-    child.send({
-      record,
-      ...command,
-      cwd,
-      env: operationEnvironment(this.record),
-      port: op.service!.port,
-    });
-    return child;
   }
 
   /** Propagates caller cancellation to managed work without creating a deadline. */
@@ -203,7 +220,11 @@ export class ServiceManager {
     service: ServiceDefinition,
     signal: AbortSignal,
   ): Promise<boolean> {
-    if (!record.pid || !record.port || !ownedLoopbackListener(record.pid, record.port))
+    if (
+      !record.pid ||
+      !record.port ||
+      !ownedLoopbackListener(record.pid, record.port, record.processScope)
+    )
       return false;
     try {
       const response = await localRequest(record.port, service.readinessPath, signal);
@@ -215,17 +236,23 @@ export class ServiceManager {
     }
   }
 
+  /** Returns lease identity without requiring a live endpoint, so failed listeners can still be cleaned up. */
+  lease(id: string): ServiceRecord {
+    if (!this.current || this.current.id !== id) throw new Error('Service lease unavailable');
+    return this.current;
+  }
+
   /** Returns the retained service state without restarting it. */
   status(id: string): ServiceRecord {
-    if (!this.current || this.current.id !== id) throw new Error('Service lease unavailable');
-    if (this.current.status !== 'ready') return this.current;
+    const current = this.lease(id);
+    if (current.status !== 'ready') return current;
     if (
-      !this.current.pid ||
-      !this.current.port ||
-      !ownedLoopbackListener(this.current.pid, this.current.port)
+      !current.pid ||
+      !current.port ||
+      !ownedLoopbackListener(current.pid, current.port, current.processScope)
     )
       throw new Error('Service lease is no longer listening');
-    return this.current;
+    return current;
   }
 
   /** Returns a bounded excerpt of retained service output. */

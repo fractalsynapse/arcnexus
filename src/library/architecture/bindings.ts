@@ -1,9 +1,10 @@
-import { accessSync, constants, realpathSync, statSync } from 'node:fs';
-import { delimiter, dirname, isAbsolute } from 'node:path';
+import { accessSync, constants, existsSync, realpathSync, statSync } from 'node:fs';
+import { delimiter, dirname, isAbsolute, join } from 'node:path';
 import type { RecordData } from '../workspace/state.js';
 import { InputError, type Command } from './config.js';
 import { ConfigurationReader } from './configuration.js';
 import { validateSchema } from './schema.js';
+import { git } from '../operations/process.js';
 
 export interface Bindings {
   taskAcceptance?: Record<string, import('./assignment.js').HostCheck[]>;
@@ -12,6 +13,15 @@ export interface Bindings {
   repositories: Record<string, string>;
   tools: Record<string, string>;
   configurationSource?: import('./configuration.js').ConfigurationSource;
+}
+
+/** Discovers one canonical Git-private binding file shared by linked worktrees and execution entry points. */
+export function loadProjectBindings(project: string): Bindings {
+  const common = realpathSync(
+    git(project, 'rev-parse', '--path-format=absolute', '--git-common-dir').trim(),
+  );
+  const path = join(common, 'arcnexus', 'bindings.yaml');
+  return loadBindings(existsSync(path) ? path : undefined);
 }
 
 export function loadBindings(path?: string): Bindings {

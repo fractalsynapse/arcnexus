@@ -4,13 +4,37 @@
 
 ### Added
 
+- Validate minimal version-five component declarations with inherited policies, derived ownership and file classification, shared operation plans, and checked-edit runtime foundations (#109).
+
 - Run prompt-driven tasks and persistent workdays with dynamic owner assignments and retained candidate evidence (#78).
 
 - Derive component ownership, package identity, standards and contracts from version-four definitions (#71).
 
 - Initialize component-led tasks and report progress without implicit execution quotas (#65).
 
+### Fixed
+
+- Preserve captured dependency states and verified delivery context when engineering resumes under the shared scheduler (#147).
+
+- Derive root-owned inventories from actual tracked files and validate generated outputs in each operation’s repository (#145, #146).
+
+- Keep implicit definition ownership anchored to its catalog repository and validate every bound minimal repository (#143).
+
+- Reject legacy environment recipes before starting a new minimal task or workday host (#142).
+
+- Reject obsolete execution budgets before applying a configuration migration (#141).
+
+- Preserve future owned paths in minimal read-only activations, valid pending operations after rejected selections, and declared repository identity in campaign clones (#138, #139, #140).
+
+- Keep one canonical project host when temporary-storage or evidence-root settings change (#137).
+
 ### Changed
+
+- Use one durable assignment dispatcher and source-read-only model path; reject historical execution budgets and initialize through shared confined operations (#109).
+
+- Route command, HTTP and service execution through shared operations, rejecting legacy executable definitions while retaining historical evidence readers (#109).
+
+- Require minimal version-five authority for new task/workday hosts, workspace preparation and shared-operation test execution; preserve historical inspection and explicit migration (#109).
 
 - Retire component, fixed-owner workday and proposal execution commands; preserve historical inspection and route prompt campaigns through the shared host (#106).
 

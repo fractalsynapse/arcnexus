@@ -4,21 +4,31 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
-import { test } from 'node:test';
-import { TestProcess, waitFor } from '../../testing/support/test-process.js';
-import { cli, stewardEntry, workflowFixture } from '../../testing/support/workflow-fixture.js';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
+import { TestProcess } from '../../testing/support/test-process.js';
+import {
+  cli,
+  stewardEntry,
+  minimalWorkflowFixture as workflowFixture,
+} from '../../testing/support/workflow-fixture.js';
 
 /** Exercises steward behavior through observable scenarios. */
 class StewardTests {
   /** Verifies the scenario uses explicit sdk settings. */
-  usesExplicitSdkSettings(t: TestContext, args: any, expected: any) {
-    const f = workflowFixture(t),
-      r = f.run(...args);
+  usesExplicitSdkSettings(t: TestContext, expected: string) {
+    const f = workflowFixture(t);
+    const path = join(f.repo, 'architecture/execution-profiles/luna.yaml');
+    const profile = JSON.parse(readFileSync(path, 'utf8'));
+    if (profile.model !== expected) {
+      writeFileSync(path, JSON.stringify({ ...profile, model: expected }));
+      f.commit();
+    }
+    const r = f.run();
     assert.equal(r.status, 0, r.stderr);
     const v = JSON.parse(r.stdout);
     assert.equal(v.settings.model, expected);
     assert.equal(v.settings.reasoning, 'medium');
-    assert.equal(v.settings.webSearch, 'live');
+    assert.equal(v.settings.webSearch, 'disabled');
     assert.equal(v.settings.network, false);
     assert.equal(v.settings.approval, 'never');
     assert.equal(v.settings.nestedDelegation, false);
@@ -33,11 +43,22 @@ class StewardTests {
     assert.deepEqual(v.settings.access.writeDirectories, []);
   }
 
-  /** Verifies that invalid attempt limits and input fail before inference. */
-  invalidAttemptLimitsAndInputFailBeforeInference(t: TestContext) {
+  /** Rejects caller quota options on the prompt-only public task interface before inference. */
+  quotaOptionsFailBeforeInference(t: TestContext) {
     const f = workflowFixture(t);
-    for (const value of ['0', '-1', '1.5', 'two'])
-      assert.equal(f.run('--max-attempts', value).status, 2);
+    for (const value of ['0', '1', '3']) {
+      const result = spawnSync(
+        process.execPath,
+        [cli, 'task', 'run', 'Improve behavior', '--max-attempts', value],
+        {
+          cwd: f.repo,
+          env: f.env,
+          encoding: 'utf8',
+          timeout: 15_000,
+        },
+      );
+      assert.equal(result.status, 2, result.stderr);
+    }
     assert.equal(existsSync(f.calls), false);
   }
 
@@ -55,7 +76,7 @@ class StewardTests {
   /** Verifies the scenario stops invalid activation. */
   stopsInvalidActivation(t: TestContext, mode: any) {
     const f = workflowFixture(t, mode),
-      r = f.run('--max-attempts', '2');
+      r = f.run();
     assert.equal(r.status, 1);
     assert.notEqual(JSON.parse(r.stdout).status, 'completed');
   }
@@ -71,28 +92,26 @@ class StewardTests {
     assert.equal(existsSync(f.calls), false);
   }
 
-  /** Verifies the scenario retains interrupted turn evidence. */
-  async retainsInterruptedTurnEvidence(t: TestContext, activity: any, cancel: any) {
+  /** Cancels an observed model stage while preserving its raw partial-turn evidence. */
+  async retainsInterruptedTurnEvidence(t: TestContext, activity: string) {
     const f = workflowFixture(t, activity + '-timeout');
-    const child = this.start(t, f, cancel);
-    if (cancel) {
-      await waitFor(
-        () => readFileSync(f.calls, 'utf8').includes(`"stage":"${activity}"`),
-        'Agent must reach selected stage',
-      );
-      child.kill('SIGINT');
-    }
-    assert.equal(await child.closed, cancel ? 130 : 1);
+    const child = this.start(t, f);
+    await child.waitForReady(
+      () => readFileSync(f.calls, 'utf8').includes(`"stage":"${activity}"`),
+      'Agent must reach selected stage',
+    );
+    child.kill('SIGINT');
+    assert.equal(await child.closed, 130);
     const v = JSON.parse(child.stdout);
-    assert.equal(v.status, cancel ? 'cancelled' : 'failed');
+    assert.equal(v.status, 'cancelled');
     assert.ok(
       existsSync(join(f.state, 'runs', v.id, 'turns', String(v.turns.length), 'events.jsonl')),
     );
     assert.equal(existsSync(join(f.state, 'active.lock')), false);
   }
 
-  /** Starts managed work and records the state needed for its later shutdown. */
-  private start(t: TestContext, f: any, cancel: boolean, seconds?: string): TestProcess {
+  /** Starts bound minimal engineering with test-owned process cleanup and no execution deadline. */
+  private start(t: TestContext, f: any): TestProcess {
     return new TestProcess(
       t,
       [
@@ -104,8 +123,8 @@ class StewardTests {
         f.repo,
         '--codex-path',
         f.executable,
-        '--timeout-seconds',
-        seconds ?? (cancel ? '60' : '20'),
+        '--bindings',
+        join(f.root, 'minimal-bindings.json'),
       ],
       f.env,
     );
@@ -116,117 +135,116 @@ class StewardTests {
     return readdirSync(join(f.state, 'runs')).some((id) => {
       const run = join(f.state, 'runs', id);
       return readdirSync(run)
-        .filter((path) => path.startsWith('command-'))
+        .filter((path) => path.startsWith('invocation-') && path.endsWith('.log'))
         .some((path) => readFileSync(join(run, path), 'utf8').includes('HOST_READY'));
     });
   }
 
-  /** Verifies that run consumes the same inspected assignment and snapshotted independent check. */
-  runConsumesTheSameInspectedAssignmentAndSnapshottedIndependentCheck(t: TestContext) {
+  /** Executes the inspected assignment with the same captured shared verification definition. */
+  inspectedSharedVerification(t: TestContext) {
     const f = workflowFixture(t),
-      file = join(f.root, 'assignment.json'),
-      check = join(f.root, 'acceptance.cjs');
-    this.assignmentWithAcceptance(file, check);
-    const args = ['sample', '--assignment', file, '--project', f.repo],
-      preview = spawnSync(process.execPath, [cli, 'inspect', ...args, '--json'], {
-        encoding: 'utf8',
-      });
+      args = this.explicitAssignment(f);
+    const preview = spawnSync(process.execPath, [cli, 'inspect', ...args, '--json'], {
+      encoding: 'utf8',
+    });
     assert.equal(preview.status, 0, preview.stderr);
-    const r = spawnSync(
+    const result = spawnSync(
       process.execPath,
       [stewardEntry, 'run', ...args, '--codex-path', f.executable],
       {
         encoding: 'utf8',
         env: f.env,
+        timeout: 30 * 60 * 1000,
       },
     );
-    assert.equal(r.status, 0, r.stderr);
-    const v = JSON.parse(r.stdout);
-    assert.equal(v.resolvedAssignment.digest, JSON.parse(preview.stdout).digest);
-    assert.ok(v.commands.at(-1).args[0].startsWith(join(f.state, 'runs', v.id, 'acceptance')));
-    const prompt = readFileSync(join(f.state, 'runs', v.id, 'turns/1/prompt.txt'), 'utf8');
-    assert.ok(!prompt.includes(Buffer.from(readFileSync(check)).toString('base64')));
+    assert.equal(result.status, 0, result.stderr);
+    const record = JSON.parse(result.stdout),
+      inspected = JSON.parse(preview.stdout);
+    assert.equal(record.resolvedAssignment.digest, inspected.digest);
+    const operation = inspected.context.at(-1).verification.find((op: any) => op.id === 'verify');
+    assert.ok(
+      record.operationInvocations.some(
+        (invocation: any) =>
+          invocation.purpose === 'verification' &&
+          invocation.definitionDigest === operation.definitionDigest &&
+          invocation.result.exitCode === 0,
+      ),
+    );
   }
 
-  /** Writes a caller-owned assignment with an external acceptance check. */
-  private assignmentWithAcceptance(file: string, check: string): void {
-    writeFileSync(
-      check,
-      "if(require('fs').readFileSync('source.txt','utf8')!=='after')process.exit(7)",
-    );
+  /** Supplies explicit goal criteria while deriving every executable check from captured shared operations. */
+  private explicitAssignment(f: any): string[] {
+    const file = join(f.root, 'assignment.json');
     writeFileSync(
       file,
       JSON.stringify({
-        schemaVersion: 1,
+        schemaVersion: 3,
         objective: 'Improve behavior',
         kind: 'change',
         expectedOutcome: 'Source after',
-        acceptanceCriteria: ['External check passes'],
-        hostChecks: [
-          { id: 'external', command: process.execPath, args: [check], artifacts: [check] },
-        ],
+        acceptanceCriteria: ['Observed shared verification passes'],
+        hostChecks: [],
       }),
     );
+    return [
+      'sample',
+      '--assignment',
+      file,
+      '--project',
+      f.repo,
+      '--bindings',
+      join(f.root, 'minimal-bindings.json'),
+    ];
   }
 
-  /** Verifies that final host verification cannot hide astaged scope violation. */
-  finalHostVerificationCannotHideAStagedScopeViolation(t: TestContext) {
+  /** Verifies that final host verification cannot mutate maintained source. */
+  finalHostVerificationCannotMutateMaintainedSource(t: TestContext) {
     const f = workflowFixture(t);
     writeFileSync(
       join(f.repo, 'verify.cjs'),
       "const fs=require('fs'),cp=require('child_process');if(fs.existsSync('tests/regression.cjs'))require('./tests/regression.cjs');if(fs.readFileSync('source.txt','utf8')==='after'){fs.writeFileSync('outside.txt','secret');cp.execFileSync('git',['add','outside.txt']);fs.unlinkSync('outside.txt');}",
     );
     f.commit();
-    const r = f.run('--max-attempts', '2');
+    const r = f.run();
     assert.equal(r.status, 1);
     const v = JSON.parse(r.stdout);
-    assert.match(r.stderr, /Out-of-scope/);
-    assert.equal(v.implementationAttempts, 1);
-    assert.ok(v.stagedChanges.some((c: any) => c.path === 'outside.txt'));
+    assert.equal(existsSync(join(v.workspace, 'outside.txt')), false);
+    assert.ok(!v.stagedChanges.some((c: any) => c.path === 'outside.txt'));
+    const logs = v.operationInvocations
+      .filter((invocation: any) => invocation.result)
+      .map((invocation: any) => readFileSync(invocation.result.log, 'utf8'))
+      .join('\n');
+    assert.match(logs, /EROFS|EACCES|EPERM/);
   }
 
-  /** Verifies the scenario retains interrupted verification evidence. */
-  async retainsInterruptedVerificationEvidence(t: TestContext, cancel: any) {
-    const f = workflowFixture(t, 'verify-timeout');
+  /** Cancels an observed host check and preserves the completed engineering turn. */
+  async retainsInterruptedVerificationEvidence(t: TestContext) {
+    const f = workflowFixture(t);
     writeFileSync(
       join(f.repo, 'verify.cjs'),
-      "const fs=require('fs');if(fs.existsSync('tests/regression.cjs'))require('./tests/regression.cjs');if(fs.existsSync('tests/marker')){console.log('HOST_READY');setInterval(()=>{},1000)}",
+      "const fs=require('fs');if(fs.existsSync('tests/regression.cjs'))require('./tests/regression.cjs');if(fs.readFileSync('source.txt','utf8')==='after'){console.log('HOST_READY');setInterval(()=>{},1000)}",
     );
-    if (!cancel) {
-      const path = join(f.repo, 'architecture/execution-profiles/luna.yaml');
-      const profile = JSON.parse(readFileSync(path, 'utf8'));
-      profile.commandTimeoutSeconds = 10;
-      writeFileSync(path, JSON.stringify(profile));
-    }
     f.commit();
-    const child = this.start(t, f, cancel, '60');
-    if (cancel) {
-      await child.waitForReady(() => this.hostReady(f), 'Host verification must start');
-      child.kill('SIGINT');
-    }
-    assert.equal(await child.closed, cancel ? 130 : 1);
-    const v = JSON.parse(child.stdout);
-    assert.equal(v.stage, 'verification', JSON.stringify({ error: v.error, commands: v.commands }));
-    assert.ok(
-      this.hostReady(f),
-      'The timed or cancelled verification must actually reach HOST_READY',
-    );
-    assert.equal(v.agent.status, 'completed');
-    assert.equal(v.turns.length, 2);
+    const child = this.start(t, f);
+    await child.waitForReady(() => this.hostReady(f), 'Host verification must start');
+    child.kill('SIGINT');
+    assert.equal(await child.closed, 130);
+    const record = JSON.parse(child.stdout);
+    assert.equal(record.stage, 'verification');
+    assert.ok(this.hostReady(f));
+    assert.equal(record.agent.status, 'completed');
+    assert.equal(record.turns.length, 3);
   }
 }
 
 const suite = new StewardTests();
 
-for (const [name, args, expected] of [
-  ['default', [], 'gpt-6-luna'],
-  ['override', ['--model', 'synthetic-model'], 'synthetic-model'],
-])
-  test(`SDK uses ${name} model and explicit settings`, (t: any) =>
-    suite.usesExplicitSdkSettings(t, args, expected));
+for (const model of ['gpt-6-luna', 'synthetic-model'])
+  test(`SDK uses declared ${model} profile and explicit settings`, (t) =>
+    suite.usesExplicitSdkSettings(t, model));
 
-test('invalid attempt limits and input fail before inference', (t: any) =>
-  suite.invalidAttemptLimitsAndInputFailBeforeInference(t));
+test('public task rejects caller quota options before inference', (t) =>
+  suite.quotaOptionsFailBeforeInference(t));
 
 test('baseline failure prevents activation', (t: any) =>
   suite.baselineFailurePreventsActivation(t));
@@ -238,18 +256,20 @@ test('target Codex configuration is rejected before activation', (t: any) =>
   suite.targetCodexConfigurationIsRejectedBeforeActivation(t));
 
 for (const activity of ['specification', 'implementation', 'review'])
-  for (const cancel of [true, false])
-    test(`${activity}: ${cancel ? 'cancellation' : 'timeout'} retains partial turn evidence`, (t: any) =>
-      suite.retainsInterruptedTurnEvidence(t, activity, cancel));
+  test(`${activity}: cancellation retains partial turn evidence`, (t) =>
+    suite.retainsInterruptedTurnEvidence(t, activity));
 
-test('run consumes the same inspected assignment and snapshotted independent check', (t: any) =>
-  suite.runConsumesTheSameInspectedAssignmentAndSnapshottedIndependentCheck(t));
+test('run preserves inspected assignment and shared verification identity', (t) =>
+  suite.inspectedSharedVerification(t));
 
-test('final host verification cannot hide a staged scope violation', (t: any) =>
-  suite.finalHostVerificationCannotHideAStagedScopeViolation(t));
+test('final host verification cannot mutate maintained source', (t: any) =>
+  suite.finalHostVerificationCannotMutateMaintainedSource(t));
 
-for (const cancel of [false, true])
-  test(`verification ${cancel ? 'cancellation' : 'timeout'} preserves completed agent turn`, (t: any) =>
-    suite.retainsInterruptedVerificationEvidence(t, cancel));
+test('verification cancellation preserves the completed agent turn', (t) =>
+  suite.retainsInterruptedVerificationEvidence(t));
 
-registerSuite({ component: 'assignment', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'assignment',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

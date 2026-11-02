@@ -1,0 +1,21 @@
+repository: arcnexus
+cwd: .
+category: cli-check
+activities: []
+generatedDirectories:
+  - .fixture-build
+  - .test-build
+  - .tool-build
+  - dist
+  - node_modules
+artifacts: []
+network: true
+schemaVersion: 4
+id: migrated-recipe-f1691da2bfa5a18c
+purpose: Verify architecture-maintenance
+kind: command
+prerequisites: []
+command: npm
+args:
+  - run
+  - check

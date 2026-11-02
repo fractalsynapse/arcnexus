@@ -34,7 +34,12 @@ export async function openBridge(
     (name, args) => pending.call(name, args),
     disconnect,
   );
-  await bridge.listen();
+  try {
+    await bridge.listen();
+  } catch (error) {
+    await bridge.close();
+    throw error;
+  }
   return {
     config: bridge.configuration(),
     close: async () => {
@@ -67,6 +72,8 @@ class HostBridge {
 
   /** Registers socket events and retains connection lifecycle ownership. */
   async listen(): Promise<void> {
+    if (Buffer.byteLength(this.path) > 100)
+      throw new Error('Private IPC path exceeds transport limit; use a shorter temporary root');
     await new Promise<void>((resolve, reject) => {
       this.server.once('error', reject);
       this.server.listen(this.path, resolve);

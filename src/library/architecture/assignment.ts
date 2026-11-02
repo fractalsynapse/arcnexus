@@ -19,7 +19,14 @@ import {
   type ExecutionProfile,
   type Role,
 } from './components.js';
-import { commands, environment, InputError, type Command, type Environment } from './config.js';
+import {
+  commands,
+  environment,
+  InputError,
+  type Command,
+  type VerificationCheck,
+  type Environment,
+} from './config.js';
 import { ConfigurationReader } from './configuration.js';
 import { validateSchema } from './schema.js';
 
@@ -73,7 +80,7 @@ export interface ResolvedAssignment {
   compositionProfile?: CompositionProfile;
   executionProfile: ExecutionProfile;
   allowedWritePaths: string[];
-  verification: Command[];
+  verification: VerificationCheck[];
   artifacts: Array<{ path: string; sha256: string; content: string }>;
   pendingChecks: string[];
   digest: string;
@@ -96,7 +103,7 @@ export function resolveBase(repository: string, ref = 'HEAD'): { source: string;
 }
 
 export interface AssignmentOptions {
-  additionalVerification?: Command[];
+  additionalVerification?: VerificationCheck[];
   capturedCatalog?: Catalog;
   initializerModel?: string;
   value?: unknown;
@@ -156,12 +163,13 @@ class AssignmentResolver {
     this.component = this.context.at(-1)!;
     this.env = environment(
       new ConfigurationReader().definition(repository, base, 'architecture/environment').value,
+      Object.values(this.catalog.operations),
     );
-    this.validateTarget();
     if (options.file && (options.objective !== undefined || options.kind !== undefined))
       throw new InputError('--assignment excludes objective and --kind');
     this.assignmentSource = options.file ? new ConfigurationReader().file(options.file) : undefined;
     this.assignment = this.resolveInput();
+    this.validateTarget();
   }
 
   /** Requires an executable owner in the primary writable repository. */
@@ -290,6 +298,13 @@ class AssignmentResolver {
   /** Selects only operations authorized by both component and assignment. */
   private operations(executionProfile: ExecutionProfile): Operation[] {
     const { assignment, component, catalog, env } = this;
+    if (component.schemaVersion === 5) {
+      if (assignment.operationIds)
+        throw new InputError('Assignments cannot substitute captured operation usages');
+      return (component.operationPlan?.agent ?? []).filter((op) =>
+        component.operations?.[op.id]?.includes('agent'),
+      );
+    }
     const requestedOperations = assignment.operationIds ?? component.operationIds ?? [];
     if (requestedOperations.some((id) => !(component.operationIds ?? []).includes(id)))
       throw new InputError('Assignment widens operation authority');
