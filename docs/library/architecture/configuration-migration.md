@@ -133,3 +133,8 @@ They reject an older component family with a `config migrate` diagnostic before
 creating a host or dispatching an activation. There is no fallback to the retired
 `architecture/execution` defaults file. Read-only historical inspection and migration
 continue to read old declarations; neither path grants execution authority.
+
+The read-only migration capture still validates executable profile requirements.
+A historical profile containing removed time, turn, operation or corrective-attempt
+budgets must be corrected explicitly before preview or write; migration cannot
+silently retain those budgets in a candidate that normal execution would reject.
