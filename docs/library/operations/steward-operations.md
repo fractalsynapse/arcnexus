@@ -215,3 +215,18 @@ verifies shutdown in `finally`. That service must be declared in the owner's age
 operations. Host verification never accepts an engineering call as evidence for a later
 candidate. Missing service authority, failed startup and uncertain interruption remain
 visible failures; no unmanaged command or writable-source fallback is available.
+
+### Confined descendant lifetime
+
+Source-read-only operations must also contain descendants that create a new
+session or process group. The installed sandbox launcher does this itself; killing
+only its original process group cannot establish cancellation. A private Linux PID
+namespace ties the whole confined process tree to its supervised launcher, including
+normal launcher exit and parent loss. Unsupported containment fails before dispatch.
+Readiness validates listener ownership through that retained process tree, never by
+port alone. Source-write enforcement remains the inner captured sandbox policy.
+
+Qualification must exercise detached descendants, cancellation, parent loss and
+normal exit using the installed runtime. A closed launcher without a closed endpoint
+is unresolved evidence, not successful cleanup. See issue #114 for the observed
+installed-runtime escape and its acceptance criteria.
