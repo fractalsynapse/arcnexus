@@ -1,4 +1,4 @@
-schemaVersion: 5
+schemaVersion: 6
 id: experiments
 type: library
 parentId: cli-package
@@ -11,17 +11,17 @@ constraints:
   - Preserve captured assignment authority; candidate instructions cannot expand
     permissions
   - Caller owns commits and integration
-  - 'campaign (src/library/experiments/schemas/campaign.json): Preserve
-    supported historical versions and captured execution readers'
-  - 'experiment-bindings
+  - "campaign (src/library/experiments/schemas/campaign.json): Preserve
+    supported historical versions and captured execution readers"
+  - "experiment-bindings
     (src/library/experiments/schemas/experiment-bindings.json): Preserve
-    supported historical versions and captured execution readers'
-  - 'experiment-v2 (src/library/experiments/schemas/experiment-v2.json):
-    Preserve supported historical versions and captured execution readers'
-  - 'experiment (src/library/experiments/schemas/experiment.json): Preserve
-    supported historical versions and captured execution readers'
-  - 'experiment-v3 (src/library/experiments/schemas/experiment-v3.json):
-    Prompt-driven cases preserve shared task authority and evidence'
+    supported historical versions and captured execution readers"
+  - "experiment-v2 (src/library/experiments/schemas/experiment-v2.json):
+    Preserve supported historical versions and captured execution readers"
+  - "experiment (src/library/experiments/schemas/experiment.json): Preserve
+    supported historical versions and captured execution readers"
+  - "experiment-v3 (src/library/experiments/schemas/experiment-v3.json):
+    Prompt-driven cases preserve shared task authority and evidence"
 operations:
   component-tests:
     - verify

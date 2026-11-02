@@ -1,4 +1,4 @@
-schemaVersion: 5
+schemaVersion: 6
 id: arcnexus
 type: platform
 purpose: Enable architecture-directed self-development
@@ -14,8 +14,6 @@ role: systems-engineer
 executionProfile: luna
 reads:
   - .
-patterns:
-  - readable-typescript
 operations:
   migrated-recipe-f1691da2bfa5a18c:
     - verify
@@ -57,3 +55,5 @@ verificationInputs:
   - tsconfig.fixtures.json
   - tsconfig.tooling.json
 testProfile: node
+standards:
+  - readable-typescript

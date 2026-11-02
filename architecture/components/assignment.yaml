@@ -1,4 +1,4 @@
-schemaVersion: 5
+schemaVersion: 6
 id: assignment
 type: library
 parentId: cli-package
@@ -8,20 +8,20 @@ objectives:
   - Make actual execution outcomes easy to inspect
 constraints:
   - Preserve captured authority and evidence
-  - 'regression-expectation
+  - "regression-expectation
     (src/library/assignment/schemas/regression-expectation.json): Preserve
-    historical index expectations alongside stable operation identities'
-  - 'general-agent-result
+    historical index expectations alongside stable operation identities"
+  - "general-agent-result
     (src/library/assignment/schemas/general-agent-result.json): General
-    execution inbox protocol; legacy reports remain readable'
-  - 'agent-result (src/library/assignment/schemas/agent-result.json): Preserve
-    supported historical versions and captured execution readers'
-  - 'assignment (src/library/assignment/schemas/assignment.json): Preserve
-    supported historical versions and captured execution readers'
-  - 'plan-updates (src/library/assignment/schemas/plan-updates.json): Preserve
-    supported historical versions and captured execution readers'
-  - 'plan (src/library/assignment/schemas/plan.json): Preserve supported
-    historical versions and captured execution readers'
+    execution inbox protocol; legacy reports remain readable"
+  - "agent-result (src/library/assignment/schemas/agent-result.json): Preserve
+    supported historical versions and captured execution readers"
+  - "assignment (src/library/assignment/schemas/assignment.json): Preserve
+    supported historical versions and captured execution readers"
+  - "plan-updates (src/library/assignment/schemas/plan-updates.json): Preserve
+    supported historical versions and captured execution readers"
+  - "plan (src/library/assignment/schemas/plan.json): Preserve supported
+    historical versions and captured execution readers"
 operations:
   migrated-recipe-43b539fb85a57c26:
     - verify
