@@ -1,6 +1,6 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { workflowFixture, minimalWorkflowFixture } from './workflow-fixture.js';
+import { minimalWorkflowFixture } from './workflow-fixture.js';
 
 /** Reuses the single shared verification definition for native agent-operation acceptance. */
 export function minimalOperationFixture(t: any, mode = 'success'): any {
@@ -9,44 +9,19 @@ export function minimalOperationFixture(t: any, mode = 'success'): any {
   return fixture;
 }
 
-export function operationFixture(t: any, mode: any = 'success'): any {
-  const f = workflowFixture(t, mode),
-    profilePath = join(f.repo, 'architecture/execution-profiles/luna.yaml');
-  const profile = JSON.parse(String(readFileSync(profilePath)));
-  Object.assign(profile, {
-    schemaVersion: 2,
-    maxTurns: 4,
-    operationCategories: ['unit-test'],
-    maxOperationCalls: mode === 'budget' ? 1 : 24,
-  });
-  writeFileSync(profilePath, JSON.stringify(profile));
-  Object.assign(f.component, { schemaVersion: 2, operationIds: ['test'] });
-  writeFileSync(join(f.repo, 'architecture/components/sample.json'), JSON.stringify(f.component));
-  defineOperation(f);
-  f.commit();
-  f.configure({ planning: true, operations: join(f.root, 'operations.jsonl') });
-  return f;
-}
-
-function defineOperation(f: any): void {
-  mkdirSync(join(f.repo, 'architecture/operations'));
-  writeFileSync(
-    join(f.repo, 'architecture/operations/test.json'),
-    JSON.stringify({
-      schemaVersion: 2,
-      id: 'test',
-      purpose: 'Observe regression',
-      kind: 'command',
-      repository: 'sample',
-      cwd: '.',
-      category: 'unit-test',
-      activities: ['testing', 'implementation', 'review', 'research'],
-      command: process.execPath,
-      args: ['verify.cjs'],
-      timeoutSeconds: 120,
-      generatedDirectories: [],
-      artifacts: [],
-      probes: [],
-    }),
+/** Declares a distinct agent recipe while retaining the original mandatory verification operation. */
+export function configureAgentOperation(f: any, args: string[]): void {
+  const path = join(f.repo, 'architecture/components/platform.json');
+  const platform = JSON.parse(readFileSync(path, 'utf8'));
+  platform.operations.verify = ['verify'];
+  platform.operations['agent-probe'] = ['agent'];
+  writeFileSync(path, JSON.stringify(platform));
+  const operation = JSON.parse(
+    readFileSync(join(f.repo, 'architecture/operations/verify.yaml'), 'utf8'),
   );
+  writeFileSync(
+    join(f.repo, 'architecture/operations/agent-probe.yaml'),
+    JSON.stringify({ ...operation, id: 'agent-probe', args }),
+  );
+  f.configure({ operationId: 'agent-probe' });
 }

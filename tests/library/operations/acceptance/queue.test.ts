@@ -1,11 +1,15 @@
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, type TestContext } from 'node:test';
-import { TestProcess, waitFor } from '../../testing/support/test-process.js';
+import type { TestContext } from 'node:test';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
+import { TestProcess } from '../../testing/support/test-process.js';
 import { stewardEntry } from '../../testing/support/workflow-fixture.js';
-import { operationFixture } from '../../testing/support/operations-fixture.js';
+import {
+  minimalOperationFixture as operationFixture,
+  configureAgentOperation,
+} from '../../testing/support/operations-fixture.js';
 
 /** Exercises operation queue behavior through observable scenarios. */
 class OperationQueueTests {
@@ -37,12 +41,14 @@ class OperationQueueTests {
         'research',
         '--project',
         f.repo,
+        '--bindings',
+        join(f.root, 'minimal-bindings.json'),
         '--codex-path',
         f.executable,
       ],
       f.env,
     );
-    await waitFor(() => this.record(f)?.operationCalls === 2, 'Both operations queued');
+    await child.waitForReady(() => this.record(f)?.operationCalls === 2, 'Both operations queued');
     child.kill('SIGTERM');
     assert.equal(await child.closed, 130, child.stderr);
     const record = JSON.parse(child.stdout);
@@ -62,11 +68,7 @@ class OperationQueueTests {
   /** Declares a command without a timeout and requests concurrent bridge calls to test serialization. */
   private fixture(t: TestContext, command: string): any {
     const f = operationFixture(t);
-    const path = join(f.repo, 'architecture/operations/test.json');
-    const op = JSON.parse(readFileSync(path, 'utf8'));
-    op.args = ['-e', command];
-    delete op.timeoutSeconds;
-    writeFileSync(path, JSON.stringify(op));
+    configureAgentOperation(f, ['-e', command]);
     f.commit();
     f.configure({
       planning: true,
@@ -85,4 +87,8 @@ test('concurrent valid operation requests execute serially with separate evidenc
 test('cancellation stops active operation and prevents queued execution', (t) =>
   suite.cancelsQueued(t));
 
-registerSuite({ component: 'operations', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'operations',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

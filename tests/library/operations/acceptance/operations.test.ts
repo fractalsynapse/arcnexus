@@ -4,8 +4,11 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
-import { test } from 'node:test';
-import { operationFixture as fixture } from '../../testing/support/operations-fixture.js';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
+import {
+  minimalOperationFixture as fixture,
+  configureAgentOperation,
+} from '../../testing/support/operations-fixture.js';
 import { cli, stewardEntry, workflowFixture } from '../../testing/support/workflow-fixture.js';
 
 /** Exercises operations behavior through observable scenarios. */
@@ -53,17 +56,9 @@ class OperationsTests {
       const rejection = JSON.parse(reply.content[0].text);
       assert.equal(rejection.status, 'rejected');
       assert.match(rejection.error, /Unknown or denied operation: unknown/);
-      assert.deepEqual(rejection.availableOperationIds, ['test']);
+      assert.deepEqual(rejection.availableOperationIds, ['verify']);
       assert.match(rejection.recovery, /No operation was queued/);
     }
-  }
-
-  /** Retains the historical private harness interpretation without enabling old profiles for new hosts. */
-  historicalBudget(t: TestContext): void {
-    const f = fixture(t, 'budget');
-    const result = f.run();
-    assert.equal(result.status, 1, result.stderr);
-    assert.match(result.stderr, /budget/i);
   }
 
   /** Verifies that inspect captures operations and rejects assignment widening. */
@@ -75,12 +70,12 @@ class OperationsTests {
         { encoding: 'utf8' },
       );
     assert.equal(r.status, 0, r.stderr);
-    assert.equal(JSON.parse(r.stdout).operations[0].id, 'test');
+    assert.equal(JSON.parse(r.stdout).operations[0].id, 'verify');
     const path = join(f.root, 'assignment.json');
     writeFileSync(
       path,
       JSON.stringify({
-        schemaVersion: 2,
+        schemaVersion: 3,
         kind: 'research',
         objective: 'Read',
         expectedOutcome: 'Evidence',
@@ -95,7 +90,7 @@ class OperationsTests {
       { encoding: 'utf8' },
     );
     assert.equal(denied.status, 2);
-    assert.match(denied.stderr, /widens operation/);
+    assert.match(denied.stderr, /cannot substitute captured operation usages/);
   }
 
   /** Verifies that operation output is bounded and excess output terminates the command. */
@@ -126,23 +121,20 @@ class OperationsTests {
   /** Verifies that declared command cannot change source during read only research. */
   declaredCommandCannotChangeSourceDuringReadOnlyResearch(t: TestContext) {
     const f = fixture(t);
-    const p = join(f.repo, 'architecture/operations/test.json'),
-      op = JSON.parse(String(readFileSync(p)));
-    op.args = ['-e', "require('fs').writeFileSync('source.txt','unauthorized')"];
-    writeFileSync(p, JSON.stringify(op));
+    configureAgentOperation(f, ['-e', "require('fs').writeFileSync('source.txt','unauthorized')"]);
     f.commit();
     const r = f.run('--kind', 'research');
-    assert.equal(r.status, 1);
-    assert.match(r.stderr, /scope|Read-only/);
+    assert.equal(r.status, 0, r.stderr);
+    const record = JSON.parse(r.stdout);
+    assert.equal(record.operations[0].exitCode, 1);
+    assert.match(readFileSync(record.operations[0].log, 'utf8'), /EROFS|EACCES|EPERM/);
+    assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'before');
   }
 
   /** Verifies that operation commands do not inherit unrelated credentials. */
   operationCommandsDoNotInheritUnrelatedCredentials(t: TestContext) {
     const f = fixture(t);
-    const p = join(f.repo, 'architecture/operations/test.json'),
-      op = JSON.parse(String(readFileSync(p)));
-    op.args = ['-e', 'if(process.env.ARCNEXUS_TEST_SECRET)process.exit(7)'];
-    writeFileSync(p, JSON.stringify(op));
+    configureAgentOperation(f, ['-e', 'if(process.env.ARCNEXUS_TEST_SECRET)process.exit(7)']);
     f.commit();
     const r = spawnSync(
       process.execPath,
@@ -155,6 +147,8 @@ class OperationsTests {
         'research',
         '--project',
         f.repo,
+        '--bindings',
+        join(f.root, 'minimal-bindings.json'),
         '--codex-path',
         f.executable,
       ],
@@ -168,10 +162,26 @@ class OperationsTests {
     assert.equal(JSON.parse(r.stdout).operations[0].exitCode, 0);
   }
 
+  /** Refuses a tracked source output root before a managed command receives write permission. */
+  rejectsSourceOutput(t: TestContext): void {
+    const f = fixture(t);
+    const path = join(f.repo, 'architecture/operations/verify.yaml');
+    const operation = JSON.parse(readFileSync(path, 'utf8'));
+    operation.generatedDirectories = ['source.txt'];
+    writeFileSync(path, JSON.stringify(operation));
+    f.commit();
+    const result = f.run();
+    assert.equal(result.status, 1, result.stderr);
+    assert.match(result.stderr, /output|maintained|tracked/i);
+    const record = JSON.parse(result.stdout);
+    assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'before');
+    assert.equal(record.turns.length, 0);
+  }
+
   /** Verifies the scenario rejects incompatible operation catalog. */
   rejectsIncompatibleOperationCatalog(t: TestContext, defect: any) {
     const f = fixture(t),
-      p = join(f.repo, 'architecture/operations/test.json'),
+      p = join(f.repo, 'architecture/operations/verify.yaml'),
       op = JSON.parse(String(readFileSync(p)));
     if (defect === 'category') {
       const path = join(f.repo, 'architecture/execution-profiles/luna.yaml'),
@@ -179,7 +189,6 @@ class OperationsTests {
       profile.operationCategories = [];
       writeFileSync(path, JSON.stringify(profile));
     }
-    if (defect === 'output') op.generatedDirectories = ['undeclared'];
     if (defect === 'service') {
       op.kind = 'http';
       delete op.command;
@@ -203,9 +212,6 @@ test('production SDK bridge returns real red and green operation feedback', (t: 
 test('host returns recoverable operation rejection without executing denied work', (t) =>
   suite.rejectsUnauthorizedOperationRequests(t));
 
-test('historical private harness retains its captured budget interpretation', (t) =>
-  suite.historicalBudget(t));
-
 test('inspect captures operations and rejects assignment widening', (t: any) =>
   suite.inspectCapturesOperationsAndRejectsAssignmentWidening(t));
 
@@ -218,11 +224,18 @@ test('declared command cannot change source during read-only research', (t: any)
 test('operation commands do not inherit unrelated credentials', (t: any) =>
   suite.operationCommandsDoNotInheritUnrelatedCredentials(t));
 
-for (const defect of ['category', 'output', 'service'])
+for (const defect of ['category', 'service'])
   test(`built validate rejects operation ${defect} inconsistency`, (t: any) =>
     suite.rejectsIncompatibleOperationCatalog(t, defect));
+
+test('operation preflight rejects tracked source output roots', (t) =>
+  suite.rejectsSourceOutput(t));
 
 test('late operation diagnostics reach the production bridge', (t) =>
   suite.lateOperationDiagnostic(t));
 
-registerSuite({ component: 'operations', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'operations',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

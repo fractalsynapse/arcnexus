@@ -399,3 +399,13 @@ Seven prior-evidence cases now pass under minimal authority and native confineme
 The setup-race case uses a generated-output gate: the caller changes its historical
 file while confined setup waits, and the session still receives the original captured
 bytes. Setup no longer writes outside its workspace to manufacture that race.
+
+The operation bridge, pending/queued work, managed services and progress-report
+fixtures now use minimal authority. Twenty-nine cases passed across the final focused
+runs with no skips: thirteen command/queue/pending cases, thirteen service cases and
+three progress projections. Service probes are shared finite operations; services
+explicitly declare their network requirement. Source-output overlap is rejected at
+operation preflight, and a denied research write leaves maintained bytes unchanged.
+The obsolete private-harness operation-budget case and its unused legacy fixture
+were retired. Historical inspection remains separately covered. Foundation lint-tool
+and remaining context/initializer/report fixture qualification is still in progress.

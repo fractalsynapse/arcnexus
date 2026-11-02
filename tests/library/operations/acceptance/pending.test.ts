@@ -1,23 +1,23 @@
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, type TestContext } from 'node:test';
-import { operationFixture } from '../../testing/support/operations-fixture.js';
+import type { TestContext } from 'node:test';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
+import {
+  minimalOperationFixture as operationFixture,
+  configureAgentOperation,
+} from '../../testing/support/operations-fixture.js';
 
 /** Exercises pending operation behavior through observable scenarios. */
 class PendingOperationTests {
   /** Verifies that sDK bridge observes a long operation without timing it out or invoking it twice. */
   waitsWithoutRestart(t: TestContext): void {
     const f = operationFixture(t);
-    const path = join(f.repo, 'architecture/operations/test.json');
-    const op = JSON.parse(readFileSync(path, 'utf8'));
-    delete op.timeoutSeconds;
-    op.args = [
+    configureAgentOperation(f, [
       '-e',
       "setTimeout(()=>console.log('Finished after transport observation window'),4100)",
-    ];
-    writeFileSync(path, JSON.stringify(op));
+    ]);
     f.commit();
     const result = f.run('--kind', 'research');
     assert.equal(result.status, 0, result.stderr);
@@ -42,4 +42,8 @@ const suite = new PendingOperationTests();
 test('SDK bridge observes a long operation without timing it out or invoking it twice', (t) =>
   suite.waitsWithoutRestart(t));
 
-registerSuite({ component: 'operations', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'operations',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

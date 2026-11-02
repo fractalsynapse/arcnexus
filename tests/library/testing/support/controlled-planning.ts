@@ -140,7 +140,7 @@ export class ControlledPlanning {
         [0, 1].map(() =>
           this.request(client, {
             name: 'operations.run',
-            arguments: { id: 'test' },
+            arguments: { id: this.options.operationId ?? 'test' },
           }),
         ),
       ),
