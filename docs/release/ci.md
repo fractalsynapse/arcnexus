@@ -98,3 +98,10 @@ and [delegation contract](https://www.freedesktop.org/software/systemd/man/lates
 The initial pinned runtime is
 [Codex 0.163.0-alpha.10.2](https://github.com/openai/codex/releases/tag/rust-v0.163.0-alpha.10.2).
 Local sandbox probes and the hosted CI result must be reported separately.
+
+The Ubuntu 24.04 hosted runner also installs the distribution `bubblewrap` and its
+AppArmor user-namespace profile, following the
+[Codex Linux prerequisites](https://learn.chatgpt.com/docs/sandboxing#prerequisites).
+The observed pinned-runtime failure was `bwrap: loopback: Failed RTM_NEWADDR:
+Operation not permitted`. Load the distribution's specific profile; do not disable
+AppArmor's system-wide user-namespace restriction or bypass source confinement.
