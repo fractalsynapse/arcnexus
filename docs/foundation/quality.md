@@ -87,3 +87,18 @@ directories may be sandbox mounts beneath
 read-only maintained source. Stale output links are removed without following them;
 a missing root is created before compilation. Build failures retain their actual
 compiler evidence and cannot grant write access to the source parent.
+
+## Checked formatting proposals
+
+The shared `component-format` agent operation formats the active owner's maintained
+files in memory and returns a JSON `source.edit` request. It uses the same Prettier
+configuration as the repository check. It does not write source, stage files or
+apply its own output. Each proposed update includes the repository-relative path,
+current SHA-256 and replacement content; unchanged, ignored and unsupported files
+produce no update. Duplicate owned roots do not produce duplicate edits.
+
+The steward submits the proposal through `source.edit` only when the current
+workflow stage permits those paths. The host still checks assignment narrowing,
+owned paths, frozen tests and current content. Formatting output grants no new
+authority. A stale proposal requires recomputation; an identical retry retains its
+transaction identity. Final `format:check` remains independent verification.
