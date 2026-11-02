@@ -54,10 +54,20 @@ export class SourceConfinement {
       this.validateSegments(path);
       mkdirSync(path, { recursive: true, mode: 0o700 });
       this.filesystem[path] = 'write';
+      this.disposableChildren(path);
     }
     this.configurationHome();
     for (const path of authority.protectedPaths ?? []) this.protect(path);
     this.overrides = this.configuration();
+  }
+
+  /** Keeps disposable root cleanup possible without exposing source metadata or following output aliases. */
+  private disposableChildren(root: string): void {
+    for (const name of ['.agents', '.codex', '.aws', '.git']) {
+      const path = join(root, name);
+      this.validateSegments(path);
+      this.filesystem[path] = 'write';
+    }
   }
 
   /** Pins configuration read-only explicitly; the installed runtime otherwise grants its home writes. */

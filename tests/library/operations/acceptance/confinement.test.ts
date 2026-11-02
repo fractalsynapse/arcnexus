@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { chmodSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test, type TestContext } from 'node:test';
@@ -8,6 +16,32 @@ import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Qualifies actual subprocess filesystem enforcement through the assembled adapter. */
 class ConfinementScenarios {
+  /** Allows installer cleanup inside generated output while keeping maintained source immutable. */
+  async cleansGenerated(t: TestContext): Promise<void> {
+    const root = this.fixture(t);
+    const module = await import(resolve('dist/library/operations/confinement.js'));
+    const authority = {
+      workspace: root,
+      reads: ['.'],
+      outputs: ['generated'],
+      temporaryRoot: root + '-private',
+      executable: process.env.ARCNEXUS_TEST_CODEX!,
+    };
+    const adapter = new module.SourceConfinement(authority);
+    const script =
+      "const f=require('fs');for(const n of ['.agents','.codex','.aws','.git']){f.mkdirSync('generated/'+n,{recursive:true});f.rmSync('generated/'+n,{recursive:true});}try{f.writeFileSync('source.txt','bad');process.exit(8)}catch(e){if(!['EROFS','EPERM','EACCES'].includes(e.code))throw e;}";
+    const command = adapter.command({ command: process.execPath, args: ['-e', script] });
+    const result = spawnSync(command.command, command.args, {
+      cwd: root,
+      env: adapter.environment(),
+      encoding: 'utf8',
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(readFileSync(join(root, 'source.txt'), 'utf8'), 'original');
+    symlinkSync(join(root, '.git'), join(root, 'generated/.agents'));
+    assert.throws(() => new module.SourceConfinement(authority), /Unsafe symlink/);
+  }
+
   /** Pins diagnostic support outside replaceable target output and rejects changed private snapshots. */
   async capturesSupport(t: TestContext): Promise<void> {
     const root = this.fixture(t);
@@ -79,6 +113,12 @@ class ConfinementScenarios {
 }
 
 const scenarios = new ConfinementScenarios();
+
+test(
+  'installed confinement permits disposable output cleanup but rejects source aliases',
+  { skip: !process.env.ARCNEXUS_TEST_CODEX && 'Live qualification requires ARCNEXUS_TEST_CODEX' },
+  (t) => scenarios.cleansGenerated(t),
+);
 
 test('confinement captures immutable runtime support outside generated target output', (t) =>
   scenarios.capturesSupport(t));
