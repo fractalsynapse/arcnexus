@@ -220,9 +220,12 @@ visible failures; no unmanaged command or writable-source fallback is available.
 
 Source-read-only operations must also contain descendants that create a new
 session or process group. The installed sandbox launcher does this itself; killing
-only its original process group cannot establish cancellation. A private Linux PID
-namespace ties the whole confined process tree to its supervised launcher, including
-normal launcher exit and parent loss. Unsupported containment fails before dispatch.
+only its original process group cannot establish cancellation. A private delegated Linux cgroup ties the whole confined process tree to its
+supervised launcher, including normal launcher exit and parent loss. The child joins
+the group before launching executable work; cleanup uses the kernel group kill
+operation, independent of process/session IDs. Unsupported containment fails before
+dispatch. Nested PID namespaces were rejected by the installed AppArmor profile;
+ArcNexus does not change that machine policy.
 Readiness validates listener ownership through that retained process tree, never by
 port alone. Source-write enforcement remains the inner captured sandbox policy.
 
