@@ -138,3 +138,18 @@ establish what the harness reported executing, while declared host checks remain
 separate evidence class. Neither tool output nor agent messages grant authority.
 Missing or partial logs remain explicit gaps. Never follow an evidence reference into
 another run or accept arbitrary private filesystem paths.
+
+## Acceptance grounded in host capabilities
+
+The director derives acceptance from caller outcomes and captured authority. It
+must not invent unavailable evidence formats or additional process deliverables.
+Declared operations retain exit status, resolved invocation context and combined
+stdout/stderr logs. Separate streams are not promised. An explicit caller need
+for unavailable evidence remains a substantive capability question.
+
+The host automatically runs independent delivery verification and a separate final
+goal assessment. Direction does not create another engineering review assignment
+merely to duplicate these checkpoints. Substantive research/review work requested
+by the caller remains assignable normally. Captured criteria are immutable within
+an accepted assignment; discovering an impossible criterion retains the gap and
+requires a new authorized decision, never a silent waiver.
