@@ -255,3 +255,11 @@ describes explicit rule overrides. ArcNexus additionally qualifies actual cleanu
 and source denial against the installed executable. The observed npm failure and
 exact runtime probe are recorded in issue #123; they are not a claim about every
 Codex version or platform.
+
+Managed operations allocate a short private temporary directory independently of
+the durable evidence path and record that location before execution. Long evidence
+roots must not force child Unix IPC addresses beyond transport limits. Retained
+records reuse their captured temporary location; uncertain operations remain
+non-replayable. Bridge startup rejects an overlong encoded address before binding
+and releases its listener and directory whenever startup fails. Test watchdogs
+remain finite; these transport safeguards do not impose agent execution budgets.
