@@ -206,6 +206,41 @@ baseline reached 570 tests: 536 passed, eight failed and 26 skipped, with inode
 exhaustion recorded in several failures. A fresh run uses private disk-backed
 storage and a stable supervisor. No live gate is claimed from that pending run.
 
+## Current execution boundary and qualification (2026-11-02)
+
+New task/workday hosts now reject pre-v5 components before dispatch. Migration
+captures old declarations through a separate read-only input reader; preview,
+validated application and idempotence remain available. The inline test runner is
+removed: `test run` requires shared operations, while historical profile inspection
+remains available. Production assignment/workspace legacy branches and the remaining
+historical harness fixtures still need retirement or migration.
+
+At `d47c4a6`, the architecture selection passed 141 of 145 tests, with four native
+cases explicitly skipped, in retained run `1ceb60c4-7845-4c2e-9caf-91eabba322a4`.
+The startup/migration scenarios passed 8/8 separately. At `5c97c15`, the testing
+selection passed 24 of 35 tests, with eleven native cases skipped, in run
+`80907332-a5a1-49a5-b7d5-3f3d97ef7d6a`. Its migrated preparation, compiler-error,
+cancellation and rejection scenarios passed 16/16 with native enforcement and no
+skips in `/tmp/arcnexus-109-inline-green.log`. These are distinct evidence classes.
+
+The native-host selection at `da95467` passed 91/91 with no skips in
+`/tmp/arcnexus-140-native-selected.log`. Its confined full suite stopped after
+449 cases (351 passed, one failed, 97 skipped), run
+`3c49fe16-5611-4f27-853b-0ca0fefb807b`. CI run `41423162844` failed on the same
+obsolete bridge assertion: denied operation selection is now recoverable. The
+replacement checks zero executed operations and structured rejection, and passes
+through the real bridge. The complete affected operations suite and integrated
+rerun at `5c97c15` are pending; the earlier CI failure is not a current-head pass.
+Formatting, lint, types, build, ownership and guidance passed for this slice.
+
+The canonical-host fix (#137) prevents different temporary/evidence roots from
+creating competing hosts for one repository. A subsequent self-development task
+`fdc2f5b7-8928-4b1e-a3c1-1e928ed99c0b` is retained against `da95467`; it cannot
+change that baseline to the later assertion repair. It has no verified delivery.
+A separate live workday `cdbad9b8-4421-461e-9d0d-8c337adfa830` has routed a real
+CLI-to-service inbox request; verified delivery and requester resumption are pending.
+Neither pending run closes a qualification gate. Phase three remains blocked.
+
 ## Earlier implementation checkpoints
 
 The following paragraphs record evidence at their respective checkpoints; they are
