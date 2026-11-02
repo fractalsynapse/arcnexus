@@ -427,3 +427,13 @@ legacy inspection fixture's missing generated-output declaration made the remain
 case pass in the final two-case rerun. Types, build and scoped lint passed. Historical
 inspection and cleanup remain available; this slice does not yet retire assignment
 or operation adapters.
+
+Operation execution now has no legacy command/service/probe dispatch branch or
+operation-call quota. Both new direct-library rejection cases failed before the
+change and pass afterward. The native operation/limits run passed 61 of 64 cases;
+three direct confinement probes could not re-execute the `/tmp`-installed binary
+inside their deliberately restricted filesystem. Rerunning the four-case confinement
+suite with `/usr/lib/chatgpt/resources/codex` passed all four. Both binaries report
+`0.163.0-alpha.10.2`; this is a tool-location qualification difference, not evidence
+that the failed configuration worked. Types, build and scoped lint passed. Assignment
+and harness retirement remain separate work.

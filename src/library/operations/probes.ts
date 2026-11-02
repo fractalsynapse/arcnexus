@@ -1,97 +1,19 @@
-import { milliseconds } from '../architecture/config.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { realpathSync } from 'node:fs';
-import { join, relative } from 'node:path';
-import type { ResolvedAssignment } from '../architecture/assignment.js';
-import { targetCommand } from '../architecture/bindings.js';
-import type { Command } from '../architecture/config.js';
 import { observe } from '../report/timeline.js';
 import { openBridge, protocolTimeoutSeconds } from '../steward/bridge.js';
 import { save, type RecordData } from '../workspace/state.js';
-import { assertIdentity, assertOutputs } from '../workspace/workspace.js';
-import { operationEnvironment, type Operation } from './operations.js';
-import { execute } from './process.js';
 
+/** Qualifies transport connectivity; declared finite probes run as shared lifecycle operations. */
 export async function prepareCapabilities(
   root: string,
   record: RecordData,
   signal: AbortSignal,
 ): Promise<void> {
-  const resolved = record.resolvedAssignment as ResolvedAssignment;
-  if (resolved.executionProfile.schemaVersion < 2) return;
-  await new CapabilityProbes(root, record, signal, resolved).run();
-}
-
-/** Exercises required execution routes before paying for model activation. */
-class CapabilityProbes {
-  private readonly probes: unknown[] = [];
-
-  /** Records the capability-probe stage before testing captured execution routes. */
-  constructor(
-    private readonly root: string,
-    private readonly record: RecordData,
-    private readonly signal: AbortSignal,
-    private readonly resolved: ResolvedAssignment,
-  ) {
-    record.probes = this.probes;
-    record.stage = 'capability-probes';
-  }
-
-  /** Executes this lifecycle through its configured collaborators and propagates failures. */
-  async run(): Promise<void> {
-    const seen = new Set<string>();
-    for (const op of this.resolved.operations)
-      for (const probe of op.probes) {
-        const key = JSON.stringify([op.cwd, probe]);
-        if (seen.has(key)) continue;
-        seen.add(key);
-        await this.hostProbe(op, probe);
-      }
-    await new BridgeProbe(this.root, this.record, this.signal, this.probes).run();
-  }
-
-  /** Exercises the declared host execution route before model activation. */
-  private async hostProbe(op: Operation, probe: Command): Promise<void> {
-    const { root, record, signal, probes } = this;
-    signal.throwIfAborted();
-    const cwd = realpathSync(join(record.workspace, op.cwd));
-    if (relative(record.workspace, cwd).startsWith('..'))
-      throw new Error('Probe working directory escapes workspace');
-    observe(root, record, 'probe.started', { operationId: op.id, command: probe, cwd });
-    try {
-      const result = await this.command(probe, cwd);
-      probes.push({ operationId: op.id, route: 'host', ...result });
-      observe(root, record, 'probe.completed', result);
-    } catch (error) {
-      const result =
-        error && typeof error === 'object' && 'commandResult' in error
-          ? error.commandResult
-          : undefined;
-      probes.push({ operationId: op.id, route: 'host', result, error: String(error) });
-      observe(root, record, 'probe.failed', probes.at(-1));
-      throw error;
-    } finally {
-      save(root, record);
-      assertIdentity(record);
-      assertOutputs(record.workspace, record.environment);
-    }
-  }
-
-  /** Runs the functional probe through the same route required by execution. */
-  private command(probe: Command, cwd: string) {
-    const { root, record, signal, probes, resolved } = this;
-    return execute(
-      targetCommand(record, probe),
-      cwd,
-      join(root, 'runs', record.id, `probe-${probes.length}.log`),
-      signal,
-      {
-        env: operationEnvironment(record),
-        timeoutMs: milliseconds(resolved.executionProfile.commandTimeoutSeconds),
-      },
-    );
-  }
+  const probes: unknown[] = [];
+  record.probes = probes;
+  record.stage = 'capability-probes';
+  await new BridgeProbe(root, record, signal, probes).run();
 }
 
 /** Checks the actual parent-to-bridge route before stewards depend on its tools. */
