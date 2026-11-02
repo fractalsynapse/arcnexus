@@ -269,3 +269,10 @@ another scheduler. Changes to temporary-storage settings must attach to the same
 host and preserve its captured authority. Live task
 `1be5cdf7-5c9f-4ccd-917d-a5150206b2bb` exposed the former duplicate-host defect;
 its failed evidence remains retained and is not automatically replayed (#137).
+
+The #137 local regression passes alternate-socket lease rejection, and all four
+`host-lifecycle` cases pass through the shared executor, including a second CLI
+with both another evidence root and another `TMPDIR`. Evidence is retained at
+`test-runs/b256161f-80b7-48ab-9a49-d9b04d777f52`. Formatting, lint, strict checking,
+build, ownership validation and guidance validation pass locally. This is deterministic
+qualification; a new live self-development task must still produce its own delivery.

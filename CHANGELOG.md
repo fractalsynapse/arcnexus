@@ -12,6 +12,10 @@
 
 - Initialize component-led tasks and report progress without implicit execution quotas (#65).
 
+### Fixed
+
+- Keep one canonical project host when temporary-storage or evidence-root settings change (#137).
+
 ### Changed
 
 - Retire component, fixed-owner workday and proposal execution commands; preserve historical inspection and route prompt campaigns through the shared host (#106).

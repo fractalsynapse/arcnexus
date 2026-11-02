@@ -37,7 +37,7 @@ class GeneralCliScenarios {
     const f = general.fixture;
     const result = spawnSync(process.execPath, [cli, 'workday', 'start'], {
       cwd: f.repo,
-      env: { ...f.env, ARCNEXUS_STATE_DIR: f.state + '-other' },
+      env: { ...f.env, ARCNEXUS_STATE_DIR: f.state + '-other', TMPDIR: f.repo },
       encoding: 'utf8',
       timeout: 30_000,
     });

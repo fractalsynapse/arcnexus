@@ -6,7 +6,6 @@ import { spawn } from 'node:child_process';
 import { connect } from 'node:net';
 import { existsSync, mkdirSync, openSync, closeSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { tmpdir } from 'node:os';
 import { RunnerSnapshot } from './runner-snapshot.js';
 import { setTimeout as delay } from 'node:timers/promises';
 import {
@@ -44,7 +43,7 @@ export class HostClient {
     );
     this.key = digest(common).slice(0, 24);
     this.directory = join(this.root, 'projects', this.key);
-    const sockets = join(tmpdir(), `arcnexus-${process.getuid?.() ?? 'user'}`);
+    const sockets = join('/tmp', `arcnexus-${process.getuid?.() ?? 'user'}`);
     mkdirSync(sockets, { recursive: true, mode: 0o700 });
     mkdirSync(this.directory, { recursive: true, mode: 0o700 });
     this.socket = join(sockets, this.key + '.sock');
