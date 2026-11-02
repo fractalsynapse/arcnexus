@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { test, type TestContext } from 'node:test';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { captureInitialization } from '../../../../dist/library/architecture/initialization.js';
@@ -14,12 +15,84 @@ class PlatformExecutionScenarios {
     const context = new ExecutionContext().resolve(join(fixture.root, 'package'));
     assert.equal(context.packageId, 'package');
     assert.equal(context.directorProfile, 'director');
+    assert.equal(context.directorComponent, 'maintenance');
     assert.equal(context.reviewerProfile, 'director');
     const snapshot = captureInitialization(context.catalog, context.catalog.components.sample!);
     assert.equal(snapshot.componentId, 'maintenance');
     assert.equal(snapshot.profile.id, 'director');
     assert.equal(snapshot.model, 'configured-director-model');
     assert.equal(snapshot.provenance, 'declared-component');
+  }
+
+  /** The declared director can assess another package without gaining its engineering eligibility. */
+  directorAuthority(t: TestContext): void {
+    const fixture = this.operational(t);
+    const execution = new ExecutionContext();
+    const context = execution.resolve(join(fixture.root, 'package'));
+    assert.ok(!context.owners.includes('maintenance'));
+    const value = {
+      schemaVersion: 3 as const,
+      kind: 'research' as const,
+      objective: 'Inspect goal',
+      expectedOutcome: 'Evidence',
+      acceptanceCriteria: ['Evidence'],
+      hostChecks: [],
+    };
+    const director = execution.assignment(context, 'maintenance', value, 'director');
+    assert.equal(director.componentId, 'maintenance');
+    assert.equal(director.executionProfile.model, 'configured-director-model');
+    assert.throws(
+      () => execution.assignment(context, 'maintenance', value, 'luna'),
+      /outside captured package/,
+    );
+    assert.throws(
+      () => execution.assignment(context, 'maintenance', { ...value, kind: 'change' }, 'director'),
+      /outside captured package/,
+    );
+    assert.throws(
+      () => execution.assignment(context, 'sample', { ...value, kind: 'change' }),
+      /checked-edit runtime/,
+    );
+    assert.equal(execution.assignment(context, 'sample', value).executionProfile.id, 'luna');
+  }
+
+  /** Adds one shared finite verification declaration for executable read-only assignments. */
+  private operational(t: TestContext): ComponentV5Fixture {
+    const fixture = this.fixture(t);
+    const path = 'architecture/components/platform.json';
+    fixture.put(path, {
+      ...JSON.parse(readFileSync(join(fixture.root, path), 'utf8')),
+      operations: { check: ['verify'] },
+    });
+    fixture.put(
+      'architecture/components/operations.json',
+      fixture.component('operations', 'library', {
+        parentId: 'maintenance-package',
+        owns: ['architecture/operations'],
+      }),
+    );
+    fixture.put('architecture/operations/check.json', this.verification());
+    fixture.commit();
+    return fixture;
+  }
+
+  /** Defines one finite command shared by all captured read-only owners. */
+  private verification() {
+    return {
+      schemaVersion: 4,
+      id: 'check',
+      purpose: 'Captured check',
+      repository: 'sample',
+      kind: 'command',
+      command: 'node',
+      args: ['-e', 'process.exit(0)'],
+      cwd: '.',
+      category: 'unit-test',
+      activities: ['testing'],
+      prerequisites: [],
+      generatedDirectories: [],
+      artifacts: [],
+    };
   }
 
   /** Rejects retired duplicate execution files rather than silently choosing one source. */
@@ -88,5 +161,8 @@ test('v5 execution rejects duplicate retired configuration', (t) => scenarios.du
 
 test('v5 execution requires explicit director and reviewer configuration', (t) =>
   scenarios.missing(t));
+
+test('declared director assessment preserves package engineering boundaries', (t) =>
+  scenarios.directorAuthority(t));
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });

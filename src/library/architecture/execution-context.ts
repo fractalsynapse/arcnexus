@@ -18,6 +18,7 @@ export interface ProjectExecution {
   catalog: Catalog;
   bindings: Bindings;
   directorProfile: string;
+  directorComponent?: string;
   reviewerProfile: string;
   executable: string;
   verificationInputs: string[];
@@ -86,7 +87,12 @@ export class ExecutionContext {
 
   /** Resolves an assignment solely against the source authority captured for the run. */
   assignment(context: ProjectExecution, owner: string, value: Assignment, profile?: string) {
-    if (!context.owners.includes(owner)) throw new InputError('Owner is outside captured package');
+    const director =
+      owner === context.directorComponent &&
+      value.kind === 'research' &&
+      profile === context.directorProfile;
+    if (!context.owners.includes(owner) && !director)
+      throw new InputError('Owner is outside captured package');
     return resolveAssignment(context.source, context.base, owner, {
       value,
       capturedCatalog: context.catalog,

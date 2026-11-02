@@ -165,17 +165,17 @@ class AssignmentResolver {
       new ConfigurationReader().definition(repository, base, 'architecture/environment').value,
       Object.values(this.catalog.operations),
     );
-    this.validateTarget();
     if (options.file && (options.objective !== undefined || options.kind !== undefined))
       throw new InputError('--assignment excludes objective and --kind');
     this.assignmentSource = options.file ? new ConfigurationReader().file(options.file) : undefined;
     this.assignment = this.resolveInput();
+    this.validateTarget();
   }
 
   /** Requires an executable owner in the primary writable repository. */
   private validateTarget(): void {
     const { env, component } = this;
-    if (component.schemaVersion === 5)
+    if (component.schemaVersion === 5 && this.assignment.kind === 'change')
       throw new InputError(
         'Version-five execution requires the checked-edit runtime; not yet available',
       );

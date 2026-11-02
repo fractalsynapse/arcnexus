@@ -31,6 +31,7 @@ export class PlatformExecution {
     const platform = platforms[0]!;
     this.director(platform);
     return {
+      directorComponent: platform.director!.component,
       directorProfile: platform.director!.profile,
       reviewerProfile: platform.reviewerProfile!,
       defaultPackage: platform.defaultPackage,

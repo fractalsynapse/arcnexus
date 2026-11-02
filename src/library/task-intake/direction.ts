@@ -34,7 +34,7 @@ export class Direction {
       : this.context.directorProfile;
     const record = new DirectionRecords(this.root, this.context).create(
       workspace,
-      owner ?? this.context.owners[0]!,
+      owner ?? this.context.directorComponent ?? this.context.owners[0]!,
       prompt,
       profile,
     );
@@ -83,7 +83,7 @@ export class Direction {
   ): Promise<string[]> {
     const record = new DirectionRecords(this.root, this.context).create(
       workspace,
-      owner,
+      goal ? (this.context.directorComponent ?? owner) : owner,
       objective,
       goal ? this.context.directorProfile : this.context.reviewerProfile,
     );
