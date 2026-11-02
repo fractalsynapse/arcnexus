@@ -23,13 +23,13 @@ export interface Dependency {
 }
 
 export interface WorkspaceDefinition {
-  primary: { id: string; repository: string };
+  primary: { id: string; repository?: string };
   dependencies: Dependency[];
 }
 
 export interface Environment {
   workspace?: WorkspaceDefinition;
-  schemaVersion: 1 | 4;
+  schemaVersion: 1 | 4 | 5;
   prerequisites: Command[];
   setup: Command[];
   generatedDirectories: string[];
@@ -67,10 +67,11 @@ export function commands(value: unknown): Command[] {
 }
 
 export function environment(value: unknown, operations: Operation[] = []): Environment {
-  if ((value as { schemaVersion?: number } | null)?.schemaVersion === 4) {
+  const version = (value as { schemaVersion?: number } | null)?.schemaVersion;
+  if (version === 4 || version === 5) {
     if (operations.some((op) => op.schemaVersion !== 4))
-      throw new InputError('Environment schema 4 requires migrated operation definitions');
-    return sharedEnvironment(value, operations);
+      throw new InputError('Shared environments require migrated operation definitions');
+    return sharedEnvironment(value, operations, version);
   }
   let v: Environment;
   try {
@@ -91,9 +92,9 @@ export function environment(value: unknown, operations: Operation[] = []): Envir
 }
 
 /** Derives disposable outputs from operation definitions while keeping composition recipe-free. */
-function sharedEnvironment(value: unknown, operations: Operation[]): Environment {
-  const input = validateSchema<{ schemaVersion: 4; workspace: WorkspaceDefinition }>(
-    'environment-v4',
+function sharedEnvironment(value: unknown, operations: Operation[], version: 4 | 5): Environment {
+  const input = validateSchema<{ schemaVersion: 4 | 5; workspace: WorkspaceDefinition }>(
+    `environment-v${version}`,
     value,
   );
   const outputs = (id: string) =>
@@ -103,7 +104,7 @@ function sharedEnvironment(value: unknown, operations: Operation[]): Environment
       ),
     ].map(relativePath);
   const result: Environment = {
-    schemaVersion: 4,
+    schemaVersion: version,
     prerequisites: [],
     setup: [],
     generatedDirectories: outputs(input.workspace.primary.id),

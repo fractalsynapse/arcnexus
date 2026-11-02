@@ -4,6 +4,8 @@
 
 ### Added
 
+- Materialize existing repositories into the project volume with supervised Git, recoverable registration, and local-only repository identity (#148).
+
 - Register existing platforms and packages in a persistent project volume with qualified identities and non-destructive removal (#148).
 
 - Migrate active component standards to schema six while preserving historical pattern evidence (#148).
@@ -19,6 +21,8 @@
 - Initialize component-led tasks and report progress without implicit execution quotas (#65).
 
 ### Fixed
+
+- Follow the transferred ArcNexus upstream at `fractalsynapse/arcnexus` in active configuration and repository links (#148).
 
 - Preserve captured dependency states and verified delivery context when engineering resumes under the shared scheduler (#147).
 

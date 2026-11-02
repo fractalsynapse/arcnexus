@@ -165,4 +165,18 @@ test('malformed application settings fail preflight without replacing the config
   assert.equal(readFileSync(path, 'utf8'), '{invalid');
 });
 
+test('local-only schema-five projects attach without an invented origin', (t) => {
+  const f = new PortfolioFixture(t);
+  f.put('architecture/environment.json', {
+    schemaVersion: 5,
+    workspace: { primary: { id: 'sample' }, dependencies: [] },
+  });
+  f.git('remote', 'remove', 'origin');
+  f.git('add', '.');
+  f.git('commit', '-qm', 'Local-only architecture');
+  const resource = f.value('platform', 'create', 'platform', f.root);
+  assert.equal(resource.source, f.root);
+  assert.equal(resource.managed, false);
+});
+
 registerSuite({ component: 'portfolio', level: 'acceptance', tags: ['deterministic'] });

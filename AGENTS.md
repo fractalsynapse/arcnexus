@@ -95,7 +95,7 @@ and required review. Agents never approve PRs, merge to main, publish tags, or d
 production. Remove a merged work branch after confirming the merge and no other open
 PR uses it; retain main/staging. See the release skill for exact gates.
 
-Use HTTPS for origin: `https://github.com/treeseed-ai/arcnexus.git`.
+Use HTTPS for origin: `https://github.com/fractalsynapse/arcnexus.git`.
 
 ## Research, verification, and process
 

@@ -31,3 +31,4 @@ api:
   - module: src/library/workspace/workspace.ts
   - schema: src/library/workspace/schemas/bindings.json
   - schema: src/library/workspace/schemas/environment.json
+  - schema: src/library/workspace/schemas/environment-v5.json

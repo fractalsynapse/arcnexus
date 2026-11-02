@@ -17,9 +17,21 @@ export interface PortfolioRegistration {
   active: boolean;
 }
 
+export interface RepositoryMaterialization {
+  id: string;
+  remote: string;
+  location: string;
+  evidence: string;
+  status: 'pending' | 'ready' | 'registered' | 'needs_attention';
+  base?: string;
+  error?: string;
+}
+
 /** Stores locations and registrations while architectural facts remain in committed definitions. */
 export class PortfolioStore {
   private readonly db?: DatabaseSync;
+
+  private version = 0;
 
   /** Opens absent volumes read-only without creating them; writes initialize a versioned private database. */
   constructor(
@@ -29,20 +41,45 @@ export class PortfolioStore {
     if (!writable && !existsSync(path)) return;
     if (writable) mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
     this.db = new DatabaseSync(path, { readOnly: !writable });
-    const version = this.db.prepare('PRAGMA user_version').get()?.user_version;
+    const version = Number(this.db.prepare('PRAGMA user_version').get()?.user_version);
+    this.version = version;
     const tables = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
-    if ((version !== 0 && version !== 1) || (version === 0 && tables.length)) {
+    if (![0, 1, 2].includes(version) || (version === 0 && tables.length)) {
       this.db.close();
       throw new Error('Unsupported portfolio database');
     }
-    if (writable) {
-      chmodSync(path, 0o600);
-      this.db.exec('PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;');
-      this.db.exec(`CREATE TABLE IF NOT EXISTS repositories(id TEXT PRIMARY KEY,data TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS registrations(kind TEXT,id TEXT,data TEXT NOT NULL,PRIMARY KEY(kind,id));
-        CREATE TABLE IF NOT EXISTS events(sequence INTEGER PRIMARY KEY,type TEXT,data TEXT);
-        PRAGMA user_version=1;`);
-    }
+    if (writable) this.initialize(path);
+  }
+
+  /** Upgrades registry storage transactionally without altering retained source or run databases. */
+  private initialize(path: string): void {
+    chmodSync(path, 0o600);
+    this.db!.exec('PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;');
+    this.db!.exec(`BEGIN IMMEDIATE;
+      CREATE TABLE IF NOT EXISTS repositories(id TEXT PRIMARY KEY,data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS registrations(kind TEXT,id TEXT,data TEXT NOT NULL,PRIMARY KEY(kind,id));
+      CREATE TABLE IF NOT EXISTS events(sequence INTEGER PRIMARY KEY,type TEXT,data TEXT);
+      CREATE TABLE IF NOT EXISTS materializations(remote TEXT PRIMARY KEY,data TEXT NOT NULL);
+      PRAGMA user_version=2;
+      COMMIT;`);
+    this.version = 2;
+  }
+
+  /** Reads clone intents, including failures, without initializing an older read-only registry. */
+  materializations(): RepositoryMaterialization[] {
+    if (this.version < 2) return [];
+    return this.db!.prepare('SELECT data FROM materializations ORDER BY remote')
+      .all()
+      .map((row) => JSON.parse(String(row.data)));
+  }
+
+  /** Records clone state inside the caller's registration or intent transaction. */
+  materialization(value: RepositoryMaterialization): void {
+    if (!this.writable) throw new Error('Portfolio is read-only');
+    this.db!.prepare(
+      `INSERT INTO materializations VALUES(?,?)
+      ON CONFLICT(remote) DO UPDATE SET data=excluded.data`,
+    ).run(value.remote, JSON.stringify(value));
   }
 
   /** Returns stable repository locations without filesystem-dependent identifiers. */
@@ -67,7 +104,7 @@ export class PortfolioStore {
       const result = action();
       this.db
         .prepare('INSERT INTO events(type,data) VALUES(?,?)')
-        .run(type, JSON.stringify(result));
+        .run(type, JSON.stringify(result ?? null));
       this.db.exec('COMMIT');
       return result;
     } catch (error) {

@@ -134,7 +134,7 @@ cases, 313 passed, 283 skipped, zero failures. Every skipped case has a separate
 passing native result, including focused reruns after observed corrections. The
 architecture selection passed 149 cases with four native skips and no failures.
 Formatting, lint, type checking, build, ownership and guidance validation passed.
-Current-head CI is an independent integration gate on [PR #110](https://github.com/treeseed-ai/arcnexus/pull/110).
+Current-head CI is an independent integration gate on [PR #110](https://github.com/fractalsynapse/arcnexus/pull/110).
 No skipped test, failed initial run or local result substitutes for that gate.
 
 The final authored configuration contains 21 components, 211 top-level fields and
@@ -279,7 +279,7 @@ run `3bd3a63a-c15b-4aba-9c49-2efe709f7318`. The frozen `5c97c15` integrated run
 `d5871042-8bdf-42cf-80ea-03fcd1180556` passed 462 of 582 cases, with 120 explicit
 skips and no failures. A separate native-host selection passed 103/103 without skips
 (`/tmp/arcnexus-109-native-5c97c15.log`); this is not a claim that every skipped case
-was covered. [CI at that revision](https://github.com/treeseed-ai/arcnexus/actions/runs/41426260359/job/125213487007)
+was covered. [CI at that revision](https://github.com/fractalsynapse/arcnexus/actions/runs/41426260359/job/125213487007)
 passed, including its 103 native cases. Later fixture and migration changes still
 require their integrated verification.
 Formatting, lint, types, build, ownership and guidance passed for this slice.
@@ -300,7 +300,7 @@ delivery qualify from that run. Phase three remains blocked.
 The following paragraphs record evidence at their respective checkpoints; they are
 not statements that later-delivered library slices remain absent.
 
-Issue: [#109](https://github.com/treeseed-ai/arcnexus/issues/109).
+Issue: [#109](https://github.com/fractalsynapse/arcnexus/issues/109).
 The initial catalog implementation accepts minimal v5 definitions, derives package
 membership and implicit definition ownership, resolves inherited policies, rejects
 retired fields, and classifies existing/proposed files with the same rules.
@@ -371,7 +371,7 @@ pass locally, including actual installed-runtime source denial from test code, f
 diagnostics, transport output limits and cancellation. The earlier discovery checkpoint
 passed all 21 testing cases; the recovery checkpoint passed all 79 runtime cases.
 
-Issue [#111](https://github.com/treeseed-ai/arcnexus/issues/111) records diagnostic transport
+Issue [#111](https://github.com/fractalsynapse/arcnexus/issues/111) records diagnostic transport
 that earlier enforcement probes did not verify. The tested network restriction hides
 Node socket-backed stdio types. A host-owned read-only preload repairs subprocess
 streams; host-opened regular descriptors preserve the test coordinator's output. The

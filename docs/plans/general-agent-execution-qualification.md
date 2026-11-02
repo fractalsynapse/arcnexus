@@ -3,7 +3,7 @@
 This records implementation and qualification of the phase-two execution extension.
 All six live gates have demonstrations; final implementation checks are recorded
 below. Integration is gated on the current head's CI and repository review rules in
-[PR #82](https://github.com/treeseed-ai/arcnexus/pull/82). Source authority and the
+[PR #82](https://github.com/fractalsynapse/arcnexus/pull/82). Source authority and the
 supervising build were held stable for each live attempt. Earlier entries are
 historical observations, including failures, rather than current status.
 

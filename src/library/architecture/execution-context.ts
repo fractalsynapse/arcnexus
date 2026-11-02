@@ -134,9 +134,9 @@ export class ExecutionContext {
       base,
       'architecture/environment',
     ).value as { schemaVersion: number };
-    if (environment.schemaVersion !== 4)
+    if (environment.schemaVersion < 4)
       throw new InputError(
-        'New execution requires environment schema 4; migrate inline setup to shared operations',
+        'New execution requires environment schema 4 or 5; migrate inline setup to shared operations',
       );
     return new PlatformExecution(catalog).defaults(source, base);
   }

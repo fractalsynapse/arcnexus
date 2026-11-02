@@ -1,5 +1,6 @@
+import { RepositoryMaterializer } from './materialization.js';
 import { ArchitectureValidation } from '../architecture/validation.js';
-import { realpathSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -7,6 +8,7 @@ import {
   PortfolioStore,
   type PortfolioRegistration,
   type PortfolioRepository,
+  type RepositoryMaterialization,
 } from '../coordination-store/portfolio-store.js';
 import { ancestry, loadCatalog } from '../architecture/components.js';
 import { loadProjectBindings } from '../architecture/bindings.js';
@@ -55,8 +57,24 @@ export class Portfolio {
     );
   }
 
-  /** Attaches committed architecture without changing source, and serializes identity creation. */
+  /** Attaches local repositories or materializes supported remote URLs under supervised application ownership. */
+  async create(kind: Kind, id: string, repository: string, signal: AbortSignal) {
+    signal.throwIfAborted();
+    this.identity(kind, id);
+    if (existsSync(repository) || !repository.includes('://'))
+      return this.register(kind, id, repository);
+    const materializer = new RepositoryMaterializer(this.volume, this.store);
+    const entry = await materializer.prepare(repository, signal);
+    return this.attach(kind, id, join(this.volume, entry.location), entry);
+  }
+
+  /** Registers existing committed source without materialization or source mutation. */
   register(kind: Kind, id: string, path: string) {
+    return this.attach(kind, id, path);
+  }
+
+  /** Attaches committed architecture without changing source, and serializes identity creation. */
+  private attach(kind: Kind, id: string, path: string, managed?: RepositoryMaterialization) {
     this.identity(kind, id);
     const { source, base } = resolveBase(path);
     const catalog = loadCatalog(source, base, loadProjectBindings(source));
@@ -70,10 +88,18 @@ export class Portfolio {
         throw new InputError('Package platform does not match its declaration');
       this.find('platform', platform.id);
     }
-    const entry = this.store.transaction('resource.registered', () =>
-      this.recordRegistration(kind, id, definitionId, source),
-    );
-    return this.view(entry);
+    return this.store.transaction('resource.registered', () => {
+      if (managed?.status === 'ready')
+        this.store.repository({
+          id: managed.id,
+          location: managed.location,
+          managed: true,
+        });
+      const value = this.view(this.recordRegistration(kind, id, definitionId, source));
+      if (managed?.status === 'ready')
+        this.store.materialization({ ...managed, status: 'registered' });
+      return value;
+    });
   }
 
   /** Persists a validated registration, preserving identity on repeated attachment. */
