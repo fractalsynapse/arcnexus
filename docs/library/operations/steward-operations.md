@@ -263,3 +263,10 @@ records reuse their captured temporary location; uncertain operations remain
 non-replayable. Bridge startup rejects an overlong encoded address before binding
 and releases its listener and directory whenever startup fails. Test watchdogs
 remain finite; these transport safeguards do not impose agent execution budgets.
+
+Network-enabled operations retain read-only access to the canonical system DNS
+resolver file when `/etc/resolv.conf` is a symlink outside the runtime’s minimal
+mounts. This grants neither access to all of `/run` nor writes to resolver or source
+files. Network-disabled operations gain no extra resolver rule. Installed-runtime
+qualification covers resolver readability and write denial; successful host DNS
+alone does not establish confined network availability.
