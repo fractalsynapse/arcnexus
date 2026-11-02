@@ -45,3 +45,21 @@ Unresolved recipe, classification, contract or ownership choices prevent a writa
 migration. Container definitions never gain descendant ownership. The converter
 validates both the old declaration and the generated v5 declaration and leaves
 its input unchanged; already-v5 declarations remain unchanged.
+
+## Shared operation extraction
+
+Operation migration compares complete normalized execution semantics, including
+repository, working directory, argv, category, activity availability, prerequisites,
+outputs, artifacts, service/HTTP settings and network policy. Different display IDs
+or purpose text alone do not require a duplicate executable definition. The migration
+retains an old-to-new identity map for every reference; command names alone never
+establish equivalence. Inline probes become finite referenced command operations in
+their original execution context. Dependency and HTTP-service references are resolved
+before deduplication, with cycles and missing references reported before returning a
+migration result. Obsolete execution timeouts require an explicit diagnostic.
+
+Generated IDs are deterministic from captured command semantics. Reprocessing the
+resulting shared definitions produces the same definitions and no further identity
+changes. This extraction does not invent typed context substitutions from similar
+owner names; any such substitution must additionally prove equal resolved arguments
+and execution semantics for every affected owner.
