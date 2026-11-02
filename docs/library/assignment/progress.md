@@ -49,3 +49,12 @@ infrastructure, never runtime defaults.
 The current-command projection clears a managed operation when its recorded
 `operation.finished` event arrives, even while the steward continues thinking in
 the same activity. A finished command must not appear to still be running.
+
+Director continuations of blocked work use a structural progress baseline: material
+candidate content, the retained workflow checkpoint and correlated dependency input.
+Changing the blocker wording or the director's diagnosis does not reset that baseline.
+Three blocked continuations at the same baseline require diagnosis; another unchanged
+continuation becomes `needs_attention`. New source/checkpoint progress or a changed
+correlated dependency input can establish a different baseline. This guard applies to
+blocked continuation dispatch, never ordinary dependency waiting or operation polling.
+The original blocker text remains in assignment and model evidence.
