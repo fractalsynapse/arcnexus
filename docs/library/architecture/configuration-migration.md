@@ -101,11 +101,15 @@ inherited test conventions for owners that have no suites yet, while test select
 and operation context are validated when the testing service is invoked.
 
 The current command migrates a complete version-four component family and leaves an
-already migrated family unchanged. Mixed configuration families and dependency-local
-inline lifecycle recipes produce explicit diagnostics; their automatic conversion is
-not yet delivered. Historical excluded files require an explicit owner before a writable
-migration can pass catalog validation. These are remaining migration limits, not claims
-that the full configuration-refactor plan is complete.
+already migrated family unchanged. Dependency-local finite lifecycle recipes migrate
+when their repository has declared executable owners. Inherited verification commands
+are anchored to each owner's repository before shared-operation deduplication. Setup
+and output grants never transfer to a different repository. Mixed configuration families,
+recipes without accountable owners, and output-only policy without a finite recipe
+produce explicit diagnostics. Historical excluded files need an explicit owner or the
+unambiguous implicit ownership of their own component definition before writable
+migration can pass catalog validation. The command never guesses an ownership transfer
+or treats similar command names as equivalent execution semantics.
 
 ### ArcNexus bootstrap ownership decision
 

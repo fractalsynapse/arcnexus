@@ -143,8 +143,8 @@ owner has disjoint maintained ownership, including future directories. Determini
 model responses remain scripted, while sandbox requests delegate to the installed
 native runtime so the same source-read-only operation path is exercised. This is
 controlled acceptance coverage, never a substitute for live model qualification.
-Legacy catalog fixtures remain confined to tests that explicitly characterize old
-inputs until their callers have migrated; they must not define the general host path.
+Historical catalog fixtures remain confined to read-only inspection, migration and
+rejection tests; all active execution scenarios use minimal authority.
 
 General-host suites carry the `native-host` tag and require an explicit
 `ARCNEXUS_TEST_CODEX` executable for their v5 sandbox path. The normal confined
@@ -160,8 +160,8 @@ scripted engineering writes pass through `source.edit`, and shared regression ch
 run under the installed native confinement adapter. The fixture records two checked
 transactions for specification and implementation and uses stable operation IDs for
 expected-red evidence. Scripted model responses are deterministic test inputs; they
-are not live model qualification. Remaining legacy session scenarios are migration
-work, not an alternate public execution mode.
+are not live model qualification. Standalone sessions advance the same durable stages as task/workday assignments;
+legacy configuration cannot select another executable session path.
 
 The workspace fixtures now use minimal authority for both standalone and composed
 preparation. Dependency cancellation waits for observed command output, then checks

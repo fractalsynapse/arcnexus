@@ -126,15 +126,16 @@ class WorkflowTests {
   }
 
   /** Retains a valid owner request for deterministic scheduler delivery without calling it a failed activation. */
-  ownerRequestYieldsSafeWaitingCheckpoint(t: TestContext) {
-    const f = workflowFixture(t, 'blocked'),
+  ownerRequestYieldsSafeWaitingCheckpoint(t: TestContext, mode = 'blocked') {
+    const f = workflowFixture(t, mode),
       r = f.run();
     assert.equal(r.status, 1);
     const v = JSON.parse(r.stdout);
     assert.equal(v.outcome, 'waiting');
     assert.equal(v.safeCheckpoint, true);
-    assert.equal(v.pendingRequests[0].ownerId, 'dependency');
-    assert.equal(v.requests[0].ownerId, 'dependency');
+    const owner = mode === 'unknown-owner' ? 'missing' : 'dependency';
+    assert.equal(v.pendingRequests[0].ownerId, owner);
+    assert.equal(v.requests[0].ownerId, owner);
     assert.equal(v.turns.length, 1);
   }
 
@@ -218,7 +219,6 @@ for (const mode of [
   'masked-symlink',
   'review-write',
   'malformed',
-  'unknown-owner',
 ])
   test(`host rejects ${mode}`, (t: any) => suite.rejectsInvalidWorkflowResult(t, mode));
 
@@ -233,6 +233,9 @@ test('a weakened current test cannot replace frozen acceptance', (t: any) =>
 
 test('owner request yields a safe waiting checkpoint', (t: any) =>
   suite.ownerRequestYieldsSafeWaitingCheckpoint(t));
+
+test('unknown owner request yields for scheduler authority resolution', (t: any) =>
+  suite.ownerRequestYieldsSafeWaitingCheckpoint(t, 'unknown-owner'));
 
 test('unchanged change assignment is explicitly no_changes', (t: any) =>
   suite.unchangedChangeAssignmentIsExplicitlyNoChanges(t));
