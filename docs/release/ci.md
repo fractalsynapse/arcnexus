@@ -105,3 +105,11 @@ AppArmor user-namespace profile, following the
 The observed pinned-runtime failure was `bwrap: loopback: Failed RTM_NEWADDR:
 Operation not permitted`. Load the distribution's specific profile; do not disable
 AppArmor's system-wide user-namespace restriction or bypass source confinement.
+
+The required repository job separately runs the CLI-selected `native-host` suites
+with `ARCNEXUS_TEST_CODEX` bound to the pinned runtime in a delegated caller scope.
+Those suites use scripted model responses and actual native supervision/confinement;
+they are deterministic native integration, not live inference. Their ordinary
+confined invocation reports skips because nested cgroup delegation is intentionally
+unavailable inside the source-read-only operation sandbox. The separate native step
+must pass; the skipped confined result cannot substitute for it.

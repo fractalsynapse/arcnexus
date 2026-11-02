@@ -144,3 +144,12 @@ native runtime so the same source-read-only operation path is exercised. This is
 controlled acceptance coverage, never a substitute for live model qualification.
 Legacy catalog fixtures remain confined to tests that explicitly characterize old
 inputs until their callers have migrated; they must not define the general host path.
+
+General-host suites carry the `native-host` tag and require an explicit
+`ARCNEXUS_TEST_CODEX` executable for their v5 sandbox path. The normal confined
+component run reports these cases skipped: a read-only operation cannot delegate
+another kernel process scope. Caller qualification selects the same suites with
+`arcnexus test inspect --tag native-host`, then runs the compiled cases from its
+own delegated scope. This adds no product execution bypass and grants the tested
+workers no additional source permissions. Report the confined and native results
+separately; skipped native cases are not qualification evidence.
