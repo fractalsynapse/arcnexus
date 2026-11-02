@@ -1,10 +1,28 @@
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
+import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Verifies minimal declarations through production catalog loading and ownership validation. */
 class ComponentV5Scenarios {
+  /** Ignores runtime protection directories without modifying the real source checkout. */
+  protectedDirectories(t: TestContext): void {
+    const f = new ComponentV5Fixture(t);
+    for (const name of ['.agents', '.aws', '.codex', '.git'])
+      mkdirSync(join(f.root, 'architecture/components', name));
+    const result = f.run('validate');
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout).components.sort(), [
+      'maintenance',
+      'maintenance-package',
+      'package',
+      'platform',
+      'sample',
+    ]);
+  }
+
   /** Resolves inherited policy, implicit definition ownership and revision-bound file classification. */
   minimal(t: TestContext): void {
     const f = new ComponentV5Fixture(t);
@@ -103,6 +121,9 @@ class ComponentV5Scenarios {
 }
 
 const scenarios = new ComponentV5Scenarios();
+
+test('v5 ignores protected directories during catalog discovery', (t) =>
+  scenarios.protectedDirectories(t));
 
 test('v5 derives minimal leaf policy, ownership and inventory', (t) => scenarios.minimal(t));
 
