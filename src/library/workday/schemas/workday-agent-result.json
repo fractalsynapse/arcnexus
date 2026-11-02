@@ -72,7 +72,7 @@
       }
     },
     "regression": {
-      "$ref": "../../assignment/schemas/regression-expectation.json"
+      "$ref": "https://arcnexus.local/schemas/regression-expectation-v1"
     },
     "reviewFindings": {
       "type": "array",

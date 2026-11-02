@@ -57,7 +57,7 @@ and the [accepted migration plan](../../plans/minimal-component-configuration.md
 for current scope and the qualification gates still outstanding.
 
 Trusted packaged result schemas may reference other packaged schema files by relative
-path. The loader expands those references before validation and model configuration,
+path or a declared identity in that registry. The loader expands those references before validation and model configuration,
 so shared result fields have one authored definition. References must resolve to
-packaged registry entries; remote references, cycles and external fragments are
+packaged registry entries; unregistered remote identities, cycles and external fragments are
 rejected. Target-owned files cannot supply runtime response contracts.

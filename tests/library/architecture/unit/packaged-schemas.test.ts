@@ -1,13 +1,30 @@
 import assert from 'node:assert/strict';
-import { copyFileSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { test, type TestContext } from 'node:test';
+import { validateContractSchemas } from '../../../../dist/library/architecture/contract-schemas.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises trusted packaged reference resolution separately from target project schemas. */
 class PackagedSchemaScenarios {
+  /** The same authored result schemas validate as architecture artifacts before packaged expansion. */
+  contracts(): void {
+    const paths = [
+      'assignment/schemas/agent-result.json',
+      'assignment/schemas/general-agent-result.json',
+      'assignment/schemas/regression-expectation.json',
+      'workday/schemas/workday-agent-result.json',
+    ];
+    const schemas = paths.map((path) =>
+      JSON.parse(
+        readFileSync(new URL('../../../../dist/library/' + path, import.meta.url), 'utf8'),
+      ),
+    );
+    assert.doesNotThrow(() => validateContractSchemas(schemas));
+  }
+
   /** Shared definitions expand from registered files into independently mutable snapshots. */
   async shared(t: TestContext): Promise<void> {
     const { loader, root } = await this.fixture(t);
@@ -70,5 +87,8 @@ test('packaged schema references expand shared definitions into independent snap
 
 test('packaged schema references reject unauthorized and ambiguous sources', (t) =>
   scenarios.rejected(t));
+
+test('authored response schemas resolve through the architectural contract registry', () =>
+  scenarios.contracts());
 
 registerSuite({ component: 'architecture', level: 'unit', tags: ['deterministic'] });
