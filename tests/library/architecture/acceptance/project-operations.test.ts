@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { ConfigurationReader } from '../../../../dist/library/architecture/configuration.js';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
@@ -21,6 +22,10 @@ class ProjectOperationScenarios {
       );
     }
     for (const source of catalog.configurationSources) {
+      assert.deepEqual(
+        source.value,
+        new ConfigurationReader().parse(source.path, source.text).value,
+      );
       const component = source.value as any;
       if (component.schemaVersion !== 5 || component.type === 'platform') continue;
       assert.ok(!component.operations?.['component-lint']);

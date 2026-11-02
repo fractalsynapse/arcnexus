@@ -141,7 +141,7 @@ function read<T>(
         : schema === 'operation' && version === 4
           ? 'operation-v4'
           : schema,
-      source.value,
+      structuredClone(source.value),
     );
   } catch (error) {
     throw new InputError(`${path}: ${String(error)}`);
