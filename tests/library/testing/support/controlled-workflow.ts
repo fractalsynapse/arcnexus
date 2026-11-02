@@ -354,7 +354,11 @@ export class ControlledWorkflow {
   /** Checks that the captured tool binding reaches the controlled execution environment. */
   private probeSuppliedTool(prompt: string): void {
     const commands = JSON.parse(
-      prompt.split('Captured verification commands (zero-based index): ')[1]!.split('\n')[0]!,
+      prompt
+        .split(
+          'Captured verification (stable operation IDs for v5, zero-based command indexes for legacy): ',
+        )[1]!
+        .split('\n')[0]!,
     );
     const supplied = JSON.parse(prompt.split('Target command environment: ')[1]!.split('\n')[0]!);
     const probe = cp.spawnSync(commands[0].command, commands[0].args, {
