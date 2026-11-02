@@ -138,3 +138,10 @@ A stale rejection includes the authorized path, submitted hash and currently obs
 hash. These identify a mismatch precisely without returning another owner's bytes.
 The worker must still inspect the file and preserve the expected-hash precondition;
 the host rechecks it on every corrected request. Rejection never creates a transaction.
+
+Edit IDs identify transactions, not owners or assignments. A distinct batch uses a
+fresh unique ID; only an identical retry may reuse one. Reusing an existing ID with
+different changes returns a recoverable rejection before writing anything, while the
+original journal and receipt remain immutable. A corrected batch with a fresh ID still
+passes full authority, hash and recovery checks. An original committed retry returns
+its original receipt without replaying edits over subsequent changes.
