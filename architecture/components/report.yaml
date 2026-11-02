@@ -10,7 +10,6 @@ constraints:
   - Preserve JSON evidence and existing report fields
   - Use the captured execution record without inspecting mutable target files
   - Keep the supervising runner unchanged
-testProfile: node
 operations:
   component-tests:
     - agent

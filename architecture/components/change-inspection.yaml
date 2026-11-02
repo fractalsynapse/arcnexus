@@ -12,7 +12,6 @@ constraints:
   - Do not edit architecture or unrelated files
   - "candidate-changes (src/library/change-inspection/changes.ts): Preserve
     path/change-kind evidence and exact scope and symlink rejection semantics"
-testProfile: node
 operations:
   change-inspection-lint:
     - agent

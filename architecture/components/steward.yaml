@@ -10,7 +10,6 @@ constraints:
   - Caller owns commits and integration
   - Do not edit architecture or weaken host verification
   - Implement only approved execution settings
-testProfile: node
 operations:
   steward-lint:
     - agent

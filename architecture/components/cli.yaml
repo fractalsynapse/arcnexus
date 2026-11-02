@@ -10,7 +10,6 @@ constraints:
   - Do not change sandbox permissions or verification requirements
   - Caller owns commits and integration
   - Do not edit architecture or unrelated files
-testProfile: node
 operations:
   cli-lint:
     - agent

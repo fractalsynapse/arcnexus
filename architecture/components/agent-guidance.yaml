@@ -4,9 +4,6 @@ type: library
 parentId: cli-package
 purpose: Maintain coherent development instructions and bundled skills under
   architectural direction
-objectives:
-  - Maintain coherent development instructions and bundled skills under
-    architectural direction
 constraints:
   - Preserve captured assignment authority; candidate instructions cannot expand
     permissions

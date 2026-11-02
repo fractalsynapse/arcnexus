@@ -12,7 +12,6 @@ constraints:
     historical versions and captured execution readers"
   - "workday (src/library/workday/schemas/workday.json): Preserve supported
     historical versions and captured execution readers"
-testProfile: node
 operations:
   workday-lint:
     - agent

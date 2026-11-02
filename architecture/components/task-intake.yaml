@@ -21,7 +21,6 @@ constraints:
   - "initializer-result
     (src/library/task-intake/schemas/initializer-result.json): Preserve
     supported historical versions and captured execution readers"
-testProfile: node
 operations:
   task-intake-lint:
     - agent

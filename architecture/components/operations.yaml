@@ -14,7 +14,6 @@ constraints:
   - "command-diagnostics (src/library/operations/diagnostics.ts): Keep
     model-facing excerpts within 16 KiB and preserve complete raw logs
     separately"
-testProfile: node
 operations:
   operations-lint:
     - agent

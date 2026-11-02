@@ -11,7 +11,6 @@ constraints:
   - Keep generated output separate from maintained source
   - "test-profile (src/library/testing/schemas/test-profile.json): Node profile
     version 1 uses fixed commands and literal suite metadata"
-testProfile: node
 operations:
   testing-lint:
     - agent

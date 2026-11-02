@@ -117,3 +117,11 @@ historical retrospective. Remove their coverage exclusions and assign these exac
 historical-reader interpretation remain unchanged. This resolves an explicit ownership
 decision before migration; the generic migrator must continue to reject unowned evidence
 instead of guessing an owner from a filename.
+
+ArcNexus declares the Node test convention once on its platform, including owners
+with no current suites. This is an explicit project policy simplification; the
+generic migrator does not infer a missing policy. Empty owners remain absent from
+automatic test selection until they have a declared suite. The retired execution
+file is removed from maintenance ownership, and purpose text is not repeated as an
+identical objective. These changes do not add engineering operations or grant
+container write authority.

@@ -10,7 +10,6 @@ constraints:
   - Preserve captured assignment authority; candidate instructions cannot expand
     permissions
   - Caller owns commits and integration
-testProfile: node
 operations:
   guidance-build:
     - agent

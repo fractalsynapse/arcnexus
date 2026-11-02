@@ -9,7 +9,6 @@ objectives:
     ordered evidence
 constraints:
   - Preserve captured authority and evidence
-testProfile: node
 operations:
   coordination-store-lint:
     - agent

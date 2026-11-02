@@ -7,7 +7,6 @@ objectives:
   - Schedule durable assignments and project execution lifecycles
 constraints:
   - Preserve captured authority and evidence
-testProfile: node
 operations:
   execution-runtime-lint:
     - agent

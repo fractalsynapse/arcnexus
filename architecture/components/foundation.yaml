@@ -10,7 +10,6 @@ objectives:
 constraints:
   - Do not weaken independent acceptance to make candidate work pass
   - Keep generated output separate from maintained source
-testProfile: node
 operations:
   foundation-lint:
     - agent

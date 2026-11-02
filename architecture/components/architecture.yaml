@@ -24,7 +24,6 @@ constraints:
     historical versions and captured execution readers"
   - "role (src/library/architecture/schemas/role.json): Preserve supported
     historical versions and captured execution readers"
-testProfile: node
 operations:
   architecture-lint:
     - agent

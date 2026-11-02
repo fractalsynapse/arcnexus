@@ -50,3 +50,4 @@ verificationInputs:
   - tsconfig.tests.json
   - tsconfig.fixtures.json
   - tsconfig.tooling.json
+testProfile: node
