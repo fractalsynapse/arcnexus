@@ -1,0 +1,65 @@
+# Checked engineering live qualification — issue 109
+
+On 2026-11-02, the normal `task run "<prompt>"` production path completed a real
+version-five change using the installed Codex executable. This is the first live
+gate of the minimal-configuration plan: a steward changed documentation, regression
+tests and implementation through the checked edit tool. It is a small qualification
+package, not an ArcNexus self-improvement or a multi-owner/workday qualification.
+
+## Captured execution
+
+- Executable: `/usr/lib/chatgpt/resources/codex`, version `0.163.0-alpha.10.2`.
+- Node: `22.22.1`; bubblewrap: `0.11.1`; Linux delegated cgroup-v2 containment.
+- Profiles: Luna engineering (`gpt-6-luna`), Astra director/reviewer (`gpt-6-astra`),
+  medium reasoning, disabled web search, no execution budgets.
+- Supervisor: `runner-ouNrjF`, immutable runtime hash
+  `334ff4c1b620fa4abf125fd01f4558ae8ddafbb78f2e26e2cb9206327afd184a`.
+- Source authority: `69870d8b4ef83e2a96cc1c86a2f53ee4bd9f0cd5`.
+- Task: `884a23ad-cf35-4518-9ae3-616002a0e402`, completed, CLI exit 0.
+- Engineering report: `6cc115f3-87f7-4d22-a745-04849fd5b28c`.
+- Independent verifier: `f28d8cfd-ad75-4cc1-a545-18d5ba82ea2e`.
+- Final director assessment: `df6d80f1-16b0-4b2b-a87e-864891ff14d1`.
+- Promoted candidate: `00e72f43fdb8e83291e1db249e9b7a4c14110604`.
+
+The prompt requested an exported `doubleMeaning()` returning twice the existing
+`meaning` constant, preserving `meaning = 42`, with documentation and an observed
+failing-then-passing regression. The declared shared operation was
+`node --test tests/reader/value.test.js`, available during research, testing,
+implementation and review. The platform supplied profiles, reads and operation
+usages; the leaf declared ownership and its public module.
+
+## Observed evidence
+
+Two committed checked-edit transactions changed exactly `docs/reader/value.md`,
+`tests/reader/value.test.js` and `src/reader/value.js`. The specification first added
+the documented behavior and regression. The host then observed exit 1 because
+`doubleMeaning` was not exported. Implementation added the function; subsequent
+host checks passed both regression cases with exit 0. The independent verifier
+accepted all six captured criteria using actual source and host command evidence.
+The final director accepted the goal with no deficiencies.
+
+The original source checkout remained clean. The retained actual diff has SHA-256
+`aed20c3a6a3d6137901256a882514123c328882752e383cf00ec124040f157ce`.
+Local raw reports, model streams, edit journals, operation logs, candidate and diff
+remain under:
+
+```text
+/home/adrian/.local/state/arcnexus-qualification-109/engineering-20261102T031834Z/
+```
+
+## Unsuccessful probes and limits
+
+Earlier retained probes are not successes. `engineering-20261102T031430Z` retained
+an architectural question because copied purpose/role text explicitly prohibited
+source mutation. `engineering-20261102T031551Z` captured checked specification edits
+and expected-red evidence, then failed because its operation declaration excluded
+implementation activity. The final fixture also recorded a rejected preflight before
+its operation activities were corrected to the declared role vocabulary. Each change
+received a new source revision before execution; no active authority or acceptance
+criteria were rewritten.
+
+The read-only probe `readonly-20261102T025840Z` exposed invented separate-stream
+criteria and duplicate review routing (issue 117); those failed tasks remain retained.
+This successful engineering task does not establish that separate routing defect as
+fixed. Deterministic suites, repository static checks and CI are reported separately.
+The other five live gates and the full executable configuration migration remain open.

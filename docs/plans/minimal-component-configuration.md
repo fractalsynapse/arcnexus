@@ -105,7 +105,26 @@ classes/methods. Report local, CI and live evidence separately. Record before/af
 field and distinct-command counts. Complete through issue-linked staging review/CI;
 never weaken frozen acceptance or publish automatically.
 
-## Implementation evidence (in progress)
+## Current delivery status (2026-11-02)
+
+Minimal catalog loading, shared finite/service/HTTP operations, checked edits,
+confinement, derived API relationships/cache and captured director identity are
+implemented in the working branch. Version-five change assignments now use the
+checked engineering path. The [first real checked-engineering task](../library/assignment/checked-engineering-qualification.md)
+completed with an actual diff, expected-red and passing host checks, independent
+verification and final director assessment. This satisfies live gate 1 only.
+
+Migration policy reduction preserves resolved authority in built-program tests.
+The `config migrate` CLI, complete executable configuration/fixture migration,
+formatter transformations, removal of legacy execution branches and the other five
+live gates remain unfinished. Phase 3 remains blocked. Direct implementation work
+remains bootstrap work; the successful qualification changed a fixture package,
+not ArcNexus itself. Configuration reduction counts must be measured after migration.
+
+## Earlier implementation checkpoints
+
+The following paragraphs record evidence at their respective checkpoints; they are
+not statements that later-delivered library slices remain absent.
 
 Issue: [#109](https://github.com/treeseed-ai/arcnexus/issues/109).
 The initial catalog implementation accepts minimal v5 definitions, derives package
@@ -183,6 +202,6 @@ that earlier enforcement probes did not verify. The tested network restriction h
 Node socket-backed stdio types. A host-owned read-only preload repairs subprocess
 streams; host-opened regular descriptors preserve the test coordinator's output. The
 runtime qualifier now requires stdout/stderr sentinels as well as filesystem denial.
-These are controlled fixture checks, not live task/workday qualification. Dynamic
-assignment test-context refresh, complete operation lifecycle unification, the derived
-API catalog, executable migration and all six live gates remain unfinished.
+These were controlled fixture checks, not live task/workday qualification. Later
+checkpoints delivered dynamic test-context refresh, shared operation lifecycle and
+the derived API catalog. Current outstanding work is listed above.
