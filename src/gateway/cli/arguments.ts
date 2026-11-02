@@ -4,12 +4,14 @@ import { InputError } from '../../library/architecture/config.js';
 export const help = `ArcNexus
   workday start|pause|resume|stop|status
   task run "<prompt>"
-  config migrate [--write]
+  config get <name> | update <name> <value> | migrate [--write]
+  platform list|get <id>|create <id> <repository>|remove <id>
+  package list [platform]|get <package>|create <platform/package> <repository>|remove <package>
   test inspect|run [component-id] --project <repository> [--level unit|integration|acceptance] [--category regression] [--tag <tag>] [--json]
 Inspection, evidence and diagnostics:
   inspect <component-id> <objective> --project <repository> [--kind change|research|review] [--json]
   inspect: --assignment <file> replaces objective
-  validate --project <repository> [--base <ref>]
+  validate [package]
   experiment inspect <manifest> --bindings <file> [--json]
   experiment run <prompt-manifest> --bindings <file> --mode simulation|live [--output <new-directory>]
   workday inspect <historical-manifest> --project <repository> [--base <ref>] [--bindings <file>] [--json]

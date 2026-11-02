@@ -1,3 +1,4 @@
+import { PortfolioCommand } from './portfolio-command.js';
 import { ConfigCommand } from './config-command.js';
 import { AssignmentCommand } from './assignment-command.js';
 import { ObservationCommand } from './observation-command.js';
@@ -90,6 +91,9 @@ class CliApplication {
   /** Routes a validated command to its adapter and preserves shared cancellation. */
   private async dispatch(): Promise<void> {
     switch (this.command) {
+      case 'platform':
+      case 'package':
+        return new PortfolioCommand(this.positionals, this.values).run();
       case 'config':
         return new ConfigCommand(this.positionals, this.values).run();
       case 'run':

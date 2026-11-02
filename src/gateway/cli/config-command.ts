@@ -1,3 +1,4 @@
+import { ApplicationSettings } from '../../library/portfolio/portfolio.js';
 import { ConfigurationMigration } from '../../library/architecture/migration.js';
 import { InputError } from '../../library/architecture/config.js';
 
@@ -11,6 +12,7 @@ export class ConfigCommand {
 
   /** Prints a reviewable diff by default; explicit write applies only the fully validated change set. */
   run(): void {
+    if (['get', 'update'].includes(this.positionals[1] ?? '')) return this.settings();
     if (
       this.positionals.length !== 2 ||
       this.positionals[1] !== 'migrate' ||
@@ -24,5 +26,20 @@ export class ConfigCommand {
       `${result.applied ? 'Applied' : 'Previewed'} ${result.changes} configuration changes`,
     );
     console.log('Migration evidence: ' + result.evidence);
+  }
+
+  /** Reads or updates machine settings without mutating component definitions. */
+  private settings(): void {
+    const [, action, name, value] = this.positionals;
+    if (
+      !name ||
+      this.positionals.length !== (action === 'get' ? 3 : 4) ||
+      Object.keys(this.values).some((key) => key !== 'json')
+    )
+      throw new InputError('Expected config get <name> or config update <name> <value>');
+    const settings = new ApplicationSettings();
+    console.log(
+      JSON.stringify(action === 'get' ? settings.get(name) : settings.update(name, value!)),
+    );
   }
 }

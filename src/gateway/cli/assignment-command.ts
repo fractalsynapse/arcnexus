@@ -1,3 +1,4 @@
+import { Portfolio } from '../../library/portfolio/portfolio.js';
 import { ArchitectureValidation } from '../../library/architecture/validation.js';
 import type { CliValues } from './arguments.js';
 import { InputError } from '../../library/architecture/config.js';
@@ -16,16 +17,32 @@ export class AssignmentCommand {
   /** Projects captured ownership, contracts and inventories for static validation output. */
   catalog(): void {
     const { values, positionals } = this;
-    if (!values.project || positionals.length !== 1)
-      throw new InputError('validate requires --project');
-    const report = new ArchitectureValidation().validate(
-      values.project,
-      values.base,
-      values.bindings ? loadBindings(values.bindings) : undefined,
-    );
+    if (positionals.length > 2 || (positionals[1] && values.project))
+      throw new InputError('Use validate [package] or validate --project <repository>');
+    if (Object.keys(values).some((key) => !['json', 'project', 'base', 'bindings'].includes(key)))
+      throw new InputError('Unsupported validation option');
+    const report = positionals[1]
+      ? this.registeredValidation(positionals[1])
+      : new ArchitectureValidation().validate(
+          values.project ?? process.cwd(),
+          values.base,
+          values.bindings ? loadBindings(values.bindings) : undefined,
+        );
     console.log(JSON.stringify(report));
     if (report.status !== 'valid') process.exitCode = 1;
     return;
+  }
+
+  /** Closes the read-only registry even when selection or source validation fails. */
+  private registeredValidation(reference: string) {
+    if (this.values.base || this.values.bindings)
+      throw new InputError('Registered validation uses the selected source and its bindings');
+    const portfolio = new Portfolio();
+    try {
+      return portfolio.validate(reference);
+    } finally {
+      portfolio.close();
+    }
   }
 
   /** Resolves captured inputs and rejects unsupported or inconsistent configuration. */

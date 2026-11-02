@@ -1,4 +1,9 @@
-# Architecture and assignment contract
+# Historical architecture and assignment contract
+
+This document records the legacy version-one through version-four interface for
+interpreting historical evidence. It is not an executable configuration contract.
+For current schema-six execution, see [configuration](configuration.md) and
+[configuration migration](configuration-migration.md).
 
 Architecture files use YAML, with legacy JSON accepted through the same reader.
 Version 4 is described in [component-owned architecture](component-contracts-v4.md).

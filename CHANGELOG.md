@@ -4,6 +4,8 @@
 
 ### Added
 
+- Register existing platforms and packages in a persistent project volume with qualified identities and non-destructive removal (#148).
+
 - Migrate active component standards to schema six while preserving historical pattern evidence (#148).
 
 - Include tracked agent guidance findings in architectural validation without requiring optional skills (#148).

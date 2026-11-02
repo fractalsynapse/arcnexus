@@ -24,8 +24,9 @@ Foundation owns build standards, release owns delivery workflows, and the testin
 does not grant authority over source. Cross-owner imports use declared public
 entry points. TreeSeed is not reorganized by this migration.
 
-Exact changed-path checks remain authoritative even where root instruction files
-require broader directory sandbox grants. Platform/package containment is context,
+Checked edits enforce captured ownership before maintained-source mutation.
+Workers and managed operations receive source-read-only confinement; exact diff
+checks remain an additional verification boundary. Platform/package containment is context,
 not an implicit grant of write authority to every descendant.
 
 ## Current execution contract
@@ -35,7 +36,7 @@ Maintained tests/tooling use TypeScript, with formatting and 500-line files and
 Mandatory initialization and task proposals preserve captured authority; cancellation
 and observable loop guards replace implicit execution limits.
 
-Version-four ownership is defined in each component. See the
+Historical version-four ownership is defined in each component. See the
 [version-four contract](component-contracts-v4.md) for derived coverage, package roots,
 patterns, contracts and discovered inventories. Versions 1–3 preserve their existing
 interpretation. Empty version-three/four container permissions express containment,
@@ -43,12 +44,13 @@ not a deny-all ceiling. Container nodes cannot execute assignments.
 
 ## Minimal configuration migration (#109)
 
-Version-five platform declarations are the single source for `director` (component
+Minimal platform declarations are the single source for `director` (component
 and profile), `reviewerProfile`, `defaultPackage`, and `verificationInputs`.
 New execution rejects a simultaneous `architecture/execution` file. Director models
 and reasoning come from the selected profile; absent configuration never selects a
-hidden model or initializer. Version-five catalogs and shared-operation preparation
-feed the checked engineering workflow.
+hidden model or initializer. New execution requires schema six; historical version-five
+catalogs remain readable and migratable. Shared-operation preparation feeds the
+checked engineering workflow.
 
 Environment schema 4 retains repository composition only. Operation schema 4 holds
 fixed commands, prerequisite references, disposable outputs and artifacts once;
