@@ -111,6 +111,10 @@ length and hashes so partial output cannot masquerade as the complete evidence.
 Owner assessment compares against its assignment candidate base. Whole-goal
 assessment compares the assembled candidate against captured source authority.
 The candidate digest is pinned before capture and checked after assessment.
+An invalid page offset or length returns a structured rejection with the valid
+bounds. It exposes no artifact content and allows the reviewer to retry the same
+pinned artifact. Unknown artifact identities remain denied; pagination mistakes
+cannot turn missing evidence into acceptance or terminate an otherwise valid review.
 Unavailable native Git metadata does not require broader verifier filesystem access.
 
 Blocked-task direction receives current run identity and host-retained assignment
