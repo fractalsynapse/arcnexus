@@ -175,10 +175,6 @@ class AssignmentResolver {
   /** Requires an executable owner in the primary writable repository. */
   private validateTarget(): void {
     const { env, component } = this;
-    if (component.schemaVersion === 5 && this.assignment.kind === 'change')
-      throw new InputError(
-        'Version-five execution requires the checked-edit runtime; not yet available',
-      );
     if (env.workspace && component.repository !== env.workspace.primary.id)
       throw new InputError('Assignment component must belong to the writable primary repository');
     if (

@@ -49,10 +49,10 @@ class PlatformExecutionScenarios {
       () => execution.assignment(context, 'maintenance', { ...value, kind: 'change' }, 'director'),
       /outside captured package/,
     );
-    assert.throws(
-      () => execution.assignment(context, 'sample', { ...value, kind: 'change' }),
-      /checked-edit runtime/,
-    );
+    const change = execution.assignment(context, 'sample', { ...value, kind: 'change' });
+    assert.equal(change.context.at(-1)?.schemaVersion, 5);
+    assert.equal(change.executionProfile.id, 'luna');
+    assert.deepEqual(change.context.at(-1)?.access.writeDirectories, []);
     assert.equal(execution.assignment(context, 'sample', value).executionProfile.id, 'luna');
   }
 
