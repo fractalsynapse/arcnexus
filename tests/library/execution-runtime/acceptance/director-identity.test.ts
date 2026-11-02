@@ -48,6 +48,7 @@ class DirectorIdentityScenarios {
       prompt,
       /may propose future engineering assignments within captured owner authority/,
     );
+    assert.match(prompt, /never copy a future independent review into worker acceptance criteria/);
     assert.match(prompt, /combined stdout\/stderr/);
     assert.match(prompt, /automatically runs independent delivery verification/);
     assert.match(prompt, /independent review of this task is covered by the built-in reviewer/);
