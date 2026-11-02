@@ -6,11 +6,21 @@ inference. There are no implicit execution or corrective quotas; the numeric lim
 below describe earlier defaults or explicitly captured legacy configurations. Planned
 stages and host checkpoints remain required, and repeated failures require diagnosis.
 
-
 Increment two (#31) implements this contract. One Luna thread performs bounded
 work. Activities are research, documentation, testing, implementation, review and
 release/handoff; they are not separate agents. The host records transitions in
 `activities.jsonl` and per-turn evidence in `turns/<number>/` outside the candidate.
+
+## Minimal configuration regression evidence
+
+Version-five components select the expected failing regression by a stable `operationId`
+from captured `verify` usages. The host resolves arguments and prerequisites from
+captured authority, observes the selected operation's failure, and retains its
+invocation identity, definition digest, resolved context and selected test hashes.
+A prerequisite failure cannot satisfy the regression expectation. Final frozen
+regression checking resolves the same operation identity against captured authority.
+Historical evidence using `verificationIndex` keeps its original interpretation;
+new version-five execution rejects index-based expectations.
 
 ## Assignment planning
 
