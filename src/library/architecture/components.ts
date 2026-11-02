@@ -25,6 +25,8 @@ import { OwnershipValidator } from './ownership.js';
 import { validateAccess, type AccessPolicy } from './permissions.js';
 import { validateSchema } from './schema.js';
 
+export { componentContext } from './model-context.js';
+
 export { ancestry, covered, scopePath } from './component-paths.js';
 
 export { classifyComponentPath } from './file-classification.js';
