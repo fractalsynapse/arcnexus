@@ -133,3 +133,8 @@ recoverable edit-tool result. It reports rejection without writing any member of
 batch; the worker must reread exact bytes and submit a corrected request. It does not
 abort an otherwise valid turn. Authority violations and uncertain journal/filesystem
 recovery remain fatal and never fall back to direct writes or unconditional overwrite.
+
+A stale rejection includes the authorized path, submitted hash and currently observed
+hash. These identify a mismatch precisely without returning another owner's bytes.
+The worker must still inspect the file and preserve the expected-hash precondition;
+the host rechecks it on every corrected request. Rejection never creates a transaction.
