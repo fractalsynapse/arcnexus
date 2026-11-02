@@ -236,3 +236,12 @@ Only actual verified delivery releases the wait; an acknowledgement cannot do so
 Dependency acceptance describes the recipient's bounded contribution. The overall
 goal supplies context, but an owner's delivery must not depend on future requester
 integration. The director assesses that assembled goal separately.
+
+Model-facing inbox context also identifies each envelope as incoming or outgoing
+relative to the active assignment, and includes current requester/recipient states,
+the effective required milestone and currently available reply actions. These are
+projections of the durable request, not owner-wide reply permissions. Completed
+supplier delivery requires no acknowledgment or additional `require_delivery`
+action. Reply validation remains transactional and authoritative even when retained
+model context has become stale. Internal reply receipt identities stay out of the
+model-facing projection, alongside request retry keys.
