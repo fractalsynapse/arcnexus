@@ -131,9 +131,30 @@ recursive object keys from 1,100 to 415. All 96 inline component commands disapp
 Across architecture configuration, authored command objects fell from 159 to 57;
 distinct command/argv pairs changed from 53 to 54 because the previously hardcoded
 Node runner became explicit. A subsequent checked catalog comparison consolidated 17 owner-specific test
-commands into one `ownerId` template, preserving every resolved execution field
-for all 17 owners and reducing operation definitions from 57 to 41. Lint/formatter
-consolidation remains open; these are not final no-duplication counts.
+commands, then shared direct Node execution replaced recursive test CLI wrappers
+in both agent and host checks. Build and test compilation remain prerequisites.
+The current configuration has 211 component top-level fields, 394 recursive keys,
+one inherited test profile, 36 operation definitions and 33 distinct command/argv
+pairs. Lint/formatter consolidation remains open; these are not final no-duplication
+counts. Empty agent test selections remain pending until invocation; mandatory
+verification still rejects empty context before any prerequisite executes.
+
+Real-project preparation now passes confined prerequisites, dependency installation
+and build. Bootstrap repairs preserve diagnostic shims, disposable output roots,
+short private operation paths, snapshot permissions and read-only resolver access.
+Issues #123–#127 retain the observed failures and focused acceptance. Issues #128–#130
+address live correlation, pagination, duplicated model context and control-response
+waiting failures. Full snapshots remain authoritative; model context is a compact
+projection with grouped import observations rather than repeated execution plans.
+
+At `72b7748`, the focused control/host-loss cases pass 3/3; evidence pagination passes
+5/5; inbox and coordination cases pass 13/13; first-suite operation cases pass 13/13,
+including installed-runtime execution. The committed shared test runner completed
+40 operations cases with 14 native tests skipped inside confinement; separate native
+probes are reported independently. The preceding full pass stopped on an obsolete
+`npm test` assertion (94 assignment passes, one failure, one skip). Its replacement
+now verifies direct full and focused checks. A fresh integrated pass is in progress;
+no final integrated or current-head CI success is claimed here.
 
 The [live multi-owner attempts](../library/task-intake/multi-owner-qualification.md)
 retain unsuccessful outcomes and the discovered tool-guidance defects. Complete

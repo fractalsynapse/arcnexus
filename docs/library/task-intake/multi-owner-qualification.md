@@ -56,3 +56,13 @@ regressions. A new task may clarify the original additive compatibility requirem
 it cannot rewrite evidence or acceptance in a retained failed task. A completed
 three-owner goal, independent verification and final director acceptance are still
 required. The separate ArcNexus self-development gate also remains open.
+
+A later task `3265a369-1f76-426b-93d6-60c2fcf2c42b` attached to the existing
+project host despite a different caller state directory. It correctly reused the
+retained candidate, including verified normalization code. A requested new expected-red
+regression consequently already passed; the task retained `needs_input` rather than
+waiving the regression checkpoint. Its log is in
+`multi-owner-correlation-20261102T065000Z/task.log`, but authoritative evidence remains
+in the earlier guidance root. This is neither a fresh candidate nor a qualification
+of the caller installation's newer runtime. Subsequent qualification uses a separate
+cloned repository identity, its original declared origin, and a fresh candidate.
