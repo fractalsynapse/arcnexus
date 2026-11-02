@@ -15,7 +15,10 @@ export interface ComponentV5Fields {
   api?: Array<{ module?: string; export?: string; schema?: string }>;
   operations?: Record<string, string[]>;
   classification?: import('./file-classification.js').FileClassification[];
-  policy?: Record<string, { value: unknown; source: string }>;
+  policy?: Record<
+    string,
+    { value: unknown; source: string | string[]; implicitOwnedPaths?: string[] }
+  >;
   director?: { component: string; profile: string };
   reviewerProfile?: string;
   defaultPackage?: string;
@@ -47,19 +50,44 @@ export class ComponentV5Policy {
   apply(component: Component): void {
     const lineage = ancestry(this.authored, component.id);
     component.policy = {};
+    this.scalars(component, lineage);
+    component.access = { readPaths: this.reads(lineage), writeDirectories: [] };
+    component.policy.reads = {
+      value: [...component.access.readPaths],
+      source: [...lineage].reverse().find((entry) => entry.reads)?.id ?? component.id,
+    };
+    this.accumulate(component, lineage);
+  }
+
+  /** Captures the nearest explicit scalar declaration without inventing execution defaults. */
+  private scalars(component: Component, lineage: Component[]): void {
     for (const key of ['role', 'executionProfile', 'testProfile'] as const) {
-      const source = [...lineage].reverse().find((c) => c[key] !== undefined);
+      const source = [...lineage].reverse().find((entry) => entry[key] !== undefined);
       if (!source) continue;
       component[key] = source[key]!;
-      component.policy[key] = { value: source[key], source: source.id };
+      component.policy![key] = { value: source[key], source: source.id };
     }
-    component.access = { readPaths: this.reads(lineage), writeDirectories: [] };
-    for (const key of ['constraints', 'patterns'] as const)
-      component[key] = [...new Set(lineage.flatMap((c) => c[key] ?? []))];
+  }
+
+  /** Records every contributing declaration while deduplicating required inherited policy values. */
+  private accumulate(component: Component, lineage: Component[]): void {
+    for (const key of ['constraints', 'patterns'] as const) {
+      component[key] = [...new Set(lineage.flatMap((entry) => entry[key] ?? []))];
+      component.policy![key] = {
+        value: [...component[key]],
+        source: lineage.filter((entry) => entry[key]?.length).map((entry) => entry.id),
+      };
+    }
     component.operations = {};
     for (const declaration of lineage)
       for (const [id, usages] of Object.entries(declaration.operations ?? {}))
         component.operations[id] = [...new Set([...(component.operations[id] ?? []), ...usages])];
+    component.policy!.operations = {
+      value: structuredClone(component.operations),
+      source: lineage
+        .filter((entry) => Object.keys(entry.operations ?? {}).length)
+        .map((entry) => entry.id),
+    };
   }
 
   /** Rejects explicit read expansions while preserving the location of ancestor declarations. */

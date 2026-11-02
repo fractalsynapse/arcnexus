@@ -36,6 +36,31 @@ class SharedOperationScenarios {
     );
   }
 
+  /** Effective policy records contributing declarations without confusing implicit reads with authored grants. */
+  provenance(t: TestContext): void {
+    const fixture = this.fixture(t);
+    fixture.put(
+      'architecture/components/unrelated-filename.json',
+      fixture.component('sample', 'library', {
+        parentId: 'package',
+        owns: ['src', 'docs', 'tests'],
+        reads: ['src'],
+        constraints: ['Leaf constraint'],
+        operations: { check: ['agent'] },
+      }),
+    );
+    fixture.commit();
+    const result = fixture.run('validate');
+    assert.equal(result.status, 0, result.stderr);
+    const policy = JSON.parse(result.stdout).owners.sample.policy;
+    assert.deepEqual(policy.operations.source, ['package', 'sample']);
+    assert.deepEqual(policy.operations.value, { check: ['verify', 'agent'] });
+    assert.deepEqual(policy.constraints.source, ['platform', 'sample']);
+    assert.deepEqual(policy.constraints.value, ['Preserve authority', 'Leaf constraint']);
+    assert.equal(policy.reads.source, 'sample');
+    assert.deepEqual(policy.reads.implicitOwnedPaths, policy.reads.value);
+  }
+
   /** Rejects a dependency cycle before building a partially executable checkpoint. */
   cycle(t: TestContext): void {
     const fixture = this.fixture(t);
@@ -112,5 +137,8 @@ test('v5 shares command definitions and retains inherited verification', (t) =>
 test('v5 operation planning rejects prerequisite cycles', (t) => scenarios.cycle(t));
 
 test('v5 mandatory operation usages require finite actions', (t) => scenarios.service(t));
+
+test('effective policy retains accumulated declaration provenance and implicit owned reads', (t) =>
+  scenarios.provenance(t));
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });

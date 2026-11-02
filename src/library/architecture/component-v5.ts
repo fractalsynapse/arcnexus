@@ -74,6 +74,11 @@ export class ComponentV5Resolver {
     };
     c.allowedWritePaths = [...paths];
     c.access.readPaths = [...new Set([...c.access.readPaths, ...paths])];
+    c.policy!.reads = {
+      ...c.policy!.reads!,
+      value: [...c.access.readPaths],
+      implicitOwnedPaths: [...paths],
+    };
     this.inventory(c);
   }
 

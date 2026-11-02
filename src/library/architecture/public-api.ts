@@ -1,3 +1,4 @@
+import { DerivedApiCache } from './derived-api-cache.js';
 import { assertImportCycles } from './ownership.js';
 import { ApiImports } from './api-imports.js';
 import ts from 'typescript';
@@ -32,7 +33,10 @@ export class PublicApiCatalog {
       );
       const minimal = owners.filter((c) => c.schemaVersion === 5);
       if (!minimal.length) continue;
+      const cache = new DerivedApiCache(revision, owners);
+      if (cache.restore(minimal)) continue;
       this.repository(owners, minimal, new RevisionArtifacts(revision.source, revision.base));
+      cache.retain(minimal);
     }
   }
 
