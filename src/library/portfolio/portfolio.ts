@@ -1,3 +1,4 @@
+import { ArchitectureValidation } from '../architecture/validation.js';
 import { realpathSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { homedir } from 'node:os';
@@ -42,6 +43,16 @@ export class Portfolio {
   /** Resolves qualified identity or a unique short reference without a mutable selected-project setting. */
   get(kind: Kind, reference: string) {
     return this.view(this.find(kind, reference));
+  }
+
+  /** Validates the selected committed package source and tracked guidance without starting a host. */
+  validate(reference: string) {
+    const resource = this.get('package', reference);
+    return new ArchitectureValidation().validate(
+      resource.source,
+      resource.base,
+      loadProjectBindings(resource.source),
+    );
   }
 
   /** Attaches committed architecture without changing source, and serializes identity creation. */

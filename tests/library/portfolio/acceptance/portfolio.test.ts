@@ -124,4 +124,16 @@ test('relocating the volume preserves registered identity and attached repositor
   }
 });
 
+test('registered package validation runs outside the source checkout without starting execution', (t) => {
+  const f = new PortfolioFixture(t);
+  f.value('platform', 'create', 'platform', f.root);
+  f.value('package', 'create', 'platform/package', f.root);
+  const result = f.value('validate', 'platform/package');
+  assert.equal(result.status, 'valid');
+  assert.equal(result.guidance.status, 'valid');
+  assert.equal(result.base, f.git('rev-parse', 'HEAD'));
+  assert.equal(existsSync(join(f.volume, 'state')), false);
+  assert.equal(f.command('validate', 'platform/package', '--project', f.root).status, 2);
+});
+
 registerSuite({ component: 'portfolio', level: 'acceptance', tags: ['deterministic'] });

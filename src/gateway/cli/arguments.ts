@@ -11,7 +11,7 @@ export const help = `ArcNexus
 Inspection, evidence and diagnostics:
   inspect <component-id> <objective> --project <repository> [--kind change|research|review] [--json]
   inspect: --assignment <file> replaces objective
-  validate --project <repository> [--base <ref>]
+  validate [package]
   experiment inspect <manifest> --bindings <file> [--json]
   experiment run <prompt-manifest> --bindings <file> --mode simulation|live [--output <new-directory>]
   workday inspect <historical-manifest> --project <repository> [--base <ref>] [--bindings <file>] [--json]
