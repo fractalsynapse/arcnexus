@@ -43,45 +43,30 @@ and private temporary storage. Run intent is flushed before dispatch; uncertain
 operations are not automatically replayed. Cleanup derives disposable outputs from
 immutable operation definitions and retains the original reports.
 
-Shared preparation, refresh, test preparation and verification are integrated with
-version-five checked engineering. A [real engineering task](../assignment/checked-engineering-qualification.md)
-completed through that path. ArcNexus's own declarations still require migration;
-the following describes its existing legacy preparation configuration.
+Shared preparation, refresh, test preparation and verification use the same operation
+executor under version-five checked engineering. ArcNexus's own declarations now
+use this configuration family. See the [real engineering qualification](../assignment/checked-engineering-qualification.md).
 
-Commit `architecture/environment.yaml` in the target repository:
+The workspace acceptance suite is being migrated to minimal component fixtures and
+native confinement. It must preserve preparation, cancellation, parent-loss and
+cleanup evidence coverage. A setup script attempting a maintained-source write must
+fail before the contents change; its failed workspace may then be cleaned safely.
+Generated directories may already exist when an operation starts.
 
-```yaml
-schemaVersion: 3
-prerequisites:
-  - command: node
-    args:
-      - --version
-setup:
-  - command: npm
-    args:
-      - ci
-generatedDirectories:
-  - node_modules
-  - dist
-```
+Historical environment and report readers remain available for evidence inspection.
+Some internal execution adapters still accept legacy recipes during fixture migration;
+they are not the configuration contract for new task/workday runs. Their removal is
+an outstanding completion gate. New execution has no time or operation budgets.
+Test watchdogs bound qualification processes, not valid application work.
 
-Schema versions 1, 2 and 3 remain readable; use version 3 for new configuration.
-All three arrays are required. Commands run without a shell from the worktree root,
-using installed host tools and normal environment credentials. Setup commands are
-trusted project code and can use the network. They must not change tracked files;
-new outputs must be ignored by Git and inside declared generated directories.
-Paths must be relative, normalized and cannot name `.git` or escape the workspace.
-Submodules are unsupported in this initial slice. No system runtimes are installed.
-
-Records snapshot the configuration, base, source, branch, timestamps and command
-results. Full stdout/stderr is retained in per-command logs. Failed and cancelled
-workspaces remain available. Commands and preparation have no implicit deadline. Optional captured command
-limits and `--timeout-seconds` are enforced when explicitly supplied.
-SIGINT exits 130; invalid/preflight input exits 2; operational failures exit 1.
-Successful preparation exits 0 and prints the record, including workspace ID/path.
-Cleanup refuses changed tracked/untracked files and unknown ignored files (including
-secret files). It deletes only declared ignored generated outputs with the worktree.
-Concurrent external edits during cleanup are unsupported; stop editors/builders first.
+Records capture configuration, base, source, branch, timestamps and operation results.
+Full stdout/stderr is retained in invocation logs. Failed and cancelled workspaces
+remain available. SIGINT exits 130; invalid/preflight input exits 2; operational
+failures exit 1. Successful preparation exits 0 and prints the workspace record.
+Cleanup refuses changed tracked files, untracked files and unknown ignored files
+(including secrets). It deletes only declared ignored generated outputs with the
+worktree. Concurrent external edits during cleanup are unsupported; stop editors
+and builders first.
 
 Git worktree operations follow the [Git documentation](https://git-scm.com/docs/git-worktree).
 
