@@ -254,3 +254,9 @@ state or prior activation payloads. Full delivery evidence remains in the privat
 reports and in the independent verifier's paged evidence artifacts. This projection
 prevents recursive evidence growth; it does not truncate acceptance criteria or
 impose an execution quota.
+
+Runner capture preserves source bytes and executable/directory modes under the
+production operation sandbox. Mode repair is necessary only when copying changed
+a mode; it must not issue redundant source-write operations against already correct
+snapshot entries. The `host-lifecycle` test selection exercises background startup,
+host-loss recovery and installation replacement through the shared executor.
