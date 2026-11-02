@@ -50,6 +50,23 @@ class OperationMigrationScenarios {
     assert.deepEqual((await this.migrate(result.definitions)).definitions, result.definitions);
   }
 
+  /** Equivalent prerequisites collapse at their first position without invalidating the dependency graph. */
+  async prerequisiteAliases(): Promise<void> {
+    const first = this.operation('first');
+    const second = { ...first, id: 'second' };
+    const root = {
+      ...this.operation('root'),
+      args: ['--help'],
+      prerequisites: ['second', 'first'],
+    };
+    const result = await this.migrate([root, second, first]);
+    assert.equal(result.definitions.length, 2);
+    assert.deepEqual(result.definitions.find((entry: any) => entry.id === 'root').prerequisites, [
+      'first',
+    ]);
+    assert.deepEqual((await this.migrate(result.definitions)).definitions, result.definitions);
+  }
+
   /** Equal service commands still represent distinct leases and separately targeted HTTP checks. */
   async services(): Promise<void> {
     const result = await this.migrate(this.serviceDefinitions());
@@ -155,5 +172,8 @@ test('operation migration diagnoses unresolved references cycles and obsolete bu
 
 test('operation migration preserves distinct managed service leases and HTTP associations', () =>
   scenarios.services());
+
+test('operation migration deduplicates resolved prerequisite aliases', () =>
+  scenarios.prerequisiteAliases());
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });

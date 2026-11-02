@@ -49,10 +49,10 @@ export class MigrationOperations {
     for (const id of [...this.source.keys()].sort()) this.visit(id);
     return {
       definitions: structuredClone(
-        [...this.definitions.values()].sort((a, b) => a.id.localeCompare(b.id)),
+        [...this.definitions.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)),
       ),
       identities: Object.fromEntries(
-        [...this.identities.entries()].sort(([a], [b]) => a.localeCompare(b)),
+        [...this.identities.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
       ),
     };
   }
@@ -68,6 +68,7 @@ export class MigrationOperations {
     const entry = this.normalize(source);
     entry.prerequisites = (source.prerequisites ?? []).map((dependency) => this.visit(dependency));
     entry.prerequisites.push(...(source.probes ?? []).map((probe) => this.probe(source, probe)));
+    entry.prerequisites = [...new Set(entry.prerequisites)];
     if (entry.http) entry.http.serviceId = this.visit(entry.http.serviceId);
     const result = this.retain(entry);
     this.identities.set(id, result);
@@ -156,7 +157,7 @@ export class MigrationOperations {
     if (value && typeof value === 'object')
       return Object.fromEntries(
         Object.entries(value)
-          .sort(([a], [b]) => a.localeCompare(b))
+          .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
           .map(([key, entry]) => [key, this.canonical(entry)]),
       );
     return value;
