@@ -36,3 +36,23 @@ ambiguous references fail. With no package argument, validation uses the current
 repository. Validation does not start an execution host or mutate registrations.
 The existing `--project` path form remains a temporary migration adapter and cannot
 be combined with a registered package argument.
+
+## Managed materialization increment
+
+A supplied HTTPS or file URL identifies an existing remote to materialize under
+`repositories/<durable-id>/source` in the project volume. Local paths still attach.
+Git runs under the existing parent-aware supervisor and delegated process scope.
+The application supplies fixed arguments, disables hooks and ambient Git configuration,
+and rejects embedded credentials and unsupported transport schemes. This operation
+only reads the remote; it cannot provision or push to it.
+
+The coordination store records materialization intent before dispatch and captures
+command evidence under the same durable repository identity. Registration is visible
+only after cloning, committed catalog validation and the final transactional update.
+Repeated creation reuses completed matching materialization. An unfinished or failed
+materialization requires reconciliation and cannot silently clone again. Source,
+logs and failure evidence are retained, including on cancellation. Managed locations
+are volume-relative; moving the entire volume preserves identities and reads.
+
+This increment does not yet create projects without architectural input, apply
+templates, change remote destinations or compose separate platform/package repositories.
