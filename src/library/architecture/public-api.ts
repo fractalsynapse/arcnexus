@@ -1,3 +1,5 @@
+import { assertImportCycles } from './ownership.js';
+import { ApiImports } from './api-imports.js';
 import ts from 'typescript';
 import type { Catalog, Component } from './components.js';
 import { covered } from './component-paths.js';
@@ -28,13 +30,47 @@ export class PublicApiCatalog {
       const owners = Object.values(this.catalog.components).filter(
         (c) => c.repository === repository,
       );
-      const declared = owners.filter((c) => c.schemaVersion === 5 && c.api?.length);
-      if (!declared.length) continue;
-      const artifacts = new RevisionArtifacts(revision.source, revision.base);
-      const program = new CapturedProgram(owners, artifacts);
-      for (const owner of declared)
-        owner.publicApi = owner.api!.map((entry) => this.entry(owner, entry, program, artifacts));
+      const minimal = owners.filter((c) => c.schemaVersion === 5);
+      if (!minimal.length) continue;
+      this.repository(owners, minimal, new RevisionArtifacts(revision.source, revision.base));
     }
+  }
+
+  /** Resolves surfaces before imports so consumers can only rely on validated public symbols. */
+  private repository(
+    owners: Component[],
+    minimal: Component[],
+    artifacts: RevisionArtifacts,
+  ): void {
+    const programs = new Map<string, CapturedProgram>();
+    const program = (owner: Component): CapturedProgram => {
+      const root = owner.repositoryRoot ?? '.';
+      if (!programs.has(root)) programs.set(root, new CapturedProgram(owners, artifacts, root));
+      return programs.get(root)!;
+    };
+    for (const owner of minimal)
+      owner.publicApi = (owner.api ?? []).map((entry) =>
+        this.entry(owner, entry, program(owner), artifacts),
+      );
+    for (const owner of minimal)
+      owner.observedImports = new ApiImports(owners, program(owner)).inspect(owner);
+    this.relationships(minimal);
+  }
+
+  /** Projects consumer views and checks the resolved runtime graph, including compiler aliases. */
+  private relationships(minimal: Component[]): void {
+    const graph = new Map<string, string[]>();
+    for (const owner of minimal)
+      for (const entry of owner.observedImports ?? [])
+        if (entry.target && !entry.typeOnly)
+          graph.set(entry.source, [...(graph.get(entry.source) ?? []), entry.target]);
+    assertImportCycles(graph);
+    for (const owner of minimal)
+      owner.observedConsumers = minimal.flatMap((consumer) =>
+        (consumer.observedImports ?? [])
+          .filter((entry) => entry.owner === owner.id && consumer.id !== owner.id)
+          .map((entry) => ({ ...entry, owner: consumer.id })),
+      );
   }
 
   /** Checks owner-local artifacts before exposing their observed module surface or schema identity. */
