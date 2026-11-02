@@ -65,7 +65,6 @@ Useful development and inspection commands remain available:
 
 ```sh
 node dist/cli.js validate --project .
-node dist/cli.js guidance validate --project .
 node dist/cli.js test inspect --project .
 node dist/cli.js test run --project .
 ```

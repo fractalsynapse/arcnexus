@@ -10,7 +10,7 @@ class CliTests {
   executableContract(): void {
     const help = this.run('--help');
     assert.equal(help.status, 0, help.stderr);
-    for (const family of ['workday', 'experiment', 'guidance', 'task', 'test'])
+    for (const family of ['workday', 'experiment', 'validate', 'task', 'test'])
       assert.ok(help.stdout.includes(family), family);
     const version = this.run('--version');
     assert.equal(version.status, 0, version.stderr);

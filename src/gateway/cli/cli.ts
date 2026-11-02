@@ -1,7 +1,6 @@
 import { ConfigCommand } from './config-command.js';
 import { AssignmentCommand } from './assignment-command.js';
 import { ObservationCommand } from './observation-command.js';
-import { GuidanceCommand } from './guidance-command.js';
 import { ExperimentCommand } from './experiment-command.js';
 import { WorkdayCommand } from './workday-command.js';
 import { TestCommand } from './test-command.js';
@@ -111,7 +110,7 @@ class CliApplication {
       case 'experiment':
         return new ExperimentCommand(this.positionals, this.values, this.controller.signal).run();
       case 'guidance':
-        return new GuidanceCommand(this.positionals, this.values, this.controller.signal).run();
+        throw new InputError('Guidance validation is included in validate --project <repository>');
     }
     return this.assignmentCommand();
   }

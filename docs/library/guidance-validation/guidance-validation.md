@@ -1,6 +1,6 @@
 # Agent guidance validation
 
-`arcnexus guidance validate --project <repository> [--json]` checks the working
+`arcnexus validate --project <repository> [--json]` includes guidance checks of the working
 checkout using Git's tracked inventory, including staged new files. It reads current
 file bytes, not the committed version, and creates no workspace or model execution.
 
@@ -13,13 +13,16 @@ resolve through symlinks in any path component. Missing and untracked paths and
 directories are invalid. Referenced files may contain binary data. Omitting
 `references` preserves the prior metadata behavior. These checks report through the
 existing `invalid_skill` diagnostic; the checker makes no semantic approval claim.
-Empty tracked skill inventories fail. The command also inventories
+Empty optional skill inventories are valid. The library accepts `requireSkills` for
+callers whose policy requires tracked skills. The command also inventories
 tracked AGENTS.md files and reports readable/unreadable state. It does not validate
 prose semantics, policy consistency, instruction effectiveness, or architectural approval.
 
 Exit codes: 0 valid, 1 findings, 2 invalid invocation or unavailable Git project.
-JSON contains version, project, status, skill and AGENTS inventories, and file-oriented
-diagnostics with stable codes. Text output reports each diagnostic and inventory totals.
+The architecture report includes a separate `guidance` result with version, project,
+status, skill and AGENTS inventories, and file-oriented diagnostics with stable codes.
+Its `source: working-tree` distinguishes these bytes from the committed catalog base.
+The retired standalone `guidance validate` command reports the replacement.
 
 The `agent-guidance` steward owns AGENTS.md, bundled skills and maintenance guidance.
 `guidance-validation` owns this checker and its tests. Related-owner context does not

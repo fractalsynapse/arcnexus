@@ -13,6 +13,7 @@ interface Diagnostic {
 
 export interface GuidanceReport {
   schemaVersion: 1;
+  source: 'working-tree';
   project: string;
   status: 'valid' | 'invalid';
   skills: Array<{ path: string; valid: boolean }>;
@@ -23,7 +24,7 @@ export interface GuidanceReport {
 /** Validates metadata and inventories instructions; never approves instruction semantics. */
 export class GuidanceValidator {
   /** Rejects inputs that violate the captured configuration contract. */
-  validate(project: string): GuidanceReport {
+  validate(project: string, options: { requireSkills?: boolean } = {}): GuidanceReport {
     const inventory = new GuidanceInventory(project);
     const report = inventory.report;
     for (const path of inventory.paths.filter((path) =>
@@ -34,7 +35,7 @@ export class GuidanceValidator {
       });
       report.skills.push({ path, valid });
     }
-    if (!report.skills.length)
+    if (options.requireSkills && !report.skills.length)
       report.diagnostics.push({
         path: '.agents/skills',
         code: 'empty_inventory',
@@ -94,6 +95,7 @@ class GuidanceInventory {
     this.tracked = new Set(this.paths);
     this.report = {
       schemaVersion: 1,
+      source: 'working-tree',
       project: root,
       status: 'valid',
       skills: [],

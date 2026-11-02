@@ -88,7 +88,6 @@ class WorkflowTests {
       'npm run lint',
       'npm run check',
       'npm test',
-      'guidance validate',
       'validate --project',
       '--help',
     ])

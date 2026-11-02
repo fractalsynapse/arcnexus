@@ -78,8 +78,6 @@ jobs:
         run: node dist/cli.js validate --project .
       - name: Smoke-test CLI
         run: node dist/cli.js --help
-      - name: Validate repository guidance
-        run: node dist/cli.js guidance validate --project .
       - name: Check changed-line whitespace
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
