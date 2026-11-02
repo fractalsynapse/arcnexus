@@ -13,6 +13,7 @@ constraints:
 operations:
   component-tests:
     - agent
+    - verify
   report-lint:
     - agent
   report-format:
@@ -20,8 +21,6 @@ operations:
   migrated-recipe-43b539fb85a57c26:
     - verify
   migrated-recipe-df6d67ddacf5bf0c:
-    - verify
-  migrated-recipe-3def3ec2c61d9604:
     - verify
 owns:
   - src/library/report

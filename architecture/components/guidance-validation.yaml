@@ -15,11 +15,10 @@ operations:
     - agent
   component-tests:
     - agent
+    - verify
   guidance-validation-lint:
     - agent
   migrated-recipe-a7573c70ed1a3dfa:
-    - verify
-  migrated-recipe-9288e75e97071a7b:
     - verify
   migrated-recipe-43b539fb85a57c26:
     - verify

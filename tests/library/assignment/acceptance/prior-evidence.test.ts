@@ -75,9 +75,18 @@ class PriorEvidenceTests {
     );
     assert.equal(r.status, 0, String(r.error ?? r.stderr));
     const commands = JSON.parse(r.stdout).verification;
-    assert.ok(commands.some((c: any) => c.command === 'npm' && c.args.join(' ') === 'test'));
     assert.ok(
-      commands.some((c: any) => c.command === 'npm' && c.args.join(' ') === 'run test:report'),
+      commands.some(
+        (c: any) => c.command === 'node' && c.args.join(' ') === '--test .test-build/**/*.test.js',
+      ),
+    );
+    assert.ok(
+      commands.some(
+        (c: any) =>
+          c.id === 'component-tests' &&
+          c.command === 'node' &&
+          c.args.includes('.test-build/library/report/unit/report.test.js'),
+      ),
       'focused report regression is captured',
     );
   }

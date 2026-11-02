@@ -11,23 +11,22 @@ constraints:
   - Preserve captured assignment authority; candidate instructions cannot expand
     permissions
   - Caller owns commits and integration
-  - "campaign (src/library/experiments/schemas/campaign.json): Preserve
-    supported historical versions and captured execution readers"
-  - "experiment-bindings
+  - 'campaign (src/library/experiments/schemas/campaign.json): Preserve
+    supported historical versions and captured execution readers'
+  - 'experiment-bindings
     (src/library/experiments/schemas/experiment-bindings.json): Preserve
-    supported historical versions and captured execution readers"
-  - "experiment-v2 (src/library/experiments/schemas/experiment-v2.json):
-    Preserve supported historical versions and captured execution readers"
-  - "experiment (src/library/experiments/schemas/experiment.json): Preserve
-    supported historical versions and captured execution readers"
-  - "experiment-v3 (src/library/experiments/schemas/experiment-v3.json):
-    Prompt-driven cases preserve shared task authority and evidence"
+    supported historical versions and captured execution readers'
+  - 'experiment-v2 (src/library/experiments/schemas/experiment-v2.json):
+    Preserve supported historical versions and captured execution readers'
+  - 'experiment (src/library/experiments/schemas/experiment.json): Preserve
+    supported historical versions and captured execution readers'
+  - 'experiment-v3 (src/library/experiments/schemas/experiment-v3.json):
+    Prompt-driven cases preserve shared task authority and evidence'
 operations:
   experiments-lint:
     - agent
   component-tests:
     - agent
-  migrated-recipe-bdad07a41af09a66:
     - verify
   migrated-recipe-43b539fb85a57c26:
     - verify
