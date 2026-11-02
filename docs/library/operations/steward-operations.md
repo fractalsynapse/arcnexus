@@ -239,3 +239,19 @@ private, read-only configuration storage. Rebuilding a target that is ArcNexus
 itself must not mount the active support file inside the output being cleared.
 An existing support snapshot with different bytes is an integrity error; candidate
 builds cannot replace the active snapshot.
+
+### Disposable output roots
+
+The installed runtime protects special child directories within writable roots.
+For validated untracked output roots and private temporary storage, the confinement
+adapter explicitly permits their disposable `.agents`, `.codex`, `.aws` and `.git`
+children so installers can replace generated contents. It validates child path
+segments before granting them. This is derived runtime policy, not authored
+component exceptions. Maintained source, its Git metadata and private configuration
+remain read-only; generated output cannot become active runtime configuration.
+
+The [named permissions documentation](https://learn.chatgpt.com/docs/permissions)
+describes explicit rule overrides. ArcNexus additionally qualifies actual cleanup
+and source denial against the installed executable. The observed npm failure and
+exact runtime probe are recorded in issue #123; they are not a claim about every
+Codex version or platform.
