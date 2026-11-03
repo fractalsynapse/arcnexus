@@ -118,3 +118,24 @@ Existing workspace list/get commands inspect the resulting receipt.
 
 This command uses the current application state location. Relocated-volume
 identities and migration of the legacy cleanup command remain separate work.
+
+## Package-scoped cleanup (#195)
+
+`workspace cleanup <package> [--workspace <id>]` resolves registered package context
+outside a checkout and delegates to the shared workspace cleanup service. Without
+an ID it considers the package's captured workspace receipts; with an ID it rejects
+unknown or differently owned workspaces before removal. Historical receipts without
+captured package membership are never assigned to a package by guessing.
+
+Cleanup holds the canonical repository lease, checks expected resource revisions
+when supplied by application callers, and reuses the existing durable removal intent
+and receipt. It removes only eligible disposable workspaces. Retained assignments,
+unfinished work, changed source, unknown outputs and active managed resources remain
+protected. A package-wide result reports each removed or preserved workspace and
+returns an unsuccessful result when any selected resource must be preserved.
+
+Original execution reports and timeline evidence remain available after removal;
+repeated cleanup validates the removed path rather than silently accepting a new
+occupant. Source repositories are never removed. Cleanup neither releases delivery
+retention nor repairs relocated records. The legacy standalone spelling remains
+only while its existing fixtures and campaigns are migrated to this service.
