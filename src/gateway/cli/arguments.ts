@@ -4,6 +4,8 @@ import { InputError } from '../../library/architecture/config.js';
 export const help = `ArcNexus
   workday start|pause|resume|stop|status
   task run "<prompt>"
+  task list [field=value...] | get <id> [--follow] | follow <id>
+  workday list [field=value...] | get <id> [--follow]
   config get <name> | update <name> <value> | migrate [--write]
   platform list|get <id>|create <id> <repository>|remove <id>
   package list [platform]|get <package>|create <platform/package> <repository>|remove <package>
@@ -23,11 +25,17 @@ Inspection, evidence and diagnostics:
   status <workspace-id> [--json]
   follow <workspace-id> [--json] [--after <sequence>]
   cleanup <workspace-id>
+Lists: --search <text> --limit <1-100> --cursor <token>
+Run following: --after <event-sequence>
 Composed workspace inspection/preparation: --bindings <file>
 `;
 
 const cliOptions = {
   write: { type: 'boolean' },
+  follow: { type: 'boolean' },
+  search: { type: 'string' },
+  limit: { type: 'string' },
+  cursor: { type: 'string' },
   component: { type: 'string' },
   activity: { type: 'string' },
   level: { type: 'string' },

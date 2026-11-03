@@ -1,3 +1,4 @@
+import { RunQueryCommand } from './run-query-command.js';
 import { ExecutionCommand } from './execution-command.js';
 import { resolveWorkday } from '../../library/workday/workday-config.js';
 import { stateRoot } from '../../library/workspace/state.js';
@@ -16,6 +17,8 @@ export class WorkdayCommand {
   /** Executes this lifecycle through its configured collaborators and propagates failures. */
   async run(): Promise<void> {
     const action = this.positionals[1];
+    if (['list', 'get'].includes(action ?? ''))
+      return new RunQueryCommand('workday', this.positionals, this.values, this.signal).run();
     if (action === 'run')
       throw new InputError(
         'Manifest execution is retired; use task run "<prompt>" or workday start',

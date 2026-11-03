@@ -1,18 +1,21 @@
 export type RunMode = 'task' | 'workday';
 
-export type RunStatus =
-  | 'running'
-  | 'idle'
-  | 'pausing'
-  | 'paused'
-  | 'stopping'
-  | 'stopped'
-  | 'interrupted'
-  | 'needs_attention'
-  | 'completed'
-  | 'needs_input'
-  | 'failed'
-  | 'cancelled';
+export const runStatuses = [
+  'running',
+  'idle',
+  'pausing',
+  'paused',
+  'stopping',
+  'stopped',
+  'interrupted',
+  'needs_attention',
+  'completed',
+  'needs_input',
+  'failed',
+  'cancelled',
+] as const;
+
+export type RunStatus = (typeof runStatuses)[number];
 
 export type AssignmentStatus =
   'ready' | 'running' | 'waiting' | 'completed' | 'blocked' | 'rejected' | 'failed' | 'interrupted';

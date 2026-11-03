@@ -1,3 +1,4 @@
+import { ResourceQuery, type ResourceQueryInput } from '../report/resource-query.js';
 import { RepositoryMaterializer } from './materialization.js';
 import { ArchitectureValidation } from '../architecture/validation.js';
 import { existsSync, realpathSync } from 'node:fs';
@@ -35,12 +36,17 @@ export class Portfolio {
   }
 
   /** Lists active resources with facts derived from source rather than duplicated database fields. */
-  list(kind: Kind, platform?: string) {
+  list(kind: Kind, platform?: string, query: ResourceQueryInput = {}) {
     const entries = this.store.registrations().filter((entry) => entry.kind === kind);
     const selected = platform
       ? entries.filter((entry) => entry.id.startsWith(platform + '/'))
       : entries;
-    return { items: selected.map((entry) => this.view(entry)), nextCursor: null };
+    return new ResourceQuery().page(
+      selected.map((entry) => this.view(entry)),
+      { id: null, type: ['platform', 'package'], repositoryId: null },
+      query,
+      ['id', 'purpose'],
+    );
   }
 
   /** Resolves qualified identity or a unique short reference without a mutable selected-project setting. */

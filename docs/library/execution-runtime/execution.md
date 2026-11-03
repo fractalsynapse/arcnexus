@@ -295,7 +295,8 @@ Reads include revision tokens. Missing or ambiguous run identities fail explicit
 Following observes ordered, run-correlated events after exclusive `--after` cursors
 and updated projections. It stops at terminal outcomes; interrupting the follower
 only detaches and returns successfully. Waiting, paused and idle work stays observable.
-SQLite snapshots keep each projection internally consistent. Read-only reopening
+SQLite snapshots keep persisted run, assignment and event records consistent; live
+command progress remains a separately observed evidence projection. Read-only reopening
 never migrates databases or replays uncertain operations. Runtime owns run discovery,
 coordination-store owns persistence, report owns common filtering/pagination, and the
 CLI only parses, renders and follows. Task controls build on this resource identity.

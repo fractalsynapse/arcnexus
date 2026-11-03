@@ -7,21 +7,40 @@ export class ExecutionDatabase {
   private readonly db: DatabaseSync;
 
   /** Opens durable state for continuation; rejects incompatible historical databases. */
-  constructor(path: string) {
-    mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
-    this.db = new DatabaseSync(path);
-    chmodSync(path, 0o600);
+  constructor(path: string, readOnly = false) {
+    if (!readOnly) mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
+    this.db = new DatabaseSync(path, { readOnly });
+    if (!readOnly) chmodSync(path, 0o600);
     const version = this.db.prepare('PRAGMA user_version').get()?.user_version;
     const tables = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
-    if ((version !== 0 && version !== 2) || (version === 0 && tables.length > 0)) {
+    if (
+      (readOnly && version !== 2) ||
+      (version !== 0 && version !== 2) ||
+      (version === 0 && tables.length > 0)
+    ) {
       this.db.close();
       throw new Error('Execution database version cannot resume');
     }
-    this.db.exec('PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;');
+    this.db.exec('PRAGMA busy_timeout=5000');
+    if (readOnly) return;
+    this.db.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;');
     this.db
       .exec(`CREATE TABLE IF NOT EXISTS entities(kind TEXT,id TEXT,data TEXT NOT NULL,PRIMARY KEY(kind,id));
       CREATE TABLE IF NOT EXISTS events(sequence INTEGER PRIMARY KEY AUTOINCREMENT,type TEXT,data TEXT,observed_at TEXT);
       PRAGMA user_version=2;`);
+  }
+
+  /** Reads a coherent SQLite snapshot without appending events or recovering work. */
+  snapshot<T>(read: () => T): T {
+    this.db.exec('BEGIN');
+    try {
+      const value = read();
+      this.db.exec('COMMIT');
+      return value;
+    } catch (error) {
+      this.db.exec('ROLLBACK');
+      throw error;
+    }
   }
 
   /** Commits a complete domain transition and its event, rolling back all writes on error. */
@@ -88,7 +107,12 @@ export class ExecutionDatabase {
     return this.db
       .prepare('SELECT * FROM events WHERE sequence>? ORDER BY sequence')
       .all(after)
-      .map((row) => ({ ...row, data: JSON.parse(String(row.data)) }));
+      .map((row) => ({
+        sequence: Number(row.sequence),
+        type: String(row.type),
+        observed_at: String(row.observed_at),
+        data: JSON.parse(String(row.data)) as Record<string, unknown>,
+      }));
   }
 
   /** Releases the SQLite connection after all synchronous transitions finish. */
