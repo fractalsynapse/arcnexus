@@ -21,7 +21,11 @@ export class RunWorkspace {
 
   /** Creates fresh planning context without treating a mutable delivery directory as authoritative. */
   async prepare(run: ExecutionRun, signal: AbortSignal): Promise<void> {
-    const latest = this.store.latestDelivery(this.context.base, this.context.packageId);
+    const latest = this.store.latestDelivery(
+      this.context.base,
+      this.context.packageId,
+      run.environment,
+    );
     const revision = String(latest?.data.candidateRevision ?? this.context.base);
     const record = createWorkspace(this.root, {
       project: this.context.source,

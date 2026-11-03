@@ -274,3 +274,21 @@ are implemented as shared library boundaries. They are not yet wired into task/w
 host dispatch. No `--simulate` command, Publisher, real Git delivery, promotion or
 real-agent qualification is claimed by this checkpoint. GitHub transport tests use
 controlled responses exclusively; no real upstream effect has been invoked by them.
+
+Candidate accumulation now has an explicit environment dimension independent of task
+versus workday mode. New captured environments cannot read another environment's
+candidate pointer; historical unbound runs keep their original pointer format.
+Continuation rejects a delivery from a different environment before restoring any
+assignment. This preserves historical evidence without implicitly promoting simulated
+changes into live work. Host creation of environments and CLI simulation selection
+remain part of the pending wiring.
+
+- 2026-11-03: Production `test run --tag lifecycle-effects` passed the 13 initial
+  collaboration tests. Recorded commands spent 6.730 s building production code,
+  4.109 s building tests and 1.171 s running the two selected test groups. Selection
+  and confinement overhead are outside these command timings. Focused built-program
+  execution is useful feedback without a full-suite round.
+- 2026-11-03: Environment isolation required separating candidate pointers from the
+  nearly 500-line execution store. The extraction kept candidate promotion inside
+  the original assignment transaction. A focused built-program run covering store,
+  inbox and provider behavior passed 34 tests, no skips, in 2.163 s excluding builds.

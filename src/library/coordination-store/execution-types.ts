@@ -1,3 +1,8 @@
+export interface RunEnvironment {
+  id: string;
+  mode: 'live' | 'simulation';
+}
+
 export type RunMode = 'task' | 'workday';
 
 export const runStatuses = [
@@ -22,6 +27,7 @@ export type AssignmentStatus =
 
 export interface ExecutionRun {
   id: string;
+  environment?: RunEnvironment;
   mode: RunMode;
   owners: string[];
   objective: string;

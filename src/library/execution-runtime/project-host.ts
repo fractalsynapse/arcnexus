@@ -9,7 +9,7 @@ import { InputError } from '../architecture/config.js';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ProjectExecution } from '../architecture/execution-context.js';
-import type { ExecutionRun } from '../coordination-store/execution-types.js';
+import type { ExecutionRun, RunEnvironment } from '../coordination-store/execution-types.js';
 import { ExecutionStore } from '../coordination-store/execution-store.js';
 import { RunWorkspace } from './run-workspace.js';
 import type { RecordData } from '../workspace/state.js';
@@ -159,7 +159,7 @@ export class ProjectHost {
   private continuation(run: ExecutionRun): void {
     new RunContinuation(this.root, this.context.base, this.store, this.authority).resume(
       run,
-      this.latestDelivery(),
+      this.latestDelivery(run.environment),
     );
   }
 
@@ -240,9 +240,12 @@ export class ProjectHost {
     }
     if (workday?.status === 'paused' && workday.data.pauseReason === 'task')
       this.store.updateRun(workday.id, 'running', {
-        candidateRevision: this.latestCandidate(),
+        candidateRevision: String(
+          this.latestDelivery(workday.environment)?.data.candidateRevision ?? this.context.base,
+        ),
         candidateRecord:
-          this.latestDelivery()?.data.candidateRecord ?? workday.data.candidateRecord,
+          this.latestDelivery(workday.environment)?.data.candidateRecord ??
+          workday.data.candidateRecord,
         pauseReason: null,
       });
     const latest = this.workday();
@@ -479,7 +482,7 @@ export class ProjectHost {
   }
 
   /** Keeps the candidate revision and its verified workspace evidence paired across run handoffs. */
-  private latestDelivery(): ExecutionRun | undefined {
-    return this.store.latestDelivery(this.context.base, this.context.packageId);
+  private latestDelivery(environment?: RunEnvironment): ExecutionRun | undefined {
+    return this.store.latestDelivery(this.context.base, this.context.packageId, environment);
   }
 }

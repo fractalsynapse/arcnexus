@@ -1,3 +1,5 @@
+import { CandidatePointers } from './candidate-pointers.js';
+import { RunRecords } from './run-records.js';
 import { InboxDecisions, type InboxDecision } from './inbox-decisions.js';
 import { randomUUID } from 'node:crypto';
 import { ExecutionDatabase } from './execution-database.js';
@@ -8,6 +10,7 @@ import type {
   InboxRequest,
   OwnerRequest,
   RunMode,
+  RunEnvironment,
   RunStatus,
 } from './execution-types.js';
 
@@ -28,22 +31,13 @@ export class ExecutionStore {
   }
 
   /** Captures the eligible owners and goal for one run. */
-  createRun(mode: RunMode, owners: string[], objective: string): ExecutionRun {
-    if (!owners.length || new Set(owners).size !== owners.length)
-      throw new Error('Invalid eligible owners');
-    const run: ExecutionRun = {
-      id: randomUUID(),
-      mode,
-      owners,
-      objective,
-      status: 'running',
-      createdAt: new Date().toISOString(),
-      data: {},
-    };
-    return this.db.transaction('run.created', run, () => {
-      this.db.put('run', run);
-      return run;
-    });
+  createRun(
+    mode: RunMode,
+    owners: string[],
+    objective: string,
+    environment?: RunEnvironment,
+  ): ExecutionRun {
+    return new RunRecords(this.db).create(mode, owners, objective, environment);
   }
 
   /** Returns the captured run, including its mutable lifecycle state. */
@@ -429,31 +423,18 @@ export class ExecutionStore {
         evidence,
         data: { ...assignment.data, deliveredRevision: candidate?.candidateRevision },
       });
-      if (candidate) this.promote(assignment.runId, candidate);
+      if (candidate) new CandidatePointers(this.db).promote(assignment.runId, candidate);
       this.wake(assignment.runId);
     });
   }
 
-  /** Advances the project candidate in the same transaction as its verified assignment delivery. */
-  private promote(runId: string, candidate: Record<string, unknown>): void {
-    const run = this.run(runId);
-    this.db.put('candidate', {
-      id: JSON.stringify([run.data.authorityBase, run.data.packageId]),
-      runId,
-    });
-    this.db.put('run', {
-      ...run,
-      data: { ...run.data, ...candidate, promotedAt: new Date().toISOString() },
-    });
-  }
-
-  /** Reads the transactional candidate pointer rather than inferring promotion order from wall-clock timestamps. */
-  latestDelivery(authorityBase: string, packageId: string): ExecutionRun | undefined {
-    const id = JSON.stringify([authorityBase, packageId]);
-    const pointer = this.db
-      .all<{ id: string; runId: string }>('candidate')
-      .find((p) => p.id === id);
-    return pointer ? this.run(pointer.runId) : undefined;
+  /** Reads a transactional candidate pointer without crossing live or simulation environments. */
+  latestDelivery(
+    authorityBase: string,
+    packageId: string,
+    environment?: RunEnvironment,
+  ): ExecutionRun | undefined {
+    return new CandidatePointers(this.db).latest(authorityBase, packageId, environment);
   }
 
   /** Blocks dependents transitively while leaving unrelated work runnable. */
