@@ -7,7 +7,7 @@ import { SimulationPublication } from '../../../../dist/library/publisher/publis
 import type { CapturedPublicationPolicy } from '../../../../dist/library/publisher/publisher.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
-import { GitDeliveryFixture } from '../../operations/support/delivery-fixture.js';
+import { GitDeliveryFixture } from '../../testing/support/delivery-fixture.js';
 
 /** Exercises complete provider orchestration with actual Git and controlled check-boundary inputs. */
 class PublicationFixture {

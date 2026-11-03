@@ -494,3 +494,9 @@ block. The long-rule overhead continues mainly in orchestration and fixture setu
 extracting cohesive publication, selection and resource responsibilities keeps the
 500/30 limits without compressing procedural code. The remaining live-provider and
 promotion work must reuse the durable effect protocol rather than add another runner.
+
+Committed-catalog validation caught a shared Git fixture imported through another
+owner's private test directory. The fixture now belongs to the testing component and
+has a declared public test-support entry point. This preserves reuse without exposing
+an operations-private implementation. Cheap prevention: move reusable fixtures into
+testing ownership when the second owner first consumes them, before catalog capture.

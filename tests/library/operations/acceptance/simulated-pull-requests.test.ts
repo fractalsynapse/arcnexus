@@ -10,7 +10,7 @@ import { SimulatedPullRequests } from '../../../../dist/library/operations/simul
 import { UpstreamExecution } from '../../../../dist/library/operations/upstream-execution.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
-import { GitDeliveryFixture } from '../support/delivery-fixture.js';
+import { GitDeliveryFixture } from '../../testing/support/delivery-fixture.js';
 
 /** Combines actual Git delivery with controlled check outcomes at the host-check boundary. */
 class PullRequestFixture {

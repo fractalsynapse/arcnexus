@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { git } from '../../../../dist/library/operations/process.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
-import { GitDeliveryFixture } from '../support/delivery-fixture.js';
+import { GitDeliveryFixture } from '../../testing/support/delivery-fixture.js';
 
 test('supervised delivery commits and pushes reviewed bytes without changing source HEAD', async (t) => {
   const f = new GitDeliveryFixture(t);
