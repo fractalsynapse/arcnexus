@@ -3,7 +3,8 @@ import { InputError } from '../../library/architecture/config.js';
 
 export const help = `ArcNexus
   workday start|pause|resume|stop|status
-  task run "<prompt>"
+  task run [package] "<prompt>" [--async]
+  task pause|resume|stop <id> | answer <id> "<response>"
   task list [field=value...] | get <id> [--follow] | follow <id>
   workday list [field=value...] | get <id> [--follow]
   config get <name> | update <name> <value> | migrate [--write]
@@ -32,6 +33,7 @@ Composed workspace inspection/preparation: --bindings <file>
 
 const cliOptions = {
   write: { type: 'boolean' },
+  async: { type: 'boolean' },
   follow: { type: 'boolean' },
   search: { type: 'string' },
   limit: { type: 'string' },

@@ -37,6 +37,7 @@ export class ExecutionResources {
       const events = store.events(after);
       return {
         ...view,
+        project: matches[0]!.project,
         revision: new ResourceQuery().revision(view),
         events: events.filter((event) =>
           ['id', 'runId', 'from', 'to'].some(
@@ -59,12 +60,15 @@ export class ExecutionResources {
       .filter((key) => existsSync(join(directory, key, 'execution.sqlite')))
       .flatMap((key) =>
         this.read(key, (store, reports) =>
-          store.runs().map((run) => ({
-            ...reports.view(run.id).run,
-            project: key,
-            packageId: run.data.packageId ?? null,
-            revision: new ResourceQuery().revision(run),
-          })),
+          store.runs().map((run) => {
+            const view = reports.view(run.id);
+            return {
+              ...view.run,
+              project: key,
+              packageId: run.data.packageId ?? null,
+              revision: new ResourceQuery().revision(view),
+            };
+          }),
         ),
       )
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
