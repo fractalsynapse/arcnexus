@@ -55,8 +55,10 @@ class ChecklistToolScenarios {
   /** Cancellation is never converted into a correctable content rejection. */
   async cancellation(t: TestContext): Promise<void> {
     const f = await this.fixture(t);
+    const original = structuredClone(f.record.plan);
     f.controller.abort(new Error('Cancelled'));
-    assert.equal((await f.call([this.update('second')])).isError, true);
+    assert.equal((await f.call([this.update('first')])).isError, true);
+    assert.deepEqual(f.record.plan, original);
     assert.equal(f.tools.signal.aborted, true);
     assert.ok(f.tools.error);
     assert.equal(f.record.progress, undefined);

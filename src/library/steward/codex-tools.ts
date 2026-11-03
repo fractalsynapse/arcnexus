@@ -51,6 +51,7 @@ export class CodexTools {
   private async call(name: string, args: unknown): Promise<unknown> {
     const { operations } = this.configuration.input;
     try {
+      this.signal.throwIfAborted();
       if (name !== 'plan.update') {
         if (!operations) throw new Error('Operations unavailable');
         return await operations.call(name, args);
