@@ -59,6 +59,8 @@
 
 ### Changed
 
+- Clarify confined and native qualification with a real steward-produced, independently verified documentation change (#164).
+
 - Use one durable assignment dispatcher and source-read-only model path; reject historical execution budgets and initialize through shared confined operations (#109).
 
 - Route command, HTTP and service execution through shared operations, rejecting legacy executable definitions while retaining historical evidence readers (#109).

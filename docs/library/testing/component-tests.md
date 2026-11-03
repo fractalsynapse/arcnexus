@@ -165,14 +165,27 @@ controlled acceptance coverage, never a substitute for live model qualification.
 Historical catalog fixtures remain confined to read-only inspection, migration and
 rejection tests; all active execution scenarios use minimal authority.
 
-General-host suites carry the `native-host` tag and require an explicit
-`ARCNEXUS_TEST_CODEX` executable for their v5 sandbox path. The normal confined
-component run reports these cases skipped: a read-only operation cannot delegate
-another kernel process scope. Caller qualification selects the same suites with
-`arcnexus test inspect --tag native-host`, then runs the compiled cases from its
-own delegated scope. This adds no product execution bypass and grants the tested
-workers no additional source permissions. Report the confined and native results
-separately; skipped native cases are not qualification evidence.
+General-host suites carry the `native-host` tag and need `ARCNEXUS_TEST_CODEX` to
+exercise their nested project-host sandbox path. The confined component runner can
+prove selection, preparation and worker behavior under the captured source-read-only
+operation boundary, but it cannot delegate the worker's request into another kernel
+process scope. These suites therefore skip there. CI runs `npm test` in a delegated
+systemd scope for the ordinary confined suite, then runs
+`node scripts/release/native-host-tests.mjs` in a separate delegated caller scope.
+That script inspects `native-host` suites, then starts Node with their compiled files;
+see [the native runner](../../../scripts/release/native-host-tests.mjs) and
+[verification workflow](../../../.github/workflows/verification.yaml).
+
+Native-host qualification proves those selected cases execute successfully with the
+installed runtime binding. It is scripted native acceptance: fixtures control model
+responses while the native runtime enforces sandbox requests. It does not exercise a
+real model or simulate an agent-led release or promotion. The process-scope cases in
+[process-scope tests](../../../tests/library/operations/acceptance/process-scope.test.ts)
+also require a caller-level run with `ARCNEXUS_TEST_CODEX`; they are environment-skipped
+otherwise. A skip or deferred environment case is not passing evidence. Count it only
+after its native invocation actually runs and succeeds; the CI native-host script
+selects the `native-host` tag, so consult its selected files before treating any
+other environment-gated suite as covered.
 
 Assignment planning characterization now uses minimal fixture authority too. Ordinary
 scripted engineering writes pass through `source.edit`, and shared regression checks
