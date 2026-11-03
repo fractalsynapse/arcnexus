@@ -9,3 +9,4 @@ owns:
   - docs/library/portfolio
 api:
   - module: src/library/portfolio/portfolio.ts
+  - module: src/library/portfolio/settings.ts

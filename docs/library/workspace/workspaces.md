@@ -10,8 +10,9 @@ The source must be clean. No fetch, clone, source checkout change, or commit occ
 without source changes or unknown ignored files. Branches and reports are retained.
 A removed workspace can be cleaned again. There is no force-discard option.
 
-State lives in `${XDG_STATE_HOME:-~/.local/state}/arcnexus`, or the explicit
-`ARCNEXUS_STATE_DIR` directory. Records and logs live under `runs/<id>`; candidates
+State lives in `state/` inside the configured project volume, or the explicit
+nonempty `ARCNEXUS_STATE_DIR` directory. To inspect historical state, select its
+original root with that override; changing the volume never migrates evidence. Records and logs live under `runs/<id>`; candidates
 under `workspaces/<id>`. One exclusive lock covers preparation, execution and cleanup.
 After a hard interruption, inspect the lock's PID and retained record; only after
 confirming the process is gone may the caller remove the stale lock. No automatic
