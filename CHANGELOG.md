@@ -34,6 +34,8 @@
 
 ### Fixed
 
+- Include previously omitted runtime enforcement suites in native CI qualification (#170).
+
 - Run consolidated architecture and guidance validation during steward verification (#165).
 
 - Keep read-only portfolio discovery stable during concurrent database initialization (#162).

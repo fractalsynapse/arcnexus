@@ -261,4 +261,8 @@ test(
   (t) => scenarios.identity(t),
 );
 
-registerSuite({ component: 'operations', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'operations',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

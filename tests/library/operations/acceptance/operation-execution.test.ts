@@ -155,4 +155,8 @@ test(
   (t) => scenarios.externalBinding(t),
 );
 
-registerSuite({ component: 'operations', level: 'acceptance', tags: ['live'] });
+registerSuite({
+  component: 'operations',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

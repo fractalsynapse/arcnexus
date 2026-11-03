@@ -111,4 +111,8 @@ test(
   (t) => scenarios.protects(t),
 );
 
-registerSuite({ component: 'steward', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'steward',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

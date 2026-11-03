@@ -159,4 +159,8 @@ test(
   (t) => scenarios.prevents(t),
 );
 
-registerSuite({ component: 'operations', level: 'acceptance', tags: ['live'] });
+registerSuite({
+  component: 'operations',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

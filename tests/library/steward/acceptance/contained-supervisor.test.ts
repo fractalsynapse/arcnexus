@@ -97,4 +97,8 @@ test('checked-edit model supervisor contains detached work after host loss', ins
   scenarios.run(t, true),
 );
 
-registerSuite({ component: 'steward', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'steward',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});
