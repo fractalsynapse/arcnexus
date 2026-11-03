@@ -120,3 +120,9 @@ CLI's selected metadata, so a missing tag cannot silently defer enforcement fore
 References inside fixture strings do not establish a runtime prerequisite. Scripted
 confinement and supervision probes are deterministic native acceptance, not live-model
 qualification. Report their actual execution separately from confined skips.
+
+Native qualification preserves the selected runtime's installed package layout.
+A binding outside system paths may forward to that installation; copying a lone
+npm launcher is not a runnable package. Controlled model processes use the current
+Node executable, and failed startup includes captured launcher diagnostics. These
+fixtures retain the same confinement and descendant-shutdown assertions (#176).
