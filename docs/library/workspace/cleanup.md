@@ -42,3 +42,7 @@ report supplies common pagination and timeline parsing. CLI resolves optional po
 targets and renders structured results. Raw harness content and local binding secrets
 are excluded from these resource projections. Mutation commands continue through the
 existing preparation/cleanup lifecycle until their grouped adapters are migrated.
+
+Resource projections include the separate cleanup receipt. A removed workspace reports
+its current removed status while preserving the original execution status; recording
+cleanup changes the resource revision without rewriting the historical run report.
