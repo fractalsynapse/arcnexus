@@ -45,15 +45,10 @@ class WorkspacePreparationScenarios {
 
   /** Cancellation retains the unfinished receipt and releases repository ownership after child cleanup. */
   async cancelled(f: PackageCliFixture): Promise<void> {
-    f.operation('setup', [
+    this.declareSetup(f, [
       '-e',
       'require("fs").writeFileSync(".test-build/ready","ok");setInterval(()=>{},1000)',
     ]);
-    f.extend(
-      'architecture/components/package.yaml',
-      (value) => (value.operations = { setup: ['setup'] }),
-    );
-    f.commit();
     const root = join(f.root, 'cancel-state'),
       controller = new AbortController();
     const target = { source: f.repo, base: f.git('rev-parse', 'HEAD'), packageId: 'package' };
@@ -76,6 +71,16 @@ class WorkspacePreparationScenarios {
     }
   }
 
+  /** Captures a shared setup recipe and its package usage before execution. */
+  private declareSetup(f: PackageCliFixture, args: string[]): void {
+    f.operation('setup', args);
+    f.extend(
+      'architecture/components/package.yaml',
+      (value) => (value.operations = { setup: ['setup'] }),
+    );
+    f.commit();
+  }
+
   /** Checks retained cancellation evidence, kernel scope removal and same-process lease reacquisition. */
   private cancelledEvidence(f: PackageCliFixture, root: string, result: any): void {
     assert.equal(result.workspace.status, 'cancelled');
@@ -92,17 +97,12 @@ class WorkspacePreparationScenarios {
 
   /** Declared setup uses real confinement, and failures keep their operation log and receipt. */
   setup(f: PackageCliFixture, fail: boolean): void {
-    f.operation('setup', [
+    this.declareSetup(f, [
       '-e',
       fail
         ? 'console.error("setup failed");process.exit(4)'
         : 'require("fs").writeFileSync(".test-build/prepared","ok")',
     ]);
-    f.extend(
-      'architecture/components/package.yaml',
-      (value) => (value.operations = { setup: ['setup'] }),
-    );
-    f.commit();
     f.register();
     const result = f.command(f.root, 'workspace', 'prepare', 'package');
     assert.equal(result.status, fail ? 1 : 0, result.stderr);
