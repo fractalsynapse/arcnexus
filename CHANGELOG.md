@@ -33,6 +33,7 @@
 ### Fixed
 
 - Keep read-only portfolio discovery stable during concurrent database initialization (#162).
+- Stop shared native-test supervisors before removing fixture evidence, preserving diagnostics if shutdown fails (#156).
 
 - Follow the transferred ArcNexus upstream at `fractalsynapse/arcnexus` in active configuration and repository links (#148).
 
