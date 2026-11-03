@@ -17,14 +17,14 @@ export class ArchitectureResourceCommand {
     this.validate();
     const portfolio = new Portfolio(undefined, this.positionals[1] === 'update');
     try {
-      console.log(JSON.stringify(this.read(portfolio), null, this.values.json ? undefined : 2));
+      console.log(JSON.stringify(this.dispatch(portfolio), null, this.values.json ? undefined : 2));
     } finally {
       portfolio.close();
     }
   }
 
-  /** Delegates scope and projection decisions to the corresponding shared application service. */
-  private read(portfolio: Portfolio) {
+  /** Routes validated reads and architectural mutations to their shared application services. */
+  private dispatch(portfolio: Portfolio) {
     if (this.positionals[1] === 'update')
       return portfolio.updateComponent(
         this.positionals[2]!,

@@ -24,7 +24,12 @@ export class ConfigurationCommit {
         ['commit-tree', tree, '-p', base],
         'Update architectural definition\n',
       );
-      this.git(['update-ref', 'refs/arcnexus/configuration-candidates/' + commit, commit]);
+      this.git([
+        'update-ref',
+        '--no-deref',
+        'refs/arcnexus/configuration-candidates/' + commit,
+        commit,
+      ]);
       return commit;
     } finally {
       rmSync(directory, { recursive: true, force: true });
