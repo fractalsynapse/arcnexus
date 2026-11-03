@@ -22,6 +22,8 @@ export { assertGeneratedOutputs, assertOutputs } from './outputs.js';
 
 export { WorkspaceResources, type WorkspaceTarget } from './resources.js';
 
+export { WorkspacePreparation, type WorkspacePreparationTarget } from './preparation.js';
+
 export interface PrepareOptions {
   project: string;
   base?: string;

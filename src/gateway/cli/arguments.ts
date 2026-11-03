@@ -8,6 +8,7 @@ export const help = `ArcNexus
   task pause|resume|stop <id> | answer <id> "<response>"
   task list [field=value...] | get <id> [--follow] | follow <id>
   workday list [field=value...] | get <id> [--follow]
+  workspace prepare <package>
   workspace list [package] | get <id> [--follow]
   config get <name> | update <name> <value> | migrate [target] [--write]
   platform list|get <id>|create <id> <repository>|remove <id>
