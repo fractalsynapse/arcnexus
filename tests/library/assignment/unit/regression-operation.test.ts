@@ -29,6 +29,32 @@ class RegressionScenarios {
     assert.throws(() => selection.select({ verificationIndex: 1 }), /version.six/);
   }
 
+  /** Correction advertises finite verify choices without admitting agent tools or corrupt authority. */
+  async rejectedAuthority(): Promise<void> {
+    const { RegressionOperation } = await this.runtime();
+    const operation = this.operation();
+    const component = {
+      schemaVersion: 6,
+      id: 'owner',
+      verification: [operation, { ...operation, id: 'server', kind: 'service' }],
+      operations: { 'agent-only': ['agent'] },
+    };
+    const selection = new RegressionOperation(component, {});
+    for (const operationId of ['agent-only', 'server', 'unknown']) {
+      assert.throws(
+        () => selection.select({ operationId }),
+        (error: any) => {
+          assert.equal(error.name, 'SpecificationValidationError');
+          assert.equal(error.identity, 'operation-selection');
+          assert.match(error.feedback, /Select one of: \["tests"\]/);
+          return true;
+        },
+      );
+    }
+    operation.schemaVersion = 3;
+    assert.throws(() => selection.select({ operationId: 'tests' }), /invalid captured schema/);
+  }
+
   /** A failed prerequisite cannot establish expected-red evidence for the selected test operation. */
   async evidence(): Promise<void> {
     const { RegressionOperation } = await this.runtime();
@@ -83,5 +109,8 @@ test('regression evidence requires the selected operation rather than a prerequi
 
 test('packaged response contracts expose stable regression operations', () =>
   scenarios.contracts());
+
+test('invalid regression choices retain finite verification authority', () =>
+  scenarios.rejectedAuthority());
 
 registerSuite({ component: 'assignment', level: 'unit', tags: ['deterministic'] });

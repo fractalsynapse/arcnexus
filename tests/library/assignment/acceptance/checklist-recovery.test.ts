@@ -126,6 +126,36 @@ class ChecklistRecoveryScenarios {
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'before');
   }
 
+  /** Rejects an invalid selection without executing it, then resumes the same specification. */
+  async selection(t: TestContext): Promise<void> {
+    const { record, step } = this.fixture(t, 'selection-recovery');
+    await step();
+    const thread = record.threadId;
+    const commands = record.commands.length;
+    await step();
+    assert.equal(record.safeCheckpoint, true);
+    assert.equal(record.nextStage, 'specification');
+    assert.equal(record.commands.length, commands);
+    assert.match(String(record.specificationFeedback), /captured verification/);
+    assert.match(String(record.specificationFeedback), /verify/);
+    assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'before');
+    for (let stage = 0; stage < 3; stage++) await step();
+    assert.equal(record.status, 'completed');
+    assert.equal(record.threadId, thread);
+    assert.ok(record.commands.some((command) => command.stage === 'red-test'));
+  }
+
+  /** Changing unknown IDs does not reset equivalent selection-failure diagnosis. */
+  async selectionLoop(t: TestContext): Promise<void> {
+    const { record, step } = this.fixture(t, 'selection-loop');
+    await step();
+    for (let failure = 0; failure < 3; failure++) await step();
+    await assert.rejects(step, /different action|attention/);
+    assert.equal(record.status, 'needs_attention');
+    assert.equal(record.nextStage, 'specification');
+    assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'before');
+  }
+
   /** Captures an unlimited engineering profile and uses the production resumable session after every turn. */
   private fixture(t: TestContext, mode: string) {
     const f = workflowFixture(t, mode);
@@ -188,6 +218,12 @@ test('completed expected-regression mismatch can correct on its retained specifi
 
 test('equivalent expected-regression mismatches require diagnosis', (t) =>
   scenarios.regressionLoop(t));
+
+test('invalid regression selection preserves the specification for correction', (t) =>
+  scenarios.selection(t));
+
+test('changing invalid regression identities does not bypass progress detection', (t) =>
+  scenarios.selectionLoop(t));
 
 registerSuite({
   component: 'assignment',

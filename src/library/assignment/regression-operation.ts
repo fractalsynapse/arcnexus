@@ -1,3 +1,4 @@
+import { SpecificationValidationError } from './specification-error.js';
 import type { Component } from '../architecture/components.js';
 import type { VerificationCheck } from '../architecture/config.js';
 import type { Operation } from '../operations/operations.js';
@@ -22,11 +23,25 @@ export class RegressionOperation {
     const operation = this.component.verification.find(
       (command) => (command as Operation).id === regression.operationId,
     ) as Operation | undefined;
-    if (!operation || operation.schemaVersion !== 4 || operation.kind === 'service')
-      throw new Error(
-        'Regression operation is not a captured verification operation (finite required)',
-      );
+    if (operation && operation.schemaVersion !== 4)
+      throw new Error('Regression operation has invalid captured schema');
+    if (!operation || operation.kind === 'service') this.rejectSelection();
     return operation;
+  }
+
+  /** Returns only finite captured verification choices; this never grants agent-only authority. */
+  private rejectSelection(): never {
+    const ids = this.component.verification
+      .map((entry) => entry as Operation)
+      .filter((entry) => entry.schemaVersion === 4 && entry.kind !== 'service')
+      .map((entry) => entry.id);
+    const message =
+      'Regression operation is not a captured verification operation (finite required)';
+    throw new SpecificationValidationError(
+      `${message}. Select one of: ${JSON.stringify(ids)}. No regression operation was executed.`,
+      'operation-selection',
+      message,
+    );
   }
 
   /** Rejects prerequisite failures and freezes the selected operation's actual host invocation context. */
