@@ -95,3 +95,17 @@ obsolete profile budgets before constructing SDK permissions. It removes the wri
 legacy sandbox path and checklist-call quotas. Source-read-only confinement and the
 current structured result contract are the only executable model path; historical
 reports and response payloads remain readable as evidence.
+
+## Correctable checklist tool claims (#178)
+
+A rejected `plan.update` content claim returns a tool error to the active model,
+with the accepted checklist unchanged. The model may correct the claim through the
+same bridge. Semantic rejection is not accepted evidence and cannot satisfy host
+verification or dependencies. Record the rejection and diagnose equivalent failures
+using the retained progress observer; repeated unchanged failure requires attention.
+
+This correction path applies only to atomic plan-content validation. Cancellation,
+missing authority, operation failures and persistence errors still abort execution.
+It never replays commands or turns incomplete transport into a safe checkpoint.
+Existing runs keep their captured supervisor; a newly built supervisor does not
+retroactively repair a failed assignment or rewrite its retained evidence.
