@@ -300,3 +300,28 @@ command progress remains a separately observed evidence projection. Read-only re
 never migrates databases or replays uncertain operations. Runtime owns run discovery,
 coordination-store owns persistence, report owns common filtering/pagination, and the
 CLI only parses, renders and follows. Task controls build on this resource identity.
+
+## Task lifecycle controls and retained supervisors
+
+`task run [package] "<prompt>" [--async]` submits durably through the existing
+project host. Explicit package targets resolve through the portfolio; local shorthand
+is unchanged. Async submission returns the retained identity without waiting for
+model execution or tying the host to the submitting terminal.
+
+`task pause/resume/stop <id>` and `task answer <id> "<response>"` resolve the
+retained run independently of the current directory. Pause records user intent and
+finishes the active activation/checkpoint; paused work releases dispatch ownership.
+Resume validates checkpoints, reconciles against the current verified candidate,
+and retains the goal, accepted plans, dependencies and unfinished assignment files.
+Stop cancels active execution and may also cancel paused/interrupted work. Answer
+requires a nonempty response to an actual needs-input task. Terminal runs cannot
+resume. Application controls support expected-revision checks at the host mutation
+boundary; the CLI never fabricates authorization from a resource projection.
+
+Recovery reuses the retained supervisor only after verifying its executable snapshot
+and captured execution identity. It never replaces a retained run's supervisor with
+the caller's newly built code. Unsupported older control protocols or unavailable,
+changed or ambiguous recovery evidence fail explicitly. Historical runs remain readable.
+A host loss marks incomplete activations interrupted before any resumed dispatch;
+uncertain operation completion still requires attention. Following remains observation,
+while interrupting an attached task submission retains its existing cancellation behavior.
