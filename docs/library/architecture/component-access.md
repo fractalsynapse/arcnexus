@@ -107,7 +107,7 @@ an execution host.
 
 Resources expose identity, purpose, objectives, constraints, questions, standards,
 ownership and declared public boundaries. They omit machine bindings, execution
-records, permissions and command recipes. Each resource has a content revision;
+records, permissions and command recipes. Each resource has a revision bound to its captured source and projected intent;
 list pages additionally have the shared query revision and continuation cursor.
 
 List uses `ResourceQuery` with `id`, `type` and `parentId` equality filters (AND),
