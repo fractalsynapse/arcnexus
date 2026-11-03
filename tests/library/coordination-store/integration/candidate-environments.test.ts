@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { ExecutionStore } from '../../../../dist/library/coordination-store/execution-store.js';
 import type { RunEnvironment } from '../../../../dist/library/coordination-store/execution-types.js';
+import { ExecutionReports } from '../../../../dist/library/report/report.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises real candidate transactions across captured live and simulation environments. */
@@ -62,6 +63,8 @@ test('run environment survives lifecycle updates and cannot be replaced by candi
   const retained = f.store.run(run.id);
   assert.deepEqual(retained.environment, { id: 'simulation', mode: 'simulation' });
   assert.equal(retained.status, 'paused');
+  const report = new ExecutionReports(f.root, f.store).view(run.id);
+  assert.deepEqual(report.run.environment, retained.environment);
 });
 
 registerSuite({

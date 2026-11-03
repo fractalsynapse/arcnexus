@@ -292,3 +292,18 @@ remain part of the pending wiring.
   nearly 500-line execution store. The extraction kept candidate promotion inside
   the original assignment transaction. A focused built-program run covering store,
   inbox and provider behavior passed 34 tests, no skips, in 2.163 s excluding builds.
+
+Latest focused feedback also covers three/five-owner scheduler behavior and prevents
+reconciliation while a provider request is active: 40 built-program tests passed,
+zero skips, in 2.457 s excluding builds. Build, test compilation and changed-file
+lint passed. Reports now expose the immutable environment separately from run mode.
+Long integrated suites, CI, native simulation enforcement, real-agent simulation and
+real upstream integration have not been run for this batch. Phase three remains
+blocked; these checks are not substitutes for the six real qualification gates.
+
+Next integration dependencies: capture provider policy and environment at host run
+creation; bind collaboration tools to actual steward sessions; create tracking issues
+before engineering; implement verified Git delivery/Publisher and promotion; then
+exercise the real director against the real component catalog. Complete remaining
+portfolio/CLI/container work against that functioning lifecycle. Do not treat the
+library checkpoint as a shipped task/workday simulation interface.

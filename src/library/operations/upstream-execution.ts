@@ -25,6 +25,8 @@ export interface UpstreamAuthority {
 export class UpstreamExecution {
   private readonly authority: UpstreamAuthority;
 
+  private readonly active = new Set<string>();
+
   /** Captures host-supplied identity and grants; workers never supply their own assignment binding. */
   constructor(
     private readonly store: LifecycleStore,
@@ -49,14 +51,20 @@ export class UpstreamExecution {
     if (effect.status !== 'prepared') return effect;
     signal.throwIfAborted();
     effect = this.store.begin(effect.id);
-    const result = await this.provider.apply(effect, signal);
-    return this.store.complete(effect.id, effect.attempt, result);
+    this.active.add(effect.id);
+    try {
+      const result = await this.provider.apply(effect, signal);
+      return this.store.complete(effect.id, effect.attempt, result);
+    } finally {
+      this.active.delete(effect.id);
+    }
   }
 
   /** Reconciles only after the supervising host establishes that the prior invocation has ended. */
   async recover(id: string, signal: AbortSignal): Promise<ExternalEffect> {
     signal.throwIfAborted();
     this.validateEnvironment();
+    if (this.active.has(id)) throw new Error('Cannot reconcile an active upstream operation');
     const effect = this.store.effect(id);
     if (
       effect.environmentId !== this.authority.environmentId ||

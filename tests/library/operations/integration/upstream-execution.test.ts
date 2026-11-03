@@ -186,6 +186,32 @@ test('collaboration bridge binds identities and rejects worker authority fields'
   assert.equal(f.providerStore.resources().length, 1);
 });
 
+test('recovery cannot declare absence while the upstream request is still active', async (t) => {
+  const f = new UpstreamFixture(t);
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const provider = {
+    id: 'provider',
+    mode: 'simulation' as const,
+    apply: async () => {
+      await pending;
+      return { id: 'observed' };
+    },
+    inspect: f.provider.inspect.bind(f.provider),
+  };
+  const executor = new UpstreamExecution(f.store, provider, f.authority);
+  const result = executor.execute('pending', 'issue.create', 'repo', {}, f.signal);
+  try {
+    await assert.rejects(() => executor.recover('pending', f.signal), /active upstream/);
+    assert.equal(f.store.effect('pending').status, 'uncertain');
+  } finally {
+    release();
+  }
+  assert.equal((await result).status, 'completed');
+});
+
 registerSuite({
   component: 'operations',
   level: 'integration',

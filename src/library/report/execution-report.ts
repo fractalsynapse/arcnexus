@@ -90,6 +90,7 @@ export class ExecutionReports {
     return {
       id: run.id,
       mode: run.mode,
+      environment: run.environment,
       objective: run.objective,
       status: run.status,
       createdAt: run.createdAt,
