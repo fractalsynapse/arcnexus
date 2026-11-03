@@ -3,7 +3,7 @@ import { InputError } from '../../library/architecture/config.js';
 import { Portfolio } from '../../library/portfolio/portfolio.js';
 import type { CliValues } from './arguments.js';
 
-/** Adapts architectural resource reads using common argument validation and portfolio lifetime. */
+/** Adapts architectural reads and updates using common argument validation and portfolio lifetime. */
 export class ArchitectureResourceCommand {
   /** Retains parsed inputs without opening storage or acquiring execution ownership. */
   constructor(
@@ -14,7 +14,7 @@ export class ArchitectureResourceCommand {
   /** Resolves registered resources independently of the caller's directory and always closes storage. */
   run(): void {
     this.validate();
-    const portfolio = new Portfolio();
+    const portfolio = new Portfolio(undefined, this.positionals[1] === 'update');
     try {
       console.log(JSON.stringify(this.read(portfolio), null, this.values.json ? undefined : 2));
     } finally {
@@ -24,6 +24,12 @@ export class ArchitectureResourceCommand {
 
   /** Delegates scope and projection decisions to the corresponding shared application service. */
   private read(portfolio: Portfolio) {
+    if (this.positionals[1] === 'update')
+      return portfolio.updateComponent(
+        this.positionals[2]!,
+        this.positionals[3]!,
+        this.positionals.slice(4),
+      );
     const query = {
       filters: this.positionals.slice(3),
       search: this.values.search,
@@ -50,12 +56,13 @@ export class ArchitectureResourceCommand {
     const [kind, action, target] = this.positionals;
     if (
       !['standard', 'component'].includes(kind ?? '') ||
-      !['list', 'get'].includes(action ?? '') ||
+      !['list', 'get', ...(kind === 'component' ? ['update'] : [])].includes(action ?? '') ||
       !target?.trim() ||
-      (action === 'get' && this.positionals.length !== 4)
+      (action === 'get' && this.positionals.length !== 4) ||
+      (action === 'update' && this.positionals.length < 5)
     )
       throw new InputError(
-        'Expected component/standard list <target> [field=value...] | get <target> <id>',
+        'Expected component/standard list <target> [field=value...] | get <target> <id> | component update <package> <id> <field=value>...',
       );
     const allowed = action === 'list' ? ['json', 'search', 'limit', 'cursor'] : ['json'];
     if (Object.keys(this.values).some((key) => !allowed.includes(key)))

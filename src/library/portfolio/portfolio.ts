@@ -1,3 +1,7 @@
+import { ArchitectureChanges } from './architecture-changes.js';
+import { ComponentUpdate } from '../architecture/component-update.js';
+import { ComponentResources } from '../architecture/inspection.js';
+import { ExecutionLease } from '../coordination-store/execution-store.js';
 import { ResourceQuery, type ResourceQueryInput } from '../report/resource-query.js';
 import { RepositoryMaterializer } from './materialization.js';
 import { ArchitectureValidation } from '../architecture/validation.js';
@@ -30,7 +34,7 @@ export class Portfolio {
   /** Reads do not create storage; explicit mutating commands open transactional registration access. */
   constructor(
     readonly volume = new ApplicationSettings().get('volume').value,
-    writable = false,
+    private readonly writable = false,
   ) {
     this.store = new PortfolioStore(join(volume, 'portfolio.sqlite'), writable);
   }
@@ -59,6 +63,7 @@ export class Portfolio {
     if (reference !== undefined) {
       if (!reference.trim()) throw new InputError('Package reference must not be empty');
       const resource = this.get('package', reference);
+      this.assertSettled(resource.repositoryId);
       return {
         source: resource.source,
         base: resource.base,
@@ -117,8 +122,13 @@ export class Portfolio {
       if (matches.length !== 1)
         throw new InputError('Unknown or ambiguous migration target: ' + reference);
       const selected = this.view(matches[0]!);
+      this.assertSettled(selected.repositoryId);
       source = selected.source;
       expectedBase = selected.base;
+      if (resolveBase(source).base !== selected.base)
+        throw new InputError(
+          'Selected configuration differs from checkout HEAD; reconcile before migration',
+        );
     }
     return new ConfigurationMigration(source).run(write, expectedBase);
   }
@@ -194,6 +204,7 @@ export class Portfolio {
     return this.store.transaction('resource.removed', () => {
       const entry = this.find(kind, reference);
       const view = this.view(entry);
+      this.assertSettled(view.repositoryId);
       if (expectedRevision !== undefined && expectedRevision !== view.revision)
         throw new Error('Resource revision changed; read the current resource before retrying');
       if (
@@ -205,6 +216,65 @@ export class Portfolio {
       this.store.registration({ ...entry, active: false, revision: entry.revision + 1 });
       return { id: entry.id, status: 'unregistered', retainedRepository: view.source };
     });
+  }
+
+  /** Updates an existing registered platform or package using the same checked configuration path. */
+  update(kind: Kind, reference: string, fields: string[], expectedRevision?: string) {
+    const entry = this.find(kind, reference);
+    return this.change(entry, entry.definitionId, fields, expectedRevision);
+  }
+
+  /** Updates one package-scoped component with optimistic revision checking for API callers. */
+  updateComponent(reference: string, id: string, fields: string[], expectedRevision?: string) {
+    const entry = this.find('package', reference);
+    const selected = this.change(entry, id, fields, expectedRevision, true);
+    return new ComponentResources().get(
+      { source: selected.source, base: selected.base, packageId: entry.definitionId },
+      id,
+    );
+  }
+
+  /** Holds canonical execution ownership across recovery, validation and committed authority selection. */
+  private change(
+    entry: PortfolioRegistration,
+    id: string,
+    fields: string[],
+    expected?: string,
+    component = false,
+  ) {
+    if (!this.writable) throw new Error('Portfolio is read-only');
+    const initial = this.view(entry);
+    const lease = new ExecutionLease(
+      join(this.common(initial.source), 'arcnexus', 'host.lease.sqlite'),
+    );
+    try {
+      this.assertInactive(initial.source);
+      const changes = new ArchitectureChanges(this.store, initial.source, entry.repositoryId);
+      changes.recover();
+      return this.applyChange(changes, entry, id, fields, expected, component);
+    } finally {
+      lease.close();
+    }
+  }
+
+  /** Validates optimistic resource identity and selects one fully checked component patch. */
+  private applyChange(
+    changes: ArchitectureChanges,
+    entry: PortfolioRegistration,
+    id: string,
+    fields: string[],
+    expected: string | undefined,
+    component: boolean,
+  ) {
+    const current = this.view(entry);
+    const target = { source: current.source, base: current.base, packageId: entry.definitionId };
+    const resource = component ? new ComponentResources().get(target, id) : current;
+    if (expected !== undefined && resource.revision !== expected)
+      throw new InputError('Resource revision changed; read the current resource before retrying');
+    const scope = component ? entry.definitionId : undefined;
+    const patch = new ComponentUpdate().prepare(current.source, current.base, id, fields, scope);
+    changes.apply(current.base, patch, id, scope);
+    return this.view(entry);
   }
 
   /** Rejects ambiguous or missing registrations before any lifecycle mutation. */
@@ -225,7 +295,10 @@ export class Portfolio {
     const location = repository.managed
       ? join(this.volume, repository.location)
       : repository.location;
-    const { source, base } = resolveBase(location);
+    const { source, base: sourceBase } = resolveBase(location);
+    if (repository.authority && repository.authority.sourceBase !== sourceBase)
+      throw new Error('Source revision changed; reconcile selected configuration authority');
+    const base = repository.authority?.base ?? sourceBase;
     const catalog = loadCatalog(source, base, loadProjectBindings(source));
     const definition = catalog.components[entry.definitionId];
     if (!definition || definition.type !== entry.kind)
@@ -277,6 +350,18 @@ export class Portfolio {
     )
       throw new InputError(
         'Expected ' + (kind === 'platform' ? 'platform identity' : 'platform/package identity'),
+      );
+  }
+
+  /** Keeps unfinished configuration publication from authorizing execution or unrelated mutations. */
+  private assertSettled(repositoryId: string): void {
+    if (
+      this.store
+        .mutations()
+        .some((entry) => entry.repositoryId === repositoryId && entry.status === 'pending')
+    )
+      throw new Error(
+        'Pending configuration transition; retry the architectural update to reconcile',
       );
   }
 

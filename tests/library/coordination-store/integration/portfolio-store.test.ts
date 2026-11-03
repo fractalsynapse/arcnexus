@@ -65,6 +65,7 @@ test('read-only portfolio access preserves the original registry schema and loca
     assert.deepEqual(store.repositories(), [f.repository]);
     assert.deepEqual(store.registrations(), [f.registration]);
     assert.deepEqual(store.materializations(), []);
+    assert.deepEqual(store.mutations(), []);
     assert.equal(f.version(), 1);
   } finally {
     store.close();
@@ -87,7 +88,8 @@ test('writable portfolio upgrade retains registrations and accepts void checkpoi
     assert.deepEqual(store.repositories(), [f.repository]);
     assert.deepEqual(store.registrations(), [f.registration]);
     assert.equal(store.materializations()[0]!.id, 'clone');
-    assert.equal(f.version(), 2);
+    assert.equal(f.version(), 3);
+    assert.deepEqual(store.mutations(), []);
   } finally {
     store.close();
   }
