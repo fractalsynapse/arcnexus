@@ -18,7 +18,7 @@ class ExecutionMigrationScenarios {
     const result = spawnSync(process.execPath, [cli, '--help'], { encoding: 'utf8' });
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /workday start\|pause\|resume\|stop\|status/);
-    assert.match(result.stdout, /task run "<prompt>"/);
+    assert.match(result.stdout, /task run \[package\] "<prompt>" \[--async\]/);
     assert.doesNotMatch(
       result.stdout,
       /max-attempts|timeout-seconds|task plan|legacy-run|workday run/,
