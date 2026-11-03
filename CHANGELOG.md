@@ -4,6 +4,8 @@
 
 ### Added
 
+- Query and follow retained tasks and workdays without a checkout or running host (#148).
+
 - Inspect registered package architecture and prompt context without starting engineering (#148).
 
 - Target registered or local packages with `test inspect/run` and explicit component selection through the shared test executor (#148).

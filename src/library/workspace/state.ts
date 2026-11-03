@@ -29,11 +29,16 @@ export interface RecordData {
   [key: string]: unknown;
 }
 
-export function stateRoot(): string {
-  const path = resolve(
+/** Resolves configured state without creating storage for read-only resource queries. */
+export function statePath(): string {
+  return resolve(
     process.env.ARCNEXUS_STATE_DIR ??
       join(process.env.XDG_STATE_HOME ?? join(homedir(), '.local/state'), 'arcnexus'),
   );
+}
+
+export function stateRoot(): string {
+  const path = statePath();
   mkdirSync(path, { recursive: true, mode: 0o700 });
   for (const name of ['runs', 'workspaces'])
     mkdirSync(join(path, name), { recursive: true, mode: 0o700 });

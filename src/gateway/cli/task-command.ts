@@ -1,3 +1,5 @@
+import { RunQueryCommand } from './run-query-command.js';
+import type { CliValues } from './arguments.js';
 import { ExecutionCommand } from './execution-command.js';
 import { InputError } from '../../library/architecture/config.js';
 import { ProposalStore } from '../../library/task-intake/tasks.js';
@@ -8,13 +10,15 @@ export class TaskCommand {
   /** Retains task arguments and cancellation without creating execution state. */
   constructor(
     private readonly positionals: string[],
-    private readonly values: Record<string, string | boolean | undefined>,
+    private readonly values: CliValues,
     private readonly signal: AbortSignal,
   ) {}
 
   /** Rejects retired execution before dispatch and preserves read-only proposal inspection. */
   async run(): Promise<void> {
     const action = this.positionals[1];
+    if (['list', 'get', 'follow'].includes(action ?? ''))
+      return new RunQueryCommand('task', this.positionals, this.values, this.signal).run();
     if (action === 'plan' || action === 'legacy-run')
       throw new InputError('Proposal execution is retired; use task run "<prompt>"');
     if (this.positionals.length !== 3 || !['run', 'inspect'].includes(action ?? ''))

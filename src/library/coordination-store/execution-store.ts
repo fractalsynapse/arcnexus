@@ -18,8 +18,13 @@ export class ExecutionStore {
   private readonly db: ExecutionDatabase;
 
   /** Opens a new or retained general execution store without reading legacy workdays. */
-  constructor(path: string) {
-    this.db = new ExecutionDatabase(path);
+  constructor(path: string, readOnly = false) {
+    this.db = new ExecutionDatabase(path, readOnly);
+  }
+
+  /** Projects related records from one consistent read transaction. */
+  snapshot<T>(read: () => T): T {
+    return this.db.snapshot(read);
   }
 
   /** Captures the eligible owners and goal for one run. */
