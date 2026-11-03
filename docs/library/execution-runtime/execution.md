@@ -327,3 +327,23 @@ changed or ambiguous recovery evidence fail explicitly. Historical runs remain r
 A host loss marks incomplete activations interrupted before any resumed dispatch;
 uncertain operation completion still requires attention. Following remains observation,
 while interrupting an attached task submission retains its existing cancellation behavior.
+
+## Workday identity controls
+
+`workday start [package]` resolves an explicit registered package or the existing
+local package context. `workday status [id]` reads retained state without starting
+or recovering a host. `workday pause/resume/stop [id]` use the same identity-bound
+control service and retained-supervisor recovery as tasks. JSON rendering is
+available for all controls.
+
+An omitted identity selects the latest workday in the local package. Outside a
+checkout, it requires exactly one active workday, or exactly one retained workday
+when none is active. Ambiguous selection fails; no global last-selected package
+is introduced. A stopped historical workday can be inspected, paused or stopped
+idempotently, but cannot resume or accidentally control a newer workday. Expected
+revision checks apply at the host mutation boundary.
+
+Read-only status is a retained projection and labels its active assignment state
+as observed, not a host-liveness claim. Interrupted-host recovery occurs only on
+an explicit mutation. Old hosts lacking the retained control protocol require an
+explicit new run; status and historical evidence remain readable.
