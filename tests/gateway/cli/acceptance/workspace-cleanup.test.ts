@@ -139,4 +139,14 @@ test('cleanup reports uncertain disappearance without fabricating preserved or r
   assert.equal(existsSync(f.report(workspace.id)), true);
 });
 
+test('cleanup reports an unfinished cleanup checkpoint as uncertain even while the directory exists', (t) => {
+  const f = new CleanupFixture(t),
+    workspace = f.prepare();
+  writeFileSync(join(f.root, 'state/runs', workspace.id, 'cleanup-intent.json'), '{}');
+  const result = f.command(f.root, 'workspace', 'cleanup', 'package');
+  assert.equal(result.status, 1, result.stderr);
+  assert.equal(JSON.parse(result.stdout).items[0].status, 'needs_attention');
+  assert.equal(existsSync(workspace.location), true);
+});
+
 registerSuite({ component: 'cli', level: 'acceptance', tags: ['deterministic'] });

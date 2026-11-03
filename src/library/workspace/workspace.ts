@@ -289,7 +289,11 @@ export class WorkspaceDisposal {
     } catch (error) {
       return {
         id: item.id,
-        status: existsSync(item.location) ? 'preserved' : 'needs_attention',
+        status:
+          !existsSync(item.location) ||
+          existsSync(join(this.root, 'runs', item.id, 'cleanup-intent.json'))
+            ? 'needs_attention'
+            : 'preserved',
         error: String(error),
         revision: item.revision,
       };

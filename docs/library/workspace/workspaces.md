@@ -133,8 +133,9 @@ and receipt. It removes only eligible disposable workspaces. Retained assignment
 unfinished work, changed source, unknown outputs and active managed resources remain
 protected. A package-wide result reports each removed or preserved workspace and
 returns an unsuccessful result when any selected resource must be preserved.
-An absent workspace without a completed removal checkpoint requires attention;
-cleanup does not falsely report that uncertain filesystem state was preserved.
+An absent workspace without a completed removal checkpoint, or a failed cleanup
+with a retained removal intent, requires attention. A remaining directory alone
+does not prove that an interrupted removal preserved the complete workspace.
 
 Original execution reports and timeline evidence remain available after removal;
 repeated cleanup validates the removed path rather than silently accepting a new
