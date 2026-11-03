@@ -21,3 +21,24 @@ This guard conservatively includes completed deliveries and superseded execution
 workspaces. Collection requires a future explicit release-of-retention decision;
 absence of edits is not proof of disposability. Standalone preparation cleanup
 continues to use existing ownership, output, service and recovery checks (#158).
+
+
+## Retained workspace resource queries
+
+The workspace application service exposes read-only discovery independently of a
+checkout, terminal or execution host (#160). `workspace list [package]` returns
+managed workspace projections with shared search, pagination and revision tokens.
+`workspace get <id> [--follow]` returns retained status and ordered events; `--after`
+is an exclusive event cursor when following. Interrupting a follower only detaches.
+
+Queries never create state, recover hosts or change cleanup eligibility. Operation-only
+receipts whose working directory is source are not managed workspaces. Historical
+workspace receipts remain inspectable. Package membership comes from captured selected
+package/preparation context; unknown historical membership remains visible as unknown
+in unfiltered queries and is not silently attributed to a requested package.
+
+Workspace owns the resource service and exports it through its existing public module;
+report supplies common pagination and timeline parsing. CLI resolves optional portfolio
+targets and renders structured results. Raw harness content and local binding secrets
+are excluded from these resource projections. Mutation commands continue through the
+existing preparation/cleanup lifecycle until their grouped adapters are migrated.
