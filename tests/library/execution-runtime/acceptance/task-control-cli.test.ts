@@ -31,6 +31,7 @@ class TaskControlCliScenario {
     assert.equal(resumed.run.data.executionIdentity, retained.run.data.executionIdentity);
     assert.equal(command(f.root, 'task', 'stop', run.id).run.status, 'cancelled');
     assert.equal(command(f.root, 'task', 'stop', run.id).run.status, 'cancelled');
+    await this.stop(general);
   }
 
   /** Resolves a registered package and submits work from a directory outside every checkout. */
@@ -51,6 +52,7 @@ class TaskControlCliScenario {
     general.captureHost();
     assert.equal(run.data.packageId, 'package');
     assert.equal(command(f.root, 'task', 'stop', run.id).run.status, 'cancelled');
+    await this.stop(general);
   }
 
   /** Rejects a modified supervisor before recovery starts a process or changes retained run status. */
@@ -76,6 +78,12 @@ class TaskControlCliScenario {
     assert.match(result.stderr, /supervising runtime changed/);
     assert.equal(command(f.root, 'task', 'get', run.id).run.status, 'paused');
     assert.ok(this.gone(general.hostPid!));
+  }
+
+  /** Stops the test-owned supervisor before fixture removal can race with cancelled-operation cleanup. */
+  private async stop(general: GeneralFixture): Promise<void> {
+    process.kill(general.hostPid!, 'SIGTERM');
+    await this.until(() => this.gone(general.hostPid!));
   }
 
   /** Reads host evidence after each startup to verify stable runtime identity. */
