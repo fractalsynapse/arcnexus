@@ -98,6 +98,26 @@ class WorkspaceQueryScenarios {
     assert.equal(f.value('workspace', 'get', 'first').workspace.packageId, null);
   }
 
+  /** Cleanup changes the resource revision while preserving its original execution report. */
+  removed(f: RunQueryFixture): void {
+    const path = this.seed(f, 'first'),
+      before = readFileSync(path);
+    const initial = f.value('workspace', 'get', 'first');
+    writeFileSync(
+      join(f.state, 'runs/first/cleanup.json'),
+      JSON.stringify({
+        cleanupStatus: 'removed',
+        removedAt: '2026-01-02T00:00:00Z',
+      }),
+    );
+    const result = f.value('workspace', 'get', 'first', '--follow');
+    assert.equal(result.workspace.status, 'removed');
+    assert.equal(result.workspace.executionStatus, 'prepared');
+    assert.notEqual(result.revision, initial.revision);
+    assert.equal(f.value('workspace', 'list').items[0].status, 'removed');
+    assert.deepEqual(readFileSync(path), before);
+  }
+
   /** Models the persisted production receipt shape, including data that must never reach query output. */
   private seed(f: RunQueryFixture, id: string, workspace = join(f.state, 'workspaces', id)) {
     const directory = join(f.state, 'runs', id);
@@ -151,6 +171,9 @@ test('workspace lists paginate managed resources and exclude operation receipts'
 
 test('workspace membership derives only from captured package context', (t) =>
   scenarios.membership(new RunQueryFixture(t)));
+
+test('workspace cleanup receipts update resource status without rewriting history', (t) =>
+  scenarios.removed(new RunQueryFixture(t)));
 
 test('workspace followers detach without cancelling retained work', { timeout: 15000 }, (t) =>
   scenarios.follow(new RunQueryFixture(t)),

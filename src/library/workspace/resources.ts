@@ -63,13 +63,14 @@ export class WorkspaceResources {
         runId: event.runId,
         componentId: event.componentId,
       }));
+    const workspace = this.project(record);
     return {
-      workspace: this.project(record),
-      revision: this.query.revision(record),
+      workspace,
+      revision: workspace.revision,
       events,
       cursor: Math.max(after, timeline.events.at(-1)?.sequence ?? 0),
       timeline: { complete: timeline.complete, problem: timeline.problem },
-      finalized: !!record.finishedAt || record.status === 'removed',
+      finalized: !!record.finishedAt || workspace.status === 'removed',
     };
   }
 
@@ -96,6 +97,7 @@ export class WorkspaceResources {
 
   /** Exposes lifecycle and location fields, keeping model turns, operation output and bindings private. */
   private project(record: RecordData) {
+    const cleanup = this.cleanup(record.id);
     return {
       id: record.id,
       source: record.source,
@@ -103,14 +105,31 @@ export class WorkspaceResources {
       packageId: this.packageId(record),
       branch: record.branch,
       base: record.base,
-      status: record.status,
+      status: cleanup?.cleanupStatus ?? record.status,
+      executionStatus: record.status,
+      removedAt: cleanup?.removedAt,
       startedAt: record.startedAt,
       finishedAt: record.finishedAt,
       executionRunId: record.executionRunId,
       assignmentId: record.assignmentId,
       retained: record.executionRunId !== undefined || record.assignmentId !== undefined,
-      revision: this.query.revision(record),
+      revision: this.query.revision({ record, cleanup }),
     };
+  }
+
+  /** Reads the separate durable removal receipt without changing original execution evidence. */
+  private cleanup(id: string): { cleanupStatus: 'removed'; removedAt: string } | undefined {
+    const path = join(this.root, 'runs', id, 'cleanup.json');
+    if (!existsSync(path)) return undefined;
+    try {
+      if (!lstatSync(path).isFile()) throw new Error('Unsafe cleanup receipt');
+      const receipt = JSON.parse(readFileSync(path, 'utf8'));
+      if (receipt.cleanupStatus !== 'removed' || typeof receipt.removedAt !== 'string')
+        throw new Error('Invalid cleanup receipt');
+      return { cleanupStatus: 'removed', removedAt: receipt.removedAt };
+    } catch {
+      throw new InputError('Workspace cleanup receipt unavailable or unsafe: ' + id);
+    }
   }
 
   /** Uses captured package selection or its preparation subtree without loading mutable architecture. */
