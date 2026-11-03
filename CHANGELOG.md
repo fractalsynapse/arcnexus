@@ -32,6 +32,8 @@
 
 ### Fixed
 
+- Stop shared native-test supervisors before removing fixture evidence, preserving diagnostics if shutdown fails (#156).
+
 - Follow the transferred ArcNexus upstream at `fractalsynapse/arcnexus` in active configuration and repository links (#148).
 
 - Preserve captured dependency states and verified delivery context when engineering resumes under the shared scheduler (#147).
