@@ -113,3 +113,10 @@ they are deterministic native integration, not live inference. Their ordinary
 confined invocation reports skips because nested cgroup delegation is intentionally
 unavailable inside the source-read-only operation sandbox. The separate native step
 must pass; the skipped confined result cannot substitute for it.
+
+Every suite directly requiring `ARCNEXUS_TEST_CODEX` must participate in native
+selection (#170). Built-program acceptance compares actual test syntax with the
+CLI's selected metadata, so a missing tag cannot silently defer enforcement forever.
+References inside fixture strings do not establish a runtime prerequisite. Scripted
+confinement and supervision probes are deterministic native acceptance, not live-model
+qualification. Report their actual execution separately from confined skips.
