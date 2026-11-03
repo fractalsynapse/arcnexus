@@ -1,6 +1,7 @@
 import { ResourceQuery, type ResourceQueryInput } from '../report/resource-query.js';
 import { RepositoryMaterializer } from './materialization.js';
 import { ArchitectureValidation } from '../architecture/validation.js';
+import { ConfigurationMigration } from '../architecture/migration.js';
 import { existsSync, realpathSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { homedir } from 'node:os';
@@ -104,6 +105,23 @@ export class Portfolio {
       resource.base,
       loadProjectBindings(resource.source),
     );
+  }
+
+  /** Migrates local or registered source without requiring preceding configuration to be executable. */
+  migrate(reference?: string, write = false, cwd = process.cwd()) {
+    let source = cwd;
+    let expectedBase: string | undefined;
+    if (reference !== undefined) {
+      const matches = this.store
+        .registrations()
+        .filter((entry) => entry.id === reference || entry.definitionId === reference);
+      if (matches.length !== 1)
+        throw new InputError('Unknown or ambiguous migration target: ' + reference);
+      const selected = this.view(matches[0]!);
+      source = selected.source;
+      expectedBase = selected.base;
+    }
+    return new ConfigurationMigration(source).run(write, expectedBase);
   }
 
   /** Attaches local repositories or materializes supported remote URLs under supervised application ownership. */

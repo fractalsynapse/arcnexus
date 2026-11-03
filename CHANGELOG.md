@@ -4,6 +4,8 @@
 
 ### Added
 
+- Target configuration migration at registered platforms or packages from outside a checkout (#167).
+
 - Expose read-only workspace list/get/follow resources with revision tokens and package targeting (#160).
 
 - Start registered workdays and control retained identities from outside a checkout; status reads no longer start a host (#148).
@@ -36,6 +38,10 @@
 
 - Isolate steward client tools and authentication from personal MCP, app and plugin configuration; validate effective capabilities before inference (#174).
 
+- Preserve installed runtime layouts and surface launcher errors in native qualification fixtures (#176).
+
+- Include previously omitted runtime enforcement suites in native CI qualification (#170).
+
 - Run consolidated architecture and guidance validation during steward verification (#165).
 
 - Keep read-only portfolio discovery stable during concurrent database initialization (#162).
@@ -60,6 +66,8 @@
 - Keep one canonical project host when temporary-storage or evidence-root settings change (#137).
 
 ### Changed
+
+- Clarify confined and native qualification with a real steward-produced, independently verified documentation change (#164).
 
 - Use one durable assignment dispatcher and source-read-only model path; reject historical execution budgets and initialize through shared confined operations (#109).
 

@@ -1,5 +1,4 @@
-import { ApplicationSettings } from '../../library/portfolio/portfolio.js';
-import { ConfigurationMigration } from '../../library/architecture/migration.js';
+import { ApplicationSettings, Portfolio } from '../../library/portfolio/portfolio.js';
 import { InputError } from '../../library/architecture/config.js';
 
 /** Adapts the minimal maintenance interface to validated architecture migration. */
@@ -14,12 +13,24 @@ export class ConfigCommand {
   run(): void {
     if (['get', 'update'].includes(this.positionals[1] ?? '')) return this.settings();
     if (
-      this.positionals.length !== 2 ||
+      this.positionals.length < 2 ||
+      this.positionals.length > 3 ||
       this.positionals[1] !== 'migrate' ||
-      Object.keys(this.values).some((key) => key !== 'write')
+      Object.keys(this.values).some((key) => !['write', 'json'].includes(key))
     )
-      throw new InputError('Use config migrate or config migrate --write');
-    const result = new ConfigurationMigration(process.cwd()).run(this.values.write === true);
+      throw new InputError('Use config migrate [target] [--write]');
+    const portfolio = new Portfolio();
+    try {
+      const result = portfolio.migrate(this.positionals[2], this.values.write === true);
+      this.render(result);
+    } finally {
+      portfolio.close();
+    }
+  }
+
+  /** Preserves human-readable migration output while exposing the service result unchanged as JSON. */
+  private render(result: ReturnType<Portfolio['migrate']>): void {
+    if (this.values.json) return console.log(JSON.stringify(result));
     if (!result.changes) return console.log('No configuration changes');
     console.log(result.diff);
     console.log(

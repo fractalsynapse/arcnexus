@@ -9,7 +9,7 @@ export const help = `ArcNexus
   task list [field=value...] | get <id> [--follow] | follow <id>
   workday list [field=value...] | get <id> [--follow]
   workspace list [package] | get <id> [--follow]
-  config get <name> | update <name> <value> | migrate [--write]
+  config get <name> | update <name> <value> | migrate [target] [--write]
   platform list|get <id>|create <id> <repository>|remove <id>
   package list [platform]|get <package>|create <platform/package> <repository>|remove <package>
   test inspect|run [package] [--component <id>] [--level unit|integration|acceptance] [--category regression] [--tag <tag>] [--json]

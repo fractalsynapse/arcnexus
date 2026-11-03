@@ -26,12 +26,17 @@ export class ConfigurationMigration {
   /** Captures only the caller's working directory; all executable inputs come from declared source authority. */
   constructor(private readonly cwd: string) {}
 
-  /** Builds a private candidate, validates it and applies only an explicitly requested clean-checkout migration. */
-  run(write = false): { diff: string; changes: number; applied: boolean; evidence?: string } {
+  /** Validates a private candidate and refuses stale selected revisions before applying a clean-checkout migration. */
+  run(
+    write = false,
+    expectedBase?: string,
+  ): { diff: string; changes: number; applied: boolean; evidence?: string } {
     try {
       const { source, base } = resolveBase(this.cwd);
       if (write) this.clean(source, base);
       const context = captureMigrationAuthority(this.cwd);
+      if (expectedBase !== undefined && context.base !== expectedBase)
+        throw new InputError('Source revision changed before configuration migration');
       const changes = this.changes(context, new MigrationDraft(context).create());
       if (!changes.length) return { diff: '', changes: 0, applied: false };
       return this.candidate(context, changes, write);

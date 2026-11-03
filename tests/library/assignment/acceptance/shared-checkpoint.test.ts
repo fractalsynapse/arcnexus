@@ -109,4 +109,8 @@ test(
   (t) => scenarios.execution(t),
 );
 
-registerSuite({ component: 'assignment', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'assignment',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});
