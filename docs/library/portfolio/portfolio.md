@@ -78,3 +78,11 @@ package to an explicit source revision and package identity. Local discovery reu
 the architecture package-selection rules; it does not require director activation.
 Read-only callers receive that target without starting a host, changing directories or
 creating absent volume storage. Test commands consume it through shared test services.
+
+## Shared list queries
+
+Platform and package lists accept `--search`, `--limit` and `--cursor`, using the
+same report query implementation as task/workday resources. Search covers identity
+and purpose. Pagination returns a result revision and rejects stale or incompatible
+cursors. Package platform selection remains an explicit namespace filter. List
+queries never create an absent volume or start execution.
