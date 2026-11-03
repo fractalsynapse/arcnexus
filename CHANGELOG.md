@@ -4,6 +4,8 @@
 
 ### Added
 
+- Read registered package components through shared list/get services with safe projections, filters, cursors and revision tokens (#173).
+
 - Target configuration migration at registered platforms or packages from outside a checkout (#167).
 
 - Expose read-only workspace list/get/follow resources with revision tokens and package targeting (#160).

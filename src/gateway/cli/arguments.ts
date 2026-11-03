@@ -12,6 +12,7 @@ export const help = `ArcNexus
   config get <name> | update <name> <value> | migrate [target] [--write]
   platform list|get <id>|create <id> <repository>|remove <id>
   package list [platform]|get <package>|create <platform/package> <repository>|remove <package>
+  component list <package> [field=value...] | get <package> <id>
   test inspect|run [package] [--component <id>] [--level unit|integration|acceptance] [--category regression] [--tag <tag>] [--json]
 Inspection, evidence and diagnostics:
   inspect <component-id> <objective> --project <repository> [--kind change|research|review] [--json]

@@ -157,3 +157,48 @@ The real #164 task exposed the stale recipe after its baseline test suite passed
 Its failed assignment and cancelled task remain evidence; do not alter its captured
 operation definitions or replay the old check. A fresh task against the corrected
 committed authority is required for the documentation delivery.
+
+## Component resource increment (#173)
+
+Implement `component list <package> [field=value...]` and
+`component get <package> <id>` through a shared read-only application service.
+This increment excludes mutations, multi-repository composition and publication.
+Existing registered package resolution must work outside any source checkout.
+
+The caller authorizes this bounded API design within the existing architecture
+public boundary: export `ComponentResources` from
+`src/library/architecture/inspection.ts`. Its constructor needs no arguments;
+`list(target, query?)` and `get(target, componentId)` receive the existing
+`Portfolio.packageTarget()` shape `{source, base, packageId}`. `base` is the captured
+Git revision; it must not be confused with the portfolio resource revision digest.
+Private implementation files are allowed, but no new public module declaration or
+owner is needed. The CLI resolves registered targets; architecture owns catalog
+loading, selected-package ancestry checks and safe component projections.
+
+Use the public ResourceQuery implementation for equality filters, case-insensitive
+search, pagination, revision tokens and cursor validation. Allow `id`, `type` and
+`parentId` equality filters; validate type values against component types. Search
+`id` and `purpose`. Keep its existing default of 50 and maximum of 100. Results
+include the selected package and its descendants, never other package subtrees.
+Expose architectural intent and resource identity/revision; omit machine bindings,
+raw execution records and model evidence. Reads cannot start a host, alter source
+or initialize missing execution storage. List accepts the common JSON/search/limit/
+cursor options; get accepts JSON only. Reject irrelevant options and invalid inputs.
+
+Preserve the existing combined unknown-or-ambiguous package InputError. The accepted
+caller goal requires rejection of both cases, not a new distinct-diagnostic contract.
+Unknown and out-of-package component lookups must also fail honestly. Do not add
+unrelated compatibility requirements or treat this newly authorized service as a
+pre-existing API that another steward must prove already exists.
+
+One CLI assignment can own the end-to-end command goal and request the architecture
+service as a verified dependency. Do not create a duplicate initial architecture
+assignment for that same requested delivery. Use correlated clarification for an
+incoming request when needed; routine method and implementation choices within this
+specified boundary do not require new architectural authority. Additional eligible
+owners remain available for actual missing capabilities.
+
+Keep actual owned documentation, expected-red built-program acceptance, checked
+edits, host verification and independent review. Earlier failed/blocked #173 tasks
+retain their original criteria, partial work and evidence; this new contract does
+not rewrite them or claim their incomplete assignments were delivered.
