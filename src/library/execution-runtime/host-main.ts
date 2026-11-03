@@ -15,6 +15,8 @@ class HostServer {
 
   private readonly lease: ExecutionLease;
 
+  private retiring = false;
+
   private readonly server = createServer((socket) => this.connection(socket));
 
   /** Opens the sole project writer using the captured startup context. */
@@ -49,7 +51,7 @@ class HostServer {
       );
     });
     setInterval(() => {
-      void this.host.tick().catch((error) => console.error(error));
+      if (!this.retiring) void this.host.tick().catch((error) => console.error(error));
     }, 100);
   }
 
@@ -77,13 +79,16 @@ class HostServer {
 
   /** Allows automatic authority replacement only after all executable runs have ended. */
   private retire(): boolean {
+    if (this.retiring) return true;
     const status = this.host.status();
     if (
       status.active ||
-      (status.workday && status.workday.status !== 'stopped') ||
-      status.tasks.some((r) => ['running', 'pausing'].includes(r.status))
+      this.host.store
+        .runs()
+        .some((run) => !['completed', 'cancelled', 'failed', 'stopped'].includes(run.status))
     )
       throw new Error('Active execution host cannot retire');
+    this.retiring = true;
     setTimeout(() => {
       this.lease.close();
       process.exit(0);
@@ -93,6 +98,8 @@ class HostServer {
 
   /** Routes explicit controls while keeping scheduling policy inside the host. */
   private dispatch(request: HostRequest): unknown {
+    if (this.retiring && !['identity', 'status', 'task-status', 'retire'].includes(request.action))
+      throw new Error('Execution host is retiring; retry after ownership is released');
     if (request.action === 'identity') return this.context;
     if (request.action === 'workday-control')
       return this.host.workdayControl(
