@@ -2,6 +2,8 @@ import { ancestry, componentContext, loadCatalog } from './components.js';
 import { loadProjectBindings, type Bindings } from './bindings.js';
 import { InputError } from './config.js';
 
+export { ComponentResources, type ComponentResourceTarget } from './component-resources.js';
+
 const activities = ['research', 'document', 'design', 'implement', 'review', 'release'];
 
 export interface InspectionRequest {
