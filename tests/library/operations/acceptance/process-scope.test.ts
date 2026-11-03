@@ -87,4 +87,8 @@ test('confined process scope closes detached listeners after caller loss', insta
   scenarios.parentLoss(t),
 );
 
-registerSuite({ component: 'operations', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'operations',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

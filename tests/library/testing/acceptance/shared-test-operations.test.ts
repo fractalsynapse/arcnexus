@@ -176,4 +176,8 @@ for (const restriction of ['category', 'activity', 'repository'])
     scenarios.restricted(t, restriction),
   );
 
-registerSuite({ component: 'testing', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'testing',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

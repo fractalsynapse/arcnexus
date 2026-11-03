@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
@@ -51,6 +52,17 @@ class StandardsMigrationFixture extends ComponentV5Fixture {
       env: { ...process.env, ARCNEXUS_STATE_DIR: this.root + '-state' },
     });
   }
+
+  /** Calls the public compiled service with a previously selected revision and private evidence storage. */
+  migrateRevision(base: string) {
+    const module = pathToFileURL(resolve('dist/library/architecture/migration.js')).href;
+    const script = `import {ConfigurationMigration} from ${JSON.stringify(module)};new ConfigurationMigration(process.cwd()).run(true,${JSON.stringify(base)});`;
+    return spawnSync(process.execPath, ['--input-type=module', '-e', script], {
+      cwd: this.root,
+      encoding: 'utf8',
+      env: { ...process.env, ARCNEXUS_STATE_DIR: this.root + '-state' },
+    });
+  }
 }
 
 test('v5 standards migration preserves ownership, previews without writes and is idempotent', (t) => {
@@ -75,6 +87,20 @@ test('v5 standards migration preserves ownership, previews without writes and is
 });
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });
+
+test('migration rejects a changed selected revision before applying configuration edits', (t) => {
+  const f = new StandardsMigrationFixture(t);
+  t.after(() => rmSync(f.root + '-state', { recursive: true, force: true }));
+  f.configure();
+  const base = f.git('rev-parse', 'HEAD');
+  f.put('package/docs/value.md', 'Updated documentation after target selection.');
+  f.commit();
+  const result = f.migrateRevision(base);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Source revision changed/);
+  assert.equal(f.read('platform').schemaVersion, 5);
+  assert.equal(f.git('status', '--porcelain'), '');
+});
 
 test('standards migration refuses an existing destination without changing source', (t) => {
   const f = new StandardsMigrationFixture(t);
