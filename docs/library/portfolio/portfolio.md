@@ -121,3 +121,39 @@ Unregistering checks the selected volume, explicit state override and historical
 state root for active execution. Changing settings does not authorize abandoning
 an active run. This increment unifies storage selection; it does not make absolute
 paths in retained run records portable or qualify container relocation/recovery.
+
+## Transactional architectural updates (#197)
+
+The update contract is `component update <package> <id> <field=value>...`,
+`platform update <id> <field=value>...` and
+`package update <package> <field=value>...`. The shared portfolio application service
+owns repository serialization and authority selection; architecture owns definition
+patching and validation, and the coordination store owns durable mutation intents.
+Values for arrays, objects, booleans and numbers use JSON; ordinary strings need no
+additional encoding. Duplicate fields, identity/schema changes and unknown or retired
+fields fail before selecting any new authority. Full catalog validation includes
+ownership, inherited policies and public boundaries, not only the patched schema.
+
+Updates create local commits on an application-owned configuration branch using a
+private index. They never stage or edit the caller's files, switch its branch, run
+Git hooks or publish upstream. Registered resources in the same repository share the
+selected revision. Registered execution targets capture it; local discovery continues
+to mean the local checkout's committed revision. Existing runs retain their captured
+revision. An external checkout advancing after selection requires explicit
+reconciliation; its new content is never imported silently. Config migration refuses
+to operate on a registered target whose selected revision differs from checkout HEAD.
+
+Application mutations receive structured field maps; only the CLI parses `field=value`
+arguments. Application mutations accept an expected resource revision. A stale token leaves the
+selection unchanged. The canonical repository execution lease excludes host execution
+and other mutations. A validated commit and intended branch transition are journaled
+before the branch changes; selection and completion are committed together in SQLite.
+Recovery accepts only the recorded previous or intended branch revision, validates the
+retained commit, and finishes that exact transition. Unexpected branch state requires
+attention and is retained. Symbolic configuration refs are rejected; ref updates never
+follow a redirect into a caller branch. No external operation is retried by configuration
+recovery.
+
+This slice updates existing same-repository definitions. Creating/removing components,
+standard mutations, multi-repository composition and transactions remain separate
+pending capabilities of the managed lifecycle plan.

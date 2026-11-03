@@ -2,7 +2,8 @@ schemaVersion: 6
 id: portfolio
 type: library
 parentId: cli-package
-purpose: Resolve registered platforms and packages in a persistent managed project volume
+purpose: Resolve registered platforms and packages and commit validated
+  architectural updates in a persistent managed project volume
 owns:
   - src/library/portfolio
   - tests/library/portfolio

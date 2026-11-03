@@ -6,6 +6,7 @@ export interface PortfolioRepository {
   id: string;
   location: string;
   managed: boolean;
+  authority?: { base: string; sourceBase: string; ref: string };
 }
 
 export interface PortfolioRegistration {
@@ -25,6 +26,17 @@ export interface RepositoryMaterialization {
   status: 'pending' | 'ready' | 'registered' | 'needs_attention';
   base?: string;
   error?: string;
+}
+
+export interface ArchitectureMutation {
+  id: string;
+  repositoryId: string;
+  sourceBase: string;
+  previousBase: string;
+  previousRef: string;
+  base: string;
+  ref: string;
+  status: 'pending' | 'completed';
 }
 
 /** Stores locations and registrations while architectural facts remain in committed definitions. */
@@ -57,7 +69,7 @@ export class PortfolioStore {
     try {
       const version = Number(this.db!.prepare('PRAGMA user_version').get()?.user_version);
       const tables = this.db!.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
-      if (![0, 1, 2].includes(version) || (version === 0 && tables.length))
+      if (![0, 1, 2, 3].includes(version) || (version === 0 && tables.length))
         throw new Error('Unsupported portfolio database');
       return version;
     } finally {
@@ -74,9 +86,10 @@ export class PortfolioStore {
       CREATE TABLE IF NOT EXISTS registrations(kind TEXT,id TEXT,data TEXT NOT NULL,PRIMARY KEY(kind,id));
       CREATE TABLE IF NOT EXISTS events(sequence INTEGER PRIMARY KEY,type TEXT,data TEXT);
       CREATE TABLE IF NOT EXISTS materializations(remote TEXT PRIMARY KEY,data TEXT NOT NULL);
-      PRAGMA user_version=2;
+      CREATE TABLE IF NOT EXISTS architecture_mutations(id TEXT PRIMARY KEY,data TEXT NOT NULL);
+      PRAGMA user_version=3;
       COMMIT;`);
-    this.version = 2;
+    this.version = 3;
   }
 
   /** Reads clone intents, including failures, without initializing an older read-only registry. */
@@ -94,6 +107,33 @@ export class PortfolioStore {
       `INSERT INTO materializations VALUES(?,?)
       ON CONFLICT(remote) DO UPDATE SET data=excluded.data`,
     ).run(value.remote, JSON.stringify(value));
+  }
+
+  /** Reads durable configuration transitions without upgrading historical read-only stores. */
+  mutations(): ArchitectureMutation[] {
+    if (this.version < 3) return [];
+    return this.db!.prepare('SELECT data FROM architecture_mutations ORDER BY rowid')
+      .all()
+      .map((row) => JSON.parse(String(row.data)));
+  }
+
+  /** Retains intent and completion in the caller's atomic authority transaction. */
+  mutation(value: ArchitectureMutation): void {
+    if (!this.writable) throw new Error('Portfolio is read-only');
+    this.db!.prepare(
+      'INSERT INTO architecture_mutations VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data',
+    ).run(value.id, JSON.stringify(value));
+  }
+
+  /** Selects an already validated configuration revision without duplicating architectural facts. */
+  selectAuthority(id: string, authority: NonNullable<PortfolioRepository['authority']>): void {
+    if (!this.writable) throw new Error('Portfolio is read-only');
+    const previous = this.repositories().find((entry) => entry.id === id);
+    if (!previous) throw new Error('Unknown registered repository');
+    this.db!.prepare('UPDATE repositories SET data=? WHERE id=?').run(
+      JSON.stringify({ ...previous, authority }),
+      id,
+    );
   }
 
   /** Returns stable repository locations without filesystem-dependent identifiers. */
