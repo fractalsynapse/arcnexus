@@ -1,3 +1,4 @@
+import { setTimeout as delay } from 'node:timers/promises';
 import { mkdirSync, writeFileSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadProjectBindings } from '../../../../dist/library/architecture/bindings.js';
@@ -30,7 +31,7 @@ export class GeneralFixture {
 
   /** Builds a committed catalog and registers host cleanup before the fixture directory disappears. */
   constructor(t: TestContext, gate?: string) {
-    this.fixture = workflowFixture(t);
+    this.fixture = workflowFixture(t, 'success', () => this.stopHost());
     const f = this.fixture;
     this.catalog();
     const native = this.harness(gate);
@@ -44,7 +45,6 @@ export class GeneralFixture {
       }),
     );
     f.commit();
-    t.after(() => this.stopHost());
   }
 
   /** Scripts model responses while delegating enforcement to the configured installed native runtime. */
@@ -203,13 +203,25 @@ import(${JSON.stringify(module)}).then(({ControlledGeneral}) => new ControlledGe
     this.hostPid = JSON.parse(readFileSync(join(root, project, 'host.json'), 'utf8')).pid;
   }
 
-  /** Stops the detached test host so no managed process survives its disposable repository. */
-  private stopHost(): void {
+  /** Stops the owned supervisor before fixture removal, retaining evidence if its test watchdog expires. */
+  private async stopHost(): Promise<void> {
     if (!this.hostPid) return;
     try {
       process.kill(this.hostPid, 'SIGTERM');
-    } catch {
-      /* Already stopped. */
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ESRCH') return;
+      throw error;
     }
+    for (let observation = 0; observation < 200; observation++) {
+      try {
+        const state = readFileSync(`/proc/${this.hostPid}/stat`, 'utf8').split(' ')[2];
+        if (state === 'Z') return;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
+        throw error;
+      }
+      await delay(50);
+    }
+    throw new Error('Test supervisor did not stop; retained fixture: ' + this.fixture.root);
   }
 }
