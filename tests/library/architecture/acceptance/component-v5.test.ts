@@ -55,7 +55,7 @@ class ComponentV5Scenarios {
     const f = new ComponentV5Fixture(t);
     f.put(
       'architecture/components/unrelated-filename.json',
-      f.component('sample', 'library', {
+      f.uncheckedComponent('sample', 'library', {
         parentId: 'package',
         owns: ['src', 'docs', 'tests'],
         [field]: [],

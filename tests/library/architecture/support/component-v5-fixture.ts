@@ -4,6 +4,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import type { TestContext } from 'node:test';
+import { validateSchema } from '../../../../dist/library/architecture/schema.js';
 
 /** Builds a completely owned minimal catalog without legacy component fields. */
 export class ComponentV5Fixture {
@@ -105,8 +106,13 @@ export class ComponentV5Fixture {
     );
   }
 
-  /** Builds a declaration whose absent fields must be inherited or derived. */
+  /** Rejects malformed ordinary setup using the same packaged schema as production loading. */
   component(id: string, type: string, extra: object = {}): any {
+    return validateSchema(`component-v${this.version}`, this.uncheckedComponent(id, type, extra));
+  }
+
+  /** Builds deliberately malformed declarations only for explicit production rejection scenarios. */
+  uncheckedComponent(id: string, type: string, extra: object = {}): any {
     return { schemaVersion: this.version, id, type, purpose: 'Own bounded behavior', ...extra };
   }
 
