@@ -4,6 +4,8 @@
 
 ### Added
 
+- Clean up eligible package workspaces outside a checkout while retaining unfinished work and execution evidence (#195).
+
 - Prepare registered package workspaces outside a checkout through shared services and exclusive repository ownership (#191).
 
 - Expose complete committed platform standard list/get resources, including unused guidance (#187).

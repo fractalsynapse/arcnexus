@@ -1,10 +1,14 @@
 import { setTimeout as delay } from 'node:timers/promises';
-import { WorkspacePreparation, WorkspaceResources } from '../../library/workspace/workspace.js';
+import {
+  WorkspaceDisposal,
+  WorkspacePreparation,
+  WorkspaceResources,
+} from '../../library/workspace/workspace.js';
 import { Portfolio } from '../../library/portfolio/portfolio.js';
 import { InputError } from '../../library/architecture/config.js';
 import type { CliValues } from './arguments.js';
 
-/** Renders workspace queries independently of the current checkout and execution-host lifecycle. */
+/** Adapts package workspace lifecycle and read-only observations independently of the current checkout. */
 export class WorkspaceQueryCommand {
   /** Keeps terminal observation cancellation separate from assignment cancellation. */
   constructor(
@@ -13,10 +17,11 @@ export class WorkspaceQueryCommand {
     private readonly signal: AbortSignal,
   ) {}
 
-  /** Routes resource reads and captured preparation through their shared application services. */
+  /** Routes workspace preparation, disposal and observation through shared application services. */
   async run(): Promise<void> {
     if (this.positionals[1] === 'list') return this.list();
     if (this.positionals[1] === 'prepare') return this.prepare();
+    if (this.positionals[1] === 'cleanup') return this.cleanup();
     const input = this.input(),
       resources = new WorkspaceResources();
     let after = input.after,
@@ -28,6 +33,26 @@ export class WorkspaceQueryCommand {
       after = result.cursor;
       if (!this.values.follow || result.finalized) return;
       await delay(200);
+    }
+  }
+
+  /** Removes only package-scoped disposable workspaces and exposes every preserved outcome. */
+  private cleanup(): void {
+    this.options(['json', 'workspace']);
+    if (this.positionals.length !== 3)
+      throw new InputError('Expected workspace cleanup <package> [--workspace <id>]');
+    const portfolio = new Portfolio();
+    try {
+      const target = portfolio.packageTarget(this.positionals[2]);
+      const result = new WorkspaceDisposal().cleanup(
+        target,
+        { workspace: this.values.workspace },
+        this.signal,
+      );
+      this.render(result);
+      process.exitCode = result.status === 'completed' ? 0 : 1;
+    } finally {
+      portfolio.close();
     }
   }
 
