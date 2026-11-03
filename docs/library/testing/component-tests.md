@@ -193,3 +193,12 @@ explicit attempt allowance is removed because that feature is intentionally reti
 The minimal limits suite instead demonstrates 25 successful operation calls and a
 fourth implementation attempt; progress cases retain diagnosis and termination of
 unchanged failures. Historical profile inspection remains read-only coverage.
+
+### Managed fixture cleanup
+
+A workflow fixture may register an asynchronous before-removal cleanup callback.
+General execution fixtures use it to stop their owned supervisor and observe its
+termination before deleting source, execution state or evidence. Cleanup ordering
+must not depend on the registration order of independent test hooks. Shutdown has
+an explicit test watchdog; if it fails, retain the fixture for diagnosis rather
+than deleting files that may still be in use (#156).
