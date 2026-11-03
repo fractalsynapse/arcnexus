@@ -121,3 +121,17 @@ aliases and configuration changes must fail before inference. Native qualificati
 uses a disposable ambient MCP canary and the actual installed runtime, then a real
 bridge turn. Neither deterministic fixtures nor a sandbox-only probe establishes
 this client tool boundary.
+
+## Correctable checklist tool claims (#178)
+
+A rejected `plan.update` content claim returns a tool error to the active model,
+with the accepted checklist unchanged. The model may correct the claim through the
+same bridge. Semantic rejection is not accepted evidence and cannot satisfy host
+verification or dependencies. Record the rejection and diagnose equivalent failures
+using the retained progress observer; repeated unchanged failure requires attention.
+
+This correction path applies only to atomic plan-content validation. Cancellation,
+missing authority, operation failures and persistence errors still abort execution.
+It never replays commands or turns incomplete transport into a safe checkpoint.
+Existing runs keep their captured supervisor; a newly built supervisor does not
+retroactively repair a failed assignment or rewrite its retained evidence.
