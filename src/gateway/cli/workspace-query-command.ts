@@ -1,5 +1,5 @@
 import { setTimeout as delay } from 'node:timers/promises';
-import { WorkspaceResources } from '../../library/workspace/workspace.js';
+import { WorkspacePreparation, WorkspaceResources } from '../../library/workspace/workspace.js';
 import { Portfolio } from '../../library/portfolio/portfolio.js';
 import { InputError } from '../../library/architecture/config.js';
 import type { CliValues } from './arguments.js';
@@ -13,9 +13,10 @@ export class WorkspaceQueryCommand {
     private readonly signal: AbortSignal,
   ) {}
 
-  /** Routes only supported read operations; mutation adapters remain in the existing lifecycle. */
+  /** Routes resource reads and captured preparation through their shared application services. */
   async run(): Promise<void> {
     if (this.positionals[1] === 'list') return this.list();
+    if (this.positionals[1] === 'prepare') return this.prepare();
     const input = this.input(),
       resources = new WorkspaceResources();
     let after = input.after,
@@ -27,6 +28,26 @@ export class WorkspaceQueryCommand {
       after = result.cursor;
       if (!this.values.follow || result.finalized) return;
       await delay(200);
+    }
+  }
+
+  /** Resolves registered authority before invoking preparation and maps its retained terminal outcome. */
+  private async prepare(): Promise<void> {
+    this.options(['json']);
+    if (this.positionals.length !== 3) throw new InputError('Expected workspace prepare <package>');
+    const portfolio = new Portfolio();
+    try {
+      const target = portfolio.packageTarget(this.positionals[2]);
+      const result = await new WorkspacePreparation().prepare(target, this.signal);
+      this.render(result);
+      process.exitCode =
+        result.workspace.status === 'prepared'
+          ? 0
+          : result.workspace.status === 'cancelled'
+            ? 130
+            : 1;
+    } finally {
+      portfolio.close();
     }
   }
 

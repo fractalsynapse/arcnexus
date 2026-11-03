@@ -4,6 +4,8 @@
 
 ### Added
 
+- Prepare registered package workspaces outside a checkout through shared services and exclusive repository ownership (#191).
+
 - Expose complete committed platform standard list/get resources, including unused guidance (#187).
 
 - Read registered package components through shared list/get services with safe projections, filters, cursors and revision tokens (#173).

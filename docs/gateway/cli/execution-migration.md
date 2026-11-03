@@ -65,3 +65,11 @@ prompt or unsupported activity fails. The architecture library owns this read se
 so later gateways can use the same contract. The temporary `inspect ... --project`
 adapter remains for qualification callers until their migration; it cannot accept the
 new activity option or ambiguously combine the two forms.
+
+`workspace prepare <package> [--json]` prepares a registered package from any
+working directory through the shared workspace service. Package references follow
+portfolio resolution; command recipes, bindings and source revisions are resolved
+under the hood. Success returns a workspace resource and exit 0; a retained failed
+preparation returns 1, invalid input/preflight returns 2, and cancellation returns
+130. An active repository host prevents preparation rather than allowing concurrent
+repository mutation. Legacy `prepare --project` remains only during fixture migration.

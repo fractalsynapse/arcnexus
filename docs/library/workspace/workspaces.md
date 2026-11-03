@@ -97,3 +97,23 @@ must be rejected before creating a worktree or launching a child.
 Execution deadlines are retired from preparation as well as task/workday execution.
 `prepare --timeout-seconds ...` returns invalid input before starting work. SIGINT and
 host-loss supervision remain available; the test runner's explicit watchdog is separate.
+
+## Registered package preparation
+
+`workspace prepare <package> [--json]` resolves a registered qualified package
+(or an unambiguous short reference) independently of the caller's directory.
+The shared `WorkspacePreparation.prepare(target, signal)` service accepts captured
+`source`, `base` and `packageId`, resolves local bindings, and prepares the existing
+application-owned workspace through the captured operations. It does not create an
+engineering assignment or start an execution host.
+
+Preparation acquires the same canonical repository lease used by project hosts.
+An existing host or concurrent preparation causes a refusal before worktree
+mutation. Source must be clean. The response is the workspace resource projection,
+with retained evidence and a terminal `prepared`, `failed` or `cancelled` status.
+Failures and cancellation preserve the workspace and operation evidence; they do
+not authorize cleanup or replay. The service releases its lease after finalization.
+Existing workspace list/get commands inspect the resulting receipt.
+
+This command uses the current application state location. Relocated-volume
+identities and migration of the legacy cleanup command remain separate work.
