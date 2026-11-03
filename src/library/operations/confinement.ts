@@ -17,7 +17,7 @@ export interface ConfinementAuthority {
   reads: string[];
   outputs: string[];
   maintainedPaths?: string[];
-  network?: boolean;
+  network?: boolean | { domains: string[] };
   temporaryRoot: string;
   executable: string;
   toolDirectories?: string[];
@@ -137,6 +137,7 @@ export class SourceConfinement {
   environment(base: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
     return {
       ...base,
+      HOME: this.temporaryRoot,
       CODEX_HOME: this.temporaryRoot + '-configuration',
       TMPDIR: this.temporaryRoot,
       NODE_OPTIONS:
@@ -212,6 +213,23 @@ export class SourceConfinement {
     );
   }
 
+  /** Restricts declared download domains through the managed proxy; unsupported filtering fails closed. */
+  private networkConfiguration(): string[] {
+    const network = this.authority.network;
+    if (!network || typeof network === 'boolean') return [];
+    if (
+      !network.domains.length ||
+      network.domains.some((domain) => !/^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/.test(domain))
+    )
+      throw new Error('Expected explicit operation network domains');
+    const domains = network.domains.map((domain) => `${JSON.stringify(domain)}="allow"`);
+    return [
+      'features.network_proxy=true',
+      'permissions.arcnexus.network.mode="limited"',
+      `permissions.arcnexus.network.domains={${domains.join(',')}}`,
+    ];
+  }
+
   /** Encodes literal TOML values with no shell interpolation or inherited writable defaults. */
   private configuration(): string[] {
     const entries = Object.entries(this.filesystem).map(
@@ -220,7 +238,8 @@ export class SourceConfinement {
     return [
       'default_permissions="arcnexus"',
       `permissions.arcnexus.filesystem={${entries.join(',')}}`,
-      `permissions.arcnexus.network.enabled=${this.authority.network === true}`,
+      `permissions.arcnexus.network.enabled=${Boolean(this.authority.network)}`,
+      ...this.networkConfiguration(),
       'features.use_legacy_landlock=false',
     ];
   }

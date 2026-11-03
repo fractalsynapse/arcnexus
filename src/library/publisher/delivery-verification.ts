@@ -78,7 +78,7 @@ export class DeliveryVerification {
       `${String(run.data.candidateRevision)}^{tree}`,
     ).trim();
     if (observed !== accepted) throw new Error('Candidate changed after verified delivery');
-    if (run.mode === 'task' && run.status !== 'completed')
+    if (run.mode === 'task' && !Array.isArray(run.data.goalEvidence))
       throw new Error('Task requires director goal acceptance before delivery');
   }
 

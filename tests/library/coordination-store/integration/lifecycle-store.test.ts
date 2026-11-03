@@ -99,4 +99,8 @@ test('read-only lifecycle inspection cannot register environments or alter effec
   }
 });
 
-registerSuite({ component: 'coordination-store', level: 'integration', tags: ['deterministic', 'lifecycle-effects'] });
+registerSuite({
+  component: 'coordination-store',
+  level: 'integration',
+  tags: ['deterministic', 'lifecycle-effects'],
+});

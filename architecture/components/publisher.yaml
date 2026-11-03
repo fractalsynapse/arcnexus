@@ -8,6 +8,8 @@ constraints:
   - Simulation promotion creates fresh live authority and verification
   - Real main merges, tags and package publication remain human-controlled
 operations:
+  publish-delivery: [agent]
+  package-artifact: [verify]
   component-tests: [verify]
   migrated-recipe-df6d67ddacf5bf0c: [verify]
 owns:

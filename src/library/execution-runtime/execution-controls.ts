@@ -1,3 +1,4 @@
+import { DeliveryResources } from '../publisher/publisher.js';
 import { InputError } from '../architecture/config.js';
 import { statePath } from '../workspace/state.js';
 import { ExecutionResources } from './execution-resources.js';
@@ -30,6 +31,18 @@ export class ExecutionControls {
       expectedRevision,
     });
     return new ExecutionResources(this.root).workday(resource.workday.id);
+  }
+
+  /** Requests publication from the original supervising runtime, preserving its repository lock and authority. */
+  async delivery(id: string, expectedRevision?: string) {
+    const delivery = new DeliveryResources(this.root).get(id);
+    if (expectedRevision !== undefined && delivery.revision !== expectedRevision)
+      throw new InputError('Stale delivery revision');
+    const connection = await new RetainedHost(this.root, delivery.projectId).connect(
+      delivery.authorityDigest,
+      'delivery-control',
+    );
+    return connection.request({ action: 'delivery-control', id, expectedRevision });
   }
 
   /** Sends one mutation; uncertain responses are surfaced rather than automatically replayed. */

@@ -9,7 +9,8 @@ generatedDirectories:
   - dist
   - node_modules
 artifacts: []
-network: true
+network:
+  domains: [registry.npmjs.org]
 schemaVersion: 4
 id: migrated-recipe-e58bdff3c39641d2
 purpose: Project setup

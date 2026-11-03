@@ -29,6 +29,6 @@ export interface ExternalEffect extends ExternalIntent {
 
 export type ExternalObservation =
   | { status: 'absent'; evidence: string }
-  | { status: 'unknown'; evidence: string }
+  | { status: 'unknown'; evidence: string; reason?: string }
   | { status: 'completed'; evidence: string; result: Record<string, unknown> }
   | { status: 'rejected'; evidence: string; reason: string };

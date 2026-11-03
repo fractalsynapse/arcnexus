@@ -1,3 +1,4 @@
+import { RunPublication } from './run-publication.js';
 import { RunSelection } from './run-selection.js';
 import { RunCreation } from './run-creation.js';
 import { RunEnvironments } from './run-environments.js';
@@ -7,12 +8,11 @@ import { HostRecovery } from './host-recovery.js';
 import { RunAuthority } from './run-authority.js';
 import { ExecutionEvidence, ExecutionReports } from '../report/report.js';
 import { StewardshipPolicy } from '../workday/workday.js';
-import { git } from '../operations/process.js';
 import { InputError } from '../architecture/config.js';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ProjectExecution } from '../architecture/execution-context.js';
-import type { ExecutionRun } from '../coordination-store/execution-types.js';
+import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/execution-types.js';
 import { ExecutionStore } from '../coordination-store/execution-store.js';
 import { RunWorkspace } from './run-workspace.js';
 import type { RecordData } from '../workspace/state.js';
@@ -97,6 +97,11 @@ export class ProjectHost {
       throw new InputError('Unknown workday action');
     this.control(action);
     return this.reports.view(id);
+  }
+
+  /** Queues publication under the sole repository host without overlapping active engineering. */
+  publish(id: string, expectedRevision?: string) {
+    return new RunPublication(this.root, this.context, this.store).request(id, expectedRevision);
   }
 
   /** Queues a goal without interrupting an in-flight safe checkpoint. */
@@ -208,21 +213,7 @@ export class ProjectHost {
 
   /** Projects current lifecycle and accountable assignments for the option-free status command. */
   status() {
-    const workday = this.selection.workday();
-    const sourceRevision = git(this.context.source, 'rev-parse', 'HEAD').trim();
-    return {
-      sourceChanged: sourceRevision !== this.context.base,
-      capturedRevision: this.context.base,
-      sourceRevision,
-      workday: workday ? this.reports.view(workday.id).run : undefined,
-      active: this.active?.runId ?? null,
-      tasks: this.store
-        .runs()
-        .filter((r) => r.mode === 'task')
-        .map((r) => this.reports.view(r.id).run),
-      assignments: workday ? this.reports.view(workday.id).assignments : [],
-      candidate: String(this.selection.delivery()?.data.candidateRevision ?? this.context.base),
-    };
+    return this.selection.status(this.active?.runId ?? null, this.reports);
   }
 
   /** Captures a new run against the last compatible verified candidate. */
@@ -243,6 +234,12 @@ export class ProjectHost {
   /** Prepares context, advances ready assignments or invokes the mode-specific selection policy. */
   private async advance(run: ExecutionRun, signal: AbortSignal): Promise<void> {
     this.authority.assert(run);
+    if (run.data.pendingPublication)
+      return new RunPublication(this.root, this.context, this.store).advance(
+        run,
+        this.environments,
+        signal,
+      );
     await this.environments.prepare(run, signal);
     run = this.store.run(run.id);
     if (!run.data.workspace) await this.workspaces(run).prepare(run, signal);
@@ -252,15 +249,26 @@ export class ProjectHost {
     if (!run.data.initialized) return this.direct(run, signal);
     const ready = this.store.ready(run.id);
     if (ready.length && (run.mode === 'task' || run.data.lastDispatch !== 'assignment')) {
-      await new CollaborativeDispatch(this.root, this.context, this.store, this.environments).step(
-        run,
-        signal,
-      );
-      this.store.updateRun(run.id, this.store.run(run.id).status, { lastDispatch: 'assignment' });
+      await this.dispatchAssignment(run, signal);
       return;
     }
     if (run.mode === 'workday') await this.stewardship(run, signal);
     else await this.finishTask(run, signal);
+  }
+
+  /** Executes ready engineering and retains any verified workday delivery before another activation. */
+  private async dispatchAssignment(run: ExecutionRun, signal: AbortSignal): Promise<void> {
+    await new CollaborativeDispatch(this.root, this.context, this.store, this.environments).step(
+      run,
+      signal,
+    );
+    this.store.updateRun(run.id, this.store.run(run.id).status, { lastDispatch: 'assignment' });
+    if (run.mode === 'workday')
+      await new RunPublication(this.root, this.context, this.store).advance(
+        this.store.run(run.id),
+        this.environments,
+        signal,
+      );
   }
 
   /** Runs task direction and retains interactive questions before any owner activation. */
@@ -367,25 +375,53 @@ export class ProjectHost {
         true,
         signal,
       );
-    const record = await this.workspaces(run).policy(run, signal);
+    if (run.data.goalEvidence && run.data.goalCandidate === run.data.candidateRevision)
+      return this.completeTask(run, signal);
     try {
-      const evidence = await new Direction(
-        this.root,
-        this.environments.contextFor(run),
-        signal,
-      ).verify(
-        record,
-        run.owners[0]!,
-        run.objective,
-        assignments,
-        true,
-        new ExecutionEvidence(this.root, this.store).capture(run.id),
-      );
-      if (!signal.aborted) this.store.updateRun(run.id, 'completed', { goalEvidence: evidence });
+      await this.assessGoal(run, assignments, signal);
+      if (!signal.aborted) await this.completeTask(this.store.run(run.id), signal);
     } catch (error) {
       if (!(error instanceof VerificationIssue)) throw error;
       await this.redirect(run, error.result, false, signal);
     }
+  }
+
+  /** Retains goal acceptance as a checkpoint before publication or terminal run transitions. */
+  private async assessGoal(
+    run: ExecutionRun,
+    assignments: ExecutionAssignment[],
+    signal: AbortSignal,
+  ): Promise<void> {
+    const record = await this.workspaces(run).policy(run, signal);
+    const evidence = await new Direction(
+      this.root,
+      this.environments.contextFor(run),
+      signal,
+    ).verify(
+      record,
+      run.owners[0]!,
+      run.objective,
+      assignments,
+      true,
+      new ExecutionEvidence(this.root, this.store).capture(run.id),
+    );
+    if (!signal.aborted)
+      this.store.updateRun(run.id, this.store.run(run.id).status, {
+        goalEvidence: evidence,
+        goalCandidate: run.data.candidateRevision,
+      });
+  }
+
+  /** Completes only after idempotent publication capture, so host loss cannot omit a verified delivery. */
+  private async completeTask(run: ExecutionRun, signal: AbortSignal): Promise<void> {
+    if (this.store.run(run.id).status !== 'running') return;
+    await new RunPublication(this.root, this.context, this.store).advance(
+      run,
+      this.environments,
+      signal,
+    );
+    if (signal.aborted || this.store.run(run.id).status !== 'running') return;
+    this.store.updateRun(run.id, 'completed');
   }
 
   /** Reactivates goal direction without discarding deliveries or fabricating resolution of blocked work. */

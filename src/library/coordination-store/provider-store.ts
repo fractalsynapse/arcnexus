@@ -36,11 +36,41 @@ export class ProviderStore {
     });
   }
 
+  /** Journals asynchronous provider work so an interrupted check cannot be mistaken for an absent request. */
+  start(effect: ExternalEffect): void {
+    this.db.transaction('provider.started', { id: effect.id }, () => {
+      if (this.db.all<{ id: string }>('pending').some((pending) => pending.id === effect.id))
+        throw new Error('Provider work requires reconciliation before retry');
+      this.db.put('pending', { id: effect.id, inputDigest: effect.inputDigest });
+    });
+  }
+
+  /** Retains asynchronous provider progress without claiming the external effect has completed. */
+  checkpoint(effect: ExternalEffect, change: () => unknown): void {
+    this.db.transaction('provider.checkpoint', { id: effect.id }, () => {
+      this.receipt(effect);
+      if (!this.db.all<{ id: string }>('pending').some((pending) => pending.id === effect.id))
+        throw new Error('Provider checkpoint requires started work');
+      this.change(change);
+    });
+  }
+
   /** Reconciles against durable provider state rather than assuming a failed transport had no effect. */
   inspect(effect: ExternalEffect): ExternalObservation {
     return this.db.snapshot(() => {
       const receipt = this.receipt(effect);
       const evidence = `simulated-provider:${effect.environmentId}:${effect.id}`;
+      const pending = this.db
+        .all<{ id: string; inputDigest: string }>('pending')
+        .find((item) => item.id === effect.id);
+      if (pending && pending.inputDigest !== effect.inputDigest)
+        throw new Error('Provider idempotency identity conflict');
+      if (!receipt && pending)
+        return {
+          status: 'unknown',
+          evidence,
+          reason: 'Provider work started without a completed receipt',
+        };
       return receipt
         ? { status: 'completed', evidence, result: receipt.result }
         : { status: 'absent', evidence };
@@ -76,7 +106,7 @@ export class ProviderStore {
   }
 
   /** Limits resource mutation to the synchronous atomic effect application. */
-  private change(action: () => Record<string, unknown>): Record<string, unknown> {
+  private change<T>(action: () => T): T {
     this.applying = true;
     try {
       return action();
@@ -92,6 +122,11 @@ export class ProviderStore {
 
   /** Rejects attempts to reuse the same provider key for a different external request. */
   private receipt(effect: ExternalEffect): ProviderReceipt | undefined {
+    const pending = this.db
+      .all<{ id: string; inputDigest: string }>('pending')
+      .find((entry) => entry.id === effect.id);
+    if (pending && pending.inputDigest !== effect.inputDigest)
+      throw new Error('Provider idempotency identity conflict');
     const receipt = this.db.all<ProviderReceipt>('receipt').find((r) => r.id === effect.id);
     if (receipt && receipt.inputDigest !== effect.inputDigest)
       throw new Error('Provider idempotency identity conflict');

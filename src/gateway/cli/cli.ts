@@ -1,3 +1,4 @@
+import { DeliveryCommand } from './delivery-command.js';
 import { ArchitectureResourceCommand } from './architecture-resource-command.js';
 import { InspectionCommand } from './inspection-command.js';
 import { PortfolioCommand } from './portfolio-command.js';
@@ -94,7 +95,7 @@ class CliApplication {
   /** Routes a validated command to its adapter and preserves shared cancellation. */
   private async dispatch(): Promise<void> {
     if (
-      ['standard', 'component', 'workspace', 'platform', 'package', 'config'].includes(
+      ['standard', 'component', 'workspace', 'platform', 'package', 'config', 'delivery'].includes(
         this.command!,
       )
     )
@@ -125,6 +126,8 @@ class CliApplication {
 
   /** Routes application resource commands separately from engineering and qualification lifecycles. */
   private async resources(): Promise<void> {
+    if (this.command === 'delivery')
+      return new DeliveryCommand(this.positionals, this.values).run();
     if (['component', 'standard'].includes(this.command!))
       return new ArchitectureResourceCommand(this.positionals, this.values).run();
     if (this.command === 'config') return new ConfigCommand(this.positionals, this.values).run();

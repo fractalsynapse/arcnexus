@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import type { ResolvedAssignment } from '../architecture/assignment.js';
 import { toolDirectories, type Bindings } from '../architecture/bindings.js';
 import { save, type RecordData } from '../workspace/state.js';
+import { NetworkQualification } from './network-qualification.js';
 import { SourceConfinement } from './confinement.js';
 import { operationEnvironment } from './environment.js';
 import type { Operation } from './operations.js';
@@ -26,6 +27,7 @@ export class OperationConfinement {
   async prepare(op: Operation): Promise<SourceConfinement> {
     const adapter = this.confinement(op);
     await this.qualify(adapter);
+    if (typeof op.network === 'object') await this.qualifyNetwork(adapter);
     return adapter;
   }
 
@@ -49,7 +51,9 @@ export class OperationConfinement {
       executable: bindings?.tools.codex ?? 'codex',
       network:
         (this.record.executionEnvironment as { mode?: string } | undefined)?.mode === 'simulation'
-          ? false
+          ? typeof op.network === 'object'
+            ? op.network
+            : false
           : op.network,
       toolDirectories: [...toolDirectories(this.record), this.record.commonDir],
     });
@@ -91,6 +95,16 @@ export class OperationConfinement {
     )
       throw new Error('Source confinement qualification failed');
     this.record.confinementQualified = hostIdentity;
+    save(this.root, this.record);
+  }
+
+  /** Separately qualifies proxy method and bypass enforcement before the first permitted download. */
+  private async qualifyNetwork(adapter: SourceConfinement): Promise<void> {
+    if (this.record.networkQualified === hostIdentity) return;
+    const { source, root } = this.probe(adapter);
+    const executable = (this.record.bindings as Bindings | undefined)?.tools.codex ?? 'codex';
+    await new NetworkQualification(executable, this.signal).run(source, root);
+    this.record.networkQualified = hostIdentity;
     save(this.root, this.record);
   }
 

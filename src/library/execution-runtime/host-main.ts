@@ -9,7 +9,7 @@ import { processStart } from '../operations/service-state.js';
 import { ProjectHost } from './project-host.js';
 import type { HostRequest } from './host-client.js';
 
-const hostCapabilities = ['task-control', 'workday-control', 'simulation'];
+const hostCapabilities = ['task-control', 'workday-control', 'simulation', 'delivery-control'];
 
 /** Owns the private IPC listener and keeps lifecycle controls responsive during inference. */
 class HostServer {
@@ -87,7 +87,11 @@ class HostServer {
       status.active ||
       this.host.store
         .runs()
-        .some((run) => !['completed', 'cancelled', 'failed', 'stopped'].includes(run.status))
+        .some(
+          (run) =>
+            run.data.pendingPublication ||
+            !['completed', 'cancelled', 'failed', 'stopped'].includes(run.status),
+        )
     )
       throw new Error('Active execution host cannot retire');
     this.retiring = true;
@@ -111,6 +115,8 @@ class HostServer {
   private dispatch(request: HostRequest): unknown {
     this.validate(request);
     if (request.action === 'identity') return { ...this.context, hostCapabilities };
+    if (request.action === 'delivery-control')
+      return this.host.publish(String(request.id), request.expectedRevision);
     if (request.action === 'workday-control')
       return this.host.workdayControl(
         String(request.control),
@@ -128,6 +134,11 @@ class HostServer {
     if (request.action === 'submit')
       return this.host.submit(String(request.prompt ?? ''), request.simulate);
     if (request.action === 'task-status') return this.host.reports.view(String(request.id));
+    return this.runControl(request);
+  }
+
+  /** Handles direct run controls while resource mutations retain explicit identity checks. */
+  private runControl(request: HostRequest): unknown {
     if (request.action === 'answer') {
       this.host.answer(String(request.id), String(request.answer));
       return true;

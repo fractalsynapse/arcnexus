@@ -85,6 +85,7 @@ export class Direction {
     evidence: unknown,
     goal = false,
     hostEvidence?: unknown,
+    baseline = goal ? this.context.base : workspace.base,
   ): Promise<string[]> {
     const record = new DirectionRecords(this.root, this.context).create(
       workspace,
@@ -96,11 +97,7 @@ export class Direction {
     record.hostExecutionEvidence = hostEvidence;
     record.acceptanceCriteria = new VerificationAssessment().criteria(objective, evidence, goal);
     if (goal) delete record.assignmentId;
-    const captured = new VerificationEvidence(
-      this.root,
-      record,
-      goal ? this.context.base : record.base,
-    );
+    const captured = new VerificationEvidence(this.root, record, baseline);
     await this.observe(record, () =>
       this.assess(record, this.verificationPrompt(record, objective, evidence, goal), captured),
     );

@@ -18,7 +18,7 @@ export { operationEnvironment } from './environment.js';
 export type Operation = {
   schemaVersion: 2 | 3 | 4;
   prerequisites?: string[];
-  network?: boolean;
+  network?: boolean | { domains: string[] };
   argumentTokens?: import('./operation-definition.js').ArgumentToken[];
   pendingContext?: import('./operation-definition.js').ContextInput[];
   definitionArguments?: import('./operation-definition.js').ArgumentToken[];
@@ -39,6 +39,7 @@ export type Operation = {
   | (Command & { kind: 'command' | 'service'; service?: ServiceDefinition })
   | { kind: 'http'; http: HttpDefinition }
   | { kind: 'upstream'; action: 'issue.create' | 'issue.comment' | 'issue.close' }
+  | { kind: 'upstream'; action: 'delivery.publish'; targetBranch: string; automaticMerge?: boolean }
 );
 
 export interface OperationBridge {

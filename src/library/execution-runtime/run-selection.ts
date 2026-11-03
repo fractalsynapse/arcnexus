@@ -1,3 +1,5 @@
+import { git } from '../operations/process.js';
+import type { ExecutionReports } from '../report/report.js';
 import type { ProjectExecution } from '../architecture/execution-context.js';
 import type { ExecutionRun, RunEnvironment } from '../coordination-store/execution-types.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
@@ -12,6 +14,8 @@ export class RunSelection {
 
   /** Selects queued tasks first and tracks automatic pauses independently of user intent. */
   next(): ExecutionRun | undefined {
+    const publication = this.store.runs().find((run) => run.data.pendingPublication);
+    if (publication) return publication;
     const task = this.selectTask();
     const workday = this.workday();
     if (task) {
@@ -30,6 +34,25 @@ export class RunSelection {
       });
     const latest = this.workday();
     return latest?.status === 'running' ? latest : undefined;
+  }
+
+  /** Projects retained run ownership alongside observed source drift without dispatching work. */
+  status(active: string | null, reports: ExecutionReports) {
+    const workday = this.workday();
+    const sourceRevision = git(this.context.source, 'rev-parse', 'HEAD').trim();
+    return {
+      sourceChanged: sourceRevision !== this.context.base,
+      capturedRevision: this.context.base,
+      sourceRevision,
+      workday: workday ? reports.view(workday.id).run : undefined,
+      active: active,
+      tasks: this.store
+        .runs()
+        .filter((r) => r.mode === 'task')
+        .map((r) => reports.view(r.id).run),
+      assignments: workday ? reports.view(workday.id).assignments : [],
+      candidate: String(this.delivery()?.data.candidateRevision ?? this.context.base),
+    };
   }
 
   /** Keeps a task's project ownership across activations; answered clarifications rejoin the FIFO queue. */

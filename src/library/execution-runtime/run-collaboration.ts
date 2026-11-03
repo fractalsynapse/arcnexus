@@ -1,3 +1,4 @@
+import { runDestination } from './run-destination.js';
 import { join } from 'node:path';
 import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
 import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/execution-types.js';
@@ -13,6 +14,8 @@ import type { RunEnvironments } from './run-environments.js';
 export class RunCollaboration {
   private providerStore?: ProviderStore;
 
+  private readonly target: string;
+
   /** Retains the existing run/assignment stores without granting a worker access to them. */
   constructor(
     private readonly context: ProjectExecution,
@@ -20,7 +23,9 @@ export class RunCollaboration {
     private readonly environments: RunEnvironments,
     private readonly run: ExecutionRun,
     private readonly signal: AbortSignal,
-  ) {}
+  ) {
+    this.target = run.environment ? runDestination(context, run.environment.mode) : '';
+  }
 
   /** Creates tracking before engineering and records the provider receipt on its accountable run or assignment. */
   async tracking(assignment?: ExecutionAssignment): Promise<void> {
@@ -32,10 +37,10 @@ export class RunCollaboration {
     );
     const key = `${identity}:tracking`;
     const input = this.trackingInput(key, assignment);
-    let result = await executor.execute(key, 'issue.create', this.target(), input, this.signal);
+    let result = await executor.execute(key, 'issue.create', this.target, input, this.signal);
     if (result.status === 'uncertain') result = await executor.recover(key, this.signal);
     if (result.status === 'prepared')
-      result = await executor.execute(key, 'issue.create', this.target(), input, this.signal);
+      result = await executor.execute(key, 'issue.create', this.target, input, this.signal);
     if (result.status !== 'completed')
       throw new Error('Tracking issue requires reconciliation: ' + key);
     if (assignment)
@@ -76,7 +81,7 @@ export class RunCollaboration {
       );
     return new UpstreamBridge(
       this.executor(assignment.owner, assignment.id),
-      this.target(),
+      this.target,
       `${this.run.environment.id}/${this.run.id}/${assignment.id}`,
       this.signal,
       actions,
@@ -112,14 +117,14 @@ export class RunCollaboration {
       provider = new SimulatedUpstream(
         environment.providerId,
         environment.id,
-        this.target(),
+        this.target,
         this.providerStore,
       );
     } else
       provider = new GitHubUpstream(
         environment.providerId,
         environment.id,
-        this.target(),
+        this.target,
         async () => {
           const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
           if (!token) throw new Error('GitHub host credential is unavailable');
@@ -136,23 +141,8 @@ export class RunCollaboration {
       .filter((op) => op.kind === 'upstream')
       .map((op) => ({
         operation: op.action,
-        target: this.target(),
+        target: this.target,
         definitionDigest: op.definitionDigest!,
       }));
-  }
-
-  /** Reads repository destination from captured architecture rather than mutable Git remotes. */
-  private target(): string {
-    const source = this.context.catalog.configurationSources.find((entry) =>
-      /^architecture\/environment\.(yaml|yml|json)$/.test(entry.path),
-    );
-    const repository = (source?.value as { workspace?: { primary?: { repository?: string } } })
-      ?.workspace?.primary?.repository;
-    const match = repository?.match(
-      /^https:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+?)(?:\.git)?$/,
-    );
-    if (match) return match[1]!;
-    if (this.run.environment?.mode === 'simulation') return this.context.catalog.primaryRepository!;
-    throw new Error('Live collaboration requires a captured GitHub repository destination');
   }
 }

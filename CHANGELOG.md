@@ -4,6 +4,8 @@
 
 ### Added
 
+- Add durable simulated Git/PR/release publication, delivery inspection and revision approval, and confined read-only dependency downloads with native bypass qualification (#148).
+
 - Route simulated tasks/workdays through isolated repositories and assignment-bound collaboration, direct workday setup, and retain revision-bound verified deliveries before publication (#148).
 
 - Add durable environment-bound collaboration intents, conservative upstream recovery, and GitHub/simulated issue adapters for the pending managed lifecycle (#148).

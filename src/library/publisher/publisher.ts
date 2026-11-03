@@ -1,3 +1,7 @@
+export { PublicationPolicy, type CapturedPublicationPolicy } from './publication-policy.js';
+
+export { DeliveryChecks } from './delivery-checks.js';
+
 import { createHash } from 'node:crypto';
 import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/execution-types.js';
 import type { DeliveryStore } from '../coordination-store/delivery-store.js';
@@ -43,3 +47,10 @@ export class Publisher {
     });
   }
 }
+
+export {
+  SimulationPublication,
+  type SimulationPublicationContext,
+} from './simulation-publication.js';
+
+export { DeliveryResources } from './delivery-resources.js';

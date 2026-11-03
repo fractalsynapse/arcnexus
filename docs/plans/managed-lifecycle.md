@@ -418,3 +418,79 @@ support before a client submits `--simulate`. An older stable supervisor must re
 this request rather than silently ignoring the new option and running against real
 upstream services. Current supervisors continue to own retained runs; this guard does
 not replace them mid-execution.
+
+- Efficiency friction: formatted fixture constructors and inline scenario assertions
+  repeatedly exceeded the 30-physical-line rule even when their behavior was small.
+  Splitting repository setup, captured authority and assertions preserved readability
+  and the current rule, but required extra edit/lint passes. Evaluate whether future
+  guidance should distinguish declarative fixture data from procedural methods; no
+  limit was waived during this batch.
+- Fast: reusing the existing shared criterion validator and private Git snapshot
+  implementation made Publisher rejection tests small and deterministic. Native Git
+  delivery now uses the existing supervised executor and external-effect journal,
+  rather than introducing another process runner or recovery protocol.
+
+Publication authorization is one shared `upstream` operation with action
+`delivery.publish`, a required target branch, and an optional explicit automatic-merge
+grant. Its captured definition authorizes the fixed host publication workflow; agents
+cannot substitute commands, branch heads or destinations. Provider-specific internal
+steps retain that definition digest. Without an automatic grant, exact-revision local
+approval is required; provider checks and review remain mandatory in either case.
+Real default-branch merges, tags and package publication remain prohibited.
+
+The simulated PR implementation now retains open/merged state, actual pushed heads,
+check evidence and visibly synthetic provider review. Interrupted asynchronous checks
+are journaled separately from completed provider receipts. Simulated merge assembly
+uses actual Git trees and a private commit, then requests fresh independent assessment
+before compare-and-swap integration. Controlled native acceptance passed five PR/merge
+cases in 8.796 s; this tests provider behavior with controlled check outcomes, not the
+real-agent or container gates. The production check adapter uses captured owner checks
+through the existing confined operation service and independent verifier.
+
+Simulation publication now has a composed host workflow for actual commit/push,
+PR/check/review/merge and content-addressed release artifact retention. Its focused
+native acceptance retained a pending PR across the exact-revision approval boundary,
+then completed all seven effects without repeating checks on retry (4.245 s process
+elapsed). Separate PR/release cases passed seven tests in 15.128 s. These use controlled
+check inputs; actual independent model qualification remains a distinct gate.
+
+Network qualification found a productive supported path: installed Codex
+0.163.0-alpha.10.2 permits an allowlisted registry GET with its managed proxy, and
+`permissions.<name>.network.mode="limited"` rejected HTTPS POST to a disposable local
+TLS server before the server observed a request. Sources:
+[permission enforcement](https://learn.chatgpt.com/docs/permissions) and
+[configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference).
+This is a disposable probe, not yet whole-runtime qualification. Capture narrowly
+allowed download domains in the existing operation network field; simulation must
+never interpret a boolean network grant as unrestricted external access. Retain the
+read-only method policy and test direct/proxy-bypass attempts before enabling it.
+
+Efficiency: actual local Git/provider acceptance is inexpensive enough to run while
+assembling publication (seconds). Investigating the installed proxy before building a
+custom download broker avoided a second networking implementation. A command initially
+used an incorrect compiled-test path; reuse test inspection output for selection
+instead of reconstructing build paths from memory.
+
+Delivery resource reads and exact-revision approval now use shared application services;
+built-CLI acceptance exercised them from outside a checkout. Explicit publication is
+queued on the original host, which continues to serialize it with engineering work.
+The declared Publisher grant targets staging and does not grant automatic merge;
+local approval therefore remains a real lifecycle checkpoint. The artifact operation
+packages the actual built CLI and captured architectural declarations.
+
+Native network coverage established HTTP reads, HTTP mutation rejection, direct
+connection rejection, and explicit HTTP 403 for an encrypted mutation before any
+request reached the controlled TLS endpoint. A self-signed local TLS read returned
+502 even with a fixture CA setting; no general conclusion about private CA support
+is drawn. That extra read was separated from the encrypted-mutation test. Public
+registry TLS reads succeeded in the disposable installed-runtime probe. A Node fetch
+attempt in the TLS fixture timed out, so the TLS bypass assertion uses an explicit
+child curl direct connection with a required connection-denied result; the separate
+HTTP case retains the Node descendant check. No real upstream writes were attempted.
+
+Efficiency observations: source/static checks found one formatting omission left in
+the prior store-test commit; the smallest correction was formatting that metadata
+block. The long-rule overhead continues mainly in orchestration and fixture setup;
+extracting cohesive publication, selection and resource responsibilities keeps the
+500/30 limits without compressing procedural code. The remaining live-provider and
+promotion work must reuse the durable effect protocol rather than add another runner.
