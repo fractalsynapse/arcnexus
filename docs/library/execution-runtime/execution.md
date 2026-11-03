@@ -347,3 +347,24 @@ Read-only status is a retained projection and labels its active assignment state
 as observed, not a host-liveness claim. Interrupted-host recovery occurs only on
 an explicit mutation. Old hosts lacking the retained control protocol require an
 explicit new run; status and historical evidence remain readable.
+
+## Terminal-host retirement (#199)
+
+A host may yield canonical repository ownership only when it has no protected work.
+Acknowledging retirement closes admission immediately, before the process releases
+its lease or exits. A competing task submission or workday start/resume must fail
+without creating a new run or activation; it must not be accepted and then stranded
+by the scheduled exit. Repeated retirement is idempotent. Read-only identity/status
+inspection remains available until exit.
+
+Retirement does not cancel running, idle or paused workdays, nonterminal tasks,
+pending operations or unresolved execution. These states require their ordinary
+explicit controls. Existing evidence and captured authority survive retirement;
+normal host discovery may start a new host after the old one releases ownership.
+Transport safeguards are separate from execution budgets. No work deadline, turn
+quota, forced host termination or new scheduler is introduced.
+
+The first bounded implementation verifies retirement admission and protected-state
+checks through the built production host/IPC path. Automatic management-command
+handoff and the shared acquisition service follow separately; this change alone
+must not claim that those commands can yet retire hosts automatically.

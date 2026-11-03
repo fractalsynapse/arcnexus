@@ -46,6 +46,8 @@
 
 ### Fixed
 
+- Close retiring-host mutation admission and preserve nonterminal tasks before releasing execution ownership (#199).
+
 - Correct component access guidance through real stewardship, distinguishing current checked edits from historical writable-directory probes (#189).
 
 - Reject malformed ordinary component test fixtures before missing-behavior assertions (#184).
