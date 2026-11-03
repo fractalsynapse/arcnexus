@@ -8,6 +8,7 @@ export const help = `ArcNexus
   task pause|resume|stop <id> | answer <id> "<response>"
   task list [field=value...] | get <id> [--follow] | follow <id>
   workday list [field=value...] | get <id> [--follow]
+  workspace cleanup <package> [--workspace <id>]
   workspace prepare <package>
   workspace list [package] | get <id> [--follow]
   config get <name> | update <name> <value> | migrate [target] [--write]
@@ -37,6 +38,7 @@ Composed workspace inspection/preparation: --bindings <file>
 `;
 
 const cliOptions = {
+  workspace: { type: 'string' },
   write: { type: 'boolean' },
   async: { type: 'boolean' },
   follow: { type: 'boolean' },
@@ -86,6 +88,11 @@ export function argumentsForCommand() {
       throw new InputError('Test filters require the test command');
     if (parsed.values.write !== undefined && parsed.positionals[0] !== 'config')
       throw new InputError('--write requires config migrate');
+    if (
+      parsed.values.workspace !== undefined &&
+      parsed.positionals.slice(0, 2).join(' ') !== 'workspace cleanup'
+    )
+      throw new InputError('--workspace requires workspace cleanup');
     return parsed;
   } catch (error) {
     throw new InputError(String(error));

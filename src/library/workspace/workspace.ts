@@ -1,10 +1,10 @@
 import { ExecutionContext } from '../architecture/execution-context.js';
 import { ExecutionLease } from '../coordination-store/execution-store.js';
 import { saveMarkdown } from '../report/report.js';
-import { WorkspaceResources } from './resources.js';
+import { WorkspaceResources, type WorkspaceTarget } from './resources.js';
 import { WorkspaceOperations } from './operation-preparation.js';
 import { randomUUID } from 'node:crypto';
-import { mkdirSync, realpathSync } from 'node:fs';
+import { existsSync, mkdirSync, realpathSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { loadBindings, type Bindings } from '../architecture/bindings.js';
 import { environment, InputError, type Environment } from '../architecture/config.js';
@@ -20,7 +20,7 @@ import {
   type Member,
 } from './members.js';
 import { assertOutputs } from './outputs.js';
-import { save, stateRoot, type RecordData } from './state.js';
+import { save, statePath, stateRoot, type RecordData } from './state.js';
 
 export { assertGeneratedOutputs, assertOutputs } from './outputs.js';
 
@@ -212,5 +212,87 @@ export class WorkspacePreparation {
     observe(root, record, 'run.finalized', { status: record.status, outcome: record.outcome });
     save(root, record);
     saveMarkdown(root, record);
+  }
+}
+
+/** Selects package-owned resources and serializes disposal through the existing cleanup engine. */
+export class WorkspaceDisposal {
+  private readonly root: string;
+
+  /** Canonicalizes existing state without creating storage during service construction. */
+  constructor(root = statePath()) {
+    this.root = existsSync(root) ? realpathSync(root) : resolve(root);
+  }
+
+  /** Checks captured membership and revision before removing anything under canonical repository ownership. */
+  cleanup(
+    target: WorkspaceTarget,
+    input: { workspace?: string; expectedRevision?: string },
+    signal: AbortSignal,
+  ) {
+    signal.throwIfAborted();
+    if (!target.source?.trim() || !target.packageId?.trim())
+      throw new InputError('Source and package identity are required');
+    const common = realpathSync(
+      git(target.source, 'rev-parse', '--path-format=absolute', '--git-common-dir').trim(),
+    );
+    const lease = new ExecutionLease(join(common, 'arcnexus', 'host.lease.sqlite'));
+    try {
+      const selected = this.selection(target, input.workspace);
+      if (input.expectedRevision !== undefined && input.expectedRevision !== selected.revision)
+        throw new Error('Workspace revision changed; read the resource again');
+      const items = selected.items.map((item) => this.remove(item, signal));
+      return {
+        status: items.some((item) => item.status !== 'removed') ? 'partial' : 'completed',
+        items,
+      };
+    } finally {
+      lease.close();
+    }
+  }
+
+  /** Captures all pages before mutation, rejecting identities outside the selected package. */
+  private selection(target: WorkspaceTarget, id?: string) {
+    const resources = new WorkspaceResources(this.root);
+    if (id !== undefined) {
+      const result = resources.get(id);
+      if (
+        result.workspace.source !== target.source ||
+        result.workspace.packageId !== target.packageId
+      )
+        throw new InputError('Workspace does not belong to the selected package');
+      return { revision: result.revision, items: [result.workspace] };
+    }
+    const first = resources.list(target),
+      items = [...first.items];
+    let cursor = first.nextCursor;
+    while (cursor) {
+      const page = resources.list(target, { cursor });
+      items.push(...page.items);
+      cursor = page.nextCursor;
+    }
+    return { revision: first.revision, items };
+  }
+
+  /** Preserves unfinished resources and reports cleanup refusals without abandoning unrelated work. */
+  private remove(item: ReturnType<WorkspaceResources['get']>['workspace'], signal: AbortSignal) {
+    signal.throwIfAborted();
+    try {
+      if (!item.finishedAt && item.status !== 'removed')
+        throw new Error('Workspace is unfinished; inspect before cleanup');
+      cleanup(this.root, item.id);
+      return {
+        id: item.id,
+        status: 'removed',
+        revision: new WorkspaceResources(this.root).get(item.id).revision,
+      };
+    } catch (error) {
+      return {
+        id: item.id,
+        status: existsSync(item.location) ? 'preserved' : 'needs_attention',
+        error: String(error),
+        revision: item.revision,
+      };
+    }
   }
 }
