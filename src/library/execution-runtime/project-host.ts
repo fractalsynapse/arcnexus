@@ -1,11 +1,12 @@
+import { RunContinuation } from './run-continuation.js';
+import { ResourceQuery } from '../report/resource-query.js';
 import { AssignmentRecovery } from './assignment-recovery.js';
 import { RunAuthority } from './run-authority.js';
 import { ExecutionEvidence, ExecutionReports } from '../report/report.js';
 import { StewardshipPolicy } from '../workday/workday.js';
 import { git } from '../operations/process.js';
 import { InputError } from '../architecture/config.js';
-import { validateContinuation } from '../assignment/steward.js';
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ProjectExecution } from '../architecture/execution-context.js';
 import type { ActivationResult, ExecutionRun } from '../coordination-store/execution-types.js';
@@ -60,7 +61,7 @@ export class ProjectHost {
       this.store.updateRun(workday.id, this.active?.runId === workday.id ? 'pausing' : 'paused', {
         pauseReason: 'user',
       });
-    else if (action === 'resume') this.resume(workday);
+    else if (action === 'resume') this.continuation(workday);
     else if (action === 'stop') {
       this.store.updateRun(workday.id, this.active?.runId === workday.id ? 'stopping' : 'stopped');
       if (this.active?.runId === workday.id) this.active.controller.abort(new Error('Cancelled'));
@@ -82,10 +83,11 @@ export class ProjectHost {
 
   /** Retains a clarification response and schedules the director on the same task. */
   answer(id: string, answer: string): void {
+    if (!answer.trim()) throw new InputError('Task answer must not be empty');
     const run = this.store.run(id);
     this.authority.assert(run);
     if (run.mode !== 'task' || run.status !== 'needs_input')
-      throw new Error('Task is not awaiting input');
+      throw new InputError('Task is not awaiting input');
     this.store.updateRun(id, 'running', {
       prompt: String(run.data.prompt ?? run.objective) + '\nArchitect response: ' + answer,
       initialized: false,
@@ -96,9 +98,50 @@ export class ProjectHost {
   cancel(id: string): void {
     const run = this.store.run(id);
     if (run.mode !== 'task') throw new Error('Expected task identity');
-    if (!['running', 'pausing', 'needs_input'].includes(run.status)) return;
+    if (['completed', 'cancelled', 'failed', 'stopped'].includes(run.status)) return;
     this.store.updateRun(id, 'cancelled');
     if (this.active?.runId === id) this.active.controller.abort(new Error('Cancelled'));
+  }
+
+  /** Applies task intent at the host boundary and rejects stale resource mutations before effects. */
+  taskControl(action: string, id: string, answer?: string, expectedRevision?: string) {
+    const run = this.store.run(id);
+    if (run.mode !== 'task') throw new InputError('Expected task identity');
+    if (
+      expectedRevision !== undefined &&
+      new ResourceQuery().revision(this.reports.view(id)) !== expectedRevision
+    )
+      throw new InputError('Stale task revision; read the task again');
+    if (action === 'stop') this.cancel(id);
+    else if (action === 'answer') this.answer(id, answer ?? '');
+    else if (action === 'pause') this.pauseTask(run);
+    else if (action === 'resume') {
+      if (run.status !== 'running') {
+        if (!['paused', 'interrupted'].includes(run.status))
+          throw new InputError('Task cannot resume from ' + run.status);
+        this.continuation(run);
+      }
+    } else throw new InputError('Unknown task action');
+    return this.reports.view(id);
+  }
+
+  /** Pauses only actionable tasks and preserves missing-input and terminal outcomes. */
+  private pauseTask(run: ExecutionRun): void {
+    if (['paused', 'pausing'].includes(run.status)) return;
+    if (run.status !== 'running') throw new InputError('Task cannot pause from ' + run.status);
+    const active = this.active?.runId === run.id;
+    this.store.updateRun(run.id, active ? 'pausing' : 'paused', {
+      pauseReason: 'user',
+      executionOwner: active,
+    });
+  }
+
+  /** Reuses checkpoint validation for both run modes without replacing retained plans or dependencies. */
+  private continuation(run: ExecutionRun): void {
+    new RunContinuation(this.root, this.context.base, this.store, this.authority).resume(
+      run,
+      this.latestDelivery(),
+    );
   }
 
   /** Executes at most one activation so IPC controls remain responsive between checkpoints. */
@@ -401,55 +444,6 @@ export class ProjectHost {
       this.store.updateRun(id, run.status, { executionOwner: false });
     if (run.status === 'pausing') this.store.updateRun(id, 'paused');
     if (run.status === 'stopping') this.store.updateRun(id, 'stopped');
-  }
-
-  /** Resumes only retained safe work; uncertain running activations require explicit reconciliation. */
-  private resume(run: ExecutionRun): void {
-    if (['stopped', 'stopping'].includes(run.status))
-      throw new Error('Stopped workday cannot resume; start a new workday');
-    this.authority.assert(run);
-    if (run.data.integrityError)
-      throw new Error(
-        'Candidate integrity requires attention; stop before starting validated work',
-      );
-    if (run.status === 'needs_attention')
-      throw new Error('Resolve or stop the workday requiring attention before new dispatch');
-    try {
-      if ((run.data.uncertainPolicyRecords as string[] | undefined)?.length)
-        throw new Error(
-          'Policy checkpoint or operation completion is uncertain; inspect retained evidence',
-        );
-      this.restoreCheckpoints(run);
-    } catch (error) {
-      this.store.updateRun(run.id, 'needs_attention', { error: String(error) });
-      throw error;
-    }
-    this.store.updateRun(run.id, 'running', {
-      seen: {},
-      pauseReason: null,
-      candidateRevision: this.latestCandidate(),
-      candidateRecord: this.latestDelivery()?.data.candidateRecord ?? run.data.candidateRecord,
-    });
-  }
-
-  /** Restores validated assignment boundaries and leaves uncertain operation evidence untouched. */
-  private restoreCheckpoints(run: ExecutionRun): void {
-    for (const assignment of this.store.assignments(run.id)) {
-      if (assignment.status !== 'interrupted') continue;
-      const record = JSON.parse(
-        readFileSync(
-          join(this.root, 'runs', String(assignment.data.recordId), 'report.json'),
-          'utf8',
-        ),
-      ) as RecordData;
-      const pending = assignment.data.reconciliation as { recordId: string } | null;
-      if (pending && pending.recordId !== record.reconciliationId)
-        throw new Error(
-          `Assignment ${assignment.id} has uncertain workspace preparation: ${pending.recordId}`,
-        );
-      validateContinuation(this.root, record);
-      this.store.updateAssignment(assignment.id, 'ready', { reconciliation: null });
-    }
   }
 
   /** Marks abandoned activations without replaying possibly completed operations. */

@@ -1,3 +1,4 @@
+import { Portfolio } from '../../library/portfolio/portfolio.js';
 import { createInterface } from 'node:readline/promises';
 import { setTimeout as delay } from 'node:timers/promises';
 import { HostClient } from '../../library/execution-runtime/host-client.js';
@@ -5,10 +6,24 @@ import type { ExecutionRun } from '../../library/coordination-store/execution-ty
 
 /** Adapts the minimal user commands to persistent project execution. */
 export class ExecutionCommand {
-  private readonly client = new HostClient(process.cwd());
+  private readonly client: HostClient;
 
   /** Retains caller cancellation without coupling background workday lifetime to the terminal. */
-  constructor(private readonly signal: AbortSignal) {}
+  constructor(
+    private readonly signal: AbortSignal,
+    packageReference?: string,
+  ) {
+    if (packageReference === undefined) this.client = new HostClient(process.cwd());
+    else {
+      const portfolio = new Portfolio();
+      try {
+        const target = portfolio.packageTarget(packageReference);
+        this.client = new HostClient(target.source, undefined, target);
+      } finally {
+        portfolio.close();
+      }
+    }
+  }
 
   /** Applies one option-free workday control and prints its authoritative state. */
   async workday(action: string): Promise<void> {
@@ -17,9 +32,18 @@ export class ExecutionCommand {
   }
 
   /** Submits a prompt and streams changed state until completion, cancellation or missing input. */
-  async task(prompt: string): Promise<void> {
+  async task(prompt: string, asynchronous = false): Promise<void> {
     await this.client.ensure('submit');
     const run = (await this.client.request({ action: 'submit', prompt })) as ExecutionRun;
+    if (asynchronous) {
+      console.log(JSON.stringify(run));
+      return;
+    }
+    await this.followTask(run);
+  }
+
+  /** Observes an attached task while preserving cancellation ownership across external pauses. */
+  private async followTask(run: ExecutionRun): Promise<void> {
     let previous = '';
     while (!this.signal.aborted) {
       const result = await this.client.request({ action: 'task-status', id: run.id });
@@ -30,7 +54,7 @@ export class ExecutionCommand {
       }
       if (result.run.status === 'needs_input' && (await this.answer(result.run))) continue;
       if (this.signal.aborted) break;
-      if (!['running', 'pausing'].includes(result.run.status)) {
+      if (!['running', 'pausing', 'paused'].includes(result.run.status)) {
         process.exitCode =
           result.run.status === 'completed' ? 0 : result.run.status === 'cancelled' ? 130 : 1;
         return;

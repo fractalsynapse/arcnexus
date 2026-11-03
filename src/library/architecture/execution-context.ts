@@ -38,15 +38,11 @@ export function executionIdentity(context: ProjectExecution): string {
 /** Resolves package context and frozen execution defaults from the current directory. */
 export class ExecutionContext {
   /** Discovers repository, committed authority and machine bindings; ambiguous packages fail. */
-  resolve(cwd: string): ProjectExecution {
-    const { source, base, commonDir, bindings } = this.discovery(cwd);
+  resolve(cwd: string, packageId?: string, revision = 'HEAD'): ProjectExecution {
+    const { source, base, commonDir, bindings } = this.discovery(cwd, revision);
     const catalog = loadCatalog(source, base, bindings);
     const config = this.defaults(source, base, catalog);
-    const selected = this.selectPackage(
-      catalog,
-      relative(source, resolve(cwd)),
-      config.defaultPackage,
-    );
+    const selected = this.selected(catalog, cwd, source, packageId, config.defaultPackage);
     const owners = this.owners(catalog, selected.id);
     this.validateProfiles(catalog, [
       ...owners.map((id) => catalog.components[id]!.executionProfile),
@@ -67,9 +63,29 @@ export class ExecutionContext {
     };
   }
 
+  /** Restricts explicit package selection to locally declared executable authority. */
+  private selected(
+    catalog: Catalog,
+    cwd: string,
+    source: string,
+    packageId?: string,
+    defaultPackage?: string,
+  ) {
+    const selected = packageId
+      ? catalog.components[packageId]
+      : this.selectPackage(catalog, relative(source, resolve(cwd)), defaultPackage);
+    if (
+      !selected ||
+      selected.type !== 'package' ||
+      selected.repository !== catalog.primaryRepository
+    )
+      throw new InputError('Selected package is outside the primary repository');
+    return selected;
+  }
+
   /** Resolves canonical repository identity and machine bindings without reading mutable authority. */
-  private discovery(cwd: string) {
-    const { source, base } = resolveBase(cwd);
+  private discovery(cwd: string, revision: string) {
+    const { source, base } = resolveBase(cwd, revision);
     const commonDir = realpathSync(
       git(source, 'rev-parse', '--path-format=absolute', '--git-common-dir').trim(),
     );

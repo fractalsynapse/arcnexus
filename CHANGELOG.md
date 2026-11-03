@@ -4,6 +4,8 @@
 
 ### Added
 
+- Manage retained tasks by identity, submit asynchronously or target registered packages, and recover through hash-validated captured supervisors (#148).
+
 - Query and follow retained tasks and workdays without a checkout or running host (#148).
 
 - Inspect registered package architecture and prompt context without starting engineering (#148).
