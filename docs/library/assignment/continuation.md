@@ -102,3 +102,11 @@ and verified-delivery evidence through the retained coordination context. Every
 engineering continuation must receive that captured context alongside correlated inbox
 requests. Its historical field name does not make it a legacy recursive handoff API.
 Removing old session controls must preserve this shared-runtime delivery contract.
+
+An invalid regression operation in a completed specification is also correctable
+(#181). The host lists the captured finite verification IDs and preserves the
+specification checkpoint without executing the rejected selection. Agent-only
+operations do not become verification authority. A later valid selection must
+still produce observed expected-red evidence before implementation. Repeated
+invalid selections share a progress diagnosis; changing an invalid ID alone is
+not progress. Invalid captured configuration and uncertain operations remain fatal.
