@@ -1,5 +1,10 @@
 # Pre-phase-three qualification
 
+Historical qualification for the earlier #70 increment. Its evidence remains valid
+for that revision, but does not establish readiness under the later
+[managed-lifecycle gates](../plans/managed-lifecycle.md). Those gates remain open
+until their own real-agent simulation, promotion and container evidence is retained.
+
 This gate covers readable configuration, enforceable component ownership, compact
 TypeScript, mandatory initialization, task proposals and progress-driven execution.
 TreeSeed retains its existing layout and is inspected through compatibility readers.
