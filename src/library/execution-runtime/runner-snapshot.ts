@@ -46,6 +46,12 @@ export class RunnerSnapshot {
     return runner;
   }
 
+  /** Rejects missing or changed retained supervisors before any recovery process is started. */
+  validate(runner: CapturedRunner): void {
+    if (this.hash(runner.directory) !== runner.hash)
+      throw new Error('Retained supervising runtime changed; inspect recovery evidence');
+  }
+
   /** Preserves empty-directory modes that recursive copying otherwise derives from the caller's umask. */
   private permissions(source: string, target: string, path: string): void {
     const input = join(source, path);

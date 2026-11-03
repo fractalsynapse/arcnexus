@@ -276,3 +276,74 @@ with both another evidence root and another `TMPDIR`. Evidence is retained at
 `test-runs/b256161f-80b7-48ab-9a49-d9b04d777f52`. Formatting, lint, strict checking,
 build, ownership validation and guidance validation pass locally. This is deterministic
 qualification; a new live self-development task must still produce its own delivery.
+
+## Run queries independent of a terminal or checkout
+
+`task list [field=value...]`, `task get <id> [--follow]`, `task follow <id>`,
+`workday list [field=value...]`, and `workday get <id> [--follow]` read the
+versioned execution stores directly. They never start a host, recover activations,
+create absent state storage or change source. Retained runs remain observable after
+host loss. Historical proposal/workday readers remain separate read-only views.
+
+Lists use the common report query contract: allowlisted equality filters with AND
+semantics (`id`, `status`, `packageId`), case-insensitive `--search`, `--limit`
+from 1 through 100 (default 50), and opaque `--cursor`. Status values must be known
+lifecycle states. A cursor binds its query and result revision; changed results
+require restarting pagination rather than silently skipping or duplicating entries.
+Reads include revision tokens. Missing or ambiguous run identities fail explicitly.
+
+Following observes ordered, run-correlated events after exclusive `--after` cursors
+and updated projections. It stops at terminal outcomes; interrupting the follower
+only detaches and returns successfully. Waiting, paused and idle work stays observable.
+SQLite snapshots keep persisted run, assignment and event records consistent; live
+command progress remains a separately observed evidence projection. Read-only reopening
+never migrates databases or replays uncertain operations. Runtime owns run discovery,
+coordination-store owns persistence, report owns common filtering/pagination, and the
+CLI only parses, renders and follows. Task controls build on this resource identity.
+
+## Task lifecycle controls and retained supervisors
+
+`task run [package] "<prompt>" [--async]` submits durably through the existing
+project host. Explicit package targets resolve through the portfolio; local shorthand
+is unchanged. Async submission returns the retained identity without waiting for
+model execution or tying the host to the submitting terminal.
+
+`task pause/resume/stop <id>` and `task answer <id> "<response>"` resolve the
+retained run independently of the current directory. Pause records user intent and
+finishes the active activation/checkpoint; paused work releases dispatch ownership.
+Resume validates checkpoints, reconciles against the current verified candidate,
+and retains the goal, accepted plans, dependencies and unfinished assignment files.
+An explicit stop cancels active execution and may also cancel paused, interrupted
+or attention-required work. Delayed attached-client cancellation preserves retained
+interrupted and attention outcomes; it is not a new explicit stop request. Answer
+requires a nonempty response to an actual needs-input task. Terminal runs cannot
+resume. Application controls support expected-revision checks at the host mutation
+boundary; the CLI never fabricates authorization from a resource projection.
+
+Recovery reuses the retained supervisor only after verifying its executable snapshot
+and captured execution identity. It never replaces a retained run's supervisor with
+the caller's newly built code. Unsupported older control protocols or unavailable,
+changed or ambiguous recovery evidence fail explicitly. Historical runs remain readable.
+A host loss marks incomplete activations interrupted before any resumed dispatch;
+uncertain operation completion still requires attention. Following remains observation,
+while interrupting an attached task submission retains its existing cancellation behavior.
+
+## Workday identity controls
+
+`workday start [package]` resolves an explicit registered package or the existing
+local package context. `workday status [id]` reads retained state without starting
+or recovering a host. `workday pause/resume/stop [id]` use the same identity-bound
+control service and retained-supervisor recovery as tasks. JSON rendering is
+available for all controls.
+
+An omitted identity selects the latest workday in the local package. Outside a
+checkout, it requires exactly one active workday, or exactly one retained workday
+when none is active. Ambiguous selection fails; no global last-selected package
+is introduced. A stopped historical workday can be inspected, paused or stopped
+idempotently, but cannot resume or accidentally control a newer workday. Expected
+revision checks apply at the host mutation boundary.
+
+Read-only status is a retained projection and labels its active assignment state
+as observed, not a host-liveness claim. Interrupted-host recovery occurs only on
+an explicit mutation. Old hosts lacking the retained control protocol require an
+explicit new run; status and historical evidence remain readable.

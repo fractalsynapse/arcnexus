@@ -4,6 +4,14 @@
 
 ### Added
 
+- Expose read-only workspace list/get/follow resources with revision tokens and package targeting (#160).
+
+- Start registered workdays and control retained identities from outside a checkout; status reads no longer start a host (#148).
+
+- Manage retained tasks by identity, submit asynchronously or target registered packages, and recover through hash-validated captured supervisors (#148).
+
+- Query and follow retained tasks and workdays without a checkout or running host (#148).
+
 - Inspect registered package architecture and prompt context without starting engineering (#148).
 
 - Target registered or local packages with `test inspect/run` and explicit component selection through the shared test executor (#148).
@@ -27,6 +35,9 @@
 ### Fixed
 
 - Keep read-only portfolio discovery stable during concurrent database initialization (#162).
+- Refuse cleanup of clean workspaces retained by general tasks, workdays or assignments before any removal effects (#158).
+
+- Stop shared native-test supervisors before removing fixture evidence, preserving diagnostics if shutdown fails (#156).
 
 - Follow the transferred ArcNexus upstream at `fractalsynapse/arcnexus` in active configuration and repository links (#148).
 

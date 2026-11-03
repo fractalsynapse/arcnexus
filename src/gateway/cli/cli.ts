@@ -14,6 +14,7 @@ import { saveMarkdown } from '../../library/report/report.js';
 import { observe } from '../../library/report/timeline.js';
 import { lock, save, stateRoot, type RecordData } from '../../library/workspace/state.js';
 import { WorkspaceCommand } from './workspace-command.js';
+import { WorkspaceQueryCommand } from './workspace-query-command.js';
 
 function finalize(root: string, record: RecordData): void {
   record.outcome ??= record.status;
@@ -92,11 +93,11 @@ class CliApplication {
   /** Routes a validated command to its adapter and preserves shared cancellation. */
   private async dispatch(): Promise<void> {
     switch (this.command) {
+      case 'workspace':
       case 'platform':
       case 'package':
-        return new PortfolioCommand(this.positionals, this.values, this.controller.signal).run();
       case 'config':
-        return new ConfigCommand(this.positionals, this.values).run();
+        return this.resources();
       case 'run':
         throw new InputError('Component execution is retired; use task run "<prompt>"');
       case 'test':
@@ -118,6 +119,14 @@ class CliApplication {
         throw new InputError('Guidance validation is included in validate --project <repository>');
     }
     return this.assignmentCommand();
+  }
+
+  /** Routes application resource commands separately from engineering and qualification lifecycles. */
+  private async resources(): Promise<void> {
+    if (this.command === 'config') return new ConfigCommand(this.positionals, this.values).run();
+    if (this.command === 'workspace')
+      return new WorkspaceQueryCommand(this.positionals, this.values, this.controller.signal).run();
+    return new PortfolioCommand(this.positionals, this.values, this.controller.signal).run();
   }
 
   /** Resolves an assignment and dispatches it through the shared steward workflow. */

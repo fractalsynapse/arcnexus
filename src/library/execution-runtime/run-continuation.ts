@@ -1,0 +1,67 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { validateContinuation } from '../assignment/steward.js';
+import type { ExecutionRun } from '../coordination-store/execution-types.js';
+import type { ExecutionStore } from '../coordination-store/execution-store.js';
+import type { RecordData } from '../workspace/state.js';
+import type { RunAuthority } from './run-authority.js';
+
+/** Validates retained checkpoints before restoring dispatch against the latest verified candidate. */
+export class RunContinuation {
+  /** Retains captured authority and evidence paths without recapturing mutable source configuration. */
+  constructor(
+    private readonly root: string,
+    private readonly base: string,
+    private readonly store: ExecutionStore,
+    private readonly authority: RunAuthority,
+  ) {}
+
+  /** Resumes only retained safe work; uncertain running activations require explicit reconciliation. */
+  resume(run: ExecutionRun, delivery?: ExecutionRun): void {
+    if (['stopped', 'stopping'].includes(run.status))
+      throw new Error('Stopped run cannot resume; start a new run');
+    this.authority.assert(run);
+    if (run.data.integrityError)
+      throw new Error(
+        'Candidate integrity requires attention; stop before starting validated work',
+      );
+    if (run.status === 'needs_attention')
+      throw new Error('Resolve or stop the run requiring attention before new dispatch');
+    try {
+      if ((run.data.uncertainPolicyRecords as string[] | undefined)?.length)
+        throw new Error(
+          'Policy checkpoint or operation completion is uncertain; inspect retained evidence',
+        );
+      this.restoreCheckpoints(run);
+    } catch (error) {
+      this.store.updateRun(run.id, 'needs_attention', { error: String(error) });
+      throw error;
+    }
+    this.store.updateRun(run.id, 'running', {
+      seen: {},
+      pauseReason: null,
+      candidateRevision: String(delivery?.data.candidateRevision ?? this.base),
+      candidateRecord: delivery?.data.candidateRecord ?? run.data.candidateRecord,
+    });
+  }
+
+  /** Restores validated assignment boundaries and leaves uncertain operation evidence untouched. */
+  private restoreCheckpoints(run: ExecutionRun): void {
+    for (const assignment of this.store.assignments(run.id)) {
+      if (assignment.status !== 'interrupted') continue;
+      const record = JSON.parse(
+        readFileSync(
+          join(this.root, 'runs', String(assignment.data.recordId), 'report.json'),
+          'utf8',
+        ),
+      ) as RecordData;
+      const pending = assignment.data.reconciliation as { recordId: string } | null;
+      if (pending && pending.recordId !== record.reconciliationId)
+        throw new Error(
+          `Assignment ${assignment.id} has uncertain workspace preparation: ${pending.recordId}`,
+        );
+      validateContinuation(this.root, record);
+      this.store.updateAssignment(assignment.id, 'ready', { reconciliation: null });
+    }
+  }
+}

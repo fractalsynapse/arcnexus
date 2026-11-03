@@ -2,8 +2,13 @@ import { parseArgs } from 'node:util';
 import { InputError } from '../../library/architecture/config.js';
 
 export const help = `ArcNexus
-  workday start|pause|resume|stop|status
-  task run "<prompt>"
+  workday start [package]
+  workday pause|resume|stop|status [id]
+  task run [package] "<prompt>" [--async]
+  task pause|resume|stop <id> | answer <id> "<response>"
+  task list [field=value...] | get <id> [--follow] | follow <id>
+  workday list [field=value...] | get <id> [--follow]
+  workspace list [package] | get <id> [--follow]
   config get <name> | update <name> <value> | migrate [--write]
   platform list|get <id>|create <id> <repository>|remove <id>
   package list [platform]|get <package>|create <platform/package> <repository>|remove <package>
@@ -23,11 +28,18 @@ Inspection, evidence and diagnostics:
   status <workspace-id> [--json]
   follow <workspace-id> [--json] [--after <sequence>]
   cleanup <workspace-id>
+Lists: --search <text> --limit <1-100> --cursor <token>
+Run following: --after <event-sequence>
 Composed workspace inspection/preparation: --bindings <file>
 `;
 
 const cliOptions = {
   write: { type: 'boolean' },
+  async: { type: 'boolean' },
+  follow: { type: 'boolean' },
+  search: { type: 'string' },
+  limit: { type: 'string' },
+  cursor: { type: 'string' },
   component: { type: 'string' },
   activity: { type: 'string' },
   level: { type: 'string' },

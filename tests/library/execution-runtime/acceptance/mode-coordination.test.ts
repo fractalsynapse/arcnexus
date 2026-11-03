@@ -33,6 +33,31 @@ class ModeCoordinationScenarios {
     }
   }
 
+  /** Task pause finishes a managed turn and leaves its plan intact while other queued work advances. */
+  async taskPause(t: TestContext): Promise<void> {
+    const { host, gate, run, assignment } = this.fixture(t, 'task');
+    const active = host.tick();
+    try {
+      await this.entered(gate);
+      host.taskControl('pause', run.id);
+      assert.equal(host.store.run(run.id).status, 'pausing');
+      const queued = host.submit('Independent queued research');
+      writeFileSync(gate, 'release');
+      await active;
+      assert.equal(host.store.run(run.id).status, 'paused');
+      this.checkpoint(host, assignment.id);
+      await host.tick();
+      assert.ok(host.store.assignments(queued.id).length);
+      host.cancel(queued.id);
+      host.taskControl('resume', run.id);
+      assert.equal(host.store.run(run.id).status, 'running');
+      this.checkpoint(host, assignment.id);
+    } finally {
+      host.cancel(run.id);
+      await active;
+    }
+  }
+
   /** Checks the retained engineering plan and next stage independently of lifecycle projections. */
   private checkpoint(host: ProjectHost, id: string): void {
     const retained = host.store.assignment(id);
@@ -76,15 +101,17 @@ class ModeCoordinationScenarios {
   }
 
   /** Captures an isolated package and a single research assignment with a controllable model turn. */
-  private fixture(t: TestContext) {
+  private fixture(t: TestContext, mode: 'task' | 'workday' = 'workday') {
     const directory = mkdtempSync(join(tmpdir(), 'arcnexus-mode-'));
     t.after(() => rmSync(directory, { recursive: true, force: true }));
     const gate = join(directory, 'release');
     const f = new GeneralFixture(t, gate).fixture;
     const host = new ProjectHost(f.state, new ExecutionContext().resolve(f.repo));
     t.after(() => host.store.close());
-    host.control('start');
+    if (mode === 'task') host.submit('Retain task research');
+    else host.control('start');
     const run = host.store.runs()[0]!;
+    if (mode === 'task') host.store.updateRun(run.id, 'running', { initialized: true });
     const assignment = host.store.enqueue(run.id, 'c', 'Research evidence', [
       'Evidence-backed result',
     ]);
@@ -108,6 +135,9 @@ test('queued tasks pause active work safely and preserve intervening user intent
   scenarios.pauseAndTasks(t));
 
 test('workday stop promptly cancels an active managed turn', (t) => scenarios.stop(t));
+
+test('task pause retains a managed checkpoint and releases dispatch to queued work', (t) =>
+  scenarios.taskPause(t));
 
 registerSuite({
   component: 'execution-runtime',

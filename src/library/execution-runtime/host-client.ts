@@ -1,9 +1,8 @@
+import { HostConnection, type HostRequest } from './host-connection.js';
 import { randomUUID } from 'node:crypto';
-import { InputError } from '../architecture/config.js';
 import { git } from '../operations/process.js';
 import { digest, resolveBase } from '../architecture/assignment.js';
 import { spawn } from 'node:child_process';
-import { connect } from 'node:net';
 import { existsSync, mkdirSync, openSync, closeSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { RunnerSnapshot } from './runner-snapshot.js';
@@ -15,12 +14,7 @@ import {
 } from '../architecture/execution-context.js';
 import { stateRoot } from '../workspace/state.js';
 
-export interface HostRequest {
-  action: string;
-  prompt?: string;
-  id?: string;
-  answer?: string;
-}
+export type { HostRequest } from './host-connection.js';
 
 /** Connects CLI invocations to the one private host for a canonical repository. */
 export class HostClient {
@@ -36,6 +30,7 @@ export class HostClient {
   constructor(
     private readonly cwd: string,
     readonly root = stateRoot(),
+    private readonly target?: { packageId: string; base: string },
   ) {
     const { source } = resolveBase(cwd);
     const common = realpathSync(
@@ -51,7 +46,11 @@ export class HostClient {
 
   /** Captures executable configuration only when creating or validating new work. */
   get context(): ProjectExecution {
-    return (this.capturedContext ??= new ExecutionContext().resolve(this.cwd));
+    return (this.capturedContext ??= new ExecutionContext().resolve(
+      this.cwd,
+      this.target?.packageId,
+      this.target?.base,
+    ));
   }
 
   /** Starts a host when necessary and waits for its local readiness, not an execution deadline. */
@@ -105,34 +104,9 @@ export class HostClient {
     child.unref();
   }
 
-  /** Sends a single structured control request and surfaces host-side errors. */
+  /** Sends a structured control through the shared private transport. */
   request(request: HostRequest): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const socket = connect(this.socket);
-      let data = '';
-      if (request.action === 'identity')
-        socket.setTimeout(5000, () =>
-          socket.destroy(new Error('Host discovery transport timed out')),
-        );
-      socket.on('connect', () => socket.write(JSON.stringify(request) + '\n'));
-      socket.on('error', reject);
-      socket.on('data', (chunk) => {
-        data += String(chunk);
-        if (!data.includes('\n')) return;
-        socket.end();
-        try {
-          const response = JSON.parse(data.split('\n')[0]!);
-          if (response.error)
-            reject(response.invalid ? new InputError(response.error) : new Error(response.error));
-          else resolve(response.value);
-        } catch (error) {
-          reject(error);
-        }
-      });
-      socket.on('end', () => {
-        if (!data.includes('\n')) reject(new Error('Host disconnected before response'));
-      });
-    });
+    return new HostConnection(this.socket).request(request);
   }
 
   /** Confirms both process identity and an answering local endpoint before trusting a stale socket. */

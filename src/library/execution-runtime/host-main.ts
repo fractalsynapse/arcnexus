@@ -2,7 +2,7 @@ import { InputError } from '../architecture/config.js';
 import { ExecutionLease } from '../coordination-store/execution-store.js';
 import { createServer, type Socket } from 'node:net';
 import { chmodSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ProjectExecution } from '../architecture/execution-context.js';
 import { processStart } from '../operations/service-state.js';
@@ -22,6 +22,7 @@ class HostServer {
     private readonly root: string,
     private readonly context: ProjectExecution,
     private readonly socket: string,
+    private readonly contextFile: string,
   ) {
     this.lease = new ExecutionLease(join(context.commonDir, 'arcnexus', 'host.lease.sqlite'));
     this.host = new ProjectHost(root, context);
@@ -35,6 +36,9 @@ class HostServer {
       writeFileSync(
         join(this.root, 'projects', this.context.key, 'host.json'),
         JSON.stringify({
+          protocolVersion: 2,
+          capabilities: ['task-control', 'workday-control'],
+          contextFile: basename(this.contextFile),
           pid: process.pid,
           start: processStart(process.pid),
           runner: JSON.parse(
@@ -90,6 +94,19 @@ class HostServer {
   /** Routes explicit controls while keeping scheduling policy inside the host. */
   private dispatch(request: HostRequest): unknown {
     if (request.action === 'identity') return this.context;
+    if (request.action === 'workday-control')
+      return this.host.workdayControl(
+        String(request.control),
+        String(request.id),
+        request.expectedRevision,
+      );
+    if (request.action === 'task-control')
+      return this.host.taskControl(
+        String(request.control),
+        String(request.id),
+        request.answer,
+        request.expectedRevision,
+      );
     if (request.action === 'retire') return this.retire();
     if (request.action === 'submit') return this.host.submit(String(request.prompt ?? ''));
     if (request.action === 'task-status') return this.host.reports.view(String(request.id));
@@ -110,4 +127,4 @@ const [root, context, socket] = process.argv.slice(2);
 if (!root || !context || !socket)
   throw new Error('Private execution host requires captured startup paths');
 
-new HostServer(root, JSON.parse(readFileSync(context, 'utf8')), socket).start();
+new HostServer(root, JSON.parse(readFileSync(context, 'utf8')), socket, context).start();

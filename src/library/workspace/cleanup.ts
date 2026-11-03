@@ -81,6 +81,10 @@ export class WorkspaceCleanup {
   /** Requires managed resources to be stopped before destructive removal. */
   private resources(): void {
     const { root, id, record } = this;
+    if (record.executionRunId !== undefined || record.assignmentId !== undefined)
+      throw new Error(
+        'Workspace is retained by general execution; its retention must be released before cleanup',
+      );
     if (['preparing', 'initializing', 'running'].includes(record.status))
       throw new Error('Workspace operation is active or incomplete; inspect before cleanup');
     assertServicesStopped(root, id);

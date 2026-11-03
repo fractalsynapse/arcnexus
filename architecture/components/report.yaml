@@ -24,6 +24,7 @@ owns:
   - tests/library/report
   - docs/library/report
 api:
+  - module: src/library/report/resource-query.ts
   - module: src/library/report/report.ts
   - module: src/library/report/timeline.ts
   - module: src/library/report/progress.ts

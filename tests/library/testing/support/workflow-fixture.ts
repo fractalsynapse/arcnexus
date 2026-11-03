@@ -13,8 +13,12 @@ export const cli = resolve('dist/cli.js');
 
 export const stewardEntry = fileURLToPath(new URL('./steward-entry.js', import.meta.url));
 
-export function workflowFixture(t: TestContext, mode = 'success'): WorkflowFixture {
-  return new WorkflowFixture(t, mode);
+export function workflowFixture(
+  t: TestContext,
+  mode = 'success',
+  beforeCleanup?: () => Promise<void>,
+): WorkflowFixture {
+  return new WorkflowFixture(t, mode, beforeCleanup);
 }
 
 /** Materializes the same scripted workflow under minimal authority and actual native confinement. */
@@ -56,8 +60,11 @@ export class WorkflowFixture {
   private options: WorkflowOptions;
 
   /** Creates a committed engineering fixture and controlled executable with temporary cleanup. */
-  constructor(t: TestContext, mode: string) {
-    t.after(() => rmSync(this.root, { recursive: true, force: true }));
+  constructor(t: TestContext, mode: string, beforeCleanup?: () => Promise<void>) {
+    t.after(async () => {
+      await beforeCleanup?.();
+      rmSync(this.root, { recursive: true, force: true });
+    });
     this.options = { mode, calls: this.calls };
     mkdirSync(join(this.repo, 'architecture/components'), { recursive: true });
     this.git('init', '-b', 'main');
