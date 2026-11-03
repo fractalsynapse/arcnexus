@@ -34,6 +34,8 @@
 
 ### Fixed
 
+- Isolate steward client tools and authentication from personal MCP, app and plugin configuration; validate effective capabilities before inference (#174).
+
 - Run consolidated architecture and guidance validation during steward verification (#165).
 
 - Keep read-only portfolio discovery stable during concurrent database initialization (#162).
