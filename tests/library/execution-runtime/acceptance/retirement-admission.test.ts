@@ -14,14 +14,18 @@ import { GeneralFixture, nativeHostTest as test } from '../../testing/support/ge
 /** Exercises retirement against the production listener and its durable execution state. */
 class RetirementAdmissionScenarios {
   /** Opens an isolated host with cleanup registered before any assertion can fail. */
-  private async open(t: TestContext, retained?: { mode: RunMode; status: RunStatus }) {
+  private async open(
+    t: TestContext,
+    retained: { mode: RunMode; status: RunStatus; partial?: boolean }[] = [],
+  ) {
     const fixture = new GeneralFixture(t);
     const client = new HostClient(fixture.fixture.repo, fixture.fixture.state);
     const store = new ExecutionStore(join(client.directory, 'execution.sqlite'));
     t.after(() => store.close());
-    if (retained) {
-      const run = store.createRun(retained.mode, ['a', 'b', 'c'], 'Retained work');
-      store.updateRun(run.id, retained.status, {
+    for (const entry of retained) {
+      const run = store.createRun(entry.mode, ['a', 'b', 'c'], 'Retained work');
+      if (entry.partial) store.enqueue(run.id, 'a', 'Retain unfinished evidence');
+      store.updateRun(run.id, entry.status, {
         executionIdentity: executionIdentity(client.context),
       });
     }
@@ -55,7 +59,7 @@ class RetirementAdmissionScenarios {
 
   /** Protected runs survive refused retirement without changing their state or evidence. */
   async protected(t: TestContext, mode: RunMode, status: RunStatus): Promise<void> {
-    const { client, store } = await this.open(t, { mode, status });
+    const { client, store } = await this.open(t, [{ mode, status }]);
     const before = store.runs();
     await assert.rejects(
       client.request({ action: 'retire' }),
@@ -73,12 +77,11 @@ class RetirementAdmissionScenarios {
 
   /** Historical incomplete assignments attached to terminal tasks are retained without blocking exit. */
   async terminal(t: TestContext): Promise<void> {
-    const { client, store } = await this.open(t);
-    for (const status of ['completed', 'cancelled', 'failed', 'stopped'] as const) {
-      const run = store.createRun('task', ['a'], 'Historical work');
-      store.enqueue(run.id, 'a', 'Retain unfinished evidence');
-      store.updateRun(run.id, status);
-    }
+    const statuses = ['completed', 'cancelled', 'failed', 'stopped'] as const;
+    const { client, store } = await this.open(
+      t,
+      statuses.map((status) => ({ mode: 'task', status, partial: true })),
+    );
     const before = store.runs();
     assert.equal(await client.request({ action: 'retire' }), true);
     const view = await client.request({ action: 'task-status', id: before[0]!.id });
