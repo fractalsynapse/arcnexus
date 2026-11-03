@@ -324,3 +324,66 @@ an explicitly confined download path is available; models remain host-connected.
 A failed setup retains evidence rather than permitting unrestricted network access.
 Real and simulated provider receipts share the durable effect protocol. Existing
 runs retain their captured authority; newly granted operations affect new runs only.
+
+### Host integration feedback — 2026-11-03
+
+Task/workday CLI simulation selection now reaches the existing project host, scheduler,
+director and steward sessions. Shared upstream operation grants determine which
+assignment-bound collaboration tools are exposed. The host creates task tracking
+once direction is actionable and workday tracking before a bounded assignment runs.
+Simulation copies captured repository objects into independent source stores and
+local bare remotes, including declared repository dependencies. Captured materialization
+bindings preserve the architectural repository identity while validating the exact
+source, revision, Git directory and fetch/push destinations. Authored bindings cannot
+supply these host-private mappings.
+
+- Fast: a focused native host acceptance run exercised real Git, SQLite and installed
+  confinement with controlled model inputs: both initial scenarios passed without
+  skips in 5.720 s, excluding builds. This exposed integration assumptions earlier
+  than a long real-model run would. It is deterministic acceptance, not real-agent
+  qualification.
+- Slowdown found: workspace preparation assumed every checkout's origin was the
+  architectural upstream. Removing origin from the simulated clone correctly exposed
+  this assumption. Explicit host materialization bindings fix the mismatch without
+  weakening ordinary repository identity checks or retaining a real upstream remote.
+- Efficiency recommendation: continue testing boundary transitions (capture → prepare
+  → direction → engineering) with focused built-program acceptance while implementing
+  delivery. Reserve real-model time for the complete useful objective and retain its
+  actual director choices; do not substitute scripted acceptance for that gate.
+- Direct bootstrap work: host/CLI propagation, repository isolation and collaboration
+  tool wiring were implemented by the supervising developer. These changes are not
+  counted as ArcNexus self-development deliveries.
+
+Additional native feedback passed: replacing the isolated push URL with an external
+URL stopped host dispatch before an engineering activation. A network-enabled shared
+operation in simulation was denied a POST from its child process to a real listening
+local endpoint; the endpoint observed zero requests. This directly qualifies that
+installed network boundary, not real GitHub authentication or the container deployment.
+The three host cases passed in 10.786 s alongside a fixture-directory setup failure
+in the new network test; correcting that test setup produced a passing isolated
+network case in 3.228 s. No product check was weakened to resolve the fixture failure.
+
+A propagation audit found that fresh director/verifier records copied workspace
+configuration but omitted the immutable execution environment. This would have left
+host-requested checks outside simulation's network restriction. The record factory
+now carries environment identity, and nested-task acceptance checks every retained
+engineering and independent policy record. Stewardship fingerprints also use the
+isolated repository so candidate commits need not exist in the caller's object store.
+These are concrete reasons to test the entire production wiring, not only the provider.
+
+## Verified delivery implementation intent
+
+The Publisher owns delivery policy and progression as a library service; release
+continues to own this repository's shipping workflows. Coordination-store persists
+immutable delivery identities, revision-bound approvals and ordered state changes.
+A delivery's engineering verification, upstream integration and publication outcomes
+are distinct. Creating or approving a delivery does not execute Git or satisfy a
+provider check. Publication actions use the same captured-operation effect ledger;
+no arbitrary command path or source-writable worker is introduced.
+
+Deliveries retain their environment and exact source/candidate revisions. Host
+capture must refuse missing independent evidence or a candidate different from the
+reviewed result. Any reconciliation creates fresh verification requirements. Approval
+names an exact immutable revision, and stale resource revisions fail before mutation.
+Simulation promotion creates a different live identity and must repeat real-target
+checks; neither approval nor promotion rewrites the original simulation.
