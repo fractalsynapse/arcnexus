@@ -1,6 +1,7 @@
 import { ResourceQuery, type ResourceQueryInput } from '../report/resource-query.js';
 import { RepositoryMaterializer } from './materialization.js';
 import { ArchitectureValidation } from '../architecture/validation.js';
+import { ConfigurationMigration } from '../architecture/migration.js';
 import { existsSync, realpathSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { homedir } from 'node:os';
@@ -106,6 +107,20 @@ export class Portfolio {
     );
   }
 
+  /** Migrates local or registered source without requiring preceding configuration to be executable. */
+  migrate(reference?: string, write = false, cwd = process.cwd()) {
+    let source = cwd;
+    if (reference !== undefined) {
+      const matches = this.store
+        .registrations()
+        .filter((entry) => entry.id === reference || entry.definitionId === reference);
+      if (matches.length !== 1)
+        throw new InputError('Unknown or ambiguous migration target: ' + reference);
+      source = this.registeredSource(matches[0]!).source;
+    }
+    return new ConfigurationMigration(source).run(write);
+  }
+
   /** Attaches local repositories or materializes supported remote URLs under supervised application ownership. */
   async create(kind: Kind, id: string, repository: string, signal: AbortSignal) {
     signal.throwIfAborted();
@@ -201,14 +216,19 @@ export class Portfolio {
     return candidates[0]!;
   }
 
-  /** Derives policy and identity from the current committed source while reporting an optimistic revision token. */
-  private view(entry: PortfolioRegistration) {
+  /** Resolves durable storage independently of executable schema validation, including migration inputs. */
+  private registeredSource(entry: PortfolioRegistration) {
     const repository = this.store.repositories().find((item) => item.id === entry.repositoryId);
     if (!repository) throw new Error('Missing registered repository: ' + entry.repositoryId);
     const location = repository.managed
       ? join(this.volume, repository.location)
       : repository.location;
-    const { source, base } = resolveBase(location);
+    return { repository, ...resolveBase(location) };
+  }
+
+  /** Derives policy and identity from the current committed source while reporting an optimistic revision token. */
+  private view(entry: PortfolioRegistration) {
+    const { repository, source, base } = this.registeredSource(entry);
     const catalog = loadCatalog(source, base, loadProjectBindings(source));
     const definition = catalog.components[entry.definitionId];
     if (!definition || definition.type !== entry.kind)
