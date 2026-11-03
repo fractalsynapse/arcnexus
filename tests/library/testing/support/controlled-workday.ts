@@ -1,3 +1,4 @@
+import { ControlledClient } from './controlled-client.js';
 import { ControlledInitializer } from './controlled-initializer.js';
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -15,10 +16,7 @@ interface Call {
 
 export async function run(options: ScenarioOptions): Promise<void> {
   const args = process.argv.slice(2);
-  if (args[0] === '--version') {
-    console.log('controlled workday');
-    return;
-  }
+  if (ControlledClient.inventory(args, 'controlled workday')) return;
   if (args[0] === 'sandbox') return;
   process.chdir(args[args.indexOf('--cd') + 1]!);
   let prompt = '';

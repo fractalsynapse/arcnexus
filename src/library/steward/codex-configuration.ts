@@ -1,5 +1,5 @@
+import { ClientHome } from './client-home.js';
 import { ExecutionContext } from '../architecture/execution-context.js';
-import { homedir } from 'node:os';
 import { SourceConfinement } from '../operations/confinement.js';
 import { readSchema } from '../architecture/schema.js';
 import { existsSync, appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -30,6 +30,8 @@ export interface CodexInput {
 
 /** Builds explicit SDK settings and rejects target configuration that weakens them. */
 export class CodexConfiguration {
+  readonly client: ClientHome;
+
   readonly dir: string;
 
   readonly launcher: string;
@@ -52,6 +54,7 @@ export class CodexConfiguration {
     this.dir = join(input.root, 'runs', input.record.id);
     this.launcher = join(this.dir, 'codex-launcher');
     this.pidFile = join(this.dir, 'codex.pid');
+    this.client = new ClientHome(input);
     this.profile = resolved.executionProfile;
     this.schema = this.resultSchema();
     const authority = this.authority(resolved);
@@ -142,6 +145,7 @@ export class CodexConfiguration {
     env.ARCNEXUS_HOST_PID = String(process.pid);
     env.ARCNEXUS_HOST_START = processStart(process.pid)!;
     env.TMPDIR = this.permissions.tmpDirectory;
+    env.CODEX_HOME = this.client.path;
     env.PATH = targetEnvironment(record).PATH!;
     return env;
   }
@@ -176,7 +180,7 @@ export class CodexConfiguration {
       temporaryRoot: join(this.dir, 'tmp'),
       executable: this.input.executable,
       toolDirectories: toolDirectories(this.input.record),
-      protectedPaths: [resolve(process.env.CODEX_HOME ?? join(homedir(), '.codex'))],
+      protectedPaths: [this.client.personal, this.client.path],
     });
     return {
       configOverrides: adapter.overrides,
@@ -189,6 +193,7 @@ export class CodexConfiguration {
   /** Builds explicit SDK settings independently of personal user configuration. */
   private executionSettings(authority: ReturnType<CodexConfiguration['authority']>) {
     return {
+      clientProtocol: 1,
       evidenceMode: this.input.record.evidenceMode ?? 'unspecified',
       model: this.input.model,
       reasoning: this.profile.reasoning,
@@ -251,6 +256,7 @@ export class CodexConfiguration {
   async preflight(): Promise<void> {
     const { root, record } = this.input;
     try {
+      this.client.validate();
       this.rejectTargetConfiguration();
       record.sandboxPreflight = { ...(await this.probe()), status: 'passed' };
     } catch (error) {
