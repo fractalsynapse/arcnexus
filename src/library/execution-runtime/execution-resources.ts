@@ -1,5 +1,7 @@
-import { existsSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { WorkdaySelection } from './workday-selection.js';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
+import { git } from '../operations/process.js';
 import { ExecutionStore } from '../coordination-store/execution-store.js';
 import { runStatuses, type RunMode } from '../coordination-store/execution-types.js';
 import { ExecutionReports } from '../report/report.js';
@@ -47,6 +49,54 @@ export class ExecutionResources {
         cursor: Number(events.at(-1)?.sequence ?? after),
       };
     });
+  }
+
+  /** Selects an explicit or unambiguous workday without querying a host for mutable global context. */
+  workday(id?: string, cwd = process.cwd()) {
+    const selected = new WorkdaySelection().select(this.entries(), id, cwd);
+    return this.read(selected.project, (store, reports) => {
+      const view = reports.view(selected.id);
+      const capturedRevision = (view.run.data as Record<string, unknown>).authorityBase;
+      const sourceRevision = this.sourceRevision(selected.project);
+      const tasks = store
+        .runs()
+        .filter((run) => run.mode === 'task')
+        .map((run) => reports.view(run.id).run);
+      return {
+        workday: view.run,
+        assignments: view.assignments,
+        counts: view.counts,
+        tasks,
+        active: view.assignments.some((assignment) => assignment.status === 'running')
+          ? selected.id
+          : null,
+        observation: 'retained',
+        capturedRevision,
+        sourceRevision,
+        sourceChanged: sourceRevision ? sourceRevision !== capturedRevision : null,
+        project: selected.project,
+        revision: new ResourceQuery().revision(view),
+        candidate: (view.run.data as Record<string, unknown>).candidateRevision,
+        report: view.report,
+      };
+    });
+  }
+
+  /** Observes source drift when retained host metadata is available; absent source is explicitly unknown. */
+  private sourceRevision(project: string): string | null {
+    try {
+      const directory = join(this.root, 'projects', project);
+      const metadata = JSON.parse(readFileSync(join(directory, 'host.json'), 'utf8'));
+      if (
+        typeof metadata.contextFile !== 'string' ||
+        basename(metadata.contextFile) !== metadata.contextFile
+      )
+        return null;
+      const context = JSON.parse(readFileSync(join(directory, metadata.contextFile), 'utf8'));
+      return git(context.source, 'rev-parse', 'HEAD').trim();
+    } catch {
+      return null;
+    }
   }
 
   /** Enumerates project stores in deterministic order and preserves submission order within a project. */

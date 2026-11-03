@@ -25,12 +25,14 @@ export class RetainedHost {
   }
 
   /** Validates the protocol and captured authority before connecting or recovering an absent host. */
-  async connect(identity: unknown): Promise<HostConnection> {
+  async connect(identity: unknown, capability = 'task-control'): Promise<HostConnection> {
     const metadata = JSON.parse(readFileSync(join(this.directory, 'host.json'), 'utf8'));
     if (metadata.protocolVersion !== 2 || typeof metadata.contextFile !== 'string')
       throw new InputError(
         'Retained supervisor does not support task controls; evidence remains readable',
       );
+    if (capability !== 'task-control' && !metadata.capabilities?.includes(capability))
+      throw new InputError('Retained supervisor does not support ' + capability);
     if (basename(metadata.contextFile) !== metadata.contextFile)
       throw new InputError('Invalid retained context location');
     const contextPath = join(this.directory, metadata.contextFile);

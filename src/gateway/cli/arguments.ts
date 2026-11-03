@@ -2,7 +2,8 @@ import { parseArgs } from 'node:util';
 import { InputError } from '../../library/architecture/config.js';
 
 export const help = `ArcNexus
-  workday start|pause|resume|stop|status
+  workday start [package]
+  workday pause|resume|stop|status [id]
   task run [package] "<prompt>" [--async]
   task pause|resume|stop <id> | answer <id> "<response>"
   task list [field=value...] | get <id> [--follow] | follow <id>

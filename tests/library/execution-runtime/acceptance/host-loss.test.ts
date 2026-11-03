@@ -43,21 +43,34 @@ class HostLossScenario {
     }
   }
 
-  /** Reopens through the normal status command and verifies retained model evidence is not replayed. */
+  /** Reads without recovery, then refuses unsafe explicit resumption without replaying model work. */
   private recovery(general: GeneralFixture): void {
     const f = general.fixture;
     const calls = readFileSync(f.calls, 'utf8');
-    const result = spawnSync(process.execPath, [cli, 'workday', 'status'], {
-      cwd: f.repo,
+    const listed = spawnSync(process.execPath, [cli, 'task', 'list', '--json'], {
+      cwd: f.root,
       env: f.env,
       encoding: 'utf8',
       timeout: 30_000,
     });
-    assert.equal(result.status, 0, result.stderr);
+    assert.equal(listed.status, 0, listed.stderr);
+    const id = JSON.parse(listed.stdout).items[0].id;
+    const result = spawnSync(process.execPath, [cli, 'task', 'resume', id], {
+      cwd: f.root,
+      env: f.env,
+      encoding: 'utf8',
+      timeout: 60_000,
+    });
+    assert.equal(result.status, 1, result.stderr);
     general.captureHost();
-    const status = JSON.parse(result.stdout);
-    assert.equal(status.tasks[0].status, 'interrupted');
-    assert.equal(status.active, null);
+    const retained = spawnSync(process.execPath, [cli, 'task', 'get', id, '--json'], {
+      cwd: f.root,
+      env: f.env,
+      encoding: 'utf8',
+      timeout: 30_000,
+    });
+    assert.equal(retained.status, 0, retained.stderr);
+    assert.equal(JSON.parse(retained.stdout).run.status, 'needs_attention');
     assert.equal(readFileSync(f.calls, 'utf8'), calls);
     this.evidence(f);
   }
@@ -95,7 +108,7 @@ class HostLossScenario {
 
 const scenario = new HostLossScenario();
 
-test('host loss stops managed execution and retains an interrupted task without replay', (t) =>
+test('host loss stops managed execution and refuses unsafe task resumption without replay', (t) =>
   scenario.run(t));
 
 registerSuite({

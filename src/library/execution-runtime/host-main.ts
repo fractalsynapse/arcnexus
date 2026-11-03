@@ -37,6 +37,7 @@ class HostServer {
         join(this.root, 'projects', this.context.key, 'host.json'),
         JSON.stringify({
           protocolVersion: 2,
+          capabilities: ['task-control', 'workday-control'],
           contextFile: basename(this.contextFile),
           pid: process.pid,
           start: processStart(process.pid),
@@ -93,6 +94,12 @@ class HostServer {
   /** Routes explicit controls while keeping scheduling policy inside the host. */
   private dispatch(request: HostRequest): unknown {
     if (request.action === 'identity') return this.context;
+    if (request.action === 'workday-control')
+      return this.host.workdayControl(
+        String(request.control),
+        String(request.id),
+        request.expectedRevision,
+      );
     if (request.action === 'task-control')
       return this.host.taskControl(
         String(request.control),

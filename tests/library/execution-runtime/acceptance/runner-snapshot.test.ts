@@ -15,7 +15,7 @@ class RunnerSnapshotScenario {
     const f = general.fixture;
     const installation = join(f.state, 'installation');
     this.install(installation);
-    this.command(general, join(installation, 'dist/cli.js'), 'workday', 'status');
+    this.command(general, join(installation, 'dist/cli.js'), 'workday', 'start');
     general.captureHost();
     const project = readdirSync(join(f.state, 'projects'))[0]!;
     const host = JSON.parse(readFileSync(join(f.state, 'projects', project, 'host.json'), 'utf8'));
