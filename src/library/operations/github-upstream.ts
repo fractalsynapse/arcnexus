@@ -1,3 +1,4 @@
+import { GitHubTransport } from './github-transport.js';
 import { createHash } from 'node:crypto';
 import type { ExternalEffect, ExternalObservation } from '../coordination-store/lifecycle-types.js';
 import type { UpstreamProvider } from './upstream-execution.js';
@@ -6,19 +7,17 @@ import type { UpstreamProvider } from './upstream-execution.js';
 export class GitHubUpstream implements UpstreamProvider {
   readonly mode = 'live' as const;
 
+  private readonly client: GitHubTransport;
+
   /** Captures one destination; credential resolution stays outside workers and durable evidence. */
   constructor(
     readonly id: string,
     private readonly environmentId: string,
     private readonly repository: string,
-    private readonly credential: () => Promise<string>,
-    private readonly transport: typeof fetch = fetch,
+    credential: () => Promise<string>,
+    transport: typeof fetch = fetch,
   ) {
-    if (
-      !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository) ||
-      repository.split('/').some((part) => part === '.' || part === '..')
-    )
-      throw new Error('Expected an explicit GitHub owner/repository');
+    this.client = new GitHubTransport(repository, credential, transport);
   }
 
   /** Sends one authorized issue or comment mutation; transport failure remains uncertain. */
@@ -28,7 +27,7 @@ export class GitHubUpstream implements UpstreamProvider {
     const body = this.text(effect, 'body') + '\n\n' + this.marker(effect);
     const input =
       effect.operation === 'issue.create' ? { title: this.text(effect, 'title'), body } : { body };
-    const response = await this.request(endpoint, signal, input);
+    const response = await this.client.request(endpoint, signal, 'POST', input);
     return this.receipt(response);
   }
 
@@ -38,7 +37,10 @@ export class GitHubUpstream implements UpstreamProvider {
     const endpoint = this.endpoint(effect);
     const matches: Record<string, unknown>[] = [];
     for (let page = 1; ; page++) {
-      const result = await this.request(`${endpoint}?state=all&per_page=100&page=${page}`, signal);
+      const result = await this.client.request(
+        `${endpoint}?state=all&per_page=100&page=${page}`,
+        signal,
+      );
       if (!Array.isArray(result)) throw new Error('Invalid GitHub listing response');
       for (const item of result) {
         if (
@@ -58,35 +60,13 @@ export class GitHubUpstream implements UpstreamProvider {
 
   /** Restricts paths to the captured repository and supported operation contracts. */
   private endpoint(effect: ExternalEffect): string {
-    const base = `/repos/${this.repository}/issues`;
+    const base = '/issues';
     if (effect.operation === 'issue.create') return base;
     if (effect.operation !== 'issue.comment') throw new Error('Unsupported GitHub operation');
     const number = effect.input.issueId;
     if (typeof number !== 'number' || !Number.isSafeInteger(number) || number <= 0)
       throw new Error('Expected GitHub issue number');
     return `${base}/${number}/comments`;
-  }
-
-  /** Keeps redirects from forwarding credentials and excludes raw response bodies from errors. */
-  private async request(path: string, signal: AbortSignal, body?: object): Promise<unknown> {
-    signal.throwIfAborted();
-    const token = await this.credential();
-    if (!token.trim()) throw new Error('GitHub host credential is unavailable');
-    signal.throwIfAborted();
-    const response = await this.transport('https://api.github.com' + path, {
-      method: body ? 'POST' : 'GET',
-      signal,
-      redirect: 'error',
-      headers: {
-        Accept: 'application/vnd.github+json',
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'X-GitHub-Api-Version': '2026-03-10',
-      },
-      ...(body ? { body: JSON.stringify(body) } : {}),
-    });
-    if (!response.ok) throw new Error(`GitHub request failed with HTTP ${response.status}`);
-    return response.json();
   }
 
   /** Retains provider identities and provenance without copying tokens or arbitrary response content. */

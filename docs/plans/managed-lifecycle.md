@@ -500,3 +500,21 @@ owner's private test directory. The fixture now belongs to the testing component
 has a declared public test-support entry point. This preserves reuse without exposing
 an operations-private implementation. Cheap prevention: move reusable fixtures into
 testing ownership when the second owner first consumes them, before catalog capture.
+
+Real production submission against revision `3a01d33` retained task
+`a551795d-1f96-4d62-9380-32cb8ab8afaa` in
+`~/.local/state/arcnexus/qualification-148-3a01d33`. It correctly captured all 21
+eligible project stewards, but stopped during setup before director selection: concurrent
+npm downloads produced a mix of successful GETs and HTTP 403s. No engineering or
+real-agent qualification is claimed for this attempt. The same tarball downloaded
+successfully in a single confined request. A fresh disposable installation through
+`SourceConfinement` with `npm ci --no-audit --no-fund --maxsockets=1` installed all
+191 packages in 8 seconds. Capture that connection-concurrency safeguard in the one
+setup operation; it is not an agent execution budget. Preserve the failed run and start
+new authority rather than silently replacing its captured configuration.
+
+Live-provider work will reuse a repository-scoped GitHub transport for collaboration
+and publication. Preserve redirect refusal, host-only credentials, full pagination,
+exact-head merge admission and explicit provider review/check evidence. API sources:
+[GitHub PR operations](https://docs.github.com/en/rest/pulls/pulls) and
+[branch protection](https://docs.github.com/en/rest/branches/branch-protection).

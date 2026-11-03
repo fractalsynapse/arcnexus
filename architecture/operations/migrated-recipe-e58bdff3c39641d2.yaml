@@ -21,3 +21,4 @@ args:
   - ci
   - --no-audit
   - --no-fund
+  - --maxsockets=1
