@@ -114,3 +114,12 @@ These reads neither start hosts nor initialize missing execution storage. Unknow
 or ambiguous packages, missing/out-of-scope components, invalid filters/cursors and
 irrelevant options return input error exit code 2. This increment provides reads;
 component creation, update and removal remain separate planned work.
+
+## Platform standard reads
+
+`arcnexus standard list <platform> [id=value] [owner=value]` lists the complete
+committed standards library for a registered platform, including unused standards.
+It accepts shared `--search`, `--limit`, `--cursor` and `--json` options.
+`arcnexus standard get <platform> <id> [--json]` reads one standard and its revision.
+Both work outside a checkout without starting an execution host. Unknown filters,
+unsupported options and standards belonging to another platform are rejected.

@@ -1,4 +1,4 @@
-import { ComponentCommand } from './component-command.js';
+import { ArchitectureResourceCommand } from './architecture-resource-command.js';
 import { InspectionCommand } from './inspection-command.js';
 import { PortfolioCommand } from './portfolio-command.js';
 import { ConfigCommand } from './config-command.js';
@@ -93,13 +93,13 @@ class CliApplication {
 
   /** Routes a validated command to its adapter and preserves shared cancellation. */
   private async dispatch(): Promise<void> {
+    if (
+      ['standard', 'component', 'workspace', 'platform', 'package', 'config'].includes(
+        this.command!,
+      )
+    )
+      return this.resources();
     switch (this.command) {
-      case 'component':
-      case 'workspace':
-      case 'platform':
-      case 'package':
-      case 'config':
-        return this.resources();
       case 'run':
         throw new InputError('Component execution is retired; use task run "<prompt>"');
       case 'test':
@@ -125,8 +125,8 @@ class CliApplication {
 
   /** Routes application resource commands separately from engineering and qualification lifecycles. */
   private async resources(): Promise<void> {
-    if (this.command === 'component')
-      return new ComponentCommand(this.positionals, this.values).run();
+    if (['component', 'standard'].includes(this.command!))
+      return new ArchitectureResourceCommand(this.positionals, this.values).run();
     if (this.command === 'config') return new ConfigCommand(this.positionals, this.values).run();
     if (this.command === 'workspace')
       return new WorkspaceQueryCommand(this.positionals, this.values, this.controller.signal).run();
