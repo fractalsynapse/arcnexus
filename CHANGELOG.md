@@ -4,6 +4,8 @@
 
 ### Added
 
+- Target configuration migration at registered platforms or packages from outside a checkout (#167).
+
 - Expose read-only workspace list/get/follow resources with revision tokens and package targeting (#160).
 
 - Start registered workdays and control retained identities from outside a checkout; status reads no longer start a host (#148).
