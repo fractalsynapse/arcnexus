@@ -8,3 +8,16 @@ Replaced paths, unexplained disappearance and ambiguous ownership are refused.
 Existing completed receipts remain supported. Branches and reports are preserved.
 A stale execution lock still requires caller inspection; cleanup does not resume
 assignments or automatically recover interrupted execution.
+
+## General execution retention
+
+A workspace linked to a general task/workday (`executionRunId`) or assignment
+(`assignmentId`) remains retained even when its worktree is clean or its local
+preparation record is no longer running. Reject cleanup before creating removal
+intent, stopping resources, deleting files or changing Git registrations. These
+links capture execution retention, not a claim that active inference is occurring.
+
+This guard conservatively includes completed deliveries and superseded execution
+workspaces. Collection requires a future explicit release-of-retention decision;
+absence of edits is not proof of disposability. Standalone preparation cleanup
+continues to use existing ownership, output, service and recovery checks (#158).
