@@ -3,7 +3,8 @@ import { ArchitectureValidation } from '../architecture/validation.js';
 import { existsSync, realpathSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { join, relative, resolve } from 'node:path';
+import { ExecutionContext } from '../architecture/execution-context.js';
 import {
   PortfolioStore,
   type PortfolioRegistration,
@@ -45,6 +46,48 @@ export class Portfolio {
   /** Resolves qualified identity or a unique short reference without a mutable selected-project setting. */
   get(kind: Kind, reference: string) {
     return this.view(this.find(kind, reference));
+  }
+
+  /** Resolves a registered reference or local package without starting execution or changing directories. */
+  packageTarget(reference?: string, cwd = process.cwd()) {
+    if (reference !== undefined) {
+      if (!reference.trim()) throw new InputError('Package reference must not be empty');
+      const resource = this.get('package', reference);
+      return {
+        source: resource.source,
+        base: resource.base,
+        packageId: resource.id.split('/').at(-1)!,
+      };
+    }
+    return this.localPackageTarget(cwd);
+  }
+
+  /** Applies the shared deepest-package rule to declarations physically belonging to this repository. */
+  private localPackageTarget(cwd: string) {
+    const { source, base } = resolveBase(cwd);
+    const catalog = loadCatalog(source, base, loadProjectBindings(source));
+    const local = {
+      ...catalog,
+      components: Object.fromEntries(
+        Object.entries(catalog.components).filter(
+          ([, component]) =>
+            component.type !== 'package' || component.repository === catalog.primaryRepository,
+        ),
+      ),
+    };
+    const defaults = [
+      ...new Set(
+        Object.values(catalog.components)
+          .filter((component) => component.type === 'platform' && component.defaultPackage)
+          .map((component) => component.defaultPackage!),
+      ),
+    ];
+    const selected = new ExecutionContext().selectPackage(
+      local,
+      relative(source, resolve(cwd)),
+      defaults.length === 1 ? defaults[0] : undefined,
+    );
+    return { source, base, packageId: selected.id };
   }
 
   /** Validates the selected committed package source and tracked guidance without starting a host. */

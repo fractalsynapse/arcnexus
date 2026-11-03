@@ -23,6 +23,7 @@ owns:
   - scripts/library/testing
   - architecture/test-profiles
 api:
+  - module: tests/library/testing/support/shared-test-fixture.ts
   - module: tests/library/testing/support/minimal-catalog-fixture.ts
   - module: src/library/testing/testing.ts
   - module: src/library/testing/suite.ts

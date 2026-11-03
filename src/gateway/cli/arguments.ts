@@ -7,7 +7,7 @@ export const help = `ArcNexus
   config get <name> | update <name> <value> | migrate [--write]
   platform list|get <id>|create <id> <repository>|remove <id>
   package list [platform]|get <package>|create <platform/package> <repository>|remove <package>
-  test inspect|run [component-id] --project <repository> [--level unit|integration|acceptance] [--category regression] [--tag <tag>] [--json]
+  test inspect|run [package] [--component <id>] [--level unit|integration|acceptance] [--category regression] [--tag <tag>] [--json]
 Inspection, evidence and diagnostics:
   inspect <component-id> <objective> --project <repository> [--kind change|research|review] [--json]
   inspect: --assignment <file> replaces objective
@@ -27,6 +27,7 @@ Composed workspace inspection/preparation: --bindings <file>
 
 const cliOptions = {
   write: { type: 'boolean' },
+  component: { type: 'string' },
   level: { type: 'string' },
   category: { type: 'string' },
   tag: { type: 'string', multiple: true },
@@ -60,7 +61,10 @@ export function argumentsForCommand() {
     });
     if (
       parsed.positionals[0] !== 'test' &&
-      (parsed.values.level || parsed.values.category || parsed.values.tag)
+      (parsed.values.component ||
+        parsed.values.level ||
+        parsed.values.category ||
+        parsed.values.tag)
     )
       throw new InputError('Test filters require the test command');
     if (parsed.values.write !== undefined && parsed.positionals[0] !== 'config')

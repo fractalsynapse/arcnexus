@@ -9,6 +9,7 @@ import type { SuiteMetadata } from './suite.js';
 import { compiledTestPath } from './test-paths.js';
 
 export interface TestFilters {
+  package?: string;
   component?: string;
   level?: string;
   category?: string;

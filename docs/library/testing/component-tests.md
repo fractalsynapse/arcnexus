@@ -1,4 +1,23 @@
-# Component test selection
+# Package-aware test commands
+
+The normal interface is `arcnexus test inspect/run [package] --component <id>`.
+Package references resolve through the portfolio, so registered projects can be tested
+from outside their checkout. Omitting the package selects the deepest containing local
+package, with a declared platform default required for equally applicable packages.
+Selection never changes the process working directory or starts an engineering host.
+
+The test application service captures the selected package and limits owners to its
+subtree. An explicit component outside that package fails before any test preparation.
+Level, category and repeated tag filters continue to intersect. Both inspection and
+execution use the existing discovery, captured operation plans and confined executor.
+Repository-wide `--project` commands remain temporary migration adapters for existing
+qualification scripts; combining their positional component with `--component` fails.
+They delegate to the same test service and are not another execution implementation.
+
+The shared test fixture is a public testing boundary so gateway acceptance can exercise
+actual package selection, preparation and test execution without reproducing recipes.
+
+# Existing repository selection adapter
 
 Use `arcnexus test inspect report --project . --json` to see the source suites,
 compiled paths, metadata and hashes selected from the working checkout. Inspection
