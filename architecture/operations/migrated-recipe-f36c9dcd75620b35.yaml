@@ -12,13 +12,13 @@ artifacts: []
 network: true
 schemaVersion: 4
 id: migrated-recipe-f36c9dcd75620b35
-purpose: Verify agent-guidance
+purpose: Validate architecture and guidance
 kind: command
-prerequisites: []
+prerequisites:
+  - migrated-recipe-a7573c70ed1a3dfa
 command: node
 args:
   - dist/cli.js
-  - guidance
   - validate
   - --project
   - .

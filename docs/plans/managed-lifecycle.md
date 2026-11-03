@@ -142,3 +142,18 @@ The architect transferred ArcNexus to `https://github.com/fractalsynapse/arcnexu
 Update the active origin constraint and repository links to that location. Stable
 repository identity, issue/PR numbers and captured historical execution evidence remain
 unchanged; new runs capture the updated committed repository declaration.
+
+
+## Captured validation operation
+
+The platform's inherited validation operation invokes the consolidated architecture
+and guidance command, with a declared build prerequisite (#165). Keep its stable
+operation identity; replace the retired command in its one authored definition.
+Built-program acceptance executes that referenced recipe's actual arguments and
+checks both architecture and guidance results. A separately written CI command
+is insufficient evidence that captured steward verification uses the current CLI.
+
+The real #164 task exposed the stale recipe after its baseline test suite passed.
+Its failed assignment and cancelled task remain evidence; do not alter its captured
+operation definitions or replay the old check. A fresh task against the corrected
+committed authority is required for the documentation delivery.
