@@ -20,6 +20,8 @@ import { save, type RecordData } from './state.js';
 
 export { assertGeneratedOutputs, assertOutputs } from './outputs.js';
 
+export { WorkspaceResources, type WorkspaceTarget } from './resources.js';
+
 export interface PrepareOptions {
   project: string;
   base?: string;

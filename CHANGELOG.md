@@ -4,6 +4,8 @@
 
 ### Added
 
+- Expose read-only workspace list/get/follow resources with revision tokens and package targeting (#160).
+
 - Start registered workdays and control retained identities from outside a checkout; status reads no longer start a host (#148).
 
 - Manage retained tasks by identity, submit asynchronously or target registered packages, and recover through hash-validated captured supervisors (#148).
