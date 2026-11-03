@@ -73,6 +73,8 @@
 
 ### Changed
 
+- Align the charter with the accepted managed lifecycle, real-agent simulation and pre-phase-three API/UI prerequisites (#148).
+
 - Clarify confined and native qualification with a real steward-produced, independently verified documentation change (#164).
 
 - Use one durable assignment dispatcher and source-read-only model path; reject historical execution budgets and initialize through shared confined operations (#109).
