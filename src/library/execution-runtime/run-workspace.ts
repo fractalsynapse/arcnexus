@@ -35,6 +35,7 @@ export class RunWorkspace {
       bindings: this.context.bindings,
     });
     record.executionRunId = run.id;
+    record.executionEnvironment = run.environment;
     this.preparing(run, record, revision, latest?.id ?? null);
     await prepareWorkspace(this.root, record, signal);
     this.validate(record, revision);

@@ -13,7 +13,11 @@ import { OwnerRetrieval } from './retrieval.js';
 import { VerificationEvidence } from './verification-evidence.js';
 import { VerificationAssessment } from './verification-assessment.js';
 
-export { VerificationIssue, type VerificationResult } from './verification-assessment.js';
+export {
+  VerificationAssessment,
+  VerificationIssue,
+  type VerificationResult,
+} from './verification-assessment.js';
 
 export interface DirectorResult extends InitializationResult {
   continuations: Array<{ assignmentId: string; ownerId: string; reason: string }>;

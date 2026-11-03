@@ -1,3 +1,4 @@
+import type { UpstreamBridge } from '../operations/upstream-bridge.js';
 import { DeliveryEvidence, ExecutionEvidence } from '../report/report.js';
 import { candidateDigest } from '../change-inspection/changes.js';
 import { readFileSync } from 'node:fs';
@@ -27,6 +28,9 @@ export class AssignmentExecution {
     private readonly context: ProjectExecution,
     private readonly store: ExecutionStore,
     private readonly signal: AbortSignal,
+    private readonly collaboration?: (
+      assignment: ExecutionAssignment,
+    ) => UpstreamBridge | undefined,
   ) {
     this.snapshots = new CandidateSnapshots(context.source, join(root, 'snapshots'));
   }
@@ -34,6 +38,12 @@ export class AssignmentExecution {
   /** Restores retained work, runs one stage and returns only a structured scheduler outcome. */
   async activate(assignment: ExecutionAssignment): Promise<ActivationResult> {
     const record = await this.record(assignment);
+    record.collaborationContext = {
+      environment: this.store.run(assignment.runId).environment,
+      trackingIssue:
+        this.store.assignment(assignment.id).data.trackingIssue ??
+        this.store.run(assignment.runId).data.trackingIssue,
+    };
     this.acknowledge(assignment, record);
     this.dependencyContext(assignment, record);
     record.inboxContext = this.inbox(assignment.id);
@@ -43,8 +53,18 @@ export class AssignmentExecution {
     ]
       .filter(Boolean)
       .join('\n');
+    const session = this.session(assignment, record);
+    if (Array.isArray(assignment.data.questions) && assignment.data.questions.length)
+      return this.answer(assignment, record, session);
+    if (!record.pendingRequests && !record.pendingInboxActions) await session.step();
+    const result = await this.outcome(assignment, record, session);
+    return { ...result, receipt: (record.checkpoint as { sha256: string }).sha256 };
+  }
+
+  /** Reconstructs the owner session with host-bound tools and the captured engineering profile. */
+  private session(assignment: ExecutionAssignment, record: RecordData): StewardSession {
     const resolved = record.resolvedAssignment as ResolvedAssignment;
-    const session = new StewardSession(
+    return new StewardSession(
       this.root,
       record,
       assignment.owner,
@@ -52,12 +72,9 @@ export class AssignmentExecution {
       resolved.executionProfile.model,
       this.context.executable,
       this.signal,
+      undefined,
+      this.collaboration?.(assignment),
     );
-    if (Array.isArray(assignment.data.questions) && assignment.data.questions.length)
-      return this.answer(assignment, record, session);
-    if (!record.pendingRequests && !record.pendingInboxActions) await session.step();
-    const result = await this.outcome(assignment, record, session);
-    return { ...result, receipt: (record.checkpoint as { sha256: string }).sha256 };
   }
 
   /** Exposes one durable reply identity while keeping internal retry keys out of model context. */
@@ -175,6 +192,7 @@ export class AssignmentExecution {
       bindings: this.context.bindings,
     });
     record.executionRunId = assignment.runId;
+    record.executionEnvironment = this.store.run(assignment.runId).environment;
     record.assignmentId = assignment.id;
     record.environment = resolved.environment;
     record.resolvedAssignment = resolved;
@@ -287,6 +305,7 @@ export class AssignmentExecution {
     next.resolvedAssignment = record.resolvedAssignment;
     next.assignmentId = assignment.id;
     next.executionRunId = assignment.runId;
+    next.executionEnvironment = record.executionEnvironment;
     this.store.updateAssignment(assignment.id, 'running', {
       reconciliation: { recordId: next.id, workspace: next.workspace, current, revision },
     });

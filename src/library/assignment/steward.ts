@@ -1,3 +1,4 @@
+import type { UpstreamBridge } from '../operations/upstream-bridge.js';
 import { validateContinuation } from './continuation.js';
 import { initializeExecution, type InitializationEvidence } from '../task-intake/initializer.js';
 import { existsSync } from 'node:fs';
@@ -47,6 +48,7 @@ export class StewardSession {
     private readonly executable: string,
     private readonly signal: AbortSignal,
     private readonly initialization?: InitializationEvidence,
+    private readonly collaboration?: UpstreamBridge,
   ) {}
 
   /** Runs durable stages until completion or an inbox yield; recipients remain the scheduler’s responsibility. */
@@ -78,6 +80,7 @@ export class StewardSession {
       model,
       executable,
       signal,
+      collaboration: this.collaboration,
     });
     if (!retained) await this.prepare();
     if (this.initialization) this.acceptInitialization();

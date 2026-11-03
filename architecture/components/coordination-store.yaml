@@ -19,6 +19,8 @@ owns:
   - tests/library/coordination-store
   - docs/library/coordination-store
 api:
+  - module: src/library/coordination-store/delivery-types.ts
+  - module: src/library/coordination-store/delivery-store.ts
   - module: src/library/coordination-store/portfolio-store.ts
   - module: src/library/coordination-store/workday-store.ts
   - module: src/library/coordination-store/execution-store.ts

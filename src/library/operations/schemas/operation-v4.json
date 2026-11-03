@@ -15,7 +15,7 @@
       "minLength": 1
     },
     "kind": {
-      "enum": ["command", "service", "http"]
+      "enum": ["command", "service", "http", "upstream"]
     },
     "repository": {
       "type": "string",
@@ -26,7 +26,15 @@
       "minLength": 1
     },
     "category": {
-      "enum": ["build", "unit-test", "integration-test", "cli-check", "http-check", "lint"]
+      "enum": [
+        "build",
+        "unit-test",
+        "integration-test",
+        "cli-check",
+        "http-check",
+        "lint",
+        "collaboration"
+      ]
     },
     "activities": {
       "type": "array",
@@ -138,6 +146,9 @@
     },
     "network": {
       "type": "boolean"
+    },
+    "action": {
+      "enum": ["issue.create", "issue.comment", "issue.close"]
     }
   },
   "required": [
@@ -157,72 +168,101 @@
       "if": {
         "properties": {
           "kind": {
-            "const": "http"
+            "const": "upstream"
           }
         }
       },
       "then": {
+        "required": ["action"],
         "properties": {
-          "http": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "serviceId": {
-                "type": "string",
-                "minLength": 1
-              },
-              "path": {
-                "type": "string",
-                "pattern": "^/[^/]*"
-              },
-              "expectedStatus": {
-                "type": "integer",
-                "minimum": 100,
-                "maximum": 599
-              }
-            },
-            "required": ["serviceId", "path", "expectedStatus"]
-          },
           "command": false,
           "args": false,
-          "service": false
-        },
-        "required": ["http"]
+          "service": false,
+          "http": false,
+          "action": {
+            "enum": ["issue.create", "issue.comment", "issue.close"]
+          },
+          "network": false,
+          "prerequisites": false,
+          "generatedDirectories": {
+            "const": []
+          },
+          "artifacts": {
+            "const": []
+          }
+        }
       },
       "else": {
-        "properties": {
-          "command": {
-            "type": "string",
-            "minLength": 1
-          },
-          "args": {
-            "type": "array",
-            "items": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": ["context"],
-                  "properties": {
-                    "context": {
-                      "enum": [
-                        "ownerId",
-                        "ownedPaths",
-                        "packageRoot",
-                        "selectedTestFiles",
-                        "testOutputRoot"
-                      ]
-                    }
-                  }
-                }
-              ]
+        "if": {
+          "properties": {
+            "kind": {
+              "const": "http"
             }
           }
         },
-        "required": ["command", "args"]
+        "then": {
+          "properties": {
+            "http": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "serviceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "path": {
+                  "type": "string",
+                  "pattern": "^/[^/]*"
+                },
+                "expectedStatus": {
+                  "type": "integer",
+                  "minimum": 100,
+                  "maximum": 599
+                }
+              },
+              "required": ["serviceId", "path", "expectedStatus"]
+            },
+            "command": false,
+            "args": false,
+            "service": false
+          },
+          "required": ["http"]
+        },
+        "else": {
+          "properties": {
+            "command": {
+              "type": "string",
+              "minLength": 1
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["context"],
+                    "properties": {
+                      "context": {
+                        "enum": [
+                          "ownerId",
+                          "ownedPaths",
+                          "packageRoot",
+                          "selectedTestFiles",
+                          "testOutputRoot"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "required": ["command", "args"]
+        }
       }
     },
     {
@@ -268,6 +308,20 @@
       "else": {
         "properties": {
           "service": false
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "enum": ["command", "service", "http"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "action": false
         }
       }
     }

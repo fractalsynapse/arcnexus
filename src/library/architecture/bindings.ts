@@ -6,7 +6,17 @@ import { ConfigurationReader } from './configuration.js';
 import { validateSchema } from './schema.js';
 import { git } from '../operations/process.js';
 
+/** Host-captured repository materialization; never accepted from an authored bindings file. */
+export interface RepositoryMaterialization {
+  source: string;
+  base: string;
+  commonDir: string;
+  repository?: string;
+  origin: string;
+}
+
 export interface Bindings {
+  materializations?: Record<string, RepositoryMaterialization>;
   taskAcceptance?: Record<string, import('./assignment.js').HostCheck[]>;
   taskRefresh?: Record<string, Command[]>;
   schemaVersion: 1;
@@ -73,4 +83,32 @@ export function targetCommand(record: RecordData, command: Command): Command {
 export function toolDirectories(record: RecordData): string[] {
   const bindings = record.bindings as Bindings | undefined;
   return [...new Set(Object.values(bindings?.tools ?? {}).map(dirname))];
+}
+
+/** Verifies the exact host materialization or the ordinary declared upstream identity. */
+export function assertRepositoryBinding(
+  source: string,
+  id: string,
+  repository: string | undefined,
+  bindings: Bindings,
+): void {
+  const materialized = bindings.materializations?.[id];
+  if (!materialized) {
+    if (repository && git(source, 'remote', 'get-url', 'origin').trim() !== repository)
+      throw new InputError(`Repository origin identity mismatch: ${id}`);
+    return;
+  }
+  const common = realpathSync(
+    git(source, 'rev-parse', '--path-format=absolute', '--git-common-dir').trim(),
+  );
+  if (
+    realpathSync(source) !== materialized.source ||
+    common !== materialized.commonDir ||
+    repository !== materialized.repository ||
+    git(source, 'rev-parse', 'HEAD').trim() !== materialized.base ||
+    git(source, 'remote').trim() !== 'origin' ||
+    git(source, 'remote', 'get-url', 'origin').trim() !== materialized.origin ||
+    git(source, 'remote', 'get-url', '--push', 'origin').trim() !== materialized.origin
+  )
+    throw new InputError(`Captured repository materialization changed: ${id}`);
 }

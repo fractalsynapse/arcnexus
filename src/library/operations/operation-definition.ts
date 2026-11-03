@@ -57,7 +57,7 @@ export class OperationArguments {
     );
     return {
       ...operation,
-      args,
+      ...(operation.kind === 'upstream' ? {} : { args }),
       argumentTokens: undefined,
       pendingContext: pendingContext.length ? pendingContext : undefined,
       definitionArguments,
@@ -133,8 +133,6 @@ export function normalizeOperation(operation: Operation): Operation {
     ...operation,
     definitionDigest,
     probes: [],
-    ...(operation.kind !== 'http'
-      ? { argumentTokens: operation.args as ArgumentToken[], args: [] }
-      : {}),
+    ...('args' in operation ? { argumentTokens: operation.args as ArgumentToken[], args: [] } : {}),
   };
 }

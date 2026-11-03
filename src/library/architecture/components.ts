@@ -286,7 +286,10 @@ class CatalogLoader {
     scopePath(operation.cwd);
     operation.generatedDirectories.forEach(scopePath);
     operation.artifacts.forEach(scopePath);
-    commands([...(operation.kind === 'http' ? [] : [operation]), ...operation.probes]);
+    commands([
+      ...(['http', 'upstream'].includes(operation.kind) ? [] : [operation]),
+      ...operation.probes,
+    ]);
     if (Object.hasOwn(catalog.operations, operation.id))
       throw new InputError('Duplicate operation: ' + operation.id);
     Object.defineProperty(catalog.operations, operation.id, {

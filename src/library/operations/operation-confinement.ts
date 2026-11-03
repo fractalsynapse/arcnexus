@@ -47,7 +47,10 @@ export class OperationConfinement {
         .flatMap((c) => c.allowedWritePaths),
       temporaryRoot: this.temporaryRoot(),
       executable: bindings?.tools.codex ?? 'codex',
-      network: op.network,
+      network:
+        (this.record.executionEnvironment as { mode?: string } | undefined)?.mode === 'simulation'
+          ? false
+          : op.network,
       toolDirectories: [...toolDirectories(this.record), this.record.commonDir],
     });
   }

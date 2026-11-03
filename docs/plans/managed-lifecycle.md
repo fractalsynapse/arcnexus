@@ -387,3 +387,34 @@ reviewed result. Any reconciliation creates fresh verification requirements. App
 names an exact immutable revision, and stale resource revisions fail before mutation.
 Simulation promotion creates a different live identity and must repeat real-target
 checks; neither approval nor promotion rewrites the original simulation.
+
+### Continued batch evidence and efficiency — 2026-11-03
+
+- Nested simulated-task acceptance passed through three controlled fixture stewards,
+  supplier requests, resumption, independent verification and final goal assessment.
+  Its test took 46.544 s; all four selected host cases passed in 56.695 s. This is
+  production wiring with controlled model inputs, not the real-director qualification.
+- The post-extraction host/isolation feedback passed three selected native tests in
+  5.811 s, with no skips. Extracting persisted run selection from the near-limit host
+  kept lifecycle intent and candidate handoff rules together and allowed explicit
+  database cleanup without compressing code to meet the line limit.
+- Seven delivery-store/Publisher tests passed in 1.345 s. They exercise real Git
+  candidate bytes, immutable capture, stale approvals, milestone ordering, rejection
+  of changed source or missing review, and prohibition of automatic live releases.
+  Provider receipts and reviewer outputs in these tests are controlled test inputs.
+- The Publisher capture service now reuses the existing criterion-coverage validator
+  instead of maintaining a second interpretation of independent acceptance. Git
+  candidate comparison uses immutable trees: repeated internal snapshots can have
+  different commit timestamps while containing identical reviewed bytes.
+
+The Publisher currently captures and validates deliveries; Git/PR/release progression
+and real promotion remain implementation work in this batch. Store transitions alone
+are not provider effects. Workday setup now goes through the real director path before
+fair rotation; empty setup/stewardship turns do not create tracking issues. Controlled
+acceptance for this path is kept in the test system, never exposed as simulation mode.
+
+An additional admission safeguard requires the captured host to advertise simulation
+support before a client submits `--simulate`. An older stable supervisor must reject
+this request rather than silently ignoring the new option and running against real
+upstream services. Current supervisors continue to own retained runs; this guard does
+not replace them mid-execution.

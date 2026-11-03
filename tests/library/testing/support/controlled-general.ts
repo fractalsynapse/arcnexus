@@ -88,21 +88,25 @@ export class ControlledGeneral {
 
   /** Selects only the first owner for tasks and reports no work during unchanged stewardship. */
   private direction(prompt: string) {
-    const idle = prompt.includes('Self-directed stewardship for');
+    const setup = prompt.includes('Workday setup:');
+    const idle = setup || prompt.includes('Self-directed stewardship for');
     const correction = prompt.includes('Goal correction');
     const blocked = prompt.includes('Blocked task diagnosis');
     if (blocked && /RECOVER_BLOCKED|RECOVER_CYCLE/.test(prompt)) return this.continuation(prompt);
-    const owner = idle
-      ? prompt.match(/Self-directed stewardship for ([a-z]+)/)![1]!
-      : correction
-        ? 'c'
-        : 'a';
+    const owner = setup
+      ? 'a'
+      : idle
+        ? prompt.match(/Self-directed stewardship for ([a-z]+)/)![1]!
+        : correction
+          ? 'c'
+          : 'a';
     return {
       status: blocked ? 'needs_clarification' : 'ready',
       summary: 'Controlled direction',
-      selectedOwners: blocked
-        ? []
-        : [{ id: owner, reason: idle ? 'Reviewed owner; no action' : 'Starting owner' }],
+      selectedOwners:
+        blocked || setup
+          ? []
+          : [{ id: owner, reason: idle ? 'Reviewed owner; no action' : 'Starting owner' }],
       rejectedOwners: [],
       questions: blocked ? ['Which authorized resolution should replace the blocked work?'] : [],
       assignments: idle || blocked ? [] : [this.assignment(owner, correction, prompt)],

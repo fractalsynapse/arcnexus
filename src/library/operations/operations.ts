@@ -38,6 +38,7 @@ export type Operation = {
 } & (
   | (Command & { kind: 'command' | 'service'; service?: ServiceDefinition })
   | { kind: 'http'; http: HttpDefinition }
+  | { kind: 'upstream'; action: 'issue.create' | 'issue.comment' | 'issue.close' }
 );
 
 export interface OperationBridge {
@@ -176,7 +177,7 @@ class OperationRuntime {
   private list(args: unknown) {
     if (args && Object.keys(args).length) throw new Error('Operation listing accepts no arguments');
     return {
-      operations: this.resolved.operations,
+      operations: this.resolved.operations.filter((operation) => operation.kind !== 'upstream'),
       used: this.record.operationCalls,
     };
   }
@@ -194,7 +195,7 @@ class OperationRuntime {
       throw new Error('Operation requires only an ID');
     const id = (args as { id: string }).id,
       op = resolved.operations.find((op) => op.id === id);
-    if (!op) throw new OperationSelectionError(id);
+    if (!op || op.kind === 'upstream') throw new OperationSelectionError(id);
     const stage = String(record.stage);
     this.assertActivity(op, stage);
     observe(root, record, 'operation.authorized', {

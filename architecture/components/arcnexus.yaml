@@ -7,14 +7,16 @@ objectives:
 constraints:
   - Human architectural authority is final
   - Candidate changes cannot redefine active acceptance
-  - No automatic commits, integration or publishing; model delegation is
-    disabled, and only captured workday participants may be dispatched by the
-    host
+  - Native agent commits and upstream mutations are forbidden; only captured
+    host operations may deliver changes. The director selects from all eligible
+    project stewards, and dependency requests may activate further owners.
 role: systems-engineer
 executionProfile: luna
 reads:
   - .
 operations:
+  comment-issue:
+    - agent
   migrated-recipe-f1691da2bfa5a18c:
     - verify
   migrated-recipe-719d77e27c5d9798:

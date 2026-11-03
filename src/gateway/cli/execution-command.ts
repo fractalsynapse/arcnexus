@@ -26,15 +26,15 @@ export class ExecutionCommand {
   }
 
   /** Applies one option-free workday control and prints its authoritative state. */
-  async workday(action: string): Promise<void> {
+  async workday(action: string, simulate = false): Promise<void> {
     await this.client.ensure(action);
-    console.log(JSON.stringify(await this.client.request({ action }), null, 2));
+    console.log(JSON.stringify(await this.client.request({ action, simulate }), null, 2));
   }
 
   /** Submits a prompt and streams changed state until completion, cancellation or missing input. */
-  async task(prompt: string, asynchronous = false): Promise<void> {
+  async task(prompt: string, asynchronous = false, simulate = false): Promise<void> {
     await this.client.ensure('submit');
-    const run = (await this.client.request({ action: 'submit', prompt })) as ExecutionRun;
+    const run = (await this.client.request({ action: 'submit', prompt, simulate })) as ExecutionRun;
     if (asynchronous) {
       console.log(JSON.stringify(run));
       return;

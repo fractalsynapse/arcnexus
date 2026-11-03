@@ -9,6 +9,8 @@ import { processStart } from '../operations/service-state.js';
 import { ProjectHost } from './project-host.js';
 import type { HostRequest } from './host-client.js';
 
+const hostCapabilities = ['task-control', 'workday-control', 'simulation'];
+
 /** Owns the private IPC listener and keeps lifecycle controls responsive during inference. */
 class HostServer {
   private readonly host: ProjectHost;
@@ -39,7 +41,7 @@ class HostServer {
         join(this.root, 'projects', this.context.key, 'host.json'),
         JSON.stringify({
           protocolVersion: 2,
-          capabilities: ['task-control', 'workday-control'],
+          capabilities: hostCapabilities,
           contextFile: basename(this.contextFile),
           pid: process.pid,
           start: processStart(process.pid),
@@ -90,17 +92,25 @@ class HostServer {
       throw new Error('Active execution host cannot retire');
     this.retiring = true;
     setTimeout(() => {
+      this.host.close();
       this.lease.close();
       process.exit(0);
     }, 50);
     return true;
   }
 
-  /** Routes explicit controls while keeping scheduling policy inside the host. */
-  private dispatch(request: HostRequest): unknown {
+  /** Rejects invalid mode input and mutations after retirement before dispatch reaches runtime state. */
+  private validate(request: HostRequest): void {
     if (this.retiring && !['identity', 'status', 'task-status', 'retire'].includes(request.action))
       throw new Error('Execution host is retiring; retry after ownership is released');
-    if (request.action === 'identity') return this.context;
+    if (request.simulate !== undefined && typeof request.simulate !== 'boolean')
+      throw new InputError('Simulation must be a boolean');
+  }
+
+  /** Routes explicit controls while keeping scheduling policy inside the host. */
+  private dispatch(request: HostRequest): unknown {
+    this.validate(request);
+    if (request.action === 'identity') return { ...this.context, hostCapabilities };
     if (request.action === 'workday-control')
       return this.host.workdayControl(
         String(request.control),
@@ -115,7 +125,8 @@ class HostServer {
         request.expectedRevision,
       );
     if (request.action === 'retire') return this.retire();
-    if (request.action === 'submit') return this.host.submit(String(request.prompt ?? ''));
+    if (request.action === 'submit')
+      return this.host.submit(String(request.prompt ?? ''), request.simulate);
     if (request.action === 'task-status') return this.host.reports.view(String(request.id));
     if (request.action === 'answer') {
       this.host.answer(String(request.id), String(request.answer));
@@ -125,7 +136,7 @@ class HostServer {
       this.host.cancel(String(request.id));
       return true;
     }
-    return this.host.control(request.action);
+    return this.host.control(request.action, request.simulate);
   }
 }
 

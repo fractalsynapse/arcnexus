@@ -1,3 +1,6 @@
+import { RunSelection } from './run-selection.js';
+import { RunCreation } from './run-creation.js';
+import { RunEnvironments } from './run-environments.js';
 import { RunContinuation } from './run-continuation.js';
 import { ResourceQuery } from '../report/resource-query.js';
 import { HostRecovery } from './host-recovery.js';
@@ -9,7 +12,7 @@ import { InputError } from '../architecture/config.js';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ProjectExecution } from '../architecture/execution-context.js';
-import type { ExecutionRun, RunEnvironment } from '../coordination-store/execution-types.js';
+import type { ExecutionRun } from '../coordination-store/execution-types.js';
 import { ExecutionStore } from '../coordination-store/execution-store.js';
 import { RunWorkspace } from './run-workspace.js';
 import type { RecordData } from '../workspace/state.js';
@@ -17,8 +20,7 @@ import { Direction, VerificationIssue } from '../task-intake/direction.js';
 import { ProgressObserver } from '../report/progress.js';
 import type { InitializationResult } from '../architecture/initialization.js';
 import { AssignmentDispatch } from './assignment-dispatch.js';
-import { AssignmentExecution } from './assignment-execution.js';
-import { Scheduler } from './scheduler.js';
+import { CollaborativeDispatch } from './collaborative-dispatch.js';
 
 /** Owns sequential project execution while task and workday policies select different work. */
 export class ProjectHost {
@@ -26,9 +28,11 @@ export class ProjectHost {
 
   readonly reports: ExecutionReports;
 
-  private readonly workspaces: RunWorkspace;
+  private readonly environments: RunEnvironments;
 
   private readonly authority: RunAuthority;
+
+  private readonly selection: RunSelection;
 
   private busy = false;
 
@@ -43,17 +47,25 @@ export class ProjectHost {
     mkdirSync(join(root, 'workspaces'), { recursive: true, mode: 0o700 });
     this.store = new ExecutionStore(join(root, 'projects', context.key, 'execution.sqlite'));
     this.reports = new ExecutionReports(join(root, 'projects', context.key), this.store);
-    this.workspaces = new RunWorkspace(root, context, this.store);
+    this.environments = new RunEnvironments(root, context, this.store);
+    this.selection = new RunSelection(context, this.store);
     this.authority = new RunAuthority(context, this.store);
     new HostRecovery(root, this.store, this.authority).recover();
   }
 
+  /** Releases host-owned databases only after managed activation has stopped. */
+  close(): void {
+    if (this.busy) throw new Error('Cannot close an active execution host');
+    this.environments.effects.close();
+    this.store.close();
+  }
+
   /** Applies user lifecycle intent immediately; active work reaches a checkpoint before pause. */
-  control(action: string): unknown {
-    let workday = this.workday();
+  control(action: string, simulate = false): unknown {
+    let workday = this.selection.workday();
     if (action === 'status') return this.status();
     if (action === 'start' && (!workday || workday.status === 'stopped'))
-      workday = this.create('workday', 'Self-directed stewardship');
+      workday = this.create('workday', 'Self-directed stewardship', simulate);
     if (!workday) throw new Error('No workday exists');
     if (workday.status === 'stopped' && ['pause', 'stop'].includes(action)) return this.status();
     if (action === 'pause' && workday.status !== 'stopped')
@@ -79,7 +91,7 @@ export class ProjectHost {
       throw new InputError('Stale workday revision; read the workday again');
     if (run.status === 'stopped' && ['pause', 'stop'].includes(action))
       return this.reports.view(id);
-    if (this.workday()?.id !== id)
+    if (this.selection.workday()?.id !== id)
       throw new InputError('Historical workday cannot resume or control current execution');
     if (!['pause', 'resume', 'stop'].includes(action))
       throw new InputError('Unknown workday action');
@@ -88,10 +100,10 @@ export class ProjectHost {
   }
 
   /** Queues a goal without interrupting an in-flight safe checkpoint. */
-  submit(prompt: string): ExecutionRun {
+  submit(prompt: string, simulate = false): ExecutionRun {
     if (!prompt.trim()) throw new InputError('Task prompt must not be empty');
-    const task = this.create('task', prompt);
-    const workday = this.workday();
+    const task = this.create('task', prompt, simulate);
+    const workday = this.selection.workday();
     if (workday && ['running', 'idle'].includes(workday.status))
       this.store.updateRun(workday.id, this.active?.runId === workday.id ? 'pausing' : 'paused', {
         pauseReason: 'task',
@@ -159,14 +171,14 @@ export class ProjectHost {
   private continuation(run: ExecutionRun): void {
     new RunContinuation(this.root, this.context.base, this.store, this.authority).resume(
       run,
-      this.latestDelivery(run.environment),
+      this.selection.delivery(run.environment),
     );
   }
 
   /** Executes at most one activation so IPC controls remain responsive between checkpoints. */
   async tick(): Promise<void> {
     if (this.busy) return;
-    const run = this.select();
+    const run = this.selection.next();
     if (!run) return;
     this.busy = true;
     this.active = { runId: run.id, controller: new AbortController() };
@@ -189,14 +201,14 @@ export class ProjectHost {
       this.store.updateRun(id, 'needs_attention', { error: String(error) });
     if (!(error instanceof Error) || error.name !== 'CandidateIntegrityError') return;
     this.store.updateRun(id, this.store.run(id).status, { integrityError: String(error) });
-    const workday = this.workday();
+    const workday = this.selection.workday();
     if (workday && workday.status !== 'stopped')
       this.store.updateRun(workday.id, 'needs_attention', { integrityError: String(error) });
   }
 
   /** Projects current lifecycle and accountable assignments for the option-free status command. */
   status() {
-    const workday = this.workday();
+    const workday = this.selection.workday();
     const sourceRevision = git(this.context.source, 'rev-parse', 'HEAD').trim();
     return {
       sourceChanged: sourceRevision !== this.context.base,
@@ -209,70 +221,41 @@ export class ProjectHost {
         .filter((r) => r.mode === 'task')
         .map((r) => this.reports.view(r.id).run),
       assignments: workday ? this.reports.view(workday.id).assignments : [],
-      candidate: this.latestCandidate(),
+      candidate: String(this.selection.delivery()?.data.candidateRevision ?? this.context.base),
     };
   }
 
   /** Captures a new run against the last compatible verified candidate. */
-  private create(mode: 'task' | 'workday', objective: string): ExecutionRun {
-    if (git(this.context.source, 'status', '--porcelain', '--untracked-files=all').trim())
-      throw new InputError('Source checkout must be clean when creating a new run');
-    if (git(this.context.source, 'rev-parse', 'HEAD').trim() !== this.context.base)
-      throw new InputError('Source revision changed; stop and start against updated authority');
-    const run = this.store.createRun(mode, this.context.owners, objective);
-    this.store.updateRun(run.id, 'running', {
-      candidateRevision: this.latestCandidate(),
-      authorityBase: this.context.base,
-      executionIdentity: this.authority.identity,
-      packageId: this.context.packageId,
-    });
-    return this.store.run(run.id);
+  private create(mode: 'task' | 'workday', objective: string, simulate = false): ExecutionRun {
+    return new RunCreation(this.context, this.store, this.environments).create(
+      mode,
+      objective,
+      simulate,
+      mode === 'task' ? this.selection.workday() : undefined,
+    );
   }
 
-  /** Selects queued tasks first and tracks automatic pauses independently of user intent. */
-  private select(): ExecutionRun | undefined {
-    const task = this.selectTask();
-    const workday = this.workday();
-    if (task) {
-      if (workday && ['running', 'idle'].includes(workday.status))
-        this.store.updateRun(workday.id, 'paused', { pauseReason: 'task' });
-      return task;
-    }
-    if (workday?.status === 'paused' && workday.data.pauseReason === 'task')
-      this.store.updateRun(workday.id, 'running', {
-        candidateRevision: String(
-          this.latestDelivery(workday.environment)?.data.candidateRevision ?? this.context.base,
-        ),
-        candidateRecord:
-          this.latestDelivery(workday.environment)?.data.candidateRecord ??
-          workday.data.candidateRecord,
-        pauseReason: null,
-      });
-    const latest = this.workday();
-    return latest?.status === 'running' ? latest : undefined;
-  }
-
-  /** Keeps a task's project ownership across activations; answered clarifications rejoin the FIFO queue. */
-  private selectTask(): ExecutionRun | undefined {
-    const tasks = this.store.runs().filter((r) => r.mode === 'task' && r.status === 'running');
-    const task = tasks.find((r) => r.data.executionOwner === true) ?? tasks[0];
-    if (task && task.data.executionOwner !== true)
-      this.store.updateRun(task.id, 'running', { executionOwner: true });
-    return task;
+  /** Resolves isolated run source without replacing the captured steward catalog or profiles. */
+  private workspaces(run: ExecutionRun): RunWorkspace {
+    return new RunWorkspace(this.root, this.environments.contextFor(run), this.store);
   }
 
   /** Prepares context, advances ready assignments or invokes the mode-specific selection policy. */
   private async advance(run: ExecutionRun, signal: AbortSignal): Promise<void> {
     this.authority.assert(run);
-    if (!run.data.workspace) await this.workspaces.prepare(run, signal);
+    await this.environments.prepare(run, signal);
+    run = this.store.run(run.id);
+    if (!run.data.workspace) await this.workspaces(run).prepare(run, signal);
     run = this.store.run(run.id);
     if (run.data.workspacePrepared !== true)
       throw new Error('Workspace preparation was interrupted; inspect retained command evidence');
-    if (run.mode === 'task' && !run.data.initialized) return this.direct(run, signal);
+    if (!run.data.initialized) return this.direct(run, signal);
     const ready = this.store.ready(run.id);
     if (ready.length && (run.mode === 'task' || run.data.lastDispatch !== 'assignment')) {
-      const executor = new AssignmentExecution(this.root, this.context, this.store, signal);
-      await new Scheduler(this.store, (a) => executor.activate(a)).step(run.id);
+      await new CollaborativeDispatch(this.root, this.context, this.store, this.environments).step(
+        run,
+        signal,
+      );
       this.store.updateRun(run.id, this.store.run(run.id).status, { lastDispatch: 'assignment' });
       return;
     }
@@ -282,27 +265,30 @@ export class ProjectHost {
 
   /** Runs task direction and retains interactive questions before any owner activation. */
   private async direct(run: ExecutionRun, signal: AbortSignal): Promise<void> {
-    const result = await new Direction(this.root, this.context, signal).propose(
-      await this.workspaces.policy(run, signal),
-      this.directionPrompt(run),
-    );
+    const result = await new Direction(
+      this.root,
+      this.environments.contextFor(run),
+      signal,
+    ).propose(await this.workspaces(run).policy(run, signal), this.directionPrompt(run));
     if (signal.aborted) return;
     if (result.status !== 'ready') {
       this.clarification(run, result);
       return;
     }
-    if (!result.assignments.length && !result.continuations.length)
+    if (run.mode === 'task' && !result.assignments.length && !result.continuations.length)
       throw new Error('Task director returned no assignment or continuation');
-    new AssignmentDispatch(this.root, this.context, this.store).apply(run, result);
-    this.store.updateRun(run.id, this.store.run(run.id).status, {
-      initialized: true,
-      initialDirection: run.data.initialDirection ?? result,
-      direction: result,
-    });
+    await new CollaborativeDispatch(
+      this.root,
+      this.context,
+      this.store,
+      this.environments,
+    ).initialize(run, result, signal);
   }
 
   /** Preserves the goal, prior delivery and unresolved findings when interactive clarification returns. */
   private directionPrompt(run: ExecutionRun): string {
+    if (run.mode === 'workday')
+      return 'Workday setup: assess the captured platform and component purposes, objectives, questions and standards. Select useful bounded starting work when warranted, or return ready with empty assignments and selectedOwners plus a justification. This is self-directed stewardship, not an external goal. The host will fairly rotate all eligible stewards afterward; your initial team does not limit later discovery or inbox requests.';
     const prompt = String(run.data.prompt ?? run.objective);
     const references = this.store
       .runs()
@@ -321,8 +307,9 @@ export class ProjectHost {
 
   /** Visits each eligible steward once per changed candidate, interleaved with inbox work. */
   private async stewardship(run: ExecutionRun, signal: AbortSignal): Promise<void> {
+    const context = this.environments.contextFor(run);
     const seen = (run.data.seen ?? {}) as Record<string, string>;
-    const selected = new StewardshipPolicy(this.context).next(run, this.store.assignments(run.id));
+    const selected = new StewardshipPolicy(context).next(run, this.store.assignments(run.id));
     if (!selected) {
       this.store.updateRun(run.id, this.store.ready(run.id).length ? 'running' : 'idle', {
         lastDispatch: 'stewardship',
@@ -331,8 +318,8 @@ export class ProjectHost {
     }
     const { owner, fingerprint } = selected;
     const component = this.context.catalog.components[owner]!;
-    const workspace = await this.workspaces.policy(run, signal);
-    const result = await new Direction(this.root, this.context, signal).propose(
+    const workspace = await this.workspaces(run).policy(run, signal);
+    const result = await new Direction(this.root, context, signal).propose(
       workspace,
       JSON.stringify({
         component,
@@ -380,9 +367,13 @@ export class ProjectHost {
         true,
         signal,
       );
-    const record = await this.workspaces.policy(run, signal);
+    const record = await this.workspaces(run).policy(run, signal);
     try {
-      const evidence = await new Direction(this.root, this.context, signal).verify(
+      const evidence = await new Direction(
+        this.root,
+        this.environments.contextFor(run),
+        signal,
+      ).verify(
         record,
         run.owners[0]!,
         run.objective,
@@ -405,14 +396,12 @@ export class ProjectHost {
     signal: AbortSignal,
   ): Promise<void> {
     this.observeGoalFailure(run, feedback);
-    const record = await this.workspaces.policy(run, signal);
-    const result = await new Direction(this.root, this.context, signal).reconsider(
-      record,
-      run.objective,
-      this.store.assignments(run.id),
-      feedback,
-      blocked,
-    );
+    const record = await this.workspaces(run).policy(run, signal);
+    const result = await new Direction(
+      this.root,
+      this.environments.contextFor(run),
+      signal,
+    ).reconsider(record, run.objective, this.store.assignments(run.id), feedback, blocked);
     if (signal.aborted) return;
     this.store.updateRun(run.id, this.store.run(run.id).status, {
       redirection: feedback,
@@ -466,23 +455,5 @@ export class ProjectHost {
       this.store.updateRun(id, run.status, { executionOwner: false });
     if (run.status === 'pausing') this.store.updateRun(id, 'paused');
     if (run.status === 'stopping') this.store.updateRun(id, 'stopped');
-  }
-
-  /** Finds the latest workday without confusing queued external tasks with its lifecycle. */
-  private workday(): ExecutionRun | undefined {
-    return this.store
-      .runs()
-      .filter((r) => r.mode === 'workday')
-      .at(-1);
-  }
-
-  /** Reads the newest verified snapshot in this captured architecture revision. */
-  private latestCandidate(): string {
-    return String(this.latestDelivery()?.data.candidateRevision ?? this.context.base);
-  }
-
-  /** Keeps the candidate revision and its verified workspace evidence paired across run handoffs. */
-  private latestDelivery(environment?: RunEnvironment): ExecutionRun | undefined {
-    return this.store.latestDelivery(this.context.base, this.context.packageId, environment);
   }
 }

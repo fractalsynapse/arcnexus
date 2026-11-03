@@ -3,6 +3,7 @@ import { InputError } from '../architecture/config.js';
 
 export interface HostRequest {
   action: string;
+  simulate?: boolean;
   prompt?: string;
   id?: string;
   answer?: string;

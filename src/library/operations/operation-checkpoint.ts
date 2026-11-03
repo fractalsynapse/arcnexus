@@ -104,7 +104,7 @@ export class OperationCheckpoint {
   /** Refuses unresolved, unbounded or legacy operations before partial lifecycle execution. */
   private validate(operation: Operation): void {
     if (
-      operation.kind === 'service' ||
+      ['service', 'upstream'].includes(operation.kind) ||
       operation.schemaVersion !== 4 ||
       operation.argumentTokens ||
       operation.pendingContext?.length ||

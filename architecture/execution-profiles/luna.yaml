@@ -10,3 +10,4 @@ operationCategories:
   - cli-check
   - http-check
   - lint
+  - collaboration

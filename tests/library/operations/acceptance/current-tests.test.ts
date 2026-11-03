@@ -129,7 +129,8 @@ class CurrentTestScenarios {
         testOutputRoot: '.test-build',
       },
     );
-    assert.ok(captured.kind !== 'http');
+    assert.equal(captured.kind, 'command');
+    assert.ok('args' in captured);
     assert.deepEqual(captured.args, ['--test', '../.test-build/unit/base.test.js']);
   }
 

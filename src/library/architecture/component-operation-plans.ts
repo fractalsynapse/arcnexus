@@ -68,7 +68,7 @@ export class ComponentOperationPlans {
         throw new InputError(`Migrate operation ${op.id} to schemaVersion 4`);
       if (op.repository !== c.repository)
         throw new InputError(`Operation repository mismatch: ${op.id}`);
-      if (usage !== 'agent' && op.kind === 'service')
+      if (usage !== 'agent' && ['service', 'upstream'].includes(op.kind))
         throw new InputError(`Required lifecycle operations must be finite: ${op.id}`);
       if (
         !op.activities.every((activity) =>

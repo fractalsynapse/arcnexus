@@ -1,3 +1,4 @@
+import { InputError } from '../architecture/config.js';
 import { HostConnection, type HostRequest } from './host-connection.js';
 import { randomUUID } from 'node:crypto';
 import { git } from '../operations/process.js';
@@ -105,8 +106,16 @@ export class HostClient {
   }
 
   /** Sends a structured control through the shared private transport. */
-  request(request: HostRequest): Promise<any> {
-    return new HostConnection(this.socket).request(request);
+  async request(request: HostRequest): Promise<any> {
+    const connection = new HostConnection(this.socket);
+    if (request.simulate === true) {
+      const identity = await connection.request({ action: 'identity' });
+      if (!identity.hostCapabilities?.includes('simulation'))
+        throw new InputError(
+          'Captured host does not support simulation; end retained runs and restart with the updated runtime',
+        );
+    }
+    return connection.request(request);
   }
 
   /** Confirms both process identity and an answering local endpoint before trusting a stale socket. */
