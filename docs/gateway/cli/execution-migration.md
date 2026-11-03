@@ -4,12 +4,16 @@ Issue #106 finishes the normal-interface migration in #78. Engineering execution
 uses the project host, durable assignment scheduler and task director. Workday
 policy supplies stewardship turns to that same host.
 
-The public execution commands are exactly `task run "<prompt>"` and `workday
-start|pause|resume|stop|status`. Legacy component `run`, manifest `workday run`,
-`task plan` and `task legacy-run` return an input error explaining the replacement,
-before creating a workspace or calling a model. Historical workday/proposal and
-worker report inspection remains read-only. `prepare` remains a workspace diagnostic,
-not an alternate engineering entry point.
+Task and workday execution now supports package targeting, retained identity
+controls and read-only resource queries. The [execution contract](../../library/execution-runtime/execution.md)
+defines the current command behavior; local prompt and argument-free workday
+shorthand remain available when context is unambiguous.
+
+Legacy component `run`, manifest `workday run`, `task plan` and `task legacy-run`
+return an input error explaining the replacement before creating a workspace or
+calling a model. Historical workday/proposal and worker report inspection remains
+read-only. `prepare` remains a workspace diagnostic pending its grouped-command
+migration, not an alternate engineering entry point.
 
 Active campaigns use schema version 3: prompts and expected terminal outcomes,
 with project declarations supplying owners, profiles and verification. Retained
