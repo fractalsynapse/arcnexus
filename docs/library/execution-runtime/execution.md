@@ -313,7 +313,9 @@ retained run independently of the current directory. Pause records user intent a
 finishes the active activation/checkpoint; paused work releases dispatch ownership.
 Resume validates checkpoints, reconciles against the current verified candidate,
 and retains the goal, accepted plans, dependencies and unfinished assignment files.
-Stop cancels active execution and may also cancel paused/interrupted work. Answer
+An explicit stop cancels active execution and may also cancel paused, interrupted
+or attention-required work. Delayed attached-client cancellation preserves retained
+interrupted and attention outcomes; it is not a new explicit stop request. Answer
 requires a nonempty response to an actual needs-input task. Terminal runs cannot
 resume. Application controls support expected-revision checks at the host mutation
 boundary; the CLI never fabricates authorization from a resource projection.
