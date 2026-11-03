@@ -214,3 +214,36 @@ Keep actual owned documentation, expected-red built-program acceptance, checked
 edits, host verification and independent review. Earlier failed/blocked #173 tasks
 retain their original criteria, partial work and evidence; this new contract does
 not rewrite them or claim their incomplete assignments were delivered.
+
+## Lifecycle implementation batch: durable external effects
+
+The coordination store owns immutable live/simulation environment identities and
+external-effect intents. Each intent captures run, assignment, operation, target,
+authority digest and input digest before a provider can mutate anything. Reusing
+an identity with different inputs is an error. An interrupted attempt remains
+uncertain until the provider reconciles it; absence must be established before
+retry. Completed effects return their retained results without executing twice.
+
+Operations owns the provider boundary and its persistent simulated upstream model.
+The same effect executor will serve real and simulated providers; environment
+identity and operation destinations come from the host, never agent-supplied identity.
+Provider state is separate from execution evidence so recovery can demonstrate a
+provider mutation that completed before its host receipt was persisted.
+
+These foundations alone do not enable `--simulate` or establish a live gate.
+Production wiring, source/network confinement, real Git delivery, independent
+verification and publication qualification remain required before exposing it.
+
+### Development efficiency observations
+
+- 2026-11-03: Repeated whole-suite regression attempts and CI cycles for small patches
+  delayed lifecycle delivery. Batch implementation and use applicability-aware focused
+  feedback; measure final qualification separately.
+- 2026-11-03: Existing director catalog selection, sequential scheduling, checked edits
+  and SQLite transaction support can be reused. Avoiding a second scheduler/director
+  removes substantial implementation and qualification work.
+- 2026-11-03: Historical evidence and runtime authority are distinct. Extending durable
+  state without rewriting old run records keeps the recovery surface smaller.
+
+Record subsequent observations with the concrete event, consequence and practical
+adjustment. These notes are observations, not new process gates or timing claims.

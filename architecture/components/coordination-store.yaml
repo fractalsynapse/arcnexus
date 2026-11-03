@@ -3,10 +3,10 @@ id: coordination-store
 type: library
 parentId: cli-package
 purpose: Persist transactional project runs, assignments, inbox dependencies and
-  ordered evidence
+  ordered evidence and durable external-effect intents
 objectives:
   - Persist transactional project runs, assignments, inbox dependencies and
-    ordered evidence
+    ordered evidence and durable external-effect intents
 constraints:
   - Preserve captured authority and evidence
 operations:
@@ -23,3 +23,5 @@ api:
   - module: src/library/coordination-store/workday-store.ts
   - module: src/library/coordination-store/execution-store.ts
   - module: src/library/coordination-store/execution-types.ts
+  - module: src/library/coordination-store/lifecycle-store.ts
+  - module: src/library/coordination-store/lifecycle-types.ts

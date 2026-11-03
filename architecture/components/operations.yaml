@@ -2,7 +2,8 @@ schemaVersion: 6
 id: operations
 type: library
 parentId: cli-package
-purpose: Execute declared commands and supervise local services and probes
+purpose: Execute declared commands, supervise services and reconcile authorized
+  upstream effects through captured providers
 objectives:
   - Execute captured engineering operations and preserve their evidence
   - Stop managed subprocesses and services when their execution scope ends
@@ -33,3 +34,5 @@ api:
   - module: src/library/operations/process.ts
   - module: src/library/operations/service-state.ts
   - schema: src/library/operations/schemas/operation.json
+  - module: src/library/operations/upstream-execution.ts
+  - module: src/library/operations/simulated-upstream.ts
