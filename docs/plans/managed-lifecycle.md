@@ -247,3 +247,30 @@ verification and publication qualification remain required before exposing it.
 
 Record subsequent observations with the concrete event, consequence and practical
 adjustment. These notes are observations, not new process gates or timing claims.
+
+The GitHub collaboration adapter uses the official
+[issue](https://docs.github.com/en/rest/issues/issues#create-an-issue) and
+[comment](https://docs.github.com/en/rest/issues/comments#create-an-issue-comment)
+contracts. Credentials are acquired only inside the host provider; redirects are
+rejected. Correlation markers identify exact intents. An absent listing result is
+not proof that a request never succeeded, so live recovery retains uncertainty
+instead of automatically resubmitting a potentially duplicated mutation.
+
+- 2026-11-03: Catalog validation resolves public modules from committed source.
+  Declaring a new public module in the intent commit makes intermediate branch
+  revisions non-executable until its implementation is committed. Keep intent in
+  documentation first and commit executable boundary declarations with their files;
+  avoid wasting test runs on an intentionally incomplete catalog.
+
+- 2026-11-03: The first 13 focused lifecycle/provider tests ran against built modules
+  with no failures or skips (229 ms test-process duration, excluding builds). They
+  cover SQLite recovery, deduplication, destination/mode rejection, cancellation,
+  controlled GitHub transport and assignment-bound collaboration input. This is fast
+  development feedback, not integrated lifecycle or real-provider qualification.
+
+Current batch checkpoint: environment/effect journals, simulated issue/comment
+persistence, GitHub issue/comment transport and an assignment-bound MCP tool adapter
+are implemented as shared library boundaries. They are not yet wired into task/workday
+host dispatch. No `--simulate` command, Publisher, real Git delivery, promotion or
+real-agent qualification is claimed by this checkpoint. GitHub transport tests use
+controlled responses exclusively; no real upstream effect has been invoked by them.

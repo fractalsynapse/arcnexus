@@ -36,3 +36,5 @@ api:
   - schema: src/library/operations/schemas/operation.json
   - module: src/library/operations/upstream-execution.ts
   - module: src/library/operations/simulated-upstream.ts
+  - module: src/library/operations/github-upstream.ts
+  - module: src/library/operations/upstream-bridge.ts

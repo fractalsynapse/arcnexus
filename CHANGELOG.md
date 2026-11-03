@@ -4,6 +4,8 @@
 
 ### Added
 
+- Add durable environment-bound collaboration intents, conservative upstream recovery, and GitHub/simulated issue adapters for the pending managed lifecycle (#148).
+
 - Update registered component, platform and package definitions through recoverable configuration commits without editing caller checkouts (#197).
 
 - Clean up eligible package workspaces outside a checkout while retaining unfinished work and execution evidence (#195).
