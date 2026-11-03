@@ -34,6 +34,8 @@
 
 ### Fixed
 
+- Run consolidated architecture and guidance validation during steward verification (#165).
+
 - Keep read-only portfolio discovery stable during concurrent database initialization (#162).
 - Refuse cleanup of clean workspaces retained by general tasks, workdays or assignments before any removal effects (#158).
 
