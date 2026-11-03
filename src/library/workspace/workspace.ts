@@ -174,6 +174,8 @@ export class WorkspacePreparation {
   /** Captures authority and acquires the host's canonical lease before creating a worktree. */
   async prepare(target: WorkspacePreparationTarget, signal: AbortSignal) {
     signal.throwIfAborted();
+    if (!target.source?.trim() || !target.base?.trim() || !target.packageId?.trim())
+      throw new InputError('Captured source, revision and package identity are required');
     const context = new ExecutionContext().resolve(target.source, target.packageId, target.base);
     const lease = new ExecutionLease(join(context.commonDir, 'arcnexus', 'host.lease.sqlite'));
     try {

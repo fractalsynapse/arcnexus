@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { waitFor } from '../../../library/testing/support/test-process.js';
 import { PackageCliFixture } from '../support/package-cli-fixture.js';
 import { ExecutionLease } from '../../../../dist/library/coordination-store/execution-store.js';
 import { WorkspacePreparation } from '../../../../dist/library/workspace/workspace.js';
@@ -40,6 +41,53 @@ class WorkspacePreparationScenarios {
     } finally {
       lease.close();
     }
+  }
+
+  /** Cancellation retains the unfinished receipt and releases repository ownership after child cleanup. */
+  async cancelled(f: PackageCliFixture): Promise<void> {
+    f.operation('setup', [
+      '-e',
+      'require("fs").writeFileSync(".test-build/ready","ok");setInterval(()=>{},1000)',
+    ]);
+    f.extend(
+      'architecture/components/package.yaml',
+      (value) => (value.operations = { setup: ['setup'] }),
+    );
+    f.commit();
+    const root = join(f.root, 'cancel-state'),
+      controller = new AbortController();
+    const target = { source: f.repo, base: f.git('rev-parse', 'HEAD'), packageId: 'package' };
+    const pending = new WorkspacePreparation(root).prepare(target, controller.signal);
+    try {
+      await waitFor(
+        () =>
+          readdirSync(join(root, 'workspaces')).some((id) =>
+            existsSync(join(root, 'workspaces', id, '.test-build/ready')),
+          ),
+        'Setup must start',
+        60_000,
+      );
+      controller.abort(new Error('qualification cancellation'));
+      const result = await pending;
+      this.cancelledEvidence(f, root, result);
+    } finally {
+      controller.abort();
+      await pending;
+    }
+  }
+
+  /** Checks retained cancellation evidence, kernel scope removal and same-process lease reacquisition. */
+  private cancelledEvidence(f: PackageCliFixture, root: string, result: any): void {
+    assert.equal(result.workspace.status, 'cancelled');
+    assert.equal(result.finalized, true);
+    const record = JSON.parse(
+      readFileSync(join(root, 'runs', result.workspace.id, 'report.json'), 'utf8'),
+    );
+    const scope = record.operationInvocations[0].result.processScope;
+    assert.equal(typeof scope, 'string');
+    assert.equal(existsSync(scope), false);
+    const common = f.git('rev-parse', '--path-format=absolute', '--git-common-dir');
+    new ExecutionLease(join(common, 'arcnexus', 'host.lease.sqlite')).close();
   }
 
   /** Declared setup uses real confinement, and failures keep their operation log and receipt. */
@@ -111,6 +159,14 @@ test('shared preparation returns a resource and releases its lease without a CLI
   const f = new PackageCliFixture(t);
   const target = { source: f.repo, base: f.git('rev-parse', 'HEAD'), packageId: 'package' };
   const root = join(f.root, 'direct-state');
+  await assert.rejects(
+    new WorkspacePreparation(root).prepare(
+      { ...target, packageId: '' },
+      new AbortController().signal,
+    ),
+    /identity are required/,
+  );
+  assert.equal(existsSync(root), false);
   const service = new WorkspacePreparation(root);
   const result = await service.prepare(target, new AbortController().signal);
   assert.equal(result.workspace.status, 'prepared');
@@ -120,5 +176,11 @@ test('shared preparation returns a resource and releases its lease without a CLI
   controller.abort(new Error('cancelled before preparation'));
   await assert.rejects(service.prepare(target, controller.signal), /cancelled before preparation/);
 });
+
+test(
+  'shared workspace preparation cancels managed setup and releases its lease',
+  { skip: !process.env.ARCNEXUS_TEST_CODEX && 'Requires installed confinement' },
+  (t) => scenarios.cancelled(new PackageCliFixture(t)),
+);
 
 registerSuite({ component: 'cli', level: 'acceptance', tags: ['deterministic', 'native-host'] });
