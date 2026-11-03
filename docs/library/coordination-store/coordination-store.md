@@ -27,3 +27,15 @@ form blocking edges. Retained links to accepted intent or completed delivery rem
 provenance and may form historical cycles without preventing runnable work. A new
 unsatisfied cycle still rolls back the entire request exchange and retains an
 explicit blocked outcome; an acknowledgment never substitutes for delivery.
+
+
+## Concurrent portfolio initialization
+
+Portfolio readers apply the same bounded SQLite lock-wait safeguard as writers
+before inspecting schema metadata (#162). This is database contention handling,
+not an engineering execution deadline. Version and table inspection share a read
+transaction so concurrent initialization cannot produce a mixed schema observation.
+
+An absent or still-uninitialized read-only registry projects empty collections and
+never creates schema. Unsupported/corrupt schemas still fail explicitly. A failed
+open closes its connection; reads never gain mutation authority while waiting.
