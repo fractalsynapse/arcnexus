@@ -41,20 +41,34 @@ export class PortfolioStore {
     if (!writable && !existsSync(path)) return;
     if (writable) mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
     this.db = new DatabaseSync(path, { readOnly: !writable });
-    const version = Number(this.db.prepare('PRAGMA user_version').get()?.user_version);
-    this.version = version;
-    const tables = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
-    if (![0, 1, 2].includes(version) || (version === 0 && tables.length)) {
+    try {
+      this.db.exec('PRAGMA busy_timeout=5000');
+      this.version = this.inspect();
+      if (writable) this.initialize(path);
+    } catch (error) {
       this.db.close();
-      throw new Error('Unsupported portfolio database');
+      throw error;
     }
-    if (writable) this.initialize(path);
+  }
+
+  /** Inspects version and tables in one read snapshot so initialization cannot produce mixed metadata. */
+  private inspect(): number {
+    this.db!.exec('BEGIN');
+    try {
+      const version = Number(this.db!.prepare('PRAGMA user_version').get()?.user_version);
+      const tables = this.db!.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
+      if (![0, 1, 2].includes(version) || (version === 0 && tables.length))
+        throw new Error('Unsupported portfolio database');
+      return version;
+    } finally {
+      this.db!.exec('ROLLBACK');
+    }
   }
 
   /** Upgrades registry storage transactionally without altering retained source or run databases. */
   private initialize(path: string): void {
     chmodSync(path, 0o600);
-    this.db!.exec('PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;');
+    this.db!.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;');
     this.db!.exec(`BEGIN IMMEDIATE;
       CREATE TABLE IF NOT EXISTS repositories(id TEXT PRIMARY KEY,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS registrations(kind TEXT,id TEXT,data TEXT NOT NULL,PRIMARY KEY(kind,id));
@@ -84,6 +98,7 @@ export class PortfolioStore {
 
   /** Returns stable repository locations without filesystem-dependent identifiers. */
   repositories(): PortfolioRepository[] {
+    if (this.version === 0) return [];
     return (this.db?.prepare('SELECT data FROM repositories ORDER BY id').all() ?? []).map((row) =>
       JSON.parse(String(row.data)),
     );
@@ -91,6 +106,7 @@ export class PortfolioStore {
 
   /** Includes tombstones only for mutation/recovery; ordinary callers receive active registrations. */
   registrations(includeRemoved = false): PortfolioRegistration[] {
+    if (this.version === 0) return [];
     return (this.db?.prepare('SELECT data FROM registrations ORDER BY kind,id').all() ?? [])
       .map((row) => JSON.parse(String(row.data)) as PortfolioRegistration)
       .filter((row) => includeRemoved || row.active);
