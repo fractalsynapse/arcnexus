@@ -36,6 +36,8 @@
 
 ### Fixed
 
+- Preserve specification continuation after an invalid regression operation selection without granting agent-only verification authority (#181).
+
 - Let stewards correct rejected checklist tool claims without aborting valid engineering; retain loop diagnosis and fatal execution safeguards (#178).
 
 - Isolate steward client tools and authentication from personal MCP, app and plugin configuration; validate effective capabilities before inference (#174).

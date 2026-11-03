@@ -224,6 +224,11 @@ export class ControlledWorkflow {
       exitCode: 1,
       outputIncludes: 'BOUNDARY_EXPECTED',
     };
+    if (
+      this.options.mode.startsWith('selection-') &&
+      (this.options.mode === 'selection-loop' || turn.count === 2)
+    )
+      turn.result.regression.operationId = `unavailable-${turn.count}`;
     this.specificationActivities(turn);
     if (this.options.mode === 'early-implementation') fs.writeFileSync('source.txt', 'after');
     if (
