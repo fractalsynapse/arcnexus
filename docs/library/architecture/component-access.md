@@ -1,117 +1,139 @@
-# Explicit component filesystem access
+# Component ownership and execution access
 
-Every component definition must declare `access`; there is no inferred or legacy
-fallback. Paths are repository-relative. `.` explicitly means the whole worktree.
+This guide describes the current schema-v6 model for component declarations and
+the runtime boundaries built from them. Historical directory-based permission
+probes are retained at the end as version-specific evidence; they are not the
+current authored access model.
 
-```yaml
-access:
-  readPaths: [src, tests, docs, package.json, node_modules]
-  writeDirectories: [src/identity, tests/identity, docs/identity]
-```
+## Authored ownership and derived edit scope
 
-An explicit broad policy is also valid:
+A component declares the paths it owns with `owns`. Paths are relative to the
+component's nearest package root. The catalog resolves these declarations at the
+captured Git revision. For a component in the primary repository, its definition
+file under `architecture/components/` is also owned implicitly. A package or
+platform is a container and does not receive the paths of its children.
 
-```yaml
-access:
-  readPaths: ["."]
-  writeDirectories: ["."]
-```
+For example, the architecture component in
+[`architecture/components/architecture.yaml`](../../../architecture/components/architecture.yaml)
+declares `src/library/architecture`, `tests/library/architecture`, and
+`docs/library/architecture`. The runtime derives exact allowed edit paths from
+those declarations and the component definition. The captured inventory classifies
+files under that scope; file classification does not grant additional ownership.
+See the v6 [component schema](../../../src/library/architecture/schemas/component-v6.json),
+[ownership resolver](../../../src/library/architecture/component-v5.ts), and
+[ownership validation](../../../src/library/architecture/ownership.ts).
 
-`readPaths` grants reads; writable directories are also readable. Every
-`allowedWritePaths` entry must be covered by a declared writable directory. Exact
-file/path checks still apply after execution and may be narrower than the directory
-sandbox. No parent directory is inferred from a writable file. Parent component
-policies are captured as context; the executable leaf supplies the command policy.
+An assignment can narrow this derived ownership to its captured
+`allowedWritePaths`. The checked edit path must satisfy both that assignment scope
+and the owning component's derived scope. Workflow stage and assignment kind add
+further restrictions. Thus ownership defines the maximum component boundary; it
+does not give every turn permission to edit every owned file.
 
-`validate` rejects write-directory paths that are already tracked files or that
-traverse tracked symlinks at the captured revision. Missing directories remain valid
-configuration. After preparation, declared writable paths must be real directories,
-not files or symlinks. Missing declared writable directories may be created empty before the
-worker starts. Read paths must exist. Reject symlink components in either kind of
-path. Invalid, missing or unsupported policies stop before inference.
+## Reads and inherited policy
 
-ArcNexus generates a named Codex permission profile through SDK config overrides.
-It does not pass legacy `--sandbox` or `sandbox_workspace_write` settings that would
-override the profile. Hosted search stays live, local command networking disabled,
-Luna/medium and approval never. Native subagent delegation remains disabled.
-The requested profile is retained in execution evidence. A bounded sandbox startup
-probe uses the selected executable and profile before inference; failure has no
-broader-permission fallback.
+Schema-v6 components express read intent with `reads`. The nearest declaration
+along a component's ancestry supplies the read boundary. A child can narrow that
+boundary, but an explicit child declaration that adds paths outside its ancestor's
+boundary is rejected. Required paths derived from the component's own ownership
+are added to its effective readable paths. Policy resolution records which
+declaration supplied reads; operation declarations and constraints accumulate
+along ancestry. See the v6 [policy resolver](../../../src/library/architecture/component-v5-policy.ts)
+and the current [platform declaration](../../../architecture/components/arcnexus.yaml).
 
-The `arcnexus` profile uses `:minimal` reads plus the validated project paths and a
-private per-run temporary directory. TOML path keys are explicitly quoted in raw
-SDK config override strings because the SDK's structured flattener does not quote
-them. The probe runs the same profile and raw overrides with an isolated empty
-`CODEX_HOME` under the run directory; it has no copied authentication state. Probe
-output is retained as `sandbox-preflight` evidence and is not counted as a component
-verification command. The requested profile name and paths are included in the
-execution manifest.
+A read boundary describes what the architecture authorizes. The effective runtime
+policy still applies process confinement and private runtime paths. Reads do not
+grant source writes.
 
-Besides declared project paths, the policy grants Codex's `:minimal` runtime reads
-and one private per-run temporary directory outside the candidate. The latter is
-passed as `TMPDIR`; there is no whole `/tmp` write grant. Generated outputs are not
-silently writable: declare any directories needed for worker-side build/test output
-in `writeDirectories`. Host setup and final verification use their own trusted
-execution boundary and are unaffected by worker read/write restrictions.
+## Worker edits and supervised operations
 
-A restricted worker is not automatically granted access to the repository's shared
-Git storage outside the worktree. The host owns Git inspection/integration. Related
-component files can be declared readable without being writable. Permission profiles
-apply to sandboxed local commands, not all host-side Codex instruction loading,
-web search, managed integrations or the supervising process. Source hashes are
-provenance, not proof that the model saw only declared files.
+Steward model commands receive read-only maintained source. The steward constructs
+the model permission policy with no writable source outputs; only private temporary
+storage is writable. The model changes maintained files through the active
+assignment-bound `source.edit` tool. Edit paths are workspace-relative; updates
+and deletes include the current SHA-256 hash, while creates use a null hash
+precondition. The host checks ownership, captured assignment scope,
+documentation-only restrictions, workflow stage and frozen regression rules
+before applying a batch, and journals the result. Planning, research, review and
+handoff turns cannot edit. A denied native write is not evidence that checked edits
+are unavailable.
 
-## Compatibility evidence
+See the [steward permission configuration](../../../src/library/steward/codex-configuration.ts),
+[checked-edit guide](../assignment/checked-engineering-qualification.md),
+[edit authorization](../../../src/library/assignment/checked-edit-bridge.ts), and
+[steward workflow](../assignment/steward-workflow.md).
 
-Directory policies were tested on Linux with Codex 0.163.0-alpha.10.2 using
-`codex sandbox --permission-profile <name> --cd <fixture> -- python3 <probe>`.
-An implementation directory was writable; a related directory was readable but
-not writable; an undeclared file was not readable. No inference was used.
+Declared host operations can write only their captured disposable generated-output
+directories and private temporary storage. The operation supervisor resolves the
+operation from captured assignment authority, checks its declaration against
+maintained source paths, and qualifies source denial before running it. Unsupported
+confinement fails closed. These operations are supervised host commands, not
+arbitrary worker write access; their output permissions do not authorize maintained
+source changes. Host verification is limited to captured operations and checks,
+with results reported separately from model claims.
 
-An exact-file write rule on this installed CLI failed before command execution:
-`bwrap` attempted metadata paths below a regular file and exited with ENOTDIR.
-That is a version/configuration finding, not a general claim that file permissions
-are impossible. It matches [upstream issue #52985](https://github.com/openai/codex/issues/52985).
-We therefore use explicit directories, not silently widened file rules.
-See [official permission profiles](https://learn.chatgpt.com/docs/permissions) and the
-[Codex SDK raw config override documentation](https://github.com/openai/codex/blob/main/sdk/typescript/README.md).
+See [operation confinement](../../../src/library/operations/operation-confinement.ts),
+[the source confinement policy](../../../src/library/operations/confinement.ts), and
+the [captured operation declarations](../../../architecture/operations).
 
-## Delivered acceptance
+## Historical permission and run evidence
 
-The default SDK construction path passed 57 deterministic runtime tests, including
-explicit broad access, missing policies, ancestor validation, startup failure and
-cancellation. `node scripts/check-permissions.mjs` uses the production profile builder
-with the installed CLI and no inference to check allowed writes, related reads,
-and denied related writes/unrelated reads and writes.
+The following observations document earlier directory-based permission behavior.
+They describe particular versions, commands and runs and do not establish the
+current schema-v6 or checked-edit enforcement path.
 
-Luna live run `4fcde85a-01db-46f1-b6eb-17536fbe6f9f` completed a documentation
-assignment using only `related` reads and `docs` writes; independent inspection
-confirmed the expected sentence and only `docs/README.md` changed. Its report,
-profile, probe log, exact prompt and events are retained under the normal state root.
-
-The implementation originated in Luna run `56a64782-fc67-40f5-b4a2-91709a30b110`.
-Its host verification caught one test executable that edited files during preflight.
-Caller review corrected that fixture, made startup cancellation use the managed
-command runner, and connected the sandbox acceptance script to the production
-profile builder. This is assisted self-development; the failed original record
-remains intact.
+- A Linux probe using Codex `0.163.0-alpha.10.2` ran
+  `codex sandbox --permission-profile <name> --cd <fixture> -- python3 <probe>`.
+  It observed writes in an implementation directory, reads but no writes in a
+  related directory, and denial for undeclared paths. No inference was used.
+- An exact-file write rule failed before command execution in that installed
+  version/configuration: `bwrap` attempted metadata paths below a regular file
+  and exited with `ENOTDIR`. This was a version-specific result, not a general
+  limitation. The original note linked [upstream issue #52985](https://github.com/openai/codex/issues/52985).
+- The earlier directory-policy implementation reported 57 deterministic runtime
+  tests. Its `node scripts/check-permissions.mjs` check used the then-current
+  production profile builder and installed CLI, without inference. These counts
+  and probes are historical acceptance evidence, not current enforcement checks.
+- Historical Luna run
+  `4fcde85a-01db-46f1-b6eb-17536fbe6f9f` completed a documentation assignment
+  using related reads and documentation writes; independent inspection reported
+  only `docs/README.md` changed. The earlier report, profile, probe log, prompt
+  and events were recorded under the normal runtime state root. This run predates
+  the current checked-edit and operation-confinement description.
+- Historical implementation run
+  `56a64782-fc67-40f5-b4a2-91709a30b110` originated the directory-policy work.
+  Host verification found a test executable that edited files during preflight.
+  Later review corrected the fixture, used the managed command runner for startup
+  cancellation, and connected the acceptance script to the production profile
+  builder. The failed original record was retained.
+- The old guide cited the
+  [official permission profiles](https://learn.chatgpt.com/docs/permissions) and
+  [Codex SDK raw config override documentation](https://github.com/openai/codex/blob/main/sdk/typescript/README.md)
+  for that historical implementation. Neither citation changes the current
+  captured architecture or assignment authority.
 
 ## Component resource reads
 
 The public inspection module exports `ComponentResources`, constructed without
-arguments. `list(target, query?)` and `get(target, componentId)` accept the existing
-portfolio target `{ source, base, packageId }`; `base` is a committed Git revision.
-Both calls include the selected package itself and its descendants while rejecting
-access to another package subtree. They do not create execution storage or start
-an execution host.
+arguments. Its `list(target, query?)` and `get(target, componentId)` methods
+accept the existing portfolio target `{ source, base, packageId }`; `base` is a
+committed Git revision. The selected package and its descendants are in scope,
+including the package itself. A component in another package subtree is rejected.
+These reads load committed catalog intent and do not create execution storage or
+start an execution host.
 
-Resources expose identity, purpose, objectives, constraints, questions, standards,
-ownership and declared public boundaries. They omit machine bindings, execution
-records, permissions and command recipes. Each resource has a revision bound to its captured source and projected intent;
-list pages additionally have the shared query revision and continuation cursor.
+Each result exposes identity, purpose, objectives, constraints, questions,
+standards, `owns`, API declarations, root and repository. It omits machine
+bindings, execution records, permissions and command recipes. Each projected
+component has a revision derived from its captured base and projected values.
+A list page also has a query revision and a continuation cursor bound to that
+revision and query. Retained targets keep their captured source revision; a newly
+resolved target can observe newly committed intent. Architecture changes do not
+update retained runs.
 
-List uses `ResourceQuery` with `id`, `type` and `parentId` equality filters (AND),
-case-insensitive `id`/`purpose` search, default limit 50 and maximum 100. Unknown
-fields, invalid types and malformed/stale cursors fail. Results are ordered by ID.
-Retained targets keep their captured source revision; a newly resolved target can
-observe newly committed intent. Architecture changes do not update retained runs.
+`list` uses the shared `ResourceQuery`: `id`, `type` and `parentId` filters
+use equality and combine with AND; search is case-insensitive and checks only
+`id` and `purpose`. The default limit is 50 and the maximum is 100. Results
+are ordered by ID. Unknown fields, invalid types, malformed filters and
+invalid or stale cursors fail. See
+[`ComponentResources`](../../../src/library/architecture/component-resources.ts)
+and [`ResourceQuery`](../../../src/library/report/resource-query.ts).
