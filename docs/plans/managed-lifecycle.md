@@ -307,3 +307,20 @@ before engineering; implement verified Git delivery/Publisher and promotion; the
 exercise the real director against the real component catalog. Complete remaining
 portfolio/CLI/container work against that functioning lifecycle. Do not treat the
 library checkpoint as a shipped task/workday simulation interface.
+
+## Host collaboration integration
+
+Upstream actions are shared operation definitions, granted through the existing
+component `operations` policy with `agent` usage. A new `upstream` operation kind
+names its provider action; it has no arbitrary command or URL. Required setup,
+refresh and verification cannot invoke upstream mutation. The host resolves the
+repository destination from captured workspace declarations and binds each tool to
+its run and assignment. Task tracking is created after direction is actionable and
+before engineering; workday tracking attaches to accepted bounded assignments.
+
+Simulation mode must propagate into every prepared policy/assignment workspace and
+operation sandbox. Ordinary operation network access is denied in simulation until
+an explicitly confined download path is available; models remain host-connected.
+A failed setup retains evidence rather than permitting unrestricted network access.
+Real and simulated provider receipts share the durable effect protocol. Existing
+runs retain their captured authority; newly granted operations affect new runs only.
