@@ -41,7 +41,7 @@ class ComponentPolicyScenarios {
     const fixture = new ComponentV5Fixture(t);
     fixture.put(
       'architecture/components/package.json',
-      fixture.component('package', 'package', {
+      fixture.uncheckedComponent('package', 'package', {
         parentId: 'platform',
         root: 'package',
         owns: ['.'],

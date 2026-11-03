@@ -36,6 +36,8 @@
 
 ### Fixed
 
+- Reject malformed ordinary component test fixtures before missing-behavior assertions (#184).
+
 - Preserve specification continuation after an invalid regression operation selection without granting agent-only verification authority (#181).
 
 - Let stewards correct rejected checklist tool claims without aborting valid engineering; retain loop diagnosis and fatal execution safeguards (#178).
