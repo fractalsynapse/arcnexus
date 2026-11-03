@@ -1,3 +1,4 @@
+import { ControlledClient } from './controlled-client.js';
 import { createHash, randomUUID } from 'node:crypto';
 import { ControlledInitializer } from './controlled-initializer.js';
 import * as cp from 'node:child_process';
@@ -63,10 +64,7 @@ export class ControlledWorkflow {
 
   /** Executes this lifecycle through its configured collaborators and propagates failures. */
   async run(): Promise<void> {
-    if (this.args[0] === '--version') {
-      console.log('controlled Codex');
-      return;
-    }
+    if (ControlledClient.inventory(this.args, 'controlled Codex')) return;
     if (this.args[0] === 'sandbox') {
       process.exitCode =
         this.options.mode === 'preflight-fail'

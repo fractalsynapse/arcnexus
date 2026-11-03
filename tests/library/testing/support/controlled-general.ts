@@ -1,3 +1,4 @@
+import { ControlledClient } from './controlled-client.js';
 import { ControlledEvidence } from './controlled-evidence.js';
 import { StructuredOutputCheck } from './structured-output-check.js';
 import { appendFileSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
@@ -15,10 +16,7 @@ export class ControlledGeneral {
   /** Handles version/preflight or emits one structured inference result. */
   async run(): Promise<void> {
     const args = process.argv.slice(2);
-    if (args[0] === '--version') {
-      console.log('controlled general execution');
-      return;
-    }
+    if (ControlledClient.inventory(args, 'controlled general execution')) return;
     if (args[0] === 'sandbox') return;
     new StructuredOutputCheck().inspect(
       JSON.parse(readFileSync(args[args.indexOf('--output-schema') + 1]!, 'utf8')),

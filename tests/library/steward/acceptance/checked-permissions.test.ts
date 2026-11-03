@@ -28,6 +28,7 @@ class CheckedPermissionScenarios {
         responseContract: 'initializer-result',
         signal: new AbortController().signal,
       });
+      writeFileSync(join(configuration.env.CODEX_HOME!, 'canary'), 'private-client');
       this.probe(configuration, workspace);
       assert.equal(readFileSync(join(workspace, 'source.txt'), 'utf8'), 'original');
       assert.equal(readFileSync(join(home, 'canary'), 'utf8'), 'private');

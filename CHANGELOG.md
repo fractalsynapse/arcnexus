@@ -36,6 +36,8 @@
 
 ### Fixed
 
+- Isolate steward client tools and authentication from personal MCP, app and plugin configuration; validate effective capabilities before inference (#174).
+
 - Preserve installed runtime layouts and surface launcher errors in native qualification fixtures (#176).
 
 - Include previously omitted runtime enforcement suites in native CI qualification (#170).

@@ -95,3 +95,29 @@ obsolete profile budgets before constructing SDK permissions. It removes the wri
 legacy sandbox path and checklist-call quotas. Source-read-only confinement and the
 current structured result contract are the only executable model path; historical
 reports and response payloads remain readable as evidence.
+
+## Private client and tool authority (#174)
+
+Model activations share a retained, host-private Codex configuration home per runtime state,
+separate from personal configuration and exported execution evidence. Personal MCP
+servers, plugins, apps and hooks are not assignment capabilities. Only the active
+ArcNexus bridge may be enabled. Apps and nested agent execution are disabled.
+The host checks the effective bridge catalog before inference and rejects extra
+servers or an altered bridge identity; the command sandbox alone is insufficient.
+
+Existing file-based client authentication is copied into private client storage
+with restrictive permissions, never into source, prompts or reports. Personal
+configuration and credentials are not modified. The authentication-source binding
+is pinned; switching identities requires distinct runtime state. Individual model
+threads remain bound to their persisted assignments. Private client storage, including
+retained threads and credentials, is denied to model shell commands. Unsupported
+credential storage requires explicit machine setup rather than importing personal
+configuration. Retained client state may refresh its own authentication normally.
+
+Private configuration is validated before every activation. Legacy retained threads
+without the private-client protocol cannot resume silently; their evidence remains
+available for an explicitly new task. Target configuration, unsafe filesystem
+aliases and configuration changes must fail before inference. Native qualification
+uses a disposable ambient MCP canary and the actual installed runtime, then a real
+bridge turn. Neither deterministic fixtures nor a sandbox-only probe establishes
+this client tool boundary.

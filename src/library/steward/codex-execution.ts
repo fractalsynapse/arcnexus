@@ -1,3 +1,4 @@
+import { BridgePreflight } from './bridge-preflight.js';
 import { ThreadRecovery } from './thread-recovery.js';
 import { ObservedProgress } from './observed-progress.js';
 import { Codex, type ThreadEvent } from '@openai/codex-sdk';
@@ -43,6 +44,7 @@ export class CodexExecution<T extends object = AgentResult> {
     const recovery = new ThreadRecovery(this.input);
     this.input.signal.addEventListener('abort', this.abort, { once: true });
     try {
+      await new BridgePreflight(this.configuration).inspect(bridge);
       try {
         return await this.stream(bridge);
       } catch (error) {
