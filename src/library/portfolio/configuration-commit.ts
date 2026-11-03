@@ -33,12 +33,15 @@ export class ConfigurationCommit {
 
   /** Reads an optional exact application ref without conflating missing refs and Git failures. */
   ref(name: string): string {
-    return this.git(['for-each-ref', '--format=%(objectname)', name]);
+    const value = this.git(['for-each-ref', '--format=%(objectname) %(symref)', name]);
+    const [revision, symbolic] = value.split(' ');
+    if (symbolic) throw new Error('Configuration branch is symbolic; reconcile retained authority');
+    return revision ?? '';
   }
 
   /** Applies the journaled compare-and-swap transition; a conflicting branch remains untouched. */
   select(ref: string, base: string, previous: string): void {
-    this.git(['update-ref', ref, base, previous || '0'.repeat(base.length)]);
+    this.git(['update-ref', '--no-deref', ref, base, previous || '0'.repeat(base.length)]);
   }
 
   /** Executes fixed local plumbing with isolated index and identity; ambient Git overrides cannot redirect writes. */

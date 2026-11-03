@@ -74,28 +74,75 @@ class ArchitectureUpdateScenarios {
     const service = new Portfolio(join(f.root, 'volume'), true);
     try {
       const before = service.get('package', 'package');
-      const selected = service.update('package', 'package', ['purpose=Selected'], before.revision);
+      const selected = service.update(
+        'package',
+        'package',
+        { purpose: 'Selected' },
+        before.revision,
+      );
       assert.notEqual(selected.base, before.base);
       assert.equal(service.packageTarget('package').base, selected.base);
       assert.throws(
-        () => service.update('package', 'package', ['purpose=Stale'], before.revision),
+        () => service.update('package', 'package', { purpose: 'Stale' }, before.revision),
         /revision changed/,
       );
       assert.equal(service.get('package', 'package').base, selected.base);
-      assert.equal(service.update('package', 'package', ['purpose=Selected']).base, selected.base);
+      assert.equal(
+        service.update('package', 'package', { purpose: 'Selected' }).base,
+        selected.base,
+      );
       assert.throws(() => service.migrate('package', true), /reconcile/);
-      const lease = new ExecutionLease(join(f.repo, '.git/arcnexus/host.lease.sqlite'));
-      try {
-        assert.throws(
-          () => service.update('package', 'package', ['purpose=Blocked']),
-          /host already owns/,
-        );
-      } finally {
-        lease.close();
-      }
+      assert.throws(() => service.update('package', 'package', { id: 'renamed' }), /immutable/);
     } finally {
       service.close();
     }
+  }
+
+  /** Refuses writes through read-only services and concurrent hosts without changing selected authority. */
+  lease(t: TestContext): void {
+    const f = new PackageCliFixture(t);
+    f.register();
+    const reader = new Portfolio(join(f.root, 'volume'));
+    try {
+      assert.throws(() => reader.update('package', 'package', { purpose: 'Denied' }), /read-only/);
+    } finally {
+      reader.close();
+    }
+    const lease = new ExecutionLease(join(f.repo, '.git/arcnexus/host.lease.sqlite'));
+    try {
+      const result = f.command(
+        f.root,
+        'component',
+        'update',
+        'package',
+        'sample',
+        'purpose=Blocked',
+      );
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /host already owns/);
+      assert.equal(
+        f.value(f.root, 'component', 'get', 'package', 'sample').purpose,
+        'Own test selection',
+      );
+    } finally {
+      lease.close();
+    }
+  }
+
+  /** Refuses a redirected application branch before Git can advance an unrelated caller branch. */
+  symbolic(t: TestContext): void {
+    const f = new PackageCliFixture(t);
+    f.register();
+    f.value(f.root, 'component', 'update', 'package', 'sample', 'purpose=First');
+    const base = f.value(f.root, 'package', 'get', 'package').base;
+    const ref = f.git('for-each-ref', '--format=%(refname)', 'refs/heads/arcnexus/configuration/');
+    f.git('branch', 'caller', base);
+    f.git('symbolic-ref', ref, 'refs/heads/caller');
+    const result = f.command(f.root, 'component', 'update', 'package', 'sample', 'purpose=Blocked');
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /branch is symbolic/);
+    assert.equal(f.git('rev-parse', 'caller'), base);
+    assert.equal(f.value(f.root, 'package', 'get', 'package').base, base);
   }
 
   /** Restores crash-boundary database state while keeping actual immutable commits and local branches. */
@@ -133,7 +180,6 @@ class ArchitectureUpdateScenarios {
     const reader = new Portfolio(join(f.root, 'volume'));
     try {
       assert.throws(() => reader.packageTarget('package'), /Pending configuration transition/);
-      assert.throws(() => reader.update('package', 'package', ['purpose=Read-only']), /read-only/);
     } finally {
       reader.close();
     }
@@ -180,8 +226,14 @@ test('architectural updates select shared committed authority without editing ca
 test('architectural updates reject invalid and foreign mutations atomically', (t) =>
   scenarios.rejects(t));
 
-test('architectural updates enforce service revisions, execution targets and canonical leases', (t) =>
+test('architectural updates enforce structured service revisions and execution targets', (t) =>
   scenarios.revisions(t));
+
+test('architectural updates reject read-only and competing-host mutations', (t) =>
+  scenarios.lease(t));
+
+test('architectural updates reject symbolic refs without moving caller branches', (t) =>
+  scenarios.symbolic(t));
 
 test('architectural updates recover a journaled commit before its branch transition', (t) =>
   scenarios.recovery(t, false));

@@ -1,3 +1,4 @@
+import { architectureFields } from './architecture-fields.js';
 import { Portfolio } from '../../library/portfolio/portfolio.js';
 import { InputError } from '../../library/architecture/config.js';
 import type { CliValues } from './arguments.js';
@@ -40,7 +41,7 @@ export class PortfolioCommand {
     if (action === 'create' && id && repository && this.positionals.length === 4)
       return service.create(kind, id, repository, this.signal);
     if (action === 'update' && id && this.positionals.length >= 4)
-      return service.update(kind, id, this.positionals.slice(3));
+      return service.update(kind, id, architectureFields(this.positionals.slice(3)));
     if (action === 'remove' && id && this.positionals.length === 3) return service.remove(kind, id);
     throw new InputError(
       'Expected ' + kind + ' list|get|create <id> <repository>|update <id> <field=value>...|remove',

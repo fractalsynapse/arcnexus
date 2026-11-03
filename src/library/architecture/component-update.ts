@@ -8,7 +8,13 @@ import { InputError } from './config.js';
 /** Prepares a minimal authored definition patch without editing source or selecting new authority. */
 export class ComponentUpdate {
   /** Resolves the immutable definition and validates fields against its supported authored schema. */
-  prepare(source: string, base: string, id: string, fields: string[], packageId?: string) {
+  prepare(
+    source: string,
+    base: string,
+    id: string,
+    fields: Record<string, unknown>,
+    packageId?: string,
+  ) {
     const catalog = loadCatalog(source, base, loadProjectBindings(source));
     const component = catalog.components[id];
     if (!component) throw new InputError('Unknown component: ' + id);
@@ -33,24 +39,17 @@ export class ComponentUpdate {
     return { path, text };
   }
 
-  /** Parses explicit values once, rejecting ambiguous duplicates and identity/family changes. */
-  private fields(fields: string[]): Record<string, unknown> {
-    if (!fields.length) throw new InputError('At least one field=value is required');
-    const result: Record<string, unknown> = Object.create(null);
-    for (const input of fields) {
-      const separator = input.indexOf('=');
-      const key = input.slice(0, separator);
-      if (separator < 1 || !/^[a-zA-Z][a-zA-Z0-9]*$/.test(key))
-        throw new InputError('Expected field=value: ' + input);
-      if (['id', 'schemaVersion'].includes(key) || Object.hasOwn(result, key))
-        throw new InputError('Immutable or duplicate field: ' + key);
-      const text = input.slice(separator + 1);
-      try {
-        result[key] = JSON.parse(text);
-      } catch {
-        result[key] = text;
-      }
-    }
-    return result;
+  /** Rejects malformed application inputs and immutable keys independently of any gateway parser. */
+  private fields(fields: Record<string, unknown>): Record<string, unknown> {
+    if (
+      !fields ||
+      typeof fields !== 'object' ||
+      Array.isArray(fields) ||
+      !Object.keys(fields).length
+    )
+      throw new InputError('At least one structured field is required');
+    if (Object.keys(fields).some((key) => ['id', 'schemaVersion'].includes(key)))
+      throw new InputError('Component identity and schema version are immutable; use migration');
+    return { ...fields };
   }
 }

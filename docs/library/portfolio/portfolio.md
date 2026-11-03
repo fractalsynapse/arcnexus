@@ -143,13 +143,16 @@ revision. An external checkout advancing after selection requires explicit
 reconciliation; its new content is never imported silently. Config migration refuses
 to operate on a registered target whose selected revision differs from checkout HEAD.
 
-Application mutations accept an expected resource revision. A stale token leaves the
+Application mutations receive structured field maps; only the CLI parses `field=value`
+arguments. Application mutations accept an expected resource revision. A stale token leaves the
 selection unchanged. The canonical repository execution lease excludes host execution
 and other mutations. A validated commit and intended branch transition are journaled
 before the branch changes; selection and completion are committed together in SQLite.
 Recovery accepts only the recorded previous or intended branch revision, validates the
 retained commit, and finishes that exact transition. Unexpected branch state requires
-attention and is retained. No external operation is retried by configuration recovery.
+attention and is retained. Symbolic configuration refs are rejected; ref updates never
+follow a redirect into a caller branch. No external operation is retried by configuration
+recovery.
 
 This slice updates existing same-repository definitions. Creating/removing components,
 standard mutations, multi-repository composition and transactions remain separate

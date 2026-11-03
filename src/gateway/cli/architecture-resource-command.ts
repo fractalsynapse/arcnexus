@@ -1,3 +1,4 @@
+import { architectureFields } from './architecture-fields.js';
 import { ComponentResources, StandardResources } from '../../library/architecture/inspection.js';
 import { InputError } from '../../library/architecture/config.js';
 import { Portfolio } from '../../library/portfolio/portfolio.js';
@@ -28,7 +29,7 @@ export class ArchitectureResourceCommand {
       return portfolio.updateComponent(
         this.positionals[2]!,
         this.positionals[3]!,
-        this.positionals.slice(4),
+        architectureFields(this.positionals.slice(4)),
       );
     const query = {
       filters: this.positionals.slice(3),

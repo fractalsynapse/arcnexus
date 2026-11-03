@@ -219,13 +219,23 @@ export class Portfolio {
   }
 
   /** Updates an existing registered platform or package using the same checked configuration path. */
-  update(kind: Kind, reference: string, fields: string[], expectedRevision?: string) {
+  update(
+    kind: Kind,
+    reference: string,
+    fields: Record<string, unknown>,
+    expectedRevision?: string,
+  ) {
     const entry = this.find(kind, reference);
     return this.change(entry, entry.definitionId, fields, expectedRevision);
   }
 
   /** Updates one package-scoped component with optimistic revision checking for API callers. */
-  updateComponent(reference: string, id: string, fields: string[], expectedRevision?: string) {
+  updateComponent(
+    reference: string,
+    id: string,
+    fields: Record<string, unknown>,
+    expectedRevision?: string,
+  ) {
     const entry = this.find('package', reference);
     const selected = this.change(entry, id, fields, expectedRevision, true);
     return new ComponentResources().get(
@@ -238,7 +248,7 @@ export class Portfolio {
   private change(
     entry: PortfolioRegistration,
     id: string,
-    fields: string[],
+    fields: Record<string, unknown>,
     expected?: string,
     component = false,
   ) {
@@ -262,7 +272,7 @@ export class Portfolio {
     changes: ArchitectureChanges,
     entry: PortfolioRegistration,
     id: string,
-    fields: string[],
+    fields: Record<string, unknown>,
     expected: string | undefined,
     component: boolean,
   ) {
