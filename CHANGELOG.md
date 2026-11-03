@@ -4,6 +4,8 @@
 
 ### Added
 
+- Inspect registered package architecture and prompt context without starting engineering (#148).
+
 - Target registered or local packages with `test inspect/run` and explicit component selection through the shared test executor (#148).
 
 - Materialize existing repositories into the project volume with supervised Git, recoverable registration, and local-only repository identity (#148).

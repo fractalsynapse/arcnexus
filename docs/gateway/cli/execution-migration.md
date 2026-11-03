@@ -45,3 +45,19 @@ checks remain session characterization tests through a test-only subprocess entr
 Historical workday SQLite, proposal integrity, campaign inspection and report-checker
 tests remain. Retiring a legacy outcome is not permission to remove the corresponding
 current failure-mode coverage or weaken any captured live acceptance source.
+
+## Package-aware architectural inspection
+
+`arcnexus inspect <package> <component> [prompt]` resolves a registered package
+from any working directory. Without a prompt it presents captured ancestor context,
+effective owner policy, standards, public API, observed relationships and operation
+identities. With a prompt it adds a planning preview, not an accepted assignment or
+invented acceptance criteria. `--activity research|document|design|implement|review|release`
+labels the requested context; a prompt defaults to implementation context.
+
+Inspection never starts a host, invokes a model, prepares a workspace or grants write
+or publication authority. A component outside the selected package, empty supplied
+prompt or unsupported activity fails. The architecture library owns this read service
+so later gateways can use the same contract. The temporary `inspect ... --project`
+adapter remains for qualification callers until their migration; it cannot accept the
+new activity option or ambiguously combine the two forms.

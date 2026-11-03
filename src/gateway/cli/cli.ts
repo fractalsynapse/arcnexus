@@ -1,3 +1,4 @@
+import { InspectionCommand } from './inspection-command.js';
 import { PortfolioCommand } from './portfolio-command.js';
 import { ConfigCommand } from './config-command.js';
 import { AssignmentCommand } from './assignment-command.js';
@@ -121,6 +122,8 @@ class CliApplication {
 
   /** Resolves an assignment and dispatches it through the shared steward workflow. */
   private async assignmentCommand(): Promise<void> {
+    if (this.command === 'inspect' && this.values.project === undefined)
+      return new InspectionCommand(this.positionals, this.values).run();
     this.validateCommand();
     const assignment = new AssignmentCommand(this.positionals, this.values, this.command);
     if (this.command === 'validate') return assignment.catalog();
@@ -171,6 +174,8 @@ class CliApplication {
     const { values, positionals, command } = this;
     if (!['prepare', 'cleanup', 'validate', 'inspect', 'status', 'follow'].includes(command ?? ''))
       throw new InputError(help);
+    if (command === 'inspect' && values.activity !== undefined)
+      throw new InputError('--activity requires package-aware inspection without --project');
     if (values['max-attempts'] !== undefined)
       throw new InputError('Execution attempt budgets are retired');
     if (command === 'prepare' && (!values.project || positionals.length !== 1))
