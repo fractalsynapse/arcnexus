@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawn, type ChildProcess } from 'node:child_process';
 import {
+  appendFileSync,
   chmodSync,
   existsSync,
   mkdtempSync,
@@ -39,7 +40,7 @@ class ContainedSupervisorScenarios {
     t.after(() => this.cleanup(root));
     const endpoint = join(root, 'endpoint.json');
     const server = `const s=require('net').createServer();s.listen(0,'127.0.0.1',()=>require('fs').writeFileSync(${JSON.stringify(endpoint)},JSON.stringify({pid:process.pid,port:s.address().port})));`;
-    const script = `#!/usr/bin/node\nconst c=require('child_process').spawn(process.execPath,['-e',${JSON.stringify(server)}],{detached:true,stdio:'inherit'});c.unref();setInterval(()=>{if(require('fs').existsSync(${JSON.stringify(endpoint)})&&!${hold})process.exit(0)},10);`;
+    const script = `#!${process.execPath}\nconst c=require('child_process').spawn(process.execPath,['-e',${JSON.stringify(server)}],{detached:true,stdio:'inherit'});c.unref();setInterval(()=>{if(require('fs').existsSync(${JSON.stringify(endpoint)})&&!${hold})process.exit(0)},10);`;
     writeFileSync(join(root, 'fake-codex'), script);
     chmodSync(join(root, 'fake-codex'), 0o700);
     return root;
@@ -56,18 +57,36 @@ class ContainedSupervisorScenarios {
       ARCNEXUS_HOST_PID: String(process.pid),
       ARCNEXUS_HOST_START: processStart(process.pid)!,
     };
-    if (!driver)
-      return spawn(process.execPath, [supervisor, 'exec'], { cwd: root, env, stdio: 'ignore' });
+    const args = driver ? this.driver(root, supervisor) : [supervisor, 'exec'];
+    const child = spawn(process.execPath, args, {
+      cwd: root,
+      env,
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
+    child.stderr?.on('data', (bytes) => appendFileSync(join(root, 'launcher.log'), bytes));
+    child.on('error', (error) => appendFileSync(join(root, 'launcher.log'), String(error)));
+    return child;
+  }
+
+  /** Builds a separately killable parent while forwarding supervisor failures to captured stderr. */
+  private driver(root: string, supervisor: string): string[] {
     const module = pathToFileURL(resolve('dist/library/operations/service-state.js')).href;
-    const script = `import {spawn} from 'node:child_process';import {processStart} from ${JSON.stringify(module)};spawn(process.execPath,[${JSON.stringify(supervisor)},'exec'],{stdio:'ignore',env:{...process.env,ARCNEXUS_HOST_PID:String(process.pid),ARCNEXUS_HOST_START:processStart(process.pid)}});setInterval(()=>{},1000);`;
+    const script = `import {spawn} from 'node:child_process';import {processStart} from ${JSON.stringify(module)};spawn(process.execPath,[${JSON.stringify(supervisor)},'exec'],{stdio:['ignore','ignore','inherit'],env:{...process.env,ARCNEXUS_HOST_PID:String(process.pid),ARCNEXUS_HOST_START:processStart(process.pid)}});setInterval(()=>{},1000);`;
     writeFileSync(join(root, 'driver.mjs'), script);
-    return spawn(process.execPath, [join(root, 'driver.mjs')], { cwd: root, env, stdio: 'ignore' });
+    return [join(root, 'driver.mjs')];
   }
 
   /** Waits for the actual listener announcement under an explicit test watchdog. */
   private async endpoint(root: string): Promise<{ pid: number; port: number }> {
     const signal = AbortSignal.timeout(5000);
-    while (!existsSync(join(root, 'endpoint.json'))) await delay(10, undefined, { signal });
+    try {
+      while (!existsSync(join(root, 'endpoint.json'))) await delay(10, undefined, { signal });
+    } catch (cause) {
+      const log = join(root, 'launcher.log');
+      throw new Error(existsSync(log) ? readFileSync(log, 'utf8') : 'No supervisor diagnostics', {
+        cause,
+      });
+    }
     return JSON.parse(readFileSync(join(root, 'endpoint.json'), 'utf8'));
   }
 

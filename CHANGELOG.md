@@ -36,6 +36,8 @@
 
 ### Fixed
 
+- Preserve installed runtime layouts and surface launcher errors in native qualification fixtures (#176).
+
 - Include previously omitted runtime enforcement suites in native CI qualification (#170).
 
 - Run consolidated architecture and guidance validation during steward verification (#165).

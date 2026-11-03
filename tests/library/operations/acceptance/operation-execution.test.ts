@@ -1,15 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import {
-  chmodSync,
-  constants,
-  copyFileSync,
-  mkdtempSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { chmodSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
@@ -60,7 +51,11 @@ class ExecutionScenarios {
     const tools = join(root, 'tools');
     mkdirSync(tools);
     const executable = join(tools, 'codex');
-    copyFileSync(process.env.ARCNEXUS_TEST_CODEX!, executable, constants.COPYFILE_FICLONE);
+    const target = JSON.stringify(process.env.ARCNEXUS_TEST_CODEX!);
+    writeFileSync(
+      executable,
+      `#!${process.execPath}\nconst r=require('child_process').spawnSync(${target},process.argv.slice(2),{stdio:'inherit'});if(r.error)throw r.error;process.exit(r.status??1);`,
+    );
     chmodSync(executable, 0o755);
     (record.bindings as any).tools.codex = executable;
     await new OperationExecution(root, record, new AbortController().signal).run(
