@@ -95,3 +95,23 @@ Caller review corrected that fixture, made startup cancellation use the managed
 command runner, and connected the sandbox acceptance script to the production
 profile builder. This is assisted self-development; the failed original record
 remains intact.
+
+## Component resource reads
+
+The public inspection module exports `ComponentResources`, constructed without
+arguments. `list(target, query?)` and `get(target, componentId)` accept the existing
+portfolio target `{ source, base, packageId }`; `base` is a committed Git revision.
+Both calls include the selected package itself and its descendants while rejecting
+access to another package subtree. They do not create execution storage or start
+an execution host.
+
+Resources expose identity, purpose, objectives, constraints, questions, standards,
+ownership and declared public boundaries. They omit machine bindings, execution
+records, permissions and command recipes. Each resource has a content revision;
+list pages additionally have the shared query revision and continuation cursor.
+
+List uses `ResourceQuery` with `id`, `type` and `parentId` equality filters (AND),
+case-insensitive `id`/`purpose` search, default limit 50 and maximum 100. Unknown
+fields, invalid types and malformed/stale cursors fail. Results are ordered by ID.
+Retained targets keep their captured source revision; a newly resolved target can
+observe newly committed intent. Architecture changes do not update retained runs.

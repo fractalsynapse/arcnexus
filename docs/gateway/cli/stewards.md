@@ -100,3 +100,17 @@ Legacy component, manifest and proposal execution commands are retired.
 Use the normal commands above for new work; `workday history <id>` reads an old
 workday record and `task inspect <id>` reads an old proposal. Validation, test selection and retained
 report inspection remain supported; historical reports do not gain new authority.
+
+## Component resources
+
+Use `component list <package> [field=value...]` and
+`component get <package> <id>` to read registered package architecture from any
+working directory. Qualified `platform/package` names are preferred; short names
+must be unambiguous. List includes the package and its descendants, supports
+`id`, `type`, `parentId` filters and common `--search`, `--limit`, `--cursor` and
+`--json` options. Get supports `--json` and includes a resource revision token.
+
+These reads neither start hosts nor initialize missing execution storage. Unknown
+or ambiguous packages, missing/out-of-scope components, invalid filters/cursors and
+irrelevant options return input error exit code 2. This increment provides reads;
+component creation, update and removal remain separate planned work.
