@@ -103,3 +103,21 @@ and evidence remain unchanged, and another successful invocation has no changes.
 Unknown or ambiguous targets fail before migration creates a candidate.
 If a registered definition has disappeared or changed type, reconcile the registration
 before migration; a retained repository location does not authorize a different target.
+
+## Execution storage (#193)
+
+Application settings also resolve execution storage through the public settings
+module. New execution defaults to `state/` inside the effective project volume.
+Runs, candidates, workspaces and stable supervisor snapshots use that same root.
+Read-only resource queries resolve paths without creating directories or hosts.
+
+An explicit nonempty `ARCNEXUS_STATE_DIR` selects a separate state root, including
+historical `${XDG_STATE_HOME:-~/.local/state}/arcnexus` evidence. Setting the volume
+does not move, rewrite or combine retained databases. Existing hosts continue using
+their captured root. Empty volume or state environment overrides fail as invalid
+input instead of accidentally selecting the current directory.
+
+Unregistering checks the selected volume, explicit state override and historical
+state root for active execution. Changing settings does not authorize abandoning
+an active run. This increment unifies storage selection; it does not make absolute
+paths in retained run records portable or qualify container relocation/recovery.

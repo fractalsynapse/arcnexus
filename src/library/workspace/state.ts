@@ -8,8 +8,8 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
-import { homedir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
+import { ApplicationSettings } from '../portfolio/settings.js';
 import type { Environment } from '../architecture/config.js';
 import type { CommandResult } from '../operations/process.js';
 
@@ -31,10 +31,7 @@ export interface RecordData {
 
 /** Resolves configured state without creating storage for read-only resource queries. */
 export function statePath(): string {
-  return resolve(
-    process.env.ARCNEXUS_STATE_DIR ??
-      join(process.env.XDG_STATE_HOME ?? join(homedir(), '.local/state'), 'arcnexus'),
-  );
+  return new ApplicationSettings().statePath();
 }
 
 export function stateRoot(): string {

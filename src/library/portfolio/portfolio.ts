@@ -4,7 +4,6 @@ import { ArchitectureValidation } from '../architecture/validation.js';
 import { ConfigurationMigration } from '../architecture/migration.js';
 import { existsSync, realpathSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
-import { homedir } from 'node:os';
 import { join, relative, resolve } from 'node:path';
 import { ExecutionContext } from '../architecture/execution-context.js';
 import {
@@ -284,10 +283,7 @@ export class Portfolio {
   /** Checks managed and local-development stores without starting a host or replaying execution. */
   private assertInactive(source: string): void {
     const key = digest(this.common(source)).slice(0, 24);
-    const legacy =
-      process.env.ARCNEXUS_STATE_DIR ??
-      join(process.env.XDG_STATE_HOME ?? join(homedir(), '.local/state'), 'arcnexus');
-    for (const root of [join(this.volume, 'state'), legacy])
+    for (const root of new ApplicationSettings().executionRoots(this.volume))
       if (PortfolioStore.activeExecution(join(root, 'projects', key, 'execution.sqlite')))
         throw new Error('Stop or reconcile active repository execution before unregistering');
   }

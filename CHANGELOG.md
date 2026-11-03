@@ -81,6 +81,8 @@
 
 ### Changed
 
+- Keep new execution state inside the configured project volume while retaining explicit access to historical state (#193).
+
 - Align the charter with the accepted managed lifecycle, real-agent simulation and pre-phase-three API/UI prerequisites (#148).
 
 - Clarify confined and native qualification with a real steward-produced, independently verified documentation change (#164).

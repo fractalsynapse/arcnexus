@@ -16,6 +16,8 @@ export class ApplicationSettings {
   get(name: string) {
     if (name !== 'volume') throw new InputError('Unknown application setting: ' + name);
     const configured = this.read().volume;
+    if (process.env.ARCNEXUS_VOLUME !== undefined && !process.env.ARCNEXUS_VOLUME.trim())
+      throw new InputError('Expected a nonempty ARCNEXUS_VOLUME path');
     const fallback = join(process.env.XDG_DATA_HOME ?? join(homedir(), '.local/share'), 'arcnexus');
     return {
       name,
@@ -26,6 +28,25 @@ export class ApplicationSettings {
           ? 'configuration'
           : 'default',
     };
+  }
+
+  /** Selects execution storage without moving historical evidence or creating directories. */
+  statePath(volume?: string): string {
+    const override = process.env.ARCNEXUS_STATE_DIR;
+    if (override !== undefined) {
+      if (!override.trim()) throw new InputError('Expected a nonempty ARCNEXUS_STATE_DIR path');
+      return resolve(override);
+    }
+    return join(volume ?? this.get('volume').value, 'state');
+  }
+
+  /** Includes historical and explicitly selected stores when guarding repository removal. */
+  executionRoots(volume: string): string[] {
+    const historical = join(
+      process.env.XDG_STATE_HOME ?? join(homedir(), '.local/state'),
+      'arcnexus',
+    );
+    return [...new Set([join(volume, 'state'), this.statePath(volume), resolve(historical)])];
   }
 
   /** Atomically saves explicit machine configuration; environment overrides remain visible. */
