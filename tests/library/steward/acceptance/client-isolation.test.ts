@@ -87,6 +87,43 @@ class ClientIsolationScenarios {
     assert.throws(() => this.configuration(fixture), /private.*configuration/i);
   }
 
+  /** Misconfigured runtime storage cannot copy host credentials into maintained source. */
+  sourceStorage(t: TestContext): void {
+    const fixture = this.fixture(t);
+    assert.throws(
+      () => this.configuration({ ...fixture, root: fixture.workspace }),
+      /private.*source/i,
+    );
+    assert.equal(existsSync(join(fixture.workspace, 'private')), false);
+  }
+
+  /** Assignments share refreshed private authentication without copying the caller file again. */
+  shared(t: TestContext): void {
+    const fixture = this.fixture(t);
+    const config = this.configuration(fixture);
+    writeFileSync(join(config.env.CODEX_HOME!, 'auth.json'), '{"refreshed":true}');
+    const next = new CodexConfiguration({
+      ...config.input,
+      record: { ...config.input.record, id: 'another-assignment' },
+    });
+    assert.equal(next.env.CODEX_HOME, config.env.CODEX_HOME);
+    assert.equal(
+      readFileSync(join(next.env.CODEX_HOME!, 'auth.json'), 'utf8'),
+      '{"refreshed":true}',
+    );
+    assert.equal(readFileSync(join(fixture.home, 'auth.json'), 'utf8'), '{}');
+  }
+
+  /** An existing private credential store never silently switches to another caller identity. */
+  identity(t: TestContext): void {
+    const fixture = this.fixture(t);
+    this.configuration(fixture);
+    const other = join(fixture.root, 'other-identity');
+    mkdirSync(other);
+    process.env.CODEX_HOME = other;
+    assert.throws(() => this.configuration(fixture), /authentication binding changed/i);
+  }
+
   /** Old retained threads cannot silently acquire a different client protocol. */
   legacy(t: TestContext): void {
     const fixture = this.fixture(t);
@@ -177,6 +214,15 @@ test('legacy model threads require explicit continuation under isolated client a
 test('client authentication aliases fail before reading the target', (t) => scenarios.alias(t));
 
 test('missing retained private configuration requires attention', (t) => scenarios.removed(t));
+
+test('private client storage rejects source overlap before copying credentials', (t) =>
+  scenarios.sourceStorage(t));
+
+test('assignments retain shared private authentication without reseeding it', (t) =>
+  scenarios.shared(t));
+
+test('changing authentication identity requires separate private runtime state', (t) =>
+  scenarios.identity(t));
 
 registerSuite({
   component: 'steward',

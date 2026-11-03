@@ -98,7 +98,7 @@ reports and response payloads remain readable as evidence.
 
 ## Private client and tool authority (#174)
 
-A model activation must use a retained, host-private Codex configuration home,
+Model activations share a retained, host-private Codex configuration home per runtime state,
 separate from personal configuration and exported execution evidence. Personal MCP
 servers, plugins, apps and hooks are not assignment capabilities. Only the active
 ArcNexus bridge may be enabled. Apps and nested agent execution are disabled.
@@ -107,7 +107,9 @@ servers or an altered bridge identity; the command sandbox alone is insufficient
 
 Existing file-based client authentication is copied into private client storage
 with restrictive permissions, never into source, prompts or reports. Personal
-configuration and credentials are not modified. Private client storage, including
+configuration and credentials are not modified. The authentication-source binding
+is pinned; switching identities requires distinct runtime state. Individual model
+threads remain bound to their persisted assignments. Private client storage, including
 retained threads and credentials, is denied to model shell commands. Unsupported
 credential storage requires explicit machine setup rather than importing personal
 configuration. Retained client state may refresh its own authentication normally.

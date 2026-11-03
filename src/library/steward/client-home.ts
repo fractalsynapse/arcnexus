@@ -1,6 +1,13 @@
-import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  writeFileSync,
+} from 'node:fs';
 import { homedir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import type { CodexInput } from './codex-configuration.js';
 
 const disabledFeatures = [
@@ -26,6 +33,8 @@ const configuration = [
 export class ClientHome {
   readonly path: string;
 
+  readonly storage: string;
+
   readonly disabledFeatures = disabledFeatures;
 
   readonly personal = resolve(process.env.CODEX_HOME ?? join(homedir(), '.codex'));
@@ -33,17 +42,35 @@ export class ClientHome {
   /** Rejects legacy continuation and unsafe storage before establishing private client authority. */
   constructor(input: CodexInput) {
     if (!/^[a-zA-Z0-9_-]+$/.test(input.record.id)) throw new Error('Invalid client identity');
-    this.path = join(resolve(input.root), 'private', 'steward', input.record.id);
+    this.storage = join(resolve(input.root), 'private');
+    this.path = join(this.storage, 'steward');
+    this.sourceBoundary(input.record.workspace);
     const settings = input.record.settings as { clientProtocol?: number } | undefined;
     if (input.resumeId && (settings?.clientProtocol !== 1 || !existsSync(this.path)))
       throw new Error('Legacy model thread requires a new task under private client authority');
     const retained = existsSync(this.path);
     this.safePath(this.path);
     mkdirSync(this.path, { recursive: true, mode: 0o700 });
-    if (!retained)
-      writeFileSync(join(this.path, 'config.toml'), configuration, { flag: 'wx', mode: 0o600 });
+    if (!retained) this.initialize();
     this.validate();
     this.authentication();
+  }
+
+  /** Pins the authentication source once; changing identities requires distinct private state. */
+  private initialize(): void {
+    writeFileSync(join(this.path, 'config.toml'), configuration, { flag: 'wx', mode: 0o600 });
+    writeFileSync(join(this.path, 'binding.json'), JSON.stringify({ source: this.personal }), {
+      flag: 'wx',
+      mode: 0o600,
+    });
+  }
+
+  /** Rejects source overlap before creating directories or copying authentication material. */
+  private sourceBoundary(workspace: string): void {
+    const source = realpathSync(workspace);
+    for (const suffix of [relative(source, this.storage), relative(this.storage, source)])
+      if (suffix === '' || (!suffix.startsWith('../') && suffix !== '..'))
+        throw new Error('Private client storage must be outside maintained source');
   }
 
   /** Rejects configuration drift rather than silently replacing an active client's authority. */
@@ -51,6 +78,13 @@ export class ClientHome {
     this.safePath(this.path);
     const path = join(this.path, 'config.toml');
     this.safePath(path);
+    const binding = join(this.path, 'binding.json');
+    this.safePath(binding);
+    if (
+      !existsSync(binding) ||
+      readFileSync(binding, 'utf8') !== JSON.stringify({ source: this.personal })
+    )
+      throw new Error('Private client authentication binding changed; use distinct runtime state');
     if (!existsSync(path) || readFileSync(path, 'utf8') !== configuration)
       throw new Error('Private client configuration changed; retain evidence and start a new task');
   }
