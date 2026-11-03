@@ -1,4 +1,4 @@
-import { acceptPlan, updatePlan, PlanValidationError } from '../assignment/plan.js';
+import { acceptPlan, updatePlan, PlanValidationError, type Plan } from '../assignment/plan.js';
 import { ProgressObserver } from '../report/progress.js';
 import { save } from '../workspace/state.js';
 import { observe } from '../report/timeline.js';
@@ -73,7 +73,13 @@ export class CodexTools {
       this.signal.throwIfAborted();
       const observer = new ProgressObserver(root, record);
       const action = { tool: 'plan.update', stage: record.stage };
-      const candidate = JSON.stringify(record.plan);
+      const candidate = JSON.stringify(
+        (record.plan as Plan).items.map(({ id, status, dependencies }) => ({
+          id,
+          status,
+          dependencies,
+        })),
+      );
       observer.before(action, candidate);
       warning = observer.failed(action, error.message, candidate);
       observe(root, record, 'tool.rejected', { name: 'plan.update', error: error.message });

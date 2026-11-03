@@ -34,6 +34,8 @@ class ChecklistToolScenarios {
     for (let n = 0; n < 3; n++) {
       assert.equal((await f.call([this.update('second')])).isError, true);
       assert.equal(f.tools.signal.aborted, false);
+      const unchanged = { id: 'first', status: 'pending', evidence: [], explanation: 'unchanged' };
+      assert.notEqual((await f.call([unchanged])).isError, true);
     }
     assert.equal((f.record.progress as any).warnings.length, 1);
     assert.equal((await f.call([this.update('second')])).isError, true);
