@@ -78,4 +78,16 @@ test('local migration retains structured preview and rejects dirty write request
   assert.equal(f.version(), 5);
 });
 
+test('migration refuses a stale registered identity before changing replacement architecture', (t) => {
+  const f = new MigrationTargetFixture(t);
+  f.register();
+  f.preceding();
+  f.platform('replacement');
+  const result = f.command(f.root, 'config', 'migrate', 'platform', '--write');
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Registered definition changed/);
+  assert.equal(f.version(), 5);
+  assert.equal(f.git('status', '--porcelain'), '');
+});
+
 registerSuite({ component: 'cli', level: 'acceptance', tags: ['deterministic'] });

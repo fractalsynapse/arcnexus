@@ -110,15 +110,18 @@ export class Portfolio {
   /** Migrates local or registered source without requiring preceding configuration to be executable. */
   migrate(reference?: string, write = false, cwd = process.cwd()) {
     let source = cwd;
+    let expectedBase: string | undefined;
     if (reference !== undefined) {
       const matches = this.store
         .registrations()
         .filter((entry) => entry.id === reference || entry.definitionId === reference);
       if (matches.length !== 1)
         throw new InputError('Unknown or ambiguous migration target: ' + reference);
-      source = this.registeredSource(matches[0]!).source;
+      const selected = this.view(matches[0]!);
+      source = selected.source;
+      expectedBase = selected.base;
     }
-    return new ConfigurationMigration(source).run(write);
+    return new ConfigurationMigration(source).run(write, expectedBase);
   }
 
   /** Attaches local repositories or materializes supported remote URLs under supervised application ownership. */
@@ -216,19 +219,14 @@ export class Portfolio {
     return candidates[0]!;
   }
 
-  /** Resolves durable storage independently of executable schema validation, including migration inputs. */
-  private registeredSource(entry: PortfolioRegistration) {
+  /** Derives policy and identity from the current committed source while reporting an optimistic revision token. */
+  private view(entry: PortfolioRegistration) {
     const repository = this.store.repositories().find((item) => item.id === entry.repositoryId);
     if (!repository) throw new Error('Missing registered repository: ' + entry.repositoryId);
     const location = repository.managed
       ? join(this.volume, repository.location)
       : repository.location;
-    return { repository, ...resolveBase(location) };
-  }
-
-  /** Derives policy and identity from the current committed source while reporting an optimistic revision token. */
-  private view(entry: PortfolioRegistration) {
-    const { repository, source, base } = this.registeredSource(entry);
+    const { source, base } = resolveBase(location);
     const catalog = loadCatalog(source, base, loadProjectBindings(source));
     const definition = catalog.components[entry.definitionId];
     if (!definition || definition.type !== entry.kind)
