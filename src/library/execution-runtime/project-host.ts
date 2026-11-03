@@ -95,10 +95,11 @@ export class ProjectHost {
   }
 
   /** Cancels only the identified task and preserves its candidate and logs. */
-  cancel(id: string): void {
+  cancel(id: string, explicitStop = false): void {
     const run = this.store.run(id);
     if (run.mode !== 'task') throw new Error('Expected task identity');
     if (['completed', 'cancelled', 'failed', 'stopped'].includes(run.status)) return;
+    if (!explicitStop && ['interrupted', 'needs_attention'].includes(run.status)) return;
     this.store.updateRun(id, 'cancelled');
     if (this.active?.runId === id) this.active.controller.abort(new Error('Cancelled'));
   }
@@ -112,7 +113,7 @@ export class ProjectHost {
       new ResourceQuery().revision(this.reports.view(id)) !== expectedRevision
     )
       throw new InputError('Stale task revision; read the task again');
-    if (action === 'stop') this.cancel(id);
+    if (action === 'stop') this.cancel(id, true);
     else if (action === 'answer') this.answer(id, answer ?? '');
     else if (action === 'pause') this.pauseTask(run);
     else if (action === 'resume') {
