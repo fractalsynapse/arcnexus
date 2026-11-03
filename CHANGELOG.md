@@ -4,6 +4,8 @@
 
 ### Added
 
+- Expose complete committed platform standard list/get resources, including unused guidance (#187).
+
 - Read registered package components through shared list/get services with safe projections, filters, cursors and revision tokens (#173).
 
 - Target configuration migration at registered platforms or packages from outside a checkout (#167).

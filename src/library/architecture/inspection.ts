@@ -1,3 +1,5 @@
+export { StandardResources, type StandardResourceTarget } from './standard-resources.js';
+
 import { ancestry, componentContext, loadCatalog } from './components.js';
 import { loadProjectBindings, type Bindings } from './bindings.js';
 import { InputError } from './config.js';

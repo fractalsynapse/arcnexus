@@ -3,7 +3,8 @@ import { RevisionArtifacts } from './revision-artifacts.js';
 import { posix } from 'node:path';
 import type { Catalog, Component } from './components.js';
 import { relativePath } from './config.js';
-import { ConfigurationReader } from './configuration.js';
+import { ConfigurationReader, isConfiguration } from './configuration.js';
+import { git } from '../operations/process.js';
 import { validateSchema } from './schema.js';
 
 export interface ContractDefinition {
@@ -39,6 +40,26 @@ export class ArchitectureReferences {
     private readonly base: string,
     private readonly catalog: Catalog,
   ) {}
+
+  /** Reads every committed standard, including unused entries, through the existing authority checks. */
+  standards() {
+    const paths = git(
+      this.repository,
+      'ls-tree',
+      '-r',
+      '--name-only',
+      this.base,
+      '--',
+      'architecture/standards',
+    )
+      .trim()
+      .split('\n')
+      .filter(isConfiguration);
+    const ids = paths.map((path) =>
+      path.slice('architecture/standards/'.length).replace(/\.(json|ya?ml)$/, ''),
+    );
+    return [...new Set(ids)].sort().map((id) => this.guidance(id, 'standard'));
+  }
 
   /** Resolves captured inputs and rejects unsupported or inconsistent configuration. */
   resolve(): void {
