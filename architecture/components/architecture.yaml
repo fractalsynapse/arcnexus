@@ -34,6 +34,7 @@ owns:
   - tests/library/architecture
   - docs/library/architecture
 api:
+  - module: src/library/architecture/inspection.ts
   - module: src/library/architecture/validation.ts
   - module: src/library/architecture/migration.ts
   - module: src/library/architecture/execution-context.ts
