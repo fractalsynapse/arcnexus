@@ -1,3 +1,5 @@
+import { ExecutionControls } from '../../library/execution-runtime/execution-controls.js';
+import { ExecutionResources } from '../../library/execution-runtime/execution-resources.js';
 import { RunQueryCommand } from './run-query-command.js';
 import { ExecutionCommand } from './execution-command.js';
 import { resolveWorkday } from '../../library/workday/workday-config.js';
@@ -23,19 +25,29 @@ export class WorkdayCommand {
       throw new InputError(
         'Manifest execution is retired; use task run "<prompt>" or workday start',
       );
-    if (
-      this.positionals.length === 2 &&
-      ['start', 'pause', 'resume', 'stop', 'status'].includes(action ?? '')
-    ) {
-      if (Object.keys(this.values).length)
-        throw new InputError('Workday controls accept no options');
-      return new ExecutionCommand(this.signal).workday(action!);
-    }
+    if (['start', 'pause', 'resume', 'stop', 'status'].includes(action ?? ''))
+      return this.control(action!);
     if (this.positionals.length !== 3)
       throw new InputError('workday requires action and manifest/identity');
     if (action === 'inspect') return this.inspectWorkday();
     if (action === 'history' || action === 'follow') return this.viewWorkday();
     throw new InputError('Unknown workday action');
+  }
+
+  /** Resolves optional package/start or workday/control identities through shared application services. */
+  private async control(action: string): Promise<void> {
+    if (
+      ![2, 3].includes(this.positionals.length) ||
+      Object.keys(this.values).some((key) => key !== 'json')
+    )
+      throw new InputError('Expected workday ' + action + ' [identity] [--json]');
+    if (action === 'start')
+      return new ExecutionCommand(this.signal, this.positionals[2]).workday(action);
+    const result =
+      action === 'status'
+        ? new ExecutionResources().workday(this.positionals[2])
+        : await new ExecutionControls().workday(action, this.positionals[2]);
+    console.log(JSON.stringify(result, null, this.values.json ? undefined : 2));
   }
 
   /** Resolves workday authority without creating a workspace or invoking a model. */

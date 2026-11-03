@@ -1,6 +1,6 @@
 import { RunContinuation } from './run-continuation.js';
 import { ResourceQuery } from '../report/resource-query.js';
-import { AssignmentRecovery } from './assignment-recovery.js';
+import { HostRecovery } from './host-recovery.js';
 import { RunAuthority } from './run-authority.js';
 import { ExecutionEvidence, ExecutionReports } from '../report/report.js';
 import { StewardshipPolicy } from '../workday/workday.js';
@@ -9,7 +9,7 @@ import { InputError } from '../architecture/config.js';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ProjectExecution } from '../architecture/execution-context.js';
-import type { ActivationResult, ExecutionRun } from '../coordination-store/execution-types.js';
+import type { ExecutionRun } from '../coordination-store/execution-types.js';
 import { ExecutionStore } from '../coordination-store/execution-store.js';
 import { RunWorkspace } from './run-workspace.js';
 import type { RecordData } from '../workspace/state.js';
@@ -19,7 +19,6 @@ import type { InitializationResult } from '../architecture/initialization.js';
 import { AssignmentDispatch } from './assignment-dispatch.js';
 import { AssignmentExecution } from './assignment-execution.js';
 import { Scheduler } from './scheduler.js';
-import { PolicyRecovery } from './policy-recovery.js';
 
 /** Owns sequential project execution while task and workday policies select different work. */
 export class ProjectHost {
@@ -46,7 +45,7 @@ export class ProjectHost {
     this.reports = new ExecutionReports(join(root, 'projects', context.key), this.store);
     this.workspaces = new RunWorkspace(root, context, this.store);
     this.authority = new RunAuthority(context, this.store);
-    this.recover();
+    new HostRecovery(root, this.store, this.authority).recover();
   }
 
   /** Applies user lifecycle intent immediately; active work reaches a checkpoint before pause. */
@@ -67,6 +66,25 @@ export class ProjectHost {
       if (this.active?.runId === workday.id) this.active.controller.abort(new Error('Cancelled'));
     } else if (!['start', 'status'].includes(action)) throw new Error('Unknown workday action');
     return this.status();
+  }
+
+  /** Binds workday mutations to their retained identity so a historical request cannot affect newer work. */
+  workdayControl(action: string, id: string, expectedRevision?: string) {
+    const run = this.store.run(id);
+    if (run.mode !== 'workday') throw new InputError('Expected workday identity');
+    if (
+      expectedRevision !== undefined &&
+      new ResourceQuery().revision(this.reports.view(id)) !== expectedRevision
+    )
+      throw new InputError('Stale workday revision; read the workday again');
+    if (run.status === 'stopped' && ['pause', 'stop'].includes(action))
+      return this.reports.view(id);
+    if (this.workday()?.id !== id)
+      throw new InputError('Historical workday cannot resume or control current execution');
+    if (!['pause', 'resume', 'stop'].includes(action))
+      throw new InputError('Unknown workday action');
+    this.control(action);
+    return this.reports.view(id);
   }
 
   /** Queues a goal without interrupting an in-flight safe checkpoint. */
@@ -445,28 +463,6 @@ export class ProjectHost {
       this.store.updateRun(id, run.status, { executionOwner: false });
     if (run.status === 'pausing') this.store.updateRun(id, 'paused');
     if (run.status === 'stopping') this.store.updateRun(id, 'stopped');
-  }
-
-  /** Marks abandoned activations without replaying possibly completed operations. */
-  private recover(): void {
-    new PolicyRecovery(this.root, this.store).recover();
-    new AssignmentRecovery(this.root, this.store).recover();
-    for (const run of this.store.runs()) {
-      for (const assignment of this.store.assignments(run.id)) {
-        if (assignment.data.pendingOutcome) {
-          const scheduler = new Scheduler(this.store, async () => {
-            throw new Error('Recovery cannot execute');
-          });
-          scheduler.commit(assignment.id, assignment.data.pendingOutcome as ActivationResult);
-        } else if (assignment.status === 'running')
-          this.store.updateAssignment(assignment.id, 'interrupted', {
-            reason: 'Host exited during activation; inspect retained operation evidence',
-          });
-      }
-      if (['running', 'pausing', 'stopping'].includes(run.status))
-        this.store.updateRun(run.id, 'interrupted');
-    }
-    this.authority.recover();
   }
 
   /** Finds the latest workday without confusing queued external tasks with its lifecycle. */
