@@ -17,9 +17,8 @@ class MigrationTargetFixture extends PackageCliFixture {
 
   /** Reads authored schema independently of the CLI's result claims. */
   version(): number {
-    return parse(
-      readFileSync(join(this.repo, 'architecture/components/platform.yaml'), 'utf8'),
-    ).schemaVersion;
+    return parse(readFileSync(join(this.repo, 'architecture/components/platform.yaml'), 'utf8'))
+      .schemaVersion;
   }
 
   /** Gives another repository a distinct platform with the same package short identity. */
