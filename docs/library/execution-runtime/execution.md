@@ -276,3 +276,26 @@ with both another evidence root and another `TMPDIR`. Evidence is retained at
 `test-runs/b256161f-80b7-48ab-9a49-d9b04d777f52`. Formatting, lint, strict checking,
 build, ownership validation and guidance validation pass locally. This is deterministic
 qualification; a new live self-development task must still produce its own delivery.
+
+## Run queries independent of a terminal or checkout
+
+`task list [field=value...]`, `task get <id> [--follow]`, `task follow <id>`,
+`workday list [field=value...]`, and `workday get <id> [--follow]` read the
+versioned execution stores directly. They never start a host, recover activations,
+create absent state storage or change source. Retained runs remain observable after
+host loss. Historical proposal/workday readers remain separate read-only views.
+
+Lists use the common report query contract: allowlisted equality filters with AND
+semantics (`id`, `status`, `packageId`), case-insensitive `--search`, `--limit`
+from 1 through 100 (default 50), and opaque `--cursor`. Status values must be known
+lifecycle states. A cursor binds its query and result revision; changed results
+require restarting pagination rather than silently skipping or duplicating entries.
+Reads include revision tokens. Missing or ambiguous run identities fail explicitly.
+
+Following observes ordered, run-correlated events after exclusive `--after` cursors
+and updated projections. It stops at terminal outcomes; interrupting the follower
+only detaches and returns successfully. Waiting, paused and idle work stays observable.
+SQLite snapshots keep each projection internally consistent. Read-only reopening
+never migrates databases or replays uncertain operations. Runtime owns run discovery,
+coordination-store owns persistence, report owns common filtering/pagination, and the
+CLI only parses, renders and follows. Task controls build on this resource identity.
