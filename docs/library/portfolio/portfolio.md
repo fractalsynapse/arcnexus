@@ -86,3 +86,18 @@ same report query implementation as task/workday resources. Search covers identi
 and purpose. Pagination returns a result revision and rejects stale or incompatible
 cursors. Package platform selection remains an explicit namespace filter. List
 queries never create an absent volume or start execution.
+
+## Registered configuration migration
+
+`config migrate [target] [--write]` accepts a registered platform or package (#167).
+Qualified package references are preferred; short references must be unambiguous
+across both resource types. With no target, migration uses the current repository.
+Resolution reads repository registration without requiring old configuration to
+validate as current executable architecture. The shared portfolio service returns
+the existing migrator's structured diff, change count and retained evidence.
+
+Preview leaves maintained source unchanged. Explicit `--write` applies the existing
+validated clean-checkout migration to the selected repository, which can contain
+multiple packages. It neither commits nor publishes. Historical execution authority
+and evidence remain unchanged, and another successful invocation has no changes.
+Unknown or ambiguous targets fail before migration creates a candidate.
