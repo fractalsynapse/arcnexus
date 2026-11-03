@@ -5,7 +5,7 @@ description: Use when starting repository changes, preparing a PR, integrating t
 
 # ArcNexus release workflow
 
-## Start a small change
+## Start a coherent implementation batch
 
 1. Read AGENTS.md and the charter. Reuse accepted scope; read-only exploration does
    not require an issue. Before editing, create/adopt one issue with observable
@@ -13,12 +13,12 @@ description: Use when starting repository changes, preparing a PR, integrating t
 2. Fetch origin. Branch from current `origin/staging` as
    `codex/<issue>-<description>`. Keep user work intact; never reset it. If staging
    does not exist in a new repository, create it from the verified remote main tip.
-3. For new/changed behavior, record intent in affected docs and commit before product
-   code; add a failing user-observable test, implement, and verify. For refactors,
-   reference the unchanged contract and prove acceptance/characterization tests pass
-   before and after; add missing coverage first. No redundant docs edit or artificial
-   failing behavior is required. Add test layers for distinct risks, not a fixed quota.
-   A docs-only change needs document validation rather than application tests.
+3. Follow the development cadence in [AGENTS.md](../../../AGENTS.md). Record changed
+   intent once for the accepted batch before product code. Write acceptance and
+   regression tests alongside implementation; use focused feedback during development
+   and defer long integrated suites until the batch is assembled. Refactors preserve
+   existing contracts; no artificial failing test or redundant docs commit is required.
+   Docs-only changes need document validation, not application test cycles.
 4. Commit logical increments as `<type>: <description> (#N)`. Push the branch for
    review. Keep the issue's acceptance boxes accurate; do not duplicate every update
    as a comment. Comment for decisions, blockers, or scope changes that need context.

@@ -85,27 +85,39 @@ Promotion preserves simulation evidence, checks current real authority, reconcil
 changes and repeats verification/CI/review before real integration. Simulation success
 never substitutes for real-target evidence.
 
-## Ordered slices and gates
+## Delivery priorities and gates
 
-1. Consolidated validation, standards migration and command/service contracts.
-2. Managed portfolio, composed authority and transactional architectural CRUD.
-3. Unified command queries, task control/answers and workspace management.
-4. Collaboration operations and persistent real-agent simulation.
-5. Verified publisher, GitHub/staging policy and explicit promotion.
-6. Acceptance migration, container qualification and real self-development.
+The accepted scope remains unchanged. The current development strategy supersedes
+this plan's original small-slice delivery order:
 
-For each slice: documented intent, failing built-program acceptance, implementation,
-verification/review and staging PR. Record direct bootstrap work until the stable
-runtime can perform bounded changes. Shared services and a qualified headless container
-are included; HTTP, web authentication and React follow in phase three.
+1. Complete the production lifecycle, collaboration operations, persistent real-agent
+   simulation, verified publisher and promotion as one coherent implementation batch.
+   Include the minimum portfolio and command support needed to exercise that lifecycle.
+2. Use the stable lifecycle for a useful ArcNexus improvement and for remaining
+   interface work as soon as it is reliable. Record direct bootstrap work separately.
+3. Finish composed authority, portfolio/CLI breadth, acceptance migration and supported
+   container qualification, retaining every agreed phase-three prerequisite.
+
+Follow [AGENTS.md](../../AGENTS.md) for implementation and verification cadence.
+Write tests alongside implementation, use focused feedback, and run long suites on
+the assembled batch instead of requiring a full cycle for each small increment.
+Shared services and a qualified headless container remain included; HTTP, web
+authentication and React follow in phase three.
+
+Real self-development uses the production director and the actual project's eligible
+component steward catalog. Give it a useful goal broad enough to require collaboration;
+do not preselect participants, force dependencies or script direction. At least three
+stewards, including one discovered during execution, must participate observably for
+the multi-owner gate. If fewer participate, retain that honest result and choose a
+substantively broader useful goal; never manufacture a team to satisfy the count.
 
 Qualification must cover three/five-owner scheduling, mode isolation, task lifecycle,
 CRUD conflicts/recovery, migration idempotence, optional/malformed guidance, external
 effect deduplication, denied bypasses, publisher gates, promotion conflicts and container
 restart/volume relocation. Preserve historical readers and checked source confinement.
 
-Retain six real demonstrations: dynamic three-owner simulated task; useful simulated
-workday/inbox; full issue/comment/commit/push/PR/check/merge/artifact lifecycle; unfinished
+Retain six real demonstrations: dynamic simulated task with at least three observed
+stewards; useful simulated workday/inbox; full issue/comment/commit/push/PR/check/merge/artifact lifecycle; unfinished
 work across pause/container interruption; denied real-target writes; and an actual
 ArcNexus improvement simulated then freshly verified/promoted to real staging.
 Report deterministic/native checks, CI, real-agent simulation and upstream integration

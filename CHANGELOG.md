@@ -87,6 +87,8 @@
 
 ### Changed
 
+- Batch related implementation and test authoring before long qualification cycles; preserve final release gates and real director-selected self-development (#148).
+
 - Keep new execution state inside the configured project volume while retaining explicit access to historical state (#193).
 
 - Align the charter with the accepted managed lifecycle, real-agent simulation and pre-phase-three API/UI prerequisites (#148).

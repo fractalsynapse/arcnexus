@@ -63,8 +63,9 @@ are not automatic context.
 
 ## Constraints
 
-- One useful vertical slice at a time; finish and demonstrate it before adding the
-  next capability. Plan only the current slice in detail.
+- Deliver coherent batches of accepted capabilities with tests written alongside
+  implementation. Use focused feedback during development and qualify the assembled
+  result before integration; follow the development cadence in [AGENTS.md](../AGENTS.md).
 - Preserve human architectural authority. A steward proposes changes beyond its
   boundary; it cannot rewrite the approved architecture to excuse a deviation.
 - Use one shared deterministic execution path behind eventual CLI, API, UI, and MCP
@@ -100,17 +101,18 @@ services. Hono and React/Vite remain the initial web implementation direction. K
 credentials and machine bindings outside architectural source, and keep the
 supervising runtime stable during self-development.
 
-Build infrastructure when the current accepted slice needs it. Do not introduce
+Build infrastructure when the current accepted batch needs it. Do not introduce
 an alternative scheduler, general agent framework or duplicate contract inventory.
 Later governance expands the working foundation rather than postponing ownership,
 standards or source confinement until after the UI.
 
 ## Reusable standards
 
-- **Direct steward:** select responsibility → give objective → execute → inspect evidence.
-- **Small vertical slice:** specify new/changed observable behavior → failing
-  acceptance test → implement → run assembled artifact → review → integrate.
-  Refactors preserve an existing contract and prove behavior before and after.
+- **Director-led task:** give objective → director selects eligible stewards → execute
+  → inspect evidence.
+- **Batched delivery:** specify accepted behavior → implement with meaningful tests
+  → verify the assembled artifact → review → integrate. Preserve existing contracts
+  during refactors and avoid repeated long test cycles for individual edits.
 - **Shared execution:** gateways call the same application functions.
 - **Structured handoff:** return a validated result/request; runtime persists state,
   routes work, and resumes assignments. Informational logs do not activate agents.
@@ -141,7 +143,9 @@ for bounded component engineering. Human architectural authority remains final.
 Deterministic runtime code schedules, enforces authority and records execution.
 The phase-two execution system supports arbitrary eligible steward counts; the
 qualification baseline includes three- and five-owner scheduling and a real
-three-owner goal with an owner discovered during execution.
+goal with at least three observed stewards and an owner discovered during execution.
+The real director selects from actual project components; callers do not prescribe
+the team or replace direction with a scripted result.
 
 - Phase two uses a verified change in the shared candidate as its delivery milestone.
   Durable checkpoints support explicit pause/resume and validated recovery.

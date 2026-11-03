@@ -3,18 +3,21 @@ name: writing-plans
 description: Use when an agreed capability needs a multi-step implementation plan; not for routine edits.
 ---
 
-# Plan one working slice
+# Plan a coherent implementation batch
 
 Read the accepted charter/design and current repository. Do not re-open settled
-questions. Plan only the next demonstrated capability; later phases stay brief.
+questions. Plan the accepted batch across its necessary responsibilities; later
+phases stay brief. Follow the cadence in [AGENTS.md](../../../AGENTS.md).
+Do not fragment a working lifecycle into tiny PRs with repeated long test cycles.
 
 Use the issue for a short plan, or `docs/plans/<topic>.md` when a durable plan helps.
 Include:
 - Goal and the user-observable acceptance scenario.
 - Affected responsibilities/files and the public boundary that must stay stable.
-- A few ordered steps: document changed intent, failing acceptance for new/changed
-  behavior, minimal implementation, verification, and integration. For a refactor,
-  use existing-contract acceptance/characterization checks before and after instead.
+- Ordered dependencies: document changed intent, implement with meaningful tests,
+  qualify the assembled result, review and integrate. Identify focused checks useful
+  during development and the long suites deferred to final qualification. Refactors
+  preserve existing contracts; add characterization where it closes a real gap.
   Fold setup into the behavior it enables; do not invent changes to satisfy a template.
 - Relevant failure cases, concrete verification commands once known, and explicit
   exclusions/open decisions. Never invent commands for a nonexistent application.
