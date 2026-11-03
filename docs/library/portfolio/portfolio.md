@@ -101,3 +101,5 @@ validated clean-checkout migration to the selected repository, which can contain
 multiple packages. It neither commits nor publishes. Historical execution authority
 and evidence remain unchanged, and another successful invocation has no changes.
 Unknown or ambiguous targets fail before migration creates a candidate.
+If a registered definition has disappeared or changed type, reconcile the registration
+before migration; a retained repository location does not authorize a different target.
