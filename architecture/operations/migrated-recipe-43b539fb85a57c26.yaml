@@ -1,6 +1,6 @@
 repository: arcnexus
 cwd: .
-category: cli-check
+category: lint
 activities: []
 generatedDirectories:
   - .fixture-build

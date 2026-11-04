@@ -1475,3 +1475,8 @@ expected-red correction scenario also passed in 18.967 seconds. An initial fixtu
 omitted permission for its new lint category and correctly failed preflight; the
 fixture now explicitly captures that permission. No production authority was widened.
 Real-agent use of the new checkpoint is still pending a future captured supervisor.
+
+The migrated repository format/lint definitions were still classified as `cli-check`.
+Their declarations now use the already permitted `lint` category, preserving command
+definitions and usages while making their static-quality purpose explicit. The host
+does not infer semantics from command names or expand agent-only operation authority.
