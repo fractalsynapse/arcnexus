@@ -1,4 +1,8 @@
-import { requestProposal } from '../coordination-store/execution-store.js';
+import {
+  requestProposal,
+  sharedRequestProblem,
+  type ExecutionStore,
+} from '../coordination-store/execution-store.js';
 import type { ExecutionAssignment } from '../coordination-store/execution-types.js';
 import { assignmentIntent } from './assignment-intent.js';
 import { ExecutionContext, type ProjectExecution } from '../architecture/execution-context.js';
@@ -15,6 +19,7 @@ export class RequestAdmission {
   constructor(
     private readonly root: string,
     private readonly context: ProjectExecution,
+    private readonly store: ExecutionStore,
   ) {}
 
   /** Validates the complete batch before routing any request or accompanying inbox action. */
@@ -44,7 +49,7 @@ export class RequestAdmission {
   /** Runs one coordination activation without changing the accepted engineering stage, plan or permissions. */
   async correct(record: RecordData, session: StewardSession): Promise<void> {
     const result = await session.reply(
-      `Correct rejected dependency requests. No recipient or inbox action from this batch was committed. Preserve the requested result and acceptance criteria; correct the requested outcome or workflow within the recipient's existing authority. Leave file selection to the recipient or edit source. Return corrected requests and any retained inboxActions; explain any withdrawal. Host admission feedback: ${JSON.stringify(record.requestCorrection)}`,
+      `Correct rejected dependency requests. No recipient or inbox action from this batch was committed. Preserve the requested result and acceptance criteria; correct the requested outcome or workflow within the recipient's existing authority. The recipient chooses its files. This coordination turn is source-read-only. Link only when the captured supplier intent covers your request. For distinct work keep the original criteria and use assignmentId=null. Return corrected requests and any retained inboxActions; explain any withdrawal. Host admission feedback: ${JSON.stringify(record.requestCorrection)}`,
     );
     record.pendingRequests = result.requests;
     record.pendingInboxActions = result.inboxActions ?? [];
@@ -58,7 +63,7 @@ export class RequestAdmission {
     request: AgentResult['requests'][number],
     index: number,
   ): string[] {
-    if (request.assignmentId) return [];
+    if (request.assignmentId) return this.shared(sender, request, index);
     try {
       new ExecutionContext().assignment(
         this.context,
@@ -74,5 +79,25 @@ export class RequestAdmission {
       if (!(error instanceof InputError)) throw error;
       return [`Request ${index} to ${request.ownerId}: ${error.message}`];
     }
+  }
+
+  /** Leaves unknown supplier identities to routing and corrects conflicting terms on a known link. */
+  private shared(
+    sender: ExecutionAssignment,
+    request: AgentResult['requests'][number],
+    index: number,
+  ): string[] {
+    const linked = this.store
+      .assignments(sender.runId)
+      .find((a) => a.id === request.assignmentId && a.owner === request.ownerId);
+    if (!linked) return [];
+    const mismatch = sharedRequestProblem(this.store.effective(linked.id), {
+      owner: linked.owner,
+      objective: request.request,
+      acceptance: request.acceptanceCriteria,
+      kind: request.kind,
+      changeType: request.changeType,
+    });
+    return mismatch ? [`Request ${index} to ${linked.owner}: ${mismatch}`] : [];
   }
 }

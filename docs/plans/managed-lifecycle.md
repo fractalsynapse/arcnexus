@@ -2645,3 +2645,11 @@ with different acceptance criteria. Keep rejecting mismatches. Use the same
 comparison before routing so the requester gets its existing read-only correction
 turn and can inspect the exact supplier intent. Keep the original run's failure,
 the accepted supplier criteria and unrelated ready work intact.
+
+The normal task host reproduced and corrected a mismatched shared-work link in
+40 seconds with controlled model input. The original supplier retained its
+criteria and distinct work received a new assignment. The cross-repository
+production run recorded four completed cold setups of 67, 40, 33 and 31 seconds.
+Nine earlier sequential-per-npm setups in the relocation run ranged from 123
+to 345 seconds. Both ran under varying machine load. Measured medians were
+36.5 seconds and 144 seconds respectively.

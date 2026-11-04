@@ -9,6 +9,32 @@ import { GeneralFixture, nativeHostTest as test } from '../../testing/support/ge
 
 /** Exercises engineering discovery and explicit supplier reuse through the real MCP and scheduler boundaries. */
 class AssignmentRegistryScenario {
+  /** Refuses a mismatched existing supplier intact, then admits distinct work through retained correction. */
+  async mismatch(t: TestContext): Promise<void> {
+    const f = new GeneralFixture(t).fixture;
+    const host = new ProjectHost(f.state, new ExecutionContext().resolve(f.repo));
+    t.after(() => host.close());
+    const run = host.submit('LINK_EXISTING_WORK MISMATCH_LINK: preserve distinct evidence');
+    await host.tick();
+    const [sender, supplier] = host.store.assignments(run.id);
+    await host.tick();
+    const path = join(
+      f.state,
+      'runs',
+      String(host.store.assignment(sender!.id).data.recordId),
+      'report.json',
+    );
+    const correction = JSON.parse(readFileSync(path, 'utf8')).requestCorrection;
+    assert.match(correction.errors.join(' '), /Shared assignment acceptance differs/);
+    assert.equal(host.store.assignments(run.id).length, 2);
+    for (let turn = 0; turn < 8 && !host.store.inbox(sender!.id).length; turn++) await host.tick();
+    const [request] = host.store.inbox(sender!.id);
+    assert.ok(request);
+    assert.notEqual(request.assignmentId, supplier!.id);
+    assert.deepEqual(request.acceptance, ['Distinct delivery evidence']);
+    assert.deepEqual(host.store.assignment(supplier!.id).acceptance, supplier!.acceptance);
+  }
+
   /** Discovers a not-started supplier without granting checkpoint access or creating duplicate assignments. */
   async run(t: TestContext): Promise<void> {
     const f = new GeneralFixture(t).fixture;
@@ -58,6 +84,9 @@ class AssignmentRegistryScenario {
 
 test('engineering discovers current-run supplier intent and links existing work through MCP', (t) =>
   new AssignmentRegistryScenario().run(t));
+
+test('incompatible shared work returns to the requester before any new supplier is created', (t) =>
+  new AssignmentRegistryScenario().mismatch(t));
 
 registerSuite({
   component: 'execution-runtime',

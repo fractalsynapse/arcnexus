@@ -29,3 +29,22 @@ export function requestMilestones(
     [recipient]: existing[recipient] === 'delivered' ? 'delivered' : required,
   };
 }
+
+/** Returns the precise mismatch without merging another assignment or modifying either party. */
+export function sharedRequestProblem(
+  recipient: ExecutionAssignment,
+  request: Pick<OwnerRequest, 'owner' | 'objective' | 'acceptance' | 'kind' | 'changeType'>,
+): string | undefined {
+  const help = `Read assignment.evidence artifact=${recipient.id}:intent for the captured objective, acceptance and workflow. Use assignmentId=null for distinct bounded work.`;
+  if (
+    recipient.owner !== request.owner ||
+    recipient.objective !== request.objective ||
+    JSON.stringify(recipient.acceptance) !== JSON.stringify(request.acceptance)
+  )
+    return 'Shared assignment acceptance differs. ' + help;
+  const existing = recipient.data.proposal as Record<string, unknown> | undefined;
+  for (const key of ['kind', 'changeType'] as const)
+    if (existing && request[key] != null && request[key] !== existing[key])
+      return 'Shared assignment workflow or scope differs. ' + help;
+  return undefined;
+}

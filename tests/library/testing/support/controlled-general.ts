@@ -63,7 +63,9 @@ export class ControlledGeneral {
         ...this.assignment('a', false, ''),
         kind: 'change',
         changeType: 'documentation',
-        objective: 'LINK_EXISTING_WORK: reuse matching supplier work',
+        objective: prompt.includes('MISMATCH_LINK')
+          ? 'LINK_EXISTING_WORK MISMATCH_LINK: request distinct evidence'
+          : 'LINK_EXISTING_WORK: reuse matching supplier work',
       },
       { ...this.assignment('b', false, ''), objective: 'Supply shared evidence' },
     ];
@@ -282,12 +284,12 @@ export class ControlledGeneral {
     )
       return this.afterPlan(result, prompt, stage!, owner!);
     if (stage === 'planning' && prompt.includes('LINK_EXISTING_WORK'))
-      return this.linkExisting(result);
+      return this.linkExisting(result, prompt);
     if (stage === 'planning') return this.planning(result, prompt, owner!);
   }
 
   /** Copies observed host intent rather than guessing an assignment identity or changing shared acceptance. */
-  private linkExisting(result: any): any {
+  private linkExisting(result: any, prompt: string): any {
     const observed = this.assignmentEvidenceValue;
     const entry = observed.manifest.assignments.find((item: any) => item.owner === 'b');
     const intent = JSON.parse(observed.artifacts[entry.artifact]);
@@ -297,7 +299,9 @@ export class ControlledGeneral {
         ownerId: intent.owner,
         assignmentId: intent.assignmentId,
         request: intent.objective,
-        acceptanceCriteria: intent.acceptance,
+        acceptanceCriteria: prompt.includes('MISMATCH_LINK')
+          ? ['Distinct delivery evidence']
+          : intent.acceptance,
         ...intent.scope,
       },
     ];
@@ -310,6 +314,11 @@ export class ControlledGeneral {
     const feedback = JSON.parse(prompt.slice(prompt.lastIndexOf(marker) + marker.length));
     result.requests = feedback.requests.map((request: any) => ({
       ...request,
+      ...(feedback.errors.some((error: string) =>
+        error.includes('Shared assignment acceptance differs'),
+      )
+        ? { assignmentId: null }
+        : {}),
       request: request.request.trim() || 'Research supplier evidence',
     }));
     result.inboxActions = feedback.actions;

@@ -42,7 +42,7 @@ export class AssignmentExecution {
     ) => UpstreamBridge | undefined,
   ) {
     this.snapshots = new CandidateSnapshots(context.source, join(root, 'snapshots'));
-    this.admission = new RequestAdmission(root, context);
+    this.admission = new RequestAdmission(root, context, store);
   }
 
   /** Restores retained work, runs one stage and returns only a structured scheduler outcome. */

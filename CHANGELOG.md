@@ -4,6 +4,8 @@
 
 ### Added
 
+- Return incompatible existing-supplier requests to the steward for correction before any inbox action commits (#241).
+
 - Let task directors explicitly replace diagnosed failed change assignments. Preserve predecessor evidence, correlated requests and original criteria through verified successor delivery (#235).
 
 - Keep a rejected stewardship decision and its evidence with the scheduled owner so unrelated workday activations can proceed (#240).

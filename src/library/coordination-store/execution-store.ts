@@ -1,6 +1,6 @@
 import { AssignmentReplacements } from './assignment-replacements.js';
 import { AssignmentAdmission } from './assignment-admission.js';
-import { requestMilestones, requestProposal } from './request-proposal.js';
+import { requestMilestones, requestProposal, sharedRequestProblem } from './request-proposal.js';
 import type { DeliveryRecord, PromotionCandidate } from './delivery-types.js';
 import { CandidatePointers } from './candidate-pointers.js';
 import { RunRecords } from './run-records.js';
@@ -21,7 +21,7 @@ import type {
 
 export { ExecutionLease } from './execution-lease.js';
 
-export { requestProposal } from './request-proposal.js';
+export { requestProposal, sharedRequestProblem } from './request-proposal.js';
 
 /** Persists assignment accountability, inbox identities and dependency readiness atomically. */
 export class ExecutionStore {
@@ -207,14 +207,11 @@ export class ExecutionStore {
     if (sender.data.replacedBy) throw new Error('Cannot request work from a retired assignment');
     this.rejectRecursiveIntent(sender, request);
     const recipient = this.recipient(sender, request);
-    if (
-      recipient.owner !== request.owner ||
-      recipient.objective !== request.objective ||
-      JSON.stringify(recipient.acceptance) !== JSON.stringify(request.acceptance)
-    )
-      throw new Error('Shared assignment acceptance differs');
+    const mismatch = sharedRequestProblem(recipient, request);
+    if (mismatch) throw new Error(mismatch);
     sender.data.milestones = requestMilestones(sender, recipient.id, request);
-    this.captureProposal(sender, recipient, request);
+    const proposal = requestProposal(sender, request);
+    recipient.data.proposal ??= proposal;
     this.db.put('assignment', recipient);
     this.db.put('request', { ...request, id: randomUUID(), from, assignmentId: recipient.id });
     this.connect(sender, recipient);
@@ -241,24 +238,6 @@ export class ExecutionStore {
         { name: 'DependencyBlocked' },
       );
     return this.replacements.current(recipient.id);
-  }
-
-  /** Preserves explicit recipient workflow and rejects incompatible reuse of accepted shared work. */
-  private captureProposal(
-    sender: ExecutionAssignment,
-    recipient: ExecutionAssignment,
-    request: OwnerRequest,
-  ): void {
-    const proposed = requestProposal(sender, request);
-    const existing = recipient.data.proposal as Record<string, unknown> | undefined;
-    for (const key of ['kind', 'changeType'] as const)
-      if (
-        existing &&
-        request[key] != null &&
-        JSON.stringify(existing[key]) !== JSON.stringify(proposed[key])
-      )
-        throw new Error('Shared assignment workflow or scope differs');
-    recipient.data.proposal ??= proposed;
   }
 
   /** Rejects a repeated ancestor intent as a blocking cycle without merging unrelated same-owner work. */

@@ -58,7 +58,7 @@ class DirectorRecoveryScenarios {
     host.store.fail(old.id, 'failed', 'Original workflow requires a fresh specification');
     await host.tick();
     const successor = host.store.effective(old.id);
-    assert.notEqual(successor.id, old.id);
+    assert.notEqual(successor.id, old.id, JSON.stringify(host.store.run(task.id).data.error));
     assert.equal(successor.owner, old.owner);
     assert.equal(successor.data.replaces, old.id);
     assert.equal((successor.data.proposal as { changeType: string }).changeType, 'refactor');
