@@ -1910,3 +1910,25 @@ The strongest measured optimization candidates are validated baseline evidence
 reuse and isolated dependency preparation reuse. Preserve current-candidate
 verification, generated-input integrity and authority; do not infer reusable
 evidence from unchanged source alone or modify these active captured runs.
+
+### Captured suite metadata before checked writes (#225)
+
+The native report assignment failed after adding a `regression` tag to a captured
+native-host suite. The host correctly rejected altered selection metadata, but
+only after the checked edit had changed the file. Reject these proposals at the
+checked-edit boundary instead: compare complete proposed suite metadata with the
+captured owner, level and tags before any batch mutation. Preserve the final host
+guard and frozen regression checks. Return recoverable, actionable rejection so
+the worker can correct its proposal without losing otherwise valid assignment
+work. Test deletion, tag additions/removals, owner/level changes, atomic batches,
+allowed body edits and new owned suites. The existing run retains its original
+supervisor and failed evidence; unrelated assignments continue.
+
+The refreshed CI passed the full confined selection but failed 45 of 413 native
+cases. Two native fixture families omitted their Node binding, so named operations
+selected an unreadable hosted-toolcache executable from PATH. Capture the actual
+fixture process executable in those bindings, and add a shadow-PATH preparation
+case. Do not broaden production read grants or depend on an implicit fallback to
+another installed Node. Retain raw CI 41861791894 and qualify affected fixture
+scenarios before refreshing the complete native lane. Earlier queued status
+responses do not establish runner wait time; execution logs are authoritative.
