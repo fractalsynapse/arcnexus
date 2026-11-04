@@ -154,9 +154,8 @@ attention and is retained. Symbolic configuration refs are rejected; ref updates
 follow a redirect into a caller branch. No external operation is retried by configuration
 recovery.
 
-This slice updates existing same-repository definitions. Creating/removing components,
-standard mutations, multi-repository composition and transactions remain separate
-pending capabilities of the managed lifecycle plan.
+These mutations support same-repository definitions. Multi-repository composition
+and transactions remain pending capabilities of the managed lifecycle plan.
 
 `component create <package> <id> <field=value>...` uses the same transaction path.
 Supply `type`, `purpose` and `owns`; the service supplies schema version, identity
@@ -185,3 +184,19 @@ remote or worktree identity is an error; ordinary checkouts retain ordinary orig
 checks. Offline local `validate` retains explicitly unavailable dependency inventories
 when bindings are not supplied. The snapshot is not authored configuration and does not change active run
 permissions or supply upstream credentials.
+
+## Standard mutations
+
+`standard create <platform> <id> <field=value>...`, `standard update` and
+`standard remove` use the same validated configuration commits. Creation requires
+`owner`, `purpose`, `applicability` and `document`; optional `examples` and
+`operationIds` default to empty arrays. The owner must be executable within the
+selected platform, documentation must exist in its scope, and checks must be
+available to that owner. Updates cannot rename IDs or change schema versions.
+Removing a standard still referenced by inherited policies fails without selecting
+a new revision. Removing the definition does not remove its documentation.
+
+Application callers use `Portfolio.changeStandard` with a structured field map
+and optional expected revision. Create checks the platform revision; update and
+remove check the standard revision. Missing artifacts, invalid references and
+stale writes leave the selected authority and attached checkout unchanged.

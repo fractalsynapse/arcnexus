@@ -88,6 +88,8 @@ export class OperationExecution {
       if (result.exitCode !== 0)
         throw Object.assign(new Error(`Command failed (${result.exitCode}): HTTP GET`), {
           commandResult: result,
+          observedExitFailure: true,
+          operationId: op.id,
         });
       return result;
     });
@@ -135,7 +137,11 @@ export class OperationExecution {
     const result = error.commandResult as CommandResult;
     throw Object.assign(
       new Error(`Operation ${op.id}: ${String(error)}; evidence: ${result.log}`, { cause: error }),
-      { commandResult: result },
+      {
+        commandResult: result,
+        operationId: op.id,
+        observedExitFailure: 'observedExitFailure' in error && error.observedExitFailure === true,
+      },
     );
   }
 

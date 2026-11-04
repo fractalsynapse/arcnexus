@@ -115,7 +115,7 @@ or ambiguous packages, missing/out-of-scope components, invalid filters/cursors 
 irrelevant options return input error exit code 2. This increment provides reads;
 component creation, update and removal remain separate planned work.
 
-## Platform standard reads
+## Platform standards
 
 `arcnexus standard list <platform> [id=value] [owner=value]` lists the complete
 committed standards library for a registered platform, including unused standards.
@@ -123,3 +123,19 @@ It accepts shared `--search`, `--limit`, `--cursor` and `--json` options.
 `arcnexus standard get <platform> <id> [--json]` reads one standard and its revision.
 Both work outside a checkout without starting an execution host. Unknown filters,
 unsupported options and standards belonging to another platform are rejected.
+
+Use `standard create <platform> <id> <field=value>...` to declare a standard with
+an existing owned document. For example:
+
+```sh
+arcnexus standard create studio readable owner=foundation \
+  'purpose=Keep code understandable' 'applicability=Maintained code' \
+  document=docs/foundation/readable.md
+arcnexus standard update studio readable 'purpose=Keep maintained code understandable'
+arcnexus standard remove studio readable
+```
+
+Creation supplies the schema version and empty optional example/check lists.
+The complete proposal must validate before selection. Removal fails while a
+component still references the standard. These commands create application-owned
+configuration commits; they do not edit an attached checkout or alter active runs.

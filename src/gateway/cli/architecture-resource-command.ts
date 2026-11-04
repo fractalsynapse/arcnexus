@@ -53,7 +53,14 @@ export class ArchitectureResourceCommand {
 
   /** Delegates explicit mutations to the same application-owned configuration transaction path. */
   private mutate(portfolio: Portfolio) {
-    const [, action, target, id] = this.positionals;
+    const [kind, action, target, id] = this.positionals;
+    if (kind === 'standard')
+      return portfolio.changeStandard(
+        target!,
+        id!,
+        action as 'create' | 'update' | 'remove',
+        action === 'remove' ? {} : architectureFields(this.positionals.slice(4)),
+      );
     if (action === 'remove') return portfolio.removeComponent(target!, id!);
     const fields = architectureFields(this.positionals.slice(4));
     return action === 'create'
@@ -66,15 +73,13 @@ export class ArchitectureResourceCommand {
     const [kind, action, target] = this.positionals;
     if (
       !['standard', 'component'].includes(kind ?? '') ||
-      !['list', 'get', ...(kind === 'component' ? ['update', 'create', 'remove'] : [])].includes(
-        action ?? '',
-      ) ||
+      !['list', 'get', 'update', 'create', 'remove'].includes(action ?? '') ||
       !target?.trim() ||
       (['get', 'remove'].includes(action!) && this.positionals.length !== 4) ||
       (['update', 'create'].includes(action!) && this.positionals.length < 5)
     )
       throw new InputError(
-        'Expected component/standard list <target> [field=value...] | get <target> <id> | component create/update <package> <id> <field=value>... | component remove <package> <id>',
+        'Expected component/standard list <target> [field=value...] | get <target> <id> | create/update <target> <id> <field=value>... | remove <target> <id>',
       );
     const allowed = action === 'list' ? ['json', 'search', 'limit', 'cursor'] : ['json'];
     if (Object.keys(this.values).some((key) => !allowed.includes(key)))

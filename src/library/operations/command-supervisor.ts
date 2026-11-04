@@ -34,7 +34,7 @@ class CommandSupervisor {
 
   /** Runs the requested action through the configured execution boundary. */
   private async execute(message: Start): Promise<void> {
-    let response: { result?: CommandResult; error?: string };
+    let response: { result?: CommandResult; error?: string; observedExitFailure?: boolean };
     try {
       response = {
         result: await executeDirect(
@@ -48,6 +48,11 @@ class CommandSupervisor {
     } catch (error) {
       response = {
         error: error instanceof Error ? error.message : String(error),
+        observedExitFailure:
+          !!error &&
+          typeof error === 'object' &&
+          'observedExitFailure' in error &&
+          error.observedExitFailure === true,
         ...(error && typeof error === 'object' && 'commandResult' in error
           ? { result: error.commandResult as CommandResult }
           : {}),

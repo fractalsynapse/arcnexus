@@ -27,6 +27,20 @@ export interface CommandResult extends Command {
   processScope?: string;
 }
 
+/** Recognizes an observed nonzero completion independently of human diagnostics or transport wrapping. */
+export function isObservedCommandFailure(error: unknown): error is Error & {
+  commandResult: CommandResult;
+  observedExitFailure: true;
+  operationId?: string;
+} {
+  return (
+    error instanceof Error &&
+    'observedExitFailure' in error &&
+    error.observedExitFailure === true &&
+    'commandResult' in error
+  );
+}
+
 export interface CommandOptions {
   env?: NodeJS.ProcessEnv;
   timeoutMs?: number;
@@ -174,7 +188,12 @@ class DirectCommand {
     this.closed(code);
     if (!this.failure && code === 0) return resolve(this.result);
     const failure = this.failure ?? new Error(`Command failed (${code}): ${this.command.command}`);
-    reject(Object.assign(failure, { commandResult: this.result }));
+    reject(
+      Object.assign(failure, {
+        commandResult: this.result,
+        observedExitFailure: !this.failure && typeof code === 'number' && code !== 0,
+      }),
+    );
   }
 
   /** Requests managed process termination and schedules forced cleanup if necessary. */
@@ -241,7 +260,7 @@ export async function execute(
 
 /** Delegates process-group lifetime to a supervisor that watches parent liveness. */
 class SupervisedCommand {
-  private response?: { result?: CommandResult; error?: string };
+  private response?: { result?: CommandResult; error?: string; observedExitFailure?: boolean };
 
   private failure?: Error;
 
@@ -290,6 +309,10 @@ class SupervisedCommand {
       this.failure ??
         new Error(this.response?.error ?? 'Command supervisor exited without a result'),
       this.response?.result ? { commandResult: this.response.result } : {},
+      {
+        observedExitFailure:
+          !this.failure && !this.signal.aborted && this.response?.observedExitFailure === true,
+      },
     );
   }
 }

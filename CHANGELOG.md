@@ -4,6 +4,8 @@
 
 ### Added
 
+- Manage platform standards through checked create/update/remove configuration transactions with stale-revision and reference protection (#148).
+- Return observed failing checks to stewards despite diagnostic prefixes while retaining fatal verification, cancellation and prerequisite failures (#203).
 - Add isolated, supervised GitHub delivery transport for verified host commits with exact-head recovery and scoped credentials (#148).
 - Create/remove executable components through validated configuration transactions and observe exact-head GitHub PR readiness without conflating approval, review and CI (#148).
 

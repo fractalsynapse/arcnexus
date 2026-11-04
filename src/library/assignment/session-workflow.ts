@@ -1,3 +1,4 @@
+import { isObservedCommandFailure } from '../operations/process.js';
 import { SpecificationValidationError } from './specification-error.js';
 import { SessionProgress } from './session-progress.js';
 import { save } from '../workspace/state.js';
@@ -214,12 +215,7 @@ export class SessionWorkflow {
       this.state.safe();
       const { signal, record } = this.state.options;
       signal.throwIfAborted();
-      if (
-        record.status === 'no_changes' ||
-        !(error instanceof Error) ||
-        !error.message.startsWith('Command failed (')
-      )
-        throw error;
+      if (record.status === 'no_changes' || !isObservedCommandFailure(error)) throw error;
       const failed = record.commands.at(-1)!;
       const feedback = `Command ${JSON.stringify({ command: failed.command, args: failed.args })}; exit code ${failed.exitCode}; ${logExcerpt(failed.log)}`;
       this.markAttempt({ status: 'failed', feedback });

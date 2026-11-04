@@ -19,6 +19,7 @@ export const help = `ArcNexus
   package update <package> <field=value>...
   component create/update <package> <id> <field=value>... | remove <package> <id>
   standard list <platform> [field=value...] | get <platform> <id>
+  standard create/update <platform> <id> <field=value>... | remove <platform> <id>
   component list <package> [field=value...] | get <package> <id>
   test inspect|run [package] [--component <id>] [--level unit|integration|acceptance] [--category regression] [--tag <tag>] [--json]
 Inspection, evidence and diagnostics:

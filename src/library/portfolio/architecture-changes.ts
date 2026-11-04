@@ -6,6 +6,7 @@ import type {
 import { ConfigurationCommit } from './configuration-commit.js';
 import { ancestry, loadCatalog } from '../architecture/components.js';
 import { loadProjectBindings } from '../architecture/bindings.js';
+import { StandardResources } from '../architecture/inspection.js';
 import { InputError } from '../architecture/config.js';
 import { git } from '../operations/process.js';
 
@@ -73,6 +74,8 @@ export class ArchitectureChanges {
           (component.type === 'package' && component.parentId !== registration.id.split('/')[0])
         )
           throw new Error('Update changes registered identity or platform; use explicit migration');
+        if (registration.kind === 'platform')
+          new StandardResources().list({ source: this.source, base, platformId: component.id });
       }
       if (
         componentId &&

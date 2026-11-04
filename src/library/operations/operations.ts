@@ -10,7 +10,7 @@ import type { Command } from '../architecture/config.js';
 import { observe } from '../report/timeline.js';
 import type { BridgeTool } from '../steward/bridge.js';
 import { save, type RecordData } from '../workspace/state.js';
-import type { CommandResult } from './process.js';
+import { isObservedCommandFailure, type CommandResult } from './process.js';
 import { ServiceManager, type HttpDefinition, type ServiceDefinition } from './services.js';
 
 export { operationEnvironment } from './environment.js';
@@ -321,7 +321,13 @@ class OperationRuntime {
     } catch (error) {
       if (error && typeof error === 'object' && 'commandResult' in error)
         outcome.result = error.commandResult as CommandResult;
-      if (!(error instanceof Error) || !error.message.startsWith('Command failed (')) throw error;
+      if (
+        signal.aborted ||
+        !outcome.result ||
+        !isObservedCommandFailure(error) ||
+        error.operationId !== op.id
+      )
+        throw error;
       return outcome.result;
     }
   }

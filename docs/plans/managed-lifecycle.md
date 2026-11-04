@@ -865,3 +865,43 @@ fatal host verification and cancellation, and cover the agent operation boundary
 The active supervisor remains unchanged; this run is diagnostic evidence, not a
 successful self-development delivery. Safe pause qualification is in progress with
 report's real unfinished diff and checkpoint hashes retained.
+
+Safe pause/resume of real task `9da40468-af92-4484-9410-bfb5000a5e4b` retained
+identical SHA-256 hashes for report's unfinished 6486-byte patch and checkpoint.
+The task reached `paused` after its active turn, then returned `running` via the
+captured supervisor CLI. Publisher and CLI both encountered the observed-test
+routing defect (#203); the run is not a successful delivery gate. Standard CRUD's
+three built-CLI acceptance cases passed with zero skips in 59.165 seconds, covering
+source preservation, invalid references, stale revisions and inherited references.
+
+The resumed real run reached an honest `needs_input` director outcome after all
+three assignments failed. Report attempted to change captured test selection and
+was correctly rejected; publisher and CLI encountered #203's expected-red routing
+bug. The director asked whether to retain partial candidates for recovery or use
+fresh attempts. Preserve this run and all edits as diagnostic evidence, stop it,
+and use a newly qualified captured supervisor for fresh work. Do not hot-patch
+active authority. The metadata fix also needs to cross command-supervisor IPC and
+replace prose checks in host expected-red and correction handling; executor-only
+coverage missed these additional consumers. A retained controlled reproduction at
+`/tmp/arcnexus-workflow-maK0Xh` isolated the host red-test failure after the agent
+operation itself had correctly returned its nonzero result.
+
+The corrected structured failure path passed three native production MCP/cancellation
+cases with no skips in 48.685 seconds. The fix carries observed-exit metadata across
+supervisor IPC, operation diagnostics and host expected-red/correction handling;
+prerequisite failures cannot masquerade as the requested agent check. A separate
+observed-exit/cancellation test passed. The public `test inspect/run` selection for
+operations lifecycle effects passed 20 confined cases with 15 explicit native-lane
+skips (record `fe16ff61-51ff-4633-8cc4-25255813c6dc`); the affected native Git/publication
+cases were qualified separately. Full formatting, lint and strict checks passed
+for the assembled batch; newly changed failure consumers require their focused
+correction checks before another real model submission.
+
+The remaining native baseline/refactor-review/corrective-diagnostic cases passed
+three of three with no skips in 50.965 seconds. Five regression-selection and
+observed-exit checks passed in 0.364 seconds. These establish expected-red and
+correction routing without allowing failed mandatory verification to count as
+completion. The next assembled source must pass isolated production verification
+before spending another director turn. Keep the same useful architect-facing goal;
+do not force a steward roster or weaken inherited test metadata to manufacture the
+three-owner or dependency-discovery gates.
