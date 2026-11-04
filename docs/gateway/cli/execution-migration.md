@@ -9,6 +9,9 @@ controls and read-only resource queries. The [execution contract](../../library/
 defines the current command behavior; local prompt and argument-free workday
 shorthand remain available when context is unambiguous.
 
+Top-level `status` and `follow` now reject with replacement guidance for
+`workspace get <id>` and `workspace get <id> --follow`.
+
 Legacy component `run`, manifest `workday run`, `task plan` and `task legacy-run`
 return an input error explaining the replacement before creating a workspace or
 calling a model. Historical workday/proposal and worker report inspection remains

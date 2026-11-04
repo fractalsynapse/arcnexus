@@ -4,7 +4,6 @@ import { InspectionCommand } from './inspection-command.js';
 import { PortfolioCommand } from './portfolio-command.js';
 import { ConfigCommand } from './config-command.js';
 import { AssignmentCommand } from './assignment-command.js';
-import { ObservationCommand } from './observation-command.js';
 import { ExperimentCommand } from './experiment-command.js';
 import { WorkdayCommand } from './workday-command.js';
 import { TestCommand } from './test-command.js';
@@ -143,13 +142,6 @@ class CliApplication {
     this.validateCommand();
     const assignment = new AssignmentCommand(this.positionals, this.values, this.command);
     if (this.command === 'validate') return assignment.catalog();
-    if (this.command === 'status' || this.command === 'follow')
-      return new ObservationCommand(
-        this.positionals,
-        this.values,
-        this.command,
-        this.controller.signal,
-      ).run();
     const input = assignment.resolve();
     if (this.command === 'inspect') {
       console.log(
@@ -188,7 +180,11 @@ class CliApplication {
   /** Rejects unsupported command and flag combinations before dispatch. */
   private validateCommand(): void {
     const { values, positionals, command } = this;
-    if (!['prepare', 'cleanup', 'validate', 'inspect', 'status', 'follow'].includes(command ?? ''))
+    if (command === 'status' || command === 'follow')
+      throw new InputError(
+        `${command} is retired; use workspace get <id>${command === 'follow' ? ' --follow' : ''}`,
+      );
+    if (!['prepare', 'cleanup', 'validate', 'inspect'].includes(command ?? ''))
       throw new InputError(help);
     if (command === 'inspect' && values.activity !== undefined)
       throw new InputError('--activity requires package-aware inspection without --project');

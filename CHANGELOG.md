@@ -4,6 +4,8 @@
 
 ### Added
 
+- Retire top-level status/follow commands in favor of workspace resource observation, preserving historical library readers and detach-only following (#148).
+
 - Preserve captured execution progress and event-sensitive revisions in workspace resource views without exposing raw harness records (#216).
 
 - Apply complete retained operation edit proposals by invocation reference through the checked edit tool, avoiding truncated formatter JSON while preserving source-write enforcement (#214).

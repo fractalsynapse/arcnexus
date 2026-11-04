@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync, appendFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { RunQueryFixture } from '../support/run-query-fixture.js';
@@ -107,3 +107,15 @@ test('event-only command changes update workspace revisions consistently across 
 });
 
 registerSuite({ component: 'cli', level: 'acceptance', tags: ['deterministic', 'resources'] });
+
+test('retired observation spellings explain resource replacements without creating state', (t) => {
+  const f = new RunQueryFixture(t);
+  for (const command of ['status', 'follow']) {
+    const result = f.command(command, 'retained');
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /workspace get <id>/);
+    if (command === 'follow') assert.match(result.stderr, /--follow/);
+  }
+  assert.equal(existsSync(f.state), false);
+  assert.deepEqual(f.value('workspace', 'list').items, []);
+});

@@ -33,8 +33,6 @@ Inspection, evidence and diagnostics:
   workday follow <historical-workday-id> [--json] [--after <sequence>]
   task inspect <historical-proposal-id> [--json]
   prepare --project <repository>
-  status <workspace-id> [--json]
-  follow <workspace-id> [--json] [--after <sequence>]
   cleanup <workspace-id>
 Lists: --search <text> --limit <1-100> --cursor <token>
 Run following: --after <event-sequence>

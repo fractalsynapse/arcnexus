@@ -52,9 +52,9 @@ turn. Corrective work requires recorded findings and a concrete repair objective
 Worker turns share one thread and any explicitly captured limits; no default
 turn, attempt or execution-time ceiling applies.
 
-`arcnexus status <workspace-id> [--json]` reads current lifecycle, activity,
+`arcnexus workspace get <workspace-id> [--json]` reads current lifecycle, activity,
 checklist, elapsed time, configured limits and evidence completeness without taking the execution lock.
-`arcnexus follow <workspace-id> [--json] [--after <sequence>]` replays and follows
+`arcnexus workspace get <workspace-id> --follow [--json] [--after <sequence>]` replays and follows
 the timestamped timeline. It exits at finalization; interrupting the viewer never
 cancels the worker. Missing historical timelines and incomplete trailing records
 are explicitly identified. Observation timestamps describe host receipt, not the
