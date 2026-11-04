@@ -1160,3 +1160,15 @@ not real-agent simulation. The complete volume is retained at
 the dedicated cgroup keeper were removed. The cheapest missing check was an actual
 Docker stop, since killing a project host inside a container cannot exercise PID 1
 signal forwarding. Keep that distinction in future deployment qualification.
+
+The seventh simulation's publisher also attempted to change a frozen regression
+file, so the director requested a bounded recovery investigation. That investigation
+was authorized within the existing objective, without authorizing policy changes,
+waiving criteria, changing the runner or selecting investigating stewards. Three
+research dependencies completed independently; original engineering delivery is
+still blocked. Issue #206 records a concrete prompt/enforcement mismatch: guidance
+says to preserve regression intent, but the edit tool freezes exact file bytes and
+turn context does not list newly frozen paths. Correct future per-turn guidance,
+including where additional tests may go, while preserving all existing enforcement.
+Two expensive failed activations make this a demonstrated cost, not a speculative
+process improvement.
