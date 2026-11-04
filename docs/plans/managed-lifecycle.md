@@ -1855,3 +1855,26 @@ image. Output tests must still prove exact structured stdout and retained stderr
 including additional diagnostics. Refresh affected cases before the assembled full
 container baseline. Retain the failed workday; its baseline cannot be rewritten by
 candidate changes or a different supervisor.
+
+The executable repair is committed at `a7fb6f8`. Native focused coverage passed
+12 cases, service lifecycle coverage passed 19, and the built image passed the
+same 12 executable/confinement/output cases with zero skips. The initial native
+fixture invocation used a private Codex installation outside its allowed read
+paths; selecting the installed system binary passed without broadening policy.
+Full container test execution is being prepared through `workspace prepare` and
+`test run`; focused results do not establish that full baseline yet.
+
+The independent native simulation has now observed four real stewards: report,
+publisher, CLI, and architecture-maintenance. CLI discovered the maintenance
+assignment through its inbox dependency. This proves dynamic participation, not
+completed multi-owner delivery. Its independent reviewer rejected a publisher
+research conclusion that inferred an artifact-link blocker without tracing the
+existing references. Retain that correction as real verification behavior.
+
+Efficiency: four distinct assignments on the unchanged `449558f` baseline each
+spent about 192–195 seconds in the same complete repository test command, before
+engineering. Evidence reuse is worth evaluating only after matching captured
+operation semantics, source, bindings, runtime and generated inputs; unchanged
+source alone is insufficient. Do not change this active run's acceptance policy.
+The focused container executable check takes less than a second, making it a
+cheap prerequisite before another multi-minute real-agent preparation.
