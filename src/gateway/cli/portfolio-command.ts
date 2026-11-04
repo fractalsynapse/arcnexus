@@ -31,12 +31,7 @@ export class PortfolioCommand {
   /** Dispatches validated command shapes while leaving persistence lifetime with the gateway. */
   private dispatch(service: Portfolio, kind: 'platform' | 'package') {
     const [, action, id, repository] = this.positionals;
-    if (action === 'list' && this.positionals.length <= (kind === 'package' ? 3 : 2))
-      return service.list(kind, id, {
-        search: this.values.search,
-        cursor: this.values.cursor,
-        limit: this.values.limit === undefined ? undefined : Number(this.values.limit),
-      });
+    if (action === 'list') return this.list(service, kind);
     if (action === 'get' && id && this.positionals.length === 3) return service.get(kind, id);
     if (action === 'create' && id && repository && this.positionals.length === 4)
       return service.create(kind, id, repository, this.signal);
@@ -46,5 +41,18 @@ export class PortfolioCommand {
     throw new InputError(
       'Expected ' + kind + ' list|get|create <id> <repository>|update <id> <field=value>...|remove',
     );
+  }
+
+  /** Separates optional package namespace selection from the shared typed equality filters. */
+  private list(service: Portfolio, kind: 'platform' | 'package') {
+    const inputs = this.positionals.slice(2);
+    const platform =
+      kind === 'package' && inputs[0] && !inputs[0].includes('=') ? inputs.shift() : undefined;
+    return service.list(kind, platform, {
+      filters: inputs,
+      search: this.values.search,
+      cursor: this.values.cursor,
+      limit: this.values.limit === undefined ? undefined : Number(this.values.limit),
+    });
   }
 }

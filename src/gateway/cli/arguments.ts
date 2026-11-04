@@ -13,8 +13,8 @@ export const help = `ArcNexus
   workspace prepare <package>
   workspace list [package] | get <id> [--follow]
   config get <name> | update <name> <value> | migrate [target] [--write]
-  platform list|get <id>|create <id> <repository>|remove <id>
-  package list [platform]|get <package>|create <platform/package> <repository>|remove <package>
+  platform list [field=value...]|get <id>|create <id> <repository>|remove <id>
+  package list [platform] [field=value...]|get <package>|create <platform/package> <repository>|remove <package>
   platform update <id> <field=value>...
   package update <package> <field=value>...
   component create/update <package> <id> <field=value>... | remove <package> <id>

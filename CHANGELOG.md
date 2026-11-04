@@ -4,6 +4,8 @@
 
 ### Added
 
+- Share typed equality filters across platform and package lists, including explicit package namespace selection (#148).
+
 - Retain structured operation stdout separately from diagnostic warnings, preserving complete checked-edit proposals and supervised output bounds (#217).
 
 - Consolidate preparation, cleanup, status and following under workspace services, removing the duplicate gateway execution path while preserving historical readers and detach-only following (#148).

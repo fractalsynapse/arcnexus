@@ -1668,3 +1668,19 @@ not establish an oversized real proposal or independently accepted delivery. The
 report dependency is ready and the original publisher assignment is implementing.
 The extra publisher assignment is not a newly discovered owner, since the real
 director selected publisher initially. Keep that qualification distinction explicit.
+
+At `2c66600`, the assembled production confined selection passed 520 cases with
+zero failures and 365 native-host skips (885 total). Its 20 recorded commands
+totaled 372.529 seconds; retained evidence is
+`~/.local/share/arcnexus/state/test-runs/dfbc729c-967d-46c7-a000-cbe073b2e8ab`.
+Consolidated validation passed for the preceding code-identical `059fd9e`; formatting
+and full lint passed. This is distinct from CI 41820203579 and native-host evidence.
+
+The remaining portfolio list filter adapter reuses the existing typed query service.
+Two built-CLI scenarios passed with no skips in 25.374 seconds, covering namespace
+selection, combined equality filters, pagination and invalid fields. Strict checking,
+production/test builds and scoped lint passed. No scheduler or new query abstraction
+was added. This small interface change followed the integrated executor batch; reuse
+that executor evidence and refresh the affected CLI/static checks instead of another
+full local native suite. Finish the remaining assembled edits before pushing again
+to avoid repeatedly cancelling or duplicating long CI cycles.
