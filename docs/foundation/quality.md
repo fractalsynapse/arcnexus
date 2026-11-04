@@ -1,7 +1,8 @@
 # TypeScript and code quality
 
-Maintained code follows this development contract. The same commands and limits
-apply to local development, steward feedback and CI.
+Maintained code follows this development contract. Local development, steward
+feedback and CI share the same standards; engineering checks use owner scope and
+assembled deliveries run the full repository checks.
 
 Maintained application code, tests and executable tooling use TypeScript. Test
 suites use cohesive classes with explicit fixture lifecycle and scenario methods.
@@ -27,10 +28,17 @@ Split responsibilities rather than compressing lines or adding trivial wrappers.
 
 ## Steward integration
 
-Components expose fixed owner-scoped lint operations. Agents receive their output
-through the existing operation bridge. Captured final verification also runs the
-repository-wide check. Neither host checks nor lint operations silently format or
-modify source; a steward may fix only its originally captured writable scope.
+Engineering checkpoints use the inherited owner lint and formatting operations and
+suites selected from the owner's captured test profile. Formatting intersects owned
+paths with the repository's existing formatting coverage, defined once in
+`scripts/foundation/format-check.mjs`. An owner without suites records that its
+implicit profile check is not applicable; it does not report a passing test.
+
+Assembled deliveries run the full captured repository checks, including formatting,
+lint, strict types, tests and architecture/guidance validation. Agent-invoked checks
+do not replace mandatory verification of the final candidate. Neither host checks
+nor lint operations silently format or modify source; a steward may fix only its
+originally captured writable scope. Active runs retain their captured policy.
 
 CI checks formatting, lint, ownership, types, build, guidance and deterministic
 acceptance. Its test-infrastructure watchdog is separate from application execution

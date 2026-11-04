@@ -60,11 +60,13 @@ callbacks within 30, including comments and blank lines. Split responsibilities;
 do not compress lines, add trivial wrappers, or suppress the rules. Existing strict
 TypeScript checking remains enabled; explicit `any` is permitted.
 
-Use the declared owner-scoped lint operation during steward work. Formatting and
-lint fixes must stay within captured writable scope. Repository-wide
+Use declared owner-scoped lint, formatting checks and test-profile-selected suites
+during engineering. Full repository checks belong to assembled deliveries, not
+every steward activation. Formatting and lint fixes must stay within captured
+writable scope. Repository-wide
 `npm run format` and `npm run lint:fix` are for callers authorized to edit all
-affected files; use explicit owned paths for a bounded assignment. Final verification
-includes `npm run format:check`, `npm run lint`, type checking, ownership and guidance
+affected files; use explicit owned paths for a bounded assignment. Assembled-delivery
+verification includes `npm run format:check`, `npm run lint`, type checking, ownership and guidance
 validation, and the relevant built-program tests. Use `arcnexus test inspect/run`
 for component selection; Node suites declare literal owner, level and tag metadata.
 Host checks never reformat source.

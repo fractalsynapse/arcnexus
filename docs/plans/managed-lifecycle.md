@@ -2378,3 +2378,22 @@ and evidence semantics. Use the actual eligible component catalog and ordinary
 simulation lifecycle; do not select a team or manufacture predecessor completion.
 This delegates useful remaining implementation to the system once the fresh runtime
 has its assembled checks, rather than manually duplicating active portfolio work.
+
+Fresh real-agent qualification now runs in an isolated managed volume under immutable
+supervisor `76c1965d0fc684fb82f4c5ba42176beabde563b3`, container
+`arcnexus-real-148-76c1965`, task `4cc89ae6-a69b-4da7-9534-0f099d86931c`.
+Its real director is reading the actual eligible catalog; no team was forced.
+The submitted objective is the remaining replacement-recovery work in #235.
+The five preparation commands took 92,532 ms in aggregate, before engineering;
+this is separate from model time and remains necessary preparation, not a removed
+engineering verification loop. Source, prompt, container invocation and bootstrap
+check hashes are retained under
+`~/.local/state/arcnexus/qualification-148-real-container-76c1965/evidence`.
+The earlier native portfolio task and b9dd9ac workday remain under their original
+supervisors. A fresh task is not evidence of successful completion or publication.
+
+Repository instructions and the foundation quality reference now explicitly separate
+owner-scoped engineering from full assembled-delivery verification. These guidance
+edits are bootstrap work and do not change any run already captured. The next long
+integrated result is CI 41918415928 for 76c1965; do not restart that same full cycle
+merely for this documentation alignment.
