@@ -1722,3 +1722,15 @@ the execution index from 26,351,724 to 2,704,204 characters. All 125 command out
 the original host evidence object remained unchanged. This is an observed index-size
 reduction, not a measured model-latency improvement or a newly accepted real delivery.
 The active simulation still uses its original supervisor.
+
+Issue #220 addresses the remaining evidence-access gap exposed by that same review.
+Investigation observations reference exact pinned `assignment.evidence` artifacts,
+which independent verification must be able to retrieve through its own manifest.
+The report boundary will validate the originating record and run, private regular
+file identity and content hash before repinning those bytes. Annotate only the
+cloned transport observations with current artifact references. Missing bytes remain
+explicit evidence gaps; foreign records, unsafe aliases and changed content fail
+capture. Do not recursively expand historical verification snapshots or interpret
+an invalid request response as a successful pinned page. Test provenance failures
+and exact retrieval through the real verifier MCP connection. This is bootstrap
+repair; the running real simulation retains its captured supervisor.
