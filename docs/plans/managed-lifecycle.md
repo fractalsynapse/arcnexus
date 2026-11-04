@@ -2097,3 +2097,16 @@ started with frozen supervisor b9dd9ac and environment
 bd3b471a-dc0f-449d-aeaa-75c3e3b6e3ea. The previous workday was explicitly stopped
 with its unfinished changes retained; no old activation was replayed under new
 authority. This run does not include the subsequent #229 bootstrap change.
+
+### Page director evidence without reducing eligible owners (#230)
+
+The native five-owner task retained six verified deliveries, then final blocked-task
+direction exceeded the installed runtime's input limit (1,058,524 characters in
+that invocation). Preserve the raw failure. Keep the original goal separate from
+retained state, and pin the complete eligible catalog, assignment checkpoint facts
+and feedback behind the existing report-owned EvidencePages MCP capability.
+Supply a compact discovery index and per-owner/per-assignment artifacts so the
+director can retrieve relevant facts without an initial history dump. Do not
+truncate evidence, filter eligible owners by the lexical shortlist, or introduce
+execution budgets. Exercise real MCP paging with more than one megabyte of retained
+evidence and safe/unsafe continuation, then qualify a fresh supervising revision.
