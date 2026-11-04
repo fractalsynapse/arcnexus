@@ -713,3 +713,12 @@ batch. Shared readiness uses provider aggregate check/review state rather than
 manually paging and reconstructing a parallel rule engine. The next remaining
 publication boundary is connecting checked live Git delivery and exact-revision
 integration; readiness alone does not close that gate.
+
+While the real report steward prepares, complete component create/remove through
+the existing configuration transaction service. Creation supplies schema version,
+stable identity and selected package parent; callers must supply meaningful type,
+purpose and ownership. Removal deletes only the definition, never maintained source:
+remaining files, dependents or registered container references must make complete
+catalog validation fail. Both operations use repository leases, immutable proposed
+commits, optimistic revision checks and the same journaled authority selection as
+updates. No caller checkout is edited and no active run gains the new authority.
