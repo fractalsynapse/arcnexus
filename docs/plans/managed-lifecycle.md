@@ -674,3 +674,14 @@ inside confinement in 25.982 seconds. These focused results resolve all eight
 failures from the clean suite; the confined lane now explicitly excludes the seven
 native-host cases, whose evidence remains required separately. This classification
 change does not relax operation confinement or remove acceptance coverage.
+
+Next publication batch: obtain provider-computed PR review, mergeability and
+current-head check state through a fixed repository-scoped GraphQL query. Keep
+credentials in the existing GitHub transport, reject partial/error responses,
+and expose observed readiness as evidence rather than inferring readiness from
+local approval. Missing CI, pending reviews, stale heads, draft/conflicting PRs,
+and default/main targets must prevent staging integration. The eventual merge
+operation must recheck the exact head after fresh independent assembled verification
+and use GitHub's expected-head merge contract. No endpoint may submit a review or
+publish a real tag/package. Provider-unit coverage is distinct from live wiring
+and real upstream qualification.
