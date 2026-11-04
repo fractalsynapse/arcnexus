@@ -103,7 +103,10 @@ export class OperationConfinement {
     if (this.record.networkQualified === hostIdentity) return;
     const { source, root } = this.probe(adapter);
     const executable = (this.record.bindings as Bindings | undefined)?.tools.codex ?? 'codex';
-    await new NetworkQualification(executable, this.signal).run(source, root);
+    await new NetworkQualification(executable, this.signal, toolDirectories(this.record)).run(
+      source,
+      root,
+    );
     this.record.networkQualified = hostIdentity;
     save(this.root, this.record);
   }

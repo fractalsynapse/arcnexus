@@ -10,6 +10,7 @@ export class NetworkQualification {
   constructor(
     private readonly executable: string,
     private readonly signal: AbortSignal,
+    private readonly toolDirectories: string[] = [],
   ) {}
 
   /** Requires an allowed read while proving proxied writes and direct-network bypass never reach the endpoint. */
@@ -45,6 +46,7 @@ export class NetworkQualification {
       temporaryRoot: join(root, 'network-private'),
       executable: this.executable,
       network: { domains: ['127.0.0.1'] },
+      toolDirectories: this.toolDirectories,
     });
     const log = join(root, 'network-qualification.log');
     const script = this.script(url);

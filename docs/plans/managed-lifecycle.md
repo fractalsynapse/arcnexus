@@ -566,3 +566,11 @@ TypeScript remains the application and test language. Also retain a private copy
 of the qualified Codex executable for the next run: the desktop-managed executable
 changed since the previous qualification, so its mutable installation path cannot
 by itself establish a stable supervising tool binary.
+
+The private-runtime submission `a56c22a1-e00f-4a45-97fd-0fedca94b6f6`
+exposed a separate preflight defect: `NetworkQualification` omitted captured tool
+directories, while ordinary operations and filesystem qualification already included
+them. Its sandbox could not re-execute the private Codex binary. Extend the existing
+external-binding acceptance to include allowed-network qualification and pass the
+same captured tool roots to the network canary. This is a missing integration check,
+not an installation or model failure. Preserve the failed task and its exact log.
