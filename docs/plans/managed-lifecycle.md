@@ -961,3 +961,16 @@ effect protocol removed duplicated recovery code while keeping the provider
 behavior explicit. The ongoing real-agent run now has two publisher dependencies
 on report and CLI; that is real dynamic assignment creation, not yet discovery
 of an additional owner or verified delivery.
+
+For live staging integration, the host must first read provider gates, capture the
+exact target revision, assemble the two-parent result and independently verify it.
+Reobserve CI/review and both heads before transport. The transport may advance only
+the captured non-default branch to that assembled descendant: no rewritten history,
+branch deletion or alternate ref is authorized. Use Git's explicit expected-ref
+lease as compare-and-swap protection in addition to proving the target is the
+assembled commit's first parent. The lease is not authority to force a non-fast-
+forward update. Reject a changed target, missing provider gates or server policy
+rejection; never override GitHub rules. Reconcile actual target ancestry after a
+lost receipt instead of repeating an uncertain merge. No real release is added.
+See Git's `--force-with-lease=<refname>:<expect>` contract in
+https://git-scm.com/docs/git-push; implicit tracking-ref leases are not sufficient.
