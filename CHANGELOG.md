@@ -4,6 +4,7 @@
 
 ### Added
 
+- Add isolated, supervised GitHub delivery transport for verified host commits with exact-head recovery and scoped credentials (#148).
 - Create/remove executable components through validated configuration transactions and observe exact-head GitHub PR readiness without conflating approval, review and CI (#148).
 
 - Prepare locked dependencies sequentially before confined offline installation and identify failed operations with retained diagnostic logs (#148).

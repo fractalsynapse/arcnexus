@@ -803,3 +803,20 @@ Reconcile uncertain publication through the actual remote ref; missing uncertain
 results remain unknown rather than authorizing blind replay. This transport is a
 prerequisite for live Publisher wiring, not a claim that promotion or staging
 integration is complete.
+
+The live Git transport passed three focused compiled tests with no skips in
+1.090 seconds, including actual local Git object transfer, exact-head reuse,
+conflict rejection and separation of push credentials from preparation. These
+are controlled-provider tests, not a real GitHub delivery. Strict type checking
+and scoped formatting/lint passed. The report steward in real task
+`9da40468-af92-4484-9410-bfb5000a5e4b` passed its baseline and retained planning
+checkpoint `03543276-c9cd-4624-932d-c245a1ee9f7d`; publisher preparation followed
+through the normal scheduler. No verified engineering delivery exists yet.
+
+Efficiency observation: repository preparation and the complete baseline recur
+for each assignment even when the candidate revision is unchanged. Preserve
+isolation, but investigate reuse keyed by captured authority, tool bindings,
+operation definitions and candidate content after observing the complete run.
+Do not skip checks or change this active supervisor to accelerate qualification.
+CI `41766922624` passed its built-CLI test step and entered native qualification;
+that remains separate evidence from the real simulation.
