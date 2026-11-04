@@ -773,3 +773,33 @@ seconds, and five offline/unbound validation cases passed in 4.827 seconds.
 The fixture now exercises built registration rather than growing unrelated
 execution policies merely to test repository identity. PR #202 is a draft; its
 first CI result is a failure and must be diagnosed separately from local evidence.
+
+The corrected complete isolated verification passed at
+`7f3c192952fa8218c2102d0a463324c459431e95`: 470 tests passed, zero failed,
+341 native-lane skips, 165.185 seconds. All eight captured report verification
+operations passed through the production executor, including types, build, test
+compilation, full suite, consolidated validation, report suite, formatting and lint.
+Evidence root: `/tmp/anx-isolated-baseline-XBlLqF`, record
+`0b2b05f4-56ce-491d-848e-c5bd78e60c56`. An earlier disposable probe invoked an
+uncompiled test glob and returned zero tests; that empty result was not accepted.
+The final qualification used the complete declared operation plan, including
+preparation, rather than the probe's abbreviated command.
+
+Real task `9da40468-af92-4484-9410-bfb5000a5e4b` now runs on that exact source,
+retained under `qualification-148-7f3c192`; environment
+`716de42e-7976-4879-86a1-0b27c16004b5`. The director completed and engineering
+preparation began. CI run `41766922624` on draft PR #202 is separate and pending.
+The previous CI run `41766387710` failed on the same now-corrected offline
+validation regression. GitHub staging currently reports no branch protection
+and no branch rules; this does not remove ArcNexus verification or approval gates.
+
+Next live-provider boundary: push only a host-captured verified commit to the
+generated `arcnexus/<delivery-id>` GitHub branch. Validate its tree, base parent,
+and delivery attribution before credential access; construct a separate private
+bare transport repository so candidate Git configuration and hooks cannot affect
+publication. Keep credentials in the host Git transport environment, out of argv,
+logs and worker environments. Refuse changed remote heads and do not force-push.
+Reconcile uncertain publication through the actual remote ref; missing uncertain
+results remain unknown rather than authorizing blind replay. This transport is a
+prerequisite for live Publisher wiring, not a claim that promotion or staging
+integration is complete.
