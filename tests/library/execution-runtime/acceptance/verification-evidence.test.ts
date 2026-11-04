@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { EvidencePages } from '../../../../dist/library/report/report.js';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
@@ -83,6 +85,87 @@ class VerificationEvidenceScenarios {
     assert.equal(commands[0]!.output.content, 'Observed check\n'.repeat(20));
   }
 
+  /** The independent verifier retrieves exact investigation bytes from its own current MCP manifest. */
+  async investigation(t: TestContext): Promise<void> {
+    const { f, context, record } = await this.fixture(t, false);
+    record.executionRunId = 'current-run';
+    const evidence = this.investigationEvidence(f.state);
+    await new Direction(f.state, context, new AbortController().signal).verify(
+      record,
+      'a',
+      'READ_HOST_EVIDENCE',
+      { criteria: ['Observed investigation'] },
+      false,
+      evidence,
+    );
+    const trace = JSON.parse(readFileSync(f.calls + '.evidence', 'utf8').trim());
+    const index = JSON.parse(trace.artifacts.execution);
+    const observed =
+      index.assignments[0].record.observations.timeline.events[0].payload.item.result;
+    assert.equal(
+      trace.artifacts[observed.verificationArtifacts[0].verificationArtifact],
+      '{"transaction":"committed"}',
+    );
+    assert.equal(
+      evidence.assignments[0]!.record.observations.timeline.events[0]!.payload.item.result
+        .verificationArtifact,
+      undefined,
+    );
+  }
+
+  /** Pins a genuine investigation artifact in a same-run worker record before verification starts. */
+  private pinInvestigation(root: string) {
+    const id = randomUUID();
+    const directory = join(root, 'runs', id);
+    mkdirSync(directory, { recursive: true });
+    writeFileSync(
+      join(directory, 'report.json'),
+      JSON.stringify({
+        id,
+        executionRunId: 'current-run',
+        assignmentId: 'investigation',
+      }),
+    );
+    const pages = new EvidencePages('assignment.evidence');
+    pages.add('unread-receipt', '{"transaction":"committed"}', 'json');
+    pages.add(
+      'manifest',
+      JSON.stringify({
+        runId: 'current-run',
+        assignmentId: 'investigation',
+        artifacts: pages.metadata(),
+      }),
+      'json',
+    );
+    pages.retain(directory, {});
+    return { id, sha256: pages.metadata().find((artifact) => artifact.id === 'manifest')!.sha256 };
+  }
+
+  /** Connects the retained artifact to a completed same-run investigation observation. */
+  private investigationEvidence(root: string) {
+    const { id, sha256 } = this.pinInvestigation(root);
+    const result: any = {
+      contentRetainedInPinnedArtifact: true,
+      artifact: 'manifest',
+      sha256,
+    };
+    const event = {
+      runId: id,
+      type: 'codex.event',
+      payload: {
+        type: 'item.completed',
+        item: {
+          type: 'mcp_tool_call',
+          server: 'arcnexus',
+          tool: 'assignment.evidence',
+          result,
+        },
+      },
+    };
+    const record = { recordId: id, observations: { timeline: { events: [event] } } };
+    return { run: { id: 'current-run' }, assignments: [{ id: 'investigation', record }] };
+  }
+
   /** Supplies populated, empty and unavailable outputs with distinct observed completion metadata. */
   private commandObservations() {
     return [
@@ -159,6 +242,9 @@ test('verification indexes complete and empty command logs without mutating reta
 
 test('verification rejects host evidence attached from a foreign run', (t) =>
   scenarios.foreignRun(t));
+
+test('verification retrieves referenced investigation bytes through its own MCP manifest', (t) =>
+  scenarios.investigation(t));
 
 registerSuite({
   component: 'execution-runtime',

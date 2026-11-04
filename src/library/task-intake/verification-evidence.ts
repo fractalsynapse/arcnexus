@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { candidateDigest, captureChanges } from '../change-inspection/changes.js';
 import type { OperationBridge } from '../operations/operations.js';
-import { EvidencePages } from '../report/report.js';
+import { EvidencePages, ReferencedEvidence } from '../report/report.js';
 import type { RecordData } from '../workspace/state.js';
 
 interface HostCommandEvidence {
@@ -14,7 +14,10 @@ interface HostExecutionEvidence {
   run?: { id?: string };
   assignments?: Array<{
     id: string;
-    record?: { observations?: { hostCommands?: HostCommandEvidence[] } };
+    record?: {
+      recordId?: string;
+      observations?: { hostCommands?: HostCommandEvidence[]; timeline?: { events?: any[] } };
+    };
   }>;
 }
 
@@ -36,7 +39,7 @@ export class VerificationEvidence {
       'git-binary-patch',
     );
     this.addFiles(JSON.parse(readFileSync(join(directory, 'new-files.json'), 'utf8')));
-    this.execution(record);
+    this.execution(root, record);
     const manifest = {
       baseline,
       candidateDigest: this.candidate,
@@ -52,12 +55,13 @@ export class VerificationEvidence {
   }
 
   /** Pins current-run host observations without accepting a foreign task as execution evidence. */
-  private execution(record: RecordData): void {
+  private execution(root: string, record: RecordData): void {
     const evidence = structuredClone(record.hostExecutionEvidence) as
       HostExecutionEvidence | undefined;
     if (!evidence) return;
-    if (!record.executionRunId || evidence.run?.id !== record.executionRunId)
+    if (typeof record.executionRunId !== 'string' || evidence.run?.id !== record.executionRunId)
       throw new Error('Host execution evidence belongs to a different run');
+    new ReferencedEvidence(root, record.executionRunId, this.pages).index(evidence);
     this.indexCommandOutputs(evidence);
     this.pages.add('execution', JSON.stringify(evidence, null, 2), 'json');
   }

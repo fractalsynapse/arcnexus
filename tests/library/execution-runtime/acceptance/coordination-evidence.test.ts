@@ -40,7 +40,7 @@ class CoordinationEvidenceScenarios {
     assert.equal(execution.source.head, context.base);
     assert.equal(execution.source.status, '');
     this.requestsPrecedeWork(execution);
-    this.observations(execution, f.calls, host);
+    this.observations(execution, f.calls, host, trace.artifacts);
   }
 
   /** Model envelopes use the reply schema identity, never the store's internal retry key. */
@@ -67,7 +67,12 @@ class CoordinationEvidenceScenarios {
   }
 
   /** Retained SDK reads and host-check output reach the verifier as distinct evidence classes. */
-  private observations(execution: any, calls: string, host: ProjectHost): void {
+  private observations(
+    execution: any,
+    calls: string,
+    host: ProjectHost,
+    artifacts: Record<string, string>,
+  ): void {
     this.inboxIdentity(host, execution.run.id);
     this.deliveries(execution, calls);
     const record = execution.assignments.find((a: any) => a.owner === 'a').record;
@@ -81,10 +86,29 @@ class CoordinationEvidenceScenarios {
     assert.equal(read.payload.item.exit_code, 0);
     assert.ok(read.payload.item.aggregated_output);
     assert.ok(read.observedAt && read.turn);
-    assert.ok(
-      observations.hostCommands.some((command: any) => typeof command.output.content === 'string'),
-    );
+    this.commandEvidence(host, record, artifacts);
     assert.doesNotMatch(JSON.stringify(observations.timeline.events), /agent_message/);
+  }
+
+  /** Current manifest references must retrieve the exact bytes of each retained host command log. */
+  private commandEvidence(
+    host: ProjectHost,
+    indexed: any,
+    artifacts: Record<string, string>,
+  ): void {
+    const record = JSON.parse(
+      readFileSync(join(host.root, 'runs', indexed.recordId, 'report.json'), 'utf8'),
+    );
+    const commands = indexed.observations.hostCommands;
+    assert.ok(commands.length > 0, 'Expected observed host checks');
+    for (const command of commands) {
+      assert.equal(typeof command.output.artifact, 'string');
+      assert.equal(
+        artifacts[command.output.artifact],
+        readFileSync(record.commands[command.index].log, 'utf8'),
+      );
+      assert.equal('content' in command.output, false);
+    }
   }
 
   /** Consumers and reviewers receive validated supplier assessments and captured routing context. */

@@ -4,6 +4,8 @@
 
 ### Added
 
+- Expose hash-validated same-run investigation artifacts through the independent verifier manifest, preserving explicit missing evidence and rejecting foreign or altered files (#220).
+
 - Index full verification command logs as separate immutable artifacts so reviewers can retrieve relevant output without scanning unrelated logs (#219).
 
 - Return corrective feedback for invalid evidence artifact requests without terminating review or exposing foreign content (#218).

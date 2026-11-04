@@ -1734,3 +1734,15 @@ capture. Do not recursively expand historical verification snapshots or interpre
 an invalid request response as a successful pinned page. Test provenance failures
 and exact retrieval through the real verifier MCP connection. This is bootstrap
 repair; the running real simulation retains its captured supervisor.
+
+The retained failure revealed that independent review needs artifacts advertised by
+the observed investigation manifest even when the worker never opened them. Include
+those immediate entries with original IDs, hashes and current verification references;
+do not recursively traverse historical state or verification snapshots. A production
+MCP test must retrieve an advertised but previously unread receipt.
+
+CI 41832306965 passed 408 native cases and failed one stale coordination assertion
+that expected inline command logs after #219 moved them to artifacts. Update that
+assertion to compare every retrieved command artifact with its original host log.
+The missed consumer cost a 12m52s native job; the cheapest prevention is to include
+existing evidence-consumer scenarios in focused checks when changing transport shape.

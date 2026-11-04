@@ -161,3 +161,13 @@ advertised names. Malformed arguments likewise return a rejection without conten
 A subsequent valid request can continue on the same connection. Invalid capability
 routing, corrupted pinned content and host execution failures remain fatal; these
 are not converted into ordinary client mistakes.
+
+Independent verification repins the exact investigation artifacts referenced by
+completed `assignment.evidence` observations. The current execution index includes
+`verificationArtifact` names from its own manifest alongside the original observed
+artifact identity and hash. Manifest observations also include `verificationArtifacts`
+for their immediate entries, including artifacts the worker never opened. Reads validate the originating run and assignment,
+regular private file identity and content hash. Missing retained content is an
+explicit gap; foreign identities, aliases and hash mismatches fail capture.
+Historical verification snapshots are not recursively expanded. An invalid tool
+request remains a rejection in observations, never a claim of pinned content.

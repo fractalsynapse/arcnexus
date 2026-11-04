@@ -283,3 +283,5 @@ export { DeliveryEvidence } from './delivery-evidence.js';
 export { EvidencePages } from './evidence-pages.js';
 
 export { RecoveryEvidence } from './recovery-evidence.js';
+
+export { ReferencedEvidence } from './referenced-evidence.js';

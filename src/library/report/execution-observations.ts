@@ -67,6 +67,9 @@ export class ExecutionObservations {
   private artifactPage(result: any): unknown {
     try {
       const page = JSON.parse(result.content.find((block: any) => block.type === 'text').text);
+      if (page.status === 'rejected') return page;
+      if (typeof page.artifact !== 'string' || typeof page.sha256 !== 'string')
+        throw new Error('Missing artifact page identity');
       return {
         contentRetainedInPinnedArtifact: true,
         artifact: page.artifact,
