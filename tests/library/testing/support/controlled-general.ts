@@ -155,20 +155,19 @@ export class ControlledGeneral {
     const correction = prompt.includes('Goal correction');
     const blocked = prompt.includes('Blocked task diagnosis');
     if (blocked && /RECOVER_BLOCKED|RECOVER_CYCLE/.test(prompt)) return this.continuation();
-    const owner = setup
-      ? 'a'
-      : idle
-        ? prompt.match(/Self-directed stewardship for ([a-z]+)/)![1]!
-        : correction
-          ? 'c'
-          : 'a';
+    const owner = this.startingOwner(prompt, setup, idle, correction);
     return {
       status: blocked ? 'needs_clarification' : 'ready',
       summary: 'Controlled direction',
       selectedOwners:
         blocked || setup
           ? []
-          : [{ id: owner, reason: idle ? 'Reviewed owner; no action' : 'Starting owner' }],
+          : [
+              {
+                id: owner,
+                reason: idle ? 'Reviewed owner; no action' : 'Starting owner',
+              },
+            ],
       rejectedOwners: [],
       questions: blocked ? ['Which authorized resolution should replace the blocked work?'] : [],
       assignments: idle || blocked ? [] : [this.assignment(owner, correction, prompt)],
@@ -176,6 +175,19 @@ export class ControlledGeneral {
       dependency: null,
       architectureProposal: null,
     };
+  }
+
+  /** Models owner selection at the external response boundary, including an explicitly injected mistake. */
+  private startingOwner(
+    prompt: string,
+    setup: boolean,
+    idle: boolean,
+    correction: boolean,
+  ): string {
+    if (setup) return 'a';
+    if (!idle) return correction ? 'c' : 'a';
+    const assigned = prompt.match(/Self-directed stewardship for ([a-z]+)/)![1]!;
+    return assigned === 'a' && existsSync(this.calls + '.wrong-owner') ? 'b' : assigned;
   }
 
   /** Selects only the retained failed supplier for a diagnosed continuation without replacing its intent. */

@@ -4,7 +4,7 @@ import { ExecutionContext, type ProjectExecution } from '../architecture/executi
 import { validateContinuation } from '../assignment/steward.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/execution-types.js';
-import type { DirectorResult } from '../task-intake/direction.js';
+import { StewardshipRefusal, type DirectorResult } from '../task-intake/direction.js';
 import { save, type RecordData } from '../workspace/state.js';
 import { ProgressObserver } from '../report/progress.js';
 import { materialCandidate } from '../change-inspection/changes.js';
@@ -49,21 +49,24 @@ export class AssignmentDispatch {
     run: ExecutionRun,
     owner: string,
     fingerprint: string,
-    seen: Record<string, string>,
-    result: import('../architecture/initialization.js').InitializationResult,
+    result: import('../architecture/initialization.js').InitializationResult | StewardshipRefusal,
   ) {
+    const review =
+      result instanceof StewardshipRefusal
+        ? { status: result.status, error: result.message, recordId: result.recordId }
+        : {
+            status: result.status,
+            questions: result.questions,
+            summary: result.summary,
+            architectureProposal: result.architectureProposal,
+          };
     return {
-      seen: { ...seen, [owner]: fingerprint },
+      seen: { ...(run.data.seen as Record<string, string>), [owner]: fingerprint },
       lastSteward: owner,
       lastDispatch: 'stewardship',
       stewardshipReviews: {
         ...((run.data.stewardshipReviews ?? {}) as object),
-        [owner]: {
-          fingerprint,
-          questions: result.questions,
-          summary: result.summary,
-          architectureProposal: result.architectureProposal,
-        },
+        [owner]: { fingerprint, ...review },
       },
     };
   }

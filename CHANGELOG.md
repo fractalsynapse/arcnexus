@@ -4,6 +4,10 @@
 
 ### Added
 
+- Keep a rejected stewardship decision and its evidence with the scheduled owner so unrelated workday activations can proceed (#240).
+
+- Validate unused standards during architecture validation and reuse each standard across its inheriting stewards (#148).
+
 - Identify the accountable steward when a checked edit crosses ownership and guide the requester through an inbox handoff without granting writes. Remove assignment file lists: only the accountable component steward selects implementation files (#239).
 
 - Migrate platform or package registrations to compatible existing repositories through supervised materialization without pushing or modifying the original checkout (#238).

@@ -18,7 +18,7 @@ import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/ex
 import { ExecutionStore } from '../coordination-store/execution-store.js';
 import { RunWorkspace } from './run-workspace.js';
 import type { RecordData } from '../workspace/state.js';
-import { Direction, VerificationIssue } from '../task-intake/direction.js';
+import { Direction, StewardshipRefusal, VerificationIssue } from '../task-intake/direction.js';
 import { ProgressObserver } from '../report/progress.js';
 import type { InitializationResult } from '../architecture/initialization.js';
 import { AssignmentDispatch } from './assignment-dispatch.js';
@@ -334,7 +334,6 @@ export class ProjectHost {
   /** Visits each eligible steward once per changed candidate, interleaved with inbox work. */
   private async stewardship(run: ExecutionRun, signal: AbortSignal): Promise<void> {
     const context = this.environments.contextFor(run);
-    const seen = (run.data.seen ?? {}) as Record<string, string>;
     const selected = new StewardshipPolicy(context).next(run, this.store.assignments(run.id));
     if (!selected) {
       this.store.updateRun(run.id, this.store.ready(run.id).length ? 'running' : 'idle', {
@@ -344,19 +343,22 @@ export class ProjectHost {
     }
     const { owner, fingerprint } = selected;
     const workspace = await this.workspaces(run).policy(run, signal);
-    const result = await new Direction(this.root, context, signal).propose(
-      workspace,
-      'Self-directed stewardship based on captured purpose, objectives, questions and inbox.',
-      owner,
-      {
-        purpose:
-          'Review completed findings and unresolved owner work in the retained state before proposing another assignment. Worker results are claims; preserve observed checkpoint and delivery status.',
-        state: this.store.assignments(run.id).filter((a) => a.owner === owner),
-        feedback: null,
-      },
-    );
+    const result = await new Direction(this.root, context, signal)
+      .propose(
+        workspace,
+        'Self-directed stewardship based on captured purpose, objectives, questions and inbox.',
+        owner,
+        {
+          purpose:
+            'Review completed findings and unresolved owner work in the retained state before proposing another assignment. Worker results are claims; preserve observed checkpoint and delivery status.',
+          state: this.store.assignments(run.id).filter((a) => a.owner === owner),
+          feedback: null,
+        },
+      )
+      .catch(StewardshipRefusal.retain);
+    if (signal.aborted) return;
     const dispatch = new AssignmentDispatch(this.root, this.context, this.store);
-    const checkpoint = dispatch.stewardshipCheckpoint(run, owner, fingerprint, seen, result);
+    const checkpoint = dispatch.stewardshipCheckpoint(run, owner, fingerprint, result);
     if (result.status === 'ready') dispatch.apply(run, result, checkpoint);
     else this.store.updateRun(run.id, this.store.run(run.id).status, checkpoint);
   }
