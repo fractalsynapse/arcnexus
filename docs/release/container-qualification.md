@@ -176,3 +176,29 @@ ownership/idempotence case remains runnable in confinement. Direct native succes
 does not establish that a new test belongs in the confined lane; the release
 selection guard now checks direct imported `node:net` server factories as well as
 installed-runtime access.
+
+## Actual model startup (#222)
+
+The real packaged workday at 449558f exposed a boundary absent from scripted harness
+qualification: Debian Bookworm's Bubblewrap 0.8.0 could not execute Codex's generated
+sandbox alias beneath the denied private client home. Native startup used the same
+Codex binary hash with Bubblewrap 0.11.1 and succeeded. The [pinned Codex source](https://github.com/openai/codex/blob/rust-v0.166.0-alpha.6/codex-rs/linux-sandbox/src/linux_run_main.rs)
+`apply_inner_command_argv0_for_launcher` uses `--argv0` when supported and otherwise
+falls back to that alias. A controlled loopback transport reproduced the failure
+before any model request; making the private home readable was a diagnostic control,
+not an acceptable deployment configuration.
+
+The image now builds [checksum-pinned Bubblewrap 0.11.1](https://github.com/containers/bubblewrap/releases/tag/v0.11.1)
+against its own runtime libc.
+It retains the same private-home denials, read-only source, zero capabilities,
+AppArmor and seccomp policies. Bubblewrap 0.13.1 was also investigated, but its
+`mount_setattr` call was rejected by the existing seccomp policy; that qualification
+was stopped and is not counted as passing. Do not expand permissions merely to use
+that version. Installed-runtime startup acceptance must pass before claiming the
+new image qualified, followed by real-agent execution under a fresh supervisor.
+
+The release startup acceptance uses the actual Codex executable and production
+confinement adapter, loads a tracked instruction file, starts a thread, and reaches
+an intentionally rejecting loopback model endpoint. It then verifies private-file
+reads and direct source writes remain denied. This is controlled transport acceptance,
+not real-agent simulation. Run it inside the supported image as well as natively.

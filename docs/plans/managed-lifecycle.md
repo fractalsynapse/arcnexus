@@ -1818,3 +1818,20 @@ probe should catch this before another multi-minute project preparation. The nat
 real task remains on its unchanged supervisor; report/publisher/CLI were selected by
 its director, and report has requested publisher work through the ordinary inbox.
 The separate portfolio-creation goal is durably queued through the same task service.
+
+The focused diagnosis isolated Bubblewrap capability rather than a required permission
+expansion: Bookworm's 0.8.0 lacks `--argv0`; the native 0.11.1 supports it. The image
+now builds checksum-pinned 0.11.1 against the runtime libc, with no change to source,
+private-home, seccomp, AppArmor or capability policy. A 0.13.1 diagnostic build failed
+on its additional `mount_setattr` requirement and was retained as unsuccessful.
+The actual-runtime startup case passed natively and in the corrected image, then all
+17 packaged enforcement/startup/host-loss/output cases passed with zero skips in
+39.199 seconds. Static checking, test build, formatting and lint also passed.
+A new real-agent workday remains required; controlled startup is not its substitute.
+
+The startup probe avoided repeated full project preparations during diagnosis.
+One probe initially waited for an unclosed test stdin, and one container command
+used a nonexistent compiled test path; those orchestration errors are retained as
+unsuccessful attempts. Resolve compiled paths before dispatch and await completion
+before reusing a container name or log. Neither error justifies changing product
+behavior or weakening acceptance.

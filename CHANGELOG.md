@@ -101,6 +101,8 @@
 
 ### Fixed
 
+- Package a compatible pinned Bubblewrap for real Codex startup while retaining private-client and source confinement (#222).
+
 - Distinguish frozen-regression preservation from the earlier Git diff during review, and inherit mandatory source quality once for every ArcNexus steward (#221).
 
 - Return observed compiler-prerequisite failures as corrective agent feedback without running dependent checks or weakening mandatory verification (#210).
