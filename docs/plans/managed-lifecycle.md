@@ -2521,3 +2521,16 @@ integrity and verification of the frozen acceptance baseline remain in force.
 A known foreign owner is a delegation destination, never a write grant. Reject
 retired assignment file lists rather than silently executing old restricted work
 with broader permissions. Active hosts retain their captured supervisor.
+
+
+The ownership-only contract removes the file-list field from director, initializer,
+assignment and inbox inputs, including resolved assignment records. Captured
+component ownership supplies checked edits, sandbox evidence and diff checks.
+Known cross-owner requests get inbox guidance; there is no new approval step.
+The real coordination-store failure remains evidence of the old supervisor. On
+the new contract, 47 focused cases passed, and three native scheduler scenarios
+passed without skips (42 seconds for supplier discovery and corrected dependency
+batches). Production CLI selection of edit routing passed both cases. This is
+deterministic evidence, not a new real-agent delivery. The cheapest early check
+was rejecting all three old list forms (empty, owned-only and foreign) at the
+built CLI boundary; it exercises the rule without paying for a model session.

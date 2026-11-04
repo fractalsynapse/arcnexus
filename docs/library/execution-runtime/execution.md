@@ -235,8 +235,8 @@ through the attached task identity; process supervision still governs host loss.
 
 A requester can return a correlated inbox action `require_delivery` with the
 existing `requestId` and an explanation. The host strengthens that existing edge
-to verified delivery without requiring another copy of the recipient's objective,
-acceptance criteria or write scope. It creates no assignment and does not relax
+to verified delivery without requiring another copy of the recipient's objective or
+acceptance criteria. It creates no assignment and does not relax
 shared-request matching. The host checks sender authority and blocking cycles in
 the same transaction; a rejected wait leaves the previous milestone and replies
 unchanged. Retries do not duplicate work, and unrelated ready assignments continue.

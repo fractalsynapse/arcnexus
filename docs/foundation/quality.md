@@ -105,9 +105,8 @@ apply its own output. Each proposed update includes the repository-relative path
 current SHA-256 and replacement content; unchanged, ignored and unsupported files
 produce no update. Duplicate owned roots do not produce duplicate edits.
 
-The steward submits the proposal through `source.edit` only when the current
-workflow stage permits those paths. The host still checks assignment narrowing,
-owned paths, frozen tests and current content. Formatting output grants no new
+The steward submits the proposal through `source.edit` during a write-enabled turn.
+The host checks component ownership, edit safety and current content. Formatting output grants no new
 authority. A stale proposal requires recomputation; an identical retry retains its
 transaction identity. Final `format:check` remains independent verification.
 
