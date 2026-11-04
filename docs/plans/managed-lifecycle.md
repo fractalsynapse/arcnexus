@@ -820,3 +820,10 @@ operation definitions and candidate content after observing the complete run.
 Do not skip checks or change this active supervisor to accelerate qualification.
 CI `41766922624` passed its built-CLI test step and entered native qualification;
 that remains separate evidence from the real simulation.
+
+The next shared boundary extracts deterministic verified delivery commits from
+simulation transport. Both environments must use the same captured tree, single
+base parent, immutable attribution, stable metadata and private-ref recovery;
+only transport and provider effects differ. It must not change a checkout, stage
+source, execute hooks or grant publication authority. Existing simulation Git
+acceptance must continue to pass after adopting this shared commit service.
