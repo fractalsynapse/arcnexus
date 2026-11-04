@@ -1,3 +1,6 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { AssignmentDispatch } from '../../../../dist/library/execution-runtime/assignment-dispatch.js';
 import assert from 'node:assert/strict';
 import type { TestContext } from 'node:test';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
@@ -41,6 +44,80 @@ class DirectorRecoveryScenarios {
     assert.equal(host.store.assignments(task.id).length, 1);
   }
 
+  /** A diagnosed supplier is replaced through real host direction without relaxing acceptance or claiming its failure passed. */
+  async replacement(t: TestContext): Promise<void> {
+    const host = this.host(t);
+    const task = host.submit('REPLACE_WORKFLOW: characterize existing behavior');
+    host.store.updateRun(task.id, 'running', { initialized: true });
+    const old = host.store.enqueue(task.id, 'c', 'Characterize existing supplier', [
+      'Existing result observed',
+    ]);
+    host.store.updateAssignment(old.id, 'ready', {
+      proposal: { kind: 'change', changeType: 'behavior' },
+    });
+    host.store.fail(old.id, 'failed', 'Original workflow requires a fresh specification');
+    await host.tick();
+    const successor = host.store.effective(old.id);
+    assert.notEqual(successor.id, old.id);
+    assert.equal(successor.owner, old.owner);
+    assert.equal(successor.data.replaces, old.id);
+    assert.equal((successor.data.proposal as { changeType: string }).changeType, 'refactor');
+    assert.deepEqual(successor.acceptance, old.acceptance);
+    assert.equal(host.store.run(task.id).status, 'running');
+    assert.equal(host.store.assignment(old.id).status, 'failed');
+  }
+
+  /** Refuses fresh engineering before dispatch when an old managed invocation may still have effects. */
+  uncertain(t: TestContext): void {
+    const f = new GeneralFixture(t).fixture;
+    const context = new ExecutionContext().resolve(f.repo);
+    const host = new ProjectHost(f.state, context);
+    t.after(() => host.store.close());
+    const task = host.submit('Recover uncertain work');
+    const old = host.store.enqueue(task.id, 'c', 'Characterize behavior', ['Observed']);
+    const path = join(f.state, 'runs', old.id);
+    mkdirSync(path, { recursive: true });
+    writeFileSync(
+      join(path, 'report.json'),
+      JSON.stringify({ operationInvocations: [{ status: 'interrupted' }] }),
+    );
+    host.store.updateAssignment(old.id, 'failed', {
+      recordId: old.id,
+      proposal: { kind: 'change', changeType: 'behavior' },
+    });
+    assert.throws(
+      () =>
+        new AssignmentDispatch(f.state, context, host.store).apply(
+          task,
+          this.replacementDecision(old.id),
+        ),
+      /Operation completion is uncertain/,
+    );
+    assert.equal(host.store.assignments(task.id).length, 1);
+  }
+
+  /** Supplies a complete director decision at the model-result boundary. */
+  private replacementDecision(id: string) {
+    return {
+      status: 'ready' as const,
+      selectedOwners: [{ id: 'c', reason: 'Investigate' }],
+      rejectedOwners: [],
+      questions: [],
+      architectureProposal: null,
+      dependency: null,
+      summary: 'Diagnose',
+      assignments: [],
+      continuations: [
+        {
+          assignmentId: id,
+          ownerId: 'c',
+          reason: 'Try a fresh workflow',
+          replacementChangeType: 'refactor' as const,
+        },
+      ],
+    };
+  }
+
   /** Captures the ordinary package and uses production direction and assignment wiring. */
   private host(t: TestContext): ProjectHost {
     const f = new GeneralFixture(t).fixture;
@@ -57,6 +134,12 @@ test('director repairs missing goal coverage with additional verified assignment
 
 test('director diagnoses blocked work without claiming its delivery', (t) =>
   scenarios.diagnosis(t));
+
+test('task direction replaces failed workflow while preserving original acceptance', (t) =>
+  scenarios.replacement(t));
+
+test('task replacement refuses interrupted operations before fresh engineering', (t) =>
+  scenarios.uncertain(t));
 
 registerSuite({
   component: 'execution-runtime',

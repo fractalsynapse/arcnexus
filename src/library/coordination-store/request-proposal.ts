@@ -15,3 +15,17 @@ export function requestProposal(
     changeType: request.changeType ?? inherited?.changeType ?? 'behavior',
   };
 }
+
+/** Retains the strongest milestone when multiple requests deliberately share recipient work. */
+export function requestMilestones(
+  sender: ExecutionAssignment,
+  recipient: string,
+  request: OwnerRequest,
+) {
+  const existing = (sender.data.milestones ?? {}) as Record<string, string>;
+  const required = request.milestone ?? 'delivered';
+  return {
+    ...existing,
+    [recipient]: existing[recipient] === 'delivered' ? 'delivered' : required,
+  };
+}

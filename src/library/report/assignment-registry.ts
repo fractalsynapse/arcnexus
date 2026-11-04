@@ -60,6 +60,9 @@ export class AssignmentRegistry {
         kind: proposal?.kind ?? null,
         changeType: proposal?.changeType ?? null,
       },
+      replaces: assignment.data.replaces,
+      replacedBy: assignment.data.replacedBy,
+      replacementReason: assignment.data.replacementReason,
       dependencies: assignment.dependencies,
       milestones: assignment.data.milestones ?? {},
     };

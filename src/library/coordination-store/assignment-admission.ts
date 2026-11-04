@@ -40,6 +40,7 @@ export class AssignmentAdmission {
   ): void {
     const assignment = this.db.get<ExecutionAssignment>('assignment', continuation.assignmentId);
     if (
+      assignment.data.replacedBy ||
       assignment.runId !== runId ||
       assignment.owner !== continuation.ownerId ||
       !continuation.reason.trim() ||

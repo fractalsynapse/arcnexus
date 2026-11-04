@@ -1,5 +1,6 @@
+import { AssignmentReplacements } from './assignment-replacements.js';
 import { AssignmentAdmission } from './assignment-admission.js';
-import { requestProposal } from './request-proposal.js';
+import { requestMilestones, requestProposal } from './request-proposal.js';
 import type { DeliveryRecord, PromotionCandidate } from './delivery-types.js';
 import { CandidatePointers } from './candidate-pointers.js';
 import { RunRecords } from './run-records.js';
@@ -8,6 +9,7 @@ import { randomUUID } from 'node:crypto';
 import { ExecutionDatabase } from './execution-database.js';
 import type {
   AssignmentStatus,
+  AssignmentContinuation,
   ExecutionAssignment,
   ExecutionRun,
   InboxRequest,
@@ -25,11 +27,14 @@ export { requestProposal } from './request-proposal.js';
 export class ExecutionStore {
   private readonly db: ExecutionDatabase;
 
+  private readonly replacements: AssignmentReplacements;
+
   private readonly admission: AssignmentAdmission;
 
   /** Opens a new or retained general execution store without reading legacy workdays. */
   constructor(path: string, readOnly = false) {
     this.db = new ExecutionDatabase(path, readOnly);
+    this.replacements = new AssignmentReplacements(this.db);
     this.admission = new AssignmentAdmission(this.db);
   }
 
@@ -117,7 +122,7 @@ export class ExecutionStore {
       acceptance: string[];
       data: Record<string, unknown>;
     }>,
-    continuations: Array<{ assignmentId: string; ownerId: string; reason: string }>,
+    continuations: AssignmentContinuation[],
     checkpoint: Record<string, unknown>,
   ): void {
     const created: string[] = [];
@@ -133,10 +138,7 @@ export class ExecutionStore {
   }
 
   /** Reactivates diagnosed work and restores only its propagated dependents to milestone waiting. */
-  continueAssignments(
-    runId: string,
-    continuations: Array<{ assignmentId: string; ownerId: string; reason: string }>,
-  ): void {
+  continueAssignments(runId: string, continuations: AssignmentContinuation[]): void {
     if (!continuations.length) return;
     this.db.transaction('assignments.continued', { runId, continuations }, () =>
       this.restoreContinuations(runId, continuations),
@@ -144,16 +146,25 @@ export class ExecutionStore {
   }
 
   /** Restores diagnosed continuations and reconsidered waits within the admission transaction. */
-  private restoreContinuations(
-    runId: string,
-    continuations: Array<{ assignmentId: string; ownerId: string; reason: string }>,
-  ): void {
+  private restoreContinuations(runId: string, continuations: AssignmentContinuation[]): void {
     if (!continuations.length) return;
     const ids = new Set(continuations.map((item) => item.assignmentId));
     if (ids.size !== continuations.length) throw new Error('Duplicate continuation identity');
-    for (const item of continuations) this.admission.continueOne(runId, item);
+    for (const item of continuations) {
+      if (item.replacementChangeType) {
+        if (this.run(runId).mode !== 'task')
+          throw new Error('Only task direction may replace an assignment');
+        this.replacements.replace(runId, item);
+        const next = this.effective(item.assignmentId);
+        for (const id of next.dependencies) this.assertAcyclic(next, id);
+      } else this.admission.continueOne(runId, item);
+    }
     for (const assignment of this.assignments(runId))
-      if (assignment.status === 'blocked' && ids.has(String(assignment.data.blockedBy)))
+      if (
+        !assignment.data.replacedBy &&
+        assignment.status === 'blocked' &&
+        ids.has(String(assignment.data.blockedBy))
+      )
         this.db.put('assignment', {
           ...assignment,
           status: 'waiting',
@@ -187,11 +198,13 @@ export class ExecutionStore {
 
   /** Routes within the caller's transaction, preserving request identity and recipient intent. */
   private route(from: string, request: OwnerRequest): ExecutionAssignment {
+    const origins = this.replacements.predecessors(from);
     const existing = this.db
       .all<InboxRequest>('request')
-      .find((item) => item.from === from && item.key === request.key);
+      .find((item) => origins.has(item.from) && item.key === request.key);
     if (existing) return this.repeated(existing, request);
     const sender = this.assignment(from);
+    if (sender.data.replacedBy) throw new Error('Cannot request work from a retired assignment');
     this.rejectRecursiveIntent(sender, request);
     const recipient = this.recipient(sender, request);
     if (
@@ -200,7 +213,7 @@ export class ExecutionStore {
       JSON.stringify(recipient.acceptance) !== JSON.stringify(request.acceptance)
     )
       throw new Error('Shared assignment acceptance differs');
-    sender.data.milestones = this.milestones(sender, recipient.id, request);
+    sender.data.milestones = requestMilestones(sender, recipient.id, request);
     this.captureProposal(sender, recipient, request);
     this.db.put('assignment', recipient);
     this.db.put('request', { ...request, id: randomUUID(), from, assignmentId: recipient.id });
@@ -227,17 +240,7 @@ export class ExecutionStore {
         ),
         { name: 'DependencyBlocked' },
       );
-    return recipient;
-  }
-
-  /** Retains the strongest milestone when multiple requests deliberately share recipient work. */
-  private milestones(sender: ExecutionAssignment, recipient: string, request: OwnerRequest) {
-    const existing = (sender.data.milestones ?? {}) as Record<string, string>;
-    const required = request.milestone ?? 'delivered';
-    return {
-      ...existing,
-      [recipient]: existing[recipient] === 'delivered' ? 'delivered' : required,
-    };
+    return this.replacements.current(recipient.id);
   }
 
   /** Preserves explicit recipient workflow and rejects incompatible reuse of accepted shared work. */
@@ -282,20 +285,17 @@ export class ExecutionStore {
     const { id: _id, from: _from, assignmentId, ...original } = existing;
     if (JSON.stringify(original) !== JSON.stringify(request))
       throw new Error('Request identity reused with different content');
-    return this.assignment(assignmentId);
+    return this.replacements.current(assignmentId);
   }
 
   /** Lists request envelopes addressed to or sent by this assignment. */
   inbox(id: string) {
-    const replies = this.db.all<InboxDecision & { actor: string }>('reply');
-    return this.db
-      .all<InboxRequest>('request')
-      .filter((r) => r.from === id || r.assignmentId === id)
-      .map((request) => ({
-        ...request,
-        ...new InboxDecisions(this.db).context(id, request),
-        replies: replies.filter((reply) => reply.requestId === request.id),
-      }));
+    return new InboxDecisions(this.db).messages(id);
+  }
+
+  /** Returns the accountable successor for a retained assignment or the original if still active. */
+  effective(id: string): ExecutionAssignment {
+    return this.replacements.current(id);
   }
 
   /** Records an accepted host-validated plan and releases accepted-intent dependents. */
@@ -323,7 +323,9 @@ export class ExecutionStore {
     for (const decision of decisions) {
       if (!new InboxDecisions(this.db).apply(actor, decision)) continue;
       if (decision.action !== 'require_delivery') continue;
-      const request = this.db.get<InboxRequest>('request', decision.requestId);
+      const request = this.replacements.envelope(
+        this.db.get<InboxRequest>('request', decision.requestId),
+      );
       this.connect(this.assignment(actor), this.assignment(request.assignmentId));
     }
   }
@@ -348,6 +350,7 @@ export class ExecutionStore {
       if (!['waiting', 'ready'].includes(item.status)) continue;
       const failed = assignments.find(
         (dep) =>
+          !dep.data.replacedBy &&
           ['blocked', 'rejected', 'failed'].includes(dep.status) &&
           this.reaches(item.id, dep.id, new Set()),
       );
@@ -372,7 +375,7 @@ export class ExecutionStore {
   /** Adds an explicit dependency on shared work, rejecting cross-run links and cycles. */
   link(from: string, to: string): void {
     this.db.transaction('dependency.linked', { from, to }, () =>
-      this.connect(this.assignment(from), this.assignment(to)),
+      this.connect(this.assignment(from), this.replacements.current(to)),
     );
   }
 
@@ -380,16 +383,18 @@ export class ExecutionStore {
   private connect(sender: ExecutionAssignment, recipient: ExecutionAssignment): void {
     if (sender.runId !== recipient.runId)
       throw new Error('Cross-run dependency requires a new assignment');
-    if (
-      !this.satisfied(sender, recipient.id) &&
-      this.reaches(recipient.id, sender.id, new Set(), true)
-    )
-      throw Object.assign(new Error('Blocking dependency cycle'), { name: 'DependencyBlocked' });
+    this.assertAcyclic(sender, recipient.id);
     if (!sender.dependencies.includes(recipient.id)) sender.dependencies.push(recipient.id);
     sender.status = sender.dependencies.every((id) => this.satisfied(sender, id))
       ? 'ready'
       : 'waiting';
     this.db.put('assignment', sender);
+  }
+
+  /** Rejects a newly blocking cycle before a dependency link or replacement can commit. */
+  private assertAcyclic(sender: ExecutionAssignment, supplier: string): void {
+    if (!this.satisfied(sender, supplier) && this.reaches(supplier, sender.id, new Set(), true))
+      throw Object.assign(new Error('Blocking dependency cycle'), { name: 'DependencyBlocked' });
   }
 
   /** Searches the existing wait graph without assuming a fixed number of owners. */
@@ -461,6 +466,7 @@ export class ExecutionStore {
       for (const other of this.assignments(item.runId)) {
         if (
           other.id !== id &&
+          !other.data.replacedBy &&
           (['ready', 'waiting', 'running'].includes(other.status) ||
             (other.status === 'blocked' && Boolean(other.data.blockedBy))) &&
           this.reaches(other.id, id, new Set())

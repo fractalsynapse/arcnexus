@@ -154,7 +154,8 @@ export class ControlledGeneral {
     const idle = setup || prompt.includes('Self-directed stewardship for');
     const correction = prompt.includes('Goal correction');
     const blocked = prompt.includes('Blocked task diagnosis');
-    if (blocked && /RECOVER_BLOCKED|RECOVER_CYCLE/.test(prompt)) return this.continuation();
+    if (blocked && /RECOVER_BLOCKED|RECOVER_CYCLE|REPLACE_WORKFLOW/.test(prompt))
+      return this.continuation(prompt);
     const owner = this.startingOwner(prompt, setup, idle, correction);
     return {
       status: blocked ? 'needs_clarification' : 'ready',
@@ -191,7 +192,7 @@ export class ControlledGeneral {
   }
 
   /** Selects only the retained failed supplier for a diagnosed continuation without replacing its intent. */
-  private continuation() {
+  private continuation(prompt: string) {
     const assignment = this.retainedDirection.state.find((item: any) => item.owner === 'c');
     return {
       status: 'ready',
@@ -204,6 +205,7 @@ export class ControlledGeneral {
         {
           assignmentId: assignment.id,
           ownerId: 'c',
+          ...(prompt.includes('REPLACE_WORKFLOW') ? { replacementChangeType: 'refactor' } : {}),
           reason: 'Use the clarified retained scope; preserve all original acceptance criteria',
         },
       ],

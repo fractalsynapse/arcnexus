@@ -1,3 +1,5 @@
+import { assignmentIntent } from './assignment-intent.js';
+import type { Assignment } from '../architecture/assignment.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ExecutionContext, type ProjectExecution } from '../architecture/execution-context.js';
@@ -94,7 +96,25 @@ export class AssignmentDispatch {
       throw new Error('Continuation must name an existing owner assignment in this run');
     if (!['blocked', 'failed', 'rejected'].includes(assignment.status))
       throw new Error('Continuation cannot reopen active or completed work');
-    if (!assignment.data.recordId) return;
+    if (assignment.data.replacedBy) {
+      if (
+        continuation.replacementChangeType === assignment.data.replacementWorkflow &&
+        continuation.reason === assignment.data.replacementReason
+      )
+        return;
+      throw new Error('Assignment already replaced; inspect its current successor');
+    }
+    this.replacementAuthority(run, assignment, continuation);
+    this.checkpoint(assignment);
+  }
+
+  /** Verifies the retained workspace and refuses to replay an operation whose outcome is unknown. */
+  private checkpoint(assignment: ExecutionAssignment): void {
+    if (!assignment.data.recordId) {
+      if (assignment.data.reconciliation)
+        throw new Error('Checkpoint has uncertain workspace preparation');
+      return;
+    }
     const record = JSON.parse(
       readFileSync(
         join(this.root, 'runs', String(assignment.data.recordId), 'report.json'),
@@ -106,6 +126,23 @@ export class AssignmentDispatch {
       throw new Error('Continuation has uncertain workspace preparation');
     validateContinuation(this.root, record);
     this.diagnose(record, assignment);
+  }
+
+  /** Rechecks a proposed fresh workflow against the original owner and all original criteria. */
+  private replacementAuthority(
+    run: ExecutionRun,
+    assignment: ExecutionAssignment,
+    continuation: DirectorResult['continuations'][number],
+  ): void {
+    if (continuation.replacementChangeType) {
+      const intent = assignmentIntent(assignment.objective, assignment.acceptance, {
+        ...(assignment.data.proposal as Partial<Assignment>),
+        changeType: continuation.replacementChangeType,
+      });
+      if (run.mode !== 'task' || intent.kind !== 'change')
+        throw new Error('Only task change assignments can be replaced');
+      new ExecutionContext().assignment(this.context, assignment.owner, intent);
+    }
   }
 
   /** Counts equivalent observed blockers across continuations without introducing a retry quota. */

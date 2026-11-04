@@ -36,6 +36,13 @@ export interface ExecutionRun {
   data: Record<string, unknown>;
 }
 
+export interface AssignmentContinuation {
+  assignmentId: string;
+  ownerId: string;
+  reason: string;
+  replacementChangeType?: 'behavior' | 'documentation' | 'refactor';
+}
+
 export interface ExecutionAssignment {
   id: string;
   runId: string;

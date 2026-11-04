@@ -366,7 +366,7 @@ export class ProjectHost {
   /** Requires all assignments and a separate goal-level assessment before task completion. */
   private async finishTask(run: ExecutionRun, signal: AbortSignal): Promise<void> {
     const assignments = this.store.assignments(run.id);
-    if (assignments.some((a) => a.status !== 'completed'))
+    if (assignments.some((a) => this.store.effective(a.id).status !== 'completed'))
       return this.redirect(
         run,
         { error: 'Goal has undelivered assignments', assignments },

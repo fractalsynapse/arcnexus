@@ -39,3 +39,12 @@ transaction so concurrent initialization cannot produce a mixed schema observati
 An absent or still-uninitialized read-only registry projects empty collections and
 never creates schema. Unsupported/corrupt schemas still fail explicitly. A failed
 open closes its connection; reads never gain mutation authority while waiting.
+
+A task director can replace a diagnosed failed change assignment when it needs
+a fresh workspace or corrected workflow. Its decision references the predecessor
+ID, owner, reason and replacement change type. The host checks the checkpoint
+for uncertain operations before admission. The store preserves the predecessor's
+status, evidence and workspace. Its successor inherits the original owner, goal,
+criteria and pending dependencies. Existing request IDs continue to identify
+the same conversations. A dependent waiting for replaced work resumes on
+verified delivery. Inspection records both assignment IDs and the diagnosis.
