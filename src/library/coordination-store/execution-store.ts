@@ -205,9 +205,7 @@ export class ExecutionStore {
     if (existing) return this.repeated(existing, request);
     const sender = this.assignment(from);
     this.rejectRecursiveIntent(sender, request);
-    const recipient = request.existingAssignmentId
-      ? this.assignment(request.existingAssignmentId)
-      : this.create(sender.runId, request.owner, request.objective, request.acceptance);
+    const recipient = this.recipient(sender, request);
     if (
       recipient.owner !== request.owner ||
       recipient.objective !== request.objective ||
@@ -219,6 +217,23 @@ export class ExecutionStore {
     this.db.put('assignment', recipient);
     this.db.put('request', { ...request, id: randomUUID(), from, assignmentId: recipient.id });
     this.connect(sender, recipient);
+    return recipient;
+  }
+
+  /** Resolves explicit supplier links before mutation; other resource identities never imply new work. */
+  private recipient(sender: ExecutionAssignment, request: OwnerRequest): ExecutionAssignment {
+    if (request.existingAssignmentId === undefined)
+      return this.create(sender.runId, request.owner, request.objective, request.acceptance);
+    const recipient = this.assignments(sender.runId).find(
+      (item) => item.id === request.existingAssignmentId && item.owner === request.owner,
+    );
+    if (!recipient)
+      throw Object.assign(
+        new Error(
+          `Invalid supplier assignment ${request.existingAssignmentId}: link a known assignment of ${request.owner} in this run with matching scope, or use assignmentId=null to request new work. Tracking issue, message and requester identities are not supplier assignments.`,
+        ),
+        { name: 'DependencyBlocked' },
+      );
     return recipient;
   }
 

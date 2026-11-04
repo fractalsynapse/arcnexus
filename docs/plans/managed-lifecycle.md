@@ -1277,3 +1277,11 @@ links become actionable dependency blockers with the rejected outcome retained;
 never reinterpret them as new work. Test atomic fan-out rollback and unrelated
 scheduler progress against the built store and scheduler. This does not repair the
 ninth run's captured supervisor or authorize rewriting its returned request.
+
+The dependency-identity correction passed 15 built scheduler/inbox cases with zero
+skips in 0.244 seconds, including atomic rollback and continued unrelated work.
+The first run exposed a test comparison against an undefined property that JSON
+correctly omits; the assertion now compares the serialized durable intent. Production
+build, test compilation and scoped lint passed. This does not claim that the ninth
+captured runtime contains the fix. Its CLI checkpoint is safe and waiting; its real
+director retains responsibility for deciding whether and how to continue it.
