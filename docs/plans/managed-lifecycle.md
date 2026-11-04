@@ -2072,3 +2072,15 @@ fails; test those claims separately rather than interpreting recovery as full
 lifecycle completion. Mandatory full checks repeated after small documentation
 corrections dominate cost; any future preparation reuse must prove unchanged
 inputs and confinement instead of weakening verification.
+
+### Reject disconnected behavioral regression scope before preparation (#229)
+
+A real report dependency was narrowed to its source directory despite requiring
+behavioral regression work. Enforce the captured Node test-profile source-root
+requirement during assignment resolution, before workspace preparation or model
+activation. Reuse the test path resolver's root definition. Return an actionable
+scope error without widening the assignment. Preserve documentation, research,
+review, refactor and custom-operation workflows; permit new suites beneath owned
+test roots even when no suite exists yet. This necessary structural check does not
+prove that the permitted tests can establish the requested acceptance criterion.
+Further feasibility findings remain explicit rather than inferred from prose.
