@@ -8,9 +8,11 @@ import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Checks real project inheritance and host path resolution for shared engineering tools. */
 class ProjectOperationScenarios {
+  private readonly context = new ExecutionContext().resolve(process.cwd());
+
   /** Executes the actual inherited validation recipe so retired CLI spellings cannot break real baselines. */
   validation(): void {
-    const { catalog, owners, source } = new ExecutionContext().resolve(process.cwd());
+    const { catalog, owners, source } = this.context;
     const operations = owners.flatMap((id) =>
       catalog.components[id]!.operationPlan!.delivery!.filter(
         (operation) => operation.id === 'migrated-recipe-f36c9dcd75620b35',
@@ -36,7 +38,7 @@ class ProjectOperationScenarios {
 
   /** Every executable owner receives shared tools without maintaining a second ownership directory list. */
   inherited(): void {
-    const { catalog, owners } = new ExecutionContext().resolve(process.cwd());
+    const { catalog, owners } = this.context;
     for (const id of owners) {
       const owner = catalog.components[id]!;
       const lint = owner.operationPlan!.agent!.find(
@@ -63,7 +65,7 @@ class ProjectOperationScenarios {
 
   /** Engineering checks use one inherited owner policy and profile while assembled checks retain whole-repository scope. */
   scoped(): void {
-    const { catalog, owners } = new ExecutionContext().resolve(process.cwd());
+    const { catalog, owners } = this.context;
     for (const id of owners) {
       const owner = catalog.components[id]!;
       const checks = owner.operationPlan!.verify!;
@@ -72,14 +74,16 @@ class ProjectOperationScenarios {
         id,
       );
       assert.ok(
-        checks.some((op) => op.id === 'component-format-check'),
-        id,
-      );
-      assert.ok(
         checks.some((op) => op.id === 'component-tests' && op.profileVerification === 'node'),
         id,
       );
       assert.ok(!checks.some((op) => op.id === 'migrated-recipe-719d77e27c5d9798'), id);
+      assert.ok(
+        !checks.some(
+          (op) => op.kind === 'command' && op.command === 'npm' && op.args.includes('lint'),
+        ),
+        id,
+      );
       assert.ok(
         owner.operationPlan!.delivery!.some((op) => op.id === 'migrated-recipe-719d77e27c5d9798'),
         id,
@@ -89,7 +93,7 @@ class ProjectOperationScenarios {
 
   /** Formatting shares one read-only command and derives each owner's proposal paths. */
   formatting(): void {
-    const { catalog, owners } = new ExecutionContext().resolve(process.cwd());
+    const { catalog, owners } = this.context;
     for (const id of owners) {
       const owner = catalog.components[id]!;
       const formatter = owner.operationPlan!.agent!.find((op) => op.id === 'component-format');

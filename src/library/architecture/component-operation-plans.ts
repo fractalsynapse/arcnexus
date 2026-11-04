@@ -82,7 +82,7 @@ export class ComponentOperationPlans {
 
   /** Uses the captured test profile's one run definition, including owners whose first suite is pending. */
   private profileCheck(c: Component): { id: string; run: string } | undefined {
-    if (!c.testProfile) return undefined;
+    if (c.schemaVersion < 6 || !c.testProfile) return undefined;
     const profile = this.catalog.configurationSources.find(
       (source) =>
         source.path.startsWith('architecture/test-profiles/') &&

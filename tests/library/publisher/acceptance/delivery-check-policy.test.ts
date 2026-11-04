@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
@@ -43,6 +43,8 @@ class DeliveryCheckPolicyScenario {
   async run(t: TestContext): Promise<void> {
     const general = new GeneralFixture(t);
     const f = general.fixture;
+    mkdirSync(join(f.state, 'runs'), { recursive: true });
+    mkdirSync(join(f.state, 'workspaces'), { recursive: true });
     this.policy(f.repo);
     f.commit();
     const context = new ExecutionContext().resolve(f.repo);

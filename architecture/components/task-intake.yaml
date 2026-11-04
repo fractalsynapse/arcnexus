@@ -24,8 +24,6 @@ constraints:
 operations:
   track-issue:
     - agent
-  migrated-recipe-712e56e123d7b39c:
-    - verify
 owns:
   - src/library/task-intake
   - tests/library/task-intake

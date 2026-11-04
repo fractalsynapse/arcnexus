@@ -2266,3 +2266,18 @@ further. The b9dd9ac director's final assessment also exposed a test-only follow
 misclassified as behavior change; a normal task answer requests a new characterization
 assignment without mutating the blocked assignment or manufacturing regression red.
 CI 41904603474 passed at adbddb8; fresh real-agent milestone comments remain unqualified.
+
+The scoped-check batch keeps formatting's existing coverage instead of expanding
+it to every owned Markdown/YAML file: that would introduce unrelated baseline
+failures. Artifact packaging also moves to delivery. Focused checkpoint/catalog
+coverage passed 15 cases without skips before the final evidence case was added.
+Two fixture errors (a missing test-level directory and missing workspace state
+roots) were caught by focused tests, not treated as runtime defects. Strict types
+caught an unchecked unknown evidence value. Prefer production state initialization
+and literal metadata conventions in new fixtures to avoid this rework.
+
+The real-project policy suite repeatedly reconstructed an unchanged TypeScript
+catalog. Reusing its immutable captured context within that suite removes repeated
+analysis without dropping assertions; the built CLI validation remains a separate
+production-path check. No timing benefit is claimed until measured. Active real
+runs still perform their original full baselines, as explicitly required.
