@@ -25,8 +25,8 @@ creates a verified host commit, repeats captured checks and independent verifica
 pushes a generated branch, creates a correlated GitHub PR and observes current CI
 and review gates. Authorized staging integration assembles the exact target,
 repeats independent verification and reobserves provider requirements before a
-non-rewriting compare-and-swap push. Promotion remains a separate implementation
-gate; real releases remain human-controlled.
+non-rewriting compare-and-swap push. Promotion now queues fresh target verification through the existing task host;
+real releases remain human-controlled.
 
 A shared `delivery.publish` operation declares the accountable publisher, destination
 repository and target branch. Its definition digest accompanies each internal effect.
@@ -70,3 +70,23 @@ the reviewed candidate record explicitly. Earlier records remain readable and
 require equivalent source proof; the latest workday candidate is not a substitute
 for the candidate that was actually delivered. Source revalidation is separate
 from fresh target-authority checks and independent verification.
+
+`delivery promote <simulation-delivery-id>` now queues a separate live task under
+current committed target authority. Its result supplies `runId` for `task get` or
+`task follow`. Repeating promotion for the same source and target authority returns
+the retained task rather than duplicating tracking issues. It verifies original
+simulation proof, creates real goal tracking, applies only the attributed diff,
+and runs current owner/publisher checks, an independent verifier and a director
+assessment before capturing a new delivery. Original assignment identities remain
+simulation provenance; the host does not manufacture completed live engineering
+assignments. The new delivery retains `promotedFrom` and fresh goal evidence.
+
+Promotion checkpoints share the task queue, pause controls, cancellation and stable
+supervisor. Partial assembly with no complete validated pin and interrupted
+verification require evidence inspection rather than automatic replay. Pausing
+also prevents queued publication from dispatching. Fresh accepted candidates update
+the live environment's candidate pointer atomically, and repeated accepted receipts
+cannot rewind a later candidate. The normal live publisher then applies current CI,
+review and exact-revision authorization gates. Native acceptance uses controlled
+model/provider inputs; real-agent simulation and real staging promotion remain
+separate qualification gates.

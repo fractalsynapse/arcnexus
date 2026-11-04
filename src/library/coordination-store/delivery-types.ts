@@ -17,6 +17,12 @@ export interface DeliveryCapture {
   promotedFrom?: string;
 }
 
+/** Fresh target workspace and goal evidence retained separately from the source simulation's assignments. */
+export interface PromotionCandidate {
+  record: Record<string, unknown>;
+  goalEvidence: string[];
+}
+
 /** Separates verified engineering, Git delivery, integration and release outcomes. */
 export interface DeliveryRecord extends DeliveryCapture {
   version: number;

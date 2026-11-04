@@ -17,12 +17,17 @@ export class DeliveryCommand {
   async run(): Promise<void> {
     const action = this.positionals[1];
     if (action === 'list') return this.list();
-    if (!['get', 'approve', 'publish'].includes(action ?? '') || this.positionals.length !== 3)
-      throw new InputError('Expected delivery list [package] | get|approve|publish <id>');
+    if (
+      !['get', 'approve', 'publish', 'promote'].includes(action ?? '') ||
+      this.positionals.length !== 3
+    )
+      throw new InputError('Expected delivery list [package] | get|approve|publish|promote <id>');
     this.options(['json']);
     const resources = new DeliveryResources();
     const delivery = resources.get(this.positionals[2]!);
     if (action === 'approve') return this.render(resources.approve(delivery.id, delivery.revision));
+    if (action === 'promote')
+      return this.render(await new ExecutionControls().promote(delivery.id, delivery.revision));
     if (action === 'publish')
       return this.render(await new ExecutionControls().delivery(delivery.id, delivery.revision));
     this.render(delivery);

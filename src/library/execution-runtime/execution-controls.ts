@@ -1,3 +1,4 @@
+import { PromotionControl } from './promotion-control.js';
 import { DeliveryResources } from '../publisher/publisher.js';
 import { InputError } from '../architecture/config.js';
 import { statePath } from '../workspace/state.js';
@@ -43,6 +44,11 @@ export class ExecutionControls {
       'delivery-control',
     );
     return connection.request({ action: 'delivery-control', id, expectedRevision });
+  }
+
+  /** Queues promotion against current target authority while preserving the simulation's immutable evidence. */
+  async promote(id: string, expectedRevision?: string) {
+    return new PromotionControl(this.root).request(id, expectedRevision);
   }
 
   /** Sends one mutation; uncertain responses are surfaced rather than automatically replayed. */

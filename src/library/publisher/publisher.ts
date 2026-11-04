@@ -9,7 +9,19 @@ import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/ex
 import type { DeliveryStore } from '../coordination-store/delivery-store.js';
 import type { DeliveryCapture, DeliveryRecord } from '../coordination-store/delivery-types.js';
 import type { RecordData } from '../workspace/state.js';
+import { PromotionReview } from './promotion-review.js';
+import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
 import { DeliveryVerification } from './delivery-verification.js';
+
+export interface PromotionInput {
+  context: ProjectExecution;
+  run: ExecutionRun;
+  sourceRun: ExecutionRun;
+  source: DeliveryRecord;
+  assignments: ExecutionAssignment[];
+  head: string;
+  target: DeliveryCapture['target'];
+}
 
 /** Captures verified engineering as immutable publication input without granting upstream authority. */
 export class Publisher {
@@ -96,6 +108,32 @@ export class Publisher {
     const candidate = JSON.parse(readFileSync(path, 'utf8')) as RecordData;
     if (candidate.id !== id) throw new Error('Retained candidate receipt identity mismatch');
     return candidate;
+  }
+
+  /** Creates separate live attribution only after original proof and fresh target/goal verification pass. */
+  async promote(input: PromotionInput, signal: AbortSignal) {
+    const { context, run, sourceRun, source, assignments, head, target } = input;
+    this.resolveRetained(source, sourceRun, assignments);
+    const proof = await new PromotionReview(this.root, context, source, run, assignments).verify(
+      head,
+      signal,
+    );
+    const delivery = this.store.capture({
+      id: this.identity(context.key, run, head, target),
+      projectId: context.key,
+      runId: run.id,
+      packageId: context.packageId,
+      assignmentIds: source.assignmentIds,
+      environment: run.environment!,
+      authorityDigest: executionIdentity(context),
+      base: context.base,
+      candidate: head,
+      candidateRecordId: proof.record.id,
+      verification: proof.verification,
+      target,
+      promotedFrom: source.id,
+    });
+    return { delivery, record: proof.record, goalEvidence: proof.goalEvidence };
   }
 
   /** Keeps source identity, assignment attribution and captured authority separate from future target verification. */

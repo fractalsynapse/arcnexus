@@ -10,7 +10,13 @@ import { processStart } from '../operations/service-state.js';
 import { ProjectHost } from './project-host.js';
 import type { HostRequest } from './host-client.js';
 
-const hostCapabilities = ['task-control', 'workday-control', 'simulation', 'delivery-control'];
+const hostCapabilities = [
+  'task-control',
+  'workday-control',
+  'simulation',
+  'delivery-control',
+  'delivery-promote',
+];
 
 /** Owns the private IPC listener and keeps lifecycle controls responsive during inference. */
 class HostServer {
@@ -154,6 +160,8 @@ class HostServer {
   private dispatch(request: HostRequest): unknown {
     this.validate(request);
     if (request.action === 'identity') return this.identity();
+    if (request.action === 'delivery-promote')
+      return this.host.promote(String(request.id), request.expectedRevision);
     if (request.action === 'delivery-control')
       return this.host.publish(String(request.id), request.expectedRevision);
     if (request.action === 'workday-control')

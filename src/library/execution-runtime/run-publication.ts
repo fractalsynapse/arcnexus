@@ -171,7 +171,8 @@ export class RunPublication {
 
   /** Limits publication assessment to assignments attributed to this immutable delivery. */
   private checks(context: ProjectExecution, run: ExecutionRun, ids: string[]): DeliveryChecks {
-    const assignments = this.execution.assignments(run.id).filter((a) => ids.includes(a.id));
+    const sourceRun = run.data.promotionSourceRun ? String(run.data.promotionSourceRun) : run.id;
+    const assignments = this.execution.assignments(sourceRun).filter((a) => ids.includes(a.id));
     return new DeliveryChecks(this.root, context, run, assignments);
   }
 

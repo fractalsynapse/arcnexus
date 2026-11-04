@@ -1285,3 +1285,40 @@ correctly omits; the assertion now compares the serialized durable intent. Produ
 build, test compilation and scoped lint passed. This does not claim that the ninth
 captured runtime contains the fix. Its CLI checkpoint is safe and waiting; its real
 director retains responsibility for deciding whether and how to continue it.
+
+Promotion wiring now uses the existing task queue and sole repository host. A
+current-target run retains original simulated assignment provenance without fake
+live completions, performs fresh confined checks plus verifier and director review,
+and queues normal live publication only after a new immutable delivery exists.
+Repeated submission is idempotent for source delivery plus target authority.
+Candidate acceptance and publication readiness are committed together; explicit
+pause suppresses publication dispatch. Interrupted verification remains an honest
+attention state rather than replaying uncertain operations. No real-provider
+qualification or phase-two completion is claimed from this implementation.
+
+The initial three native promotion cases passed with zero skips in 10.819 seconds.
+Two focused failures exposed missing fixture record attribution and a missing
+current-run identity in the goal-evidence envelope; both were corrected without
+relaxing evidence validation. Further goal-pointer/replay assertions are being
+assembled before final checks. This short production-wiring feedback loop is more
+efficient than another complete native suite after each small interface edit.
+
+CI 41785987986 passed at add2dc8. The ninth real report steward reached implementation
+but then failed test preparation with TS2339 in its new report-cli regression.
+Its original failed CLI assignment and this compiler diagnostic remain retained;
+publisher-discovered report and CLI dependency assignments continue independently.
+Observed compilation failures currently terminate some engineering paths instead
+of returning corrective feedback. Diagnose the invocation and checkpoint boundary
+before changing recovery behavior; a prerequisite failure must never count as the
+selected expected-red regression, and active captured authority must remain stable.
+
+The assembled promotion source-proof, native Git and production-host cases passed
+15 tests with zero skips in 15.208 seconds. Four deterministic candidate-store cases
+passed with zero skips in 0.242 seconds, including fresh goal evidence, rejected
+foreign authority, atomic readiness and no pointer rewind on duplicate acceptance.
+Formatting and strict checking passed. Full lint found one oversized fixture data
+builder; it was split by receipt construction and run setup, with scoped lint then
+passing. The ninth task was stopped through its captured CLI and retained as
+cancelled once the unsafe compiler-failure checkpoint established that another
+baseline could not recover its original required assignment. Issue #210 records the
+corrective prerequisite-feedback defect. No ninth-run engineering delivery passed.

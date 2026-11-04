@@ -14,7 +14,12 @@ export class RunSelection {
 
   /** Selects queued tasks first and tracks automatic pauses independently of user intent. */
   next(): ExecutionRun | undefined {
-    const publication = this.store.runs().find((run) => run.data.pendingPublication);
+    const publication = this.store
+      .runs()
+      .find(
+        (run) =>
+          run.data.pendingPublication && ['running', 'idle', 'completed'].includes(run.status),
+      );
     if (publication) return publication;
     const task = this.selectTask();
     const workday = this.workday();

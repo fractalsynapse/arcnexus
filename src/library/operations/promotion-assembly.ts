@@ -43,19 +43,25 @@ export class PromotionAssembly {
     signal.throwIfAborted();
     this.assert(effect);
     this.assertMergeConfiguration();
-    const prior = git(
+    const prior = this.retained(effect);
+    if (prior) return prior;
+    await this.import(effect, signal);
+    const tree = await this.reconcile(effect, signal);
+    return this.candidate(effect, tree, signal);
+  }
+
+  /** Reconciles only a complete validated pin; partial imports never authorize automatic replay. */
+  retained(effect: ExternalEffect): string | undefined {
+    this.assert(effect);
+    const candidate = git(
       this.target,
       'for-each-ref',
       '--format=%(objectname)',
       this.ref(effect),
     ).trim();
-    if (prior) {
-      this.validate(effect, prior);
-      return prior;
-    }
-    await this.import(effect, signal);
-    const tree = await this.reconcile(effect, signal);
-    return this.candidate(effect, tree, signal);
+    if (!candidate) return undefined;
+    this.validate(effect, candidate);
+    return candidate;
   }
 
   /** Pins an unverified result parented only by the real target, retaining deterministic attribution. */

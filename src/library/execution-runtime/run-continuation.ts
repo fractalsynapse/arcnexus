@@ -24,6 +24,10 @@ export class RunContinuation {
         throw new Error(
           'Policy checkpoint or operation completion is uncertain; inspect retained evidence',
         );
+      if (run.data.promotionStage === 'verifying')
+        throw new Error(
+          'Promotion verification was interrupted; inspect retained operation evidence',
+        );
       this.restoreCheckpoints(run);
     } catch (error) {
       this.store.updateRun(run.id, 'needs_attention', { error: String(error) });
@@ -32,8 +36,14 @@ export class RunContinuation {
     this.store.updateRun(run.id, 'running', {
       seen: {},
       pauseReason: null,
-      candidateRevision: String(delivery?.data.candidateRevision ?? this.base),
-      candidateRecord: delivery?.data.candidateRecord ?? run.data.candidateRecord,
+      candidateRevision: String(
+        run.data.promotionSource
+          ? run.data.candidateRevision
+          : (delivery?.data.candidateRevision ?? this.base),
+      ),
+      candidateRecord: run.data.promotionSource
+        ? run.data.candidateRecord
+        : (delivery?.data.candidateRecord ?? run.data.candidateRecord),
     });
   }
 

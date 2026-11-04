@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { ExecutionStore } from '../../../../dist/library/coordination-store/execution-store.js';
+import type { DeliveryRecord } from '../../../../dist/library/coordination-store/delivery-types.js';
 import type { RunEnvironment } from '../../../../dist/library/coordination-store/execution-types.js';
 import { ExecutionReports } from '../../../../dist/library/report/report.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
@@ -20,6 +21,51 @@ class CandidateFixture {
       this.store.close();
       rmSync(this.root, { recursive: true, force: true });
     });
+  }
+
+  /** Supplies explicitly controlled proof metadata to exercise the atomic pointer transition. */
+  promotion() {
+    const environment: RunEnvironment = { id: 'live', mode: 'live' };
+    const run = this.store.createRun('task', ['a'], 'Promote', environment);
+    this.store.updateRun(run.id, 'running', {
+      authorityBase: 'base',
+      packageId: 'package',
+      executionIdentity: 'authority',
+      promotionSource: 'simulation-delivery',
+      promotionStage: 'verifying',
+    });
+    const delivery = this.capture(run.id, environment);
+    const proof = {
+      record: { id: 'record', base: 'promoted', executionRunId: run.id, status: 'completed' },
+      goalEvidence: ['goal'],
+    };
+    return { run, delivery, proof };
+  }
+
+  /** Defines immutable delivery provenance separately from its mutable live run checkpoint. */
+  private capture(runId: string, environment: RunEnvironment): DeliveryRecord {
+    return {
+      id: 'promotion',
+      projectId: 'project',
+      packageId: 'package',
+      runId,
+      assignmentIds: ['original-simulation-assignment'],
+      environment,
+      authorityDigest: 'authority',
+      base: 'base',
+      candidate: 'promoted',
+      candidateRecordId: 'record',
+      verification: { references: ['target-checks', 'review', 'goal'], digest: 'controlled' },
+      target: { repository: 'example/project', branch: 'staging' },
+      promotedFrom: 'simulation-delivery',
+      version: 1,
+      createdAt: 'fixture',
+      engineering: 'verified',
+      delivery: 'retained',
+      integration: 'not_requested',
+      publication: 'not_requested',
+      receipts: {},
+    };
   }
 
   /** Delivers one verified assignment through the production candidate transaction. */
@@ -65,6 +111,34 @@ test('run environment survives lifecycle updates and cannot be replaced by candi
   assert.equal(retained.status, 'paused');
   const report = new ExecutionReports(f.root, f.store).view(run.id);
   assert.deepEqual(report.run.environment, retained.environment);
+});
+
+test('promotion atomically retains goal proof and duplicate acceptance cannot rewind later work', (t) => {
+  const f = new CandidateFixture(t);
+  const { run, delivery, proof } = f.promotion();
+  f.store.promotion(run.id, delivery, proof);
+  assert.equal(f.store.latestDelivery('base', 'package', run.environment)!.id, run.id);
+  assert.deepEqual(f.store.run(run.id).data.goalEvidence, ['goal']);
+  assert.equal(f.store.run(run.id).data.pendingPublication, delivery.id);
+  assert.deepEqual(f.store.assignments(run.id), []);
+  const later = f.deliver('later', run.environment);
+  f.store.promotion(run.id, delivery, proof);
+  assert.equal(f.store.latestDelivery('base', 'package', run.environment)!.id, later.id);
+});
+
+test('promotion refuses mismatched target authority and missing goal proof without pointer mutation', (t) => {
+  const f = new CandidateFixture(t);
+  const { run, delivery, proof } = f.promotion();
+  assert.throws(
+    () => f.store.promotion(run.id, { ...delivery, authorityDigest: 'foreign' }, proof),
+    /authority/,
+  );
+  assert.throws(
+    () => f.store.promotion(run.id, delivery, { ...proof, goalEvidence: [] }),
+    /goal evidence/,
+  );
+  assert.equal(f.store.latestDelivery('base', 'package', run.environment), undefined);
+  assert.equal(f.store.run(run.id).data.promotionStage, 'verifying');
 });
 
 registerSuite({

@@ -4,6 +4,10 @@
 
 ### Added
 
+- Queue simulation promotion under fresh real-target authority with independent target and goal verification, retained source provenance, and existing live publication gates (#148).
+
+- Explain supplier-assignment identities and retain invalid links as actionable dependency blockers without stopping unrelated work (#209).
+
 - Retain reviewed candidate record identities and revalidate original delivery attribution and independent evidence before promotion (#148).
 
 - Classify host IPC admission tests in native qualification and detect direct socket factories before they can break confined steward baselines (#208).

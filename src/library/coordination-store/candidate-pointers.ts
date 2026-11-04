@@ -1,3 +1,4 @@
+import type { DeliveryRecord, PromotionCandidate } from './delivery-types.js';
 import type { ExecutionDatabase } from './execution-database.js';
 import type { ExecutionRun, RunEnvironment } from './execution-types.js';
 
@@ -17,6 +18,62 @@ export class CandidatePointers {
       ...run,
       data: { ...run.data, ...candidate, promotedAt: new Date().toISOString() },
     });
+  }
+
+  /** Advances a live candidate only from matching newly verified promotion attribution. */
+  acceptPromotion(runId: string, delivery: DeliveryRecord, proof: PromotionCandidate): void {
+    this.db.transaction('promotion.verified', { runId, deliveryId: delivery.id }, () => {
+      const run = this.db.get<ExecutionRun>('run', runId);
+      this.validatePromotion(run, delivery, proof.record);
+      if (run.data.promotionStage === 'verified') {
+        if (
+          run.data.deliveryId !== delivery.id ||
+          run.data.candidateRevision !== delivery.candidate
+        )
+          throw new Error('Verified promotion attribution cannot change');
+        return;
+      }
+      if (
+        !proof.goalEvidence.length ||
+        proof.goalEvidence.some((path) => !delivery.verification.references.includes(path))
+      )
+        throw new Error('Promotion requires fresh retained goal evidence');
+      this.promote(runId, {
+        candidateRevision: delivery.candidate,
+        candidateRecord: proof.record,
+        goalEvidence: proof.goalEvidence,
+        goalCandidate: delivery.candidate,
+        verifiedEvidence: delivery.verification.references,
+        deliveryId: delivery.id,
+        pendingPublication: delivery.id,
+        promotionStage: 'verified',
+      });
+    });
+  }
+
+  /** Keeps source lineage and target authority explicit without manufacturing engineering assignments. */
+  private validatePromotion(
+    run: ExecutionRun,
+    delivery: DeliveryRecord,
+    record: Record<string, unknown>,
+  ): void {
+    if (
+      !delivery.promotedFrom ||
+      run.data.promotionSource !== delivery.promotedFrom ||
+      delivery.runId !== run.id ||
+      delivery.environment.mode !== 'live' ||
+      JSON.stringify(delivery.environment) !== JSON.stringify(run.environment) ||
+      delivery.authorityDigest !== run.data.executionIdentity ||
+      delivery.base !== run.data.authorityBase ||
+      delivery.packageId !== run.data.packageId ||
+      delivery.engineering !== 'verified' ||
+      !delivery.verification.references.length ||
+      record.id !== delivery.candidateRecordId ||
+      record.base !== delivery.candidate ||
+      record.executionRunId !== run.id ||
+      record.status !== 'completed'
+    )
+      throw new Error('Promotion evidence differs from target run authority');
   }
 
   /** Returns only the latest verified candidate from the requested environment. */
