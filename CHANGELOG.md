@@ -4,6 +4,8 @@
 
 ### Added
 
+- Give research/review assignments pinned current-run checkpoint, checked-edit and operation evidence through a read-only MCP capability, including director and caller clarification (#207).
+
 - Queue simulation promotion under fresh real-target authority with independent target and goal verification, retained source provenance, and existing live publication gates (#148).
 
 - Explain supplier-assignment identities and retain invalid links as actionable dependency blockers without stopping unrelated work (#209).

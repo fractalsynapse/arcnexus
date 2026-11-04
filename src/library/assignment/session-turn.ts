@@ -37,13 +37,20 @@ export class SessionTurn {
     edits.recover();
     this.operations = {
       ...operations,
-      tools: [...operations.tools, ...edits.tools, ...(state.options.collaboration?.tools ?? [])],
+      tools: [
+        ...operations.tools,
+        ...edits.tools,
+        ...(state.options.collaboration?.tools ?? []),
+        ...(state.options.evidence?.tools ?? []),
+      ],
       call: (name: string, args: unknown) =>
         state.options.collaboration?.tools.some((tool) => tool.name === name)
           ? state.options.collaboration.call(name, args)
-          : name === 'source.edit'
-            ? Promise.resolve(edits.call(name, args))
-            : operations.call(name, args),
+          : state.options.evidence?.tools.some((tool) => tool.name === name)
+            ? state.options.evidence.call(name, args)
+            : name === 'source.edit'
+              ? Promise.resolve(edits.call(name, args))
+              : operations.call(name, args),
     };
   }
 

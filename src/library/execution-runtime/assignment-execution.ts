@@ -1,5 +1,5 @@
 import type { UpstreamBridge } from '../operations/upstream-bridge.js';
-import { DeliveryEvidence, ExecutionEvidence } from '../report/report.js';
+import { DeliveryEvidence, ExecutionEvidence, RecoveryEvidence } from '../report/report.js';
 import { candidateDigest } from '../change-inspection/changes.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -74,7 +74,22 @@ export class AssignmentExecution {
       this.signal,
       undefined,
       this.collaboration?.(assignment),
+      this.investigation(assignment, record),
     );
+  }
+
+  /** Supplies pinned same-run evidence to read-only research and review without widening filesystem access. */
+  private investigation(assignment: ExecutionAssignment, record: RecordData) {
+    const resolved = record.resolvedAssignment as ResolvedAssignment;
+    if (resolved.assignment.kind === 'change') return;
+    const pages = new RecoveryEvidence(this.root, this.store).capture(assignment);
+    record.investigationEvidence = pages.retain(join(this.root, 'runs', record.id), {
+      runId: assignment.runId,
+      assignmentId: assignment.id,
+      artifacts: pages.metadata(),
+    });
+    save(this.root, record);
+    return pages;
   }
 
   /** Exposes one durable reply identity while keeping internal retry keys out of model context. */

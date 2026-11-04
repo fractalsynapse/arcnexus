@@ -133,3 +133,23 @@ For report assignments, obtain `report-format` feedback before interpreting
 checks formatting and lint before expensive repository tests; the focused report
 regression remains verification command 2. A formatting failure must be repaired
 within report scope, not hidden by compressing expressions onto fewer lines.
+
+### Investigation evidence
+
+Research and review assignments receive `assignment.evidence` through their
+host-bound MCP connection. Read `artifact=manifest`, then the advertised artifact
+names, following `nextOffset` until `complete=true`. Pages use the same content
+hashes, character offsets and maximum page size as `verification.evidence`.
+
+The host captures other assignments in the same run, including checkpoint bytes,
+checked-edit transaction journals, observed tool requests/results and managed
+operation state. Director decisions, feedback and caller clarification accompany
+the capture. Content remains pinned when original files subsequently change.
+Missing records, journals and logs are explicit evidence gaps; an absent journal
+alone does not prove an edit was never attempted. Worker observations remain
+separate from trusted host checks.
+
+The tool accepts artifact names and page bounds, never filesystem paths, owner
+identities or run overrides. Foreign records and unsafe aliases are rejected.
+Investigation evidence grants no write authority, does not declare an uncertain
+operation completed and cannot make an unsafe checkpoint resumable.

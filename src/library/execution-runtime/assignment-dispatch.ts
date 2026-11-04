@@ -38,7 +38,14 @@ export class AssignmentDispatch {
         proposal.objective,
         proposal.acceptanceCriteria,
       );
-      this.store.updateAssignment(assignment.id, 'ready', { proposal });
+      this.store.updateAssignment(assignment.id, 'ready', {
+        proposal,
+        directionContext: {
+          summary: result.summary,
+          feedback: this.store.run(run.id).data.redirection,
+          prompt: this.store.run(run.id).data.prompt,
+        },
+      });
     }
   }
 

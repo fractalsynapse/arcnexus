@@ -49,6 +49,10 @@ export class StewardSession {
     private readonly signal: AbortSignal,
     private readonly initialization?: InitializationEvidence,
     private readonly collaboration?: UpstreamBridge,
+    private readonly evidence?: Pick<
+      import('../operations/operations.js').OperationBridge,
+      'tools' | 'call'
+    >,
   ) {}
 
   /** Runs durable stages until completion or an inbox yield; recipients remain the scheduler’s responsibility. */
@@ -81,6 +85,7 @@ export class StewardSession {
       executable,
       signal,
       collaboration: this.collaboration,
+      evidence: this.evidence,
     });
     if (!retained) await this.prepare();
     if (this.initialization) this.acceptInitialization();

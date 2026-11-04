@@ -24,6 +24,8 @@ export class ControlledGeneral {
     let prompt = '';
     for await (const chunk of process.stdin) prompt += chunk;
     appendFileSync(this.calls, JSON.stringify({ args, prompt }) + '\n');
+    if (prompt.includes('READ_ASSIGNMENT_EVIDENCE') && prompt.includes('Activity turn: planning'))
+      await new ControlledEvidence(this.calls, 'assignment.evidence').inspect(args, false);
     await this.checkpointGate(prompt);
     if (
       prompt.startsWith('Independent read-only verification.') &&
@@ -148,6 +150,7 @@ export class ControlledGeneral {
       objective: correction
         ? 'Additional goal evidence'
         : (prompt.includes('READ_TOOL_OBSERVATIONS') ? 'READ_TOOL_OBSERVATIONS: ' : '') +
+          (prompt.includes('READ_ASSIGNMENT_EVIDENCE') ? 'READ_ASSIGNMENT_EVIDENCE: ' : '') +
           (prompt.includes('RECOVER_CYCLE') ? 'RECOVER_CYCLE: ' : '') +
           'Research the dependency chain',
       kind: 'research',

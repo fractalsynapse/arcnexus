@@ -29,6 +29,7 @@ import { candidateDigest, type FrozenTest } from './checkpoints.js';
 import type { StewardCheckpoint } from './steward.js';
 
 export interface SessionOptions {
+  evidence?: Pick<import('../operations/operations.js').OperationBridge, 'tools' | 'call'>;
   collaboration?: import('../operations/upstream-bridge.js').UpstreamBridge;
   root: string;
   record: RecordData;

@@ -110,3 +110,11 @@ operations do not become verification authority. A later valid selection must
 still produce observed expected-red evidence before implementation. Repeated
 invalid selections share a progress diagnosis; changing an invalid ID alone is
 not progress. Invalid captured configuration and uncertain operations remain fatal.
+
+Research/review assignments investigating retained work can inspect the host's
+`assignment.evidence` manifest and paged artifacts. This capability supplies
+current-run checkpoint/edit/operation observations and the director's substantive
+handoff without exposing private evidence directories. It does not change the
+continuation decision: only validated checkpoints resume, and uncertain effects
+still require reconciliation rather than replay. See the
+[report contract](../report/report.md#investigation-evidence).

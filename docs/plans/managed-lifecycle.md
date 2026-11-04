@@ -1385,3 +1385,19 @@ editing-script variable reuse briefly replaced changelog contents in one local
 commit; inspection of the commit's line count caught it immediately, and the next
 commit restored the original plus the intended two edits before qualification.
 Prefer direct patches and inspect the complete diff statistic before committing.
+
+The #207 bootstrap implementation now shares one `EvidencePages` transport between
+verification and investigation. Actual director → assignment → MCP handoff passed
+with controlled model inputs; original checkpoint bytes and caller clarification
+arrived without reopening failed work. Boundary cases cover foreign identities,
+symlink records, immutable capture, invalid pages and arbitrary path rejection.
+The assembled focused group passed 13 tests, zero failures/skips, in 24.571 seconds.
+Production and test builds plus scoped lint passed. This is deterministic/native
+handoff evidence, not a new real-agent investigation claim. The tenth simulation
+continues using its original `b2bc240` supervisor, which predates this addition.
+
+A follow-up alias boundary check passed eight report cases with zero skips in
+0.331 seconds, including a hard-linked record and safe timeline/log observations.
+Existing verifier artifact paths and the `verification.evidence` contract remain
+unchanged. These short targeted checks reused the already passing native MCP
+handoff rather than repeating the entire integrated suite after a small boundary fix.

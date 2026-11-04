@@ -6,7 +6,10 @@ import { appendFileSync } from 'node:fs';
 /** Inspects captured verification artifacts through the actual SDK-configured MCP boundary. */
 export class ControlledEvidence {
   /** Retains a test-owned trace outside the editable candidate. */
-  constructor(private readonly trace: string) {}
+  constructor(
+    private readonly trace: string,
+    private readonly capability = 'verification.evidence',
+  ) {}
 
   /** Reads all advertised evidence pages without using native Git or arbitrary host paths. */
   async inspect(args: string[], forbidden: boolean, retryPage = false): Promise<void> {
@@ -49,7 +52,7 @@ export class ControlledEvidence {
   /** A malformed transport page must be rejected without ending the verifier activation. */
   private async rejectedPage(client: Client): Promise<void> {
     const reply: any = await client.callTool({
-      name: 'verification.evidence',
+      name: this.capability,
       arguments: { artifact: 'manifest', offset: 0, length: 100000 },
     });
     const rejection = JSON.parse(reply.content[0].text);
@@ -64,7 +67,7 @@ export class ControlledEvidence {
     let text = '';
     while (true) {
       const reply: any = await client.callTool({
-        name: 'verification.evidence',
+        name: this.capability,
         arguments: { artifact, offset, length: 64 },
       });
       if (reply.isError) throw new Error(reply.content[0].text);

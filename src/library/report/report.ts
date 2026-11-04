@@ -279,3 +279,7 @@ export function saveMarkdown(root: string, record: RecordData): void {
 }
 
 export { DeliveryEvidence } from './delivery-evidence.js';
+
+export { EvidencePages } from './evidence-pages.js';
+
+export { RecoveryEvidence } from './recovery-evidence.js';
