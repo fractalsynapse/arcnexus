@@ -184,16 +184,17 @@ terminates its Codex process group if that host disappears. It preserves the SDK
 stdio event stream and inserts `--ignore-user-config` exactly as before. A lost
 host leaves incomplete evidence, never a successful outcome.
 
-The reporting owner declares a focused built report-test command in addition to
-full repository verification. Use that command for the expected-red and captured
-regression checkpoints; full verification still runs at baseline and after changes.
-This keeps repeated regression checks bounded without weakening integration checks.
+The reporting owner receives its focused built tests from the inherited test profile.
+Owner-scoped verification applies at engineering checkpoints, including expected-red
+and captured regression checks. Full repository verification runs on assembled
+deliveries; it is not repeated at every owner baseline or corrective turn. Required
+integration checks remain mandatory before publication.
 
-Research/review has exactly one execution turn after planning. Source-read-only
-means no source edits; it does not prohibit declared test or service operations.
-The steward must perform its selected permitted work and update the checklist in
-that turn, or report a precise blocker. Activity names are not promises of additional
-model turns. Incomplete checklist claims fail rather than silently adding a turn.
+Research/review remains source-read-only after planning; declared test and service
+operations remain available. The steward must perform its selected permitted work
+and update the checklist, or report a precise blocker. Dependencies yield to the
+shared scheduler and resume through retained checkpoints. There is no execution
+turn quota, and an incomplete checklist cannot establish verified completion.
 
 Shared checkpoints also cover initializer verification, assignment baselines, final
 verification, frozen acceptance and refactor characterization. Each checkpoint orders

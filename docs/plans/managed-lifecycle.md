@@ -2466,3 +2466,11 @@ reference; retain historical acceptance narrative with an explicit current-polic
 note. This test failure cost a 21-minute native sweep, so search expectations by both
 operation identity and command argv when moving a policy boundary. Do not repeat the
 entire sweep to diagnose a single already identified assertion.
+
+The corrected inspection assertion passed with all seven original prior-evidence
+cases (49.467 seconds, no skips). The inspection-only case is now a separate
+portable `scoped-checks` suite rather than borrowing the native harness wrapper;
+its confined production-CLI qualification follows. Native selection will contain
+one fewer case and portable coverage one more: this moves coverage, not removes it.
+The live operations reference also no longer presents the historical research-turn
+quota as current behavior; the historical acceptance record is explicitly labeled.
