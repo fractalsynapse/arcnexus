@@ -1229,3 +1229,22 @@ those local driver definitions before import and immediately before comparison.
 Four native cases passed with zero skips in 6.762 seconds, including no driver
 execution and no imported refs on rejection. This does not broaden host commands
 or authorize publication.
+
+## Retained promotion proof
+
+Before importing a simulation candidate, revalidate its captured run, environment,
+assignment set, source authority, exact candidate and independent evidence digest.
+Retain the candidate record identity on new deliveries; preserve optional historical
+records and allow their evidence to establish the record instead of trusting a
+workday's mutable latest-candidate pointer. Changed review bytes must invalidate
+retained proof even when a revised review still claims success. This is source
+provenance validation; it never substitutes for fresh target verification.
+
+At `add2dc8`, the full production confined test selection passed 840 tests: 482
+passes, zero failures and 358 native-lane skips. Both native admission cases passed
+in 0.256 seconds; the three selection guard cases passed. Formatting, lint, strict
+checking, build and consolidated validation passed. CI `41782502012` separately
+passed its older `7aa7eac` revision (482 confined-lane passes/353 skips and 395 native
+passes/zero skips). The ninth real task `328f21ef-bfd1-4f39-87e5-91a089f93861` now
+captures `add2dc8` with the unchanged goal and no selected roster. Its state root is
+`qualification-148-add2dc8`; prior tasks and their failures remain retained.

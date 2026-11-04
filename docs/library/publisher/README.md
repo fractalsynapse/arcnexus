@@ -63,3 +63,10 @@ rejects even a concurrent update to another ancestor; it never permits history
 rewrites or a different ref. Server-side policy rejection remains a blocker. No
 admin override or GitHub review submission is available. Lost receipts reconcile
 the actual target against the retained assembly before advancing delivery state.
+
+Promotion must revalidate the source delivery's immutable attribution and retained
+independent evidence before importing its objects. New delivery records identify
+the reviewed candidate record explicitly. Earlier records remain readable and
+require equivalent source proof; the latest workday candidate is not a substitute
+for the candidate that was actually delivered. Source revalidation is separate
+from fresh target-authority checks and independent verification.
