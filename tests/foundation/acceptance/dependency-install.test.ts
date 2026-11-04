@@ -14,14 +14,32 @@ class DependencyInstallScenarios {
     this.lock(fixture.root, {
       'node_modules/a': this.entry('a'),
       'node_modules/b': this.entry('a'),
+      'node_modules/d': this.entry('d'),
       'node_modules/c': { ...this.entry('c'), os: ['!' + process.platform] },
     });
     const result = fixture.run();
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(fixture.calls(), [
-      ['cache', 'add', 'https://registry.npmjs.org/a.tgz', '--ignore-scripts', '--prefer-offline'],
+      [
+        'cache',
+        'add',
+        'https://registry.npmjs.org/a.tgz',
+        'https://registry.npmjs.org/d.tgz',
+        '--maxsockets=1',
+        '--ignore-scripts',
+        '--prefer-offline',
+      ],
       ['ci', '--offline', '--no-audit', '--no-fund'],
     ]);
+  }
+
+  /** An empty applicable lock does not invoke cache add without required package arguments. */
+  empty(t: TestContext): void {
+    const fixture = this.fixture(t);
+    this.lock(fixture.root, {});
+    const result = fixture.run();
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(fixture.calls(), [['ci', '--offline', '--no-audit', '--no-fund']]);
   }
 
   /** Rejects unsupported sources before even an earlier valid entry starts a download. */
@@ -93,6 +111,8 @@ const scenarios = new DependencyInstallScenarios();
 
 test('bootstrap caches applicable locked artifacts before offline installation', (t) =>
   scenarios.install(t));
+
+test('bootstrap installs an empty lock without a cache invocation', (t) => scenarios.empty(t));
 
 test('bootstrap rejects unsupported sources before any download', (t) => scenarios.invalid(t));
 

@@ -4,6 +4,8 @@
 
 ### Added
 
+- Batch locked dependency cache preparation in one npm process with an explicit connection bound, preserving confined offline installation and failure evidence (#237).
+
 - Keep collaboration acceptance portable inside steward confinement by separating catalog fixtures from native host setup, without adding skipped checks (#236).
 
 - Project dependency waits and verified/blocked assignment milestones onto authorized tracking issues with durable, nonduplicating recovery (#233).
