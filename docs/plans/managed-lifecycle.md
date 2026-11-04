@@ -2313,3 +2313,13 @@ Documentation-only and refactor workflows keep their distinct requirements.
 This structural check prevents the demonstrated invalid capture. It does not by
 itself resolve already blocked assignments or implement the explicit replacement
 protocol tracked by #235; those records retain their original evidence and status.
+
+The b9dd9ac characterization follow-up then failed its observed `format:check` on
+`tests/gateway/cli/acceptance/cli.test.ts`. Its log establishes an ordinary formatting
+deficiency, not uncertain transport or unavailable confinement. The refactor branch
+bypassed specification-quality correction and terminated before establishing a safe
+checkpoint. Extend the existing observed-failure correction boundary to passing
+characterization checks: keep criteria, scope and operation authority fixed, retain
+the actual diagnostic, and return to specification correction. Cancellation,
+uncertain completion and unsafe source state must still propagate without retry.
+Do not replay or reclassify the retained b9dd9ac record. This is a fresh-runtime fix.
