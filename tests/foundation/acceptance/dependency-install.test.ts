@@ -20,15 +20,8 @@ class DependencyInstallScenarios {
     const result = fixture.run();
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(fixture.calls(), [
-      [
-        'cache',
-        'add',
-        'https://registry.npmjs.org/a.tgz',
-        'https://registry.npmjs.org/d.tgz',
-        '--maxsockets=1',
-        '--ignore-scripts',
-        '--prefer-offline',
-      ],
+      ['cache', 'add', 'https://registry.npmjs.org/a.tgz', '--ignore-scripts', '--prefer-offline'],
+      ['cache', 'add', 'https://registry.npmjs.org/d.tgz', '--ignore-scripts', '--prefer-offline'],
       ['ci', '--offline', '--no-audit', '--no-fund'],
     ]);
   }

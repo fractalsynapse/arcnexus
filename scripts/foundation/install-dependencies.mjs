@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 
 /** @typedef {{resolved: string, integrity: string, os?: string[], cpu?: string[]}} LockedPackage */
 
-/** Prepares locked packages with bounded connections, then installs offline under confinement. */
+/** Prepares locked packages sequentially, then installs offline under the caller's confinement. */
 class DependencyInstaller {
   /** Validates every source before downloading and leaves lifecycle hooks inside the supervised install. */
   run() {
@@ -15,8 +15,7 @@ class DependencyInstaller {
       .filter(([path]) => path !== '')
       .map(([, entry]) => this.package(entry));
     const urls = new Set(packages.filter((entry) => this.applicable(entry)).map((p) => p.resolved));
-    if (urls.size)
-      this.npm(['cache', 'add', ...urls, '--maxsockets=1', '--ignore-scripts', '--prefer-offline']);
+    for (const url of urls) this.npm(['cache', 'add', url, '--ignore-scripts', '--prefer-offline']);
     this.npm(['ci', '--offline', '--no-audit', '--no-fund']);
   }
 

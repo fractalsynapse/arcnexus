@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Prepare locked dependencies sequentially before offline installation in confined workspaces (#237).
+
 ### Added
 
 - Identify the accountable steward when a checked edit crosses ownership and guide the requester through an inbox handoff without granting writes. Remove assignment file lists: only the accountable component steward selects implementation files (#239).
