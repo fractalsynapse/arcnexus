@@ -1583,3 +1583,21 @@ and planning scenarios to those resource views, preserving read-only historical
 report functions at the library boundary. Keep package-aware observation cancellation
 as detach-only. This does not retire `prepare` or `cleanup`; their composition and
 failure-recovery callers still require migration.
+
+Top-level observation migration passed ten built CLI resource cases with zero skips
+and four focused native planning/report scenarios with zero skips (51.776 seconds).
+The first resource attempt caught a stale production build: `build:tests` refreshed
+test output but retained the old CLI. Rebuild production explicitly before claiming
+built-program coverage; the rerun passed against the new command routing. Formatting,
+lint and strict checks passed. This diagnostic cost one extra focused native run;
+it did not justify weakening the test or interpreting an old program as current.
+
+The tenth real simulation was stopped through `task stop` after both original report
+and publisher engineering assignments reached the same frozen-formatting blocker.
+The remaining CLI evidence operation was cancelled and its assignment interrupted;
+partial edits and all reports remain retained. Two research assignments were accepted,
+but no engineering delivery was verified. The control response and final projection
+are hashed under `qualification-148-b2bc240/qualification-control/tenth-stop`.
+A fresh simulation must capture the corrected supervisor, rather than waiving format
+checks or rewriting frozen sources in the old run. Continue using the useful original
+goal and real director selection from the project catalog, without prescribing a team.
