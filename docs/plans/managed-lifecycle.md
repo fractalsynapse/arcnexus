@@ -2597,3 +2597,13 @@ to resolved writable roots and public API declarations. Emit the effective
 owner scope and public boundary once in steward context. Preserve the underlying
 captured catalog, complete relationships, historical component views and the
 existing size check.
+
+The real formerly rejected workday response replayed through the managed
+host boundary in 17 seconds using controlled model input. All four native
+idle, refusal and inbox-control scenarios passed in 70 seconds. A separate
+real container workday, c65331c7-77a5-4c1e-aa48-3ec9901fcca1, started with
+the fix. In the task trial, the three starting stewards exchanged four
+persisted inbox requests before any verified delivery. Repeated assignments
+to a starting steward count as requests rather than newly discovered owners.
+The native simulation confinement suite also rejected descendant HTTP, TLS
+and direct-network bypass attempts against listening mutation endpoints.
