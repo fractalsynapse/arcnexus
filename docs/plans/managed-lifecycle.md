@@ -1070,3 +1070,11 @@ dropped and source/runtime mounts read-only. Do not change docker-default, disab
 AppArmor, run privileged, or expose all host cgroups. Loading this separate named
 profile needs host administrator authentication, which this session lacks. Keep
 static parsing and actual enforcement qualification distinct.
+
+The dedicated container profile passed AppArmor syntax parsing without loading a
+kernel policy. The seccomp generator fetched the pinned Moby revision, verified
+its SHA-256 and reproduced the earlier probe's exact policy bytes; scoped ESLint
+and formatting passed. This is policy preparation, not native enforcement or
+container recovery qualification. Keep the required administrator load separate
+from ordinary repository development; the application must not try to install
+host security policy through a privileged container workaround.
