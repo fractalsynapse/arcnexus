@@ -1099,3 +1099,33 @@ report produced approximately 110 MB of raw verifier events. Preserve raw eviden
 but investigate eliminating repeated expanded context in structured summaries and
 using bounded evidence retrieval. Do not truncate authoritative evidence or change
 the active verifier's captured input to save time.
+
+CI run 41775419180 passed at cabed86: the confined built-program run reported 827
+cases (477 passed, 350 explicitly skipped native cases, zero failures), and the
+separate native stage passed all 392 cases with zero skips in 1128.773 seconds.
+Static checks and consolidated architecture/guidance validation also passed. Newer
+shutdown, edit-schema and container changes require their own refreshed evidence;
+this green run does not retroactively cover them.
+
+Container confinement now passes ten existing acceptance cases with zero skips,
+including actual HTTP/TLS proxy denial and descendant cleanup. Installing the
+runtime bundle in a captured system tool location and supplying curl/OpenSSL fixed
+missing-runtime prerequisites without changing application permissions. The first
+container host-loss probe exposed inherited HOME=/root; the next exposed orphaned
+zombies because no PID 1 init reaped them. Use an accessible non-root home and
+Docker --init. Do not extend watchdogs or weaken process-exit assertions to hide
+these deployment defects. Fixed prerequisites are cheap to check before a long
+lifecycle suite. The immutable product image builds separately from managed source;
+its entrypoint delegates only its own cgroup and drops capabilities before dispatch.
+
+The packaged product image passed 13 native enforcement/host-loss cases with zero
+skips in 37.499 seconds. Tests mounted only compiled acceptance inputs, so this
+qualifies the image's own distribution, production dependencies and installed Codex,
+not a writable checkout overlaid on the application. The runtime identity probe
+observed UID/GID 1000, zero effective/permitted/inheritable/ambient/bounding capabilities,
+and no-new-privileges. A real managed clone/registration survived replacing its
+container and moving the volume mount from /var/lib/arcnexus to /relocated with the
+same repository ID, base and revision token. Unfinished execution relocation and
+whole-container lifecycle recovery remain separate; do not infer them from a
+portfolio read. Packaging the supervisor independently took one initial build;
+subsequent entrypoint corrections reused the dependency and compile layers.

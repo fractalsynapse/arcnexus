@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Derived from moby/profiles at 6fe7deb1b9fb7c0397a4593480d7d22b9ee8caef.
 # ArcNexus modification: permit inner namespace mounts, retain default system denials.
-# Deploy only with --cap-drop=ALL, read-only runtime and a dedicated cgroup subtree.
+# Runtime requires zero capabilities, read-only mounts and a dedicated cgroup subtree.
 abi <abi/3.0>,
 #include <tunables/global>
 
@@ -37,6 +37,8 @@ profile "arcnexus-container" flags=(attach_disconnected,mediate_deleted) {
 
   # The outer container drops all capabilities; mounts require its nested user namespace.
   mount,
+  # Bubblewrap changes root only after entering its confined mount/user namespace.
+  pivot_root,
 
   deny /sys/[^f]*/** wklx,
   deny /sys/f[^s]*/** wklx,

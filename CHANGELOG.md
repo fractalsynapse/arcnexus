@@ -4,6 +4,8 @@
 
 ### Added
 
+- Package an immutable container supervisor with scoped startup delegation, capability-free execution and qualified native confinement; unattended lifecycle qualification remains in progress (#148).
+
 - Reject malformed checked-edit requests with corrective feedback before any source mutation, while retaining fatal authority and recovery failures (#205).
 
 - Drain managed execution and persist interruption on host shutdown without falsely rejecting dependent work (#148).
