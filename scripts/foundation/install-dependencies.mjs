@@ -1,5 +1,7 @@
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 /** @typedef {{resolved: string, integrity: string, os?: string[], cpu?: string[]}} LockedPackage */
 
@@ -15,8 +17,44 @@ class DependencyInstaller {
       .filter(([path]) => path !== '')
       .map(([, entry]) => this.package(entry));
     const urls = new Set(packages.filter((entry) => this.applicable(entry)).map((p) => p.resolved));
-    for (const url of urls) this.npm(['cache', 'add', url, '--ignore-scripts', '--prefer-offline']);
-    this.npm(['ci', '--offline', '--no-audit', '--no-fund']);
+    const artifacts = [...urls];
+    // Chunk argv and temporary disk usage. curl transfers the URLs in each chunk serially.
+    for (let i = 0; i < artifacts.length; i += 64) this.cache(artifacts.slice(i, i + 64));
+    this.command('npm', ['ci', '--offline', '--no-audit', '--no-fund']);
+  }
+
+  /** Downloads to private storage and lets npm ingest local archives without another registry request.
+   * @param {string[]} urls
+   */
+  cache(urls) {
+    const directory = mkdtempSync(join(tmpdir(), 'arcnexus-locked-'));
+    const archives = urls.map((url, index) => ({ url, path: join(directory, index + '.tgz') }));
+    try {
+      const transfers = archives.flatMap(({ url, path }) => ['--url', url, '--output', path]);
+      this.command('curl', [
+        '--disable',
+        '--silent',
+        '--show-error',
+        '--fail-early',
+        '--fail',
+        '--globoff',
+        '--location',
+        '--proto',
+        '=https',
+        '--proto-redir',
+        '=https',
+        ...transfers,
+      ]);
+      this.command('npm', [
+        'cache',
+        'add',
+        '--offline',
+        '--ignore-scripts',
+        ...archives.map(({ path }) => path),
+      ]);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   }
 
   /** Refuses local, mutable or authenticated sources before creating any package cache entries.
@@ -52,10 +90,11 @@ class DependencyInstaller {
   }
 
   /** Runs fixed argv without a shell and stops immediately on an observed dependency failure.
+   * @param {string} executable
    * @param {string[]} args
    */
-  npm(args) {
-    const result = spawnSync('npm', args, { stdio: 'inherit' });
+  command(executable, args) {
+    const result = spawnSync(executable, args, { stdio: 'inherit' });
     if (result.error) throw result.error;
     if (result.status !== 0) throw new Error(`Dependency preparation failed (${result.status})`);
   }

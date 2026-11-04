@@ -2617,3 +2617,12 @@ sandbox using serial curl downloads (27 seconds), local npm cache ingestion
 lock integrity and confined hooks. Use private temporary archives, remove them
 after cache ingestion and require a failed fetch to stop the operation. Qualify
 both native and container tooling before relying on this optimization.
+
+The same cold-cache prototype completed in the qualified container with 25
+seconds for serial HTTPS, 14 seconds for local archive ingestion and 8 seconds
+for offline install. The implementation chunks command arguments and deletes
+each private archive directory after ingestion. It installed all 191 packages
+in separate native and container confinement trials. Five focused cases passed,
+including real npm refusing an archive with a different integrity digest.
+Published workspaces still need their own observed setup; these timings describe
+disposable probes.

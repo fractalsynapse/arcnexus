@@ -14,7 +14,7 @@
 
 - Persist the complete director decision and workflow checkpoint atomically before dispatching its assignments (#235).
 
-- Prepare locked dependencies sequentially before offline installation in confined workspaces (#237).
+- Fetch locked HTTPS dependencies serially with curl, cache their archives locally, and install offline with npm integrity checks inside confinement (#237).
 
 - Keep collaboration acceptance portable inside steward confinement by separating catalog fixtures from native host setup, without adding skipped checks (#236).
 

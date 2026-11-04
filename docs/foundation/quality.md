@@ -114,7 +114,8 @@ transaction identity. Final `format:check` remains independent verification.
 
 The captured setup operation invokes `scripts/foundation/install-dependencies.mjs`.
 It validates the version-three lockfile, caches applicable HTTPS artifacts
-sequentially, then runs `npm ci --offline --no-audit --no-fund`. npm retains
+sequentially, using curl. It caches the private archives locally with npm, removes them,
+and runs `npm ci --offline --no-audit --no-fund`. npm retains
 lockfile integrity enforcement. Package lifecycle hooks run inside the same
 source-read-only operation sandbox. Unsupported dependency sources fail before
 any download; individual download failures are not retried automatically.
