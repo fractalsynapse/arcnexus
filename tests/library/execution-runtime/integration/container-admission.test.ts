@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { ContainerLifetime } from '../../../../dist/library/execution-runtime/container-lifetime.js';
+import { nativeHostTest } from '../../testing/support/general-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Checks deployment admission and foreign host refusal without starting engineering or sending real signals. */
@@ -19,17 +20,7 @@ class ContainerAdmissionScenarios {
     const lifetime = new ContainerLifetime(root);
     const socket = join('/tmp', `arcnexus-${process.getuid?.() ?? 'user'}`, key + '.sock');
     mkdirSync(join(socket, '..'), { recursive: true });
-    const server = createServer((connection) => {
-      connection.once('data', () =>
-        connection.end(
-          JSON.stringify({
-            value: { key, runtime: { root: root + '-foreign', pid: 99999999, start: '1' } },
-          }) + '\n',
-        ),
-      );
-    });
-    await new Promise<void>((resolve) => server.listen(socket, resolve));
-    t.after(() => new Promise<void>((resolve) => server.close(() => resolve())));
+    await this.foreignEndpoint(socket, root, t);
     await assert.rejects(lifetime.shutdown(), (error: AggregateError) => {
       assert.match(String(error.errors[0]), /matching live deployment identity/);
       return true;
@@ -39,6 +30,24 @@ class ContainerAdmissionScenarios {
     const replacement = new ContainerLifetime(root);
     ContainerLifetime.assertOpen(root);
     await replacement.shutdown();
+  }
+
+  /** Owns the foreign IPC fixture and reports bind failures through the test rather than an uncaught event. */
+  private async foreignEndpoint(socket: string, root: string, t: TestContext): Promise<void> {
+    const server = createServer((connection) => {
+      connection.once('data', () =>
+        connection.end(
+          JSON.stringify({
+            value: { key, runtime: { root: root + '-foreign', pid: 99999999, start: '1' } },
+          }) + '\n',
+        ),
+      );
+    });
+    await new Promise<void>((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(socket, resolve);
+    });
+    t.after(() => new Promise<void>((resolve) => server.close(() => resolve())));
   }
 
   /** Excludes a second lifetime owner and treats repeated empty-volume shutdown as the same drain. */
@@ -56,8 +65,10 @@ class ContainerAdmissionScenarios {
 
 const scenarios = new ContainerAdmissionScenarios();
 
-test('container shutdown refuses a foreign answering host and retains closed admission', (t) =>
-  scenarios.foreign(t));
+nativeHostTest(
+  'container shutdown refuses a foreign answering host and retains closed admission',
+  (t) => scenarios.foreign(t),
+);
 
 test('container lifetime has one owner and idempotent shutdown without dispatch', (t) =>
   scenarios.exclusive(t));
@@ -65,5 +76,5 @@ test('container lifetime has one owner and idempotent shutdown without dispatch'
 registerSuite({
   component: 'execution-runtime',
   level: 'integration',
-  tags: ['deterministic', 'host-lifecycle'],
+  tags: ['deterministic', 'native-host', 'host-lifecycle'],
 });

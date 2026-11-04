@@ -45,7 +45,43 @@ class NativeSelectionScenarios {
       ts.forEachChild(node, visit);
     };
     visit(source);
+    return found || this.socketServer(source);
+  }
+
+  /** Recognizes direct calls to imported net factories, including named aliases and namespace imports. */
+  private socketServer(source: ts.SourceFile): boolean {
+    const factories = this.socketImports(source);
+    let found = false;
+    const visit = (node: ts.Node): void => {
+      if (ts.isCallExpression(node) && factories.has(node.expression.getText(source))) found = true;
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
     return found;
+  }
+
+  /** Collects only node:net factory bindings; fixture strings and unrelated method names grant no match. */
+  private socketImports(source: ts.SourceFile): Set<string> {
+    const factories = new Set<string>();
+    for (const statement of source.statements) {
+      if (
+        !ts.isImportDeclaration(statement) ||
+        statement.importClause?.isTypeOnly ||
+        !ts.isStringLiteral(statement.moduleSpecifier) ||
+        statement.moduleSpecifier.text !== 'node:net'
+      )
+        continue;
+      const clause = statement.importClause;
+      const bindings = clause?.namedBindings;
+      if (clause?.name) factories.add(clause.name.text + '.createServer');
+      if (bindings && ts.isNamespaceImport(bindings))
+        factories.add(bindings.name.text + '.createServer');
+      if (bindings && ts.isNamedImports(bindings))
+        for (const binding of bindings.elements)
+          if (!binding.isTypeOnly && (binding.propertyName ?? binding.name).text === 'createServer')
+            factories.add(binding.name.text);
+    }
+    return factories;
   }
 
   /** Reads production suite selection without starting a host or substituting a fixture catalog. */
@@ -77,6 +113,32 @@ test('native dependency detection distinguishes actual access from fixture strin
   assert.equal(
     scenarios.requiresRuntime('const installed = process.env["ARCNEXUS_TEST_CODEX"];'),
     true,
+  );
+});
+
+test('native dependency detection recognizes host socket calls without matching unused imports', () => {
+  assert.equal(scenarios.requiresRuntime("import { createServer } from 'node:net';"), false);
+  assert.equal(
+    scenarios.requiresRuntime(
+      "const fixture = `import { createServer } from 'node:net'; createServer()`;",
+    ),
+    false,
+  );
+  assert.equal(
+    scenarios.requiresRuntime("import { createServer } from 'node:net'; createServer();"),
+    true,
+  );
+  assert.equal(
+    scenarios.requiresRuntime("import { createServer as listen } from 'node:net'; listen();"),
+    true,
+  );
+  assert.equal(
+    scenarios.requiresRuntime("import * as net from 'node:net'; net.createServer();"),
+    true,
+  );
+  assert.equal(
+    scenarios.requiresRuntime("import { createServer } from 'other'; createServer();"),
+    false,
   );
 });
 

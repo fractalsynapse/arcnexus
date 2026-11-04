@@ -168,3 +168,11 @@ They establish deployment behavior, not the real-agent self-development gate.
 Both the application and PID 1 tini were observed as UID/GID 1000 with every
 capability set zero and no-new-privileges. Runtime artifacts and volume are retained
 under the phase-two container qualification evidence.
+
+The foreign-IPC admission case requires native host access: its Unix socket bind is
+intentionally denied inside a confined agent operation. It carries native-host
+selection metadata and an explicit native test guard. The SQLite-only lifetime
+ownership/idempotence case remains runnable in confinement. Direct native success
+does not establish that a new test belongs in the confined lane; the release
+selection guard now checks direct imported `node:net` server factories as well as
+installed-runtime access.

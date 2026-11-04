@@ -4,6 +4,8 @@
 
 ### Added
 
+- Classify host IPC admission tests in native qualification and detect direct socket factories before they can break confined steward baselines (#208).
+
 - Assemble attributed simulation changes against a current target without importing unrelated baseline history or changing source branches; retain conflicts for inspection (#148).
 
 - Show current frozen regression paths and hashes on every steward turn, with explicit guidance for additional tests without weakening checked edits (#206).
