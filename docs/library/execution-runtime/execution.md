@@ -124,6 +124,16 @@ specify accepted intent or verified delivery as their required milestone. An inb
 reply must match its captured sender/recipient identities. A clarification does not
 restart engineering or mark the original assignment complete.
 
+Every activation can inspect a pinned current-run work index through
+`assignment.evidence`: read `manifest`, then the relevant assignment intent artifact.
+The index includes starting assignments that have not acquired a workspace yet.
+Engineering receives owner, objective, acceptance, declared scope, status and
+accepted-intent metadata; private checkpoint/source evidence remains restricted to
+read-only investigations. Status alone is not verification evidence. Linking requires
+the observed supplier identity and matching intent and scope; similar wording does
+not authorize automatic merging. Clarify an incoming request when its contract is
+unclear instead of creating a new engineering assignment just to ask its requester.
+
 Requests may narrow the recipient assignment with an explicit work kind, change
 type and writable paths. Null values inherit the originating work kind/change type
 and the recipient owner’s declared scope; an empty writable list is read-only.
@@ -133,7 +143,7 @@ need only an agreed intent. Independent delivery verification is automatic and
 does not require a worker to invent a reviewer-owner assignment.
 
 Captured verification inputs remain stable even when an assignment edits tests or
-check configuration. `verificationInputs` in `architecture/execution.yaml` declares
+check configuration. `verificationInputs` in the platform definition declares
 additional trusted source paths used by project checks; the host also captures the
 owner's existing test sources and tracked command-argument files automatically.
 When these inputs change in a candidate, the host reruns checks with their captured

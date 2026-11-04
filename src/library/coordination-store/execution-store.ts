@@ -1,3 +1,4 @@
+import { requestProposal } from './request-proposal.js';
 import type { DeliveryRecord, PromotionCandidate } from './delivery-types.js';
 import { CandidatePointers } from './candidate-pointers.js';
 import { RunRecords } from './run-records.js';
@@ -16,6 +17,8 @@ import type {
 } from './execution-types.js';
 
 export { ExecutionLease } from './execution-lease.js';
+
+export { requestProposal } from './request-proposal.js';
 
 /** Persists assignment accountability, inbox identities and dependency readiness atomically. */
 export class ExecutionStore {
@@ -254,12 +257,7 @@ export class ExecutionStore {
     recipient: ExecutionAssignment,
     request: OwnerRequest,
   ): void {
-    const inherited = sender.data.proposal as Record<string, unknown> | undefined;
-    const proposed = {
-      kind: request.kind ?? inherited?.kind ?? 'change',
-      changeType: request.changeType ?? inherited?.changeType ?? 'behavior',
-      ...(request.allowedWritePaths ? { allowedWritePaths: request.allowedWritePaths } : {}),
-    };
+    const proposed = requestProposal(sender, request);
     const existing = recipient.data.proposal as Record<string, unknown> | undefined;
     for (const key of ['kind', 'changeType', 'allowedWritePaths'] as const)
       if (

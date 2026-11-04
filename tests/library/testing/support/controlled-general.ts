@@ -11,6 +11,8 @@ export class ControlledGeneral {
 
   private assessment: unknown;
 
+  private assignmentEvidenceValue: any;
+
   /** Retains an external trace that survives candidate workspace switches. */
   constructor(
     private readonly calls: string,
@@ -28,15 +30,45 @@ export class ControlledGeneral {
     let prompt = '';
     for await (const chunk of process.stdin) prompt += chunk;
     appendFileSync(this.calls, JSON.stringify({ args, prompt }) + '\n');
-    if (prompt.includes('READ_ASSIGNMENT_EVIDENCE') && prompt.includes('Activity turn: planning'))
-      await new ControlledEvidence(this.calls, 'assignment.evidence').inspect(args, false);
+    await this.assignmentEvidence(args, prompt);
     await this.directionEvidence(args, prompt);
     await this.checkpointGate(prompt);
     await this.verificationEvidence(args, prompt);
     const result = prompt.startsWith('ArcNexus task direction.')
-      ? this.direction(prompt)
+      ? this.startingWork(this.direction(prompt), prompt)
       : this.worker(prompt);
     this.emit(result, prompt);
+  }
+
+  /** Reads the actual assignment capability before returning a deliberately shared supplier identity. */
+  private async assignmentEvidence(args: string[], prompt: string): Promise<void> {
+    if (
+      !/READ_ASSIGNMENT_EVIDENCE|LINK_EXISTING_WORK/.test(prompt) ||
+      !prompt.includes('Activity turn: planning')
+    )
+      return;
+    this.assignmentEvidenceValue = await new ControlledEvidence(
+      this.calls,
+      'assignment.evidence',
+      32768,
+    ).inspect(args, true, true);
+  }
+
+  /** Supplies two starting owners only for the controlled existing-work discovery scenario. */
+  private startingWork(result: any, prompt: string): any {
+    if (!prompt.includes('LINK_EXISTING_WORK')) return result;
+    result.selectedOwners = ['a', 'b'].map((id) => ({ id, reason: 'Starting owner' }));
+    result.assignments = [
+      {
+        ...this.assignment('a', false, ''),
+        kind: 'change',
+        changeType: 'documentation',
+        allowedWritePaths: ['docs'],
+        objective: 'LINK_EXISTING_WORK: reuse matching supplier work',
+      },
+      { ...this.assignment('b', false, ''), objective: 'Supply shared evidence' },
+    ];
+    return result;
   }
 
   /** Retrieves assessment inputs through the real verifier bridge when a controlled criterion depends on them. */
@@ -173,22 +205,32 @@ export class ControlledGeneral {
   private assignment(owner: string, correction: boolean, prompt: string) {
     return {
       ownerId: owner,
-      objective: correction
-        ? 'Additional goal evidence'
-        : (prompt.includes('READ_TOOL_OBSERVATIONS') ? 'READ_TOOL_OBSERVATIONS: ' : '') +
-          (prompt.includes('READ_ASSIGNMENT_EVIDENCE') ? 'READ_ASSIGNMENT_EVIDENCE: ' : '') +
-          (prompt.includes('RECOVER_CYCLE') ? 'RECOVER_CYCLE: ' : '') +
-          (prompt.includes('INVALID_REQUEST_SCOPE_AFTER_PLAN')
-            ? 'INVALID_REQUEST_SCOPE_AFTER_PLAN: '
-            : prompt.includes('INVALID_REQUEST_SCOPE')
-              ? 'INVALID_REQUEST_SCOPE: '
-              : '') +
-          'Research the dependency chain',
-      kind: 'research',
-      changeType: 'behavior',
+      objective: this.assignmentObjective(prompt, correction),
+      kind: prompt.includes('INHERIT_DOCUMENTATION') ? 'change' : 'research',
+      changeType: prompt.includes('INHERIT_DOCUMENTATION') ? 'documentation' : 'behavior',
       acceptanceCriteria: ['Evidence-backed result'],
-      allowedWritePaths: [],
+      allowedWritePaths: prompt.includes('INHERIT_DOCUMENTATION') ? ['docs'] : [],
     };
+  }
+
+  /** Retains only scenario directives needed by the assigned worker rather than copying director history. */
+  private assignmentObjective(prompt: string, correction: boolean): string {
+    if (correction) return 'Additional goal evidence';
+    const markers = [
+      'READ_TOOL_OBSERVATIONS',
+      'READ_ASSIGNMENT_EVIDENCE',
+      'RECOVER_CYCLE',
+      'INHERIT_DOCUMENTATION',
+    ];
+    const scope = prompt.includes('INVALID_REQUEST_SCOPE_AFTER_PLAN')
+      ? 'INVALID_REQUEST_SCOPE_AFTER_PLAN'
+      : 'INVALID_REQUEST_SCOPE';
+    return (
+      [...markers, scope]
+        .filter((marker) => prompt.includes(marker))
+        .map((marker) => marker + ': ')
+        .join('') + 'Research the dependency chain'
+    );
   }
 
   /** Requests additional owners during planning and completes resumed research with evidence. */
@@ -227,7 +269,27 @@ export class ControlledGeneral {
       !prompt.includes('Dependency assignment states')
     )
       return this.afterPlan(result, prompt, stage!, owner!);
+    if (stage === 'planning' && prompt.includes('LINK_EXISTING_WORK'))
+      return this.linkExisting(result);
     if (stage === 'planning') return this.planning(result, prompt, owner!);
+  }
+
+  /** Copies observed host intent rather than guessing an assignment identity or changing shared acceptance. */
+  private linkExisting(result: any): any {
+    const observed = this.assignmentEvidenceValue;
+    const entry = observed.manifest.assignments.find((item: any) => item.owner === 'b');
+    const intent = JSON.parse(observed.artifacts[entry.artifact]);
+    result.requests = [
+      {
+        ...this.request('a', ''),
+        ownerId: intent.owner,
+        assignmentId: intent.assignmentId,
+        request: intent.objective,
+        acceptanceCriteria: intent.acceptance,
+        ...intent.scope,
+      },
+    ];
+    return result;
   }
 
   /** Corrects the entire rejected batch from observed host feedback without changing expected deliveries. */

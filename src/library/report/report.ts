@@ -285,3 +285,5 @@ export { EvidencePages } from './evidence-pages.js';
 export { RecoveryEvidence } from './recovery-evidence.js';
 
 export { ReferencedEvidence } from './referenced-evidence.js';
+
+export { AssignmentRegistry } from './assignment-registry.js';

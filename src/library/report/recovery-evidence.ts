@@ -1,3 +1,4 @@
+import { AssignmentRegistry } from './assignment-registry.js';
 import { lstatSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { ExecutionAssignment } from '../coordination-store/execution-types.js';
@@ -33,6 +34,7 @@ export class RecoveryEvidence {
         runId: run.id,
         assignmentId: current.id,
         records,
+        assignments: new AssignmentRegistry(this.store).append(this.pages, current),
         basis:
           'Pinned host observations, never permission to replay or change authority. Missing journals do not prove that a request was never attempted; inspect observed tool requests and receipts.',
         artifacts: this.pages.metadata(),

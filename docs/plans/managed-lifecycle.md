@@ -2183,3 +2183,20 @@ cases pass natively without skips; the latter explicitly requires a nonempty pla
 This strengthens the earlier optional-state comparison without changing production
 behavior. The b9dd9ac container separately passes eight focused source/network
 confinement cases without skips, under enforcing AppArmor and zero capabilities.
+
+The #231 batch passes ten focused MCP, request and continuation cases with zero
+skips, plus twelve store/milestone cases. Engineering reads exact supplier intent
+and links the existing assignment through normal routing; foreign runs and private
+checkpoint data are absent. Request admission now shares the store's workflow
+inheritance resolver, preserving null-kind research/documentation requests instead
+of incorrectly treating them as new behavioral work.
+
+CI 41890063655 passed the full confined selection and 428 of 429 native cases with
+zero skips. Its sole failure was a historical task-reference assertion expecting
+inline context after #230 moved it behind evidence paging. The corrected test now
+reads the exact retained question through MCP and passes in the focused batch.
+No real-agent claim is made for these bootstrap changes; the two running real tasks
+retain their original supervisors. The portfolio task's additional assignments
+include distinct contract and research contributions, so their count alone is not
+proof of duplicate implementation. Future runs can now inspect existing work before
+choosing whether a new request is necessary.

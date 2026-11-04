@@ -1,7 +1,12 @@
 import { assignmentIntent } from './assignment-intent.js';
 import { RequestAdmission } from './request-admission.js';
 import type { UpstreamBridge } from '../operations/upstream-bridge.js';
-import { DeliveryEvidence, ExecutionEvidence, RecoveryEvidence } from '../report/report.js';
+import {
+  AssignmentRegistry,
+  DeliveryEvidence,
+  ExecutionEvidence,
+  RecoveryEvidence,
+} from '../report/report.js';
 import { candidateDigest } from '../change-inspection/changes.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -84,11 +89,13 @@ export class AssignmentExecution {
     );
   }
 
-  /** Supplies pinned same-run evidence to read-only research and review without widening filesystem access. */
+  /** Supplies intent discovery to engineers and private retained evidence only to read-only investigations. */
   private investigation(assignment: ExecutionAssignment, record: RecordData) {
     const resolved = record.resolvedAssignment as ResolvedAssignment;
-    if (resolved.assignment.kind === 'change') return;
-    const pages = new RecoveryEvidence(this.root, this.store).capture(assignment);
+    const pages =
+      resolved.assignment.kind === 'change'
+        ? new AssignmentRegistry(this.store).capture(assignment)
+        : new RecoveryEvidence(this.root, this.store).capture(assignment);
     record.investigationEvidence = pages.retain(join(this.root, 'runs', record.id), {
       runId: assignment.runId,
       assignmentId: assignment.id,
@@ -330,7 +337,7 @@ export class AssignmentExecution {
   ): ActivationResult {
     if (requests.some((r) => !r.ownerId || !this.context.owners.includes(r.ownerId)))
       return { kind: 'blocked', reason: JSON.stringify(requests) };
-    if (!this.admission.accept(record, requests)) return { kind: 'continue' };
+    if (!this.admission.accept(record, assignment, requests)) return { kind: 'continue' };
     return {
       kind: 'request',
       requests: requests.map((r, index) => ({

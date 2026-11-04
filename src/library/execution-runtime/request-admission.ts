@@ -1,3 +1,5 @@
+import { requestProposal } from '../coordination-store/execution-store.js';
+import type { ExecutionAssignment } from '../coordination-store/execution-types.js';
 import { assignmentIntent } from './assignment-intent.js';
 import { ExecutionContext, type ProjectExecution } from '../architecture/execution-context.js';
 import { InputError } from '../architecture/config.js';
@@ -16,8 +18,12 @@ export class RequestAdmission {
   ) {}
 
   /** Validates the complete batch before routing any request or accompanying inbox action. */
-  accept(record: RecordData, requests: AgentResult['requests']): boolean {
-    const errors = requests.flatMap((request, index) => this.validate(request, index));
+  accept(
+    record: RecordData,
+    sender: ExecutionAssignment,
+    requests: AgentResult['requests'],
+  ): boolean {
+    const errors = requests.flatMap((request, index) => this.validate(sender, request, index));
     if (!errors.length) return true;
     const warning = new ProgressObserver(this.root, record).failed(
       { activity: 'request-admission' },
@@ -47,17 +53,21 @@ export class RequestAdmission {
   }
 
   /** Shared-work links retain store matching rules; new known owners must pass the ordinary resolver. */
-  private validate(request: AgentResult['requests'][number], index: number): string[] {
+  private validate(
+    sender: ExecutionAssignment,
+    request: AgentResult['requests'][number],
+    index: number,
+  ): string[] {
     if (request.assignmentId) return [];
     try {
       new ExecutionContext().assignment(
         this.context,
         request.ownerId!,
-        assignmentIntent(request.request, request.acceptanceCriteria, {
-          kind: request.kind ?? undefined,
-          changeType: request.changeType ?? undefined,
-          allowedWritePaths: request.allowedWritePaths ?? undefined,
-        }),
+        assignmentIntent(
+          request.request,
+          request.acceptanceCriteria,
+          requestProposal(sender, request),
+        ),
       );
       return [];
     } catch (error) {
