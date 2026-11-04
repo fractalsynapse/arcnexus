@@ -1202,3 +1202,12 @@ checkpoint or supervisor was modified. Issue #207 records unavailable evidence i
 the recovery handoff. The selected assignment acceptance suite passed 17 cases with
 79 native-lane skips through the production test CLI; these skips are not native
 qualification. CI `41782502012` is running separately.
+
+Promotion assembly passed three actual native Git cases with zero skips in 6.773
+seconds: target changes survive while unrelated simulation-baseline content stays
+out, conflicts preserve both versions and logs, and linked-worktree or substituted
+candidate inputs are refused. Both checkouts and upstream remain unchanged. The
+first focused run exposed only an incorrect test expectation for the supervised
+command error text; the corrected assertion checks exit code and retained conflict
+output instead. This is operation-level evidence, not completed promotion, fresh
+model verification, or real upstream integration.

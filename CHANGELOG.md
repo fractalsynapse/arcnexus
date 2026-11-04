@@ -4,6 +4,8 @@
 
 ### Added
 
+- Assemble attributed simulation changes against a current target without importing unrelated baseline history or changing source branches; retain conflicts for inspection (#148).
+
 - Show current frozen regression paths and hashes on every steward turn, with explicit guidance for additional tests without weakening checked edits (#206).
 
 - Package an immutable headless container supervisor with scoped startup delegation, capability-free init and execution, qualified native confinement and graceful project-host drain (#148).
