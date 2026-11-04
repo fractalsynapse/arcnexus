@@ -362,3 +362,16 @@ unverified until the publisher performs fresh target checks and independent revi
 Neither source checkout nor upstream refs are changed. Conflicts retain command
 evidence and both revisions; simulation verification never substitutes for target
 verification.
+
+### Executable identity in confined operations
+
+The host resolves a declared program against the invocation's working directory
+and effective `PATH` before sandbox dispatch. It retains PATH ordering and symlink
+aliases, supplies an absolute executable path, and rejects missing programs before
+starting a command or service supervisor. Resolution grants no additional read or
+write access; the executable must still be readable under captured confinement.
+
+This keeps subprocess runtime identities usable for nested tool bindings and
+interpreter scripts in containers as well as native execution. Standard output
+remains separate from diagnostics; runtime warnings are retained in stderr and
+the combined operation log rather than being mistaken for structured results.

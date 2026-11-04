@@ -48,10 +48,11 @@ test('regular-file execution preserves complete structured stdout alongside stde
   assert.equal(result.exitCode, 0);
   assert.equal(result.stdoutLog, f.stdout);
   assert.equal(JSON.parse(readFileSync(f.stdout, 'utf8')).content, 'large-content-'.repeat(3000));
-  assert.equal(readFileSync(f.stderr, 'utf8'), 'diagnostic warning\n');
+  const stderr = readFileSync(f.stderr, 'utf8');
+  assert.match(stderr, /diagnostic warning\n/);
   const combined = readFileSync(f.log, 'utf8');
   assert.ok(combined.includes(readFileSync(f.stdout, 'utf8')));
-  assert.match(combined, /diagnostic warning/);
+  assert.ok(combined.includes(stderr));
 });
 
 test(
@@ -70,9 +71,10 @@ test(
     f.controller.abort(new Error('Cancelled test'));
     await failure;
     assert.equal(readFileSync(f.stdout, 'utf8'), 'ready');
-    assert.equal(readFileSync(f.stderr, 'utf8'), 'warning');
+    const stderr = readFileSync(f.stderr, 'utf8');
+    assert.match(stderr, /warning/);
     assert.match(readFileSync(f.log, 'utf8'), /ready/);
-    assert.match(readFileSync(f.log, 'utf8'), /warning/);
+    assert.ok(readFileSync(f.log, 'utf8').includes(stderr));
   },
 );
 

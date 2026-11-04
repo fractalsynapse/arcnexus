@@ -154,6 +154,7 @@ export class OperationExecution {
     const command = adapter.command(
       targetCommand(this.record, op),
       join(this.record.workspace, op.cwd),
+      operationEnvironment(this.record).PATH,
     );
     const result = await execute(
       command,

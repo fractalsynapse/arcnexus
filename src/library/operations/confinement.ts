@@ -9,6 +9,7 @@ import {
 import { join, relative, resolve } from 'node:path';
 import { relativePath, type Command } from '../architecture/config.js';
 import { git } from './process.js';
+import { executablePath } from './executable.js';
 
 const diagnosticSupport = readFileSync(new URL('./node-stdio.js', import.meta.url), 'utf8');
 
@@ -109,8 +110,8 @@ export class SourceConfinement {
     this.filesystem[canonical] = 'read';
   }
 
-  /** Returns the exact wrapper command; unsupported installed enforcement fails without fallback. */
-  command(command: Command, cwd = this.workspace): Command {
+  /** Resolves the declared program before wrapping it, without changing aliases or granting new filesystem access. */
+  command(command: Command, cwd = this.workspace, path = process.env.PATH): Command {
     const actual = realpathSync(cwd);
     this.rejectConfiguration(actual);
     if (!this.inside(actual, this.workspace)) throw new Error('Operation cwd escapes source');
@@ -118,7 +119,7 @@ export class SourceConfinement {
     for (const override of this.overrides) args.push('-c', override);
     return {
       command: this.authority.executable,
-      args: [...args, '--', command.command, ...command.args],
+      args: [...args, '--', executablePath(command.command, actual, path), ...command.args],
     };
   }
 

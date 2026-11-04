@@ -10,12 +10,39 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve, isAbsolute } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Qualifies actual subprocess filesystem enforcement through the assembled adapter. */
 class ConfinementScenarios {
+  /** Named programs retain an absolute executable identity under the installed sandbox, including containers. */
+  async executableIdentity(t: TestContext): Promise<void> {
+    const root = this.fixture(t);
+    const module = await import(resolve('dist/library/operations/confinement.js'));
+    const adapter = new module.SourceConfinement({
+      workspace: root,
+      reads: ['.'],
+      outputs: [],
+      temporaryRoot: root + '-private',
+      executable: process.env.ARCNEXUS_TEST_CODEX!,
+      toolDirectories: [dirname(process.execPath)],
+    });
+    const command = adapter.command(
+      { command: 'node', args: ['-p', 'JSON.stringify({executable:process.execPath})'] },
+      root,
+      dirname(process.execPath),
+    );
+    const result = spawnSync(command.command, command.args, {
+      cwd: root,
+      env: adapter.environment(),
+      encoding: 'utf8',
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(isAbsolute(JSON.parse(result.stdout).executable), true);
+    assert.equal(readFileSync(join(root, 'source.txt'), 'utf8'), 'original');
+  }
+
   /** Makes the actual resolver readable without giving a network-enabled command a writable handle. */
   async resolver(t: TestContext): Promise<void> {
     const root = this.fixture(t);
@@ -137,6 +164,14 @@ class ConfinementScenarios {
 }
 
 const scenarios = new ConfinementScenarios();
+
+test(
+  'named confined programs retain absolute executable identity',
+  {
+    skip: !process.env.ARCNEXUS_TEST_CODEX && 'Requires installed native confinement',
+  },
+  (t) => scenarios.executableIdentity(t),
+);
 
 test(
   'network-enabled confinement reads the canonical resolver but denies write handles',

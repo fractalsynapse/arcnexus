@@ -101,6 +101,8 @@
 
 ### Fixed
 
+- Resolve confined command and service executables against their actual PATH before dispatch, preserving absolute runtime identity and executable aliases in containers (#223).
+
 - Package a compatible pinned Bubblewrap for real Codex startup while retaining private-client and source confinement (#222).
 
 - Distinguish frozen-regression preservation from the earlier Git diff during review, and inherit mandatory source quality once for every ArcNexus steward (#221).
