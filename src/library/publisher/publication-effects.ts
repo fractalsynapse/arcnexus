@@ -32,10 +32,39 @@ export class PublicationEffects {
 
   /** Reuses immutable intent and reconciles uncertain results before permitting any new invocation. */
   async effect(operation: string, signal: AbortSignal, input: Record<string, unknown> = {}) {
-    signal.throwIfAborted();
+    return this.invoke(this.identity(operation), operation, signal, input);
+  }
+
+  /** Reconciles unfinished observations before a host-authorized fresh simulated check attempt. */
+  async refreshChecks(attempt: string, signal: AbortSignal) {
+    if (this.delivery.environment.mode !== 'simulation' || !attempt)
+      throw new Error('Fresh simulated checks require a retained host attempt identity');
+    const operation = 'pull-request.check';
+    const pending = this.effects
+      .effects()
+      .filter(
+        (effect) =>
+          effect.operation === operation &&
+          effect.environmentId === this.delivery.environment.id &&
+          effect.runId === this.delivery.runId &&
+          effect.input.deliveryId === this.delivery.id &&
+          effect.status !== 'completed',
+      );
+    for (const effect of pending) await this.invoke(effect.id, operation, signal, effect.input);
     const id = createHash('sha256')
-      .update(this.delivery.id + ':' + operation)
+      .update(this.identity(operation) + ':' + attempt)
       .digest('hex');
+    return this.invoke(id, operation, signal, {});
+  }
+
+  /** Preserves each immutable effect intent and requires observed completion before returning a receipt. */
+  private async invoke(
+    id: string,
+    operation: string,
+    signal: AbortSignal,
+    input: Record<string, unknown>,
+  ) {
+    signal.throwIfAborted();
     const prior = this.effects.effects().find((effect) => effect.id === id);
     let effect = prior?.status === 'uncertain' ? await this.executor.recover(id, signal) : prior;
     if (!effect || effect.status === 'prepared')

@@ -101,6 +101,10 @@
 
 ### Fixed
 
+- Preserve original delivery attribution when a workday inherits a verified task candidate, without duplicating publication or stopping unrelated work (#227).
+
+- Give explicit simulated publication retries fresh check observations while retaining failed receipts, deduplicating pending requests and refusing uncertain-operation replay (#228).
+
 - Validate proposed new test registrations, owner and source layout before checked edits, returning corrective feedback without partial writes (#226).
 
 - Reject captured test-selection changes before checked source mutation, allowing stewards to correct proposals without terminating otherwise valid work (#225).

@@ -16,6 +16,7 @@ import type { CapturedPublicationPolicy } from './publication-policy.js';
 
 export interface SimulationPublicationContext {
   root: string;
+  checkAttempt?: string;
   repositoryId: string;
   repository: RepositoryMaterialization;
   effects: LifecycleStore;
@@ -128,6 +129,8 @@ export class SimulationPublication {
     signal: AbortSignal,
     extra: Record<string, unknown> = {},
   ) {
+    if (operation === 'pull-request.check' && this.context.checkAttempt)
+      return this.executor.refreshChecks(this.context.checkAttempt, signal);
     const target = operation === 'pull-request.merge' ? { targetHead: this.git.targetHead() } : {};
     return this.executor.effect(operation, signal, { ...extra, ...target });
   }

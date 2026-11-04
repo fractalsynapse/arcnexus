@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
 import type { ExecutionRun } from '../coordination-store/execution-types.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
@@ -31,6 +32,7 @@ export class RunPublication {
     const policy = new PublicationPolicy().resolve(this.context);
     if (!policy || !run.environment || !run.data.candidateRecord) return;
     const candidate = run.data.candidateRecord as RecordData;
+    if (this.inherited(run, candidate)) return;
     const changed = git(
       candidate.source,
       'diff',
@@ -50,6 +52,25 @@ export class RunPublication {
     }
   }
 
+  /** Leaves a verified handoff attributed to its original run instead of publishing it twice. */
+  private inherited(run: ExecutionRun, candidate: RecordData): boolean {
+    if (candidate.executionRunId === run.id) return false;
+    const source = this.execution.run(String(candidate.executionRunId));
+    const retained = source.data.candidateRecord as RecordData | undefined;
+    if (
+      !retained ||
+      retained.id !== candidate.id ||
+      candidate.status !== 'completed' ||
+      retained.status !== 'completed' ||
+      source.data.candidateRevision !== run.data.candidateRevision ||
+      source.data.executionIdentity !== run.data.executionIdentity ||
+      JSON.stringify(source.environment) !== JSON.stringify(run.environment) ||
+      JSON.stringify(candidate.executionEnvironment) !== JSON.stringify(run.environment)
+    )
+      throw new Error('Inherited publication candidate does not match its verified source run');
+    return true;
+  }
+
   /** Persists explicit publication intent for sequential dispatch after the current activation checkpoint. */
   request(id: string, expectedRevision?: string) {
     const delivery = new DeliveryResources(this.root).get(id);
@@ -64,8 +85,11 @@ export class RunPublication {
       throw new Error('Delivery authority differs from retained run');
     if (run.data.pendingPublication && run.data.pendingPublication !== id)
       throw new Error('This run already has a queued publication');
-    if (delivery.publication !== 'released')
-      this.execution.updateRun(run.id, run.status, { pendingPublication: id });
+    if (delivery.publication !== 'released' && !run.data.pendingPublication)
+      this.execution.updateRun(run.id, run.status, {
+        pendingPublication: id,
+        publicationCheckAttempt: randomUUID(),
+      });
     return { accepted: true, deliveryId: id, runId: run.id };
   }
 
@@ -135,6 +159,9 @@ export class RunPublication {
         deliveries: store,
         policy: run.data.publicationPolicy as CapturedPublicationPolicy,
         checks: (head, cancellation, independent) => checks.check(head, cancellation, independent),
+        checkAttempt: run.data.pendingPublication
+          ? (run.data.publicationCheckAttempt as string | undefined)
+          : undefined,
       },
       delivery,
     );

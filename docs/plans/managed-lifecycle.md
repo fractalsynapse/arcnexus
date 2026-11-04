@@ -2015,3 +2015,60 @@ all uncertain prior check effects before executing a new observation. Recovery
 must reuse its retained attempt; no caller-selected commands or target overrides
 are introduced. Cover observed failure then success, duplicate requests and
 uncertain checks through actual simulated provider transitions and the host service.
+
+### Real container task and retained-work replacement
+
+Real simulated task 8282e6eb-b9b5-407e-ba48-69ee65e69958 completed engineering and
+goal assessment on immutable a7fb6f8. The release steward delivered container
+recovery guidance and dynamically requested the maintenance-owned changelog.
+Independent verification caught an incorrect report path; review also required
+preserving an explicit state-directory override in the replacement recipe. The
+steward corrected both through checked edits. A model-capacity failure in later
+independent verification was recovered by the real director from the completed
+engineering checkpoint, without manual changes or replay of uncertain operations.
+
+The task safely interrupted workday dc7fc89b-0a41-4536-a26e-a952bc100746 and the
+workday resumed automatically at 17:20:38 UTC. A subsequent explicit safe pause
+captured four assignment records and two unfinished source files. Replacing the
+container with the same image and retained volume preserved the exact checkpoint
+fields and file hashes. The old container exited successfully with PID zero.
+Explicit resume in the replacement continued the existing report inbox dependency.
+Execution remains UID/GID 1000, all capabilities zero, no-new-privileges enabled.
+This proves same-mount recovery, not unfinished-checkpoint relocation to a new path.
+
+Simulated delivery fd1de7c3a7033c50f607f8e6c19eeb0f7cec9c79249621359ad6da9f9b50b31f
+retains verified engineering, a commit, push and PR. Publication checks encountered
+an npm registry HTTP 403 while fetching glob-parent 6.0.2; integration/release are
+not yet established. The publication retry was accepted after replacement but reused the failed
+check receipt without executing a fresh check; #228 addresses this defect. An earlier retry attempt timed out on read-only host discovery before
+its publication request was sent. All failures remain recorded. Recovery evidence
+is indexed by qualification-148-real-container-a7fb6f8/evidence/recovery-manifest.json.
+
+Bootstrap e5a650a passes 26 focused edit/discovery cases and 13 native authority
+cases, with zero skips; build, strict types, formatting, lint and committed unified
+validation pass. CI 41877397062 is separate and pending. CI 41871028425 passed the
+full confined selection and 413/414 native cases; the remaining fixture mutation
+was corrected. CI 41876713346 was cancelled early after local committed validation
+caught an import cycle, which e5a650a removes. Validate a committed candidate before
+pushing, so architecture feedback does not consume a complete CI round.
+
+After replacement, workday dispatch encountered the inherited-candidate publication
+identity defect tracked in #227 and entered needs_attention. The recovery evidence
+proves checkpoint preservation and resumed execution, not successful ongoing
+workday completion. Neither frozen supervisor nor failed evidence was modified.
+
+The #227/#228 bootstrap batch passes eleven built-program cases with no skips,
+covering inherited provenance, pending-request identities, actual simulated
+publication failure followed by fresh successful checks, unchanged mutation
+receipts, and refusal to bypass uncertain checks. The focused run took 13.3 seconds.
+This deterministic provider evidence does not replace a new real-agent release
+qualification. The native real task has independently completed its runtime
+dependency and resumed publisher verification; report and CLI failures remain.
+
+Efficiency observation: workflow identity transitions and failed-check retries
+need focused production-service tests before another expensive real run. A valid
+checkpoint can survive container replacement while a later publication boundary
+fails; test those claims separately rather than interpreting recovery as full
+lifecycle completion. Mandatory full checks repeated after small documentation
+corrections dominate cost; any future preparation reuse must prove unchanged
+inputs and confinement instead of weakening verification.

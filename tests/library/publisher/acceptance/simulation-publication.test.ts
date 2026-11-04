@@ -37,13 +37,18 @@ class PublicationFixture {
     },
   };
 
-  /** Uses production effect and publication wiring while keeping synthetic verification explicitly in acceptance. */
+  result: 'passed' | 'failed' | 'interrupted' = 'passed';
+
+  /** Uses production effect and publication wiring while keeping synthetic verification in acceptance. */
   constructor(t: TestContext) {
     this.git = new GitDeliveryFixture(t);
-    const path = join(this.git.root, 'built-output');
-    writeFileSync(path, 'controlled artifact');
-    const sha256 = createHash('sha256').update('controlled artifact').digest('hex');
-    this.publication = new SimulationPublication(
+    writeFileSync(join(this.git.root, 'built-output'), 'controlled artifact');
+    this.publication = this.instance(t);
+  }
+
+  /** Reopens provider orchestration with an explicit retained check intent and unchanged delivery authority. */
+  instance(t: TestContext, checkAttempt?: string): SimulationPublication {
+    const publication = new SimulationPublication(
       {
         root: this.git.root,
         repositoryId: 'repo',
@@ -51,18 +56,29 @@ class PublicationFixture {
         effects: this.git.effects,
         deliveries: this.git.store,
         policy: this.policy,
-        checks: async () => {
-          this.checks++;
-          return {
-            status: 'passed',
-            evidence: ['controlled-check'],
-            artifacts: [{ path, sha256 }],
-          };
-        },
+        checkAttempt,
+        checks: async () => this.check(),
       },
       this.git.store.get(this.git.id),
     );
-    t.after(() => this.publication.close());
+    t.after(() => publication.close());
+    return publication;
+  }
+
+  /** Counts actual check-boundary calls and can model an observed failure or uncertain interruption. */
+  private check() {
+    this.checks++;
+    if (this.result === 'interrupted') throw new Error('Controlled check interruption');
+    return {
+      status: this.result,
+      evidence: ['controlled-check'],
+      artifacts: [
+        {
+          path: join(this.git.root, 'built-output'),
+          sha256: createHash('sha256').update('controlled artifact').digest('hex'),
+        },
+      ],
+    };
   }
 }
 
@@ -81,6 +97,44 @@ test('publication retains pending PR until revision approval then completes and 
   assert.deepEqual(await f.publication.publish(f.git.signal), released);
   assert.equal(f.checks, 2);
   assert.equal(f.git.effects.effects().length, 7);
+});
+
+test('explicit simulated check refresh retains failed evidence and all original mutation receipts', async (t) => {
+  const f = new PublicationFixture(t);
+  f.result = 'failed';
+  await assert.rejects(() => f.publication.publish(f.git.signal), /checks failed/);
+  const failed = structuredClone(
+    f.git.effects.effects().find((e) => e.operation === 'pull-request.check'),
+  )!;
+  const pending = f.git.store.get(f.git.id);
+  const receipts = structuredClone(pending.receipts);
+  f.git.store.approve(pending.id, pending.version, pending.candidate);
+  f.result = 'passed';
+  const retry = f.instance(t, 'retained-retry');
+  const released = await retry.publish(f.git.signal);
+  assert.equal(released.publication, 'released');
+  assert.equal(f.checks, 3);
+  assert.deepEqual(
+    f.git.effects.effects().find((e) => e.id === failed.id),
+    failed,
+  );
+  for (const [key, value] of Object.entries(receipts))
+    assert.equal(released.receipts[key as keyof typeof receipts], value);
+  assert.deepEqual(await retry.publish(f.git.signal), released);
+  assert.equal(f.checks, 3);
+  assert.equal(f.git.effects.effects().length, 8);
+});
+
+test('explicit simulated check refresh cannot bypass an uncertain earlier check', async (t) => {
+  const f = new PublicationFixture(t);
+  f.result = 'interrupted';
+  await assert.rejects(() => f.publication.publish(f.git.signal), /Controlled check interruption/);
+  f.result = 'passed';
+  const retry = f.instance(t, 'fresh-intent');
+  await assert.rejects(() => retry.publish(f.git.signal), /uncertain|reconciliation|unknown/i);
+  assert.equal(f.checks, 1);
+  assert.equal(f.git.effects.effects().length, 4);
+  assert.equal(f.git.store.get(f.git.id).integration, 'pending');
 });
 
 registerSuite({
