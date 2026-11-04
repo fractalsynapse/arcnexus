@@ -2569,3 +2569,11 @@ the failed job's individual test stacks and replaying those cases took seconds.
 Building the test sources alone reused stale product output. Rebuilding the
 product first reproduced the corrected diagnostics. The two historical cases and
 four installer cases then passed locally.
+
+### Validate the complete standards library once per catalog (#148)
+
+A package validation could pass an unused standard with an undeclared check,
+although listing standards rejected the same revision. Resolve every standard
+while building the committed catalog, then use that captured result for inherited
+component context and resource queries. This also avoids resolving the same
+inherited standard and its documents once per steward during host startup.
