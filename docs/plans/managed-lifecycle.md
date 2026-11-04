@@ -1557,3 +1557,21 @@ timeline payloads. Include timeline evidence in workspace revision tokens so eve
 progress changes invalidate stale resource reads. Missing historical progress remains
 unavailable. Preparation/cleanup test migration and alias retirement remain subsequent
 work; adding this projection alone does not complete that gate.
+
+
+The #216 production resource selection passed nine cases with zero failures/skips
+(11.892 seconds), including historical unknowns, private-field omission, claimed
+versus verified progress, command completion and event-sensitive stable revisions.
+Evidence is retained at
+`~/.local/share/arcnexus/state/test-runs/f82a13b2-40ea-43b2-a69d-457e9a15f927`.
+Scoped lint, strict checking, builds and consolidated validation passed at `e740a47`.
+This is bootstrap work; legacy command retirement is still pending caller migration.
+
+A timing sample from the tenth publisher assignment on 2026-11-04 records
+48 completed host commands totaling 1,277.3 seconds. Five full-suite invocations and
+five strict-check/lint cycles occurred while the assignment moved through correction;
+its start was 07:50 UTC. Those command durations are not the whole elapsed time and
+do not establish model-only latency because scheduling and other owners also consume
+wall time. Recommendation: fix the observed proposal transport and pre-freeze quality
+failures first, then measure a fresh run before changing required verification. Do
+not skip checks on changed candidates or attribute all delay to test execution.
