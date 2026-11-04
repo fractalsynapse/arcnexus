@@ -13,8 +13,6 @@ constraints:
 operations:
   guidance-build:
     - agent
-  component-tests:
-    - verify
   migrated-recipe-a7573c70ed1a3dfa:
     - verify
 owns:

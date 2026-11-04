@@ -12,11 +12,15 @@ class ProjectOperationScenarios {
   validation(): void {
     const { catalog, owners, source } = new ExecutionContext().resolve(process.cwd());
     const operations = owners.flatMap((id) =>
-      catalog.components[id]!.operationPlan!.verify!.filter(
+      catalog.components[id]!.operationPlan!.delivery!.filter(
         (operation) => operation.id === 'migrated-recipe-f36c9dcd75620b35',
       ),
     );
-    assert.equal(operations.length, owners.length, 'Every steward must inherit validation');
+    assert.equal(
+      operations.length,
+      owners.length,
+      'Every steward must inherit assembled delivery validation',
+    );
     const operation = operations[0]!;
     assert.ok(operation.kind === 'command');
     const result = spawnSync(operation.command, operation.args, {
@@ -57,6 +61,32 @@ class ProjectOperationScenarios {
     }
   }
 
+  /** Engineering checks use one inherited owner policy and profile while assembled checks retain whole-repository scope. */
+  scoped(): void {
+    const { catalog, owners } = new ExecutionContext().resolve(process.cwd());
+    for (const id of owners) {
+      const owner = catalog.components[id]!;
+      const checks = owner.operationPlan!.verify!;
+      assert.ok(
+        checks.some((op) => op.id === 'component-lint'),
+        id,
+      );
+      assert.ok(
+        checks.some((op) => op.id === 'component-format-check'),
+        id,
+      );
+      assert.ok(
+        checks.some((op) => op.id === 'component-tests' && op.profileVerification === 'node'),
+        id,
+      );
+      assert.ok(!checks.some((op) => op.id === 'migrated-recipe-719d77e27c5d9798'), id);
+      assert.ok(
+        owner.operationPlan!.delivery!.some((op) => op.id === 'migrated-recipe-719d77e27c5d9798'),
+        id,
+      );
+    }
+  }
+
   /** Formatting shares one read-only command and derives each owner's proposal paths. */
   formatting(): void {
     const { catalog, owners } = new ExecutionContext().resolve(process.cwd());
@@ -83,5 +113,8 @@ test('real project inherits one shared lint and test availability definition per
 
 test('real project derives checked formatting proposals from inherited ownership', () =>
   scenarios.formatting());
+
+test('engineering checks are owner-scoped while assembled delivery retains full checks', () =>
+  scenarios.scoped());
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });

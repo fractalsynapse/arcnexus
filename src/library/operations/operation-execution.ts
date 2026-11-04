@@ -1,3 +1,4 @@
+import { observe } from '../report/timeline.js';
 import { OperationEvidence } from './operation-evidence.js';
 import { ServiceManager } from './services.js';
 import type { SourceConfinement } from './confinement.js';
@@ -27,7 +28,10 @@ export class OperationExecution {
 
   /** Executes a fresh checkpoint, including required preparation, for a single requested operation. */
   async run(op: Operation, purpose: string): Promise<CommandResult> {
-    return (await this.checkpoint([op], purpose)).at(-1)!;
+    const results = await this.checkpoint([op], purpose);
+    const result = results.at(-1);
+    if (!result) throw new Error(`Operation has no applicable test suites: ${op.id}`);
+    return result;
   }
 
   /** Executes the fully validated dependency order once, without reusing evidence across checkpoints. */
@@ -39,7 +43,10 @@ export class OperationExecution {
   async steps(steps: OperationStep[]): Promise<CommandResult[]> {
     this.evidence.assertSettled();
     this.signal.throwIfAborted();
-    const ordered = new OperationCheckpoint(this.record).resolve(steps);
+    const checkpoint = new OperationCheckpoint(this.record);
+    const ordered = checkpoint.resolve(steps);
+    for (const selection of checkpoint.notApplicable)
+      observe(this.root, this.record, 'operation.not_applicable', selection);
     const results: CommandResult[] = [];
     for (const step of ordered) results.push(await this.invoke(step.operation, step.purpose));
     return results;

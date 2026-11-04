@@ -11,8 +11,6 @@ constraints:
   - Use the captured execution record without inspecting mutable target files
   - Keep the supervising runner unchanged
 operations:
-  component-tests:
-    - verify
   report-format:
     - agent
 owns:

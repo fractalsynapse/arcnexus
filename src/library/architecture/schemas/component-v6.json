@@ -79,7 +79,7 @@
             "minItems": 1,
             "uniqueItems": true,
             "items": {
-              "enum": ["preflight", "setup", "refresh", "verify", "agent"]
+              "enum": ["preflight", "setup", "refresh", "verify", "delivery", "agent"]
             }
           }
         },
@@ -194,7 +194,7 @@
             "minItems": 1,
             "uniqueItems": true,
             "items": {
-              "enum": ["preflight", "setup", "refresh", "verify", "agent"]
+              "enum": ["preflight", "setup", "refresh", "verify", "delivery", "agent"]
             }
           }
         },
@@ -307,7 +307,7 @@
             "minItems": 1,
             "uniqueItems": true,
             "items": {
-              "enum": ["preflight", "setup", "refresh", "verify", "agent"]
+              "enum": ["preflight", "setup", "refresh", "verify", "delivery", "agent"]
             }
           }
         },

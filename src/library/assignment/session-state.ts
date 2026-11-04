@@ -185,8 +185,14 @@ export class SessionState {
     record.stage = stage;
     this.journal(stage, 'started', commands);
     try {
-      await new OperationExecution(root, record, signal).checkpoint(commands as Operation[], stage);
-      this.journal(stage, 'completed', { checks: commands.length });
+      const results = await new OperationExecution(root, record, signal).checkpoint(
+        commands as Operation[],
+        stage,
+      );
+      this.journal(stage, 'completed', {
+        declaredChecks: commands.length,
+        completedCommands: results.length,
+      });
     } catch (error) {
       this.journal(stage, 'failed', String(error));
       throw error;

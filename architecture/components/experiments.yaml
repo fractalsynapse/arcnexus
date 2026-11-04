@@ -23,8 +23,6 @@ constraints:
   - "experiment-v3 (src/library/experiments/schemas/experiment-v3.json):
     Prompt-driven cases preserve shared task authority and evidence"
 operations:
-  component-tests:
-    - verify
 owns:
   - src/library/experiments
   - tests/library/experiments

@@ -28,13 +28,22 @@ export function operationOwner(record: RecordData, operation: Operation): Compon
 
 /** Plans finite prerequisites and deduplicates equivalent execution within one explicit checkpoint. */
 export class OperationCheckpoint {
+  readonly notApplicable: Array<{
+    operationId: string;
+    ownerId: string;
+    profile: string;
+    purpose: string;
+  }> = [];
+
   /** Retains captured authority while resolving current candidate test selection. */
   constructor(private readonly record: RecordData) {}
 
   /** Validates the complete dependency graph before any command in the checkpoint is dispatched. */
   resolve(steps: OperationStep[]): OperationStep[] {
+    this.notApplicable.length = 0;
     const seen = new Set<string>();
     return steps
+      .filter((step) => this.applicable(step))
       .flatMap(({ operation, purpose }) =>
         this.dependencies(operation).map((dependency) => ({ operation: dependency, purpose })),
       )
@@ -45,6 +54,29 @@ export class OperationCheckpoint {
         seen.add(key);
         return true;
       });
+  }
+
+  /** Records empty implicit profile selections without weakening explicitly declared verification. */
+  private applicable(step: OperationStep): boolean {
+    if (!step.operation.profileVerification) return true;
+    const operation = currentOperationContext(this.record, step.operation);
+    if (!operation.pendingContext?.includes('selectedTestFiles')) return true;
+    const owner = operationOwner(this.record, operation);
+    if (
+      owner.testProfile !== operation.profileVerification ||
+      !owner.operationPlan?.verify?.some(
+        (entry) =>
+          entry.id === operation.id && entry.profileVerification === operation.profileVerification,
+      )
+    )
+      throw new Error('Profile verification requires captured test-profile authority');
+    this.notApplicable.push({
+      operationId: operation.id,
+      ownerId: owner.id,
+      profile: operation.profileVerification!,
+      purpose: step.purpose,
+    });
+    return false;
   }
 
   /** Resolves finite preparation for an explicit service start without executing the service as a checkpoint. */

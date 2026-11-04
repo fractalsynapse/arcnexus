@@ -16,17 +16,17 @@ reads:
   - .
 operations:
   migrated-recipe-43b539fb85a57c26:
-    - verify
+    - delivery
   migrated-recipe-df6d67ddacf5bf0c:
-    - verify
+    - delivery
   comment-issue:
     - agent
   migrated-recipe-f1691da2bfa5a18c:
-    - verify
+    - delivery
   migrated-recipe-719d77e27c5d9798:
-    - verify
+    - delivery
   migrated-recipe-f36c9dcd75620b35:
-    - verify
+    - delivery
   migrated-recipe-eddf6384eb12cd8d:
     - preflight
   migrated-recipe-c6b0f27327a0cc0c:
@@ -41,6 +41,7 @@ operations:
     - agent
   component-lint:
     - agent
+    - verify
   component-format:
     - agent
 director:

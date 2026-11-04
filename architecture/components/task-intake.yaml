@@ -24,8 +24,6 @@ constraints:
 operations:
   track-issue:
     - agent
-  component-tests:
-    - verify
   migrated-recipe-712e56e123d7b39c:
     - verify
 owns:

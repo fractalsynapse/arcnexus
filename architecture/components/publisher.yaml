@@ -9,8 +9,7 @@ constraints:
   - Real main merges, tags and package publication remain human-controlled
 operations:
   publish-delivery: [agent]
-  package-artifact: [verify]
-  component-tests: [verify]
+  package-artifact: [delivery]
 owns:
   - src/library/publisher
   - tests/library/publisher

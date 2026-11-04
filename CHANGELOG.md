@@ -168,6 +168,8 @@
 
 ### Changed
 
+- Use owner-scoped engineering checks and retain full repository verification on assembled deliveries (#234).
+
 - Move scripted prompt-campaign execution into acceptance-test support and retire `experiment run`; real-agent simulation continues through tasks and workdays (#148).
 
 - Batch related implementation and test authoring before long qualification cycles; preserve final release gates and real director-selected self-development (#148).

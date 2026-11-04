@@ -79,7 +79,7 @@ export class DeliveryChecks {
         !component.operationPlan?.verify?.length
       )
         throw new Error('Missing captured owner verification: ' + id);
-      return component.operationPlan.verify;
+      return [...component.operationPlan.verify, ...(component.operationPlan.delivery ?? [])];
     });
     const before = candidateDigest(record);
     record.commands.push(

@@ -2248,8 +2248,8 @@ keeps subsequent CLI selection focused on this changed behavior.
 New captured authority separates finite `delivery` operation usage from assignment
 `verify` usage. Inherited delivery operations run on the assembled immutable head
 alongside owner checks before publication; engineering does not repeatedly execute
-those repository-wide checks. ArcNexus declares shared owner formatting and lint
-verification once. The inherited test profile supplies its existing run operation
+those repository-wide checks. ArcNexus declares shared owner lint verification once; checked formatting
+proposals remain available during engineering, with formatting enforced at delivery. The inherited test profile supplies its existing run operation
 for owner-suite verification without another maintained suite list or leaf recipe.
 An explicit verify declaration remains mandatory. An implicit profile check with no
 owned suites records non-applicability; it never launches an empty Node test command.
