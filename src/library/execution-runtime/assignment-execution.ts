@@ -1,3 +1,5 @@
+import { assignmentIntent } from './assignment-intent.js';
+import { RequestAdmission } from './request-admission.js';
 import type { UpstreamBridge } from '../operations/upstream-bridge.js';
 import { DeliveryEvidence, ExecutionEvidence, RecoveryEvidence } from '../report/report.js';
 import { candidateDigest } from '../change-inspection/changes.js';
@@ -22,6 +24,8 @@ import type { AgentResult } from '../steward/codex.js';
 export class AssignmentExecution {
   private readonly snapshots: CandidateSnapshots;
 
+  private readonly admission: RequestAdmission;
+
   /** Captures authority and the project store independently of mutable candidate source. */
   constructor(
     private readonly root: string,
@@ -33,6 +37,7 @@ export class AssignmentExecution {
     ) => UpstreamBridge | undefined,
   ) {
     this.snapshots = new CandidateSnapshots(context.source, join(root, 'snapshots'));
+    this.admission = new RequestAdmission(root, context);
   }
 
   /** Restores retained work, runs one stage and returns only a structured scheduler outcome. */
@@ -56,7 +61,8 @@ export class AssignmentExecution {
     const session = this.session(assignment, record);
     if (Array.isArray(assignment.data.questions) && assignment.data.questions.length)
       return this.answer(assignment, record, session);
-    if (!record.pendingRequests && !record.pendingInboxActions) await session.step();
+    if (record.requestCorrection) await this.admission.correct(record, session);
+    else if (!record.pendingRequests && !record.pendingInboxActions) await session.step();
     const result = await this.outcome(assignment, record, session);
     return { ...result, receipt: (record.checkpoint as { sha256: string }).sha256 };
   }
@@ -197,7 +203,11 @@ export class AssignmentExecution {
 
   /** Captures assignment authority and associates a fresh workspace with its durable execution identity. */
   private capture(assignment: ExecutionAssignment, base: string): RecordData {
-    const value = this.value(assignment);
+    const value = assignmentIntent(
+      assignment.objective,
+      assignment.acceptance,
+      assignment.data.proposal as Partial<Assignment> | undefined,
+    );
     const resolved = new ExecutionContext().assignment(this.context, assignment.owner, value);
     const record = createWorkspace(this.root, {
       project: this.context.source,
@@ -214,23 +224,6 @@ export class AssignmentExecution {
     record.directionAccepted = true;
     record.trustedVerificationPaths = this.context.verificationInputs;
     return record;
-  }
-
-  /** Uses director-authored intent or the recipient's bounded request objective. */
-  private value(assignment: ExecutionAssignment): Assignment {
-    const proposed = assignment.data.proposal as Partial<Assignment> | undefined;
-    return {
-      schemaVersion: 3,
-      kind: proposed?.kind ?? 'change',
-      changeType: proposed?.changeType ?? 'behavior',
-      objective: assignment.objective,
-      expectedOutcome: assignment.objective,
-      acceptanceCriteria: assignment.acceptance.length
-        ? assignment.acceptance
-        : [assignment.objective],
-      allowedWritePaths: proposed?.allowedWritePaths,
-      hostChecks: [],
-    };
   }
 
   /** Distinguishes accepted intent from verified delivery and preserves explicit milestone semantics. */
@@ -337,6 +330,7 @@ export class AssignmentExecution {
   ): ActivationResult {
     if (requests.some((r) => !r.ownerId || !this.context.owners.includes(r.ownerId)))
       return { kind: 'blocked', reason: JSON.stringify(requests) };
+    if (!this.admission.accept(record, requests)) return { kind: 'continue' };
     return {
       kind: 'request',
       requests: requests.map((r, index) => ({

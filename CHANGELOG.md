@@ -103,7 +103,7 @@
 
 - Page complete director catalogs, retained checkpoint state and assessment input through immutable evidence tools, preventing large histories from overflowing initial prompts without restricting eligible owners (#230).
 
-- Reject behavioral assignment scopes disconnected from the captured test-profile root before workspace preparation, preserving explicit scope and nonbehavioral workflows (#229).
+- Return invalid dependency scope to the requester before creating recipient work; reject behavioral assignment scopes disconnected from the captured test-profile root before workspace preparation, preserving explicit scope and nonbehavioral workflows (#229).
 
 - Preserve original delivery attribution when a workday inherits a verified task candidate, without duplicating publication or stopping unrelated work (#227).
 

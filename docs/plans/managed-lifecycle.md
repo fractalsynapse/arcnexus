@@ -2147,3 +2147,16 @@ partially route a fan-out batch. Existing deliberately linked assignments keep
 their store-enforced matching rules. Unknown owners remain explicit blockers.
 Use the existing equivalent-failure diagnosis, not a new retry quota, and qualify
 corrected resubmission through production request routing.
+
+The first requester-correction native acceptance passed: an invalid two-request
+batch creates no recipient; corrected requests route once through a retained
+read-only activation, and unrelated work remains runnable. Admission and recipient
+capture now share one intent normalizer to prevent default drift.
+
+CI 41886521596 failed in the confined inspection suite before native execution:
+the historical skill-maintenance preview implicitly requested behavioral work
+from an owner without regression-test authority. Its fixture now declares its
+actual documentation workflow; the behavioral scope guard remains intact.
+Efficiency observation: preserve workflow intent in acceptance fixtures rather
+than treating every prompt as a feature change. The focused scenario catches this
+without another full native cycle.

@@ -178,6 +178,7 @@ export class ControlledGeneral {
         : (prompt.includes('READ_TOOL_OBSERVATIONS') ? 'READ_TOOL_OBSERVATIONS: ' : '') +
           (prompt.includes('READ_ASSIGNMENT_EVIDENCE') ? 'READ_ASSIGNMENT_EVIDENCE: ' : '') +
           (prompt.includes('RECOVER_CYCLE') ? 'RECOVER_CYCLE: ' : '') +
+          (prompt.includes('INVALID_REQUEST_SCOPE') ? 'INVALID_REQUEST_SCOPE: ' : '') +
           'Research the dependency chain',
       kind: 'research',
       changeType: 'behavior',
@@ -192,6 +193,8 @@ export class ControlledGeneral {
     if (prompt.startsWith('Independent read-only verification.')) return this.review(prompt);
     const owner = prompt.match(/active component identity ([a-z]+) as fromComponent/)?.[1];
     const stage = prompt.match(/Activity turn: ([a-z]+)/)?.[1];
+    if (prompt.includes('Correct rejected dependency requests'))
+      return this.correctRequests(result, prompt);
     if (stage === 'planning') return this.planning(result, prompt, owner!);
     if (
       prompt.includes('REPORT_BLOCK_ONCE') &&
@@ -212,6 +215,18 @@ export class ControlledGeneral {
     return result;
   }
 
+  /** Corrects the entire rejected batch from observed host feedback without changing expected deliveries. */
+  private correctRequests(result: any, prompt: string): any {
+    const marker = 'Host admission feedback: ';
+    const feedback = JSON.parse(prompt.slice(prompt.lastIndexOf(marker) + marker.length));
+    result.requests = feedback.requests.map((request: any) => ({
+      ...request,
+      allowedWritePaths: null,
+    }));
+    result.inboxActions = feedback.actions;
+    return result;
+  }
+
   /** Emits initial supplier requests, a deliberate cycle, or the accepted retained research plan. */
   private planning(result: any, prompt: string, owner: string): any {
     if (
@@ -224,6 +239,8 @@ export class ControlledGeneral {
       result.status = owner === 'a' ? 'completed' : 'blocked';
       result.blockers = ['Needs supplier evidence'];
       result.requests = [this.request(owner, prompt)];
+      if (prompt.includes('INVALID_REQUEST_SCOPE'))
+        result.requests.push({ ...this.request(owner, 'valid sibling'), ownerId: 'c' });
     } else result.plan = this.plan(prompt);
     return result;
   }
@@ -292,7 +309,7 @@ export class ControlledGeneral {
       assignmentId: null,
       kind: null,
       changeType: null,
-      allowedWritePaths: null,
+      allowedWritePaths: prompt.includes('INVALID_REQUEST_SCOPE') ? ['outside.txt'] : null,
       milestone: 'delivered',
       fromComponent: owner,
       ownerId: owner === 'a' ? 'b' : 'c',

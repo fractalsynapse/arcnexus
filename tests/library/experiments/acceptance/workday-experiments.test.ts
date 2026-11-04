@@ -1,7 +1,8 @@
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import type { TestContext } from 'node:test';
 import { test } from 'node:test';
@@ -48,14 +49,16 @@ class WorkdayExperimentsTests {
   }
 
   /** Verifies that guidance inspection preserves checked skill ownership without direct write grants. */
-  guidanceInspectionPreservesCheckedSkillOwnership() {
+  guidanceInspectionPreservesCheckedSkillOwnership(t: TestContext) {
+    const assignment = this.guidanceAssignment(t);
     const r = spawnSync(
       process.execPath,
       [
         cli,
         'inspect',
         'agent-guidance',
-        'Maintain skill metadata',
+        '--assignment',
+        assignment,
         '--project',
         process.cwd(),
         '--json',
@@ -66,6 +69,26 @@ class WorkdayExperimentsTests {
     const owner = JSON.parse(r.stdout).context.find((c: any) => c.id === 'agent-guidance');
     assert.ok(owner.allowedWritePaths.includes('.agents/skills'));
     assert.deepEqual(owner.access.writeDirectories, []);
+  }
+
+  /** Declares documentation intent explicitly so the preview does not invent behavioral regression authority. */
+  private guidanceAssignment(t: TestContext): string {
+    const root = mkdtempSync(join(tmpdir(), 'arcnexus-guidance-inspection-'));
+    t.after(() => rmSync(root, { recursive: true, force: true }));
+    const path = join(root, 'assignment.json');
+    writeFileSync(
+      path,
+      JSON.stringify({
+        schemaVersion: 3,
+        kind: 'change',
+        changeType: 'documentation',
+        objective: 'Maintain skill metadata',
+        expectedOutcome: 'Coherent skill metadata',
+        acceptanceCriteria: ['Preserve declared skill ownership'],
+        hostChecks: [],
+      }),
+    );
+    return path;
   }
 }
 
@@ -166,7 +189,7 @@ test('built experiment inspection captures both workday participants without inf
 test('real validator owner receives declared build and regression operations', () =>
   suite.realValidatorOwnerReceivesDeclaredBuildAndRegressionOperations());
 
-test('guidance inspection preserves checked skill ownership without direct write grants', () =>
-  suite.guidanceInspectionPreservesCheckedSkillOwnership());
+test('guidance inspection preserves checked skill ownership without direct write grants', (t) =>
+  suite.guidanceInspectionPreservesCheckedSkillOwnership(t));
 
 registerSuite({ component: 'experiments', level: 'acceptance', tags: ['deterministic'] });
