@@ -837,3 +837,11 @@ on the changed diagnostic; it was discarded. Build the distribution before test
 compilation/execution when using focused Node commands, or use the built test
 service that manages preparation. This is a cheap ordering check, not a reason
 to repeat the entire integrated suite.
+
+While the real lifecycle progresses on captured authority, finish standard CRUD
+through the existing configuration transaction service. Standards retain stable
+IDs, explicit owner/document/check references and schema-approved fields. Create,
+update and remove must validate the entire resulting library, reject stale resource
+revisions and referenced removals, and leave attached checkouts untouched. Reuse
+the same repository lease, journal and configuration branch as component updates;
+do not introduce a second mutation engine or silently create missing documentation.
