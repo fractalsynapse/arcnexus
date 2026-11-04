@@ -1,7 +1,8 @@
 # Container qualification
 
-Status: deployment qualification is in progress. The full container lifecycle and
-restart gates have not passed; this is not yet a supported production recipe.
+Status: native confinement and same-mount container replacement are qualified.
+Real-agent qualification and relocation of unfinished execution checkpoints remain
+open; this is not a claim that phase two or production release is complete.
 
 The supervisor needs a writable, dedicated cgroup-v2 subtree to terminate managed
 process trees, and an outer container policy that permits its nested Linux sandbox.
@@ -82,7 +83,7 @@ as `mount` for the inner sandbox; it remains attached across that transition.
 The complete native Codex bundle must be installed in a captured readable tool
 location. The qualification mounts it read-only at `/usr/local/lib/arcnexus/codex`;
 placing it at an undeclared `/runtime` path failed with a missing sandbox helper.
-The image must include Git, Bubblewrap, util-linux (`setpriv`), curl and OpenSSL.
+The image includes Git, Bubblewrap, util-linux (`setpriv`), tini, curl and OpenSSL.
 Missing curl fails the application's actual network qualification, rather than
 silently skipping the check. Machine executable bindings remain deployment data.
 
@@ -111,16 +112,17 @@ configured non-root UID/GID before starting the container.
 
 For a deployment with the Docker systemd cgroup driver, create a dedicated slice
 before bind-mounting it. An empty keeper container can hold the slice while the
-application container starts. Use `--init` on application containers: Node is not
-an orphan reaper, and running it directly as PID 1 left exited children as zombies
-in the host-loss acceptance. Release the keeper after the application owns its
-scope, or when qualification finishes. Do not mount the Docker socket into either.
+application container starts. The image entrypoint becomes a non-root, capability-free tini before starting
+the application: Node alone is not an orphan reaper. Do not add Docker `--init`
+to this recipe; its outer root-owned init could not signal the non-root application
+with the restricted startup capability set. Release the keeper after the application
+owns its scope, or when qualification finishes. Do not mount the Docker socket into either.
 
 The following is the qualified invocation shape; substitute the volume and generated
 seccomp policy paths. It demonstrates a read operation, not a running web service:
 
 ```sh
-docker run --rm --init --read-only \
+docker run --rm --read-only \
   --cgroup-parent=arcnexus.slice --cgroupns=host \
   --cap-drop=ALL --cap-add=CHOWN --cap-add=SETUID --cap-add=SETGID --cap-add=SETPCAP \
   --security-opt apparmor=arcnexus-container \
@@ -132,10 +134,18 @@ docker run --rm --init --read-only \
   arcnexus:phase2 arcnexus config get volume --json
 ```
 
-Keep an attached task's container alive until it finishes. Do not use the returning
-`workday start` command as the container's sole lifetime process: durable workday
-hosting and whole-container replacement remain explicit qualification work before
-this becomes a supported unattended deployment. No HTTP service is included yet.
+Omit the command override to start the image's default headless lifetime service.
+It holds the deployment open without starting engineering. Ordinary commands can
+then use `docker exec <container> arcnexus-entrypoint arcnexus ...`; the entrypoint
+applies the same non-root identity and capability drop to these invocations.
+The returning `workday start` command is not the container's lifetime process.
+No HTTP service is included yet.
+
+On Docker stop, the lifetime service closes execution admission, obtains live host
+identities over private IPC, signals those hosts and waits for their drain. The
+closing marker remains until a replacement lifetime service opens admission.
+Replacement alone never resumes engineering. Docker's external stop grace period
+can still force hard interruption; the application does not impose a drain budget.
 
 The product image itself passed the same ten enforcement cases plus three actual
 background-host SIGKILL/SIGTERM/SIGINT cases: 13 passes, zero failures/skips in
@@ -148,3 +158,13 @@ registered a managed repository. A replacement container mounted the same volume
 at `/relocated` and read the identical repository ID, architectural revision and
 source base through the relocated source path. This establishes portfolio/storage
 relocation; it does not establish relocation of unfinished execution checkpoints.
+
+An actual Docker stop during a managed activation exited zero with the task and
+assignment already persisted as interrupted. A replacement container retained that
+state and the exact model-call evidence without replay. A preceding forced loss
+also retained evidence; explicit resume correctly refused its unsafe checkpoint.
+These used controlled model inputs, actual project hosts and the packaged sandbox.
+They establish deployment behavior, not the real-agent self-development gate.
+Both the application and PID 1 tini were observed as UID/GID 1000 with every
+capability set zero and no-new-privileges. Runtime artifacts and volume are retained
+under the phase-two container qualification evidence.

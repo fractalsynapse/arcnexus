@@ -4,7 +4,7 @@
 
 ### Added
 
-- Package an immutable container supervisor with scoped startup delegation, capability-free execution and qualified native confinement; unattended lifecycle qualification remains in progress (#148).
+- Package an immutable headless container supervisor with scoped startup delegation, capability-free init and execution, qualified native confinement and graceful project-host drain (#148).
 
 - Reject malformed checked-edit requests with corrective feedback before any source mutation, while retaining fatal authority and recovery failures (#205).
 

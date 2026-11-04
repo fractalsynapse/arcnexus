@@ -7,6 +7,11 @@ if [ "$#" -eq 0 ]; then
   exit 2
 fi
 
+# Only the container lifetime needs an init; exec-based CLI controls use its existing reaper.
+if [ "$$" -eq 1 ]; then
+  set -- /usr/bin/tini -- "$@"
+fi
+
 if [ "$(id -u)" -ne 0 ]; then
   exec setpriv --bounding-set=-all --inh-caps=-all --ambient-caps=-all --no-new-privs "$@"
 fi

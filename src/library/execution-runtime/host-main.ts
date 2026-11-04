@@ -1,8 +1,9 @@
+import { ContainerLifetime } from './container-lifetime.js';
 import { InputError } from '../architecture/config.js';
 import { ExecutionLease } from '../coordination-store/execution-store.js';
 import { createServer, type Socket } from 'node:net';
 import { chmodSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import { basename, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ProjectExecution } from '../architecture/execution-context.js';
 import { processStart } from '../operations/service-state.js';
@@ -30,35 +31,45 @@ class HostServer {
     private readonly socket: string,
     private readonly contextFile: string,
   ) {
+    ContainerLifetime.assertOpen(this.root);
     this.lease = new ExecutionLease(join(context.commonDir, 'arcnexus', 'host.lease.sqlite'));
     this.host = new ProjectHost(root, context);
   }
 
   /** Publishes readiness after binding IPC and starts sequential scheduling. */
   start(): void {
+    ContainerLifetime.assertOpen(this.root);
     rmSync(this.socket, { force: true });
-    this.server.listen(this.socket, () => {
-      chmodSync(this.socket, 0o600);
-      writeFileSync(
-        join(this.root, 'projects', this.context.key, 'host.json'),
-        JSON.stringify({
-          protocolVersion: 2,
-          capabilities: hostCapabilities,
-          contextFile: basename(this.contextFile),
-          pid: process.pid,
-          start: processStart(process.pid),
-          runner: JSON.parse(
-            readFileSync(fileURLToPath(new URL('../../../runner.json', import.meta.url)), 'utf8'),
-          ),
-        }),
-        { mode: 0o600 },
-      );
-    });
+    this.server.listen(this.socket, () => this.ready());
     for (const signal of ['SIGTERM', 'SIGINT'] as const)
       process.on(signal, () => void this.shutdown());
     this.timer = setInterval(() => {
+      try {
+        ContainerLifetime.assertOpen(this.root);
+      } catch {
+        return;
+      }
       if (!this.retiring) void this.host.tick().catch((error) => console.error(error));
     }, 100);
+  }
+
+  /** Publishes process and captured-runtime identity only after IPC accepts connections. */
+  private ready(): void {
+    chmodSync(this.socket, 0o600);
+    writeFileSync(
+      join(this.root, 'projects', this.context.key, 'host.json'),
+      JSON.stringify({
+        protocolVersion: 2,
+        capabilities: hostCapabilities,
+        contextFile: basename(this.contextFile),
+        pid: process.pid,
+        start: processStart(process.pid),
+        runner: JSON.parse(
+          readFileSync(fileURLToPath(new URL('../../../runner.json', import.meta.url)), 'utf8'),
+        ),
+      }),
+      { mode: 0o600 },
+    );
   }
 
   /** Closes admission and retains interruption after managed subprocesses drain on container or terminal shutdown. */
@@ -129,6 +140,12 @@ class HostServer {
   private validate(request: HostRequest): void {
     if (this.retiring && !['identity', 'status', 'task-status', 'retire'].includes(request.action))
       throw new Error('Execution host is retiring; retry after ownership is released');
+    if (
+      !['identity', 'status', 'task-status', 'retire', 'stop', 'pause', 'cancel'].includes(
+        request.action,
+      )
+    )
+      ContainerLifetime.assertOpen(this.root);
     if (request.simulate !== undefined && typeof request.simulate !== 'boolean')
       throw new InputError('Simulation must be a boolean');
   }
@@ -136,7 +153,7 @@ class HostServer {
   /** Routes explicit controls while keeping scheduling policy inside the host. */
   private dispatch(request: HostRequest): unknown {
     this.validate(request);
-    if (request.action === 'identity') return { ...this.context, hostCapabilities };
+    if (request.action === 'identity') return this.identity();
     if (request.action === 'delivery-control')
       return this.host.publish(String(request.id), request.expectedRevision);
     if (request.action === 'workday-control')
@@ -157,6 +174,15 @@ class HostServer {
       return this.host.submit(String(request.prompt ?? ''), request.simulate);
     if (request.action === 'task-status') return this.host.reports.view(String(request.id));
     return this.runControl(request);
+  }
+
+  /** Exposes a live process token for deployment shutdown without trusting retained PID files. */
+  private identity() {
+    return {
+      ...this.context,
+      hostCapabilities,
+      runtime: { pid: process.pid, start: processStart(process.pid), root: resolve(this.root) },
+    };
   }
 
   /** Handles direct run controls while resource mutations retain explicit identity checks. */

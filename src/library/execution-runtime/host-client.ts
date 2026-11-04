@@ -1,3 +1,4 @@
+import { ContainerLifetime } from './container-lifetime.js';
 import { InputError } from '../architecture/config.js';
 import { HostConnection, type HostRequest } from './host-connection.js';
 import { randomUUID } from 'node:crypto';
@@ -56,6 +57,7 @@ export class HostClient {
 
   /** Starts a host when necessary and waits for its local readiness, not an execution deadline. */
   async ensure(action = 'status'): Promise<void> {
+    if (!['status', 'stop', 'pause'].includes(action)) ContainerLifetime.assertOpen(this.root);
     if (await this.alive()) {
       if (await this.compatible(action)) return;
     }
@@ -87,6 +89,7 @@ export class HostClient {
 
   /** Starts the detached host with private context and logs, leaving execution to its scheduler. */
   private launch(): void {
+    ContainerLifetime.assertOpen(this.root);
     const context = join(this.directory, 'context-' + randomUUID() + '.json');
     writeFileSync(context, JSON.stringify(this.context), { mode: 0o600 });
     const runner = new RunnerSnapshot().capture(this.root);

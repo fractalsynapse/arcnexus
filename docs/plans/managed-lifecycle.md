@@ -1137,3 +1137,26 @@ recovery. Use private IPC live identity (PID/start/storage root), never stale PI
 files, before signalling host shutdown. Qualify it against the same actual managed
 host fixture and then an actual Docker stop with a retained volume. This closes the
 returning-workday-command lifetime gap without adding HTTP or changing public CLI.
+
+
+The headless lifetime service passed its actual-host shutdown/replacement case;
+all four native lifetime and host-loss cases passed with zero skips in 104.651
+seconds. Two deterministic admission cases passed in 0.263 seconds: a foreign
+answering endpoint is refused, shutdown stays closed until replacement, and only
+one lifetime owner can hold the volume. The service schedules no work and has no
+automatic continuation policy.
+
+Whole-container stop then exposed a topology difference: Docker's root-owned init
+could not forward SIGTERM to the non-root child with the four startup capabilities.
+The fixed image starts its own tini after the privilege drop, so PID 1 and the
+application both have zero capabilities and the same non-root identity; no KILL
+or SYS_ADMIN grant was added. Actual Docker stop subsequently exited zero and
+persisted both the task and active assignment as interrupted before replacement.
+The next container preserved those states and byte-identical model-call evidence.
+An earlier hard loss preserved its uncertain operation and correctly refused
+explicit unsafe resumption. This is native, controlled-input deployment evidence,
+not real-agent simulation. The complete volume is retained at
+`~/.local/state/arcnexus/qualification-148-container-volume`; test containers and
+the dedicated cgroup keeper were removed. The cheapest missing check was an actual
+Docker stop, since killing a project host inside a container cannot exercise PID 1
+signal forwarding. Keep that distinction in future deployment qualification.
