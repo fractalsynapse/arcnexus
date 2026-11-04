@@ -1211,3 +1211,14 @@ first focused run exposed only an incorrect test expectation for the supervised
 command error text; the corrected assertion checks exit code and retained conflict
 output instead. This is operation-level evidence, not completed promotion, fresh
 model verification, or real upstream integration.
+
+Issue #208 corrects a lane classification introduced by the container batch. The
+eighth real task failed its first confined baseline on a host Unix-socket bind in
+container-admission: 481 passed, one failed, 353 native skips. Stop the other owner
+baselines rather than paying for the same known failure. Keep the socket assertion
+in native qualification, keep the non-socket ownership assertion runnable in the
+confined service, and teach the existing AST-based lane guard about actual imported
+node:net server creation. Fixture strings and unused imports must not trigger it.
+Run the affected production confined selection and native test, then the complete
+confined baseline before starting a new real task. No sandbox permission, regression
+criterion or active runner changes are authorized by this classification correction.
