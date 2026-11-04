@@ -2607,3 +2607,13 @@ persisted inbox requests before any verified delivery. Repeated assignments
 to a starting steward count as requests rather than newly discovered owners.
 The native simulation confinement suite also rejected descendant HTTP, TLS
 and direct-network bypass attempts against listening mutation endpoints.
+
+### Keep dependency downloads serial without starting npm for each artifact (#237)
+
+The fresh native task spent 247 seconds in dependency preparation. A cold-cache
+disposable probe on the same lock installed 191 packages in the source-read-only
+sandbox using serial curl downloads (27 seconds), local npm cache ingestion
+(2 seconds) and offline npm ci (13 seconds). Keep the same allowed destinations,
+lock integrity and confined hooks. Use private temporary archives, remove them
+after cache ingestion and require a failed fetch to stop the operation. Qualify
+both native and container tooling before relying on this optimization.
