@@ -1,14 +1,11 @@
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { WorkspaceCliFixture } from '../../testing/support/workspace-cli-fixture.js';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
 import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
-import {
-  cli,
-  minimalWorkflowFixture as workflowFixture,
-} from '../../testing/support/workflow-fixture.js';
+import { minimalWorkflowFixture as workflowFixture } from '../../testing/support/workflow-fixture.js';
 
 /** Exercises initialization cleanup behavior through observable scenarios. */
 class InitializationCleanupTests {
@@ -30,11 +27,8 @@ class InitializationCleanupTests {
       delete record.finishedAt;
       writeFileSync(join(f.state, 'runs', record.id, 'report.json'), JSON.stringify(record));
     }
-    const cleaned = spawnSync(process.execPath, [cli, 'cleanup', record.id], {
-      encoding: 'utf8',
-      env: f.env,
-      timeout: 30 * 60 * 1000,
-    });
+    const workspace = new WorkspaceCliFixture(f, join(f.root, 'minimal-bindings.json'));
+    const cleaned = workspace.cleanup(record.id);
     assert.equal(cleaned.status, 1, cleaned.stderr);
     assert.ok(existsSync(record.workspace));
   }

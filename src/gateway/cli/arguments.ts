@@ -32,11 +32,9 @@ Inspection, evidence and diagnostics:
   workday history <historical-workday-id> [--json]
   workday follow <historical-workday-id> [--json] [--after <sequence>]
   task inspect <historical-proposal-id> [--json]
-  prepare --project <repository>
-  cleanup <workspace-id>
 Lists: --search <text> --limit <1-100> --cursor <token>
 Run following: --after <event-sequence>
-Composed workspace inspection/preparation: --bindings <file>
+Historical composed inspection: --bindings <file>
 `;
 
 const cliOptions = {

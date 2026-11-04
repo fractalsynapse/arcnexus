@@ -4,7 +4,7 @@
 
 ### Added
 
-- Retire top-level status/follow commands in favor of workspace resource observation, preserving historical library readers and detach-only following (#148).
+- Consolidate preparation, cleanup, status and following under workspace services, removing the duplicate gateway execution path while preserving historical readers and detach-only following (#148).
 
 - Preserve captured execution progress and event-sensitive revisions in workspace resource views without exposing raw harness records (#216).
 

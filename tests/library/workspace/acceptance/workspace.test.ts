@@ -207,7 +207,9 @@ class WorkspaceTests {
     }
     const path = join(f.state, 'runs', record.id, 'report.json');
     writeFileSync(path, JSON.stringify({ ...record, workspace: f.repo }));
-    assert.equal(f.cleanup(record.id).status, 1);
+    const rejected = f.cleanup(record.id);
+    assert.equal(rejected.status, 2);
+    assert.match(rejected.stderr, /not a managed workspace/);
     assert.ok(existsSync(f.repo));
   }
 

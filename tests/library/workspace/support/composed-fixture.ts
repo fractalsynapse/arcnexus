@@ -35,6 +35,8 @@ export function composed(t: TestContext): any {
   const workspace = new WorkspaceCliFixture(f, bindings);
   return {
     ...f,
+    env: workspace.env,
+    prepareArgs: workspace.prepareArgs,
     dependency,
     dg,
     environment,

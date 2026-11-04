@@ -15,8 +15,8 @@ Top-level `status` and `follow` now reject with replacement guidance for
 Legacy component `run`, manifest `workday run`, `task plan` and `task legacy-run`
 return an input error explaining the replacement before creating a workspace or
 calling a model. Historical workday/proposal and worker report inspection remains
-read-only. `prepare` remains a workspace diagnostic pending its grouped-command
-migration, not an alternate engineering entry point.
+read-only. Top-level `prepare` and `cleanup` also reject with guidance for the
+package-aware workspace commands; their separate gateway execution path is removed.
 
 Active campaigns use schema version 3: prompts and expected terminal outcomes,
 with project declarations supplying owners, profiles and verification. Retained
@@ -74,7 +74,7 @@ working directory through the shared workspace service. Package references follo
 portfolio resolution; command recipes, bindings and source revisions are resolved
 under the hood. Success returns a workspace resource and exit 0; a retained failed
 preparation returns 1, invalid input/preflight returns 2, and cancellation returns 130. An active repository host prevents preparation rather than allowing concurrent
-repository mutation. Legacy `prepare --project` remains only during fixture migration.
+repository mutation. Retired preparation options cannot select an alternate execution path.
 
 ## Scripted campaigns
 

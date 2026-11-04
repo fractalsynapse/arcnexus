@@ -3,22 +3,26 @@
 Supported host: Linux/POSIX, Node 22.13 or newer within Node 22, and Git.
 Build with `npm ci && npm run build`; invoke `node dist/cli.js`.
 
-`arcnexus prepare --project /absolute/repository [--base ref] [--issue number]`
-creates a unique branch and linked worktree at a resolved commit (default HEAD).
-The source must be clean. No fetch, clone, source checkout change, or commit occurs.
-`arcnexus cleanup <workspace-id>` removes only an inactive, registered worktree
-without source changes or unknown ignored files. Branches and reports are retained.
-A removed workspace can be cleaned again. There is no force-discard option.
+`arcnexus workspace prepare <package>` resolves a registered package and creates
+an application-owned branch and linked worktree at its selected committed authority.
+The source must be clean. Its checkout and branch remain unchanged.
+`arcnexus workspace cleanup <package> [--workspace <id>]` removes only eligible
+inactive workspaces without source changes or unknown ignored files. Branches,
+reports and unfinished assignment evidence are retained. Repeated cleanup is safe;
+there is no force-discard option. The retired top-level `prepare` and `cleanup`
+commands return replacement guidance.
 
 State lives in `state/` inside the configured project volume, or the explicit
 nonempty `ARCNEXUS_STATE_DIR` directory. To inspect historical state, select its
-original root with that override; changing the volume never migrates evidence. Records and logs live under `runs/<id>`; candidates
-under `workspaces/<id>`. One exclusive lock covers preparation, execution and cleanup.
-After a hard interruption, inspect the lock's PID and retained record; only after
-confirming the process is gone may the caller remove the stale lock. No automatic
-recovery is attempted. State is private to the current OS user.
+original root with that override; changing the volume never migrates evidence.
+Records and logs live under `runs/<id>`; candidates under `workspaces/<id>`.
+Preparation, cleanup and the execution host share the canonical repository lease,
+including linked Git worktrees. Process exit releases that SQLite ownership;
+retained records still preserve interrupted or uncertain operations. Do not remove
+lease databases or blindly replay commands after interruption. State is private
+to the current OS user.
 
-## Shared-operation preparation (migration in progress)
+## Shared-operation preparation
 
 Environment schema 4 contains repository composition only:
 

@@ -1,8 +1,15 @@
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, copyFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, symlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { Portfolio } from '../../../../dist/library/portfolio/portfolio.js';
-import { cli, type WorkflowFixture } from './workflow-fixture.js';
+import { cli } from './workflow-fixture.js';
+
+interface WorkspaceFixtureInput {
+  root: string;
+  repo: string;
+  state: string;
+  env: NodeJS.ProcessEnv;
+}
 
 /** Exercises package workspace commands with real registrations and isolated application storage. */
 export class WorkspaceCliFixture {
@@ -12,13 +19,13 @@ export class WorkspaceCliFixture {
 
   /** Binds captured tools locally and registers committed fixture authority without changing source. */
   constructor(
-    private readonly fixture: WorkflowFixture,
+    private readonly fixture: WorkspaceFixtureInput,
     bindings: string,
   ) {
     const volume = join(fixture.root, 'volume');
     this.env = { ...fixture.env, ARCNEXUS_VOLUME: volume };
     mkdirSync(join(fixture.repo, '.git/arcnexus'), { recursive: true });
-    copyFileSync(bindings, join(fixture.repo, '.git/arcnexus/bindings.yaml'));
+    symlinkSync(bindings, join(fixture.repo, '.git/arcnexus/bindings.yaml'));
     const portfolio = new Portfolio(volume, true);
     try {
       portfolio.register('platform', 'platform', fixture.repo);

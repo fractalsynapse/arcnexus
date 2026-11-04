@@ -110,10 +110,10 @@ registerSuite({ component: 'cli', level: 'acceptance', tags: ['deterministic', '
 
 test('retired observation spellings explain resource replacements without creating state', (t) => {
   const f = new RunQueryFixture(t);
-  for (const command of ['status', 'follow']) {
+  for (const command of ['status', 'follow', 'prepare', 'cleanup']) {
     const result = f.command(command, 'retained');
     assert.equal(result.status, 2);
-    assert.match(result.stderr, /workspace get <id>/);
+    assert.match(result.stderr, /is retired; use workspace (get|prepare|cleanup)/);
     if (command === 'follow') assert.match(result.stderr, /--follow/);
   }
   assert.equal(existsSync(f.state), false);
