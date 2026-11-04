@@ -1835,3 +1835,23 @@ used a nonexistent compiled test path; those orchestration errors are retained a
 unsuccessful attempts. Resolve compiled paths before dispatch and await completion
 before reusing a container name or log. Neither error justifies changing product
 behavior or weakening acceptance.
+
+### Confined executable identity and portable baseline (#223)
+
+The corrected container completed its real director turn and selected change-inspection
+for behavior-preserving regression coverage. Engineering then stopped at mandatory
+baseline: 13 of 907 cases failed, with 525 passes and 369 explicitly native skips.
+A production-adapter probe isolated a relative `process.execPath` when Node entered
+confinement as `node`. This invalidated test-created executable bindings and host
+checks; generated npm stubs received an unusable relative shebang. Two output tests
+also incorrectly required stderr to exclude runtime-generated warnings.
+
+Resolve operation/service executable names to absolute paths using the same host
+execution PATH before sandbox dispatch. Preserve explicit bindings, working-directory
+semantics, cancellation, evidence and confinement. Keep unknown or non-executable
+tools as pre-dispatch errors; do not hardcode Node locations or add configuration.
+Qualify the actual confined executable identity and PATH precedence in the supported
+image. Output tests must still prove exact structured stdout and retained stderr,
+including additional diagnostics. Refresh affected cases before the assembled full
+container baseline. Retain the failed workday; its baseline cannot be rewritten by
+candidate changes or a different supervisor.
