@@ -2298,3 +2298,18 @@ cannot settle its blocked predecessor. Preserve both records and require explici
 verified replacement semantics; never fabricate predecessor completion. The active
 b9dd9ac supervisor is unchanged. CI 41904603474 passed the prior collaboration batch,
 including 433 native cases with zero native skips; #234 has separate pending CI.
+
+### Reject infeasible specification scopes before engineering (#235)
+
+Behavioral assignments already require actual documentation and regression changes
+at the specification checkpoint. Admission must establish that the narrowed writable
+scope can contain both kinds of evidence, using the same captured classifier and
+package test-root rules as checked edits. A scope containing only an existing test
+file cannot satisfy the documentation requirement. Return actionable scope/workflow
+feedback before creating its assignment or preparing its baseline; do not silently
+widen scope, rewrite an active workflow, or manufacture a failing characterization.
+Documentation-only and refactor workflows keep their distinct requirements.
+
+This structural check prevents the demonstrated invalid capture. It does not by
+itself resolve already blocked assignments or implement the explicit replacement
+protocol tracked by #235; those records retain their original evidence and status.
