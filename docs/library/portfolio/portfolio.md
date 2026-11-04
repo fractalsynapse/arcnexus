@@ -90,11 +90,15 @@ creating absent volume storage. Test commands consume it through shared test ser
 
 ## Shared list queries
 
-Platform and package lists accept `--search`, `--limit` and `--cursor`, using the
+Platform and package lists accept `field=value` equality filters plus
+`--search`, `--limit` and `--cursor`, using the
 same report query implementation as task/workday resources. Search covers identity
 and purpose. Pagination returns a result revision and rejects stale or incompatible
 cursors. Package platform selection remains an explicit namespace filter. List
-queries never create an absent volume or start execution.
+queries never create an absent volume or start execution. Filters accept `id`,
+`type` and `repositoryId`, combine with AND semantics, and reject unknown fields
+or invalid types. In `package list [platform] [field=value...]`, a leading value
+without `=` is the optional platform; subsequent values must be filters.
 
 ## Registered configuration migration
 
