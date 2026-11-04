@@ -8,6 +8,7 @@ import { ProviderStore } from '../../../../dist/library/coordination-store/provi
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import { RunEnvironments } from '../../../../dist/library/execution-runtime/run-environments.js';
 import { RunCollaboration } from '../../../../dist/library/execution-runtime/run-collaboration.js';
+import { SimulatedUpstream } from '../../../../dist/library/operations/simulated-upstream.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { GeneralFixture } from '../../testing/support/general-fixture.js';
 
@@ -181,4 +182,29 @@ test('missing comment grants preserve tracking without inventing upstream author
   );
 });
 
-registerSuite({ component: 'execution-runtime', level: 'acceptance', tags: ['deterministic'] });
+test('foreign-environment issue references cannot receive milestone comments', async (t) => {
+  const f = new ProgressFixture(t);
+  const { assignment, collaboration, provider } = await f.start(t);
+  const tracking = f.environments.effects.effects()[0]!;
+  const foreign = await new SimulatedUpstream(
+    'foreign',
+    'foreign',
+    tracking.target,
+    provider,
+  ).apply(
+    { ...tracking, id: 'foreign-issue', environmentId: 'foreign' },
+    new AbortController().signal,
+  );
+  f.host.store.updateAssignment(assignment.id, 'waiting', {
+    trackingIssue: { issueId: foreign.issueId },
+  });
+  await assert.rejects(collaboration.progress(), /not an issue in this environment/);
+  assert.equal(provider.resources().filter((resource) => resource.kind === 'comment').length, 0);
+  assert.equal(provider.resource(String(foreign.issueId)).revision, 1);
+});
+
+registerSuite({
+  component: 'execution-runtime',
+  level: 'acceptance',
+  tags: ['deterministic', 'lifecycle-effects'],
+});

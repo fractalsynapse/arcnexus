@@ -2237,3 +2237,8 @@ source but changed the execution-host key after moving the repository and state.
 Issue #232 tracks this absolute-path identity gap separately from already-qualified
 portfolio relocation and same-mount container recovery. Historical evidence and
 active supervisors remain unchanged.
+
+A further #233 provider-boundary case rejects a foreign-environment tracking issue
+before any comment mutation. All six focused provider cases pass without skips;
+the native scheduler evidence remains unchanged. The shared lifecycle-effects tag
+keeps subsequent CLI selection focused on this changed behavior.
