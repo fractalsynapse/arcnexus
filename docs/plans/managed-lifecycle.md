@@ -2160,3 +2160,26 @@ actual documentation workflow; the behavioral scope guard remains intact.
 Efficiency observation: preserve workflow intent in acceptance fixtures rather
 than treating every prompt as a feature change. The focused scenario catches this
 without another full native cycle.
+
+### Expose existing work before creating dependencies (#231)
+
+The real portfolio task expanded four starting assignments into ten assignments.
+Some are distinct contract and research contributions; the count alone does not
+prove duplication. Engineering workers nevertheless lack the current-run identity
+and intent index needed to deliberately link director-created starting work.
+
+Expose immutable assignment metadata through the existing paged assignment.evidence
+capability for engineering as well as investigations. Include not-started owners,
+objectives, acceptance, declared workflow/scope and accepted-intent status. Keep
+private checkpoint/source evidence on the existing read-only investigation path.
+The report library owns this projection; execution-runtime binds it to the active
+assignment, and assignment guidance distinguishes clarification from new work.
+Preserve exact store matching, milestones and all authority checks. Do not infer
+shared work from similar prose, force a team, or change active supervisors.
+
+The #229 correction coverage now also starts from an actually accepted research
+plan before rejecting a dependency batch. Both early-planning and accepted-plan
+cases pass natively without skips; the latter explicitly requires a nonempty plan.
+This strengthens the earlier optional-state comparison without changing production
+behavior. The b9dd9ac container separately passes eight focused source/network
+confinement cases without skips, under enforcing AppArmor and zero capabilities.

@@ -178,7 +178,11 @@ export class ControlledGeneral {
         : (prompt.includes('READ_TOOL_OBSERVATIONS') ? 'READ_TOOL_OBSERVATIONS: ' : '') +
           (prompt.includes('READ_ASSIGNMENT_EVIDENCE') ? 'READ_ASSIGNMENT_EVIDENCE: ' : '') +
           (prompt.includes('RECOVER_CYCLE') ? 'RECOVER_CYCLE: ' : '') +
-          (prompt.includes('INVALID_REQUEST_SCOPE') ? 'INVALID_REQUEST_SCOPE: ' : '') +
+          (prompt.includes('INVALID_REQUEST_SCOPE_AFTER_PLAN')
+            ? 'INVALID_REQUEST_SCOPE_AFTER_PLAN: '
+            : prompt.includes('INVALID_REQUEST_SCOPE')
+              ? 'INVALID_REQUEST_SCOPE: '
+              : '') +
           'Research the dependency chain',
       kind: 'research',
       changeType: 'behavior',
@@ -191,11 +195,8 @@ export class ControlledGeneral {
   private worker(prompt: string): any {
     const result = this.result();
     if (prompt.startsWith('Independent read-only verification.')) return this.review(prompt);
-    const owner = prompt.match(/active component identity ([a-z]+) as fromComponent/)?.[1];
-    const stage = prompt.match(/Activity turn: ([a-z]+)/)?.[1];
-    if (prompt.includes('Correct rejected dependency requests'))
-      return this.correctRequests(result, prompt);
-    if (stage === 'planning') return this.planning(result, prompt, owner!);
+    const coordination = this.coordination(result, prompt);
+    if (coordination) return coordination;
     if (
       prompt.includes('REPORT_BLOCK_ONCE') &&
       !prompt.includes('Use the clarified retained scope')
@@ -213,6 +214,20 @@ export class ControlledGeneral {
       },
     ];
     return result;
+  }
+
+  /** Selects planning and retained dependency coordination separately from ordinary research completion. */
+  private coordination(result: any, prompt: string): any {
+    const owner = prompt.match(/active component identity ([a-z]+) as fromComponent/)?.[1];
+    const stage = prompt.match(/Activity turn: ([a-z]+)/)?.[1];
+    if (prompt.includes('Correct rejected dependency requests'))
+      return this.correctRequests(result, prompt);
+    if (
+      prompt.includes('INVALID_REQUEST_SCOPE_AFTER_PLAN') &&
+      !prompt.includes('Dependency assignment states')
+    )
+      return this.afterPlan(result, prompt, stage!, owner!);
+    if (stage === 'planning') return this.planning(result, prompt, owner!);
   }
 
   /** Corrects the entire rejected batch from observed host feedback without changing expected deliveries. */
@@ -238,11 +253,24 @@ export class ControlledGeneral {
     if (owner !== 'c' && !prompt.includes('Verified dependency deliveries:')) {
       result.status = owner === 'a' ? 'completed' : 'blocked';
       result.blockers = ['Needs supplier evidence'];
-      result.requests = [this.request(owner, prompt)];
-      if (prompt.includes('INVALID_REQUEST_SCOPE'))
-        result.requests.push({ ...this.request(owner, 'valid sibling'), ownerId: 'c' });
+      result.requests = this.requestBatch(owner, prompt);
     } else result.plan = this.plan(prompt);
     return result;
+  }
+
+  /** Suspends actual accepted research work with an invalid dependency batch after planning has completed. */
+  private afterPlan(result: any, prompt: string, stage: string, owner: string): any {
+    if (stage === 'planning') result.plan = this.plan(prompt);
+    else result.requests = this.requestBatch(owner, prompt);
+    return result;
+  }
+
+  /** Retains a valid sibling so rejection must remain atomic across the entire deliberately invalid batch. */
+  private requestBatch(owner: string, prompt: string): any[] {
+    const requests = [this.request(owner, prompt)];
+    if (prompt.includes('INVALID_REQUEST_SCOPE'))
+      requests.push({ ...this.request(owner, 'valid sibling'), ownerId: 'c' });
+    return requests;
   }
 
   /** Rejects one goal assessment until an additional observed assignment addresses the gap. */

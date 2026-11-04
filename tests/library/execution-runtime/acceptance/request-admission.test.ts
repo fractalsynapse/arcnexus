@@ -10,18 +10,21 @@ import { GeneralFixture, nativeHostTest as test } from '../../testing/support/ge
 /** Exercises whole-batch scope rejection and retained-thread correction through actual scheduler activations. */
 class RequestAdmissionScenario {
   /** Invalid scope creates no recipient; one read-only correction then admits the complete requested fan-out. */
-  async run(t: TestContext): Promise<void> {
+  async run(t: TestContext, accepted = false): Promise<void> {
     const f = new GeneralFixture(t).fixture;
     const host = new ProjectHost(f.state, new ExecutionContext().resolve(f.repo));
     t.after(() => host.close());
-    const run = host.submit('INVALID_REQUEST_SCOPE: obtain supplier evidence');
+    const marker = accepted ? 'INVALID_REQUEST_SCOPE_AFTER_PLAN' : 'INVALID_REQUEST_SCOPE';
+    const run = host.submit(marker + ': obtain supplier evidence');
     await host.tick();
     await host.tick();
+    if (accepted) await host.tick();
     const requester = host.store.assignments(run.id)[0]!;
     assert.equal(host.store.assignments(run.id).length, 1);
     assert.deepEqual(host.store.inbox(requester.id), []);
     const path = join(f.state, 'runs', String(requester.data.recordId), 'report.json');
     const before = JSON.parse(readFileSync(path, 'utf8'));
+    if (accepted) assert.ok(before.plan?.items.length, 'An actual accepted plan is required');
     assert.match(before.requestCorrection.errors[0], /widens component scope/);
     assert.equal(before.requestCorrection.requests.length, 2);
     const unrelated = host.store.enqueue(run.id, 'c', 'Unrelated retained work');
@@ -57,6 +60,9 @@ const scenario = new RequestAdmissionScenario();
 
 test('invalid request batches are corrected before recipient activation and unrelated work remains runnable', (t) =>
   scenario.run(t));
+
+test('dependency correction preserves an accepted plan and its suspended research stage', (t) =>
+  scenario.run(t, true));
 
 registerSuite({
   component: 'execution-runtime',
