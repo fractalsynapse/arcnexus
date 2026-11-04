@@ -2409,3 +2409,27 @@ the actual confined CLI. Do not add skips or fake native enforcement. Preserve t
 reported that the failed baseline has no safe continuation. A new corrected run is
 required. This fixture defect cost preparation and director time despite prior native
 passes; testing the portable selection without ambient bindings is the cheap guard.
+
+The #236 correction is committed as `8f1c40c`: portable catalog construction is
+separate from native harness setup. Six focused collaboration cases pass without
+skips, and the native three-owner director scenario still passes (43.016 seconds).
+The production confined CLI selection from a separate checkout with no local
+machine binding passes six portable cases, skips seven other designated native
+cases, and fails none. Full format/lint/types and consolidated validation pass.
+The portable fixture now asserts empty machine-tool bindings and no model-call
+file, so an ambient CI binding cannot conceal this dependency again.
+
+A fresh task, `a6e7a19c-cca0-4080-a65e-c0905b85f6d6`, runs corrected source under
+the same immutable 76c1965 supervisor. It passed the actual execution-runtime owner
+baseline: 32 tests passed, 119 designated native cases skipped, zero failed. Owner
+lint, scoped format, required build preparation and selected tests totaled 16,322 ms
+of command time, excluding initial workspace setup and model time. This is an
+observed workload, not a controlled benchmark against the earlier publisher run.
+The real director selected the starting work; execution-runtime and task-intake
+have entered the scheduling cycle. Goal completion and publication remain unproven.
+
+The unfinished-volume relocation probe also confirms that Git worktree administration
+contains absolute links: moving source and an unfinished candidate together retains
+candidate bytes but makes Git resolution fail. #232 therefore needs validated,
+journaled metadata repair as well as durable application identities; changing the
+project-key hash alone would not complete recovery. No retained run was modified.
