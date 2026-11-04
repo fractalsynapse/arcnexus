@@ -2,14 +2,13 @@ schemaVersion: 6
 id: cli
 type: gateway
 parentId: cli-package
-purpose: Expose predictable command-line execution settings and lifecycle operations
+purpose: Expose managed project and execution services through the command line
 objectives:
-  - Use affordable Luna-sized stewards by default while respecting explicit
-    model selection
+  - Make tasks and workdays usable from local and registered project contexts
+  - Give callers accurate lifecycle status and actionable errors
 constraints:
+  - Resolve execution settings from captured project policy
   - Do not change sandbox permissions or verification requirements
-  - Caller owns commits and integration
-  - Do not edit architecture or unrelated files
 owns:
   - src/gateway/cli
   - docs/gateway/cli
