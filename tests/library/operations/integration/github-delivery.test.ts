@@ -179,7 +179,7 @@ test('GitHub delivery rejects unverified commit attribution before credential ac
         join(f.root, 'evidence'),
         credential,
       ),
-    /tree, base or attribution/,
+    /tree and attribution/,
   );
   assert.throws(
     () =>

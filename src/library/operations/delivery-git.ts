@@ -5,6 +5,7 @@ import type { ExternalEffect, ExternalObservation } from '../coordination-store/
 import type { RepositoryMaterialization } from '../architecture/bindings.js';
 import { assertRepositoryBinding } from '../architecture/bindings.js';
 import { execute, git } from './process.js';
+import { DeliveryCommit } from './delivery-commit.js';
 
 /** Executes delivery Git effects on a host-bound simulated repository, preserving exact-head recovery. */
 export class DeliveryGit {
@@ -12,7 +13,7 @@ export class DeliveryGit {
 
   private readonly privateRef: string;
 
-  private readonly message: string;
+  private readonly commits: DeliveryCommit;
 
   /** Binds all paths and revisions to captured host delivery state, never worker arguments. */
   constructor(
@@ -28,7 +29,7 @@ export class DeliveryGit {
     if (!/^[a-f0-9]{64}$/.test(delivery.id)) throw new Error('Unsafe delivery identity');
     this.ref = 'refs/heads/arcnexus/' + delivery.id;
     this.privateRef = 'refs/arcnexus/deliveries/' + delivery.id;
-    this.message = 'ArcNexus verified delivery ' + delivery.id;
+    this.commits = new DeliveryCommit(delivery, repository.source, evidenceRoot);
     this.validateRepository();
   }
 
@@ -36,7 +37,7 @@ export class DeliveryGit {
   async apply(effect: ExternalEffect, signal: AbortSignal): Promise<Record<string, unknown>> {
     this.assert(effect);
     signal.throwIfAborted();
-    if (effect.operation === 'delivery.commit') return this.commit(effect, signal);
+    if (effect.operation === 'delivery.commit') return this.commits.apply(effect, signal);
     if (effect.operation === 'delivery.push') return this.push(effect, signal);
     throw new Error('Unsupported delivery Git operation');
   }
@@ -44,14 +45,14 @@ export class DeliveryGit {
   /** Reconciles actual refs after an interrupted effect, rejecting mismatched or redirected objects. */
   inspect(effect: ExternalEffect): ExternalObservation {
     this.assert(effect);
-    const reference = effect.operation === 'delivery.commit' ? this.privateRef : this.ref;
-    const repository =
-      effect.operation === 'delivery.commit' ? this.repository.source : this.repository.origin;
+    if (effect.operation === 'delivery.commit') return this.commits.inspect(effect);
+    const reference = this.ref;
+    const repository = this.repository.origin;
     const head = git(repository, 'for-each-ref', '--format=%(objectname)', reference).trim();
     const evidence = `git:${this.delivery.environment.id}:${reference}`;
     if (!head) return { status: 'absent', evidence };
     try {
-      this.validateCommit(repository, head);
+      this.commits.validate(repository, head);
       if (
         effect.operation === 'delivery.push' &&
         head !== git(this.repository.source, 'rev-parse', '--verify', this.privateRef).trim()
@@ -63,29 +64,6 @@ export class DeliveryGit {
     }
   }
 
-  /** Produces a deterministic commit object and pins it only after all its captured attributes match. */
-  private async commit(effect: ExternalEffect, signal: AbortSignal) {
-    const existing = this.inspect(effect);
-    if (existing.status === 'completed') return existing.result;
-    if (existing.status !== 'absent')
-      throw new Error('Delivery commit conflicts with retained state');
-    const tree = git(
-      this.repository.source,
-      'rev-parse',
-      `${this.delivery.candidate}^{tree}`,
-    ).trim();
-    const output = await this.command(
-      effect,
-      'commit',
-      ['commit-tree', tree, '-p', this.delivery.base, '-m', this.message],
-      signal,
-    );
-    const head = output.trim();
-    this.validateCommit(this.repository.source, head);
-    await this.command(effect, 'pin', ['update-ref', this.privateRef, head, ''], signal);
-    return this.receipt(head);
-  }
-
   /** Pushes a verified host commit to a generated branch without force or a real upstream destination. */
   private async push(effect: ExternalEffect, signal: AbortSignal) {
     const existing = this.inspect(effect);
@@ -93,7 +71,7 @@ export class DeliveryGit {
     if (existing.status !== 'absent')
       throw new Error('Delivery branch conflicts with retained state');
     const head = git(this.repository.source, 'rev-parse', '--verify', this.privateRef).trim();
-    this.validateCommit(this.repository.source, head);
+    this.commits.validate(this.repository.source, head);
     await this.command(
       effect,
       'push',
@@ -122,7 +100,7 @@ export class DeliveryGit {
     if (this.targetHead() !== effect.input.targetHead)
       throw new Error('Simulated target changed before assembly');
     const head = git(this.repository.source, 'rev-parse', '--verify', this.privateRef).trim();
-    this.validateCommit(this.repository.source, head);
+    this.commits.validate(this.repository.source, head);
     const tree = await this.mergeTree(effect, head, signal);
     return this.pinMerge(effect, tree, head, signal);
   }
@@ -285,19 +263,6 @@ export class DeliveryGit {
       git(this.repository.origin, 'remote').trim()
     )
       throw new Error('Simulated delivery remote is not an isolated local bare repository');
-  }
-
-  /** Requires the reviewed tree and captured base; a matching branch name alone is insufficient evidence. */
-  private validateCommit(repository: string, head: string): void {
-    if (!/^[a-f0-9]{40,64}$/.test(head)) throw new Error('Invalid delivery commit');
-    const actual = git(repository, 'show', '-s', '--format=%T%n%P%n%s', head).trim();
-    const tree = git(
-      this.repository.source,
-      'rev-parse',
-      `${this.delivery.candidate}^{tree}`,
-    ).trim();
-    if (actual !== [tree, this.delivery.base, this.message].join('\n'))
-      throw new Error('Delivery commit does not match captured verified tree and attribution');
   }
 
   /** Records immutable Git outcome with explicit simulated provenance. */

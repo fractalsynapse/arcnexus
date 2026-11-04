@@ -827,3 +827,13 @@ base parent, immutable attribution, stable metadata and private-ref recovery;
 only transport and provider effects differ. It must not change a checkout, stage
 source, execute hooks or grant publication authority. Existing simulation Git
 acceptance must continue to pass after adopting this shared commit service.
+
+Shared commit qualification passed all 16 affected native Git/provider/publication
+cases with zero skips in 25.755 seconds. Simulation still exercises actual local
+push, conflict handling, approval and release; the new live commit case exercises
+real supervised object creation and recovery without contacting an upstream.
+One initial run used newly compiled tests against an older distribution and failed
+on the changed diagnostic; it was discarded. Build the distribution before test
+compilation/execution when using focused Node commands, or use the built test
+service that manages preparation. This is a cheap ordering check, not a reason
+to repeat the entire integrated suite.

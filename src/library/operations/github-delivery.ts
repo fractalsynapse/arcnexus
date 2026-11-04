@@ -4,7 +4,8 @@ import { join, relative, resolve } from 'node:path';
 import type { DeliveryRecord } from '../coordination-store/delivery-types.js';
 import type { ExternalEffect, ExternalObservation } from '../coordination-store/lifecycle-types.js';
 import { GitHubTransport } from './github-transport.js';
-import { execute, git } from './process.js';
+import { execute } from './process.js';
+import { DeliveryCommit } from './delivery-commit.js';
 
 const gitPolicy = [
   '-c',
@@ -173,17 +174,12 @@ export class GitHubDelivery {
     }
   }
 
-  /** Rechecks the tree, base parent and attribution instead of trusting a caller-provided commit hash alone. */
+  /** Reuses the shared commit attribution check before transport or recovery observes upstream state. */
   private local(): void {
-    if (realpathSync(this.source) !== resolve(this.source))
-      throw new Error('Aliased delivery source');
-    const tree = git(this.source, 'rev-parse', `${this.delivery.candidate}^{tree}`).trim();
-    const actual = git(this.source, 'show', '-s', '--format=%T%n%P%n%s', this.head).trim();
-    if (
-      actual !==
-      [tree, this.delivery.base, 'ArcNexus verified delivery ' + this.delivery.id].join('\n')
-    )
-      throw new Error('Local commit differs from verified delivery tree, base or attribution');
+    new DeliveryCommit(this.delivery, this.source, this.evidenceRoot).validate(
+      this.source,
+      this.head,
+    );
   }
 
   /** Rejects cross-run, simulation and substituted intent before any provider request. */
