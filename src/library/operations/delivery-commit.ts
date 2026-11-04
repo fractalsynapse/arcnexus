@@ -1,8 +1,9 @@
-import { mkdirSync, readFileSync, realpathSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { realpathSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { DeliveryRecord } from '../coordination-store/delivery-types.js';
 import type { ExternalEffect, ExternalObservation } from '../coordination-store/lifecycle-types.js';
 import { execute, git } from './process.js';
+import { DeliveryCommands } from './delivery-commands.js';
 
 /** Creates the same attributed verified commit in either environment without modifying the source checkout. */
 export class DeliveryCommit {
@@ -10,12 +11,14 @@ export class DeliveryCommit {
 
   private readonly message: string;
 
+  private readonly commands: DeliveryCommands;
+
   /** Captures immutable delivery identity and canonical host repository before permitting object writes. */
   constructor(
     private readonly delivery: DeliveryRecord,
     private readonly source: string,
-    private readonly evidenceRoot: string,
-    private readonly runner: typeof execute = execute,
+    evidenceRoot: string,
+    runner: typeof execute = execute,
   ) {
     this.delivery = structuredClone(delivery);
     if (
@@ -30,6 +33,7 @@ export class DeliveryCommit {
       );
     this.ref = 'refs/arcnexus/deliveries/' + delivery.id;
     this.message = 'ArcNexus verified delivery ' + delivery.id;
+    this.commands = new DeliveryCommands(this.delivery, source, evidenceRoot, runner);
   }
 
   /** Reuses an exact retained object or creates and atomically pins one deterministic commit. */
@@ -42,7 +46,7 @@ export class DeliveryCommit {
       throw new Error('Delivery commit conflicts with retained state');
     const tree = git(this.source, 'rev-parse', `${this.delivery.candidate}^{tree}`).trim();
     const head = (
-      await this.command(
+      await this.commands.run(
         effect,
         'commit',
         ['commit-tree', tree, '-p', this.delivery.base, '-m', this.message],
@@ -50,7 +54,7 @@ export class DeliveryCommit {
       )
     ).trim();
     this.validate(this.source, head);
-    await this.command(effect, 'pin', ['update-ref', this.ref, head, ''], signal);
+    await this.commands.run(effect, 'pin', ['update-ref', this.ref, head, ''], signal);
     return this.receipt(head);
   }
 
@@ -97,44 +101,6 @@ export class DeliveryCommit {
       ref: 'refs/heads/arcnexus/' + this.delivery.id,
       environmentId: this.delivery.environment.id,
       simulation: this.delivery.environment.mode === 'simulation',
-    };
-  }
-
-  /** Executes only fixed object commands with supervised cancellation and exclusively created evidence. */
-  private async command(
-    effect: ExternalEffect,
-    step: string,
-    args: string[],
-    signal: AbortSignal,
-  ): Promise<string> {
-    const directory = join(this.evidenceRoot, this.delivery.id, String(effect.attempt), step);
-    mkdirSync(directory, { recursive: true, mode: 0o700 });
-    const stdout = join(directory, 'stdout');
-    const result = await this.runner(
-      { command: 'git', args: ['-c', 'core.hooksPath=/dev/null', ...args] },
-      this.source,
-      join(directory, 'command.log'),
-      signal,
-      { processScope: true, stdout, env: this.environment() },
-    );
-    if (result.exitCode !== 0) throw new Error('Delivery Git failed; inspect ' + result.log);
-    return readFileSync(stdout, 'utf8');
-  }
-
-  /** Fixes commit metadata and removes ambient network credentials and Git configuration overrides. */
-  private environment(): NodeJS.ProcessEnv {
-    return {
-      PATH: process.env.PATH,
-      GIT_CONFIG_NOSYSTEM: '1',
-      GIT_CONFIG_GLOBAL: '/dev/null',
-      GIT_TERMINAL_PROMPT: '0',
-      GIT_ALLOW_PROTOCOL: 'file',
-      GIT_AUTHOR_NAME: 'ArcNexus delivery',
-      GIT_AUTHOR_EMAIL: 'delivery@arcnexus.invalid',
-      GIT_COMMITTER_NAME: 'ArcNexus delivery',
-      GIT_COMMITTER_EMAIL: 'delivery@arcnexus.invalid',
-      GIT_AUTHOR_DATE: this.delivery.createdAt,
-      GIT_COMMITTER_DATE: this.delivery.createdAt,
     };
   }
 }

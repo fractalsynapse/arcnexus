@@ -930,3 +930,11 @@ merge object and never update the target. Transport retains responsibility for
 fetching approved objects and atomically checking target identity at integration;
 only checked assembled objects may advance. Keep provider mutation and permission
 checks outside this reusable local object operation.
+
+Shared merge assembly passed 18 native Git/provider/publication cases with no
+skips in 19.882 seconds. Live-mode assembly retained the verified bytes and exact
+parents without changing checkout or upstream; retained-object substitution and
+cancellation were rejected. Existing simulated conflicts, integration, approval
+and release behavior remained covered. The shared command path removes duplicate
+commit metadata and supervision setup. This is controlled-provider evidence,
+not live upstream integration or promotion qualification.

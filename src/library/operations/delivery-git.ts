@@ -1,10 +1,11 @@
-import { mkdirSync, readFileSync, realpathSync } from 'node:fs';
-import { join } from 'node:path';
+import { realpathSync } from 'node:fs';
 import type { DeliveryRecord } from '../coordination-store/delivery-types.js';
 import type { ExternalEffect, ExternalObservation } from '../coordination-store/lifecycle-types.js';
 import type { RepositoryMaterialization } from '../architecture/bindings.js';
 import { assertRepositoryBinding } from '../architecture/bindings.js';
-import { execute, git } from './process.js';
+import { git } from './process.js';
+import { DeliveryCommands } from './delivery-commands.js';
+import { DeliveryAssembly } from './delivery-assembly.js';
 import { DeliveryCommit } from './delivery-commit.js';
 
 /** Executes delivery Git effects on a host-bound simulated repository, preserving exact-head recovery. */
@@ -15,12 +16,16 @@ export class DeliveryGit {
 
   private readonly commits: DeliveryCommit;
 
+  private readonly commands: DeliveryCommands;
+
+  private readonly assembly: DeliveryAssembly;
+
   /** Binds all paths and revisions to captured host delivery state, never worker arguments. */
   constructor(
     private readonly delivery: DeliveryRecord,
     private readonly repositoryId: string,
     private readonly repository: RepositoryMaterialization,
-    private readonly evidenceRoot: string,
+    evidenceRoot: string,
   ) {
     this.delivery = structuredClone(delivery);
     this.repository = structuredClone(repository);
@@ -30,6 +35,8 @@ export class DeliveryGit {
     this.ref = 'refs/heads/arcnexus/' + delivery.id;
     this.privateRef = 'refs/arcnexus/deliveries/' + delivery.id;
     this.commits = new DeliveryCommit(delivery, repository.source, evidenceRoot);
+    this.commands = new DeliveryCommands(this.delivery, repository.source, evidenceRoot);
+    this.assembly = new DeliveryAssembly(this.delivery, repository.source, evidenceRoot);
     this.validateRepository();
   }
 
@@ -72,7 +79,7 @@ export class DeliveryGit {
       throw new Error('Delivery branch conflicts with retained state');
     const head = git(this.repository.source, 'rev-parse', '--verify', this.privateRef).trim();
     this.commits.validate(this.repository.source, head);
-    await this.command(
+    await this.commands.run(
       effect,
       'push',
       ['push', '--porcelain', '--', this.repository.origin, `${head}:${this.ref}`],
@@ -101,52 +108,13 @@ export class DeliveryGit {
       throw new Error('Simulated target changed before assembly');
     const head = git(this.repository.source, 'rev-parse', '--verify', this.privateRef).trim();
     this.commits.validate(this.repository.source, head);
-    const tree = await this.mergeTree(effect, head, signal);
-    return this.pinMerge(effect, tree, head, signal);
-  }
-
-  /** Fetches only the captured local target and preserves conflict output before creating a merge object. */
-  private async mergeTree(
-    effect: ExternalEffect,
-    head: string,
-    signal: AbortSignal,
-  ): Promise<string> {
-    const target = String(effect.input.targetHead);
-    await this.command(
+    await this.commands.run(
       effect,
       'fetch-target',
-      ['fetch', '--no-tags', '--', this.repository.origin, target],
+      ['fetch', '--no-tags', '--', this.repository.origin, String(effect.input.targetHead)],
       signal,
     );
-    const merged = await this.command(
-      effect,
-      'merge-tree',
-      ['merge-tree', '--write-tree', target, head],
-      signal,
-    );
-    const tree = merged.split('\n')[0]!.trim();
-    if (!/^[a-f0-9]{40,64}$/.test(tree)) throw new Error('Invalid assembled tree');
-    return tree;
-  }
-
-  /** Pins the assembled object independently of the target so failed checks preserve both versions. */
-  private async pinMerge(
-    effect: ExternalEffect,
-    tree: string,
-    head: string,
-    signal: AbortSignal,
-  ): Promise<string> {
-    const target = String(effect.input.targetHead);
-    const message = 'ArcNexus simulated merge ' + this.delivery.id;
-    const arguments_ = ['commit-tree', tree, '-p', target, '-p', head, '-m', message];
-    const commit = (await this.command(effect, 'merge-commit', arguments_, signal)).trim();
-    await this.command(
-      effect,
-      'pin-merge',
-      ['update-ref', 'refs/arcnexus/merges/' + effect.inputDigest, commit, ''],
-      signal,
-    );
-    return commit;
+    return this.assembly.assemble(effect, head, signal);
   }
 
   /** Applies only the exact assembled commit after fresh checks, rejecting concurrent target changes. */
@@ -163,6 +131,8 @@ export class DeliveryGit {
       'refs/arcnexus/merges/' + effect.inputDigest,
     ).trim();
     if (assembled !== captured) throw new Error('Assembled merge identity changed');
+    const head = git(this.repository.source, 'rev-parse', '--verify', this.privateRef).trim();
+    this.assembly.validate(effect, head, assembled);
     await this.publishMerge(effect, assembled, signal);
     return {
       ...this.receipt(assembled),
@@ -179,18 +149,18 @@ export class DeliveryGit {
   ): Promise<void> {
     const pin = 'refs/arcnexus/merges/' + effect.inputDigest;
     const target = 'refs/heads/' + this.delivery.target.branch;
-    await this.command(
+    await this.commands.run(
       effect,
       'push-merge-object',
       ['push', '--porcelain', '--', this.repository.origin, `${assembled}:${pin}`],
       signal,
     );
-    await this.command(
+    await this.commands.run(
       effect,
       'integrate',
       ['update-ref', target, assembled, String(effect.input.targetHead)],
       signal,
-      true,
+      this.repository.origin,
     );
   }
 
@@ -273,45 +243,6 @@ export class DeliveryGit {
       ref: this.ref,
       environmentId: this.delivery.environment.id,
       simulation: true,
-    };
-  }
-
-  /** Supervises fixed argv with private logs, file-only transport and no credential or hook inheritance. */
-  private async command(
-    effect: ExternalEffect,
-    step: string,
-    args: string[],
-    signal: AbortSignal,
-    remote = false,
-  ): Promise<string> {
-    const directory = join(this.evidenceRoot, this.delivery.id, String(effect.attempt), step);
-    mkdirSync(directory, { recursive: true, mode: 0o700 });
-    const output = join(directory, 'stdout');
-    const result = await execute(
-      { command: 'git', args: ['-c', 'core.hooksPath=/dev/null', ...args] },
-      remote ? this.repository.origin : this.repository.source,
-      join(directory, 'command.log'),
-      signal,
-      { processScope: true, stdout: output, env: this.environment() },
-    );
-    if (result.exitCode !== 0) throw new Error('Delivery Git failed; inspect ' + result.log);
-    return readFileSync(output, 'utf8');
-  }
-
-  /** Uses stable commit metadata and denies remote protocols in all managed descendants. */
-  private environment(): NodeJS.ProcessEnv {
-    return {
-      PATH: process.env.PATH,
-      GIT_CONFIG_NOSYSTEM: '1',
-      GIT_CONFIG_GLOBAL: '/dev/null',
-      GIT_TERMINAL_PROMPT: '0',
-      GIT_ALLOW_PROTOCOL: 'file',
-      GIT_AUTHOR_NAME: 'ArcNexus delivery',
-      GIT_AUTHOR_EMAIL: 'delivery@arcnexus.invalid',
-      GIT_COMMITTER_NAME: 'ArcNexus delivery',
-      GIT_COMMITTER_EMAIL: 'delivery@arcnexus.invalid',
-      GIT_AUTHOR_DATE: this.delivery.createdAt,
-      GIT_COMMITTER_DATE: this.delivery.createdAt,
     };
   }
 }
