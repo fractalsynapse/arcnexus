@@ -30,7 +30,7 @@ jobs:
         run: npm ci
       - name: Install confinement runtime
         run: |
-          sudo npm install --global --prefix /usr/local --ignore-scripts @openai/codex@0.163.0-alpha.10.2
+          sudo npm install --global --prefix /usr/local --ignore-scripts @openai/codex@0.163.0-alpha.10.2 npm@10.9.9
           sudo apt-get update
           sudo apt-get install -y bubblewrap apparmor-profiles apparmor-utils
           sudo install -m 0644 /usr/share/apparmor/extra-profiles/bwrap-userns-restrict /etc/apparmor.d/bwrap-userns-restrict
@@ -48,12 +48,14 @@ jobs:
             .filter((path) => readFileSync(path).subarray(0, 4).equals(Buffer.from([127, 69, 76, 70])));
           if (binaries.length !== 1) throw new Error('Expected one installed native Codex executable');
           const codex = binaries[0];
+          const npm = '/usr/local/bin/npm';
+          console.log(execFileSync(npm, ['--version'], { encoding: 'utf8' }));
           console.log(execFileSync(codex, ['--version'], { encoding: 'utf8' }));
           appendFileSync(process.env.GITHUB_ENV, `ARCNEXUS_TEST_CODEX=${codex}\n`);
           mkdirSync('.git/arcnexus', { recursive: true });
           writeFileSync('.git/arcnexus/bindings.yaml', JSON.stringify({
             schemaVersion: 1,
-            tools: { node: process.execPath, codex },
+            tools: { node: process.execPath, codex, npm },
             repositories: {},
           }));
           NODE
