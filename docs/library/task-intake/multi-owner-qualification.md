@@ -150,3 +150,9 @@ Independent Astra reviews accepted names (two criteria,
 `04e07e55-ac73-4bfa-9cb1-5034d4625408` accepted all eleven goal criteria without
 deficiencies. The worker reports and request chronology retain the actual dynamic
 activation sequence; this is separate from the scripted native regression matrix.
+
+Independent verification indexes retain command identity and observed result metadata;
+complete host-command output is available through named artifacts in the current
+`verification.evidence` manifest. Reviewers inspect the complete outputs relevant to
+each criterion without treating unrelated logs as required reading. An unread log
+is not supporting evidence. Original reports and retained command logs remain intact.

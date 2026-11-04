@@ -1699,3 +1699,12 @@ The failed reviewer paged more than 26 million characters of execution evidence.
 Keep complete evidence available, but investigate duplication and more selective
 retrieval separately. Do not solve that cost by truncating required evidence,
 changing acceptance criteria or adding an execution budget.
+
+Issue #219 addresses the measured transport cost alongside #218. The failed review's
+execution artifact contains 26,351,724 characters; host command output accounts for
+roughly 22 million. Use the existing pinned evidence artifacts for individual command
+logs. The execution index retains command identity, arguments, stage and exit status
+with references advertised in the current verification manifest. Preserve every log
+byte, explicitly unavailable output and the original report data. Verify exact
+retrieval through MCP; record index-size reduction independently from unmeasured
+model-time savings. No reading quota or acceptance relaxation is introduced.
