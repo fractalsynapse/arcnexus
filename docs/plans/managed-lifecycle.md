@@ -574,3 +574,10 @@ them. Its sandbox could not re-execute the private Codex binary. Extend the exis
 external-binding acceptance to include allowed-network qualification and pass the
 same captured tool roots to the network canary. This is a missing integration check,
 not an installation or model failure. Preserve the failed task and its exact log.
+
+Next live-publication boundary: create or reconcile a GitHub PR only for the
+host-captured verified delivery branch and exact pushed head. Check repository,
+branch and default-branch exclusion before mutation, retain an intent marker,
+reject mismatched/duplicate observations, and keep absent uncertain PRs uncertain.
+This provider adapter does not itself authorize merge, submit reviews, or publish
+packages; those require the separate captured-policy, current-check and review gates.
