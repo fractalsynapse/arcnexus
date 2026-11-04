@@ -1438,3 +1438,32 @@ assignment; this is an additional actual project owner discovered during executi
 The original report assignment retained specification edits and observed expected-red
 regression evidence and safely advanced to implementation. These are progress facts,
 not completed delivery or full self-development qualification.
+
+The tenth task subsequently passed a real unfinished-work pause/resume check through
+its captured production CLI. Pause waited for the active turn and checkpoint; resume
+retained five records' plans, model threads, regression evidence, checkpoint bytes,
+checked-edit snapshots and dependencies. The simulation environment and dependency
+graph were unchanged. The full assignment comparison intentionally differs because
+the previously unstarted architecture-maintenance assignment moved from ready to
+running after resume; that is dispatch, not lost continuation state. Hashed snapshots
+and control responses are retained under
+`qualification-148-b2bc240/qualification-control/tenth-pause-resume` in the local
+qualification state. This proves task continuation, not container recovery or final
+delivery acceptance.
+
+CI 41798007233 passed at `b633d8f`, including confined tests, native-host qualification,
+formatting, lint, strict typing and architectural ownership validation. The report
+steward's new regression tests and owner lint also passed during implementation;
+formatting correction and independent verification remain separate pending work.
+Observed formatting proposals require the worker to apply their returned content
+through checked edits. Repeated proposal/check cycles are an efficiency observation,
+not authorization for the supervising caller to modify the agent's candidate.
+
+Issue #212 identifies the actual contradiction behind that formatting delay: the
+host accepted and froze an unformatted regression. Required formatting subsequently
+failed while implementation correctly preserved frozen bytes. Before freezing a
+behavioral specification, execute its captured mandatory lint-category operations.
+Completed source-quality failures use existing specification correction; uncertain
+operations and cancellation do not. Keep final checks and frozen-test protection
+unchanged. This is bootstrap prevention for new supervisors, not a hot patch or
+permission to rewrite the tenth run's accepted regression.
