@@ -25,6 +25,7 @@ owns:
   - tests/library/operations
   - docs/library/operations
 api:
+  - module: src/library/operations/promotion-assembly.ts
   - module: src/library/operations/delivery-assembly.ts
   - module: src/library/operations/delivery-commit.ts
   - module: src/library/operations/github-delivery.ts

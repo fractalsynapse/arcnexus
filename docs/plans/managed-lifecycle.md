@@ -1180,3 +1180,25 @@ phase-two gate. The context fix now renders current checkpoint paths/hashes on e
 turn; three built-program context cases pass. Existing frozen-edit enforcement is
 unchanged. Record this bootstrap fix separately from the captured simulation, which
 continues under its original supervisor.
+
+## Promotion assembly intent
+
+Implement promotion as a new live delivery, never an environment switch. Its first
+operation imports the retained simulation's immutable base/candidate objects into
+the current target object store and applies only their attributed difference using
+an explicit three-way base. A normal history merge could accidentally include
+unrelated bootstrap commits present in the simulation baseline. Preserve target
+changes, retain conflicts, pin the resulting unverified candidate with only the
+current target as parent, and leave both checkouts, branches and upstream untouched.
+Use the existing supervised local Git command service. Fresh target-authority checks,
+independent review and live issue/publication wiring remain mandatory subsequent
+steps; object assembly alone is not promotion completion or authorization to push.
+
+The seventh real task was stopped with all failed records retained after its actual
+assignment steward confirmed the captured safe-checkpoint contract prohibits
+continuation. A new task `b0943121-18c9-48dc-b951-9bd4a7207399` captures `7aa7eac`
+and the identical engineering goal under `qualification-148-7aa7eac`. No original
+checkpoint or supervisor was modified. Issue #207 records unavailable evidence in
+the recovery handoff. The selected assignment acceptance suite passed 17 cases with
+79 native-lane skips through the production test CLI; these skips are not native
+qualification. CI `41782502012` is running separately.

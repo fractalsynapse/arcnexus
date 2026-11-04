@@ -330,3 +330,12 @@ denying network targets; it is not unrestricted `network.enabled` execution.
 Installed-runtime qualification separately checks real direct connections and
 proxied HTTP/HTTPS mutations. Explicit download domains remain captured operation
 policy, and the local/private-network guard remains enabled.
+
+### Promotion object assembly
+
+Host-owned promotion imports only captured simulation revisions and reconciles the
+base-to-candidate difference against an exact current target. Its private result is
+unverified until the publisher performs fresh target checks and independent review.
+Neither source checkout nor upstream refs are changed. Conflicts retain command
+evidence and both revisions; simulation verification never substitutes for target
+verification.
