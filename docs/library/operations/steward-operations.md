@@ -315,3 +315,11 @@ that responsibility. Bridge connectivity remains a transport qualification.
 
 Operation call counts remain metrics. They never become execution quotas. Historical
 operation definitions and report fields remain readable without making them executable.
+
+The GitHub delivery PR adapter accepts only host-captured live delivery attribution
+and its verified pushed head. It checks the actual branch, excludes main and the
+repository default branch, and correlates creation/recovery with a durable intent
+marker. Changed heads or ambiguous receipts require reconciliation. This adapter
+creates PRs only; it does not submit reviews, authorize integration, or publish
+packages. The live Publisher orchestration and promotion gates remain separate
+work until their production wiring and real-provider qualification are retained.

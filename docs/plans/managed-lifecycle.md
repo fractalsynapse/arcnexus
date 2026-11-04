@@ -581,3 +581,21 @@ branch and default-branch exclusion before mutation, retain an intent marker,
 reject mismatched/duplicate observations, and keep absent uncertain PRs uncertain.
 This provider adapter does not itself authorize merge, submit reviews, or publish
 packages; those require the separate captured-policy, current-check and review gates.
+
+Revision `50f0051` passed native preparation and reached the real director in task
+`5ff1df6a-a50a-4d28-b12a-877586459338`. The director selected report, publisher and
+CLI from the actual catalog, with ordinary dependency routing left to the workers.
+This is planning evidence, not three executed/verified steward deliveries. The
+retained director prompt is 749,798 bytes; its turn reports 372,482 input tokens,
+186,112 cached input tokens and 1,499 output tokens. Review catalog/context
+serialization for repeated material before future qualification, without changing
+this run's captured inputs. Full cold dependency preparation is also repeated for
+each isolated assignment; investigate integrity-checked package-cache reuse as a
+separate optimization rather than disabling independent checks.
+
+Foundation suites passed through the actual `test run --component foundation`
+service, including confined preparation and selected built-program execution.
+GitHub PR provider tests passed seven controlled HTTP cases in 0.210 seconds:
+creation, exact-head/default-branch refusal, conservative recovery, duplicate reuse,
+and existing collaboration behavior. These are deterministic provider-boundary
+checks, not real GitHub publication or complete live Publisher wiring.
