@@ -2653,3 +2653,12 @@ production run recorded four completed cold setups of 67, 40, 33 and 31 seconds.
 Nine earlier sequential-per-npm setups in the relocation run ranged from 123
 to 345 seconds. Both ran under varying machine load. Measured medians were
 36.5 seconds and 144 seconds respectively.
+
+### Align the CLI steward's objective with managed execution (#148)
+
+The real self-directed workday opened a dependency to add CLI selection settings
+after reading the CLI component's old model-selection objective. Correct the
+source of that objective for future runs. Capture profiles in project authority,
+select starting owners through the director, and let stewards request dependencies.
+A configuration review caught the drift before promoting the proposed feature.
+Keep the current workday's evidence and captured instructions intact.
