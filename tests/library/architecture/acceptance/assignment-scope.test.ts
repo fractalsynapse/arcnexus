@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
+import { ConfigurationReader } from '../../../../dist/library/architecture/configuration.js';
 import { loadCatalog } from '../../../../dist/library/architecture/components.js';
 import {
   resolveAssignment,
@@ -15,6 +16,16 @@ class AssignmentScopeScenarios {
     const { resolve, catalog } = this.fixture(t);
     assert.throws(() => resolve(['source.txt']), /requires owned regression scope beneath tests/);
     assert.deepEqual(catalog.components.sample!.allowedWritePaths, ['source.txt', 'docs', 'tests']);
+  }
+
+  /** Readable historical profiles cannot remove required tests from newly admitted engineering. */
+  legacyProfile(t: TestContext): void {
+    const { resolve, catalog } = this.fixture(t);
+    const profile = catalog.configurationSources.find((source) =>
+      source.path.startsWith('architecture/test-profiles/'),
+    )!;
+    profile.value = { ...(profile.value as object), schemaVersion: 1 };
+    assert.throws(() => resolve(['docs', 'tests']), /Migrate test profile to schemaVersion 2/);
   }
 
   /** Allows future regression creation without requiring a preexisting suite inventory. */
@@ -71,17 +82,29 @@ class AssignmentScopeScenarios {
     assert.doesNotThrow(() => resolve(['source.txt'], kind, changeType));
   }
 
-  /** Reuses captured fixture authority and changes only the profile/root fields relevant to admission. */
-  private fixture(t: TestContext) {
-    const f = workflowFixture(t);
-    const base = f.git('rev-parse', 'HEAD');
-    const catalog = loadCatalog(f.repo, base);
+  /** Supplies the profile declaration as well as its reference in isolated captured authority. */
+  private catalog(repository: string, base: string) {
+    const catalog = loadCatalog(repository, base);
     Object.assign(catalog.components.sample!, {
       schemaVersion: 6,
       repositoryRoot: '.',
       testProfile: 'node',
       allowedWritePaths: ['source.txt', 'docs', 'tests'],
     });
+    catalog.configurationSources.push(
+      new ConfigurationReader().parse(
+        'architecture/test-profiles/node.json',
+        JSON.stringify({ schemaVersion: 2, id: 'node', run: 'check' }),
+      ),
+    );
+    return catalog;
+  }
+
+  /** Reuses captured fixture authority and changes only the profile/root fields relevant to admission. */
+  private fixture(t: TestContext) {
+    const f = workflowFixture(t);
+    const base = f.git('rev-parse', 'HEAD');
+    const catalog = this.catalog(f.repo, base);
     const resolve = (
       paths: string[],
       kind: Assignment['kind'] = 'change',
@@ -129,3 +152,6 @@ test('behavioral documentation admission uses captured classification for new fi
   scenarios.classification(t));
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });
+
+test('assignment admission rejects a readable legacy test profile', (t) =>
+  scenarios.legacyProfile(t));

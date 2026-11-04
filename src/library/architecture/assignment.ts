@@ -1,3 +1,4 @@
+import { ComponentOperationPlans } from './component-operation-plans.js';
 import { assignmentScope } from './assignment-scope.js';
 import { captureInitialization, type InitializationSnapshot } from './initialization.js';
 import { isUtf8 } from 'node:buffer';
@@ -174,6 +175,7 @@ class AssignmentResolver {
   /** Requires an executable owner in the primary writable repository. */
   private validateTarget(): void {
     const { env, component } = this;
+    new ComponentOperationPlans(this.catalog).profileCheck(component, true);
     if (env.workspace && component.repository !== env.workspace.primary.id)
       throw new InputError('Assignment component must belong to the writable primary repository');
     if (

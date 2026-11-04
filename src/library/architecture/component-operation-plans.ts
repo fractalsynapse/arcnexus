@@ -80,14 +80,17 @@ export class ComponentOperationPlans {
     });
   }
 
-  /** Uses the captured test profile's one run definition, including owners whose first suite is pending. */
-  private profileCheck(c: Component): { id: string; run: string } | undefined {
+  /** Keeps legacy discovery readable while requiring a shared runner before assignment execution. */
+  profileCheck(c: Component, executable = false): { id: string; run: string } | undefined {
     if (c.schemaVersion < 6 || !c.testProfile) return undefined;
     const profile = this.catalog.configurationSources.find(
       (source) =>
         source.path.startsWith('architecture/test-profiles/') &&
         (source.value as { id?: string }).id === c.testProfile,
     )?.value as { schemaVersion: number; id: string; run?: string } | undefined;
+    if (profile?.schemaVersion === 1 && !executable) return undefined;
+    if (profile?.schemaVersion === 1)
+      throw new InputError('Migrate test profile to schemaVersion 2 with arcnexus config migrate');
     if (profile?.schemaVersion !== 2 || !profile.run)
       throw new InputError(`Missing executable test profile: ${c.testProfile}`);
     return { id: profile.id, run: profile.run };

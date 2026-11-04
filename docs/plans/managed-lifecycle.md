@@ -2362,3 +2362,19 @@ shared profile at assignment admission, before preparing or executing engineerin
 inspection must not create an executable compatibility adapter. Add a focused
 admission regression and reuse the existing built-CLI discovery cases. The cheapest
 additional check is this four-case suite, not another early full repository cycle.
+
+The discovery correction passes all 15 focused admission/discovery cases with no
+skips, plus full formatting, lint and strict typing. It preserves inspection and
+rejects legacy profiles at assignment admission; no inline runner was restored.
+The scoped-check production CLI selection passed nine checks and skipped its one
+native-only case, which has separate passing native evidence. Its operation report
+is `493cb75f-29a8-4de6-b710-2842d7135c74`. A fixture that only assigned a profile name
+needed the matching captured declaration after admission validation was strengthened;
+this was caught in the focused suite before CI. Preserve the old supervisor runs.
+
+Next self-development objective: ask a fresh real director to address explicit
+verified replacement of failed task assignments (#235), including durable dependency
+and evidence semantics. Use the actual eligible component catalog and ordinary
+simulation lifecycle; do not select a team or manufacture predecessor completion.
+This delegates useful remaining implementation to the system once the fresh runtime
+has its assembled checks, rather than manually duplicating active portfolio work.
