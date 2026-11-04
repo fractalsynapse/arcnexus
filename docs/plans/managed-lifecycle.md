@@ -1222,3 +1222,10 @@ node:net server creation. Fixture strings and unused imports must not trigger it
 Run the affected production confined selection and native test, then the complete
 confined baseline before starting a new real task. No sandbox permission, regression
 criterion or active runner changes are authorized by this classification correction.
+
+Promotion review also found that a target's configured custom Git merge driver
+could execute while processing candidate-controlled attributes. Assembly now refuses
+those local driver definitions before import and immediately before comparison.
+Four native cases passed with zero skips in 6.762 seconds, including no driver
+execution and no imported refs on rejection. This does not broaden host commands
+or authorize publication.

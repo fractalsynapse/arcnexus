@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
 import { PromotionAssembly } from '../../../../dist/library/operations/promotion-assembly.js';
@@ -137,6 +137,16 @@ test('promotion rejects linked worktrees and substituted retained candidates', a
       ),
     /isolated/,
   );
+});
+
+test('promotion refuses configured executable merge drivers before any object import', async (t) => {
+  const f = new PromotionFixture(t);
+  const marker = join(f.target, 'unauthorized-write');
+  git(f.target, 'config', 'merge.external.driver', 'touch ' + marker);
+  const effect = f.intent();
+  await assert.rejects(f.assembly.assemble(effect, f.signal), /executable merge driver/);
+  assert.equal(existsSync(marker), false);
+  assert.equal(git(f.target, 'for-each-ref', 'refs/arcnexus/promotions'), '');
 });
 
 registerSuite({

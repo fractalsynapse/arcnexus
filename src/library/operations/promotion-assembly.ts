@@ -42,6 +42,7 @@ export class PromotionAssembly {
   async assemble(effect: ExternalEffect, signal: AbortSignal): Promise<string> {
     signal.throwIfAborted();
     this.assert(effect);
+    this.assertMergeConfiguration();
     const prior = git(
       this.target,
       'for-each-ref',
@@ -111,8 +112,16 @@ export class PromotionAssembly {
       );
   }
 
+  /** Refuses executable local merge drivers before Git can process candidate-controlled attributes. */
+  private assertMergeConfiguration(): void {
+    const keys = git(this.target, 'config', '--local', '--includes', '--name-only', '--list');
+    if (keys.split('\n').some((key) => /^merge\..+\.driver$/i.test(key)))
+      throw new Error('Promotion target has an executable merge driver; use an isolated target');
+  }
+
   /** Uses an explicit common base so simulation baseline history cannot become part of the promoted diff. */
   private async reconcile(effect: ExternalEffect, signal: AbortSignal): Promise<string> {
+    this.assertMergeConfiguration();
     const current = await this.side(effect, 'current', String(effect.input.targetHead), signal);
     const incoming = await this.side(effect, 'incoming', this.delivery.candidate, signal);
     const merged = await this.commands.run(
