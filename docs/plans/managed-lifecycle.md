@@ -2323,3 +2323,33 @@ characterization checks: keep criteria, scope and operation authority fixed, ret
 the actual diagnostic, and return to specification correction. Cancellation,
 uncertain completion and unsafe source state must still propagate without retry.
 Do not replay or reclassify the retained b9dd9ac record. This is a fresh-runtime fix.
+
+The workday continued after the task entered `needs_attention`, preserving failure
+isolation, but its assignment steward also hit a terminal missing-documentation
+postcondition. Scope-checked missing documentation/test evidence now uses the existing
+specification-correction signal; cross-owner writes remain terminal rejections. The
+retained run is not edited. Three native continuation/refactor cases passed without
+skips before this additional postcondition coverage; refreshed focused evidence follows.
+
+CI 41910757535 caught two foundation assertions that still required repository-wide
+quality at each engineering checkpoint. Update those assertions to the architect's
+newly accepted policy: exactly one inherited owner lint requirement for engineering,
+exactly one inherited full lint/format requirement for delivery, and one authored
+platform declaration. Preserve all assertions about mandatory checks and ownership.
+
+Passing characterization now freezes current owned test sources using captured
+classification, including a first new test file; it no longer relies on the captured
+inventory containing that file already. Director instructions explicitly distinguish
+changed behavior from characterization so test-only coverage is not needlessly
+assigned the behavioral workflow. These changes remain bootstrap repairs pending
+fresh real-supervisor qualification; the full replacement protocol is still tracked
+separately in #235.
+
+Owner formatting refinement (#234): deferring all formatting to delivery is too late
+for already frozen regression/characterization sources. Supply a scoped read-only
+format check using exactly the existing repository formatting coverage intersected
+with captured owned paths. Centralize that existing coverage once in the shared
+foundation formatter; full check/write commands and the owner check use it. Keep
+optional checked formatting proposals available for other owned documents without
+turning those documents into new baseline requirements. This replaces the earlier
+interim delivery-only formatting choice and avoids repeated authored path lists.
