@@ -2587,3 +2587,13 @@ owner-first instructions for a scheduled stewardship turn. Record an invalid
 decision against that owner and input fingerprint, preserve the activation
 identity and continue unrelated ready work. Candidate integrity, cancellation
 and transport failures retain their own handling.
+
+### Remove duplicate ownership from prompt projections (#239)
+
+CI at ca40a3d reported that the combined component views crossed the existing
+700,000-character regression threshold. The real catalog measured 700,429
+characters, including 9,068 for the historical ownership wrapper, in addition
+to resolved writable roots and public API declarations. Emit the effective
+owner scope and public boundary once in steward context. Preserve the underlying
+captured catalog, complete relationships, historical component views and the
+existing size check.
