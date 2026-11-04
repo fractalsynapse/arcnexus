@@ -2242,3 +2242,27 @@ A further #233 provider-boundary case rejects a foreign-environment tracking iss
 before any comment mutation. All six focused provider cases pass without skips;
 the native scheduler evidence remains unchanged. The shared lifecycle-effects tag
 keeps subsequent CLI selection focused on this changed behavior.
+
+### Owner engineering checks and assembled delivery verification (#234)
+
+New captured authority separates finite `delivery` operation usage from assignment
+`verify` usage. Inherited delivery operations run on the assembled immutable head
+alongside owner checks before publication; engineering does not repeatedly execute
+those repository-wide checks. ArcNexus declares shared owner formatting and lint
+verification once. The inherited test profile supplies its existing run operation
+for owner-suite verification without another maintained suite list or leaf recipe.
+An explicit verify declaration remains mandatory. An implicit profile check with no
+owned suites records non-applicability; it never launches an empty Node test command.
+Current suite discovery uses captured ownership/profile rules, including first new
+suites, and preserves captured suite identities. Final repository checks and
+independent verification remain mandatory. Existing runs retain their supervisors,
+operation plans and acceptance sources unchanged.
+
+Efficiency evidence: one real publisher research record used 23 commands totaling
+610,494 ms, including two full-suite invocations totaling 393,875 ms and dependency
+installation of 82,213 ms. These are summed command durations, not wall/model time.
+Separate unavoidable preparation from repeated verification before optimizing
+further. The b9dd9ac director's final assessment also exposed a test-only follow-up
+misclassified as behavior change; a normal task answer requests a new characterization
+assignment without mutating the blocked assignment or manufacturing regression red.
+CI 41904603474 passed at adbddb8; fresh real-agent milestone comments remain unqualified.
