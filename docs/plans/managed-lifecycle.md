@@ -1327,3 +1327,15 @@ Consolidated validation caught a private cross-owner import for the new promotio
 fixture. The fixture is used only by execution-runtime, so it now lives under that
 owner's test support directory instead of expanding testing's public API. This
 keeps reusable infrastructure separate from one feature's scenario setup.
+
+## Observed prerequisite feedback correction (#210)
+
+For agent-invoked finite operations, an observed nonzero prerequisite exit must
+return failed feedback identifying the requested and actual failed operation. Do
+not run the dependent command or claim its artifacts were produced. The steward
+can then correct authorized source. Cancellation, uncertain completion, invalid
+operation authority and transport failure remain fatal. This changes only the
+agent bridge: expected-red capture still requires the selected regression's own
+observed failure, and mandatory verification still throws on failed prerequisites.
+Test the real MCP/harness path with a failed compiler prerequisite, a subsequent
+successful operation, and no dependent side effects; retain raw invocation evidence.
