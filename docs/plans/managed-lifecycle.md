@@ -2353,3 +2353,12 @@ foundation formatter; full check/write commands and the owner check use it. Keep
 optional checked formatting proposals available for other owned documents without
 turning those documents into new baseline requirements. This replaces the earlier
 interim delivery-only formatting choice and avoids repeated authored path lists.
+
+CI 41915348793 passed formatting, lint and strict types, then found three testing
+compatibility failures: implicit profile verification rejected historical inline
+profiles while merely inspecting minimal catalogs. Keep historical test discovery
+read-only and retain its existing migration diagnostic on `test run`. Require the
+shared profile at assignment admission, before preparing or executing engineering;
+inspection must not create an executable compatibility adapter. Add a focused
+admission regression and reuse the existing built-CLI discovery cases. The cheapest
+additional check is this four-case suite, not another early full repository cycle.
