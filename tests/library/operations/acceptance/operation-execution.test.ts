@@ -22,7 +22,15 @@ class ExecutionScenarios {
     const executor = new OperationExecution(root, record, new AbortController().signal);
     await executor.run(operation, 'agent');
     writeFileSync(join(record.workspace, 'source.txt'), 'changed');
-    await assert.rejects(executor.run(operation, 'verify'), /Command failed/);
+    await assert.rejects(
+      executor.run(operation, 'verify'),
+      /Operation check: Error: Command failed.*evidence: .*invocation-.*\.log/,
+    );
+    this.assertEvidence(root, record);
+  }
+
+  /** Checks that later verification has fresh identity, observed artifacts and its own failure status. */
+  private assertEvidence(root: string, record: RecordData): void {
     const report = JSON.parse(readFileSync(join(root, 'runs/run/report.json'), 'utf8'));
     const [agent, verify] = report.operationInvocations;
     assert.equal(agent.status, 'completed');

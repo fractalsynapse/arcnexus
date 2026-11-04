@@ -16,9 +16,6 @@ id: migrated-recipe-e58bdff3c39641d2
 purpose: Project setup
 kind: command
 prerequisites: []
-command: npm
+command: node
 args:
-  - ci
-  - --no-audit
-  - --no-fund
-  - --maxsockets=1
+  - scripts/foundation/install-dependencies.mjs

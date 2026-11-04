@@ -129,6 +129,16 @@ export class OperationExecution {
     }
   }
 
+  /** Attaches the declared operation and raw evidence location without masking cancellation or uncertainty. */
+  private failure(op: Operation, error: unknown): never {
+    if (!error || typeof error !== 'object' || !('commandResult' in error)) throw error;
+    const result = error.commandResult as CommandResult;
+    throw Object.assign(
+      new Error(`Operation ${op.id}: ${String(error)}; evidence: ${result.log}`, { cause: error }),
+      { commandResult: result },
+    );
+  }
+
   /** Sends resolved argv through the same confined process supervisor for every invocation purpose. */
   private async command(
     op: Extract<Operation, { command: string }>,
@@ -149,7 +159,7 @@ export class OperationExecution {
         fileOutput: true,
         processScope: true,
       },
-    );
+    ).catch((error) => this.failure(op, error));
     return { ...result, command: op.command, args: op.args };
   }
 }

@@ -3,7 +3,9 @@
   "compilerOptions": {
     "rootDir": ".",
     "noEmit": true,
+    "allowJs": true,
+    "checkJs": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["eslint.config.ts"]
+  "include": ["eslint.config.ts", "scripts/foundation/install-dependencies.mjs"]
 }

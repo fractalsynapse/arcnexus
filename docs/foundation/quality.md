@@ -102,3 +102,17 @@ workflow stage permits those paths. The host still checks assignment narrowing,
 owned paths, frozen tests and current content. Formatting output grants no new
 authority. A stale proposal requires recomputation; an identical retry retains its
 transaction identity. Final `format:check` remains independent verification.
+
+## Dependency bootstrap
+
+The captured setup operation invokes `scripts/foundation/install-dependencies.mjs`.
+It validates the version-three lockfile, caches applicable HTTPS artifacts
+sequentially, then runs `npm ci --offline --no-audit --no-fund`. npm retains
+lockfile integrity enforcement. Package lifecycle hooks run inside the same
+source-read-only operation sandbox. Unsupported dependency sources fail before
+any download; individual download failures are not retried automatically.
+
+This pre-install bootstrap is JavaScript because it must run before TypeScript
+is installed, including on Node builds without built-in type stripping. JSDoc
+annotations and the strict tooling TypeScript check cover it. Application code
+and acceptance scenarios retain the TypeScript standard.

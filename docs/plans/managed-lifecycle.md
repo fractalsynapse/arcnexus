@@ -542,3 +542,27 @@ probe when a package manager reports a generic transport error. Repeating full
 real-agent launches concealed the useful error and consumed setup time without
 reaching a model. An isolated native preparation check is the cheapest useful gate
 before the next expensive lifecycle submission.
+
+Operation failure reports must identify the declared operation and retained log,
+not merely the confinement wrapper executable. Preserve the raw command evidence
+and cancellation/uncertainty classification while adding this diagnostic context.
+This closes the observed need to search entire run directories for an installer
+failure that the normal task result currently describes only as a Codex exit.
+
+Two fresh confined installations using sequential cache preparation completed,
+each installing 191 packages offline in approximately four seconds after cache
+preparation. Total cold preparation takes approximately two minutes; this is a
+measured startup cost, not a reason to widen source or network authority. The
+bootstrap acceptance controls only npm's external process boundary and covers
+platform selection, deduplication, offline installation, pre-download rejection
+and failure propagation. Native shared-executor coverage passed six combined
+cases with zero skips in 2.842 seconds before the bootstrap type-check refinement.
+
+A portability check exposed that this host's Node 22.22.1 was compiled without
+TypeScript stripping (`ERR_NO_TYPESCRIPT`). Keep the pre-install bootstrap as
+strictly checked JSDoc JavaScript rather than introducing a compiler dependency
+before dependency installation. This is a narrow, documented bootstrap exception;
+TypeScript remains the application and test language. Also retain a private copy
+of the qualified Codex executable for the next run: the desktop-managed executable
+changed since the previous qualification, so its mutable installation path cannot
+by itself establish a stable supervising tool binary.
