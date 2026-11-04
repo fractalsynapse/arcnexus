@@ -1509,3 +1509,13 @@ cases in 6.592 seconds. Builds and scoped formatting/lint passed. Reusing the ex
 SQLite lease avoided a new lock protocol or second settings source. Expected revisions
 are service inputs, not additional required CLI arguments. The concurrent real-agent
 publisher assignment has begun implementation; its evidence remains separate.
+
+Issue #214 records a directly observed transport defect: publisher's formatter emitted
+a 25,110-byte JSON edit proposal, but each operation response contained a 14,446-character
+diagnostic excerpt that could not be parsed. Four repeated calls returned the same
+unusable excerpt. Retain complete successful checked-edit proposals as immutable
+host evidence bound to their invocation; return compact metadata and let the existing
+`source.edit` tool consume that reference through its unchanged authorization and
+transaction engine. Reject foreign, incomplete, tampered or aliased evidence, preserve
+stale-hash and frozen-test checks, and identify truncated diagnostics explicitly.
+This removes model-mediated copying without giving commands direct source writes.
