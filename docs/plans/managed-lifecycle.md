@@ -855,3 +855,13 @@ binding to the installed ELF binary and validate its version before the expensiv
 native lane. Do not relax confinement or skip the affected tests. This repeats
 the executable-bundle class of failures tracked in #201; inspect packaging at the
 binding boundary rather than letting dozens of downstream cases rediscover it.
+
+The real publisher specification turn produced its intended failing regression,
+but the assignment failed because the agent-operation catch matched a human error
+message prefix. Adding operation identity to diagnostics invalidated that match.
+Record `d56a81bf-81c9-4b22-9343-55482d9f41d5` retains the actual assertion and edits.
+Replace prose-based classification with structured observed-exit metadata, preserve
+fatal host verification and cancellation, and cover the agent operation boundary.
+The active supervisor remains unchanged; this run is diagnostic evidence, not a
+successful self-development delivery. Safe pause qualification is in progress with
+report's real unfinished diff and checkpoint hashes retained.
