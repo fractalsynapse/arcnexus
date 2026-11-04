@@ -1969,3 +1969,11 @@ files outside suite discovery and retain valid new-suite creation, captured-suit
 immutability, stage checks and frozen regressions. The old failed candidate and
 captured supervisor remain untouched. Verify malformed registration, wrong owner,
 directory mismatch, atomic batches and corrected retries through the built bridge.
+
+CI 41871028425 passed the confined selection and 413 of 414 native cases, with
+zero native skips. The remaining authority test assigned `process.execPath` as a
+changed Node binding, which became a no-op after the fixture correctly captured
+that same executable. Make the mutation explicit with a distinct executable alias
+and assert the before/after binding differs. Preserve the rejection assertion and
+all production authority checks. This fixture correction accompanies #226 rather
+than repeating another long CI cycle on its own. The raw failed run is retained.
