@@ -2433,3 +2433,13 @@ contains absolute links: moving source and an unfinished candidate together reta
 candidate bytes but makes Git resolution fail. #232 therefore needs validated,
 journaled metadata repair as well as durable application identities; changing the
 project-key hash alone would not complete recovery. No retained run was modified.
+
+Preparation remains an observed cost after scoped checks: fresh assignment installs
+spend about 85 seconds launching one npm process per applicable locked artifact.
+#237 qualifies batching cache preparation into one npm invocation with an explicit
+per-origin connection bound, followed by the existing offline integrity-checked
+install. Installed container npm 10.9.9 accepts multiple specs but internally uses
+Promise.all; batching without a connection setting would change transport behavior.
+Preserve validation before dispatch, platform filtering, failure evidence and source/
+network confinement. Test through the declared executor before adopting the speedup;
+never change a running assignment's captured script or execution policy.
