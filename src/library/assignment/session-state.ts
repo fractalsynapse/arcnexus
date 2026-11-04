@@ -77,6 +77,7 @@ export class SessionState {
     if (!resolved) throw new InputError('A captured assignment is required');
     this.resolved = resolved;
     this.component = { ...resolved.context.at(-1)!, verification: resolved.verification };
+    this.validateAuthority();
     if (
       Object.hasOwn(resolved.assignment, 'allowedWritePaths') ||
       Object.hasOwn(resolved, 'allowedWritePaths')
@@ -84,7 +85,6 @@ export class SessionState {
       throw new InputError(
         'Legacy assignment authority requires its captured supervisor; start new work for ownership-only execution',
       );
-    this.validateAuthority();
     this.assignment = resolved.assignment;
     this.documentationOnly = this.assignment.changeType === 'documentation';
     this.scope = this.assignment.kind === 'change' ? this.component.allowedWritePaths : [];
