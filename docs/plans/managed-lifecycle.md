@@ -2662,3 +2662,12 @@ source of that objective for future runs. Capture profiles in project authority,
 select starting owners through the director, and let stewards request dependencies.
 A configuration review caught the drift before promoting the proposed feature.
 Keep the current workday's evidence and captured instructions intact.
+
+### Skip repeated run hydration when scheduling finds no work (#242)
+
+A host with a single 2,680,796-byte needs-attention run spent 2,967 ms on eight
+empty selections under load. Eight indexed event cursor reads against that
+retained database took 0.10 ms. Cache an empty selection at the durable event
+sequence. A newly committed event must make the next tick reconsider work,
+including when another store connection delivered an inbox request. Measure the
+normal production selector on the same retained database after the change.
