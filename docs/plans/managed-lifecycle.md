@@ -2637,3 +2637,11 @@ authority. A requester awaiting its replacement requires verified delivery.
 Record both identities and the director's diagnosis for final goal assessment.
 A continuation keeps its checkpoint; a replacement starts separately. Refuse
 uncertain operations and incompatible authority before admitting either.
+
+### Correct mismatched links before routing inbox requests (#241)
+
+The new cross-repository task reached a real supplier but linked existing work
+with different acceptance criteria. Keep rejecting mismatches. Use the same
+comparison before routing so the requester gets its existing read-only correction
+turn and can inspect the exact supplier intent. Keep the original run's failure,
+the accepted supplier criteria and unrelated ready work intact.
