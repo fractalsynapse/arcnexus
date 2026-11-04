@@ -950,3 +950,14 @@ established. An explicit publication request can refresh pending provider gates
 without repeating a completed commit, push or PR. Tests substitute only external
 transport and use real local Git and SQLite. This is bootstrap work while the
 seventh captured real simulation continues independently.
+
+Live publication orchestration and unchanged simulation publication passed three
+native acceptance cases with no skips in 5.530 seconds. These used actual local
+Git, supervised processes and SQLite; only HTTP/remote transport and verification
+inputs were controlled acceptance boundaries. CI changed from pending to success
+without repeating checks, push or PR creation; failed verification prevented all
+upstream requests. This is not real GitHub integration evidence. Sharing the
+effect protocol removed duplicated recovery code while keeping the provider
+behavior explicit. The ongoing real-agent run now has two publisher dependencies
+on report and CLI; that is real dynamic assignment creation, not yet discovery
+of an additional owner or verified delivery.

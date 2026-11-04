@@ -54,3 +54,5 @@ export {
 } from './simulation-publication.js';
 
 export { DeliveryResources } from './delivery-resources.js';
+
+export { LivePublication, type LivePublicationContext } from './live-publication.js';

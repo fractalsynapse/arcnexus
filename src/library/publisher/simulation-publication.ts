@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import type { RepositoryMaterialization } from '../architecture/bindings.js';
 import type { DeliveryRecord, DeliveryMilestone } from '../coordination-store/delivery-types.js';
@@ -12,7 +11,7 @@ import {
   type SimulationCheckResult,
 } from '../operations/simulated-pull-requests.js';
 import { SimulatedReleases } from '../operations/simulated-releases.js';
-import { UpstreamExecution } from '../operations/upstream-execution.js';
+import { PublicationEffects } from './publication-effects.js';
 import type { CapturedPublicationPolicy } from './publication-policy.js';
 
 export interface SimulationPublicationContext {
@@ -49,7 +48,7 @@ export class SimulationPublication {
 
   private readonly releases: SimulatedReleases;
 
-  private readonly executor: UpstreamExecution;
+  private readonly executor: PublicationEffects;
 
   /** Captures host policy once and exposes no caller-supplied command, target or artifact overrides. */
   constructor(
@@ -99,26 +98,20 @@ export class SimulationPublication {
   }
 
   /** Routes every lifecycle step through the same immutable environment and write-ahead protocol. */
-  private execution(): UpstreamExecution {
-    const { environment, runId, authorityDigest, target } = this.delivery;
-    return new UpstreamExecution(
+  private execution(): PublicationEffects {
+    const { environment } = this.delivery;
+    return new PublicationEffects(
       this.context.effects,
+      this.context.deliveries,
+      this.delivery,
       {
         id: this.context.effects.environment(environment.id).providerId,
         mode: 'simulation',
         apply: (effect, signal) => this.adapter(effect).apply(effect, signal),
         inspect: async (effect) => this.adapter(effect).inspect(effect),
       },
-      {
-        environmentId: environment.id,
-        runId,
-        authorityDigest,
-        grants: actions.map((operation) => ({
-          operation,
-          target: target.repository,
-          definitionDigest: this.context.policy.operation.definitionDigest!,
-        })),
-      },
+      this.context.policy.operation.definitionDigest!,
+      actions,
     );
   }
 
@@ -135,27 +128,8 @@ export class SimulationPublication {
     signal: AbortSignal,
     extra: Record<string, unknown> = {},
   ) {
-    const id = createHash('sha256')
-      .update(this.delivery.id + ':' + operation)
-      .digest('hex');
-    const prior = this.context.effects.effects().find((effect) => effect.id === id);
-    const input = prior?.input ?? {
-      deliveryId: this.delivery.id,
-      ...extra,
-      ...(operation === 'pull-request.merge' ? { targetHead: this.git.targetHead() } : {}),
-    };
-    let effect = prior?.status === 'uncertain' ? await this.executor.recover(id, signal) : prior;
-    if (!effect || effect.status === 'prepared')
-      effect = await this.executor.execute(
-        id,
-        operation,
-        this.delivery.target.repository,
-        input,
-        signal,
-      );
-    if (effect.status !== 'completed')
-      throw new Error(`Publication ${operation} requires reconciliation: ${effect.status}`);
-    return effect;
+    const target = operation === 'pull-request.merge' ? { targetHead: this.git.targetHead() } : {};
+    return this.executor.effect(operation, signal, { ...extra, ...target });
   }
 
   /** Records a milestone only after a completed provider receipt exists. */
@@ -166,8 +140,7 @@ export class SimulationPublication {
 
   /** Keeps milestone persistence idempotent across a crash after the external effect completes. */
   private complete(milestone: DeliveryMilestone, effectId: string): void {
-    const current = this.current();
-    this.context.deliveries.complete(current.id, current.version, milestone, effectId);
+    this.executor.complete(milestone, effectId);
   }
 
   /** Reads authorization and lifecycle state freshly so intervening approval is not lost. */

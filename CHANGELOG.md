@@ -4,6 +4,8 @@
 
 ### Added
 
+- Connect live delivery commit, fresh verification, push and GitHub PR creation to the coordinator with durable effect reuse and refreshable provider gates; staging integration remains gated (#148).
+
 - Manage platform standards through checked create/update/remove configuration transactions with stale-revision and reference protection (#148).
 - Return observed failing checks to stewards despite diagnostic prefixes while retaining fatal verification, cancellation and prerequisite failures (#203).
 - Add isolated, supervised GitHub delivery transport for verified host commits with exact-head recovery and scoped credentials (#148).

@@ -20,9 +20,11 @@ remain outside this increment's automatic authority.
 `delivery list [package]` and `delivery get <id>` read retained state without starting
 an execution host. `delivery approve <id>` authorizes the observed immutable revision
 using a stale-revision check. `delivery publish <id>` queues advancement on the original
-supervisor, preserving repository serialization and captured authority. The current
-publication adapter advances simulation deliveries; live publication and promotion
-remain separate implementation gates.
+supervisor, preserving repository serialization and captured authority. The simulation adapter advances the complete isolated lifecycle. The live adapter
+creates a verified host commit, repeats captured checks and independent verification,
+pushes a generated branch, creates a correlated GitHub PR and observes current CI
+and review gates. Live staging integration and promotion remain implementation
+gates; the adapter retains an explicit blocker instead of declaring integration.
 
 A shared `delivery.publish` operation declares the accountable publisher, destination
 repository and target branch. Its definition digest accompanies each internal effect.
@@ -45,3 +47,10 @@ merge authority or fresh assembled verification; live publication wiring must
 combine those gates before requesting integration. The provider follows GitHub's
 [PR fields and merge states](https://docs.github.com/en/graphql/reference/pulls)
 and [commit check rollups](https://docs.github.com/en/graphql/reference/commits).
+
+Both adapters use one durable publication-effect service. Completed commits, pushes
+and PRs are reused after interruption; uncertain mutations require reconciliation.
+CI/review observations are refreshed on each explicit publication request, so a
+pending check does not become a permanently cached failure. The live host reads
+`GH_TOKEN` or `GITHUB_TOKEN` at the provider boundary; neither workers nor operation
+evidence receive credentials. Local approval never submits a GitHub review.

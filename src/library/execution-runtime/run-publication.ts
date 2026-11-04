@@ -9,6 +9,7 @@ import {
   DeliveryResources,
   DeliveryChecks,
   SimulationPublication,
+  LivePublication,
   type CapturedPublicationPolicy,
 } from '../publisher/publisher.js';
 import { git } from '../operations/process.js';
@@ -55,8 +56,6 @@ export class RunPublication {
     if (expectedRevision !== undefined && delivery.revision !== expectedRevision)
       throw new Error('Stale delivery revision');
     if (delivery.projectId !== this.context.key) throw new Error('Foreign delivery project');
-    if (delivery.environment.mode !== 'simulation')
-      throw new Error('Live publication is not yet available');
     const run = this.execution.run(delivery.runId);
     if (
       run.data.executionIdentity !== delivery.authorityDigest ||
@@ -78,10 +77,7 @@ export class RunPublication {
   ): Promise<void> {
     if (!run.data.pendingPublication) this.capture(run);
     const retained = this.execution.run(run.id);
-    if (
-      !(retained.data.pendingPublication || retained.data.deliveryId) ||
-      retained.environment?.mode !== 'simulation'
-    )
+    if (!(retained.data.pendingPublication || retained.data.deliveryId) || !retained.environment)
       return;
     const store = new DeliveryStore(
       join(this.root, 'projects', this.context.key, 'deliveries.sqlite'),
@@ -109,13 +105,28 @@ export class RunPublication {
     store: DeliveryStore,
     signal: AbortSignal,
   ) {
-    const context = environments.contextFor(run);
     const delivery = store.get(String(run.data.pendingPublication ?? run.data.deliveryId));
     if (delivery.publication === 'released' || (delivery.blocker && !run.data.pendingPublication))
       return;
+    if (delivery.environment.mode === 'live') {
+      await this.publishLive(run, environments, store, signal);
+      return;
+    }
+    const publication = this.simulation(run, environments, store);
+    try {
+      await publication.publish(signal);
+    } finally {
+      publication.close();
+    }
+  }
+
+  /** Binds isolated publication to actual captured repositories and verification callbacks. */
+  private simulation(run: ExecutionRun, environments: RunEnvironments, store: DeliveryStore) {
+    const context = environments.contextFor(run);
+    const delivery = store.get(String(run.data.pendingPublication ?? run.data.deliveryId));
     const repositoryId = context.catalog.primaryRepository!;
     const checks = this.checks(context, run, delivery.assignmentIds);
-    const publication = new SimulationPublication(
+    return new SimulationPublication(
       {
         root: join(environments.directory, run.environment!.id),
         repositoryId,
@@ -127,11 +138,35 @@ export class RunPublication {
       },
       delivery,
     );
-    try {
-      await publication.publish(signal);
-    } finally {
-      publication.close();
-    }
+  }
+
+  /** Uses the same host checks and captured authority for real branch delivery, without worker credentials. */
+  private async publishLive(
+    run: ExecutionRun,
+    environments: RunEnvironments,
+    store: DeliveryStore,
+    signal: AbortSignal,
+  ): Promise<void> {
+    const delivery = store.get(String(run.data.pendingPublication ?? run.data.deliveryId));
+    const checks = this.checks(this.context, run, delivery.assignmentIds);
+    const publication = new LivePublication(
+      {
+        root: join(environments.directory, run.environment!.id),
+        repositoryId: this.context.catalog.primaryRepository!,
+        source: this.context.source,
+        effects: environments.effects,
+        deliveries: store,
+        policy: run.data.publicationPolicy as CapturedPublicationPolicy,
+        credential: async () => {
+          const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
+          if (!token) throw new Error('GitHub host credential is unavailable');
+          return token;
+        },
+        checks: (head, cancellation, independent) => checks.check(head, cancellation, independent),
+      },
+      delivery,
+    );
+    await publication.publish(signal);
   }
 
   /** Limits publication assessment to assignments attributed to this immutable delivery. */
