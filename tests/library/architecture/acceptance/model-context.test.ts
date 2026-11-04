@@ -26,6 +26,8 @@ class ModelContextScenarios {
       this.imports(owner, view);
       assert.equal(view.operationPlan, undefined);
       assert.equal(view.inventory, undefined);
+      assert.equal(view.ownership, undefined);
+      assert.equal(view.owns, undefined);
       assert.equal(view.capturedTests, undefined);
     }
     this.sharedStandards(context, before);
