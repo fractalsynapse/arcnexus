@@ -65,6 +65,11 @@ class HostLossScenario {
     });
     assert.equal(result.status, 1, result.stderr);
     general.captureHost();
+    this.retained(f, id, calls);
+  }
+
+  /** Confirms recovery retained the blocker and evidence without issuing another model call. */
+  private retained(f: WorkflowFixture, id: string, calls: string): void {
     const retained = spawnSync(process.execPath, [cli, 'task', 'get', id, '--json'], {
       cwd: f.root,
       env: f.env,

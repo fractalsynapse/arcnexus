@@ -1078,3 +1078,24 @@ and formatting passed. This is policy preparation, not native enforcement or
 container recovery qualification. Keep the required administrator load separate
 from ordinary repository development; the application must not try to install
 host security policy through a privileged container workaround.
+
+After the administrator loaded the dedicated profile, the first all-capabilities-
+dropped Docker probe passed three process-scope cases but failed Bubblewrap UID
+mapping when the supervisor ran as UID 0. Linux requires CAP_SETFCAP to map parent
+UID 0; granting that to engineering is not the solution. A disposable probe delegated
+only the test container's own cgroup, then switched to UID/GID 1000 and dropped the
+complete capability bounding set with no-new-privileges before invoking tests.
+That advanced confinement to an explicit AppArmor `pivotroot` denial, confirmed in
+the kernel audit. The profile now permits the inner sandbox's root change and
+awaits an administrator reload. The base test image also lacked OpenSSL, required
+by the existing TLS interception acceptance; the qualification image now includes
+it. These are separate prerequisite failures, not waived tests.
+
+The real report research dependency reached independently verified completion,
+and its publisher requester resumed. It made no source changes and therefore does
+not establish the self-development delivery gate. Verification inspection also
+identified an efficiency cost: a 14.7 MB execution artifact and 19.1 MB review
+report produced approximately 110 MB of raw verifier events. Preserve raw evidence,
+but investigate eliminating repeated expanded context in structured summaries and
+using bounded evidence retrieval. Do not truncate authoritative evidence or change
+the active verifier's captured input to save time.
