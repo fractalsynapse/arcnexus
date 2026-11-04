@@ -377,3 +377,20 @@ successful delivery. A cancelled supplier remains interrupted, with dependent
 assignments still waiting for delivery rather than receiving fabricated rejection.
 Manual pause/stop and terminal outcomes remain intact. Hard host loss still uses
 parent-death supervision and validated recovery on the next host startup.
+
+### Headless container lifetime
+
+The container lifetime service keeps the environment alive while ordinary CLI
+commands create or inspect project hosts. It does not schedule work, select owners,
+resume interrupted operations, or introduce another execution mode. On SIGTERM or
+SIGINT it discovers answering hosts in its own execution storage, validates their
+live process identity over private IPC, signals them to drain, and waits for those
+exact processes to exit. Existing per-project hosts own cancellation, checkpoints
+and interruption evidence. No hidden drain deadline is introduced. Docker still
+needs an init process to reap orphans and may enforce its own external stop limit.
+
+Read-only host identity includes its PID, process start token and execution storage
+root so a deployment can distinguish an answering host from stale or foreign
+metadata. Shutdown must not signal a process based only on a retained PID file.
+Container replacement leaves retained runs interrupted until explicit validated
+continuation; starting the lifetime service alone performs no engineering.

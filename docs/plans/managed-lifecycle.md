@@ -1129,3 +1129,11 @@ same repository ID, base and revision token. Unfinished execution relocation and
 whole-container lifecycle recovery remain separate; do not infer them from a
 portfolio read. Packaging the supervisor independently took one initial build;
 subsequent entrypoint corrections reused the dependency and compile layers.
+
+Finish unattended container lifetime through the existing execution-runtime owner:
+a small headless lifetime service keeps the container alive for normal CLI controls,
+and drains answering hosts on container signals. It owns no scheduler or automatic
+recovery. Use private IPC live identity (PID/start/storage root), never stale PID
+files, before signalling host shutdown. Qualify it against the same actual managed
+host fixture and then an actual Docker stop with a retained volume. This closes the
+returning-workday-command lifetime gap without adding HTTP or changing public CLI.
