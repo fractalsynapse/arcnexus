@@ -1528,3 +1528,32 @@ MCP scenario passed in 22.130 seconds: a real confined operation emitted a large
 proposal, the actual bridge applied complete bytes by reference, and a repeated
 reference reused its receipt. Its model input was controlled; real-agent use remains
 pending a fresh supervisor. Builds, formatting, lint and strict checking passed.
+
+
+The assembled production confined selection at `3c9e99e` passed 512 cases with zero
+failures and 365 native-host skips (877 total). Evidence is retained at
+`~/.local/share/arcnexus/state/test-runs/e2f69e18-15e8-4ac9-b536-7ad45b6d2f69`.
+Formatting, lint, strict checking, builds and consolidated architecture/guidance
+validation passed. Native focused results above remain separate; CI 41809960511
+is still running its native-host qualification. CI 41805305089 passed at `0fcc316`,
+before the settings and complete-proposal changes.
+
+Efficiency observation: assembling the checkpoint, settings and proposal repairs
+before one integrated run avoided three repeated long suites. Complete proposal
+references also remove a demonstrated copying/truncation loop without relaxing edit
+authority. The tenth simulation now has independently accepted report and publisher
+research; neither is an engineering delivery. Its changelog verifier correctly
+rejected a claim made before the CLI workflow was verified. Architecture maintenance
+requested a further CLI evidence assignment through the ordinary inbox, which is
+running. Observe whether that produces relevant evidence or duplicates unfinished
+work before changing dependency policy; do not fabricate completion to release a
+waiter. All these live observations retain the original `b2bc240` supervisor.
+
+Issue #216 preserves execution progress before retiring legacy observation commands.
+Expose the report library's captured-record progress projection through workspace
+resource reads: observed commands, claimed checklist progress, verification evidence,
+cancellation and historical limits. Do not expose whole model turns, bindings or raw
+timeline payloads. Include timeline evidence in workspace revision tokens so event-only
+progress changes invalidate stale resource reads. Missing historical progress remains
+unavailable. Preparation/cleanup test migration and alias retirement remain subsequent
+work; adding this projection alone does not complete that gate.
