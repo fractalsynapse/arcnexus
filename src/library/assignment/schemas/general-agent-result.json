@@ -130,13 +130,6 @@
           },
           "changeType": {
             "enum": ["behavior", "documentation", "refactor", null]
-          },
-          "allowedWritePaths": {
-            "type": ["array", "null"],
-            "items": {
-              "type": "string",
-              "minLength": 1
-            }
           }
         },
         "required": [
@@ -149,8 +142,7 @@
           "assignmentId",
           "milestone",
           "kind",
-          "changeType",
-          "allowedWritePaths"
+          "changeType"
         ],
         "additionalProperties": false
       }

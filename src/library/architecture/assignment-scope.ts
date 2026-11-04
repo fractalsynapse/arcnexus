@@ -1,20 +1,14 @@
 import { posix } from 'node:path';
 import type { Assignment } from './assignment.js';
 import type { Component } from './components.js';
-import { covered, scopePath } from './component-paths.js';
+import { covered } from './component-paths.js';
 import { classifyComponentPath } from './file-classification.js';
 import { InputError } from './config.js';
 import { assertBehavioralTestScope } from '../testing/captured-tests.js';
 
-/** Resolves narrowed write authority and rejects workflows whose mandatory specification cannot fit. */
-export function assignmentScope(assignment: Assignment, component: Component): string[] {
-  const requested = assignment.allowedWritePaths ?? component.allowedWritePaths;
-  for (const path of requested) {
-    scopePath(path);
-    if (!covered(path, component.allowedWritePaths))
-      throw new InputError(`Assignment widens component scope: ${path}`);
-  }
-  const writable = assignment.kind === 'change' ? requested : [];
+/** Checks that the component can carry out the workflow without requiring a planner to select files. */
+export function validateOwnerWorkflow(assignment: Assignment, component: Component): void {
+  const writable = component.allowedWritePaths;
   if (
     component.schemaVersion === 6 &&
     assignment.kind === 'change' &&
@@ -23,10 +17,9 @@ export function assignmentScope(assignment: Assignment, component: Component): s
     assertBehavioralTestScope(component, writable);
     if (!writable.some((path) => allowsDocumentation(component, path)))
       throw new InputError(
-        `Behavioral assignment for ${component.id} requires owned documentation scope for its specification; request corrected scope, or use the refactor workflow for test-only characterization without changing behavior. Active assignment authority cannot be widened.`,
+        `Behavioral assignment for ${component.id} requires owned documentation scope for its specification; an architectural decision is required if the component cannot own a specification.`,
       );
   }
-  return writable;
 }
 
 /** Applies the captured classifier to existing files and possible new documentation inside owned directories. */

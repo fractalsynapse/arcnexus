@@ -1,4 +1,5 @@
 import { assertCapturedTestEdit } from '../testing/captured-tests.js';
+import { relativePath } from '../architecture/config.js';
 import { readSchema } from '../architecture/schema.js';
 import { join } from 'node:path';
 import { checkedEditAuthority } from './edit-recovery.js';
@@ -12,6 +13,18 @@ import {
 } from '../workspace/checked-edits.js';
 import type { SessionState } from './session-state.js';
 import { OperationEditProposals } from '../operations/operations.js';
+
+/** Retains safe routing guidance after a completely rejected authority-boundary request. */
+class EditRoutingError extends EditRequestError {
+  /** Captures the accountable owner and next action without granting writes or creating inbox work. */
+  constructor(
+    readonly path: string,
+    readonly ownerId: string,
+    readonly recovery: string,
+  ) {
+    super(`File belongs to another owner: ${path}`);
+  }
+}
 
 /** Exposes checked source mutation only through the active assignment's host-bound connection. */
 export class CheckedEditBridge {
@@ -32,7 +45,7 @@ export class CheckedEditBridge {
       {
         name: 'source.edit',
         description:
-          'Apply owned edits through checked transactions. Supply id and changes with current SHA-256 hashes, using a fresh id for each distinct batch. Alternatively, when an operation returns editProposal, supply only proposalInvocationId to apply its complete pinned batch without copying diagnostic excerpts. Both forms enforce current ownership, stage and frozen-test authority. This is the only source write route.',
+          'Apply owned edits through checked transactions. Supply id and changes with current SHA-256 hashes, using a fresh id for each distinct batch. Alternatively, when an operation returns editProposal, supply only proposalInvocationId to apply its complete pinned batch without copying diagnostic excerpts. Both forms enforce current ownership, stage and captured suite integrity. This is the only source write route.',
         inputSchema: {
           type: 'object',
           oneOf: [
@@ -91,25 +104,36 @@ export class CheckedEditBridge {
 
   /** Reports safe pre-transaction conflicts without relaxing authorization or uncertain recovery failures. */
   private rejected(error: StaleEditError | EditIdentityError | EditRequestError): unknown {
-    const conflict =
-      error instanceof StaleEditError
-        ? {
-            path: error.path,
-            expectedSha256: error.expectedSha256,
-            currentSha256: error.currentSha256,
-          }
-        : error instanceof EditIdentityError
-          ? { id: error.transactionId }
-          : {};
     const recovery =
-      error instanceof StaleEditError
-        ? 'No edits were applied. Reread the current bytes, compute SHA-256 and retry the complete batch.'
-        : error instanceof EditRequestError
-          ? 'No edits were applied. Use a completed proposalInvocationId from this assignment, or correct the direct request: create/update require complete replacement content; delete permits omitted or null content. Use each relative path once.'
-          : 'No edits were applied. Use a fresh unique transaction ID for a different batch; reuse an ID only for an identical retry.';
-    const rejection = { status: 'rejected', error: error.message, ...conflict, recovery };
+      error instanceof EditRoutingError
+        ? error.recovery
+        : error instanceof StaleEditError
+          ? 'No edits were applied. Reread the current bytes, compute SHA-256 and retry the complete batch.'
+          : error instanceof EditRequestError
+            ? 'No edits were applied. Use a completed proposalInvocationId from this assignment, or correct the direct request: create/update require complete replacement content; delete permits omitted or null content. Use each relative path once.'
+            : 'No edits were applied. Use a fresh unique transaction ID for a different batch; reuse an ID only for an identical retry.';
+    const rejection = {
+      status: 'rejected',
+      error: error.message,
+      ...this.details(error),
+      recovery,
+    };
     this.state.journal(String(this.state.options.record.stage), 'source.edit_rejected', rejection);
     return rejection;
+  }
+
+  /** Describes only the observed conflict; tool feedback cannot select a new owner or assignment. */
+  private details(error: StaleEditError | EditIdentityError | EditRequestError) {
+    if (error instanceof EditRoutingError)
+      return { path: error.path, ownerId: error.ownerId, reason: 'owner_boundary' };
+    if (error instanceof StaleEditError)
+      return {
+        path: error.path,
+        expectedSha256: error.expectedSha256,
+        currentSha256: error.currentSha256,
+      };
+    if (error instanceof EditIdentityError) return { id: error.transactionId };
+    return {};
   }
 
   /** Rejects selection changes as correctable input after enforcing the assignment's write authority. */
@@ -124,7 +148,7 @@ export class CheckedEditBridge {
     }
   }
 
-  /** Enforces narrowing, workflow stage and frozen regression authority before any file is modified. */
+  /** Permits writes only in engineering turns and only to the accountable component’s own files. */
   private authorize(path: string): string {
     const { record } = this.state.options;
     if (
@@ -133,15 +157,36 @@ export class CheckedEditBridge {
       !['specification', 'implementation', 'correction'].includes(String(record.stage))
     )
       throw new Error('Source edits are forbidden in the current workflow stage');
-    if (!covered(path, this.state.scope))
-      throw new Error(`Edit outside active assignment: ${path}`);
-    const kind = classifyComponentPath(this.state.component, path);
-    if (this.state.documentationOnly && kind !== 'documentation')
-      throw new Error(`Documentation assignment cannot edit ${kind}: ${path}`);
-    if (record.stage === 'specification' && !['documentation', 'tests'].includes(kind))
-      throw new Error(`Specification cannot edit ${kind}: ${path}`);
-    if (record.stage !== 'specification' && this.state.frozen.some((test) => test.path === path))
-      throw new Error(`Implementation cannot change frozen regression: ${path}`);
-    return kind;
+    if (!covered(path, this.state.scope)) this.rejectBoundary(path);
+    return classifyComponentPath(this.state.component, path);
+  }
+
+  /** Uses captured ownership only; known recipients receive inbox guidance, while unknown paths block. */
+  private rejectBoundary(path: string): never {
+    relativePath(path);
+    const matches =
+      this.state.resolved.ownership?.filter((owner) => covered(path, owner.paths)) ?? [];
+    if (matches.length === 1 && matches[0]!.ownerId !== this.state.component.id) {
+      this.delegate(path, matches[0]!);
+    }
+    throw new Error(
+      `Edit outside component ownership: ${path}. Captured ownership is unknown or ambiguous; request an architectural decision without guessing a recipient.`,
+    );
+  }
+
+  /** Names the actual steward and supplies the existing request protocol only when dispatch is permitted. */
+  private delegate(path: string, recipient: { ownerId: string; eligible?: boolean }): never {
+    const { ownerId: owner, eligible } = recipient;
+    if (eligible === false)
+      throw new EditRoutingError(
+        path,
+        owner,
+        `No edits were applied. ${owner} owns this file but is outside the captured eligible team catalog. Report the architectural blocker with the requested change; do not dispatch unauthorized work.`,
+      );
+    throw new EditRoutingError(
+      path,
+      owner,
+      `No edits were applied. Contact the ${owner} steward through the existing inbox protocol: return a requests entry with fromComponent=${this.state.component.id}, ownerId=${owner}, assignmentId=null for new work, and milestone=delivered for required changes. Describe the intended change to ${path}, its purpose, expected result, acceptance criteria and supporting evidence. The host validates the recipient and scope and assigns durable identities. Wait for verified delivery before relying on the change; acknowledgement alone is not delivery. Do not edit this path yourself or request broader permissions. If the owner is not eligible, report the architectural blocker.`,
+    );
   }
 }

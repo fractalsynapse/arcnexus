@@ -63,7 +63,6 @@ export class ControlledGeneral {
         ...this.assignment('a', false, ''),
         kind: 'change',
         changeType: 'documentation',
-        allowedWritePaths: ['docs'],
         objective: 'LINK_EXISTING_WORK: reuse matching supplier work',
       },
       { ...this.assignment('b', false, ''), objective: 'Supply shared evidence' },
@@ -209,7 +208,6 @@ export class ControlledGeneral {
       kind: prompt.includes('INHERIT_DOCUMENTATION') ? 'change' : 'research',
       changeType: prompt.includes('INHERIT_DOCUMENTATION') ? 'documentation' : 'behavior',
       acceptanceCriteria: ['Evidence-backed result'],
-      allowedWritePaths: prompt.includes('INHERIT_DOCUMENTATION') ? ['docs'] : [],
     };
   }
 
@@ -298,7 +296,7 @@ export class ControlledGeneral {
     const feedback = JSON.parse(prompt.slice(prompt.lastIndexOf(marker) + marker.length));
     result.requests = feedback.requests.map((request: any) => ({
       ...request,
-      allowedWritePaths: null,
+      request: request.request.trim() || 'Research supplier evidence',
     }));
     result.inboxActions = feedback.actions;
     return result;
@@ -399,12 +397,13 @@ export class ControlledGeneral {
       assignmentId: null,
       kind: null,
       changeType: null,
-      allowedWritePaths: prompt.includes('INVALID_REQUEST_SCOPE') ? ['outside.txt'] : null,
       milestone: 'delivered',
       fromComponent: owner,
       ownerId: owner === 'a' ? 'b' : 'c',
-      request:
-        (prompt.includes('RECOVER_CYCLE') ? 'RECOVER_CYCLE: ' : '') + 'Research supplier evidence',
+      request: prompt.includes('INVALID_REQUEST_SCOPE')
+        ? ' '
+        : (prompt.includes('RECOVER_CYCLE') ? 'RECOVER_CYCLE: ' : '') +
+          'Research supplier evidence',
       evidence: ['source.txt'],
       acceptanceCriteria: ['Evidence-backed result'],
       reason: 'Dependency',

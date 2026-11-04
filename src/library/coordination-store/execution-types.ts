@@ -51,7 +51,6 @@ export interface ExecutionAssignment {
 export interface OwnerRequest {
   kind?: 'change' | 'research' | 'review' | null;
   changeType?: 'behavior' | 'documentation' | 'refactor' | null;
-  allowedWritePaths?: string[] | null;
   existingAssignmentId?: string;
   milestone?: 'accepted' | 'delivered';
   key: string;

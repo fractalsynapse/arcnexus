@@ -47,7 +47,6 @@ export class AssignmentRegistry {
       | Partial<{
           kind: string;
           changeType: string;
-          allowedWritePaths: string[];
         }>
       | undefined;
     return {
@@ -60,7 +59,6 @@ export class AssignmentRegistry {
       scope: {
         kind: proposal?.kind ?? null,
         changeType: proposal?.changeType ?? null,
-        allowedWritePaths: proposal?.allowedWritePaths ?? null,
       },
       dependencies: assignment.dependencies,
       milestones: assignment.data.milestones ?? {},

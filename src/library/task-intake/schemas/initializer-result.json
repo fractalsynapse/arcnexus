@@ -68,22 +68,9 @@
             "items": {
               "type": "string"
             }
-          },
-          "allowedWritePaths": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           }
         },
-        "required": [
-          "ownerId",
-          "objective",
-          "kind",
-          "changeType",
-          "acceptanceCriteria",
-          "allowedWritePaths"
-        ],
+        "required": ["ownerId", "objective", "kind", "changeType", "acceptanceCriteria"],
         "additionalProperties": false
       }
     },

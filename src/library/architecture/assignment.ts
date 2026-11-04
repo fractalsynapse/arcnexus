@@ -1,5 +1,6 @@
+import { OwnershipValidator } from './ownership.js';
 import { ComponentOperationPlans } from './component-operation-plans.js';
-import { assignmentScope } from './assignment-scope.js';
+import { validateOwnerWorkflow } from './assignment-scope.js';
 import { captureInitialization, type InitializationSnapshot } from './initialization.js';
 import { isUtf8 } from 'node:buffer';
 import { createHash } from 'node:crypto';
@@ -57,7 +58,6 @@ export interface Assignment {
   expectedOutcome: string;
   changeType?: 'behavior' | 'documentation' | 'refactor';
   acceptanceCriteria: string[];
-  allowedWritePaths?: string[];
   hostChecks: HostCheck[];
 }
 
@@ -72,6 +72,7 @@ export interface ResolvedAssignment {
   bindings?: Bindings;
   base: string;
   owners: string[];
+  ownership?: Array<{ ownerId: string; paths: string[]; eligible?: boolean }>;
   componentId: string;
   assignment: Assignment;
   context: Component[];
@@ -79,7 +80,6 @@ export interface ResolvedAssignment {
   role: Role;
   compositionProfile?: CompositionProfile;
   executionProfile: ExecutionProfile;
-  allowedWritePaths: string[];
   verification: VerificationCheck[];
   artifacts: Array<{ path: string; sha256: string; content: string }>;
   pendingChecks: string[];
@@ -105,6 +105,7 @@ export function resolveBase(repository: string, ref = 'HEAD'): { source: string;
 export interface AssignmentOptions {
   additionalVerification?: VerificationCheck[];
   capturedCatalog?: Catalog;
+  eligibleOwners?: string[];
   initializerModel?: string;
   value?: unknown;
   bindings?: Bindings;
@@ -170,6 +171,7 @@ class AssignmentResolver {
     this.assignmentSource = options.file ? new ConfigurationReader().file(options.file) : undefined;
     this.assignment = this.resolveInput();
     this.validateTarget();
+    validateOwnerWorkflow(this.assignment, this.component);
   }
 
   /** Requires an executable owner in the primary writable repository. */
@@ -221,7 +223,7 @@ class AssignmentResolver {
       workspaceMembers: execution.workspaceMembers,
       ...(execution.bindings ? { bindings: execution.bindings } : {}),
       base,
-      owners: Object.keys(catalog.components),
+      ...this.ownerDirectory(),
       componentId: id,
       assignment,
       context,
@@ -229,12 +231,24 @@ class AssignmentResolver {
       role: catalog.roles[component.role]!,
       ...(execution.compositionProfile ? { compositionProfile: execution.compositionProfile } : {}),
       executionProfile: execution.executionProfile,
-      allowedWritePaths: assignmentScope(assignment, component),
       verification: [...component.verification, ...(this.options.additionalVerification ?? [])],
       artifacts: captureCheckArtifacts(assignment),
       pendingChecks: [...pendingChecks],
     };
     return { ...data, digest: digest(JSON.stringify(data)) };
+  }
+
+  /** Captures owner identities and repository-relative routing paths without granting write access. */
+  private ownerDirectory() {
+    const components = this.catalog.components;
+    const ownership = OwnershipValidator.repositoryOwners(this.catalog)
+      .filter((owner) => !['platform', 'package'].includes(components[owner.component]!.type))
+      .map((owner) => ({
+        ownerId: owner.component,
+        paths: [...owner.paths],
+        eligible: this.options.eligibleOwners?.includes(owner.component),
+      }));
+    return { owners: Object.keys(components), ownership };
   }
 
   /** Rejects unresolved references before they can enter assignment context. */

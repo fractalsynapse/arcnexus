@@ -23,11 +23,11 @@ See the v6 [component schema](../../../src/library/architecture/schemas/componen
 [ownership resolver](../../../src/library/architecture/component-v5.ts), and
 [ownership validation](../../../src/library/architecture/ownership.ts).
 
-An assignment can narrow this derived ownership to its captured
-`allowedWritePaths`. The checked edit path must satisfy both that assignment scope
-and the owning component's derived scope. Workflow stage and assignment kind add
-further restrictions. Thus ownership defines the maximum component boundary; it
-does not give every turn permission to edit every owned file.
+Component ownership is the sole source of maintained-file write authority.
+Assignments contain objectives, technical requirements and acceptance criteria.
+Only the accountable steward discovers and chooses the files it needs to edit.
+A foreign file requires an inbox request to its owner. Read-only activities,
+safe edit transactions and independent verification still apply.
 
 ## Reads and inherited policy
 
@@ -51,9 +51,9 @@ the model permission policy with no writable source outputs; only private tempor
 storage is writable. The model changes maintained files through the active
 assignment-bound `source.edit` tool. Edit paths are workspace-relative; updates
 and deletes include the current SHA-256 hash, while creates use a null hash
-precondition. The host checks ownership, captured assignment scope,
-documentation-only restrictions, workflow stage and frozen regression rules
-before applying a batch, and journals the result. Planning, research, review and
+precondition. The host checks component ownership, whether this turn can edit, and transaction
+integrity before applying a batch. Workflow checkpoints and independent review
+assess the resulting diff against the captured requirements. Planning, research, review and
 handoff turns cannot edit. A denied native write is not evidence that checked edits
 are unavailable.
 

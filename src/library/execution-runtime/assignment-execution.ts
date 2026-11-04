@@ -346,7 +346,6 @@ export class AssignmentExecution {
         existingAssignmentId: r.assignmentId ?? undefined,
         kind: r.kind,
         changeType: r.changeType,
-        allowedWritePaths: r.allowedWritePaths,
         milestone: r.milestone ?? 'delivered',
         objective: r.request,
         acceptance: r.acceptanceCriteria,

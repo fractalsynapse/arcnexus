@@ -26,14 +26,6 @@
       "uniqueItems": true,
       "minItems": 1
     },
-    "allowedWritePaths": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      },
-      "uniqueItems": true
-    },
     "hostChecks": {
       "type": "array",
       "items": {

@@ -369,7 +369,6 @@ export class ControlledWorkflow {
         milestone: 'delivered',
         kind: 'change',
         changeType: 'behavior',
-        allowedWritePaths: null,
       },
     ];
   }

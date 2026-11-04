@@ -117,6 +117,7 @@ export class ExecutionContext {
     return resolveAssignment(context.source, context.base, owner, {
       value,
       capturedCatalog: context.catalog,
+      eligibleOwners: context.owners,
       additionalVerification: this.containerChecks(context, owner),
       bindings: context.bindings,
       executionProfile: profile,

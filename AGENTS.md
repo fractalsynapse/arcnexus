@@ -151,3 +151,8 @@ Keep descriptive scenario names without meaningless numeric suffixes. Preserve t
 500/30 physical-line limits without compressing code or deleting useful explanation.
 Lint checks header presence and spacing; review must still assess whether the
 explanation helps a newcomer. See [the readable TypeScript standard](docs/foundation/typescript-standard.md).
+
+Component ownership is the sole source of file write authority. Assign outcomes,
+technical requirements and acceptance criteria; leave discovery and selection of
+implementation files to the accountable steward. Request a different steward's
+work through its inbox. Never add a per-assignment file permission list.

@@ -228,8 +228,8 @@ class ArchitectureTests {
     assert.equal(r.status, 2, r.stderr);
   }
 
-  /** Verifies that assignment narrows but cannot widen scope and has astable digest. */
-  assignmentNarrowsButCannotWidenScopeAndHasAStableDigest(t: TestContext) {
+  /** Verifies that assignment rejects caller-authored file lists and has astable digest. */
+  assignmentRejectsFileListsAndHasAStableDigest(t: TestContext) {
     const f = fixture(t),
       file = join(f.root, 'assignment.json');
     const assignment = {
@@ -238,7 +238,6 @@ class ArchitectureTests {
       kind: 'change',
       expectedOutcome: 'Verified behavior',
       acceptanceCriteria: ['Keep public interface'],
-      allowedWritePaths: ['source.txt'],
       hostChecks: [],
     };
     writeFileSync(file, JSON.stringify(assignment));
@@ -248,9 +247,11 @@ class ArchitectureTests {
       JSON.parse(r.stdout).digest,
       JSON.parse(f.run('inspect', 'sample', '--assignment', file, '--json').stdout).digest,
     );
-    assignment.allowedWritePaths = ['outside.txt'];
-    writeFileSync(file, JSON.stringify(assignment));
-    assert.equal(f.run('inspect', 'sample', '--assignment', file).status, 2);
+    for (const paths of [[], ['source.txt'], ['outside.txt']]) {
+      writeFileSync(file, JSON.stringify({ ...assignment, allowedWritePaths: paths }));
+      const rejected = f.run('inspect', 'sample', '--assignment', file);
+      assert.equal(rejected.status, 2, rejected.stderr);
+    }
   }
 
   /** Verifies that unused invalid definition is rejected and dirty working definitions cannot change inspection. */
@@ -286,7 +287,7 @@ class ArchitectureTests {
     const r = f.run('inspect', 'sample', 'Improve behavior', '--json');
     assert.equal(r.status, 0, r.stderr);
     const result = JSON.parse(r.stdout);
-    assert.deepEqual(result.allowedWritePaths, ['source.txt']);
+    assert.deepEqual(result.context.at(-1).allowedWritePaths, ['source.txt']);
     assert.equal(result.related[0].id, 'related');
     f.put('architecture/components/platform.json', {
       ...f.component,
@@ -391,8 +392,8 @@ for (const [name, mutate] of [
 ])
   test(`catalog rejects ${name}`, (t: any) => suite.rejectsInvalidCatalogReferences(t, mutate));
 
-test('assignment narrows but cannot widen scope and has a stable digest', (t: any) =>
-  suite.assignmentNarrowsButCannotWidenScopeAndHasAStableDigest(t));
+test('assignment rejects caller-authored file lists and has a stable digest', (t: any) =>
+  suite.assignmentRejectsFileListsAndHasAStableDigest(t));
 
 test('unused invalid definition is rejected and dirty working definitions cannot change inspection', (t: any) =>
   suite.unusedInvalidDefinitionIsRejectedAndDirtyWorkingDefinitionsCannotChangeInspection(t));

@@ -31,7 +31,8 @@ class AssignmentRegistryScenario {
       readFileSync(join(f.state, 'runs', String(record), 'report.json'), 'utf8'),
     );
     assert.equal(retained.resolvedAssignment.assignment.kind, 'change');
-    assert.deepEqual(retained.resolvedAssignment.allowedWritePaths, ['docs']);
+    assert.equal(Object.hasOwn(retained.resolvedAssignment.assignment, 'allowedWritePaths'), false);
+    assert.ok(retained.resolvedAssignment.context.at(-1).allowedWritePaths.includes('new.txt'));
     this.evidence(f.calls, run.id, sender.id, supplier.id);
   }
 

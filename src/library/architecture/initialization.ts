@@ -26,7 +26,6 @@ export interface ProposedAssignment {
   kind: 'change' | 'research' | 'review';
   changeType: 'behavior' | 'documentation' | 'refactor';
   acceptanceCriteria: string[];
-  allowedWritePaths: string[];
 }
 
 export interface ArchitectureProposal {

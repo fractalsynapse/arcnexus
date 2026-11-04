@@ -259,7 +259,7 @@ export class ExecutionStore {
   ): void {
     const proposed = requestProposal(sender, request);
     const existing = recipient.data.proposal as Record<string, unknown> | undefined;
-    for (const key of ['kind', 'changeType', 'allowedWritePaths'] as const)
+    for (const key of ['kind', 'changeType'] as const)
       if (
         existing &&
         request[key] != null &&

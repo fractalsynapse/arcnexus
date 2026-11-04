@@ -25,7 +25,7 @@ class RequestAdmissionScenario {
     const path = join(f.state, 'runs', String(requester.data.recordId), 'report.json');
     const before = JSON.parse(readFileSync(path, 'utf8'));
     if (accepted) assert.ok(before.plan?.items.length, 'An actual accepted plan is required');
-    assert.match(before.requestCorrection.errors[0], /widens component scope/);
+    assert.match(before.requestCorrection.errors[0], /Objective must not be blank/i);
     assert.equal(before.requestCorrection.requests.length, 2);
     const unrelated = host.store.enqueue(run.id, 'c', 'Unrelated retained work');
     host.store.updateAssignment(unrelated.id, 'ready', { proposal: { kind: 'research' } });

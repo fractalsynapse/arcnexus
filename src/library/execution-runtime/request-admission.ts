@@ -44,7 +44,7 @@ export class RequestAdmission {
   /** Runs one coordination activation without changing the accepted engineering stage, plan or permissions. */
   async correct(record: RecordData, session: StewardSession): Promise<void> {
     const result = await session.reply(
-      `Correct rejected dependency requests. No recipient or inbox action from this batch was committed. Preserve the requested result and acceptance criteria; correct scope or workflow declarations within the recipient's existing authority. Do not widen an accepted assignment or edit source. Return corrected requests and any retained inboxActions; explain any withdrawal. Host admission feedback: ${JSON.stringify(record.requestCorrection)}`,
+      `Correct rejected dependency requests. No recipient or inbox action from this batch was committed. Preserve the requested result and acceptance criteria; correct the requested outcome or workflow within the recipient's existing authority. Leave file selection to the recipient or edit source. Return corrected requests and any retained inboxActions; explain any withdrawal. Host admission feedback: ${JSON.stringify(record.requestCorrection)}`,
     );
     record.pendingRequests = result.requests;
     record.pendingInboxActions = result.inboxActions ?? [];

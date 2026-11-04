@@ -61,7 +61,7 @@ class InboxScenarios {
     assert.equal(store.assignments(run.id).length, before);
   }
 
-  /** Explicit review and document requests preserve their workflow and narrowed recipient scope. */
+  /** Explicit review and document requests preserve their workflow without a file list. */
   recipientScope(t: TestContext): void {
     const store = this.store(t);
     const run = store.createRun('task', ['a', 'b'], 'A documentation goal');
@@ -76,13 +76,11 @@ class InboxScenarios {
       acceptance: ['Observed'],
       kind: 'review' as const,
       changeType: null,
-      allowedWritePaths: [],
     };
     const b = store.request(a.id, request);
     assert.deepEqual(b.data.proposal, {
       kind: 'review',
       changeType: 'documentation',
-      allowedWritePaths: [],
     });
     assert.equal(store.request(a.id, request).id, b.id);
   }
@@ -93,7 +91,7 @@ class InboxScenarios {
     const run = store.createRun('task', ['a', 'b'], 'Shared work');
     const a = store.enqueue(run.id, 'a', 'Root');
     const b = store.enqueue(run.id, 'b', 'Review');
-    store.updateAssignment(b.id, 'ready', { proposal: { kind: 'review', allowedWritePaths: [] } });
+    store.updateAssignment(b.id, 'ready', { proposal: { kind: 'review' } });
     const request = {
       key: 'shared',
       owner: 'b',
@@ -312,7 +310,7 @@ test('durable scheduling outcomes deduplicate crash replay', (t) => scenarios.re
 test('duplicate verified delivery cannot rewind the accumulated candidate', (t) =>
   scenarios.promotions(t));
 
-test('inbox requests preserve explicit recipient workflow and narrowed scope', (t) =>
+test('inbox requests preserve explicit recipient workflow without a file list', (t) =>
   scenarios.recipientScope(t));
 
 test('shared recipient work rejects conflicting workflow authority', (t) =>

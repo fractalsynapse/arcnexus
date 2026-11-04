@@ -171,8 +171,7 @@ lint, types, tests and architecture validation remain required at assembled deli
 Retained runs continue using their captured supervisor and plans. Updating the source
 policy changes new authority only, never active-run requirements or historical evidence.
 
-Behavioral assignment narrowing must retain writable documentation and regression
-scope for the mandatory specification checkpoint. The host checks feasibility before
-engineering and never broadens a narrow file grant. Test-only characterization of
+Behavioral work requires component-owned documentation and regression locations.
+The steward selects those files; assignment authors cannot grant or narrow ownership. Test-only characterization of
 existing behavior uses the refactor workflow, with passing captured checks rather
 than invented documentation edits or failing tests.

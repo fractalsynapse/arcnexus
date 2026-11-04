@@ -15,7 +15,7 @@ class AssignmentScopeScenarios {
   narrowed(t: TestContext): void {
     const { resolve, catalog } = this.fixture(t);
     assert.throws(() => resolve(['source.txt']), /requires owned regression scope beneath tests/);
-    assert.deepEqual(catalog.components.sample!.allowedWritePaths, ['source.txt', 'docs', 'tests']);
+    assert.deepEqual(catalog.components.sample!.allowedWritePaths, ['source.txt']);
   }
 
   /** Readable historical profiles cannot remove required tests from newly admitted engineering. */
@@ -32,15 +32,48 @@ class AssignmentScopeScenarios {
   valid(t: TestContext): void {
     const { resolve } = this.fixture(t);
     const paths = ['source.txt', 'docs', 'tests/acceptance/new.test.ts'];
-    assert.deepEqual(resolve(paths).allowedWritePaths, paths);
+    assert.deepEqual(resolve(paths).context.at(-1)!.allowedWritePaths, paths);
+  }
+
+  /** Captures all local stewards' full ownership for routing independently of the active write scope. */
+  routing(t: TestContext): void {
+    const { resolve, catalog } = this.fixture(t);
+    const source = catalog.components.sample!;
+    catalog.primaryRepository = source.repository;
+    source.ownership = { paths: ['docs'], publicModules: [], directoryExceptions: [] };
+    catalog.components.recipient = {
+      ...source,
+      id: 'recipient',
+      ownership: { ...source.ownership, paths: ['elsewhere'] },
+    };
+    catalog.components.remote = {
+      ...source,
+      id: 'remote',
+      repository: 'different',
+      definition: undefined,
+    };
+    const result = resolve(['docs'], 'change', 'documentation');
+    assert.deepEqual(Object.hasOwn(result, 'allowedWritePaths'), false);
+    assert.deepEqual(result.ownership?.find((owner) => owner.ownerId === 'recipient')?.paths, [
+      'elsewhere',
+    ]);
+    assert.equal(
+      result.ownership?.some((owner) => owner.ownerId === 'remote'),
+      false,
+    );
+    source.ownership.paths.push('later');
+    assert.equal(
+      result.ownership?.find((owner) => owner.ownerId === 'sample')?.paths.includes('later'),
+      false,
+    );
   }
 
   /** Test-only characterization cannot be admitted as a behavioral documentation/regression workflow. */
   testOnly(t: TestContext): void {
     const { resolve } = this.fixture(t);
     const paths = ['tests/acceptance/new.test.ts'];
-    assert.throws(() => resolve(paths), /requires owned documentation scope.*refactor/);
-    assert.deepEqual(resolve(paths, 'change', 'refactor').allowedWritePaths, paths);
+    assert.throws(() => resolve(paths), /requires owned documentation scope/);
+    assert.deepEqual(resolve(paths, 'change', 'refactor').context.at(-1)!.allowedWritePaths, paths);
   }
 
   /** Explicit classification governs hypothetical new documents as it does checked writes. */
@@ -48,7 +81,10 @@ class AssignmentScopeScenarios {
     const { resolve, catalog } = this.fixture(t);
     catalog.components.sample!.fileClassification = [{ path: 'tests', kind: 'tests' }];
     assert.throws(() => resolve(['tests']), /requires owned documentation scope/);
-    assert.deepEqual(resolve(['tests', 'docs/new.md']).allowedWritePaths, ['tests', 'docs/new.md']);
+    assert.deepEqual(resolve(['tests', 'docs/new.md']).context.at(-1)!.allowedWritePaths, [
+      'tests',
+      'docs/new.md',
+    ]);
   }
 
   /** Package-relative roots cannot be replaced with a similarly named sibling directory. */
@@ -66,14 +102,17 @@ class AssignmentScopeScenarios {
       /beneath packages\/sample\/tests/,
     );
     const paths = ['packages/sample/tests/unit/new.test.ts', 'packages/sample/docs'];
-    assert.deepEqual(resolve(paths).allowedWritePaths, paths);
+    assert.deepEqual(resolve(paths).context.at(-1)!.allowedWritePaths, paths);
   }
 
   /** Custom verification without a Node profile does not acquire Node-specific path requirements. */
   customChecks(t: TestContext): void {
     const { resolve, catalog } = this.fixture(t);
     delete catalog.components.sample!.testProfile;
-    assert.deepEqual(resolve(['source.txt', 'docs']).allowedWritePaths, ['source.txt', 'docs']);
+    assert.deepEqual(resolve(['source.txt', 'docs']).context.at(-1)!.allowedWritePaths, [
+      'source.txt',
+      'docs',
+    ]);
   }
 
   /** Read-only, prose and characterization workflows do not acquire a new regression-writing mandate. */
@@ -109,8 +148,9 @@ class AssignmentScopeScenarios {
       paths: string[],
       kind: Assignment['kind'] = 'change',
       changeType?: Assignment['changeType'],
-    ) =>
-      resolveAssignment(f.repo, base, 'sample', {
+    ) => {
+      catalog.components.sample!.allowedWritePaths = paths;
+      return resolveAssignment(f.repo, base, 'sample', {
         capturedCatalog: catalog,
         value: {
           schemaVersion: 3,
@@ -119,17 +159,17 @@ class AssignmentScopeScenarios {
           changeType,
           expectedOutcome: 'Verified behavior',
           acceptanceCriteria: ['Preserve the contract'],
-          allowedWritePaths: paths,
           hostChecks: [],
         },
       });
+    };
     return { resolve, catalog };
   }
 }
 
 const scenarios = new AssignmentScopeScenarios();
 
-test('behavioral assignment rejects narrowing disconnected from the captured test root', (t) =>
+test('behavioral work requires component ownership of a regression location', (t) =>
   scenarios.narrowed(t));
 
 test('behavioral assignment permits new owned regression paths', (t) => scenarios.valid(t));
@@ -145,11 +185,14 @@ for (const changeType of ['documentation', 'refactor'] as const)
   test(`${changeType} assignment needs no new behavioral regression`, (t) =>
     scenarios.distinct(t, 'change', changeType));
 
-test('test-only behavioral scope fails admission while characterization keeps its narrow scope', (t) =>
+test('test-only components can characterize existing behavior without a documentation grant', (t) =>
   scenarios.testOnly(t));
 
 test('behavioral documentation admission uses captured classification for new files', (t) =>
   scenarios.classification(t));
+
+test('assignment captures repository-local inbox routing without expanding write authority', (t) =>
+  scenarios.routing(t));
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });
 

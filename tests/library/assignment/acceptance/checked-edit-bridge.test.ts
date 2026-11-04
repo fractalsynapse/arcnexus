@@ -1,8 +1,8 @@
+import { CheckedEditFixture } from '../support/checked-edit-fixture.js';
 import assert from 'node:assert/strict';
 import {
   chmodSync,
   linkSync,
-  mkdtempSync,
   mkdirSync,
   readFileSync,
   readdirSync,
@@ -11,7 +11,6 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { randomUUID } from 'node:crypto';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { CheckedEditBridge } from '../../../../dist/library/assignment/checked-edit-bridge.js';
@@ -22,7 +21,7 @@ import { OperationEditProposals } from '../../../../dist/library/operations/oper
 import { readDiagnosticExcerpt } from '../../../../dist/library/operations/diagnostics.js';
 
 /** Exercises host-bound edit authorization independently of agent claims about owner or stage. */
-class EditAuthorityScenarios {
+class EditAuthorityScenarios extends CheckedEditFixture {
   /** Applies a complete oversized proposal by reference and reuses its receipt without replaying bytes. */
   proposal(t: TestContext): void {
     const state = this.fixture(t);
@@ -66,7 +65,7 @@ class EditAuthorityScenarios {
     assert.throws(() => proposals.capture(invocation.result), /Unsafe edit proposal/);
   }
 
-  /** A retained proposal cannot bypass current stage, frozen-test or complete-batch ownership checks. */
+  /** A retained proposal cannot bypass current stage or complete-batch ownership checks. */
   proposalAuthority(t: TestContext): void {
     const state = this.fixture(t);
     const bridge = new CheckedEditBridge(state);
@@ -76,11 +75,9 @@ class EditAuthorityScenarios {
     assert.throws(() => bridge.call('source.edit', reference), /workflow stage/);
     state.options.record.stage = 'implementation';
     state.frozen = [{ path: 'owned/file.ts', sha256: digest('before'), content: 'before' }];
-    assert.throws(() => bridge.call('source.edit', reference), /frozen regression/);
-    state.frozen = [];
     request.changes.push({ ...request.changes[0]!, path: 'other/file.ts' });
     const mixed = this.capture(state, request);
-    assert.throws(() => bridge.call('source.edit', mixed), /outside active/);
+    assert.throws(() => bridge.call('source.edit', mixed), /outside component ownership/);
     assert.equal(
       readFileSync(join(state.options.record.workspace, 'owned/file.ts'), 'utf8'),
       'before',
@@ -164,7 +161,7 @@ class EditAuthorityScenarios {
     state.options.record.stage = 'implementation';
     assert.throws(
       () => bridge.call('source.edit', this.request('other/file.ts')),
-      /outside active/,
+      /outside component ownership/,
     );
     state.options.record.readOnlyTurn = true;
     assert.throws(
@@ -181,14 +178,24 @@ class EditAuthorityScenarios {
   correction(t: TestContext): void {
     const state = this.fixture(t);
     state.options.record.stage = 'correction';
+    const path = 'owned/tests/acceptance/regression.test.ts';
+    const before =
+      'registerSuite({ component: "assignment", level: "acceptance", tags: ["deterministic"] });';
+    const after = before + '\n// additional owned coverage';
     state.frozen = [
-      { path: 'owned/regression.test.ts', sha256: digest('before'), content: 'before' },
+      { path, sha256: digest(before), content: Buffer.from(before).toString('base64') },
     ];
+    mkdirSync(join(state.options.record.workspace, 'owned/tests/acceptance'), { recursive: true });
+    writeFileSync(join(state.options.record.workspace, path), before);
     const bridge = new CheckedEditBridge(state);
-    assert.throws(
-      () => bridge.call('source.edit', this.request('owned/regression.test.ts')),
-      /frozen regression/,
-    );
+    const edit = {
+      id: 'regression-edit',
+      changes: [{ path, operation: 'update', expectedSha256: digest(before), content: after }],
+    };
+    const receipt = bridge.call('source.edit', edit) as { status: string };
+    assert.equal(receipt.status, 'committed', JSON.stringify(receipt));
+    assert.equal(readFileSync(join(state.options.record.workspace, path), 'utf8'), after);
+    assert.equal(state.frozen[0]!.sha256, digest(before));
     bridge.call('source.edit', this.request('owned/file.ts'));
     assert.equal(
       readFileSync(join(state.options.record.workspace, 'owned/file.ts'), 'utf8'),
@@ -340,13 +347,6 @@ class EditAuthorityScenarios {
     assert.deepEqual(readdirSync(join(state.dir, 'checked-edits')), []);
   }
 
-  /** Observes both batch members so a partial application cannot satisfy the rejection assertions. */
-  private contents(state: SessionState): string[] {
-    return ['owned/file.ts', 'owned/second.ts'].map((path) =>
-      readFileSync(join(state.options.record.workspace, path), 'utf8'),
-    );
-  }
-
   /** Captures complete output at the observed-operation boundary; source editing stays production code. */
   private capture(state: SessionState, request: unknown) {
     mkdirSync(state.dir, { recursive: true });
@@ -369,42 +369,6 @@ class EditAuthorityScenarios {
     assert.equal(proposal?.invocationId, id);
     return { proposalInvocationId: id };
   }
-
-  /** Creates a minimal host state with authority unavailable to the incoming edit arguments. */
-  private fixture(t: TestContext): SessionState {
-    const root = mkdtempSync(join(tmpdir(), 'edit-authority-'));
-    t.after(() => rmSync(root, { recursive: true, force: true }));
-    const workspace = join(root, 'source');
-    mkdirSync(join(workspace, 'owned'), { recursive: true });
-    writeFileSync(join(workspace, 'owned/file.ts'), 'before');
-    const resolved = { digest: 'captured-authority' };
-    return {
-      options: { record: { workspace, id: 'run', resolvedAssignment: resolved } },
-      dir: join(root, 'evidence'),
-      resolved,
-      scope: ['owned'],
-      assignment: { kind: 'change' },
-      frozen: [],
-      component: {
-        schemaVersion: 6,
-        id: 'assignment',
-        repositoryRoot: 'owned',
-        testProfile: 'node',
-        allowedWritePaths: ['owned'],
-        fileClassification: [],
-      },
-      journal: () => {},
-      safe: () => {},
-    } as unknown as SessionState;
-  }
-
-  /** Supplies content expectations without any owner or authority override. */
-  private request(path: string) {
-    return {
-      id: 'edit',
-      changes: [{ path, operation: 'update', expectedSha256: digest('before'), content: 'after' }],
-    };
-  }
 }
 
 const scenarios = new EditAuthorityScenarios();
@@ -418,7 +382,7 @@ test('oversized operation proposals apply complete bytes through the checked edi
 test('operation proposals bind safe stdout and preserve pinned historical evidence', (t) =>
   scenarios.stdoutIdentity(t));
 
-test('operation proposals retain stage, frozen-test and atomic ownership enforcement', (t) =>
+test('operation proposals retain stage and atomic ownership enforcement', (t) =>
   scenarios.proposalAuthority(t));
 
 test('operation proposals reject stale, foreign and incomplete references', (t) =>
