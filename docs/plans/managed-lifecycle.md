@@ -1761,3 +1761,34 @@ quality verification usages once to the platform and remove duplicate leaf usage
 Qualify inheritance for the actual steward catalog and retain the existing generic
 pre-freeze operation selection. This repairs captured policy for new runs without
 hardcoding repository guidance in the product or modifying active authority.
+
+The #221 catalog repair removes 37 repeated leaf operation usages and declares the
+two shared quality requirements once at the platform; the two executable command
+definitions are reused. Sixteen focused cases passed, including the actual committed
+steward catalog and exact frozen-checkpoint comparisons. Native context qualification
+initially passed nine of ten cases; the added assertion incorrectly looked for an
+untracked regression in the tracked Git patch. Check `newFiles` for that regression
+and retain the separate tracked-patch assertion before refreshing that case.
+
+The eleventh real task was cancelled through its captured CLI after the diagnosed
+policy/review defects required new authority. Its publisher had rejected an attempted
+frozen-file edit before mutation; original report work remained blocked by the old
+artifact lookup failure. Three dependency deliveries were independently accepted
+(two research and one changelog), but no original engineering delivery or publication
+is claimed. All retained edits/checkpoints remain. None of 380 retained managed
+process scopes contained a running child after cancellation. Earlier in this run,
+safe pause followed by paused-host SIGKILL and captured-runtime resume preserved
+all eight assignment identities, inbox counts and dependencies, with seven immutable
+checkpoint files verified against their hashes. The safe pause took 480.866 seconds
+while the active turn completed. These are actual real-work recovery/cancellation
+observations, distinct from active-operation recovery or container relocation.
+
+The corrected native review case passed with zero skips in 33.511 seconds; the
+other nine cases from its focused native set had already passed. Actual review
+prompts retain tracked changes and new regression content with host-observed frozen
+hash comparisons. Static checks and consolidated validation passed at `eea963f`;
+final assembled revision evidence follows separately. A manual test/build overlap
+briefly omitted six newly emitted cases from an earlier direct invocation; that
+result was not accepted. Waiting for compilation and checking the expected count
+produced all sixteen focused passes. Keep build completion a prerequisite for direct
+native tests; the production test service already serializes these steps.
