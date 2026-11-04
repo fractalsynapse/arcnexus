@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { classifyComponentPath, type Catalog, type Component } from '../architecture/components.js';
+import type { Catalog, Component } from '../architecture/components.js';
 import { git } from '../operations/process.js';
 import { SuiteMetadataReader } from './metadata.js';
 import { loadTestProfile } from './profile.js';
@@ -67,9 +67,10 @@ export function assertCapturedTestEdit(
   component: Component,
   path: string,
   content: string | null,
+  kind: string,
 ): void {
   const captured = component.capturedTests?.find((suite) => suite.source === path);
-  if (!captured) return assertNewTestEdit(component, path, content);
+  if (!captured) return assertNewTestEdit(component, path, content, kind);
   if (content === null) throw new Error(`Cannot delete captured mandatory suite: ${path}`);
   const current = new SuiteMetadataReader().read(path, content);
   if (
@@ -82,13 +83,18 @@ export function assertCapturedTestEdit(
 }
 
 /** Applies normal discovery rules to new suites while leaving helper and ordinary source files alone. */
-function assertNewTestEdit(component: Component, path: string, content: string | null): void {
+function assertNewTestEdit(
+  component: Component,
+  path: string,
+  content: string | null,
+  kind: string,
+): void {
   if (
     content === null ||
     !component.testProfile ||
     !path.endsWith('.test.ts') ||
     path.split('/').includes('support') ||
-    classifyComponentPath(component, path) !== 'tests'
+    kind !== 'tests'
   )
     return;
   relativeTestSource(component, path);

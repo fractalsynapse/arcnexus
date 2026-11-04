@@ -114,9 +114,9 @@ export class CheckedEditBridge {
 
   /** Rejects selection changes as correctable input after enforcing the assignment's write authority. */
   private validateEdit(path: string, content: string | null): void {
-    this.authorize(path);
+    const kind = this.authorize(path);
     try {
-      assertCapturedTestEdit(this.state.component, path, content);
+      assertCapturedTestEdit(this.state.component, path, content, kind);
     } catch (error) {
       throw new EditRequestError(
         `Invalid test suite edit. Preserve captured test selection and use literal component, level and tags metadata. ${String(error)}`,
@@ -125,7 +125,7 @@ export class CheckedEditBridge {
   }
 
   /** Enforces narrowing, workflow stage and frozen regression authority before any file is modified. */
-  private authorize(path: string): void {
+  private authorize(path: string): string {
     const { record } = this.state.options;
     if (
       record.readOnlyTurn ||
@@ -142,5 +142,6 @@ export class CheckedEditBridge {
       throw new Error(`Specification cannot edit ${kind}: ${path}`);
     if (record.stage !== 'specification' && this.state.frozen.some((test) => test.path === path))
       throw new Error(`Implementation cannot change frozen regression: ${path}`);
+    return kind;
   }
 }
