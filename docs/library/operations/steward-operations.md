@@ -31,7 +31,10 @@ returns `editProposal` with its invocation ID, digest and proposed paths. Apply 
 with `source.edit({proposalInvocationId: editProposal.invocationId})` instead of copying
 replacement contents from diagnostic text. This uses the same atomic checked-edit
 engine as direct requests: current hashes, ownership, workflow stage and frozen-test
-restrictions still apply. Failed, incomplete or foreign invocations grant no proposal;
+restrictions still apply. Structured proposals come from separately retained stdout; stderr warnings remain
+in combined diagnostics and cannot corrupt the JSON protocol. Both streams use the
+same supervised executor and existing output transport bound.
+Failed, incomplete or foreign invocations grant no proposal;
 altered or aliased evidence is rejected. Repeating the reference returns the original
 receipt without replaying edits or the operation. No managed command gains source
 write access.

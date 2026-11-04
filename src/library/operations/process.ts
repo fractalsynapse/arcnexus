@@ -1,6 +1,7 @@
+import { CommandFileOutput, commandOutputLimit } from './command-file-output.js';
 import { ProcessScope } from './process-scope.js';
 import { fork, spawn, spawnSync, type ChildProcess } from 'node:child_process';
-import { closeSync, fstatSync, ftruncateSync, openSync, writeSync, writeFileSync } from 'node:fs';
+import { closeSync, openSync, writeSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { Command } from '../architecture/config.js';
 
@@ -24,6 +25,7 @@ export interface CommandResult extends Command {
   durationMs: number;
   exitCode: number | null;
   log: string;
+  stdoutLog?: string;
   processScope?: string;
 }
 
@@ -72,6 +74,8 @@ class DirectCommand {
 
   private readonly stderr?: number;
 
+  private readonly fileOutput?: CommandFileOutput;
+
   private readonly result: CommandResult;
 
   private child!: ChildProcess;
@@ -98,11 +102,14 @@ class DirectCommand {
     private readonly signal: AbortSignal,
     private readonly options: CommandOptions,
   ) {
-    if (options.fileOutput && (options.stdout || options.stderr))
-      throw new Error('File diagnostic capture cannot use separate stream destinations');
     this.fd = openSync(log, 'wx', 0o600);
     this.stdout = options.stdout ? openSync(options.stdout, 'wx', 0o600) : undefined;
     this.stderr = options.stderr ? openSync(options.stderr, 'wx', 0o600) : undefined;
+    if (options.fileOutput)
+      this.fileOutput = new CommandFileOutput(this.fd, [
+        { path: options.stdout, descriptor: this.stdout },
+        { path: options.stderr, descriptor: this.stderr },
+      ]);
     this.result = {
       ...command,
       cwd,
@@ -110,6 +117,7 @@ class DirectCommand {
       durationMs: 0,
       exitCode: null,
       log,
+      ...(options.stdout ? { stdoutLog: options.stdout } : {}),
     };
   }
 
@@ -157,8 +165,8 @@ class DirectCommand {
       detached: true,
       stdio: [
         'ignore',
-        this.options.fileOutput ? this.fd : 'pipe',
-        this.options.fileOutput ? this.fd : 'pipe',
+        this.options.fileOutput ? (this.stdout ?? this.fd) : 'pipe',
+        this.options.fileOutput ? (this.stderr ?? this.fd) : 'pipe',
       ],
     });
     this.child.stdout?.on('data', (chunk) => this.capture(chunk, this.stdout));
@@ -169,7 +177,7 @@ class DirectCommand {
   private watchOutput(): void {
     if (!this.options.fileOutput) return;
     this.outputTimer = setInterval(() => {
-      if (!this.failure && fstatSync(this.fd).size > 64 * 1024 * 1024)
+      if (!this.failure && this.fileOutput!.poll())
         this.terminate(new Error('Command output limit exceeded'));
     }, 10);
   }
@@ -217,13 +225,13 @@ class DirectCommand {
 
   /** Snapshots the inputs used by later verification. */
   private capture(chunk: Buffer, separate?: number): void {
-    const remaining = 64 * 1024 * 1024 - this.outputBytes;
+    const remaining = commandOutputLimit - this.outputBytes;
     if (remaining > 0) {
       writeSync(this.fd, chunk.subarray(0, remaining));
       if (separate !== undefined) writeSync(separate, chunk.subarray(0, remaining));
     }
     this.outputBytes += chunk.length;
-    if (this.outputBytes > 64 * 1024 * 1024)
+    if (this.outputBytes > commandOutputLimit)
       this.terminate(new Error('Command output limit exceeded'));
   }
 
@@ -232,10 +240,7 @@ class DirectCommand {
     clearTimeout(this.timer);
     clearInterval(this.outputTimer);
     this.signal.removeEventListener('abort', this.abort);
-    if (this.options.fileOutput && fstatSync(this.fd).size > 64 * 1024 * 1024) {
-      this.failure ??= new Error('Command output limit exceeded');
-      ftruncateSync(this.fd, 64 * 1024 * 1024);
-    }
+    if (this.fileOutput?.close()) this.failure ??= new Error('Command output limit exceeded');
     closeSync(this.fd);
     if (this.stdout !== undefined) closeSync(this.stdout);
     if (this.stderr !== undefined) closeSync(this.stderr);

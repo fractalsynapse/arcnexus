@@ -29,10 +29,8 @@ export class OperationEditProposals {
   /** Captures only successful observed agent invocations whose complete output is a valid edit batch. */
   capture(result: CommandResult): ProposalEvidence | undefined {
     const invocation = this.invocations().findLast((entry) => entry.result?.log === result.log);
-    if (!this.eligible(invocation) || result.exitCode !== 0) return undefined;
-    if (resolve(result.log) !== join(resolve(this.directory), `invocation-${invocation.id}.log`))
-      throw new Error('Edit proposal log does not belong to its observed invocation');
-    const request = this.parse(this.bytes(result.log));
+    if (!this.eligible(invocation) || result.exitCode !== 0 || !result.stdoutLog) return undefined;
+    const request = this.parse(this.stdout(result, invocation));
     if (!request) return undefined;
     const content = JSON.stringify({ ...request, id: 'operation-' + invocation.id });
     const evidence = {
@@ -52,6 +50,20 @@ export class OperationEditProposals {
       throw new Error('Edit proposal evidence changed');
     this.proposals()[invocation.id] = evidence;
     return evidence;
+  }
+
+  /** Validates separate protocol output against the exact originating invocation before reading bytes. */
+  private stdout(result: CommandResult, invocation: any): Buffer {
+    const directory = resolve(this.directory);
+    if (resolve(result.log) !== join(directory, `invocation-${invocation.id}.log`))
+      throw new Error('Edit proposal log does not belong to its observed invocation');
+    if (
+      !result.stdoutLog ||
+      result.stdoutLog !== invocation.result.stdoutLog ||
+      resolve(result.stdoutLog) !== join(directory, `invocation-${invocation.id}.stdout`)
+    )
+      throw new Error('Edit proposal stdout does not belong to its observed invocation');
+    return this.bytes(result.stdoutLog);
   }
 
   /** Resolves pinned bytes without trusting an agent-supplied path, owner or operation definition. */

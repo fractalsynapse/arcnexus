@@ -35,6 +35,10 @@ class EditAuthorityScenarios {
     assert.equal(readDiagnosticExcerpt(log).truncated, true);
     assert.throws(() => JSON.parse(readDiagnosticExcerpt(log).output));
     writeFileSync(log, 'Later diagnostic contents do not redefine the pinned proposal');
+    writeFileSync(
+      join(state.dir, `invocation-${reference.proposalInvocationId}.stdout`),
+      'Later stdout',
+    );
     const receipt = bridge.call('source.edit', reference);
     assert.equal(
       readFileSync(join(state.options.record.workspace, 'owned/file.ts'), 'utf8'),
@@ -42,6 +46,24 @@ class EditAuthorityScenarios {
     );
     assert.deepEqual(bridge.call('source.edit', reference), receipt);
     assert.equal(readdirSync(join(state.dir, 'checked-edits')).length, 1);
+  }
+
+  /** Keeps structured stdout invocation-bound while preserving previously pinned historical references. */
+  stdoutIdentity(t: TestContext): void {
+    const state = this.fixture(t);
+    const reference = this.capture(state, this.request('owned/file.ts'));
+    const invocation = (state.options.record.operationInvocations as any[])[0];
+    const stdout = invocation.result.stdoutLog;
+    const proposals = new OperationEditProposals(state.dir, state.options.record);
+    delete invocation.result.stdoutLog;
+    assert.equal(proposals.capture(invocation.result), undefined);
+    assert.ok(proposals.resolve(reference.proposalInvocationId));
+    invocation.result.stdoutLog = invocation.result.log;
+    assert.throws(() => proposals.capture(invocation.result), /stdout does not belong/);
+    invocation.result.stdoutLog = stdout;
+    rmSync(stdout);
+    symlinkSync(invocation.result.log, stdout);
+    assert.throws(() => proposals.capture(invocation.result), /Unsafe edit proposal/);
   }
 
   /** A retained proposal cannot bypass current stage, frozen-test or complete-batch ownership checks. */
@@ -262,8 +284,10 @@ class EditAuthorityScenarios {
     mkdirSync(state.dir, { recursive: true });
     const id = randomUUID();
     const log = join(state.dir, `invocation-${id}.log`);
-    writeFileSync(log, JSON.stringify(request));
-    const result: any = { exitCode: 0, log };
+    const stdoutLog = join(state.dir, `invocation-${id}.stdout`);
+    writeFileSync(stdoutLog, JSON.stringify(request));
+    writeFileSync(log, JSON.stringify(request) + '\nDiagnostic warning on stderr\n');
+    const result: any = { exitCode: 0, log, stdoutLog };
     state.options.record.operationInvocations ??= [];
     (state.options.record.operationInvocations as any[]).push({
       id,
@@ -312,6 +336,9 @@ const scenarios = new EditAuthorityScenarios();
 
 test('oversized operation proposals apply complete bytes through the checked edit bridge', (t) =>
   scenarios.proposal(t));
+
+test('operation proposals bind safe stdout and preserve pinned historical evidence', (t) =>
+  scenarios.stdoutIdentity(t));
 
 test('operation proposals retain stage, frozen-test and atomic ownership enforcement', (t) =>
   scenarios.proposalAuthority(t));

@@ -43,7 +43,7 @@ class MinimalWorkflowScenarios {
     return `const fs=require('fs'),crypto=require('crypto');console.log(JSON.stringify({id:'proposal',changes:[
       {path:'source.txt',operation:'update',expectedSha256:crypto.createHash('sha256').update(fs.readFileSync('source.txt')).digest('hex'),content:'after'},
       {path:'new.txt',operation:'create',expectedSha256:null,content:'large-content-'.repeat(3000)}
-    ]}));`;
+    ]}));console.error("Proxy diagnostic on stderr must not corrupt structured stdout");`;
   }
 
   /** Plans, observes an expected failing regression and completes through host-mediated source transactions. */

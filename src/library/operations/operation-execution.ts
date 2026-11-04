@@ -163,6 +163,7 @@ export class OperationExecution {
       {
         env: adapter.environment(operationEnvironment(this.record)),
         fileOutput: true,
+        stdout: join(this.root, 'runs', this.record.id, `invocation-${id}.stdout`),
         processScope: true,
       },
     ).catch((error) => this.failure(op, error));

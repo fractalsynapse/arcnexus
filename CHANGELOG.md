@@ -4,6 +4,8 @@
 
 ### Added
 
+- Retain structured operation stdout separately from diagnostic warnings, preserving complete checked-edit proposals and supervised output bounds (#217).
+
 - Consolidate preparation, cleanup, status and following under workspace services, removing the duplicate gateway execution path while preserving historical readers and detach-only following (#148).
 
 - Preserve captured execution progress and event-sensitive revisions in workspace resource views without exposing raw harness records (#216).
