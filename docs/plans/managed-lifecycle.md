@@ -2003,3 +2003,15 @@ without relabeling their records or creating duplicate deliveries. Validate reta
 handoff provenance, keep mismatches explicit, and publish later current-run verified
 engineering through the unchanged independent-verification requirements. Exercise
 this boundary with publication enabled; retain the failed live workday unchanged.
+
+### Refresh observed simulated checks on explicit publication retry (#228)
+
+The real simulated delivery's dependency installation failed with HTTP 403. Its
+explicit publication retry reused the completed failed check receipt and therefore
+could not make progress. Keep that receipt immutable and keep commit, push, PR,
+merge and release identities unchanged. Persist a distinct host check-attempt
+identity for an explicit retry, deduplicate a still-pending request, and reconcile
+all uncertain prior check effects before executing a new observation. Recovery
+must reuse its retained attempt; no caller-selected commands or target overrides
+are introduced. Cover observed failure then success, duplicate requests and
+uncertain checks through actual simulated provider transitions and the host service.
