@@ -2626,3 +2626,14 @@ in separate native and container confinement trials. Five focused cases passed,
 including real npm refusing an archive with a different integrity digest.
 Published workspaces still need their own observed setup; these timings describe
 disposable probes.
+
+### Retain failed assignments when the director requests a replacement (#235)
+
+A diagnosed task assignment may need a fresh workspace and a corrected workflow.
+An explicit replacement keeps its run, owner, objective and original acceptance
+criteria. Preserve the failed predecessor, raw response and workspace. A fresh
+assignment takes over open requests and dependencies under the same captured
+authority. A requester awaiting its replacement requires verified delivery.
+Record both identities and the director's diagnosis for final goal assessment.
+A continuation keeps its checkpoint; a replacement starts separately. Refuse
+uncertain operations and incompatible authority before admitting either.
