@@ -938,3 +938,15 @@ cancellation were rejected. Existing simulated conflicts, integration, approval
 and release behavior remained covered. The shared command path removes duplicate
 commit metadata and supervision setup. This is controlled-provider evidence,
 not live upstream integration or promotion qualification.
+
+Next publication batch connects verified live deliveries to host-managed commit,
+HTTPS push and GitHub PR creation through the existing durable effect protocol.
+Both modes share effect identity, uncertainty recovery and milestone persistence;
+only provider adapters differ. Live observations of CI/review remain refreshable,
+not permanently cached mutation receipts. No GitHub review is submitted, and no
+main/tag/package operation is exposed. Staging integration remains blocked until
+exact-target assembly, fresh independent assessment and provider gates can all be
+established. An explicit publication request can refresh pending provider gates
+without repeating a completed commit, push or PR. Tests substitute only external
+transport and use real local Git and SQLite. This is bootstrap work while the
+seventh captured real simulation continues independently.
