@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { lstatSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 class BuildApplication {
   /** Rebuilds production output, packages trusted schemas and compiles executable fixtures. */
   async run(): Promise<void> {
+    if (process.argv[2] === '--tests') return this.tests();
     mkdirSync('dist', { recursive: true });
     this.clear('dist');
     this.compile([]);
@@ -22,8 +23,17 @@ class BuildApplication {
     this.compile(['-p', 'tsconfig.fixtures.json']);
   }
 
+  /** Rebuilds only current test sources while preserving the declared generated mount directory. */
+  private tests(): void {
+    mkdirSync('.test-build', { recursive: true });
+    this.clear('.test-build');
+    this.compile(['-p', 'tsconfig.tests.json']);
+  }
+
   /** Removes stale files and links without replacing directories that may be sandbox mounts. */
   private clear(directory: string): void {
+    if (!lstatSync(directory).isDirectory())
+      throw new Error('Generated output root must be a real directory');
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
       const path = join(directory, entry.name);
       if (entry.isDirectory()) this.clear(path);

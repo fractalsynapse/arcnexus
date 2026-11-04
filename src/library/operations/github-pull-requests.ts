@@ -20,6 +20,7 @@ export class GitHubPullRequests {
     if (
       delivery.environment.mode !== 'live' ||
       delivery.engineering !== 'verified' ||
+      delivery.delivery !== 'pushed' ||
       !/^[a-f0-9]{64}$/.test(delivery.id) ||
       !/^[a-f0-9]{40,64}$/.test(head)
     )

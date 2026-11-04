@@ -213,16 +213,17 @@ export class SourceConfinement {
     );
   }
 
-  /** Restricts declared download domains through the managed proxy; unsupported filtering fails closed. */
+  /** Uses a deny-all proxy for no-network work, preserving local stdio without granting network destinations. */
   private networkConfiguration(): string[] {
     const network = this.authority.network;
-    if (!network || typeof network === 'boolean') return [];
+    if (network === true) return [];
+    const allowed = network && typeof network === 'object' ? network.domains : [];
     if (
-      !network.domains.length ||
-      network.domains.some((domain) => !/^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/.test(domain))
+      (typeof network === 'object' && !allowed.length) ||
+      allowed.some((domain) => !/^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/.test(domain))
     )
       throw new Error('Expected explicit operation network domains');
-    const domains = network.domains.map((domain) => `${JSON.stringify(domain)}="allow"`);
+    const domains = allowed.map((domain) => `${JSON.stringify(domain)}="allow"`);
     return [
       'features.network_proxy=true',
       'permissions.arcnexus.network.mode="limited"',
@@ -238,7 +239,7 @@ export class SourceConfinement {
     return [
       'default_permissions="arcnexus"',
       `permissions.arcnexus.filesystem={${entries.join(',')}}`,
-      `permissions.arcnexus.network.enabled=${Boolean(this.authority.network)}`,
+      'permissions.arcnexus.network.enabled=true',
       ...this.networkConfiguration(),
       'features.use_legacy_landlock=false',
     ];

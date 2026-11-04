@@ -11,6 +11,7 @@ export function componentContext(component: Component): unknown {
     policy,
     verification,
     observedImports,
+    observedConsumers,
     ...intent
   } = component;
   return {
@@ -24,10 +25,29 @@ export function componentContext(component: Component): unknown {
     verification: verification.map((check) =>
       'id' in check ? { id: check.id, purpose: check.purpose } : check,
     ),
+    observedConsumers: importContext(observedConsumers ?? []),
     observedImports: importContext(
       observedImports?.filter((relationship) => relationship.owner !== component.id) ?? [],
     ),
   };
+}
+
+/** Shares inherited standard text once across a complete eligible catalog without filtering its owners. */
+export function catalogContext(components: Component[]) {
+  const standards = new Map<string, NonNullable<Component['standardSnapshots']>[number]>();
+  const views = components.map((component) => {
+    const { standardSnapshots, ...view } = componentContext(component) as Record<string, unknown>;
+    for (const snapshot of (standardSnapshots ?? []) as NonNullable<
+      Component['standardSnapshots']
+    >) {
+      const previous = standards.get(snapshot.id);
+      if (previous && JSON.stringify(previous) !== JSON.stringify(snapshot))
+        throw new Error('Conflicting captured standard snapshots: ' + snapshot.id);
+      standards.set(snapshot.id, snapshot);
+    }
+    return view;
+  });
+  return { components: views, standards: [...standards.values()] };
 }
 
 /** Groups repeated import observations while preserving each source and every referenced symbol. */

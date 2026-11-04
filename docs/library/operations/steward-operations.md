@@ -323,3 +323,10 @@ marker. Changed heads or ambiguous receipts require reconciliation. This adapter
 creates PRs only; it does not submit reviews, authorize integration, or publish
 packages. The live Publisher orchestration and promotion gates remain separate
 work until their production wiring and real-provider qualification are retained.
+
+No-network operation policy uses the managed proxy with an empty destination
+allowlist and limited methods. This preserves local subprocess IPC and stdin while
+denying network targets; it is not unrestricted `network.enabled` execution.
+Installed-runtime qualification separately checks real direct connections and
+proxied HTTP/HTTPS mutations. Explicit download domains remain captured operation
+policy, and the local/private-network guard remains enabled.

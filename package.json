@@ -13,7 +13,7 @@
     "build": "tsc -p tsconfig.build.json && node .tool-build/build.js",
     "check": "tsc --emitDeclarationOnly && tsc --noEmit && tsc -p tsconfig.tests.json --noEmit && tsc -p tsconfig.fixtures.json --noEmit && tsc -p tsconfig.tooling.json && tsc -p tsconfig.build.json --noEmit",
     "test": "npm run build && node dist/library/testing/npm-tests.js",
-    "build:tests": "tsc -p tsconfig.tests.json",
+    "build:tests": "tsc -p tsconfig.build.json && node .tool-build/build.js --tests",
     "lint": "eslint src tests scripts fixtures experiments/checks qualification eslint.config.ts",
     "lint:fix": "npm run lint -- --fix",
     "format:check": "prettier --check src tests scripts fixtures experiments/checks qualification eslint.config.ts",

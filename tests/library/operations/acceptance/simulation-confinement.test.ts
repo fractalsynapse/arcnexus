@@ -107,13 +107,20 @@ class SimulationConfinementScenario {
     return { key: readFileSync(key), cert: readFileSync(cert) };
   }
 
+  /** Requires real pipe input and successful subprocess status under the same deny-all network boundary. */
+  private stdio(): string {
+    const echo =
+      "let text='';process.stdin.on('data',part=>text+=part);process.stdin.on('end',()=>process.stdout.write(text));";
+    return `const echo=p.spawnSync(process.execPath,['-e',${JSON.stringify(echo)}],{input:'stdio-proof',encoding:'utf8'});if(echo.error||echo.status!==0||echo.stdout!=='stdio-proof')throw Error('Confined stdin failed: '+echo.error);const git=p.spawnSync('git',['--version'],{encoding:'utf8'});if(git.error||git.status!==0||!git.stdout.startsWith('git version'))throw Error('Confined subprocess status failed: '+git.error);`;
+  }
+
   /** Sends the write from a descendant and requires an observed network rejection, not a timeout. */
   private script(url: string, downloads: boolean, tls: boolean): string {
     const child = `fetch(${JSON.stringify(url)},{method:'POST',body:'forbidden',signal:AbortSignal.timeout(3000)}).then(()=>process.exit(8)).catch(e=>{if(e.name==='TimeoutError')process.exit(9);console.log('network-denied')})`;
     const read = downloads
       ? `if(!${tls}){const read=p.spawnSync('curl',['--insecure','--silent','--show-error','--fail','--max-time','3',${JSON.stringify(url)}],{encoding:'utf8'});if(read.status!==0||read.stdout!=='controlled-read')throw Error('Allowed read failed: '+read.stderr);}const write=p.spawnSync('curl',['--insecure','--silent','--fail','--write-out','%{http_code}','--max-time','3','-X','POST',${JSON.stringify(url)}]);if(write.status!==22||String(write.stdout)!=='403')throw Error('Proxy did not reject mutation');const bypass=p.spawnSync('curl',['--insecure','--silent','--fail','--max-time','3','--noproxy','*','-X','POST',${JSON.stringify(url)}]);if(bypass.status!==7)throw Error('Direct connection not denied: '+bypass.status);`
       : '';
-    return `const p=require('child_process');${read}if(process.env.GH_TOKEN||process.env.GITHUB_TOKEN)process.exit(7);if(${tls}){console.log('network-denied')}else{const r=p.spawnSync(process.execPath,['-e',${JSON.stringify(child)}],{stdio:'inherit'});process.exit(r.status??1)}`;
+    return `const p=require('child_process');${this.stdio()}${read}if(process.env.GH_TOKEN||process.env.GITHUB_TOKEN)process.exit(7);if(${tls}){console.log('network-denied')}else{const r=p.spawnSync(process.execPath,['-e',${JSON.stringify(child)}],{stdio:'inherit'});process.exit(r.status??1)}`;
   }
 }
 

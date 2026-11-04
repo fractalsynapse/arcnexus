@@ -599,3 +599,62 @@ GitHub PR provider tests passed seven controlled HTTP cases in 0.210 seconds:
 creation, exact-head/default-branch refusal, conservative recovery, duplicate reuse,
 and existing collaboration behavior. These are deterministic provider-boundary
 checks, not real GitHub publication or complete live Publisher wiring.
+
+The report steward's baseline revealed a distinct installed-runtime/Node interaction:
+under `network.enabled=false`, `spawnSync('git', ['--version'])` returned exit code
+zero and actual Git output but also `EPERM`; a Node child's socket-backed stdin
+arrived empty. This explains both registration failures and lint tests accepting
+empty input. A focused probe with the managed proxy enabled, limited mode and an
+empty destination allowlist preserved the same subprocess results and stdin.
+Qualify this deny-all proxy configuration with actual direct-connection and
+HTTP/HTTPS mutation tests before replacing the no-network adapter path. No domain,
+private-network exception or unrestricted route is being granted. Reference:
+[permissions](https://learn.chatgpt.com/docs/permissions), which distinguishes a
+proxy with no allowed domains from unrestricted network access without the proxy.
+
+The director also retained a warning that the private executable copy lacked its
+Code Mode helper. Copy the complete installed binary bundle for the next run,
+retaining the failed/incomplete environment unchanged. Issue #201 records the
+preparation-qualification gap. Do not treat a valid director plan as proof that
+its worker tool runtime is complete.
+
+A local full-suite attempt found stale compiled suites under the preceding test
+layout (`.test-build/assignment` and `.test-build/operations`) alongside current
+owner directories. The broad Node glob executed obsolete suites; stop that attempt
+without counting it as current acceptance. Fresh simulation workspaces did not
+contain those stale outputs. Make test compilation clear its disposable output
+before compiling, using the existing build utility rather than a second cleaner.
+This directly prevents duplicated/obsolete execution after source moves and avoids
+mistaking a dirty local artifact tree for current product behavior.
+
+The measured catalog repeats 238,614 bytes of raw consumer relationships alongside
+240,137 bytes of grouped imports, and repeats 57,666 bytes of inherited standard
+snapshots. Compact consumer observations with the existing source/symbol-preserving
+grouping and project shared standard snapshots once in whole-catalog director
+context. Keep every eligible owner, public API, ownership boundary and relationship
+available; do not narrow the team or raise the existing context-size acceptance
+threshold. The authoritative catalog remains unchanged by its model projection.
+
+The clean confined suite isolated another measured cost: catalog ownership acceptance
+launches 21 built `inspect` processes, rebuilding the full real-project catalog for
+each owner. Replace those duplicate reads with one complete built `validate` result;
+retain equality with all declared owner IDs and the assertion that every source file
+has exactly one owner. This preserves production CLI coverage and ownership acceptance
+while removing repeated compiler/catalog construction. The combined native proxy and
+stdio regression passed six cases, zero skips, in 7.803 seconds.
+
+The corrected build-output, ownership and model-context acceptance passed five
+cases with zero skips in 16.898 seconds. The complete ownership assertion now
+uses one built validation call (16.720 seconds alongside context analysis), instead
+of the old per-owner loop that was still running when the full-suite test watchdog
+expired after 300 seconds. That timed-out suite is not counted as passed. Native
+confinement checks established stdin, exit-status and network-denial behavior
+separately. Full formatting, lint and strict checks passed before these final
+context/test-output changes; refresh the affected checks on the assembled revision.
+
+Measured current model projections retain all 21 owners: individual component
+contexts total 637,259 bytes, and the shared-standard director catalog is 581,926
+bytes. These are catalog projection sizes, not model token counts or a promise of
+identical inference cost. The earlier 749,798-byte figure was the complete retained
+director prompt, so do not report a percentage comparison between those different
+artifacts. The next real turn will provide comparable full-prompt and usage evidence.

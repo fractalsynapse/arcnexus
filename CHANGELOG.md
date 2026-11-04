@@ -54,6 +54,8 @@
 
 ### Fixed
 
+- Preserve confined subprocess input and exit status with deny-all proxy enforcement, remove stale compiled tests, and deduplicate director context without narrowing eligible owners (#148).
+
 - Close retiring-host mutation admission and preserve nonterminal tasks before releasing execution ownership (#199).
 
 - Correct component access guidance through real stewardship, distinguishing current checked edits from historical writable-directory probes (#189).
