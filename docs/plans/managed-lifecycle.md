@@ -1575,3 +1575,11 @@ do not establish model-only latency because scheduling and other owners also con
 wall time. Recommendation: fix the observed proposal transport and pre-freeze quality
 failures first, then measure a fresh run before changing required verification. Do
 not skip checks on changed candidates or attribute all delay to test execution.
+
+With workspace progress available, retire the top-level `status` and `follow`
+spellings in the #148 CLI migration. Return an input error naming `workspace get`
+and `workspace get --follow` before accessing state. Migrate built-program report
+and planning scenarios to those resource views, preserving read-only historical
+report functions at the library boundary. Keep package-aware observation cancellation
+as detach-only. This does not retire `prepare` or `cleanup`; their composition and
+failure-recovery callers still require migration.
