@@ -19,7 +19,7 @@ export class AssignmentDispatch {
   ) {}
 
   /** Validates every scope and checkpoint before any proposal can become runnable. */
-  apply(run: ExecutionRun, result: DirectorResult): void {
+  apply(run: ExecutionRun, result: DirectorResult, checkpoint: Record<string, unknown> = {}): void {
     for (const proposal of result.assignments) {
       const { ownerId, ...assignment } = proposal;
       new ExecutionContext().assignment(this.context, ownerId, {
@@ -30,35 +30,30 @@ export class AssignmentDispatch {
       });
     }
     const continuations = result.continuations.filter((item) => this.eligible(run, item));
-    this.store.continueAssignments(run.id, continuations);
-    for (const proposal of result.assignments) {
-      const assignment = this.store.enqueue(
-        run.id,
-        proposal.ownerId,
-        proposal.objective,
-        proposal.acceptanceCriteria,
-      );
-      this.store.updateAssignment(assignment.id, 'ready', {
-        proposal,
-        directionContext: {
-          summary: result.summary,
-          feedback: this.store.run(run.id).data.redirection,
-          prompt: this.store.run(run.id).data.prompt,
-        },
-      });
-    }
+    const directionContext = {
+      summary: result.summary,
+      feedback: this.store.run(run.id).data.redirection,
+      prompt: run.data.prompt,
+    };
+    const proposals = result.assignments.map((proposal) => ({
+      owner: proposal.ownerId,
+      objective: proposal.objective,
+      acceptance: proposal.acceptanceCriteria,
+      data: { proposal, directionContext },
+    }));
+    this.store.admitDirection(run.id, proposals, continuations, checkpoint);
   }
 
   /** Retains each owner's considered inputs and architectural questions independently. */
-  recordStewardship(
+  stewardshipCheckpoint(
     run: ExecutionRun,
     owner: string,
     fingerprint: string,
     seen: Record<string, string>,
     result: import('../architecture/initialization.js').InitializationResult,
-  ): void {
-    this.store.updateRun(run.id, this.store.run(run.id).status, {
-      seen,
+  ) {
+    return {
+      seen: { ...seen, [owner]: fingerprint },
       lastSteward: owner,
       lastDispatch: 'stewardship',
       stewardshipReviews: {
@@ -70,7 +65,7 @@ export class AssignmentDispatch {
           architectureProposal: result.architectureProposal,
         },
       },
-    });
+    };
   }
 
   /** Isolates an exhausted diagnosis loop to its workday assignment while preserving task goal failure. */

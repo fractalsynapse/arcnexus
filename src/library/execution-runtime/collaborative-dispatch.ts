@@ -47,8 +47,7 @@ export class CollaborativeDispatch {
 
   /** Persists actionable direction before creating tracking and before any engineering activation. */
   async initialize(run: ExecutionRun, result: DirectorResult, signal: AbortSignal): Promise<void> {
-    new AssignmentDispatch(this.root, this.context, this.store).apply(run, result);
-    this.store.updateRun(run.id, this.store.run(run.id).status, {
+    new AssignmentDispatch(this.root, this.context, this.store).apply(run, result, {
       initialized: true,
       initialDirection: run.data.initialDirection ?? result,
       direction: result,

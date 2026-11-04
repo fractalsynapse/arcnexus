@@ -1,3 +1,4 @@
+import { AssignmentAdmission } from './assignment-admission.js';
 import { requestProposal } from './request-proposal.js';
 import type { DeliveryRecord, PromotionCandidate } from './delivery-types.js';
 import { CandidatePointers } from './candidate-pointers.js';
@@ -24,9 +25,12 @@ export { requestProposal } from './request-proposal.js';
 export class ExecutionStore {
   private readonly db: ExecutionDatabase;
 
+  private readonly admission: AssignmentAdmission;
+
   /** Opens a new or retained general execution store without reading legacy workdays. */
   constructor(path: string, readOnly = false) {
     this.db = new ExecutionDatabase(path, readOnly);
+    this.admission = new AssignmentAdmission(this.db);
   }
 
   /** Projects related records from one consistent read transaction. */
@@ -70,33 +74,8 @@ export class ExecutionStore {
     acceptance: string[] = [],
   ): ExecutionAssignment {
     return this.db.transaction('assignment.created', { runId, owner }, () =>
-      this.create(runId, owner, objective, acceptance),
+      this.admission.create(runId, owner, objective, acceptance),
     );
-  }
-
-  /** Validates authority and constructs an assignment within the caller's transaction. */
-  private create(
-    runId: string,
-    owner: string,
-    objective: string,
-    acceptance: string[],
-  ): ExecutionAssignment {
-    if (!this.run(runId).owners.includes(owner))
-      throw new Error('Unknown eligible owner: ' + owner);
-    if (!objective.trim()) throw new Error('Assignment objective is empty');
-    const assignment: ExecutionAssignment = {
-      id: randomUUID(),
-      runId,
-      owner,
-      objective,
-      acceptance,
-      status: 'ready',
-      dependencies: [],
-      evidence: [],
-      data: {},
-    };
-    this.db.put('assignment', assignment);
-    return assignment;
   }
 
   /** Reads authoritative assignment state. */
@@ -129,53 +108,58 @@ export class ExecutionStore {
     });
   }
 
+  /** Commits a complete director decision before the scheduler can see any of its assignments. */
+  admitDirection(
+    runId: string,
+    proposals: Array<{
+      owner: string;
+      objective: string;
+      acceptance: string[];
+      data: Record<string, unknown>;
+    }>,
+    continuations: Array<{ assignmentId: string; ownerId: string; reason: string }>,
+    checkpoint: Record<string, unknown>,
+  ): void {
+    const created: string[] = [];
+    this.db.transaction('direction.admitted', { runId, created, continuations }, () => {
+      const run = this.run(runId);
+      this.restoreContinuations(runId, continuations);
+      for (const item of proposals)
+        created.push(
+          this.admission.create(runId, item.owner, item.objective, item.acceptance, item.data).id,
+        );
+      this.db.put('run', { ...run, data: { ...run.data, ...checkpoint } });
+    });
+  }
+
   /** Reactivates diagnosed work and restores only its propagated dependents to milestone waiting. */
   continueAssignments(
     runId: string,
     continuations: Array<{ assignmentId: string; ownerId: string; reason: string }>,
   ): void {
     if (!continuations.length) return;
-    this.db.transaction('assignments.continued', { runId, continuations }, () => {
-      const ids = new Set(continuations.map((item) => item.assignmentId));
-      if (ids.size !== continuations.length) throw new Error('Duplicate continuation identity');
-      for (const item of continuations) this.continueOne(runId, item);
-      for (const assignment of this.assignments(runId))
-        if (assignment.status === 'blocked' && ids.has(String(assignment.data.blockedBy)))
-          this.db.put('assignment', {
-            ...assignment,
-            status: 'waiting',
-            data: { ...assignment.data, blockedBy: null, reason: null },
-          });
-      this.wake(runId);
-    });
+    this.db.transaction('assignments.continued', { runId, continuations }, () =>
+      this.restoreContinuations(runId, continuations),
+    );
   }
 
-  /** Preserves failed outcome evidence while acknowledging its known routing receipt for correction. */
-  private continueOne(
+  /** Restores diagnosed continuations and reconsidered waits within the admission transaction. */
+  private restoreContinuations(
     runId: string,
-    continuation: { assignmentId: string; ownerId: string; reason: string },
+    continuations: Array<{ assignmentId: string; ownerId: string; reason: string }>,
   ): void {
-    const assignment = this.assignment(continuation.assignmentId);
-    if (
-      assignment.runId !== runId ||
-      assignment.owner !== continuation.ownerId ||
-      !continuation.reason.trim() ||
-      !['blocked', 'failed', 'rejected'].includes(assignment.status)
-    )
-      throw new Error('Invalid retained assignment continuation');
-    const failed = assignment.data.lastFailedOutcome as { receipt?: string } | undefined;
-    this.db.put('assignment', {
-      ...assignment,
-      status: 'ready',
-      data: {
-        ...assignment.data,
-        blockedBy: null,
-        reason: null,
-        continuationReason: continuation.reason,
-        lastReceipt: failed?.receipt ?? assignment.data.lastReceipt,
-        continuationFrom: { status: assignment.status, reason: assignment.data.reason },
-      },
-    });
+    if (!continuations.length) return;
+    const ids = new Set(continuations.map((item) => item.assignmentId));
+    if (ids.size !== continuations.length) throw new Error('Duplicate continuation identity');
+    for (const item of continuations) this.admission.continueOne(runId, item);
+    for (const assignment of this.assignments(runId))
+      if (assignment.status === 'blocked' && ids.has(String(assignment.data.blockedBy)))
+        this.db.put('assignment', {
+          ...assignment,
+          status: 'waiting',
+          data: { ...assignment.data, blockedBy: null, reason: null },
+        });
+    this.wake(runId);
   }
 
   /** Routes a request once; conflicting reuse of a request identity is rejected. */
@@ -227,7 +211,12 @@ export class ExecutionStore {
   /** Resolves explicit supplier links before mutation; other resource identities never imply new work. */
   private recipient(sender: ExecutionAssignment, request: OwnerRequest): ExecutionAssignment {
     if (request.existingAssignmentId === undefined)
-      return this.create(sender.runId, request.owner, request.objective, request.acceptance);
+      return this.admission.create(
+        sender.runId,
+        request.owner,
+        request.objective,
+        request.acceptance,
+      );
     const recipient = this.assignments(sender.runId).find(
       (item) => item.id === request.existingAssignmentId && item.owner === request.owner,
     );

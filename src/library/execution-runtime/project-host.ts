@@ -356,9 +356,9 @@ export class ProjectHost {
       },
     );
     const dispatch = new AssignmentDispatch(this.root, this.context, this.store);
-    if (result.status === 'ready') dispatch.apply(run, result);
-    seen[owner] = fingerprint;
-    dispatch.recordStewardship(run, owner, fingerprint, seen, result);
+    const checkpoint = dispatch.stewardshipCheckpoint(run, owner, fingerprint, seen, result);
+    if (result.status === 'ready') dispatch.apply(run, result, checkpoint);
+    else this.store.updateRun(run.id, this.store.run(run.id).status, checkpoint);
   }
 
   /** Requires all assignments and a separate goal-level assessment before task completion. */

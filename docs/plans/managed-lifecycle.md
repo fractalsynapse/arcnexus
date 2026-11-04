@@ -2553,3 +2553,19 @@ an interruption between queue insertion and recording the proposal could leave a
 ready assignment without its workflow or cause recovery to submit a second team.
 Keep provider tracking outside the database transaction. Prove rollback with an
 invalid later owner and inspect retained state after reopening the store.
+
+The next fresh native simulation, 75e1aadd-e654-4121-9677-289b0adc83a0,
+completed sequential dependency setup in 247 seconds under concurrent host load.
+Its real director selected portfolio, workspace and execution-runtime from 21
+eligible stewards for volume relocation. These are starting selections. Dynamic
+discovery, verified engineering and publication require separate observed events.
+Container workday cc67f01a-0f01-430a-bef6-0042818d37e3 started on its own
+volume at 0dba58c. The runtime had UID 1000, zero effective and bounding
+capabilities, no-new-privileges and the enforced ArcNexus AppArmor profile.
+Both runs use their own captured supervisors.
+
+CI on 8c78dc3 exposed two historical-authority diagnostic regressions. Reading
+the failed job's individual test stacks and replaying those cases took seconds.
+Building the test sources alone reused stale product output. Rebuilding the
+product first reproduced the corrected diagnostics. The two historical cases and
+four installer cases then passed locally.
