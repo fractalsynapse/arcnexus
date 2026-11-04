@@ -54,18 +54,11 @@ class AssignmentScopeScenarios {
     };
     const result = resolve(['docs'], 'change', 'documentation');
     assert.deepEqual(Object.hasOwn(result, 'allowedWritePaths'), false);
-    assert.deepEqual(result.ownership?.find((owner) => owner.ownerId === 'recipient')?.paths, [
-      'elsewhere',
-    ]);
-    assert.equal(
-      result.ownership?.some((owner) => owner.ownerId === 'remote'),
-      false,
-    );
+    const paths = new Map(result.ownership?.map((owner) => [owner.ownerId, owner.paths]));
+    assert.deepEqual(paths.get('recipient'), ['elsewhere']);
+    assert.equal(paths.has('remote'), false);
     source.ownership.paths.push('later');
-    assert.equal(
-      result.ownership?.find((owner) => owner.ownerId === 'sample')?.paths.includes('later'),
-      false,
-    );
+    assert.deepEqual(paths.get('sample'), ['docs']);
   }
 
   /** Test-only characterization cannot be admitted as a behavioral documentation/regression workflow. */
