@@ -10,6 +10,7 @@ import {
   EditRequestError,
 } from '../workspace/checked-edits.js';
 import type { SessionState } from './session-state.js';
+import { OperationEditProposals } from '../operations/operations.js';
 
 /** Exposes checked source mutation only through the active assignment's host-bound connection. */
 export class CheckedEditBridge {
@@ -30,8 +31,19 @@ export class CheckedEditBridge {
       {
         name: 'source.edit',
         description:
-          'Apply an idempotent batch of owned source edits. Use a fresh unique transaction ID for each distinct batch, not an owner or assignment ID; reuse it only for an identical retry. Read bytes first and supply current SHA-256 hashes. This is the only source write route.',
-        inputSchema: readSchema('checked-edits'),
+          'Apply owned edits through checked transactions. Supply id and changes with current SHA-256 hashes, using a fresh id for each distinct batch. Alternatively, when an operation returns editProposal, supply only proposalInvocationId to apply its complete pinned batch without copying diagnostic excerpts. Both forms enforce current ownership, stage and frozen-test authority. This is the only source write route.',
+        inputSchema: {
+          type: 'object',
+          oneOf: [
+            readSchema('checked-edits'),
+            {
+              type: 'object',
+              additionalProperties: false,
+              required: ['proposalInvocationId'],
+              properties: { proposalInvocationId: { type: 'string', pattern: '^[a-f0-9-]{36}$' } },
+            },
+          ],
+        },
       },
     ];
   }
@@ -46,7 +58,7 @@ export class CheckedEditBridge {
     if (name !== 'source.edit') throw new Error('Unknown edit tool');
     let receipt;
     try {
-      receipt = this.edits.apply(args);
+      receipt = this.edits.apply(this.request(args));
     } catch (error) {
       if (
         error instanceof StaleEditError ||
@@ -59,6 +71,21 @@ export class CheckedEditBridge {
     this.state.journal(String(this.state.options.record.stage), 'source.edited', receipt);
     this.state.safe();
     return receipt;
+  }
+
+  /** Expands only an exact proposal reference from this assignment's completed operation evidence. */
+  private request(args: unknown): unknown {
+    if (!args || typeof args !== 'object' || !('proposalInvocationId' in args)) return args;
+    if (Object.keys(args).length !== 1 || typeof args.proposalInvocationId !== 'string')
+      throw new EditRequestError(
+        'Supply only proposalInvocationId for a retained operation proposal',
+      );
+    const proposal = new OperationEditProposals(this.state.dir, this.state.options.record).resolve(
+      args.proposalInvocationId,
+    );
+    if (!proposal)
+      throw new EditRequestError('No completed edit proposal for this assignment invocation');
+    return proposal;
   }
 
   /** Reports safe pre-transaction conflicts without relaxing authorization or uncertain recovery failures. */
@@ -77,7 +104,7 @@ export class CheckedEditBridge {
       error instanceof StaleEditError
         ? 'No edits were applied. Reread the current bytes, compute SHA-256 and retry the complete batch.'
         : error instanceof EditRequestError
-          ? 'No edits were applied. Correct the request shape: create/update require complete replacement content; delete permits omitted or null content. Use each relative path once.'
+          ? 'No edits were applied. Use a completed proposalInvocationId from this assignment, or correct the direct request: create/update require complete replacement content; delete permits omitted or null content. Use each relative path once.'
           : 'No edits were applied. Use a fresh unique transaction ID for a different batch; reuse an ID only for an identical retry.';
     const rejection = { status: 'rejected', error: error.message, ...conflict, recovery };
     this.state.journal(String(this.state.options.record.stage), 'source.edit_rejected', rejection);

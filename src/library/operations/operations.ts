@@ -1,5 +1,6 @@
 import { OperationExecution } from './operation-execution.js';
 import { readDiagnosticExcerpt } from './diagnostics.js';
+import { OperationEditProposals } from './edit-proposals.js';
 import { materialCandidate } from '../change-inspection/changes.js';
 import { ProgressObserver } from '../report/progress.js';
 import { realpathSync } from 'node:fs';
@@ -14,6 +15,8 @@ import { isObservedCommandFailure, type CommandResult } from './process.js';
 import { ServiceManager, type HttpDefinition, type ServiceDefinition } from './services.js';
 
 export { operationEnvironment } from './environment.js';
+
+export { OperationEditProposals } from './edit-proposals.js';
 
 export type Operation = {
   schemaVersion: 2 | 3 | 4;
@@ -300,14 +303,20 @@ class OperationRuntime {
       this.inspect();
       const prerequisiteFailed = !!outcome.failedOperationId && outcome.failedOperationId !== op.id;
       if (!prerequisiteFailed) artifacts = op.artifacts.map((path) => this.artifact(path));
-      const output = readDiagnosticExcerpt(result!.log).output;
+      const diagnostic = readDiagnosticExcerpt(result!.log);
+      const proposals = new OperationEditProposals(
+        join(this.root, 'runs', this.record.id),
+        this.record,
+      );
       return {
         id: op.id,
         status: result!.exitCode === 0 ? 'passed' : 'failed',
         failedOperationId: outcome.failedOperationId,
         prerequisiteFailed,
         ...result,
-        output,
+        output: diagnostic.output,
+        outputTruncated: diagnostic.truncated,
+        editProposal: proposals.capture(result!),
         artifacts,
       };
     } finally {

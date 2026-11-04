@@ -1,5 +1,16 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  linkSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
@@ -7,9 +18,116 @@ import { CheckedEditBridge } from '../../../../dist/library/assignment/checked-e
 import { digest } from '../../../../dist/library/architecture/assignment.js';
 import type { SessionState } from '../../../../dist/library/assignment/session-state.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
+import { OperationEditProposals } from '../../../../dist/library/operations/operations.js';
+import { readDiagnosticExcerpt } from '../../../../dist/library/operations/diagnostics.js';
 
 /** Exercises host-bound edit authorization independently of agent claims about owner or stage. */
 class EditAuthorityScenarios {
+  /** Applies a complete oversized proposal by reference and reuses its receipt without replaying bytes. */
+  proposal(t: TestContext): void {
+    const state = this.fixture(t);
+    state.options.record.stage = 'implementation';
+    const bridge = new CheckedEditBridge(state);
+    const request = this.request('owned/file.ts');
+    request.changes[0]!.content = 'complete-content-'.repeat(3000);
+    const reference = this.capture(state, request);
+    const log = join(state.dir, `invocation-${reference.proposalInvocationId}.log`);
+    assert.equal(readDiagnosticExcerpt(log).truncated, true);
+    assert.throws(() => JSON.parse(readDiagnosticExcerpt(log).output));
+    writeFileSync(log, 'Later diagnostic contents do not redefine the pinned proposal');
+    const receipt = bridge.call('source.edit', reference);
+    assert.equal(
+      readFileSync(join(state.options.record.workspace, 'owned/file.ts'), 'utf8'),
+      request.changes[0]!.content,
+    );
+    assert.deepEqual(bridge.call('source.edit', reference), receipt);
+    assert.equal(readdirSync(join(state.dir, 'checked-edits')).length, 1);
+  }
+
+  /** A retained proposal cannot bypass current stage, frozen-test or complete-batch ownership checks. */
+  proposalAuthority(t: TestContext): void {
+    const state = this.fixture(t);
+    const bridge = new CheckedEditBridge(state);
+    const request = this.request('owned/file.ts');
+    const reference = this.capture(state, request);
+    state.options.record.stage = 'review';
+    assert.throws(() => bridge.call('source.edit', reference), /workflow stage/);
+    state.options.record.stage = 'implementation';
+    state.frozen = [{ path: 'owned/file.ts', sha256: digest('before'), content: 'before' }];
+    assert.throws(() => bridge.call('source.edit', reference), /frozen regression/);
+    state.frozen = [];
+    request.changes.push({ ...request.changes[0]!, path: 'other/file.ts' });
+    const mixed = this.capture(state, request);
+    assert.throws(() => bridge.call('source.edit', mixed), /outside active/);
+    assert.equal(
+      readFileSync(join(state.options.record.workspace, 'owned/file.ts'), 'utf8'),
+      'before',
+    );
+    assert.deepEqual(readdirSync(join(state.dir, 'checked-edits')), []);
+  }
+
+  /** Stale, unknown and incomplete references fail without exposing arbitrary files or partial writes. */
+  proposalRejection(t: TestContext): void {
+    const state = this.fixture(t);
+    state.options.record.stage = 'implementation';
+    const bridge = new CheckedEditBridge(state);
+    const reference = this.capture(state, this.request('owned/file.ts'));
+    const invocation = (state.options.record.operationInvocations as any[])[0]!;
+    invocation.assignmentId = 'foreign';
+    assert.equal((bridge.call('source.edit', reference) as any).status, 'rejected');
+    invocation.assignmentId = state.options.record.assignmentId;
+    invocation.status = 'running';
+    assert.equal((bridge.call('source.edit', reference) as any).status, 'rejected');
+    invocation.status = 'completed';
+    const path = join(state.options.record.workspace, 'owned/file.ts');
+    writeFileSync(path, 'changed');
+    assert.equal((bridge.call('source.edit', reference) as any).status, 'rejected');
+    assert.equal(
+      (bridge.call('source.edit', { proposalInvocationId: '../private' }) as any).status,
+      'rejected',
+    );
+    assert.equal(readFileSync(path, 'utf8'), 'changed');
+    assert.deepEqual(readdirSync(join(state.dir, 'checked-edits')), []);
+  }
+
+  /** Altered and hard-linked immutable artifacts cannot be consumed as checked-edit requests. */
+  proposalIntegrity(t: TestContext): void {
+    const state = this.fixture(t);
+    state.options.record.stage = 'implementation';
+    const bridge = new CheckedEditBridge(state);
+    const first = this.capture(state, this.request('owned/file.ts'));
+    const path = join(state.dir, 'edit-proposals', first.proposalInvocationId + '.json');
+    chmodSync(path, 0o600);
+    writeFileSync(path, '{}');
+    assert.throws(() => bridge.call('source.edit', first), /evidence changed/);
+    const second = this.capture(state, this.request('owned/file.ts'));
+    linkSync(
+      join(state.dir, 'edit-proposals', second.proposalInvocationId + '.json'),
+      join(state.dir, 'alias'),
+    );
+    assert.throws(() => bridge.call('source.edit', second), /Unsafe edit proposal/);
+    assert.equal(
+      readFileSync(join(state.options.record.workspace, 'owned/file.ts'), 'utf8'),
+      'before',
+    );
+  }
+
+  /** A symlink replacing a pinned artifact cannot redirect source editing to other retained bytes. */
+  proposalSymlink(t: TestContext): void {
+    const state = this.fixture(t);
+    state.options.record.stage = 'implementation';
+    const bridge = new CheckedEditBridge(state);
+    const reference = this.capture(state, this.request('owned/file.ts'));
+    const path = join(state.dir, 'edit-proposals', reference.proposalInvocationId + '.json');
+    rmSync(path);
+    symlinkSync(join(state.options.record.workspace, 'owned/file.ts'), path);
+    assert.throws(() => bridge.call('source.edit', reference), /Unsafe edit proposal/);
+    assert.equal(
+      readFileSync(join(state.options.record.workspace, 'owned/file.ts'), 'utf8'),
+      'before',
+    );
+  }
+
   /** Rejects read-only stages and cross-owner batches before changing any candidate source. */
   stages(t: TestContext): void {
     const state = this.fixture(t);
@@ -139,6 +257,27 @@ class EditAuthorityScenarios {
     );
   }
 
+  /** Captures complete output at the observed-operation boundary; source editing stays production code. */
+  private capture(state: SessionState, request: unknown) {
+    mkdirSync(state.dir, { recursive: true });
+    const id = randomUUID();
+    const log = join(state.dir, `invocation-${id}.log`);
+    writeFileSync(log, JSON.stringify(request));
+    const result: any = { exitCode: 0, log };
+    state.options.record.operationInvocations ??= [];
+    (state.options.record.operationInvocations as any[]).push({
+      id,
+      runId: state.options.record.id,
+      assignmentId: state.options.record.assignmentId,
+      purpose: 'agent',
+      status: 'completed',
+      result,
+    });
+    const proposal = new OperationEditProposals(state.dir, state.options.record).capture(result);
+    assert.equal(proposal?.invocationId, id);
+    return { proposalInvocationId: id };
+  }
+
   /** Creates a minimal host state with authority unavailable to the incoming edit arguments. */
   private fixture(t: TestContext): SessionState {
     const root = mkdtempSync(join(tmpdir(), 'edit-authority-'));
@@ -170,6 +309,21 @@ class EditAuthorityScenarios {
 }
 
 const scenarios = new EditAuthorityScenarios();
+
+test('oversized operation proposals apply complete bytes through the checked edit bridge', (t) =>
+  scenarios.proposal(t));
+
+test('operation proposals retain stage, frozen-test and atomic ownership enforcement', (t) =>
+  scenarios.proposalAuthority(t));
+
+test('operation proposals reject stale, foreign and incomplete references', (t) =>
+  scenarios.proposalRejection(t));
+
+test('operation proposal evidence rejects tampering and aliases', (t) =>
+  scenarios.proposalIntegrity(t));
+
+test('operation proposal evidence rejects symlink replacement', (t) =>
+  scenarios.proposalSymlink(t));
 
 test('checked edit bridge enforces bound owner and workflow stage', (t) => scenarios.stages(t));
 

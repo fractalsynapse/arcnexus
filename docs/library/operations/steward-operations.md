@@ -24,6 +24,18 @@ transport failure, invalid authority and uncertain completion remain fatal. Mand
 host verification still fails, and prerequisite failure cannot establish the selected
 regression's expected-red evidence. Invocation records retain both identities.
 
+Operation replies mark diagnostic excerpts with `outputTruncated`; excerpts are not
+complete machine-readable output. When a successful agent operation emits a valid
+checked-edit batch, the host pins its complete bytes outside editable source and
+returns `editProposal` with its invocation ID, digest and proposed paths. Apply it
+with `source.edit({proposalInvocationId: editProposal.invocationId})` instead of copying
+replacement contents from diagnostic text. This uses the same atomic checked-edit
+engine as direct requests: current hashes, ownership, workflow stage and frozen-test
+restrictions still apply. Failed, incomplete or foreign invocations grant no proposal;
+altered or aliased evidence is rejected. Repeating the reference returns the original
+receipt without replaying edits or the operation. No managed command gains source
+write access.
+
 Plans/timeline (#41), declared operations (#42), managed local services/probes
 (#45), and selected history/live qualification (#48) are available. Their retained
 qualification evidence is linked below.

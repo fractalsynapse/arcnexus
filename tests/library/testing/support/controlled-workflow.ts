@@ -114,10 +114,10 @@ export class ControlledWorkflow {
   /** Submits one atomic source transaction through the production MCP bridge before observing checks. */
   private async flush(turn: WorkflowTurn): Promise<void> {
     if (!this.edits.size) return;
-    await new ControlledPlanning(this.options).sourceEdit(turn, {
-      id: randomUUID(),
-      changes: [...this.edits.values()],
-    });
+    const planning = new ControlledPlanning(this.options);
+    if (this.options.mode === 'proposal-edit' && turn.stage === 'implementation')
+      await planning.sourceProposal(turn);
+    else await planning.sourceEdit(turn, { id: randomUUID(), changes: [...this.edits.values()] });
     this.edits.clear();
     if (['implementation', 'correction'].includes(turn.stage))
       this.candidateMutations(this.options.mode);

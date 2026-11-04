@@ -4,6 +4,8 @@
 
 ### Added
 
+- Apply complete retained operation edit proposals by invocation reference through the checked edit tool, avoiding truncated formatter JSON while preserving source-write enforcement (#214).
+
 - Return application-settings revisions and reject stale service updates under exclusive persistence ownership, preserving environment overrides and simple config commands (#213).
 
 - Check captured mandatory source quality before freezing behavioral regressions, retaining specification correction without weakening frozen-test authority (#212).

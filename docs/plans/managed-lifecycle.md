@@ -1519,3 +1519,12 @@ host evidence bound to their invocation; return compact metadata and let the exi
 transaction engine. Reject foreign, incomplete, tampered or aliased evidence, preserve
 stale-hash and frozen-test checks, and identify truncated diagnostics explicitly.
 This removes model-mediated copying without giving commands direct source writes.
+
+The #214 implementation passed 13 focused bridge/context cases with zero skips in
+1.140 seconds, including a proposal larger than the excerpt, immutable capture after
+the original log changes, replay, stale hashes, foreign/incomplete identities,
+ownership/stage/frozen-test rejection, tampering, hard links and symlinks. A native
+MCP scenario passed in 22.130 seconds: a real confined operation emitted a large
+proposal, the actual bridge applied complete bytes by reference, and a repeated
+reference reused its receipt. Its model input was controlled; real-agent use remains
+pending a fresh supervisor. Builds, formatting, lint and strict checking passed.

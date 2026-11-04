@@ -13,6 +13,13 @@ completion and cancellation remain unsafe; agent-only formatters do not become
 mandatory checks. Final verification still reruns the required checks against the
 assembled candidate, and implementation cannot rewrite frozen regression bytes.
 
+Checked edits may refer to a successful operation's pinned `editProposal` using
+`proposalInvocationId`. The host resolves complete immutable bytes for the active
+assignment before applying ordinary transaction checks; diagnostic truncation cannot
+truncate an edit. Proposal references survive checkpoints with their operation and
+edit journals. A changed current source hash rejects a stale proposal, and references
+never bypass frozen-test or read-only-stage restrictions.
+
 A retained activation must match captured authority and candidate identity before
 continuing. Model claims never bypass specification or final verification. The final retirement slice routes the standalone session API through this same
 durable stage dispatcher, eliminating its separate complete-workflow loop. A session
