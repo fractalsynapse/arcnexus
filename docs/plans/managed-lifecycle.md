@@ -905,3 +905,13 @@ completion. The next assembled source must pass isolated production verification
 before spending another director turn. Keep the same useful architect-facing goal;
 do not force a steward roster or weaken inherited test metadata to manufacture the
 three-owner or dependency-discovery gates.
+
+At `dbb2ce9`, complete isolated suite execution observed 475 passes, two failures
+and 343 native-lane skips in 185.524 seconds. Both failures were release acceptance
+assertions still requiring the old npm launcher path; production behavior and the
+other suites passed. Update those assertions to require native executable discovery,
+version checking and the shared exported binding. Run the four release cases and
+remaining checkpoints; retain unchanged suite evidence instead of repeating the
+whole baseline for this test-only correction. Efficiency lesson: CI YAML belongs
+to release, so its cheap structural acceptance must accompany changes even when
+the motivating defect appears in operations. Track this coverage miss with #201.

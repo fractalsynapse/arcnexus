@@ -43,7 +43,9 @@ class WorkflowTests {
     assert.doesNotMatch(install.run, /sysctl/);
     const bindings = steps.find((step: any) => step.name === 'Bind verified machine executables');
     assert.match(bindings.run, /\.git\/arcnexus\/bindings\.yaml/);
-    assert.match(bindings.run, /codex: '\/usr\/local\/bin\/codex'/);
+    assert.match(bindings.run, /Expected one installed native Codex executable/);
+    assert.match(bindings.run, /execFileSync\(codex, \['--version'\]/);
+    assert.match(bindings.run, /tools: \{ node: process.execPath, codex \}/);
     const tests = steps.find((step: any) => step.name === 'Test built CLI');
     assert.match(tests.run, /systemd-run/);
     assert.match(tests.run, /--property=Delegate=yes/);
@@ -64,7 +66,7 @@ class WorkflowTests {
     assert.notEqual(native['continue-on-error'], true);
     assert.match(native.run, /--property=Delegate=yes/);
     assert.match(native.run, /--uid="\$\(id -u\)"/);
-    assert.match(native.run, /ARCNEXUS_TEST_CODEX=\/usr\/local\/bin\/codex/);
+    assert.match(native.run, /ARCNEXUS_TEST_CODEX=\$ARCNEXUS_TEST_CODEX/);
     assert.match(native.run, /node scripts\/release\/native-host-tests.mjs/);
     const selection = readFileSync('scripts/release/native-host-tests.mjs', 'utf8');
     assert.match(selection, /'test', 'inspect'/);
