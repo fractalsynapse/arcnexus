@@ -9,10 +9,11 @@ export class ControlledEvidence {
   constructor(
     private readonly trace: string,
     private readonly capability = 'verification.evidence',
+    private readonly pageLength = 64,
   ) {}
 
   /** Reads all advertised evidence pages without using native Git or arbitrary host paths. */
-  async inspect(args: string[], forbidden: boolean, retryPage = false): Promise<void> {
+  async inspect(args: string[], forbidden: boolean, retryPage = false) {
     const client = this.client();
     try {
       await client.connect(this.transport(args));
@@ -23,6 +24,7 @@ export class ControlledEvidence {
       for (const artifact of manifest.artifacts)
         artifacts[artifact.id] = await this.read(client, artifact.id);
       appendFileSync(this.trace + '.evidence', JSON.stringify({ manifest, artifacts }) + '\n');
+      return { manifest, artifacts };
     } finally {
       await client.close();
     }
@@ -77,7 +79,7 @@ export class ControlledEvidence {
     while (true) {
       const reply: any = await client.callTool({
         name: this.capability,
-        arguments: { artifact, offset, length: 64 },
+        arguments: { artifact, offset, length: this.pageLength },
       });
       if (reply.isError) throw new Error(reply.content[0].text);
       const page = JSON.parse(reply.content[0].text);

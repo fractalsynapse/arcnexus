@@ -13,6 +13,29 @@ import { GeneralFixture, nativeHostTest as test } from '../../testing/support/ge
 
 /** Verifies the independent model receives immutable host change evidence through a constrained tool. */
 class VerificationEvidenceScenarios {
+  /** Goal assessment retrieves large exact input instead of duplicating retained assignments in its prompt. */
+  async large(t: TestContext): Promise<void> {
+    const { f, context, record } = await this.fixture(t, true);
+    const input = [{ acceptance: ['Observed scope'], notes: 'x'.repeat(1100000) }];
+    await new Direction(f.state, context, new AbortController().signal).verify(
+      record,
+      'a',
+      'READ_HOST_EVIDENCE LARGE_ASSESSMENT',
+      input,
+      true,
+    );
+    const trace = JSON.parse(readFileSync(f.calls + '.evidence', 'utf8').trim());
+    assert.deepEqual(JSON.parse(trace.artifacts.assessment), input);
+    const calls = readFileSync(f.calls, 'utf8')
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line));
+    const prompt = calls.find((call) =>
+      call.prompt.startsWith('Independent read-only verification.'),
+    ).prompt;
+    assert.ok(prompt.length < 100000, 'Goal prompt must not inline retained assignment records');
+  }
+
   /** Both owner and whole-goal assessments can inspect accumulated tracked and untracked changes. */
   async inspect(t: TestContext, goal: boolean, retryPage = false): Promise<void> {
     const { f, context, record } = await this.fixture(t, goal);
@@ -245,6 +268,9 @@ test('verification rejects host evidence attached from a foreign run', (t) =>
 
 test('verification retrieves referenced investigation bytes through its own MCP manifest', (t) =>
   scenarios.investigation(t));
+
+test('goal assessment pages more than one megabyte of exact submitted input', (t) =>
+  scenarios.large(t));
 
 registerSuite({
   component: 'execution-runtime',

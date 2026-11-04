@@ -74,6 +74,7 @@ export class DirectionEvidence {
       pendingInboxActions: record.pendingInboxActions,
       regressionCheckpoint: record.regressionCheckpoint,
       independentFindings: record.independentFindings,
+      workerResult: record.agent,
       error: record.error,
     };
   }

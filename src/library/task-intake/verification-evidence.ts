@@ -28,7 +28,7 @@ export class VerificationEvidence {
   readonly candidate: string;
 
   /** Captures complete change evidence outside the editable candidate and rejects concurrent changes. */
-  constructor(root: string, record: RecordData, baseline: string) {
+  constructor(root: string, record: RecordData, baseline: string, input?: unknown) {
     this.candidate = candidateDigest(record);
     const captured: RecordData = { ...record, base: baseline };
     captureChanges(root, captured);
@@ -40,6 +40,7 @@ export class VerificationEvidence {
     );
     this.addFiles(JSON.parse(readFileSync(join(directory, 'new-files.json'), 'utf8')));
     this.execution(root, record);
+    this.pages.add('assessment', JSON.stringify(input ?? null), 'json');
     const manifest = {
       baseline,
       candidateDigest: this.candidate,

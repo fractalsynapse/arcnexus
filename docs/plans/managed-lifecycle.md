@@ -2110,3 +2110,27 @@ director can retrieve relevant facts without an initial history dump. Do not
 truncate evidence, filter eligible owners by the lexical shortlist, or introduce
 execution budgets. Exercise real MCP paging with more than one megabyte of retained
 evidence and safe/unsafe continuation, then qualify a fresh supervising revision.
+
+The #230 batch also pages workday owner history, task clarification/references and
+goal-assessment input, preventing the same overflow through adjacent entry points.
+Complete worker results remain labeled claims alongside observed checkpoint facts.
+Twenty native direction/verification/recovery cases pass, including exact retrieval
+of inputs larger than one megabyte. Seven further native cases pass after the final
+workday/reference wiring changes; no native skips. These are controlled MCP
+acceptance results, not a real-agent qualification of the new supervisor.
+
+CI 41877397062 is green for e5a650a: the full confined selection passed and all
+414 native cases passed with zero skips. Later bootstrap changes still need their
+own assembled CI. The original real task now has six verified deliveries but
+remains needs_attention after its oversized final-direction invocation; its queued
+portfolio goal has started under the same frozen supervisor with four director-
+selected owners. The new container workday remains on frozen b9dd9ac.
+
+Efficiency observations: the native task retained 211 distinct host-command logs
+with summed durations of 6,564,723 ms, including 31 Node test invocations totaling
+3,942,522 ms. These are invocation costs, not wall-clock or model time; component
+and whole-repository test runs are included. Preserve exact-input evidence reuse
+as an optimization target, without changing active checks. The large-history
+regressions use 32,768-character transport pages instead of the small-page stress
+fixture default; all bytes and hashes are still checked. Do not repeat a proven
+unfinished-file pause gate merely to delay the next useful publication task.

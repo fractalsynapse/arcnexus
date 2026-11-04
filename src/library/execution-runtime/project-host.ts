@@ -304,13 +304,16 @@ export class ProjectHost {
 
   /** Runs task direction and retains interactive questions before any owner activation. */
   private async direct(run: ExecutionRun, signal: AbortSignal): Promise<void> {
+    const input = this.workspaces(run).directionInput(run, this.reports);
     const result = await new Direction(
       this.root,
       this.environments.contextFor(run),
       signal,
     ).propose(
       await this.workspaces(run).policy(run, signal),
-      this.workspaces(run).directionPrompt(run, this.reports),
+      input.prompt,
+      undefined,
+      input.retained,
     );
     if (signal.aborted) return;
     if (result.status !== 'ready') {
@@ -339,15 +342,17 @@ export class ProjectHost {
       return;
     }
     const { owner, fingerprint } = selected;
-    const component = this.context.catalog.components[owner]!;
     const workspace = await this.workspaces(run).policy(run, signal);
     const result = await new Direction(this.root, context, signal).propose(
       workspace,
-      JSON.stringify({
-        component,
-        history: this.store.assignments(run.id).filter((a) => a.owner === owner),
-      }),
+      'Self-directed stewardship based on captured purpose, objectives, questions and inbox.',
       owner,
+      {
+        purpose:
+          'Review completed findings and unresolved owner work in the retained state before proposing another assignment. Worker results are claims; preserve observed checkpoint and delivery status.',
+        state: this.store.assignments(run.id).filter((a) => a.owner === owner),
+        feedback: null,
+      },
     );
     const dispatch = new AssignmentDispatch(this.root, this.context, this.store);
     if (result.status === 'ready') dispatch.apply(run, result);

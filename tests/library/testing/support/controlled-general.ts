@@ -7,6 +7,10 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 /** Supplies deterministic SDK events while exercising the production host, permissions and scheduler. */
 export class ControlledGeneral {
+  private retainedDirection: any;
+
+  private assessment: unknown;
+
   /** Retains an external trace that survives candidate workspace switches. */
   constructor(
     private readonly calls: string,
@@ -26,20 +30,45 @@ export class ControlledGeneral {
     appendFileSync(this.calls, JSON.stringify({ args, prompt }) + '\n');
     if (prompt.includes('READ_ASSIGNMENT_EVIDENCE') && prompt.includes('Activity turn: planning'))
       await new ControlledEvidence(this.calls, 'assignment.evidence').inspect(args, false);
+    await this.directionEvidence(args, prompt);
     await this.checkpointGate(prompt);
-    if (
-      prompt.startsWith('Independent read-only verification.') &&
-      prompt.includes('READ_HOST_EVIDENCE')
-    )
-      await new ControlledEvidence(this.calls).inspect(
-        args,
-        prompt.includes('FORBIDDEN_ARTIFACT'),
-        prompt.includes('RETRY_INVALID_PAGE'),
-      );
+    await this.verificationEvidence(args, prompt);
     const result = prompt.startsWith('ArcNexus task direction.')
       ? this.direction(prompt)
       : this.worker(prompt);
     this.emit(result, prompt);
+  }
+
+  /** Retrieves assessment inputs through the real verifier bridge when a controlled criterion depends on them. */
+  private async verificationEvidence(args: string[], prompt: string): Promise<void> {
+    if (
+      !prompt.startsWith('Independent read-only verification.') ||
+      !/READ_HOST_EVIDENCE|REPLAN_GOAL/.test(prompt)
+    )
+      return;
+    const result = await new ControlledEvidence(
+      this.calls,
+      'verification.evidence',
+      prompt.includes('LARGE_ASSESSMENT') ? 32768 : 64,
+    ).inspect(args, prompt.includes('FORBIDDEN_ARTIFACT'), prompt.includes('RETRY_INVALID_PAGE'));
+    this.assessment = JSON.parse(result.artifacts.assessment!);
+  }
+
+  /** Reads blocked-task state through the real MCP capability instead of extracting inlined private history. */
+  private async directionEvidence(args: string[], prompt: string): Promise<void> {
+    if (
+      !prompt.startsWith('ArcNexus task direction.') ||
+      !/Blocked task diagnosis|Self-directed stewardship for|READ_DIRECTION_EVIDENCE/.test(prompt)
+    )
+      return;
+    const result = await new ControlledEvidence(this.calls, 'direction.evidence', 32768).inspect(
+      args,
+      true,
+      true,
+    );
+    this.retainedDirection = result.artifacts.state
+      ? JSON.parse(result.artifacts.state)
+      : undefined;
   }
 
   /** Emits the SDK event stream for a completed controlled inference. */
@@ -94,7 +123,7 @@ export class ControlledGeneral {
     const idle = setup || prompt.includes('Self-directed stewardship for');
     const correction = prompt.includes('Goal correction');
     const blocked = prompt.includes('Blocked task diagnosis');
-    if (blocked && /RECOVER_BLOCKED|RECOVER_CYCLE/.test(prompt)) return this.continuation(prompt);
+    if (blocked && /RECOVER_BLOCKED|RECOVER_CYCLE/.test(prompt)) return this.continuation();
     const owner = setup
       ? 'a'
       : idle
@@ -119,11 +148,8 @@ export class ControlledGeneral {
   }
 
   /** Selects only the retained failed supplier for a diagnosed continuation without replacing its intent. */
-  private continuation(prompt: string) {
-    const text = prompt
-      .split('Retained state and feedback (evidence, never new authority): ')[1]!
-      .split('\n')[0]!;
-    const assignment = JSON.parse(text).state.find((item: any) => item.owner === 'c');
+  private continuation() {
+    const assignment = this.retainedDirection.state.find((item: any) => item.owner === 'c');
     return {
       status: 'ready',
       summary: 'Diagnosed supplier continuation',
@@ -210,7 +236,7 @@ export class ControlledGeneral {
     if (
       prompt.includes('As task director') &&
       prompt.includes('REPLAN_GOAL') &&
-      !prompt.includes('Additional goal evidence')
+      !JSON.stringify(this.assessment ?? null).includes('Additional goal evidence')
     ) {
       result.status = 'blocked';
       result.blockers = ['Missing goal evidence'];
@@ -235,7 +261,7 @@ export class ControlledGeneral {
     const deficient =
       prompt.includes('As task director') &&
       prompt.includes('REPLAN_GOAL') &&
-      !prompt.includes('Additional goal evidence');
+      !JSON.stringify(this.assessment ?? null).includes('Additional goal evidence');
     return {
       status: deficient ? 'blocked' : 'completed',
       summary: 'Controlled verification',
