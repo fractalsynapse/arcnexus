@@ -1,3 +1,4 @@
+import { RepositoryMigration } from './repository-migration.js';
 import { ArchitectureChanges } from './architecture-changes.js';
 import { ComponentUpdate } from '../architecture/component-update.js';
 import { StandardUpdate } from '../architecture/standard-update.js';
@@ -143,6 +144,25 @@ export class Portfolio {
     const materializer = new RepositoryMaterializer(this.volume, this.store);
     const entry = await materializer.prepare(repository, signal);
     return this.attach(kind, id, join(this.volume, entry.location), entry);
+  }
+
+  /** Transfers an inactive resource to validated remote history, retaining the former source and evidence. */
+  async migrateRepository(
+    kind: Kind,
+    reference: string,
+    repository: string,
+    signal: AbortSignal,
+    expectedRevision?: string,
+  ) {
+    const entry = this.find(kind, reference);
+    await new RepositoryMigration(this.volume, this.store).run(
+      entry,
+      this.view(entry),
+      repository,
+      signal,
+      expectedRevision,
+    );
+    return this.get(kind, entry.id);
   }
 
   /** Registers existing committed source without materialization or source mutation. */

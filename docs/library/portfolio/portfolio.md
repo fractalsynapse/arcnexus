@@ -216,8 +216,8 @@ stale writes leave the selected authority and attached checkout unchanged.
 
 ## Repository migration contract (#238)
 
-The next migration increment supplies `platform migrate <id> <repository>` and
-`package migrate <package> <repository>` through the shared portfolio service.
+`platform migrate <id> <repository>` and `package migrate <package> <repository>`
+transfer a registration through the shared portfolio service.
 An existing HTTPS/file remote (or local repository used as a remote) is cloned into
 managed storage through the existing supervised, journaled materializer. Migration
 never moves or edits the original checkout and never pushes upstream.

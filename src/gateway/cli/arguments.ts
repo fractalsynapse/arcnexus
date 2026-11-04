@@ -15,6 +15,7 @@ export const help = `ArcNexus
   config get <name> | update <name> <value> | migrate [target] [--write]
   platform list [field=value...]|get <id>|create <id> <repository>|remove <id>
   package list [platform] [field=value...]|get <package>|create <platform/package> <repository>|remove <package>
+  platform migrate <id> <repository> | package migrate <package> <repository>
   platform update <id> <field=value>...
   package update <package> <field=value>...
   component create/update <package> <id> <field=value>... | remove <package> <id>
