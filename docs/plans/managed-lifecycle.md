@@ -1172,3 +1172,11 @@ turn context does not list newly frozen paths. Correct future per-turn guidance,
 including where additional tests may go, while preserving all existing enforcement.
 Two expensive failed activations make this a demonstrated cost, not a speculative
 process improvement.
+
+The real director selected the assignment steward for that investigation, adding a
+fourth actual project owner during execution without a caller-selected roster.
+This establishes observed dynamic selection, not completed engineering or the full
+phase-two gate. The context fix now renders current checkpoint paths/hashes on each
+turn; three built-program context cases pass. Existing frozen-edit enforcement is
+unchanged. Record this bootstrap fix separately from the captured simulation, which
+continues under its original supervisor.

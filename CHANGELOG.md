@@ -4,6 +4,8 @@
 
 ### Added
 
+- Show current frozen regression paths and hashes on every steward turn, with explicit guidance for additional tests without weakening checked edits (#206).
+
 - Package an immutable headless container supervisor with scoped startup delegation, capability-free init and execution, qualified native confinement and graceful project-host drain (#148).
 
 - Reject malformed checked-edit requests with corrective feedback before any source mutation, while retaining fatal authority and recovery failures (#205).

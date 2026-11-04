@@ -24,6 +24,25 @@ class EngineeringContextScenarios {
     assert.doesNotMatch(prompt, /secret-check-command/);
   }
 
+  /** A retained context observes new freezes and never discloses frozen source content. */
+  async checkpoint(): Promise<void> {
+    const path = new URL(
+      '../../../../dist/library/assignment/engineering-context.js',
+      import.meta.url,
+    );
+    const { EngineeringContext } = await import(path.href);
+    const state = { frozen: [] as { path: string; sha256: string; content: string }[] };
+    const context = new EngineeringContext(state);
+    assert.match(context.checkpoint(), /Current frozen regressions: \[\]/);
+    state.frozen.push({ path: 'owned/regression.test.ts', sha256: 'captured', content: 'private' });
+    const prompt = context.checkpoint();
+    assert.match(prompt, /"path":"owned\/regression.test.ts","sha256":"captured"/);
+    assert.match(prompt, /byte-for-byte: no edits, additions, deletions, renames or formatting/);
+    assert.match(prompt, /separate files within captured test authority/);
+    assert.match(prompt, /Specification correction retains its existing stage permissions/);
+    assert.doesNotMatch(prompt, /private/);
+  }
+
   /** Historical evidence cannot be rendered as a new engineering activation. */
   async historical(): Promise<void> {
     await assert.rejects(this.context(4), /version.six.*migrat/i);
@@ -58,5 +77,8 @@ test('engineering context explains the only maintained-source write route', () =
   scenarios.checked());
 
 test('historical authority cannot create a new engineering context', () => scenarios.historical());
+
+test('turn checkpoint reflects newly frozen regressions without broadening authority', () =>
+  scenarios.checkpoint());
 
 registerSuite({ component: 'assignment', level: 'acceptance', tags: ['deterministic'] });

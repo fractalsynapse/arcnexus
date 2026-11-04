@@ -7,6 +7,12 @@ export class EngineeringContext {
   /** Retains captured session authority without granting model access to host-only check commands. */
   constructor(private readonly state: SessionState) {}
 
+  /** Renders the latest accepted checkpoint without exposing retained test contents. */
+  checkpoint(): string {
+    const frozen = this.state.frozen.map(({ path, sha256 }) => ({ path, sha256 }));
+    return `Current frozen regressions: ${JSON.stringify(frozen)}\nOutside specification correction, preserve every listed file byte-for-byte: no edits, additions, deletions, renames or formatting. Preserving intent is insufficient. Put additional supporting tests in separate files within captured test authority. If a frozen regression is invalid, report the evidence and request a decision; do not repair it during implementation or correction. Specification correction retains its existing stage permissions before acceptance. This context does not expand edit authority.`;
+  }
+
   /** Builds the model-facing instructions from captured assignment context. */
   render(): string {
     if (this.state.component.schemaVersion !== 6)
