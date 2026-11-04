@@ -1,6 +1,5 @@
 import { ancestry, loadCatalog } from './components.js';
 import { loadProjectBindings } from './bindings.js';
-import { ArchitectureReferences } from './references.js';
 import { InputError } from './config.js';
 import { ResourceQuery, type ResourceQueryInput } from '../report/resource-query.js';
 
@@ -38,8 +37,7 @@ export class StandardResources {
         throw new InputError('Unknown selected platform');
       if (platform.schemaVersion !== 6)
         throw new InputError('Migrate platform configuration before reading standards');
-      return new ArchitectureReferences(target.source, target.base, catalog)
-        .standards()
+      return (catalog.standards ?? [])
         .filter((entry) => ancestry(catalog, entry.owner).some((owner) => owner.id === platform.id))
         .map(({ artifacts, ...definition }) => ({
           ...structuredClone(definition),

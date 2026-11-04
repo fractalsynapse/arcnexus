@@ -95,6 +95,7 @@ export interface CompositionProfile {
 }
 
 export interface Catalog {
+  standards?: ReturnType<ArchitectureReferences['standards']>;
   primaryRepository?: string;
   repositoryRevisions?: Record<string, RepositoryRevision>;
   configurationSources: ConfigurationSource[];

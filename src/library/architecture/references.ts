@@ -21,7 +21,7 @@ export interface ReferenceArtifact {
   sha256: string;
 }
 
-interface PatternDefinition {
+interface GuidanceDefinition {
   schemaVersion: 1;
   id: string;
   owner: string;
@@ -64,11 +64,14 @@ export class ArchitectureReferences {
   /** Resolves captured inputs and rejects unsupported or inconsistent configuration. */
   resolve(): void {
     const contracts = this.contracts();
+    const standards = this.capturedStandards();
     for (const component of Object.values(this.catalog.components)) {
       if (component.schemaVersion === 6) {
-        component.standardSnapshots = (component.standards ?? []).map((id) =>
-          this.guidance(id, 'standard'),
-        );
+        component.standardSnapshots = (component.standards ?? []).map((id) => {
+          const standard = standards.get(id);
+          if (!standard) throw new Error('Missing standard: ' + id);
+          return standard;
+        });
         continue;
       }
       if (component.schemaVersion === 5) {
@@ -87,6 +90,13 @@ export class ArchitectureReferences {
         return contract;
       });
     }
+  }
+
+  /** Captures each standard once, including declarations without current consumers. */
+  private capturedStandards() {
+    if (Object.values(this.catalog.components).some((component) => component.schemaVersion === 6))
+      this.catalog.standards = this.standards();
+    return new Map(this.catalog.standards?.map((standard) => [standard.id, standard]));
   }
 
   /** Resolves provided and consumed contract identities and supported versions. */
@@ -115,32 +125,31 @@ export class ArchitectureReferences {
   /** Loads the referenced standard and optional supporting artifacts. */
   private guidance(id: string, kind: 'pattern' | 'standard' = 'pattern') {
     relativePath(id);
-    if (id.includes('/')) throw new Error(`Invalid pattern identity: ${id}`);
+    const label = kind === 'standard' ? 'Standard' : 'Pattern';
+    if (id.includes('/')) throw new Error(`Invalid ${kind} identity: ${id}`);
     const source = new ConfigurationReader().definition(
       this.repository,
       this.base,
       `architecture/${kind}s/${id}`,
     );
-    const pattern = validateSchema<PatternDefinition>(kind, source.value);
-    if (pattern.id !== id) throw new Error(`Pattern identity mismatch: ${id}`);
+    const pattern = validateSchema<GuidanceDefinition>(kind, source.value);
+    if (pattern.id !== id) throw new Error(`${label} identity mismatch: ${id}`);
     const owner = this.catalog.components[pattern.owner];
-    if (!owner) throw new Error(`Missing pattern owner: ${pattern.owner}`);
+    if (!owner) throw new Error(`Missing ${kind} owner: ${pattern.owner}`);
     for (const operation of pattern.operationIds)
       if (
         owner.schemaVersion >= 5
           ? !owner.operations?.[operation]?.length
           : !owner.operationIds?.includes(operation)
       )
-        throw new Error(
-          `${kind === 'standard' ? 'Standard' : 'Pattern'} check outside owner's operations: ${operation}`,
-        );
+        throw new Error(`${label} check outside owner's operations: ${operation}`);
     if (!this.catalog.configurationSources.some((entry) => entry.path === source.path))
       this.catalog.configurationSources.push(source);
     const artifacts = [pattern.document, ...pattern.examples].map((p) =>
       this.artifact(this.ownedPath(owner, p), owner.repository),
     );
     if (artifacts.some((artifact) => !artifact))
-      throw new Error(`Pattern requires repository binding: ${pattern.owner}`);
+      throw new Error(`${label} requires repository binding: ${pattern.owner}`);
     return { ...pattern, artifacts: artifacts as ReferenceArtifact[] };
   }
 
