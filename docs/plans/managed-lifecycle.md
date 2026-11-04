@@ -2671,3 +2671,6 @@ retained database took 0.10 ms. Cache an empty selection at the durable event
 sequence. A newly committed event must make the next tick reconsider work,
 including when another store connection delivered an inbox request. Measure the
 normal production selector on the same retained database after the change.
+
+The rebuilt production selector performed eight repeat empty selections in 2.6 ms
+after its initial scan of the same read-only database, under concurrent load.

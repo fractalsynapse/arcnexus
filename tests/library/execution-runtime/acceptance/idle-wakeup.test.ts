@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
+import { ExecutionStore } from '../../../../dist/library/coordination-store/execution-store.js';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
@@ -28,7 +29,7 @@ class IdleWakeupScenarios {
     );
     assert.equal(record.status, 'failed');
     assert.equal(reviews.b.status, 'ready');
-    const recipient = this.request(host, run.id);
+    const recipient = this.request(host.store, run.id);
     await host.tick();
     assert.ok(host.store.assignment(recipient.id).data.recordId);
   }
@@ -38,8 +39,14 @@ class IdleWakeupScenarios {
     const { host, run, f } = await this.fixture(t);
     const calls = readFileSync(f.calls, 'utf8');
     await host.tick();
+    const scans = t.mock.method(host.store, 'runs');
+    await host.tick();
+    assert.equal(scans.mock.callCount(), 0);
     assert.equal(readFileSync(f.calls, 'utf8'), calls);
-    const recipient = this.request(host, run.id);
+    const context = new ExecutionContext().resolve(f.repo);
+    const inbox = new ExecutionStore(join(f.state, 'projects', context.key, 'execution.sqlite'));
+    t.after(() => inbox.close());
+    const recipient = this.request(inbox, run.id);
     assert.equal(host.store.run(run.id).status, 'running');
     await host.tick();
     assert.ok(host.store.assignment(recipient.id).data.recordId);
@@ -51,7 +58,7 @@ class IdleWakeupScenarios {
     const { host, run, f } = await this.fixture(t);
     host.control(action);
     const calls = readFileSync(f.calls, 'utf8');
-    const recipient = this.request(host, run.id);
+    const recipient = this.request(host.store, run.id);
     await host.tick();
     assert.equal(host.store.run(run.id).status, action === 'pause' ? 'paused' : 'stopped');
     assert.equal(host.store.assignment(recipient.id).data.recordId, undefined);
@@ -59,10 +66,10 @@ class IdleWakeupScenarios {
   }
 
   /** Persists an owner-scoped external inbox request through the public coordination boundary. */
-  private request(host: ProjectHost, runId: string) {
-    const sender = host.store.enqueue(runId, 'a', 'Incoming owner request');
-    host.store.updateAssignment(sender.id, 'ready', { proposal: { kind: 'research' } });
-    return host.store.request(sender.id, {
+  private request(store: ExecutionStore, runId: string) {
+    const sender = store.enqueue(runId, 'a', 'Incoming owner request');
+    store.updateAssignment(sender.id, 'ready', { proposal: { kind: 'research' } });
+    return store.request(sender.id, {
       key: 'new-inbox-work',
       owner: 'c',
       objective: 'Research newly available evidence',

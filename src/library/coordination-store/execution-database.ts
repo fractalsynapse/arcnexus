@@ -104,6 +104,11 @@ export class ExecutionDatabase {
     value.data.readyOrder = order;
   }
 
+  /** Reads the latest committed transition without decoding retained event or run payloads. */
+  eventSequence(): number {
+    return Number(this.db.prepare('SELECT MAX(sequence) AS cursor FROM events').get()?.cursor ?? 0);
+  }
+
   /** Returns ordered events after an exclusive cursor. */
   events(after = 0) {
     return this.db

@@ -6,6 +6,8 @@ import type { ExecutionStore } from '../coordination-store/execution-store.js';
 
 /** Selects persisted run ownership and coordinates automatic workday handoffs without replacing user intent. */
 export class RunSelection {
+  private emptyAt?: number;
+
   /** Retains the repository's captured authority and sole transactional execution store. */
   constructor(
     private readonly context: ProjectExecution,
@@ -14,21 +16,21 @@ export class RunSelection {
 
   /** Selects queued tasks first and tracks automatic pauses independently of user intent. */
   next(): ExecutionRun | undefined {
-    const publication = this.store
-      .runs()
-      .find(
-        (run) =>
-          run.data.pendingPublication && ['running', 'idle', 'completed'].includes(run.status),
-      );
+    const sequence = this.store.eventSequence();
+    if (this.emptyAt === sequence) return;
+    const runs = this.store.runs();
+    const publication = runs.find(
+      (run) => run.data.pendingPublication && ['running', 'idle', 'completed'].includes(run.status),
+    );
     if (publication) return publication;
-    const task = this.selectTask();
-    const workday = this.workday();
+    const task = this.selectTask(runs);
+    const workday = runs.filter((run) => run.mode === 'workday').at(-1);
     if (task) {
       if (workday && ['running', 'idle'].includes(workday.status))
         this.store.updateRun(workday.id, 'paused', { pauseReason: 'task' });
       return task;
     }
-    if (workday?.status === 'paused' && workday.data.pauseReason === 'task')
+    if (workday?.status === 'paused' && workday.data.pauseReason === 'task') {
       this.store.updateRun(workday.id, 'running', {
         candidateRevision: String(
           this.delivery(workday.environment)?.data.candidateRevision ?? this.context.base,
@@ -37,8 +39,11 @@ export class RunSelection {
           this.delivery(workday.environment)?.data.candidateRecord ?? workday.data.candidateRecord,
         pauseReason: null,
       });
-    const latest = this.workday();
-    return latest?.status === 'running' ? latest : undefined;
+      return this.store.run(workday.id);
+    }
+    if (workday?.status === 'running') return workday;
+    this.emptyAt = sequence;
+    return undefined;
   }
 
   /** Projects retained run ownership alongside observed source drift without dispatching work. */
@@ -61,8 +66,8 @@ export class RunSelection {
   }
 
   /** Keeps a task's project ownership across activations; answered clarifications rejoin the FIFO queue. */
-  private selectTask(): ExecutionRun | undefined {
-    const tasks = this.store.runs().filter((r) => r.mode === 'task' && r.status === 'running');
+  private selectTask(runs: ExecutionRun[]): ExecutionRun | undefined {
+    const tasks = runs.filter((r) => r.mode === 'task' && r.status === 'running');
     const task = tasks.find((r) => r.data.executionOwner === true) ?? tasks[0];
     if (task && task.data.executionOwner !== true)
       this.store.updateRun(task.id, 'running', { executionOwner: true });

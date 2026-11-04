@@ -459,6 +459,11 @@ export class ExecutionStore {
     });
   }
 
+  /** Identifies the last durable transition across all connections for scheduler wakeups. */
+  eventSequence(): number {
+    return this.db.eventSequence();
+  }
+
   /** Exposes immutable event projections for reports and streaming clients. */
   events(after = 0) {
     return this.db.events(after);
