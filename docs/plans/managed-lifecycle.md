@@ -1746,3 +1746,18 @@ that expected inline command logs after #219 moved them to artifacts. Update tha
 assertion to compare every retrieved command artifact with its original host log.
 The missed consumer cost a 12m52s native job; the cheapest prevention is to include
 existing evidence-consumer scenarios in focused checks when changing transport shape.
+
+Issue #221 follows two equivalent real publisher review corrections. The current
+regression bytes match their immutable frozen checkpoint but differ from the earlier
+Git base, because specification changes precede freezing. Candidate review must
+retain the complete diff and explicitly report current versus frozen hashes; a
+pre-freeze diff is not itself evidence of a preservation violation. A matching hash
+does not establish test quality or waive acceptance. Missing, changed and unsafe
+files must remain distinguishable from preserved files.
+
+The same diagnosis found that publisher's authored policy requires lint but omits
+formatting, unlike several other stewards. Hoist both existing repository-required
+quality verification usages once to the platform and remove duplicate leaf usages.
+Qualify inheritance for the actual steward catalog and retain the existing generic
+pre-freeze operation selection. This repairs captured policy for new runs without
+hardcoding repository guidance in the product or modifying active authority.
