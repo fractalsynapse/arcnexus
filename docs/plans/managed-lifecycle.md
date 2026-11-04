@@ -915,3 +915,18 @@ remaining checkpoints; retain unchanged suite evidence instead of repeating the
 whole baseline for this test-only correction. Efficiency lesson: CI YAML belongs
 to release, so its cheap structural acceptance must accompany changes even when
 the motivating defect appears in operations. Track this coverage miss with #201.
+
+Fresh real task `26f75a70-fb8d-4354-b8e4-709149154c34` captures `ee36ef0` under
+`qualification-148-ee36ef0`, environment `91b80566-2c4c-4d03-9143-9d519902057e`.
+The actual director selected report, publisher and CLI; report preparation began.
+No roster was supplied. Four updated release cases passed in 0.229 seconds, and
+remaining isolated validation/report/format/lint checkpoints passed. CI
+`41772180248` is the latest separate run.
+
+Next live publication foundation: share immutable merge assembly and supervised
+Git evidence between simulated and live providers. Assembly must take an exact
+captured target head and verified delivery head, preserve conflicts, pin a private
+merge object and never update the target. Transport retains responsibility for
+fetching approved objects and atomically checking target identity at integration;
+only checked assembled objects may advance. Keep provider mutation and permission
+checks outside this reusable local object operation.
