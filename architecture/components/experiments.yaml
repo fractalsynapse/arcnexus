@@ -45,7 +45,6 @@ owns:
   - scripts/qualify.mjs
 api:
   - module: src/library/experiments/experiment-config.ts
-  - module: src/library/experiments/experiments.ts
   - schema: src/library/experiments/schemas/campaign.json
   - schema: src/library/experiments/schemas/experiment-bindings.json
   - schema: src/library/experiments/schemas/experiment-v2.json

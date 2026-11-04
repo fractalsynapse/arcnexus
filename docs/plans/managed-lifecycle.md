@@ -1401,3 +1401,19 @@ A follow-up alias boundary check passed eight report cases with zero skips in
 Existing verifier artifact paths and the `verification.evidence` contract remain
 unchanged. These short targeted checks reused the already passing native MCP
 handoff rather than repeating the entire integrated suite after a small boundary fix.
+
+## Scripted campaign retirement intent
+
+Move the remaining prompt-campaign executor out of production source into the
+experiments owner's acceptance-test support. Its cases continue to invoke the
+ordinary built task command with controlled model inputs, preserving cancellation,
+source pinning, expected-outcome assertions and supervisor-integrity checks. The
+existing `test inspect/run --component experiments` selection remains the way to
+run these scenarios. Do not add a scripted mode to tasks or workdays.
+
+Retire `experiment run` before reading any manifest or creating state, with explicit
+replacement guidance for acceptance tests and real-agent `task run --simulate`.
+Keep read-only historical manifest inspection while historical resource readers
+are consolidated; it must never import an executable campaign runner. Remove the
+production campaign-runner public module and its help entry. Existing schema/report
+vocabulary remains historical evidence, not the meaning of current simulation.
