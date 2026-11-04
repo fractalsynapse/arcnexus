@@ -15,7 +15,7 @@ class ExperimentsTests {
     const f = fixture(t);
     const result = f.runCampaign();
     assert.equal(result.status, 2, result.stderr);
-    assert.match(result.stderr, /retired.*schemaVersion 3/);
+    assert.match(result.stderr, /retired.*test inspect/);
     assert.equal(existsSync(f.output), false);
     assert.equal(existsSync(f.state), false);
   }

@@ -28,7 +28,6 @@ Inspection, evidence and diagnostics:
   validate [package]
   inspect <package> <component> [prompt] [--activity research|document|design|implement|review|release]
   experiment inspect <manifest> --bindings <file> [--json]
-  experiment run <prompt-manifest> --bindings <file> --mode simulation|live [--output <new-directory>]
   workday inspect <historical-manifest> --project <repository> [--base <ref>] [--bindings <file>] [--json]
   workday history <historical-workday-id> [--json]
   workday follow <historical-workday-id> [--json] [--after <sequence>]

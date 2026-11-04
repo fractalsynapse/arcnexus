@@ -148,7 +148,7 @@ class PromptCampaignScenarios {
     return bindings.runner;
   }
 
-  /** Invokes the assembled CLI with the same external watchdog and output capture for each case. */
+  /** Invokes test-only orchestration around the built task CLI with an external watchdog and output capture for each case. */
   private execute({
     f,
     manifest,
@@ -163,18 +163,12 @@ class PromptCampaignScenarios {
     });
   }
 
-  /** Builds the single ordinary campaign CLI shape used by synchronous and cancellable scenarios. */
+  /** Builds the acceptance-only subprocess arguments used by synchronous and cancellable scenarios. */
   private command(value: { manifest: string; bindings: string; output: string }): string[] {
     return [
-      cli,
-      'experiment',
-      'run',
+      resolve('.test-build/library/experiments/support/campaign-entry.js'),
       value.manifest,
-      '--bindings',
       value.bindings,
-      '--mode',
-      'simulation',
-      '--output',
       value.output,
     ];
   }

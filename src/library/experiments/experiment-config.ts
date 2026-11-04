@@ -1,4 +1,8 @@
-export { PromptExperimentResolver, type PromptExperimentInput } from './prompt-config.js';
+export {
+  PromptExperimentResolver,
+  type PromptExperimentInput,
+  type PromptExperimentCase,
+} from './prompt-config.js';
 
 import { accessSync, constants, readFileSync, realpathSync, statSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';

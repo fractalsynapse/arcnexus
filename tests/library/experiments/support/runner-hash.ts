@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { InputError } from '../architecture/config.js';
-import { hash } from './experiment-hash.js';
+import { InputError } from '../../../../dist/library/architecture/config.js';
+import { digest as hash } from '../../../../dist/library/architecture/assignment.js';
 
 /** Hashes supervising code and fixture inputs before and after qualification execution. */
 export function runnerHash(runner: string): string {

@@ -73,3 +73,11 @@ under the hood. Success returns a workspace resource and exit 0; a retained fail
 preparation returns 1, invalid input/preflight returns 2, and cancellation returns
 130. An active repository host prevents preparation rather than allowing concurrent
 repository mutation. Legacy `prepare --project` remains only during fixture migration.
+
+## Scripted campaigns
+
+`experiment run` no longer executes any manifest version. Use `test inspect/run
+--component experiments` for deterministic campaign assertions. Those tests still
+exercise the built task command; their orchestration is compiled only with tests.
+Historical `experiment inspect` remains read-only. Use `task run --simulate` or
+`workday start --simulate` for real-agent isolated lifecycle learning.

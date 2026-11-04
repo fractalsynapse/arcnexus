@@ -8,11 +8,14 @@ import {
 } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { digest } from '../architecture/assignment.js';
-import { InputError } from '../architecture/config.js';
-import { HostClient } from '../execution-runtime/host-client.js';
-import { execute, git, type CommandResult } from '../operations/process.js';
-import type { PromptExperimentCase, PromptExperimentInput } from './prompt-config.js';
+import { digest } from '../../../../dist/library/architecture/assignment.js';
+import { InputError } from '../../../../dist/library/architecture/config.js';
+import { HostClient } from '../../../../dist/library/execution-runtime/host-client.js';
+import { execute, git, type CommandResult } from '../../../../dist/library/operations/process.js';
+import type {
+  PromptExperimentCase,
+  PromptExperimentInput,
+} from '../../../../dist/library/experiments/experiment-config.js';
 import { runnerHash } from './runner-hash.js';
 
 interface PromptCaseReport {
