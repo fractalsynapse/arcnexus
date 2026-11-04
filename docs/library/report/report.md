@@ -153,3 +153,11 @@ The tool accepts artifact names and page bounds, never filesystem paths, owner
 identities or run overrides. Foreign records and unsafe aliases are rejected.
 Investigation evidence grants no write authority, does not declare an uncertain
 operation completed and cannot make an unsafe checkpoint resumable.
+
+Invalid evidence requests return bounded corrective rejections through the same
+capability. An unknown artifact, including an identity quoted from another tool's
+observations, grants no access: read the current capability's manifest and use its
+advertised names. Malformed arguments likewise return a rejection without content.
+A subsequent valid request can continue on the same connection. Invalid capability
+routing, corrupted pinned content and host execution failures remain fatal; these
+are not converted into ordinary client mistakes.

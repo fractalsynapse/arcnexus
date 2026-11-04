@@ -1684,3 +1684,18 @@ was added. This small interface change followed the integrated executor batch; r
 that executor evidence and refresh the affected CLI/static checks instead of another
 full local native suite. Finish the remaining assembled edits before pushing again
 to avoid repeatedly cancelling or duplicating long CI cycles.
+
+Issue #218 follows an observed failure in the eleventh simulation: verifier
+`4fa306a7-12ce-4d1b-85a4-644e82f383e8` requested an artifact ID quoted from another
+capability's SDK observations. The ID was absent from its current manifest. The
+unknown-artifact exception terminated verification, failed the research supplier
+and blocked its report dependent; unrelated engineering continued. Make request
+validation correctable through the existing evidence bridge without exposing
+foreign artifacts, accepting paths or swallowing integrity failures. Prove recovery
+through actual MCP calls after an invalid artifact request. The running supervisor
+remains unchanged; its director may diagnose safe retained continuation normally.
+
+The failed reviewer paged more than 26 million characters of execution evidence.
+Keep complete evidence available, but investigate duplication and more selective
+retrieval separately. Do not solve that cost by truncating required evidence,
+changing acceptance criteria or adding an execution budget.
