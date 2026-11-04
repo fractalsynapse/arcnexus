@@ -658,3 +658,12 @@ bytes. These are catalog projection sizes, not model token counts or a promise o
 identical inference cost. The earlier 749,798-byte figure was the complete retained
 director prompt, so do not report a percentage comparison between those different
 artifacts. The next real turn will provide comparable full-prompt and usage evidence.
+
+The clean confined suite completed in 166.840 seconds: 462 passed, eight failed,
+and 334 were skipped. Seven failures attempted host Unix-socket listeners from
+inside operation confinement. Classify those existing bridge/admission scenarios
+as native-host checks and execute them there without removing their assertions;
+do not grant operations host-socket authority to make tests pass. The remaining
+failure expected an obsolete operation list without the declared `comment-issue`
+capability. Refresh that exact expectation. Strict type checking and consolidated
+architecture/guidance validation passed at this preparation checkpoint.
