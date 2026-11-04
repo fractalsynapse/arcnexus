@@ -101,6 +101,8 @@
 
 ### Fixed
 
+- Reject captured test-selection changes before checked source mutation, allowing stewards to correct proposals without terminating otherwise valid work (#225).
+
 - Resolve confined command and service executables against their actual PATH before dispatch, preserving absolute runtime identity and executable aliases in containers (#223).
 
 - Package a compatible pinned Bubblewrap for real Codex startup while retaining private-client and source confinement (#222).

@@ -272,6 +272,74 @@ class EditAuthorityScenarios {
     );
   }
 
+  /** Rejects metadata changes atomically, then permits corrected bodies and a new owned suite. */
+  capturedSelection(t: TestContext): void {
+    const state = this.fixture(t);
+    state.options.record.stage = 'implementation';
+    const metadata = {
+      component: 'assignment',
+      level: 'acceptance' as const,
+      tags: ['native-host'],
+    };
+    const original = `registerSuite(${JSON.stringify(metadata)});`;
+    writeFileSync(join(state.options.record.workspace, 'owned/second.ts'), original);
+    state.component.capturedTests = [
+      { ...metadata, source: 'owned/second.ts', sha256: digest(original) },
+    ];
+    const bridge = new CheckedEditBridge(state);
+    for (const change of [
+      { ...metadata, component: 'other' },
+      { ...metadata, level: 'unit' },
+      { ...metadata, tags: [] },
+      { ...metadata, tags: ['native-host', 'regression'] },
+    ])
+      this.rejectSelection(state, bridge, original, `registerSuite(${JSON.stringify(change)});`);
+    this.rejectSelection(state, bridge, original, null);
+    this.rejectSelection(state, bridge, original, '// registration removed');
+    this.correctSelection(bridge, original);
+  }
+
+  /** Applies changed test bodies and new suites without changing the captured suite selection. */
+  private correctSelection(bridge: CheckedEditBridge, original: string): void {
+    const request = this.request('owned/file.ts');
+    request.changes.push({
+      path: 'owned/second.ts',
+      operation: 'update',
+      expectedSha256: digest(original),
+      content: original + '\n// improved body',
+    });
+    assert.equal((bridge.call('source.edit', request) as any).status, 'committed');
+    const added = {
+      path: 'owned/new.test.ts',
+      operation: 'create',
+      expectedSha256: null,
+      content: original,
+    };
+    const result = bridge.call('source.edit', { id: 'new-suite', changes: [added] }) as any;
+    assert.equal(result.status, 'committed');
+  }
+
+  /** Checks every member and the journal after rejection, including explicit suite deletion. */
+  private rejectSelection(
+    state: SessionState,
+    bridge: CheckedEditBridge,
+    original: string,
+    content: string | null,
+  ): void {
+    const request: any = this.request('owned/file.ts');
+    request.changes.push({
+      path: 'owned/second.ts',
+      operation: content === null ? 'delete' : 'update',
+      expectedSha256: digest(original),
+      content,
+    });
+    const result = bridge.call('source.edit', request) as any;
+    assert.equal(result.status, 'rejected');
+    assert.match(result.error, /Captured test selection/);
+    assert.deepEqual(this.contents(state), ['before', original]);
+    assert.deepEqual(readdirSync(join(state.dir, 'checked-edits')), []);
+  }
+
   /** Observes both batch members so a partial application cannot satisfy the rejection assertions. */
   private contents(state: SessionState): string[] {
     return ['owned/file.ts', 'owned/second.ts'].map((path) =>
@@ -333,6 +401,9 @@ class EditAuthorityScenarios {
 }
 
 const scenarios = new EditAuthorityScenarios();
+
+test('captured suite selection rejects complete batches before mutation and permits corrected retries', (t) =>
+  scenarios.capturedSelection(t));
 
 test('oversized operation proposals apply complete bytes through the checked edit bridge', (t) =>
   scenarios.proposal(t));

@@ -123,6 +123,12 @@ owned documentation and regression files; implementation cannot modify the froze
 regression. Every batch checks current hashes, complete scope and workflow stage
 before applying any change, and retains an idempotent journal outside source.
 
+Captured mandatory suites also retain their owner, level and tags. Changing those
+fields, removing registration or deleting a captured suite rejects the entire batch
+before writing, with corrective feedback. Test-body changes and new owned suites
+remain possible within stage authority; frozen regressions remain immutable. The
+final host selection check still independently verifies the candidate.
+
 Qualification must retain actual model tool observations, edit receipts, expected
 failing regression output, passing host checks, independent assessment and the
 candidate diff. Enabling resolution or passing deterministic tests alone does not

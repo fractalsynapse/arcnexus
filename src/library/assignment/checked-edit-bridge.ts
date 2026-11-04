@@ -1,3 +1,4 @@
+import { assertCapturedTestEdit } from '../testing/captured-tests.js';
 import { readSchema } from '../architecture/schema.js';
 import { join } from 'node:path';
 import { checkedEditAuthority } from './edit-recovery.js';
@@ -25,7 +26,7 @@ export class CheckedEditBridge {
       record.workspace,
       join(state.dir, 'checked-edits'),
       checkedEditAuthority(record),
-      (path) => this.authorize(path),
+      (path, content) => this.validateEdit(path, content),
     );
     this.tools = [
       {
@@ -109,6 +110,16 @@ export class CheckedEditBridge {
     const rejection = { status: 'rejected', error: error.message, ...conflict, recovery };
     this.state.journal(String(this.state.options.record.stage), 'source.edit_rejected', rejection);
     return rejection;
+  }
+
+  /** Rejects selection changes as correctable input after enforcing the assignment's write authority. */
+  private validateEdit(path: string, content: string | null): void {
+    this.authorize(path);
+    try {
+      assertCapturedTestEdit(this.state.component, path, content);
+    } catch (error) {
+      throw new EditRequestError(`Captured test selection must remain unchanged. ${String(error)}`);
+    }
   }
 
   /** Enforces narrowing, workflow stage and frozen regression authority before any file is modified. */

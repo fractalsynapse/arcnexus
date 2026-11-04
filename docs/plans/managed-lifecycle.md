@@ -1932,3 +1932,27 @@ case. Do not broaden production read grants or depend on an implicit fallback to
 another installed Node. Retain raw CI 41861791894 and qualify affected fixture
 scenarios before refreshing the complete native lane. Earlier queued status
 responses do not establish runner wait time; execution logs are authoritative.
+
+The checked-edit bridge now validates proposed captured-suite metadata before
+transaction persistence and returns recoverable rejection. The final host guard
+remains in place. Twelve built bridge cases pass, including complete-batch
+rejection, corrected retry, body edits and new owned suites. Native workspace
+preparation passes all seven cases, including a shadow-PATH executable; no skips.
+Build, strict type checks, formatting and lint pass for this bootstrap batch.
+Current-revision ownership validation and refreshed CI remain separate evidence.
+
+Efficiency observation: `build:tests` compiles test sources only. An initial
+focused run exercised the preceding product build and failed the new acceptance;
+a product rebuild then produced the expected twelve passes in under one second.
+Use the product build before focused built-program checks when production source
+changes, and avoid rebuilding it while native tests are reading that distribution.
+This small feedback cycle is much cheaper than discovering fixture drift in the
+full native CI lane. The active real runs keep their captured supervisors.
+
+After rebuilding the final test sources, the combined checked-edit bridge and
+workspace transaction suites pass all 16 cases (zero skips). A representative
+native task scenario also completes its three-owner dependency chain and final
+director assessment in 46.1 seconds, with zero skips. This is controlled acceptance
+through production wiring, separate from the ongoing real-model task, which has
+now activated execution-runtime as its fifth observed owner through a publisher
+request. Its earlier report failure remains retained for director reconsideration.

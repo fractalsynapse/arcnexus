@@ -61,6 +61,25 @@ export function assertCapturedTests(component: Component, workspace: string): vo
   }
 }
 
+/** Validates proposed bytes against captured selection before a host edit transaction starts. */
+export function assertCapturedTestEdit(
+  component: Component,
+  path: string,
+  content: string | null,
+): void {
+  const captured = component.capturedTests?.find((suite) => suite.source === path);
+  if (!captured) return;
+  if (content === null) throw new Error(`Cannot delete captured mandatory suite: ${path}`);
+  const current = new SuiteMetadataReader().read(path, content);
+  if (
+    current.component !== captured.component ||
+    current.level !== captured.level ||
+    JSON.stringify([...(current.tags ?? [])].sort()) !==
+      JSON.stringify([...(captured.tags ?? [])].sort())
+  )
+    throw new Error(`Preserve captured suite component, level and tags: ${path}`);
+}
+
 /** Selects current owned suites using captured rules and refuses changes to mandatory identities. */
 export function currentComponentTests(component: Component, workspace: string, outputRoot: string) {
   assertCapturedTests(component, workspace);

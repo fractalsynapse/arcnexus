@@ -40,7 +40,7 @@ export class GeneralFixture {
       join(f.repo, '.git/arcnexus/bindings.yaml'),
       JSON.stringify({
         schemaVersion: 1,
-        tools: { codex: f.executable, nativeCodex: native },
+        tools: { node: process.execPath, codex: f.executable, nativeCodex: native },
         repositories: {},
       }),
     );

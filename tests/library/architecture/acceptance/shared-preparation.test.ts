@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { WorkspaceCliFixture } from '../../testing/support/workspace-cli-fixture.js';
-import { readFileSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { delimiter, join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
@@ -9,6 +9,20 @@ import { registerSuite } from '../../../../dist/library/testing/suite.js';
 /** Exercises shared setup operations through actual workspace preparation and installed confinement. */
 class SharedPreparationScenarios {
   private readonly workspaces = new WeakMap<ComponentV5Fixture, WorkspaceCliFixture>();
+
+  /** Uses captured Node identity even when the caller PATH contains an unrelated inaccessible executable. */
+  boundRuntime(t: TestContext): void {
+    const f = this.fixture(t);
+    const tools = f.root + '-tools';
+    mkdirSync(tools);
+    t.after(() => rmSync(tools, { recursive: true, force: true }));
+    writeFileSync(join(tools, 'node'), '#!/bin/sh\nexit 97\n', { mode: 0o755 });
+    this.workspaces.get(f)!.env.PATH = [tools, process.env.PATH ?? ''].join(delimiter);
+    const { result, report } = this.execute(f);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(readFileSync(join(report.workspace, 'package/generated/proof'), 'utf8'), 'sample');
+    assert.equal(report.bindings.tools.node, process.execPath);
+  }
 
   /** Keeps real child IPC usable when durable evidence lives below a long application state path. */
   ipc(t: TestContext): void {
@@ -159,7 +173,7 @@ class SharedPreparationScenarios {
     f.put('.git/bindings.json', {
       schemaVersion: 1,
       repositories: {},
-      tools: { codex: process.env.ARCNEXUS_TEST_CODEX! },
+      tools: { node: process.execPath, codex: process.env.ARCNEXUS_TEST_CODEX! },
     });
     f.commit();
     this.application(f, t);
@@ -224,6 +238,12 @@ class SharedPreparationScenarios {
 }
 
 const scenarios = new SharedPreparationScenarios();
+
+test(
+  'shared preparation uses captured Node instead of caller PATH shadowing',
+  { skip: !process.env.ARCNEXUS_TEST_CODEX && 'Requires native-host qualification' },
+  (t) => scenarios.boundRuntime(t),
+);
 
 test(
   'shared operation temporary storage supports real private IPC',

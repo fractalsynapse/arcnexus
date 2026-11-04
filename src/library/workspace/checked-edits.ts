@@ -52,7 +52,7 @@ export class CheckedEdits {
     workspace: string,
     private readonly directory: string,
     private readonly authority: string,
-    private readonly authorize: (path: string) => void,
+    private readonly authorize: (path: string, content: string | null) => void,
   ) {
     if (realpathSync(workspace) !== resolve(workspace))
       throw new Error('Edit workspace cannot be a filesystem alias');
@@ -76,7 +76,7 @@ export class CheckedEdits {
     const path = join(this.directory, request.id + '.json');
     if (existsSync(path)) return this.retry(path, requestHash);
     this.recover();
-    request.changes.forEach((change) => this.authorize(change.path));
+    request.changes.forEach((change) => this.authorize(change.path, change.content ?? null));
     this.assertIndependent(request.changes);
     const transaction: EditTransaction = {
       id: request.id,
