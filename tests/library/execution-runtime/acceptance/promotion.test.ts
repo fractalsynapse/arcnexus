@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import type { TestContext } from 'node:test';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
-import { PromotionFixture } from '../../testing/support/promotion-fixture.js';
+import { PromotionFixture } from '../support/promotion-fixture.js';
 
 /** Qualifies promotion's real host/checkpoint/check wiring with explicitly controlled model and provider inputs. */
 class PromotionScenarios {

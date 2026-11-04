@@ -1322,3 +1322,8 @@ passing. The ninth task was stopped through its captured CLI and retained as
 cancelled once the unsafe compiler-failure checkpoint established that another
 baseline could not recover its original required assignment. Issue #210 records the
 corrective prerequisite-feedback defect. No ninth-run engineering delivery passed.
+
+Consolidated validation caught a private cross-owner import for the new promotion
+fixture. The fixture is used only by execution-runtime, so it now lives under that
+owner's test support directory instead of expanding testing's public API. This
+keeps reusable infrastructure separate from one feature's scenario setup.

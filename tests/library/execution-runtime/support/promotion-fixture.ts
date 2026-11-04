@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
-import { GeneralFixture } from './general-fixture.js';
+import { GeneralFixture } from '../../testing/support/general-fixture.js';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import { DeliveryStore } from '../../../../dist/library/coordination-store/delivery-store.js';
