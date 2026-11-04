@@ -9,15 +9,12 @@ export class ConfigurationCommit {
   constructor(private readonly source: string) {}
 
   /** Replaces one existing regular definition and retains its mode in a parented configuration commit. */
-  create(base: string, change: { path: string; text: string }): string {
+  create(base: string, change: { path: string; text: string | null; create?: boolean }): string {
     const directory = mkdtempSync(join(tmpdir(), 'arcnexus-configuration-'));
     const index = join(directory, 'index');
     try {
-      const mode = this.git(['ls-tree', base, '--', change.path]).split(' ')[0]!;
-      if (!['100644', '100755'].includes(mode)) throw new Error('Definition is not a regular file');
       this.git(['read-tree', base], undefined, index);
-      const blob = this.git(['hash-object', '-w', '--stdin'], change.text);
-      this.git(['update-index', '--cacheinfo', mode, blob, change.path], undefined, index);
+      this.edit(base, change, index);
       const tree = this.git(['write-tree'], undefined, index);
       if (tree === this.git(['rev-parse', base + '^{tree}'])) return base;
       const commit = this.git(
@@ -34,6 +31,28 @@ export class ConfigurationCommit {
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }
+  }
+
+  /** Applies explicit create, replace or delete intent without overwriting an existing definition accidentally. */
+  private edit(
+    base: string,
+    change: { path: string; text: string | null; create?: boolean },
+    index: string,
+  ) {
+    const mode = this.git(['ls-tree', base, '--', change.path]).split(' ')[0]!;
+    if (change.create ? mode !== '' : !['100644', '100755'].includes(mode))
+      throw new Error('Definition existence or file mode conflicts with mutation');
+    if (change.text === null) {
+      if (change.create) throw new Error('Cannot create a deleted definition');
+      this.git(['update-index', '--force-remove', '--', change.path], undefined, index);
+      return;
+    }
+    const blob = this.git(['hash-object', '-w', '--stdin'], change.text);
+    this.git(
+      ['update-index', '--add', '--cacheinfo', mode || '100644', blob, change.path],
+      undefined,
+      index,
+    );
   }
 
   /** Reads an optional exact application ref without conflating missing refs and Git failures. */

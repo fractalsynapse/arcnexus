@@ -157,3 +157,22 @@ recovery.
 This slice updates existing same-repository definitions. Creating/removing components,
 standard mutations, multi-repository composition and transactions remain separate
 pending capabilities of the managed lifecycle plan.
+
+`component create <package> <id> <field=value>...` uses the same transaction path.
+Supply `type`, `purpose` and `owns`; the service supplies schema version, identity
+and the selected package as the default parent. Only executable component types
+belong here. The proposed definition cannot collide with an existing identity or
+file, overlap ownership, or leave its selected package. For example:
+
+```sh
+arcnexus component create studio/service metrics type=library \
+  'purpose=Report service health' 'owns=["src/metrics","tests/metrics"]'
+```
+
+`component remove <package> <id>` removes only that executable definition. It does
+not delete source or silently transfer ownership. Remaining maintained files,
+children and references must resolve in the resulting catalog or removal fails.
+Platform/package removal continues to use resource unregistration. Creation accepts
+the current package revision for optimistic checks; removal accepts the current
+component revision. Neither operation edits an attached checkout or changes the
+authority of a retained run.

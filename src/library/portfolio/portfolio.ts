@@ -244,6 +244,28 @@ export class Portfolio {
     );
   }
 
+  /** Adds one executable owner only after validating the entire committed composition. */
+  createComponent(
+    reference: string,
+    id: string,
+    fields: Record<string, unknown>,
+    expectedRevision?: string,
+  ) {
+    const entry = this.find('package', reference);
+    const selected = this.change(entry, id, fields, expectedRevision, true, 'create');
+    return new ComponentResources().get(
+      { source: selected.source, base: selected.base, packageId: entry.definitionId },
+      id,
+    );
+  }
+
+  /** Deletes a definition without deleting source, refusing leftover ownership or referenced authority. */
+  removeComponent(reference: string, id: string, expectedRevision?: string) {
+    const entry = this.find('package', reference);
+    const selected = this.change(entry, id, {}, expectedRevision, true, 'remove');
+    return { removed: id, packageId: entry.id, revision: selected.revision };
+  }
+
   /** Holds canonical execution ownership across recovery, validation and committed authority selection. */
   private change(
     entry: PortfolioRegistration,
@@ -251,6 +273,7 @@ export class Portfolio {
     fields: Record<string, unknown>,
     expected?: string,
     component = false,
+    action: 'update' | 'create' | 'remove' = 'update',
   ) {
     if (!this.writable) throw new Error('Portfolio is read-only');
     const initial = this.view(entry);
@@ -261,7 +284,7 @@ export class Portfolio {
       this.assertInactive(initial.source);
       const changes = new ArchitectureChanges(this.store, initial.source, entry.repositoryId);
       changes.recover();
-      return this.applyChange(changes, entry, id, fields, expected, component);
+      return this.applyChange(changes, entry, id, fields, expected, component, action);
     } finally {
       lease.close();
     }
@@ -275,14 +298,22 @@ export class Portfolio {
     fields: Record<string, unknown>,
     expected: string | undefined,
     component: boolean,
+    action: 'update' | 'create' | 'remove',
   ) {
     const current = this.view(entry);
     const target = { source: current.source, base: current.base, packageId: entry.definitionId };
-    const resource = component ? new ComponentResources().get(target, id) : current;
+    const resource =
+      component && action !== 'create' ? new ComponentResources().get(target, id) : current;
     if (expected !== undefined && resource.revision !== expected)
       throw new InputError('Resource revision changed; read the current resource before retrying');
     const scope = component ? entry.definitionId : undefined;
-    const patch = new ComponentUpdate().prepare(current.source, current.base, id, fields, scope);
+    const editor = new ComponentUpdate();
+    const patch =
+      action === 'create'
+        ? editor.create(current.source, current.base, id, fields, entry.definitionId)
+        : action === 'remove'
+          ? editor.remove(current.source, current.base, id, entry.definitionId)
+          : editor.prepare(current.source, current.base, id, fields, scope);
     changes.apply(current.base, patch, id, scope);
     return this.view(entry);
   }

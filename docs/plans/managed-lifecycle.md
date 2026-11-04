@@ -722,3 +722,24 @@ remaining files, dependents or registered container references must make complet
 catalog validation fail. Both operations use repository leases, immutable proposed
 commits, optimistic revision checks and the same journaled authority selection as
 updates. No caller checkout is edited and no active run gains the new authority.
+
+Component create/remove passed all 12 portfolio cases (51.503 seconds); the eight
+existing update/recovery cases also passed (88.633 seconds). Strict typing and
+scoped lint passed. Reusing configuration transactions avoided another persistence
+or mutation framework. Repeated CLI fixture startups dominate these acceptance
+suites; preserve representative built-CLI coverage while moving future input
+matrix expansion to the shared service boundary where it tests the same contract.
+
+The real task's first worker baseline completed 804 cases in 141.982 seconds:
+453 passed, 10 failed, 341 explicitly skipped. All ten failures involve fresh CLI
+or catalog discovery inside the isolated worktree rejecting its local simulation
+origin against the declared upstream. The original-checkout confined suite cannot
+cover this difference. Stop task `cb53dbe7-7be0-4553-89cf-b4b02237a4f5` and retain
+its records before another owner repeats preparation. No engineering model ran.
+
+Fix child discovery by recording a host-created, read-only materialization snapshot
+in the linked worktree's private Git metadata. Fresh CLI processes must validate
+that exact worktree, HEAD, common Git directory and origin mapping before using it;
+do not rewrite declared upstreams or loosen ordinary origin checks. The snapshot
+is outside maintained source and cannot redefine captured runtime authority. Add
+isolated-worktree built-CLI acceptance before another expensive real submission.

@@ -4,6 +4,8 @@
 
 ### Added
 
+- Create/remove executable components through validated configuration transactions and observe exact-head GitHub PR readiness without conflating approval, review and CI (#148).
+
 - Prepare locked dependencies sequentially before confined offline installation and identify failed operations with retained diagnostic logs (#148).
 
 - Add durable simulated Git/PR/release publication, delivery inspection and revision approval, and confined read-only dependency downloads with native bypass qualification (#148).
