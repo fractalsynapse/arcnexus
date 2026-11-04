@@ -2544,3 +2544,12 @@ setup failed with HTTP 403 fetching yocto-queue before the director ran. The
 Restore one cache request per locked artifact before offline installation. The
 extra setup time costs less than losing a production submission to concurrent
 requests. Retain the failed run and use new captured authority for qualification.
+
+### Atomic director admission (#235)
+
+Commit a director's admitted proposals, their captured technical criteria,
+continuations and initialization checkpoint in one SQLite transaction. Previously
+an interruption between queue insertion and recording the proposal could leave a
+ready assignment without its workflow or cause recovery to submit a second team.
+Keep provider tracking outside the database transaction. Prove rollback with an
+invalid later owner and inspect retained state after reopening the store.
