@@ -1026,3 +1026,12 @@ A default Docker probe using image `arcnexus-qualification:node22` (image digest
 22.23.4, `--network none`, observed no writable cgroup mount and no bundled Codex.
 This is a failed prerequisite of that configuration, not a statement that container
 execution is unsupported. No privileged or unsupervised fallback was attempted.
+
+The seventh real CLI activation failed on an update with omitted `content`. The
+advertised edit schema allowed that shape; later untyped semantic rejection killed
+the activation before source mutation. Fix the contract to require replacement
+content for create/update, and return typed pre-transaction request rejection so a
+steward can correct syntax in the same turn. Keep authorization, frozen tests,
+filesystem aliases and uncertain journals fatal. Retain the exact failed request
+and its clean source evidence; do not hot-patch the captured real supervisor. The
+report steward continues independently and has reached its regression stage.
