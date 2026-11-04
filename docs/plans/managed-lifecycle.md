@@ -2509,3 +2509,15 @@ rejection with delegation guidance; it will not terminate an otherwise safe turn
 Unknown/ambiguous ownership remains an architectural blocker. Unsafe paths, workflow
 stage violations, frozen regressions and uncertain transactions still fail closed.
 This supersedes the earlier proposed hard termination for known cross-owner requests.
+
+### Steward-owned file decisions (#239)
+
+Component ownership alone determines who may edit a maintained file. Directors,
+workday proposals and inbox requesters describe objectives, technical constraints,
+acceptance criteria and required deliveries. They do not select files or supply a
+second write boundary. The accountable steward discovers which owned files to
+change. Write-capable tools remain host-checked; read-only activities, sandbox
+integrity and verification of the frozen acceptance baseline remain in force.
+A known foreign owner is a delegation destination, never a write grant. Reject
+retired assignment file lists rather than silently executing old restricted work
+with broader permissions. Active hosts retain their captured supervisor.
