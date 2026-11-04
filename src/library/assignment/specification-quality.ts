@@ -1,4 +1,5 @@
 import { isObservedCommandFailure } from '../operations/process.js';
+import type { VerificationCheck } from '../architecture/config.js';
 import type { Operation } from '../operations/operations.js';
 import { logExcerpt } from './attempts.js';
 import type { SessionState } from './session-state.js';
@@ -14,9 +15,27 @@ export class SpecificationQuality {
     const checks = this.state.component.verification.filter(
       (check) => (check as Operation).category === 'lint',
     );
+    return this.check(checks, 'specification-quality', 'Specification source quality');
+  }
+
+  /** Keeps all captured passing-characterization checks mandatory while returning observed deficiencies for correction. */
+  characterization(): Promise<void> {
+    return this.check(
+      this.state.component.verification,
+      'characterization-before',
+      'Characterization',
+    );
+  }
+
+  /** Distinguishes actionable command failures from uncertain execution before any source evidence is frozen. */
+  private async check(
+    checks: VerificationCheck[],
+    stage: string,
+    requirement: string,
+  ): Promise<void> {
     if (!checks.length) return;
     try {
-      await this.state.checks(checks, 'specification-quality');
+      await this.state.checks(checks, stage);
       this.state.safe();
     } catch (error) {
       this.state.options.signal.throwIfAborted();
@@ -26,8 +45,10 @@ export class SpecificationQuality {
       const diagnostic = logExcerpt(failed.log);
       throw new SpecificationValidationError(
         `Correct specification source quality before regression freezing. Exit ${failed.exitCode}: ${diagnostic}; retained log: ${failed.log}`,
-        'source-quality:' + (error.operationId ?? JSON.stringify(failed.args)),
-        'Specification source quality must pass before freezing regression sources: ' + diagnostic,
+        (stage === 'specification-quality' ? 'source-quality' : stage) +
+          ':' +
+          (error.operationId ?? JSON.stringify(failed.args)),
+        requirement + ' must pass before freezing regression sources: ' + diagnostic,
       );
     }
   }

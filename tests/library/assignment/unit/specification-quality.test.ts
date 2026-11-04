@@ -43,6 +43,32 @@ class SpecificationQualityScenarios {
     assert.equal(state.options.record.frozenTests, undefined);
   }
 
+  /** Refactor preparation returns an observed formatting failure before freezing any characterization evidence. */
+  async characterization(t: TestContext): Promise<void> {
+    const { state, failure } = this.fixture(t);
+    state.assignment.changeType = 'refactor';
+    const calls: any[] = [];
+    state.checks = async (checks: any[], stage: string) => {
+      calls.push({ checks, stage });
+      throw failure;
+    };
+    const { SessionVerification } =
+      await import('../../../../dist/library/assignment/session-verification.js');
+    await assert.rejects(new SessionVerification(state).specification({} as any), (error: any) => {
+      assert.equal(error.name, 'SpecificationValidationError');
+      assert.match(error.message, /Characterization must pass.*FORMAT_REQUIRED/);
+      assert.match(error.feedback, /FORMAT_REQUIRED/);
+      return true;
+    });
+    assert.deepEqual(
+      calls[0].checks.map((check: any) => check.id),
+      ['format', 'tests'],
+    );
+    assert.equal(calls[0].stage, 'characterization-before');
+    assert.equal(state.specificationFinished, undefined);
+    assert.equal(state.options.record.frozenTests, undefined);
+  }
+
   /** Runs only mandatory lint checks, then permits the same corrected sources to progress. */
   async correction(t: TestContext): Promise<void> {
     const { state, failure } = this.fixture(t);
@@ -147,5 +173,8 @@ test('corrected specification uses only captured mandatory quality operations', 
 test('unsafe specification quality execution remains unsafe', (t) => scenarios.unsafe(t));
 
 test('specification quality does not invent mandatory commands', (t) => scenarios.absent(t));
+
+test('refactor characterization returns observed deficiencies for specification correction', (t) =>
+  scenarios.characterization(t));
 
 registerSuite({ component: 'assignment', level: 'unit', tags: ['deterministic'] });

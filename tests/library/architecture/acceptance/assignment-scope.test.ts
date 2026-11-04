@@ -24,17 +24,37 @@ class AssignmentScopeScenarios {
     assert.deepEqual(resolve(paths).allowedWritePaths, paths);
   }
 
+  /** Test-only characterization cannot be admitted as a behavioral documentation/regression workflow. */
+  testOnly(t: TestContext): void {
+    const { resolve } = this.fixture(t);
+    const paths = ['tests/acceptance/new.test.ts'];
+    assert.throws(() => resolve(paths), /requires owned documentation scope.*refactor/);
+    assert.deepEqual(resolve(paths, 'change', 'refactor').allowedWritePaths, paths);
+  }
+
+  /** Explicit classification governs hypothetical new documents as it does checked writes. */
+  classification(t: TestContext): void {
+    const { resolve, catalog } = this.fixture(t);
+    catalog.components.sample!.fileClassification = [{ path: 'tests', kind: 'tests' }];
+    assert.throws(() => resolve(['tests']), /requires owned documentation scope/);
+    assert.deepEqual(resolve(['tests', 'docs/new.md']).allowedWritePaths, ['tests', 'docs/new.md']);
+  }
+
   /** Package-relative roots cannot be replaced with a similarly named sibling directory. */
   packageRoot(t: TestContext): void {
     const { resolve, catalog } = this.fixture(t);
     const owner = catalog.components.sample!;
     owner.repositoryRoot = 'packages/sample';
-    owner.allowedWritePaths = ['packages/sample/tests', 'packages/sample/tests-other'];
+    owner.allowedWritePaths = [
+      'packages/sample/tests',
+      'packages/sample/tests-other',
+      'packages/sample/docs',
+    ];
     assert.throws(
       () => resolve(['packages/sample/tests-other']),
       /beneath packages\/sample\/tests/,
     );
-    const paths = ['packages/sample/tests/unit/new.test.ts'];
+    const paths = ['packages/sample/tests/unit/new.test.ts', 'packages/sample/docs'];
     assert.deepEqual(resolve(paths).allowedWritePaths, paths);
   }
 
@@ -42,7 +62,7 @@ class AssignmentScopeScenarios {
   customChecks(t: TestContext): void {
     const { resolve, catalog } = this.fixture(t);
     delete catalog.components.sample!.testProfile;
-    assert.deepEqual(resolve(['source.txt']).allowedWritePaths, ['source.txt']);
+    assert.deepEqual(resolve(['source.txt', 'docs']).allowedWritePaths, ['source.txt', 'docs']);
   }
 
   /** Read-only, prose and characterization workflows do not acquire a new regression-writing mandate. */
@@ -101,5 +121,11 @@ for (const kind of ['research', 'review'] as const)
 for (const changeType of ['documentation', 'refactor'] as const)
   test(`${changeType} assignment needs no new behavioral regression`, (t) =>
     scenarios.distinct(t, 'change', changeType));
+
+test('test-only behavioral scope fails admission while characterization keeps its narrow scope', (t) =>
+  scenarios.testOnly(t));
+
+test('behavioral documentation admission uses captured classification for new files', (t) =>
+  scenarios.classification(t));
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });

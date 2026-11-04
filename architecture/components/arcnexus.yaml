@@ -44,6 +44,8 @@ operations:
     - verify
   component-format:
     - agent
+  component-format-check:
+    - verify
 director:
   component: task-intake
   profile: astra

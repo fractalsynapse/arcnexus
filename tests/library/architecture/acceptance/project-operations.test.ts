@@ -77,6 +77,10 @@ class ProjectOperationScenarios {
         checks.some((op) => op.id === 'component-tests' && op.profileVerification === 'node'),
         id,
       );
+      assert.ok(
+        checks.some((op) => op.id === 'component-format-check'),
+        id,
+      );
       assert.ok(!checks.some((op) => op.id === 'migrated-recipe-719d77e27c5d9798'), id);
       assert.ok(
         !checks.some(

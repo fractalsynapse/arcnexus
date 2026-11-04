@@ -1,7 +1,8 @@
+import { SpecificationQuality } from './specification-quality.js';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { digest } from '../architecture/assignment.js';
-import { covered } from '../architecture/components.js';
+import { classifyComponentPath, covered } from '../architecture/components.js';
 import { git } from '../operations/process.js';
 import { withFrozenTests } from './checkpoints.js';
 import type { SessionState } from './session-state.js';
@@ -15,11 +16,12 @@ export class RefactorCheckpoint {
   async prepare(): Promise<void> {
     const { record } = this.state.options;
     this.state.safe();
-    await this.state.checks(this.state.component.verification, 'characterization-before');
+    await new SpecificationQuality(this.state).characterization();
     const paths = git(record.workspace, 'ls-files', '--cached', '--others', '--exclude-standard')
       .trim()
       .split('\n')
-      .filter((path) => covered(path, this.state.component.tests));
+      .filter((path) => covered(path, this.state.component.allowedWritePaths))
+      .filter((path) => classifyComponentPath(this.state.component, path) === 'tests');
     if (!paths.length) throw new Error('Refactor needs observed characterization coverage');
     this.state.frozen = paths.map((path) => {
       const bytes = readFileSync(join(record.workspace, path));

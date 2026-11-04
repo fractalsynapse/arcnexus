@@ -163,8 +163,16 @@ suites. No leaf test recipe or inventory is needed. An owner with no suites reco
 `operation.not_applicable` for an implicit profile check; this is not a passing test.
 An explicitly declared verification operation still fails if required selection is
 empty. Agents cannot substitute another owner's test paths. Formatting proposals stay
-available as checked edits; full formatting, lint, types, tests and architecture
-validation remain required by ArcNexus's assembled-delivery policy.
+available as checked edits. ArcNexus's owner format check intersects owned paths
+with the same maintained-code coverage used by its full formatter; it does not add
+new baseline requirements for documents outside that coverage. Full formatting,
+lint, types, tests and architecture validation remain required at assembled delivery.
 
 Retained runs continue using their captured supervisor and plans. Updating the source
 policy changes new authority only, never active-run requirements or historical evidence.
+
+Behavioral assignment narrowing must retain writable documentation and regression
+scope for the mandatory specification checkpoint. The host checks feasibility before
+engineering and never broadens a narrow file grant. Test-only characterization of
+existing behavior uses the refactor workflow, with passing captured checks rather
+than invented documentation edits or failing tests.

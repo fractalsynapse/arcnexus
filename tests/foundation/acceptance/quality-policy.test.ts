@@ -4,7 +4,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { test } from 'node:test';
 import YAML from 'yaml';
-import { loadCatalog } from '../../../dist/library/architecture/components.js';
+import { loadCatalog, type Component } from '../../../dist/library/architecture/components.js';
 import { loadProjectBindings } from '../../../dist/library/architecture/bindings.js';
 import { registerSuite } from '../../../dist/library/testing/suite.js';
 
@@ -12,7 +12,7 @@ import { registerSuite } from '../../../dist/library/testing/suite.js';
 class RepositoryQualityPolicyScenarios {
   private readonly ids = ['migrated-recipe-43b539fb85a57c26', 'migrated-recipe-df6d67ddacf5bf0c'];
 
-  /** Every real executable steward inherits both finite mandatory quality checks exactly once. */
+  /** Every real steward inherits the engineering and assembled quality policy exactly once. */
   inherited(): void {
     const source = resolve('.');
     const base = execFileSync('git', ['rev-parse', 'HEAD'], {
@@ -24,13 +24,25 @@ class RepositoryQualityPolicyScenarios {
       (c) => !['platform', 'package'].includes(c.type),
     );
     assert.ok(owners.some((owner) => owner.id === 'publisher'));
-    for (const owner of owners) {
-      for (const id of this.ids) {
-        const checks = owner.verification.filter((check) => (check as any).id === id);
-        assert.equal(checks.length, 1, owner.id + ' must inherit ' + id + ' once');
-        assert.equal((checks[0] as any).category, 'lint');
-        assert.equal((checks[0] as any).kind, 'command');
-      }
+    for (const owner of owners) this.ownerChecks(owner);
+  }
+
+  /** Keeps owner lint in engineering and full source quality mandatory on assembled deliveries. */
+  private ownerChecks(owner: Component): void {
+    assert.equal(owner.verification.filter((op) => (op as any).id === 'component-lint').length, 1);
+    const formatter = owner.operationPlan!.verify!.find((op) => op.id === 'component-format-check');
+    assert.ok(formatter && formatter.kind === 'command');
+    assert.deepEqual(formatter.args, [
+      'scripts/foundation/format-check.mjs',
+      '--check',
+      ...owner.allowedWritePaths,
+    ]);
+    for (const id of this.ids) {
+      assert.ok(!owner.verification.some((op) => (op as any).id === id));
+      const checks = owner.operationPlan!.delivery!.filter((op) => op.id === id);
+      assert.equal(checks.length, 1, owner.id + ' must inherit ' + id + ' once');
+      assert.equal(checks[0]!.category, 'lint');
+      assert.equal(checks[0]!.kind, 'command');
     }
   }
 
@@ -40,7 +52,7 @@ class RepositoryQualityPolicyScenarios {
     for (const file of readdirSync(directory).filter((file) => file.endsWith('.yaml'))) {
       const component = YAML.parse(readFileSync(join(directory, file), 'utf8'));
       for (const id of this.ids) {
-        if (component.id === 'arcnexus') assert.deepEqual(component.operations[id], ['verify']);
+        if (component.id === 'arcnexus') assert.deepEqual(component.operations[id], ['delivery']);
         else
           assert.equal(component.operations?.[id], undefined, component.id + ' duplicates ' + id);
       }
@@ -50,7 +62,7 @@ class RepositoryQualityPolicyScenarios {
 
 const scenarios = new RepositoryQualityPolicyScenarios();
 
-test('actual ArcNexus stewards inherit mandatory source quality before regression freezing', () =>
+test('actual ArcNexus stewards inherit owner lint and mandatory assembled source quality', () =>
   scenarios.inherited());
 
 test('ArcNexus shared quality usages are authored once at the platform', () =>

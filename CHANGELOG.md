@@ -105,6 +105,8 @@
 
 ### Fixed
 
+- Reject infeasible behavioral scopes early and return observed specification and characterization deficiencies for correction (#235).
+
 - Page complete director catalogs, retained checkpoint state and assessment input through immutable evidence tools, preventing large histories from overflowing initial prompts without restricting eligible owners (#230).
 
 - Return invalid dependency scope to the requester before creating recipient work; reject behavioral assignment scopes disconnected from the captured test-profile root before workspace preparation, preserving explicit scope and nonbehavioral workflows (#229).

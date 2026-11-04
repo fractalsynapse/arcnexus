@@ -1,4 +1,4 @@
-import { assertBehavioralTestScope } from '../testing/captured-tests.js';
+import { assignmentScope } from './assignment-scope.js';
 import { captureInitialization, type InitializationSnapshot } from './initialization.js';
 import { isUtf8 } from 'node:buffer';
 import { createHash } from 'node:crypto';
@@ -10,9 +10,7 @@ import { resolveMembers, type Member } from '../workspace/members.js';
 import { loadBindings, type Bindings } from './bindings.js';
 import {
   ancestry,
-  covered,
   loadCatalog,
-  scopePath,
   validateOperations,
   type Component,
   type Catalog,
@@ -340,23 +338,6 @@ function capturePriorEvidence(assignment: Assignment): EvidenceSnapshot[] {
     });
   }
   return priorEvidence;
-}
-
-function assignmentScope(assignment: Assignment, component: Component): string[] {
-  const requestedPaths = assignment.allowedWritePaths ?? component.allowedWritePaths;
-  const allowedWritePaths = assignment.kind === 'change' ? requestedPaths : [];
-  for (const p of requestedPaths) {
-    scopePath(p);
-    if (!covered(p, component.allowedWritePaths))
-      throw new InputError(`Assignment widens component scope: ${p}`);
-  }
-  if (
-    component.schemaVersion === 6 &&
-    assignment.kind === 'change' &&
-    (!assignment.changeType || assignment.changeType === 'behavior')
-  )
-    assertBehavioralTestScope(component, allowedWritePaths);
-  return allowedWritePaths;
 }
 
 function captureCheckArtifacts(assignment: Assignment): ResolvedAssignment['artifacts'] {

@@ -1,3 +1,4 @@
+import { SpecificationValidationError } from './specification-error.js';
 import { existsSync, lstatSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { digest } from '../architecture/assignment.js';
@@ -12,6 +13,7 @@ export interface FrozenTest {
   sha256: string;
 }
 
+/** Requires actual scope-checked specification changes before capturing immutable regression sources. */
 export function specificationFiles(
   record: RecordData,
   component: Component,
@@ -26,15 +28,30 @@ export function specificationFiles(
     documentationOnly ? documentation : [...documentation, ...testPaths],
   );
   if (!observed.some((c) => covered(c.path, documentation)))
-    throw new Error('Specification must document changed intent');
+    throw new SpecificationValidationError(
+      'Make an actual owned documentation edit describing the intended behavior before implementation.',
+      'missing-documentation',
+      'Specification must document changed intent',
+    );
   if (documentationOnly) return [];
   const tests = observed.filter((c) => covered(c.path, testPaths));
-  if (!tests.length) throw new Error('Specification must add or update regression tests');
-  return tests.map((c) => {
-    if (c.kind === 'D') throw new Error('Regression checkpoint cannot delete tests');
-    const content = readFileSync(join(record.workspace, c.path));
-    return { path: c.path, content: content.toString('base64'), sha256: digest(content) };
-  });
+  if (!tests.length)
+    throw new SpecificationValidationError(
+      'Add or update an owned regression test before implementation.',
+      'missing-regression-source',
+      'Specification must add or update regression tests',
+    );
+  return tests.map((change) => freezeRegression(record, change));
+}
+
+/** Captures one existing regression source after ownership and specification classification checks. */
+function freezeRegression(
+  record: RecordData,
+  change: ReturnType<typeof changes>[number],
+): FrozenTest {
+  if (change.kind === 'D') throw new Error('Regression checkpoint cannot delete tests');
+  const content = readFileSync(join(record.workspace, change.path));
+  return { path: change.path, content: content.toString('base64'), sha256: digest(content) };
 }
 
 /** Applies the captured classifier to proposed files without inventing documentation or test evidence. */
