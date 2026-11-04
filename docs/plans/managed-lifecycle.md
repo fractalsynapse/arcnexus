@@ -974,3 +974,14 @@ rejection; never override GitHub rules. Reconcile actual target ancestry after a
 lost receipt instead of repeating an uncertain merge. No real release is added.
 See Git's `--force-with-lease=<refname>:<expect>` contract in
 https://git-scm.com/docs/git-push; implicit tracking-ref leases are not sufficient.
+
+CI `41772180248` passed formatting, lint, strict checking and the confined built
+program suite. Native qualification observed 377 passes, eight failures and zero
+skips in 908.891 seconds. Remaining failures assume the old pre-director workday
+activation sequence: wait for an engineering gate after dispatching only setup,
+look for a stewardship record after only setup, or assert idle/failure before
+its activation. Update these scenarios to observe persisted lifecycle state and
+execute actual director setup, without bypassing it or increasing arbitrary
+waits. This 15-minute feedback cost reinforces the value of focused native
+lifecycle cases whenever dispatch ordering changes. Keep the real simulation's
+captured supervisor untouched.
