@@ -5,6 +5,8 @@ import {
   cli,
   managedScope,
 } from '../support/workspace-fixture.js';
+import { WorkspacePreparation } from '../../../../dist/library/workspace/workspace.js';
+import { ExecutionLease } from '../../../../dist/library/coordination-store/execution-store.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
 import {
@@ -38,19 +40,19 @@ class WorkspaceTests {
       },
     ]);
     const base = f.git('rev-parse', 'HEAD');
-    const result = f.prepare('--issue', '7');
+    const result = f.prepare();
     assert.equal(result.status, 0, result.stderr);
     const record = JSON.parse(result.stdout);
     assert.equal(record.base, base);
-    assert.match(record.branch, /^codex\/7-/);
+    assert.match(record.branch, /^codex\//);
     assert.equal(readFileSync(join(record.workspace, 'generated/cwd'), 'utf8'), record.workspace);
     assert.equal(f.git('status', '--porcelain'), '');
     assert.equal(f.git('branch', '--show-current'), 'main');
-    assert.equal(f.run('cleanup', record.id).status, 0);
+    assert.equal(f.cleanup(record.id).status, 0);
     assert.equal(existsSync(record.workspace), false);
     assert.equal(f.git('rev-parse', record.branch), base);
     assert.equal(existsSync(join(f.state, 'runs', record.id, 'report.json')), true);
-    assert.equal(f.run('cleanup', record.id).status, 0);
+    assert.equal(f.cleanup(record.id).status, 0);
   }
 
   /** Verifies that dirty source is rejected without preparation. */
@@ -84,7 +86,7 @@ class WorkspaceTests {
     assert.equal(r.status, 1);
     const record = JSON.parse(r.stdout);
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'original\n');
-    assert.equal(f.run('cleanup', record.id).status, 0);
+    assert.equal(f.cleanup(record.id).status, 0);
   }
 
   /** Verifies that cleanup refuses unknown ignored files and untracked files. */
@@ -95,11 +97,11 @@ class WorkspaceTests {
     const record = JSON.parse(r.stdout);
     for (const name of ['.env', 'valuable.txt']) {
       writeFileSync(join(record.workspace, name), 'keep');
-      assert.equal(f.run('cleanup', record.id).status, 1);
+      assert.equal(f.cleanup(record.id).status, 1);
       assert.equal(readFileSync(join(record.workspace, name), 'utf8'), 'keep');
       rmSync(join(record.workspace, name));
     }
-    assert.equal(f.run('cleanup', record.id).status, 0);
+    assert.equal(f.cleanup(record.id).status, 0);
   }
 
   /** Rejects executable legacy preparation while retaining static configuration inspection. */
@@ -133,7 +135,7 @@ class WorkspaceTests {
     const f = fixture(t, [{ command: 'node', args: ['-e', 'setInterval(()=>{},1000)'] }]);
     const r = f.prepare('--timeout-seconds', '0.2');
     assert.equal(r.status, 2);
-    assert.match(r.stderr, /execution deadlines.*retired/i);
+    assert.match(r.stderr, /Unsupported workspace query option/);
     assert.equal(r.stdout, '');
   }
 
@@ -142,18 +144,14 @@ class WorkspaceTests {
     const f = fixture(t, [
       { command: 'node', args: ['-e', 'console.log("READY");setInterval(()=>{},1000)'] },
     ]);
-    const child = new TestProcess(
-      t,
-      [cli, 'prepare', '--project', f.repo, '--bindings', f.bindings],
-      f.env,
-    );
+    const child = new TestProcess(t, [cli, ...f.prepareArgs], f.env);
     await child.waitForReady(
       () => this.setupIsReady(f),
       'Setup must be running before cancellation',
     );
     child.kill('SIGINT');
     assert.equal(await child.closed, 130);
-    assert.equal(JSON.parse(child.stdout).status, 'cancelled');
+    assert.equal(JSON.parse(child.stdout).workspace.status, 'cancelled');
     assert.equal(existsSync(join(f.state, 'active.lock')), false);
   }
 
@@ -201,28 +199,31 @@ class WorkspaceTests {
     const r = f.prepare();
     assert.equal(r.status, 0, r.stderr);
     const record = JSON.parse(r.stdout);
-    writeFileSync(join(f.state, 'active.lock'), 'interrupted');
-    assert.equal(f.prepare().status, 1);
-    rmSync(join(f.state, 'active.lock'));
+    const lease = new ExecutionLease(join(f.repo, '.git/arcnexus/host.lease.sqlite'));
+    try {
+      assert.equal(f.prepare().status, 1);
+    } finally {
+      lease.close();
+    }
     const path = join(f.state, 'runs', record.id, 'report.json');
     writeFileSync(path, JSON.stringify({ ...record, workspace: f.repo }));
-    assert.equal(f.run('cleanup', record.id).status, 1);
+    assert.equal(f.cleanup(record.id).status, 1);
     assert.ok(existsSync(f.repo));
   }
 
   /** Verifies that explicit base remains pinned while source headadvances. */
-  explicitBaseRemainsPinnedWhileSourceHEADAdvances(t: TestContext) {
+  async explicitBaseRemainsPinnedWhileSourceHEADAdvances(t: TestContext) {
     const f = fixture(t),
       base = f.git('rev-parse', 'HEAD');
     writeFileSync(join(f.repo, 'source.txt'), 'new');
     f.git('add', '.');
     f.git('commit', '-m', 'advance');
-    const r = f.prepare('--base', base);
-    assert.equal(r.status, 0, r.stderr);
-    assert.equal(
-      readFileSync(join(JSON.parse(r.stdout).workspace, 'source.txt'), 'utf8'),
-      'original\n',
+    const r = await new WorkspacePreparation(f.state).prepare(
+      { source: f.repo, base, packageId: 'package' },
+      new AbortController().signal,
     );
+    assert.equal(r.workspace.status, 'prepared');
+    assert.equal(readFileSync(join(r.workspace.location, 'source.txt'), 'utf8'), 'original\n');
     assert.equal(readFileSync(join(f.repo, 'source.txt'), 'utf8'), 'new');
   }
 
@@ -256,9 +257,9 @@ class WorkspaceTests {
     assert.equal(prepared.status, failed ? 1 : 0, prepared.stderr);
     const record = JSON.parse(prepared.stdout),
       original = evidence(f, record);
-    const first = f.run('cleanup', record.id);
+    const first = f.cleanup(record.id);
     assert.equal(first.status, 0, first.stderr);
-    assert.deepEqual(JSON.parse(first.stdout), { ...record, cleanupStatus: 'removed' });
+    assert.equal(JSON.parse(first.stdout).items[0].status, 'removed');
     original.assertReports();
     const receiptPath = join(original.dir, 'cleanup.json'),
       receipt = readFileSync(receiptPath);
@@ -266,9 +267,9 @@ class WorkspaceTests {
     assert.equal(metadata.cleanupStatus, 'removed');
     assert.ok(Number.isFinite(Date.parse(metadata.removedAt)));
     assert.equal(existsSync(record.workspace), false);
-    const second = f.run('cleanup', record.id);
+    const second = f.cleanup(record.id);
     assert.equal(second.status, 0, second.stderr);
-    assert.deepEqual(JSON.parse(second.stdout), { ...record, cleanupStatus: 'removed' });
+    assert.equal(JSON.parse(second.stdout).items[0].status, 'removed');
     original.assertReports();
     assert.deepEqual(readFileSync(receiptPath), receipt);
   }
@@ -294,9 +295,9 @@ class WorkspaceTests {
       rmSync(record.workspace, { recursive: true });
     }
     for (let i = 0; i < 2; i++) {
-      const result = f.run('cleanup', record.id);
+      const result = f.cleanup(record.id);
       assert.equal(result.status, 0, result.stderr);
-      assert.deepEqual(JSON.parse(result.stdout), { ...record, cleanupStatus: 'removed' });
+      assert.equal(JSON.parse(result.stdout).items[0].status, 'removed');
       checkEvidence();
     }
   }
@@ -308,7 +309,7 @@ class WorkspaceTests {
       record.status = 'removed';
       writeFileSync(join(f.state, 'runs', record.id, 'report.json'), JSON.stringify(record));
     } else {
-      const result = f.run('cleanup', record.id);
+      const result = f.cleanup(record.id);
       assert.equal(result.status, 0, result.stderr);
     }
   }
@@ -320,7 +321,7 @@ class WorkspaceTests {
       mkdirSync(record.workspace);
       writeFileSync(join(record.workspace, 'keep'), 'keep');
     } else symlinkSync(kind === 'symlink' ? f.repo : join(f.root, 'missing'), record.workspace);
-    const result = f.run('cleanup', record.id);
+    const result = f.cleanup(record.id);
     assert.equal(result.status, 1, `${kind}: ${result.stderr}`);
     if (kind.includes('symlink')) {
       assert.ok(lstatSync(record.workspace).isSymbolicLink());
@@ -343,11 +344,7 @@ class WorkspaceTests {
         args: ['-e', "console.log('COMMAND_PID='+process.pid);setInterval(()=>{},1000)"],
       },
     ]);
-    const child = new TestProcess(
-      t,
-      [cli, 'prepare', '--project', f.repo, '--bindings', f.bindings],
-      f.env,
-    );
+    const child = new TestProcess(t, [cli, ...f.prepareArgs], f.env);
     let captured: { scope: string; record: string; log: string } | undefined;
     await child.waitForReady(() => {
       captured = this.runningSetup(f, child.child.pid!);
@@ -397,14 +394,14 @@ class WorkspaceTests {
     writeFileSync(join(dir, 'members-cleanup.json'), JSON.stringify({ removed: [] }));
     const before = readFileSync(join(dir, 'report.json'));
     f.git('worktree', 'remove', record.workspace);
-    const result = f.run('cleanup', record.id);
+    const result = f.cleanup(record.id);
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(readFileSync(join(dir, 'report.json')), before);
     assert.equal(
       JSON.parse(String(readFileSync(join(dir, 'cleanup-intent.json')))).status,
       'removed',
     );
-    assert.equal(f.run('cleanup', record.id).status, 0);
+    assert.equal(f.cleanup(record.id).status, 0);
   }
 
   /** Verifies that cleanup refuses unexplained disappearance and replacement after intent. */
@@ -414,11 +411,11 @@ class WorkspaceTests {
       dir = join(f.state, 'runs', record.id);
     const intent = cleanupIntent(record);
     f.git('worktree', 'remove', record.workspace);
-    assert.equal(f.run('cleanup', record.id).status, 1);
+    assert.equal(f.cleanup(record.id).status, 1);
     writeFileSync(join(dir, 'cleanup-intent.json'), JSON.stringify(intent));
     mkdirSync(record.workspace);
     writeFileSync(join(record.workspace, 'precious'), 'keep');
-    assert.equal(f.run('cleanup', record.id).status, 1);
+    assert.equal(f.cleanup(record.id).status, 1);
     assert.equal(readFileSync(join(record.workspace, 'precious'), 'utf8'), 'keep');
   }
 }

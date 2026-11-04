@@ -1,3 +1,4 @@
+import { WorkspaceCliFixture } from '../../testing/support/workspace-cli-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -54,15 +55,7 @@ class ProgressProjectionTests {
 
   /** Prepares a real workspace, then records an unfinished initialization for viewer assertions. */
   private preparingRecord(f: ReturnType<typeof workflowFixture>): any {
-    const prepared = spawnSync(
-      process.execPath,
-      [cli, 'prepare', '--project', f.repo, '--bindings', join(f.root, 'minimal-bindings.json')],
-      {
-        encoding: 'utf8',
-        env: f.env,
-        timeout: 30 * 60 * 1000,
-      },
-    );
+    const prepared = new WorkspaceCliFixture(f, join(f.root, 'minimal-bindings.json')).prepare();
     assert.equal(prepared.status, 0, prepared.stderr);
     const record = JSON.parse(prepared.stdout);
     record.status = 'initializing';

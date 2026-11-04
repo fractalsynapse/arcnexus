@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { minimalWorkflowFixture } from '../../testing/support/workflow-fixture.js';
-import { spawnSync } from 'node:child_process';
+import { WorkspaceCliFixture } from '../../testing/support/workspace-cli-fixture.js';
 import { lstatSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
@@ -31,17 +31,15 @@ export function fixture(t: any, setup: any = []): any {
   writeEnvironment(f.repo, setup);
   f.commit();
   const bindings = join(f.root, 'minimal-bindings.json');
-  const run = (...args: string[]) =>
-    spawnSync(process.execPath, [cli, ...args, '--bindings', bindings], {
-      env: f.env,
-      encoding: 'utf8',
-      timeout: 30 * 60 * 1000,
-    });
+  const workspace = new WorkspaceCliFixture(f, bindings);
   return {
     ...f,
     bindings,
-    run,
-    prepare: (...args: string[]) => run('prepare', '--project', f.repo, ...args),
+    env: workspace.env,
+    prepareArgs: workspace.prepareArgs,
+    run: (...args: string[]) => workspace.command(...args),
+    prepare: (...args: string[]) => workspace.prepare(...args),
+    cleanup: (id: string) => workspace.cleanup(id),
   };
 }
 
