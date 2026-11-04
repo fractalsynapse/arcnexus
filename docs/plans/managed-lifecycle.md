@@ -2281,3 +2281,20 @@ catalog. Reusing its immutable captured context within that suite removes repeat
 analysis without dropping assertions; the built CLI validation remains a separate
 production-path check. No timing benefit is claimed until measured. Active real
 runs still perform their original full baselines, as explicitly required.
+
+The assembled #234 policy passes 20 focused cases and one native delivery-check
+case without skips; the native case observes the failing command's exit code and
+publication checkpoint rather than faking a failed result. The first CLI-selected
+run exposed overbroad test discovery: refreshing every catalog-backed operation
+expanded two explicitly selected suites into all suites owned by those components
+(19 tests, 10 passed, 9 native skips). Restrict mandatory refresh to actual assignment
+and publication-check records; explicit test CLI filters remain authoritative.
+Add a focused selection-preservation regression and repeat the production CLI path.
+This is why actual command selection matters in addition to planner unit tests.
+
+Issue #235 records the real follow-up's workflow/decomposition gap: a test-only
+coverage correction was captured as behavioral work, and a new assignment alone
+cannot settle its blocked predecessor. Preserve both records and require explicit,
+verified replacement semantics; never fabricate predecessor completion. The active
+b9dd9ac supervisor is unchanged. CI 41904603474 passed the prior collaboration batch,
+including 433 native cases with zero native skips; #234 has separate pending CI.

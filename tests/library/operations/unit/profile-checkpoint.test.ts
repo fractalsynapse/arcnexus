@@ -3,6 +3,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
+import { currentOperationContext } from '../../../../dist/library/operations/current-context.js';
 import { OperationExecution } from '../../../../dist/library/operations/operation-execution.js';
 import { OperationCheckpoint } from '../../../../dist/library/operations/operation-checkpoint.js';
 import {
@@ -68,6 +69,26 @@ class ProfileCheckpointScenarios {
     );
   }
 
+  /** Explicit CLI test selection does not expand to an owner's mandatory engineering selection. */
+  selection(t: TestContext): void {
+    const { record, operation } = this.fixture(t);
+    delete record.activationRole;
+    const selected = new OperationArguments().capture(operation, {
+      ...operation.resolvedContext!,
+      selectedTestFiles: ['.test-build/unit/selected.test.js'],
+    });
+    writeFileSync(
+      join(record.workspace, 'tests/unit/another.test.ts'),
+      "registerSuite({ component: 'sample', level: 'unit' });\n",
+    );
+    assert.equal(currentOperationContext(record, selected), selected);
+    const steps = new OperationCheckpoint(record).resolve([
+      { operation: selected, purpose: 'test' },
+    ]);
+    assert.ok(steps[0]!.operation.kind === 'command');
+    assert.deepEqual(steps[0]!.operation.args, ['--test', '.test-build/unit/selected.test.js']);
+  }
+
   /** Foreign suite metadata is rejected before preparing or executing a test operation. */
   foreign(t: TestContext): void {
     const { record, operation } = this.fixture(t);
@@ -98,7 +119,11 @@ class ProfileCheckpointScenarios {
       capturedTests: [],
       operationPlan: { verify: [operation] },
     };
-    const record = { workspace, operationCatalog: [owner] } as unknown as RecordData;
+    const record = {
+      workspace,
+      activationRole: 'publication-checks',
+      operationCatalog: [owner],
+    } as unknown as RecordData;
     return { record, operation, owner };
   }
 
@@ -151,5 +176,8 @@ test('profile verification rejects foreign suite metadata before dispatch', (t) 
 
 test('empty implicit checks retain non-applicability without passing command evidence', (t) =>
   scenarios.observation(t));
+
+test('explicit CLI test selection remains narrow outside assignment and publication checkpoints', (t) =>
+  scenarios.selection(t));
 
 registerSuite({ component: 'operations', level: 'unit', tags: ['deterministic', 'scoped-checks'] });

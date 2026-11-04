@@ -7,6 +7,8 @@ import type { Operation } from './operations.js';
 
 /** Refreshes derived suite selection without replacing the run's captured owner, profile or definition. */
 export function currentOperationContext<T extends Operation>(record: RecordData, operation: T): T {
+  if (!record.resolvedAssignment && record.activationRole !== 'publication-checks')
+    return operation;
   const tokens = operation.definitionArguments ?? [];
   if (!tokens.some((token) => typeof token !== 'string' && token.context === 'selectedTestFiles'))
     return operation;
