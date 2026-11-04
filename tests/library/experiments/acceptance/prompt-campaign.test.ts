@@ -20,7 +20,7 @@ class PromptCampaignScenarios {
     const report = JSON.parse(readFileSync(join(output, 'campaign.json'), 'utf8'));
     const log = join(output, 'chain/execution.log');
     const diagnostics = existsSync(log) ? readFileSync(log, 'utf8') : '';
-    assert.equal(result.status, 0, result.stderr + JSON.stringify(report) + diagnostics);
+    assert.equal(result.status, 0, result.stderr + this.diagnostic(report) + diagnostics);
     assert.equal(report.evidenceMode, 'simulation');
     assert.equal(report.input.cases[0].origin, 'https://example.invalid/sample.git');
     assert.equal(report.cases[0].task.run.status, 'completed');
@@ -127,13 +127,29 @@ class PromptCampaignScenarios {
     writeFileSync(fixture.bindings, '{}');
     writeFileSync(join(fixture.f.repo, 'verify.cjs'), 'process.exit(19)');
     writeFileSync(gate, 'continue');
-    assert.equal(await child.closed, 0, child.stderr);
+    const status = await child.closed;
     const report = JSON.parse(readFileSync(join(fixture.output, 'campaign.json'), 'utf8'));
+    assert.equal(status, 0, child.stderr + this.diagnostic(report));
     assert.deepEqual(
       report.cases.map((c: any) => c.status),
       ['passed', 'passed'],
     );
     assert.notEqual(report.cases[0].source, report.cases[1].source);
+  }
+
+  /** Reports retained failures before fixture cleanup without dumping complete execution records. */
+  private diagnostic(report: any): string {
+    return JSON.stringify({
+      status: report.status,
+      error: report.error,
+      cases: report.cases.map((item: any) => ({
+        id: item.id,
+        status: item.status,
+        error: item.error,
+        taskStatus: item.task?.run.status,
+        exitCode: item.execution?.exitCode,
+      })),
+    });
   }
 
   /** Copies an independent runner so mutation checks never edit the supervisor running other tests. */

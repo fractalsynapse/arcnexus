@@ -1417,3 +1417,24 @@ Keep read-only historical manifest inspection while historical resource readers
 are consolidated; it must never import an executable campaign runner. Remove the
 production campaign-runner public module and its help entry. Existing schema/report
 vocabulary remains historical evidence, not the meaning of current simulation.
+
+Campaign retirement passed the production confined experiments selection at
+`2879d70`: 24 passes, zero failures, seven native-host skips. The selected native
+group initially had 11 passes and two failures: the intermediate committed-boundary
+inspection noted above, and a captured-input scenario whose assertion omitted its
+retained cause. The three-case CLI rerun passed against the assembled commit. The
+unchanged captured-input case passed separately with zero skips in 92.094 seconds.
+A concurrent `test run` rebuilt shared outputs during the original native case;
+that overlap is a supported explanation, not a proven diagnosis of the lost report.
+Issue #211 adds concise retained failure diagnostics and records build/test ordering.
+No original outcome or supervisor-integrity requirement was weakened. Avoid repeating
+the full group for this assertion-message correction.
+
+CI 41792602428 passed at `b2bc240`: confined selection 492 passes/362 native skips,
+native qualification 405 passes/zero skips in 1,137.002 seconds. Later bootstrap
+commits require their own CI. The tenth real simulation's CLI steward independently
+requested report and publisher research plus an architecture-maintenance changelog
+assignment; this is an additional actual project owner discovered during execution.
+The original report assignment retained specification edits and observed expected-red
+regression evidence and safely advanced to implementation. These are progress facts,
+not completed delivery or full self-development qualification.

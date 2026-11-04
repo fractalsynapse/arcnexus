@@ -9,7 +9,11 @@ arcnexus test run --component experiments
 
 Their test-only orchestrator invokes the ordinary built task CLI and checks pinned
 source, expected outcomes, cancellation and supervising-code integrity. It is not
-shipped in the production distribution. Controlled model responses establish
+shipped in the production distribution. Run build-producing commands before these
+native cases: `test run` prepares `dist` and `.test-build`, and strict checking emits
+declarations. Do not overlap them with checkout-based supervisor-integrity tests.
+Source-authority assertions require the assembled committed implementation, not an
+intermediate boundary/intent commit. Controlled model responses establish
 acceptance behavior, not successful real-agent engineering.
 
 For real-agent learning, use `task run "<prompt>" --simulate` or
