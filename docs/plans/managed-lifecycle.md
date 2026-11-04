@@ -1956,3 +1956,16 @@ director assessment in 46.1 seconds, with zero skips. This is controlled accepta
 through production wiring, separate from the ongoing real-model task, which has
 now activated execution-runtime as its fifth observed owner through a publisher
 request. Its earlier report failure remains retained for director reconsideration.
+
+### Validate proposed new suites before mutation (#226)
+
+The same real task's CLI assignment created a new test with a two-argument,
+nonliteral `registerSuite` call and an unsupported `owner` metadata field. Discovery
+rejected it after the write, leaving implementation without a safe checkpoint.
+Extend checked-edit validation to new discoverable suites: share the existing
+literal metadata, owner and directory/level rules with normal discovery, reject
+invalid batches before mutation, and return corrective feedback. Keep support
+files outside suite discovery and retain valid new-suite creation, captured-suite
+immutability, stage checks and frozen regressions. The old failed candidate and
+captured supervisor remain untouched. Verify malformed registration, wrong owner,
+directory mismatch, atomic batches and corrected retries through the built bridge.
