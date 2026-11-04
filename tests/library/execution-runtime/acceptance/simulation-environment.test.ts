@@ -85,6 +85,17 @@ class SimulationFixture {
     return calls.length;
   }
 
+  /** Requires scheduler-generated waits and verified deliveries in the actual provider store. */
+  assertProgress(environmentId: string): void {
+    const resources = this.issues(environmentId);
+    assert.equal(resources.filter((resource) => resource.kind === 'issue').length, 1);
+    const milestones = resources
+      .filter((resource) => resource.kind === 'comment')
+      .map((comment) => JSON.parse(String(comment.data.body)).milestone);
+    assert.equal(milestones.filter((milestone) => milestone === 'verified_delivery').length, 3);
+    assert.ok(milestones.includes('waiting'));
+  }
+
   /** Reads simulated issues independently of execution reports and closes the inspection connection. */
   issues(environmentId: string) {
     const path = join(
@@ -161,7 +172,7 @@ test(
     assert.ok(records.some((record) => record.activationRole === 'director'));
     for (const record of records)
       assert.deepEqual(record.executionEnvironment, retained.environment);
-    assert.equal(f.issues(retained.environment!.id).length, 1);
+    f.assertProgress(retained.environment!.id);
     assert.equal(f.general.fixture.git('status', '--porcelain'), '');
   },
 );

@@ -404,3 +404,15 @@ root so a deployment can distinguish an answering host from stale or foreign
 metadata. Shutdown must not signal a process based only on a retained PID file.
 Container replacement leaves retained runs interrupted until explicit validated
 continuation; starting the lifetime service alone performs no engineering.
+
+### Tracking milestone comments
+
+When the accountable owner has a captured `issue.comment` grant, the coordinator
+records dependency waits and terminal assignment outcomes on the retained tracking
+issue. A completed assignment is labeled `verified_delivery`; waiting and failed
+work remain distinct. Comments carry assignment and evidence identities, not model
+claims or token activity. Unchanged observations reuse receipts without new effects
+or events. Recovery reconciles uncertain comments before further engineering or
+goal assessment, including when assignment state has since changed. Missing comment
+authority creates no implicit grant. Empty stewardship turns create no tracking
+resources. Worker-authored comments remain available through their existing MCP tool.

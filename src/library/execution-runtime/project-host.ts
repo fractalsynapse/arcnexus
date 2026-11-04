@@ -34,6 +34,8 @@ export class ProjectHost {
 
   private readonly authority: RunAuthority;
 
+  private readonly collaboration: CollaborativeDispatch;
+
   private readonly selection: RunSelection;
 
   private readonly activation = new HostActivation();
@@ -48,6 +50,7 @@ export class ProjectHost {
     this.store = new ExecutionStore(join(root, 'projects', context.key, 'execution.sqlite'));
     this.reports = new ExecutionReports(join(root, 'projects', context.key), this.store);
     this.environments = new RunEnvironments(root, context, this.store);
+    this.collaboration = new CollaborativeDispatch(root, context, this.store, this.environments);
     this.selection = new RunSelection(context, this.store);
     this.authority = new RunAuthority(context, this.store);
     new HostRecovery(root, this.store, this.authority).recover();
@@ -278,6 +281,12 @@ export class ProjectHost {
     if (run.data.workspacePrepared !== true)
       throw new Error('Workspace preparation was interrupted; inspect retained command evidence');
     if (!run.data.initialized) return this.direct(run, signal);
+    await this.advanceAssignments(run, signal);
+  }
+
+  /** Reconciles collaboration before engineering or goal assessment can pass a retained milestone. */
+  private async advanceAssignments(run: ExecutionRun, signal: AbortSignal): Promise<void> {
+    await this.collaboration.progress(run, signal);
     const ready = this.store.ready(run.id);
     if (ready.length && (run.mode === 'task' || run.data.lastDispatch !== 'assignment')) {
       await this.dispatchAssignment(run, signal);
@@ -289,10 +298,7 @@ export class ProjectHost {
 
   /** Executes ready engineering and retains any verified workday delivery before another activation. */
   private async dispatchAssignment(run: ExecutionRun, signal: AbortSignal): Promise<void> {
-    await new CollaborativeDispatch(this.root, this.context, this.store, this.environments).step(
-      run,
-      signal,
-    );
+    await this.collaboration.step(run, signal);
     this.store.updateRun(run.id, this.store.run(run.id).status, { lastDispatch: 'assignment' });
     if (run.mode === 'workday')
       await new RunPublication(this.root, this.context, this.store).advance(
@@ -322,12 +328,7 @@ export class ProjectHost {
     }
     if (run.mode === 'task' && !result.assignments.length && !result.continuations.length)
       throw new Error('Task director returned no assignment or continuation');
-    await new CollaborativeDispatch(
-      this.root,
-      this.context,
-      this.store,
-      this.environments,
-    ).initialize(run, result, signal);
+    await this.collaboration.initialize(run, result, signal);
   }
 
   /** Visits each eligible steward once per changed candidate, interleaved with inbox work. */

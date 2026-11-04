@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { runDestination } from './run-destination.js';
 import { join } from 'node:path';
 import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
@@ -68,6 +69,74 @@ export class RunCollaboration {
         }),
       }
     );
+  }
+
+  /** Reconciles durable comments before projecting meaningful assignment state, never polling or model tokens. */
+  async progress(): Promise<void> {
+    if (!this.run.environment) return;
+    const prefix = this.run.id + ':progress:';
+    const receipts = await this.reconcileComments(prefix);
+    for (const assignment of this.store.assignments(this.run.id)) {
+      if (!['waiting', 'completed', 'blocked', 'rejected', 'failed'].includes(assignment.status))
+        continue;
+      const issue = (assignment.data.trackingIssue ??
+        this.store.run(this.run.id).data.trackingIssue) as { issueId?: unknown } | undefined;
+      if (
+        !issue ||
+        !this.grants(assignment.owner).some((grant) => grant.operation === 'issue.comment')
+      )
+        continue;
+      const input = this.milestone(assignment, issue.issueId);
+      const id = prefix + createHash('sha256').update(JSON.stringify(input)).digest('hex');
+      if (!receipts.has(id)) await this.comment(assignment, id, input);
+    }
+  }
+
+  /** Finishes retained intents first and returns receipts so unchanged observations create no new events. */
+  private async reconcileComments(prefix: string): Promise<Set<string>> {
+    const receipts = new Set<string>();
+    for (const effect of this.environments.effects.effects()) {
+      if (!effect.id.startsWith(prefix)) continue;
+      if (effect.status !== 'completed')
+        await this.comment(this.store.assignment(effect.assignmentId!), effect.id, effect.input);
+      receipts.add(effect.id);
+    }
+    return receipts;
+  }
+
+  /** Labels verified delivery separately from waiting or failed intent using only authoritative identifiers. */
+  private milestone(assignment: ExecutionAssignment, issueId: unknown): Record<string, unknown> {
+    return {
+      issueId,
+      body: JSON.stringify(
+        {
+          assignmentId: assignment.id,
+          owner: assignment.owner,
+          milestone: assignment.status === 'completed' ? 'verified_delivery' : assignment.status,
+          dependencies: assignment.dependencies,
+          evidence: assignment.evidence,
+        },
+        null,
+        2,
+      ),
+    };
+  }
+
+  /** Reuses original intent and reconciles uncertain effects before any retry or further engineering. */
+  private async comment(
+    assignment: ExecutionAssignment,
+    id: string,
+    input: Record<string, unknown>,
+  ) {
+    if (assignment.runId !== this.run.id)
+      throw new Error('Comment assignment belongs to another run');
+    const executor = this.executor(assignment.owner, assignment.id);
+    let result = await executor.execute(id, 'issue.comment', this.target, input, this.signal);
+    if (result.status === 'uncertain') result = await executor.recover(id, this.signal);
+    if (result.status === 'prepared')
+      result = await executor.execute(id, 'issue.comment', this.target, input, this.signal);
+    if (result.status !== 'completed')
+      throw new Error('Progress comment requires reconciliation: ' + id);
   }
 
   /** Provides only explicitly granted agent actions, with host-derived scope and destination. */

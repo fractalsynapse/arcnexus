@@ -39,6 +39,7 @@ export class CollaborativeDispatch {
         await collaboration.tracking(run.mode === 'workday' ? assignment : undefined);
         return executor.activate(assignment);
       }).step(run.id, signal);
+      await collaboration.progress();
     } finally {
       collaboration.close();
     }
@@ -53,6 +54,22 @@ export class CollaborativeDispatch {
       direction: result,
     });
     if (run.mode === 'task') await this.tracking(this.store.run(run.id), signal);
+  }
+
+  /** Flushes retained milestone effects before dispatch or final assessment after a recovered checkpoint. */
+  async progress(run: ExecutionRun, signal: AbortSignal): Promise<void> {
+    const collaboration = new RunCollaboration(
+      this.context,
+      this.store,
+      this.environments,
+      run,
+      signal,
+    );
+    try {
+      await collaboration.progress();
+    } finally {
+      collaboration.close();
+    }
   }
 
   /** Captures task tracking as soon as the director has accepted actionable work. */

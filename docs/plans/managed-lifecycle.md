@@ -2214,3 +2214,26 @@ from accepted intent, blocking and interruption. Empty stewardship and absent
 comment grants create no new effects. Reconcile outstanding milestones before
 further engineering or goal assessment so a host loss cannot skip a final comment.
 Existing supervisors and provider evidence remain unchanged.
+
+The #233 bootstrap passes five focused provider/receipt cases and five native
+production-scheduler cases without skips. Coverage includes task/workday comments,
+unchanged observations producing no new events, a crash after provider mutation but
+before the host receipt, unknown provider progress preventing replay, absent grants,
+and empty stewardship. The real nested three-owner fixture observes wait comments
+and three verified-delivery comments through the production scheduler. These are
+controlled acceptance results, not fresh real-agent qualification. Formatting, lint,
+strict types and builds pass locally; committed validation and confined selection
+follow the assembled commit.
+
+CI 41898547101 passed at 3a3d2e4: the full confined selection and 433 native cases
+with zero native skips. The native phase took 12.8 minutes and the entire job 22.5
+minutes, faster than the earlier 35-minute job; no causal performance claim is made
+without equivalent host/environment evidence. This CI does not cover the later
+milestone-comment change. The real container publisher correction passed independent
+review; its CLI and dynamically discovered maintenance assignments continue.
+
+A subsecond disposable relocation probe at 3a3d2e4 retained identical committed
+source but changed the execution-host key after moving the repository and state.
+Issue #232 tracks this absolute-path identity gap separately from already-qualified
+portfolio relocation and same-mount container recovery. Historical evidence and
+active supervisors remain unchanged.

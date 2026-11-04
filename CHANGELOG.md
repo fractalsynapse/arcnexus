@@ -4,6 +4,8 @@
 
 ### Added
 
+- Project dependency waits and verified/blocked assignment milestones onto authorized tracking issues with durable, nonduplicating recovery (#233).
+
 - Expose current-run assignment intent through read-only evidence so stewards can discover and deliberately link existing work without private checkpoint access (#231).
 
 - Expose hash-validated same-run investigation artifacts through the independent verifier manifest, preserving explicit missing evidence and rejecting foreign or altered files (#220).
