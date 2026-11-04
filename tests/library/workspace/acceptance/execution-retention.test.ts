@@ -31,7 +31,7 @@ class ExecutionRetentionScenarios {
     const before = readFileSync(report);
     const result = f.cleanup(record.id);
     assert.equal(result.status, 1, result.stderr);
-    assert.match(JSON.parse(result.stdout).items[0].reason, /retained.*execution/i);
+    assert.match(JSON.parse(result.stdout).items[0].error, /retained.*execution/i);
     assert.ok(existsSync(record.workspace));
     assert.equal(existsSync(join(directory, 'cleanup-intent.json')), false);
     assert.deepEqual(readFileSync(report), before);

@@ -121,7 +121,7 @@ class ComposedTests {
     writeFileSync(join(f.state, 'runs', v.id, 'report.json'), JSON.stringify(v));
     const cleanup = f.cleanup(v.id);
     assert.equal(cleanup.status, 1);
-    assert.match(JSON.parse(cleanup.stdout).items[0].reason, /ownership/);
+    assert.match(JSON.parse(cleanup.stdout).items[0].error, /ownership/);
     assert.equal(readFileSync(join(f.dependency, 'source.txt'), 'utf8'), 'dependency');
   }
 
