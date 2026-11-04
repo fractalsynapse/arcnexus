@@ -23,10 +23,11 @@ export class SpecificationQuality {
       if (!isObservedCommandFailure(error)) throw error;
       this.state.safe();
       const failed = error.commandResult;
+      const diagnostic = logExcerpt(failed.log);
       throw new SpecificationValidationError(
-        `Correct specification source quality before regression freezing. Exit ${failed.exitCode}: ${logExcerpt(failed.log)}; retained log: ${failed.log}`,
+        `Correct specification source quality before regression freezing. Exit ${failed.exitCode}: ${diagnostic}; retained log: ${failed.log}`,
         'source-quality:' + (error.operationId ?? JSON.stringify(failed.args)),
-        'Specification source quality must pass before freezing regression sources',
+        'Specification source quality must pass before freezing regression sources: ' + diagnostic,
       );
     }
   }

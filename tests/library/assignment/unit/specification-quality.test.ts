@@ -7,6 +7,27 @@ import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Checks pre-freeze quality selection and distinguishes correctable failures from unsafe execution. */
 class SpecificationQualityScenarios {
+  /** Different observed deficiencies remain distinct inputs to existing progress-loop detection. */
+  async diagnostics(t: TestContext): Promise<void> {
+    const { state, failure } = this.fixture(t);
+    const { SpecificationQuality } = await this.runtime();
+    state.checks = async () => {
+      throw failure;
+    };
+    const messages: string[] = [];
+    for (const diagnostic of ['FORMAT_REQUIRED', 'FORMAT_REQUIRED', 'DIFFERENT_LINT_FAILURE']) {
+      writeFileSync(failure.commandResult.log, diagnostic);
+      await assert.rejects(new SpecificationQuality(state).verify(), (error: any) => {
+        messages.push(error.message);
+        assert.equal(error.identity, 'source-quality:format');
+        return true;
+      });
+    }
+    assert.equal(messages[0], messages[1]);
+    assert.notEqual(messages[1], messages[2]);
+    assert.ok(messages.every((message) => !message.includes(failure.commandResult.log)));
+  }
+
   /** Uses the assembled session entry point to prove a failed quality check cannot freeze sources. */
   async ordering(t: TestContext): Promise<void> {
     const { state, failure } = this.fixture(t);
@@ -114,6 +135,9 @@ class SpecificationQualityScenarios {
 }
 
 const scenarios = new SpecificationQualityScenarios();
+
+test('specification quality preserves diagnostic identity without evidence filenames', (t) =>
+  scenarios.diagnostics(t));
 
 test('specification quality fails before regression freezing', (t) => scenarios.ordering(t));
 
