@@ -2577,3 +2577,13 @@ although listing standards rejected the same revision. Resolve every standard
 while building the committed catalog, then use that captured result for inherited
 component context and resource queries. This also avoids resolving the same
 inherited standard and its documents once per steward during host startup.
+
+### Keep invalid stewardship decisions local to their owner (#240)
+
+The assignment steward on simulated workday cc67f01a-0f01-430a-bef6-0042818d37e3
+returned a no-work decision about the workday component. The failed activation
+retained the exact response, but the host stopped the whole rotation. Supply
+owner-first instructions for a scheduled stewardship turn. Record an invalid
+decision against that owner and input fingerprint, preserve the activation
+identity and continue unrelated ready work. Candidate integrity, cancellation
+and transport failures retain their own handling.
