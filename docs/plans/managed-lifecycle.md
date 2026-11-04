@@ -1878,3 +1878,12 @@ operation semantics, source, bindings, runtime and generated inputs; unchanged
 source alone is insufficient. Do not change this active run's acceptance policy.
 The focused container executable check takes less than a second, making it a
 cheap prerequisite before another multi-minute real-agent preparation.
+
+The first CI run of the executable repair failed before test dispatch: its
+setup-node npm alias resolves outside the captured readable tool directory. The
+old sandbox PATH lookup silently selected a different readable installation.
+Make CI's intended npm installation explicit: install the existing npm 10.9.9
+version under `/usr/local` and capture its executable binding beside Node and
+Codex. Keep the host toolchain separate from source authority and preserve the
+read boundary; do not add the entire hosted tool cache as a readable exception.
+Retain failed run 41857431712 and requalify the actual runner configuration.
