@@ -11,3 +11,10 @@ Reconciliation uses a three-way merge of the assignment base, latest verified
 candidate and completed assignment snapshot. Conflicts preserve all three snapshots
 and require attention. A successful merge is only a proposal: assembled checks and
 independent review must pass before the verified-candidate pointer changes.
+
+Checked edit requests require complete replacement content for create/update;
+delete permits omitted or null content. Invalid request shape is rejected before
+scope evaluation, journal creation or source mutation. The host-bound tool returns
+a retained, correctable rejection so an agent can resend a valid complete batch.
+This does not relax owner/stage authority, frozen regression protection, filesystem
+alias checks or uncertain-transaction recovery: those failures remain fatal.

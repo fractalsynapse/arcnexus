@@ -1044,3 +1044,13 @@ passed in 0.215 seconds, including interruption leaving a dependent waiting whil
 unrelated ready work completes. Splitting activation admission/drain into its own
 small class kept the project host below the 500-line limit without compressing code.
 Container deployment qualification is still separate from this native evidence.
+
+Issue #205's schema and checked-edit bridge regression passed nine cases with no
+skips in 0.747 seconds. The exact omitted-content shape is rejected without source
+or journal changes, then a corrected request commits. Existing owner/stage/frozen
+regression protections, identity/stale conflicts, filesystem alias prevention and
+crash recovery remain covered. Typed schema failures distinguish invalid input
+from unavailable trusted schemas; no diagnostic-prefix parsing was introduced.
+The actual running supervisor remains unchanged and its failed CLI evidence stays
+retained. The report worker has meanwhile passed observed expected-red verification
+and entered implementation, providing real evidence for #203's corrected routing.

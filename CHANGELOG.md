@@ -4,6 +4,8 @@
 
 ### Added
 
+- Reject malformed checked-edit requests with corrective feedback before any source mutation, while retaining fatal authority and recovery failures (#205).
+
 - Drain managed execution and persist interruption on host shutdown without falsely rejecting dependent work (#148).
 
 - Connect live delivery commit, fresh verification, push and GitHub PR creation to the coordinator with durable effect reuse, refreshable provider gates and independently verified exact-target staging integration (#148).

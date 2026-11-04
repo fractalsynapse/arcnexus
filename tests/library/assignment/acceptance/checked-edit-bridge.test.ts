@@ -108,6 +108,30 @@ class EditAuthorityScenarios {
     assert.equal(readdirSync(join(state.dir, 'checked-edits')).length, 2);
   }
 
+  /** Malformed request syntax rejects the whole batch and allows correction without granting source authority. */
+  malformed(t: TestContext): void {
+    const state = this.fixture(t);
+    state.options.record.stage = 'implementation';
+    const bridge = new CheckedEditBridge(state);
+    const request: any = this.request('owned/file.ts');
+    delete request.changes[0].content;
+    const result = bridge.call('source.edit', request) as any;
+    assert.equal(result.status, 'rejected');
+    assert.match(result.error, /content/);
+    assert.match(result.recovery, /complete replacement content/);
+    assert.equal(
+      readFileSync(join(state.options.record.workspace, 'owned/file.ts'), 'utf8'),
+      'before',
+    );
+    assert.deepEqual(readdirSync(join(state.dir, 'checked-edits')), []);
+    request.changes[0].content = 'after';
+    assert.equal((bridge.call('source.edit', request) as any).status, 'committed');
+    assert.equal(
+      readFileSync(join(state.options.record.workspace, 'owned/file.ts'), 'utf8'),
+      'after',
+    );
+  }
+
   /** Observes both batch members so a partial application cannot satisfy the rejection assertions. */
   private contents(state: SessionState): string[] {
     return ['owned/file.ts', 'owned/second.ts'].map((path) =>
@@ -157,5 +181,8 @@ test('stale checked edits return rejection and permit a corrected atomic batch',
 
 test('checked edit identity conflicts recover without replacing or replaying prior transactions', (t) =>
   scenarios.identities(t));
+
+test('malformed checked edit input is correctable without source mutation or weakened authority', (t) =>
+  scenarios.malformed(t));
 
 registerSuite({ component: 'assignment', level: 'acceptance', tags: ['deterministic'] });

@@ -3,7 +3,12 @@ import { join } from 'node:path';
 import { checkedEditAuthority } from './edit-recovery.js';
 import { covered, classifyComponentPath } from '../architecture/components.js';
 import type { BridgeTool } from '../steward/bridge.js';
-import { CheckedEdits, EditIdentityError, StaleEditError } from '../workspace/checked-edits.js';
+import {
+  CheckedEdits,
+  EditIdentityError,
+  StaleEditError,
+  EditRequestError,
+} from '../workspace/checked-edits.js';
 import type { SessionState } from './session-state.js';
 
 /** Exposes checked source mutation only through the active assignment's host-bound connection. */
@@ -43,7 +48,11 @@ export class CheckedEditBridge {
     try {
       receipt = this.edits.apply(args);
     } catch (error) {
-      if (error instanceof StaleEditError || error instanceof EditIdentityError)
+      if (
+        error instanceof StaleEditError ||
+        error instanceof EditIdentityError ||
+        error instanceof EditRequestError
+      )
         return this.rejected(error);
       throw error;
     }
@@ -53,7 +62,7 @@ export class CheckedEditBridge {
   }
 
   /** Reports safe pre-transaction conflicts without relaxing authorization or uncertain recovery failures. */
-  private rejected(error: StaleEditError | EditIdentityError): unknown {
+  private rejected(error: StaleEditError | EditIdentityError | EditRequestError): unknown {
     const conflict =
       error instanceof StaleEditError
         ? {
@@ -61,11 +70,15 @@ export class CheckedEditBridge {
             expectedSha256: error.expectedSha256,
             currentSha256: error.currentSha256,
           }
-        : { id: error.transactionId };
+        : error instanceof EditIdentityError
+          ? { id: error.transactionId }
+          : {};
     const recovery =
       error instanceof StaleEditError
         ? 'No edits were applied. Reread the current bytes, compute SHA-256 and retry the complete batch.'
-        : 'No edits were applied. Use a fresh unique transaction ID for a different batch; reuse an ID only for an identical retry.';
+        : error instanceof EditRequestError
+          ? 'No edits were applied. Correct the request shape: create/update require complete replacement content; delete permits omitted or null content. Use each relative path once.'
+          : 'No edits were applied. Use a fresh unique transaction ID for a different batch; reuse an ID only for an identical retry.';
     const rejection = { status: 'rejected', error: error.message, ...conflict, recovery };
     this.state.journal(String(this.state.options.record.stage), 'source.edit_rejected', rejection);
     return rejection;
