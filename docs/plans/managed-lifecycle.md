@@ -1011,3 +1011,18 @@ operation definition, resolved arguments and confinement/tool bindings are ident
 Owner-specific checks and checks after changes must remain independent; do not relax
 this run's captured acceptance or substitute skip counts for evidence. No cache change
 has been made to the running supervisor.
+
+Container readiness next requires orderly supervisor shutdown, independent of any
+HTTP server. SIGTERM/SIGINT must close mutation admission, stop new dispatch, cancel
+and drain the managed activation, persist interruption and release IPC/database
+ownership. This is host interruption, not an explicit user stop or a completed task;
+terminal outcomes and manual pause/stop intent remain intact. Reuse existing recovery
+and operation evidence; never replay an uncertain command. There is no application
+drain deadline. Docker may still kill a host at its external shutdown boundary, where
+existing parent-death supervision and next-start recovery remain required.
+
+A default Docker probe using image `arcnexus-qualification:node22` (image digest
+26381efc3c7e7a60601ac4577c64e5c240cf00d81a5294380c44d4090809c9fb), Node
+22.23.4, `--network none`, observed no writable cgroup mount and no bundled Codex.
+This is a failed prerequisite of that configuration, not a statement that container
+execution is unsupported. No privileged or unsupervised fallback was attempted.
