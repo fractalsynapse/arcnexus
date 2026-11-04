@@ -2499,3 +2499,13 @@ requests, wrong-stage writes, frozen tests, unsafe files and uncertain recovery 
 hard barriers. Test the entire batch remains unchanged before accepting a subsequent
 in-scope edit. This avoids spending a new setup and model session on a correctable
 owned-path mistake while preserving every source-write permission.
+
+The architect additionally requested actionable cross-owner edit feedback: identify
+the actual accountable steward and instruct the requester to send it the intended
+change and acceptance criteria through the existing inbox protocol. New captures
+will derive owner/path routing from the same immutable catalog, not candidate edits
+or a second authored registry. A known cross-owner path will return a non-mutating
+rejection with delegation guidance; it will not terminate an otherwise safe turn.
+Unknown/ambiguous ownership remains an architectural blocker. Unsafe paths, workflow
+stage violations, frozen regressions and uncertain transactions still fail closed.
+This supersedes the earlier proposed hard termination for known cross-owner requests.
