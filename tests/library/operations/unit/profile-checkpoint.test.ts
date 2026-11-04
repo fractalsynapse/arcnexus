@@ -44,7 +44,7 @@ class ProfileCheckpointScenarios {
     );
     assert.equal(event.type, 'operation.not_applicable');
     assert.equal(event.payload.operationId, 'tests');
-    assert.equal(record.operationInvocations?.length ?? 0, 0);
+    assert.deepEqual(record.operationInvocations ?? [], []);
     await assert.rejects(executor.run(operation, 'regression'), /no applicable test suites/);
   }
 
