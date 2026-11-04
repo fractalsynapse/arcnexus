@@ -1647,3 +1647,24 @@ Native acceptance must deliberately emit a large proposal plus a stderr warning;
 unit coverage must retain both streams and exercise cancellation/output bounds.
 The two failed CI rounds cost roughly two native qualification cycles; a small
 mixed-stream case would have caught this condition before those long runs.
+
+The workspace retirement's three corrected cleanup assertions all passed against
+the built package-aware CLI, alongside the native large-proposal mixed-stream
+regression: four cases, zero failures/skips, 47.332 seconds. The shared executor's
+process-scope, operation execution, file diagnostics and pending-operation cases
+passed ten native cases with zero failures/skips in 18.045 seconds. Issue #217's
+17 focused checks also passed, covering cancellation, the retained 64 MiB output
+bound, immutable proposal references and stdout identity. This is local evidence;
+the two earlier CI failures remain failures until a new head is qualified.
+
+The eleventh real simulation provides observed evidence for the checkpoint and
+proposal fixes under its unchanged `7a7db01` supervisor. The CLI steward corrected
+a failed specification-format check, passed formatting/lint, and advanced to the
+red-test stage with frozen regression evidence. At 11:04:34 UTC on 2026-11-04 it
+applied proposal invocation `641e7d7e-5053-44a2-925f-7507a6098dbf` through the
+assignment-bound checked edit tool. The response retained the committed transaction
+and changed test hash. This demonstrates a real proposal-reference edit; it does
+not establish an oversized real proposal or independently accepted delivery. The
+report dependency is ready and the original publisher assignment is implementing.
+The extra publisher assignment is not a newly discovered owner, since the real
+director selected publisher initially. Keep that qualification distinction explicit.
