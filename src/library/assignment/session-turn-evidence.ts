@@ -1,3 +1,4 @@
+import { frozenReview } from './checkpoints.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { digest } from '../architecture/assignment.js';
@@ -71,7 +72,7 @@ export class TurnEvidence {
         Buffer.from(bytes, 'base64').toString('utf8'),
       ]),
     );
-    return { patch, newFiles };
+    return { patch, newFiles, frozenRegressions: frozenReview(record, this.state.frozen) };
   }
 
   /** Starts managed work and records the state needed for its later shutdown. */

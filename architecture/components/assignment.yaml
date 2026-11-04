@@ -22,11 +22,6 @@ constraints:
     supported historical versions and captured execution readers"
   - "plan (src/library/assignment/schemas/plan.json): Preserve supported
     historical versions and captured execution readers"
-operations:
-  migrated-recipe-43b539fb85a57c26:
-    - verify
-  migrated-recipe-df6d67ddacf5bf0c:
-    - verify
 owns:
   - src/library/assignment
   - tests/library/assignment

@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { digest } from '../architecture/assignment.js';
 import { classifyComponentPath, covered, type Component } from '../architecture/components.js';
@@ -48,6 +48,38 @@ function specificationPaths(component: Component, observed: ReturnType<typeof ch
     .filter((c) => classifyComponentPath(component, c.path) === 'tests')
     .map((c) => c.path);
   return { documentation, testPaths };
+}
+
+/** Compares candidate bytes with the accepted checkpoint, never with the earlier Git baseline. */
+export function frozenReview(record: RecordData, tests: FrozenTest[]) {
+  checkFrozenPaths(record.workspace, tests);
+  return {
+    basis: 'frozen-regression-checkpoint',
+    files: tests.map((test) => {
+      if (digest(Buffer.from(test.content, 'base64')) !== test.sha256)
+        throw new Error('Frozen regression digest mismatch');
+      const currentSha256 = frozenCurrentHash(join(record.workspace, test.path));
+      return {
+        path: test.path,
+        frozenSha256: test.sha256,
+        currentSha256,
+        status:
+          currentSha256 === null
+            ? 'missing'
+            : currentSha256 === test.sha256
+              ? 'preserved'
+              : 'changed',
+      };
+    }),
+  };
+}
+
+/** Rejects shared or non-regular candidate files instead of attributing foreign bytes to a checkpoint. */
+function frozenCurrentHash(path: string): string | null {
+  if (!existsSync(path)) return null;
+  const stat = lstatSync(path);
+  if (!stat.isFile() || stat.nlink !== 1) throw new Error('Unsafe frozen regression path');
+  return digest(readFileSync(path));
 }
 
 export async function withFrozenTests(

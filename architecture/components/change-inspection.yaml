@@ -12,11 +12,6 @@ constraints:
   - Do not edit architecture or unrelated files
   - "candidate-changes (src/library/change-inspection/changes.ts): Preserve
     path/change-kind evidence and exact scope and symlink rejection semantics"
-operations:
-  migrated-recipe-43b539fb85a57c26:
-    - verify
-  migrated-recipe-df6d67ddacf5bf0c:
-    - verify
 owns:
   - src/library/change-inspection
   - tests/library/change-inspection

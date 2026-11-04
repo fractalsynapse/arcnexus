@@ -12,7 +12,7 @@ artifacts: []
 network: true
 schemaVersion: 4
 id: migrated-recipe-43b539fb85a57c26
-purpose: Verify agent-guidance
+purpose: Check maintained-source formatting
 kind: command
 prerequisites: []
 command: npm

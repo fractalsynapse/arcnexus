@@ -9,11 +9,6 @@ objectives:
     ordered evidence and durable external-effect intents
 constraints:
   - Preserve captured authority and evidence
-operations:
-  migrated-recipe-43b539fb85a57c26:
-    - verify
-  migrated-recipe-df6d67ddacf5bf0c:
-    - verify
 owns:
   - src/library/coordination-store
   - tests/library/coordination-store

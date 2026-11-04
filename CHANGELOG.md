@@ -101,6 +101,8 @@
 
 ### Fixed
 
+- Distinguish frozen-regression preservation from the earlier Git diff during review, and inherit mandatory source quality once for every ArcNexus steward (#221).
+
 - Return observed compiler-prerequisite failures as corrective agent feedback without running dependent checks or weakening mandatory verification (#210).
 
 - Preserve confined subprocess input and exit status with deny-all proxy enforcement, remove stale compiled tests, and deduplicate director context without narrowing eligible owners (#148).

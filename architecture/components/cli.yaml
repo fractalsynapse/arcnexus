@@ -10,11 +10,6 @@ constraints:
   - Do not change sandbox permissions or verification requirements
   - Caller owns commits and integration
   - Do not edit architecture or unrelated files
-operations:
-  migrated-recipe-43b539fb85a57c26:
-    - verify
-  migrated-recipe-df6d67ddacf5bf0c:
-    - verify
 owns:
   - src/gateway/cli
   - docs/gateway/cli

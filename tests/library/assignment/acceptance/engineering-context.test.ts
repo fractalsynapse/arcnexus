@@ -40,6 +40,8 @@ class EngineeringContextScenarios {
     assert.match(prompt, /byte-for-byte: no edits, additions, deletions, renames or formatting/);
     assert.match(prompt, /separate files within captured test authority/);
     assert.match(prompt, /Specification correction retains its existing stage permissions/);
+    assert.match(prompt, /accepted frozen checkpoint, not the earlier Git base/);
+    assert.match(prompt, /does not establish test quality or acceptance/);
     assert.doesNotMatch(prompt, /private/);
   }
 

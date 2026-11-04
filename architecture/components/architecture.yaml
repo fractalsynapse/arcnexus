@@ -24,11 +24,6 @@ constraints:
     historical versions and captured execution readers"
   - "role (src/library/architecture/schemas/role.json): Preserve supported
     historical versions and captured execution readers"
-operations:
-  migrated-recipe-43b539fb85a57c26:
-    - verify
-  migrated-recipe-df6d67ddacf5bf0c:
-    - verify
 owns:
   - src/library/architecture
   - tests/library/architecture

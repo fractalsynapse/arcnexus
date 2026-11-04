@@ -11,7 +11,6 @@ operations:
   publish-delivery: [agent]
   package-artifact: [verify]
   component-tests: [verify]
-  migrated-recipe-df6d67ddacf5bf0c: [verify]
 owns:
   - src/library/publisher
   - tests/library/publisher

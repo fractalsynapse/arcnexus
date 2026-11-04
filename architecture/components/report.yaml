@@ -15,10 +15,6 @@ operations:
     - verify
   report-format:
     - agent
-  migrated-recipe-43b539fb85a57c26:
-    - verify
-  migrated-recipe-df6d67ddacf5bf0c:
-    - verify
 owns:
   - src/library/report
   - tests/library/report

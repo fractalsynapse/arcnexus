@@ -167,3 +167,10 @@ Specification correction retains its existing permission to revise tests before 
 checkpoint is accepted. The host's checked-edit and final digest checks enforce
 these restrictions independently of prompt text. Turn context must reflect the
 latest checkpoint rather than the session's initial, not-yet-frozen state.
+
+Candidate review retains the full Git-base diff and separately reports
+`frozenRegressions` comparisons against the accepted checkpoint. `preserved` means
+current bytes match the frozen hash, even if specification work changed that file
+before freezing. It does not mean the test establishes acceptance or has good
+quality. Missing and changed files are explicit; unsafe paths and corrupt retained
+checkpoints fail capture. Review cannot authorize editing frozen regressions.

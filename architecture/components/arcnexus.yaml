@@ -15,6 +15,10 @@ executionProfile: luna
 reads:
   - .
 operations:
+  migrated-recipe-43b539fb85a57c26:
+    - verify
+  migrated-recipe-df6d67ddacf5bf0c:
+    - verify
   comment-issue:
     - agent
   migrated-recipe-f1691da2bfa5a18c:
