@@ -1269,3 +1269,11 @@ assignment, not tracking. Record this integration defect and clarify the typed
 contract rather than silently deleting a requested identity or hotpatching the
 captured runner. Failed real runs continue to expose gaps that isolated success
 fixtures miss; small production-contract checks are cheaper than repeated baselines.
+
+Issue #209 will clarify nullable supplier-assignment linking in the active schema
+and per-turn context. Resolve explicitly linked recipients within the same run and
+owner before mutating any request state. Unknown issue/message IDs and mismatched
+links become actionable dependency blockers with the rejected outcome retained;
+never reinterpret them as new work. Test atomic fan-out rollback and unrelated
+scheduler progress against the built store and scheduler. This does not repair the
+ninth run's captured supervisor or authorize rewriting its returned request.
