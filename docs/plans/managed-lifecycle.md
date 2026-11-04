@@ -845,3 +845,13 @@ update and remove must validate the entire resulting library, reject stale resou
 revisions and referenced removals, and leave attached checkouts untouched. Reuse
 the same repository lease, journal and configuration branch as component updates;
 do not introduce a second mutation engine or silently create missing documentation.
+
+CI run `41766922624` passed the confined built suite but failed native qualification:
+324 passed, 59 failed, zero skipped, 1011.611 seconds. The retained diagnostics
+show `Missing optional dependency @openai/codex-linux-x64` when fixtures copy
+`/usr/local/bin/codex`, which is the npm JavaScript launcher rather than the
+self-contained native executable expected by those fixtures. Correct the CI
+binding to the installed ELF binary and validate its version before the expensive
+native lane. Do not relax confinement or skip the affected tests. This repeats
+the executable-bundle class of failures tracked in #201; inspect packaging at the
+binding boundary rather than letting dozens of downstream cases rediscover it.
