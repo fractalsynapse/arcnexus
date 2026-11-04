@@ -2456,3 +2456,13 @@ The four subprocess-boundary cases cover multiple deduplicated URLs, platform
 filtering, empty selection, invalid sources and failure without retry. Evidence is
 retained in `qualification-148-real-container-76c1965/evidence/setup-237`.
 Active tasks continue using their original installer and captured source.
+
+CI 41918415928 completed the full confined suite, then passed 432 of 433 native
+cases with zero native skips. The only failure was another old policy assertion:
+assignment inspection still expected the full repository test command inside owner
+verification. Change that assertion to require focused owner tests in `verification`
+and full tests in the captured delivery plan. Align the corresponding operations
+reference; retain historical acceptance narrative with an explicit current-policy
+note. This test failure cost a 21-minute native sweep, so search expectations by both
+operation identity and command argv when moving a policy boundary. Do not repeat the
+entire sweep to diagnose a single already identified assertion.
