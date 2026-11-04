@@ -29,6 +29,62 @@ export class GitHubPullRequests {
     this.client = new GitHubTransport(delivery.target.repository, credential, transport);
   }
 
+  /** Observes current provider gates without treating local delivery approval as a GitHub review. */
+  async readiness(number: number, signal: AbortSignal) {
+    const repository = await this.client.pullRequest(number, signal);
+    const pull = repository.pullRequest;
+    if (
+      pull?.number !== number ||
+      pull.headRefOid !== this.head ||
+      pull.headRefName !== this.branch ||
+      pull.headRepository?.nameWithOwner !== this.delivery.target.repository ||
+      pull.baseRefName !== this.delivery.target.branch ||
+      pull.url !== `https://github.com/${this.delivery.target.repository}/pull/${number}`
+    )
+      throw new Error('GitHub readiness differs from captured delivery attribution');
+    const blockers = this.blockers(repository);
+    return {
+      pullRequestId: number,
+      head: this.head,
+      base: pull.baseRefOid,
+      environmentId: this.delivery.environment.id,
+      simulation: false,
+      ready: blockers.length === 0,
+      blockers,
+      reviewDecision: pull.reviewDecision,
+      mergeState: pull.mergeStateStatus,
+    };
+  }
+
+  /** Fails closed on missing checks, unknown review state, conflicts and protected integration targets. */
+  private blockers(repository: any): string[] {
+    const pull = repository.pullRequest,
+      blockers: string[] = [];
+    const commit = pull.commits?.nodes?.[0]?.commit;
+    const checks = commit?.statusCheckRollup;
+    const target = this.delivery.target.branch;
+    if (
+      !repository.defaultBranchRef?.name ||
+      [repository.defaultBranchRef.name, 'main', 'master'].includes(target)
+    )
+      blockers.push('Default or main integration is not authorized');
+    if (pull.state !== 'OPEN' || pull.isDraft !== false) blockers.push('PR is not open and ready');
+    if (pull.mergeable !== 'MERGEABLE' || pull.mergeStateStatus !== 'CLEAN')
+      blockers.push('Provider merge requirements are not satisfied');
+    if (!['APPROVED', null].includes(pull.reviewDecision))
+      blockers.push('Provider review requirements are not satisfied');
+    if (
+      commit?.oid !== this.head ||
+      checks?.state !== 'SUCCESS' ||
+      !Number.isSafeInteger(checks?.contexts?.totalCount) ||
+      checks.contexts.totalCount < 1
+    )
+      blockers.push('Current-head CI evidence is missing or unsuccessful');
+    if (!/^[a-f0-9]{40,64}$/.test(String(pull.baseRefOid)))
+      blockers.push('Integration target revision is unavailable');
+    return blockers;
+  }
+
   /** Checks actual upstream refs and reuses exact prior intent instead of creating duplicate PRs. */
   async apply(effect: ExternalEffect, signal: AbortSignal): Promise<Record<string, unknown>> {
     this.assert(effect);

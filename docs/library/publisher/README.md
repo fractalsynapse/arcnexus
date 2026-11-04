@@ -36,3 +36,12 @@ result before compare-and-swap integration. Releases require actual captured bui
 artifacts: their bytes are checked against retained hashes and copied into private
 content-addressed storage. Failed checks, conflicts, missing artifacts and uncertain
 operations retain honest blockers. Repeated requests reuse completed receipts.
+
+The GitHub PR provider also observes readiness using a fixed repository-scoped
+query. It binds CI rollups to the pushed commit, retains the provider's review and
+merge state, and blocks missing/failed CI, pending review, drafts, conflicts and
+main/default targets. Partial GraphQL results are errors. This observation is not
+merge authority or fresh assembled verification; live publication wiring must
+combine those gates before requesting integration. The provider follows GitHub's
+[PR fields and merge states](https://docs.github.com/en/graphql/reference/pulls)
+and [commit check rollups](https://docs.github.com/en/graphql/reference/commits).

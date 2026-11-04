@@ -685,3 +685,31 @@ operation must recheck the exact head after fresh independent assembled verifica
 and use GitHub's expected-head merge contract. No endpoint may submit a review or
 publish a real tag/package. Provider-unit coverage is distinct from live wiring
 and real upstream qualification.
+
+The GitHub collaboration/PR provider checks passed ten deterministic cases with
+zero skips in 0.214 seconds. A read-only authenticated request against existing
+`fractalsynapse/arcnexus` PR #200 confirmed the production GraphQL query: merged PR,
+head `d3218e0b336e1a57d63b47e0cbd611d947d3312f`, successful check rollup,
+unknown merge state and null review decision. No upstream mutation was attempted;
+this proves the observation transport, not live publication or promotion.
+
+The next real simulation is task `cb53dbe7-7be0-4553-89cf-b4b02237a4f5`, source
+`9e910d330c35bc05cb146be6a38bd9ad9aec8116`, retained under
+`qualification-148-9e910d3`. Preparation completed and the real director started
+with the complete private runtime bundle. The useful delivery-evidence goal is
+unchanged, and no steward roster was supplied. Publication development proceeds
+against the checkout without replacing that run's captured supervisor.
+
+The new director prompt is 587,554 bytes, versus 749,798 bytes in the previous
+retained director run (21.6% smaller). Both directors selected report, publisher
+and CLI themselves. New turn usage is 628,524 input tokens, 464,896 cached input
+tokens and 1,478 output tokens across its investigation; those cumulative turn
+counts are not a per-prompt size comparison. The complete bundle removed the
+missing Code Mode companion error. The retained deprecated Landlock-setting
+warning remains diagnostic noise, not evidence of failed native enforcement.
+
+Formatting, repository lint and strict type checks passed after the readiness
+batch. Shared readiness uses provider aggregate check/review state rather than
+manually paging and reconstructing a parallel rule engine. The next remaining
+publication boundary is connecting checked live Git delivery and exact-revision
+integration; readiness alone does not close that gate.

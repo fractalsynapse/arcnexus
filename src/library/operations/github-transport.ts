@@ -15,7 +15,40 @@ export class GitHubTransport {
 
   /** Rejects path escape and redirects before credentials can reach another destination. */
   async request(path: string, signal: AbortSignal, method = 'GET', body?: object): Promise<any> {
-    const url = this.scope(path, method);
+    return this.send(this.scope(path, method), signal, method, body);
+  }
+
+  /** Reads provider-computed PR gates using a fixed query and captured repository variables. */
+  async pullRequest(number: number, signal: AbortSignal): Promise<any> {
+    if (!Number.isSafeInteger(number) || number <= 0) throw new Error('Invalid PR identity');
+    const [owner, name] = this.repository.split('/');
+    const query = `query($owner:String!,$name:String!,$number:Int!) {
+      repository(owner:$owner,name:$name) { nameWithOwner defaultBranchRef { name }
+        pullRequest(number:$number) { number url state isDraft headRefOid headRefName
+          headRepository { nameWithOwner } baseRefName baseRefOid
+          mergeable mergeStateStatus reviewDecision
+          commits(last:1) { nodes { commit { oid statusCheckRollup {
+            state contexts { totalCount }
+          } } } }
+        }
+      }
+    }`;
+    const result = await this.send('https://api.github.com/graphql', signal, 'POST', {
+      query,
+      variables: { owner, name, number },
+    });
+    if (result.errors?.length || result.data?.repository?.nameWithOwner !== this.repository)
+      throw new Error('GitHub readiness response is incomplete or outside captured repository');
+    return result.data.repository;
+  }
+
+  /** Keeps authenticated transport identical for scoped REST mutations and fixed GraphQL observations. */
+  private async send(
+    url: string,
+    signal: AbortSignal,
+    method: string,
+    body?: object,
+  ): Promise<any> {
     signal.throwIfAborted();
     const token = await this.credential();
     if (!token.trim()) throw new Error('GitHub host credential is unavailable');

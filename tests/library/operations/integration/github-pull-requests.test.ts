@@ -72,6 +72,40 @@ class PullRequestFixture {
     };
   }
 
+  readonly checkedCommit = {
+    oid: this.head,
+    statusCheckRollup: { state: 'SUCCESS', contexts: { totalCount: 3 } },
+  };
+
+  /** Supplies provider-computed readiness with checks bound to the captured commit. */
+  gates(overrides: Record<string, unknown> = {}, repository: Record<string, unknown> = {}) {
+    return {
+      data: {
+        repository: {
+          nameWithOwner: this.delivery.target.repository,
+          defaultBranchRef: { name: 'main' },
+          pullRequest: {
+            number: 17,
+            url: 'https://github.com/example/project/pull/17',
+            headRefOid: this.head,
+            headRefName: 'arcnexus/' + this.delivery.id,
+            headRepository: { nameWithOwner: this.delivery.target.repository },
+            baseRefName: 'staging',
+            baseRefOid: 'b'.repeat(40),
+            state: 'OPEN',
+            isDraft: false,
+            mergeable: 'MERGEABLE',
+            mergeStateStatus: 'CLEAN',
+            reviewDecision: 'APPROVED',
+            commits: { nodes: [{ commit: this.checkedCommit }] },
+            ...overrides,
+          },
+          ...repository,
+        },
+      },
+    };
+  }
+
   /** Queues host metadata, actual pushed ref, target branch and absence of an existing correlated PR. */
   ready(): void {
     this.responses.push(
@@ -142,6 +176,52 @@ test('GitHub PR creation blocks default targets, changed branch heads and caller
     f.requests.every((r) => r.options.method === 'GET'),
     true,
   );
+});
+
+test('GitHub readiness observes exact-head checks and reviews without creating provider effects', async () => {
+  const f = new PullRequestFixture();
+  f.responses.push(f.gates());
+  const result = await f.provider.readiness(17, f.signal);
+  assert.equal(result.ready, true);
+  assert.deepEqual(result.blockers, []);
+  const request = f.requests[0]!;
+  assert.equal(request.url, 'https://api.github.com/graphql');
+  const body = JSON.parse(String(request.options.body));
+  assert.deepEqual(body.variables, { owner: 'example', name: 'project', number: 17 });
+  assert.match(body.query, /^query/);
+  assert.equal(request.options.redirect, 'error');
+});
+
+test('GitHub readiness refuses missing CI, unknown or pending reviews and non-ready targets', async () => {
+  const f = new PullRequestFixture();
+  for (const state of [
+    { commits: { nodes: [] } },
+    { reviewDecision: 'REVIEW_REQUIRED' },
+    { reviewDecision: 'CHANGES_REQUESTED' },
+    { reviewDecision: undefined },
+    { mergeStateStatus: 'BLOCKED' },
+    { mergeable: 'CONFLICTING' },
+    { isDraft: true },
+    { state: 'CLOSED' },
+    { baseRefOid: null },
+  ]) {
+    f.responses.push(f.gates(state));
+    assert.equal((await f.provider.readiness(17, f.signal)).ready, false, JSON.stringify(state));
+  }
+  f.responses.push(f.gates({}, { defaultBranchRef: { name: 'staging' } }));
+  assert.equal((await f.provider.readiness(17, f.signal)).ready, false);
+});
+
+test('GitHub readiness rejects substituted heads and partial GraphQL responses', async () => {
+  const f = new PullRequestFixture();
+  f.responses.push(f.gates({ headRefOid: 'f'.repeat(40) }));
+  await assert.rejects(f.provider.readiness(17, f.signal), /attribution/);
+  f.responses.push({ ...f.gates(), errors: [{ message: 'inaccessible review state' }] });
+  await assert.rejects(f.provider.readiness(17, f.signal), /incomplete/);
+  f.responses.push(f.gates({}, { nameWithOwner: 'other/repository' }));
+  await assert.rejects(f.provider.readiness(17, f.signal), /captured repository/);
+  await assert.rejects(f.provider.readiness(-1, f.signal), /identity/);
+  assert.equal(f.responses.length, 0);
 });
 
 registerSuite({
