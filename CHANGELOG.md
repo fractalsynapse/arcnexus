@@ -4,6 +4,8 @@
 
 ### Added
 
+- Keep collaboration acceptance portable inside steward confinement by separating catalog fixtures from native host setup, without adding skipped checks (#236).
+
 - Project dependency waits and verified/blocked assignment milestones onto authorized tracking issues with durable, nonduplicating recovery (#233).
 
 - Expose current-run assignment intent through read-only evidence so stewards can discover and deliberately link existing work without private checkpoint access (#231).

@@ -1,22 +1,25 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
-import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
+import {
+  ExecutionContext,
+  type ProjectExecution,
+} from '../../../../dist/library/architecture/execution-context.js';
 import { ProviderStore } from '../../../../dist/library/coordination-store/provider-store.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import { RunEnvironments } from '../../../../dist/library/execution-runtime/run-environments.js';
 import { RunCollaboration } from '../../../../dist/library/execution-runtime/run-collaboration.js';
 import { SimulatedUpstream } from '../../../../dist/library/operations/simulated-upstream.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { generalCatalogFixture } from '../../testing/support/general-fixture.js';
 
 /** Exercises durable provider transitions without a model or replacement collaboration implementation. */
 class ProgressFixture {
-  readonly general: GeneralFixture;
+  readonly fixture: ReturnType<typeof generalCatalogFixture>;
 
-  readonly context;
+  readonly context: ProjectExecution;
 
   readonly host: ProjectHost;
 
@@ -24,15 +27,13 @@ class ProgressFixture {
 
   /** Captures explicit grants and opens ordinary host storage without starting engineering. */
   constructor(t: TestContext, comment = true) {
-    this.general = new GeneralFixture(t);
+    this.fixture = generalCatalogFixture(t);
     this.policy(comment);
-    this.context = new ExecutionContext().resolve(this.general.fixture.repo);
-    this.host = new ProjectHost(this.general.fixture.state, this.context);
-    this.environments = new RunEnvironments(
-      this.general.fixture.state,
-      this.context,
-      this.host.store,
-    );
+    this.context = new ExecutionContext().resolve(this.fixture.repo);
+    assert.deepEqual(this.context.bindings.tools, {});
+    t.after(() => assert.equal(existsSync(this.fixture.calls), false));
+    this.host = new ProjectHost(this.fixture.state, this.context);
+    this.environments = new RunEnvironments(this.fixture.state, this.context, this.host.store);
     t.after(() => {
       this.environments.effects.close();
       this.host.close();
@@ -41,7 +42,7 @@ class ProgressFixture {
 
   /** Uses committed shared-operation authority, including an explicit absent-comment case. */
   private policy(comment: boolean): void {
-    const f = this.general.fixture;
+    const f = this.fixture;
     const path = join(f.repo, 'architecture/components/platform.json');
     const platform = JSON.parse(readFileSync(path, 'utf8'));
     for (const action of comment ? ['issue.create', 'issue.comment'] : ['issue.create']) {
