@@ -1629,3 +1629,21 @@ resolver, shared service and repository lease. Test captured older revisions thr
 the public preparation service, not a retired CLI option. Preserve cancellation,
 parent-loss, ownership, conflict and cleanup-receipt coverage. Remove the old gateway's
 separate worktree execution/finalization path only after migrating its callers.
+
+The assembled workspace migration passed 47 of 50 native cases and all ten focused
+CLI resource cases. The remaining three assertions used `reason` instead of the
+shared cleanup result's existing `error` field; ownership and retention refusals
+were observed. Correct those assertions and rerun their affected cases. Preserve
+all lifecycle tests, including captured older revisions through the public service.
+
+Issue #217 resolves the actual native-CI proposal failure. CI 41814615373 retained
+valid complete JSON followed by an `UNDICI-EHPA` stderr warning in the combined log.
+The warning is valid diagnostic evidence, not part of the structured stdout protocol.
+Extend the supervised regular-file capture to retain separate stdout while keeping
+combined diagnostics and the existing output bound. Pin edit proposals from their
+invocation-bound stdout file, never by stripping warnings or accepting a JSON prefix.
+Keep cancellation, descendant supervision and checked-edit authorization unchanged.
+Native acceptance must deliberately emit a large proposal plus a stderr warning;
+unit coverage must retain both streams and exercise cancellation/output bounds.
+The two failed CI rounds cost roughly two native qualification cycles; a small
+mixed-stream case would have caught this condition before those long runs.
