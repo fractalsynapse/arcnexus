@@ -667,3 +667,10 @@ do not grant operations host-socket authority to make tests pass. The remaining
 failure expected an obsolete operation list without the declared `comment-issue`
 capability. Refresh that exact expectation. Strict type checking and consolidated
 architecture/guidance validation passed at this preparation checkpoint.
+
+All seven socket-dependent scenarios passed natively with zero skips in 1.508
+seconds. The affected experiment acceptance passed three cases with zero skips
+inside confinement in 25.982 seconds. These focused results resolve all eight
+failures from the clean suite; the confined lane now explicitly excludes the seven
+native-host cases, whose evidence remains required separately. This classification
+change does not relax operation confinement or remove acceptance coverage.

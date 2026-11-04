@@ -224,9 +224,8 @@ for (const mode of ['invalid-plan', 'planning-write'])
 
 nodeTest('status rejects escaping run IDs', () => suite.statusRejectsEscapingRunIDs());
 
-nodeTest('real stdio MCP bridge updates host checklist during a turn', (t: any) =>
-  suite.realStdioMCPBridgeUpdatesHostChecklistDuringATurn(t),
-);
+test('real stdio MCP bridge updates host checklist during a turn', (t: any) =>
+  suite.realStdioMCPBridgeUpdatesHostChecklistDuringATurn(t));
 
 for (const kind of ['research', 'review'])
   test(`planned ${kind} uses two source-read-only turns`, (t: any) =>

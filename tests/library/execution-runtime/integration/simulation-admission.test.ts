@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:net';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
 import { HostClient } from '../../../../dist/library/execution-runtime/host-client.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { workflowFixture } from '../../testing/support/workflow-fixture.js';
@@ -69,5 +70,5 @@ test('qualified host receives the explicit immutable simulation selection', asyn
 registerSuite({
   component: 'execution-runtime',
   level: 'integration',
-  tags: ['deterministic', 'lifecycle-effects'],
+  tags: ['deterministic', 'lifecycle-effects', 'native-host'],
 });
