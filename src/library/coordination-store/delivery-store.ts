@@ -148,6 +148,7 @@ export class DeliveryStore {
       input.authorityDigest,
       input.base,
       input.candidate,
+      ...(input.candidateRecordId === undefined ? [] : [input.candidateRecordId]),
       input.target.repository,
       input.target.branch,
       input.environment.id,

@@ -5,7 +5,7 @@ export { DeliveryChecks } from './delivery-checks.js';
 import { createHash } from 'node:crypto';
 import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/execution-types.js';
 import type { DeliveryStore } from '../coordination-store/delivery-store.js';
-import type { DeliveryCapture } from '../coordination-store/delivery-types.js';
+import type { DeliveryCapture, DeliveryRecord } from '../coordination-store/delivery-types.js';
 import type { RecordData } from '../workspace/state.js';
 import { DeliveryVerification } from './delivery-verification.js';
 
@@ -27,11 +27,7 @@ export class Publisher {
     const candidate = run.data.candidateRecord as RecordData | undefined;
     if (!candidate) throw new Error('No verified candidate is available for delivery');
     const verification = new DeliveryVerification(this.root).capture(run, assignments, candidate);
-    const id = createHash('sha256')
-      .update(
-        JSON.stringify([projectId, run.id, run.environment, run.data.candidateRevision, target]),
-      )
-      .digest('hex');
+    const id = this.identity(projectId, run, String(run.data.candidateRevision ?? ''), target);
     return this.store.capture({
       id,
       projectId,
@@ -42,9 +38,61 @@ export class Publisher {
       authorityDigest: String(run.data.executionIdentity ?? ''),
       base: String(run.data.authorityBase ?? ''),
       candidate: String(run.data.candidateRevision ?? ''),
+      candidateRecordId: candidate.id,
       verification,
       target,
     });
+  }
+
+  /** Rechecks original delivery proof without trusting a workday's later candidate pointer or revised review claims. */
+  revalidate(
+    delivery: DeliveryRecord,
+    run: ExecutionRun,
+    assignments: ExecutionAssignment[],
+    candidate: RecordData,
+  ): void {
+    this.assertRetained(delivery, run, assignments, candidate);
+    const captured = { ...run, data: { ...run.data, candidateRevision: delivery.candidate } };
+    const evidence = new DeliveryVerification(this.root).capture(captured, assignments, candidate);
+    if (
+      evidence.digest !== delivery.verification.digest ||
+      JSON.stringify(evidence.references) !== JSON.stringify(delivery.verification.references)
+    )
+      throw new Error('Retained independent delivery evidence changed');
+  }
+
+  /** Keeps source identity, assignment attribution and captured authority separate from future target verification. */
+  private assertRetained(
+    delivery: DeliveryRecord,
+    run: ExecutionRun,
+    assignments: ExecutionAssignment[],
+    candidate: RecordData,
+  ): void {
+    const id = this.identity(delivery.projectId, run, delivery.candidate, delivery.target);
+    if (
+      delivery.engineering !== 'verified' ||
+      delivery.id !== id ||
+      delivery.runId !== run.id ||
+      JSON.stringify(delivery.environment) !== JSON.stringify(run.environment) ||
+      delivery.packageId !== run.data.packageId ||
+      delivery.authorityDigest !== run.data.executionIdentity ||
+      delivery.base !== run.data.authorityBase ||
+      JSON.stringify(delivery.assignmentIds) !== JSON.stringify(assignments.map((a) => a.id)) ||
+      (delivery.candidateRecordId !== undefined && delivery.candidateRecordId !== candidate.id)
+    )
+      throw new Error('Retained delivery attribution differs from its captured source');
+  }
+
+  /** Hashes one immutable attribution tuple for both initial capture and retained-proof validation. */
+  private identity(
+    projectId: string,
+    run: ExecutionRun,
+    candidate: string,
+    target: DeliveryCapture['target'],
+  ): string {
+    return createHash('sha256')
+      .update(JSON.stringify([projectId, run.id, run.environment, candidate, target]))
+      .digest('hex');
   }
 }
 

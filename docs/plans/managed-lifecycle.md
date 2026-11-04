@@ -1236,7 +1236,7 @@ Before importing a simulation candidate, revalidate its captured run, environmen
 assignment set, source authority, exact candidate and independent evidence digest.
 Retain the candidate record identity on new deliveries; preserve optional historical
 records and allow their evidence to establish the record instead of trusting a
-workday's mutable latest-candidate pointer. Changed review bytes must invalidate
+workday's mutable latest-candidate pointer. Changed review content must invalidate
 retained proof even when a revised review still claims success. This is source
 provenance validation; it never substitutes for fresh target verification.
 
@@ -1248,3 +1248,9 @@ passed its older `7aa7eac` revision (482 confined-lane passes/353 skips and 395 
 passes/zero skips). The ninth real task `328f21ef-bfd1-4f39-87e5-91a089f93861` now
 captures `add2dc8` with the unchanged goal and no selected roster. Its state root is
 `qualification-148-add2dc8`; prior tasks and their failures remain retained.
+
+Six built publisher cases passed in 5.157 seconds, including historical optional
+record metadata, changed latest-candidate pointers, altered independent review
+content, and substituted source/assignment authority. Capture and revalidation now
+share one identity calculation. This validates retained source proof only; it does
+not claim fresh-target acceptance or a completed promotion command.

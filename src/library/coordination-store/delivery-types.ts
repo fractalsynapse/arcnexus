@@ -11,6 +11,7 @@ export interface DeliveryCapture {
   authorityDigest: string;
   base: string;
   candidate: string;
+  candidateRecordId?: string;
   verification: { references: string[]; digest: string };
   target: { repository: string; branch: string };
   promotedFrom?: string;

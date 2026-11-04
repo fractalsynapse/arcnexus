@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
@@ -198,6 +198,62 @@ test('publisher refuses missing goal evidence and unfinished assignments', (t) =
   f.run.data.goalEvidence = [];
   assert.throws(() => f.capture(), /goal assessment/);
   assert.deepEqual(f.store.list(), []);
+});
+
+test('retained delivery proof survives a newer candidate pointer and supports historical record metadata', (t) => {
+  const f = new PublisherFixture(t);
+  const delivery = f.capture();
+  assert.equal(delivery.candidateRecordId, f.record.id);
+  f.run.data.candidateRevision = f.record.base;
+  f.publisher.revalidate(delivery, f.run, [f.assignment], f.record);
+  const historical = { ...delivery };
+  delete historical.candidateRecordId;
+  f.publisher.revalidate(historical, f.run, [f.assignment], f.record);
+  assert.deepEqual(f.store.get(delivery.id), delivery);
+});
+
+test('retained delivery proof rejects revised review content even when they still claim success', (t) => {
+  const f = new PublisherFixture(t);
+  const delivery = f.capture();
+  const path = f.assignment.evidence[0]!;
+  const review = JSON.parse(readFileSync(path, 'utf8'));
+  review.agent.summary = 'Rewritten after acceptance';
+  writeFileSync(path, JSON.stringify(review));
+  assert.throws(
+    () => f.publisher.revalidate(delivery, f.run, [f.assignment], f.record),
+    /evidence changed/,
+  );
+});
+
+test('retained delivery proof rejects substituted source authority, record and assignment attribution', (t) => {
+  const f = new PublisherFixture(t);
+  const delivery = f.capture();
+  assert.throws(() => f.publisher.revalidate(delivery, f.run, [], f.record), /attribution/);
+  assert.throws(
+    () =>
+      f.publisher.revalidate(
+        { ...delivery, candidateRecordId: 'foreign' },
+        f.run,
+        [f.assignment],
+        f.record,
+      ),
+    /attribution/,
+  );
+  assert.throws(
+    () =>
+      f.publisher.revalidate(
+        { ...delivery, authorityDigest: 'foreign' },
+        f.run,
+        [f.assignment],
+        f.record,
+      ),
+    /attribution/,
+  );
+  writeFileSync(join(f.source, 'source.txt'), 'unreviewed after capture');
+  assert.throws(
+    () => f.publisher.revalidate(delivery, f.run, [f.assignment], f.record),
+    /changed after verified/,
+  );
 });
 
 registerSuite({

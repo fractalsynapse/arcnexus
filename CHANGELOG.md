@@ -4,6 +4,8 @@
 
 ### Added
 
+- Retain reviewed candidate record identities and revalidate original delivery attribution and independent evidence before promotion (#148).
+
 - Classify host IPC admission tests in native qualification and detect direct socket factories before they can break confined steward baselines (#208).
 
 - Assemble attributed simulation changes against a current target without importing unrelated baseline history or changing source branches; retain conflicts for inspection (#148).
