@@ -2200,3 +2200,17 @@ retain their original supervisors. The portfolio task's additional assignments
 include distinct contract and research contributions, so their count alone is not
 proof of duplicate implementation. Future runs can now inspect existing work before
 choosing whether a new request is necessary.
+
+### Project durable collaboration milestones (#233)
+
+The actual b9dd9ac task has tracking and meaningful dependency/review transitions,
+but its simulated provider still contains no comments. Merely exposing the worker
+MCP tool does not guarantee the accepted issue-to-delivery history. Project durable
+assignment waits and terminal outcomes through the existing captured comment grant
+and upstream executor. Bind issue, owner and environment to host state; use stable
+input-derived identities, reconcile uncertain effects, and retain complete receipts.
+Do not comment on polling or model tokens. Verified delivery must remain distinct
+from accepted intent, blocking and interruption. Empty stewardship and absent
+comment grants create no new effects. Reconcile outstanding milestones before
+further engineering or goal assessment so a host loss cannot skip a final comment.
+Existing supervisors and provider evidence remain unchanged.
