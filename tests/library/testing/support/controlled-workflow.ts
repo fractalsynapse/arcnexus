@@ -217,7 +217,8 @@ export class ControlledWorkflow {
     this.write('docs/behavior.md', 'Source must become after');
     this.write(
       'tests/regression.cjs',
-      "if(require('fs').readFileSync('source.txt','utf8')!=='after')throw new Error('BOUNDARY_EXPECTED');",
+      "if(require('fs').readFileSync('source.txt','utf8')!=='after')throw new Error('BOUNDARY_EXPECTED');" +
+        (this.options.mode === 'quality-recovery' && turn.count > 2 ? '\n' : ''),
     );
     turn.result.regression = {
       ...(this.options.checkedEdits ? { operationId: 'verify' } : { verificationIndex: 0 }),

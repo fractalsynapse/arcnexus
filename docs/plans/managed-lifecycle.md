@@ -1480,3 +1480,10 @@ The migrated repository format/lint definitions were still classified as `cli-ch
 Their declarations now use the already permitted `lint` category, preserving command
 definitions and usages while making their static-quality purpose explicit. The host
 does not infer semantics from command names or expand agent-only operation authority.
+
+The native #212 scenario was extended through correction, expected-red, implementation
+and final verification on the same retained thread: one pass, zero skips, 25.060
+seconds. Only the controlled model boundary supplies the corrected specification;
+the actual checked-edit, operation and stage machinery runs unchanged. This additional
+focused execution closes the distinction between safe rejection and successful
+continuation without another long integrated suite.

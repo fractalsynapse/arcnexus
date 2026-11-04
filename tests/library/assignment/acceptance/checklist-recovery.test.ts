@@ -30,6 +30,11 @@ class ChecklistRecoveryScenarios {
       false,
     );
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'before');
+    for (let stage = 0; stage < 3; stage++) await step();
+    assert.equal(record.status, 'completed');
+    assert.equal(record.threadId, thread);
+    assert.equal(record.specificationFeedback, undefined);
+    assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'after');
   }
 
   /** Preserves the accepted plan and partial specification until a valid correction reaches verification. */
@@ -225,7 +230,7 @@ class ChecklistRecoveryScenarios {
     operation.category = 'lint';
     operation.args = [
       '-e',
-      "if(require('fs').existsSync('tests/regression.cjs'))throw Error('FORMAT_REQUIRED')",
+      "const fs=require('fs');const p='tests/regression.cjs';if(fs.existsSync(p)&&!fs.readFileSync(p,'utf8').endsWith('\\n'))throw Error('FORMAT_REQUIRED')",
     ];
     writeFileSync(
       join(f.repo, 'architecture/operations/spec-quality.yaml'),
