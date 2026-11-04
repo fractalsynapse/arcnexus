@@ -2397,3 +2397,15 @@ owner-scoped engineering from full assembled-delivery verification. These guidan
 edits are bootstrap work and do not change any run already captured. The next long
 integrated result is CI 41918415928 for 76c1965; do not restart that same full cycle
 merely for this documentation alignment.
+
+Real qualification exposed #236 before engineering: the execution-runtime baseline
+passed 26 cases, failed six collaboration-progress cases, and explicitly skipped 119
+native cases. All six failures came from `GeneralFixture` requiring a native machine
+binding for tests that never launch a harness. The candidate correctly lacked the
+host's Git-private bindings. Separate reusable catalog construction from native
+harness setup, keep these provider/store checks portable, and exercise them through
+the actual confined CLI. Do not add skips or fake native enforcement. Preserve task
+`4cc89ae6-a69b-4da7-9534-0f099d86931c` and its supervisor; its director correctly
+reported that the failed baseline has no safe continuation. A new corrected run is
+required. This fixture defect cost preparation and director time despite prior native
+passes; testing the portable selection without ambient bindings is the cheap guard.
