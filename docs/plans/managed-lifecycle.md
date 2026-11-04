@@ -1487,3 +1487,10 @@ seconds. Only the controlled model boundary supplies the corrected specification
 the actual checked-edit, operation and stage machinery runs unchanged. This additional
 focused execution closes the distinction between safe rejection and successful
 continuation without another long integrated suite.
+
+Production `test inspect/run --component assignment --level unit` selected and passed
+nine cases with zero failures/skips at `89b4759`; evidence is retained at
+`~/.local/share/arcnexus/state/test-runs/6980793d-7cb1-4e44-a7b7-db10555e67f8`.
+Assembled formatting, lint and strict type checks passed. The tenth task separately
+completed and independently accepted its report research dependency; this does not
+count as a verified engineering change or simulated publication.
