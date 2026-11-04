@@ -1991,3 +1991,15 @@ captured suites left malformed new registrations able to fail a later activation
 The follow-up shares discovery rules rather than introducing a second parser.
 Focused assembled checks took about seven seconds; the prior CI job spanned
 16:47:42–17:15:40 UTC. Preserve the latter as measured job duration, not queue time.
+
+### Preserve publication attribution during candidate handoff (#227)
+
+The completed container task returned its verified candidate to the workday after
+automatic resumption. Checkpoint replacement and explicit resume succeeded, but
+workday dispatch then tried to publish that inherited task-owned candidate as a
+new workday delivery. Strict candidate identity checking rejected it and halted
+otherwise ready work. Automatic capture must recognize inherited verified baselines
+without relabeling their records or creating duplicate deliveries. Validate retained
+handoff provenance, keep mismatches explicit, and publish later current-run verified
+engineering through the unchanged independent-verification requirements. Exercise
+this boundary with publication enabled; retain the failed live workday unchanged.
