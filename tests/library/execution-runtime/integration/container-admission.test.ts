@@ -20,7 +20,7 @@ class ContainerAdmissionScenarios {
     const lifetime = new ContainerLifetime(root);
     const socket = join('/tmp', `arcnexus-${process.getuid?.() ?? 'user'}`, key + '.sock');
     mkdirSync(join(socket, '..'), { recursive: true });
-    await this.foreignEndpoint(socket, root, t);
+    await this.foreignEndpoint(socket, root, key, t);
     await assert.rejects(lifetime.shutdown(), (error: AggregateError) => {
       assert.match(String(error.errors[0]), /matching live deployment identity/);
       return true;
@@ -33,7 +33,12 @@ class ContainerAdmissionScenarios {
   }
 
   /** Owns the foreign IPC fixture and reports bind failures through the test rather than an uncaught event. */
-  private async foreignEndpoint(socket: string, root: string, t: TestContext): Promise<void> {
+  private async foreignEndpoint(
+    socket: string,
+    root: string,
+    key: string,
+    t: TestContext,
+  ): Promise<void> {
     const server = createServer((connection) => {
       connection.once('data', () =>
         connection.end(
