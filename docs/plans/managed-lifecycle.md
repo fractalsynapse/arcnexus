@@ -1887,3 +1887,14 @@ version under `/usr/local` and capture its executable binding beside Node and
 Codex. Keep the host toolchain separate from source authority and preserve the
 read boundary; do not add the entire hosted tool cache as a readable exception.
 Retain failed run 41857431712 and requalify the actual runner configuration.
+
+Efficiency correction (#224): the npm-binding workflow update omitted the existing
+release-owned workflow acceptance test. CI 41858507266 then spent 12 minutes
+54 seconds before reporting its stale two-tool assertion. YAML parsing and
+formatting were insufficient. The corrected compiled suite checks the additional
+pinned npm installation and binding: five cases passed with zero skips in
+210 milliseconds. Run this affected suite before pushing workflow changes; no
+full baseline or new process framework is necessary for that feedback. The initial
+direct TypeScript test attempt was unsupported by this installed Node build; the
+normal test build and compiled suite provided the evidence. Refreshed CI remains
+a separate gate.
