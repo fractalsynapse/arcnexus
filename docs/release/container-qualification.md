@@ -202,3 +202,28 @@ confinement adapter, loads a tracked instruction file, starts a thread, and reac
 an intentionally rejecting loopback model endpoint. It then verifies private-file
 reads and direct source writes remain denied. This is controlled transport acceptance,
 not real-agent simulation. Run it inside the supported image as well as natively.
+
+## Executable identity and full confined selection (#223)
+
+Real director startup passed at 45a5468, but the first engineering baseline exposed
+relative Node executable identity and diagnostic-output assumptions. The a7fb6f8
+image resolves declared programs against the invocation PATH before sandbox
+dispatch, preserving aliases and existing permissions. Twelve focused installed
+container cases passed with zero skips. A fresh `workspace prepare` followed by
+`test run` passed all 18 selected groups: 912 cases, 542 passes, zero failures, and
+370 designated native-host skips. Native service coverage separately passed all
+19 cases. These are deterministic and installed-enforcement results, not a
+completed real-agent workday.
+
+The new actual workday `dc7fc89b-0a41-4536-a26e-a952bc100746` captures a7fb6f8 and
+uses the real director and project catalog. Its volume and evidence are retained
+at `qualification-148-real-container-a7fb6f8`. The failed preceding workday and
+container are stopped but retained. Unfinished-work replacement and full
+self-development still require observed real execution.
+
+CI additionally requires an explicit readable npm installation: setup-node's
+preferred npm alias lives outside the captured readable tool directory. The
+workflow installs npm 10.9.9 under `/usr/local` and captures that binding alongside
+Node and Codex. Do not widen the sandbox to expose the complete hosted tool cache.
+Failed CI 41857431712 and refreshed CI 41858507266 are separate evidence; the latter
+is pending as of this record.
