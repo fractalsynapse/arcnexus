@@ -368,3 +368,12 @@ The first bounded implementation verifies retirement admission and protected-sta
 checks through the built production host/IPC path. Automatic management-command
 handoff and the shared acquisition service follow separately; this change alone
 must not claim that those commands can yet retire hosts automatically.
+
+Orderly host termination (`SIGTERM` or `SIGINT`) closes mutation admission and
+stops dispatch before cancelling the active managed execution. The host waits for
+its owned processes to drain, persists interruption and releases its stores and
+IPC endpoint. This does not convert unfinished work into a user-stopped run or a
+successful delivery. A cancelled supplier remains interrupted, with dependent
+assignments still waiting for delivery rather than receiving fabricated rejection.
+Manual pause/stop and terminal outcomes remain intact. Hard host loss still uses
+parent-death supervision and validated recovery on the next host startup.

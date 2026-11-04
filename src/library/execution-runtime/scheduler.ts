@@ -15,7 +15,7 @@ export class Scheduler {
   ) {}
 
   /** Runs the oldest ready assignment and persists its outcome; concurrent calls are rejected. */
-  async step(runId: string): Promise<boolean> {
+  async step(runId: string, signal?: AbortSignal): Promise<boolean> {
     if (this.active) throw new Error('An activation is already running');
     if (this.store.run(runId).status !== 'running') return false;
     const assignment = this.store.ready(runId)[0];
@@ -26,19 +26,28 @@ export class Scheduler {
       const result = assignment.data.pendingOutcome as ActivationResult | undefined;
       this.commit(assignment.id, result ?? (await this.execute(assignment)));
     } catch (error) {
-      const pendingOutcome = this.store.assignment(assignment.id).data.pendingOutcome;
-      const status =
-        error instanceof Error && error.name === 'DependencyBlocked' ? 'blocked' : 'failed';
-      this.store.fail(assignment.id, status, String(error));
-      this.store.updateAssignment(assignment.id, status, {
-        lastFailedOutcome: pendingOutcome ?? null,
-        pendingOutcome: null,
-      });
+      this.failure(assignment.id, error, signal?.aborted === true);
       if (error instanceof Error && error.name === 'CandidateIntegrityError') throw error;
     } finally {
       this.active = false;
     }
     return true;
+  }
+
+  /** Distinguishes interrupted execution from rejected work so cancellation cannot fabricate failed dependencies. */
+  private failure(id: string, error: unknown, interrupted: boolean): void {
+    const pendingOutcome = this.store.assignment(id).data.pendingOutcome;
+    const status = interrupted
+      ? 'interrupted'
+      : error instanceof Error && error.name === 'DependencyBlocked'
+        ? 'blocked'
+        : 'failed';
+    if (status === 'blocked' || status === 'failed') this.store.fail(id, status, String(error));
+    this.store.updateAssignment(id, status, {
+      lastFailedOutcome: pendingOutcome ?? null,
+      pendingOutcome: null,
+      ...(interrupted ? { reason: String(error) } : {}),
+    });
   }
 
   /** Journals an observed outcome before applying idempotent scheduling transitions. */

@@ -42,6 +42,30 @@ export class AssignmentDispatch {
     }
   }
 
+  /** Retains each owner's considered inputs and architectural questions independently. */
+  recordStewardship(
+    run: ExecutionRun,
+    owner: string,
+    fingerprint: string,
+    seen: Record<string, string>,
+    result: import('../architecture/initialization.js').InitializationResult,
+  ): void {
+    this.store.updateRun(run.id, this.store.run(run.id).status, {
+      seen,
+      lastSteward: owner,
+      lastDispatch: 'stewardship',
+      stewardshipReviews: {
+        ...((run.data.stewardshipReviews ?? {}) as object),
+        [owner]: {
+          fingerprint,
+          questions: result.questions,
+          summary: result.summary,
+          architectureProposal: result.architectureProposal,
+        },
+      },
+    });
+  }
+
   /** Isolates an exhausted diagnosis loop to its workday assignment while preserving task goal failure. */
   private eligible(
     run: ExecutionRun,

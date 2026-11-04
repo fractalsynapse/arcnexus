@@ -1035,3 +1035,12 @@ steward can correct syntax in the same turn. Keep authorization, frozen tests,
 filesystem aliases and uncertain journals fatal. Retain the exact failed request
 and its clean source evidence; do not hot-patch the captured real supervisor. The
 report steward continues independently and has reached its regression stage.
+
+Orderly host shutdown passed 14 native host-loss, signal, mode-control and retirement
+cases with zero skips in 52.919 seconds. Actual background hosts received SIGTERM
+and SIGINT while managed engineering was active; processes exited and interrupted
+state was visible before a replacement host started. Twelve durable inbox cases
+passed in 0.215 seconds, including interruption leaving a dependent waiting while
+unrelated ready work completes. Splitting activation admission/drain into its own
+small class kept the project host below the 500-line limit without compressing code.
+Container deployment qualification is still separate from this native evidence.

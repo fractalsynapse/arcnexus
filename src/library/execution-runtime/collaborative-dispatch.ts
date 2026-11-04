@@ -38,7 +38,7 @@ export class CollaborativeDispatch {
       await new Scheduler(this.store, async (assignment) => {
         await collaboration.tracking(run.mode === 'workday' ? assignment : undefined);
         return executor.activate(assignment);
-      }).step(run.id);
+      }).step(run.id, signal);
     } finally {
       collaboration.close();
     }

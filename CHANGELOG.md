@@ -4,6 +4,8 @@
 
 ### Added
 
+- Drain managed execution and persist interruption on host shutdown without falsely rejecting dependent work (#148).
+
 - Connect live delivery commit, fresh verification, push and GitHub PR creation to the coordinator with durable effect reuse, refreshable provider gates and independently verified exact-target staging integration (#148).
 
 - Manage platform standards through checked create/update/remove configuration transactions with stale-revision and reference protection (#148).

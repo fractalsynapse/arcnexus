@@ -19,6 +19,8 @@ class HostServer {
 
   private retiring = false;
 
+  private timer?: ReturnType<typeof setInterval>;
+
   private readonly server = createServer((socket) => this.connection(socket));
 
   /** Opens the sole project writer using the captured startup context. */
@@ -52,9 +54,29 @@ class HostServer {
         { mode: 0o600 },
       );
     });
-    setInterval(() => {
+    for (const signal of ['SIGTERM', 'SIGINT'] as const)
+      process.on(signal, () => void this.shutdown());
+    this.timer = setInterval(() => {
       if (!this.retiring) void this.host.tick().catch((error) => console.error(error));
     }, 100);
+  }
+
+  /** Closes admission and retains interruption after managed subprocesses drain on container or terminal shutdown. */
+  private async shutdown(): Promise<void> {
+    if (this.retiring) return;
+    this.retiring = true;
+    clearInterval(this.timer);
+    this.server.close();
+    try {
+      await this.host.shutdown();
+      this.host.close();
+      this.lease.close();
+      rmSync(this.socket, { force: true });
+      process.exit(0);
+    } catch (error) {
+      console.error(error);
+      process.exit(1);
+    }
   }
 
   /** Parses one bounded control message; malformed input cannot mutate execution state. */

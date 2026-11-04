@@ -1,3 +1,4 @@
+import { HostActivation } from './host-activation.js';
 import { RunPublication } from './run-publication.js';
 import { RunSelection } from './run-selection.js';
 import { RunCreation } from './run-creation.js';
@@ -34,9 +35,7 @@ export class ProjectHost {
 
   private readonly selection: RunSelection;
 
-  private busy = false;
-
-  private active?: { runId: string; controller: AbortController };
+  private readonly activation = new HostActivation();
 
   /** Opens durable project state without automatically replaying interrupted activations. */
   constructor(
@@ -55,7 +54,7 @@ export class ProjectHost {
 
   /** Releases host-owned databases only after managed activation has stopped. */
   close(): void {
-    if (this.busy) throw new Error('Cannot close an active execution host');
+    if (this.activation.busy) throw new Error('Cannot close an active execution host');
     this.environments.effects.close();
     this.store.close();
   }
@@ -69,13 +68,21 @@ export class ProjectHost {
     if (!workday) throw new Error('No workday exists');
     if (workday.status === 'stopped' && ['pause', 'stop'].includes(action)) return this.status();
     if (action === 'pause' && workday.status !== 'stopped')
-      this.store.updateRun(workday.id, this.active?.runId === workday.id ? 'pausing' : 'paused', {
-        pauseReason: 'user',
-      });
+      this.store.updateRun(
+        workday.id,
+        this.activation.current?.runId === workday.id ? 'pausing' : 'paused',
+        {
+          pauseReason: 'user',
+        },
+      );
     else if (action === 'resume') this.continuation(workday);
     else if (action === 'stop') {
-      this.store.updateRun(workday.id, this.active?.runId === workday.id ? 'stopping' : 'stopped');
-      if (this.active?.runId === workday.id) this.active.controller.abort(new Error('Cancelled'));
+      this.store.updateRun(
+        workday.id,
+        this.activation.current?.runId === workday.id ? 'stopping' : 'stopped',
+      );
+      if (this.activation.current?.runId === workday.id)
+        this.activation.current.controller.abort(new Error('Cancelled'));
     } else if (!['start', 'status'].includes(action)) throw new Error('Unknown workday action');
     return this.status();
   }
@@ -110,9 +117,13 @@ export class ProjectHost {
     const task = this.create('task', prompt, simulate);
     const workday = this.selection.workday();
     if (workday && ['running', 'idle'].includes(workday.status))
-      this.store.updateRun(workday.id, this.active?.runId === workday.id ? 'pausing' : 'paused', {
-        pauseReason: 'task',
-      });
+      this.store.updateRun(
+        workday.id,
+        this.activation.current?.runId === workday.id ? 'pausing' : 'paused',
+        {
+          pauseReason: 'task',
+        },
+      );
     return task;
   }
 
@@ -136,7 +147,8 @@ export class ProjectHost {
     if (['completed', 'cancelled', 'failed', 'stopped'].includes(run.status)) return;
     if (!explicitStop && ['interrupted', 'needs_attention'].includes(run.status)) return;
     this.store.updateRun(id, 'cancelled');
-    if (this.active?.runId === id) this.active.controller.abort(new Error('Cancelled'));
+    if (this.activation.current?.runId === id)
+      this.activation.current.controller.abort(new Error('Cancelled'));
   }
 
   /** Applies task intent at the host boundary and rejects stale resource mutations before effects. */
@@ -165,7 +177,7 @@ export class ProjectHost {
   private pauseTask(run: ExecutionRun): void {
     if (['paused', 'pausing'].includes(run.status)) return;
     if (run.status !== 'running') throw new InputError('Task cannot pause from ' + run.status);
-    const active = this.active?.runId === run.id;
+    const active = this.activation.current?.runId === run.id;
     this.store.updateRun(run.id, active ? 'pausing' : 'paused', {
       pauseReason: 'user',
       executionOwner: active,
@@ -182,21 +194,25 @@ export class ProjectHost {
 
   /** Executes at most one activation so IPC controls remain responsive between checkpoints. */
   async tick(): Promise<void> {
-    if (this.busy) return;
+    if (this.activation.busy || this.activation.closing) return;
     const run = this.selection.next();
     if (!run) return;
-    this.busy = true;
-    this.active = { runId: run.id, controller: new AbortController() };
-    try {
-      await this.advance(run, this.active.controller.signal);
-    } catch (error) {
-      this.failure(run.id, error);
-    } finally {
-      this.settle(run.id);
-      this.reports.save(run.id);
-      this.active = undefined;
-      this.busy = false;
-    }
+    await this.activation.run(run.id, async (signal) => {
+      try {
+        await this.advance(run, signal);
+      } catch (error) {
+        this.failure(run.id, error);
+      } finally {
+        this.settle(run.id);
+        this.reports.save(run.id);
+      }
+    });
+  }
+
+  /** Drains managed execution and persists interruption before the caller closes host stores. */
+  async shutdown(): Promise<void> {
+    await this.activation.shutdown(this.store, this.reports);
+    new HostRecovery(this.root, this.store, this.authority).recover();
   }
 
   /** Quarantines integrity failures across mode handoffs while retaining ordinary task failure isolation. */
@@ -213,7 +229,7 @@ export class ProjectHost {
 
   /** Projects current lifecycle and accountable assignments for the option-free status command. */
   status() {
-    return this.selection.status(this.active?.runId ?? null, this.reports);
+    return this.selection.status(this.activation.current?.runId ?? null, this.reports);
   }
 
   /** Captures a new run against the last compatible verified candidate. */
@@ -335,34 +351,10 @@ export class ProjectHost {
       }),
       owner,
     );
-    if (result.status === 'ready')
-      new AssignmentDispatch(this.root, this.context, this.store).apply(run, result);
+    const dispatch = new AssignmentDispatch(this.root, this.context, this.store);
+    if (result.status === 'ready') dispatch.apply(run, result);
     seen[owner] = fingerprint;
-    this.recordStewardship(run, owner, fingerprint, seen, result);
-  }
-
-  /** Retains each owner's considered inputs and architectural questions independently. */
-  private recordStewardship(
-    run: ExecutionRun,
-    owner: string,
-    fingerprint: string,
-    seen: Record<string, string>,
-    result: import('../architecture/initialization.js').InitializationResult,
-  ): void {
-    this.store.updateRun(run.id, this.store.run(run.id).status, {
-      seen,
-      lastSteward: owner,
-      lastDispatch: 'stewardship',
-      stewardshipReviews: {
-        ...((run.data.stewardshipReviews ?? {}) as object),
-        [owner]: {
-          fingerprint,
-          questions: result.questions,
-          summary: result.summary,
-          architectureProposal: result.architectureProposal,
-        },
-      },
-    });
+    dispatch.recordStewardship(run, owner, fingerprint, seen, result);
   }
 
   /** Requires all assignments and a separate goal-level assessment before task completion. */
