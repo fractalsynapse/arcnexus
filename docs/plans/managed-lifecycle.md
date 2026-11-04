@@ -2483,3 +2483,19 @@ transaction rather than adding a second Git execution path. Preserve attached
 checkouts, require compatible committed destination authority, and reject active
 execution or uncertain transitions. This work must not alter any active supervisor.
 The 40f5da3 assembled batch has been pushed once; CI 41925434578 is running.
+
+### Correctable owned-path narrowing (#239)
+
+The fresh real replacement task discovered coordination-store, report and maintenance
+through real inbox requests. Coordination-store then attempted its owned documentation
+path outside the accepted assignment's narrowed source/test paths. The host prevented
+the edit, but a generic exception ended the assignment and blocked its dependent.
+Unrelated report/maintenance work continues. Preserve this failure and active run.
+
+A future supervisor should return a structured, non-mutating rejection for a path
+owned by the steward but excluded by assignment narrowing, including its captured
+allowed paths. The steward may correct the request; it gains no authority. Cross-owner
+requests, wrong-stage writes, frozen tests, unsafe files and uncertain recovery remain
+hard barriers. Test the entire batch remains unchanged before accepting a subsequent
+in-scope edit. This avoids spending a new setup and model session on a correctable
+owned-path mistake while preserving every source-write permission.
