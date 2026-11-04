@@ -2134,3 +2134,16 @@ as an optimization target, without changing active checks. The large-history
 regressions use 32,768-character transport pages instead of the small-page stress
 fixture default; all bytes and hashes are still checked. Do not repeat a proven
 unfinished-file pause gate merely to delay the next useful publication task.
+
+### Return invalid dependency scope to its requester (#229 continuation)
+
+The early resolver check prevents expensive activation, but creating a recipient
+with an invalid accepted scope would still strand the dependency. Validate a new
+request batch before persisting recipient assignments. Return known-owner scope
+errors to the requester's retained thread in a read-only coordination activation,
+then yield normally to the scheduler. Preserve the original engineering stage,
+plan, frozen regression and authority; never widen an accepted assignment or
+partially route a fan-out batch. Existing deliberately linked assignments keep
+their store-enforced matching rules. Unknown owners remain explicit blockers.
+Use the existing equivalent-failure diagnosis, not a new retry quota, and qualify
+corrected resubmission through production request routing.
