@@ -80,12 +80,10 @@ export class EvidencePages {
 
   /** Validates bounded transport pages without limiting how much evidence a reviewer may inspect. */
   private read(args: unknown): unknown {
-    if (!args || typeof args !== 'object') throw new Error('Invalid retained evidence request');
-    const request = args as Record<string, unknown>;
-    if (Object.keys(request).some((key) => !['artifact', 'offset', 'length'].includes(key)))
-      throw new Error('Invalid retained evidence arguments');
-    const artifact = this.artifacts.get(String(request.artifact));
-    if (!artifact) throw new Error('Unknown ' + this.name.split('.')[0] + ' artifact');
+    const request = this.request(args);
+    if (!request) return this.rejected('Invalid retained evidence arguments');
+    const artifact = this.artifacts.get(request.artifact);
+    if (!artifact) return this.rejected('Unknown ' + this.name.split('.')[0] + ' artifact');
     const page = this.page(request, artifact.content.length);
     if (!page)
       return {
@@ -107,6 +105,28 @@ export class EvidencePages {
       nextOffset,
       complete: nextOffset === artifact.content.length,
       content,
+    };
+  }
+
+  /** Validates client-supplied names without coercion, path lookup or additional authority fields. */
+  private request(args: unknown) {
+    if (!args || typeof args !== 'object' || Array.isArray(args)) return;
+    const request = args as Record<string, unknown>;
+    if (
+      Object.keys(request).some((key) => !['artifact', 'offset', 'length'].includes(key)) ||
+      typeof request.artifact !== 'string' ||
+      !request.artifact
+    )
+      return;
+    return { artifact: request.artifact, offset: request.offset, length: request.length };
+  }
+
+  /** Keeps recoverable client mistakes distinct from corrupted evidence and unknown capability routing. */
+  private rejected(error: string) {
+    return {
+      status: 'rejected',
+      error,
+      recovery: 'Read artifact=manifest on this capability and use its advertised artifact names.',
     };
   }
 

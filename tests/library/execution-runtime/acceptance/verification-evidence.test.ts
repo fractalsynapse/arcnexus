@@ -42,16 +42,59 @@ class VerificationEvidenceScenarios {
   /** Artifact names are fixed host capabilities and cannot be used to read arbitrary evidence-directory paths. */
   async forbidden(t: TestContext): Promise<void> {
     const { f, context, record } = await this.fixture(t, false);
-    await assert.rejects(
-      () =>
-        new Direction(f.state, context, new AbortController().signal).verify(
-          record,
-          'a',
-          'READ_HOST_EVIDENCE FORBIDDEN_ARTIFACT',
-          { criteria: ['Scope is observed'] },
-        ),
-      /Unknown verification artifact/,
+    await new Direction(f.state, context, new AbortController().signal).verify(
+      record,
+      'a',
+      'READ_HOST_EVIDENCE FORBIDDEN_ARTIFACT',
+      { criteria: ['Scope is observed'] },
     );
+    const trace = JSON.parse(readFileSync(f.calls + '.evidence', 'utf8').trim());
+    assert.match(trace.artifacts.patch, /observed candidate change/);
+    assert.equal(trace.artifacts['../report.json'], undefined);
+    assert.equal(trace.artifacts['supplier:edit:foreign.json'], undefined);
+  }
+
+  /** Complete command logs are discoverable from the current manifest without duplicating them in its index. */
+  async commandOutputs(t: TestContext): Promise<void> {
+    const { f, context, record } = await this.fixture(t, false);
+    record.executionRunId = 'current-run';
+    const commands = this.commandObservations();
+    const evidence = {
+      run: { id: 'current-run' },
+      assignments: [{ id: 'assignment', record: { observations: { hostCommands: commands } } }],
+    };
+    await new Direction(f.state, context, new AbortController().signal).verify(
+      record,
+      'a',
+      'READ_HOST_EVIDENCE',
+      { criteria: ['Observed logs'] },
+      false,
+      evidence,
+    );
+    const trace = JSON.parse(readFileSync(f.calls + '.evidence', 'utf8').trim());
+    const index = JSON.parse(trace.artifacts.execution);
+    const indexed = index.assignments[0].record.observations.hostCommands;
+    assert.equal(trace.artifacts[indexed[0].output.artifact], commands[0]!.output.content);
+    assert.equal(trace.artifacts[indexed[1].output.artifact], '');
+    assert.equal(indexed[0].exitCode, 0);
+    assert.equal(indexed[0].stage, 'verification');
+    assert.equal('content' in indexed[0].output, false);
+    assert.deepEqual(indexed[2], commands[2]);
+    assert.equal(commands[0]!.output.content, 'Observed check\n'.repeat(20));
+  }
+
+  /** Supplies populated, empty and unavailable outputs with distinct observed completion metadata. */
+  private commandObservations() {
+    return [
+      {
+        index: 0,
+        stage: 'verification',
+        exitCode: 0,
+        output: { content: 'Observed check\n'.repeat(20) },
+      },
+      { index: 1, stage: 'verification', exitCode: 0, output: { content: '' } },
+      { index: 2, stage: 'verification', exitCode: null, output: { evidenceUnavailable: true } },
+    ];
   }
 
   /** A caller cannot attach another run's host facts to an otherwise valid current candidate. */
@@ -108,7 +151,11 @@ for (const goal of [false, true])
 test('verification retries an invalid page without losing pinned evidence', (t) =>
   scenarios.inspect(t, false, true));
 
-test('verification artifact access rejects arbitrary host paths', (t) => scenarios.forbidden(t));
+test('verification rejects foreign artifacts and resumes valid reads on the same MCP connection', (t) =>
+  scenarios.forbidden(t));
+
+test('verification indexes complete and empty command logs without mutating retained evidence', (t) =>
+  scenarios.commandOutputs(t));
 
 test('verification rejects host evidence attached from a foreign run', (t) =>
   scenarios.foreignRun(t));

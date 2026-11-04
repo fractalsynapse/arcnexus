@@ -5,6 +5,19 @@ import type { OperationBridge } from '../operations/operations.js';
 import { EvidencePages } from '../report/report.js';
 import type { RecordData } from '../workspace/state.js';
 
+interface HostCommandEvidence {
+  index: number;
+  output?: { content?: string; artifact?: string };
+}
+
+interface HostExecutionEvidence {
+  run?: { id?: string };
+  assignments?: Array<{
+    id: string;
+    record?: { observations?: { hostCommands?: HostCommandEvidence[] } };
+  }>;
+}
+
 /** Pins host-observed changes and exposes only their retained artifacts to independent reviewers. */
 export class VerificationEvidence {
   private readonly pages = new EvidencePages('verification.evidence');
@@ -40,11 +53,26 @@ export class VerificationEvidence {
 
   /** Pins current-run host observations without accepting a foreign task as execution evidence. */
   private execution(record: RecordData): void {
-    const evidence = record.hostExecutionEvidence as { run?: { id?: string } } | undefined;
+    const evidence = structuredClone(record.hostExecutionEvidence) as
+      HostExecutionEvidence | undefined;
     if (!evidence) return;
     if (!record.executionRunId || evidence.run?.id !== record.executionRunId)
       throw new Error('Host execution evidence belongs to a different run');
+    this.indexCommandOutputs(evidence);
     this.pages.add('execution', JSON.stringify(evidence, null, 2), 'json');
+  }
+
+  /** Pins complete logs separately so criterion inspection need not page through unrelated command output. */
+  private indexCommandOutputs(evidence: HostExecutionEvidence): void {
+    for (const assignment of evidence.assignments ?? []) {
+      for (const command of assignment.record?.observations?.hostCommands ?? []) {
+        if (typeof command.output?.content !== 'string') continue;
+        const id = `execution:${assignment.id}:command:${command.index}`;
+        this.pages.add(id, command.output.content, 'utf8');
+        delete command.output.content;
+        command.output.artifact = id;
+      }
+    }
   }
 
   /** Extends the declared operations with a fixed read-only artifact capability. */

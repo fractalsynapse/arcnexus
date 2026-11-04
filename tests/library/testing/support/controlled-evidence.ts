@@ -17,10 +17,7 @@ export class ControlledEvidence {
     try {
       await client.connect(this.transport(args));
       if (retryPage) await this.rejectedPage(client);
-      if (forbidden) {
-        await this.read(client, '../report.json');
-        return;
-      }
+      if (forbidden) await this.rejectedArtifacts(client);
       const manifest = JSON.parse(await this.read(client, 'manifest'));
       const artifacts: Record<string, string> = {};
       for (const artifact of manifest.artifacts)
@@ -47,6 +44,18 @@ export class ControlledEvidence {
           .join('='),
       );
     return new StdioClientTransport({ command: option('command'), args: option('args') });
+  }
+
+  /** Unknown or foreign artifact names disclose no bytes and do not terminate the real MCP connection. */
+  private async rejectedArtifacts(client: Client): Promise<void> {
+    for (const artifact of ['../report.json', 'supplier:edit:foreign.json']) {
+      const reply: any = await client.callTool({ name: this.capability, arguments: { artifact } });
+      const rejection = JSON.parse(reply.content[0].text);
+      if (reply.isError || rejection.status !== 'rejected' || 'content' in rejection)
+        throw new Error('Unknown artifact did not return a content-free corrective rejection');
+      if (!rejection.recovery?.includes('artifact=manifest'))
+        throw new Error('Unknown artifact omitted manifest recovery guidance');
+    }
   }
 
   /** A malformed transport page must be rejected without ending the verifier activation. */

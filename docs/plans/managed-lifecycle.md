@@ -1708,3 +1708,17 @@ with references advertised in the current verification manifest. Preserve every 
 byte, explicitly unavailable output and the original report data. Verify exact
 retrieval through MCP; record index-size reduction independently from unmeasured
 model-time savings. No reading quota or acceptance relaxation is introduced.
+
+The #218 repair passed seven focused evidence cases and its five native MCP cases.
+The assembled #218/#219 transport then passed all six native verification cases
+with zero skips in 28.546 seconds, including same-connection recovery from foreign
+artifact IDs, exact complete/empty command outputs and unchanged source evidence.
+The report selection passed 18 cases with zero failures and 14 native-host skips
+(32 total); strict checking and builds passed.
+
+Exercising the new production pinner against the retained real review input reduced
+the execution index from 26,351,724 to 2,704,204 characters. All 125 command outputs
+(21,856,105 characters) remained separately retrievable with matching content hashes;
+the original host evidence object remained unchanged. This is an observed index-size
+reduction, not a measured model-latency improvement or a newly accepted real delivery.
+The active simulation still uses its original supervisor.

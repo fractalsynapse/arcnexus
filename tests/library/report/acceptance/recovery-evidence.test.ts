@@ -43,14 +43,14 @@ class RecoveryEvidenceScenarios {
       length: 999999,
     })) as any;
     assert.equal(invalid.status, 'rejected');
-    await assert.rejects(
-      pages.call('assignment.evidence', { artifact: '../report.json' }),
-      /Unknown assignment artifact/,
-    );
-    await assert.rejects(
-      pages.call('assignment.evidence', { artifact: 'manifest', runId: 'foreign' }),
-      /arguments/,
-    );
+    for (const request of [
+      { artifact: '../report.json' },
+      { artifact: 'manifest', runId: 'foreign' },
+    ]) {
+      const rejected = (await pages.call('assignment.evidence', request)) as any;
+      assert.equal(rejected.status, 'rejected');
+      assert.equal('content' in rejected, false);
+    }
   }
 
   /** Foreign record identities and filesystem aliases cannot expose contents through a matching assignment. */
@@ -73,10 +73,11 @@ class RecoveryEvidenceScenarios {
     const page = (await pages.call('assignment.evidence', { artifact: 'manifest' })) as any;
     assert.equal(JSON.parse(page.content).records[0].evidenceUnavailable, true);
     assert.doesNotMatch(page.content, /SECRET/);
-    await assert.rejects(
-      pages.call('assignment.evidence', { artifact: f.source.id + ':state' }),
-      /Unknown/,
-    );
+    const missing = (await pages.call('assignment.evidence', {
+      artifact: f.source.id + ':state',
+    })) as any;
+    assert.equal(missing.status, 'rejected');
+    assert.equal('content' in missing, false);
     assert.throws(
       () =>
         new RecoveryEvidence(f.root, f.store).capture({ ...f.investigator, runId: randomUUID() }),
