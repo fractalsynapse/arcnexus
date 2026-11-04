@@ -6,6 +6,13 @@ requests survive process reopening. Yielding a dependency does not advance the
 stage or reset evidence. The requesting stage continues after verified delivery.
 Host checks finish before a stage checkpoint is declared safe for pause.
 
+Before freezing behavioral regression sources, the host runs captured mandatory
+verification operations classified as `lint`. A completed quality failure returns
+to specification correction while those sources remain editable. Uncertain operation
+completion and cancellation remain unsafe; agent-only formatters do not become
+mandatory checks. Final verification still reruns the required checks against the
+assembled candidate, and implementation cannot rewrite frozen regression bytes.
+
 A retained activation must match captured authority and candidate identity before
 continuing. Model claims never bypass specification or final verification. The final retirement slice routes the standalone session API through this same
 durable stage dispatcher, eliminating its separate complete-workflow loop. A session

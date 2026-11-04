@@ -4,6 +4,8 @@
 
 ### Added
 
+- Check captured mandatory source quality before freezing behavioral regressions, retaining specification correction without weakening frozen-test authority (#212).
+
 - Give research/review assignments pinned current-run checkpoint, checked-edit and operation evidence through a read-only MCP capability, including director and caller clarification (#207).
 
 - Queue simulation promotion under fresh real-target authority with independent target and goal verification, retained source provenance, and existing live publication gates (#148).

@@ -1467,3 +1467,11 @@ Completed source-quality failures use existing specification correction; uncerta
 operations and cancellation do not. Keep final checks and frozen-test protection
 unchanged. This is bootstrap prevention for new supervisors, not a hot patch or
 permission to rewrite the tenth run's accepted regression.
+
+The #212 focused built-program group passed eight unit cases with zero skips in
+0.687 seconds. Native execution then demonstrated the new pre-freeze failure path
+with a real supervised operation (one pass, zero skips, 10.015 seconds); the existing
+expected-red correction scenario also passed in 18.967 seconds. An initial fixture
+omitted permission for its new lint category and correctly failed preflight; the
+fixture now explicitly captures that permission. No production authority was widened.
+Real-agent use of the new checkpoint is still pending a future captured supervisor.

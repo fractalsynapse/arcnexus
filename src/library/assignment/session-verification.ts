@@ -1,6 +1,7 @@
 import { RegressionOperation } from './regression-operation.js';
 import { digest } from '../architecture/assignment.js';
 import { SpecificationValidationError } from './specification-error.js';
+import { SpecificationQuality } from './specification-quality.js';
 import { logExcerpt } from './attempts.js';
 import { CapturedVerification } from './captured-verification.js';
 import { RefactorCheckpoint } from './refactor-checkpoint.js';
@@ -28,6 +29,7 @@ export class SessionVerification {
       this.state.options.record.outcome = 'no_changes';
       throw new Error('Candidate has no changes');
     }
+    await new SpecificationQuality(this.state).verify();
     this.captureRegression();
     if (!this.state.documentationOnly) await this.regression(spec);
     else
