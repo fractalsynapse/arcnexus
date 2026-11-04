@@ -1792,3 +1792,29 @@ briefly omitted six newly emitted cases from an earlier direct invocation; that
 result was not accepted. Waiting for compilation and checking the expected count
 produced all sixteen focused passes. Keep build completion a prerequisite for direct
 native tests; the production test service already serializes these steps.
+
+### Real container startup qualification (#222)
+
+The packaged 449558f real workday registered the actual ArcNexus platform/package
+from outside a checkout and completed setup, then failed before its director could
+start: the generated `codex-linux-sandbox` alias under the denied private client home
+could not execute. The runtime remained non-root with all capabilities zero and
+no-new-privileges; no AppArmor denial appeared in the inspected failure interval.
+The preceding controlled container tests did not cover this actual Codex thread-start
+path. Preserve the failed workday and its supervisor, and qualify a new supervisor
+before claiming real container execution.
+
+Diagnose the precise helper visibility requirement with the installed runtime and a
+controlled model transport. Any correction must expose only necessary runtime support,
+retain private credential/client-state denials, and keep maintained source read-only.
+Add actual-runtime startup coverage rather than substituting another scripted worker.
+The official [permission contract](https://learn.chatgpt.com/docs/permissions) documents
+narrow filesystem grants, but the installed version must demonstrate enforcement.
+No privileged or broadly readable fallback is authorized.
+
+Efficiency observation: real packaged startup found a missing boundary case after
+sixteen controlled enforcement tests passed. A small actual-runtime thread-start
+probe should catch this before another multi-minute project preparation. The native
+real task remains on its unchanged supervisor; report/publisher/CLI were selected by
+its director, and report has requested publisher work through the ordinary inbox.
+The separate portfolio-creation goal is durably queued through the same task service.
