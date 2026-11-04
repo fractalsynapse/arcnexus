@@ -1494,3 +1494,11 @@ nine cases with zero failures/skips at `89b4759`; evidence is retained at
 Assembled formatting, lint and strict type checks passed. The tenth task separately
 completed and independently accepted its report research dependency; this does not
 count as a verified engineering change or simulated publication.
+
+Issue #213 closes the settings resource's missing revision contract before phase-three
+gateways consume it. Return deterministic revisions from effective settings reads;
+accept optional expected revisions in the shared update service and compare under
+the existing SQLite writer lease before atomic JSON replacement. Keep configured
+values separate from environment overrides, retain allowlisted settings and do not
+create storage on reads. The CLI keeps its simple argument contract. This is direct
+bootstrap work during the real simulation, not agent-delivered implementation.
