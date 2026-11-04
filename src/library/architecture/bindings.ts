@@ -1,3 +1,4 @@
+import { MaterializationBindings } from './materialization-bindings.js';
 import { accessSync, constants, existsSync, realpathSync, statSync } from 'node:fs';
 import { delimiter, dirname, isAbsolute, join } from 'node:path';
 import type { RecordData } from '../workspace/state.js';
@@ -31,7 +32,17 @@ export function loadProjectBindings(project: string): Bindings {
     git(project, 'rev-parse', '--path-format=absolute', '--git-common-dir').trim(),
   );
   const path = join(common, 'arcnexus', 'bindings.yaml');
-  return loadBindings(existsSync(path) ? path : undefined);
+  const bindings = loadBindings(existsSync(path) ? path : undefined);
+  const source = git(project, 'rev-parse', '--show-toplevel').trim();
+  const materializations = new MaterializationBindings().read(source);
+  for (const [id, entry] of Object.entries(materializations))
+    assertRepositoryBinding(source, id, entry.repository, { ...bindings, materializations });
+  return Object.keys(materializations).length ? { ...bindings, materializations } : bindings;
+}
+
+/** Records host-captured worktree discovery and returns its retained evidence digest. */
+export function captureWorktreeBindings(workspace: string, bindings: Bindings) {
+  return new MaterializationBindings().capture(workspace, bindings);
 }
 
 export function loadBindings(path?: string): Bindings {

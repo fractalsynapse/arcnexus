@@ -6,7 +6,7 @@ import { WorkspaceOperations } from './operation-preparation.js';
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, realpathSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { loadBindings, type Bindings } from '../architecture/bindings.js';
+import { captureWorktreeBindings, loadBindings, type Bindings } from '../architecture/bindings.js';
 import { environment, InputError, type Environment } from '../architecture/config.js';
 import { ConfigurationReader } from '../architecture/configuration.js';
 import { git } from '../operations/process.js';
@@ -104,6 +104,11 @@ export async function prepareWorkspace(
       'Preparation requires environment schema 4 or 5; migrate legacy recipes before execution',
     );
   git(record.source, 'worktree', 'add', '-b', record.branch, record.workspace, record.base);
+  record.materializationBinding = captureWorktreeBindings(
+    record.workspace,
+    record.bindings as Bindings,
+  );
+  save(root, record);
   observe(root, record, 'workspace.created', { workspace: record.workspace, base: record.base });
   const shared = new WorkspaceOperations(root, record, signal);
   await prepareMembers(root, record, signal, (member) => shared.member(member));

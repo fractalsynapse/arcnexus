@@ -743,3 +743,17 @@ that exact worktree, HEAD, common Git directory and origin mapping before using 
 do not rewrite declared upstreams or loosen ordinary origin checks. The snapshot
 is outside maintained source and cannot redefine captured runtime authority. Add
 isolated-worktree built-CLI acceptance before another expensive real submission.
+
+The new isolated-worktree discovery regression passed two built-program cases in
+2.324 seconds. It also exposed that local `validate` formerly omitted automatic
+bindings entirely, while legacy assignment inspection supplied empty bindings.
+Normalize those reads to the same discovered binding path instead of adding a
+simulation-only CLI flag. Qualification must now exercise a complete isolated
+worktree baseline before spending another director turn. The prior confined
+checkout check was insufficient because its real origin concealed this difference.
+
+The native production-host simulation setup case also passed with zero skips in
+5.023 seconds, including fresh discovery of the prepared worktree snapshot.
+Type checks and affected lint passed. This is controlled-input acceptance, not a
+real-agent completion gate. Retain that distinction when the full isolated baseline
+and next genuine model run are reported.

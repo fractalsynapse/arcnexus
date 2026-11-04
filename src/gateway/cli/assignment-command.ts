@@ -3,7 +3,7 @@ import { ArchitectureValidation } from '../../library/architecture/validation.js
 import type { CliValues } from './arguments.js';
 import { InputError } from '../../library/architecture/config.js';
 import { resolveAssignment, resolveBase } from '../../library/architecture/assignment.js';
-import { loadBindings } from '../../library/architecture/bindings.js';
+import { loadBindings, loadProjectBindings } from '../../library/architecture/bindings.js';
 
 /** Resolves immutable assignments and presents their captured authority. */
 export class AssignmentCommand {
@@ -48,8 +48,11 @@ export class AssignmentCommand {
   /** Resolves captured inputs and rejects unsupported or inconsistent configuration. */
   resolve() {
     const { values, positionals, command } = this;
-    const bindings = loadBindings(values.bindings);
     const selection = command === 'inspect' ? resolveBase(values.project!, values.base) : undefined;
+    const bindings =
+      values.bindings || !selection
+        ? loadBindings(values.bindings)
+        : loadProjectBindings(selection.source);
     const resolved = selection
       ? resolveAssignment(selection.source, selection.base, positionals[1]!, {
           objective: positionals[2],

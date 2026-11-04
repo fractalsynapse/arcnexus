@@ -176,3 +176,11 @@ Platform/package removal continues to use resource unregistration. Creation acce
 the current package revision for optimistic checks; removal accepts the current
 component revision. Neither operation edits an attached checkout or changes the
 authority of a retained run.
+
+Managed simulation worktrees carry a host-written materialization snapshot in their
+private Git metadata. Fresh `validate`, `inspect` and test-selection processes use
+that snapshot to check the actual worktree revision and isolated origin against the
+captured mapping. Declared upstream identities remain unchanged. A mismatched HEAD,
+remote or worktree identity is an error; ordinary checkouts retain ordinary origin
+checks. The snapshot is not authored configuration and does not change active run
+permissions or supply upstream credentials.

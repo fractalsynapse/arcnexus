@@ -1,3 +1,4 @@
+import { loadProjectBindings } from '../../../../dist/library/architecture/bindings.js';
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -112,9 +113,17 @@ test('simulation uses isolated Git source and creates tracking before the first 
   assert.equal(retained.status, 'running', JSON.stringify(retained.data));
   assert.equal(retained.environment!.mode, 'simulation');
   assert.equal(retained.data.initialized, true);
-  const workspace = retained.data.workspace as { source: string; executionEnvironment: unknown };
+  const workspace = retained.data.workspace as {
+    source: string;
+    workspace: string;
+    executionEnvironment: unknown;
+  };
   assert.notEqual(workspace.source, f.general.fixture.repo);
   assert.deepEqual(workspace.executionEnvironment, retained.environment);
+  assert.equal(
+    loadProjectBindings(workspace.workspace).materializations!.sample!.source,
+    workspace.workspace,
+  );
   assert.equal(f.issues(retained.environment!.id).length, 1);
   assert.ok(f.host.store.assignments(task.id).every((a) => !a.data.recordId));
   assert.equal(f.general.fixture.git('rev-parse', 'HEAD'), original);
