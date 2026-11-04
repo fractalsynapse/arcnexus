@@ -53,6 +53,8 @@ class PolicyRecoveryScenarios {
     host.control('start');
     const run = host.store.runs()[0]!;
     await host.tick();
+    assert.equal(host.store.run(run.id).data.initialized, true);
+    await host.tick();
     const paths = readdirSync(join(f.state, 'runs')).map((id) =>
       join(f.state, 'runs', id, 'report.json'),
     );

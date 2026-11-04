@@ -994,3 +994,20 @@ push would permit. Lost-receipt recovery reused the actual pinned target without
 rerunning checks or mutation. Three existing GitHub transport cases and complete
 simulation publication also passed in the preceding seven-case run (8.373 seconds).
 These remain controlled-provider acceptance, not real GitHub staging integration.
+
+Issue #204's four affected native suites now pass all 18 cases with zero skips in
+48.110 seconds. The tests execute actual director setup and assert initialization
+before the engineering/policy condition under test. No production lifecycle code,
+confinement boundary or timeout was weakened. State-driven idle observation replaces
+an assumed four-tick sequence. This focused reproduction was far faster than another
+15-minute full native run; the assembled CI still needs a new current-head result.
+
+Observed remaining efficiency cost: the seventh real task runs the same inherited
+full-package baseline for separate assignments, including a second report assignment
+created by publisher dependency routing, before any candidate delivery changes.
+One CLI baseline alone ran 820 tests (477 pass, 343 native skips) in 179.596 seconds.
+Consider reusing successful baseline evidence only when candidate, captured authority,
+operation definition, resolved arguments and confinement/tool bindings are identical.
+Owner-specific checks and checks after changes must remain independent; do not relax
+this run's captured acceptance or substitute skip counts for evidence. No cache change
+has been made to the running supervisor.
