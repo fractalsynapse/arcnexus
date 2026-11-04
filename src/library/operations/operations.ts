@@ -72,6 +72,11 @@ class OperationSelectionError extends Error {
   }
 }
 
+interface OperationOutcome {
+  result?: CommandResult;
+  failedOperationId?: string;
+}
+
 /** Authorizes declared commands and services, accounts for calls, and retains their evidence. */
 class OperationRuntime {
   private readonly resolved: ResolvedAssignment;
@@ -287,23 +292,26 @@ class OperationRuntime {
   /** Executes a declared finite operation and retains its command evidence. */
   private async finite(op: Operation) {
     const { combined, start } = this.begin(op);
-    const outcome: { result?: CommandResult } = {};
+    const outcome: OperationOutcome = {};
     let artifacts: unknown[] = [];
     try {
       outcome.result = await this.execute(op, combined, outcome);
       const result = outcome.result;
       this.inspect();
-      artifacts = op.artifacts.map((path) => this.artifact(path));
+      const prerequisiteFailed = !!outcome.failedOperationId && outcome.failedOperationId !== op.id;
+      if (!prerequisiteFailed) artifacts = op.artifacts.map((path) => this.artifact(path));
       const output = readDiagnosticExcerpt(result!.log).output;
       return {
         id: op.id,
         status: result!.exitCode === 0 ? 'passed' : 'failed',
+        failedOperationId: outcome.failedOperationId,
+        prerequisiteFailed,
         ...result,
         output,
         artifacts,
       };
     } finally {
-      this.finish(op.id, start, outcome.result, artifacts);
+      this.finish(op.id, start, outcome, artifacts);
     }
   }
 
@@ -311,7 +319,7 @@ class OperationRuntime {
   private async execute(
     op: Operation,
     signal: AbortSignal,
-    outcome: { result?: CommandResult },
+    outcome: OperationOutcome,
   ): Promise<CommandResult | undefined> {
     try {
       return await new OperationExecution(this.root, this.record, signal, this.services).run(
@@ -321,13 +329,9 @@ class OperationRuntime {
     } catch (error) {
       if (error && typeof error === 'object' && 'commandResult' in error)
         outcome.result = error.commandResult as CommandResult;
-      if (
-        signal.aborted ||
-        !outcome.result ||
-        !isObservedCommandFailure(error) ||
-        error.operationId !== op.id
-      )
-        throw error;
+      if (signal.aborted || !outcome.result || !isObservedCommandFailure(error)) throw error;
+      if (typeof error.operationId !== 'string') throw error;
+      outcome.failedOperationId = error.operationId;
       return outcome.result;
     }
   }
@@ -338,19 +342,17 @@ class OperationRuntime {
   }
 
   /** Finalizes the current lifecycle while preserving its recorded outcome. */
-  private finish(
-    id: string,
-    start: number,
-    result: CommandResult | undefined,
-    artifacts: unknown[],
-  ): void {
+  private finish(id: string, start: number, outcome: OperationOutcome, artifacts: unknown[]): void {
     const { root, record } = this;
-    if (result) (record.operations as unknown[]).push({ id, ...result, artifacts });
+    const { result, failedOperationId } = outcome;
+    if (result)
+      (record.operations as unknown[]).push({ id, ...result, failedOperationId, artifacts });
     observe(root, record, 'operation.finished', {
       id,
       number: this.activeNumber,
       durationMs: Date.now() - start,
       result,
+      failedOperationId,
       artifacts,
     });
     delete record.currentOperation;

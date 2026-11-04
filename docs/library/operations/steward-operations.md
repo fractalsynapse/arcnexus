@@ -16,6 +16,14 @@ A new checkpoint re-executes its checks. Host regression checks and engineering 
 use this same ordering; a requested test cannot run against stale generated output
 merely because it was selected separately from its preparation prerequisite.
 
+For current schema-4 agent calls, an observed nonzero prerequisite exit returns
+failed feedback with the requested `id`, actual `failedOperationId`, diagnostic and
+`prerequisiteFailed: true`. The dependent command is not executed and its artifacts
+are not collected. A subsequent authorized correction can run normally. Cancellation,
+transport failure, invalid authority and uncertain completion remain fatal. Mandatory
+host verification still fails, and prerequisite failure cannot establish the selected
+regression's expected-red evidence. Invocation records retain both identities.
+
 Plans/timeline (#41), declared operations (#42), managed local services/probes
 (#45), and selected history/live qualification (#48) are available. Their retained
 qualification evidence is linked below.

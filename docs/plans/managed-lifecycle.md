@@ -1339,3 +1339,13 @@ agent bridge: expected-red capture still requires the selected regression's own
 observed failure, and mandatory verification still throws on failed prerequisites.
 Test the real MCP/harness path with a failed compiler prerequisite, a subsequent
 successful operation, and no dependent side effects; retain raw invocation evidence.
+
+The prerequisite correction passed five focused built cases with zero skips in
+26.686 seconds. The native MCP scenario observed compiler exit 7, returned the
+actual failed operation to the steward, skipped dependent output/artifacts, then
+completed two subsequent operations after checked source correction. A direct
+mandatory invocation still failed, and four regression-selection cases retained
+the rule that prerequisite failure is not expected-red evidence. Scoped lint and
+build/test compilation passed. No real-agent success is inferred from these scripted
+inputs. The next real run will capture this correction instead of modifying any
+previous supervisor.
