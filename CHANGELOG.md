@@ -101,6 +101,8 @@
 
 ### Fixed
 
+- Reject behavioral assignment scopes disconnected from the captured test-profile root before workspace preparation, preserving explicit scope and nonbehavioral workflows (#229).
+
 - Preserve original delivery attribution when a workday inherits a verified task candidate, without duplicating publication or stopping unrelated work (#227).
 
 - Give explicit simulated publication retries fresh check observations while retaining failed receipts, deduplicating pending requests and refusing uncertain-operation replay (#228).

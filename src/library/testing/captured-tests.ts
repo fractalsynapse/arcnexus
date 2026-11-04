@@ -13,7 +13,7 @@ export interface CapturedTest extends SuiteMetadata {
   sha256: string;
 }
 
-export { compiledTestPath } from './test-paths.js';
+export { compiledTestPath, assertBehavioralTestScope } from './test-paths.js';
 
 /** Captures mandatory suite identities before candidate edits can affect discovery. */
 export function captureComponentTests(catalog: Catalog, repository: string, base: string): void {

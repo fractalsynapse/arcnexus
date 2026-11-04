@@ -2084,3 +2084,16 @@ review, refactor and custom-operation workflows; permit new suites beneath owned
 test roots even when no suite exists yet. This necessary structural check does not
 prove that the permitted tests can establish the requested acceptance criterion.
 Further feasibility findings remain explicit rather than inferred from prose.
+
+The #229 resolver checks pass twelve focused cases with no skips, including
+package-root anchoring, new regression paths, a similarly named sibling rejection,
+custom verification, nonbehavioral workflows and existing checked-edit registration
+validation. The check reuses the testing owner's root resolver and runs before
+workspace preparation. It diagnoses a necessary path constraint; it cannot prove
+acceptance feasibility or automatically renegotiate a narrowed dependency.
+
+A fresh real simulated container workday a7623609-a3d0-41d1-a1bd-2872b3c02094
+started with frozen supervisor b9dd9ac and environment
+bd3b471a-dc0f-449d-aeaa-75c3e3b6e3ea. The previous workday was explicitly stopped
+with its unfinished changes retained; no old activation was replayed under new
+authority. This run does not include the subsequent #229 bootstrap change.

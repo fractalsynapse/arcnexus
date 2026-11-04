@@ -1,3 +1,4 @@
+import { assertBehavioralTestScope } from '../testing/captured-tests.js';
 import { captureInitialization, type InitializationSnapshot } from './initialization.js';
 import { isUtf8 } from 'node:buffer';
 import { createHash } from 'node:crypto';
@@ -349,6 +350,12 @@ function assignmentScope(assignment: Assignment, component: Component): string[]
     if (!covered(p, component.allowedWritePaths))
       throw new InputError(`Assignment widens component scope: ${p}`);
   }
+  if (
+    component.schemaVersion === 6 &&
+    assignment.kind === 'change' &&
+    (!assignment.changeType || assignment.changeType === 'behavior')
+  )
+    assertBehavioralTestScope(component, allowedWritePaths);
   return allowedWritePaths;
 }
 
