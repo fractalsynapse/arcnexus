@@ -12,6 +12,15 @@ configuration lives under XDG config storage and contains no architectural polic
 credentials. `config get/update volume` reads or changes this application setting.
 An environment override wins and is visible in the effective result.
 
+Settings reads include a deterministic `revision` without creating storage. Shared
+application callers may pass that token as the third argument to
+`ApplicationSettings.update(name, value, expectedRevision)`. A stale token fails
+before replacing configuration. Updates hold the existing SQLite writer lease through
+validation and atomic JSON replacement; failed mutations release it. The revision
+includes both the effective environment override and the configured value, so an
+override cannot conceal an intervening configuration change. The CLI keeps
+`config update <name> <value>`; revision-aware API adapters use the shared service.
+
 The coordination store owns a versioned portfolio SQLite database. Repository records
 contain stable UUIDs and managed-relative or attached-absolute storage locations.
 Registration records locate component definitions; they do not copy purposes,

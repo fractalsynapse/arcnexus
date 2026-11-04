@@ -1502,3 +1502,10 @@ the existing SQLite writer lease before atomic JSON replacement. Keep configured
 values separate from environment overrides, retain allowlisted settings and do not
 create storage on reads. The CLI keeps its simple argument contract. This is direct
 bootstrap work during the real simulation, not agent-delivered implementation.
+
+The #213 settings service and existing built CLI passed seven focused cases with
+zero skips: four persistence/revision cases in 0.610 seconds, three CLI compatibility
+cases in 6.592 seconds. Builds and scoped formatting/lint passed. Reusing the existing
+SQLite lease avoided a new lock protocol or second settings source. Expected revisions
+are service inputs, not additional required CLI arguments. The concurrent real-agent
+publisher assignment has begun implementation; its evidence remains separate.

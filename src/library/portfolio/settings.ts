@@ -1,8 +1,9 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { InputError } from '../architecture/config.js';
+import { ExecutionLease } from '../coordination-store/execution-store.js';
 
 /** Resolves application storage without confusing machine settings with architectural authority. */
 export class ApplicationSettings {
@@ -19,7 +20,7 @@ export class ApplicationSettings {
     if (process.env.ARCNEXUS_VOLUME !== undefined && !process.env.ARCNEXUS_VOLUME.trim())
       throw new InputError('Expected a nonempty ARCNEXUS_VOLUME path');
     const fallback = join(process.env.XDG_DATA_HOME ?? join(homedir(), '.local/share'), 'arcnexus');
-    return {
+    const result = {
       name,
       value: resolve(process.env.ARCNEXUS_VOLUME ?? configured ?? fallback),
       source: process.env.ARCNEXUS_VOLUME
@@ -28,6 +29,10 @@ export class ApplicationSettings {
           ? 'configuration'
           : 'default',
     };
+    const revision = createHash('sha256')
+      .update(JSON.stringify({ ...result, configuredValue: configured ?? null }))
+      .digest('hex');
+    return { ...result, revision };
   }
 
   /** Selects execution storage without moving historical evidence or creating directories. */
@@ -50,13 +55,33 @@ export class ApplicationSettings {
   }
 
   /** Atomically saves explicit machine configuration; environment overrides remain visible. */
-  update(name: string, value: string) {
+  update(name: string, value: string, expectedRevision?: string) {
     if (name !== 'volume' || !value.trim()) throw new InputError('Expected a nonempty volume path');
+    const lease = new ExecutionLease(
+      this.path + '.lease.sqlite',
+      'Application settings are being updated',
+    );
+    try {
+      const current = this.get(name);
+      if (expectedRevision !== undefined && current.revision !== expectedRevision)
+        throw new InputError('Settings revision changed; read current settings before retrying');
+      return this.persist(name, value);
+    } finally {
+      lease.close();
+    }
+  }
+
+  /** Replaces the single authored settings source and removes any incomplete temporary file. */
+  private persist(name: string, value: string) {
     const data = { ...this.read(), volume: resolve(value) };
     mkdirSync(dirname(this.path), { recursive: true, mode: 0o700 });
     const temporary = this.path + '.' + randomUUID();
-    writeFileSync(temporary, JSON.stringify(data, null, 2) + '\n', { mode: 0o600 });
-    renameSync(temporary, this.path);
+    try {
+      writeFileSync(temporary, JSON.stringify(data, null, 2) + '\n', { mode: 0o600, flag: 'wx' });
+      renameSync(temporary, this.path);
+    } finally {
+      rmSync(temporary, { force: true });
+    }
     return { ...this.get(name), configuredValue: data.volume };
   }
 

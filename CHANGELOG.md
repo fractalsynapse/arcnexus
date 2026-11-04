@@ -4,6 +4,8 @@
 
 ### Added
 
+- Return application-settings revisions and reject stale service updates under exclusive persistence ownership, preserving environment overrides and simple config commands (#213).
+
 - Check captured mandatory source quality before freezing behavioral regressions, retaining specification correction without weakening frozen-test authority (#212).
 
 - Give research/review assignments pinned current-run checkpoint, checked-edit and operation evidence through a read-only MCP capability, including director and caller clarification (#207).
