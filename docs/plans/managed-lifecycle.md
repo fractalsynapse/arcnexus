@@ -1054,3 +1054,19 @@ from unavailable trusted schemas; no diagnostic-prefix parsing was introduced.
 The actual running supervisor remains unchanged and its failed CLI evidence stays
 retained. The report worker has meanwhile passed observed expected-red verification
 and entered implementation, providing real evidence for #203's corrected routing.
+
+Container probe follow-up: Docker 29.9.1 with its systemd cgroup driver passed all
+three process-scope tests (0.515 seconds) using a dedicated `arcnexusq148.slice`
+subtree, read-only application/runtime mounts and private tmpfs. The default
+seccomp profile denied Bubblewrap namespace creation. A pinned Moby default profile
+plus the namespace/mount syscalls required by the inner sandbox permitted userns
+creation, then the unchanged `docker-default` AppArmor profile denied mount
+propagation (`Failed to make / slave`). This isolates two deployment prerequisites;
+it is not a passed container confinement gate.
+
+Prepare a dedicated, reviewable AppArmor profile based on Moby's existing container
+restrictions, allowing inner namespace mounts while keeping outer capabilities
+dropped and source/runtime mounts read-only. Do not change docker-default, disable
+AppArmor, run privileged, or expose all host cgroups. Loading this separate named
+profile needs host administrator authentication, which this session lacks. Keep
+static parsing and actual enforcement qualification distinct.
