@@ -4,6 +4,8 @@
 
 ### Added
 
+- Preserve captured execution progress and event-sensitive revisions in workspace resource views without exposing raw harness records (#216).
+
 - Apply complete retained operation edit proposals by invocation reference through the checked edit tool, avoiding truncated formatter JSON while preserving source-write enforcement (#214).
 
 - Return application-settings revisions and reject stale service updates under exclusive persistence ownership, preserving environment overrides and simple config commands (#213).

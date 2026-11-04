@@ -70,8 +70,7 @@ new activity option or ambiguously combine the two forms.
 working directory through the shared workspace service. Package references follow
 portfolio resolution; command recipes, bindings and source revisions are resolved
 under the hood. Success returns a workspace resource and exit 0; a retained failed
-preparation returns 1, invalid input/preflight returns 2, and cancellation returns
-130. An active repository host prevents preparation rather than allowing concurrent
+preparation returns 1, invalid input/preflight returns 2, and cancellation returns 130. An active repository host prevents preparation rather than allowing concurrent
 repository mutation. Legacy `prepare --project` remains only during fixture migration.
 
 ## Scripted campaigns
@@ -81,3 +80,10 @@ repository mutation. Legacy `prepare --project` remains only during fixture migr
 exercise the built task command; their orchestration is compiled only with tests.
 Historical `experiment inspect` remains read-only. Use `task run --simulate` or
 `workday start --simulate` for real-agent isolated lifecycle learning.
+
+`workspace get <id>` includes captured execution progress: observed operation,
+checklist claims, host verification evidence and cancellation state. Historical
+missing fields remain unavailable; recorded old limits are evidence, not active
+budgets. Reads do not start a host or load mutable source. Revision tokens change
+when retained timeline progress changes, including updates between report saves.
+Raw model turns, bindings and full event payloads remain outside this resource.

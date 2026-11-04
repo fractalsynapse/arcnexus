@@ -5,6 +5,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { InputError } from '../architecture/config.js';
 import type { RecordData } from '../workspace/state.js';
 
+export { progressView } from './progress-view.js';
+
 export interface TimelineEvent {
   schemaVersion: 1;
   sequence: number;
