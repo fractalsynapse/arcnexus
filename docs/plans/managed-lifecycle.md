@@ -1898,3 +1898,15 @@ full baseline or new process framework is necessary for that feedback. The initi
 direct TypeScript test attempt was unsupported by this installed Node build; the
 normal test build and compiled suite provided the evidence. Refreshed CI remains
 a separate gate.
+
+The 16:04 UTC native-run snapshot retained 132 completed engineering commands
+(total recorded durations 3,938,902 ms, approximately 65.6 minutes). Eleven full
+suite invocations account for 2,316,716 ms (38.6 minutes), and seven dependency
+installations account for 837,609 ms (14.0 minutes). These are summed command
+durations, not run elapsed time; director/reviewer activity and pending commands
+are excluded. Detailed attribution is retained in
+`qualification-148-449558f/qualification-control/command-cost-current.json`.
+The strongest measured optimization candidates are validated baseline evidence
+reuse and isolated dependency preparation reuse. Preserve current-candidate
+verification, generated-input integrity and authority; do not infer reusable
+evidence from unchanged source alone or modify these active captured runs.
