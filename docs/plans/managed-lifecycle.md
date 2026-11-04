@@ -2534,3 +2534,13 @@ batches). Production CLI selection of edit routing passed both cases. This is
 deterministic evidence, not a new real-agent delivery. The cheapest early check
 was rejecting all three old list forms (empty, owned-only and foreign) at the
 built CLI boundary; it exercises the rule without paying for a model session.
+
+### Ownership-only production submission and setup reliability (#237, #239)
+
+Fresh simulated task 6c6c7afc-ef1c-4537-8eb3-532efd94c9c7 captured revision
+8c78dc3 and 21 eligible stewards for the volume relocation objective. Dependency
+setup failed with HTTP 403 fetching yocto-queue before the director ran. The
+30-second container installation had established speed for one successful batch.
+Restore one cache request per locked artifact before offline installation. The
+extra setup time costs less than losing a production submission to concurrent
+requests. Retain the failed run and use new captured authority for qualification.
