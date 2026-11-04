@@ -118,7 +118,9 @@ export class CheckedEditBridge {
     try {
       assertCapturedTestEdit(this.state.component, path, content);
     } catch (error) {
-      throw new EditRequestError(`Captured test selection must remain unchanged. ${String(error)}`);
+      throw new EditRequestError(
+        `Invalid test suite edit. Preserve captured test selection and use literal component, level and tags metadata. ${String(error)}`,
+      );
     }
   }
 

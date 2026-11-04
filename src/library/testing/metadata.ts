@@ -30,6 +30,19 @@ export class SuiteMetadataReader {
     return value;
   }
 
+  /** Requires a discovered suite to name its accountable owner and agree with its directory. */
+  readOwned(owner: string, path: string, text: string): SuiteMetadata {
+    const metadata = this.read(path, text);
+    if (metadata.component !== owner) throw new InputError(`Wrong suite owner: ${path}`);
+    const category = path.split('/').at(-2)!;
+    if (
+      !['unit', 'integration', 'acceptance', 'regression'].includes(category) ||
+      (category !== 'regression' && category !== metadata.level)
+    )
+      throw new InputError(`Suite directory and level disagree: ${path}`);
+    return metadata;
+  }
+
   /** Reads only supported literal metadata without evaluating the module. */
   private literal(node: ts.Node): unknown {
     if (ts.isStringLiteral(node)) return node.text;

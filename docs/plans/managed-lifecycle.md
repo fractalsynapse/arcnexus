@@ -1977,3 +1977,17 @@ that same executable. Make the mutation explicit with a distinct executable alia
 and assert the before/after binding differs. Preserve the rejection assertion and
 all production authority checks. This fixture correction accompanies #226 rather
 than repeating another long CI cycle on its own. The raw failed run is retained.
+
+The assembled #226 bridge, transaction and discovery coverage passes 26 cases with
+zero skips. The repaired native authority suite passes 13 cases with zero skips,
+including the distinct executable binding and unchanged-authority controls. Build,
+strict type checks, formatting and lint pass. CI for the preceding revision passed
+the complete confined selection; its 413/414 native result is not a current-head
+pass. The new-suite guard and fixture correction are assembled for one refresh.
+
+Efficiency lesson: apply an existing validation rule at the earliest checked-write
+boundary for both existing and proposed files. Restricting the first repair to
+captured suites left malformed new registrations able to fail a later activation.
+The follow-up shares discovery rules rather than introducing a second parser.
+Focused assembled checks took about seven seconds; the prior CI job spanned
+16:47:42–17:15:40 UTC. Preserve the latter as measured job duration, not queue time.

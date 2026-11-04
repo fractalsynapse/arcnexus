@@ -310,7 +310,7 @@ class EditAuthorityScenarios {
     });
     assert.equal((bridge.call('source.edit', request) as any).status, 'committed');
     const added = {
-      path: 'owned/new.test.ts',
+      path: 'owned/tests/acceptance/new.test.ts',
       operation: 'create',
       expectedSha256: null,
       content: original,
@@ -335,7 +335,7 @@ class EditAuthorityScenarios {
     });
     const result = bridge.call('source.edit', request) as any;
     assert.equal(result.status, 'rejected');
-    assert.match(result.error, /Captured test selection/);
+    assert.match(result.error, /captured test selection/);
     assert.deepEqual(this.contents(state), ['before', original]);
     assert.deepEqual(readdirSync(join(state.dir, 'checked-edits')), []);
   }
@@ -385,7 +385,14 @@ class EditAuthorityScenarios {
       scope: ['owned'],
       assignment: { kind: 'change' },
       frozen: [],
-      component: { schemaVersion: 6, allowedWritePaths: ['owned'], fileClassification: [] },
+      component: {
+        schemaVersion: 6,
+        id: 'assignment',
+        repositoryRoot: 'owned',
+        testProfile: 'node',
+        allowedWritePaths: ['owned'],
+        fileClassification: [],
+      },
       journal: () => {},
       safe: () => {},
     } as unknown as SessionState;

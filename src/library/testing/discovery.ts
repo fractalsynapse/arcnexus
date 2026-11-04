@@ -77,14 +77,8 @@ export class TestDiscovery {
   /** Reads literal suite metadata and maps the source to its compiled test artifact. */
   private suite(component: Component, source: string, outputRoot: string): DiscoveredSuite {
     const text = readFileSync(this.safe(source), 'utf8');
-    const metadata = new SuiteMetadataReader().read(source, text);
-    if (metadata.component !== component.id) throw new InputError(`Wrong suite owner: ${source}`);
+    const metadata = new SuiteMetadataReader().readOwned(component.id, source, text);
     const category = source.split('/').at(-2)!;
-    if (
-      !['unit', 'integration', 'acceptance', 'regression'].includes(category) ||
-      (category !== 'regression' && category !== metadata.level)
-    )
-      throw new InputError(`Suite directory and level disagree: ${source}`);
     const sha256 = createHash('sha256').update(text).digest('hex');
     const captured = component.inventory?.find((file) => file.path === source);
     return {

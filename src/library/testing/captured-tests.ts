@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Catalog, Component } from '../architecture/components.js';
+import { classifyComponentPath, type Catalog, type Component } from '../architecture/components.js';
 import { git } from '../operations/process.js';
 import { SuiteMetadataReader } from './metadata.js';
 import { loadTestProfile } from './profile.js';
 import type { SuiteMetadata } from './suite.js';
 import { TestDiscovery } from './discovery.js';
+import { relativeTestSource } from './test-paths.js';
 
 export interface CapturedTest extends SuiteMetadata {
   source: string;
@@ -61,14 +62,14 @@ export function assertCapturedTests(component: Component, workspace: string): vo
   }
 }
 
-/** Validates proposed bytes against captured selection before a host edit transaction starts. */
+/** Validates suite registration and captured selection before a host edit transaction starts. */
 export function assertCapturedTestEdit(
   component: Component,
   path: string,
   content: string | null,
 ): void {
   const captured = component.capturedTests?.find((suite) => suite.source === path);
-  if (!captured) return;
+  if (!captured) return assertNewTestEdit(component, path, content);
   if (content === null) throw new Error(`Cannot delete captured mandatory suite: ${path}`);
   const current = new SuiteMetadataReader().read(path, content);
   if (
@@ -78,6 +79,20 @@ export function assertCapturedTestEdit(
       JSON.stringify([...(captured.tags ?? [])].sort())
   )
     throw new Error(`Preserve captured suite component, level and tags: ${path}`);
+}
+
+/** Applies normal discovery rules to new suites while leaving helper and ordinary source files alone. */
+function assertNewTestEdit(component: Component, path: string, content: string | null): void {
+  if (
+    content === null ||
+    !component.testProfile ||
+    !path.endsWith('.test.ts') ||
+    path.split('/').includes('support') ||
+    classifyComponentPath(component, path) !== 'tests'
+  )
+    return;
+  relativeTestSource(component, path);
+  new SuiteMetadataReader().readOwned(component.id, path, content);
 }
 
 /** Selects current owned suites using captured rules and refuses changes to mandatory identities. */

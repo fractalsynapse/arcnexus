@@ -127,7 +127,11 @@ Captured mandatory suites also retain their owner, level and tags. Changing thos
 fields, removing registration or deleting a captured suite rejects the entire batch
 before writing, with corrective feedback. Test-body changes and new owned suites
 remain possible within stage authority; frozen regressions remain immutable. The
-final host selection check still independently verifies the candidate.
+final host selection check still independently verifies the candidate. New suites
+must also have the literal `registerSuite({ component, level, tags })` declaration,
+name their owner, and match the captured package test root and level directory.
+Malformed new registrations receive corrective feedback before any batch writes;
+support files retain their normal discovery exclusion.
 
 Qualification must retain actual model tool observations, edit receipts, expected
 failing regression output, passing host checks, independent assessment and the
