@@ -213,3 +213,25 @@ Application callers use `Portfolio.changeStandard` with a structured field map
 and optional expected revision. Create checks the platform revision; update and
 remove check the standard revision. Missing artifacts, invalid references and
 stale writes leave the selected authority and attached checkout unchanged.
+
+## Repository migration contract (#238)
+
+The next migration increment supplies `platform migrate <id> <repository>` and
+`package migrate <package> <repository>` through the shared portfolio service.
+An existing HTTPS/file remote (or local repository used as a remote) is cloned into
+managed storage through the existing supervised, journaled materializer. Migration
+never moves or edits the original checkout and never pushes upstream.
+
+The destination must contain the selected source authority in its history and a
+valid committed definition with the same resource identity and platform relation.
+A behind or divergent destination requires reconciliation; migration does not
+silently discard local/configuration commits or infer permission to publish them.
+The entire resulting catalog is validated before registration changes. Other
+resources sharing the old repository retain their current registrations.
+
+Source and destination execution leases prevent competing repository mutation.
+Active runs, pending configuration transitions and stale resource revisions block
+transfer. The final registration and materialization transition commit atomically;
+repeating a successful request preserves identity and revision. Failed validation
+retains the clone and original registration; uncertain clones cannot be replayed.
+Historical execution evidence remains associated with its original repository.

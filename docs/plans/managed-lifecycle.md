@@ -2474,3 +2474,12 @@ its confined production-CLI qualification follows. Native selection will contain
 one fewer case and portable coverage one more: this moves coverage, not removes it.
 The live operations reference also no longer presents the historical research-turn
 quota as current behavior; the historical acceptance record is explicitly labeled.
+
+### Remaining repository migration (#238)
+
+Bootstrap work now completes remote migration independently of the real stewards'
+creation/replacement assignments. Reuse the existing clone journal and portfolio
+transaction rather than adding a second Git execution path. Preserve attached
+checkouts, require compatible committed destination authority, and reject active
+execution or uncertain transitions. This work must not alter any active supervisor.
+The 40f5da3 assembled batch has been pushed once; CI 41925434578 is running.
