@@ -3,6 +3,8 @@ export { PublicationPolicy, type CapturedPublicationPolicy } from './publication
 export { DeliveryChecks } from './delivery-checks.js';
 
 import { createHash } from 'node:crypto';
+import { lstatSync, readFileSync, realpathSync } from 'node:fs';
+import { join } from 'node:path';
 import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/execution-types.js';
 import type { DeliveryStore } from '../coordination-store/delivery-store.js';
 import type { DeliveryCapture, DeliveryRecord } from '../coordination-store/delivery-types.js';
@@ -59,6 +61,41 @@ export class Publisher {
       JSON.stringify(evidence.references) !== JSON.stringify(delivery.verification.references)
     )
       throw new Error('Retained independent delivery evidence changed');
+  }
+
+  /** Finds the original reviewed receipt without substituting a run's newer accumulated candidate. */
+  resolveRetained(
+    delivery: DeliveryRecord,
+    run: ExecutionRun,
+    assignments: ExecutionAssignment[],
+  ): RecordData {
+    const ids = delivery.candidateRecordId
+      ? [delivery.candidateRecordId]
+      : [...new Set(assignments.map((assignment) => assignment.data.recordId))].reverse();
+    const problems: string[] = [];
+    for (const id of ids) {
+      try {
+        const candidate = this.readCandidate(id);
+        this.revalidate(delivery, run, assignments, candidate);
+        return candidate;
+      } catch (error) {
+        problems.push(String(error));
+      }
+    }
+    throw new Error('Retained delivery candidate unavailable: ' + problems.join('; '));
+  }
+
+  /** Reads only regular private receipts with matching identities; aliases cannot redirect proof lookup. */
+  private readCandidate(id: unknown): RecordData {
+    if (typeof id !== 'string' || !/^[a-f0-9-]{36}$/.test(id))
+      throw new Error('Invalid retained candidate identity');
+    const root = realpathSync(this.root);
+    const path = join(root, 'runs', id, 'report.json');
+    if (realpathSync(path) !== path || !lstatSync(path).isFile() || lstatSync(path).nlink !== 1)
+      throw new Error('Unsafe retained candidate receipt');
+    const candidate = JSON.parse(readFileSync(path, 'utf8')) as RecordData;
+    if (candidate.id !== id) throw new Error('Retained candidate receipt identity mismatch');
+    return candidate;
   }
 
   /** Keeps source identity, assignment attribution and captured authority separate from future target verification. */

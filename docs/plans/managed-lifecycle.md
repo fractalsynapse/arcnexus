@@ -1254,3 +1254,18 @@ record metadata, changed latest-candidate pointers, altered independent review
 content, and substituted source/assignment authority. Capture and revalidation now
 share one identity calculation. This validates retained source proof only; it does
 not claim fresh-target acceptance or a completed promotion command.
+
+Retained receipt resolution now finds the original candidate by captured record ID
+or historical assignment receipts, rechecks its tree and independent digest, and
+rejects missing, aliased or substituted receipts. Eight built publisher cases passed
+with zero skips in 1.920 seconds; scoped lint and production/test builds passed.
+This reuses existing retained proof rather than introducing a second evidence model.
+
+The ninth real run reached specification for report but the CLI steward supplied
+the tracking issue identity in the dependency request's assignmentId field. The
+host rejected that unknown assignment; unrelated ready work continued. The schema
+allowed nullable assignmentId without explaining that it means an existing supplier
+assignment, not tracking. Record this integration defect and clarify the typed
+contract rather than silently deleting a requested identity or hotpatching the
+captured runner. Failed real runs continue to expose gaps that isolated success
+fixtures miss; small production-contract checks are cheaper than repeated baselines.

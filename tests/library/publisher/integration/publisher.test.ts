@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
@@ -10,6 +10,7 @@ import type {
   ExecutionRun,
   ExecutionAssignment,
 } from '../../../../dist/library/coordination-store/execution-types.js';
+import { save } from '../../../../dist/library/workspace/state.js';
 import type { RecordData } from '../../../../dist/library/workspace/state.js';
 import { CandidateSnapshots } from '../../../../dist/library/workspace/candidates.js';
 import { candidateDigest } from '../../../../dist/library/change-inspection/changes.js';
@@ -57,6 +58,8 @@ class PublisherFixture {
       data: { recordId: this.record.id, deliveredRevision: candidate },
     };
     this.run.data.goalEvidence = [this.review('director-assessment')];
+    mkdirSync(join(this.root, 'runs', this.record.id), { recursive: true });
+    save(this.root, this.record);
   }
 
   /** Creates a committed baseline and actual uncommitted source changes in private test storage. */
@@ -253,6 +256,35 @@ test('retained delivery proof rejects substituted source authority, record and a
   assert.throws(
     () => f.publisher.revalidate(delivery, f.run, [f.assignment], f.record),
     /changed after verified/,
+  );
+});
+
+test('retained candidate resolution uses verified historical receipts instead of the latest run pointer', (t) => {
+  const f = new PublisherFixture(t);
+  const delivery = f.capture();
+  f.run.data.candidateRecord = { id: 'newer-candidate' };
+  f.run.data.candidateRevision = f.record.base;
+  assert.deepEqual(f.publisher.resolveRetained(delivery, f.run, [f.assignment]), f.record);
+  const historical = { ...delivery };
+  delete historical.candidateRecordId;
+  assert.deepEqual(f.publisher.resolveRetained(historical, f.run, [f.assignment]), f.record);
+});
+
+test('retained candidate resolution rejects missing, aliased and substituted receipts', (t) => {
+  const f = new PublisherFixture(t);
+  const delivery = f.capture();
+  const path = join(f.root, 'runs', f.record.id, 'report.json');
+  rmSync(path);
+  assert.throws(() => f.publisher.resolveRetained(delivery, f.run, [f.assignment]), /unavailable/);
+  const alternate = join(f.root, 'alternate.json');
+  writeFileSync(alternate, JSON.stringify(f.record));
+  symlinkSync(alternate, path);
+  assert.throws(() => f.publisher.resolveRetained(delivery, f.run, [f.assignment]), /Unsafe/);
+  rmSync(path);
+  writeFileSync(path, JSON.stringify({ ...f.record, id: randomUUID() }));
+  assert.throws(
+    () => f.publisher.resolveRetained(delivery, f.run, [f.assignment]),
+    /identity mismatch/,
   );
 });
 
