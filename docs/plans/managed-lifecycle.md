@@ -1621,3 +1621,11 @@ the CI failure. Preserve bounded response diagnostics in the controlled fixture 
 the next CI observation rather than weakening its assertions or changing the runtime
 pin speculatively. Fresh real simulation on the locally qualified runtime continues;
 real upstream integration still requires green CI and all applicable review gates.
+
+Finish preparation/cleanup retirement by moving native fixtures to registered,
+isolated-volume `workspace prepare` and `workspace cleanup` calls. Their low-level
+assertions may read retained reports, but preparation must use the production package
+resolver, shared service and repository lease. Test captured older revisions through
+the public preparation service, not a retired CLI option. Preserve cancellation,
+parent-loss, ownership, conflict and cleanup-receipt coverage. Remove the old gateway's
+separate worktree execution/finalization path only after migrating its callers.
