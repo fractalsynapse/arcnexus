@@ -2443,3 +2443,16 @@ Promise.all; batching without a connection setting would change transport behavi
 Preserve validation before dispatch, platform filtering, failure evidence and source/
 network confinement. Test through the declared executor before adopting the speedup;
 never change a running assignment's captured script or execution policy.
+
+The #237 preparation experiment passed through `platform create`, `package create`
+and `workspace prepare` on a separate source clone in the qualified container,
+using the existing shared operation executor and unchanged 76c1965 runtime.
+Record `b99151ca-9ec5-4e19-9782-11d647a44fe2` captured the new install script at
+source `f580f8d`: installation took 29,802 ms, every command exited zero, and the
+production build passed. Source and prepared workspace both remained clean.
+Earlier fresh assignment installs were approximately 85 seconds; report this as an
+observed improvement under the same container runtime, not a controlled benchmark.
+The four subprocess-boundary cases cover multiple deduplicated URLs, platform
+filtering, empty selection, invalid sources and failure without retry. Evidence is
+retained in `qualification-148-real-container-76c1965/evidence/setup-237`.
+Active tasks continue using their original installer and captured source.

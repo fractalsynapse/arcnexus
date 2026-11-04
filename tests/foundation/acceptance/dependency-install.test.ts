@@ -118,4 +118,8 @@ test('bootstrap rejects unsupported sources before any download', (t) => scenari
 
 test('bootstrap does not retry or install after a failed download', (t) => scenarios.failed(t));
 
-registerSuite({ component: 'foundation', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'foundation',
+  level: 'acceptance',
+  tags: ['deterministic', 'dependency-install'],
+});
