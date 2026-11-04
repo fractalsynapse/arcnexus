@@ -1349,3 +1349,39 @@ the rule that prerequisite failure is not expected-red evidence. Scoped lint and
 build/test compilation passed. No real-agent success is inferred from these scripted
 inputs. The next real run will capture this correction instead of modifying any
 previous supervisor.
+
+## Assembled qualification and recovery handoff — 2026-11-04
+
+Revision `b2bc240906e5cc460b522fdca25f7b29216eac13` passed the complete production
+confined test selection: 854 cases, 492 passes, zero failures, 362 native-host
+qualification skips. Counts are summed from all retained operation logs, not the
+last suite's output. Evidence is retained at
+`~/.local/share/arcnexus/state/test-runs/3fa81c55-6e36-41b6-8ee7-972ab241d557`.
+Formatting, lint, strict checking and consolidated architecture/guidance validation
+also passed. Current-head CI remains separate evidence.
+
+A fresh real-agent simulated task `c77ed720-cfb7-4fc1-9e57-8c38aaf39589` captured
+that clean revision under `qualification-148-b2bc240`. It receives the same useful
+delivery-inspection goal; the real director chooses from the actual project catalog.
+No team is prescribed. Starting this run establishes neither delivery nor completion.
+
+Issue #207 supplies the next bounded bootstrap change: research/review assignments
+must receive a host-bound read-only view of current-run recovery evidence. Pin the
+selected checkpoint, checked-edit journals, operation/service state and observed
+request/receipt records outside source; page complete content through a fixed MCP
+capability rather than granting private filesystem reads. Include director feedback
+and caller clarification in the retained handoff. Reject foreign identities and
+unsafe file aliases, preserve unavailable evidence explicitly, and never treat an
+investigation as permission to replay uncertain operations. Reuse the verifier's
+artifact paging contract instead of creating a second evidence transport.
+
+Efficiency observations: the ninth report assignment spent 118.894 seconds on
+locked dependency setup and 179.116 seconds on the inherited full-suite baseline;
+its owner test command took 0.718 seconds. Repeated baseline/setup work therefore
+costs substantially more than focused feedback. Any future reuse must be keyed by
+immutable authority, source/candidate, operation and environment identities; this
+observation does not waive checks or authorize mutable evidence reuse. A separate
+editing-script variable reuse briefly replaced changelog contents in one local
+commit; inspection of the commit's line count caught it immediately, and the next
+commit restored the original plus the intended two edits before qualification.
+Prefer direct patches and inspect the complete diff statistic before committing.
