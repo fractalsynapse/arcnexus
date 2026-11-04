@@ -518,3 +518,27 @@ and publication. Preserve redirect refusal, host-only credentials, full paginati
 exact-head merge admission and explicit provider review/check evidence. API sources:
 [GitHub PR operations](https://docs.github.com/en/rest/pulls/pulls) and
 [branch protection](https://docs.github.com/en/rest/branches/branch-protection).
+
+The next real submission, `69ddd63f-4f56-4675-8dda-4e46f82b9e52`, also
+stopped before director selection at captured revision `5e6ba12`. Its evidence is
+retained under `~/.local/state/arcnexus/qualification-148-5e6ba12`. The successful
+single installer probe did not establish reliability: `--maxsockets=1` still
+produced mixed HTTP 200/403 responses. A focused request-body probe exposed the
+actual denial: `Sandbox policy blocks local/private network addresses.` Public
+DNS lookup returned public registry addresses. Both desktop Codex
+`0.166.0-alpha.6` and dependency Codex `0.166.0` reproduced the install failure;
+this does not establish a universal runtime defect or justify disabling the guard.
+
+Bootstrap intent: qualify sequential lockfile-based cache preparation followed by
+an offline install within the unchanged source/network confinement. Keep the
+lockfile authoritative, retain integrity checks, reject unsupported dependency
+sources before download, and fail on any individual download error. Do not retry
+uncertain engineering or replace the failed run's captured authority. If this
+approach qualifies, one declared setup operation will invoke it; no new scheduler,
+network broker or alternate installation authority is needed.
+
+Efficiency observation: capture the HTTP response body in a bounded disposable
+probe when a package manager reports a generic transport error. Repeating full
+real-agent launches concealed the useful error and consumed setup time without
+reaching a model. An isolated native preparation check is the cheapest useful gate
+before the next expensive lifecycle submission.
