@@ -178,9 +178,10 @@ component revision. Neither operation edits an attached checkout or changes the
 authority of a retained run.
 
 Managed simulation worktrees carry a host-written materialization snapshot in their
-private Git metadata. Fresh `validate`, `inspect` and test-selection processes use
+private Git metadata. Fresh `inspect`, registered validation and test-selection processes use
 that snapshot to check the actual worktree revision and isolated origin against the
 captured mapping. Declared upstream identities remain unchanged. A mismatched HEAD,
 remote or worktree identity is an error; ordinary checkouts retain ordinary origin
-checks. The snapshot is not authored configuration and does not change active run
+checks. Offline local `validate` retains explicitly unavailable dependency inventories
+when bindings are not supplied. The snapshot is not authored configuration and does not change active run
 permissions or supply upstream credentials.

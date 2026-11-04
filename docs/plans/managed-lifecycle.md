@@ -757,3 +757,19 @@ The native production-host simulation setup case also passed with zero skips in
 Type checks and affected lint passed. This is controlled-input acceptance, not a
 real-agent completion gate. Retain that distinction when the full isolated baseline
 and next genuine model run are reported.
+
+The first complete isolated run exposed a regression in automatic bindings for
+offline local validation: 420 passed, 50 failed and 341 skipped in 164.115 seconds.
+Those failures require restoring the existing ability to inspect unbound catalogs,
+not changing fixtures or skipping tests. Keep automatic materialization discovery
+on assignment inspection, registered validation and test selection; preserve
+offline `validate` without explicit bindings. The discovery acceptance now uses
+built platform registration, which resolves actual repository identity without
+requiring a model-executable assignment fixture. Draft PR #202 starts CI
+for the assembled batch; it is not ready for integration or a phase-three gate.
+
+The corrected discovery regression passed two cases with zero skips in 2.422
+seconds, and five offline/unbound validation cases passed in 4.827 seconds.
+The fixture now exercises built registration rather than growing unrelated
+execution policies merely to test repository identity. PR #202 is a draft; its
+first CI result is a failure and must be diagnosed separately from local evidence.

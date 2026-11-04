@@ -25,6 +25,7 @@ class DiscoveryFixture extends MinimalCatalogFixture {
     t.after(() => {
       rmSync(this.workspace, { recursive: true, force: true });
       rmSync(this.remote, { recursive: true, force: true });
+      rmSync(this.root + '-volume', { recursive: true, force: true });
     });
   }
 
@@ -48,21 +49,26 @@ class DiscoveryFixture extends MinimalCatalogFixture {
 
   /** Invokes the ordinary CLI without an injected catalog or special simulation option. */
   validate() {
-    return spawnSync(process.execPath, [resolve('dist/cli.js'), 'validate', '--json'], {
-      cwd: this.workspace,
-      encoding: 'utf8',
-      maxBuffer: 16 * 1024 * 1024,
-    });
+    return spawnSync(
+      process.execPath,
+      [resolve('dist/cli.js'), 'platform', 'create', 'platform', this.workspace, '--json'],
+      {
+        cwd: this.workspace,
+        env: { ...process.env, ARCNEXUS_VOLUME: this.root + '-volume' },
+        encoding: 'utf8',
+        maxBuffer: 16 * 1024 * 1024,
+      },
+    );
   }
 }
 
-test('fresh built CLI validates isolated worktree identity without changing declared upstream', (t) => {
+test('fresh built CLI registers isolated worktree identity without changing declared upstream', (t) => {
   const f = new DiscoveryFixture(t);
   assert.match(f.validate().stderr, /origin identity mismatch/);
   const capture = f.capture();
   const result = f.validate();
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(JSON.parse(result.stdout).status, 'valid');
+  assert.equal(JSON.parse(result.stdout).id, 'platform');
   assert.match(capture.sha256, /^[a-f0-9]{64}$/);
   assert.equal(loadProjectBindings(f.workspace).materializations!.sample!.source, f.workspace);
   assert.match(
