@@ -39,7 +39,17 @@ export class ControlledPlanning {
     if (reply.isError) throw new Error(JSON.stringify(reply));
     const result = JSON.parse(reply.content[0].text);
     if (!result.outputTruncated || !result.editProposal?.invocationId)
-      throw new Error('Expected retained oversized edit proposal');
+      throw new Error(
+        'Expected retained oversized edit proposal: ' +
+          JSON.stringify({
+            status: result.status,
+            exitCode: result.exitCode,
+            outputTruncated: result.outputTruncated,
+            editProposal: result.editProposal,
+            outputStart: result.output?.slice(0, 1200),
+            outputEnd: result.output?.slice(-400),
+          }),
+      );
     const request = { proposalInvocationId: result.editProposal.invocationId };
     await this.sourceEdit(turn, request);
     await this.sourceEdit(turn, request);

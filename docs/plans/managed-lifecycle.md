@@ -1601,3 +1601,23 @@ are hashed under `qualification-148-b2bc240/qualification-control/tenth-stop`.
 A fresh simulation must capture the corrected supervisor, rather than waiving format
 checks or rewriting frozen sources in the old run. Continue using the useful original
 goal and real director selection from the project catalog, without prescribing a team.
+
+
+At `7a7db01`, the assembled confined selection passed 516 cases with zero failures
+and 365 native-host skips (881 total). Evidence:
+`~/.local/share/arcnexus/state/test-runs/bb5fa869-303e-44c5-b139-2e0914d3d8ea`.
+The eleventh real-agent simulation `c4e8b7df-967b-4c95-b932-a01ad0ad1251` captured
+that committed supervisor and the unchanged useful goal in environment
+`41d55ae4-741f-47a7-b12a-903d822a036a`. Its director selects from all 21 actual eligible
+project stewards; the eligible catalog is not a prescribed participant list.
+
+CI 41809960511 at `3c9e99e` failed one of 408 native cases; 407 passed with zero
+skips. The oversized-proposal scenario reported missing expected response metadata
+but discarded the operation response in its assertion. CI used Codex
+`0.163.0-alpha.10.2`, versus local/container `0.166.0-alpha.6`. Installing the exact
+CI runtime separately and rerunning that scenario locally passed one case with zero
+skips in 22.230 seconds. This does not establish a version incompatibility or resolve
+the CI failure. Preserve bounded response diagnostics in the controlled fixture for
+the next CI observation rather than weakening its assertions or changing the runtime
+pin speculatively. Fresh real simulation on the locally qualified runtime continues;
+real upstream integration still requires green CI and all applicable review gates.
