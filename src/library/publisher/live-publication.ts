@@ -28,7 +28,13 @@ export interface LivePublicationContext {
   runner?: typeof execute;
 }
 
-const actions = ['delivery.commit', 'delivery.verify', 'delivery.push', 'pull-request.create'];
+const actions = [
+  'delivery.commit',
+  'delivery.verify',
+  'delivery.push',
+  'pull-request.create',
+  'pull-request.merge',
+];
 
 /** Publishes verified live branches and PRs while preserving provider gates and forbidding real releases. */
 export class LivePublication {
@@ -72,15 +78,14 @@ export class LivePublication {
       const verification = await this.effects.effect('delivery.verify', signal);
       if (verification.result?.status !== 'passed') throw new Error('Live delivery checks failed');
       await this.effects.step('push', 'delivery.push', signal);
-      const pull = await this.effects.step('pull_request', 'pull-request.create', signal);
-      const gates = await this.prs().readiness(Number(pull.result?.pullRequestId), signal);
-      if (!gates.ready) throw new Error('GitHub integration blocked: ' + gates.blockers.join('; '));
-      if (
-        !this.context.policy.operation.automaticMerge &&
-        this.effects.current().approval?.candidate !== this.delivery.candidate
-      )
-        throw new Error('Delivery requires approval for the captured candidate revision');
-      throw new Error('Staging integration requires verified exact-target assembly');
+      await this.effects.step('pull_request', 'pull-request.create', signal);
+      const prior = this.effects.prior('pull-request.merge');
+      const targetHead = prior?.input.targetHead ?? (await this.ready(signal)).base;
+      this.assertApproval();
+      const merged = await this.effects.effect('pull-request.merge', signal, { targetHead });
+      if (merged.result?.merged !== true) throw new Error('Live integration was not verified');
+      this.effects.complete('merge', merged.id);
+      return this.effects.current();
     } catch (error) {
       const current = this.effects.current();
       this.context.deliveries.block(current.id, current.version, String(error));
@@ -101,6 +106,7 @@ export class LivePublication {
     }
     if (effect.operation === 'delivery.push') return this.push().apply(effect, signal);
     if (effect.operation === 'pull-request.create') return this.prs().apply(effect, signal);
+    if (effect.operation === 'pull-request.merge') return this.merge(effect, signal);
     throw new Error('Unsupported live publication operation');
   }
 
@@ -109,7 +115,43 @@ export class LivePublication {
     if (effect.operation === 'delivery.commit') return this.commits.inspect(effect);
     if (effect.operation === 'delivery.push') return this.push().inspect(effect, signal);
     if (effect.operation === 'pull-request.create') return this.prs().inspect(effect, signal);
+    if (effect.operation === 'pull-request.merge') return this.push().inspectMerge(effect, signal);
     return { status: 'unknown', evidence: effect.id, reason: 'Inspect interrupted verification' };
+  }
+
+  /** Verifies the assembled target and reobserves provider requirements immediately before compare-and-swap transport. */
+  private async merge(effect: ExternalEffect, signal: AbortSignal) {
+    this.assertApproval();
+    if ((await this.ready(signal)).base !== effect.input.targetHead)
+      throw new Error('GitHub target changed before assembly');
+    const assembled = await this.push().assemble(effect, signal);
+    const verification = await this.context.checks(assembled, signal, true);
+    if (verification.status !== 'passed' || !verification.evidence.length)
+      throw new Error('Assembled live delivery verification failed');
+    if ((await this.ready(signal)).base !== effect.input.targetHead)
+      throw new Error('GitHub target changed during verification');
+    this.assertApproval();
+    const result = await this.push().integrate(effect, assembled, signal);
+    return { ...result, verification };
+  }
+
+  /** Observes current-head CI and repository review rules, never treating local approval as provider review. */
+  private async ready(signal: AbortSignal) {
+    const receipt = this.effects.current().receipts.pull_request;
+    if (!receipt) throw new Error('Missing delivery PR receipt');
+    const pull = this.context.effects.effect(receipt);
+    const gates = await this.prs().readiness(Number(pull.result?.pullRequestId), signal);
+    if (!gates.ready) throw new Error('GitHub integration blocked: ' + gates.blockers.join('; '));
+    return gates;
+  }
+
+  /** Requires an explicit automatic grant or authorization for this exact immutable candidate. */
+  private assertApproval(): void {
+    if (
+      !this.context.policy.operation.automaticMerge &&
+      this.effects.current().approval?.candidate !== this.delivery.candidate
+    )
+      throw new Error('Delivery requires approval for the captured candidate revision');
   }
 
   /** Recovers the committed object from its durable receipt and revalidates its actual attribution. */

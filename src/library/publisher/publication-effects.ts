@@ -51,6 +51,18 @@ export class PublicationEffects {
     return effect;
   }
 
+  /** Exposes retained intent so recovery does not require a new provider readiness decision. */
+  prior(operation: string) {
+    return this.effects.effects().find((effect) => effect.id === this.identity(operation));
+  }
+
+  /** Derives one stable identity per immutable delivery operation in both environments. */
+  private identity(operation: string): string {
+    return createHash('sha256')
+      .update(this.delivery.id + ':' + operation)
+      .digest('hex');
+  }
+
   /** Persists a milestone only after its exact provider effect has a completed receipt. */
   async step(milestone: DeliveryMilestone, operation: string, signal: AbortSignal) {
     const effect = await this.effect(operation, signal);

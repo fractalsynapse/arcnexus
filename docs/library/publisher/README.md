@@ -23,8 +23,10 @@ using a stale-revision check. `delivery publish <id>` queues advancement on the 
 supervisor, preserving repository serialization and captured authority. The simulation adapter advances the complete isolated lifecycle. The live adapter
 creates a verified host commit, repeats captured checks and independent verification,
 pushes a generated branch, creates a correlated GitHub PR and observes current CI
-and review gates. Live staging integration and promotion remain implementation
-gates; the adapter retains an explicit blocker instead of declaring integration.
+and review gates. Authorized staging integration assembles the exact target,
+repeats independent verification and reobserves provider requirements before a
+non-rewriting compare-and-swap push. Promotion remains a separate implementation
+gate; real releases remain human-controlled.
 
 A shared `delivery.publish` operation declares the accountable publisher, destination
 repository and target branch. Its definition digest accompanies each internal effect.
@@ -43,8 +45,8 @@ The GitHub PR provider also observes readiness using a fixed repository-scoped
 query. It binds CI rollups to the pushed commit, retains the provider's review and
 merge state, and blocks missing/failed CI, pending review, drafts, conflicts and
 main/default targets. Partial GraphQL results are errors. This observation is not
-merge authority or fresh assembled verification; live publication wiring must
-combine those gates before requesting integration. The provider follows GitHub's
+merge authority or fresh assembled verification; the live publication service
+combines those gates before requesting integration. The provider follows GitHub's
 [PR fields and merge states](https://docs.github.com/en/graphql/reference/pulls)
 and [commit check rollups](https://docs.github.com/en/graphql/reference/commits).
 
@@ -54,3 +56,10 @@ CI/review observations are refreshed on each explicit publication request, so a
 pending check does not become a permanently cached failure. The live host reads
 `GH_TOKEN` or `GITHUB_TOKEN` at the provider boundary; neither workers nor operation
 evidence receive credentials. Local approval never submits a GitHub review.
+
+Integration requires the target to be the assembled commit's first parent and the
+result to match the host's private assembly pin. An explicit expected-ref Git lease
+rejects even a concurrent update to another ancestor; it never permits history
+rewrites or a different ref. Server-side policy rejection remains a blocker. No
+admin override or GitHub review submission is available. Lost receipts reconcile
+the actual target against the retained assembly before advancing delivery state.

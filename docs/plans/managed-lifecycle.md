@@ -985,3 +985,12 @@ execute actual director setup, without bypassing it or increasing arbitrary
 waits. This 15-minute feedback cost reinforces the value of focused native
 lifecycle cases whenever dispatch ordering changes. Keep the real simulation's
 captured supervisor untouched.
+
+Live integration passed five native publication cases with zero skips in 16.502
+seconds, including a target change during verification, a concurrent ancestor
+update immediately before push, and receipt loss after a real local merge. The
+explicit expected-head lease rejected the ancestor race that ordinary fast-forward
+push would permit. Lost-receipt recovery reused the actual pinned target without
+rerunning checks or mutation. Three existing GitHub transport cases and complete
+simulation publication also passed in the preceding seven-case run (8.373 seconds).
+These remain controlled-provider acceptance, not real GitHub staging integration.
