@@ -2825,3 +2825,9 @@ release state remain intact. A focused promotion regression also checks the
 actual bytes in the verifier capability against the host command report.
 Running its four cases took 31 seconds and avoided repeating the full guide
 simulation while diagnosing evidence transport (#249).
+
+Runtime logs, transcripts, workday/task records, provider state and generated
+qualification indexes belong in application evidence storage. Archive the
+historical qualification JSON bytes there and remove their maintained copies
+and ownership entries. Keep authored acceptance procedures, code, fixtures and
+concise development observations in source (#250).
