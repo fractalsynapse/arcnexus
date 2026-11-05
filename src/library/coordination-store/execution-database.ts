@@ -38,8 +38,7 @@ export class ExecutionDatabase {
       this.db.exec('COMMIT');
       return value;
     } catch (error) {
-      this.db.exec('ROLLBACK');
-      throw error;
+      this.rollback(error);
     }
   }
 
@@ -54,9 +53,18 @@ export class ExecutionDatabase {
       this.db.exec('COMMIT');
       return result;
     } catch (error) {
-      this.db.exec('ROLLBACK');
-      throw error;
+      this.rollback(error);
     }
+  }
+
+  /** Preserves the primary failure when SQLite has already aborted or cannot roll back storage. */
+  private rollback(error: unknown): never {
+    try {
+      this.db.exec('ROLLBACK');
+    } catch {
+      // A secondary cleanup error cannot replace the failure that prevented the transition.
+    }
+    throw error;
   }
 
   /** Loads an entity; unknown identities are errors rather than empty state. */

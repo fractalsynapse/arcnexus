@@ -28,7 +28,6 @@ provenance and may form historical cycles without preventing runnable work. A ne
 unsatisfied cycle still rolls back the entire request exchange and retains an
 explicit blocked outcome; an acknowledgment never substitutes for delivery.
 
-
 ## Concurrent portfolio initialization
 
 Portfolio readers apply the same bounded SQLite lock-wait safeguard as writers

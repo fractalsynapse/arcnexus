@@ -136,6 +136,8 @@
 
 ### Fixed
 
+- Preserve the primary execution-store error when SQLite rollback also fails after storage exhaustion (#258).
+
 - Reject new live promotions before task creation when the execution host lacks its GitHub credential (#256).
 
 - Preserve validated diagnostic checkpoints after completed worker failure responses while still refusing uncertain operations (#254).
