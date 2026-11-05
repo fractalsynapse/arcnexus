@@ -2683,3 +2683,12 @@ Remove the turn-level and checkpoint-level classification allowlists. Use captur
 component ownership for every file boundary and classification for determining
 which changes supply documentation and regression evidence. Preserve read-only
 turns, frozen tests, expected-red checks and independent review.
+
+### Keep relevance ranking independent of starting team size (#148)
+
+The real directors selected three starting owners for volume relocation, three
+for repository composition, two for the operator guide and zero at workday setup.
+Each had the same 21 eligible stewards. Rank all positive lexical matches for
+initial suggestions. Remove the twelve-match cutoff while preserving deterministic
+ordering, full catalog access and the director's responsibility for team size.
+Count distinct participants after execution for qualification.
