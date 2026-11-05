@@ -443,3 +443,12 @@ with the host's captured identity. Compact status reports are projections, not
 authority records. Matching tasks retain that workday's environment and isolated
 staging even when upstream staging has advanced; this does not upgrade the host
 or import a new source revision (#259).
+
+### Explicit promotion retry after cancellation (#272)
+
+Repeated promotion requests reuse active or completed work. An explicitly cancelled
+attempt remains terminal and retains its full evidence. A subsequent `delivery promote`
+request creates a new task through the same admission and verification path; it does
+not revive the cancelled task or rewrite uncertain external effects. Interrupted and
+needs-attention attempts still require ordinary recovery or an explicit cancellation
+before replacement. New admission still requires host credentials.
