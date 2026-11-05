@@ -10,6 +10,26 @@ import { PromotionFixture } from '../support/promotion-fixture.js';
 
 /** Qualifies promotion's real host/checkpoint/check wiring with explicitly controlled model and provider inputs. */
 class PromotionScenarios {
+  /** Missing host credentials cannot create live work; a corrected binding admits one durable task. */
+  missingCredential(t: TestContext): void {
+    const f = new PromotionFixture(t);
+    for (const name of ['GH_TOKEN', 'GITHUB_TOKEN']) {
+      const previous = process.env[name];
+      delete process.env[name];
+      t.after(() => {
+        if (previous === undefined) delete process.env[name];
+        else process.env[name] = previous;
+      });
+    }
+    assert.throws(() => f.host.promote(f.delivery.id), /Configure GH_TOKEN or GITHUB_TOKEN/);
+    assert.equal(f.host.store.runs().length, 1);
+    process.env.GH_TOKEN = 'controlled-test-credential';
+    const queued = f.host.promote(f.delivery.id);
+    delete process.env.GH_TOKEN;
+    assert.deepEqual(f.host.promote(f.delivery.id), queued);
+    assert.equal(f.host.store.runs().length, 2);
+  }
+
   /** A checkout-only grant cannot authorize promotion when the actual upstream staging revision lacks it. */
   async stagingAuthority(t: TestContext): Promise<void> {
     const f = new PromotionFixture(t);
@@ -134,6 +154,7 @@ class PromotionScenarios {
   /** An interrupted verification checkpoint cannot replay commands or infer acceptance from partial evidence. */
   interrupted(t: TestContext): void {
     const f = new PromotionFixture(t);
+    f.credential(t);
     const queued = f.host.promote(f.delivery.id);
     f.host.store.updateRun(queued.runId, 'interrupted', { promotionStage: 'verifying' });
     assert.throws(() => f.host.taskControl('resume', queued.runId), /verification was interrupted/);
@@ -143,6 +164,9 @@ class PromotionScenarios {
 }
 
 const scenarios = new PromotionScenarios();
+
+test('promotion validates host credentials before durable admission', (t) =>
+  scenarios.missingCredential(t));
 
 test('promotion uses fresh target checks and independent reviews without relabeling simulation', (t) =>
   scenarios.verified(t));

@@ -136,6 +136,8 @@
 
 ### Fixed
 
+- Reject new live promotions before task creation when the execution host lacks its GitHub credential (#256).
+
 - Preserve validated diagnostic checkpoints after completed worker failure responses while still refusing uncertain operations (#254).
 
 - Admit diagnosed workday assignment successors through the same ownership, acceptance and checkpoint checks used for tasks (#253).

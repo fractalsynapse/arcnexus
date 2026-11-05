@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+import { InputError } from '../architecture/config.js';
 import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
 import type { ExecutionRun } from '../coordination-store/execution-types.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
@@ -64,6 +65,10 @@ export class RunPromotion {
           run.data.executionIdentity === executionIdentity(this.context),
       );
     if (prior) return { accepted: true, runId: prior.id, promotedFrom: source.id };
+    if (!(process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN)?.trim())
+      throw new InputError(
+        'Configure GH_TOKEN or GITHUB_TOKEN on the execution host before promotion',
+      );
     const original = this.execution.run(source.runId);
     const run = submit(original.objective);
     this.execution.updateRun(run.id, run.status, {
