@@ -206,6 +206,10 @@ export class ControlledWorkflow {
         this.specification(turn);
       if (['implementation', 'correction'].includes(turn.stage)) this.implement(turn);
     }
+    if (this.options.mode === 'reported-failure' && turn.stage === 'implementation') {
+      turn.result.status = 'failed';
+      turn.result.blockers = ['Completed work requires director diagnosis'];
+    }
     if (turn.stage === 'review') this.review(turn);
     if (['blocked', 'unknown-owner'].includes(this.options.mode)) this.block(turn);
     if (this.options.mode === 'research-write' && turn.stage === 'research')

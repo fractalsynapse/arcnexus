@@ -132,3 +132,10 @@ handoff without exposing private evidence directories. It does not change the
 continuation decision: only validated checkpoints resume, and uncertain effects
 still require reconciliation rather than replay. See the
 [report contract](../report/report.md#investigation-evidence).
+
+A completed structured worker response may report failure without implying that
+its execution was interrupted. After source checks and turn cleanup finish, retain
+that failed outcome at a checkpoint the director can inspect. Continuation still
+validates the checkpoint hash, captured authority, candidate and stopped resources;
+running or interrupted operations remain a hard refusal. A failed response never
+establishes delivery or schedules an automatic retry (#254).
