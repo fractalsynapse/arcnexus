@@ -120,9 +120,25 @@ class WorkflowTests {
       (invocation: any) =>
         invocation.purpose === 'frozen-regression' && invocation.result?.exitCode === 1,
     );
+    this.frozenFeedback(record, f.state);
     assert.ok(failures.length >= 3);
     for (const invocation of failures)
       assert.match(readFileSync(invocation.result.log, 'utf8'), /BOUNDARY_EXPECTED/);
+  }
+
+  /** Requires corrective prompts to explain the retained acceptance baseline without weakening it. */
+  private frozenFeedback(record: any, root: string): void {
+    const corrections = record.turns.filter((turn: any) => turn.activity === 'correction');
+    assert.ok(corrections.length > 0);
+    for (const turn of corrections) {
+      const prompt = readFileSync(
+        join(root, 'runs', record.id, 'turns', String(turn.number), 'prompt.txt'),
+        'utf8',
+      );
+      assert.match(prompt, /Host checkpoint frozen-regression/);
+      assert.match(prompt, /intentionally tested the retained specification checkpoint/);
+      assert.match(prompt, /Candidate test edits cannot replace this acceptance baseline/);
+    }
   }
 
   /** Retains a valid owner request for deterministic scheduler delivery without calling it a failed activation. */

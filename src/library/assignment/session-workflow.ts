@@ -1,4 +1,4 @@
-import { isObservedCommandFailure } from '../operations/process.js';
+import { isObservedCommandFailure, type CommandResult } from '../operations/process.js';
 import { SpecificationValidationError } from './specification-error.js';
 import { SessionProgress } from './session-progress.js';
 import { save } from '../workspace/state.js';
@@ -219,7 +219,7 @@ export class SessionWorkflow {
       signal.throwIfAborted();
       if (record.status === 'no_changes' || !isObservedCommandFailure(error)) throw error;
       const failed = record.commands.at(-1)!;
-      const feedback = `Command ${JSON.stringify({ command: failed.command, args: failed.args })}; exit code ${failed.exitCode}; ${logExcerpt(failed.log)}`;
+      const feedback = this.commandFeedback(failed);
       this.markAttempt({ status: 'failed', feedback });
       this.state.journal('implementation', 'failed', { attempt, feedback });
       return new SessionProgress(this.state).failure(
@@ -230,11 +230,20 @@ export class SessionWorkflow {
     }
   }
 
+  /** Identifies captured acceptance failures separately from checks of the current candidate. */
+  private commandFeedback(failed: CommandResult): string {
+    const baseline =
+      failed.stage === 'frozen-regression'
+        ? 'The host intentionally tested the retained specification checkpoint, not your edited candidate tests. Candidate test edits cannot replace this acceptance baseline. Diagnose against the accepted requirements; a different assertion alone is not evidence of stale compiled output. '
+        : '';
+    return `Host checkpoint ${failed.stage ?? 'verification'}: ${baseline}Command ${JSON.stringify({ command: failed.command, args: failed.args })}; exit code ${failed.exitCode}; ${logExcerpt(failed.log)}`;
+  }
+
   /** Runs source-read-only review and requires final host verification. */
   private async review(): Promise<string | undefined> {
     const review = await this.turns.perform(
       'review',
-      `Review the candidate diff without editing source. Host check results (captured evidence): ${JSON.stringify(this.state.options.record.commands.map(({ command, args, exitCode, durationMs }) => ({ command, args, exitCode, durationMs })))}. The earlier expected red-test failure was a specification checkpoint. Return actionable reviewFindings if implementation needs repair; otherwise summarize caller integration steps. Record caller handoff as review within captured role activities; do not claim release authority or publish.`,
+      `Review the candidate diff without editing source. Host check results (captured evidence): ${JSON.stringify(this.state.options.record.commands.map(({ command, args, exitCode, durationMs, stage }) => ({ command, args, exitCode, durationMs, stage })))}. The earlier expected red-test failure was a specification checkpoint. Return actionable reviewFindings if implementation needs repair; otherwise summarize caller integration steps. Record caller handoff as review within captured role activities; do not claim release authority or publish.`,
       true,
     );
     if (!review.reviewFindings.length) return undefined;

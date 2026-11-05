@@ -6,7 +6,6 @@ inference. There are no execution or corrective quotas; the numeric limits below
 historical captured configurations that are no longer executable. Planned
 stages and host checkpoints remain required, and repeated failures require diagnosis.
 
-
 ## Historical two-attempt contract
 
 The remainder records the earlier implementation and its qualification evidence.

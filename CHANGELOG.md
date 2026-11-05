@@ -136,6 +136,8 @@
 
 ### Fixed
 
+- Identify frozen acceptance failures in steward corrective and review feedback (#251).
+
 - Reject infeasible behavioral scopes early and return observed specification and characterization deficiencies for correction (#235).
 
 - Page complete director catalogs, retained checkpoint state and assessment input through immutable evidence tools, preventing large histories from overflowing initial prompts without restricting eligible owners (#230).
