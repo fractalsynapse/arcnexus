@@ -2674,3 +2674,12 @@ normal production selector on the same retained database after the change.
 
 The rebuilt production selector performed eight repeat empty selections in 2.6 ms
 after its initial scan of the same read-only database, under concurrent load.
+
+### Keep specification evidence separate from edit authority (#243)
+
+The live workday spent a specification activation producing real owned changes,
+then failed after a checked formatter proposal modified the steward's own YAML.
+Remove the turn-level and checkpoint-level classification allowlists. Use captured
+component ownership for every file boundary and classification for determining
+which changes supply documentation and regression evidence. Preserve read-only
+turns, frozen tests, expected-red checks and independent review.
