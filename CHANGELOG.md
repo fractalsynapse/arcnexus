@@ -4,6 +4,8 @@
 
 ### Added
 
+- Record the observed staging commit for steward development branches in publication-enabled projects. Block branch creation when the candidate and staging have incompatible histories (#247).
+
 - Pin real promotion to the GitHub target branch revision and require its publication grant before admitting live work. Refuse a merge that would import unreviewed base history (#247).
 
 - Rank the complete eligible steward catalog for task direction. Starting teams follow the goal, and committed inbox activity wakes an idle scheduler without repeated catalog scans (#148, #242).

@@ -2749,7 +2749,7 @@ Validate target availability and base ancestry before spending time on PR checks
 and reject assembly that would import unreviewed base history. A simulated
 target must have an explicit initialization policy before qualification begins.
 
-### Steward development branches and staging provenance (#247)
+### Steward development branches and staging provenance (#247, #248)
 
 Give each writing steward assignment its own development branch and worktree.
 Create the branch at the exact staging commit observed in that run's environment.
@@ -2768,3 +2768,10 @@ If either head moves, retain the work and refresh verification. Real conflicts
 remain visible to the accountable steward. Exercise two independently started
 stewards with a staging advance between their PRs, including both disjoint
 changes and conflicting changes. Preserve active supervisors and retained runs.
+
+In the authorized recovery, the operator initialized only the missing simulated
+staging ref at the recorded source f6fd4e6. A compare-and-swap required the ref
+to be absent, and a merge-tree preview matched exactly the approved 34 added
+lines before resubmission. This is retained as an operator intervention. The
+new workspace acceptance uses two real Git worktrees and a staging advance to
+check their branch starting points in seconds, independently of model latency.

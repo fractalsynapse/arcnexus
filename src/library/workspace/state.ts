@@ -18,6 +18,7 @@ export interface RecordData {
   source: string;
   workspace: string;
   branch: string;
+  branchBase?: string;
   base: string;
   commonDir: string;
   status: string;

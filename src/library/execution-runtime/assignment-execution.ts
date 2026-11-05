@@ -1,3 +1,4 @@
+import { developmentBase } from './development-base.js';
 import { assignmentIntent } from './assignment-intent.js';
 import { RequestAdmission } from './request-admission.js';
 import type { UpstreamBridge } from '../operations/upstream-bridge.js';
@@ -199,7 +200,7 @@ export class AssignmentExecution {
     }
     const run = this.store.run(assignment.runId);
     const base = String(run.data.candidateRevision ?? this.context.base);
-    const record = this.capture(assignment, base);
+    const record = await this.capture(assignment, base);
     this.store.updateAssignment(assignment.id, 'running', {
       recordId: record.id,
       candidateBase: base,
@@ -209,20 +210,14 @@ export class AssignmentExecution {
   }
 
   /** Captures assignment authority and associates a fresh workspace with its durable execution identity. */
-  private capture(assignment: ExecutionAssignment, base: string): RecordData {
+  private async capture(assignment: ExecutionAssignment, base: string): Promise<RecordData> {
     const value = assignmentIntent(
       assignment.objective,
       assignment.acceptance,
       assignment.data.proposal as Partial<Assignment> | undefined,
     );
     const resolved = new ExecutionContext().assignment(this.context, assignment.owner, value);
-    const record = createWorkspace(this.root, {
-      project: this.context.source,
-      authorityBase: this.context.base,
-      packageId: this.context.packageId,
-      base,
-      bindings: this.context.bindings,
-    });
+    const record = await this.developmentWorkspace(assignment, base);
     record.executionRunId = assignment.runId;
     record.executionEnvironment = this.store.run(assignment.runId).environment;
     record.assignmentId = assignment.id;
@@ -231,6 +226,20 @@ export class AssignmentExecution {
     record.directionAccepted = true;
     record.trustedVerificationPaths = this.context.verificationInputs;
     return record;
+  }
+
+  /** Shares staging resolution and branch provenance between new and reconciled steward workspaces. */
+  private async developmentWorkspace(assignment: ExecutionAssignment, base: string) {
+    const environment = this.store.run(assignment.runId).environment;
+    const branchBase = await developmentBase(this.context, environment?.mode, base, this.signal);
+    return createWorkspace(this.root, {
+      project: this.context.source,
+      authorityBase: this.context.base,
+      packageId: this.context.packageId,
+      base,
+      branchBase,
+      bindings: this.context.bindings,
+    });
   }
 
   /** Distinguishes accepted intent from verified delivery and preserves explicit milestone semantics. */
@@ -292,6 +301,7 @@ export class AssignmentExecution {
     Object.assign(record, {
       workspace: next.workspace,
       branch: next.branch,
+      branchBase: next.branchBase,
       base: current,
     });
     if (record.nextStage === 'finished') record.nextStage = 'review';
@@ -309,13 +319,7 @@ export class AssignmentExecution {
     current: string,
     revision: string,
   ): Promise<RecordData> {
-    const next = createWorkspace(this.root, {
-      project: this.context.source,
-      authorityBase: this.context.base,
-      packageId: this.context.packageId,
-      base: current,
-      bindings: this.context.bindings,
-    });
+    const next = await this.developmentWorkspace(assignment, current);
     next.environment = record.environment;
     next.resolvedAssignment = record.resolvedAssignment;
     next.assignmentId = assignment.id;

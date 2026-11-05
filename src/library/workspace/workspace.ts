@@ -30,6 +30,7 @@ export interface PrepareOptions {
   project: string;
   base?: string;
   authorityBase?: string;
+  branchBase?: string;
   packageId?: string;
   issue?: string;
   bindings?: Bindings;
@@ -54,6 +55,7 @@ export function createWorkspace(root: string, options: PrepareOptions): RecordDa
     base,
     commonDir,
     branch,
+    ...(options.branchBase ? { branchBase: options.branchBase } : {}),
     workspace: join(root, 'workspaces', id),
     status: 'preparing',
     startedAt: new Date().toISOString(),
@@ -103,7 +105,7 @@ export async function prepareWorkspace(
     throw new InputError(
       'Preparation requires environment schema 4 or 5; migrate legacy recipes before execution',
     );
-  git(record.source, 'worktree', 'add', '-b', record.branch, record.workspace, record.base);
+  prepareBranch(record);
   record.materializationBinding = captureWorktreeBindings(
     record.workspace,
     record.bindings as Bindings,
@@ -120,6 +122,16 @@ export async function prepareWorkspace(
   record.status = 'prepared';
   observe(root, record, 'workspace.prepared', { members: record.members });
   save(root, record);
+}
+
+/** Cuts the private branch at observed staging, then includes only a verified descendant baseline. */
+function prepareBranch(record: RecordData): void {
+  const start = record.branchBase ?? record.base;
+  if (git(record.source, 'rev-list', '--max-count=1', start, '--not', record.base).trim())
+    throw new Error('Candidate is missing commits from the development branch base');
+  git(record.source, 'worktree', 'add', '-b', record.branch, record.workspace, start);
+  if (start !== record.base)
+    git(record.workspace, '-c', 'core.hooksPath=/dev/null', 'merge', '--ff-only', record.base);
 }
 
 export function cleanup(root: string, id: string): RecordData {
