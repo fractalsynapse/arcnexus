@@ -157,7 +157,8 @@ The existing install operation remains the single command definition. Its option
 determine dependency preparation; its existing generated
 output roots identify what may be shared. Matching preparation is reused within the
 same execution environment. Changed inputs, recipe, machine bindings or runtime
-require a new installation, never mutation of one already in use.
+require a new installation, never mutation of one already in use. The host and
+preparation executor use the same installed-runtime fingerprint.
 
 Preparation uses the existing supervised executor and retains the original invocation.
 Only successful, settled preparation is reusable. Recovery preserves uncertain
