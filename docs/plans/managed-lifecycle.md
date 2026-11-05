@@ -2692,3 +2692,11 @@ Each had the same 21 eligible stewards. Rank all positive lexical matches for
 initial suggestions. Remove the twelve-match cutoff while preserving deterministic
 ordering, full catalog access and the director's responsibility for team size.
 Count distinct participants after execution for qualification.
+
+### Align direction evidence and continuation admission (#245)
+
+The real composition director tried to resume work whose status excluded it from
+continuation. A valid filesystem checkpoint alone was being reported as eligible.
+Derive the director's eligibility field from the same lifecycle rule as dispatch
+and persistence, including before an activation has a record. Preserve the
+checkpoint for inspection. Waiting work should wake through its existing request.
