@@ -2748,3 +2748,23 @@ guide with 34 insertions. Preserve the failed simulation and its approval.
 Validate target availability and base ancestry before spending time on PR checks,
 and reject assembly that would import unreviewed base history. A simulated
 target must have an explicit initialization policy before qualification begins.
+
+### Steward development branches and staging provenance (#247)
+
+Give each writing steward assignment its own development branch and worktree.
+Create the branch at the exact staging commit observed in that run's environment.
+For live GitHub projects, resolve and fetch that commit from the authorized
+upstream. For simulations, resolve the isolated remote's staging ref. Record
+the repository, ref, commit, owner, and assignment before exposing the workspace
+to the worker. A missing target blocks dispatch. Neither a caller's checkout
+nor a cached remote-tracking branch establishes the starting point.
+
+Keep the development branch on pause and restore it on resume. Integrate
+verified dependency deliveries explicitly and keep their attribution. Submit the
+completed development branch through the development release workflow as a PR
+to staging. Reconcile against current staging before integration, rerun checks
+on the assembled tree, and bind the final update to both reviewed revisions.
+If either head moves, retain the work and refresh verification. Real conflicts
+remain visible to the accountable steward. Exercise two independently started
+stewards with a staging advance between their PRs, including both disjoint
+changes and conflicting changes. Preserve active supervisors and retained runs.
