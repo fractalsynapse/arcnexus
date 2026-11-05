@@ -1,3 +1,4 @@
+import { importObservedHead } from './github-git.js';
 import { GitHubTransport } from './github-transport.js';
 import { createHash } from 'node:crypto';
 import type { ExternalEffect, ExternalObservation } from '../coordination-store/lifecycle-types.js';
@@ -11,8 +12,25 @@ export async function githubHostCredential(): Promise<string> {
 }
 
 /** Pins a promotion to the provider's target without updating a checkout or a Git ref. */
-export function githubBranchHead(repository: string, branch: string, signal: AbortSignal) {
-  return new GitHubTransport(repository, githubHostCredential).branchHead(branch, signal);
+export async function githubBranchHead(
+  repository: string,
+  branch: string,
+  signal: AbortSignal,
+  target: { source: string; evidence: string },
+) {
+  const head = await new GitHubTransport(repository, githubHostCredential).branchHead(
+    branch,
+    signal,
+  );
+  await importObservedHead(
+    target.source,
+    target.evidence,
+    repository,
+    head,
+    githubHostCredential,
+    signal,
+  );
+  return head;
 }
 
 /** Implements allowlisted GitHub collaboration with host-only credentials and conservative recovery. */

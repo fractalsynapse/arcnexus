@@ -17,7 +17,13 @@ test('steward admission uses isolated staging and rejects a stale authority befo
   };
   const target = 'refs/heads/staging';
   const resolve = () =>
-    developmentBase(context, 'simulation', context.base, new AbortController().signal);
+    developmentBase(
+      context,
+      'simulation',
+      context.base,
+      f.general.fixture.root,
+      new AbortController().signal,
+    );
   git(origin, 'update-ref', '-d', target);
   await assert.rejects(resolve, /missing simulated development branch target/i);
   git(origin, 'update-ref', target, context.base, '');

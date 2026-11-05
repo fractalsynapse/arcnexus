@@ -1,3 +1,4 @@
+import { gitAuthorization, gitEnvironment, gitPolicy } from './github-git.js';
 import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, realpathSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
@@ -7,19 +8,6 @@ import { GitHubTransport } from './github-transport.js';
 import { execute, git } from './process.js';
 import { DeliveryAssembly } from './delivery-assembly.js';
 import { DeliveryCommit } from './delivery-commit.js';
-
-const gitPolicy = [
-  '-c',
-  'core.hooksPath=/dev/null',
-  '-c',
-  'init.templateDir=',
-  '-c',
-  'credential.helper=',
-  '-c',
-  'http.followRedirects=false',
-  '-c',
-  'http.sslVerify=true',
-];
 
 /** Publishes a verified host commit through isolated Git configuration and repository-scoped credentials. */
 export class GitHubDelivery {
@@ -58,7 +46,7 @@ export class GitHubDelivery {
     if (before === this.head) return this.receipt();
     if (before) throw new Error('GitHub delivery branch conflicts with verified head');
     const directory = await this.prepare(effect, signal);
-    const credentials = await this.authorization();
+    const credentials = await gitAuthorization(this.delivery.target.repository, this.credential);
     await this.command(
       directory,
       'push',
@@ -106,7 +94,7 @@ export class GitHubDelivery {
         target,
       ],
       signal,
-      await this.authorization(),
+      await gitAuthorization(this.delivery.target.repository, this.credential),
     );
     await this.command(
       directory,
@@ -139,7 +127,7 @@ export class GitHubDelivery {
         `${assembled}:${ref}`,
       ],
       signal,
-      await this.authorization(),
+      await gitAuthorization(this.delivery.target.repository, this.credential),
     );
     if ((await this.target(signal)) !== assembled)
       throw new Error('GitHub integration requires reconciliation');
@@ -252,35 +240,10 @@ export class GitHubDelivery {
       {
         processScope: true,
         fileOutput: true,
-        env: this.environment(credentials),
+        env: gitEnvironment(credentials),
       },
     );
     if (result.exitCode !== 0) throw new Error('Delivery Git failed; inspect ' + result.log);
-  }
-
-  /** Removes ambient credential helpers, tracing and Git overrides from every host transport child. */
-  private environment(credentials: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-    return {
-      PATH: process.env.PATH,
-      GIT_CONFIG_NOSYSTEM: '1',
-      GIT_CONFIG_GLOBAL: '/dev/null',
-      GIT_TERMINAL_PROMPT: '0',
-      GIT_ALLOW_PROTOCOL: 'file',
-      ...credentials,
-    };
-  }
-
-  /** Supplies a path-scoped header only to the trusted HTTPS push, never to local preparation or evidence. */
-  private async authorization(): Promise<NodeJS.ProcessEnv> {
-    const token = await this.credential();
-    if (!token.trim()) throw new Error('GitHub host credential is unavailable');
-    const authorization = Buffer.from('x-access-token:' + token).toString('base64');
-    return {
-      GIT_ALLOW_PROTOCOL: 'https',
-      GIT_CONFIG_COUNT: '1',
-      GIT_CONFIG_KEY_0: `http.https://github.com/${this.delivery.target.repository}.git.extraHeader`,
-      GIT_CONFIG_VALUE_0: 'Authorization: Basic ' + authorization,
-    };
   }
 
   /** Reads the exact generated ref and treats provider authorization failures as errors, not absence. */

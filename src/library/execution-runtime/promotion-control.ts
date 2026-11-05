@@ -20,12 +20,12 @@ export class PromotionControl {
     if (delivery.environment.mode !== 'simulation')
       throw new InputError('Only a simulation delivery can be promoted');
     const { repository, branch } = delivery.target;
-    const base = await githubBranchHead(repository, branch, new AbortController().signal);
     const source = this.source(delivery.projectId);
-    const client = new HostClient(source, this.root, {
-      packageId: delivery.packageId,
-      base,
+    const base = await githubBranchHead(repository, branch, new AbortController().signal, {
+      source,
+      evidence: join(this.root, 'projects', delivery.projectId, 'target-observations'),
     });
+    const client = new HostClient(source, this.root, { packageId: delivery.packageId, base });
     if (client.context.key !== delivery.projectId)
       throw new InputError('Promotion repository identity changed');
     const policy = new PublicationPolicy().resolve(client.context);

@@ -9,6 +9,7 @@ export async function developmentBase(
   context: ProjectExecution,
   mode: 'live' | 'simulation' | undefined,
   candidate: string,
+  evidence: string,
   signal: AbortSignal,
 ): Promise<string | undefined> {
   const policy = new PublicationPolicy().resolve(context);
@@ -21,7 +22,10 @@ export async function developmentBase(
   const head =
     mode === 'simulation'
       ? isolatedHead(origin!, ref)
-      : await githubBranchHead(runDestination(context, 'live'), branch, signal);
+      : await githubBranchHead(runDestination(context, 'live'), branch, signal, {
+          source: context.source,
+          evidence,
+        });
   const unseen = (from: string, target: string) =>
     git(context.source, 'rev-list', '--max-count=1', from, '--not', target).trim();
   if (unseen(context.base, head) || unseen(head, candidate))

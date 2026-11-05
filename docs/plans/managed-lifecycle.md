@@ -2775,3 +2775,11 @@ to be absent, and a merge-tree preview matched exactly the approved 34 added
 lines before resubmission. This is retained as an operator intervention. The
 new workspace acceptance uses two real Git worktrees and a staging advance to
 check their branch starting points in seconds, independently of model latency.
+
+The stale-object check used an empty bare repository and the real read-only
+GitHub transport. It imported the observed staging commit cf3ca34 into the
+object store without creating a branch, updating a checkout, or writing
+FETCH_HEAD. Authenticated fetch ran in a separate private bare repository.
+Keep the retained operation logs separate from provider mutation evidence.
+Batch the build before invoking selectors: a simultaneous local rebuild briefly
+removed the schema registry from dist and invalidated one selector invocation.

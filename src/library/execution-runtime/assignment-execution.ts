@@ -231,7 +231,13 @@ export class AssignmentExecution {
   /** Shares staging resolution and branch provenance between new and reconciled steward workspaces. */
   private async developmentWorkspace(assignment: ExecutionAssignment, base: string) {
     const environment = this.store.run(assignment.runId).environment;
-    const branchBase = await developmentBase(this.context, environment?.mode, base, this.signal);
+    const branchBase = await developmentBase(
+      this.context,
+      environment?.mode,
+      base,
+      join(this.root, 'projects', this.context.key, 'target-observations'),
+      this.signal,
+    );
     return createWorkspace(this.root, {
       project: this.context.source,
       authorityBase: this.context.base,
