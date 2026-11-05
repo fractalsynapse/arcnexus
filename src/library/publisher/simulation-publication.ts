@@ -130,7 +130,13 @@ export class SimulationPublication {
     extra: Record<string, unknown> = {},
   ) {
     if (operation === 'pull-request.check' && this.context.checkAttempt)
-      return this.executor.refreshChecks(this.context.checkAttempt, signal);
+      return this.executor.refreshChecks(
+        this.context.checkAttempt,
+        signal,
+        (check) =>
+          check.definitionDigest === this.context.policy.operation.definitionDigest &&
+          this.prs.currentCheck(check),
+      );
     const target = operation === 'pull-request.merge' ? { targetHead: this.git.targetHead() } : {};
     return this.executor.effect(operation, signal, { ...extra, ...target });
   }

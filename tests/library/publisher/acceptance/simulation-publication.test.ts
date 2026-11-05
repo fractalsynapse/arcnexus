@@ -90,7 +90,7 @@ test('publication retains pending PR until revision approval then completes and 
   assert.equal(pending.integration, 'pending');
   assert.equal(f.git.provider.targetHead(), f.git.repository.base);
   f.git.store.approve(pending.id, pending.version, pending.candidate);
-  const released = await f.publication.publish(f.git.signal);
+  const released = await f.instance(t, 'approval-only').publish(f.git.signal);
   assert.equal(released.integration, 'merged');
   assert.equal(released.publication, 'released');
   assert.equal(f.checks, 2);

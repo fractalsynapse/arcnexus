@@ -2790,3 +2790,11 @@ branch stays in place. The admitted run captures staging as its authority and
 candidate baseline and separately records the caller checkout to detect later
 drift. Repeated start on an existing workday observes its retained host. The
 promotion path uses the same target resolution and policy check.
+
+Three PR checks eventually passed on the identical guide delivery head. The
+last approval continuation spent about 12 minutes repeating that check before
+starting the separate assembled verification. New publishers reuse a passing
+receipt only after reconciling pending attempts and confirming the captured
+operation, provider check evidence and pushed Git head still match. Three native
+publication scenarios covered approval, retry after a failed check, and an
+uncertain check. The active qualification used its original publisher.

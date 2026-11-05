@@ -179,6 +179,24 @@ export class SimulatedPullRequests {
     return this.receipt(updated);
   }
 
+  /** Confirms the original check, provider evidence and actual pushed revision before reusing a pass. */
+  currentCheck(effect: ExternalEffect): boolean {
+    this.assert(effect);
+    if (effect.operation !== 'pull-request.check' || effect.result?.checks !== 'passed')
+      return false;
+    const resource = this.store.resource(this.id);
+    const observed = this.store.inspect(effect);
+    return (
+      observed.status === 'completed' &&
+      observed.result.head === effect.result.head &&
+      resource.data.checks === 'passed' &&
+      Array.isArray(resource.data.checkEvidence) &&
+      resource.data.checkEvidence.length > 0 &&
+      resource.data.checkHead === effect.result.head &&
+      this.head(effect) === effect.result.head
+    );
+  }
+
   /** Requires current green checks and provider review, independently of local delivery approval. */
   ready(effect: ExternalEffect): ProviderResource {
     const resource = this.current(effect);

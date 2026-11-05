@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { DeliveryStore } from '../coordination-store/delivery-store.js';
 import type { DeliveryRecord, DeliveryMilestone } from '../coordination-store/delivery-types.js';
+import type { ExternalEffect } from '../coordination-store/lifecycle-types.js';
 import type { LifecycleStore } from '../coordination-store/lifecycle-store.js';
 import { UpstreamExecution, type UpstreamProvider } from '../operations/upstream-execution.js';
 
@@ -36,21 +37,27 @@ export class PublicationEffects {
   }
 
   /** Reconciles unfinished observations before a host-authorized fresh simulated check attempt. */
-  async refreshChecks(attempt: string, signal: AbortSignal) {
+  async refreshChecks(
+    attempt: string,
+    signal: AbortSignal,
+    reusable: (effect: ExternalEffect) => boolean,
+  ) {
     if (this.delivery.environment.mode !== 'simulation' || !attempt)
       throw new Error('Fresh simulated checks require a retained host attempt identity');
     const operation = 'pull-request.check';
-    const pending = this.effects
+    const checks = this.effects
       .effects()
       .filter(
         (effect) =>
           effect.operation === operation &&
           effect.environmentId === this.delivery.environment.id &&
           effect.runId === this.delivery.runId &&
-          effect.input.deliveryId === this.delivery.id &&
-          effect.status !== 'completed',
+          effect.input.deliveryId === this.delivery.id,
       );
-    for (const effect of pending) await this.invoke(effect.id, operation, signal, effect.input);
+    for (const effect of checks.filter((entry) => entry.status !== 'completed'))
+      await this.invoke(effect.id, operation, signal, effect.input);
+    const current = checks.find((effect) => effect.status === 'completed' && reusable(effect));
+    if (current) return current;
     const id = createHash('sha256')
       .update(this.identity(operation) + ':' + attempt)
       .digest('hex');
