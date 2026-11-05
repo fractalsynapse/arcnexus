@@ -26,3 +26,9 @@ missing or weakened coverage of the original objective, and may accept justified
 test corrections. A passing command alone cannot establish criterion coverage.
 This replaces replay of worker-authored frozen regressions; historical evidence
 remains readable and recovery retains the original assignment and observations.
+
+Host command stages distinguish `verification` of candidate tests from
+`captured-acceptance` with original trusted test inputs. Captured acceptance can
+therefore run fewer tests than candidate verification. Assess added coverage from
+the observed candidate checks and preserved regression evidence; assess baseline
+preservation from captured acceptance. Test counts alone do not establish either.
