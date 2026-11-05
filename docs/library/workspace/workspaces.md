@@ -161,10 +161,12 @@ require a new installation, never mutation of one already in use.
 
 Preparation uses the existing supervised executor and retains the original invocation.
 Only successful, settled preparation is reusable. Recovery preserves uncertain
-installation evidence instead of claiming readiness or replaying it. Host-created
-dependency references are validated against their retained receipt and exposed
-read-only to both agents and operations. Ordinary symlinks and writable aliases
-remain rejected. Build products stay local to the source worktree.
+installation evidence instead of claiming readiness or replaying it. The host materializes the completed installation into each worktree using
+copy-on-write copies where supported, retaining the original preparation receipt.
+This avoids dependency-path symlink exceptions and writable shared aliases.
+Prepared roots are read-only to both agents and operations; a changed dependency
+input prepares a replacement before engineering continues. Build products stay local
+to the source worktree. No test or verification result is reused by this mechanism.
 
 This is implementation intent; qualification must prove actual reuse, invalidation,
 interruption handling and write denial before it is reported as delivered.
