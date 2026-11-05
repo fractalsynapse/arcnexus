@@ -4,7 +4,7 @@
 
 ### Added
 
-- Pin real promotion to the GitHub target branch revision and require its publication grant before admitting live work (#247).
+- Pin real promotion to the GitHub target branch revision and require its publication grant before admitting live work. Refuse a merge that would import unreviewed base history (#247).
 
 - Rank the complete eligible steward catalog for task direction. Starting teams follow the goal, and committed inbox activity wakes an idle scheduler without repeated catalog scans (#148, #242).
 - Accept all component-owned file types at specification checkpoints while still requiring classified documentation and regression evidence. Show directors which failed assignments can resume, and let stewards correct missing final checklist evidence (#243, #245, #246).

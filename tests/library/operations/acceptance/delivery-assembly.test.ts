@@ -15,7 +15,7 @@ class LiveAssemblyFixture extends GitDeliveryFixture {
   );
 
   /** Prepares one host-captured merge intent without authorizing any upstream transition. */
-  intent() {
+  intent(targetHead = this.repository.base) {
     this.effects.prepare({
       id: 'merge',
       environmentId: 'sim',
@@ -23,7 +23,7 @@ class LiveAssemblyFixture extends GitDeliveryFixture {
       operation: 'pull-request.merge',
       target: 'repo',
       definitionDigest: 'policy',
-      input: { deliveryId: this.id, targetHead: this.repository.base },
+      input: { deliveryId: this.id, targetHead },
     });
     return { ...this.effects.begin('merge'), environmentId: 'live' };
   }
@@ -69,6 +69,30 @@ test('shared assembly refuses changed retained objects and substituted target in
     ),
     /authority/,
   );
+});
+
+test('assembly refuses to import unreviewed base history even when target bytes match', async (t) => {
+  const f = new LiveAssemblyFixture(t);
+  const source = f.repository.source;
+  const head = String((await f.execute('delivery.commit')).result!.head);
+  const tree = git(source, 'rev-parse', 'HEAD^{tree}').trim();
+  const target = git(
+    source,
+    '-c',
+    'user.name=Acceptance',
+    '-c',
+    'user.email=test@example.invalid',
+    'commit-tree',
+    tree,
+    '-m',
+    'Independent target',
+  ).trim();
+  const effect = f.intent(target);
+  await assert.rejects(
+    f.assembly.assemble(effect, head, f.signal),
+    /lacks the verified delivery base/,
+  );
+  assert.equal(git(source, 'for-each-ref', 'refs/arcnexus/merges/'), '');
 });
 
 registerSuite({

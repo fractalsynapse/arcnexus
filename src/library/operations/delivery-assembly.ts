@@ -26,6 +26,7 @@ export class DeliveryAssembly {
     signal.throwIfAborted();
     this.assert(effect);
     this.commits.validate(this.source, head);
+    this.assertTargetContainsBase(effect);
     const prior = git(
       this.source,
       'for-each-ref',
@@ -65,11 +66,21 @@ export class DeliveryAssembly {
   /** Rejects redirected or mismatched retained merge objects before they can be reused for verification. */
   validate(effect: ExternalEffect, head: string, assembled: string): void {
     this.assert(effect);
+    this.assertTargetContainsBase(effect);
     this.commits.validate(this.source, head);
     if (!/^[a-f0-9]{40,64}$/.test(assembled)) throw new Error('Invalid assembled commit');
     const actual = git(this.source, 'show', '-s', '--format=%P%n%s', assembled).trim();
     if (actual !== [String(effect.input.targetHead) + ' ' + head, this.message()].join('\n'))
       throw new Error('Assembled merge differs from captured parents or attribution');
+  }
+
+  /** Rejects targets that a two-parent merge would advance through unreviewed source history. */
+  private assertTargetContainsBase(effect: ExternalEffect): void {
+    const target = String(effect.input.targetHead);
+    if (git(this.source, 'rev-list', '--max-count=1', this.delivery.base, '--not', target).trim())
+      throw new Error(
+        'Integration target lacks the verified delivery base; reconcile before merging',
+      );
   }
 
   /** Names private assembly evidence by the complete durable intent digest, not a mutable source branch. */
