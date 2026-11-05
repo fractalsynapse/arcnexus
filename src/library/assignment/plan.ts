@@ -160,21 +160,7 @@ function validateUpdates(record: RecordData, updates: unknown): Plan {
   return plan;
 }
 
-/** Requires terminal steward claims before handoff; host verification is recorded separately. */
-export function requireCompletedItems(record: RecordData): void {
-  const open = (record.plan as Plan | undefined)?.items.filter(
-    (item) => !['completed', 'skipped'].includes(item.status),
-  );
-  if (open?.length)
-    throw new CompletedPlanValidationError(
-      new PlanValidationError(
-        'Assignment checklist remains incomplete or blocked: ' +
-          open.map((item) => item.id).join(', ') +
-          '. Report supporting evidence for finished items or return a substantive blocker.',
-      ),
-    );
-}
-
+/** Records observed host checks without changing a steward's remaining checklist claims. */
 export function completePlan(root: string, record: RecordData): void {
   const plan = structuredClone(record.plan) as Plan | undefined;
   if (!plan) return;

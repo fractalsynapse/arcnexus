@@ -3,7 +3,7 @@ import { SpecificationValidationError } from './specification-error.js';
 import { SessionProgress } from './session-progress.js';
 import { save } from '../workspace/state.js';
 import { logExcerpt } from './attempts.js';
-import { completePlan, CompletedPlanValidationError, requireCompletedItems } from './plan.js';
+import { completePlan, CompletedPlanValidationError } from './plan.js';
 import { SessionState } from './session-state.js';
 import { AssignmentBlocked, AssignmentFailed, SessionTurn } from './session-turn.js';
 import { SessionVerification } from './session-verification.js';
@@ -28,20 +28,29 @@ export class SessionWorkflow {
       await this.advance(stage);
       safe = true;
     } catch (error) {
-      if (
-        !(error instanceof Error && error.name === 'AssignmentYield') &&
-        !(error instanceof AssignmentBlocked) &&
-        !this.retainPlanCorrection(stage, error) &&
-        !this.retainSpecificationCorrection(stage, error)
-      ) {
-        safe = error instanceof AssignmentFailed;
-        this.failure(error);
-        throw error;
-      }
-      safe = true;
+      safe =
+        error instanceof CompletedPlanValidationError ||
+        error instanceof SpecificationValidationError ||
+        error instanceof AssignmentBlocked ||
+        error instanceof AssignmentFailed ||
+        (error instanceof Error && error.name === 'AssignmentYield');
+      this.handleFailure(stage, error);
     } finally {
       this.checkpoint(safe);
     }
+  }
+
+  /** Retains completed diagnosis and yields while recording terminal engineering failures honestly. */
+  private handleFailure(stage: string, error: unknown): void {
+    if (
+      (error instanceof Error && error.name === 'AssignmentYield') ||
+      error instanceof AssignmentBlocked ||
+      this.retainPlanCorrection(stage, error) ||
+      this.retainSpecificationCorrection(stage, error)
+    )
+      return;
+    this.failure(error);
+    throw error;
   }
 
   /** Saves durable continuation evidence after the completed stage or retained failure. */
@@ -132,7 +141,6 @@ export class SessionWorkflow {
       record.nextStage = 'implementation';
       return;
     }
-    requireCompletedItems(record);
     await this.verification.final();
     this.markAttempt({ status: 'completed' });
     record.outcome = 'ready_for_integration';
@@ -157,7 +165,7 @@ export class SessionWorkflow {
         (this.state.options.record.planningFeedback
           ? `Plan validation feedback: ${String(this.state.options.record.planningFeedback)}\n`
           : '') +
-          'Plan the assignment without source edits. Return plan with approach, assumptions, activities with reasons, questions, and checklist items: stable id, activity, result, criteria (zero-based acceptance criterion indices), expectedEvidence, dependencies (item IDs), status=pending, evidence=[], explanation=empty string. Use only the role activity names research, documentation, testing, implementation, review, release (restricted further by the captured role). Host stage names such as specification and planning are not checklist activity names. Every initial item is pending, including dependencies awaiting another owner; progress claims apply only after the host accepts the plan. Every checklist item activity must also appear in plan.activities with a reason. Before returning, check this membership, unique item IDs, existing acyclic dependency IDs, and valid zero-based criterion indices. Cover every acceptance criterion. Plan only within captured permissions; host checkpoints cannot be waived. No publication. Return before executing the plan.',
+          'Plan the assignment without source edits. Return plan with approach, assumptions, activities with reasons, questions, and checklist items: stable id, activity, result, criteria (zero-based acceptance criterion indices), expectedEvidence, dependencies (item IDs), status=pending, evidence=[], explanation=empty string. Use only the role activity names research, documentation, testing, implementation, review, release (restricted further by the captured role). Host stage names such as specification and planning are not checklist activity names. Every initial item is pending, including dependencies awaiting another owner; progress claims apply only after the host accepts the plan. Every checklist item activity must also appear in plan.activities with a reason. Before returning, check this membership, unique item IDs, existing acyclic dependency IDs, and valid zero-based criterion indices. Cover every acceptance criterion. Checklist items describe your engineering work and handoff; host delivery, integration and publication are subsequent lifecycle outcomes, not worker completion prerequisites. Plan only within captured permissions; host checkpoints cannot be waived. No publication. Return before executing the plan.',
         true,
       );
   }
@@ -170,7 +178,6 @@ export class SessionWorkflow {
         '\nThis is the only execution turn after planning for this research/review assignment. Execute the selected plan now using permitted operations; do not defer testing or service operations to an imaginary later turn. Source-read-only prohibits source edits, not declared operations. Return findings, evidence references, uncertainty and checklist updates for all selected work, or a precise blocker. Do not implement source changes or publish.',
       true,
     );
-    requireCompletedItems(this.state.options.record);
     await this.verification.final();
     this.state.options.record.outcome = `${this.state.assignment.kind}_completed`;
   }

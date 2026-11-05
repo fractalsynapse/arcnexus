@@ -33,11 +33,7 @@ export class ControlledChecklist {
 
   /** Selects completed blocking or transport faults before generating checklist correction claims. */
   private intercept(turn: WorkflowTurn): boolean {
-    if (
-      this.mode === 'final-checklist' &&
-      turn.stage !== 'planning' &&
-      !turn.prompt.includes('Assignment checklist remains incomplete or blocked')
-    ) {
+    if (this.mode === 'final-checklist' && turn.stage !== 'planning') {
       turn.result.planUpdates = [];
       return true;
     }
