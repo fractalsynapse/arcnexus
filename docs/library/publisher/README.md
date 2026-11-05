@@ -90,3 +90,14 @@ cannot rewind a later candidate. The normal live publisher then applies current 
 review and exact-revision authorization gates. Native acceptance uses controlled
 model/provider inputs; real-agent simulation and real staging promotion remain
 separate qualification gates.
+
+## Steward development branches
+
+A verified run retains each writing assignment's original development branch,
+base and verified candidate. Publication advances those branches in candidate
+order through the development PR and staging workflow. Each branch retains its
+accountable owner. The complete run requires independent engineering and goal
+acceptance before publication begins. An aggregate delivery is complete only
+when all its constituent development deliveries have completed their required
+milestones. Approval of the exact aggregate candidate authorizes its captured
+constituents. Conflicting refs and incomplete verification block publication.
