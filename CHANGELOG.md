@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep worker regression checkpoints as review evidence so incidental test corrections do not redefine product acceptance (#273).
+
 ### Changed
 
 - Reuse settled dependency preparation across task/workday workspaces while keeping installed dependencies read-only and build outputs isolated (#268).

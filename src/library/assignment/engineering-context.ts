@@ -10,7 +10,7 @@ export class EngineeringContext {
   /** Renders the latest accepted checkpoint without exposing retained test contents. */
   checkpoint(): string {
     const frozen = this.state.frozen.map(({ path, sha256 }) => ({ path, sha256 }));
-    return `Current frozen regressions: ${JSON.stringify(frozen)}\nThe preservation baseline is the accepted frozen checkpoint, not the earlier Git base. The full candidate diff includes specification changes made before freezing; those changes alone do not violate preservation. Compare current bytes against each listed frozen hash and the host frozenRegressions observations. A preserved hash does not establish test quality or acceptance. The host retains those bytes independently and verifies the candidate against the frozen checks. You choose the owned candidate files to edit; justify any regression changes against the original requirements. A candidate test edit cannot replace the frozen acceptance baseline. This context does not expand edit authority.`;
+    return `Retained regression evidence: ${JSON.stringify(frozen)}\nThese worker-authored specification bytes and their observed failure remain evidence, not additional architectural authority. Compare later test changes with the retained checkpoint and explain corrections against the original acceptance criteria. Current candidate checks must pass; independent review must reject removed or weakened coverage of those criteria. Correct incidental test mistakes instead of changing correct product behavior to satisfy them. Captured trusted acceptance remains independently enforced. This context does not expand edit authority.`;
   }
 
   /** Builds the model-facing instructions from captured assignment context. */

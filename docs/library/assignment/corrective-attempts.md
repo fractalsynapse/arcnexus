@@ -83,9 +83,10 @@ accounting after live inspection. This is assisted self-development; failed and
 pre-fix records remain intact. The supervisor and external checks remained outside
 the candidate's writable scope throughout.
 
-Host verification feedback identifies the checkpoint that failed. A
-`frozen-regression` failure means the host intentionally tested the retained
-specification bytes, even when the steward's current candidate tests pass.
-Corrective and review context must preserve this distinction. Candidate test edits
-cannot replace captured acceptance; discrepancies require diagnosis against the
-accepted requirements, not an assumption that compiled tests are stale (#251).
+Host verification feedback identifies the checkpoint that failed. Historical
+`frozen-regression` failures reran worker-authored specification bytes; those
+reports remain readable. Current execution retains those bytes and the observed
+failure for review, but checks the current candidate. A worker's incidental test
+mistake does not become an architectural requirement. Review must assess test
+corrections and reject weakened coverage against the original acceptance criteria.
+Captured trusted acceptance remains independently enforced (#273).

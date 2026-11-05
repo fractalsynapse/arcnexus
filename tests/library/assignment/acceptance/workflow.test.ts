@@ -101,14 +101,9 @@ class WorkflowTests {
     assert.equal(JSON.parse(r.stdout).turns.length, 6);
   }
 
-  /** Verifies that a weakened current test cannot replace frozen acceptance. */
+  /** Candidate test weakening cannot hide failure of the captured host check. */
   aWeakenedCurrentTestCannotReplaceFrozenAcceptance(t: TestContext) {
     const f = workflowFixture(t, 'weak-test');
-    writeFileSync(
-      join(f.repo, 'verify.cjs'),
-      "if(require('fs').existsSync('tests/regression.cjs'))require('./tests/regression.cjs');",
-    );
-    f.commit();
     const r = f.run();
     assert.equal(r.status, 1);
     const record = JSON.parse(r.stdout);
@@ -117,29 +112,29 @@ class WorkflowTests {
       readFileSync(join(record.workspace, 'tests/regression.cjs'), 'utf8'),
       '// weakened test',
     );
-    const failures = record.operationInvocations.filter(
-      (invocation: any) =>
-        invocation.purpose === 'frozen-regression' && invocation.result?.exitCode === 1,
-    );
-    this.frozenFeedback(record, f.state);
-    assert.ok(failures.length >= 3);
-    for (const invocation of failures)
-      assert.match(readFileSync(invocation.result.log, 'utf8'), /BOUNDARY_EXPECTED/);
+    assert.ok(record.commands.some((command: any) => command.exitCode === 1));
+    assert.ok(record.frozenTests.length);
   }
 
-  /** Requires corrective prompts to explain the retained acceptance baseline without weakening it. */
-  private frozenFeedback(record: any, root: string): void {
-    const corrections = record.turns.filter((turn: any) => turn.activity === 'correction');
-    assert.ok(corrections.length > 0);
-    for (const turn of corrections) {
-      const prompt = readFileSync(
-        join(root, 'runs', record.id, 'turns', String(turn.number), 'prompt.txt'),
-        'utf8',
-      );
-      assert.match(prompt, /Host checkpoint frozen-regression/);
-      assert.match(prompt, /intentionally tested the retained specification checkpoint/);
-      assert.match(prompt, /Candidate test edits cannot replace this acceptance baseline/);
-    }
+  /** A corrected incidental assertion preserves red evidence without forcing incorrect product behavior. */
+  correctedRegressionRetainsEvidence(t: TestContext): void {
+    const f = workflowFixture(t, 'corrected-regression');
+    const result = f.run();
+    assert.equal(result.status, 0, result.stderr);
+    const record = JSON.parse(result.stdout);
+    assert.equal(record.outcome, 'ready_for_integration');
+    const original = record.frozenTests.find((test: any) => test.path === 'tests/regression.cjs');
+    assert.match(Buffer.from(original.content, 'base64').toString(), /INCIDENTAL_MISTAKE/);
+    const current = readFileSync(join(record.workspace, original.path), 'utf8');
+    assert.doesNotMatch(current, /INCIDENTAL_MISTAKE/);
+    assert.match(current, /BOUNDARY_EXPECTED/);
+    assert.ok(
+      record.commands.some(
+        (command: any) => command.stage === 'red-test' && command.exitCode === 1,
+      ),
+    );
+    assert.ok(!record.commands.some((command: any) => command.stage === 'frozen-regression'));
+    assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'after');
   }
 
   /** Retains a valid owner request for deterministic scheduler delivery without calling it a failed activation. */
@@ -266,7 +261,7 @@ test('automatic repair preserves frozen tests and cumulative usage', (t: any) =>
 test('review can request correction without an attempt allowance', (t: any) =>
   suite.reviewCanRequestCorrectionWithoutAnAttemptAllowance(t));
 
-test('a weakened current test cannot replace frozen acceptance', (t: any) =>
+test('a weakened current test cannot replace the captured host check', (t: any) =>
   suite.aWeakenedCurrentTestCannotReplaceFrozenAcceptance(t));
 
 test('owner request yields a safe waiting checkpoint', (t: any) =>
@@ -289,6 +284,9 @@ test('frozen-test restoration refuses a redirected file without overwriting its 
 
 test('candidate guidance cannot authorize edits outside captured scope', (t: any) =>
   suite.candidateGuidanceCannotAuthorizeEditsOutsideCapturedScope(t));
+
+test('corrected worker regression retains original failure evidence', (t) =>
+  suite.correctedRegressionRetainsEvidence(t));
 
 test('late host diagnostics reach the corrective steward', (t) =>
   suite.lateFailureReachesCorrection(t));

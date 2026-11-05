@@ -240,11 +240,7 @@ export class SessionWorkflow {
 
   /** Identifies captured acceptance failures separately from checks of the current candidate. */
   private commandFeedback(failed: CommandResult): string {
-    const baseline =
-      failed.stage === 'frozen-regression'
-        ? 'The host intentionally tested the retained specification checkpoint, not your edited candidate tests. Candidate test edits cannot replace this acceptance baseline. Diagnose against the accepted requirements; a different assertion alone is not evidence of stale compiled output. '
-        : '';
-    return `Host checkpoint ${failed.stage ?? 'verification'}: ${baseline}Command ${JSON.stringify({ command: failed.command, args: failed.args })}; exit code ${failed.exitCode}; ${logExcerpt(failed.log)}`;
+    return `Host checkpoint ${failed.stage ?? 'verification'}: Command ${JSON.stringify({ command: failed.command, args: failed.args })}; exit code ${failed.exitCode}; ${logExcerpt(failed.log)}`;
   }
 
   /** Runs source-read-only review and requires final host verification. */

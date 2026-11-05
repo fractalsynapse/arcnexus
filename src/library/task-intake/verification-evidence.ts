@@ -1,3 +1,4 @@
+import { frozenReview, type FrozenTest } from '../assignment/checkpoints.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { candidateDigest, captureChanges } from '../change-inspection/changes.js';
@@ -41,6 +42,7 @@ export class VerificationEvidence {
     );
     this.addFiles(JSON.parse(readFileSync(join(directory, 'new-files.json'), 'utf8')));
     this.execution(root, record);
+    this.regressions(record);
     this.pages.add('assessment', JSON.stringify(input ?? null), 'json');
     const manifest = {
       baseline,
@@ -54,6 +56,20 @@ export class VerificationEvidence {
       throw Object.assign(new Error('Candidate changed during evidence capture'), {
         name: 'CandidateIntegrityError',
       });
+  }
+
+  /** Exposes original worker tests and observed failure for review without executing them as authority. */
+  private regressions(record: RecordData): void {
+    const tests = (record.frozenTests ?? []) as FrozenTest[];
+    if (!tests.length) return;
+    const comparison = frozenReview(record, tests);
+    for (const test of tests)
+      this.pages.add('regression:' + test.path, test.content, 'base64', test.path);
+    this.pages.add(
+      'regressions',
+      JSON.stringify({ ...comparison, expectedFailure: record.regressionCheckpoint }),
+      'json',
+    );
   }
 
   /** Pins current-run host observations without accepting a foreign task as execution evidence. */
