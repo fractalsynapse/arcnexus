@@ -2722,3 +2722,12 @@ task produced a verified change and a simulated PR. Separately, the new workday
 delivered a verified execution-runtime research response to the architecture
 steward's inbox request. Those are distinct observations from release and promotion.
 CI 41946383210 passed the confined and native suites on f6fd4e6.
+
+### Pin promotion to the real target branch (#247)
+
+The approved simulation candidate changes one guide. Its supervising source is
+201 commits ahead of the real staging branch, covering 359 files. Resolve the
+provider branch head before choosing target authority for promotion. Use that
+commit for catalog resolution and host admission. Refuse absent target authority
+or a changed destination before starting a host or creating a live issue. Preserve
+the simulation delivery, active checkout and original run evidence.
