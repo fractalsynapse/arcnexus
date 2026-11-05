@@ -30,9 +30,37 @@
             "pattern": "^[a-f0-9]{64}$"
           },
           "content": {
-            "type": ["string", "null"]
+            "type": ["string", "null"],
+            "description": "Complete replacement bytes, required for create and update. Omit or set null only for delete."
           }
-        }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "operation": {
+                  "enum": ["create", "update"]
+                }
+              },
+              "required": ["operation"]
+            },
+            "then": {
+              "properties": {
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": ["content"]
+            },
+            "else": {
+              "properties": {
+                "content": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        ]
       }
     }
   }

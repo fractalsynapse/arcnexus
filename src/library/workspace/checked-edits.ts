@@ -1,4 +1,4 @@
-import { validateSchema } from '../architecture/schema.js';
+import { validateSchema, SchemaValidationError } from '../architecture/schema.js';
 import {
   existsSync,
   mkdirSync,
@@ -27,6 +27,14 @@ export class EditIdentityError extends Error {
   }
 }
 
+/** Rejects malformed edit intent before authorization, journaling or maintained-source mutation. */
+export class EditRequestError extends Error {
+  /** Retains a correctable request diagnostic, distinct from unsafe filesystem or authority failures. */
+  constructor(detail: string) {
+    super(detail);
+  }
+}
+
 interface EditTransaction {
   id: string;
   requestHash: string;
@@ -44,7 +52,7 @@ export class CheckedEdits {
     workspace: string,
     private readonly directory: string,
     private readonly authority: string,
-    private readonly authorize: (path: string) => void,
+    private readonly authorize: (path: string, content: string | null) => void,
   ) {
     if (realpathSync(workspace) !== resolve(workspace))
       throw new Error('Edit workspace cannot be a filesystem alias');
@@ -68,7 +76,7 @@ export class CheckedEdits {
     const path = join(this.directory, request.id + '.json');
     if (existsSync(path)) return this.retry(path, requestHash);
     this.recover();
-    request.changes.forEach((change) => this.authorize(change.path));
+    request.changes.forEach((change) => this.authorize(change.path, change.content ?? null));
     this.assertIndependent(request.changes);
     const transaction: EditTransaction = {
       id: request.id,
@@ -106,11 +114,21 @@ export class CheckedEdits {
 
   /** Rejects caller-supplied identities and malformed edit semantics before scope evaluation. */
   private request(value: unknown): { id: string; changes: CheckedChange[] } {
-    const input = validateSchema<{ id: string; changes: CheckedChange[] }>('checked-edits', value);
+    const input = this.validateRequest(value);
     const changes = input.changes.map((change) => this.change(change));
     if (new Set(changes.map((change) => change.path)).size !== changes.length)
-      throw new Error('An edit batch cannot repeat a path');
+      throw new EditRequestError('An edit batch cannot repeat a path');
     return { id: input.id, changes };
+  }
+
+  /** Converts only typed schema rejection; unavailable or invalid trusted schemas remain fatal. */
+  private validateRequest(value: unknown): { id: string; changes: CheckedChange[] } {
+    try {
+      return validateSchema('checked-edits', value);
+    } catch (error) {
+      if (error instanceof SchemaValidationError) throw new EditRequestError(error.message);
+      throw error;
+    }
   }
 
   /** Canonicalizes explicit edit fields so equivalent JSON ordering retains retry identity. */
@@ -126,7 +144,7 @@ export class CheckedEdits {
       (value.operation !== 'delete' && typeof value.content !== 'string') ||
       (value.operation === 'delete' && value.content != null)
     )
-      throw new Error('Malformed checked edit');
+      throw new EditRequestError('Malformed checked edit');
     return {
       path: value.path,
       operation: value.operation,

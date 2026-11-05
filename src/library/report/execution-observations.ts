@@ -1,5 +1,5 @@
-import { lstatSync, readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { existsSync, lstatSync, readFileSync, realpathSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import type { RecordData } from '../workspace/state.js';
 import { readTimeline, type TimelineEvent } from './timeline.js';
 
@@ -10,6 +10,8 @@ export class ExecutionObservations {
 
   /** Captures completed SDK tool observations and declared command logs without interpreting their claims. */
   capture(record: RecordData) {
+    const path = join(this.directory, 'timeline.jsonl');
+    if (existsSync(path)) this.validateFile(path);
     const timeline = readTimeline(this.directory);
     if (timeline.events.some((event) => event.runId !== record.id))
       throw new Error('Timeline belongs to a different execution record');
@@ -52,7 +54,7 @@ export class ExecutionObservations {
     if (
       item.type !== 'mcp_tool_call' ||
       item.server !== 'arcnexus' ||
-      item.tool !== 'verification.evidence'
+      !['verification.evidence', 'assignment.evidence'].includes(item.tool)
     )
       return event;
     return {
@@ -65,6 +67,9 @@ export class ExecutionObservations {
   private artifactPage(result: any): unknown {
     try {
       const page = JSON.parse(result.content.find((block: any) => block.type === 'text').text);
+      if (page.status === 'rejected') return page;
+      if (typeof page.artifact !== 'string' || typeof page.sha256 !== 'string')
+        throw new Error('Missing artifact page identity');
       return {
         contentRetainedInPinnedArtifact: true,
         artifact: page.artifact,
@@ -82,12 +87,20 @@ export class ExecutionObservations {
     }
   }
 
+  /** Rejects aliases and shared inodes before observing any private timeline or command output. */
+  private validateFile(path: string): void {
+    if (dirname(resolve(path)) !== resolve(this.directory))
+      throw new Error('Command output is outside the execution record');
+    const stat = lstatSync(path);
+    if (!stat.isFile() || stat.nlink !== 1 || realpathSync(path) !== resolve(path))
+      throw new Error('Evidence is not an unaliased regular file');
+  }
+
   /** Reads only regular captured logs within this record, retaining absent output as an explicit gap. */
   private log(path: string | undefined): unknown {
     try {
-      if (!path || dirname(resolve(path)) !== resolve(this.directory))
-        throw new Error('Command output is outside the execution record');
-      if (!lstatSync(path).isFile()) throw new Error('Command output is not a regular file');
+      if (!path) throw new Error('Missing command output path');
+      this.validateFile(path);
       return { content: readFileSync(path, 'utf8') };
     } catch (error) {
       return { evidenceUnavailable: true, reason: String(error) };

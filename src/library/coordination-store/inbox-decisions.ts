@@ -1,3 +1,4 @@
+import { AssignmentReplacements } from './assignment-replacements.js';
 import type { ExecutionDatabase } from './execution-database.js';
 import type { ExecutionAssignment, InboxRequest } from './execution-types.js';
 
@@ -11,6 +12,25 @@ export interface InboxDecision {
 export class InboxDecisions {
   /** Shares the single transactional writer; it never opens a second connection. */
   constructor(private readonly db: ExecutionDatabase) {}
+
+  /** Projects inherited conversations onto their active parties and keeps failed attempts inspectable. */
+  messages(id: string) {
+    const lineage = new AssignmentReplacements(this.db);
+    const archived = Boolean(this.db.get<ExecutionAssignment>('assignment', id).data.replacedBy);
+    const endpoints = archived ? new Set([id]) : lineage.predecessors(id);
+    const replies = this.db.all<InboxDecision & { actor: string }>('reply');
+    return this.db
+      .all<InboxRequest>('request')
+      .filter((r) => endpoints.has(r.from) || endpoints.has(r.assignmentId))
+      .map((original) => {
+        const request = archived ? original : lineage.envelope(original);
+        return {
+          ...request,
+          ...this.context(id, request),
+          replies: replies.filter((reply) => reply.requestId === request.id),
+        };
+      });
+  }
 
   /** Projects assignment-relative action guidance from the same states checked during replies. */
   context(actor: string, request: InboxRequest) {
@@ -69,7 +89,9 @@ export class InboxDecisions {
     if (!decision.text.trim()) throw new Error('Inbox decision requires an explanation');
     const id = JSON.stringify([decision.requestId, actor, decision.action, decision.text]);
     if (this.db.all<{ id: string }>('reply').some((r) => r.id === id)) return false;
-    const request = this.db.get<InboxRequest>('request', decision.requestId);
+    const request = new AssignmentReplacements(this.db).envelope(
+      this.db.get<InboxRequest>('request', decision.requestId),
+    );
     const requesterAction = ['answer', 'require_delivery'].includes(decision.action);
     if (actor !== (requesterAction ? request.from : request.assignmentId))
       throw new Error('Inbox reply has unauthorized sender');

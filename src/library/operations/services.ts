@@ -152,19 +152,24 @@ export class ServiceManager {
     const cwd = realpathSync(join(this.record.workspace, op.cwd));
     if (relative(this.record.workspace, cwd).startsWith('..'))
       throw new Error('Service working directory escapes workspace');
+    const declared = targetCommand(this.record, {
+      command: op.command,
+      args: op.args.map((a) => (a === '{workspace}' ? this.record.workspace : a)),
+    });
+    const command = this.confinement!.command(
+      declared,
+      cwd,
+      operationEnvironment(this.record).PATH,
+    );
     const child = fork(fileURLToPath(new URL('./service-supervisor.js', import.meta.url)), [], {
       detached: true,
       stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
       env: operationEnvironment(this.record),
     });
     this.watch(child, record);
-    const command = targetCommand(this.record, {
-      command: op.command,
-      args: op.args.map((a) => (a === '{workspace}' ? this.record.workspace : a)),
-    });
     child.send({
       record,
-      ...this.confinement!.command(command, cwd),
+      ...command,
       cwd,
       env: this.confinement!.environment(operationEnvironment(this.record)),
       port: op.service!.port,

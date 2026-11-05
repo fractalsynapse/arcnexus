@@ -83,6 +83,25 @@ class ExecutionObservationScenarios {
     assert.doesNotMatch(JSON.stringify(evidence), /RECURSIVE_CONTENT/);
   }
 
+  /** Corrective tool responses remain rejections rather than falsely claiming pinned content. */
+  rejected(t: TestContext): void {
+    const { f, store, run, record } = this.fixture(t);
+    const rejection = { status: 'rejected', error: 'Unknown artifact', recovery: 'Read manifest' };
+    observe(f.state, record, 'codex.event', {
+      type: 'item.completed',
+      item: {
+        type: 'mcp_tool_call',
+        server: 'arcnexus',
+        tool: 'assignment.evidence',
+        result: { content: [{ type: 'text', text: JSON.stringify(rejection) }] },
+      },
+    });
+    const evidence = new ExecutionEvidence(f.state, store).capture(run.id);
+    const event = (evidence.assignments[0]!.record as any).observations.timeline.events[0];
+    assert.deepEqual(event.payload.item.result, rejection);
+    assert.equal(event.payload.item.result.contentRetainedInPinnedArtifact, undefined);
+  }
+
   /** Registers a matching host-owned assignment record in a private durable store. */
   private fixture(t: TestContext) {
     const f = new GeneralFixture(t).fixture;
@@ -114,5 +133,8 @@ test('independent evidence rejects a foreign assignment timeline', (t) => scenar
 
 test('verification artifact observations preserve page provenance without recursive payloads', (t) =>
   scenarios.artifact(t));
+
+test('rejected evidence observations never claim successful pinned content', (t) =>
+  scenarios.rejected(t));
 
 registerSuite({ component: 'report', level: 'acceptance', tags: ['native-host', 'deterministic'] });

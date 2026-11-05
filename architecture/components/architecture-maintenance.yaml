@@ -9,11 +9,6 @@ objectives:
 constraints:
   - Caller accepts architectural authority changes
   - Candidate definition edits never change authority for an active execution
-operations:
-  migrated-recipe-43b539fb85a57c26:
-    - verify
-  migrated-recipe-df6d67ddacf5bf0c:
-    - verify
 owns:
   - README.md
   - CHANGELOG.md
@@ -21,10 +16,6 @@ owns:
   - docs/dev.md
   - docs/phase-one-retrospective.md
   - docs/guidance-audit.md
-  - docs/experiment-qualification.json
-  - docs/guidance-qualification.json
-  - docs/operations-qualification.json
-  - docs/workday-qualification.json
   - docs/plans
   - LICENSE
   - architecture/composition-profiles

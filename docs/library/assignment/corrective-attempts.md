@@ -6,7 +6,6 @@ inference. There are no execution or corrective quotas; the numeric limits below
 historical captured configurations that are no longer executable. Planned
 stages and host checkpoints remain required, and repeated failures require diagnosis.
 
-
 ## Historical two-attempt contract
 
 The remainder records the earlier implementation and its qualification evidence.
@@ -83,3 +82,10 @@ attempt evidence, thread identity and final no-change checks, and corrected usag
 accounting after live inspection. This is assisted self-development; failed and
 pre-fix records remain intact. The supervisor and external checks remained outside
 the candidate's writable scope throughout.
+
+Host verification feedback identifies the checkpoint that failed. A
+`frozen-regression` failure means the host intentionally tested the retained
+specification bytes, even when the steward's current candidate tests pass.
+Corrective and review context must preserve this distinction. Candidate test edits
+cannot replace captured acceptance; discrepancies require diagnosis against the
+accepted requirements, not an assumption that compiled tests are stale (#251).

@@ -67,7 +67,7 @@ export class WorkflowFixture {
     });
     this.options = { mode, calls: this.calls };
     mkdirSync(join(this.repo, 'architecture/components'), { recursive: true });
-    this.git('init', '-b', 'main');
+    this.git('init', '-b', 'staging');
     this.git('config', 'user.name', 'Test');
     this.git('config', 'user.email', 'test@example.invalid');
     this.files();

@@ -133,3 +133,41 @@ For report assignments, obtain `report-format` feedback before interpreting
 checks formatting and lint before expensive repository tests; the focused report
 regression remains verification command 2. A formatting failure must be repaired
 within report scope, not hidden by compressing expressions onto fewer lines.
+
+### Investigation evidence
+
+Research and review assignments receive `assignment.evidence` through their
+host-bound MCP connection. Read `artifact=manifest`, then the advertised artifact
+names, following `nextOffset` until `complete=true`. Pages use the same content
+hashes, character offsets and maximum page size as `verification.evidence`.
+
+The host captures other assignments in the same run, including checkpoint bytes,
+checked-edit transaction journals, observed tool requests/results and managed
+operation state. Director decisions, feedback and caller clarification accompany
+the capture. Content remains pinned when original files subsequently change.
+Missing records, journals and logs are explicit evidence gaps; an absent journal
+alone does not prove an edit was never attempted. Worker observations remain
+separate from trusted host checks.
+
+The tool accepts artifact names and page bounds, never filesystem paths, owner
+identities or run overrides. Foreign records and unsafe aliases are rejected.
+Investigation evidence grants no write authority, does not declare an uncertain
+operation completed and cannot make an unsafe checkpoint resumable.
+
+Invalid evidence requests return bounded corrective rejections through the same
+capability. An unknown artifact, including an identity quoted from another tool's
+observations, grants no access: read the current capability's manifest and use its
+advertised names. Malformed arguments likewise return a rejection without content.
+A subsequent valid request can continue on the same connection. Invalid capability
+routing, corrupted pinned content and host execution failures remain fatal; these
+are not converted into ordinary client mistakes.
+
+Independent verification repins the exact investigation artifacts referenced by
+completed `assignment.evidence` observations. The current execution index includes
+`verificationArtifact` names from its own manifest alongside the original observed
+artifact identity and hash. Manifest observations also include `verificationArtifacts`
+for their immediate entries, including artifacts the worker never opened. Reads validate the originating run and assignment,
+regular private file identity and content hash. Missing retained content is an
+explicit gap; foreign identities, aliases and hash mismatches fail capture.
+Historical verification snapshots are not recursively expanded. An invalid tool
+request remains a rejection in observations, never a claim of pinned content.

@@ -9,6 +9,7 @@ import {
 import { join, relative, resolve } from 'node:path';
 import { relativePath, type Command } from '../architecture/config.js';
 import { git } from './process.js';
+import { executablePath } from './executable.js';
 
 const diagnosticSupport = readFileSync(new URL('./node-stdio.js', import.meta.url), 'utf8');
 
@@ -17,7 +18,7 @@ export interface ConfinementAuthority {
   reads: string[];
   outputs: string[];
   maintainedPaths?: string[];
-  network?: boolean;
+  network?: boolean | { domains: string[] };
   temporaryRoot: string;
   executable: string;
   toolDirectories?: string[];
@@ -109,8 +110,8 @@ export class SourceConfinement {
     this.filesystem[canonical] = 'read';
   }
 
-  /** Returns the exact wrapper command; unsupported installed enforcement fails without fallback. */
-  command(command: Command, cwd = this.workspace): Command {
+  /** Resolves the declared program before wrapping it, without changing aliases or granting new filesystem access. */
+  command(command: Command, cwd = this.workspace, path = process.env.PATH): Command {
     const actual = realpathSync(cwd);
     this.rejectConfiguration(actual);
     if (!this.inside(actual, this.workspace)) throw new Error('Operation cwd escapes source');
@@ -118,7 +119,7 @@ export class SourceConfinement {
     for (const override of this.overrides) args.push('-c', override);
     return {
       command: this.authority.executable,
-      args: [...args, '--', command.command, ...command.args],
+      args: [...args, '--', executablePath(command.command, actual, path), ...command.args],
     };
   }
 
@@ -137,6 +138,7 @@ export class SourceConfinement {
   environment(base: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
     return {
       ...base,
+      HOME: this.temporaryRoot,
       CODEX_HOME: this.temporaryRoot + '-configuration',
       TMPDIR: this.temporaryRoot,
       NODE_OPTIONS:
@@ -212,6 +214,24 @@ export class SourceConfinement {
     );
   }
 
+  /** Uses a deny-all proxy for no-network work, preserving local stdio without granting network destinations. */
+  private networkConfiguration(): string[] {
+    const network = this.authority.network;
+    if (network === true) return [];
+    const allowed = network && typeof network === 'object' ? network.domains : [];
+    if (
+      (typeof network === 'object' && !allowed.length) ||
+      allowed.some((domain) => !/^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/.test(domain))
+    )
+      throw new Error('Expected explicit operation network domains');
+    const domains = allowed.map((domain) => `${JSON.stringify(domain)}="allow"`);
+    return [
+      'features.network_proxy=true',
+      'permissions.arcnexus.network.mode="limited"',
+      `permissions.arcnexus.network.domains={${domains.join(',')}}`,
+    ];
+  }
+
   /** Encodes literal TOML values with no shell interpolation or inherited writable defaults. */
   private configuration(): string[] {
     const entries = Object.entries(this.filesystem).map(
@@ -220,7 +240,8 @@ export class SourceConfinement {
     return [
       'default_permissions="arcnexus"',
       `permissions.arcnexus.filesystem={${entries.join(',')}}`,
-      `permissions.arcnexus.network.enabled=${this.authority.network === true}`,
+      'permissions.arcnexus.network.enabled=true',
+      ...this.networkConfiguration(),
       'features.use_legacy_landlock=false',
     ];
   }

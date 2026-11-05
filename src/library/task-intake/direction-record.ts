@@ -18,6 +18,7 @@ export class DirectionRecords {
     const record: RecordData = {
       id: randomUUID(),
       executionRunId: workspace.executionRunId,
+      executionEnvironment: workspace.executionEnvironment,
       assignmentId: workspace.assignmentId,
       parentRecordId: workspace.id,
       source: workspace.source,

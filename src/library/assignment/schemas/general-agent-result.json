@@ -118,6 +118,7 @@
             "minLength": 1
           },
           "assignmentId": {
+            "description": "Use null to request new recipient work. A non-null ID links only an existing recipient assignment from the host inbox in this run, with matching owner, objective, acceptance and scope. Never use a tracking issue ID, request/message ID or your own assignment ID.",
             "type": ["string", "null"]
           },
           "milestone": {
@@ -129,13 +130,6 @@
           },
           "changeType": {
             "enum": ["behavior", "documentation", "refactor", null]
-          },
-          "allowedWritePaths": {
-            "type": ["array", "null"],
-            "items": {
-              "type": "string",
-              "minLength": 1
-            }
           }
         },
         "required": [
@@ -148,8 +142,7 @@
           "assignmentId",
           "milestone",
           "kind",
-          "changeType",
-          "allowedWritePaths"
+          "changeType"
         ],
         "additionalProperties": false
       }

@@ -1,4 +1,13 @@
-import { DeliveryEvidence, ExecutionEvidence } from '../report/report.js';
+import { developmentBase } from './development-base.js';
+import { assignmentIntent } from './assignment-intent.js';
+import { RequestAdmission } from './request-admission.js';
+import type { UpstreamBridge } from '../operations/upstream-bridge.js';
+import {
+  AssignmentRegistry,
+  DeliveryEvidence,
+  ExecutionEvidence,
+  RecoveryEvidence,
+} from '../report/report.js';
 import { candidateDigest } from '../change-inspection/changes.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -11,7 +20,11 @@ import type {
   ExecutionAssignment,
 } from '../coordination-store/execution-types.js';
 import { CandidateSnapshots } from '../workspace/candidates.js';
-import { createWorkspace, prepareWorkspace } from '../workspace/workspace.js';
+import {
+  continueDevelopmentBranch,
+  createWorkspace,
+  prepareWorkspace,
+} from '../workspace/workspace.js';
 import { save, type RecordData } from '../workspace/state.js';
 import { ProgressObserver } from '../report/progress.js';
 import { Direction, VerificationIssue } from '../task-intake/direction.js';
@@ -21,19 +34,31 @@ import type { AgentResult } from '../steward/codex.js';
 export class AssignmentExecution {
   private readonly snapshots: CandidateSnapshots;
 
+  private readonly admission: RequestAdmission;
+
   /** Captures authority and the project store independently of mutable candidate source. */
   constructor(
     private readonly root: string,
     private readonly context: ProjectExecution,
     private readonly store: ExecutionStore,
     private readonly signal: AbortSignal,
+    private readonly collaboration?: (
+      assignment: ExecutionAssignment,
+    ) => UpstreamBridge | undefined,
   ) {
     this.snapshots = new CandidateSnapshots(context.source, join(root, 'snapshots'));
+    this.admission = new RequestAdmission(root, context, store);
   }
 
   /** Restores retained work, runs one stage and returns only a structured scheduler outcome. */
   async activate(assignment: ExecutionAssignment): Promise<ActivationResult> {
     const record = await this.record(assignment);
+    record.collaborationContext = {
+      environment: this.store.run(assignment.runId).environment,
+      trackingIssue:
+        this.store.assignment(assignment.id).data.trackingIssue ??
+        this.store.run(assignment.runId).data.trackingIssue,
+    };
     this.acknowledge(assignment, record);
     this.dependencyContext(assignment, record);
     record.inboxContext = this.inbox(assignment.id);
@@ -43,8 +68,19 @@ export class AssignmentExecution {
     ]
       .filter(Boolean)
       .join('\n');
+    const session = this.session(assignment, record);
+    if (Array.isArray(assignment.data.questions) && assignment.data.questions.length)
+      return this.answer(assignment, record, session);
+    if (record.requestCorrection) await this.admission.correct(record, session);
+    else if (!record.pendingRequests && !record.pendingInboxActions) await session.step();
+    const result = await this.outcome(assignment, record, session);
+    return { ...result, receipt: (record.checkpoint as { sha256: string }).sha256 };
+  }
+
+  /** Reconstructs the owner session with host-bound tools and the captured engineering profile. */
+  private session(assignment: ExecutionAssignment, record: RecordData): StewardSession {
     const resolved = record.resolvedAssignment as ResolvedAssignment;
-    const session = new StewardSession(
+    return new StewardSession(
       this.root,
       record,
       assignment.owner,
@@ -52,12 +88,26 @@ export class AssignmentExecution {
       resolved.executionProfile.model,
       this.context.executable,
       this.signal,
+      undefined,
+      this.collaboration?.(assignment),
+      this.investigation(assignment, record),
     );
-    if (Array.isArray(assignment.data.questions) && assignment.data.questions.length)
-      return this.answer(assignment, record, session);
-    if (!record.pendingRequests && !record.pendingInboxActions) await session.step();
-    const result = await this.outcome(assignment, record, session);
-    return { ...result, receipt: (record.checkpoint as { sha256: string }).sha256 };
+  }
+
+  /** Supplies intent discovery to engineers and private retained evidence only to read-only investigations. */
+  private investigation(assignment: ExecutionAssignment, record: RecordData) {
+    const resolved = record.resolvedAssignment as ResolvedAssignment;
+    const pages =
+      resolved.assignment.kind === 'change'
+        ? new AssignmentRegistry(this.store).capture(assignment)
+        : new RecoveryEvidence(this.root, this.store).capture(assignment);
+    record.investigationEvidence = pages.retain(join(this.root, 'runs', record.id), {
+      runId: assignment.runId,
+      assignmentId: assignment.id,
+      artifacts: pages.metadata(),
+    });
+    save(this.root, record);
+    return pages;
   }
 
   /** Exposes one durable reply identity while keeping internal retry keys out of model context. */
@@ -154,7 +204,7 @@ export class AssignmentExecution {
     }
     const run = this.store.run(assignment.runId);
     const base = String(run.data.candidateRevision ?? this.context.base);
-    const record = this.capture(assignment, base);
+    const record = await this.capture(assignment, base);
     this.store.updateAssignment(assignment.id, 'running', {
       recordId: record.id,
       candidateBase: base,
@@ -164,17 +214,16 @@ export class AssignmentExecution {
   }
 
   /** Captures assignment authority and associates a fresh workspace with its durable execution identity. */
-  private capture(assignment: ExecutionAssignment, base: string): RecordData {
-    const value = this.value(assignment);
+  private async capture(assignment: ExecutionAssignment, base: string): Promise<RecordData> {
+    const value = assignmentIntent(
+      assignment.objective,
+      assignment.acceptance,
+      assignment.data.proposal as Partial<Assignment> | undefined,
+    );
     const resolved = new ExecutionContext().assignment(this.context, assignment.owner, value);
-    const record = createWorkspace(this.root, {
-      project: this.context.source,
-      authorityBase: this.context.base,
-      packageId: this.context.packageId,
-      base,
-      bindings: this.context.bindings,
-    });
+    const record = await this.developmentWorkspace(assignment, base);
     record.executionRunId = assignment.runId;
+    record.executionEnvironment = this.store.run(assignment.runId).environment;
     record.assignmentId = assignment.id;
     record.environment = resolved.environment;
     record.resolvedAssignment = resolved;
@@ -183,21 +232,24 @@ export class AssignmentExecution {
     return record;
   }
 
-  /** Uses director-authored intent or the recipient's bounded request objective. */
-  private value(assignment: ExecutionAssignment): Assignment {
-    const proposed = assignment.data.proposal as Partial<Assignment> | undefined;
-    return {
-      schemaVersion: 3,
-      kind: proposed?.kind ?? 'change',
-      changeType: proposed?.changeType ?? 'behavior',
-      objective: assignment.objective,
-      expectedOutcome: assignment.objective,
-      acceptanceCriteria: assignment.acceptance.length
-        ? assignment.acceptance
-        : [assignment.objective],
-      allowedWritePaths: proposed?.allowedWritePaths,
-      hostChecks: [],
-    };
+  /** Shares staging resolution and branch provenance between new and reconciled steward workspaces. */
+  private async developmentWorkspace(assignment: ExecutionAssignment, base: string) {
+    const environment = this.store.run(assignment.runId).environment;
+    const branchBase = await developmentBase(
+      this.context,
+      environment?.mode,
+      base,
+      join(this.root, 'projects', this.context.key, 'target-observations'),
+      this.signal,
+    );
+    return createWorkspace(this.root, {
+      project: this.context.source,
+      authorityBase: this.context.base,
+      packageId: this.context.packageId,
+      base,
+      branchBase,
+      bindings: this.context.bindings,
+    });
   }
 
   /** Distinguishes accepted intent from verified delivery and preserves explicit milestone semantics. */
@@ -259,8 +311,12 @@ export class AssignmentExecution {
     Object.assign(record, {
       workspace: next.workspace,
       branch: next.branch,
+      branchBase: record.branchBase ?? next.branchBase,
+      members: next.members,
+      materializationBinding: next.materializationBinding,
       base: current,
     });
+    delete record.developmentHead;
     if (record.nextStage === 'finished') record.nextStage = 'review';
     record.reconciledCandidateDigest = candidateDigest(record);
     record.reconciliationId = next.id;
@@ -276,22 +332,19 @@ export class AssignmentExecution {
     current: string,
     revision: string,
   ): Promise<RecordData> {
-    const next = createWorkspace(this.root, {
-      project: this.context.source,
-      authorityBase: this.context.base,
-      packageId: this.context.packageId,
-      base: current,
-      bindings: this.context.bindings,
-    });
+    const next = await this.developmentWorkspace(assignment, current);
     next.environment = record.environment;
     next.resolvedAssignment = record.resolvedAssignment;
     next.assignmentId = assignment.id;
     next.executionRunId = assignment.runId;
+    next.executionEnvironment = record.executionEnvironment;
     this.store.updateAssignment(assignment.id, 'running', {
       reconciliation: { recordId: next.id, workspace: next.workspace, current, revision },
     });
     await prepareWorkspace(this.root, next, this.signal);
     this.snapshots.apply(next.workspace, current, revision);
+    continueDevelopmentBranch(record, next);
+    save(this.root, next);
     return next;
   }
 
@@ -303,6 +356,7 @@ export class AssignmentExecution {
   ): ActivationResult {
     if (requests.some((r) => !r.ownerId || !this.context.owners.includes(r.ownerId)))
       return { kind: 'blocked', reason: JSON.stringify(requests) };
+    if (!this.admission.accept(record, assignment, requests)) return { kind: 'continue' };
     return {
       kind: 'request',
       requests: requests.map((r, index) => ({
@@ -311,7 +365,6 @@ export class AssignmentExecution {
         existingAssignmentId: r.assignmentId ?? undefined,
         kind: r.kind,
         changeType: r.changeType,
-        allowedWritePaths: r.allowedWritePaths,
         milestone: r.milestone ?? 'delivered',
         objective: r.request,
         acceptance: r.acceptanceCriteria,

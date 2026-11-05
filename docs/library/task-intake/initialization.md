@@ -173,3 +173,21 @@ the worker submits its findings before that review can run. The host still requi
 independent verification, and the final director assesses the original goal against
 its retained result. This separation removes a circular worker/reviewer dependency;
 it does not waive captured criteria in an existing assignment.
+
+## Retained direction and assessment evidence
+
+Director and stewardship activations use `direction.evidence` to read a pinned
+manifest, the complete eligible catalog and each owner's captured contracts.
+Lexical suggestions help retrieval; they never limit which eligible owners the
+director may select. Blocked-task reconsideration also exposes a state index,
+per-assignment checkpoint artifacts and exact feedback. The original goal remains
+separate from these records. Missing or uncertain checkpoint evidence cannot
+authorize continuation.
+
+Independent verification uses `verification.evidence` for the complete submitted
+`assessment` input as well as observed execution and candidate-change artifacts.
+Submitted worker claims remain distinct from observed supporting evidence. These
+inputs are paged rather than embedded repeatedly in the initial prompt; no evidence
+is discarded and no execution quota is introduced. Each activation retains immutable
+content hashes and its own artifact names. Read the current manifest and follow
+page offsets until the relevant artifact is complete.

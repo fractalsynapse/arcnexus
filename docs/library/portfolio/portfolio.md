@@ -12,6 +12,15 @@ configuration lives under XDG config storage and contains no architectural polic
 credentials. `config get/update volume` reads or changes this application setting.
 An environment override wins and is visible in the effective result.
 
+Settings reads include a deterministic `revision` without creating storage. Shared
+application callers may pass that token as the third argument to
+`ApplicationSettings.update(name, value, expectedRevision)`. A stale token fails
+before replacing configuration. Updates hold the existing SQLite writer lease through
+validation and atomic JSON replacement; failed mutations release it. The revision
+includes both the effective environment override and the configured value, so an
+override cannot conceal an intervening configuration change. The CLI keeps
+`config update <name> <value>`; revision-aware API adapters use the shared service.
+
 The coordination store owns a versioned portfolio SQLite database. Repository records
 contain stable UUIDs and managed-relative or attached-absolute storage locations.
 Registration records locate component definitions; they do not copy purposes,
@@ -81,11 +90,15 @@ creating absent volume storage. Test commands consume it through shared test ser
 
 ## Shared list queries
 
-Platform and package lists accept `--search`, `--limit` and `--cursor`, using the
+Platform and package lists accept `field=value` equality filters plus
+`--search`, `--limit` and `--cursor`, using the
 same report query implementation as task/workday resources. Search covers identity
 and purpose. Pagination returns a result revision and rejects stale or incompatible
 cursors. Package platform selection remains an explicit namespace filter. List
-queries never create an absent volume or start execution.
+queries never create an absent volume or start execution. Filters accept `id`,
+`type` and `repositoryId`, combine with AND semantics, and reject unknown fields
+or invalid types. In `package list [platform] [field=value...]`, a leading value
+without `=` is the optional platform; subsequent values must be filters.
 
 ## Registered configuration migration
 
@@ -154,6 +167,71 @@ attention and is retained. Symbolic configuration refs are rejected; ref updates
 follow a redirect into a caller branch. No external operation is retried by configuration
 recovery.
 
-This slice updates existing same-repository definitions. Creating/removing components,
-standard mutations, multi-repository composition and transactions remain separate
-pending capabilities of the managed lifecycle plan.
+These mutations support same-repository definitions. Multi-repository composition
+and transactions remain pending capabilities of the managed lifecycle plan.
+
+`component create <package> <id> <field=value>...` uses the same transaction path.
+Supply `type`, `purpose` and `owns`; the service supplies schema version, identity
+and the selected package as the default parent. Only executable component types
+belong here. The proposed definition cannot collide with an existing identity or
+file, overlap ownership, or leave its selected package. For example:
+
+```sh
+arcnexus component create studio/service metrics type=library \
+  'purpose=Report service health' 'owns=["src/metrics","tests/metrics"]'
+```
+
+`component remove <package> <id>` removes only that executable definition. It does
+not delete source or silently transfer ownership. Remaining maintained files,
+children and references must resolve in the resulting catalog or removal fails.
+Platform/package removal continues to use resource unregistration. Creation accepts
+the current package revision for optimistic checks; removal accepts the current
+component revision. Neither operation edits an attached checkout or changes the
+authority of a retained run.
+
+Managed simulation worktrees carry a host-written materialization snapshot in their
+private Git metadata. Fresh `inspect`, registered validation and test-selection processes use
+that snapshot to check the actual worktree revision and isolated origin against the
+captured mapping. Declared upstream identities remain unchanged. A mismatched HEAD,
+remote or worktree identity is an error; ordinary checkouts retain ordinary origin
+checks. Offline local `validate` retains explicitly unavailable dependency inventories
+when bindings are not supplied. The snapshot is not authored configuration and does not change active run
+permissions or supply upstream credentials.
+
+## Standard mutations
+
+`standard create <platform> <id> <field=value>...`, `standard update` and
+`standard remove` use the same validated configuration commits. Creation requires
+`owner`, `purpose`, `applicability` and `document`; optional `examples` and
+`operationIds` default to empty arrays. The owner must be executable within the
+selected platform, documentation must exist in its scope, and checks must be
+available to that owner. Updates cannot rename IDs or change schema versions.
+Removing a standard still referenced by inherited policies fails without selecting
+a new revision. Removing the definition does not remove its documentation.
+
+Application callers use `Portfolio.changeStandard` with a structured field map
+and optional expected revision. Create checks the platform revision; update and
+remove check the standard revision. Missing artifacts, invalid references and
+stale writes leave the selected authority and attached checkout unchanged.
+
+## Repository migration contract (#238)
+
+`platform migrate <id> <repository>` and `package migrate <package> <repository>`
+transfer a registration through the shared portfolio service.
+An existing HTTPS/file remote (or local repository used as a remote) is cloned into
+managed storage through the existing supervised, journaled materializer. Migration
+never moves or edits the original checkout and never pushes upstream.
+
+The destination must contain the selected source authority in its history and a
+valid committed definition with the same resource identity and platform relation.
+A behind or divergent destination requires reconciliation; migration does not
+silently discard local/configuration commits or infer permission to publish them.
+The entire resulting catalog is validated before registration changes. Other
+resources sharing the old repository retain their current registrations.
+
+Source and destination execution leases prevent competing repository mutation.
+Active runs, pending configuration transitions and stale resource revisions block
+transfer. The final registration and materialization transition commit atomically;
+repeating a successful request preserves identity and revision. Failed validation
+retains the clone and original registration; uncertain clones cannot be replayed.
+Historical execution evidence remains associated with its original repository.

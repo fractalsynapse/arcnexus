@@ -155,12 +155,10 @@ class Initializer {
       context: this.snapshot.context,
       role: this.snapshot.role,
       executionProfile: this.snapshot.profile,
-      allowedWritePaths: [],
       operations: this.snapshot.operations,
       assignment: {
         ...base.assignment,
         kind: 'research' as const,
-        allowedWritePaths: [],
         operationIds: this.snapshot.operations.map((op) => op.id),
         hostChecks: [],
       },
@@ -233,7 +231,7 @@ class Initializer {
     if (!this.input.proposal) return [];
     return [
       'Task proposal request: ' + this.input.proposal.request,
-      'This is unstructured task intake, not an explicit execution assignment. Propose assignments for selected existing owners, with concrete objectives, kind, changeType, acceptanceCriteria and narrowed allowedWritePaths. For two owners propose one requester-to-recipient dependency. No commands or new authority. The host captures existing verification.',
+      'This is unstructured task intake, not an explicit execution assignment. Propose assignments for selected existing owners, with concrete objectives, kind, changeType, acceptance criteria and technical requirements. Only the owning steward decides which files to change. For two owners propose one requester-to-recipient dependency. No commands or new authority. The host captures existing verification.',
       'Dependency direction: from is the requesting consumer that needs another owner; to is the supplying owner. This is a request edge, not delivery order. The requester starts, yields to the supplier, then resumes after verified delivery.',
       'Eligible directed request edges: ' + JSON.stringify(this.requestEdges()),
       'The captured execution owners above are empty because routing is not yet accepted. Select from the retrieved catalog. Do not force a match: missing responsibility requires architecture_change_required with a precise architectureProposal; ambiguity requires needs_clarification. More than two necessary owners requires architectural decomposition.',

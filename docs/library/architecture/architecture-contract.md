@@ -44,7 +44,7 @@ Validation checks the whole catalog, including unused definitions.
 
 `run` and `inspect` also accept `--assignment <file>` instead of the objective.
 The versioned assignment declares objective, kind, expected outcome, acceptance
-criteria, optional narrowed writable paths, and host checks. A host check names an
+criteria and host checks. A host check names an
 absolute executable and argument array; file inputs listed in `artifacts` are
 snapshotted with hashes outside candidate control. The caller is responsible for
 declaring all acceptance code inputs; mutable external services are not frozen.
@@ -56,7 +56,7 @@ role, execution profile, permissions and verification, with a deterministic SHA-
 digest. Run stores this before setup. Explicit model/timeout overrides are captured.
 Issue numbers provide traceability, not an automatically fetched objective.
 
-Assignments can narrow scope but cannot widen component authority. Every exact
+Assignments describe outcomes. Only the component steward selects files within its ownership. Every exact
 write path must be covered by declared write directories. `.` must be explicit.
 Research/review use source-read-only execution and can complete without edits;
 change assignments follow the [host-checked workflow](../assignment/steward-workflow.md).

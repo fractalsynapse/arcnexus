@@ -16,6 +16,29 @@ A new checkpoint re-executes its checks. Host regression checks and engineering 
 use this same ordering; a requested test cannot run against stale generated output
 merely because it was selected separately from its preparation prerequisite.
 
+For current schema-4 agent calls, an observed nonzero prerequisite exit returns
+failed feedback with the requested `id`, actual `failedOperationId`, diagnostic and
+`prerequisiteFailed: true`. The dependent command is not executed and its artifacts
+are not collected. A subsequent authorized correction can run normally. Cancellation,
+transport failure, invalid authority and uncertain completion remain fatal. Mandatory
+host verification still fails, and prerequisite failure cannot establish the selected
+regression's expected-red evidence. Invocation records retain both identities.
+
+Operation replies mark diagnostic excerpts with `outputTruncated`; excerpts are not
+complete machine-readable output. When a successful agent operation emits a valid
+checked-edit batch, the host pins its complete bytes outside editable source and
+returns `editProposal` with its invocation ID, digest and proposed paths. Apply it
+with `source.edit({proposalInvocationId: editProposal.invocationId})` instead of copying
+replacement contents from diagnostic text. This uses the same atomic checked-edit
+engine as direct requests: current hashes, ownership, workflow stage and frozen-test
+restrictions still apply. Structured proposals come from separately retained stdout; stderr warnings remain
+in combined diagnostics and cannot corrupt the JSON protocol. Both streams use the
+same supervised executor and existing output transport bound.
+Failed, incomplete or foreign invocations grant no proposal;
+altered or aliased evidence is rejected. Repeating the reference returns the original
+receipt without replaying edits or the operation. No managed command gains source
+write access.
+
 Plans/timeline (#41), declared operations (#42), managed local services/probes
 (#45), and selected history/live qualification (#48) are available. Their retained
 qualification evidence is linked below.
@@ -32,9 +55,9 @@ turn. Corrective work requires recorded findings and a concrete repair objective
 Worker turns share one thread and any explicitly captured limits; no default
 turn, attempt or execution-time ceiling applies.
 
-`arcnexus status <workspace-id> [--json]` reads current lifecycle, activity,
+`arcnexus workspace get <workspace-id> [--json]` reads current lifecycle, activity,
 checklist, elapsed time, configured limits and evidence completeness without taking the execution lock.
-`arcnexus follow <workspace-id> [--json] [--after <sequence>]` replays and follows
+`arcnexus workspace get <workspace-id> --follow [--json] [--after <sequence>]` replays and follows
 the timestamped timeline. It exits at finalization; interrupting the viewer never
 cancels the worker. Missing historical timelines and incomplete trailing records
 are explicitly identified. Observation timestamps describe host receipt, not the
@@ -161,16 +184,17 @@ terminates its Codex process group if that host disappears. It preserves the SDK
 stdio event stream and inserts `--ignore-user-config` exactly as before. A lost
 host leaves incomplete evidence, never a successful outcome.
 
-The reporting owner declares a focused built report-test command in addition to
-full repository verification. Use that command for the expected-red and captured
-regression checkpoints; full verification still runs at baseline and after changes.
-This keeps repeated regression checks bounded without weakening integration checks.
+The reporting owner receives its focused built tests from the inherited test profile.
+Owner-scoped verification applies at engineering checkpoints, including expected-red
+and captured regression checks. Full repository verification runs on assembled
+deliveries; it is not repeated at every owner baseline or corrective turn. Required
+integration checks remain mandatory before publication.
 
-Research/review has exactly one execution turn after planning. Source-read-only
-means no source edits; it does not prohibit declared test or service operations.
-The steward must perform its selected permitted work and update the checklist in
-that turn, or report a precise blocker. Activity names are not promises of additional
-model turns. Incomplete checklist claims fail rather than silently adding a turn.
+Research/review remains source-read-only after planning; declared test and service
+operations remain available. The steward must perform its selected permitted work
+and update the checklist, or report a precise blocker. Dependencies yield to the
+shared scheduler and resume through retained checkpoints. There is no execution
+turn quota, and an incomplete checklist cannot establish verified completion.
 
 Shared checkpoints also cover initializer verification, assignment baselines, final
 verification, frozen acceptance and refactor characterization. Each checkpoint orders
@@ -315,3 +339,40 @@ that responsibility. Bridge connectivity remains a transport qualification.
 
 Operation call counts remain metrics. They never become execution quotas. Historical
 operation definitions and report fields remain readable without making them executable.
+
+The GitHub delivery PR adapter accepts only host-captured live delivery attribution
+and its verified pushed head. It checks the actual branch, excludes main and the
+repository default branch, and correlates creation/recovery with a durable intent
+marker. Changed heads or ambiguous receipts require reconciliation. This adapter
+creates PRs only; it does not submit reviews, authorize integration, or publish
+packages. The live Publisher orchestration and promotion gates remain separate
+work until their production wiring and real-provider qualification are retained.
+
+No-network operation policy uses the managed proxy with an empty destination
+allowlist and limited methods. This preserves local subprocess IPC and stdin while
+denying network targets; it is not unrestricted `network.enabled` execution.
+Installed-runtime qualification separately checks real direct connections and
+proxied HTTP/HTTPS mutations. Explicit download domains remain captured operation
+policy, and the local/private-network guard remains enabled.
+
+### Promotion object assembly
+
+Host-owned promotion imports only captured simulation revisions and reconciles the
+base-to-candidate difference against an exact current target. Its private result is
+unverified until the publisher performs fresh target checks and independent review.
+Neither source checkout nor upstream refs are changed. Conflicts retain command
+evidence and both revisions; simulation verification never substitutes for target
+verification.
+
+### Executable identity in confined operations
+
+The host resolves a declared program against the invocation's working directory
+and effective `PATH` before sandbox dispatch. It retains PATH ordering and symlink
+aliases, supplies an absolute executable path, and rejects missing programs before
+starting a command or service supervisor. Resolution grants no additional read or
+write access; the executable must still be readable under captured confinement.
+
+This keeps subprocess runtime identities usable for nested tool bindings and
+interpreter scripts in containers as well as native execution. Standard output
+remains separate from diagnostics; runtime warnings are retained in stderr and
+the combined operation log rather than being mistaken for structured results.

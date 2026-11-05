@@ -1,5 +1,6 @@
 import { OperationExecution } from './operation-execution.js';
 import { readDiagnosticExcerpt } from './diagnostics.js';
+import { OperationEditProposals } from './edit-proposals.js';
 import { materialCandidate } from '../change-inspection/changes.js';
 import { ProgressObserver } from '../report/progress.js';
 import { realpathSync } from 'node:fs';
@@ -10,15 +11,18 @@ import type { Command } from '../architecture/config.js';
 import { observe } from '../report/timeline.js';
 import type { BridgeTool } from '../steward/bridge.js';
 import { save, type RecordData } from '../workspace/state.js';
-import type { CommandResult } from './process.js';
+import { isObservedCommandFailure, type CommandResult } from './process.js';
 import { ServiceManager, type HttpDefinition, type ServiceDefinition } from './services.js';
 
 export { operationEnvironment } from './environment.js';
 
+export { OperationEditProposals } from './edit-proposals.js';
+
 export type Operation = {
   schemaVersion: 2 | 3 | 4;
   prerequisites?: string[];
-  network?: boolean;
+  profileVerification?: string;
+  network?: boolean | { domains: string[] };
   argumentTokens?: import('./operation-definition.js').ArgumentToken[];
   pendingContext?: import('./operation-definition.js').ContextInput[];
   definitionArguments?: import('./operation-definition.js').ArgumentToken[];
@@ -38,6 +42,8 @@ export type Operation = {
 } & (
   | (Command & { kind: 'command' | 'service'; service?: ServiceDefinition })
   | { kind: 'http'; http: HttpDefinition }
+  | { kind: 'upstream'; action: 'issue.create' | 'issue.comment' | 'issue.close' }
+  | { kind: 'upstream'; action: 'delivery.publish'; targetBranch: string; automaticMerge?: boolean }
 );
 
 export interface OperationBridge {
@@ -68,6 +74,11 @@ class OperationSelectionError extends Error {
   constructor(readonly operationId: string) {
     super('Unknown or denied operation: ' + operationId);
   }
+}
+
+interface OperationOutcome {
+  result?: CommandResult;
+  failedOperationId?: string;
 }
 
 /** Authorizes declared commands and services, accounts for calls, and retains their evidence. */
@@ -176,7 +187,7 @@ class OperationRuntime {
   private list(args: unknown) {
     if (args && Object.keys(args).length) throw new Error('Operation listing accepts no arguments');
     return {
-      operations: this.resolved.operations,
+      operations: this.resolved.operations.filter((operation) => operation.kind !== 'upstream'),
       used: this.record.operationCalls,
     };
   }
@@ -194,7 +205,7 @@ class OperationRuntime {
       throw new Error('Operation requires only an ID');
     const id = (args as { id: string }).id,
       op = resolved.operations.find((op) => op.id === id);
-    if (!op) throw new OperationSelectionError(id);
+    if (!op || op.kind === 'upstream') throw new OperationSelectionError(id);
     const stage = String(record.stage);
     this.assertActivity(op, stage);
     observe(root, record, 'operation.authorized', {
@@ -285,23 +296,32 @@ class OperationRuntime {
   /** Executes a declared finite operation and retains its command evidence. */
   private async finite(op: Operation) {
     const { combined, start } = this.begin(op);
-    const outcome: { result?: CommandResult } = {};
+    const outcome: OperationOutcome = {};
     let artifacts: unknown[] = [];
     try {
       outcome.result = await this.execute(op, combined, outcome);
       const result = outcome.result;
       this.inspect();
-      artifacts = op.artifacts.map((path) => this.artifact(path));
-      const output = readDiagnosticExcerpt(result!.log).output;
+      const prerequisiteFailed = !!outcome.failedOperationId && outcome.failedOperationId !== op.id;
+      if (!prerequisiteFailed) artifacts = op.artifacts.map((path) => this.artifact(path));
+      const diagnostic = readDiagnosticExcerpt(result!.log);
+      const proposals = new OperationEditProposals(
+        join(this.root, 'runs', this.record.id),
+        this.record,
+      );
       return {
         id: op.id,
         status: result!.exitCode === 0 ? 'passed' : 'failed',
+        failedOperationId: outcome.failedOperationId,
+        prerequisiteFailed,
         ...result,
-        output,
+        output: diagnostic.output,
+        outputTruncated: diagnostic.truncated,
+        editProposal: proposals.capture(result!),
         artifacts,
       };
     } finally {
-      this.finish(op.id, start, outcome.result, artifacts);
+      this.finish(op.id, start, outcome, artifacts);
     }
   }
 
@@ -309,7 +329,7 @@ class OperationRuntime {
   private async execute(
     op: Operation,
     signal: AbortSignal,
-    outcome: { result?: CommandResult },
+    outcome: OperationOutcome,
   ): Promise<CommandResult | undefined> {
     try {
       return await new OperationExecution(this.root, this.record, signal, this.services).run(
@@ -319,7 +339,9 @@ class OperationRuntime {
     } catch (error) {
       if (error && typeof error === 'object' && 'commandResult' in error)
         outcome.result = error.commandResult as CommandResult;
-      if (!(error instanceof Error) || !error.message.startsWith('Command failed (')) throw error;
+      if (signal.aborted || !outcome.result || !isObservedCommandFailure(error)) throw error;
+      if (typeof error.operationId !== 'string') throw error;
+      outcome.failedOperationId = error.operationId;
       return outcome.result;
     }
   }
@@ -330,19 +352,17 @@ class OperationRuntime {
   }
 
   /** Finalizes the current lifecycle while preserving its recorded outcome. */
-  private finish(
-    id: string,
-    start: number,
-    result: CommandResult | undefined,
-    artifacts: unknown[],
-  ): void {
+  private finish(id: string, start: number, outcome: OperationOutcome, artifacts: unknown[]): void {
     const { root, record } = this;
-    if (result) (record.operations as unknown[]).push({ id, ...result, artifacts });
+    const { result, failedOperationId } = outcome;
+    if (result)
+      (record.operations as unknown[]).push({ id, ...result, failedOperationId, artifacts });
     observe(root, record, 'operation.finished', {
       id,
       number: this.activeNumber,
       durationMs: Date.now() - start,
       result,
+      failedOperationId,
       artifacts,
     });
     delete record.currentOperation;

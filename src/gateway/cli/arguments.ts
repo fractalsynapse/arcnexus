@@ -2,22 +2,25 @@ import { parseArgs } from 'node:util';
 import { InputError } from '../../library/architecture/config.js';
 
 export const help = `ArcNexus
-  workday start [package]
+  workday start [package] [--simulate]
   workday pause|resume|stop|status [id]
-  task run [package] "<prompt>" [--async]
+  task run [package] "<prompt>" [--async] [--simulate]
   task pause|resume|stop <id> | answer <id> "<response>"
   task list [field=value...] | get <id> [--follow] | follow <id>
   workday list [field=value...] | get <id> [--follow]
+  delivery list [package] | get <id> | approve <id> | publish <id> | promote <simulation-delivery-id>
   workspace cleanup <package> [--workspace <id>]
   workspace prepare <package>
   workspace list [package] | get <id> [--follow]
   config get <name> | update <name> <value> | migrate [target] [--write]
-  platform list|get <id>|create <id> <repository>|remove <id>
-  package list [platform]|get <package>|create <platform/package> <repository>|remove <package>
+  platform list [field=value...]|get <id>|create <id> <repository>|remove <id>
+  package list [platform] [field=value...]|get <package>|create <platform/package> <repository>|remove <package>
+  platform migrate <id> <repository> | package migrate <package> <repository>
   platform update <id> <field=value>...
   package update <package> <field=value>...
-  component update <package> <id> <field=value>...
+  component create/update <package> <id> <field=value>... | remove <package> <id>
   standard list <platform> [field=value...] | get <platform> <id>
+  standard create/update <platform> <id> <field=value>... | remove <platform> <id>
   component list <package> [field=value...] | get <package> <id>
   test inspect|run [package] [--component <id>] [--level unit|integration|acceptance] [--category regression] [--tag <tag>] [--json]
 Inspection, evidence and diagnostics:
@@ -26,24 +29,20 @@ Inspection, evidence and diagnostics:
   validate [package]
   inspect <package> <component> [prompt] [--activity research|document|design|implement|review|release]
   experiment inspect <manifest> --bindings <file> [--json]
-  experiment run <prompt-manifest> --bindings <file> --mode simulation|live [--output <new-directory>]
   workday inspect <historical-manifest> --project <repository> [--base <ref>] [--bindings <file>] [--json]
   workday history <historical-workday-id> [--json]
   workday follow <historical-workday-id> [--json] [--after <sequence>]
   task inspect <historical-proposal-id> [--json]
-  prepare --project <repository>
-  status <workspace-id> [--json]
-  follow <workspace-id> [--json] [--after <sequence>]
-  cleanup <workspace-id>
 Lists: --search <text> --limit <1-100> --cursor <token>
 Run following: --after <event-sequence>
-Composed workspace inspection/preparation: --bindings <file>
+Historical composed inspection: --bindings <file>
 `;
 
 const cliOptions = {
   workspace: { type: 'string' },
   write: { type: 'boolean' },
   async: { type: 'boolean' },
+  simulate: { type: 'boolean' },
   follow: { type: 'boolean' },
   search: { type: 'string' },
   limit: { type: 'string' },

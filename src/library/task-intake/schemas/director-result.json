@@ -68,22 +68,9 @@
             "items": {
               "type": "string"
             }
-          },
-          "allowedWritePaths": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           }
         },
-        "required": [
-          "ownerId",
-          "objective",
-          "kind",
-          "changeType",
-          "acceptanceCriteria",
-          "allowedWritePaths"
-        ],
+        "required": ["ownerId", "objective", "kind", "changeType", "acceptanceCriteria"],
         "additionalProperties": false
       }
     },
@@ -212,23 +199,49 @@
     "continuations": {
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "assignmentId": {
-            "type": "string",
-            "minLength": 1
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "assignmentId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "ownerId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["assignmentId", "ownerId", "reason"],
+            "additionalProperties": false
           },
-          "ownerId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "reason": {
-            "type": "string",
-            "minLength": 1
+          {
+            "type": "object",
+            "properties": {
+              "assignmentId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "ownerId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "replacementChangeType": {
+                "enum": ["behavior", "documentation", "refactor"]
+              }
+            },
+            "required": ["assignmentId", "ownerId", "reason", "replacementChangeType"],
+            "additionalProperties": false
           }
-        },
-        "required": ["assignmentId", "ownerId", "reason"],
-        "additionalProperties": false
+        ]
       }
     }
   },

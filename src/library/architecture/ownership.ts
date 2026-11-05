@@ -66,7 +66,7 @@ export class OwnershipValidator {
     const components = Object.values(catalog.components).filter(
       (c) => c.type === 'platform' || c.repository === catalog.primaryRepository,
     );
-    const owners = this.repositoryOwners(catalog);
+    const owners = OwnershipValidator.repositoryOwners(catalog);
     const exclusions = components
       .filter((c) => c.type === 'platform')
       .flatMap((c) => c.coverageExclusions ?? []);
@@ -82,7 +82,7 @@ export class OwnershipValidator {
   }
 
   /** Combines local implementation roots with definitions physically declared in this repository. */
-  private repositoryOwners(catalog: Catalog): Owner[] {
+  static repositoryOwners(catalog: Catalog): Owner[] {
     const owners = Object.values(catalog.components)
       .filter((c) => c.type === 'platform' || c.repository === catalog.primaryRepository)
       .filter((c) => c.ownership)

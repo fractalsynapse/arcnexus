@@ -87,11 +87,13 @@ export class ExecutionDatabase {
 
   /** Assigns a transactional FIFO position only when an assignment enters the ready queue. */
   private readiness(value: import('./execution-types.js').ExecutionAssignment): void {
-    if (value.status !== 'ready') return;
     const row = this.db
       .prepare('SELECT data FROM entities WHERE kind=? AND id=?')
       .get('assignment', value.id);
     const previous = row ? JSON.parse(String(row.data)) : undefined;
+    if (previous?.data.replacedBy)
+      throw new Error('Replaced assignment retains immutable failure evidence');
+    if (value.status !== 'ready') return;
     if (previous?.status === 'ready') {
       value.data.readyOrder = previous.data.readyOrder;
       return;
@@ -100,6 +102,11 @@ export class ExecutionDatabase {
     const order = (counter?.value ?? 0) + 1;
     this.put('ready-clock', { id: 'project', value: order });
     value.data.readyOrder = order;
+  }
+
+  /** Reads the latest committed transition without decoding retained event or run payloads. */
+  eventSequence(): number {
+    return Number(this.db.prepare('SELECT MAX(sequence) AS cursor FROM events').get()?.cursor ?? 0);
   }
 
   /** Returns ordered events after an exclusive cursor. */

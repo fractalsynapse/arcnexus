@@ -3,11 +3,13 @@ import { InputError } from '../architecture/config.js';
 
 export interface HostRequest {
   action: string;
+  simulate?: boolean;
   prompt?: string;
   id?: string;
   answer?: string;
   control?: string;
   expectedRevision?: string;
+  expectedEnvironmentId?: string;
 }
 
 /** Sends private IPC requests independently of source checkout discovery or host creation. */

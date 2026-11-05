@@ -50,6 +50,8 @@ class DirectorIdentityScenarios {
     );
     assert.match(prompt, /never copy a future independent review into worker acceptance criteria/);
     assert.match(prompt, /combined stdout\/stderr/);
+    assert.match(prompt, /owned documentation and regression scope/);
+    assert.match(prompt, /test-only characterization of already correct behavior/);
     assert.match(prompt, /automatically runs independent delivery verification/);
     assert.match(prompt, /independent review of this task is covered by the built-in reviewer/);
   }

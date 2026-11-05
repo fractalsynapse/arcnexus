@@ -113,14 +113,11 @@ or treats similar command names as equivalent execution semantics.
 
 ### ArcNexus bootstrap ownership decision
 
-The four immutable qualification records currently at the top of `docs` belong to
-`architecture-maintenance`, alongside the central charter, development guidance and
-historical retrospective. Remove their coverage exclusions and assign these exact files:
-`experiment-qualification.json`, `guidance-qualification.json`,
-`operations-qualification.json` and `workday-qualification.json`. Their bytes and
-historical-reader interpretation remain unchanged. This resolves an explicit ownership
-decision before migration; the generic migrator must continue to reject unowned evidence
-instead of guessing an owner from a filename.
+Historical qualification records were explicitly owned during configuration migration.
+Their original JSON bytes are now archived beneath the application state directory at
+`evidence/repository-archives/78000e2/docs`, with a hash manifest at the archive root.
+Runtime records stay in application storage. The generic migrator continues to reject
+unowned maintained files instead of guessing an owner from a filename.
 
 ArcNexus declares the Node test convention once on its platform, including owners
 with no current suites. This is an explicit project policy simplification; the

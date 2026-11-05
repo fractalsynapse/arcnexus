@@ -50,7 +50,6 @@ export class ControlledInitializer {
           kind: 'research',
           changeType: 'behavior',
           acceptanceCriteria: ['Evidence-backed explanation'],
-          allowedWritePaths: [],
         },
       ];
     }
@@ -71,10 +70,6 @@ export class ControlledInitializer {
       kind: 'change',
       changeType: 'behavior',
       acceptanceCriteria: ['Independent acceptance passes'],
-      allowedWritePaths:
-        ownerId === 'sample'
-          ? ['source.txt', 'docs', 'tests']
-          : ['dependency.txt', 'dependency-docs', 'dependency-tests'],
     }));
     result.dependency = {
       from: 'sample',

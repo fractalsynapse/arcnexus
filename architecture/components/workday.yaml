@@ -12,11 +12,6 @@ constraints:
     historical versions and captured execution readers"
   - "workday (src/library/workday/schemas/workday.json): Preserve supported
     historical versions and captured execution readers"
-operations:
-  migrated-recipe-43b539fb85a57c26:
-    - verify
-  migrated-recipe-df6d67ddacf5bf0c:
-    - verify
 owns:
   - src/library/workday
   - tests/library/workday

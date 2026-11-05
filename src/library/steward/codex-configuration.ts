@@ -119,9 +119,10 @@ export class CodexConfiguration {
     const declared = component?.access as AccessPolicy;
     const readOnly = record.readOnlyTurn === true;
     return {
-      allowedWritePaths: readOnly
-        ? []
-        : (resolved?.allowedWritePaths ?? component?.allowedWritePaths),
+      allowedWritePaths:
+        readOnly || (resolved && resolved.assignment?.kind !== 'change')
+          ? []
+          : component?.allowedWritePaths,
       access: declared,
       inherited:
         context?.slice(0, -1).map((item) => ({

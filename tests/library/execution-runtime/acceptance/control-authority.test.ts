@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
@@ -99,7 +99,10 @@ class ControlAuthorityScenarios {
     } else if (mode === 'bindings') {
       const path = join(f.repo, '.git/arcnexus/bindings.yaml');
       const value = JSON.parse(readFileSync(path, 'utf8'));
-      value.tools.node = process.execPath;
+      const alternate = join(f.root, 'alternate-node');
+      copyFileSync(process.execPath, alternate);
+      assert.notEqual(value.tools.node, alternate);
+      value.tools.node = alternate;
       writeFileSync(path, JSON.stringify(value));
     }
   }

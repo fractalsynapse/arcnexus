@@ -6,7 +6,7 @@ import { WorkspaceOperations } from './operation-preparation.js';
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, realpathSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { loadBindings, type Bindings } from '../architecture/bindings.js';
+import { captureWorktreeBindings, loadBindings, type Bindings } from '../architecture/bindings.js';
 import { environment, InputError, type Environment } from '../architecture/config.js';
 import { ConfigurationReader } from '../architecture/configuration.js';
 import { git } from '../operations/process.js';
@@ -30,18 +30,29 @@ export interface PrepareOptions {
   project: string;
   base?: string;
   authorityBase?: string;
+  branchBase?: string;
   packageId?: string;
   issue?: string;
   bindings?: Bindings;
 }
 
 export function assertIdentity(record: RecordData): void {
-  if (
-    git(record.workspace, 'rev-parse', 'HEAD').trim() !== record.base ||
-    git(record.workspace, 'branch', '--show-current').trim() !== record.branch
-  )
+  if (git(record.workspace, 'rev-parse', 'HEAD').trim() !== record.base || !matchesBranch(record))
     throw new Error('Candidate branch or HEAD changed');
   if ((record.members as Member[] | undefined)?.length) assertMembers(record);
+}
+
+/** Recognizes a completed delivery's archived worktree only while its journaled branch head is intact. */
+function matchesBranch(record: RecordData): boolean {
+  const branch = git(record.workspace, 'branch', '--show-current').trim();
+  if (branch === record.branch) return true;
+  if (branch || record.status !== 'completed' || typeof record.developmentHead !== 'string')
+    return false;
+  return (
+    git(record.source, 'rev-parse', 'refs/heads/' + record.branch).trim() ===
+      record.developmentHead &&
+    git(record.source, 'show', '-s', '--format=%P', record.developmentHead).trim() === record.base
+  );
 }
 
 export function createWorkspace(root: string, options: PrepareOptions): RecordData {
@@ -54,6 +65,7 @@ export function createWorkspace(root: string, options: PrepareOptions): RecordDa
     base,
     commonDir,
     branch,
+    ...(options.branchBase ? { branchBase: options.branchBase } : {}),
     workspace: join(root, 'workspaces', id),
     status: 'preparing',
     startedAt: new Date().toISOString(),
@@ -103,7 +115,12 @@ export async function prepareWorkspace(
     throw new InputError(
       'Preparation requires environment schema 4 or 5; migrate legacy recipes before execution',
     );
-  git(record.source, 'worktree', 'add', '-b', record.branch, record.workspace, record.base);
+  prepareBranch(record);
+  record.materializationBinding = captureWorktreeBindings(
+    record.workspace,
+    record.bindings as Bindings,
+  );
+  save(root, record);
   observe(root, record, 'workspace.created', { workspace: record.workspace, base: record.base });
   const shared = new WorkspaceOperations(root, record, signal);
   await prepareMembers(root, record, signal, (member) => shared.member(member));
@@ -115,6 +132,45 @@ export async function prepareWorkspace(
   record.status = 'prepared';
   observe(root, record, 'workspace.prepared', { members: record.members });
   save(root, record);
+}
+
+/** Cuts the private branch at observed staging, then includes only a verified descendant baseline. */
+function prepareBranch(record: RecordData): void {
+  const start = record.branchBase ?? record.base;
+  if (git(record.source, 'rev-list', '--max-count=1', start, '--not', record.base).trim())
+    throw new Error('Candidate is missing commits from the development branch base');
+  git(record.source, 'worktree', 'add', '-b', record.branch, record.workspace, start);
+  if (start !== record.base)
+    git(record.workspace, '-c', 'core.hooksPath=/dev/null', 'merge', '--ff-only', record.base);
+}
+
+/** Moves an assignment's existing branch to its verified successor worktree and retains the old checkout. */
+export function continueDevelopmentBranch(previous: RecordData, next: RecordData): void {
+  if (
+    !previous.assignmentId ||
+    next.assignmentId !== previous.assignmentId ||
+    !previous.executionRunId ||
+    previous.executionRunId !== next.executionRunId ||
+    previous.commonDir !== next.commonDir ||
+    previous.workspace === next.workspace ||
+    previous.branch === next.branch ||
+    previous.branch !== 'codex/run-' + previous.id ||
+    next.branch !== 'codex/run-' + next.id
+  )
+    throw new Error(
+      'Development branch continuation requires distinct worktrees of the same assignment',
+    );
+  assertIdentity(previous);
+  assertIdentity(next);
+  const ref = 'refs/heads/' + previous.branch;
+  const prior = git(next.source, 'rev-parse', ref).trim();
+  if (git(next.source, 'rev-list', '--max-count=1', prior, '--not', next.base).trim())
+    throw new Error('Development continuation would lose retained commits');
+  git(previous.workspace, '-c', 'core.hooksPath=/dev/null', 'switch', '--detach', previous.base);
+  git(next.source, 'update-ref', '--no-deref', ref, next.base, prior);
+  git(next.workspace, '-c', 'core.hooksPath=/dev/null', 'switch', '--no-guess', previous.branch);
+  next.branch = previous.branch;
+  assertIdentity(next);
 }
 
 export function cleanup(root: string, id: string): RecordData {

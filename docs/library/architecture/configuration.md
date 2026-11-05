@@ -148,3 +148,30 @@ For minimal catalogs, ownership validation covers every locally bound captured
 repository, not just the primary source. Every tracked maintained file must have one
 owner in that repository. Unbound inventories remain explicitly unavailable. No extra
 authored definition path or parallel ownership declaration is required.
+
+## Engineering and assembled-delivery checks
+
+Schema-six operation usages are `preflight`, `setup`, `refresh`, `verify`,
+`delivery` and `agent`. Both `verify` and `delivery` accumulate through inheritance;
+a leaf cannot remove an ancestor requirement. Delivery checks are finite operations
+executed on the assembled head before publication, alongside accountable owners'
+verification. They are not assignment baseline or regression choices.
+
+A captured test profile supplies its `run` operation for owner verification. The host
+refreshes owned suite selection using captured metadata and ownership, including new
+suites. No leaf test recipe or inventory is needed. An owner with no suites records
+`operation.not_applicable` for an implicit profile check; this is not a passing test.
+An explicitly declared verification operation still fails if required selection is
+empty. Agents cannot substitute another owner's test paths. Formatting proposals stay
+available as checked edits. ArcNexus's owner format check intersects owned paths
+with the same maintained-code coverage used by its full formatter; it does not add
+new baseline requirements for documents outside that coverage. Full formatting,
+lint, types, tests and architecture validation remain required at assembled delivery.
+
+Retained runs continue using their captured supervisor and plans. Updating the source
+policy changes new authority only, never active-run requirements or historical evidence.
+
+Behavioral work requires component-owned documentation and regression locations.
+The steward selects those files; assignment authors cannot grant or narrow ownership. Test-only characterization of
+existing behavior uses the refactor workflow, with passing captured checks rather
+than invented documentation edits or failing tests.

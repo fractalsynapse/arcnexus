@@ -13,7 +13,7 @@ import { GeneralFixture, nativeHostTest as test } from '../../testing/support/ge
 class ModeCoordinationScenarios {
   /** Records pausing immediately, preserves a completed checkpoint and honors intervening user pause. */
   async pauseAndTasks(t: TestContext): Promise<void> {
-    const { host, gate, run, assignment } = this.fixture(t);
+    const { host, gate, run, assignment } = await this.fixture(t);
     const active = host.tick();
     try {
       await this.entered(gate);
@@ -35,7 +35,7 @@ class ModeCoordinationScenarios {
 
   /** Task pause finishes a managed turn and leaves its plan intact while other queued work advances. */
   async taskPause(t: TestContext): Promise<void> {
-    const { host, gate, run, assignment } = this.fixture(t, 'task');
+    const { host, gate, run, assignment } = await this.fixture(t, 'task');
     const active = host.tick();
     try {
       await this.entered(gate);
@@ -82,7 +82,7 @@ class ModeCoordinationScenarios {
 
   /** Stop cancels the owned process without requiring the blocked turn to reach its voluntary checkpoint. */
   async stop(t: TestContext): Promise<void> {
-    const { host, gate, run, assignment } = this.fixture(t);
+    const { host, gate, run, assignment } = await this.fixture(t);
     const active = host.tick();
     try {
       await this.entered(gate);
@@ -101,7 +101,7 @@ class ModeCoordinationScenarios {
   }
 
   /** Captures an isolated package and a single research assignment with a controllable model turn. */
-  private fixture(t: TestContext, mode: 'task' | 'workday' = 'workday') {
+  private async fixture(t: TestContext, mode: 'task' | 'workday' = 'workday') {
     const directory = mkdtempSync(join(tmpdir(), 'arcnexus-mode-'));
     t.after(() => rmSync(directory, { recursive: true, force: true }));
     const gate = join(directory, 'release');
@@ -109,9 +109,13 @@ class ModeCoordinationScenarios {
     const host = new ProjectHost(f.state, new ExecutionContext().resolve(f.repo));
     t.after(() => host.store.close());
     if (mode === 'task') host.submit('Retain task research');
-    else host.control('start');
+    else {
+      host.control('start');
+      await host.tick();
+    }
     const run = host.store.runs()[0]!;
     if (mode === 'task') host.store.updateRun(run.id, 'running', { initialized: true });
+    else assert.equal(host.store.run(run.id).data.initialized, true);
     const assignment = host.store.enqueue(run.id, 'c', 'Research evidence', [
       'Evidence-backed result',
     ]);

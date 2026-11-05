@@ -1,3 +1,8 @@
+export interface RunEnvironment {
+  id: string;
+  mode: 'live' | 'simulation';
+}
+
 export type RunMode = 'task' | 'workday';
 
 export const runStatuses = [
@@ -20,14 +25,27 @@ export type RunStatus = (typeof runStatuses)[number];
 export type AssignmentStatus =
   'ready' | 'running' | 'waiting' | 'completed' | 'blocked' | 'rejected' | 'failed' | 'interrupted';
 
+/** Only diagnosed unsuccessful assignments can be reopened by a director continuation. */
+export function canReopenAssignment(status: AssignmentStatus): boolean {
+  return status === 'failed' || status === 'blocked' || status === 'rejected';
+}
+
 export interface ExecutionRun {
   id: string;
+  environment?: RunEnvironment;
   mode: RunMode;
   owners: string[];
   objective: string;
   status: RunStatus;
   createdAt: string;
   data: Record<string, unknown>;
+}
+
+export interface AssignmentContinuation {
+  assignmentId: string;
+  ownerId: string;
+  reason: string;
+  replacementChangeType?: 'behavior' | 'documentation' | 'refactor';
 }
 
 export interface ExecutionAssignment {
@@ -45,7 +63,6 @@ export interface ExecutionAssignment {
 export interface OwnerRequest {
   kind?: 'change' | 'research' | 'review' | null;
   changeType?: 'behavior' | 'documentation' | 'refactor' | null;
-  allowedWritePaths?: string[] | null;
   existingAssignmentId?: string;
   milestone?: 'accepted' | 'delivered';
   key: string;

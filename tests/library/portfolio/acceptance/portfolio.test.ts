@@ -179,4 +179,58 @@ test('local-only schema-five projects attach without an invented origin', (t) =>
   assert.equal(resource.managed, false);
 });
 
+test('component creation and removal select validated authority without editing the attached checkout', (t) => {
+  const f = new PortfolioFixture(t);
+  f.value('platform', 'create', 'platform', f.root);
+  f.value('package', 'create', 'platform/package', f.root);
+  const head = f.git('rev-parse', 'HEAD');
+  const created = f.value(
+    'component',
+    'create',
+    'package',
+    'new-owner',
+    'type=library',
+    'purpose=Own a new bounded capability',
+    'owns=["new-owner"]',
+  );
+  assert.equal(created.id, 'new-owner');
+  assert.equal(created.parentId, 'package');
+  assert.equal(f.value('component', 'get', 'package', 'new-owner').revision, created.revision);
+  assert.equal(f.command('component', 'create', 'package', 'new-owner', 'type=library').status, 2);
+  assert.equal(f.value('component', 'remove', 'package', 'new-owner').removed, 'new-owner');
+  assert.equal(f.command('component', 'get', 'package', 'new-owner').status, 2);
+  assert.equal(f.git('rev-parse', 'HEAD'), head);
+  assert.equal(f.git('status', '--porcelain'), '');
+});
+
+test('component mutation rejects stale state, missing intent, overlap and removal of maintained ownership', (t) => {
+  const f = new PortfolioFixture(t);
+  f.value('platform', 'create', 'platform', f.root);
+  const original = f.value('package', 'create', 'platform/package', f.root);
+  const service = new Portfolio(f.volume, true);
+  try {
+    const fields = { type: 'library', purpose: 'Maintain a bounded area', owns: ['new-owner'] };
+    assert.throws(
+      () => service.createComponent('package', 'new-owner', fields, 'stale'),
+      /revision/,
+    );
+    assert.throws(() => service.createComponent('package', '../escape', fields), /identity/);
+    assert.throws(() => service.createComponent('package', 'new-owner', {}), /field/);
+    assert.throws(() =>
+      service.createComponent('package', 'new-owner', { ...fields, owns: ['.agents'] }),
+    );
+    assert.throws(() => service.removeComponent('package', 'owner'), /owner|owned|ownership/i);
+    assert.throws(() => service.removeComponent('package', 'package'), /container/i);
+    assert.equal(service.get('package', 'package').revision, original.revision);
+    const created = service.createComponent('package', 'new-owner', fields, original.revision);
+    assert.throws(() => service.removeComponent('package', 'new-owner', 'stale'), /revision/);
+    assert.equal(
+      service.removeComponent('package', 'new-owner', created.revision).removed,
+      'new-owner',
+    );
+  } finally {
+    service.close();
+  }
+});
+
 registerSuite({ component: 'portfolio', level: 'acceptance', tags: ['deterministic'] });

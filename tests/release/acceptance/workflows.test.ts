@@ -43,7 +43,9 @@ class WorkflowTests {
     assert.doesNotMatch(install.run, /sysctl/);
     const bindings = steps.find((step: any) => step.name === 'Bind verified machine executables');
     assert.match(bindings.run, /\.git\/arcnexus\/bindings\.yaml/);
-    assert.match(bindings.run, /codex: '\/usr\/local\/bin\/codex'/);
+    assert.match(bindings.run, /Expected one installed native Codex executable/);
+    assert.match(bindings.run, /execFileSync\(codex, \['--version'\]/);
+    assert.match(bindings.run, /tools: \{ npm, node: process.execPath, codex \}/);
     const tests = steps.find((step: any) => step.name === 'Test built CLI');
     assert.match(tests.run, /systemd-run/);
     assert.match(tests.run, /--property=Delegate=yes/);
@@ -55,6 +57,18 @@ class WorkflowTests {
     assert.doesNotMatch(tests.run, /--scope|\|\| true/);
   }
 
+  /** Pins a readable npm installation instead of depending on an inaccessible hosted-toolcache alias. */
+  npmBinding(): void {
+    const steps = this.read('verification').jobs.repository.steps;
+    const install = steps.find((step: any) => step.name === 'Install confinement runtime');
+    const bindings = steps.find((step: any) => step.name === 'Bind verified machine executables');
+    assert.match(install.run, /--prefix \/usr\/local.*npm@10\.9\.9/);
+    assert.match(bindings.run, /const npm = '\/usr\/local\/lib\/arcnexus-ci\/bin\/npm'/);
+    assert.ok(bindings.run.includes('exec /usr/local/bin/npm "$@"'));
+    assert.match(bindings.run, /execFileSync\(npm, \['--version'\]/);
+    assert.match(bindings.run, /tools: \{ npm, node: process.execPath, codex \}/);
+  }
+
   /** Confined skips require a separate native host gate, without inference or privilege escalation for workers. */
   nativeHosts(): void {
     const steps = this.read('verification').jobs.repository.steps;
@@ -64,7 +78,7 @@ class WorkflowTests {
     assert.notEqual(native['continue-on-error'], true);
     assert.match(native.run, /--property=Delegate=yes/);
     assert.match(native.run, /--uid="\$\(id -u\)"/);
-    assert.match(native.run, /ARCNEXUS_TEST_CODEX=\/usr\/local\/bin\/codex/);
+    assert.match(native.run, /ARCNEXUS_TEST_CODEX=\$ARCNEXUS_TEST_CODEX/);
     assert.match(native.run, /node scripts\/release\/native-host-tests.mjs/);
     const selection = readFileSync('scripts/release/native-host-tests.mjs', 'utf8');
     assert.match(selection, /'test', 'inspect'/);
@@ -101,6 +115,8 @@ const suite = new WorkflowTests();
 
 test('hosted execution provisions confinement and delegated supervision', () =>
   suite.confinement());
+
+test('hosted npm uses an explicit pinned readable binding', () => suite.npmBinding());
 
 test('native host qualification remains a required separate caller gate', () =>
   suite.nativeHosts());

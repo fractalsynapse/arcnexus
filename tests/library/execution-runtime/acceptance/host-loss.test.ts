@@ -12,7 +12,7 @@ import { GeneralFixture, nativeHostTest as test } from '../../testing/support/ge
 /** Kills the actual background host while its managed harness is active and inspects recovery. */
 class HostLossScenario {
   /** Parent loss kills managed execution and a replacement host retains uncertainty without replay. */
-  async run(t: TestContext): Promise<void> {
+  async run(t: TestContext, signal: 'SIGKILL' | 'SIGTERM' | 'SIGINT' = 'SIGKILL'): Promise<void> {
     const directory = mkdtempSync(join(tmpdir(), 'arcnexus-host-loss-'));
     t.after(() => rmSync(directory, { recursive: true, force: true }));
     const gate = join(directory, 'release');
@@ -27,10 +27,10 @@ class HostLossScenario {
       await this.until(() => existsSync(gate + '.entered'), 4800);
       general.captureHost();
       const managed = Number(readFileSync(gate + '.entered', 'utf8'));
-      process.kill(general.hostPid!, 'SIGKILL');
+      process.kill(general.hostPid!, signal);
       await this.until(() => this.gone(managed));
       await finished;
-      this.recovery(general);
+      this.recovery(general, signal !== 'SIGKILL');
     } finally {
       client.kill('SIGINT');
       await finished;
@@ -44,7 +44,7 @@ class HostLossScenario {
   }
 
   /** Reads without recovery, then refuses unsafe explicit resumption without replaying model work. */
-  private recovery(general: GeneralFixture): void {
+  private recovery(general: GeneralFixture, orderly: boolean): void {
     const f = general.fixture;
     const calls = readFileSync(f.calls, 'utf8');
     const listed = spawnSync(process.execPath, [cli, 'task', 'list', '--json'], {
@@ -54,7 +54,9 @@ class HostLossScenario {
       timeout: 30_000,
     });
     assert.equal(listed.status, 0, listed.stderr);
-    const id = JSON.parse(listed.stdout).items[0].id;
+    const run = JSON.parse(listed.stdout).items[0];
+    if (orderly) assert.equal(run.status, 'interrupted');
+    const id = run.id;
     const result = spawnSync(process.execPath, [cli, 'task', 'resume', id], {
       cwd: f.root,
       env: f.env,
@@ -63,6 +65,11 @@ class HostLossScenario {
     });
     assert.equal(result.status, 1, result.stderr);
     general.captureHost();
+    this.retained(f, id, calls);
+  }
+
+  /** Confirms recovery retained the blocker and evidence without issuing another model call. */
+  private retained(f: WorkflowFixture, id: string, calls: string): void {
     const retained = spawnSync(process.execPath, [cli, 'task', 'get', id, '--json'], {
       cwd: f.root,
       env: f.env,
@@ -110,6 +117,12 @@ const scenario = new HostLossScenario();
 
 test('host loss stops managed execution and refuses unsafe task resumption without replay', (t) =>
   scenario.run(t));
+
+for (const signal of ['SIGTERM', 'SIGINT'] as const)
+  test(
+    'host ' + signal + ' drains managed execution and persists interruption before recovery',
+    (t) => scenario.run(t, signal),
+  );
 
 registerSuite({
   component: 'execution-runtime',

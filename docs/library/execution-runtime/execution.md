@@ -124,16 +124,25 @@ specify accepted intent or verified delivery as their required milestone. An inb
 reply must match its captured sender/recipient identities. A clarification does not
 restart engineering or mark the original assignment complete.
 
-Requests may narrow the recipient assignment with an explicit work kind, change
-type and writable paths. Null values inherit the originating work kind/change type
-and the recipient owner’s declared scope; an empty writable list is read-only.
-These fields can only narrow captured recipient authority. A request for an actual
+Every activation can inspect a pinned current-run work index through
+`assignment.evidence`: read `manifest`, then the relevant assignment intent artifact.
+The index includes starting assignments that have not acquired a workspace yet.
+Engineering receives owner, objective, acceptance, declared scope, status and
+accepted-intent metadata; private checkpoint/source evidence remains restricted to
+read-only investigations. Status alone is not verification evidence. Linking requires
+the observed supplier identity and matching intent and scope; similar wording does
+not authorize automatic merging. Clarify an incoming request when its contract is
+unclear instead of creating a new engineering assignment just to ask its requester.
+
+Requests specify the required result, work kind and acceptance conditions. A null
+kind or change type inherits the originating workflow. The recipient steward alone
+chooses which owned files to change. A request for an actual
 artifact uses the delivered milestone; accepted is reserved for dependencies that
 need only an agreed intent. Independent delivery verification is automatic and
 does not require a worker to invent a reviewer-owner assignment.
 
 Captured verification inputs remain stable even when an assignment edits tests or
-check configuration. `verificationInputs` in `architecture/execution.yaml` declares
+check configuration. `verificationInputs` in the platform definition declares
 additional trusted source paths used by project checks; the host also captures the
 owner's existing test sources and tracked command-argument files automatically.
 When these inputs change in a candidate, the host reruns checks with their captured
@@ -226,8 +235,8 @@ through the attached task identity; process supervision still governs host loss.
 
 A requester can return a correlated inbox action `require_delivery` with the
 existing `requestId` and an explanation. The host strengthens that existing edge
-to verified delivery without requiring another copy of the recipient's objective,
-acceptance criteria or write scope. It creates no assignment and does not relax
+to verified delivery without requiring another copy of the recipient's objective or
+acceptance criteria. It creates no assignment and does not relax
 shared-request matching. The host checks sender authority and blocking cycles in
 the same transaction; a rejected wait leaves the previous milestone and replies
 unchanged. Retries do not duplicate work, and unrelated ready assignments continue.
@@ -368,3 +377,48 @@ The first bounded implementation verifies retirement admission and protected-sta
 checks through the built production host/IPC path. Automatic management-command
 handoff and the shared acquisition service follow separately; this change alone
 must not claim that those commands can yet retire hosts automatically.
+
+Orderly host termination (`SIGTERM` or `SIGINT`) closes mutation admission and
+stops dispatch before cancelling the active managed execution. The host waits for
+its owned processes to drain, persists interruption and releases its stores and
+IPC endpoint. This does not convert unfinished work into a user-stopped run or a
+successful delivery. A cancelled supplier remains interrupted, with dependent
+assignments still waiting for delivery rather than receiving fabricated rejection.
+Manual pause/stop and terminal outcomes remain intact. Hard host loss still uses
+parent-death supervision and validated recovery on the next host startup.
+
+### Headless container lifetime
+
+The container lifetime service keeps the environment alive while ordinary CLI
+commands create or inspect project hosts. It does not schedule work, select owners,
+resume interrupted operations, or introduce another execution mode. On SIGTERM or
+SIGINT it discovers answering hosts in its own execution storage, validates their
+live process identity over private IPC, signals them to drain, and waits for those
+exact processes to exit. Existing per-project hosts own cancellation, checkpoints
+and interruption evidence. No hidden drain deadline is introduced. Docker still
+needs an init process to reap orphans and may enforce its own external stop limit.
+
+Read-only host identity includes its PID, process start token and execution storage
+root so a deployment can distinguish an answering host from stale or foreign
+metadata. Shutdown must not signal a process based only on a retained PID file.
+Container replacement leaves retained runs interrupted until explicit validated
+continuation; starting the lifetime service alone performs no engineering.
+
+### Tracking milestone comments
+
+When the accountable owner has a captured `issue.comment` grant, the coordinator
+records dependency waits and terminal assignment outcomes on the retained tracking
+issue. A completed assignment is labeled `verified_delivery`; waiting and failed
+work remain distinct. Comments carry assignment and evidence identities, not model
+claims or token activity. Unchanged observations reuse receipts without new effects
+or events. Recovery reconciles uncertain comments before further engineering or
+goal assessment, including when assignment state has since changed. Missing comment
+authority creates no implicit grant. Empty stewardship turns create no tracking
+resources. Worker-authored comments remain available through their existing MCP tool.
+
+Diagnosed failed change assignments use the same successor admission in tasks
+and workdays. A fresh workflow retains the original owner, objective, acceptance
+and dependency obligations while preserving the failed predecessor. Admission
+still validates the retained checkpoint and refuses uncertain operations before
+creating any successor. An unrelated ready workday assignment remains runnable;
+workday mode alone does not invalidate a director's replacement decision (#253).

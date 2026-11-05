@@ -1,10 +1,37 @@
-# Repeatable prompt experiments
+# Acceptance campaigns and historical experiment evidence
 
-Normal execution uses the shared task host. Inspect a version-3 campaign with
-`arcnexus experiment inspect <manifest> --bindings <file> --json`; execute it with
-`arcnexus experiment run <manifest> --bindings <file> --mode live` (or explicitly
-`simulation`). Machine bindings select clean pinned configured projects and an
-executable. The manifest contains prompts, not participant assignments or budgets.
+Scripted and recorded campaigns run through the test system:
+
+```sh
+arcnexus test inspect --component experiments
+arcnexus test run --component experiments
+```
+
+Their test-only orchestrator invokes the ordinary built task CLI and checks pinned
+source, expected outcomes, cancellation and supervising-code integrity. It is not
+shipped in the production distribution. Run build-producing commands before these
+native cases: `test run` prepares `dist` and `.test-build`, and strict checking emits
+declarations. Do not overlap them with checkout-based supervisor-integrity tests.
+Source-authority assertions require the assembled committed implementation, not an
+intermediate boundary/intent commit. Controlled model responses establish
+acceptance behavior, not successful real-agent engineering.
+
+For real-agent learning, use `task run "<prompt>" --simulate` or
+`workday start --simulate`. These use the normal director, agents, verifier and
+publisher with isolated upstream effects. Supply a useful goal; do not prescribe
+a starting roster or use a scripted director for live qualification.
+
+`experiment run` is retired for every manifest version. It rejects execution before
+reading inputs or creating state. Read-only historical inspection remains available
+through `experiment inspect <manifest> --bindings <file> --json`. Existing campaign
+reports retain their original schema and evidence labels.
+
+## Historical formats and behavior
+
+The following reference describes historical campaign formats and original execution
+semantics. Old `simulation` labels may mean scripted inputs; they are not the current
+real-agent `--simulate` environment. Retired execution examples below are historical
+reproduction context, not supported commands for starting new work.
 
 ## Prompt campaigns
 
@@ -32,7 +59,7 @@ source/bindings identity. Snapshot all case inputs before running the first case
 No experiment commits or integrates a candidate into the original checkout.
 
 Legacy manifests and reports remain inspectable. Version-1/2 execution is retired;
-active examples use version 3. See the [migration contract](../../gateway/cli/execution-migration.md)
+version-3 execution is also retired into acceptance support. See the [migration contract](../../gateway/cli/execution-migration.md)
 for retained historical inputs and replacement coverage.
 
 The testing library supplies the reusable multi-owner controlled harness used by
@@ -40,7 +67,7 @@ runtime and prompt-campaign acceptance. Sharing that fixture preserves identical
 SDK, dependency and verification behavior across both entry points; individual
 component suites retain their own scenarios and assertions.
 
-## General fixture and normal campaign example
+## Historical general fixture and campaign example
 
 The bundled `general` fixture is a complete package with three executable owners:
 CLI argument handling, greeting construction and name normalization. Its committed
@@ -68,8 +95,8 @@ node dist/cli.js experiment inspect experiments/operations.yaml --bindings /abso
 Execute once, with an explicit evidence mode:
 
 ```sh
-node dist/cli.js experiment run experiments/operations.yaml --bindings /absolute/local-bindings.json --mode live --output /absolute/new-campaign
-node dist/cli.js experiment run experiments/simulation.yaml --bindings /absolute/simulation-bindings.json --mode simulation
+# Retired: node dist/cli.js experiment run experiments/operations.yaml --bindings /absolute/local-bindings.json --mode live --output /absolute/new-campaign
+# Retired: node dist/cli.js experiment run experiments/simulation.yaml --bindings /absolute/simulation-bindings.json --mode simulation
 ```
 
 A missing mode is an input error. Inspection reports mode as unselected; it never

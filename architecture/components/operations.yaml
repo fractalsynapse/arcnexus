@@ -2,28 +2,31 @@ schemaVersion: 6
 id: operations
 type: library
 parentId: cli-package
-purpose: Execute declared commands and supervise local services and probes
+purpose: Execute declared commands, supervise services and reconcile authorized
+  upstream effects through captured providers
 objectives:
   - Execute captured engineering operations and preserve their evidence
   - Stop managed subprocesses and services when their execution scope ends
 constraints:
   - Never infer setup commands or broaden captured operation authority
   - Preserve caller cancellation and resource ownership checks
-  - "operation (src/library/operations/schemas/operation.json): Preserve
-    supported historical versions and captured execution readers"
-  - "command-diagnostics (src/library/operations/diagnostics.ts): Keep
+  - 'operation (src/library/operations/schemas/operation.json): Preserve
+    supported historical versions and captured execution readers'
+  - 'command-diagnostics (src/library/operations/diagnostics.ts): Keep
     model-facing excerpts within 16 KiB and preserve complete raw logs
-    separately"
-operations:
-  migrated-recipe-43b539fb85a57c26:
-    - verify
-  migrated-recipe-df6d67ddacf5bf0c:
-    - verify
+    separately'
 owns:
   - src/library/operations
   - tests/library/operations
   - docs/library/operations
 api:
+  - module: src/library/operations/promotion-assembly.ts
+  - module: src/library/operations/delivery-assembly.ts
+  - module: src/library/operations/delivery-commit.ts
+  - module: src/library/operations/github-delivery.ts
+  - module: src/library/operations/github-pull-requests.ts
+  - module: src/library/operations/simulated-pull-requests.ts
+  - module: src/library/operations/delivery-git.ts
   - module: src/library/operations/operation-execution.ts
   - module: src/library/operations/confinement.ts
   - module: src/library/operations/operation-definition.ts
@@ -33,3 +36,8 @@ api:
   - module: src/library/operations/process.ts
   - module: src/library/operations/service-state.ts
   - schema: src/library/operations/schemas/operation.json
+  - module: src/library/operations/upstream-execution.ts
+  - module: src/library/operations/simulated-upstream.ts
+  - module: src/library/operations/github-upstream.ts
+  - module: src/library/operations/upstream-bridge.ts
+  - module: src/library/operations/simulated-releases.ts

@@ -1,7 +1,7 @@
 # ArcNexus — architecture-directed self-development
 
 Read [the charter](docs/charter.md) for purpose, objectives, constraints, questions,
-and patterns. The goal is a working ArcNexus that develops itself under human
+and standards. The goal is a working ArcNexus that develops itself under human
 architectural guidance. Every increment should shorten the path to that loop or
 improve the loop through demonstrated use.
 
@@ -28,19 +28,22 @@ approved objective; do not weaken a check merely to make the candidate pass.
 
 ## Working style
 
-- Deliver one small, useful vertical slice at a time. Keep the app working and run
-  the behavior before calling a slice complete. Plan only the next slice in detail.
+- Deliver coherent implementation batches against accepted outcomes. Implement related
+  responsibilities together when that shortens the path to usable behavior; do not
+  require a separate PR or long test cycle for each small change.
 - Use ArcNexus for its own development as soon as its runtime can reliably perform
   the task. Record bootstrap work still needed; do not wait for a complete studio.
 - Prefer simple modules and concise functions with coherent responsibilities.
   Reuse existing code. Add abstractions, dependencies, or infrastructure only for
   a demonstrated requirement. Avoid trivial wrappers and speculative frameworks.
 - No placeholder implementation or simulated output presented as delivered behavior.
+- Keep execution logs, transcripts, run databases and generated evidence indexes in
+  application storage outside source. Commit authored code, tests and documentation.
 - One accountable owner per objective. Prefer native sequential work. Do not spawn
   agents merely to satisfy ceremony; focused independent validation may be used when
   a selected skill explicitly calls for it and the evidence warrants it.
 - Keep guidance proportionate; avoid specifying implementation details ahead of
-  the next working slice. Read relevant skills only; their procedures support the
+  the accepted implementation batch. Read relevant skills only; their procedures support the
   objective, not expand it.
 
 ## Ownership and code quality
@@ -59,11 +62,13 @@ callbacks within 30, including comments and blank lines. Split responsibilities;
 do not compress lines, add trivial wrappers, or suppress the rules. Existing strict
 TypeScript checking remains enabled; explicit `any` is permitted.
 
-Use the declared owner-scoped lint operation during steward work. Formatting and
-lint fixes must stay within captured writable scope. Repository-wide
+Use declared owner-scoped lint, formatting checks and test-profile-selected suites
+during engineering. Full repository checks belong to assembled deliveries, not
+every steward activation. Formatting and lint fixes must stay within captured
+writable scope. Repository-wide
 `npm run format` and `npm run lint:fix` are for callers authorized to edit all
-affected files; use explicit owned paths for a bounded assignment. Final verification
-includes `npm run format:check`, `npm run lint`, type checking, ownership and guidance
+affected files; use explicit owned paths for a bounded assignment. Assembled-delivery
+verification includes `npm run format:check`, `npm run lint`, type checking, ownership and guidance
 validation, and the relevant built-program tests. Use `arcnexus test inspect/run`
 for component selection; Node suites declare literal owner, level and tag metadata.
 Host checks never reformat source.
@@ -76,13 +81,29 @@ change and before its PR. Read-only discussion/audit needs no branch; edits do.
 Create/adopt an issue, then branch from current `origin/staging` using
 `codex/<issue>-<description>`. Never edit directly on `main` or `staging`.
 
-For new or changed behavior: issue and acceptance → documentation → failing
-acceptance test → implementation → verification/review → PR to staging. Commit
-changed intent before product code. For a behavior-preserving refactor, reference
-the existing contract, establish passing acceptance/characterization coverage before
-editing, then prove it still passes; add missing coverage first. Do not manufacture
-a behavior change or redundant docs commit. Documentation-only work uses document
-validation. Add other test layers only where they prove distinct risks.
+Use issue and acceptance → documented intent → implementation with tests → assembled
+verification/review → PR to staging. Record changed intent before product code; one
+intent commit can cover the accepted batch. Write meaningful tests alongside the
+implementation. A failing test before every edit and a full baseline run before
+every refactor are not prerequisites. Preserve existing contracts and add missing
+coverage for distinct risks. Documentation-only work uses document validation.
+
+During implementation, use focused tests, builds and owner-scoped checks where they
+resolve a concrete uncertainty. Assemble the batch before running long integrated,
+native and CI suites. Fix failures using focused feedback, then refresh affected
+integration evidence. Reuse evidence whose inputs and environment are unchanged;
+repeat a full suite when integration risk warrants it, not after every small edit.
+Do not claim completion or merge until applicable final checks pass. Batch size does
+not change ownership, confinement, review or release authority.
+
+Prioritize the working lifecycle and real self-development, then finish interface
+breadth using that lifecycle where reliable. For real qualification, the real
+director selects stewards from the actual project's eligible component catalog;
+dependencies can activate additional stewards. Supply useful goals, never a forced
+team, participant ceiling or scripted director. The phase-two multi-owner gate
+requires at least three observed stewards, including one discovered during execution.
+A smaller run is useful evidence but does not satisfy that gate. Keep deterministic
+scenarios in acceptance tests and preserve the stable supervisor and captured authority.
 
 For executable changes, test the assembled program and the default production wiring.
 Fast deterministic tests may use fakes; introducing or changing real harness
@@ -108,7 +129,7 @@ Verify claims against observed evidence at the current revision. After three
 functionally identical attempts without progress, diagnose and change approach or
 report the blocker. Waiting for an external process to change is not a retry loop.
 
-When a defect escapes checks, a mistake recurs, or a delivered/current-slice promise
+When a defect escapes checks, a mistake recurs, or a delivered/current-batch promise
 lacks verification (not a clearly deferred charter objective),
 record the pattern, cost, and cheapest check that would catch it in a focused issue.
 Keep unrelated process changes out of feature work. Do not build a process framework
@@ -132,3 +153,8 @@ Keep descriptive scenario names without meaningless numeric suffixes. Preserve t
 500/30 physical-line limits without compressing code or deleting useful explanation.
 Lint checks header presence and spacing; review must still assess whether the
 explanation helps a newcomer. See [the readable TypeScript standard](docs/foundation/typescript-standard.md).
+
+Component ownership is the sole source of file write authority. Assign outcomes,
+technical requirements and acceptance criteria; leave discovery and selection of
+implementation files to the accountable steward. Request a different steward's
+work through its inbox. Never add a per-assignment file permission list.

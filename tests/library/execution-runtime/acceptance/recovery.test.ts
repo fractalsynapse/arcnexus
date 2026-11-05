@@ -126,6 +126,8 @@ class RecoveryScenarios {
     t.after(() => host.store.close());
     host.control('start');
     const run = host.store.runs()[0]!;
+    await host.tick();
+    assert.equal(host.store.run(run.id).data.initialized, true);
     const assignment = host.store.enqueue(run.id, 'c', 'Research', ['Observed evidence']);
     host.store.updateAssignment(assignment.id, 'ready', { proposal: { kind: 'research' } });
     await host.tick();

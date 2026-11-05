@@ -9,11 +9,14 @@ controls and read-only resource queries. The [execution contract](../../library/
 defines the current command behavior; local prompt and argument-free workday
 shorthand remain available when context is unambiguous.
 
+Top-level `status` and `follow` now reject with replacement guidance for
+`workspace get <id>` and `workspace get <id> --follow`.
+
 Legacy component `run`, manifest `workday run`, `task plan` and `task legacy-run`
 return an input error explaining the replacement before creating a workspace or
 calling a model. Historical workday/proposal and worker report inspection remains
-read-only. `prepare` remains a workspace diagnostic pending its grouped-command
-migration, not an alternate engineering entry point.
+read-only. Top-level `prepare` and `cleanup` also reject with guidance for the
+package-aware workspace commands; their separate gateway execution path is removed.
 
 Active campaigns use schema version 3: prompts and expected terminal outcomes,
 with project declarations supplying owners, profiles and verification. Retained
@@ -70,6 +73,20 @@ new activity option or ambiguously combine the two forms.
 working directory through the shared workspace service. Package references follow
 portfolio resolution; command recipes, bindings and source revisions are resolved
 under the hood. Success returns a workspace resource and exit 0; a retained failed
-preparation returns 1, invalid input/preflight returns 2, and cancellation returns
-130. An active repository host prevents preparation rather than allowing concurrent
-repository mutation. Legacy `prepare --project` remains only during fixture migration.
+preparation returns 1, invalid input/preflight returns 2, and cancellation returns 130. An active repository host prevents preparation rather than allowing concurrent
+repository mutation. Retired preparation options cannot select an alternate execution path.
+
+## Scripted campaigns
+
+`experiment run` no longer executes any manifest version. Use `test inspect/run
+--component experiments` for deterministic campaign assertions. Those tests still
+exercise the built task command; their orchestration is compiled only with tests.
+Historical `experiment inspect` remains read-only. Use `task run --simulate` or
+`workday start --simulate` for real-agent isolated lifecycle learning.
+
+`workspace get <id>` includes captured execution progress: observed operation,
+checklist claims, host verification evidence and cancellation state. Historical
+missing fields remain unavailable; recorded old limits are evidence, not active
+budgets. Reads do not start a host or load mutable source. Revision tokens change
+when retained timeline progress changes, including updates between report saves.
+Raw model turns, bindings and full event payloads remain outside this resource.

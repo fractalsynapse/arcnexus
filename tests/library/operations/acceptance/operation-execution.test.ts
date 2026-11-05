@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { chmodSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  copyFileSync,
+  chmodSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
@@ -22,7 +30,15 @@ class ExecutionScenarios {
     const executor = new OperationExecution(root, record, new AbortController().signal);
     await executor.run(operation, 'agent');
     writeFileSync(join(record.workspace, 'source.txt'), 'changed');
-    await assert.rejects(executor.run(operation, 'verify'), /Command failed/);
+    await assert.rejects(
+      executor.run(operation, 'verify'),
+      /Operation check: Error: Command failed.*evidence: .*invocation-.*\.log/,
+    );
+    this.assertEvidence(root, record);
+  }
+
+  /** Checks that later verification has fresh identity, observed artifacts and its own failure status. */
+  private assertEvidence(root: string, record: RecordData): void {
     const report = JSON.parse(readFileSync(join(root, 'runs/run/report.json'), 'utf8'));
     const [agent, verify] = report.operationInvocations;
     assert.equal(agent.status, 'completed');
@@ -51,20 +67,16 @@ class ExecutionScenarios {
     const tools = join(root, 'tools');
     mkdirSync(tools);
     const executable = join(tools, 'codex');
-    const target = JSON.stringify(process.env.ARCNEXUS_TEST_CODEX!);
-    writeFileSync(
-      executable,
-      `#!${process.execPath}\nconst r=require('child_process').spawnSync(${target},process.argv.slice(2),{stdio:'inherit'});if(r.error)throw r.error;process.exit(r.status??1);`,
-    );
+    copyFileSync(process.env.ARCNEXUS_TEST_CODEX!, executable);
     chmodSync(executable, 0o755);
     (record.bindings as any).tools.codex = executable;
     await new OperationExecution(root, record, new AbortController().signal).run(
-      this.operation(),
+      { ...this.operation(), network: { domains: ['127.0.0.1'] } },
       'verify',
     );
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'original');
     assert.equal(readFileSync(join(record.workspace, 'generated/result'), 'utf8'), 'original');
-    assert.equal(typeof record.confinementQualified, 'string');
+    assert.equal(typeof record.networkQualified, 'string');
   }
 
   /** Refuses uncertain operations without repeating their source or output effects. */

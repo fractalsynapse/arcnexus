@@ -20,7 +20,7 @@ export class OwnerRetrieval {
       .filter((c) => ['gateway', 'library', 'foundation', 'release'].includes(c.type))
       .map((c) => this.score(c, tokens))
       .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
-    const selected = scores.filter((c) => c.score > 0).slice(0, 12);
+    const selected = scores.filter((c) => c.score > 0);
     for (const match of [...selected]) this.expand(match, selected);
     return selected;
   }

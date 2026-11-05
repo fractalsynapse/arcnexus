@@ -2,7 +2,7 @@ import { existsSync, lstatSync, readdirSync, readFileSync, realpathSync } from '
 import { join } from 'node:path';
 import { InputError } from '../architecture/config.js';
 import { ResourceQuery, type ResourceQueryInput } from '../report/resource-query.js';
-import { readTimeline } from '../report/timeline.js';
+import { progressView, readTimeline } from '../report/timeline.js';
 import { statePath, type RecordData } from './state.js';
 
 export interface WorkspaceTarget {
@@ -63,9 +63,10 @@ export class WorkspaceResources {
         runId: event.runId,
         componentId: event.componentId,
       }));
-    const workspace = this.project(record);
+    const workspace = this.project(record, timeline);
     return {
       workspace,
+      progress: progressView(record, timeline.events),
       revision: workspace.revision,
       events,
       cursor: Math.max(after, timeline.events.at(-1)?.sequence ?? 0),
@@ -96,7 +97,7 @@ export class WorkspaceResources {
   }
 
   /** Exposes lifecycle and location fields, keeping model turns, operation output and bindings private. */
-  private project(record: RecordData) {
+  private project(record: RecordData, timeline = readTimeline(join(this.root, 'runs', record.id))) {
     const cleanup = this.cleanup(record.id);
     return {
       id: record.id,
@@ -113,7 +114,7 @@ export class WorkspaceResources {
       executionRunId: record.executionRunId,
       assignmentId: record.assignmentId,
       retained: record.executionRunId !== undefined || record.assignmentId !== undefined,
-      revision: this.query.revision({ record, cleanup }),
+      revision: this.query.revision({ record, cleanup, timeline }),
     };
   }
 

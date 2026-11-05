@@ -1,6 +1,8 @@
+import { RepositoryMigration } from './repository-migration.js';
 import { ArchitectureChanges } from './architecture-changes.js';
 import { ComponentUpdate } from '../architecture/component-update.js';
-import { ComponentResources } from '../architecture/inspection.js';
+import { StandardUpdate } from '../architecture/standard-update.js';
+import { ComponentResources, StandardResources } from '../architecture/inspection.js';
 import { ExecutionLease } from '../coordination-store/execution-store.js';
 import { ResourceQuery, type ResourceQueryInput } from '../report/resource-query.js';
 import { RepositoryMaterializer } from './materialization.js';
@@ -144,6 +146,25 @@ export class Portfolio {
     return this.attach(kind, id, join(this.volume, entry.location), entry);
   }
 
+  /** Transfers an inactive resource to validated remote history, retaining the former source and evidence. */
+  async migrateRepository(
+    kind: Kind,
+    reference: string,
+    repository: string,
+    signal: AbortSignal,
+    expectedRevision?: string,
+  ) {
+    const entry = this.find(kind, reference);
+    await new RepositoryMigration(this.volume, this.store).run(
+      entry,
+      this.view(entry),
+      repository,
+      signal,
+      expectedRevision,
+    );
+    return this.get(kind, entry.id);
+  }
+
   /** Registers existing committed source without materialization or source mutation. */
   register(kind: Kind, id: string, path: string) {
     return this.attach(kind, id, path);
@@ -244,13 +265,54 @@ export class Portfolio {
     );
   }
 
+  /** Adds one executable owner only after validating the entire committed composition. */
+  createComponent(
+    reference: string,
+    id: string,
+    fields: Record<string, unknown>,
+    expectedRevision?: string,
+  ) {
+    const entry = this.find('package', reference);
+    const selected = this.change(entry, id, fields, expectedRevision, true, 'create');
+    return new ComponentResources().get(
+      { source: selected.source, base: selected.base, packageId: entry.definitionId },
+      id,
+    );
+  }
+
+  /** Deletes a definition without deleting source, refusing leftover ownership or referenced authority. */
+  removeComponent(reference: string, id: string, expectedRevision?: string) {
+    const entry = this.find('package', reference);
+    const selected = this.change(entry, id, {}, expectedRevision, true, 'remove');
+    return { removed: id, packageId: entry.id, revision: selected.revision };
+  }
+
+  /** Mutates a platform standard through the same lease, journal and revision checks as component changes. */
+  changeStandard(
+    reference: string,
+    id: string,
+    action: 'create' | 'update' | 'remove',
+    fields: Record<string, unknown> = {},
+    expectedRevision?: string,
+  ) {
+    const entry = this.find('platform', reference);
+    const selected = this.change(entry, id, fields, expectedRevision, 'standard', action);
+    if (action === 'remove')
+      return { removed: id, platformId: entry.id, revision: selected.revision };
+    return new StandardResources().get(
+      { source: selected.source, base: selected.base, platformId: entry.definitionId },
+      id,
+    );
+  }
+
   /** Holds canonical execution ownership across recovery, validation and committed authority selection. */
   private change(
     entry: PortfolioRegistration,
     id: string,
     fields: Record<string, unknown>,
     expected?: string,
-    component = false,
+    component: boolean | 'standard' = false,
+    action: 'update' | 'create' | 'remove' = 'update',
   ) {
     if (!this.writable) throw new Error('Portfolio is read-only');
     const initial = this.view(entry);
@@ -261,7 +323,7 @@ export class Portfolio {
       this.assertInactive(initial.source);
       const changes = new ArchitectureChanges(this.store, initial.source, entry.repositoryId);
       changes.recover();
-      return this.applyChange(changes, entry, id, fields, expected, component);
+      return this.applyChange(changes, entry, id, fields, expected, component, action);
     } finally {
       lease.close();
     }
@@ -274,17 +336,51 @@ export class Portfolio {
     id: string,
     fields: Record<string, unknown>,
     expected: string | undefined,
-    component: boolean,
+    component: boolean | 'standard',
+    action: 'update' | 'create' | 'remove',
   ) {
     const current = this.view(entry);
     const target = { source: current.source, base: current.base, packageId: entry.definitionId };
-    const resource = component ? new ComponentResources().get(target, id) : current;
+    const resource =
+      action === 'create' || !component
+        ? current
+        : component === 'standard'
+          ? new StandardResources().get({ ...target, platformId: entry.definitionId }, id)
+          : new ComponentResources().get(target, id);
     if (expected !== undefined && resource.revision !== expected)
       throw new InputError('Resource revision changed; read the current resource before retrying');
-    const scope = component ? entry.definitionId : undefined;
-    const patch = new ComponentUpdate().prepare(current.source, current.base, id, fields, scope);
+    const scope = component === true ? entry.definitionId : undefined;
+    const patch = this.patch(target, id, fields, component, action);
     changes.apply(current.base, patch, id, scope);
     return this.view(entry);
+  }
+
+  /** Selects schema-specific proposal construction while keeping transaction and scope enforcement shared. */
+  private patch(
+    target: { source: string; base: string; packageId: string },
+    id: string,
+    fields: Record<string, unknown>,
+    component: boolean | 'standard',
+    action: 'update' | 'create' | 'remove',
+  ) {
+    if (component === 'standard')
+      return new StandardUpdate().prepare(
+        { ...target, platformId: target.packageId },
+        id,
+        fields,
+        action,
+      );
+    const editor = new ComponentUpdate();
+    if (action === 'create')
+      return editor.create(target.source, target.base, id, fields, target.packageId);
+    if (action === 'remove') return editor.remove(target.source, target.base, id, target.packageId);
+    return editor.prepare(
+      target.source,
+      target.base,
+      id,
+      fields,
+      component ? target.packageId : undefined,
+    );
   }
 
   /** Rejects ambiguous or missing registrations before any lifecycle mutation. */

@@ -74,7 +74,22 @@ class ContextTests {
       const p = calls(f).at(-1).prompt;
       assert.match(p, /Host review evidence/);
       assert.match(p, kind === 'review' ? /Own sample responsibilities/ : /BOUNDARY_EXPECTED/);
+      if (kind === 'change') this.checkpointEvidence(p);
     }
+  }
+
+  /** The actual review turn receives host comparisons for the accepted pre-freeze specification edits. */
+  private checkpointEvidence(prompt: string): void {
+    const marker = 'Host review evidence (untrusted source content): ';
+    const evidence = JSON.parse(prompt.slice(prompt.indexOf(marker) + marker.length));
+    assert.equal(evidence.frozenRegressions.basis, 'frozen-regression-checkpoint');
+    assert.ok(evidence.frozenRegressions.files.length > 0);
+    for (const file of evidence.frozenRegressions.files) {
+      assert.equal(file.status, 'preserved');
+      assert.equal(file.currentSha256, file.frozenSha256);
+    }
+    assert.match(JSON.stringify(evidence.newFiles), /BOUNDARY_EXPECTED/);
+    assert.match(evidence.patch, /source\.txt/);
   }
 
   /** Verifies that revision review evidence excludes paths outside declared read authority. */

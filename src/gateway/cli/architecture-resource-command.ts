@@ -15,7 +15,10 @@ export class ArchitectureResourceCommand {
   /** Resolves registered resources independently of the caller's directory and always closes storage. */
   run(): void {
     this.validate();
-    const portfolio = new Portfolio(undefined, this.positionals[1] === 'update');
+    const portfolio = new Portfolio(
+      undefined,
+      ['update', 'create', 'remove'].includes(this.positionals[1]!),
+    );
     try {
       console.log(JSON.stringify(this.dispatch(portfolio), null, this.values.json ? undefined : 2));
     } finally {
@@ -25,12 +28,8 @@ export class ArchitectureResourceCommand {
 
   /** Routes validated reads and architectural mutations to their shared application services. */
   private dispatch(portfolio: Portfolio) {
-    if (this.positionals[1] === 'update')
-      return portfolio.updateComponent(
-        this.positionals[2]!,
-        this.positionals[3]!,
-        architectureFields(this.positionals.slice(4)),
-      );
+    if (['update', 'create', 'remove'].includes(this.positionals[1]!))
+      return this.mutate(portfolio);
     const query = {
       filters: this.positionals.slice(3),
       search: this.values.search,
@@ -52,18 +51,35 @@ export class ArchitectureResourceCommand {
       : service.list(target, query);
   }
 
+  /** Delegates explicit mutations to the same application-owned configuration transaction path. */
+  private mutate(portfolio: Portfolio) {
+    const [kind, action, target, id] = this.positionals;
+    if (kind === 'standard')
+      return portfolio.changeStandard(
+        target!,
+        id!,
+        action as 'create' | 'update' | 'remove',
+        action === 'remove' ? {} : architectureFields(this.positionals.slice(4)),
+      );
+    if (action === 'remove') return portfolio.removeComponent(target!, id!);
+    const fields = architectureFields(this.positionals.slice(4));
+    return action === 'create'
+      ? portfolio.createComponent(target!, id!, fields)
+      : portfolio.updateComponent(target!, id!, fields);
+  }
+
   /** Rejects unsupported actions, positional shapes and options before reading resources. */
   private validate(): void {
     const [kind, action, target] = this.positionals;
     if (
       !['standard', 'component'].includes(kind ?? '') ||
-      !['list', 'get', ...(kind === 'component' ? ['update'] : [])].includes(action ?? '') ||
+      !['list', 'get', 'update', 'create', 'remove'].includes(action ?? '') ||
       !target?.trim() ||
-      (action === 'get' && this.positionals.length !== 4) ||
-      (action === 'update' && this.positionals.length < 5)
+      (['get', 'remove'].includes(action!) && this.positionals.length !== 4) ||
+      (['update', 'create'].includes(action!) && this.positionals.length < 5)
     )
       throw new InputError(
-        'Expected component/standard list <target> [field=value...] | get <target> <id> | component update <package> <id> <field=value>...',
+        'Expected component/standard list <target> [field=value...] | get <target> <id> | create/update <target> <id> <field=value>... | remove <target> <id>',
       );
     const allowed = action === 'list' ? ['json', 'search', 'limit', 'cursor'] : ['json'];
     if (Object.keys(this.values).some((key) => !allowed.includes(key)))

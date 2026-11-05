@@ -126,3 +126,13 @@ A binding outside system paths may forward to that installation; copying a lone
 npm launcher is not a runnable package. Controlled model processes use the current
 Node executable, and failed startup includes captured launcher diagnostics. These
 fixtures retain the same confinement and descendant-shutdown assertions (#176).
+
+CI exposes the same bound Node and npm installations to nested commands on PATH.
+The archived-integrity acceptance invokes real npm inside the confined test suite.
+The hosted toolcache's fallback npm wrapper failed before testing the lock in
+CI 41937959205. Keep the installed package intact and the integrity assertion active.
+
+CI 41939762531 showed that changing the ambient PATH alone does not change
+the captured environment. ArcNexus prepends canonical binding directories.
+Bind a forwarding executable named npm first so nested npm resolves to the
+verified installation even when the bound Node directory also contains npm.

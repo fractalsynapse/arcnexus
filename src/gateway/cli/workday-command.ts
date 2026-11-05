@@ -38,11 +38,16 @@ export class WorkdayCommand {
   private async control(action: string): Promise<void> {
     if (
       ![2, 3].includes(this.positionals.length) ||
-      Object.keys(this.values).some((key) => key !== 'json')
+      Object.keys(this.values).some(
+        (key) => key !== 'json' && !(action === 'start' && key === 'simulate'),
+      )
     )
       throw new InputError('Expected workday ' + action + ' [identity] [--json]');
     if (action === 'start')
-      return new ExecutionCommand(this.signal, this.positionals[2]).workday(action);
+      return new ExecutionCommand(this.signal, this.positionals[2]).workday(
+        action,
+        this.values.simulate,
+      );
     const result =
       action === 'status'
         ? new ExecutionResources().workday(this.positionals[2])

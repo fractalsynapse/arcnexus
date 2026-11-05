@@ -22,13 +22,6 @@ constraints:
     supported historical versions and captured execution readers"
   - "experiment-v3 (src/library/experiments/schemas/experiment-v3.json):
     Prompt-driven cases preserve shared task authority and evidence"
-operations:
-  component-tests:
-    - verify
-  migrated-recipe-43b539fb85a57c26:
-    - verify
-  migrated-recipe-df6d67ddacf5bf0c:
-    - verify
 owns:
   - src/library/experiments
   - tests/library/experiments
@@ -45,7 +38,6 @@ owns:
   - scripts/qualify.mjs
 api:
   - module: src/library/experiments/experiment-config.ts
-  - module: src/library/experiments/experiments.ts
   - schema: src/library/experiments/schemas/campaign.json
   - schema: src/library/experiments/schemas/experiment-bindings.json
   - schema: src/library/experiments/schemas/experiment-v2.json

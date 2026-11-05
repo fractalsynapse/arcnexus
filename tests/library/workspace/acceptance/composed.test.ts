@@ -121,7 +121,7 @@ class ComposedTests {
     writeFileSync(join(f.state, 'runs', v.id, 'report.json'), JSON.stringify(v));
     const cleanup = f.cleanup(v.id);
     assert.equal(cleanup.status, 1);
-    assert.match(cleanup.stderr, /ownership/);
+    assert.match(JSON.parse(cleanup.stdout).items[0].error, /ownership/);
     assert.equal(readFileSync(join(f.dependency, 'source.txt'), 'utf8'), 'dependency');
   }
 
@@ -195,15 +195,12 @@ class ComposedTests {
     const f = composed(t);
     f.setup({ command: 'node', args: ['-e', 'console.log("READY");setInterval(()=>{},1000)'] });
     f.commit();
-    const child = new TestProcess(
-      t,
-      [cli, 'prepare', '--project', f.repo, '--bindings', f.bindings],
-      f.env,
-    );
+    const child = new TestProcess(t, [cli, ...f.prepareArgs], f.env);
     await child.waitForReady(() => this.dependencyReady(f), 'Dependency setup must be running');
     child.kill('SIGINT');
     assert.equal(await child.closed, 130, child.stderr);
-    const record = JSON.parse(child.stdout);
+    const id = JSON.parse(child.stdout).workspace.id;
+    const record = JSON.parse(readFileSync(join(f.state, 'runs', id, 'report.json'), 'utf8'));
     assert.equal(record.members[0].status, 'created');
     const retained = JSON.parse(
       readFileSync(join(f.state, 'runs', record.id + '-dependency', 'report.json'), 'utf8'),

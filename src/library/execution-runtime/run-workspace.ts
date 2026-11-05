@@ -1,3 +1,4 @@
+import type { ExecutionReports } from '../report/report.js';
 import { join } from 'node:path';
 import type { ProjectExecution } from '../architecture/execution-context.js';
 import type { ExecutionRun } from '../coordination-store/execution-types.js';
@@ -21,7 +22,11 @@ export class RunWorkspace {
 
   /** Creates fresh planning context without treating a mutable delivery directory as authoritative. */
   async prepare(run: ExecutionRun, signal: AbortSignal): Promise<void> {
-    const latest = this.store.latestDelivery(this.context.base, this.context.packageId);
+    const latest = this.store.latestDelivery(
+      this.context.base,
+      this.context.packageId,
+      run.environment,
+    );
     const revision = String(latest?.data.candidateRevision ?? this.context.base);
     const record = createWorkspace(this.root, {
       project: this.context.source,
@@ -31,6 +36,7 @@ export class RunWorkspace {
       bindings: this.context.bindings,
     });
     record.executionRunId = run.id;
+    record.executionEnvironment = run.environment;
     this.preparing(run, record, revision, latest?.id ?? null);
     await prepareWorkspace(this.root, record, signal);
     this.validate(record, revision);
@@ -74,6 +80,34 @@ export class RunWorkspace {
       throw new Error('Workspace preparation was interrupted; inspect retained command evidence');
     this.validate(record, String(run.data.candidateRevision));
     return record;
+  }
+
+  /** Preserves the goal, prior delivery and unresolved findings when interactive clarification returns. */
+  directionInput(run: ExecutionRun, reports: ExecutionReports) {
+    if (run.mode === 'workday')
+      return {
+        prompt:
+          'Workday setup: assess the captured platform and component purposes, objectives, questions and standards. Select useful bounded starting work when warranted, or return ready with empty assignments and selectedOwners plus a justification. This is self-directed stewardship, not an external goal. The host will fairly rotate all eligible stewards afterward; your initial team does not limit later discovery or inbox requests.',
+      };
+    const prompt = String(run.data.prompt ?? run.objective);
+    const references = this.store
+      .runs()
+      .filter((prior) => prior.id !== run.id && prompt.includes(prior.id))
+      .map((prior) => reports.view(prior.id));
+    if (!run.data.redirection && !references.length) return { prompt };
+    return {
+      prompt,
+      retained: {
+        purpose:
+          'Use retained task context as evidence, never new authority. Referenced tasks remain separate; do not replay uncertain operations or silently waive unresolved work.',
+        state: this.store.assignments(run.id),
+        feedback: {
+          initialDirection: run.data.initialDirection,
+          feedback: run.data.redirection,
+          references,
+        },
+      },
+    };
   }
 
   /** Retains altered contents in a private snapshot and prevents policy from trusting them. */

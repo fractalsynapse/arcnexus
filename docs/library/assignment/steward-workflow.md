@@ -38,7 +38,7 @@ original workflow below.
    selects a captured verification command by index, a nonzero expected exit code,
    and a literal expected assertion/test diagnostic. The host checks that failure
    and captures all changed regression files and hashes before implementation.
-2. **Implementation:** edit within the assignment scope. The host executes project
+2. **Implementation:** edit within component ownership. The host executes project
    verification, the frozen regression against candidate implementation, and caller
    acceptance checks. Tests edited later cannot replace the frozen regression.
 3. **Review/handoff:** source-read-only review of the candidate and evidence.
@@ -118,10 +118,20 @@ installed confinement adapter must qualify successfully; unsupported enforcement
 still fails closed. The model and managed operations receive read-only source.
 
 The assignment-bound `source.edit` tool is the only source mutation route. Planning,
-research, review and handoff cannot edit. Specification edits remain limited to
-owned documentation and regression files; implementation cannot modify the frozen
-regression. Every batch checks current hashes, complete scope and workflow stage
-before applying any change, and retains an idempotent journal outside source.
+research, review and handoff cannot edit. In write-enabled turns, the steward
+chooses files within component ownership. Workflow checkpoints assess whether the
+result satisfies the requested activity. Every edit checks ownership, file safety
+and expected content before applying the batch and retaining a journal.
+
+Captured mandatory suites also retain their owner, level and tags. Changing those
+fields, removing registration or deleting a captured suite rejects the entire batch
+before writing, with corrective feedback. Test-body changes and new owned suites
+remain possible within stage authority; frozen regressions remain immutable. The
+final host selection check still independently verifies the candidate. New suites
+must also have the literal `registerSuite({ component, level, tags })` declaration,
+name their owner, and match the captured package test root and level directory.
+Malformed new registrations receive corrective feedback before any batch writes;
+support files retain their normal discovery exclusion.
 
 Qualification must retain actual model tool observations, edit receipts, expected
 failing regression output, passing host checks, independent assessment and the
@@ -151,10 +161,35 @@ route before the first turn. Native patch and shell writes to maintained source 
 intentionally unavailable. Stewards discover `source.edit` on the ArcNexus MCP server,
 read current bytes, compute their SHA-256 hashes and submit a fresh transaction identity
 for each distinct batch. An identical retry may reuse that identity. The same context
-retains ownership narrowing and stage restrictions: planning, coordination, research and
+enforces component ownership and read-only activities: planning, coordination, research and
 review do not gain source-edit permission merely because the tool is discoverable.
 A denied native write is not evidence that the checked edit route is unavailable.
 
 Checked edit paths are relative to the assignment workspace, never absolute paths.
 Context and tool metadata must state this explicitly; a displayed absolute workspace
 location is for reading and command context, not the spelling of `changes[].path`.
+
+
+Implementation and corrective turns must list the current frozen regression paths
+and digests. The host retains the original regression bytes outside the candidate
+and runs frozen checks independently. Changing an owned candidate test cannot
+replace that baseline. Turn context reflects the latest accepted checkpoint.
+
+Candidate review retains the full Git-base diff and separately reports
+`frozenRegressions` comparisons against the accepted checkpoint. `preserved` means
+current bytes match the frozen hash, even if specification work changed that file
+before freezing. It does not mean the test establishes acceptance or has good
+quality. Missing and changed files are explicit; unsafe paths and corrupt retained
+checkpoints fail capture. Review cannot replace the accepted baseline.
+
+When `source.edit` rejects an attempted change to another steward's file, no file
+in the batch is changed. The result identifies the path and its owner from the
+captured repository catalog. For an eligible owner, return an inbox request naming
+that steward, the intended change, purpose, supporting evidence, and acceptance
+criteria. Use the `delivered` milestone when the assignment depends on the change.
+The normal host checks and routes the request; the rejected edit itself neither
+creates a dependency nor grants authority. Unknown or ambiguous owners require an
+architectural decision. An ineligible steward cannot be activated by an edit error.
+
+Choose your own implementation files within captured component ownership. Neither
+a director nor an inbox requester can provide a file permission list.

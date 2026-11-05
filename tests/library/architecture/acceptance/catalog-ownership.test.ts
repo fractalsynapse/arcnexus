@@ -8,19 +8,21 @@ import { parse } from 'yaml';
 
 /** Exercises catalog ownership behavior through observable scenarios. */
 class CatalogOwnershipTests {
-  /** Verifies that built inspect assigns every real source module to one executable owner. */
-  builtInspectAssignsEveryRealSourceModuleToOneExecutableOwner() {
+  /** Verifies that built validation assigns every real source module to one executable owner. */
+  builtValidationAssignsEveryRealSourceModuleToOneExecutableOwner() {
     const components = readdirSync('architecture/components', { withFileTypes: true })
       .filter((entry) => entry.isFile() && /\.(?:json|yaml|yml)$/.test(entry.name))
       .map((entry) => parse(readFileSync('architecture/components/' + entry.name, 'utf8')))
       .filter((c: any) => !['platform', 'package'].includes(c.type));
-    const owners = components.map((component: any) => this.inspectOwner(component.id));
+    const catalog = this.catalog();
+    assert.deepEqual(Object.keys(catalog.owners).sort(), components.map((c: any) => c.id).sort());
+    const owners = Object.values(catalog.owners);
     const files = readdirSync('src', { recursive: true }).filter((p: any) => p.endsWith('.ts'));
     for (const name of files) {
       const path = 'src/' + name;
       assert.equal(
         owners.filter((c: any) =>
-          c.allowedWritePaths.some((p: any) => p === path || path.startsWith(p + '/')),
+          c.writeScope.some((p: any) => p === path || path.startsWith(p + '/')),
         ).length,
         1,
         `${path} must have one executable owner`,
@@ -28,29 +30,21 @@ class CatalogOwnershipTests {
     }
   }
 
-  /** Resolves effective owner authority through the built inspect command. */
-  private inspectOwner(id: string): any {
+  /** Resolves all effective owners through one complete production validation instead of rebuilding per owner. */
+  private catalog(): any {
     const r = spawnSync(
       process.execPath,
-      [
-        resolve('dist/cli.js'),
-        'inspect',
-        id,
-        'Inspect ownership',
-        '--project',
-        process.cwd(),
-        '--json',
-      ],
+      [resolve('dist/cli.js'), 'validate', '--project', process.cwd(), '--json'],
       { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 },
     );
     assert.equal(r.status, 0, String(r.error ?? r.stderr));
-    return JSON.parse(r.stdout).context.at(-1);
+    return JSON.parse(r.stdout);
   }
 }
 
 const suite = new CatalogOwnershipTests();
 
-test('built inspect assigns every real source module to one executable owner', () =>
-  suite.builtInspectAssignsEveryRealSourceModuleToOneExecutableOwner());
+test('built validation assigns every real source module to one executable owner', () =>
+  suite.builtValidationAssignsEveryRealSourceModuleToOneExecutableOwner());
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });

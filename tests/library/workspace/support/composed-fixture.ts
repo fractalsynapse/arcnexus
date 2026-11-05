@@ -1,13 +1,21 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { WorkspaceCliFixture } from '../../testing/support/workspace-cli-fixture.js';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
 import {
-  cli,
   minimalWorkflowFixture,
   type WorkflowFixture,
 } from '../../testing/support/workflow-fixture.js';
+
+const generatedDirectoryProbe = {
+  command: 'node',
+  args: [
+    '-e',
+    "require('fs').mkdirSync('generated',{recursive:true});require('fs').writeFileSync('generated/cwd',process.cwd())",
+  ],
+};
 
 /** Materializes two captured repositories whose lifecycle recipes use shared confined operations. */
 export function composed(t: TestContext): any {
@@ -22,23 +30,22 @@ export function composed(t: TestContext): any {
     if (f.git('status', '--porcelain')) f.commit();
   };
   const setup = (command: { command: string; args: string[] }) => writeSetup(f, command);
-  setup({
-    command: 'node',
-    args: [
-      '-e',
-      "require('fs').mkdirSync('generated',{recursive:true});require('fs').writeFileSync('generated/cwd',process.cwd())",
-    ],
-  });
+  setup(generatedDirectoryProbe);
   commit();
-  const prepare = () =>
-    spawnSync(process.execPath, [cli, 'prepare', '--project', f.repo, '--bindings', bindings], {
-      env: f.env,
-      encoding: 'utf8',
-      timeout: 30 * 60 * 1000,
-    });
-  const cleanup = (id: string) =>
-    spawnSync(process.execPath, [cli, 'cleanup', id], { env: f.env, encoding: 'utf8' });
-  return { ...f, dependency, dg, environment, bindings, commit, prepare, cleanup, setup };
+  const workspace = new WorkspaceCliFixture(f, bindings);
+  return {
+    ...f,
+    env: workspace.env,
+    prepareArgs: workspace.prepareArgs,
+    dependency,
+    dg,
+    environment,
+    bindings,
+    commit,
+    setup,
+    prepare: () => workspace.prepare(),
+    cleanup: (id: string) => workspace.cleanup(id),
+  };
 }
 
 /** Keeps repository-specific verification on its package while inheriting common engineering policy. */

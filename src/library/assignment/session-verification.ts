@@ -1,6 +1,7 @@
 import { RegressionOperation } from './regression-operation.js';
 import { digest } from '../architecture/assignment.js';
 import { SpecificationValidationError } from './specification-error.js';
+import { SpecificationQuality } from './specification-quality.js';
 import { logExcerpt } from './attempts.js';
 import { CapturedVerification } from './captured-verification.js';
 import { RefactorCheckpoint } from './refactor-checkpoint.js';
@@ -9,7 +10,7 @@ import { SessionProgress } from './session-progress.js';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { candidateDigest } from '../change-inspection/changes.js';
-import { type CommandResult } from '../operations/process.js';
+import { isObservedCommandFailure, type CommandResult } from '../operations/process.js';
 import { type AgentResult } from '../steward/codex.js';
 import { specificationFiles, withFrozenTests } from './checkpoints.js';
 import { SessionState } from './session-state.js';
@@ -28,6 +29,7 @@ export class SessionVerification {
       this.state.options.record.outcome = 'no_changes';
       throw new Error('Candidate has no changes');
     }
+    await new SpecificationQuality(this.state).verify();
     this.captureRegression();
     if (!this.state.documentationOnly) await this.regression(spec);
     else
@@ -93,12 +95,7 @@ export class SessionVerification {
       await this.state.command(command, 'red-test');
     } catch (error) {
       this.state.options.signal.throwIfAborted();
-      if (
-        error instanceof Error &&
-        error.message.startsWith('Command failed (') &&
-        'commandResult' in error
-      )
-        failed = error.commandResult as CommandResult;
+      if (isObservedCommandFailure(error)) failed = error.commandResult as CommandResult;
       else throw error;
     }
     if (failed) selection.capture(command, failed);

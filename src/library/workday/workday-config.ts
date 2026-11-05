@@ -190,10 +190,10 @@ class WorkdayResolver {
     )
       throw new InputError('Both owners must belong to the same primary repository');
     if (
-      requester.resolved.allowedWritePaths.some(
+      a.allowedWritePaths.some(
         (path) =>
-          covered(path, recipient.resolved.allowedWritePaths) ||
-          recipient.resolved.allowedWritePaths.some((other) => covered(other, [path])),
+          covered(path, b.allowedWritePaths) ||
+          b.allowedWritePaths.some((other) => covered(other, [path])),
       )
     )
       throw new InputError('Workday owner writable scopes overlap');

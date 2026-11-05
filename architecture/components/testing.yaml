@@ -11,11 +11,6 @@ constraints:
   - Keep generated output separate from maintained source
   - "test-profile (src/library/testing/schemas/test-profile.json): Node profile
     version 1 uses fixed commands and literal suite metadata"
-operations:
-  migrated-recipe-43b539fb85a57c26:
-    - verify
-  migrated-recipe-df6d67ddacf5bf0c:
-    - verify
 owns:
   - src/library/testing
   - tests/library/testing
@@ -23,6 +18,8 @@ owns:
   - scripts/library/testing
   - architecture/test-profiles
 api:
+  - module: tests/library/testing/support/workspace-cli-fixture.ts
+  - module: tests/library/testing/support/delivery-fixture.ts
   - module: tests/library/testing/support/shared-test-fixture.ts
   - module: tests/library/testing/support/minimal-catalog-fixture.ts
   - module: src/library/testing/testing.ts

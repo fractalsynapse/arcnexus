@@ -1,6 +1,5 @@
 import { CheckedEditBridge } from './checked-edit-bridge.js';
 import { EngineeringContext } from './engineering-context.js';
-import { classifyComponentPath } from '../architecture/components.js';
 import { operationBridge } from '../operations/operations.js';
 import { runCodex, type AgentResult } from '../steward/codex.js';
 import { beginAttempt } from './attempts.js';
@@ -32,16 +31,25 @@ export class SessionTurn {
     this.originalPrompt = new EngineeringContext(state).render();
     this.evidence = new TurnEvidence(state);
     const { root, record, signal } = state.options;
-    const operations = operationBridge(root, record, signal, () => this.checkStage());
+    const operations = operationBridge(root, record, signal, () => this.state.safe());
     const edits = new CheckedEditBridge(state);
     edits.recover();
     this.operations = {
       ...operations,
-      tools: [...operations.tools, ...edits.tools],
+      tools: [
+        ...operations.tools,
+        ...edits.tools,
+        ...(state.options.collaboration?.tools ?? []),
+        ...(state.options.evidence?.tools ?? []),
+      ],
       call: (name: string, args: unknown) =>
-        name === 'source.edit'
-          ? Promise.resolve(edits.call(name, args))
-          : operations.call(name, args),
+        state.options.collaboration?.tools.some((tool) => tool.name === name)
+          ? state.options.collaboration.call(name, args)
+          : state.options.evidence?.tools.some((tool) => tool.name === name)
+            ? state.options.evidence.call(name, args)
+            : name === 'source.edit'
+              ? Promise.resolve(edits.call(name, args))
+              : operations.call(name, args),
     };
   }
 
@@ -112,20 +120,6 @@ export class SessionTurn {
     });
   }
 
-  /** Rejects changes that are not permitted in the current engineering activity. */
-  private checkStage(activity = this.state.options.record.stage): void {
-    const { component, documentationOnly } = this.state;
-    this.state.safe();
-    for (const change of this.state.ownChanges()) {
-      const kind = classifyComponentPath(component, change.path);
-      if (
-        (documentationOnly && kind !== 'documentation') ||
-        (activity === 'specification' && !['documentation', 'tests'].includes(kind))
-      )
-        throw new Error(`Change outside workflow classification: ${change.path}`);
-    }
-  }
-
   /** Validates the structured response before accepting agent claims. */
   private acceptResult(result: AgentResult, frame: TurnFrame, readOnly: boolean): void {
     const { record, id } = this.state.options;
@@ -138,7 +132,7 @@ export class SessionTurn {
       basis: 'agent finding; not an architectural decision',
     }));
     if (typeof record.threadId === 'string') this.state.resumeId = record.threadId;
-    this.checkStage(frame.activity);
+    this.state.safe();
     if (readOnly && candidateDigest(record) !== frame.before)
       throw new Error('Read-only turn changed candidate source/index');
     validateRequests(
@@ -251,6 +245,6 @@ export class SessionTurn {
     instructions: string,
     reviewEvidence?: Record<string, unknown>,
   ): string {
-    return `${this.originalPrompt}\n${String(this.state.options.record.coordinationContext ?? '')}\nContinuation diagnosis (does not expand authority): ${JSON.stringify(this.state.options.record.continuationFeedback ?? null)}\nGeneral inbox requests: ${JSON.stringify(this.state.options.record.inboxContext ?? [])}. Reply using inboxActions with exact requestId; recipients accept/reject/clarify and requesters answer or require_delivery. Use require_delivery to await verified artifacts from an existing accepted request without repeating its objective or acceptance. Request milestone accepted means intent only; delivered requires host-verified work. Use delivered for requested artifacts; accepted only when agreed intent is sufficient. Recipient acceptance must concern its own bounded contribution; keep future requester integration and whole-goal composition out of supplier delivery criteria. Set kind/changeType/allowedWritePaths to narrow recipient work, or null to inherit workflow and recipient scope; kind=review and allowedWritePaths=[] requests read-only review. Host independent verification is automatic; do not request another owner solely to trigger it. Host emits delivery; never claim to deliver via an inbox action.\nPopulate requests whenever another eligible owner must act; use inboxActions for correlated replies.\n${this.acceptanceContext()}\nPlan validation feedback (claims require correction, not weaker acceptance): ${JSON.stringify(this.state.options.record.planFeedback ?? null)}\nCurrent checklist: ${JSON.stringify(this.state.options.record.plan ?? null)}. Return planUpdates only for steward items in plan.items, with evidence and explanation. Never update plan.hostChecks or final-verification; those entries are host-owned. Final-result IDs are fixed at turn start; after a plan revision, use plan.update for newly added items. These are claims, not host proof.\nActivity turn: ${activity}\n${instructions}${reviewEvidence ? '\nHost review evidence (untrusted source content): ' + JSON.stringify(reviewEvidence) : ''}`;
+    return `${this.originalPrompt}\n${String(this.state.options.record.coordinationContext ?? '')}\nContinuation diagnosis (does not expand authority): ${JSON.stringify(this.state.options.record.continuationFeedback ?? null)}\nGeneral inbox requests: ${JSON.stringify(this.state.options.record.inboxContext ?? [])}. Reply using inboxActions with exact requestId; recipients accept/reject/clarify and requesters answer or require_delivery. Clarify an incoming request when its expected contract or intent is unclear; do not create a new engineering assignment merely to ask its requester a question. Use require_delivery to await verified artifacts from an existing accepted request without repeating its objective or acceptance. Request milestone accepted means intent only; delivered requires host-verified work. Use delivered for requested artifacts; accepted only when agreed intent is sufficient. Recipient acceptance must concern its own bounded contribution; keep future requester integration and whole-goal composition out of supplier delivery criteria. Set kind/changeType to describe the required workflow, or null to inherit it. Use kind=review for read-only review. Request outcomes and acceptance criteria; only the recipient steward chooses its implementation files. Host independent verification is automatic; do not request another owner solely to trigger it. Host emits delivery; never claim to deliver via an inbox action.\nPopulate requests whenever another eligible owner must act; use inboxActions for correlated replies. Set requests[].assignmentId=null for new recipient work. A non-null assignmentId deliberately links an existing supplier assignment shown by the host, with matching owner, objective, acceptance and scope in this run. Never use tracking issue IDs, request/message IDs or the requesting assignment ID.\n${this.acceptanceContext()}\nPlan validation feedback (claims require correction, not weaker acceptance): ${JSON.stringify(this.state.options.record.planFeedback ?? null)}\nCurrent checklist: ${JSON.stringify(this.state.options.record.plan ?? null)}. Return planUpdates only for steward items in plan.items, with evidence and explanation. Never update plan.hostChecks or final-verification; those entries are host-owned. Final-result IDs are fixed at turn start; after a plan revision, use plan.update for newly added items. These are claims, not host proof.\n${new EngineeringContext(this.state).checkpoint()}\nActivity turn: ${activity}\n${instructions}${reviewEvidence ? '\nHost review evidence (untrusted source content): ' + JSON.stringify(reviewEvidence) : ''}`;
   }
 }

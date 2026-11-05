@@ -69,6 +69,7 @@ export class OperationEvidence {
 
   /** Captures definition identity and resolved context before starting managed work. */
   private begin(op: Operation, purpose: string): Invocation {
+    if (op.kind === 'upstream') throw new Error('Upstream operations require lifecycle evidence');
     const invocation: Invocation = {
       id: randomUUID(),
       operationId: op.id,

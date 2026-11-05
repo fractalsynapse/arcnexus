@@ -114,10 +114,10 @@ export class ControlledWorkflow {
   /** Submits one atomic source transaction through the production MCP bridge before observing checks. */
   private async flush(turn: WorkflowTurn): Promise<void> {
     if (!this.edits.size) return;
-    await new ControlledPlanning(this.options).sourceEdit(turn, {
-      id: randomUUID(),
-      changes: [...this.edits.values()],
-    });
+    const planning = new ControlledPlanning(this.options);
+    if (this.options.mode === 'proposal-edit' && turn.stage === 'implementation')
+      await planning.sourceProposal(turn);
+    else await planning.sourceEdit(turn, { id: randomUUID(), changes: [...this.edits.values()] });
     this.edits.clear();
     if (['implementation', 'correction'].includes(turn.stage))
       this.candidateMutations(this.options.mode);
@@ -217,7 +217,8 @@ export class ControlledWorkflow {
     this.write('docs/behavior.md', 'Source must become after');
     this.write(
       'tests/regression.cjs',
-      "if(require('fs').readFileSync('source.txt','utf8')!=='after')throw new Error('BOUNDARY_EXPECTED');",
+      "if(require('fs').readFileSync('source.txt','utf8')!=='after')throw new Error('BOUNDARY_EXPECTED');" +
+        (this.options.mode === 'quality-recovery' && turn.count > 2 ? '\n' : ''),
     );
     turn.result.regression = {
       ...(this.options.checkedEdits ? { operationId: 'verify' } : { verificationIndex: 0 }),
@@ -368,7 +369,6 @@ export class ControlledWorkflow {
         milestone: 'delivered',
         kind: 'change',
         changeType: 'behavior',
-        allowedWritePaths: null,
       },
     ];
   }

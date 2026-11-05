@@ -13,13 +13,7 @@ constraints:
 operations:
   guidance-build:
     - agent
-  component-tests:
-    - verify
   migrated-recipe-a7573c70ed1a3dfa:
-    - verify
-  migrated-recipe-43b539fb85a57c26:
-    - verify
-  migrated-recipe-df6d67ddacf5bf0c:
     - verify
 owns:
   - src/library/guidance-validation

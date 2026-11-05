@@ -16,8 +16,8 @@ detailed implementation plan.
 | Phase | Current status and next proof |
 | --- | --- |
 | 1. Single steward | Delivered: managed workspace/setup, SDK execution, verification, evidence and guarded cleanup. See the [implementation sequence](plans/phase-one.md), [live sample](acceptance/live-sample.md) and [self-development evidence](acceptance/self-development.md). |
-| 2. Two stewards | Delivered: bounded requests, verified delivery, partial-change parking and same-thread continuation, proven by a live contract fixture and real guidance/validator self-management. See [workdays](library/workday/workdays.md) and [retained evidence](acceptance/workdays.md). |
-| 3. Minimal UI | Planned: architect selects a component, directs work and reviews evidence through the same runtime. |
+| 2. Managed lifecycle | In qualification. Earlier two-steward delivery is retained in [workday evidence](acceptance/workdays.md). The [managed lifecycle plan](plans/managed-lifecycle.md) tracks real multi-owner execution, simulated publication and promotion. |
+| 3. Service APIs and UI | Begins after the phase-two gates pass. Expose the shared application services through OpenAPI, MCP and React. |
 | 4. Expanded governance | Planned: deepen inherited standards, contract validation and conformance checks based on actual use. |
 | 5. Multi-project operation | Planned: prove one real package relationship before broad composition and release coordination. |
 
@@ -41,14 +41,12 @@ Later architect decisions refine the historical sequence:
   four expands governance; architecture has applied from the first assignment.
 - Self-development started in phase one, including a corrective change. It does
   not wait for the UI or the completion of the first three milestones.
-- The intended model hierarchy is an Astra supervisor directing Luna workers.
-  Astra handles high-level reasoning/review; deterministic runtime code owns
-  dispatch and evidence. Human architectural guidance remains authoritative.
-  Start with two Luna stewards before scaling.
-- Use `gpt-6-luna` for subsequent worker live tests. Luna-sized models are the intended
-  steward baseline; earlier Astra evidence does not establish Luna readiness.
-  The CLI defaults to `gpt-6-luna`; explicit `--model` overrides remain supported. A larger-model fallback requires an explicit decision, not a
-  silent retry. Track verified outcomes, execution count, elapsed time and usage.
+- The platform selects director, reviewer and engineering execution profiles.
+  The director selects starting stewards from the eligible project catalog.
+  Stewards discover additional owners through inbox requests. The host owns
+  dispatch and evidence. Task and workday callers supply no team or model.
+- Track verified outcomes, execution count, elapsed time and usage against the
+  profiles captured for each run.
 
 ## Historical planning transcription
 

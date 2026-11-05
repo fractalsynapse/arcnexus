@@ -1,4 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { SpecificationValidationError } from './specification-error.js';
+import { existsSync, lstatSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { digest } from '../architecture/assignment.js';
 import { classifyComponentPath, covered, type Component } from '../architecture/components.js';
@@ -12,6 +13,7 @@ export interface FrozenTest {
   sha256: string;
 }
 
+/** Requires actual scope-checked specification changes before capturing immutable regression sources. */
 export function specificationFiles(
   record: RecordData,
   component: Component,
@@ -20,21 +22,32 @@ export function specificationFiles(
 ): FrozenTest[] {
   const observed = selected;
   const { documentation, testPaths } = specificationPaths(component, observed);
-  checkScope(
-    record.workspace,
-    observed,
-    documentationOnly ? documentation : [...documentation, ...testPaths],
-  );
+  checkScope(record.workspace, observed, component.allowedWritePaths);
   if (!observed.some((c) => covered(c.path, documentation)))
-    throw new Error('Specification must document changed intent');
+    throw new SpecificationValidationError(
+      'Make an actual owned documentation edit describing the intended behavior before implementation.',
+      'missing-documentation',
+      'Specification must document changed intent',
+    );
   if (documentationOnly) return [];
   const tests = observed.filter((c) => covered(c.path, testPaths));
-  if (!tests.length) throw new Error('Specification must add or update regression tests');
-  return tests.map((c) => {
-    if (c.kind === 'D') throw new Error('Regression checkpoint cannot delete tests');
-    const content = readFileSync(join(record.workspace, c.path));
-    return { path: c.path, content: content.toString('base64'), sha256: digest(content) };
-  });
+  if (!tests.length)
+    throw new SpecificationValidationError(
+      'Add or update an owned regression test before implementation.',
+      'missing-regression-source',
+      'Specification must add or update regression tests',
+    );
+  return tests.map((change) => freezeRegression(record, change));
+}
+
+/** Captures one existing regression source after ownership and specification classification checks. */
+function freezeRegression(
+  record: RecordData,
+  change: ReturnType<typeof changes>[number],
+): FrozenTest {
+  if (change.kind === 'D') throw new Error('Regression checkpoint cannot delete tests');
+  const content = readFileSync(join(record.workspace, change.path));
+  return { path: change.path, content: content.toString('base64'), sha256: digest(content) };
 }
 
 /** Applies the captured classifier to proposed files without inventing documentation or test evidence. */
@@ -48,6 +61,38 @@ function specificationPaths(component: Component, observed: ReturnType<typeof ch
     .filter((c) => classifyComponentPath(component, c.path) === 'tests')
     .map((c) => c.path);
   return { documentation, testPaths };
+}
+
+/** Compares candidate bytes with the accepted checkpoint, never with the earlier Git baseline. */
+export function frozenReview(record: RecordData, tests: FrozenTest[]) {
+  checkFrozenPaths(record.workspace, tests);
+  return {
+    basis: 'frozen-regression-checkpoint',
+    files: tests.map((test) => {
+      if (digest(Buffer.from(test.content, 'base64')) !== test.sha256)
+        throw new Error('Frozen regression digest mismatch');
+      const currentSha256 = frozenCurrentHash(join(record.workspace, test.path));
+      return {
+        path: test.path,
+        frozenSha256: test.sha256,
+        currentSha256,
+        status:
+          currentSha256 === null
+            ? 'missing'
+            : currentSha256 === test.sha256
+              ? 'preserved'
+              : 'changed',
+      };
+    }),
+  };
+}
+
+/** Rejects shared or non-regular candidate files instead of attributing foreign bytes to a checkpoint. */
+function frozenCurrentHash(path: string): string | null {
+  if (!existsSync(path)) return null;
+  const stat = lstatSync(path);
+  if (!stat.isFile() || stat.nlink !== 1) throw new Error('Unsafe frozen regression path');
+  return digest(readFileSync(path));
 }
 
 export async function withFrozenTests(

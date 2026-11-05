@@ -6,6 +6,20 @@ requests survive process reopening. Yielding a dependency does not advance the
 stage or reset evidence. The requesting stage continues after verified delivery.
 Host checks finish before a stage checkpoint is declared safe for pause.
 
+Before freezing behavioral regression sources, the host runs captured mandatory
+verification operations classified as `lint`. A completed quality failure returns
+to specification correction while those sources remain editable. Uncertain operation
+completion and cancellation remain unsafe; agent-only formatters do not become
+mandatory checks. Final verification still reruns the required checks against the
+assembled candidate, and implementation cannot rewrite frozen regression bytes.
+
+Checked edits may refer to a successful operation's pinned `editProposal` using
+`proposalInvocationId`. The host resolves complete immutable bytes for the active
+assignment before applying ordinary transaction checks; diagnostic truncation cannot
+truncate an edit. Proposal references survive checkpoints with their operation and
+edit journals. A changed current source hash rejects a stale proposal, and references
+never bypass frozen-test or read-only-stage restrictions.
+
 A retained activation must match captured authority and candidate identity before
 continuing. Model claims never bypass specification or final verification. The final retirement slice routes the standalone session API through this same
 durable stage dispatcher, eliminating its separate complete-workflow loop. A session
@@ -110,3 +124,11 @@ operations do not become verification authority. A later valid selection must
 still produce observed expected-red evidence before implementation. Repeated
 invalid selections share a progress diagnosis; changing an invalid ID alone is
 not progress. Invalid captured configuration and uncertain operations remain fatal.
+
+Research/review assignments investigating retained work can inspect the host's
+`assignment.evidence` manifest and paged artifacts. This capability supplies
+current-run checkpoint/edit/operation observations and the director's substantive
+handoff without exposing private evidence directories. It does not change the
+continuation decision: only validated checkpoints resume, and uncertain effects
+still require reconciliation rather than replay. See the
+[report contract](../report/report.md#investigation-evidence).

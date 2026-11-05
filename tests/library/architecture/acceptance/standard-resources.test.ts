@@ -109,6 +109,9 @@ class StandardResourceScenarios {
     const definition = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
     f.put(path, { ...definition, operationIds: ['undeclared'] });
     f.commit();
+    const validation = f.run('validate');
+    assert.equal(validation.status, 2);
+    assert.match(validation.stderr, /Standard check outside owner's operations/);
     assert.throws(
       () => service.list({ ...target, base: f.git('rev-parse', 'HEAD') }),
       /outside owner's operations/,

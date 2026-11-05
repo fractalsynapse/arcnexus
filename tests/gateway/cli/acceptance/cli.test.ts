@@ -1,6 +1,7 @@
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { test } from 'node:test';
 
@@ -16,6 +17,18 @@ class CliTests {
     assert.equal(version.status, 0, version.stderr);
     assert.match(version.stdout.trim(), /^\d+\.\d+\.\d+$/);
     assert.equal(this.run('unknown-command').status, 2);
+  }
+
+  /** Retired campaigns fail before opening missing inputs and are absent from the production build. */
+  retiredCampaign(): void {
+    const result = this.run('experiment', 'run', '/missing/campaign.json');
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /retired.*test inspect\/run/);
+    assert.match(result.stderr, /task run.*--simulate/);
+    assert.doesNotMatch(result.stderr, /ENOENT/);
+    assert.doesNotMatch(this.run('--help').stdout, /experiment run/);
+    assert.equal(existsSync(resolve('dist/library/experiments/prompt-campaign.js')), false);
+    assert.equal(existsSync(resolve('dist/library/experiments/experiments.js')), false);
   }
 
   /** Verifies that the CLI gateway owns its test directory without project-wide write access. */
@@ -47,6 +60,8 @@ class CliTests {
 }
 
 const suite = new CliTests();
+
+test('scripted campaign execution is retired before input access', () => suite.retiredCampaign());
 
 test('generated CLI executable preserves help, version and invalid-command behavior', () =>
   suite.executableContract());

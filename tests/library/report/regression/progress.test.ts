@@ -1,3 +1,4 @@
+import { WorkspaceCliFixture } from '../../testing/support/workspace-cli-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -28,7 +29,7 @@ class ProgressProjectionTests {
         },
       },
     });
-    const result = spawnSync(process.execPath, [cli, 'status', record.id, '--json'], {
+    const result = spawnSync(process.execPath, [cli, 'workspace', 'get', record.id, '--json'], {
       encoding: 'utf8',
       env: f.env,
       timeout: 30 * 60 * 1000,
@@ -43,7 +44,7 @@ class ProgressProjectionTests {
     const record = this.preparingRecord(f);
     observe(f.state, record, 'operation.started', { id: 'report-tests' });
     observe(f.state, record, 'operation.finished', { id: 'report-tests', result: { exitCode: 0 } });
-    const result = spawnSync(process.execPath, [cli, 'status', record.id, '--json'], {
+    const result = spawnSync(process.execPath, [cli, 'workspace', 'get', record.id, '--json'], {
       encoding: 'utf8',
       env: f.env,
       timeout: 30 * 60 * 1000,
@@ -54,15 +55,7 @@ class ProgressProjectionTests {
 
   /** Prepares a real workspace, then records an unfinished initialization for viewer assertions. */
   private preparingRecord(f: ReturnType<typeof workflowFixture>): any {
-    const prepared = spawnSync(
-      process.execPath,
-      [cli, 'prepare', '--project', f.repo, '--bindings', join(f.root, 'minimal-bindings.json')],
-      {
-        encoding: 'utf8',
-        env: f.env,
-        timeout: 30 * 60 * 1000,
-      },
-    );
+    const prepared = new WorkspaceCliFixture(f, join(f.root, 'minimal-bindings.json')).prepare();
     assert.equal(prepared.status, 0, prepared.stderr);
     const record = JSON.parse(prepared.stdout);
     record.status = 'initializing';
@@ -78,7 +71,7 @@ class ProgressProjectionTests {
     const result = f.run();
     assert.equal(result.status, 0, result.stderr);
     const record = JSON.parse(result.stdout);
-    const status = spawnSync(process.execPath, [cli, 'status', record.id, '--json'], {
+    const status = spawnSync(process.execPath, [cli, 'workspace', 'get', record.id, '--json'], {
       encoding: 'utf8',
       env: f.env,
       timeout: 30 * 60 * 1000,

@@ -5,6 +5,9 @@ description: Use before claiming a change works, a check passes, acceptance is m
 
 # Evidence before claims
 
+Apply this skill when making a verification claim, not as a mandatory pause after
+every edit. Follow the batched development cadence in [AGENTS.md](../../../AGENTS.md).
+
 Identify what evidence proves the exact claim. Run the relevant check at the current
 revision, inspect its output and exit status, and report the result and limitations.
 Agent-reported success is not independent verification: inspect the diff and execute

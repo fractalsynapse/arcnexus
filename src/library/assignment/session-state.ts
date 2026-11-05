@@ -29,6 +29,8 @@ import { candidateDigest, type FrozenTest } from './checkpoints.js';
 import type { StewardCheckpoint } from './steward.js';
 
 export interface SessionOptions {
+  evidence?: Pick<import('../operations/operations.js').OperationBridge, 'tools' | 'call'>;
+  collaboration?: import('../operations/upstream-bridge.js').UpstreamBridge;
   root: string;
   record: RecordData;
   id: string;
@@ -76,9 +78,16 @@ export class SessionState {
     this.resolved = resolved;
     this.component = { ...resolved.context.at(-1)!, verification: resolved.verification };
     this.validateAuthority();
+    if (
+      Object.hasOwn(resolved.assignment, 'allowedWritePaths') ||
+      Object.hasOwn(resolved, 'allowedWritePaths')
+    )
+      throw new InputError(
+        'Legacy assignment authority requires its captured supervisor; start new work for ownership-only execution',
+      );
     this.assignment = resolved.assignment;
     this.documentationOnly = this.assignment.changeType === 'documentation';
-    this.scope = this.assignmentScope();
+    this.scope = this.assignment.kind === 'change' ? this.component.allowedWritePaths : [];
     this.validate();
     this.dir = join(root, 'runs', record.id);
     this.hostChecks = materializeChecks(resolved, join(this.dir, 'acceptance'));
@@ -112,11 +121,6 @@ export class SessionState {
     const execution = new ExecutionContext();
     execution.validateProfile(this.resolved.executionProfile);
     execution.validateProfile(this.resolved.initialization.profile);
-  }
-
-  /** Intersects assignment authority with whether the workflow permits maintained-source changes. */
-  private assignmentScope(): string[] {
-    return this.assignment.kind === 'change' ? this.resolved.allowedWritePaths : [];
   }
 
   /** Rejects target configuration that could override the stable supervising harness. */
@@ -183,8 +187,14 @@ export class SessionState {
     record.stage = stage;
     this.journal(stage, 'started', commands);
     try {
-      await new OperationExecution(root, record, signal).checkpoint(commands as Operation[], stage);
-      this.journal(stage, 'completed', { checks: commands.length });
+      const results = await new OperationExecution(root, record, signal).checkpoint(
+        commands as Operation[],
+        stage,
+      );
+      this.journal(stage, 'completed', {
+        declaredChecks: commands.length,
+        completedCommands: results.length,
+      });
     } catch (error) {
       this.journal(stage, 'failed', String(error));
       throw error;

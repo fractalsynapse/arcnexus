@@ -19,7 +19,7 @@ export class ComponentOperationPlans {
       if (c.schemaVersion < 5 || ['platform', 'package'].includes(c.type)) continue;
       c.operationPlan = {};
       const context = this.context(c);
-      for (const usage of ['preflight', 'setup', 'refresh', 'verify', 'agent'])
+      for (const usage of ['preflight', 'setup', 'refresh', 'verify', 'delivery', 'agent'])
         c.operationPlan[usage] = this.plan(c, context, usage);
       c.verification = c.operationPlan.verify!;
       this.services(c);
@@ -63,22 +63,52 @@ export class ComponentOperationPlans {
     const ids = Object.entries(c.operations ?? {})
       .filter(([, usages]) => usages.includes(usage))
       .map(([id]) => id);
+    const profile = usage === 'verify' ? this.profileCheck(c) : undefined;
+    const implicit = profile && !ids.includes(profile.run) ? profile : undefined;
+    if (implicit) ids.push(implicit.run);
     return new OperationOrder(this.catalog.operations).resolve(ids).map((op) => {
-      if (op.schemaVersion !== 4)
-        throw new InputError(`Migrate operation ${op.id} to schemaVersion 4`);
-      if (op.repository !== c.repository)
-        throw new InputError(`Operation repository mismatch: ${op.id}`);
-      if (usage !== 'agent' && op.kind === 'service')
-        throw new InputError(`Required lifecycle operations must be finite: ${op.id}`);
-      if (
-        !op.activities.every((activity) =>
-          this.catalog.roles[c.role]!.activities.includes(activity),
-        )
-      )
-        throw new InputError(`Operation activity outside role: ${op.id}`);
-      if (!this.catalog.profiles[c.executionProfile]!.operationCategories?.includes(op.category))
-        throw new InputError(`Operation category not permitted: ${op.id}`);
-      return new OperationArguments().capture(op, context, usage === 'agent');
+      this.validate(c, op, usage);
+      const profileVerification = implicit?.run === op.id ? implicit.id : undefined;
+      return {
+        ...new OperationArguments().capture(
+          op,
+          context,
+          usage === 'agent' || !!profileVerification,
+        ),
+        ...(profileVerification ? { profileVerification } : {}),
+      };
     });
+  }
+
+  /** Keeps legacy discovery readable while requiring a shared runner before assignment execution. */
+  profileCheck(c: Component, executable = false): { id: string; run: string } | undefined {
+    if (c.schemaVersion < 6 || !c.testProfile) return undefined;
+    const profile = this.catalog.configurationSources.find(
+      (source) =>
+        source.path.startsWith('architecture/test-profiles/') &&
+        (source.value as { id?: string }).id === c.testProfile,
+    )?.value as { schemaVersion: number; id: string; run?: string } | undefined;
+    if (profile?.schemaVersion === 1 && !executable) return undefined;
+    if (profile?.schemaVersion === 1)
+      throw new InputError('Migrate test profile to schemaVersion 2 with arcnexus config migrate');
+    if (profile?.schemaVersion !== 2 || !profile.run)
+      throw new InputError(`Missing executable test profile: ${c.testProfile}`);
+    return { id: profile.id, run: profile.run };
+  }
+
+  /** Keeps implicit profile checks subject to the same role, repository and finite-operation authority. */
+  private validate(c: Component, op: Operation, usage: string): void {
+    if (op.schemaVersion !== 4)
+      throw new InputError(`Migrate operation ${op.id} to schemaVersion 4`);
+    if (op.repository !== c.repository)
+      throw new InputError(`Operation repository mismatch: ${op.id}`);
+    if (usage !== 'agent' && ['service', 'upstream'].includes(op.kind))
+      throw new InputError(`Required lifecycle operations must be finite: ${op.id}`);
+    if (
+      !op.activities.every((activity) => this.catalog.roles[c.role]!.activities.includes(activity))
+    )
+      throw new InputError(`Operation activity outside role: ${op.id}`);
+    if (!this.catalog.profiles[c.executionProfile]!.operationCategories?.includes(op.category))
+      throw new InputError(`Operation category not permitted: ${op.id}`);
   }
 }

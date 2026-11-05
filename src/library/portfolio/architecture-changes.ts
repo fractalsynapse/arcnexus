@@ -33,13 +33,13 @@ export class ArchitectureChanges {
   /** Validates a complete immutable proposal before recording any visible selection or branch change. */
   apply(
     base: string,
-    change: { path: string; text: string },
+    change: { path: string; text: string | null; create?: boolean },
     componentId: string,
     packageId?: string,
   ): void {
     const repository = this.store.repositories().find((entry) => entry.id === this.repositoryId)!;
     const next = this.commits.create(base, change);
-    this.validate(next, componentId, packageId);
+    this.validate(next, change.text === null ? undefined : componentId, packageId);
     const ref = repository.authority?.ref ?? 'refs/heads/arcnexus/configuration/' + repository.id;
     const previousRef = this.commits.ref(ref);
     if (previousRef !== (repository.authority?.base ?? ''))
@@ -73,6 +73,8 @@ export class ArchitectureChanges {
           (component.type === 'package' && component.parentId !== registration.id.split('/')[0])
         )
           throw new Error('Update changes registered identity or platform; use explicit migration');
+        if (registration.kind === 'platform' && component.schemaVersion !== 6)
+          throw new InputError('Migrate platform configuration before editing standards');
       }
       if (
         componentId &&

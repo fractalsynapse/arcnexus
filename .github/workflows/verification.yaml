@@ -24,25 +24,42 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: "22"
+          node-version: '22'
           cache: npm
       - name: Install product dependencies
         run: npm ci
       - name: Install confinement runtime
         run: |
-          sudo npm install --global --prefix /usr/local --ignore-scripts @openai/codex@0.163.0-alpha.10.2
+          sudo npm install --global --prefix /usr/local --ignore-scripts @openai/codex@0.163.0-alpha.10.2 npm@10.9.9
           sudo apt-get update
           sudo apt-get install -y bubblewrap apparmor-profiles apparmor-utils
           sudo install -m 0644 /usr/share/apparmor/extra-profiles/bwrap-userns-restrict /etc/apparmor.d/bwrap-userns-restrict
           sudo apparmor_parser -r /etc/apparmor.d/bwrap-userns-restrict
       - name: Bind verified machine executables
         run: |
+          tool_bin=/usr/local/lib/arcnexus-ci/bin
+          sudo install -d "$tool_bin"
+          printf '%s\n' '#!/bin/sh' 'exec /usr/local/bin/npm "$@"' | sudo tee "$tool_bin/npm" >/dev/null
+          sudo chmod 0755 "$tool_bin/npm"
           node --input-type=module <<'NODE'
-          import { mkdirSync, writeFileSync } from 'node:fs';
+          import { appendFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          import { join } from 'node:path';
+          const root = '/usr/local/lib/node_modules/@openai';
+          const binaries = readdirSync(root, { recursive: true, withFileTypes: true })
+            .filter((entry) => entry.isFile() && entry.name === 'codex')
+            .map((entry) => join(entry.parentPath, entry.name))
+            .filter((path) => readFileSync(path).subarray(0, 4).equals(Buffer.from([127, 69, 76, 70])));
+          if (binaries.length !== 1) throw new Error('Expected one installed native Codex executable');
+          const codex = binaries[0];
+          const npm = '/usr/local/lib/arcnexus-ci/bin/npm';
+          console.log(execFileSync(npm, ['--version'], { encoding: 'utf8' }));
+          console.log(execFileSync(codex, ['--version'], { encoding: 'utf8' }));
+          appendFileSync(process.env.GITHUB_ENV, `ARCNEXUS_TEST_CODEX=${codex}\n`);
           mkdirSync('.git/arcnexus', { recursive: true });
           writeFileSync('.git/arcnexus/bindings.yaml', JSON.stringify({
             schemaVersion: 1,
-            tools: { node: process.execPath, codex: '/usr/local/bin/codex' },
+            tools: { npm, node: process.execPath, codex },
             repositories: {},
           }));
           NODE
@@ -61,7 +78,7 @@ jobs:
         run: |
           sudo systemd-run --uid="$(id -u)" --gid="$(id -g)" \
             --property=Delegate=yes --working-directory="$PWD" \
-            --setenv="PATH=$PATH" --setenv=ARCNEXUS_TEST_CODEX=/usr/local/bin/codex \
+            --setenv="PATH=$PATH" --setenv="ARCNEXUS_TEST_CODEX=$ARCNEXUS_TEST_CODEX" \
             --wait --pipe --collect node scripts/release/native-host-tests.mjs
       - name: Retain failed operation diagnostics
         if: failure()

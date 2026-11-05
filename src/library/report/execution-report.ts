@@ -20,6 +20,9 @@ export class ExecutionReports {
       owner: a.owner,
       objective: a.objective,
       status: a.status,
+      replaces: a.data.replaces,
+      replacedBy: a.data.replacedBy,
+      replacementReason: a.data.replacementReason,
       dependencies: a.dependencies,
       evidence: a.evidence,
       reason: a.data.reason,
@@ -90,6 +93,7 @@ export class ExecutionReports {
     return {
       id: run.id,
       mode: run.mode,
+      environment: run.environment,
       objective: run.objective,
       status: run.status,
       createdAt: run.createdAt,

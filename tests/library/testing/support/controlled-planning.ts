@@ -33,6 +33,28 @@ export class ControlledPlanning {
       throw new Error(JSON.stringify(reply));
   }
 
+  /** Consumes a large operation proposal by retained identity through the real MCP edit contract. */
+  async sourceProposal(turn: WorkflowTurn): Promise<void> {
+    const reply = await this.call(turn, 'operations.run', { id: 'edit-proposal' });
+    if (reply.isError) throw new Error(JSON.stringify(reply));
+    const result = JSON.parse(reply.content[0].text);
+    if (!result.outputTruncated || !result.editProposal?.invocationId)
+      throw new Error(
+        'Expected retained oversized edit proposal: ' +
+          JSON.stringify({
+            status: result.status,
+            exitCode: result.exitCode,
+            outputTruncated: result.outputTruncated,
+            editProposal: result.editProposal,
+            outputStart: result.output?.slice(0, 1200),
+            outputEnd: result.output?.slice(-400),
+          }),
+      );
+    const request = { proposalInvocationId: result.editProposal.invocationId };
+    await this.sourceEdit(turn, request);
+    await this.sourceEdit(turn, request);
+  }
+
   /** Rejects response schemas incompatible with the controlled strict-output contract. */
   private strictSchema(schema: any): void {
     if (!schema || typeof schema !== 'object') return;

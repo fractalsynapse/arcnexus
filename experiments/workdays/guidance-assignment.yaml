@@ -30,7 +30,4 @@ acceptanceCriteria:
     docs/library/agent-guidance/guidance-maintenance.md
   - Maintenance documentation explains optional references validation, tracked
     readable files, forbidden paths, and caller-owned integration
-allowedWritePaths:
-  - .agents/skills/documentation-writer/SKILL.md
-  - docs/library/agent-guidance/guidance-maintenance.md
 hostChecks: []

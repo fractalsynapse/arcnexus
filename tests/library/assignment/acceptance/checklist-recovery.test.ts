@@ -12,6 +12,31 @@ import { minimalWorkflowFixture as workflowFixture } from '../../testing/support
 
 /** Reproduces real specification edits followed by an invalid completed-turn checklist update. */
 class ChecklistRecoveryScenarios {
+  /** A real supervised quality failure retains editable specification work before freezing tests. */
+  async quality(t: TestContext): Promise<void> {
+    const { record, step } = this.fixture(t, 'quality-recovery');
+    await step();
+    const thread = record.threadId;
+    await step();
+    assert.equal(record.safeCheckpoint, true);
+    assert.equal(record.nextStage, 'specification');
+    assert.equal(record.threadId, thread);
+    assert.equal(record.frozenTests, undefined);
+    assert.equal(record.specificationFinished, false);
+    assert.match(String(record.specificationFeedback), /FORMAT_REQUIRED/);
+    assert.ok(record.commands.some((command) => command.stage === 'specification-quality'));
+    assert.equal(
+      record.commands.some((command) => command.stage === 'red-test'),
+      false,
+    );
+    assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'before');
+    for (let stage = 0; stage < 3; stage++) await step();
+    assert.equal(record.status, 'completed');
+    assert.equal(record.threadId, thread);
+    assert.equal(record.specificationFeedback, undefined);
+    assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'after');
+  }
+
   /** Preserves the accepted plan and partial specification until a valid correction reaches verification. */
   async correct(t: TestContext): Promise<void> {
     const { f, record, step } = this.fixture(t, 'checklist-recovery');
@@ -156,6 +181,18 @@ class ChecklistRecoveryScenarios {
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'before');
   }
 
+  /** A pending final item keeps the completed review correctable at the same checkpoint. */
+  async finalClaim(t: TestContext): Promise<void> {
+    const { record, step } = this.fixture(t, 'final-checklist');
+    for (let stage = 0; stage < 4; stage++) await step();
+    assert.equal(record.nextStage, 'review');
+    assert.equal(record.safeCheckpoint, true);
+    assert.match(String(record.planFeedback), /incomplete or blocked: work/);
+    await step();
+    assert.equal(record.nextStage, 'finished');
+    assert.equal(record.status, 'completed');
+  }
+
   /** Captures an unlimited engineering profile and uses the production resumable session after every turn. */
   private fixture(t: TestContext, mode: string) {
     const f = workflowFixture(t, mode);
@@ -183,6 +220,7 @@ class ChecklistRecoveryScenarios {
 
   /** Captures an unlimited profile with the deterministic planning-aware harness. */
   private configure(f: ReturnType<typeof workflowFixture>, mode: string): void {
+    if (mode === 'quality-recovery') this.qualityPolicy(f);
     if (mode.startsWith('restricted-')) {
       const path = join(f.repo, 'architecture/roles/engineer.yaml');
       const role = JSON.parse(readFileSync(path, 'utf8'));
@@ -191,9 +229,35 @@ class ChecklistRecoveryScenarios {
       f.commit();
     }
   }
+
+  /** Declares a finite mandatory check that rejects the controlled specification, not its baseline. */
+  private qualityPolicy(f: ReturnType<typeof workflowFixture>): void {
+    const profilePath = join(f.repo, 'architecture/execution-profiles/luna.yaml');
+    const profile = JSON.parse(readFileSync(profilePath, 'utf8'));
+    profile.operationCategories.push('lint');
+    writeFileSync(profilePath, JSON.stringify(profile));
+    const path = join(f.repo, 'architecture/operations/verify.yaml');
+    const operation = JSON.parse(readFileSync(path, 'utf8'));
+    operation.id = 'spec-quality';
+    operation.category = 'lint';
+    operation.args = [
+      '-e',
+      "const fs=require('fs');const p='tests/regression.cjs';if(fs.existsSync(p)&&!fs.readFileSync(p,'utf8').endsWith('\\n'))throw Error('FORMAT_REQUIRED')",
+    ];
+    writeFileSync(
+      join(f.repo, 'architecture/operations/spec-quality.yaml'),
+      JSON.stringify(operation),
+    );
+    f.component.operations = { 'spec-quality': ['verify'] };
+    writeFileSync(join(f.repo, 'architecture/components/sample.json'), JSON.stringify(f.component));
+    f.commit();
+  }
 }
 
 const scenarios = new ChecklistRecoveryScenarios();
+
+test('mandatory source quality fails while specification edits remain correctable', (t) =>
+  scenarios.quality(t));
 
 test('completed-turn checklist correction preserves real specification and regression work', (t) =>
   scenarios.correct(t));
@@ -224,6 +288,9 @@ test('invalid regression selection preserves the specification for correction', 
 
 test('changing invalid regression identities does not bypass progress detection', (t) =>
   scenarios.selectionLoop(t));
+
+test('final review can supply missing checklist evidence at its safe checkpoint', (t) =>
+  scenarios.finalClaim(t));
 
 registerSuite({
   component: 'assignment',

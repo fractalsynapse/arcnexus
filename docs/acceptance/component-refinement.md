@@ -55,7 +55,7 @@ separate from the host-owned final verification entry. No service was requested.
 All paths below are relative to
 `$XDG_STATE_HOME/arcnexus/qualification/component-refinement-73`, normally
 `~/.local/state/arcnexus/qualification/component-refinement-73`.
-The [evidence index](component-refinement.json) records revisions, usage, hashes,
+The archived evidence index `evidence/repository-archives/78000e2/docs/acceptance/component-refinement.json` in application state records revisions, usage, hashes,
 operations, checks, authority and report references.
 
 | State directory | Run | Result |

@@ -19,20 +19,29 @@ class TaskReferenceScenario {
       questions: ['Which evidence format: JSON or Markdown?'],
     });
     host.store.updateAssignment(assignment.id, 'waiting');
-    const next = host.submit(`Use JSON for retained task ${previous.id}; finish the goal`);
+    const next = host.submit(
+      `READ_DIRECTION_EVIDENCE: Use JSON for retained task ${previous.id}; finish the goal`,
+    );
     await host.tick();
-    const calls = readFileSync(f.calls, 'utf8')
-      .trim()
-      .split('\n')
-      .map((line) => JSON.parse(line));
-    const prompt = calls.find((call) => call.prompt.startsWith('ArcNexus task direction.')).prompt;
-    assert.match(prompt, /Which evidence format: JSON or Markdown/);
-    assert.match(prompt, /Unfinished retained assignment/);
-    assert.match(prompt, /Retained goal requiring an answer/);
+    this.evidence(f.calls);
     assert.notEqual(next.id, previous.id);
     assert.equal(host.store.run(previous.id).status, 'needs_input');
     assert.equal(host.store.assignment(assignment.id).status, 'waiting');
     assert.equal(host.store.assignments(next.id).length, 1);
+  }
+
+  /** Requires exact prior context from the real paged capability rather than an oversized initial prompt. */
+  private evidence(path: string): void {
+    const calls = readFileSync(path, 'utf8')
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line));
+    const prompt = calls.find((call) => call.prompt.startsWith('ArcNexus task direction.')).prompt;
+    const trace = JSON.parse(readFileSync(path + '.evidence', 'utf8').trim());
+    assert.doesNotMatch(prompt, /Which evidence format: JSON or Markdown/);
+    assert.match(trace.artifacts.feedback, /Which evidence format: JSON or Markdown/);
+    assert.match(trace.artifacts.feedback, /Unfinished retained assignment/);
+    assert.match(trace.artifacts.feedback, /Retained goal requiring an answer/);
   }
 }
 

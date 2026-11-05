@@ -11,14 +11,8 @@ constraints:
   - Use the captured execution record without inspecting mutable target files
   - Keep the supervising runner unchanged
 operations:
-  component-tests:
-    - verify
   report-format:
     - agent
-  migrated-recipe-43b539fb85a57c26:
-    - verify
-  migrated-recipe-df6d67ddacf5bf0c:
-    - verify
 owns:
   - src/library/report
   - tests/library/report

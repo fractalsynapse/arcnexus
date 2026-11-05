@@ -1,10 +1,16 @@
+import { assignmentIntent } from './assignment-intent.js';
+import type { Assignment } from '../architecture/assignment.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ExecutionContext, type ProjectExecution } from '../architecture/execution-context.js';
 import { validateContinuation } from '../assignment/steward.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
-import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/execution-types.js';
-import type { DirectorResult } from '../task-intake/direction.js';
+import {
+  canReopenAssignment,
+  type ExecutionRun,
+  type ExecutionAssignment,
+} from '../coordination-store/execution-types.js';
+import { StewardshipRefusal, type DirectorResult } from '../task-intake/direction.js';
 import { save, type RecordData } from '../workspace/state.js';
 import { ProgressObserver } from '../report/progress.js';
 import { materialCandidate } from '../change-inspection/changes.js';
@@ -19,7 +25,7 @@ export class AssignmentDispatch {
   ) {}
 
   /** Validates every scope and checkpoint before any proposal can become runnable. */
-  apply(run: ExecutionRun, result: DirectorResult): void {
+  apply(run: ExecutionRun, result: DirectorResult, checkpoint: Record<string, unknown> = {}): void {
     for (const proposal of result.assignments) {
       const { ownerId, ...assignment } = proposal;
       new ExecutionContext().assignment(this.context, ownerId, {
@@ -30,16 +36,45 @@ export class AssignmentDispatch {
       });
     }
     const continuations = result.continuations.filter((item) => this.eligible(run, item));
-    this.store.continueAssignments(run.id, continuations);
-    for (const proposal of result.assignments) {
-      const assignment = this.store.enqueue(
-        run.id,
-        proposal.ownerId,
-        proposal.objective,
-        proposal.acceptanceCriteria,
-      );
-      this.store.updateAssignment(assignment.id, 'ready', { proposal });
-    }
+    const directionContext = {
+      summary: result.summary,
+      feedback: this.store.run(run.id).data.redirection,
+      prompt: run.data.prompt,
+    };
+    const proposals = result.assignments.map((proposal) => ({
+      owner: proposal.ownerId,
+      objective: proposal.objective,
+      acceptance: proposal.acceptanceCriteria,
+      data: { proposal, directionContext },
+    }));
+    this.store.admitDirection(run.id, proposals, continuations, checkpoint);
+  }
+
+  /** Retains each owner's considered inputs and architectural questions independently. */
+  stewardshipCheckpoint(
+    run: ExecutionRun,
+    owner: string,
+    fingerprint: string,
+    result: import('../architecture/initialization.js').InitializationResult | StewardshipRefusal,
+  ) {
+    const review =
+      result instanceof StewardshipRefusal
+        ? { status: result.status, error: result.message, recordId: result.recordId }
+        : {
+            status: result.status,
+            questions: result.questions,
+            summary: result.summary,
+            architectureProposal: result.architectureProposal,
+          };
+    return {
+      seen: { ...(run.data.seen as Record<string, string>), [owner]: fingerprint },
+      lastSteward: owner,
+      lastDispatch: 'stewardship',
+      stewardshipReviews: {
+        ...((run.data.stewardshipReviews ?? {}) as object),
+        [owner]: { fingerprint, ...review },
+      },
+    };
   }
 
   /** Isolates an exhausted diagnosis loop to its workday assignment while preserving task goal failure. */
@@ -63,9 +98,27 @@ export class AssignmentDispatch {
     const assignment = this.store.assignment(continuation.assignmentId);
     if (assignment.runId !== run.id || assignment.owner !== continuation.ownerId)
       throw new Error('Continuation must name an existing owner assignment in this run');
-    if (!['blocked', 'failed', 'rejected'].includes(assignment.status))
+    if (!canReopenAssignment(assignment.status))
       throw new Error('Continuation cannot reopen active or completed work');
-    if (!assignment.data.recordId) return;
+    if (assignment.data.replacedBy) {
+      if (
+        continuation.replacementChangeType === assignment.data.replacementWorkflow &&
+        continuation.reason === assignment.data.replacementReason
+      )
+        return;
+      throw new Error('Assignment already replaced; inspect its current successor');
+    }
+    this.replacementAuthority(assignment, continuation);
+    this.checkpoint(assignment);
+  }
+
+  /** Verifies the retained workspace and refuses to replay an operation whose outcome is unknown. */
+  private checkpoint(assignment: ExecutionAssignment): void {
+    if (!assignment.data.recordId) {
+      if (assignment.data.reconciliation)
+        throw new Error('Checkpoint has uncertain workspace preparation');
+      return;
+    }
     const record = JSON.parse(
       readFileSync(
         join(this.root, 'runs', String(assignment.data.recordId), 'report.json'),
@@ -77,6 +130,21 @@ export class AssignmentDispatch {
       throw new Error('Continuation has uncertain workspace preparation');
     validateContinuation(this.root, record);
     this.diagnose(record, assignment);
+  }
+
+  /** Rechecks a proposed fresh workflow against the original owner and all original criteria. */
+  private replacementAuthority(
+    assignment: ExecutionAssignment,
+    continuation: DirectorResult['continuations'][number],
+  ): void {
+    if (continuation.replacementChangeType) {
+      const intent = assignmentIntent(assignment.objective, assignment.acceptance, {
+        ...(assignment.data.proposal as Partial<Assignment>),
+        changeType: continuation.replacementChangeType,
+      });
+      if (intent.kind !== 'change') throw new Error('Only change assignments can be replaced');
+      new ExecutionContext().assignment(this.context, assignment.owner, intent);
+    }
   }
 
   /** Counts equivalent observed blockers across continuations without introducing a retry quota. */

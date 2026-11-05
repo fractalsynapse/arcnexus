@@ -1,3 +1,4 @@
+import { MaterializationBindings } from './materialization-bindings.js';
 import { accessSync, constants, existsSync, realpathSync, statSync } from 'node:fs';
 import { delimiter, dirname, isAbsolute, join } from 'node:path';
 import type { RecordData } from '../workspace/state.js';
@@ -6,7 +7,17 @@ import { ConfigurationReader } from './configuration.js';
 import { validateSchema } from './schema.js';
 import { git } from '../operations/process.js';
 
+/** Host-captured repository materialization; never accepted from an authored bindings file. */
+export interface RepositoryMaterialization {
+  source: string;
+  base: string;
+  commonDir: string;
+  repository?: string;
+  origin: string;
+}
+
 export interface Bindings {
+  materializations?: Record<string, RepositoryMaterialization>;
   taskAcceptance?: Record<string, import('./assignment.js').HostCheck[]>;
   taskRefresh?: Record<string, Command[]>;
   schemaVersion: 1;
@@ -21,7 +32,17 @@ export function loadProjectBindings(project: string): Bindings {
     git(project, 'rev-parse', '--path-format=absolute', '--git-common-dir').trim(),
   );
   const path = join(common, 'arcnexus', 'bindings.yaml');
-  return loadBindings(existsSync(path) ? path : undefined);
+  const bindings = loadBindings(existsSync(path) ? path : undefined);
+  const source = git(project, 'rev-parse', '--show-toplevel').trim();
+  const materializations = new MaterializationBindings().read(source);
+  for (const [id, entry] of Object.entries(materializations))
+    assertRepositoryBinding(source, id, entry.repository, { ...bindings, materializations });
+  return Object.keys(materializations).length ? { ...bindings, materializations } : bindings;
+}
+
+/** Records host-captured worktree discovery and returns its retained evidence digest. */
+export function captureWorktreeBindings(workspace: string, bindings: Bindings) {
+  return new MaterializationBindings().capture(workspace, bindings);
 }
 
 export function loadBindings(path?: string): Bindings {
@@ -73,4 +94,32 @@ export function targetCommand(record: RecordData, command: Command): Command {
 export function toolDirectories(record: RecordData): string[] {
   const bindings = record.bindings as Bindings | undefined;
   return [...new Set(Object.values(bindings?.tools ?? {}).map(dirname))];
+}
+
+/** Verifies the exact host materialization or the ordinary declared upstream identity. */
+export function assertRepositoryBinding(
+  source: string,
+  id: string,
+  repository: string | undefined,
+  bindings: Bindings,
+): void {
+  const materialized = bindings.materializations?.[id];
+  if (!materialized) {
+    if (repository && git(source, 'remote', 'get-url', 'origin').trim() !== repository)
+      throw new InputError(`Repository origin identity mismatch: ${id}`);
+    return;
+  }
+  const common = realpathSync(
+    git(source, 'rev-parse', '--path-format=absolute', '--git-common-dir').trim(),
+  );
+  if (
+    realpathSync(source) !== materialized.source ||
+    common !== materialized.commonDir ||
+    repository !== materialized.repository ||
+    git(source, 'rev-parse', 'HEAD').trim() !== materialized.base ||
+    git(source, 'remote').trim() !== 'origin' ||
+    git(source, 'remote', 'get-url', 'origin').trim() !== materialized.origin ||
+    git(source, 'remote', 'get-url', '--push', 'origin').trim() !== materialized.origin
+  )
+    throw new InputError(`Captured repository materialization changed: ${id}`);
 }

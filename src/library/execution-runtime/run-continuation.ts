@@ -18,19 +18,15 @@ export class RunContinuation {
 
   /** Resumes only retained safe work; uncertain running activations require explicit reconciliation. */
   resume(run: ExecutionRun, delivery?: ExecutionRun): void {
-    if (['stopped', 'stopping'].includes(run.status))
-      throw new Error('Stopped run cannot resume; start a new run');
-    this.authority.assert(run);
-    if (run.data.integrityError)
-      throw new Error(
-        'Candidate integrity requires attention; stop before starting validated work',
-      );
-    if (run.status === 'needs_attention')
-      throw new Error('Resolve or stop the run requiring attention before new dispatch');
+    this.validate(run, delivery);
     try {
       if ((run.data.uncertainPolicyRecords as string[] | undefined)?.length)
         throw new Error(
           'Policy checkpoint or operation completion is uncertain; inspect retained evidence',
+        );
+      if (run.data.promotionStage === 'verifying')
+        throw new Error(
+          'Promotion verification was interrupted; inspect retained operation evidence',
         );
       this.restoreCheckpoints(run);
     } catch (error) {
@@ -40,9 +36,34 @@ export class RunContinuation {
     this.store.updateRun(run.id, 'running', {
       seen: {},
       pauseReason: null,
-      candidateRevision: String(delivery?.data.candidateRevision ?? this.base),
-      candidateRecord: delivery?.data.candidateRecord ?? run.data.candidateRecord,
+      candidateRevision: String(
+        run.data.promotionSource
+          ? run.data.candidateRevision
+          : (delivery?.data.candidateRevision ?? this.base),
+      ),
+      candidateRecord: run.data.promotionSource
+        ? run.data.candidateRecord
+        : (delivery?.data.candidateRecord ?? run.data.candidateRecord),
     });
+  }
+
+  /** Checks lifecycle and candidate authority before restoring any assignment checkpoints. */
+  private validate(run: ExecutionRun, delivery?: ExecutionRun): void {
+    if (['stopped', 'stopping'].includes(run.status))
+      throw new Error('Stopped run cannot resume; start a new run');
+    this.authority.assert(run);
+    if (
+      delivery &&
+      (delivery.environment?.id !== run.environment?.id ||
+        delivery.environment?.mode !== run.environment?.mode)
+    )
+      throw new Error('Cannot resume against a different execution environment');
+    if (run.data.integrityError)
+      throw new Error(
+        'Candidate integrity requires attention; stop before starting validated work',
+      );
+    if (run.status === 'needs_attention')
+      throw new Error('Resolve or stop the run requiring attention before new dispatch');
   }
 
   /** Restores validated assignment boundaries and leaves uncertain operation evidence untouched. */

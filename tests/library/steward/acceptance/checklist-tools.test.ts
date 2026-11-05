@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { test, type TestContext } from 'node:test';
+import type { TestContext } from 'node:test';
+import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { CodexTools } from '../../../../dist/library/steward/codex-tools.js';
@@ -128,4 +129,8 @@ test('MCP checklist persistence failures remain fatal', (t) => scenarios.persist
 
 test('MCP checklist correction cannot swallow cancellation', (t) => scenarios.cancellation(t));
 
-registerSuite({ component: 'steward', level: 'acceptance', tags: ['deterministic'] });
+registerSuite({
+  component: 'steward',
+  level: 'acceptance',
+  tags: ['deterministic', 'native-host'],
+});

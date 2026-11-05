@@ -2,14 +2,16 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { closeSync, lstatSync, mkdtempSync, openSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { pathToFileURL } from 'node:url';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { format, getFileInfo, resolveConfig } from 'prettier';
 
 /** Produces checked formatting proposals without exposing a maintained-source write path. */
-class FormattingProposal {
+export class FormattingProposal {
   /** Validates host-provided ownership paths before discovering maintained candidate files. */
-  constructor(paths) {
+  constructor(paths, included = paths) {
     if (!paths.length) throw new Error('Formatting requires captured owned paths');
+    this.included = included;
     this.roots = paths.map((path) => {
       const normalized = relative(process.cwd(), resolve(path));
       if (isAbsolute(path) || normalized === '..' || normalized.startsWith('..' + sep))
@@ -24,6 +26,10 @@ class FormattingProposal {
     const changes = [];
     for (const path of [...new Set(paths)].sort()) {
       if (!this.roots.some((root) => root === '.' || path === root || path.startsWith(root + '/')))
+        continue;
+      if (
+        !this.included.some((root) => root === '.' || path === root || path.startsWith(root + '/'))
+      )
         continue;
       const change = await this.change(path);
       if (change) changes.push(change);
@@ -70,4 +76,5 @@ class FormattingProposal {
   }
 }
 
-console.log(JSON.stringify(await new FormattingProposal(process.argv.slice(2)).create()));
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href)
+  console.log(JSON.stringify(await new FormattingProposal(process.argv.slice(2)).create()));

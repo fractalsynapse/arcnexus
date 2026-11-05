@@ -9,6 +9,30 @@ import { Scheduler } from '../../../../dist/library/execution-runtime/scheduler.
 
 /** Proves correlated inbox decisions and journal replay against the built durable store. */
 class InboxScenarios {
+  /** Cancellation preserves dependency waits and leaves unrelated work runnable without fabricating rejection. */
+  async interruption(t: TestContext): Promise<void> {
+    const store = this.store(t);
+    const run = store.createRun('workday', ['a', 'b', 'c'], 'Retain dependencies');
+    const a = store.enqueue(run.id, 'a', 'Root');
+    const b = store.request(a.id, { key: 'b', owner: 'b', objective: 'Supply', acceptance: [] });
+    const c = store.enqueue(run.id, 'c', 'Independent work');
+    const cancellation = new AbortController();
+    const scheduler = new Scheduler(store, async () => {
+      cancellation.abort(new Error('Host shutdown'));
+      throw cancellation.signal.reason;
+    });
+    await scheduler.step(run.id, cancellation.signal);
+    assert.equal(store.assignment(b.id).status, 'interrupted');
+    assert.equal(store.assignment(a.id).status, 'waiting');
+    assert.equal(store.assignment(c.id).status, 'ready');
+    await new Scheduler(store, async () => ({
+      kind: 'completed',
+      evidence: ['controlled check'],
+    })).step(run.id);
+    assert.equal(store.assignment(c.id).status, 'completed');
+    assert.equal(store.assignment(a.id).status, 'waiting');
+  }
+
   /** Keeps accepted intent distinct from delivery and atomically rolls back invalid fan-out. */
   milestones(t: TestContext): void {
     const store = this.store(t);
@@ -37,7 +61,7 @@ class InboxScenarios {
     assert.equal(store.assignments(run.id).length, before);
   }
 
-  /** Explicit review and document requests preserve their workflow and narrowed recipient scope. */
+  /** Explicit review and document requests preserve their workflow without a file list. */
   recipientScope(t: TestContext): void {
     const store = this.store(t);
     const run = store.createRun('task', ['a', 'b'], 'A documentation goal');
@@ -52,13 +76,11 @@ class InboxScenarios {
       acceptance: ['Observed'],
       kind: 'review' as const,
       changeType: null,
-      allowedWritePaths: [],
     };
     const b = store.request(a.id, request);
     assert.deepEqual(b.data.proposal, {
       kind: 'review',
       changeType: 'documentation',
-      allowedWritePaths: [],
     });
     assert.equal(store.request(a.id, request).id, b.id);
   }
@@ -69,7 +91,7 @@ class InboxScenarios {
     const run = store.createRun('task', ['a', 'b'], 'Shared work');
     const a = store.enqueue(run.id, 'a', 'Root');
     const b = store.enqueue(run.id, 'b', 'Review');
-    store.updateAssignment(b.id, 'ready', { proposal: { kind: 'review', allowedWritePaths: [] } });
+    store.updateAssignment(b.id, 'ready', { proposal: { kind: 'review' } });
     const request = {
       key: 'shared',
       owner: 'b',
@@ -288,7 +310,7 @@ test('durable scheduling outcomes deduplicate crash replay', (t) => scenarios.re
 test('duplicate verified delivery cannot rewind the accumulated candidate', (t) =>
   scenarios.promotions(t));
 
-test('inbox requests preserve explicit recipient workflow and narrowed scope', (t) =>
+test('inbox requests preserve explicit recipient workflow without a file list', (t) =>
   scenarios.recipientScope(t));
 
 test('shared recipient work rejects conflicting workflow authority', (t) =>
@@ -305,5 +327,8 @@ test('satisfied intent permits historical cycles without blocking delivery', (t)
 test('unsatisfied cycles roll back their request exchange', (t) => scenarios.blockingCycle(t));
 
 test('shared work retains the strongest required milestone', (t) => scenarios.sharedMilestones(t));
+
+test('interrupted suppliers do not reject dependents or prevent unrelated delivery', (t) =>
+  scenarios.interruption(t));
 
 registerSuite({ component: 'execution-runtime', level: 'acceptance', tags: ['deterministic'] });

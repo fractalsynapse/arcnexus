@@ -1,0 +1,18 @@
+schemaVersion: 6
+id: publisher
+type: library
+parentId: cli-package
+purpose: Retain verified deliveries and advance policy-authorized integration and publication
+constraints:
+  - Publication cannot substitute for independent engineering verification
+  - Simulation promotion creates fresh live authority and verification
+  - Real main merges, tags and package publication remain human-controlled
+operations:
+  publish-delivery: [agent]
+  package-artifact: [delivery]
+owns:
+  - src/library/publisher
+  - tests/library/publisher
+  - docs/library/publisher
+api:
+  - module: src/library/publisher/publisher.ts

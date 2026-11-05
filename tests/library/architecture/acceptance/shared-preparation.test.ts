@@ -1,13 +1,29 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { readFileSync, readdirSync, rmSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { WorkspaceCliFixture } from '../../testing/support/workspace-cli-fixture.js';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { delimiter, join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises shared setup operations through actual workspace preparation and installed confinement. */
 class SharedPreparationScenarios {
+  private readonly workspaces = new WeakMap<ComponentV5Fixture, WorkspaceCliFixture>();
+
+  /** Uses captured Node identity even when the caller PATH contains an unrelated inaccessible executable. */
+  boundRuntime(t: TestContext): void {
+    const f = this.fixture(t);
+    const tools = f.root + '-tools';
+    mkdirSync(tools);
+    t.after(() => rmSync(tools, { recursive: true, force: true }));
+    writeFileSync(join(tools, 'node'), '#!/bin/sh\nexit 97\n', { mode: 0o755 });
+    this.workspaces.get(f)!.env.PATH = [tools, process.env.PATH ?? ''].join(delimiter);
+    const { result, report } = this.execute(f);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(readFileSync(join(report.workspace, 'package/generated/proof'), 'utf8'), 'sample');
+    assert.equal(report.bindings.tools.node, process.execPath);
+  }
+
   /** Keeps real child IPC usable when durable evidence lives below a long application state path. */
   ipc(t: TestContext): void {
     const f = this.fixture(t);
@@ -17,7 +33,7 @@ class SharedPreparationScenarios {
     );
     f.put('architecture/operations/prepare.json', { ...this.operation(), network: true });
     f.commit();
-    const { result, report } = this.execute(f, t);
+    const { result, report } = this.execute(f);
     assert.equal(
       result.status,
       0,
@@ -34,7 +50,7 @@ class SharedPreparationScenarios {
   /** Resolves setup automatically, writes generated evidence, and preserves maintained source. */
   prepare(t: TestContext, local = false): void {
     const f = this.fixture(t, local);
-    const { result, report, state } = this.execute(f, t);
+    const { result, report } = this.execute(f);
     assert.equal(result.status, 0, result.stderr);
     assert.equal(readFileSync(join(report.workspace, 'package/generated/proof'), 'utf8'), 'sample');
     assert.equal(
@@ -44,10 +60,7 @@ class SharedPreparationScenarios {
     assert.equal(report.operationInvocations.length, 1);
     assert.equal(report.operationInvocations[0].purpose, 'setup');
     assert.equal(report.operationInvocations[0].operationId, 'prepare');
-    const cleanup = spawnSync(process.execPath, [resolve('dist/cli.js'), 'cleanup', report.id], {
-      encoding: 'utf8',
-      env: { ...process.env, ARCNEXUS_STATE_DIR: state },
-    });
+    const cleanup = this.workspaces.get(f)!.cleanup(report.id);
     assert.equal(cleanup.status, 0, cleanup.stderr);
   }
 
@@ -66,7 +79,7 @@ class SharedPreparationScenarios {
       args: ['package/src/prepare.cjs', 'shared'],
     });
     f.commit();
-    const { result, report } = this.execute(f, t);
+    const { result, report } = this.execute(f);
     assert.equal(result.status, 0, result.stderr);
     assert.equal(report.operationInvocations.length, 1);
     assert.equal(readFileSync(join(report.workspace, 'package/generated/proof'), 'utf8'), 'shared');
@@ -80,7 +93,7 @@ class SharedPreparationScenarios {
       "require('fs').writeFileSync('package/src/value.ts','unauthorized');",
     );
     f.commit();
-    const { result, report } = this.execute(f, t);
+    const { result, report } = this.execute(f);
     assert.equal(result.status, 1);
     assert.equal(
       readFileSync(join(report.workspace, 'package/src/value.ts'), 'utf8'),
@@ -105,35 +118,35 @@ class SharedPreparationScenarios {
       maxTurns: 1,
     });
     f.commit();
-    const { result } = this.execute(f, t);
+    const { result } = this.execute(f);
     assert.equal(result.status, 2);
     assert.match(result.stderr, /Remove obsolete work budget maxTurns/);
   }
 
   /** Uses private fixture evidence and returns the persisted report even when setup fails. */
-  private execute(f: ComponentV5Fixture, t: TestContext) {
-    const state = f.root + '-state';
-    t.after(() => rmSync(state, { recursive: true, force: true }));
-    const result = spawnSync(
-      process.execPath,
-      [
-        resolve('dist/cli.js'),
-        'prepare',
-        '--project',
-        join(f.root, 'package'),
-        '--bindings',
+  private execute(f: ComponentV5Fixture) {
+    const result = this.workspaces.get(f)!.prepare();
+    const report = result.stdout.trim() ? JSON.parse(result.stdout) : undefined;
+    return { result, report };
+  }
+
+  /** Registers valid initial authority before individual scenarios introduce their tested faults. */
+  private application(f: ComponentV5Fixture, t: TestContext): void {
+    const root = f.root + '-application',
+      state = join(root, 'state');
+    t.after(() => rmSync(root, { recursive: true, force: true }));
+    this.workspaces.set(
+      f,
+      new WorkspaceCliFixture(
+        {
+          root,
+          repo: f.root,
+          state,
+          env: { ...process.env, ARCNEXUS_STATE_DIR: state },
+        },
         join(f.root, '.git/bindings.json'),
-      ],
-      {
-        encoding: 'utf8',
-        env: { ...process.env, ARCNEXUS_STATE_DIR: state },
-      },
+      ),
     );
-    const id = readdirSync(join(state, 'runs'))[0]!;
-    const report = id
-      ? JSON.parse(readFileSync(join(state, 'runs', id, 'report.json'), 'utf8'))
-      : undefined;
-    return { result, report, state };
   }
 
   /** Captures a minimal package with one shared setup definition and no environment commands. */
@@ -150,6 +163,7 @@ class SharedPreparationScenarios {
       },
     });
     this.components(f);
+    this.executionDefaults(f);
     f.put('package/.gitignore', 'generated/\n');
     f.put(
       'package/src/prepare.cjs',
@@ -159,10 +173,23 @@ class SharedPreparationScenarios {
     f.put('.git/bindings.json', {
       schemaVersion: 1,
       repositories: {},
-      tools: { codex: process.env.ARCNEXUS_TEST_CODEX! },
+      tools: { node: process.execPath, codex: process.env.ARCNEXUS_TEST_CODEX! },
     });
     f.commit();
+    this.application(f, t);
     return f;
+  }
+
+  /** Supplies explicit director/reviewer authority required by production package preparation. */
+  private executionDefaults(f: ComponentV5Fixture): void {
+    const path = 'architecture/components/platform.json';
+    const platform = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
+    f.put(path, {
+      ...platform,
+      director: { component: 'maintenance', profile: 'luna' },
+      reviewerProfile: 'luna',
+      defaultPackage: 'package',
+    });
   }
 
   /** Gives package inheritance, source ownership and shared definitions distinct declarations. */
@@ -211,6 +238,12 @@ class SharedPreparationScenarios {
 }
 
 const scenarios = new SharedPreparationScenarios();
+
+test(
+  'shared preparation uses captured Node instead of caller PATH shadowing',
+  { skip: !process.env.ARCNEXUS_TEST_CODEX && 'Requires native-host qualification' },
+  (t) => scenarios.boundRuntime(t),
+);
 
 test(
   'shared operation temporary storage supports real private IPC',

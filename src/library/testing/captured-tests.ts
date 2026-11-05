@@ -6,13 +6,14 @@ import { SuiteMetadataReader } from './metadata.js';
 import { loadTestProfile } from './profile.js';
 import type { SuiteMetadata } from './suite.js';
 import { TestDiscovery } from './discovery.js';
+import { relativeTestSource } from './test-paths.js';
 
 export interface CapturedTest extends SuiteMetadata {
   source: string;
   sha256: string;
 }
 
-export { compiledTestPath } from './test-paths.js';
+export { compiledTestPath, assertBehavioralTestScope } from './test-paths.js';
 
 /** Captures mandatory suite identities before candidate edits can affect discovery. */
 export function captureComponentTests(catalog: Catalog, repository: string, base: string): void {
@@ -59,6 +60,45 @@ export function assertCapturedTests(component: Component, workspace: string): vo
     )
       throw new Error(`Candidate changed mandatory test selection: ${captured.source}`);
   }
+}
+
+/** Validates suite registration and captured selection before a host edit transaction starts. */
+export function assertCapturedTestEdit(
+  component: Component,
+  path: string,
+  content: string | null,
+  kind: string,
+): void {
+  const captured = component.capturedTests?.find((suite) => suite.source === path);
+  if (!captured) return assertNewTestEdit(component, path, content, kind);
+  if (content === null) throw new Error(`Cannot delete captured mandatory suite: ${path}`);
+  const current = new SuiteMetadataReader().read(path, content);
+  if (
+    current.component !== captured.component ||
+    current.level !== captured.level ||
+    JSON.stringify([...(current.tags ?? [])].sort()) !==
+      JSON.stringify([...(captured.tags ?? [])].sort())
+  )
+    throw new Error(`Preserve captured suite component, level and tags: ${path}`);
+}
+
+/** Applies normal discovery rules to new suites while leaving helper and ordinary source files alone. */
+function assertNewTestEdit(
+  component: Component,
+  path: string,
+  content: string | null,
+  kind: string,
+): void {
+  if (
+    content === null ||
+    !component.testProfile ||
+    !path.endsWith('.test.ts') ||
+    path.split('/').includes('support') ||
+    kind !== 'tests'
+  )
+    return;
+  relativeTestSource(component, path);
+  new SuiteMetadataReader().readOwned(component.id, path, content);
 }
 
 /** Selects current owned suites using captured rules and refuses changes to mandatory identities. */

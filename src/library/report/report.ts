@@ -260,6 +260,8 @@ function serviceLines(record: RecordData): string {
   return serviceLines;
 }
 
+export { PublicationEvidence } from './publication-evidence.js';
+
 export { ExecutionEvidence } from './execution-evidence.js';
 
 export { ExecutionReports } from './execution-report.js';
@@ -279,3 +281,11 @@ export function saveMarkdown(root: string, record: RecordData): void {
 }
 
 export { DeliveryEvidence } from './delivery-evidence.js';
+
+export { EvidencePages } from './evidence-pages.js';
+
+export { RecoveryEvidence } from './recovery-evidence.js';
+
+export { ReferencedEvidence } from './referenced-evidence.js';
+
+export { AssignmentRegistry } from './assignment-registry.js';

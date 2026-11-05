@@ -65,7 +65,12 @@ class PolicyWorkspaceScenarios {
     t.after(() => host.store.close());
     host.control('start');
     const run = host.store.runs()[0]!;
-    for (let owner = 0; owner < 4; owner++) await host.tick();
+    await host.tick();
+    assert.equal(host.store.run(run.id).data.initialized, true);
+    for (let turn = 0; turn <= host.context.owners.length; turn++) {
+      if (host.store.run(run.id).status !== 'running') break;
+      await host.tick();
+    }
     const retained = host.store.run(run.id);
     assert.equal(retained.status, 'idle', String(retained.data.error));
     assert.deepEqual(Object.keys(retained.data.stewardshipReviews as object), ['a', 'b', 'c']);

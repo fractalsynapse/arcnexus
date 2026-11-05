@@ -1,7 +1,7 @@
 # Integrated experiment qualification
 
 Issue #53 replaces campaign generation with declarative data and a TypeScript runner.
-The [evidence index](../experiment-qualification.json) records hashes and paths
+The archived evidence index `evidence/repository-archives/78000e2/docs/experiment-qualification.json` records hashes and paths
 relative to the retained ArcNexus user-state directory. Historical campaigns and
 failures remain unchanged. The guidance-steward demonstration is recorded separately
 in [agent guidance acceptance](agent-guidance.md).

@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { join } from 'node:path';
-import type { Bindings } from '../architecture/bindings.js';
+import { assertRepositoryBinding, type Bindings } from '../architecture/bindings.js';
 import { InputError, type Dependency, type Environment } from '../architecture/config.js';
 import { git } from '../operations/process.js';
 import { assertOutputs } from './outputs.js';
@@ -44,11 +44,12 @@ export function resolveMembers(
 ): Member[] {
   try {
     if (!env.workspace) return [];
-    if (
-      env.workspace.primary.repository &&
-      git(source, 'remote', 'get-url', 'origin').trim() !== env.workspace.primary.repository
-    )
-      throw new InputError('Primary repository origin identity mismatch');
+    assertRepositoryBinding(
+      source,
+      env.workspace.primary.id,
+      env.workspace.primary.repository,
+      bindings,
+    );
     const resolver = new MemberResolver(source, base, workspace, bindings);
     return env.workspace.dependencies.map((definition) => resolver.resolve(definition));
   } catch (error) {
@@ -89,8 +90,7 @@ class MemberResolver {
       : undefined;
     if (!binding) throw new InputError(`Missing repository binding: ${definition.id}`);
     const path = realpathSync(git(binding, 'rev-parse', '--show-toplevel').trim());
-    if (git(path, 'remote', 'get-url', 'origin').trim() !== definition.repository)
-      throw new InputError(`Dependency origin identity mismatch: ${definition.id}`);
+    assertRepositoryBinding(path, definition.id, definition.repository, this.bindings);
     if (git(path, 'status', '--porcelain', '--untracked-files=all').trim())
       throw new InputError(`Dependency source must be clean: ${definition.id}`);
     return path;

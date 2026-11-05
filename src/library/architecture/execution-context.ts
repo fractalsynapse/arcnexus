@@ -17,6 +17,8 @@ import { git } from '../operations/process.js';
 export interface ProjectExecution {
   source: string;
   base: string;
+  checkoutAtCapture?: string;
+  observedStaging?: { repository: string; branch: string };
   commonDir: string;
   key: string;
   packageId: string;
@@ -40,6 +42,7 @@ export class ExecutionContext {
   /** Discovers repository, committed authority and machine bindings; ambiguous packages fail. */
   resolve(cwd: string, packageId?: string, revision = 'HEAD'): ProjectExecution {
     const { source, base, commonDir, bindings } = this.discovery(cwd, revision);
+    const checkout = revision === 'HEAD' ? base : git(source, 'rev-parse', 'HEAD').trim();
     const catalog = loadCatalog(source, base, bindings);
     const config = this.defaults(source, base, catalog);
     const selected = this.selected(catalog, cwd, source, packageId, config.defaultPackage);
@@ -52,6 +55,7 @@ export class ExecutionContext {
     return {
       source,
       base,
+      ...(checkout !== base ? { checkoutAtCapture: checkout } : {}),
       commonDir,
       key: digest(commonDir).slice(0, 24),
       packageId: selected.id,
@@ -117,6 +121,7 @@ export class ExecutionContext {
     return resolveAssignment(context.source, context.base, owner, {
       value,
       capturedCatalog: context.catalog,
+      eligibleOwners: context.owners,
       additionalVerification: this.containerChecks(context, owner),
       bindings: context.bindings,
       executionProfile: profile,

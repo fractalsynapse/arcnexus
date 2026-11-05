@@ -41,7 +41,3 @@ hostChecks:
       - ../../dist/library/experiments/checks/report-operations.js
     artifacts:
       - ../../dist/library/experiments/checks/report-operations.js
-allowedWritePaths:
-  - src/library/report/report.ts
-  - tests/library/report/report.test.mjs
-  - docs/library/report/report.md

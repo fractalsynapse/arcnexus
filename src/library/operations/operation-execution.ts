@@ -1,3 +1,4 @@
+import { observe } from '../report/timeline.js';
 import { OperationEvidence } from './operation-evidence.js';
 import { ServiceManager } from './services.js';
 import type { SourceConfinement } from './confinement.js';
@@ -27,7 +28,10 @@ export class OperationExecution {
 
   /** Executes a fresh checkpoint, including required preparation, for a single requested operation. */
   async run(op: Operation, purpose: string): Promise<CommandResult> {
-    return (await this.checkpoint([op], purpose)).at(-1)!;
+    const results = await this.checkpoint([op], purpose);
+    const result = results.at(-1);
+    if (!result) throw new Error(`Operation has no applicable test suites: ${op.id}`);
+    return result;
   }
 
   /** Executes the fully validated dependency order once, without reusing evidence across checkpoints. */
@@ -39,7 +43,10 @@ export class OperationExecution {
   async steps(steps: OperationStep[]): Promise<CommandResult[]> {
     this.evidence.assertSettled();
     this.signal.throwIfAborted();
-    const ordered = new OperationCheckpoint(this.record).resolve(steps);
+    const checkpoint = new OperationCheckpoint(this.record);
+    const ordered = checkpoint.resolve(steps);
+    for (const selection of checkpoint.notApplicable)
+      observe(this.root, this.record, 'operation.not_applicable', selection);
     const results: CommandResult[] = [];
     for (const step of ordered) results.push(await this.invoke(step.operation, step.purpose));
     return results;
@@ -88,6 +95,8 @@ export class OperationExecution {
       if (result.exitCode !== 0)
         throw Object.assign(new Error(`Command failed (${result.exitCode}): HTTP GET`), {
           commandResult: result,
+          observedExitFailure: true,
+          operationId: op.id,
         });
       return result;
     });
@@ -129,6 +138,20 @@ export class OperationExecution {
     }
   }
 
+  /** Attaches the declared operation and raw evidence location without masking cancellation or uncertainty. */
+  private failure(op: Operation, error: unknown): never {
+    if (!error || typeof error !== 'object' || !('commandResult' in error)) throw error;
+    const result = error.commandResult as CommandResult;
+    throw Object.assign(
+      new Error(`Operation ${op.id}: ${String(error)}; evidence: ${result.log}`, { cause: error }),
+      {
+        commandResult: result,
+        operationId: op.id,
+        observedExitFailure: 'observedExitFailure' in error && error.observedExitFailure === true,
+      },
+    );
+  }
+
   /** Sends resolved argv through the same confined process supervisor for every invocation purpose. */
   private async command(
     op: Extract<Operation, { command: string }>,
@@ -138,6 +161,7 @@ export class OperationExecution {
     const command = adapter.command(
       targetCommand(this.record, op),
       join(this.record.workspace, op.cwd),
+      operationEnvironment(this.record).PATH,
     );
     const result = await execute(
       command,
@@ -147,9 +171,10 @@ export class OperationExecution {
       {
         env: adapter.environment(operationEnvironment(this.record)),
         fileOutput: true,
+        stdout: join(this.root, 'runs', this.record.id, `invocation-${id}.stdout`),
         processScope: true,
       },
-    );
+    ).catch((error) => this.failure(op, error));
     return { ...result, command: op.command, args: op.args };
   }
 }

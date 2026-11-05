@@ -1,25 +1,41 @@
+import { AssignmentReplacements } from './assignment-replacements.js';
+import { AssignmentAdmission } from './assignment-admission.js';
+import { requestMilestones, requestProposal, sharedRequestProblem } from './request-proposal.js';
+import type { DeliveryRecord, PromotionCandidate } from './delivery-types.js';
+import { CandidatePointers } from './candidate-pointers.js';
+import { RunRecords } from './run-records.js';
 import { InboxDecisions, type InboxDecision } from './inbox-decisions.js';
 import { randomUUID } from 'node:crypto';
 import { ExecutionDatabase } from './execution-database.js';
 import type {
   AssignmentStatus,
+  AssignmentContinuation,
   ExecutionAssignment,
   ExecutionRun,
   InboxRequest,
   OwnerRequest,
   RunMode,
+  RunEnvironment,
   RunStatus,
 } from './execution-types.js';
 
 export { ExecutionLease } from './execution-lease.js';
 
+export { requestProposal, sharedRequestProblem } from './request-proposal.js';
+
 /** Persists assignment accountability, inbox identities and dependency readiness atomically. */
 export class ExecutionStore {
   private readonly db: ExecutionDatabase;
 
+  private readonly replacements: AssignmentReplacements;
+
+  private readonly admission: AssignmentAdmission;
+
   /** Opens a new or retained general execution store without reading legacy workdays. */
   constructor(path: string, readOnly = false) {
     this.db = new ExecutionDatabase(path, readOnly);
+    this.replacements = new AssignmentReplacements(this.db);
+    this.admission = new AssignmentAdmission(this.db);
   }
 
   /** Projects related records from one consistent read transaction. */
@@ -28,22 +44,13 @@ export class ExecutionStore {
   }
 
   /** Captures the eligible owners and goal for one run. */
-  createRun(mode: RunMode, owners: string[], objective: string): ExecutionRun {
-    if (!owners.length || new Set(owners).size !== owners.length)
-      throw new Error('Invalid eligible owners');
-    const run: ExecutionRun = {
-      id: randomUUID(),
-      mode,
-      owners,
-      objective,
-      status: 'running',
-      createdAt: new Date().toISOString(),
-      data: {},
-    };
-    return this.db.transaction('run.created', run, () => {
-      this.db.put('run', run);
-      return run;
-    });
+  createRun(
+    mode: RunMode,
+    owners: string[],
+    objective: string,
+    environment?: RunEnvironment,
+  ): ExecutionRun {
+    return new RunRecords(this.db).create(mode, owners, objective, environment);
   }
 
   /** Returns the captured run, including its mutable lifecycle state. */
@@ -72,33 +79,8 @@ export class ExecutionStore {
     acceptance: string[] = [],
   ): ExecutionAssignment {
     return this.db.transaction('assignment.created', { runId, owner }, () =>
-      this.create(runId, owner, objective, acceptance),
+      this.admission.create(runId, owner, objective, acceptance),
     );
-  }
-
-  /** Validates authority and constructs an assignment within the caller's transaction. */
-  private create(
-    runId: string,
-    owner: string,
-    objective: string,
-    acceptance: string[],
-  ): ExecutionAssignment {
-    if (!this.run(runId).owners.includes(owner))
-      throw new Error('Unknown eligible owner: ' + owner);
-    if (!objective.trim()) throw new Error('Assignment objective is empty');
-    const assignment: ExecutionAssignment = {
-      id: randomUUID(),
-      runId,
-      owner,
-      objective,
-      acceptance,
-      status: 'ready',
-      dependencies: [],
-      evidence: [],
-      data: {},
-    };
-    this.db.put('assignment', assignment);
-    return assignment;
   }
 
   /** Reads authoritative assignment state. */
@@ -131,53 +113,62 @@ export class ExecutionStore {
     });
   }
 
-  /** Reactivates diagnosed work and restores only its propagated dependents to milestone waiting. */
-  continueAssignments(
+  /** Commits a complete director decision before the scheduler can see any of its assignments. */
+  admitDirection(
     runId: string,
-    continuations: Array<{ assignmentId: string; ownerId: string; reason: string }>,
+    proposals: Array<{
+      owner: string;
+      objective: string;
+      acceptance: string[];
+      data: Record<string, unknown>;
+    }>,
+    continuations: AssignmentContinuation[],
+    checkpoint: Record<string, unknown>,
   ): void {
-    if (!continuations.length) return;
-    this.db.transaction('assignments.continued', { runId, continuations }, () => {
-      const ids = new Set(continuations.map((item) => item.assignmentId));
-      if (ids.size !== continuations.length) throw new Error('Duplicate continuation identity');
-      for (const item of continuations) this.continueOne(runId, item);
-      for (const assignment of this.assignments(runId))
-        if (assignment.status === 'blocked' && ids.has(String(assignment.data.blockedBy)))
-          this.db.put('assignment', {
-            ...assignment,
-            status: 'waiting',
-            data: { ...assignment.data, blockedBy: null, reason: null },
-          });
-      this.wake(runId);
+    const created: string[] = [];
+    this.db.transaction('direction.admitted', { runId, created, continuations }, () => {
+      const run = this.run(runId);
+      this.restoreContinuations(runId, continuations);
+      for (const item of proposals)
+        created.push(
+          this.admission.create(runId, item.owner, item.objective, item.acceptance, item.data).id,
+        );
+      this.db.put('run', { ...run, data: { ...run.data, ...checkpoint } });
     });
   }
 
-  /** Preserves failed outcome evidence while acknowledging its known routing receipt for correction. */
-  private continueOne(
-    runId: string,
-    continuation: { assignmentId: string; ownerId: string; reason: string },
-  ): void {
-    const assignment = this.assignment(continuation.assignmentId);
-    if (
-      assignment.runId !== runId ||
-      assignment.owner !== continuation.ownerId ||
-      !continuation.reason.trim() ||
-      !['blocked', 'failed', 'rejected'].includes(assignment.status)
-    )
-      throw new Error('Invalid retained assignment continuation');
-    const failed = assignment.data.lastFailedOutcome as { receipt?: string } | undefined;
-    this.db.put('assignment', {
-      ...assignment,
-      status: 'ready',
-      data: {
-        ...assignment.data,
-        blockedBy: null,
-        reason: null,
-        continuationReason: continuation.reason,
-        lastReceipt: failed?.receipt ?? assignment.data.lastReceipt,
-        continuationFrom: { status: assignment.status, reason: assignment.data.reason },
-      },
-    });
+  /** Reactivates diagnosed work and restores only its propagated dependents to milestone waiting. */
+  continueAssignments(runId: string, continuations: AssignmentContinuation[]): void {
+    if (!continuations.length) return;
+    this.db.transaction('assignments.continued', { runId, continuations }, () =>
+      this.restoreContinuations(runId, continuations),
+    );
+  }
+
+  /** Restores diagnosed continuations and reconsidered waits within the admission transaction. */
+  private restoreContinuations(runId: string, continuations: AssignmentContinuation[]): void {
+    if (!continuations.length) return;
+    const ids = new Set(continuations.map((item) => item.assignmentId));
+    if (ids.size !== continuations.length) throw new Error('Duplicate continuation identity');
+    for (const item of continuations) {
+      if (item.replacementChangeType) {
+        this.replacements.replace(runId, item);
+        const next = this.effective(item.assignmentId);
+        for (const id of next.dependencies) this.assertAcyclic(next, id);
+      } else this.admission.continueOne(runId, item);
+    }
+    for (const assignment of this.assignments(runId))
+      if (
+        !assignment.data.replacedBy &&
+        assignment.status === 'blocked' &&
+        ids.has(String(assignment.data.blockedBy))
+      )
+        this.db.put('assignment', {
+          ...assignment,
+          status: 'waiting',
+          data: { ...assignment.data, blockedBy: null, reason: null },
+        });
+    this.wake(runId);
   }
 
   /** Routes a request once; conflicting reuse of a request identity is rejected. */
@@ -205,60 +196,46 @@ export class ExecutionStore {
 
   /** Routes within the caller's transaction, preserving request identity and recipient intent. */
   private route(from: string, request: OwnerRequest): ExecutionAssignment {
+    const origins = this.replacements.predecessors(from);
     const existing = this.db
       .all<InboxRequest>('request')
-      .find((item) => item.from === from && item.key === request.key);
+      .find((item) => origins.has(item.from) && item.key === request.key);
     if (existing) return this.repeated(existing, request);
     const sender = this.assignment(from);
+    if (sender.data.replacedBy) throw new Error('Cannot request work from a retired assignment');
     this.rejectRecursiveIntent(sender, request);
-    const recipient = request.existingAssignmentId
-      ? this.assignment(request.existingAssignmentId)
-      : this.create(sender.runId, request.owner, request.objective, request.acceptance);
-    if (
-      recipient.owner !== request.owner ||
-      recipient.objective !== request.objective ||
-      JSON.stringify(recipient.acceptance) !== JSON.stringify(request.acceptance)
-    )
-      throw new Error('Shared assignment acceptance differs');
-    sender.data.milestones = this.milestones(sender, recipient.id, request);
-    this.captureProposal(sender, recipient, request);
+    const recipient = this.recipient(sender, request);
+    const mismatch = sharedRequestProblem(recipient, request);
+    if (mismatch) throw new Error(mismatch);
+    sender.data.milestones = requestMilestones(sender, recipient.id, request);
+    const proposal = requestProposal(sender, request);
+    recipient.data.proposal ??= proposal;
     this.db.put('assignment', recipient);
     this.db.put('request', { ...request, id: randomUUID(), from, assignmentId: recipient.id });
     this.connect(sender, recipient);
     return recipient;
   }
 
-  /** Retains the strongest milestone when multiple requests deliberately share recipient work. */
-  private milestones(sender: ExecutionAssignment, recipient: string, request: OwnerRequest) {
-    const existing = (sender.data.milestones ?? {}) as Record<string, string>;
-    const required = request.milestone ?? 'delivered';
-    return {
-      ...existing,
-      [recipient]: existing[recipient] === 'delivered' ? 'delivered' : required,
-    };
-  }
-
-  /** Preserves explicit recipient workflow and rejects incompatible reuse of accepted shared work. */
-  private captureProposal(
-    sender: ExecutionAssignment,
-    recipient: ExecutionAssignment,
-    request: OwnerRequest,
-  ): void {
-    const inherited = sender.data.proposal as Record<string, unknown> | undefined;
-    const proposed = {
-      kind: request.kind ?? inherited?.kind ?? 'change',
-      changeType: request.changeType ?? inherited?.changeType ?? 'behavior',
-      ...(request.allowedWritePaths ? { allowedWritePaths: request.allowedWritePaths } : {}),
-    };
-    const existing = recipient.data.proposal as Record<string, unknown> | undefined;
-    for (const key of ['kind', 'changeType', 'allowedWritePaths'] as const)
-      if (
-        existing &&
-        request[key] != null &&
-        JSON.stringify(existing[key]) !== JSON.stringify(proposed[key])
-      )
-        throw new Error('Shared assignment workflow or scope differs');
-    recipient.data.proposal ??= proposed;
+  /** Resolves explicit supplier links before mutation; other resource identities never imply new work. */
+  private recipient(sender: ExecutionAssignment, request: OwnerRequest): ExecutionAssignment {
+    if (request.existingAssignmentId === undefined)
+      return this.admission.create(
+        sender.runId,
+        request.owner,
+        request.objective,
+        request.acceptance,
+      );
+    const recipient = this.assignments(sender.runId).find(
+      (item) => item.id === request.existingAssignmentId && item.owner === request.owner,
+    );
+    if (!recipient)
+      throw Object.assign(
+        new Error(
+          `Invalid supplier assignment ${request.existingAssignmentId}: link a known assignment of ${request.owner} in this run with matching scope, or use assignmentId=null to request new work. Tracking issue, message and requester identities are not supplier assignments.`,
+        ),
+        { name: 'DependencyBlocked' },
+      );
+    return this.replacements.current(recipient.id);
   }
 
   /** Rejects a repeated ancestor intent as a blocking cycle without merging unrelated same-owner work. */
@@ -285,20 +262,17 @@ export class ExecutionStore {
     const { id: _id, from: _from, assignmentId, ...original } = existing;
     if (JSON.stringify(original) !== JSON.stringify(request))
       throw new Error('Request identity reused with different content');
-    return this.assignment(assignmentId);
+    return this.replacements.current(assignmentId);
   }
 
   /** Lists request envelopes addressed to or sent by this assignment. */
   inbox(id: string) {
-    const replies = this.db.all<InboxDecision & { actor: string }>('reply');
-    return this.db
-      .all<InboxRequest>('request')
-      .filter((r) => r.from === id || r.assignmentId === id)
-      .map((request) => ({
-        ...request,
-        ...new InboxDecisions(this.db).context(id, request),
-        replies: replies.filter((reply) => reply.requestId === request.id),
-      }));
+    return new InboxDecisions(this.db).messages(id);
+  }
+
+  /** Returns the accountable successor for a retained assignment or the original if still active. */
+  effective(id: string): ExecutionAssignment {
+    return this.replacements.current(id);
   }
 
   /** Records an accepted host-validated plan and releases accepted-intent dependents. */
@@ -326,7 +300,9 @@ export class ExecutionStore {
     for (const decision of decisions) {
       if (!new InboxDecisions(this.db).apply(actor, decision)) continue;
       if (decision.action !== 'require_delivery') continue;
-      const request = this.db.get<InboxRequest>('request', decision.requestId);
+      const request = this.replacements.envelope(
+        this.db.get<InboxRequest>('request', decision.requestId),
+      );
       this.connect(this.assignment(actor), this.assignment(request.assignmentId));
     }
   }
@@ -351,6 +327,7 @@ export class ExecutionStore {
       if (!['waiting', 'ready'].includes(item.status)) continue;
       const failed = assignments.find(
         (dep) =>
+          !dep.data.replacedBy &&
           ['blocked', 'rejected', 'failed'].includes(dep.status) &&
           this.reaches(item.id, dep.id, new Set()),
       );
@@ -375,7 +352,7 @@ export class ExecutionStore {
   /** Adds an explicit dependency on shared work, rejecting cross-run links and cycles. */
   link(from: string, to: string): void {
     this.db.transaction('dependency.linked', { from, to }, () =>
-      this.connect(this.assignment(from), this.assignment(to)),
+      this.connect(this.assignment(from), this.replacements.current(to)),
     );
   }
 
@@ -383,16 +360,18 @@ export class ExecutionStore {
   private connect(sender: ExecutionAssignment, recipient: ExecutionAssignment): void {
     if (sender.runId !== recipient.runId)
       throw new Error('Cross-run dependency requires a new assignment');
-    if (
-      !this.satisfied(sender, recipient.id) &&
-      this.reaches(recipient.id, sender.id, new Set(), true)
-    )
-      throw Object.assign(new Error('Blocking dependency cycle'), { name: 'DependencyBlocked' });
+    this.assertAcyclic(sender, recipient.id);
     if (!sender.dependencies.includes(recipient.id)) sender.dependencies.push(recipient.id);
     sender.status = sender.dependencies.every((id) => this.satisfied(sender, id))
       ? 'ready'
       : 'waiting';
     this.db.put('assignment', sender);
+  }
+
+  /** Rejects a newly blocking cycle before a dependency link or replacement can commit. */
+  private assertAcyclic(sender: ExecutionAssignment, supplier: string): void {
+    if (!this.satisfied(sender, supplier) && this.reaches(supplier, sender.id, new Set(), true))
+      throw Object.assign(new Error('Blocking dependency cycle'), { name: 'DependencyBlocked' });
   }
 
   /** Searches the existing wait graph without assuming a fixed number of owners. */
@@ -429,31 +408,23 @@ export class ExecutionStore {
         evidence,
         data: { ...assignment.data, deliveredRevision: candidate?.candidateRevision },
       });
-      if (candidate) this.promote(assignment.runId, candidate);
+      if (candidate) new CandidatePointers(this.db).promote(assignment.runId, candidate);
       this.wake(assignment.runId);
     });
   }
 
-  /** Advances the project candidate in the same transaction as its verified assignment delivery. */
-  private promote(runId: string, candidate: Record<string, unknown>): void {
-    const run = this.run(runId);
-    this.db.put('candidate', {
-      id: JSON.stringify([run.data.authorityBase, run.data.packageId]),
-      runId,
-    });
-    this.db.put('run', {
-      ...run,
-      data: { ...run.data, ...candidate, promotedAt: new Date().toISOString() },
-    });
+  /** Publishes fresh verified promotion evidence to the environment's candidate pointer atomically. */
+  promotion(runId: string, delivery: DeliveryRecord, proof: PromotionCandidate) {
+    new CandidatePointers(this.db).acceptPromotion(runId, delivery, proof);
   }
 
-  /** Reads the transactional candidate pointer rather than inferring promotion order from wall-clock timestamps. */
-  latestDelivery(authorityBase: string, packageId: string): ExecutionRun | undefined {
-    const id = JSON.stringify([authorityBase, packageId]);
-    const pointer = this.db
-      .all<{ id: string; runId: string }>('candidate')
-      .find((p) => p.id === id);
-    return pointer ? this.run(pointer.runId) : undefined;
+  /** Reads a transactional candidate pointer without crossing live or simulation environments. */
+  latestDelivery(
+    authorityBase: string,
+    packageId: string,
+    environment?: RunEnvironment,
+  ): ExecutionRun | undefined {
+    return new CandidatePointers(this.db).latest(authorityBase, packageId, environment);
   }
 
   /** Blocks dependents transitively while leaving unrelated work runnable. */
@@ -472,6 +443,7 @@ export class ExecutionStore {
       for (const other of this.assignments(item.runId)) {
         if (
           other.id !== id &&
+          !other.data.replacedBy &&
           (['ready', 'waiting', 'running'].includes(other.status) ||
             (other.status === 'blocked' && Boolean(other.data.blockedBy))) &&
           this.reaches(other.id, id, new Set())
@@ -483,6 +455,11 @@ export class ExecutionStore {
           });
       }
     });
+  }
+
+  /** Identifies the last durable transition across all connections for scheduler wakeups. */
+  eventSequence(): number {
+    return this.db.eventSequence();
   }
 
   /** Exposes immutable event projections for reports and streaming clients. */

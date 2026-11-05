@@ -4,6 +4,96 @@
 
 ### Added
 
+- Publish each steward’s verified development branch through staging in delivery order, retain branch ancestry across dependencies, and reuse completed workday deliveries (#248).
+
+- Archive historical runtime indexes in application evidence storage and remove their maintained repository copies (#250).
+
+- Give independent publication reviewers access to the captured assembled check outputs and supplier evidence (#249).
+
+- Snapshot GitHub staging when a simulation starts. Each steward works on its own development branch, and the host rejects incompatible baselines before dispatch (#247, #248).
+
+- Pin real promotion to the GitHub target branch revision and require its publication grant before admitting live work. Refuse a merge that would import unreviewed base history (#247).
+
+- Rank the complete eligible steward catalog for task direction. Starting teams follow the goal, and committed inbox activity wakes an idle scheduler without repeated catalog scans (#148, #242).
+- Accept all component-owned file types at specification checkpoints while still requiring classified documentation and regression evidence. Show directors which failed assignments can resume, and let stewards correct missing final checklist evidence (#243, #245, #246).
+
+- Return incompatible existing-supplier requests to the steward for correction before any inbox action commits (#241).
+
+- Let task directors explicitly replace diagnosed failed change assignments. Preserve predecessor evidence, correlated requests and original criteria through verified successor delivery (#235).
+
+- Keep a rejected stewardship decision and its evidence with the scheduled owner so unrelated workday activations can proceed (#240).
+
+- Validate unused standards during architecture validation and reuse each standard across its inheriting stewards (#148).
+
+- Identify the accountable steward when a checked edit crosses ownership and guide the requester through an inbox handoff without granting writes. Remove assignment file lists: only the accountable component steward selects implementation files (#239).
+
+- Migrate platform or package registrations to compatible existing repositories through supervised materialization without pushing or modifying the original checkout (#238).
+
+- Persist the complete director decision and workflow checkpoint atomically before dispatching its assignments (#235).
+
+- Fetch locked HTTPS dependencies serially with curl, cache their archives locally, and install offline with npm integrity checks inside confinement (#237).
+
+- Keep collaboration acceptance portable inside steward confinement by separating catalog fixtures from native host setup, without adding skipped checks (#236).
+
+- Project dependency waits and verified/blocked assignment milestones onto authorized tracking issues with durable, nonduplicating recovery (#233).
+
+- Expose current-run assignment intent through read-only evidence so stewards can discover and deliberately link existing work without private checkpoint access (#231).
+
+- Expose hash-validated same-run investigation artifacts through the independent verifier manifest, preserving explicit missing evidence and rejecting foreign or altered files (#220).
+
+- Index full verification command logs as separate immutable artifacts so reviewers can retrieve relevant output without scanning unrelated logs (#219).
+
+- Return corrective feedback for invalid evidence artifact requests without terminating review or exposing foreign content (#218).
+
+- Share typed equality filters across platform and package lists, including explicit package namespace selection (#148).
+
+- Retain structured operation stdout separately from diagnostic warnings, preserving complete checked-edit proposals and supervised output bounds (#217).
+
+- Consolidate preparation, cleanup, status and following under workspace services, removing the duplicate gateway execution path while preserving historical readers and detach-only following (#148).
+
+- Preserve captured execution progress and event-sensitive revisions in workspace resource views without exposing raw harness records (#216).
+
+- Apply complete retained operation edit proposals by invocation reference through the checked edit tool, avoiding truncated formatter JSON while preserving source-write enforcement (#214).
+
+- Return application-settings revisions and reject stale service updates under exclusive persistence ownership, preserving environment overrides and simple config commands (#213).
+
+- Check captured mandatory source quality before freezing behavioral regressions, retaining specification correction without weakening frozen-test authority (#212).
+
+- Give research/review assignments pinned current-run checkpoint, checked-edit and operation evidence through a read-only MCP capability, including director and caller clarification (#207).
+
+- Queue simulation promotion under fresh real-target authority with independent target and goal verification, retained source provenance, and existing live publication gates (#148).
+
+- Explain supplier-assignment identities and retain invalid links as actionable dependency blockers without stopping unrelated work (#209).
+
+- Retain reviewed candidate record identities and revalidate original delivery attribution and independent evidence before promotion (#148).
+
+- Classify host IPC admission tests in native qualification and detect direct socket factories before they can break confined steward baselines (#208).
+
+- Assemble attributed simulation changes against a current target without importing unrelated baseline history or changing source branches; retain conflicts for inspection (#148).
+
+- Show current frozen regression paths and hashes on every steward turn, with explicit guidance for additional tests without weakening checked edits (#206).
+
+- Package an immutable headless container supervisor with scoped startup delegation, capability-free init and execution, qualified native confinement and graceful project-host drain (#148).
+
+- Reject malformed checked-edit requests with corrective feedback before any source mutation, while retaining fatal authority and recovery failures (#205).
+
+- Drain managed execution and persist interruption on host shutdown without falsely rejecting dependent work (#148).
+
+- Connect live delivery commit, fresh verification, push and GitHub PR creation to the coordinator with durable effect reuse, refreshable provider gates and independently verified exact-target staging integration (#148).
+
+- Manage platform standards through checked create/update/remove configuration transactions with stale-revision and reference protection (#148).
+- Return observed failing checks to stewards despite diagnostic prefixes while retaining fatal mandatory verification, cancellation and uncertain execution (#203, #210).
+- Add isolated, supervised GitHub delivery transport for verified host commits with exact-head recovery and scoped credentials (#148).
+- Create/remove executable components through validated configuration transactions and observe exact-head GitHub PR readiness without conflating approval, review and CI (#148).
+
+- Prepare locked dependencies sequentially before confined offline installation and identify failed operations with retained diagnostic logs (#148).
+
+- Add durable simulated Git/PR/release publication, delivery inspection and revision approval, and confined read-only dependency downloads with native bypass qualification (#148).
+
+- Route simulated tasks/workdays through isolated repositories and assignment-bound collaboration, direct workday setup, and retain revision-bound verified deliveries before publication (#148).
+
+- Add durable environment-bound collaboration intents, conservative upstream recovery, and GitHub/simulated issue adapters for the pending managed lifecycle (#148).
+
 - Update registered component, platform and package definitions through recoverable configuration commits without editing caller checkouts (#197).
 
 - Clean up eligible package workspaces outside a checkout while retaining unfinished work and execution evidence (#195).
@@ -46,6 +136,36 @@
 
 ### Fixed
 
+- Admit diagnosed workday assignment successors through the same ownership, acceptance and checkpoint checks used for tasks (#253).
+
+- Remove the workspace steward’s obsolete prohibition on its component-owned definition; retained runs keep their captured authority (#252).
+
+- Identify frozen acceptance failures in steward corrective and review feedback (#251).
+
+- Reject infeasible behavioral scopes early and return observed specification and characterization deficiencies for correction (#235).
+
+- Page complete director catalogs, retained checkpoint state and assessment input through immutable evidence tools, preventing large histories from overflowing initial prompts without restricting eligible owners (#230).
+
+- Return invalid dependency scope to the requester before creating recipient work; reject behavioral assignment scopes disconnected from the captured test-profile root before workspace preparation, preserving explicit scope and nonbehavioral workflows (#229).
+
+- Preserve original delivery attribution when a workday inherits a verified task candidate, without duplicating publication or stopping unrelated work (#227).
+
+- Give explicit simulated publication retries fresh check observations while retaining failed receipts, deduplicating pending requests and refusing uncertain-operation replay (#228).
+
+- Validate proposed new test registrations, owner and source layout before checked edits, returning corrective feedback without partial writes (#226).
+
+- Reject captured test-selection changes before checked source mutation, allowing stewards to correct proposals without terminating otherwise valid work (#225).
+
+- Resolve confined command and service executables against their actual PATH before dispatch, preserving absolute runtime identity and executable aliases in containers (#223).
+
+- Package a compatible pinned Bubblewrap for real Codex startup while retaining private-client and source confinement (#222).
+
+- Distinguish frozen-regression preservation from the earlier Git diff during review, and inherit mandatory source quality once for every ArcNexus steward (#221).
+
+- Return observed compiler-prerequisite failures as corrective agent feedback without running dependent checks or weakening mandatory verification (#210).
+
+- Preserve confined subprocess input and exit status with deny-all proxy enforcement, remove stale compiled tests, and deduplicate director context without narrowing eligible owners (#148).
+
 - Close retiring-host mutation admission and preserve nonterminal tasks before releasing execution ownership (#199).
 
 - Correct component access guidance through real stewardship, distinguishing current checked edits from historical writable-directory probes (#189).
@@ -86,6 +206,12 @@
 - Keep one canonical project host when temporary-storage or evidence-root settings change (#137).
 
 ### Changed
+
+- Use owner-scoped engineering checks and retain full repository verification on assembled deliveries (#234).
+
+- Move scripted prompt-campaign execution into acceptance-test support and retire `experiment run`; real-agent simulation continues through tasks and workdays (#148).
+
+- Batch related implementation and test authoring before long qualification cycles; preserve final release gates and real director-selected self-development (#148).
 
 - Keep new execution state inside the configured project volume while retaining explicit access to historical state (#193).
 

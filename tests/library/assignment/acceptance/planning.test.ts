@@ -43,14 +43,18 @@ class PlanningTests {
     this.assertViewers(f.env, record.id);
   }
 
-  /** Requires built status and follow commands to expose the captured plan and terminal state. */
+  /** Requires workspace resource reads and following to expose retained progress and terminal state. */
   private assertViewers(env: NodeJS.ProcessEnv, id: string): void {
-    for (const command of ['status', 'follow']) {
-      const viewed = spawnSync(process.execPath, [cli, command, id, '--json'], {
-        env,
-        encoding: 'utf8',
-        timeout: 30 * 60 * 1000,
-      });
+    for (const options of [[], ['--follow']]) {
+      const viewed = spawnSync(
+        process.execPath,
+        [cli, 'workspace', 'get', id, ...options, '--json'],
+        {
+          env,
+          encoding: 'utf8',
+          timeout: 30 * 60 * 1000,
+        },
+      );
       assert.equal(viewed.status, 0, viewed.stderr);
       assert.ok(viewed.stdout.length);
     }
@@ -69,7 +73,7 @@ class PlanningTests {
 
   /** Verifies that status rejects escaping run ids. */
   statusRejectsEscapingRunIDs() {
-    const r = spawnSync(process.execPath, [cli, 'status', '../../outside', '--json'], {
+    const r = spawnSync(process.execPath, [cli, 'workspace', 'get', '../../outside', '--json'], {
       encoding: 'utf8',
     });
     assert.equal(r.status, 2);
@@ -224,9 +228,8 @@ for (const mode of ['invalid-plan', 'planning-write'])
 
 nodeTest('status rejects escaping run IDs', () => suite.statusRejectsEscapingRunIDs());
 
-nodeTest('real stdio MCP bridge updates host checklist during a turn', (t: any) =>
-  suite.realStdioMCPBridgeUpdatesHostChecklistDuringATurn(t),
-);
+test('real stdio MCP bridge updates host checklist during a turn', (t: any) =>
+  suite.realStdioMCPBridgeUpdatesHostChecklistDuringATurn(t));
 
 for (const kind of ['research', 'review'])
   test(`planned ${kind} uses two source-read-only turns`, (t: any) =>
