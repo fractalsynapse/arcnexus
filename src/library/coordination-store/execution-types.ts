@@ -25,6 +25,11 @@ export type RunStatus = (typeof runStatuses)[number];
 export type AssignmentStatus =
   'ready' | 'running' | 'waiting' | 'completed' | 'blocked' | 'rejected' | 'failed' | 'interrupted';
 
+/** Only diagnosed unsuccessful assignments can be reopened by a director continuation. */
+export function canReopenAssignment(status: AssignmentStatus): boolean {
+  return status === 'failed' || status === 'blocked' || status === 'rejected';
+}
+
 export interface ExecutionRun {
   id: string;
   environment?: RunEnvironment;

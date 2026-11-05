@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { validateContinuation } from '../assignment/steward.js';
-import type { ExecutionAssignment } from '../coordination-store/execution-types.js';
+import {
+  canReopenAssignment,
+  type ExecutionAssignment,
+} from '../coordination-store/execution-types.js';
 import type { RecordData } from '../workspace/state.js';
 
 /** Projects runtime-owned checkpoint facts into direction without exposing arbitrary host filesystem reads. */
@@ -29,7 +32,7 @@ export class DirectionEvidence {
       if (!id)
         return {
           recordId: null,
-          continuation: { eligible: true, reason: 'No activation has started' },
+          continuation: this.continuation(undefined, assignment),
         };
       if (typeof id !== 'string' || !/^[a-f0-9-]{36}$/.test(id))
         throw new Error('Invalid retained record identity');
@@ -80,7 +83,13 @@ export class DirectionEvidence {
   }
 
   /** Distinguishes validated continuation from uncertain filesystem or managed-operation state. */
-  private continuation(record: RecordData, assignment: ExecutionAssignment) {
+  private continuation(record: RecordData | undefined, assignment: ExecutionAssignment) {
+    if (!canReopenAssignment(assignment.status) || assignment.data.replacedBy)
+      return {
+        eligible: false,
+        reason: 'Assignment cannot reopen from its current lifecycle state',
+      };
+    if (!record) return { eligible: true, reason: 'No activation has started' };
     try {
       const pending = assignment.data.reconciliation as { recordId: string } | null;
       if (pending && pending.recordId !== record.reconciliationId)

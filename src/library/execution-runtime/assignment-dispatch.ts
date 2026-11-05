@@ -5,7 +5,11 @@ import { join } from 'node:path';
 import { ExecutionContext, type ProjectExecution } from '../architecture/execution-context.js';
 import { validateContinuation } from '../assignment/steward.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
-import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/execution-types.js';
+import {
+  canReopenAssignment,
+  type ExecutionRun,
+  type ExecutionAssignment,
+} from '../coordination-store/execution-types.js';
 import { StewardshipRefusal, type DirectorResult } from '../task-intake/direction.js';
 import { save, type RecordData } from '../workspace/state.js';
 import { ProgressObserver } from '../report/progress.js';
@@ -94,7 +98,7 @@ export class AssignmentDispatch {
     const assignment = this.store.assignment(continuation.assignmentId);
     if (assignment.runId !== run.id || assignment.owner !== continuation.ownerId)
       throw new Error('Continuation must name an existing owner assignment in this run');
-    if (!['blocked', 'failed', 'rejected'].includes(assignment.status))
+    if (!canReopenAssignment(assignment.status))
       throw new Error('Continuation cannot reopen active or completed work');
     if (assignment.data.replacedBy) {
       if (

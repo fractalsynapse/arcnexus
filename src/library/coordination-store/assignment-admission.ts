@@ -1,6 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import type { ExecutionDatabase } from './execution-database.js';
-import type { ExecutionAssignment, ExecutionRun } from './execution-types.js';
+import {
+  canReopenAssignment,
+  type ExecutionAssignment,
+  type ExecutionRun,
+} from './execution-types.js';
 
 /** Admits new or continued engineering work inside its caller's durable transition. */
 export class AssignmentAdmission {
@@ -44,7 +48,7 @@ export class AssignmentAdmission {
       assignment.runId !== runId ||
       assignment.owner !== continuation.ownerId ||
       !continuation.reason.trim() ||
-      !['blocked', 'failed', 'rejected'].includes(assignment.status)
+      !canReopenAssignment(assignment.status)
     )
       throw new Error('Invalid retained assignment continuation');
     const failed = assignment.data.lastFailedOutcome as { receipt?: string } | undefined;

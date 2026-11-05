@@ -1,9 +1,10 @@
 import { AssignmentAdmission } from './assignment-admission.js';
 import type { ExecutionDatabase } from './execution-database.js';
-import type {
-  ExecutionAssignment,
-  AssignmentContinuation,
-  InboxRequest,
+import {
+  canReopenAssignment,
+  type ExecutionAssignment,
+  type AssignmentContinuation,
+  type InboxRequest,
 } from './execution-types.js';
 
 /** Keeps failed attempts inspectable while routing unresolved work to an explicitly admitted successor. */
@@ -60,7 +61,7 @@ export class AssignmentReplacements {
       previous.runId !== runId ||
       previous.owner !== decision.ownerId ||
       !decision.reason.trim() ||
-      !['failed', 'blocked', 'rejected'].includes(previous.status)
+      !canReopenAssignment(previous.status)
     )
       throw new Error('Replacement requires a diagnosed assignment of the same owner and run');
     if (previous.data.replacedBy) {
