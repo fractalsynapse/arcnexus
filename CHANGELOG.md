@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Recover retained tasks through the installed runtime and one host launcher, recording runtime transitions without per-run supervisor copies (#266).
+
 ### Added
 
 - Publish each steward’s verified development branch through staging in delivery order, retain branch ancestry across dependencies, and reuse completed workday deliveries (#248).
@@ -136,6 +140,10 @@
 
 ### Fixed
 
+- Give promotion directors retrievable target-check evidence and a distinct live-promotion goal while preserving source acceptance and provenance (#265).
+
+- Page complete steward review evidence instead of embedding large patches in model input (#262).
+
 - Measure the production shared catalog in context-size acceptance while preserving its existing safeguard and authority checks (#260).
 
 - Admit same-package simulated tasks against the active host's captured identity without recapturing advanced upstream staging (#259).
@@ -216,6 +224,8 @@
 - Keep one canonical project host when temporary-storage or evidence-root settings change (#137).
 
 ### Changed
+
+- Make simplification and three consecutive real self-development cycles the MVP baseline; defer scope expansion and permit ordinary recovery without frozen supervisors (#266).
 
 - Use owner-scoped engineering checks and retain full repository verification on assembled deliveries (#234).
 

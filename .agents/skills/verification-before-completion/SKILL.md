@@ -5,6 +5,8 @@ description: Use before claiming a change works, a check passes, acceptance is m
 
 # Evidence before claims
 
+Apply the [simplification and reliability rule](../../../AGENTS.md#simplification-and-reliability). Track its consecutive real-cycle evidence explicitly; static or scripted passes cannot establish that qualification. A failed handoff calls for examining the shared process, not another bypass.
+
 Apply this skill when making a verification claim, not as a mandatory pause after
 every edit. Follow the batched development cadence in [AGENTS.md](../../../AGENTS.md).
 

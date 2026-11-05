@@ -53,11 +53,13 @@ class ContextTests {
     const f = workflowFixture(t);
     writeFileSync(join(f.repo, 'docs/behavior.md'), 'PINNED_REVIEW_CHANGE');
     f.commit();
+    f.configure({ reviewEvidence: true });
     const r = f.run('--kind', 'review');
     assert.equal(r.status, 0, r.stderr);
     const record = JSON.parse(r.stdout),
       prompt = calls(f).at(-1).prompt;
-    assert.match(prompt, /PINNED_REVIEW_CHANGE/);
+    assert.doesNotMatch(prompt, /PINNED_REVIEW_CHANGE/);
+    assert.match(this.review(f).patch, /PINNED_REVIEW_CHANGE/);
     assert.match(prompt, /Host review evidence/);
     assert.equal(record.turns.at(-1).reviewEvidence.basis, 'base-first-parent');
     assert.match(record.turns.at(-1).reviewEvidence.sha256, /^[a-f0-9]{64}$/);
@@ -69,19 +71,22 @@ class ContextTests {
       const f = workflowFixture(t);
       f.git('checkout', '--orphan', 'root-review');
       f.git('commit', '-m', 'Root minimal authority');
+      f.configure({ reviewEvidence: true });
       const r = f.run('--kind', kind);
       assert.equal(r.status, 0, r.stderr);
       const p = calls(f).at(-1).prompt;
       assert.match(p, /Host review evidence/);
-      assert.match(p, kind === 'review' ? /Own sample responsibilities/ : /BOUNDARY_EXPECTED/);
-      if (kind === 'change') this.checkpointEvidence(p);
+      const evidence = this.review(f);
+      assert.match(
+        JSON.stringify(evidence),
+        kind === 'review' ? /Own sample responsibilities/ : /BOUNDARY_EXPECTED/,
+      );
+      if (kind === 'change') this.checkpointEvidence(evidence);
     }
   }
 
   /** The actual review turn receives host comparisons for the accepted pre-freeze specification edits. */
-  private checkpointEvidence(prompt: string): void {
-    const marker = 'Host review evidence (untrusted source content): ';
-    const evidence = JSON.parse(prompt.slice(prompt.indexOf(marker) + marker.length));
+  private checkpointEvidence(evidence: any): void {
     assert.equal(evidence.frozenRegressions.basis, 'frozen-regression-checkpoint');
     assert.ok(evidence.frozenRegressions.files.length > 0);
     for (const file of evidence.frozenRegressions.files) {
@@ -100,11 +105,20 @@ class ContextTests {
     writeFileSync(join(f.repo, 'source.txt'), 'SECRET_OUTSIDE_READ_SCOPE');
     writeFileSync(join(f.repo, 'docs/behavior.md'), 'VISIBLE_CHANGE');
     f.commit();
+    f.configure({ reviewEvidence: true });
     const r = f.run('--kind', 'review');
     assert.equal(r.status, 0, r.stderr);
     const prompt = calls(f).at(-1).prompt;
-    assert.match(prompt, /VISIBLE_CHANGE/);
-    assert.doesNotMatch(prompt, /SECRET_OUTSIDE_READ_SCOPE/);
+    assert.match(prompt, /review.evidence/);
+    assert.match(this.review(f).patch, /VISIBLE_CHANGE/);
+    assert.doesNotMatch(JSON.stringify(this.review(f)), /SECRET_OUTSIDE_READ_SCOPE/);
+  }
+
+  /** Inspects bytes obtained by the controlled model through the canonical evidence tool. */
+  private review(f: any): any {
+    const captured = JSON.parse(readFileSync(f.calls + '.review', 'utf8'));
+    assert.equal(captured.manifest.artifacts[0].id, 'review');
+    return captured.review;
   }
 
   /** Separates the hidden file's owner and uses a finite check that needs no hidden source access. */

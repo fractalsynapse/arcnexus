@@ -7,10 +7,9 @@ import { HostConnection, type HostRequest } from './host-connection.js';
 import { randomUUID } from 'node:crypto';
 import { git } from '../operations/process.js';
 import { digest, resolveBase } from '../architecture/assignment.js';
-import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, openSync, closeSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { RunnerSnapshot } from './runner-snapshot.js';
+import { HostRuntime } from './host-runtime.js';
 import { setTimeout as delay } from 'node:timers/promises';
 import {
   ExecutionContext,
@@ -150,20 +149,7 @@ export class HostClient {
     ContainerLifetime.assertOpen(this.root);
     const context = join(this.directory, 'context-' + randomUUID() + '.json');
     writeFileSync(context, JSON.stringify(this.context), { mode: 0o600 });
-    const runner = new RunnerSnapshot().capture(this.root);
-    const log = openSync(join(this.directory, 'host.log'), 'a', 0o600);
-    const child = spawn(
-      process.execPath,
-      [
-        join(runner.directory, 'dist/library/execution-runtime/host-main.js'),
-        this.root,
-        context,
-        this.socket,
-      ],
-      { detached: true, stdio: ['ignore', log, log] },
-    );
-    closeSync(log);
-    child.unref();
+    new HostRuntime().launch(this.root, context, this.socket);
   }
 
   /** Sends a structured control through the shared private transport. */

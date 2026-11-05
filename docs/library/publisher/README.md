@@ -101,3 +101,16 @@ acceptance before publication begins. An aggregate delivery is complete only
 when all its constituent development deliveries have completed their required
 milestones. Approval of the exact aggregate candidate authorizes its captured
 constituents. Conflicting refs and incomplete verification block publication.
+
+### Promotion assessment evidence
+
+A new promotion has a live-promotion goal. The original simulation objective remains
+provenance; all original engineering acceptance criteria remain mandatory. Promoting
+verified engineering does not claim that the source simulation completed publication.
+Its lifecycle history and any separately retained recovery remain distinct evidence.
+
+The promotion director receives the current candidate's complete host-check outputs
+through the same paged publication evidence as the independent reviewer, plus the
+candidate-bound independent assessment. Private report paths alone do not establish
+validation. A foreign, incomplete or mismatched assessment must block promotion.
+Existing promotion goals and frozen supervisors are not rewritten.

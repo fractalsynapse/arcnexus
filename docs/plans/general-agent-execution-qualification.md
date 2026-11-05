@@ -1,5 +1,9 @@
 # General execution qualification — issue 78
 
+Historical scope and evidence. Current MVP scope and qualification are governed by
+[the self-development MVP](self-development-mvp.md); this ledger does not add
+completion gates to that contract.
+
 This records implementation and qualification of the phase-two execution extension.
 All six live gates have demonstrations; final implementation checks are recorded
 below. Integration is gated on the current head's CI and repository review rules in

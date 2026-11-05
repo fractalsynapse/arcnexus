@@ -24,10 +24,11 @@ as it is reliable. Direct bootstrap development supplies only what that loop nee
    sequentially through durable assignments, inboxes and dynamic dependencies.
    Support self-directed workdays and director-led tasks, with one accountable owner
    per assignment. The [general execution contract](library/execution-runtime/execution.md)
-   and its qualification gates remain foundational. The accepted
-   [managed lifecycle and CLI contract](plans/managed-lifecycle.md) extends phase
-   two with a managed portfolio, composed authority, publication and real-agent
-   simulation; its gates must pass before phase three.
+   retains foundational coordination and trust requirements; current qualification
+   is defined by the MVP below. The accepted
+   [self-development MVP](plans/self-development-mvp.md) defines the current phase-two
+   scope and gates. The broader managed lifecycle plan is historical scope, not an
+   additional prerequisite.
 3. **Architect-directed operation:** shared application services support OpenAPI
    and MCP gateways and a React UI for architectural direction, task/workday
    control, portfolio management and evidence inspection.
@@ -70,7 +71,7 @@ are not automatic context.
   boundary; it cannot rewrite the approved architecture to excuse a deviation.
 - Use one shared deterministic execution path behind eventual CLI, API, UI, and MCP
   gateways. AI performs engineering; ordinary code schedules and records work.
-- Execute sequentially within each repository, with one execution owner. Tasks
+- Execute through one platform-wide sequential lane for the MVP. Tasks
   safely coordinate with workdays while preserving explicit pause/stop intent and
   live/simulation isolation. Stewards are dormant definitions between activations.
 - Keep one accountable owner per assignment and one authoritative owner per contract.
@@ -94,12 +95,12 @@ one repository. Durable coordination uses SQLite. Executable architectural sourc
 uses the current supported schema family; historical readers preserve earlier
 configuration and evidence without making them executable adapters.
 
-The accepted managed lifecycle extends that foundation to a project volume and
-composed platform/package repositories before phase three. Shared application
+The current MVP uses one platform, one sequential execution lane, a fixed project
+volume mount and straightforward platform/package composition. Shared application
 services own behavior; CLI and future OpenAPI, MCP and React gateways adapt those
 services. Hono and React/Vite remain the initial web implementation direction. Keep
-credentials and machine bindings outside architectural source, and keep the
-supervising runtime stable during self-development.
+credentials and machine bindings outside architectural source. Ordinary recovery
+may adopt the installed runtime after validating the checkpoint and its authority.
 
 Build infrastructure when the current accepted batch needs it. Do not introduce
 an alternative scheduler, general agent framework or duplicate contract inventory.
@@ -122,7 +123,8 @@ standards or source confinement until after the UI.
   retaining unresolved dependencies and limits in the report.
 - **Self-development loop:** use a verified working ArcNexus revision to improve
   the next; a tested local/staging revision qualifies without a published release.
-  Retain the stable supervising runner and a recovery path when the candidate fails.
+  Keep recovery ordinary and retain evidence when a candidate fails; frozen runtime
+  copies are not a prerequisite for continuation.
   Candidate changes to instructions or tests cannot retroactively redefine the
   active assignment's authority or accepted behavior.
 
@@ -141,13 +143,13 @@ The architect specifies **an Astra supervisor directing Luna stewards**: reserve
 Astra for high-level decomposition, architectural reasoning and review; use Luna
 for bounded component engineering. Human architectural authority remains final.
 Deterministic runtime code schedules, enforces authority and records execution.
-The phase-two execution system supports arbitrary eligible steward counts; the
-qualification baseline includes three- and five-owner scheduling and a real
-goal with at least three observed stewards and an owner discovered during execution.
+The execution system supports eligible component stewards in one sequential lane.
+The current MVP qualification is defined below; steward counts follow actual work.
 The real director selects from actual project components; callers do not prescribe
 the team or replace direction with a scripted result.
 
-- Phase two uses a verified change in the shared candidate as its delivery milestone.
+- Phase two uses a verified owner delivery as its dependency milestone. The host
+  assembles verified deliveries through the canonical staging route.
   Durable checkpoints support explicit pause/resume and validated recovery.
   Uncertain operations are never replayed automatically. Historical two-owner
   workdays remain inspectable but cannot resume under the new scheduler.
@@ -157,10 +159,9 @@ the team or replace direction with a scripted result.
 ## Sequence, not a large implementation plan
 
 1. Single steward and real CLI engineering result.
-2. General execution, minimal configuration, managed portfolio and composed
-   authority, the unified CLI, and the coordinator/director/agent/verifier/publisher
-   lifecycle. Qualify real-agent tasks and workdays in isolated simulation, promotion
-   into real staging, and the supported container runtime.
+2. Simplify and unify the self-development lifecycle within the current MVP envelope.
+   Establish repeatable real engineering, verification, recovery and staging delivery
+   before expanding interface or portfolio breadth.
 3. OpenAPI and MCP web-service gateways and the React application, using the same
    application services independently of the current directory and terminal.
 4. Expand architectural governance and conformance beyond the initial contracts.
@@ -181,41 +182,13 @@ decisions should update this charter rather than require readers to reconstruct 
 
 ## Phase-two completion gate
 
-Phase three remains blocked until the accepted
-[managed lifecycle and CLI plan](plans/managed-lifecycle.md) is implemented and
-qualified. Its scope includes managed volume identities, composed platform/package
-architecture, architectural CRUD, the complete CLI contract, isolated simulation,
-authorized GitHub/staging delivery and explicit promotion. Earlier foundation
-increments do not establish completion of these capabilities.
+The [self-development MVP](plans/self-development-mvp.md) is the single current
+scope and acceptance contract for phase two. It replaces the broader completion gates
+in historical plans; deferred scope is not claimed complete. The governing
+simplification and repeated-reliability rule lives in [AGENTS.md](../AGENTS.md#simplification-and-reliability).
 
-Tasks and workdays share one production lifecycle:
-**Coordinator → Director → Agents → Independent Verifier → Publisher**.
-Simulation changes the captured external environment, not the scheduler or engineering
-workflow. It uses real agents, actual edits, tests, local Git delivery and retained
-artifacts while preventing real upstream mutations throughout the run. Deterministic
-and recorded scenarios belong in acceptance tests. Real main merges, tags and package
-publication remain outside this increment and under human control.
-
-All six real demonstrations in the managed lifecycle plan are prerequisites.
-Retain actual diffs, operation evidence, independent reviews and artifacts, including
-a useful ArcNexus improvement delivered through the complete simulated lifecycle
-and then explicitly promoted, freshly verified and integrated into real staging.
-
-Report deterministic tests, native enforcement, CI, real-agent simulation and real
-upstream integration separately. Scripted success cannot substitute for a real-agent
-case; simulated publication cannot establish real-provider integration. A normal
-real-agent change integrated manually is useful progress, but does not establish the
-complete simulated delivery and promotion gate.
-
-The [general execution ledger](plans/general-agent-execution-qualification.md) and
-[minimal configuration contract](plans/minimal-component-configuration.md) retain
-their foundational requirements: arbitrary eligible stewards, durable sequential
-execution, fair workdays, cancellation/recovery, one authored source per architectural
-fact, derived catalogs, supervised operations, checked source edits and frozen authority.
-No execution budgets or legacy executable adapters are reintroduced. Historical
-reports and qualification records remain inspectable without rewriting their meaning.
-
-The container gate includes a persistent project volume, supported native confinement
-and delegated cgroups, stable supervisors, interruption recovery and relocated mounts.
-HTTP routing, web authentication and React implementation begin in phase three only
-after these application services and lifecycle gates are established.
+Phase three begins when that supported lifecycle meets its real qualification and
+its application services can support the OpenAPI, MCP and React gateways. Keep
+local checks, native enforcement, CI, real-agent simulation and real upstream
+integration distinct in reports. Recorded or scripted tests cannot establish real
+self-development. Human authority over main, tags and production releases remains.
