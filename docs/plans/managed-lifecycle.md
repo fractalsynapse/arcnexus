@@ -2708,3 +2708,9 @@ then failed because the final read-only turn omitted a review checklist item.
 Identify outstanding steward items before accepting the handoff. Give a completed
 turn its existing plan-correction checkpoint so it can supply evidence or explain
 a blocker. Never complete an item on the steward's behalf.
+
+The correction fixture reproduced the pending final claim and recovered it through
+the normal native session in 49 seconds. The existing record and unchanged review
+checkpoint were sufficient. The assembled confined run at c84f845 recorded 590
+passes and 397 native-environment skips across 987 cases, with no failures.
+The two ranking tests and two native paged-direction cases passed separately.

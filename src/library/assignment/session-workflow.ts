@@ -3,7 +3,7 @@ import { SpecificationValidationError } from './specification-error.js';
 import { SessionProgress } from './session-progress.js';
 import { save } from '../workspace/state.js';
 import { logExcerpt } from './attempts.js';
-import { completePlan, CompletedPlanValidationError } from './plan.js';
+import { completePlan, CompletedPlanValidationError, requireCompletedItems } from './plan.js';
 import { SessionState } from './session-state.js';
 import { AssignmentBlocked, SessionTurn } from './session-turn.js';
 import { SessionVerification } from './session-verification.js';
@@ -131,6 +131,7 @@ export class SessionWorkflow {
       record.nextStage = 'implementation';
       return;
     }
+    requireCompletedItems(record);
     await this.verification.final();
     this.markAttempt({ status: 'completed' });
     record.outcome = 'ready_for_integration';
@@ -168,6 +169,7 @@ export class SessionWorkflow {
         '\nThis is the only execution turn after planning for this research/review assignment. Execute the selected plan now using permitted operations; do not defer testing or service operations to an imaginary later turn. Source-read-only prohibits source edits, not declared operations. Return findings, evidence references, uncertainty and checklist updates for all selected work, or a precise blocker. Do not implement source changes or publish.',
       true,
     );
+    requireCompletedItems(this.state.options.record);
     await this.verification.final();
     this.state.options.record.outcome = `${this.state.assignment.kind}_completed`;
   }

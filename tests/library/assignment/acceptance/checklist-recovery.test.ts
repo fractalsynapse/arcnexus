@@ -181,6 +181,18 @@ class ChecklistRecoveryScenarios {
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'before');
   }
 
+  /** A pending final item keeps the completed review correctable at the same checkpoint. */
+  async finalClaim(t: TestContext): Promise<void> {
+    const { record, step } = this.fixture(t, 'final-checklist');
+    for (let stage = 0; stage < 4; stage++) await step();
+    assert.equal(record.nextStage, 'review');
+    assert.equal(record.safeCheckpoint, true);
+    assert.match(String(record.planFeedback), /incomplete or blocked: work/);
+    await step();
+    assert.equal(record.nextStage, 'finished');
+    assert.equal(record.status, 'completed');
+  }
+
   /** Captures an unlimited engineering profile and uses the production resumable session after every turn. */
   private fixture(t: TestContext, mode: string) {
     const f = workflowFixture(t, mode);
@@ -276,6 +288,9 @@ test('invalid regression selection preserves the specification for correction', 
 
 test('changing invalid regression identities does not bypass progress detection', (t) =>
   scenarios.selectionLoop(t));
+
+test('final review can supply missing checklist evidence at its safe checkpoint', (t) =>
+  scenarios.finalClaim(t));
 
 registerSuite({
   component: 'assignment',
