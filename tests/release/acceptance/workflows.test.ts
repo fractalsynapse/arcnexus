@@ -45,7 +45,7 @@ class WorkflowTests {
     assert.match(bindings.run, /\.git\/arcnexus\/bindings\.yaml/);
     assert.match(bindings.run, /Expected one installed native Codex executable/);
     assert.match(bindings.run, /execFileSync\(codex, \['--version'\]/);
-    assert.match(bindings.run, /tools: \{ node: process.execPath, codex, npm \}/);
+    assert.match(bindings.run, /tools: \{ npm, node: process.execPath, codex \}/);
     const tests = steps.find((step: any) => step.name === 'Test built CLI');
     assert.match(tests.run, /systemd-run/);
     assert.match(tests.run, /--property=Delegate=yes/);
@@ -63,9 +63,10 @@ class WorkflowTests {
     const install = steps.find((step: any) => step.name === 'Install confinement runtime');
     const bindings = steps.find((step: any) => step.name === 'Bind verified machine executables');
     assert.match(install.run, /--prefix \/usr\/local.*npm@10\.9\.9/);
-    assert.match(bindings.run, /const npm = '\/usr\/local\/bin\/npm'/);
+    assert.match(bindings.run, /const npm = '\/usr\/local\/lib\/arcnexus-ci\/bin\/npm'/);
+    assert.ok(bindings.run.includes('exec /usr/local/bin/npm "$@"'));
     assert.match(bindings.run, /execFileSync\(npm, \['--version'\]/);
-    assert.match(bindings.run, /tools: \{ node: process.execPath, codex, npm \}/);
+    assert.match(bindings.run, /tools: \{ npm, node: process.execPath, codex \}/);
   }
 
   /** Confined skips require a separate native host gate, without inference or privilege escalation for workers. */
