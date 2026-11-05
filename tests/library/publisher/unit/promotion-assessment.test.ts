@@ -16,6 +16,7 @@ class PromotionAssessmentScenario {
     const run: any = { id: 'live', environment: { id: 'target', mode: 'live' } };
     const review: any = {
       id: 'review',
+      base: record.base,
       executionRunId: 'live',
       parentRecordId: 'check',
       executionEnvironment: run.environment,
@@ -38,6 +39,7 @@ class PromotionAssessmentScenario {
 const scenario = new PromotionAssessmentScenario();
 
 for (const [field, value] of Object.entries({
+  base: 'foreign-candidate',
   executionRunId: 'foreign',
   parentRecordId: 'other',
   executionEnvironment: { id: 'foreign' },

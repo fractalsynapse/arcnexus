@@ -86,6 +86,7 @@ export class PromotionReview {
       if (
         review.executionRunId !== this.run.id ||
         review.parentRecordId !== record.id ||
+        review.base !== record.base ||
         JSON.stringify(review.executionEnvironment) !== JSON.stringify(this.run.environment) ||
         review.activationRole !== 'verifier' ||
         review.status !== 'completed' ||
