@@ -1,3 +1,4 @@
+import { OwnerRetrieval } from './retrieval.js';
 import { DirectionEvidence } from './direction-evidence.js';
 import { join } from 'node:path';
 import { catalogContext, type Component } from '../architecture/components.js';
@@ -21,8 +22,9 @@ export class DirectionContext {
     record: RecordData,
     catalog: Component[],
     retained?: RetainedDirection,
+    goal?: string,
   ) {
-    this.catalog(catalog);
+    this.catalog(catalog, goal);
     if (retained)
       this.state(String(record.executionRunId), {
         ...retained,
@@ -43,13 +45,18 @@ export class DirectionContext {
   }
 
   /** Makes every eligible owner discoverable and exposes its complete captured contracts separately. */
-  private catalog(components: Component[]): void {
+  private catalog(components: Component[], goal?: string): void {
     const catalog = catalogContext(components);
     const index = catalog.components.map((component) => {
       const artifact = 'owner:' + String(component.id);
       this.pages.add(artifact, JSON.stringify(component), 'json');
       return { id: component.id, purpose: component.purpose, type: component.type, artifact };
     });
+    if (goal) {
+      const matches = new OwnerRetrieval(components).select(goal);
+      const scores = new Map(matches.map((match) => [match.id, match.score]));
+      index.sort((a, b) => (scores.get(String(b.id)) ?? -1) - (scores.get(String(a.id)) ?? -1));
+    }
     this.pages.add(
       'catalog',
       JSON.stringify({ components: index, standards: catalog.standards }),
