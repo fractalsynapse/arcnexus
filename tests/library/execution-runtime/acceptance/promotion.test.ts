@@ -68,6 +68,28 @@ class PromotionScenarios {
     assert.equal(readFileSync(join(f.general.fixture.repo, 'source.txt'), 'utf8'), 'before');
   }
 
+  /** Reads exactly the artifacts advertised to the independent reviewer and compares them to host output. */
+  private assertPublicationEvidence([check, reviewer, director]: any[]): void {
+    assert.equal(director.acceptanceCriteria.length, 2);
+    const manifest = reviewer.verificationEvidence;
+    const content = (id: string) => {
+      const artifact = manifest.artifacts.find((entry: { id: string }) => entry.id === id);
+      assert.ok(artifact, 'Missing review artifact: ' + id);
+      return readFileSync(join(manifest.directory, artifact.sha256), 'utf8');
+    };
+    const execution = JSON.parse(content('execution'));
+    assert.equal(execution.publication.head, check.base);
+    assert.equal(execution.publication.recordId, check.id);
+    const commands = execution.publication.observations.hostCommands;
+    assert.ok(commands.length > 0);
+    for (const command of commands)
+      assert.equal(
+        content(command.output.artifact),
+        readFileSync(check.commands[command.index].log, 'utf8'),
+      );
+    assert.equal(execution.publication.sourceDeliveries.length, 1);
+  }
+
   /** Checks fresh current-run review identities and retains original assignments without fabricating live completions. */
   private assertDelivery(f: PromotionFixture, id: string): void {
     const run = f.host.store.run(id);
@@ -87,7 +109,7 @@ class PromotionScenarios {
       reports.map((r) => r.activationRole),
       ['publication-checks', 'verifier', 'director-assessment'],
     );
-    assert.equal(reports[2].acceptanceCriteria.length, 2);
+    this.assertPublicationEvidence(reports);
     assert.equal(delivery.approval, undefined);
     assert.equal(delivery.integration, 'not_requested');
     assert.equal(delivery.publication, 'not_requested');

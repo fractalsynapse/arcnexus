@@ -4,6 +4,8 @@
 
 ### Added
 
+- Give independent publication reviewers access to the captured assembled check outputs and supplier evidence (#249).
+
 - Snapshot GitHub staging when a simulation starts. Each steward works on its own development branch, and the host rejects incompatible baselines before dispatch (#247, #248).
 
 - Pin real promotion to the GitHub target branch revision and require its publication grant before admitting live work. Refuse a merge that would import unreviewed base history (#247).

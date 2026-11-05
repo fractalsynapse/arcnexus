@@ -1,3 +1,4 @@
+import { PublicationEvidence } from '../report/report.js';
 import { PublicationPolicy } from './publication-policy.js';
 import { join } from 'node:path';
 import type { ProjectExecution } from '../architecture/execution-context.js';
@@ -95,6 +96,8 @@ export class DeliveryChecks {
   /** Independently assesses assembled changes against captured source and original assignment criteria. */
   private review(record: RecordData, signal: AbortSignal): Promise<string[]> {
     const evidence = {
+      stage:
+        'Assembled candidate before integration. Assess the engineering criteria using publication.head and its observed checks. Integration and release outcomes are recorded separately after verification.',
       criteria: this.assignments.flatMap((assignment) => assignment.acceptance),
       assignments: this.assignments,
       commands: record.commands,
@@ -105,7 +108,11 @@ export class DeliveryChecks {
       this.run.objective,
       evidence,
       false,
-      undefined,
+      new PublicationEvidence(this.root, this.context.key).capture(
+        this.run,
+        record,
+        this.assignments,
+      ),
       this.context.base,
     );
   }

@@ -12,6 +12,7 @@ interface HostCommandEvidence {
 
 interface HostExecutionEvidence {
   run?: { id?: string };
+  publication?: { recordId: string; observations: { hostCommands?: HostCommandEvidence[] } };
   assignments?: Array<{
     id: string;
     record?: {
@@ -69,14 +70,26 @@ export class VerificationEvidence {
 
   /** Pins complete logs separately so criterion inspection need not page through unrelated command output. */
   private indexCommandOutputs(evidence: HostExecutionEvidence): void {
-    for (const assignment of evidence.assignments ?? []) {
-      for (const command of assignment.record?.observations?.hostCommands ?? []) {
-        if (typeof command.output?.content !== 'string') continue;
-        const id = `execution:${assignment.id}:command:${command.index}`;
-        this.pages.add(id, command.output.content, 'utf8');
-        delete command.output.content;
-        command.output.artifact = id;
-      }
+    for (const assignment of evidence.assignments ?? [])
+      this.addCommandOutputs(
+        'execution:' + assignment.id,
+        assignment.record?.observations?.hostCommands ?? [],
+      );
+    if (evidence.publication)
+      this.addCommandOutputs(
+        'publication:' + evidence.publication.recordId,
+        evidence.publication.observations.hostCommands ?? [],
+      );
+  }
+
+  /** Labels each immutable output by its originating assignment or assembled check record. */
+  private addCommandOutputs(prefix: string, commands: HostCommandEvidence[]): void {
+    for (const command of commands) {
+      if (typeof command.output?.content !== 'string') continue;
+      const id = prefix + ':command:' + command.index;
+      this.pages.add(id, command.output.content, 'utf8');
+      delete command.output.content;
+      command.output.artifact = id;
     }
   }
 

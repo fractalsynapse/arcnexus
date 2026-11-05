@@ -2817,3 +2817,11 @@ without the validation outputs. Simulated staging remained at f6fd4e6. Bind
 the assembled checks, execution chronology and supplier assessments to the
 actual review manifest before another qualification (#249). Preserve the
 original uncertain merge and do not substitute a manual merge or promotion.
+
+A separately captured read-only qualification of the same assembled guide
+revision exposed the actual host command outputs to the independent reviewer.
+It verified all five engineering criteria. The original uncertain merge and
+release state remain intact. A focused promotion regression also checks the
+actual bytes in the verifier capability against the host command report.
+Running its four cases took 31 seconds and avoided repeating the full guide
+simulation while diagnosing evidence transport (#249).
