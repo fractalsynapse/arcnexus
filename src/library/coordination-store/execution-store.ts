@@ -152,8 +152,6 @@ export class ExecutionStore {
     if (ids.size !== continuations.length) throw new Error('Duplicate continuation identity');
     for (const item of continuations) {
       if (item.replacementChangeType) {
-        if (this.run(runId).mode !== 'task')
-          throw new Error('Only task direction may replace an assignment');
         this.replacements.replace(runId, item);
         const next = this.effective(item.assignmentId);
         for (const id of next.dependencies) this.assertAcyclic(next, id);

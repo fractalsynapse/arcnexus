@@ -27,14 +27,14 @@ class ReplacementScenario {
   };
 
   /** Captures a failed supplier with an already propagated blocker and immutable evidence. */
-  constructor(t: TestContext) {
+  constructor(t: TestContext, mode: 'task' | 'workday' = 'task') {
     const root = mkdtempSync(join(tmpdir(), 'arcnexus-replacement-'));
     this.store = new ExecutionStore(join(root, 'execution.sqlite'));
     t.after(() => {
       this.store.close();
       rmSync(root, { recursive: true, force: true });
     });
-    this.run = this.store.createRun('task', ['a', 'b'], 'Verified delivery');
+    this.run = this.store.createRun(mode, ['a', 'b'], 'Verified delivery');
     this.sender = this.store.enqueue(this.run.id, 'a', 'Wait for the fix');
     this.first = this.store.request(this.sender.id, this.request);
     this.store.updateAssignment(this.first.id, 'running', { recordId: 'failed-record' });
@@ -121,6 +121,9 @@ class ReplacementScenario {
 
 test('explicit replacements preserve failed evidence and wait for verified chain delivery', (t) =>
   new ReplacementScenario(t).chain());
+
+test('workday replacements preserve failed evidence and verified dependency milestones', (t) =>
+  new ReplacementScenario(t, 'workday').chain());
 
 test('conflicting and cross-owner replacements roll back admission', (t) =>
   new ReplacementScenario(t).refuse());

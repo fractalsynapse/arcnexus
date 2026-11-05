@@ -108,7 +108,7 @@ export class AssignmentDispatch {
         return;
       throw new Error('Assignment already replaced; inspect its current successor');
     }
-    this.replacementAuthority(run, assignment, continuation);
+    this.replacementAuthority(assignment, continuation);
     this.checkpoint(assignment);
   }
 
@@ -134,7 +134,6 @@ export class AssignmentDispatch {
 
   /** Rechecks a proposed fresh workflow against the original owner and all original criteria. */
   private replacementAuthority(
-    run: ExecutionRun,
     assignment: ExecutionAssignment,
     continuation: DirectorResult['continuations'][number],
   ): void {
@@ -143,8 +142,7 @@ export class AssignmentDispatch {
         ...(assignment.data.proposal as Partial<Assignment>),
         changeType: continuation.replacementChangeType,
       });
-      if (run.mode !== 'task' || intent.kind !== 'change')
-        throw new Error('Only task change assignments can be replaced');
+      if (intent.kind !== 'change') throw new Error('Only change assignments can be replaced');
       new ExecutionContext().assignment(this.context, assignment.owner, intent);
     }
   }

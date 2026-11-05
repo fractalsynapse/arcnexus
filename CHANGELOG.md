@@ -136,6 +136,8 @@
 
 ### Fixed
 
+- Admit diagnosed workday assignment successors through the same ownership, acceptance and checkpoint checks used for tasks (#253).
+
 - Remove the workspace steward’s obsolete prohibition on its component-owned definition; retained runs keep their captured authority (#252).
 
 - Identify frozen acceptance failures in steward corrective and review feedback (#251).

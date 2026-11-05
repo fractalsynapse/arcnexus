@@ -67,13 +67,39 @@ class DirectorRecoveryScenarios {
     assert.equal(host.store.assignment(old.id).status, 'failed');
   }
 
-  /** Refuses fresh engineering before dispatch when an old managed invocation may still have effects. */
-  uncertain(t: TestContext): void {
+  /** Admits a workday director successor without blocking unrelated ready stewardship work. */
+  workdayReplacement(t: TestContext): void {
     const f = new GeneralFixture(t).fixture;
     const context = new ExecutionContext().resolve(f.repo);
     const host = new ProjectHost(f.state, context);
     t.after(() => host.store.close());
-    const task = host.submit('Recover uncertain work');
+    host.control('start');
+    const run = host.store.runs().find((item) => item.mode === 'workday')!;
+    const old = host.store.enqueue(run.id, 'c', 'Characterize behavior', ['Observed']);
+    const unrelated = host.store.enqueue(run.id, 'a', 'Unrelated ready work');
+    host.store.updateAssignment(old.id, 'ready', {
+      proposal: { kind: 'change', changeType: 'behavior' },
+    });
+    host.store.fail(old.id, 'failed', 'Requires a diagnosed fresh workflow');
+    new AssignmentDispatch(f.state, context, host.store).apply(
+      run,
+      this.replacementDecision(old.id),
+    );
+    const successor = host.store.effective(old.id);
+    assert.notEqual(successor.id, old.id);
+    assert.equal(successor.owner, old.owner);
+    assert.deepEqual(successor.acceptance, old.acceptance);
+    assert.equal(host.store.assignment(old.id).status, 'failed');
+    assert.ok(host.store.ready(run.id).some((item) => item.id === unrelated.id));
+  }
+
+  /** Refuses fresh engineering before dispatch when an old managed invocation may still have effects. */
+  uncertain(t: TestContext, mode: 'task' | 'workday' = 'task'): void {
+    const f = new GeneralFixture(t).fixture;
+    const context = new ExecutionContext().resolve(f.repo);
+    const host = new ProjectHost(f.state, context);
+    t.after(() => host.store.close());
+    const task = host.store.createRun(mode, context.owners, 'Recover uncertain work');
     const old = host.store.enqueue(task.id, 'c', 'Characterize behavior', ['Observed']);
     const path = join(f.state, 'runs', old.id);
     mkdirSync(path, { recursive: true });
@@ -138,8 +164,12 @@ test('director diagnoses blocked work without claiming its delivery', (t) =>
 test('task direction replaces failed workflow while preserving original acceptance', (t) =>
   scenarios.replacement(t));
 
-test('task replacement refuses interrupted operations before fresh engineering', (t) =>
-  scenarios.uncertain(t));
+test('workday direction replaces failed change work without blocking unrelated ready work', (t) =>
+  scenarios.workdayReplacement(t));
+
+for (const mode of ['task', 'workday'] as const)
+  test(`${mode} replacement refuses interrupted operations before fresh engineering`, (t) =>
+    scenarios.uncertain(t, mode));
 
 registerSuite({
   component: 'execution-runtime',
