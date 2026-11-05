@@ -208,14 +208,8 @@ export class GitHubDelivery {
   }
 
   /** Reads an exact target ref with no mutable local tracking-ref fallback. */
-  private async target(signal: AbortSignal): Promise<string> {
-    const result = await this.client.request(
-      '/git/ref/heads/' + encodeURIComponent(this.delivery.target.branch),
-      signal,
-    );
-    if (result.object?.type !== 'commit' || !/^[a-f0-9]{40,64}$/.test(result.object.sha))
-      throw new Error('GitHub target revision is unavailable');
-    return result.object.sha;
+  private target(signal: AbortSignal): Promise<string> {
+    return this.client.branchHead(this.delivery.target.branch, signal);
   }
 
   /** Imports immutable objects into a fresh host-only bare repository without candidate configuration or hooks. */

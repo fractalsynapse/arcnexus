@@ -1,3 +1,4 @@
+import { githubHostCredential } from '../operations/github-upstream.js';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
@@ -184,11 +185,7 @@ export class RunPublication {
         effects: environments.effects,
         deliveries: store,
         policy: run.data.publicationPolicy as CapturedPublicationPolicy,
-        credential: async () => {
-          const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
-          if (!token) throw new Error('GitHub host credential is unavailable');
-          return token;
-        },
+        credential: githubHostCredential,
         checks: (head, cancellation, independent) => checks.check(head, cancellation, independent),
       },
       delivery,

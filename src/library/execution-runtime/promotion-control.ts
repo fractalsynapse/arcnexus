@@ -2,7 +2,9 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { InputError } from '../architecture/config.js';
 import { DeliveryResources } from '../publisher/publisher.js';
-import { git } from '../operations/process.js';
+import { githubBranchHead } from '../operations/github-upstream.js';
+import { PublicationPolicy } from '../publisher/publisher.js';
+import { runDestination } from './run-destination.js';
 import { HostClient } from './host-client.js';
 
 /** Starts promotion under newly captured target authority instead of upgrading the simulation's supervisor. */
@@ -17,13 +19,23 @@ export class PromotionControl {
       throw new InputError('Stale simulation delivery revision');
     if (delivery.environment.mode !== 'simulation')
       throw new InputError('Only a simulation delivery can be promoted');
+    const { repository, branch } = delivery.target;
+    const base = await githubBranchHead(repository, branch, new AbortController().signal);
     const source = this.source(delivery.projectId);
     const client = new HostClient(source, this.root, {
       packageId: delivery.packageId,
-      base: git(source, 'rev-parse', 'HEAD').trim(),
+      base,
     });
     if (client.context.key !== delivery.projectId)
       throw new InputError('Promotion repository identity changed');
+    const policy = new PublicationPolicy().resolve(client.context);
+    if (
+      policy?.operation.targetBranch !== branch ||
+      runDestination(client.context, 'live') !== repository
+    )
+      throw new InputError(
+        `Promotion requires a matching publication grant on ${repository}/${branch} at ${base}`,
+      );
     await client.ensure('delivery-promote');
     const identity = await client.request({ action: 'identity' });
     if (!identity.hostCapabilities?.includes('delivery-promote'))

@@ -3,6 +3,18 @@ import { createHash } from 'node:crypto';
 import type { ExternalEffect, ExternalObservation } from '../coordination-store/lifecycle-types.js';
 import type { UpstreamProvider } from './upstream-execution.js';
 
+/** Supplies the GitHub credential only at the host/provider boundary. */
+export async function githubHostCredential(): Promise<string> {
+  const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
+  if (!token) throw new Error('GitHub host credential is unavailable');
+  return token;
+}
+
+/** Pins a promotion to the provider's target without updating a checkout or a Git ref. */
+export function githubBranchHead(repository: string, branch: string, signal: AbortSignal) {
+  return new GitHubTransport(repository, githubHostCredential).branchHead(branch, signal);
+}
+
 /** Implements allowlisted GitHub collaboration with host-only credentials and conservative recovery. */
 export class GitHubUpstream implements UpstreamProvider {
   readonly mode = 'live' as const;

@@ -18,6 +18,19 @@ export class GitHubTransport {
     return this.send(this.scope(path, method), signal, method, body);
   }
 
+  /** Resolves a captured branch to its immutable Git commit before live work is admitted. */
+  async branchHead(branch: string, signal: AbortSignal): Promise<string> {
+    const ref = await this.request('/git/ref/heads/' + encodeURIComponent(branch), signal);
+    const sha = ref.object?.sha;
+    if (
+      ref.object?.type !== 'commit' ||
+      typeof sha !== 'string' ||
+      !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(sha)
+    )
+      throw new Error('GitHub target revision is unavailable');
+    return sha;
+  }
+
   /** Reads provider-computed PR gates using a fixed query and captured repository variables. */
   async pullRequest(number: number, signal: AbortSignal): Promise<any> {
     if (!Number.isSafeInteger(number) || number <= 0) throw new Error('Invalid PR identity');

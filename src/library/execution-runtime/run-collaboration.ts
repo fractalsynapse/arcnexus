@@ -5,7 +5,7 @@ import { executionIdentity, type ProjectExecution } from '../architecture/execut
 import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/execution-types.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import { ProviderStore } from '../coordination-store/provider-store.js';
-import { GitHubUpstream } from '../operations/github-upstream.js';
+import { githubHostCredential, GitHubUpstream } from '../operations/github-upstream.js';
 import { SimulatedUpstream } from '../operations/simulated-upstream.js';
 import { UpstreamExecution } from '../operations/upstream-execution.js';
 import { UpstreamBridge } from '../operations/upstream-bridge.js';
@@ -194,11 +194,7 @@ export class RunCollaboration {
         environment.providerId,
         environment.id,
         this.target,
-        async () => {
-          const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
-          if (!token) throw new Error('GitHub host credential is unavailable');
-          return token;
-        },
+        githubHostCredential,
       );
     return provider;
   }

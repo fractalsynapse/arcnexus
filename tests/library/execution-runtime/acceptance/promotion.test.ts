@@ -1,13 +1,46 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
+import { ExecutionControls } from '../../../../dist/library/execution-runtime/execution-controls.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
 import { PromotionFixture } from '../support/promotion-fixture.js';
 
 /** Qualifies promotion's real host/checkpoint/check wiring with explicitly controlled model and provider inputs. */
 class PromotionScenarios {
+  /** A checkout-only grant cannot authorize promotion when the actual upstream staging revision lacks it. */
+  async stagingAuthority(t: TestContext): Promise<void> {
+    const f = new PromotionFixture(t);
+    const { state, repo } = f.general.fixture;
+    const directory = join(state, 'projects', f.context.key);
+    writeFileSync(join(directory, 'host.json'), JSON.stringify({ contextFile: 'context.json' }));
+    writeFileSync(
+      join(directory, 'context.json'),
+      JSON.stringify({ source: repo, key: f.context.key }),
+    );
+    const base = execFileSync('git', ['rev-parse', 'HEAD^'], {
+      cwd: repo,
+      encoding: 'utf8',
+    }).trim();
+    f.credential(t);
+    const query = t.mock.method(globalThis, 'fetch', async (url: string, options: RequestInit) => {
+      assert.equal(
+        url,
+        'https://api.github.com/repos/example/promotion-fixture/git/ref/heads/staging',
+      );
+      assert.equal(options.method, 'GET');
+      return Response.json({ object: { type: 'commit', sha: base } });
+    });
+    await assert.rejects(
+      new ExecutionControls(state).promote(f.delivery.id),
+      /publication grant on.*staging/,
+    );
+    assert.equal(query.mock.callCount(), 1);
+    assert.equal(f.host.store.runs().length, 1);
+  }
+
   /** Preserves simulation evidence, checks current target bytes and runs both independent target assessments. */
   async verified(t: TestContext): Promise<void> {
     const f = new PromotionFixture(t);
@@ -95,6 +128,9 @@ test('promotion uses fresh target checks and independent reviews without relabel
 test('promotion rejects altered source before creating live work', (t) => scenarios.rejected(t));
 
 test('interrupted promotion verification cannot silently replay', (t) => scenarios.interrupted(t));
+
+test('promotion uses the provider staging commit even when checkout HEAD grants publication', (t) =>
+  scenarios.stagingAuthority(t));
 
 registerSuite({
   component: 'execution-runtime',

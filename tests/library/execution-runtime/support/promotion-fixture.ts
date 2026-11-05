@@ -55,16 +55,17 @@ export class PromotionFixture {
   /** Defines actual finite verification plus explicit collaboration/publication grants in captured source. */
   private policy(): void {
     const f = this.general.fixture;
-    const path = join(f.repo, 'architecture/components/a.json');
-    const owner = JSON.parse(readFileSync(path, 'utf8'));
-    owner.operations = { tracking: ['agent'], publish: ['agent'] };
-    writeFileSync(path, JSON.stringify(owner));
     this.operations();
     const environment = join(f.repo, 'architecture/environment.yaml');
     const value = JSON.parse(readFileSync(environment, 'utf8'));
     value.workspace.primary.repository = 'https://github.com/example/promotion-fixture.git';
     writeFileSync(environment, JSON.stringify(value));
     f.git('remote', 'set-url', 'origin', value.workspace.primary.repository);
+    f.commit();
+    const path = join(f.repo, 'architecture/components/a.json');
+    const owner = JSON.parse(readFileSync(path, 'utf8'));
+    owner.operations = { tracking: ['agent'], publish: ['agent'] };
+    writeFileSync(path, JSON.stringify(owner));
     f.commit();
   }
 
@@ -186,15 +187,20 @@ export class PromotionFixture {
     };
   }
 
-  /** Replaces only the real provider transport; any unexpected network operation fails the scenario. */
-  tracking(t: TestContext): string[] {
-    const calls: string[] = [];
+  /** Installs a fixture-only host credential and restores the caller environment after the scenario. */
+  credential(t: TestContext): void {
     const old = process.env.GH_TOKEN;
     process.env.GH_TOKEN = 'controlled-test-credential';
     t.after(() => {
       if (old === undefined) delete process.env.GH_TOKEN;
       else process.env.GH_TOKEN = old;
     });
+  }
+
+  /** Replaces only the real provider transport; any unexpected network operation fails the scenario. */
+  tracking(t: TestContext): string[] {
+    const calls: string[] = [];
+    this.credential(t);
     t.mock.method(globalThis, 'fetch', async (url: string | URL, options: RequestInit) => {
       if (
         String(url) !== 'https://api.github.com/repos/example/promotion-fixture/issues' ||
