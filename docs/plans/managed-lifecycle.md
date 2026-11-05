@@ -2714,3 +2714,11 @@ the normal native session in 49 seconds. The existing record and unchanged revie
 checkpoint were sufficient. The assembled confined run at c84f845 recorded 590
 passes and 397 native-environment skips across 987 cases, with no failures.
 The two ranking tests and two native paged-direction cases passed separately.
+
+The fresh user-facing team-selection guide task selected one starting owner
+(`cli`) from 21 eligible stewards. The recorded initial decisions on the same
+project now include zero, one, two and three starting stewards. The single-owner
+task produced a verified change and a simulated PR. Separately, the new workday
+delivered a verified execution-runtime research response to the architecture
+steward's inbox request. Those are distinct observations from release and promotion.
+CI 41946383210 passed the confined and native suites on f6fd4e6.
