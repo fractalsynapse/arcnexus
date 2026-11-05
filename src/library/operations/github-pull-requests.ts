@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import type { DeliveryRecord } from '../coordination-store/delivery-types.js';
 import type { ExternalEffect, ExternalObservation } from '../coordination-store/lifecycle-types.js';
 import { GitHubTransport } from './github-transport.js';
+import { deliveryBranch } from './delivery-commit.js';
 
 /** Creates exact-head delivery PRs without granting review, integration or release authority. */
 export class GitHubPullRequests {
@@ -25,7 +26,7 @@ export class GitHubPullRequests {
       !/^[a-f0-9]{40,64}$/.test(head)
     )
       throw new Error('GitHub PR requires a verified live delivery and captured pushed head');
-    this.branch = 'arcnexus/' + delivery.id;
+    this.branch = deliveryBranch(delivery);
     this.client = new GitHubTransport(delivery.target.repository, credential, transport);
   }
 

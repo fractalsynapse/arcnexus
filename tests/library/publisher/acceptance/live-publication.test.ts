@@ -15,6 +15,8 @@ class LivePublicationFixture {
 
   readonly id = 'b'.repeat(64);
 
+  readonly branch: string;
+
   readonly publication: LivePublication;
 
   readonly requests: string[] = [];
@@ -52,8 +54,11 @@ class LivePublicationFixture {
   };
 
   /** Keeps test credentials and remote repository entirely local while exercising production orchestration. */
-  constructor(t: TestContext) {
+  constructor(t: TestContext, development = false) {
     this.git = new GitDeliveryFixture(t);
+    this.branch = development
+      ? 'codex/run-11111111-1111-4111-8111-111111111111'
+      : 'arcnexus/' + this.id;
     const delivery = this.capture();
     this.publication = new LivePublication(
       {
@@ -92,6 +97,7 @@ class LivePublicationFixture {
       id: this.id,
       environment: { id: 'live', mode: 'live' },
       target: { repository: 'example/project', branch: 'staging' },
+      ...this.development(original),
     });
     this.git.effects.register({
       id: 'live',
@@ -101,6 +107,27 @@ class LivePublicationFixture {
       authorityDigest: 'authority',
     });
     return delivery;
+  }
+
+  /** Captures an optional real steward branch for the shared live-provider regression. */
+  private development(
+    original: import('../../../../dist/library/coordination-store/delivery-types.js').DeliveryRecord,
+  ) {
+    if (!this.branch.startsWith('codex/')) return {};
+    git(this.git.repository.source, 'branch', this.branch, original.base);
+    const recordId = this.branch.slice('codex/run-'.length);
+    return {
+      candidateRecordId: recordId,
+      parentDeliveryId: 'c'.repeat(64),
+      development: {
+        assignmentId: original.assignmentIds[0]!,
+        owner: 'owner',
+        recordId,
+        branch: this.branch,
+        base: original.base,
+        candidate: original.candidate,
+      },
+    };
   }
 
   /** Redirects only the external push destination; actual supervised Git commands still execute. */
@@ -122,7 +149,7 @@ class LivePublicationFixture {
   }
 
   /** Observes the actual pushed ref instead of inventing a successful Git delivery. */
-  private head(ref = 'arcnexus/' + this.id): string {
+  private head(ref = this.branch): string {
     return git(
       this.git.repository.origin,
       'for-each-ref',
@@ -154,7 +181,7 @@ class LivePublicationFixture {
         number: 7,
         html_url: 'https://github.com/example/project/pull/7',
         body: body.body,
-        head: { sha: this.head(), ref: 'arcnexus/' + this.id, repo },
+        head: { sha: this.head(), ref: this.branch, repo },
         base: { ref: 'staging', repo },
       };
       return Response.json(this.pull);
@@ -179,7 +206,7 @@ class LivePublicationFixture {
             number: 7,
             url: 'https://github.com/example/project/pull/7',
             headRefOid: this.head(),
-            headRefName: 'arcnexus/' + this.id,
+            headRefName: this.branch,
             headRepository: { nameWithOwner: 'example/project' },
             baseRefName: 'staging',
             baseRefOid: this.head('staging'),
@@ -219,6 +246,31 @@ test('live publication retains PR and refreshes CI without repeating verified ef
   assert.equal(git(f.git.repository.origin, 'show', 'staging:source.txt'), 'reviewed candidate');
   assert.equal(git(f.git.repository.origin, 'rev-parse', 'staging^1').trim(), pending.base);
   assert.equal(f.git.store.get(f.id).publication, 'not_requested');
+});
+
+test('live provider pushes and integrates the captured steward development branch', async (t) => {
+  const f = new LivePublicationFixture(t, true);
+  const delivery = f.git.store.get(f.id);
+  f.git.store.approve(f.id, delivery.version, delivery.candidate);
+  f.ci = 'SUCCESS';
+  const merged = await f.publication.publish(f.git.signal);
+  assert.equal(merged.integration, 'merged');
+  assert.equal(f.pull.head.ref, f.branch);
+  assert.equal(
+    git(f.git.repository.origin, 'rev-parse', 'refs/heads/' + f.branch).trim(),
+    delivery.candidate,
+  );
+  assert.equal(
+    git(
+      f.git.repository.origin,
+      'rev-list',
+      '--max-count=1',
+      delivery.candidate,
+      '--not',
+      'staging',
+    ).trim(),
+    '',
+  );
 });
 
 test('failed live verification prevents branch and PR publication', async (t) => {

@@ -1,5 +1,15 @@
 import type { RunEnvironment } from './execution-types.js';
 
+/** Captures the original steward branch and its independently verified contribution. */
+export interface DevelopmentDelivery {
+  assignmentId: string;
+  owner: string;
+  recordId: string;
+  branch: string;
+  base: string;
+  candidate: string;
+}
+
 /** Immutable attribution and verification captured before publication authority is considered. */
 export interface DeliveryCapture {
   id: string;
@@ -15,6 +25,9 @@ export interface DeliveryCapture {
   verification: { references: string[]; digest: string };
   target: { repository: string; branch: string };
   promotedFrom?: string;
+  developments?: DevelopmentDelivery[];
+  development?: DevelopmentDelivery;
+  parentDeliveryId?: string;
 }
 
 /** Fresh target workspace and goal evidence retained separately from the source simulation's assignments. */

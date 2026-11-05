@@ -4,6 +4,8 @@
 
 ### Added
 
+- Publish each steward’s verified development branch through staging in delivery order, retain branch ancestry across dependencies, and reuse completed workday deliveries (#248).
+
 - Archive historical runtime indexes in application evidence storage and remove their maintained repository copies (#250).
 
 - Give independent publication reviewers access to the captured assembled check outputs and supplier evidence (#249).

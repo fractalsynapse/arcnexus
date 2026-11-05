@@ -7,7 +7,7 @@ import type { ExternalEffect, ExternalObservation } from '../coordination-store/
 import { GitHubTransport } from './github-transport.js';
 import { execute, git } from './process.js';
 import { DeliveryAssembly } from './delivery-assembly.js';
-import { DeliveryCommit } from './delivery-commit.js';
+import { DeliveryCommit, deliveryBranch } from './delivery-commit.js';
 
 /** Publishes a verified host commit through isolated Git configuration and repository-scoped credentials. */
 export class GitHubDelivery {
@@ -34,7 +34,7 @@ export class GitHubDelivery {
       !/^[a-f0-9]{40,64}$/.test(head)
     )
       throw new Error('GitHub push requires a committed verified live delivery');
-    this.ref = 'refs/heads/arcnexus/' + delivery.id;
+    this.ref = 'refs/heads/' + deliveryBranch(delivery);
     this.client = new GitHubTransport(delivery.target.repository, credential, transport);
     this.local();
   }
@@ -250,7 +250,7 @@ export class GitHubDelivery {
   private async remote(signal: AbortSignal): Promise<string | undefined> {
     try {
       const value = await this.client.request(
-        '/git/ref/heads/' + encodeURIComponent('arcnexus/' + this.delivery.id),
+        '/git/ref/heads/' + encodeURIComponent(deliveryBranch(this.delivery)),
         signal,
       );
       if (value.object?.type !== 'commit' || !/^[a-f0-9]{40,64}$/.test(value.object.sha))

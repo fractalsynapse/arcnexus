@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
 import type { ExecutionRun } from '../coordination-store/execution-types.js';
+import type { DeliveryRecord } from '../coordination-store/delivery-types.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import { DeliveryStore } from '../coordination-store/delivery-store.js';
 import {
@@ -12,6 +13,7 @@ import {
   DeliveryChecks,
   SimulationPublication,
   LivePublication,
+  DevelopmentDeliveries,
   type CapturedPublicationPolicy,
 } from '../publisher/publisher.js';
 import { git } from '../operations/process.js';
@@ -33,6 +35,11 @@ export class RunPublication {
     const policy = new PublicationPolicy().resolve(this.context);
     if (!policy || !run.environment || !run.data.candidateRecord) return;
     const candidate = run.data.candidateRecord as RecordData;
+    if (
+      run.data.integratedRevision === run.data.candidateRevision &&
+      run.data.integratedRecordId === candidate.id
+    )
+      return;
     if (this.inherited(run, candidate)) return;
     const changed = git(
       candidate.source,
@@ -109,6 +116,7 @@ export class RunPublication {
     );
     try {
       await this.publish(retained, environments, store, signal);
+      this.integrated(retained, environments, store);
     } catch (error) {
       if (signal.aborted) throw error;
       this.execution.updateRun(run.id, this.execution.run(run.id).status, {
@@ -123,6 +131,29 @@ export class RunPublication {
     }
   }
 
+  /** Makes the verified staging merge the next engineering baseline while retaining original delivery attribution. */
+  private integrated(run: ExecutionRun, environments: RunEnvironments, store: DeliveryStore): void {
+    const delivery = store.get(String(run.data.pendingPublication ?? run.data.deliveryId));
+    const current = this.execution.run(run.id);
+    if (delivery.integration !== 'merged' || current.data.candidateRevision !== delivery.candidate)
+      return;
+    const effect = environments.effects.effect(delivery.receipts.merge!);
+    const head = effect.result?.head;
+    if (
+      effect.status !== 'completed' ||
+      effect.result?.merged !== true ||
+      typeof head !== 'string' ||
+      !/^[a-f0-9]{40,64}$/.test(head)
+    )
+      throw new Error('Verified staging merge lacks a completed head receipt');
+    this.execution.updateRun(run.id, current.status, {
+      candidateRevision: head,
+      integratedDelivery: delivery.id,
+      integratedRevision: head,
+      integratedRecordId: delivery.candidateRecordId,
+    });
+  }
+
   /** Uses frozen isolated repositories and actual check/verifier services for the provider workflow. */
   private async publish(
     run: ExecutionRun,
@@ -133,11 +164,38 @@ export class RunPublication {
     const delivery = store.get(String(run.data.pendingPublication ?? run.data.deliveryId));
     if (delivery.publication === 'released' || (delivery.blocker && !run.data.pendingPublication))
       return;
-    if (delivery.environment.mode === 'live') {
-      await this.publishLive(run, environments, store, signal);
+    if (delivery.developments?.length) {
+      new Publisher(this.root, store).resolveRetained(
+        delivery,
+        run,
+        delivery.assignmentIds.map((id) => this.execution.assignment(id)),
+      );
+      await new DevelopmentDeliveries(this.root).publish(delivery, store, (child) =>
+        this.publishDelivery(run, environments, store, signal, child),
+      );
       return;
     }
-    const publication = this.simulation(run, environments, store);
+    await this.publishDelivery(run, environments, store, signal, delivery);
+  }
+
+  /** Applies the same provider workflow to an individual accountable development branch. */
+  private async publishDelivery(
+    run: ExecutionRun,
+    environments: RunEnvironments,
+    store: DeliveryStore,
+    signal: AbortSignal,
+    delivery: DeliveryRecord,
+  ): Promise<void> {
+    if (
+      delivery.publication === 'released' ||
+      (delivery.environment.mode === 'live' && delivery.integration === 'merged')
+    )
+      return;
+    if (delivery.environment.mode === 'live') {
+      await this.publishLive(run, environments, store, signal, delivery);
+      return;
+    }
+    const publication = this.simulation(run, environments, store, delivery);
     try {
       await publication.publish(signal);
     } finally {
@@ -146,11 +204,15 @@ export class RunPublication {
   }
 
   /** Binds isolated publication to actual captured repositories and verification callbacks. */
-  private simulation(run: ExecutionRun, environments: RunEnvironments, store: DeliveryStore) {
+  private simulation(
+    run: ExecutionRun,
+    environments: RunEnvironments,
+    store: DeliveryStore,
+    delivery: DeliveryRecord,
+  ) {
     const context = environments.contextFor(run);
-    const delivery = store.get(String(run.data.pendingPublication ?? run.data.deliveryId));
     const repositoryId = context.catalog.primaryRepository!;
-    const checks = this.checks(context, run, delivery.assignmentIds);
+    const checks = this.checks(context, run, delivery);
     return new SimulationPublication(
       {
         root: join(environments.directory, run.environment!.id),
@@ -174,9 +236,9 @@ export class RunPublication {
     environments: RunEnvironments,
     store: DeliveryStore,
     signal: AbortSignal,
+    delivery: DeliveryRecord,
   ): Promise<void> {
-    const delivery = store.get(String(run.data.pendingPublication ?? run.data.deliveryId));
-    const checks = this.checks(this.context, run, delivery.assignmentIds);
+    const checks = this.checks(this.context, run, delivery);
     const publication = new LivePublication(
       {
         root: join(environments.directory, run.environment!.id),
@@ -194,10 +256,17 @@ export class RunPublication {
   }
 
   /** Limits publication assessment to assignments attributed to this immutable delivery. */
-  private checks(context: ProjectExecution, run: ExecutionRun, ids: string[]): DeliveryChecks {
+  private checks(
+    context: ProjectExecution,
+    run: ExecutionRun,
+    delivery: DeliveryRecord,
+  ): DeliveryChecks {
     const sourceRun = run.data.promotionSourceRun ? String(run.data.promotionSourceRun) : run.id;
-    const assignments = this.execution.assignments(sourceRun).filter((a) => ids.includes(a.id));
-    return new DeliveryChecks(this.root, context, run, assignments);
+    const assignments = this.execution
+      .assignments(sourceRun)
+      .filter((a) => delivery.assignmentIds.includes(a.id));
+    const publication = { ...run, data: { ...run.data, publicationDeliveryId: delivery.id } };
+    return new DeliveryChecks(this.root, context, publication, assignments);
   }
 
   /** Keeps repeated candidate capture idempotent while attributing only completed engineering work. */

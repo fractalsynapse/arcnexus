@@ -6,7 +6,7 @@ import { assertRepositoryBinding } from '../architecture/bindings.js';
 import { git } from './process.js';
 import { DeliveryCommands } from './delivery-commands.js';
 import { DeliveryAssembly } from './delivery-assembly.js';
-import { DeliveryCommit } from './delivery-commit.js';
+import { DeliveryCommit, deliveryBranch } from './delivery-commit.js';
 
 /** Executes delivery Git effects on a host-bound simulated repository, preserving exact-head recovery. */
 export class DeliveryGit {
@@ -32,7 +32,7 @@ export class DeliveryGit {
     if (delivery.environment.mode !== 'simulation')
       throw new Error('Local delivery transport requires a simulation environment');
     if (!/^[a-f0-9]{64}$/.test(delivery.id)) throw new Error('Unsafe delivery identity');
-    this.ref = 'refs/heads/arcnexus/' + delivery.id;
+    this.ref = 'refs/heads/' + deliveryBranch(delivery);
     this.privateRef = 'refs/arcnexus/deliveries/' + delivery.id;
     this.commits = new DeliveryCommit(delivery, repository.source, evidenceRoot);
     this.commands = new DeliveryCommands(this.delivery, repository.source, evidenceRoot);

@@ -12,6 +12,7 @@ import type { RecordData } from '../workspace/state.js';
 import { PromotionReview } from './promotion-review.js';
 import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
 import { DeliveryVerification } from './delivery-verification.js';
+import { DevelopmentDeliveries } from './development-deliveries.js';
 
 export interface PromotionInput {
   context: ProjectExecution;
@@ -55,6 +56,11 @@ export class Publisher {
       candidateRecordId: candidate.id,
       verification,
       target,
+      developments: new DevelopmentDeliveries(this.root).capture(
+        assignments,
+        candidate,
+        String(run.data.candidateRevision ?? ''),
+      ),
     });
   }
 
@@ -68,6 +74,14 @@ export class Publisher {
     this.assertRetained(delivery, run, assignments, candidate);
     const captured = { ...run, data: { ...run.data, candidateRevision: delivery.candidate } };
     const evidence = new DeliveryVerification(this.root).capture(captured, assignments, candidate);
+    if (
+      delivery.developments &&
+      JSON.stringify(delivery.developments) !==
+        JSON.stringify(
+          new DevelopmentDeliveries(this.root).capture(assignments, candidate, delivery.candidate),
+        )
+    )
+      throw new Error('Retained development manifest differs from verified assignment records');
     if (
       evidence.digest !== delivery.verification.digest ||
       JSON.stringify(evidence.references) !== JSON.stringify(delivery.verification.references)
@@ -177,5 +191,7 @@ export {
 } from './simulation-publication.js';
 
 export { DeliveryResources } from './delivery-resources.js';
+
+export { DevelopmentDeliveries } from './development-deliveries.js';
 
 export { LivePublication, type LivePublicationContext } from './live-publication.js';

@@ -62,7 +62,8 @@ export class PublicationEvidence {
   private effects(directory: string, run: ExecutionRun) {
     const store = new LifecycleStore(join(directory, 'lifecycle.sqlite'), true);
     try {
-      const deliveryId = run.data.pendingPublication ?? run.data.deliveryId;
+      const deliveryId =
+        run.data.publicationDeliveryId ?? run.data.pendingPublication ?? run.data.deliveryId;
       const effects = store
         .effects()
         .filter(
