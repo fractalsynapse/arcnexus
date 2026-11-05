@@ -1,3 +1,5 @@
+import { EvidencePages } from '../report/report.js';
+import type { OperationBridge } from '../operations/operations.js';
 import { frozenReview } from './checkpoints.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -20,6 +22,8 @@ export interface TurnFrame {
 
 /** Retains prompts, SDK events, usage and structured outcomes for each model turn. */
 export class TurnEvidence {
+  private reviewPages?: EvidencePages;
+
   /** Retains session state for per-turn evidence capture and cumulative usage accounting. */
   constructor(private readonly state: SessionState) {}
 
@@ -32,6 +36,28 @@ export class TurnEvidence {
     };
     const bytes = JSON.stringify(evidence);
     return { ...evidence, sha256: digest(bytes), bytes: Buffer.byteLength(bytes) };
+  }
+
+  /** Pins complete review bytes and returns only bounded metadata for model transport. */
+  reference(evidence: Record<string, unknown>): Record<string, unknown> {
+    const pages = new EvidencePages('review.evidence');
+    pages.add('review', JSON.stringify(evidence), 'json');
+    const manifest = {
+      basis: evidence.basis,
+      base: evidence.base,
+      sha256: evidence.sha256,
+      bytes: evidence.bytes,
+      artifacts: pages.metadata(),
+    };
+    pages.add('manifest', JSON.stringify(manifest), 'json');
+    this.state.options.record.reviewEvidence = pages.retain(this.state.dir, manifest);
+    this.reviewPages = pages;
+    return manifest;
+  }
+
+  /** Makes the current pinned review accessible without exposing host filesystem paths. */
+  wrap(operations: OperationBridge): OperationBridge {
+    return this.reviewPages?.wrap(operations) ?? operations;
   }
 
   /** Constructs the read-only review view from captured assignment inputs. */

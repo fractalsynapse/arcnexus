@@ -136,6 +136,10 @@
 
 ### Fixed
 
+- Give promotion directors retrievable target-check evidence and a distinct live-promotion goal while preserving source acceptance and provenance (#265).
+
+- Page complete steward review evidence instead of embedding large patches in model input (#262).
+
 - Measure the production shared catalog in context-size acceptance while preserving its existing safeguard and authority checks (#260).
 
 - Admit same-package simulated tasks against the active host's captured identity without recapturing advanced upstream staging (#259).
