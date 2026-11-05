@@ -4,6 +4,9 @@
 
 ### Added
 
+- Rank the complete eligible steward catalog for task direction. Starting teams follow the goal, and committed inbox activity wakes an idle scheduler without repeated catalog scans (#148, #242).
+- Accept all component-owned file types at specification checkpoints while still requiring classified documentation and regression evidence. Show directors which failed assignments can resume, and let stewards correct missing final checklist evidence (#243, #245, #246).
+
 - Return incompatible existing-supplier requests to the steward for correction before any inbox action commits (#241).
 
 - Let task directors explicitly replace diagnosed failed change assignments. Preserve predecessor evidence, correlated requests and original criteria through verified successor delivery (#235).
