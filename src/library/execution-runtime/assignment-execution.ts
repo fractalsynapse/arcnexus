@@ -316,6 +316,7 @@ export class AssignmentExecution {
       materializationBinding: next.materializationBinding,
       base: current,
     });
+    delete record.developmentHead;
     if (record.nextStage === 'finished') record.nextStage = 'review';
     record.reconciledCandidateDigest = candidateDigest(record);
     record.reconciliationId = next.id;

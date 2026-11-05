@@ -37,12 +37,22 @@ export interface PrepareOptions {
 }
 
 export function assertIdentity(record: RecordData): void {
-  if (
-    git(record.workspace, 'rev-parse', 'HEAD').trim() !== record.base ||
-    git(record.workspace, 'branch', '--show-current').trim() !== record.branch
-  )
+  if (git(record.workspace, 'rev-parse', 'HEAD').trim() !== record.base || !matchesBranch(record))
     throw new Error('Candidate branch or HEAD changed');
   if ((record.members as Member[] | undefined)?.length) assertMembers(record);
+}
+
+/** Recognizes a completed delivery's archived worktree only while its journaled branch head is intact. */
+function matchesBranch(record: RecordData): boolean {
+  const branch = git(record.workspace, 'branch', '--show-current').trim();
+  if (branch === record.branch) return true;
+  if (branch || record.status !== 'completed' || typeof record.developmentHead !== 'string')
+    return false;
+  return (
+    git(record.source, 'rev-parse', 'refs/heads/' + record.branch).trim() ===
+      record.developmentHead &&
+    git(record.source, 'show', '-s', '--format=%P', record.developmentHead).trim() === record.base
+  );
 }
 
 export function createWorkspace(root: string, options: PrepareOptions): RecordData {
@@ -152,11 +162,12 @@ export function continueDevelopmentBranch(previous: RecordData, next: RecordData
     );
   assertIdentity(previous);
   assertIdentity(next);
-  if (git(next.source, 'rev-list', '--max-count=1', previous.base, '--not', next.base).trim())
-    throw new Error('Development branch continuation would lose retained commits');
   const ref = 'refs/heads/' + previous.branch;
+  const prior = git(next.source, 'rev-parse', ref).trim();
+  if (git(next.source, 'rev-list', '--max-count=1', prior, '--not', next.base).trim())
+    throw new Error('Development continuation would lose retained commits');
   git(previous.workspace, '-c', 'core.hooksPath=/dev/null', 'switch', '--detach', previous.base);
-  git(next.source, 'update-ref', '--no-deref', ref, next.base, previous.base);
+  git(next.source, 'update-ref', '--no-deref', ref, next.base, prior);
   git(next.workspace, '-c', 'core.hooksPath=/dev/null', 'switch', '--no-guess', previous.branch);
   next.branch = previous.branch;
   assertIdentity(next);

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID, createHash } from 'node:crypto';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
 import {
@@ -8,6 +8,8 @@ import {
   SimulationPublication,
 } from '../../../../dist/library/publisher/publisher.js';
 import { CandidateSnapshots } from '../../../../dist/library/workspace/candidates.js';
+import { assertIdentity } from '../../../../dist/library/workspace/workspace.js';
+import { candidateDigest } from '../../../../dist/library/change-inspection/changes.js';
 import { git } from '../../../../dist/library/operations/process.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
@@ -91,7 +93,11 @@ class DevelopmentScenario {
       runId: 'run',
       owner: 'owner-' + index,
       status: 'completed',
-      data: { recordId: id, deliveredRevision: candidate },
+      data: {
+        recordId: id,
+        deliveredRevision: candidate,
+        reviewedDigest: candidateDigest(this.record),
+      },
       evidence: ['controlled-review'],
     });
   }
@@ -165,6 +171,14 @@ class DevelopmentScenario {
       const head = git(origin, 'rev-parse', 'refs/heads/' + branch).trim();
       assert.equal(head, this.assignments[index].data.deliveredRevision);
       assert.equal(git(source, 'rev-parse', branch).trim(), head);
+      const record = JSON.parse(
+        readFileSync(
+          join(this.fixture.root, 'runs', this.assignments[index].data.recordId, 'report.json'),
+          'utf8',
+        ),
+      );
+      assertIdentity(record);
+      assert.equal(candidateDigest(record), this.assignments[index].data.reviewedDigest);
       assert.equal(git(origin, 'rev-list', '--max-count=1', head, '--not', 'staging').trim(), '');
       assert.equal(
         git(origin, 'show', 'staging:owner-' + index + '.txt'),

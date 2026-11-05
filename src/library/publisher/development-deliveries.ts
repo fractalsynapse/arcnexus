@@ -1,11 +1,11 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DevelopmentDelivery, DeliveryRecord } from '../coordination-store/delivery-types.js';
 import type { DeliveryStore } from '../coordination-store/delivery-store.js';
 import type { ExecutionAssignment } from '../coordination-store/execution-types.js';
 import { git } from '../operations/process.js';
-import type { RecordData } from '../workspace/state.js';
+import { save, type RecordData } from '../workspace/state.js';
 
 /** Preserves individual steward branches within one verified run delivery. */
 export class DevelopmentDeliveries {
@@ -125,6 +125,7 @@ export class DevelopmentDeliveries {
     let last: DeliveryRecord | undefined;
     for (const entry of parent.developments!) {
       const child = this.retain(parent, entry, store);
+      if (child.delivery === 'retained') this.markBranch(entry);
       await publish(child);
       last = store.get(child.id);
       if (
@@ -134,6 +135,20 @@ export class DevelopmentDeliveries {
         throw new Error('Development branch integration is incomplete');
     }
     return last!;
+  }
+
+  /** Journals the verified branch head before publication can detach its completed evidence worktree. */
+  private markBranch(entry: DevelopmentDelivery): void {
+    const record = this.record(entry.recordId);
+    if (
+      record.branch !== entry.branch ||
+      record.base !== entry.base ||
+      record.status !== 'completed'
+    )
+      throw new Error('Development workspace changed before publication');
+    if (record.developmentHead === entry.candidate) return;
+    record.developmentHead = entry.candidate;
+    save(this.root, record);
   }
 
   /** Projects successful constituent milestones onto the aggregate without generating another PR. */
@@ -148,9 +163,7 @@ export class DevelopmentDeliveries {
   /** Requires a real completed workspace and the snapshot accepted by the scheduler. */
   private entry(assignment: ExecutionAssignment): DevelopmentDelivery | undefined {
     if (typeof assignment.data.recordId !== 'string') return undefined;
-    const record = JSON.parse(
-      readFileSync(join(this.root, 'runs', assignment.data.recordId, 'report.json'), 'utf8'),
-    ) as RecordData;
+    const record = this.record(assignment.data.recordId);
     if (record.branchBase === undefined) return undefined;
     const candidate = String(assignment.data.deliveredRevision ?? '');
     if (candidate === record.base) return undefined;
@@ -172,6 +185,18 @@ export class DevelopmentDeliveries {
       base: record.base,
       candidate,
     };
+  }
+
+  /** Rejects redirected or mismatched private records before reading branch provenance. */
+  private record(id: string): RecordData {
+    if (!/^[a-f0-9-]{36}$/.test(id)) throw new Error('Invalid development record identity');
+    const path = join(realpathSync(this.root), 'runs', id, 'report.json');
+    const stat = lstatSync(path);
+    if (realpathSync(path) !== path || !stat.isFile() || stat.nlink !== 1)
+      throw new Error('Unsafe development record alias');
+    const record = JSON.parse(readFileSync(path, 'utf8')) as RecordData;
+    if (record.id !== id) throw new Error('Development record identity changed');
+    return record;
   }
 
   /** Compares immutable Git ancestry without consulting mutable tracking refs. */

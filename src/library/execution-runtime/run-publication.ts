@@ -262,11 +262,27 @@ export class RunPublication {
     delivery: DeliveryRecord,
   ): DeliveryChecks {
     const sourceRun = run.data.promotionSourceRun ? String(run.data.promotionSourceRun) : run.id;
-    const assignments = this.execution
-      .assignments(sourceRun)
-      .filter((a) => delivery.assignmentIds.includes(a.id));
+    const ids = this.reviewAssignments(delivery);
+    const assignments = this.execution.assignments(sourceRun).filter((a) => ids.includes(a.id));
     const publication = { ...run, data: { ...run.data, publicationDeliveryId: delivery.id } };
     return new DeliveryChecks(this.root, context, publication, assignments);
+  }
+
+  /** Rechecks every accepted criterion on the final assembled branch of a run delivery. */
+  private reviewAssignments(delivery: DeliveryRecord): string[] {
+    if (!delivery.parentDeliveryId) return delivery.assignmentIds;
+    const store = new DeliveryStore(
+      join(this.root, 'projects', this.context.key, 'deliveries.sqlite'),
+      true,
+    );
+    try {
+      const parent = store.get(delivery.parentDeliveryId);
+      return parent.candidate === delivery.candidate
+        ? parent.assignmentIds
+        : delivery.assignmentIds;
+    } finally {
+      store.close();
+    }
   }
 
   /** Keeps repeated candidate capture idempotent while attributing only completed engineering work. */
