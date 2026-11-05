@@ -59,6 +59,11 @@ jobs:
             repositories: {},
           }));
           NODE
+          tool_bin=/usr/local/lib/arcnexus-ci/bin
+          sudo install -d "$tool_bin"
+          sudo ln -s "$(command -v node)" "$tool_bin/node"
+          sudo ln -s /usr/local/bin/npm "$tool_bin/npm"
+          echo "$tool_bin" >> "$GITHUB_PATH"
       - name: Check formatting
         run: npm run format:check
       - name: Lint maintained code
