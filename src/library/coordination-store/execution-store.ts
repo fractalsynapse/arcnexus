@@ -457,6 +457,20 @@ export class ExecutionStore {
     });
   }
 
+  /** Records installed runtime transitions without altering retained assignments or prior evidence. */
+  recordRuntime(
+    runtime: { directory: string; hash: string },
+    historical?: { directory: string; hash: string },
+  ): void {
+    const recorded = this.db.all<{ id: string; directory: string; hash: string }>('runtime')[0];
+    if (recorded?.directory === runtime.directory && recorded.hash === runtime.hash) return;
+    const previous = recorded ?? historical;
+    const current = { id: 'host', ...runtime };
+    this.db.transaction('runtime.changed', { previous: previous ?? null, current }, () =>
+      this.db.put('runtime', current),
+    );
+  }
+
   /** Identifies the last durable transition across all connections for scheduler wakeups. */
   eventSequence(): number {
     return this.db.eventSequence();

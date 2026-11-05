@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Recover retained tasks through the installed runtime and one host launcher, recording runtime transitions without per-run supervisor copies (#266).
+
 ### Added
 
 - Publish each steward’s verified development branch through staging in delivery order, retain branch ancestry across dependencies, and reuse completed workday deliveries (#248).

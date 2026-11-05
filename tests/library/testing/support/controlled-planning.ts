@@ -26,6 +26,29 @@ export class ControlledPlanning {
     new ControlledChecklist(this.options.mode).apply(turn);
   }
 
+  /** Exercises the production review capability instead of relying on inline prompt artifacts. */
+  async reviewEvidence(turn: WorkflowTurn): Promise<void> {
+    const manifest = JSON.parse(await this.reviewArtifact(turn, 'manifest'));
+    const review = JSON.parse(await this.reviewArtifact(turn, 'review'));
+    writeFileSync(this.options.calls + '.review', JSON.stringify({ manifest, review }));
+  }
+
+  /** Retrieves every advertised page through the actual MCP transport. */
+  private async reviewArtifact(turn: WorkflowTurn, artifact: string): Promise<string> {
+    let offset = 0;
+    let content = '';
+    for (;;) {
+      const reply = await this.call(turn, 'review.evidence', { artifact, offset, length: 32768 });
+      if (reply.isError) throw new Error(JSON.stringify(reply));
+      const page = JSON.parse(reply.content[0].text);
+      if (typeof page.content !== 'string') throw new Error(JSON.stringify(page));
+      content += page.content;
+      if (page.complete) return content;
+      if (page.nextOffset <= offset) throw new Error('Review evidence did not advance');
+      offset = page.nextOffset;
+    }
+  }
+
   /** Uses host-bound ownership and stage validation for every normal minimal-workflow source edit. */
   async sourceEdit(turn: WorkflowTurn, request: Record<string, unknown>): Promise<void> {
     const reply = await this.call(turn, 'source.edit', request);

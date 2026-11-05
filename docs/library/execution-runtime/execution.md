@@ -1,9 +1,8 @@
 # General agent execution
 
 The [self-development MVP](../../plans/self-development-mvp.md) governs current
-scope and recovery requirements. Frozen-supervisor and relocation descriptions below
-record the existing implementation to simplify; they do not override that contract.
-Runtime migration is not complete merely because the intended contract changed.
+scope and recovery requirements. Recovery uses the installed runtime at the fixed
+volume location. Historical relocation qualification does not expand current scope.
 
 Issue #78 records this approved contract. Normal execution uses the shared project
 host; legacy component, two-owner manifest and proposal execution are retired.
@@ -53,8 +52,8 @@ authority require the architect; relationships aid discovery rather than grant w
 Use isolated assignment workspaces and one accumulated verified candidate. Preserve
 unfinished edits; reconcile against the current candidate without silent overwrite.
 Recheck assembled changes before promotion. Workers cannot publish, switch branches
-or commit. Captured architecture, instructions, checks and supervising build remain
-stable; candidate edits cannot redefine active authority. Policy and goal-assessment
+or commit directly. Captured architecture, instructions and checks remain
+host-controlled; candidate edits cannot redefine active authority. Policy and goal-assessment
 workspaces are materialized from the pinned verified revision, not a delivery
 workspace that might have changed later. Validate retained policy workspaces before
 reuse. An integrity mismatch preserves evidence and requires attention; it must not
@@ -214,11 +213,11 @@ candidate and evidence without importing the new source revision. Historical ter
 outcomes remain readable. A still-running original host may observe source drift,
 but its captured authority and candidate never change silently.
 
-Supervising-runner snapshots preserve source permission modes on copied files and
-directories, including empty generated directories. The destination hash and a
-second source hash must still match the initial capture. An active umask cannot
-make an unchanged installation appear to be a concurrent rebuild, and permission
-normalization must not relax the source-change or byte-integrity checks.
+New hosts and recovered hosts use one installed-runtime launcher. No per-run
+executable copy is created. Runtime identity fingerprints executable files and
+dependency declarations; changes are recorded in the existing event ledger and
+report projection. Historical supervisor identities remain provenance. Stop the
+host at a checkpoint before upgrading its installation; active hosts are not hot-patched.
 
 ### Correlated model inbox context
 
@@ -334,10 +333,11 @@ requires a nonempty response to an actual needs-input task. Terminal runs cannot
 resume. Application controls support expected-revision checks at the host mutation
 boundary; the CLI never fabricates authorization from a resource projection.
 
-Recovery reuses the retained supervisor only after verifying its executable snapshot
-and captured execution identity. It never replaces a retained run's supervisor with
-the caller's newly built code. Unsupported older control protocols or unavailable,
-changed or ambiguous recovery evidence fail explicitly. Historical runs remain readable.
+Recovery validates captured execution and repository identity, then starts the
+installed runtime if the host is absent. The same run, assignments, checkpoints
+and evidence remain in place; upgrading does not require a successor task.
+Unsupported control protocols or unavailable, changed or ambiguous authority
+evidence fail explicitly. Historical runs remain readable.
 A host loss marks incomplete activations interrupted before any resumed dispatch;
 uncertain operation completion still requires attention. Following remains observation,
 while interrupting an attached task submission retains its existing cancellation behavior.

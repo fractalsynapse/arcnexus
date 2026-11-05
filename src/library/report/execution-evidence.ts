@@ -40,6 +40,7 @@ export class ExecutionEvidence {
         .filter((event) =>
           Object.values(event.data).some((value) => typeof value === 'string' && ids.has(value)),
         ),
+      runtimeTransitions: this.store.events().filter((event) => event.type === 'runtime.changed'),
       requests: this.requests(assignments, ids),
       source: this.source(run),
       assignments: assignments.map((assignment) => this.assignment(assignment)),
