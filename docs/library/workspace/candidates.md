@@ -18,3 +18,10 @@ scope evaluation, journal creation or source mutation. The host-bound tool retur
 a retained, correctable rejection so an agent can resend a valid complete batch.
 This does not relax owner/stage authority, frozen regression protection, filesystem
 alias checks or uncertain-transaction recovery: those failures remain fatal.
+
+An assignment may propose changes to its owner's component definition, which is
+included in that component's derived ownership. Workspace stewardship has no
+additional prohibition on editing that owned file. Such changes remain candidate
+proposals: the host continues using the run's captured architecture, permissions
+and acceptance until a new run captures approved authority. Existing supervisors
+and retained evidence are not rewritten (#252).
