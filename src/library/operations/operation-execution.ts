@@ -1,3 +1,4 @@
+import { PreparedDependencies } from './prepared-dependencies.js';
 import { observe } from '../report/timeline.js';
 import { OperationEvidence } from './operation-evidence.js';
 import { ServiceManager } from './services.js';
@@ -48,7 +49,12 @@ export class OperationExecution {
     for (const selection of checkpoint.notApplicable)
       observe(this.root, this.record, 'operation.not_applicable', selection);
     const results: CommandResult[] = [];
-    for (const step of ordered) results.push(await this.invoke(step.operation, step.purpose));
+    for (const step of ordered)
+      results.push(
+        await new PreparedDependencies(this.root, this.record).run(step.operation, () =>
+          this.invoke(step.operation, step.purpose),
+        ),
+      );
     return results;
   }
 

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { test, type TestContext } from 'node:test';
 import { ExecutionStore } from '../../../../dist/library/coordination-store/execution-store.js';
@@ -36,8 +36,10 @@ class InstalledRuntimeScenario {
   /** Installs the real built launcher with a minimal declared dependency manifest. */
   private install(root: string): string {
     const module = 'dist/library/execution-runtime/host-runtime.js';
-    mkdirSync(join(root, 'dist/library/execution-runtime'), { recursive: true });
-    cpSync(resolve(module), join(root, module));
+    for (const path of [module, 'dist/library/operations/installed-runtime.js']) {
+      mkdirSync(dirname(join(root, path)), { recursive: true });
+      cpSync(resolve(path), join(root, path));
+    }
     writeFileSync(join(root, 'package.json'), JSON.stringify({ type: 'module' }));
     writeFileSync(join(root, 'package-lock.json'), '{}');
     return join(root, module);

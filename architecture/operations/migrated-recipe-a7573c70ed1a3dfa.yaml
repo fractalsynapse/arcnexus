@@ -14,7 +14,8 @@ schemaVersion: 4
 id: migrated-recipe-a7573c70ed1a3dfa
 purpose: Verify guidance-validation
 kind: command
-prerequisites: []
+prerequisites:
+  - migrated-recipe-e58bdff3c39641d2
 command: npm
 args:
   - run

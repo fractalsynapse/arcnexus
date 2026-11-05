@@ -146,3 +146,28 @@ repeated cleanup validates the removed path rather than silently accepting a new
 occupant. Source repositories are never removed. Cleanup neither releases delivery
 retention nor repairs relocated records. The legacy standalone spelling remains
 only while its existing fixtures and campaigns are migrated to this service.
+
+## Shared dependency preparation (#268)
+
+Dependency preparation is a host responsibility at task/workday setup. The director,
+engineering stewards, independent verifier and publisher share the resulting
+read-only dependencies while retaining separate source branches and build outputs.
+
+The existing install operation remains the single command definition. Its optional `dependencyInputs` list names the repository-relative files that
+determine dependency preparation; its existing generated
+output roots identify what may be shared. Matching preparation is reused within the
+same execution environment. Changed inputs, recipe, machine bindings or runtime
+require a new installation, never mutation of one already in use. The host and
+preparation executor use the same installed-runtime fingerprint.
+
+Preparation uses the existing supervised executor and retains the original invocation.
+Only successful, settled preparation is reusable. Recovery preserves uncertain
+installation evidence instead of claiming readiness or replaying it. The host materializes the completed installation into each worktree using
+copy-on-write copies where supported, retaining the original preparation receipt.
+This avoids dependency-path symlink exceptions and writable shared aliases.
+Prepared roots are read-only to both agents and operations; a changed dependency
+input prepares a replacement before engineering continues. Build products stay local
+to the source worktree. No test or verification result is reused by this mechanism.
+
+This is implementation intent; qualification must prove actual reuse, invalidation,
+interruption handling and write denial before it is reported as delivered.

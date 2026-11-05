@@ -21,6 +21,7 @@ export { OperationEditProposals } from './edit-proposals.js';
 export type Operation = {
   schemaVersion: 2 | 3 | 4;
   prerequisites?: string[];
+  dependencyInputs?: string[];
   profileVerification?: string;
   network?: boolean | { domains: string[] };
   argumentTokens?: import('./operation-definition.js').ArgumentToken[];

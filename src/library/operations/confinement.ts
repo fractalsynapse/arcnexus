@@ -17,6 +17,7 @@ export interface ConfinementAuthority {
   workspace: string;
   reads: string[];
   outputs: string[];
+  readOnlyOutputs?: string[];
   maintainedPaths?: string[];
   network?: boolean | { domains: string[] };
   temporaryRoot: string;
@@ -48,7 +49,12 @@ export class SourceConfinement {
     )
       throw new Error('Private temporary storage must be outside source');
     this.validateSource();
-    const outputs = authority.outputs.map((path) => this.output(path));
+    const protectedOutputs = (authority.readOnlyOutputs ?? []).map((path) => this.output(path));
+    const outputs = authority.outputs
+      .map((path) => this.output(path))
+      .filter((path) => !protectedOutputs.some((root) => this.inside(path, root)));
+    if (outputs.some((path) => protectedOutputs.some((root) => this.inside(root, path))))
+      throw new Error('Writable output contains prepared dependencies');
     for (const path of authority.reads) this.read(path);
     for (const path of authority.toolDirectories ?? []) this.tool(path);
     if (authority.network && existsSync('/etc/resolv.conf')) this.tool('/etc/resolv.conf');
@@ -58,6 +64,7 @@ export class SourceConfinement {
       this.filesystem[path] = 'write';
       this.disposableChildren(path);
     }
+    for (const path of protectedOutputs) this.filesystem[path] = 'read';
     this.configurationHome();
     for (const path of authority.protectedPaths ?? []) this.protect(path);
     this.overrides = this.configuration();

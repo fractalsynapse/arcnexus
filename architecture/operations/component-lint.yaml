@@ -19,4 +19,5 @@ args:
   - context: ownedPaths
 generatedDirectories: []
 artifacts: []
-prerequisites: []
+prerequisites:
+  - migrated-recipe-e58bdff3c39641d2

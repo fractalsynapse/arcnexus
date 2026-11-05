@@ -1,7 +1,7 @@
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
-import { createHash } from 'node:crypto';
+import { installedRuntime } from '../operations/installed-runtime.js';
 import { spawn } from 'node:child_process';
-import { closeSync, existsSync, openSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { closeSync, existsSync, openSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -11,9 +11,7 @@ export class HostRuntime {
 
   /** Records installed executable identity without copying or pinning an executable per run. */
   describe(): { directory: string; hash: string } {
-    const hash = createHash('sha256');
-    for (const path of ['dist', 'package.json', 'package-lock.json']) this.hash(path, hash);
-    return { directory: this.directory, hash: hash.digest('hex') };
+    return installedRuntime();
   }
 
   /** Retains legacy host identity as provenance while recording the installed runtime in one ledger. */
@@ -44,16 +42,5 @@ export class HostRuntime {
     } finally {
       closeSync(log);
     }
-  }
-
-  /** Fingerprints executable files and declared dependencies for honest transition evidence. */
-  private hash(path: string, hash: ReturnType<typeof createHash>): void {
-    const absolute = join(this.directory, path);
-    const stat = statSync(absolute);
-    hash.update(JSON.stringify([path, stat.mode & 0o777]));
-    if (stat.isDirectory())
-      for (const name of readdirSync(absolute).sort()) this.hash(join(path, name), hash);
-    else if (stat.isFile()) hash.update(readFileSync(absolute));
-    else throw new Error('Unsupported installed runtime input: ' + absolute);
   }
 }
