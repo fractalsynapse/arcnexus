@@ -30,15 +30,15 @@ class ModelContextScenarios {
       assert.equal(view.owns, undefined);
       assert.equal(view.capturedTests, undefined);
     }
-    this.sharedStandards(context, before);
+    const catalog = this.sharedStandards(context, before);
     assert.ok(
-      JSON.stringify(views).length < 700000,
+      JSON.stringify(catalog).length < 700000,
       'Leave room for goal and review context within observed native input limit',
     );
   }
 
   /** Shares standard bytes once while preserving every eligible owner and its standard references. */
-  private sharedStandards(context: ReturnType<ExecutionContext['resolve']>, before: string): void {
+  private sharedStandards(context: ReturnType<ExecutionContext['resolve']>, before: string) {
     const owners = context.owners.map((id) => context.catalog.components[id]!);
     const view = Reflect.get(components, 'catalogContext')(owners);
     assert.deepEqual(
@@ -61,6 +61,7 @@ class ModelContextScenarios {
         );
     }
     assert.equal(JSON.stringify(context.catalog), before);
+    return view;
   }
 
   /** Grouping retains the evidence needed to locate every observed cross-owner or unresolved reference. */

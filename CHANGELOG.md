@@ -136,6 +136,14 @@
 
 ### Fixed
 
+- Measure the production shared catalog in context-size acceptance while preserving its existing safeguard and authority checks (#260).
+
+- Admit same-package simulated tasks against the active host's captured identity without recapturing advanced upstream staging (#259).
+
+- Preserve the primary execution-store error when SQLite rollback also fails after storage exhaustion (#258).
+
+- Reject new live promotions before task creation when the execution host lacks its GitHub credential (#256).
+
 - Preserve validated diagnostic checkpoints after completed worker failure responses while still refusing uncertain operations (#254).
 
 - Admit diagnosed workday assignment successors through the same ownership, acceptance and checkpoint checks used for tasks (#253).

@@ -83,3 +83,9 @@ exceptions, captured file inventories, referenced standards/contracts, and cover
 exclusions. It identifies checks requiring a prepared environment. Legacy write
 scope is labeled separately when no component-owned ownership declaration exists.
 Discovery roots, like permissions, resolve to repository-relative paths before use.
+
+For current model context, the complete eligible catalog shares captured standard
+text once and retains each owner's standard references. Context-size acceptance
+measures this production catalog projection, not a concatenation of standalone
+owner views that repeats standards. The safeguard must retain every owner and
+all authority and relationship evidence without modifying the captured catalog (#260).
