@@ -37,6 +37,10 @@ jobs:
           sudo apparmor_parser -r /etc/apparmor.d/bwrap-userns-restrict
       - name: Bind verified machine executables
         run: |
+          tool_bin=/usr/local/lib/arcnexus-ci/bin
+          sudo install -d "$tool_bin"
+          printf '%s\n' '#!/bin/sh' 'exec /usr/local/bin/npm "$@"' | sudo tee "$tool_bin/npm" >/dev/null
+          sudo chmod 0755 "$tool_bin/npm"
           node --input-type=module <<'NODE'
           import { appendFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
           import { execFileSync } from 'node:child_process';
@@ -48,22 +52,17 @@ jobs:
             .filter((path) => readFileSync(path).subarray(0, 4).equals(Buffer.from([127, 69, 76, 70])));
           if (binaries.length !== 1) throw new Error('Expected one installed native Codex executable');
           const codex = binaries[0];
-          const npm = '/usr/local/bin/npm';
+          const npm = '/usr/local/lib/arcnexus-ci/bin/npm';
           console.log(execFileSync(npm, ['--version'], { encoding: 'utf8' }));
           console.log(execFileSync(codex, ['--version'], { encoding: 'utf8' }));
           appendFileSync(process.env.GITHUB_ENV, `ARCNEXUS_TEST_CODEX=${codex}\n`);
           mkdirSync('.git/arcnexus', { recursive: true });
           writeFileSync('.git/arcnexus/bindings.yaml', JSON.stringify({
             schemaVersion: 1,
-            tools: { node: process.execPath, codex, npm },
+            tools: { npm, node: process.execPath, codex },
             repositories: {},
           }));
           NODE
-          tool_bin=/usr/local/lib/arcnexus-ci/bin
-          sudo install -d "$tool_bin"
-          sudo ln -s "$(command -v node)" "$tool_bin/node"
-          sudo ln -s /usr/local/bin/npm "$tool_bin/npm"
-          echo "$tool_bin" >> "$GITHUB_PATH"
       - name: Check formatting
         run: npm run format:check
       - name: Lint maintained code
