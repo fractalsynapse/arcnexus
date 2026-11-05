@@ -37,6 +37,8 @@ approved objective; do not weaken a check merely to make the candidate pass.
   Reuse existing code. Add abstractions, dependencies, or infrastructure only for
   a demonstrated requirement. Avoid trivial wrappers and speculative frameworks.
 - No placeholder implementation or simulated output presented as delivered behavior.
+- Keep execution logs, transcripts, run databases and generated evidence indexes in
+  application storage outside source. Commit authored code, tests and documentation.
 - One accountable owner per objective. Prefer native sequential work. Do not spawn
   agents merely to satisfy ceremony; focused independent validation may be used when
   a selected skill explicitly calls for it and the evidence warrants it.

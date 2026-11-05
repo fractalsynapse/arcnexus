@@ -5,7 +5,7 @@ qualification runner are integrated through ArcNexus PRs #33–#36. TreeSeed's r
 catalog is integrated through Platform #869; the retired Studio/language and
 intent/implementation blueprints were removed separately through #868.
 
-The [structured evidence index](pre-phase-two.json) records revisions, run IDs,
+The archived evidence index `evidence/repository-archives/78000e2/docs/acceptance/pre-phase-two.json` in application state records revisions, run IDs,
 report hashes, elapsed time, supplied prompt sizes and available SDK usage. Full
 campaign manifests, captured acceptance artifacts, reports, raw events and logs
 remain outside candidates under `~/.local/state/arcnexus/campaigns/` and `runs/`.

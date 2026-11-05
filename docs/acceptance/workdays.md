@@ -28,7 +28,7 @@ and passes the new application validator. The user-approved top-level `reference
 extension is validated by ArcNexus; generic skill-authoring validators with a closed
 metadata allowlist do not define this application's metadata contract.
 
-[Machine-readable evidence index](../workday-qualification.json) records all 14 explicit
+The archived evidence index `evidence/repository-archives/78000e2/docs/workday-qualification.json` records all 14 explicit
 invocations, including 11 failed and one cancelled invocation, artifact hashes, immutable
 supervisor revisions, supplied inputs, thread/turn identities, usage and integration
 file hashes. Paths in that index are relative to the private ArcNexus user-state directory.

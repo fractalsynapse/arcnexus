@@ -10,7 +10,7 @@ The four increments are tracked by ArcNexus issues #41, #42, #45 and #48 and PRs
 [Platform PR #875](https://github.com/treeseed-ai/platform/pull/875). ArcNexus uses
 `staging`; no production release or multi-steward coordination was introduced.
 
-The [machine-readable evidence index](../operations-qualification.json) records
+The archived evidence index `evidence/repository-archives/78000e2/docs/operations-qualification.json` records
 immutable revisions, assignment/report hashes, runner hashes, outcomes, turns,
 usage completeness and resource shutdown. Paths in that index are relative to the
 local ArcNexus state directory (normally `~/.local/state/arcnexus`). Full private

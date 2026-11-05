@@ -1,7 +1,7 @@
 # Agent guidance acceptance
 
 Issue #51 adds the TypeScript metadata checker and real agent-guidance ownership.
-The [evidence index](../guidance-qualification.json) points to retained private
+The archived evidence index `evidence/repository-archives/78000e2/docs/guidance-qualification.json` points to retained private
 artifacts beneath the ArcNexus state directory.
 
 Luna run `53f94231-dc28-419d-9d23-4d5a00037015` used the captured hierarchy
