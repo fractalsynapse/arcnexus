@@ -48,3 +48,8 @@ status, evidence and workspace. Its successor inherits the original owner, goal,
 criteria and pending dependencies. Existing request IDs continue to identify
 the same conversations. A dependent waiting for replaced work resumes on
 verified delivery. Inspection records both assignment IDs and the diagnosis.
+
+Execution transactions and read snapshots preserve their original failure even
+if rollback also fails. SQLite can already have aborted a transaction after a
+storage failure; its later rollback diagnostic must not conceal that cause.
+This does not establish operation completion or authorize a retry (#258).
