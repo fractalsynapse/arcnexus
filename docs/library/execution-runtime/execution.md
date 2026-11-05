@@ -432,3 +432,9 @@ preflight error: do not create a task or external effect. Credentials remain
 outside architectural source and worker environments. This presence check does
 not claim that authentication, repository access or publication checks will pass.
 Existing promotion identities remain readable without credentials (#256).
+
+Task admission into an existing simulated workday compares the selected package
+with the host's captured identity. Compact status reports are projections, not
+authority records. Matching tasks retain that workday's environment and isolated
+staging even when upstream staging has advanced; this does not upgrade the host
+or import a new source revision (#259).
