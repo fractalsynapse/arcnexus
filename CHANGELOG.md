@@ -136,6 +136,8 @@
 
 ### Fixed
 
+- Measure the production shared catalog in context-size acceptance while preserving its existing safeguard and authority checks (#260).
+
 - Admit same-package simulated tasks against the active host's captured identity without recapturing advanced upstream staging (#259).
 
 - Preserve the primary execution-store error when SQLite rollback also fails after storage exhaustion (#258).
