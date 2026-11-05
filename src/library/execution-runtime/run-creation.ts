@@ -22,13 +22,7 @@ export class RunCreation {
     simulate: boolean,
     workday?: ExecutionRun,
   ): ExecutionRun {
-    if (git(this.context.source, 'status', '--porcelain', '--untracked-files=all').trim())
-      throw new InputError('Source checkout must be clean when creating a new run');
-    if (
-      git(this.context.source, 'rev-parse', 'HEAD').trim() !==
-      (this.context.checkoutAtCapture ?? this.context.base)
-    )
-      throw new InputError('Source revision changed; stop and start against updated authority');
+    this.validateSource(simulate, workday);
     const environment = this.environments.capture(simulate, workday);
     const candidate = this.store.latestDelivery(
       this.context.base,
@@ -43,5 +37,19 @@ export class RunCreation {
       packageId: this.context.packageId,
     });
     return this.store.run(run.id);
+  }
+
+  /** Checks the caller only for new environments; a joined simulation validates its isolated source. */
+  private validateSource(simulate: boolean, workday?: ExecutionRun): void {
+    const isolated =
+      simulate &&
+      workday?.data.environmentPrepared &&
+      this.environments.reusable('simulation', workday);
+    const context = isolated ? this.environments.contextFor(workday!) : this.context;
+    const expected = isolated ? context.base : (context.checkoutAtCapture ?? context.base);
+    if (git(context.source, 'status', '--porcelain', '--untracked-files=all').trim())
+      throw new InputError('Source checkout must be clean when creating a new run');
+    if (git(context.source, 'rev-parse', 'HEAD').trim() !== expected)
+      throw new InputError('Source revision changed; stop and start against updated authority');
   }
 }

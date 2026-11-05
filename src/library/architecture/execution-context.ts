@@ -18,6 +18,7 @@ export interface ProjectExecution {
   source: string;
   base: string;
   checkoutAtCapture?: string;
+  observedStaging?: { repository: string; branch: string };
   commonDir: string;
   key: string;
   packageId: string;

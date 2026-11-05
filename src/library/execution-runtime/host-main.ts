@@ -16,6 +16,7 @@ const hostCapabilities = [
   'simulation',
   'delivery-control',
   'delivery-promote',
+  'staging-snapshot',
 ];
 
 /** Owns the private IPC listener and keeps lifecycle controls responsive during inference. */
@@ -179,7 +180,11 @@ class HostServer {
       );
     if (request.action === 'retire') return this.retire();
     if (request.action === 'submit')
-      return this.host.submit(String(request.prompt ?? ''), request.simulate);
+      return this.host.submit(
+        String(request.prompt ?? ''),
+        request.simulate,
+        request.expectedEnvironmentId,
+      );
     if (request.action === 'task-status') return this.host.reports.view(String(request.id));
     return this.runControl(request);
   }

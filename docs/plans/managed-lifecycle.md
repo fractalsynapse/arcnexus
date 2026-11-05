@@ -2798,3 +2798,22 @@ receipt only after reconciling pending attempts and confirming the captured
 operation, provider check evidence and pushed Git head still match. Three native
 publication scenarios covered approval, retry after a failed check, and an
 uncertain check. The active qualification used its original publisher.
+
+For every new GitHub-backed simulation, the architect selected an online,
+read-only observation of actual GitHub staging at startup. Seed an empty bare
+remote from that exact commit; do not clone all caller branches. From that point
+on, use the isolated staging branch, including tasks that join the same workday.
+An environment identity check rejects a workday that stops or changes between
+selection and submission. A local-only project uses its actual local staging
+ref. Neither mode needs a publication grant merely to cut a development branch.
+
+Real GitHub snapshot qualification observed cf3ca34 for staging while the
+caller remained on f6fd4e6. The new bare remote contained only refs/heads/staging
+at cf3ca34 and had no outbound remote. This was read-only provider and Git
+materialization evidence. Separately, the original guide's assembled checks
+produced their package artifact. Independent review accepted criteria 0–3 and
+blocked criterion 4 because verification.evidence exposed patch and assessment
+without the validation outputs. Simulated staging remained at f6fd4e6. Bind
+the assembled checks, execution chronology and supplier assessments to the
+actual review manifest before another qualification (#249). Preserve the
+original uncertain merge and do not substitute a manual merge or promotion.

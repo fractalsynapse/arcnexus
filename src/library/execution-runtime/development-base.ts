@@ -11,17 +11,15 @@ export async function developmentBase(
   candidate: string,
   evidence: string,
   signal: AbortSignal,
-): Promise<string | undefined> {
-  const policy = new PublicationPolicy().resolve(context);
-  if (!policy) return undefined;
-  const branch = policy.operation.targetBranch;
+): Promise<string> {
+  const branch = developmentTarget(context);
   const ref = 'refs/heads/' + branch;
   git(context.source, 'check-ref-format', ref);
   const origin = context.bindings.materializations?.[context.catalog.primaryRepository!]?.origin;
   if (mode === 'simulation' && !origin) throw new Error('Missing simulated development repository');
   const head =
-    mode === 'simulation'
-      ? isolatedHead(origin!, ref)
+    mode !== 'live'
+      ? repositoryHead(mode === 'simulation' ? origin! : context.source, ref)
       : await githubBranchHead(runDestination(context, 'live'), branch, signal, {
           source: context.source,
           evidence,
@@ -36,15 +34,17 @@ export async function developmentBase(
 }
 
 /** Reports a missing simulated target without substituting a checkout or stale tracking ref. */
-function isolatedHead(origin: string, ref: string): string {
+function repositoryHead(origin: string, ref: string): string {
   const heads = git(origin, 'for-each-ref', '--format=%(refname) %(objectname)', ref);
   const head = heads
     .split('\n')
     .find((line) => line.startsWith(ref + ' '))
     ?.split(' ')[1];
-  if (!head)
-    throw new Error(
-      `Missing simulated development branch target ${ref}; inspect environment setup`,
-    );
+  if (!head) throw new Error(`Missing development branch target ${ref}; inspect environment setup`);
   return head;
+}
+
+/** Engineering always has an integration branch, including local packages without publication authority. */
+export function developmentTarget(context: ProjectExecution): string {
+  return new PublicationPolicy().resolve(context)?.operation.targetBranch ?? 'staging';
 }

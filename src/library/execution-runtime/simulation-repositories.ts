@@ -1,3 +1,5 @@
+import { developmentTarget } from './development-base.js';
+import { githubDestination } from './run-destination.js';
 import { mkdirSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import type { RepositoryMaterialization } from '../architecture/bindings.js';
@@ -42,7 +44,10 @@ export class SimulationRepositories {
     mkdirSync(directory, { recursive: true, mode: 0o700 });
     const origin = join(directory, 'remote.git');
     const destination = join(directory, 'source');
-    await this.materialize(source, destination, origin, base, directory, signal);
+    if (id === this.context.catalog.primaryRepository)
+      await this.seedPrimary(source, origin, base, directory, signal);
+    else await this.copyDependency(source, origin, directory, signal);
+    await this.materialize(destination, origin, base, directory, signal);
     return {
       source: realpathSync(destination),
       base,
@@ -52,15 +57,13 @@ export class SimulationRepositories {
     };
   }
 
-  /** Creates independent source and remote stores before checking out the captured revision. */
-  private async materialize(
+  /** Copies dependency refs without retaining the source repository as an upstream destination. */
+  private async copyDependency(
     source: string,
-    destination: string,
     origin: string,
-    base: string,
     directory: string,
     signal: AbortSignal,
-  ): Promise<void> {
+  ) {
     await this.command(
       ['clone', '--bare', '--no-local', '--', source, origin],
       source,
@@ -69,9 +72,64 @@ export class SimulationRepositories {
       signal,
     );
     git(origin, 'remote', 'remove', 'origin');
+  }
+
+  /** Seeds only the observed integration branch in a new isolated bare repository. */
+  private async seedPrimary(
+    source: string,
+    origin: string,
+    base: string,
+    directory: string,
+    signal: AbortSignal,
+  ) {
+    const branch = developmentTarget(this.context);
+    const ref = 'refs/heads/' + branch;
+    git(source, 'check-ref-format', ref);
+    this.validateSnapshot(source, branch, ref, base);
+    await this.command(
+      ['init', '--bare', '--initial-branch=' + branch, origin],
+      source,
+      directory,
+      'remote',
+      signal,
+    );
+    await this.command(
+      ['fetch', '--no-tags', '--', source, base + ':' + ref],
+      origin,
+      directory,
+      'seed',
+      signal,
+    );
+    if (git(origin, 'show-ref', '--verify', '--hash', ref).trim() !== base)
+      throw new Error('Simulation staging differs from the observed source');
+  }
+
+  /** Refuses an unobserved GitHub ref or a local staging ref that moved after admission. */
+  private validateSnapshot(source: string, branch: string, ref: string, base: string): void {
+    const upstream = githubDestination(this.context);
+    if (upstream) {
+      const observed = this.context.observedStaging;
+      if (
+        observed?.repository !== upstream ||
+        observed.branch !== branch ||
+        this.context.base !== base
+      )
+        throw new Error('Simulation requires an observed GitHub staging snapshot before setup');
+    } else if (git(source, 'show-ref', '--verify', '--hash', ref).trim() !== base)
+      throw new Error('Local staging changed before simulation setup');
+  }
+
+  /** Creates independent source and remote stores before checking out the captured revision. */
+  private async materialize(
+    destination: string,
+    origin: string,
+    base: string,
+    directory: string,
+    signal: AbortSignal,
+  ): Promise<void> {
     await this.command(
       ['clone', '--no-local', '--no-checkout', '--', origin, destination],
-      source,
+      directory,
       directory,
       'clone',
       signal,

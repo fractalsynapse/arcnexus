@@ -46,7 +46,7 @@ export async function importObservedHead(
   evidence: string,
   repository: string,
   head: string,
-  credential: () => Promise<string>,
+  credential: (() => Promise<string>) | undefined,
   signal: AbortSignal,
 ): Promise<void> {
   if (!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(head)) throw new Error('Invalid observed commit');
@@ -62,7 +62,7 @@ export async function importObservedHead(
     'upstream',
     bare,
     [...fetch, 'https://github.com/' + repository + '.git', head],
-    await gitAuthorization(repository, credential),
+    credential ? await gitAuthorization(repository, credential) : { GIT_ALLOW_PROTOCOL: 'https' },
   );
   await run('import', source, [...fetch, bare, head]);
   if (git(source, 'cat-file', '-t', head).trim() !== 'commit')

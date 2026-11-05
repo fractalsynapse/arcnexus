@@ -20,7 +20,11 @@ import type {
   ExecutionAssignment,
 } from '../coordination-store/execution-types.js';
 import { CandidateSnapshots } from '../workspace/candidates.js';
-import { createWorkspace, prepareWorkspace } from '../workspace/workspace.js';
+import {
+  continueDevelopmentBranch,
+  createWorkspace,
+  prepareWorkspace,
+} from '../workspace/workspace.js';
 import { save, type RecordData } from '../workspace/state.js';
 import { ProgressObserver } from '../report/progress.js';
 import { Direction, VerificationIssue } from '../task-intake/direction.js';
@@ -307,7 +311,9 @@ export class AssignmentExecution {
     Object.assign(record, {
       workspace: next.workspace,
       branch: next.branch,
-      branchBase: next.branchBase,
+      branchBase: record.branchBase ?? next.branchBase,
+      members: next.members,
+      materializationBinding: next.materializationBinding,
       base: current,
     });
     if (record.nextStage === 'finished') record.nextStage = 'review';
@@ -336,6 +342,8 @@ export class AssignmentExecution {
     });
     await prepareWorkspace(this.root, next, this.signal);
     this.snapshots.apply(next.workspace, current, revision);
+    continueDevelopmentBranch(record, next);
+    save(this.root, next);
     return next;
   }
 

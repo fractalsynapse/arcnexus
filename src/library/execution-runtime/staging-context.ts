@@ -13,6 +13,7 @@ export async function stagingContext(
   repository: string,
   branch: string,
   signal: AbortSignal,
+  requirePublication = true,
 ): Promise<ProjectExecution> {
   const base = await githubBranchHead(repository, branch, signal, {
     source,
@@ -20,9 +21,13 @@ export async function stagingContext(
   });
   const context = new ExecutionContext().resolve(source, packageId, base);
   const policy = new PublicationPolicy().resolve(context);
-  if (policy?.operation.targetBranch !== branch || runDestination(context, 'live') !== repository)
+  if (
+    (requirePublication && !policy) ||
+    (policy && policy.operation.targetBranch !== branch) ||
+    runDestination(context, 'live') !== repository
+  )
     throw new InputError(
       `Execution requires a matching publication grant on ${repository}/${branch} at ${base}`,
     );
-  return context;
+  return { ...context, observedStaging: { repository, branch } };
 }

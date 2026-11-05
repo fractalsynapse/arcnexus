@@ -140,7 +140,10 @@ class LivePublicationFixture {
     if (path.startsWith('/git/ref/')) {
       const head = this.head(decodeURIComponent(path.slice('/git/ref/heads/'.length)));
       return head
-        ? Response.json({ object: { type: 'commit', sha: head } })
+        ? Response.json({
+            ref: 'refs/heads/' + decodeURIComponent(path.slice('/git/ref/heads/'.length)),
+            object: { type: 'commit', sha: head },
+          })
         : new Response('{}', { status: 404 });
     }
     if (path === '/branches/staging') return Response.json({ name: 'staging' });

@@ -134,6 +134,34 @@ function prepareBranch(record: RecordData): void {
     git(record.workspace, '-c', 'core.hooksPath=/dev/null', 'merge', '--ff-only', record.base);
 }
 
+/** Moves an assignment's existing branch to its verified successor worktree and retains the old checkout. */
+export function continueDevelopmentBranch(previous: RecordData, next: RecordData): void {
+  if (
+    !previous.assignmentId ||
+    next.assignmentId !== previous.assignmentId ||
+    !previous.executionRunId ||
+    previous.executionRunId !== next.executionRunId ||
+    previous.commonDir !== next.commonDir ||
+    previous.workspace === next.workspace ||
+    previous.branch === next.branch ||
+    previous.branch !== 'codex/run-' + previous.id ||
+    next.branch !== 'codex/run-' + next.id
+  )
+    throw new Error(
+      'Development branch continuation requires distinct worktrees of the same assignment',
+    );
+  assertIdentity(previous);
+  assertIdentity(next);
+  if (git(next.source, 'rev-list', '--max-count=1', previous.base, '--not', next.base).trim())
+    throw new Error('Development branch continuation would lose retained commits');
+  const ref = 'refs/heads/' + previous.branch;
+  git(previous.workspace, '-c', 'core.hooksPath=/dev/null', 'switch', '--detach', previous.base);
+  git(next.source, 'update-ref', '--no-deref', ref, next.base, previous.base);
+  git(next.workspace, '-c', 'core.hooksPath=/dev/null', 'switch', '--no-guess', previous.branch);
+  next.branch = previous.branch;
+  assertIdentity(next);
+}
+
 export function cleanup(root: string, id: string): RecordData {
   return new WorkspaceCleanup(root, id).run();
 }

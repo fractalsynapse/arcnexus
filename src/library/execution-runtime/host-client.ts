@@ -1,6 +1,6 @@
 import { stagingContext } from './staging-context.js';
-import { PublicationPolicy } from '../publisher/publisher.js';
-import { runDestination } from './run-destination.js';
+import { developmentTarget } from './development-base.js';
+import { githubDestination } from './run-destination.js';
 import { ContainerLifetime } from './container-lifetime.js';
 import { InputError } from '../architecture/config.js';
 import { HostConnection, type HostRequest } from './host-connection.js';
@@ -24,6 +24,8 @@ export type { HostRequest } from './host-connection.js';
 /** Connects CLI invocations to the one private host for a canonical repository. */
 export class HostClient {
   private capturedContext?: ProjectExecution;
+
+  private expectedEnvironmentId?: string;
 
   private readonly key: string;
 
@@ -60,23 +62,50 @@ export class HostClient {
 
   /** Selects live staging before admission; existing supervisors retain their own captured authority. */
   async ensureRun(action: 'submit' | 'start', simulate: boolean, signal: AbortSignal) {
-    if (action === 'start' && (await this.alive())) {
-      const { workday } = await this.request({ action: 'status' });
-      if (workday && workday.status !== 'stopped') return;
-    }
+    if (await this.retainedAdmission(action, simulate)) return;
     const discovered = this.context;
-    const policy = new PublicationPolicy().resolve(discovered);
-    if (!simulate && policy) {
+    const branch = developmentTarget(discovered);
+    const repository = githubDestination(discovered);
+    if (repository) {
       this.capturedContext = await stagingContext(
         discovered.source,
         discovered.packageId,
         this.directory,
-        runDestination(discovered, 'live'),
-        policy.operation.targetBranch,
+        repository,
+        branch,
         signal,
+        false,
+      );
+    } else {
+      this.capturedContext = new ExecutionContext().resolve(
+        discovered.source,
+        discovered.packageId,
+        'refs/heads/' + branch,
       );
     }
     await this.ensure(action);
+  }
+
+  /** Keeps an existing isolated workday in its own upstream environment, including task admission. */
+  private async retainedAdmission(action: string, simulate: boolean): Promise<boolean> {
+    if (!(await this.alive())) return false;
+    const { workday } = await this.request({ action: 'status' });
+    if (!workday || workday.status === 'stopped') return false;
+    if (action === 'start') return true;
+    if (
+      !simulate ||
+      workday.environment?.mode !== 'simulation' ||
+      !['running', 'idle', 'paused', 'pausing'].includes(workday.status) ||
+      workday.data.packageId !== this.context.packageId
+    )
+      return false;
+    const identity = await this.request({ action: 'identity' });
+    if (!identity.hostCapabilities?.includes('staging-snapshot'))
+      throw new InputError(
+        'Retained simulation uses an older branch workflow; finish it before submitting new work',
+      );
+    this.expectedEnvironmentId = workday.environment.id;
+    return true;
   }
 
   /** Starts a host when necessary and waits for its local readiness, not an execution deadline. */
@@ -94,7 +123,12 @@ export class HostClient {
   private async compatible(action: string): Promise<boolean> {
     if (['status', 'stop', 'pause'].includes(action)) return true;
     const context = (await this.request({ action: 'identity' })) as ProjectExecution;
-    if (executionIdentity(context) === executionIdentity(this.context)) return true;
+    if (
+      executionIdentity(context) === executionIdentity(this.context) &&
+      (!this.context.observedStaging ||
+        JSON.stringify(context.observedStaging) === JSON.stringify(this.context.observedStaging))
+    )
+      return true;
     const status = await this.request({ action: 'status' });
     if (
       (status.workday && status.workday.status !== 'stopped') ||
@@ -142,7 +176,11 @@ export class HostClient {
           'Captured host does not support simulation; end retained runs and restart with the updated runtime',
         );
     }
-    return connection.request(request);
+    return connection.request(
+      request.action === 'submit' && this.expectedEnvironmentId
+        ? { ...request, expectedEnvironmentId: this.expectedEnvironmentId }
+        : request,
+    );
   }
 
   /** Confirms both process identity and an answering local endpoint before trusting a stale socket. */

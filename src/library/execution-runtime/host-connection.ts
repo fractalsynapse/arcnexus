@@ -9,6 +9,7 @@ export interface HostRequest {
   answer?: string;
   control?: string;
   expectedRevision?: string;
+  expectedEnvironmentId?: string;
 }
 
 /** Sends private IPC requests independently of source checkout discovery or host creation. */

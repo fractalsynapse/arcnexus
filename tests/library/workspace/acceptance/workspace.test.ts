@@ -47,7 +47,7 @@ class WorkspaceTests {
     assert.match(record.branch, /^codex\//);
     assert.equal(readFileSync(join(record.workspace, 'generated/cwd'), 'utf8'), record.workspace);
     assert.equal(f.git('status', '--porcelain'), '');
-    assert.equal(f.git('branch', '--show-current'), 'main');
+    assert.equal(f.git('branch', '--show-current'), 'staging');
     assert.equal(f.cleanup(record.id).status, 0);
     assert.equal(existsSync(record.workspace), false);
     assert.equal(f.git('rev-parse', record.branch), base);

@@ -18,18 +18,10 @@ export async function githubBranchHead(
   signal: AbortSignal,
   target: { source: string; evidence: string },
 ) {
-  const head = await new GitHubTransport(repository, githubHostCredential).branchHead(
-    branch,
-    signal,
-  );
-  await importObservedHead(
-    target.source,
-    target.evidence,
-    repository,
-    head,
-    githubHostCredential,
-    signal,
-  );
+  const credential =
+    process.env.GH_TOKEN || process.env.GITHUB_TOKEN ? githubHostCredential : undefined;
+  const head = await new GitHubTransport(repository, credential).branchHead(branch, signal);
+  await importObservedHead(target.source, target.evidence, repository, head, credential, signal);
   return head;
 }
 

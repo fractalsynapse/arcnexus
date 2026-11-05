@@ -31,7 +31,7 @@ class PromotionScenarios {
         'https://api.github.com/repos/example/promotion-fixture/git/ref/heads/staging',
       );
       assert.equal(options.method, 'GET');
-      return Response.json({ object: { type: 'commit', sha: base } });
+      return Response.json({ ref: 'refs/heads/staging', object: { type: 'commit', sha: base } });
     });
     await assert.rejects(
       new ExecutionControls(state).promote(f.delivery.id),

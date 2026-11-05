@@ -4,7 +4,7 @@
 
 ### Added
 
-- Record the observed staging commit for steward development branches in publication-enabled projects. Block branch creation when the candidate and staging have incompatible histories (#247).
+- Snapshot GitHub staging when a simulation starts. Each steward works on its own development branch, and the host rejects incompatible baselines before dispatch (#247, #248).
 
 - Pin real promotion to the GitHub target branch revision and require its publication grant before admitting live work. Refuse a merge that would import unreviewed base history (#247).
 

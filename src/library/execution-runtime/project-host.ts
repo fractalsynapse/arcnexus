@@ -125,10 +125,15 @@ export class ProjectHost {
   }
 
   /** Queues a goal without interrupting an in-flight safe checkpoint. */
-  submit(prompt: string, simulate = false): ExecutionRun {
+  submit(prompt: string, simulate = false, expectedEnvironmentId?: string): ExecutionRun {
     if (!prompt.trim()) throw new InputError('Task prompt must not be empty');
-    const task = this.create('task', prompt, simulate);
     const workday = this.selection.workday();
+    const reusable = simulate && this.environments.reusable('simulation', workday);
+    if (expectedEnvironmentId && expectedEnvironmentId !== reusable)
+      throw new InputError(
+        'Simulated workday changed before admission; submit again to capture staging',
+      );
+    const task = this.create('task', prompt, simulate);
     if (workday && ['running', 'idle'].includes(workday.status))
       this.store.updateRun(
         workday.id,

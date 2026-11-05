@@ -3,7 +3,7 @@ export class GitHubTransport {
   /** Captures one explicit upstream and an injectable transport boundary for deterministic acceptance. */
   constructor(
     readonly repository: string,
-    private readonly credential: () => Promise<string>,
+    private readonly credential: (() => Promise<string>) | undefined,
     private readonly transport: typeof fetch = fetch,
   ) {
     if (
@@ -20,9 +20,11 @@ export class GitHubTransport {
 
   /** Resolves a captured branch to its immutable Git commit before live work is admitted. */
   async branchHead(branch: string, signal: AbortSignal): Promise<string> {
-    const ref = await this.request('/git/ref/heads/' + encodeURIComponent(branch), signal);
+    const url = this.scope('/git/ref/heads/' + encodeURIComponent(branch), 'GET');
+    const ref = await this.send(url, signal, 'GET', undefined, true);
     const sha = ref.object?.sha;
     if (
+      ref.ref !== 'refs/heads/' + branch ||
       ref.object?.type !== 'commit' ||
       typeof sha !== 'string' ||
       !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(sha)
@@ -61,10 +63,11 @@ export class GitHubTransport {
     signal: AbortSignal,
     method: string,
     body?: object,
+    publicRead = false,
   ): Promise<any> {
     signal.throwIfAborted();
-    const token = await this.credential();
-    if (!token.trim()) throw new Error('GitHub host credential is unavailable');
+    const token = await this.credential?.();
+    if (!token?.trim() && !publicRead) throw new Error('GitHub host credential is unavailable');
     signal.throwIfAborted();
     const response = await this.transport(url, {
       method,
@@ -72,7 +75,7 @@ export class GitHubTransport {
       redirect: 'error',
       headers: {
         Accept: 'application/vnd.github+json',
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         'Content-Type': 'application/json',
         'X-GitHub-Api-Version': '2026-03-10',
       },

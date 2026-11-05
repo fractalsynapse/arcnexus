@@ -1,15 +1,19 @@
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { createWorkspace, prepareWorkspace } from '../../../../dist/library/workspace/workspace.js';
+import {
+  continueDevelopmentBranch,
+  createWorkspace,
+  prepareWorkspace,
+} from '../../../../dist/library/workspace/workspace.js';
 import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
 import { fixture } from '../support/workspace-fixture.js';
 
 test('each steward branch starts at observed staging and retains verified candidate commits', async (t) => {
   const f = fixture(t);
   const staging = f.git('rev-parse', 'HEAD');
-  f.git('branch', 'staging', staging);
+  f.git('switch', '-c', 'verified-dependencies', staging);
   writeFileSync(join(f.repo, 'source.txt'), 'verified dependency');
   f.commit();
   const candidate = f.git('rev-parse', 'HEAD');
@@ -30,6 +34,27 @@ test('each steward branch starts at observed staging and retains verified candid
     /missing commits/,
   );
   assert.equal(existsSync(stale.workspace), false);
+});
+
+test('a verified dependency preserves the steward branch and the previous unfinished worktree', async (t) => {
+  const f = fixture(t);
+  mkdirSync(join(f.state, 'runs'), { recursive: true });
+  const first = createWorkspace(f.state, { project: f.repo });
+  await prepareWorkspace(f.state, first, new AbortController().signal);
+  const ownBranch = first.branch;
+  writeFileSync(join(first.workspace, 'source.txt'), 'unfinished edit');
+  writeFileSync(join(f.repo, 'source.txt'), 'verified dependency');
+  f.commit();
+  const next = createWorkspace(f.state, { project: f.repo });
+  await prepareWorkspace(f.state, next, new AbortController().signal);
+  for (const record of [first, next])
+    Object.assign(record, { executionRunId: 'run', assignmentId: 'owner-assignment' });
+  writeFileSync(join(next.workspace, 'source.txt'), 'reconciled edit');
+  continueDevelopmentBranch(first, next);
+  assert.equal(next.branch, ownBranch);
+  assert.equal(f.git('rev-parse', ownBranch), next.base);
+  assert.equal(readFileSync(join(first.workspace, 'source.txt'), 'utf8'), 'unfinished edit');
+  assert.equal(readFileSync(join(next.workspace, 'source.txt'), 'utf8'), 'reconciled edit');
 });
 
 registerSuite({

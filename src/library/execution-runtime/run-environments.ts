@@ -37,14 +37,7 @@ export class RunEnvironments {
     if (!enabled) throw new Error('Simulation requires declared upstream lifecycle operations');
     const mode = simulate ? 'simulation' : 'live';
     const identity = executionIdentity(this.context);
-    const id =
-      workday?.environment?.mode === mode &&
-      ['running', 'idle', 'paused', 'pausing'].includes(workday.status) &&
-      workday.data.executionIdentity === identity
-        ? workday.environment.id
-        : simulate
-          ? randomUUID()
-          : `live-${identity}`;
+    const id = this.reusable(mode, workday) ?? (simulate ? randomUUID() : `live-${identity}`);
     this.effects.register({
       id,
       mode,
@@ -53,6 +46,17 @@ export class RunEnvironments {
       authorityDigest: identity,
     });
     return { id, mode };
+  }
+
+  /** Returns the reusable environment only while its workday and captured authority are compatible. */
+  reusable(mode: RunEnvironment['mode'], workday?: ExecutionRun): string | undefined {
+    if (
+      workday?.environment?.mode === mode &&
+      ['running', 'idle', 'paused', 'pausing'].includes(workday.status) &&
+      workday.data.executionIdentity === executionIdentity(this.context)
+    )
+      return workday.environment.id;
+    return undefined;
   }
 
   /** Prepares isolated Git objects once; uncertain filesystem transitions require inspection, never replay. */
