@@ -16,6 +16,34 @@ import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Qualifies actual subprocess filesystem enforcement through the assembled adapter. */
 class ConfinementScenarios {
+  /** Prepared dependencies stay readable but cannot be modified by shell descendants or broad output grants. */
+  async preparedDependencies(t: TestContext): Promise<void> {
+    const root = this.fixture(t);
+    const { SourceConfinement } = await import(resolve('dist/library/operations/confinement.js'));
+    mkdirSync(join(root, 'node_modules'));
+    writeFileSync(join(root, 'node_modules/dependency'), 'original');
+    const adapter = new SourceConfinement({
+      workspace: root,
+      reads: ['.'],
+      outputs: ['node_modules', 'generated'],
+      readOnlyOutputs: ['node_modules'],
+      temporaryRoot: root + '-private',
+      executable: process.env.ARCNEXUS_TEST_CODEX!,
+      toolDirectories: [dirname(process.execPath), dirname(process.env.ARCNEXUS_TEST_CODEX!)],
+    });
+    const script =
+      "const f=require('fs');if(f.readFileSync('node_modules/dependency','utf8')!=='original')process.exit(6);f.writeFileSync('generated/result','ok');try{f.writeFileSync('node_modules/dependency','bad');process.exit(7)}catch(e){if(!['EROFS','EPERM','EACCES'].includes(e.code))throw e;}";
+    const command = adapter.command({ command: process.execPath, args: ['-e', script] });
+    const result = spawnSync(command.command, command.args, {
+      cwd: root,
+      env: adapter.environment(),
+      encoding: 'utf8',
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(readFileSync(join(root, 'node_modules/dependency'), 'utf8'), 'original');
+    assert.equal(readFileSync(join(root, 'generated/result'), 'utf8'), 'ok');
+  }
+
   /** Named programs retain an absolute executable identity under the installed sandbox, including containers. */
   async executableIdentity(t: TestContext): Promise<void> {
     const root = this.fixture(t);
@@ -192,6 +220,12 @@ test(
   'installed confinement allows generated output and prevents source mutation',
   { skip: !process.env.ARCNEXUS_TEST_CODEX && 'Live qualification requires ARCNEXUS_TEST_CODEX' },
   (t) => scenarios.prevents(t),
+);
+
+test(
+  'installed confinement keeps prepared dependencies read-only despite broad generated outputs',
+  { skip: !process.env.ARCNEXUS_TEST_CODEX && 'Live qualification requires ARCNEXUS_TEST_CODEX' },
+  (t) => scenarios.preparedDependencies(t),
 );
 
 registerSuite({

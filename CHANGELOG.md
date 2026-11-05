@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Reuse settled dependency preparation across task/workday workspaces while keeping installed dependencies read-only and build outputs isolated (#268).
+
 - Recover retained tasks through the installed runtime and one host launcher, recording runtime transitions without per-run supervisor copies (#266).
 
 ### Added

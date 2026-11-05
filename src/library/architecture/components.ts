@@ -287,6 +287,7 @@ class CatalogLoader {
     scopePath(operation.cwd);
     operation.generatedDirectories.forEach(scopePath);
     operation.artifacts.forEach(scopePath);
+    operation.dependencyInputs?.forEach(scopePath);
     commands([
       ...(['http', 'upstream'].includes(operation.kind) ? [] : [operation]),
       ...operation.probes,

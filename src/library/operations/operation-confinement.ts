@@ -1,3 +1,4 @@
+import { PreparedDependencies } from './prepared-dependencies.js';
 import type { Component } from '../architecture/components.js';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
@@ -44,6 +45,7 @@ export class OperationConfinement {
       workspace: this.record.workspace,
       reads: owner.access.readPaths,
       outputs: op.generatedDirectories,
+      readOnlyOutputs: PreparedDependencies.outputs(this.record),
       maintainedPaths: catalog
         .filter((c) => c.repository === owner.repository)
         .flatMap((c) => c.allowedWritePaths),

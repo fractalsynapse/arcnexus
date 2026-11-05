@@ -26,6 +26,15 @@ export function operationOwner(record: RecordData, operation: Operation): Compon
   return owner;
 }
 
+/** Canonicalizes effective read scope for operation deduplication and preparation reuse. */
+export function operationReads(record: RecordData, operation: Operation): string[] {
+  const paths = [...new Set(operationOwner(record, operation).access.readPaths)].sort();
+  return paths.filter(
+    (path) =>
+      !paths.some((parent) => parent !== path && (parent === '.' || path.startsWith(`${parent}/`))),
+  );
+}
+
 /** Plans finite prerequisites and deduplicates equivalent execution within one explicit checkpoint. */
 export class OperationCheckpoint {
   readonly notApplicable: Array<{
@@ -148,14 +157,7 @@ export class OperationCheckpoint {
 
   /** Includes effective read permissions while ignoring unused owner context in otherwise identical commands. */
   private identity(operation: Operation): string {
-    const owner = operationOwner(this.record, operation);
-    const paths = [...new Set(owner.access.readPaths)].sort();
-    const reads = paths.filter(
-      (path) =>
-        !paths.some(
-          (parent) => parent !== path && (parent === '.' || path.startsWith(`${parent}/`)),
-        ),
-    );
+    const reads = operationReads(this.record, operation);
     const { resolvedContext: _context, ...definition } = operation;
     return JSON.stringify({ definition, reads });
   }

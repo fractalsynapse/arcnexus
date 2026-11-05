@@ -3,10 +3,6 @@ cwd: .
 category: cli-check
 activities: []
 generatedDirectories:
-  - .fixture-build
-  - .test-build
-  - .tool-build
-  - dist
   - node_modules
 artifacts: []
 network:
@@ -18,4 +14,8 @@ kind: command
 prerequisites: []
 command: node
 args:
+  - scripts/foundation/install-dependencies.mjs
+dependencyInputs:
+  - package.json
+  - package-lock.json
   - scripts/foundation/install-dependencies.mjs
