@@ -1,3 +1,4 @@
+import { validateSchema } from '../../../../dist/library/architecture/schema.js';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -70,6 +71,30 @@ class DependencyScenarios {
       exitCode: 0,
       log: 'original-log',
     };
+  }
+
+  /** Compiles the packaged strict schema before testing executable dependency configurations. */
+  schema(): void {
+    const { resolvedContext: _context, definitionDigest: _digest, ...definition } = this.operation;
+    const value = {
+      ...definition,
+      purpose: 'Install dependencies',
+      category: 'build',
+      activities: [],
+    };
+    assert.equal(validateSchema('operation-v4', value), value);
+    assert.throws(
+      () => validateSchema('operation-v4', { ...value, dependencyInputs: [] }),
+      /Invalid operation/,
+    );
+    assert.throws(
+      () => validateSchema('operation-v4', { ...value, artifacts: ['report.json'] }),
+      /Invalid operation/,
+    );
+    assert.throws(
+      () => validateSchema('operation-v4', { ...value, kind: 'service' }),
+      /Invalid operation/,
+    );
   }
 
   /** Three workspaces reuse one install; local copies have no writable shared inode. */
@@ -156,7 +181,7 @@ class DependencyScenarios {
   }
 }
 
-for (const name of ['reuse', 'invalidation', 'interrupted', 'protection'] as const)
+for (const name of ['schema', 'reuse', 'invalidation', 'interrupted', 'protection'] as const)
   test('prepared dependencies: ' + name, async () => {
     const scenario = new DependencyScenarios();
     try {

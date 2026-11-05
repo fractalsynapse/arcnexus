@@ -394,7 +394,10 @@
     },
     {
       "if": {
-        "required": ["dependencyInputs"]
+        "required": ["dependencyInputs"],
+        "properties": {
+          "dependencyInputs": {}
+        }
       },
       "then": {
         "properties": {
@@ -402,10 +405,12 @@
             "const": "command"
           },
           "generatedDirectories": {
-            "minItems": 1
+            "minItems": 1,
+            "type": "array"
           },
           "artifacts": {
-            "maxItems": 0
+            "maxItems": 0,
+            "type": "array"
           }
         }
       }

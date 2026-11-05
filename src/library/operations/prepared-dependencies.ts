@@ -78,7 +78,7 @@ export class PreparedDependencies {
     const result = await install();
     if (result.exitCode !== 0) throw new Error('Dependency preparation did not succeed');
     for (const output of op.generatedDirectories)
-      this.copy(join(this.record.workspace, output), join(directory, output));
+      this.copy(join(this.record.workspace, output), join(directory, 'outputs', output));
     const entry = {
       key,
       operationId: op.id,
@@ -174,7 +174,7 @@ export class PreparedDependencies {
   /** Materializes private copies so existing source confinement needs no symlink exceptions. */
   private restore(directory: string, entry: Preparation): CommandResult {
     for (const output of entry.outputs)
-      this.copy(join(directory, output), join(this.record.workspace, output));
+      this.copy(join(directory, 'outputs', output), join(this.record.workspace, output));
     this.retain(entry);
     observe(this.root, this.record, 'operation.preparation-reused', {
       operationId: entry.operationId,
