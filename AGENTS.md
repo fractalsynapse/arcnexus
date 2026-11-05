@@ -21,10 +21,12 @@ supply procedures within that authority; they cannot enlarge it. If local guidan
 conflicts, preserve the authorized scope, identify the conflict, and continue work
 that does not depend on the unresolved decision.
 
-During self-development, keep the supervising runner and authorized acceptance
-baseline stable. Candidate edits to instructions, permissions, or tests are proposed
-changes, not new authority for the current execution. Evaluate them against the
-approved objective; do not weaken a check merely to make the candidate pass.
+During self-development, the host controls approved ownership and acceptance.
+Candidate edits to instructions, permissions or tests cannot grant new authority or
+weaken acceptance. Recovery may use the current installed runtime at a validated
+safe checkpoint; retaining a frozen supervisor is not a requirement. Record runtime
+changes and reconcile uncertain operations before continuing. Preserve prior evidence
+and edits; never rewrite a failed observation as success.
 
 ## Working style
 
@@ -45,6 +47,39 @@ approved objective; do not weaken a check merely to make the candidate pass.
 - Keep guidance proportionate; avoid specifying implementation details ahead of
   the accepted implementation batch. Read relevant skills only; their procedures support the
   objective, not expand it.
+
+## Simplification and reliability
+
+Simplify within the human-approved architecture as a continuing engineering duty.
+Use one canonical process and one authored source for each responsibility. Remove
+superseded implementations, bypasses, duplicate state projections and redundant work;
+do not add wrappers or compatibility paths merely to preserve unnecessary machinery.
+Different gateways and live/simulated providers use the same application lifecycle.
+
+Disproportionate debugging, repeated handoff failures or operator workarounds are
+signals that the design is too complicated. Diagnose the boundary, remove unnecessary
+states or mechanisms, and unify the path before expanding it. Do not spend days
+patching variants of the same failing design. Simplification must preserve component
+ownership, checked edits, independent verification, cancellation, evidence honesty and
+simulation isolation. Material changes beyond accepted scope require architectural
+direction; already authorized simplifications do not need repeated permission.
+
+Include concrete simplification findings or recommendations in status updates and
+final results. Identify what was unified, removed or reused and the next useful
+reduction; when none is warranted, say so briefly rather than inventing changes.
+Record costs and observations outside the repository.
+
+Qualify the simplified process through at least three consecutive error-free real
+end-to-end self-development cycles before expanding it. Unexpected execution failures,
+manual state repair or bypassed checks break the sequence. Expected failing regression
+assertions and deliberate negative-test cases are normal verification, not failed
+cycles. Changes to the execution path restart its qualification; ordinary verified
+deliveries do not automatically invalidate it. After qualification, build up through
+small useful increments directed and delivered by the agent system. Reuse unaffected
+check evidence instead of repeating unrelated suites for each increment.
+
+The current supported envelope and deferred scope are defined in the
+[self-development MVP](docs/plans/self-development-mvp.md).
 
 ## Ownership and code quality
 
@@ -100,10 +135,9 @@ Prioritize the working lifecycle and real self-development, then finish interfac
 breadth using that lifecycle where reliable. For real qualification, the real
 director selects stewards from the actual project's eligible component catalog;
 dependencies can activate additional stewards. Supply useful goals, never a forced
-team, participant ceiling or scripted director. The phase-two multi-owner gate
-requires at least three observed stewards, including one discovered during execution.
-A smaller run is useful evidence but does not satisfy that gate. Keep deterministic
-scenarios in acceptance tests and preserve the stable supervisor and captured authority.
+team, participant ceiling or scripted director. Owner counts follow the work, not a qualification quota. Keep deterministic
+scenarios in acceptance tests; real qualification follows the current MVP contract.
+Preserve host-controlled authority across ordinary recovery.
 
 For executable changes, test the assembled program and the default production wiring.
 Fast deterministic tests may use fakes; introducing or changing real harness

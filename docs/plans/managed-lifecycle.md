@@ -1,7 +1,11 @@
 # Managed lifecycle and CLI — issue 148
 
-Status: accepted intent; implementation and qualification are incomplete. Phase three
-remains blocked. This extends the verified minimal configuration foundation (#109).
+Status: historical design and implementation ledger. The architect's November 5,
+2026 simplification decision supersedes this plan's MVP scope and completion gates.
+The current contract is [the self-development MVP](self-development-mvp.md).
+Preserve this history as evidence and rationale; its frozen-supervisor, relocation,
+transactional multi-repository and interface-breadth requirements are not current MVP
+prerequisites. This does not claim that deferred requirements were implemented.
 
 ## Product contract
 

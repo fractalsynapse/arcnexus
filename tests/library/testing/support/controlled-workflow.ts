@@ -30,6 +30,7 @@ export interface WorkflowOptions {
   suppliedTool?: boolean;
   sandboxFeedback?: boolean;
   documentationOnly?: boolean;
+  reviewEvidence?: boolean;
   refactor?: boolean;
   missingThread?: boolean;
   guidanceExpansion?: boolean;
@@ -85,6 +86,8 @@ export class ControlledWorkflow {
       setInterval(() => {}, 1000);
       return;
     }
+    if (this.options.reviewEvidence && turn.stage === 'review')
+      await new ControlledPlanning(this.options).reviewEvidence(turn);
     this.execute(turn);
     await this.flush(turn);
     if (this.options.planning) await new ControlledPlanning(this.options).apply(turn);

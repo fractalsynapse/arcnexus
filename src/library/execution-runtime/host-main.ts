@@ -4,7 +4,7 @@ import { ExecutionLease } from '../coordination-store/execution-store.js';
 import { createServer, type Socket } from 'node:net';
 import { chmodSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { HostRuntime } from './host-runtime.js';
 import type { ProjectExecution } from '../architecture/execution-context.js';
 import { processStart } from '../operations/service-state.js';
 import { ProjectHost } from './project-host.js';
@@ -63,6 +63,10 @@ class HostServer {
   /** Publishes process and captured-runtime identity only after IPC accepts connections. */
   private ready(): void {
     chmodSync(this.socket, 0o600);
+    const runner = new HostRuntime().record(
+      this.host.store,
+      join(this.root, 'projects', this.context.key),
+    );
     writeFileSync(
       join(this.root, 'projects', this.context.key, 'host.json'),
       JSON.stringify({
@@ -71,9 +75,7 @@ class HostServer {
         contextFile: basename(this.contextFile),
         pid: process.pid,
         start: processStart(process.pid),
-        runner: JSON.parse(
-          readFileSync(fileURLToPath(new URL('../../../runner.json', import.meta.url)), 'utf8'),
-        ),
+        runner,
       }),
       { mode: 0o600 },
     );

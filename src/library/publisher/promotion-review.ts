@@ -1,3 +1,4 @@
+import { PublicationEvidence } from '../report/report.js';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
@@ -58,7 +59,13 @@ export class PromotionReview {
       this.assignments,
       true,
       {
-        run: this.run,
+        ...new PublicationEvidence(this.root, this.context.key).capture(
+          this.run,
+          record,
+          this.assignments,
+        ),
+        verificationReports: this.assessments(record, checks),
+        promotionSourceObjective: this.run.data.promotionSourceObjective,
         promotionSource: this.source,
         originalAssignments: this.assignments,
         targetChecks: checks,
@@ -69,6 +76,33 @@ export class PromotionReview {
     if (candidateDigest(record) !== before)
       throw new Error('Promotion review changed target source');
     return goal;
+  }
+
+  /** Rejects stale or foreign target assessments before exposing their candidate-bound verdicts. */
+  private assessments(record: RecordData, checks: SimulationCheckResult) {
+    return checks.evidence.slice(1).map((reference) => {
+      const review = JSON.parse(readFileSync(reference, 'utf8')) as RecordData;
+      const captured = review.verificationEvidence as { candidateDigest?: string } | undefined;
+      if (
+        review.executionRunId !== this.run.id ||
+        review.parentRecordId !== record.id ||
+        review.base !== record.base ||
+        JSON.stringify(review.executionEnvironment) !== JSON.stringify(this.run.environment) ||
+        review.activationRole !== 'verifier' ||
+        review.status !== 'completed' ||
+        (review.agent as { status?: string } | undefined)?.status !== 'completed' ||
+        captured?.candidateDigest !== candidateDigest(record)
+      )
+        throw new Error('Promotion target assessment identity or candidate does not match');
+      return {
+        recordId: review.id,
+        runId: review.executionRunId,
+        parentRecordId: review.parentRecordId,
+        reviewedCandidate: captured,
+        acceptanceCriteria: review.acceptanceCriteria,
+        assessment: review.agent,
+      };
+    });
   }
 
   /** Refuses mode changes, missing source attribution and obsolete target ownership before running checks. */

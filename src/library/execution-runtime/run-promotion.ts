@@ -69,12 +69,14 @@ export class RunPromotion {
       throw new InputError(
         'Configure GH_TOKEN or GITHUB_TOKEN on the execution host before promotion',
       );
-    const original = this.execution.run(source.runId);
-    const run = submit(original.objective);
+    const run = submit(
+      `Promote verified simulation delivery ${source.id} into a freshly verified live candidate under current target authority. Preserve every original engineering acceptance criterion. Integration and publication follow separately through the captured live policy; this assessment does not claim completion of the source simulation lifecycle.`,
+    );
     this.execution.updateRun(run.id, run.status, {
       promotionSource: source.id,
       promotionStage: 'queued',
       promotionSourceRun: source.runId,
+      promotionSourceObjective: this.execution.run(source.runId).objective,
       publicationPolicy: new PublicationPolicy().resolve(this.context),
     });
     return { accepted: true, runId: run.id, promotedFrom: source.id };

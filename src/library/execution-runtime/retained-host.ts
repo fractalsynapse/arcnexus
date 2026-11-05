@@ -1,15 +1,14 @@
-import { closeSync, mkdirSync, openSync, readFileSync, realpathSync } from 'node:fs';
+import { mkdirSync, readFileSync, realpathSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
 import { InputError } from '../architecture/config.js';
 import { digest } from '../architecture/assignment.js';
 import { git } from '../operations/process.js';
-import { RunnerSnapshot, type CapturedRunner } from './runner-snapshot.js';
+import { HostRuntime } from './host-runtime.js';
 import { HostConnection } from './host-connection.js';
 
-/** Reconnects to a retained run's captured supervisor without upgrading its executable authority. */
+/** Reconnects to captured run authority and restarts the installed runtime when its host is absent. */
 export class RetainedHost {
   private readonly directory: string;
 
@@ -41,7 +40,7 @@ export class RetainedHost {
       throw new InputError('Retained supervisor authority does not match this task');
     const connection = new HostConnection(this.socket);
     if (await this.alive(connection, identity)) return connection;
-    this.launch(context, contextPath, metadata.runner);
+    this.launch(context, contextPath);
     for (let attempt = 0; attempt < 100; attempt++) {
       if (await this.alive(connection, identity)) return connection;
       await delay(50);
@@ -64,35 +63,18 @@ export class RetainedHost {
     return true;
   }
 
-  /** Starts only hash-validated retained code after confirming the original canonical repository. */
-  private launch(context: ProjectExecution, contextPath: string, runner: CapturedRunner): void {
-    const captured = this.validate(context, runner);
+  /** Restarts through the same installed launcher after validating repository identity. */
+  private launch(context: ProjectExecution, contextPath: string): void {
+    this.validate(context);
     mkdirSync(join('/tmp', `arcnexus-${process.getuid?.() ?? 'user'}`), {
       recursive: true,
       mode: 0o700,
     });
-    const log = openSync(join(this.directory, 'host.log'), 'a', 0o600);
-    try {
-      spawn(
-        process.execPath,
-        [
-          join(captured.directory, 'dist/library/execution-runtime/host-main.js'),
-          this.root,
-          contextPath,
-          this.socket,
-        ],
-        {
-          detached: true,
-          stdio: ['ignore', log, log],
-        },
-      ).unref();
-    } finally {
-      closeSync(log);
-    }
+    new HostRuntime().launch(this.root, contextPath, this.socket);
   }
 
-  /** Resolves relocated runtime storage while retaining the original repository and executable digests. */
-  private validate(context: ProjectExecution, runner: CapturedRunner): CapturedRunner {
+  /** Refuses a different repository; fixed-mount recovery does not relocate or replace source. */
+  private validate(context: ProjectExecution): void {
     const common = realpathSync(
       git(context.source, 'rev-parse', '--path-format=absolute', '--git-common-dir').trim(),
     );
@@ -100,11 +82,5 @@ export class RetainedHost {
       throw new InputError(
         'Retained repository identity changed; reconcile registration before recovery',
       );
-    const captured = {
-      ...runner,
-      directory: join(this.root, 'supervisors', basename(runner.directory)),
-    };
-    new RunnerSnapshot().validate(captured);
-    return captured;
   }
 }

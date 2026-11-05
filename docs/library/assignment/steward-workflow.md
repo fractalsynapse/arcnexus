@@ -193,3 +193,12 @@ architectural decision. An ineligible steward cannot be activated by an edit err
 
 Choose your own implementation files within captured component ownership. Neither
 a director nor an inbox requester can provide a file permission list.
+
+### Bounded review transport
+
+Steward review turns retain the complete captured patch, new-file contents and
+frozen-regression comparison outside the candidate. The initial prompt carries
+content identities and a `review.evidence` reference, not the patch body. Reviewers
+read the manifest and relevant artifacts through their final page. Paging limits
+individual transport messages; it never truncates evidence or limits review work.
+Existing retained supervisors keep their captured behavior.
