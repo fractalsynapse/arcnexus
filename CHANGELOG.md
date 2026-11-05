@@ -136,6 +136,8 @@
 
 ### Fixed
 
+- Remove the workspace steward’s obsolete prohibition on its component-owned definition; retained runs keep their captured authority (#252).
+
 - Identify frozen acceptance failures in steward corrective and review feedback (#251).
 
 - Reject infeasible behavioral scopes early and return observed specification and characterization deficiencies for correction (#235).
