@@ -140,6 +140,8 @@
 
 ### Fixed
 
+- Keep worker checklists as progress evidence instead of requiring host delivery before engineering handoff; recover completed diagnostic checkpoints without replaying uncertain execution (#269).
+
 - Give promotion directors retrievable target-check evidence and a distinct live-promotion goal while preserving source acceptance and provenance (#265).
 
 - Page complete steward review evidence instead of embedding large patches in model input (#262).

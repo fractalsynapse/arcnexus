@@ -4,8 +4,11 @@ import { join } from 'node:path';
 import type { TestContext } from 'node:test';
 import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
 import { loadBindings } from '../../../../dist/library/architecture/bindings.js';
-import { resolveAssignment } from '../../../../dist/library/architecture/assignment.js';
-import { StewardSession } from '../../../../dist/library/assignment/steward.js';
+import { digest, resolveAssignment } from '../../../../dist/library/architecture/assignment.js';
+import {
+  StewardSession,
+  validateContinuation,
+} from '../../../../dist/library/assignment/steward.js';
 import { createWorkspace } from '../../../../dist/library/workspace/workspace.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { minimalWorkflowFixture as workflowFixture } from '../../testing/support/workflow-fixture.js';
@@ -74,7 +77,7 @@ class ChecklistRecoveryScenarios {
     for (let failure = 0; failure < 3; failure++) await step();
     await assert.rejects(step, /different action|attention/);
     assert.equal(record.status, 'needs_attention');
-    assert.equal(record.safeCheckpoint, false);
+    assert.equal(record.safeCheckpoint, true);
     assert.equal((record.plan as any).items[0].status, 'pending');
     assert.equal((record.progress as any).warnings.length, 1);
   }
@@ -181,16 +184,46 @@ class ChecklistRecoveryScenarios {
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'before');
   }
 
-  /** A pending final item keeps the completed review correctable at the same checkpoint. */
+  /** Pending worker bookkeeping stays visible without preventing independently checked handoff. */
   async finalClaim(t: TestContext): Promise<void> {
     const { record, step } = this.fixture(t, 'final-checklist');
     for (let stage = 0; stage < 4; stage++) await step();
-    assert.equal(record.nextStage, 'review');
-    assert.equal(record.safeCheckpoint, true);
-    assert.match(String(record.planFeedback), /incomplete or blocked: work/);
-    await step();
     assert.equal(record.nextStage, 'finished');
+    assert.equal(record.safeCheckpoint, true);
+    assert.equal(record.planFeedback, undefined);
     assert.equal(record.status, 'completed');
+    assert.equal((record.plan as any).items[0].status, 'pending');
+    assert.equal((record.plan as any).hostChecks[0].status, 'completed');
+    assert.equal((record.turns as unknown[]).length, 4);
+  }
+
+  /** Recovers completed diagnostic evidence while refusing uncertain operations, turns and changed files. */
+  async diagnosticRecovery(t: TestContext): Promise<void> {
+    const { f, record, step } = this.fixture(t, 'final-checklist');
+    for (let stage = 0; stage < 4; stage++) await step();
+    const checkpoint = record.checkpoint as { path: string; sha256: string };
+    const value = JSON.parse(readFileSync(checkpoint.path, 'utf8'));
+    value.status = record.status = 'needs_attention';
+    record.safeCheckpoint = false;
+    const capture = () => {
+      const bytes = JSON.stringify(value);
+      writeFileSync(checkpoint.path, bytes);
+      checkpoint.sha256 = digest(bytes);
+    };
+    capture();
+    assert.doesNotThrow(() => validateContinuation(f.state, record));
+    for (const status of ['running', 'failed']) {
+      value.turns.at(-1).status = status;
+      capture();
+      assert.throws(() => validateContinuation(f.state, record), /no safe checkpoint/);
+    }
+    value.turns.at(-1).status = 'completed';
+    capture();
+    record.operationInvocations = [{ status: 'interrupted' }];
+    assert.throws(() => validateContinuation(f.state, record), /Operation completion is uncertain/);
+    record.operationInvocations = [];
+    writeFileSync(join(record.workspace, 'source.txt'), 'unreviewed');
+    assert.throws(() => validateContinuation(f.state, record), /Candidate changed/);
   }
 
   /** Captures an unlimited engineering profile and uses the production resumable session after every turn. */
@@ -256,6 +289,9 @@ class ChecklistRecoveryScenarios {
 
 const scenarios = new ChecklistRecoveryScenarios();
 
+test('completed diagnostic recovery preserves authority and refuses uncertain work', (t) =>
+  scenarios.diagnosticRecovery(t));
+
 test('mandatory source quality fails while specification edits remain correctable', (t) =>
   scenarios.quality(t));
 
@@ -289,7 +325,7 @@ test('invalid regression selection preserves the specification for correction', 
 test('changing invalid regression identities does not bypass progress detection', (t) =>
   scenarios.selectionLoop(t));
 
-test('final review can supply missing checklist evidence at its safe checkpoint', (t) =>
+test('pending checklist claims do not create a circular host-delivery prerequisite', (t) =>
   scenarios.finalClaim(t));
 
 registerSuite({

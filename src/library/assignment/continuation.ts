@@ -10,11 +10,13 @@ export function validateContinuation(root: string, record: RecordData): void {
   if (invocations.some((op) => ['running', 'interrupted'].includes(op.status)))
     throw new Error('Operation completion is uncertain; inspect retained invocation evidence');
   const checkpoint = record.checkpoint as { path: string; sha256: string } | undefined;
-  if (!record.safeCheckpoint || !checkpoint)
+  if (!checkpoint)
     throw new Error('Activation has no safe checkpoint; uncertain operations must be inspected');
   const bytes = readFileSync(checkpoint.path);
   if (digest(bytes) !== checkpoint.sha256) throw new Error('Checkpoint evidence changed');
   const value = JSON.parse(bytes.toString('utf8'));
+  if (!record.safeCheckpoint && !completedDiagnostic(value))
+    throw new Error('Activation has no safe checkpoint; uncertain operations must be inspected');
   const authority = record.resolvedAssignment as ResolvedAssignment;
   if (value.authorityHash !== authority.digest || record.continuationAuthority !== authority.digest)
     throw new Error('Checkpoint authority mismatch');
@@ -22,4 +24,12 @@ export function validateContinuation(root: string, record: RecordData): void {
   if (candidateDigest(record) !== expected)
     throw new Error('Candidate changed outside its retained checkpoint');
   assertServicesStopped(root, record.id);
+}
+
+/** Recognizes a retained post-turn diagnosis without treating unfinished inference as complete. */
+function completedDiagnostic(value: {
+  status?: string;
+  turns?: Array<{ status?: string }>;
+}): boolean {
+  return value.status === 'needs_attention' && value.turns?.at(-1)?.status === 'completed';
 }
