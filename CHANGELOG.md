@@ -217,6 +217,8 @@
 
 ### Changed
 
+- Make simplification and three consecutive real self-development cycles the MVP baseline; defer scope expansion and permit ordinary recovery without frozen supervisors (#266).
+
 - Use owner-scoped engineering checks and retain full repository verification on assembled deliveries (#234).
 
 - Move scripted prompt-campaign execution into acceptance-test support and retire `experiment run`; real-agent simulation continues through tasks and workdays (#148).

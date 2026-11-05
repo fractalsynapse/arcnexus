@@ -5,6 +5,8 @@ description: Use when an agreed capability needs a multi-step implementation pla
 
 # Plan a coherent implementation batch
 
+Plan the smallest useful increment under the [simplification rule](../../../AGENTS.md#simplification-and-reliability). Name the canonical path, what duplication or mechanisms will be removed, what evidence can be reused, and the current MVP exclusions. Human-authorized scope retirement overrides preservation of obsolete contracts.
+
 Read the accepted charter/design and current repository. Do not re-open settled
 questions. Plan the accepted batch across its necessary responsibilities; later
 phases stay brief. Follow the cadence in [AGENTS.md](../../../AGENTS.md).
@@ -12,6 +14,7 @@ Do not fragment a working lifecycle into tiny PRs with repeated long test cycles
 
 Use the issue for a short plan, or `docs/plans/<topic>.md` when a durable plan helps.
 Include:
+
 - Goal and the user-observable acceptance scenario.
 - Affected responsibilities/files and the public boundary that must stay stable.
 - Ordered dependencies: document changed intent, implement with meaningful tests,

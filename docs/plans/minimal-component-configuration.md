@@ -1,5 +1,9 @@
 # Minimal component configuration — issue 109
 
+Historical scope and evidence. Current MVP scope and qualification are governed by
+[the self-development MVP](self-development-mvp.md); this ledger does not add
+completion gates to that contract.
+
 Status: implementation and local/live qualification complete. Staging integration
 requires green current-head CI on PR #110; phase-three work has not begun.
 

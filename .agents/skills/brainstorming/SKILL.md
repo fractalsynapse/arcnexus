@@ -5,6 +5,8 @@ description: Use when a new capability or architectural decision needs its scope
 
 # Clarify the next useful capability
 
+Apply the [simplification rule](../../../AGENTS.md#simplification-and-reliability): first look for a mechanism, duplicate fact or special path that can be removed. Repeated expensive failures call for a smaller supported design before more features.
+
 Read the charter, request, and relevant existing decisions. Reuse answers already
 provided. If intent and acceptance are clear, summarize the accepted outcome and
 proceed within authorization. Do not restart discovery or require a second approval.

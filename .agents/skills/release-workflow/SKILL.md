@@ -5,6 +5,8 @@ description: Use when starting repository changes, preparing a PR, integrating t
 
 # ArcNexus release workflow
 
+Use the [simplification rule](../../../AGENTS.md#simplification-and-reliability) and current MVP scope. Keep one development-branch → verified delivery → staging PR route. Reuse valid check evidence; remove superseded delivery paths rather than maintaining special release variants.
+
 ## Start a coherent implementation batch
 
 1. Read AGENTS.md and the charter. Reuse accepted scope; read-only exploration does
@@ -67,6 +69,7 @@ Issues remain open until release. Agents may prepare an RC to main; only the
 maintainer approves/merges main, publishes tags, and authorizes production.
 
 When asked to prepare a release:
+
 - Determine the actual unreleased range from the previous release to candidate head.
   Derive shipping PRs and linked issues from that range, not all historical merged PRs.
 - Check every closing issue's acceptance evidence; omit incomplete issues from the

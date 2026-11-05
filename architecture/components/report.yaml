@@ -9,7 +9,7 @@ objectives:
 constraints:
   - Preserve JSON evidence and existing report fields
   - Use the captured execution record without inspecting mutable target files
-  - Keep the supervising runner unchanged
+  - Preserve observed evidence and identify runtime changes across recovery
 operations:
   report-format:
     - agent

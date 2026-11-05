@@ -5,6 +5,8 @@ description: Use when creating, editing, or validating repository-local agent sk
 
 # Maintain useful skills
 
+Keep the [simplification rule](../../../AGENTS.md#simplification-and-reliability) canonical in AGENTS.md. Link to it from relevant skills; remove conflicting instructions instead of copying the policy into every skill.
+
 A skill should improve a concrete agent decision with little context overhead.
 Use skill-creator guidance when installed; otherwise this skill is self-contained.
 Do not install a framework or companion skill merely to satisfy this procedure.

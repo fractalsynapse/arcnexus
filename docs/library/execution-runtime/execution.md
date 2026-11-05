@@ -1,9 +1,14 @@
 # General agent execution
 
+The [self-development MVP](../../plans/self-development-mvp.md) governs current
+scope and recovery requirements. Frozen-supervisor and relocation descriptions below
+record the existing implementation to simplify; they do not override that contract.
+Runtime migration is not complete merely because the intended contract changed.
+
 Issue #78 records this approved contract. Normal execution uses the shared project
 host; legacy component, two-owner manifest and proposal execution are retired.
-Historical inspection remains available. Phase three requires the final deterministic
-and live qualification recorded in the [qualification ledger](../../plans/general-agent-execution-qualification.md).
+Historical inspection remains available. The [qualification ledger](../../plans/general-agent-execution-qualification.md)
+records earlier evidence; the current MVP defines phase-three readiness.
 
 ## Public interface
 
