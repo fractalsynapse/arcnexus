@@ -153,8 +153,8 @@ Dependency preparation is a host responsibility at task/workday setup. The direc
 engineering stewards, independent verifier and publisher share the resulting
 read-only dependencies while retaining separate source branches and build outputs.
 
-The existing install operation remains the single command definition. Its declared
-dependency input files identify when preparation must change; its existing generated
+The existing install operation remains the single command definition. Its optional `dependencyInputs` list names the repository-relative files that
+determine dependency preparation; its existing generated
 output roots identify what may be shared. Matching preparation is reused within the
 same execution environment. Changed inputs, recipe, machine bindings or runtime
 require a new installation, never mutation of one already in use.
