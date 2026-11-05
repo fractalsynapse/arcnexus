@@ -2,7 +2,13 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep worker regression checkpoints as review evidence so incidental test corrections do not redefine product acceptance (#273).
+
 ### Changed
+
+- Require verified director/steward self-repair within existing authority as part of the self-development lifecycle (#275).
 
 - Reuse settled dependency preparation across task/workday workspaces while keeping installed dependencies read-only and build outputs isolated (#268).
 

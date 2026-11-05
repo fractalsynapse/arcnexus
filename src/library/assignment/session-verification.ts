@@ -12,10 +12,10 @@ import { join } from 'node:path';
 import { candidateDigest } from '../change-inspection/changes.js';
 import { isObservedCommandFailure, type CommandResult } from '../operations/process.js';
 import { type AgentResult } from '../steward/codex.js';
-import { specificationFiles, withFrozenTests } from './checkpoints.js';
+import { specificationFiles } from './checkpoints.js';
 import { SessionState } from './session-state.js';
 
-/** Enforces expected-red, frozen-test and final independent verification checkpoints. */
+/** Enforces expected-red evidence and captured acceptance without elevating worker tests to authority. */
 export class SessionVerification {
   /** Uses captured session checks and scope for authoritative verification. */
   constructor(private readonly state: SessionState) {}
@@ -102,7 +102,7 @@ export class SessionVerification {
     return failed;
   }
 
-  /** Rechecks scope, captured suites, frozen tests and independent acceptance. */
+  /** Rechecks current candidate suites and independently captured acceptance. */
   async final() {
     this.assertCandidate();
     const { record } = this.state.options;
@@ -116,7 +116,7 @@ export class SessionVerification {
     await this.state.checks(this.state.component.verification, 'verification');
     assertCapturedTests(this.state.component, this.state.options.record.workspace);
     this.state.safe();
-    await this.verifyFrozen();
+    await this.verifyCapturedAcceptance();
     await this.state.checks(this.state.hostChecks, 'acceptance');
     this.assertCandidate();
     record.finalVerifiedDigest = candidateDigest(record);
@@ -124,18 +124,8 @@ export class SessionVerification {
     new SessionProgress(this.state).verified('final-verification');
   }
 
-  /** Rechecks frozen behavioral, characterization and original acceptance sources independently. */
-  private async verifyFrozen(): Promise<void> {
-    if (this.state.regression)
-      await withFrozenTests(this.state.options.record, this.state.frozen, async () => {
-        await this.state.command(
-          new RegressionOperation(this.state.component, this.state.options.record).select(
-            this.state.regression,
-          ),
-          'frozen-regression',
-        );
-        this.state.safe();
-      });
+  /** Rechecks trusted characterization and original acceptance; worker regressions remain review evidence. */
+  private async verifyCapturedAcceptance(): Promise<void> {
     await new RefactorCheckpoint(this.state).verify();
     await new CapturedVerification(this.state).verify();
   }

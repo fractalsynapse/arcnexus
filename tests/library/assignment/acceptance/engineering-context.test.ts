@@ -33,14 +33,15 @@ class EngineeringContextScenarios {
     const { EngineeringContext } = await import(path.href);
     const state = { frozen: [] as { path: string; sha256: string; content: string }[] };
     const context = new EngineeringContext(state);
-    assert.match(context.checkpoint(), /Current frozen regressions: \[\]/);
+    assert.match(context.checkpoint(), /Retained regression evidence: \[\]/);
     state.frozen.push({ path: 'owned/regression.test.ts', sha256: 'captured', content: 'private' });
     const prompt = context.checkpoint();
     assert.match(prompt, /"path":"owned\/regression.test.ts","sha256":"captured"/);
-    assert.match(prompt, /choose the owned candidate files/);
-    assert.match(prompt, /cannot replace the frozen acceptance baseline/);
-    assert.match(prompt, /accepted frozen checkpoint, not the earlier Git base/);
-    assert.match(prompt, /does not establish test quality or acceptance/);
+    assert.match(prompt, /does not expand edit authority/);
+    assert.match(prompt, /Captured trusted acceptance remains independently enforced/);
+    assert.match(prompt, /explain corrections against the original acceptance criteria/);
+    assert.match(prompt, /independent review must reject removed or weakened coverage/);
+    assert.match(prompt, /evidence, not additional architectural authority/);
     assert.doesNotMatch(prompt, /private/);
   }
 

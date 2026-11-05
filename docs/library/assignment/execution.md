@@ -1,4 +1,3 @@
-
 ## Worker handoff and ordinary recovery (#269)
 
 A steward's plan and checklist are progress evidence, not an independent completion
@@ -14,3 +13,22 @@ A completed, scope-checked model turn that stops for semantic diagnosis retains 
 recoverable checkpoint. Installed-runtime recovery validates the retained checkpoint
 hash, authority, candidate, stopped services and settled operations before resuming
 the same assignment. In-flight or uncertain model/operation execution remains blocked.
+
+## Regression evidence and acceptance authority
+
+Worker-authored regression checkpoints preserve the original tests and observed
+expected failure as review evidence. They do not turn incidental test assertions
+into new architectural requirements. Engineering may correct those tests within
+component ownership; the original bytes, failure and subsequent diff remain
+available to review. Final checks execute the current candidate, while captured
+trusted acceptance remains separately enforced. Independent review must reject
+missing or weakened coverage of the original objective, and may accept justified
+test corrections. A passing command alone cannot establish criterion coverage.
+This replaces replay of worker-authored frozen regressions; historical evidence
+remains readable and recovery retains the original assignment and observations.
+
+Host command stages distinguish `verification` of candidate tests from
+`captured-acceptance` with original trusted test inputs. Captured acceptance can
+therefore run fewer tests than candidate verification. Assess added coverage from
+the observed candidate checks and preserved regression evidence; assess baseline
+preservation from captured acceptance. Test counts alone do not establish either.
