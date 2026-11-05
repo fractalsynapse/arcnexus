@@ -131,7 +131,7 @@ class VerificationEvidenceScenarios {
     assert.equal(trace.artifacts[indexed[0].output.artifact], commands[0]!.output.content);
     assert.equal(trace.artifacts[indexed[1].output.artifact], '');
     assert.equal(indexed[0].exitCode, 0);
-    assert.equal(indexed[0].stage, 'verification');
+    assert.equal(indexed[1].stage, 'captured-acceptance');
     assert.equal('content' in indexed[0].output, false);
     assert.deepEqual(indexed[2], commands[2]);
     assert.equal(commands[0]!.output.content, 'Observed check\n'.repeat(20));
@@ -227,7 +227,7 @@ class VerificationEvidenceScenarios {
         exitCode: 0,
         output: { content: 'Observed check\n'.repeat(20) },
       },
-      { index: 1, stage: 'verification', exitCode: 0, output: { content: '' } },
+      { index: 1, stage: 'captured-acceptance', exitCode: 0, output: { content: '' } },
       { index: 2, stage: 'verification', exitCode: null, output: { evidenceUnavailable: true } },
     ];
   }
