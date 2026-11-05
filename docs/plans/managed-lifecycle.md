@@ -2700,3 +2700,11 @@ continuation. A valid filesystem checkpoint alone was being reported as eligible
 Derive the director's eligibility field from the same lifecycle rule as dispatch
 and persistence, including before an activation has a record. Preserve the
 checkpoint for inspection. Waiting work should wake through its existing request.
+
+### Return missing final checklist claims to the steward (#246)
+
+The real quick-start task edited its owned guide and passed verification operations,
+then failed because the final read-only turn omitted a review checklist item.
+Identify outstanding steward items before accepting the handoff. Give a completed
+turn its existing plan-correction checkpoint so it can supply evidence or explain
+a blocker. Never complete an item on the steward's behalf.
