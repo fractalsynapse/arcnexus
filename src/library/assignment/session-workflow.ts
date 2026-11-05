@@ -5,7 +5,7 @@ import { save } from '../workspace/state.js';
 import { logExcerpt } from './attempts.js';
 import { completePlan, CompletedPlanValidationError, requireCompletedItems } from './plan.js';
 import { SessionState } from './session-state.js';
-import { AssignmentBlocked, SessionTurn } from './session-turn.js';
+import { AssignmentBlocked, AssignmentFailed, SessionTurn } from './session-turn.js';
 import { SessionVerification } from './session-verification.js';
 
 /** Advances engineering stages and corrective attempts through mandatory host checkpoints. */
@@ -34,6 +34,7 @@ export class SessionWorkflow {
         !this.retainPlanCorrection(stage, error) &&
         !this.retainSpecificationCorrection(stage, error)
       ) {
+        safe = error instanceof AssignmentFailed;
         this.failure(error);
         throw error;
       }

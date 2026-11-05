@@ -18,6 +18,9 @@ type TurnKind = 'engineering' | 'coordination';
 /** Identifies a completed, scope-checked blocker whose retained stage is safe to diagnose. */
 export class AssignmentBlocked extends Error {}
 
+/** Identifies a completed, scope-checked failure response without implying execution uncertainty. */
+export class AssignmentFailed extends Error {}
+
 /** Constructs activity-specific context and executes one turn within captured permissions. */
 export class SessionTurn {
   private readonly originalPrompt: string;
@@ -181,6 +184,7 @@ export class SessionTurn {
         record.error = reason;
         throw new AssignmentBlocked(reason);
       }
+      if (record.generalExecution && result.status === 'failed') throw new AssignmentFailed(reason);
       throw new Error(reason);
     }
     if (

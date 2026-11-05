@@ -1,5 +1,6 @@
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
+import { validateContinuation } from '../../../../dist/library/assignment/steward.js';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
@@ -155,6 +156,27 @@ class WorkflowTests {
     assert.equal(v.turns.length, 1);
   }
 
+  /** A failed completed response retains a verifiable boundary but never becomes a successful delivery. */
+  reportedFailureCheckpoint(t: TestContext): void {
+    const f = workflowFixture(t, 'reported-failure');
+    const result = f.run();
+    assert.equal(result.status, 1);
+    const record = JSON.parse(result.stdout);
+    assert.equal(record.status, 'failed');
+    assert.equal(record.outcome, 'failed');
+    assert.equal(record.safeCheckpoint, true);
+    assert.match(record.error, /Agent reported failed/);
+    validateContinuation(f.state, record);
+    assert.throws(
+      () =>
+        validateContinuation(f.state, {
+          ...record,
+          operationInvocations: [{ status: 'interrupted' }],
+        }),
+      /Operation completion is uncertain/,
+    );
+  }
+
   /** Verifies that unchanged change assignment is explicitly no changes. */
   unchangedChangeAssignmentIsExplicitlyNoChanges(t: TestContext) {
     const f = workflowFixture(t, 'no-changes'),
@@ -252,6 +274,9 @@ test('owner request yields a safe waiting checkpoint', (t: any) =>
 
 test('unknown owner request yields for scheduler authority resolution', (t: any) =>
   suite.ownerRequestYieldsSafeWaitingCheckpoint(t, 'unknown-owner'));
+
+test('completed worker failure retains a safe diagnostic checkpoint without accepting uncertainty', (t) =>
+  suite.reportedFailureCheckpoint(t));
 
 test('unchanged change assignment is explicitly no_changes', (t: any) =>
   suite.unchangedChangeAssignmentIsExplicitlyNoChanges(t));
