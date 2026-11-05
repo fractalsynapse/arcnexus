@@ -8,6 +8,8 @@
 
 ### Changed
 
+- Require verified director/steward self-repair within existing authority as part of the self-development lifecycle (#275).
+
 - Reuse settled dependency preparation across task/workday workspaces while keeping installed dependencies read-only and build outputs isolated (#268).
 
 - Recover retained tasks through the installed runtime and one host launcher, recording runtime transitions without per-run supervisor copies (#266).

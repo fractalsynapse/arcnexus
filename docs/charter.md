@@ -121,6 +121,12 @@ standards or source confinement until after the UI.
   and execution rules; retrieve other information only as needed.
 - **Evidence-backed completion:** independently inspect changes and verification,
   retaining unresolved dependencies and limits in the report.
+- **Verified self-repair:** when possible, the director diagnoses execution failures
+  and routes bounded repairs to the responsible component stewards. Reuse retained
+  work and resume through the same verified lifecycle. Preserve failure evidence,
+  original human acceptance and authority; escalate when repair requires a new
+  architectural decision or unavailable external action. A proposed repair is not
+  proof of recovery: demonstrate the repaired behavior before claiming success.
 - **Self-development loop:** use a verified working ArcNexus revision to improve
   the next; a tested local/staging revision qualifies without a published release.
   Keep recovery ordinary and retain evidence when a candidate fails; frozen runtime
