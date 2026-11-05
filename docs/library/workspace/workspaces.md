@@ -146,3 +146,25 @@ repeated cleanup validates the removed path rather than silently accepting a new
 occupant. Source repositories are never removed. Cleanup neither releases delivery
 retention nor repairs relocated records. The legacy standalone spelling remains
 only while its existing fixtures and campaigns are migrated to this service.
+
+## Shared dependency preparation (#268)
+
+Dependency preparation is a host responsibility at task/workday setup. The director,
+engineering stewards, independent verifier and publisher share the resulting
+read-only dependencies while retaining separate source branches and build outputs.
+
+The existing install operation remains the single command definition. Its declared
+dependency input files identify when preparation must change; its existing generated
+output roots identify what may be shared. Matching preparation is reused within the
+same execution environment. Changed inputs, recipe, machine bindings or runtime
+require a new installation, never mutation of one already in use.
+
+Preparation uses the existing supervised executor and retains the original invocation.
+Only successful, settled preparation is reusable. Recovery preserves uncertain
+installation evidence instead of claiming readiness or replaying it. Host-created
+dependency references are validated against their retained receipt and exposed
+read-only to both agents and operations. Ordinary symlinks and writable aliases
+remain rejected. Build products stay local to the source worktree.
+
+This is implementation intent; qualification must prove actual reuse, invalidation,
+interruption handling and write denial before it is reported as delivered.
