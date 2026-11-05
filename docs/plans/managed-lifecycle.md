@@ -2731,3 +2731,10 @@ provider branch head before choosing target authority for promotion. Use that
 commit for catalog resolution and host admission. Refuse absent target authority
 or a changed destination before starting a host or creating a live issue. Preserve
 the simulation delivery, active checkout and original run evidence.
+
+The exact simulated candidate was approved on delivery ba7ba00f41f5. The
+publisher reused its commit, push, PR and review receipts, but accepted a new
+PR-check attempt after the approval, even though the previous one passed for
+the same head. Measure that extra pass separately from the required assembled
+merge verification. A future optimization should reuse a still-current successful
+PR check for approval-only continuation and keep retries for failed checks.
