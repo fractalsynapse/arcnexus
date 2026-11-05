@@ -415,3 +415,10 @@ or events. Recovery reconciles uncertain comments before further engineering or
 goal assessment, including when assignment state has since changed. Missing comment
 authority creates no implicit grant. Empty stewardship turns create no tracking
 resources. Worker-authored comments remain available through their existing MCP tool.
+
+Diagnosed failed change assignments use the same successor admission in tasks
+and workdays. A fresh workflow retains the original owner, objective, acceptance
+and dependency obligations while preserving the failed predecessor. Admission
+still validates the retained checkpoint and refuses uncertain operations before
+creating any successor. An unrelated ready workday assignment remains runnable;
+workday mode alone does not invalidate a director's replacement decision (#253).
