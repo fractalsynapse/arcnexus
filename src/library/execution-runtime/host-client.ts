@@ -95,11 +95,11 @@ export class HostClient {
     if (
       !simulate ||
       workday.environment?.mode !== 'simulation' ||
-      !['running', 'idle', 'paused', 'pausing'].includes(workday.status) ||
-      workday.data.packageId !== this.context.packageId
+      !['running', 'idle', 'paused', 'pausing'].includes(workday.status)
     )
       return false;
     const identity = await this.request({ action: 'identity' });
+    if (identity.packageId !== this.context.packageId) return false;
     if (!identity.hostCapabilities?.includes('staging-snapshot'))
       throw new InputError(
         'Retained simulation uses an older branch workflow; finish it before submitting new work',
