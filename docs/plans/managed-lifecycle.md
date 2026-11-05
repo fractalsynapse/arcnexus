@@ -2783,3 +2783,10 @@ FETCH_HEAD. Authenticated fetch ran in a separate private bare repository.
 Keep the retained operation logs separate from provider mutation evidence.
 Batch the build before invoking selectors: a simultaneous local rebuild briefly
 removed the schema registry from dist and invalidated one selector invocation.
+
+Live task and workday admission now resolves the project publication target
+before directing engineering. A local checkout on a different development
+branch stays in place. The admitted run captures staging as its authority and
+candidate baseline and separately records the caller checkout to detect later
+drift. Repeated start on an existing workday observes its retained host. The
+promotion path uses the same target resolution and policy check.

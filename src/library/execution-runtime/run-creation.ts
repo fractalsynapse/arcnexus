@@ -24,7 +24,10 @@ export class RunCreation {
   ): ExecutionRun {
     if (git(this.context.source, 'status', '--porcelain', '--untracked-files=all').trim())
       throw new InputError('Source checkout must be clean when creating a new run');
-    if (git(this.context.source, 'rev-parse', 'HEAD').trim() !== this.context.base)
+    if (
+      git(this.context.source, 'rev-parse', 'HEAD').trim() !==
+      (this.context.checkoutAtCapture ?? this.context.base)
+    )
       throw new InputError('Source revision changed; stop and start against updated authority');
     const environment = this.environments.capture(simulate, workday);
     const candidate = this.store.latestDelivery(

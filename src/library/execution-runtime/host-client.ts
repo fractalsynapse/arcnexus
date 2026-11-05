@@ -1,3 +1,6 @@
+import { stagingContext } from './staging-context.js';
+import { PublicationPolicy } from '../publisher/publisher.js';
+import { runDestination } from './run-destination.js';
 import { ContainerLifetime } from './container-lifetime.js';
 import { InputError } from '../architecture/config.js';
 import { HostConnection, type HostRequest } from './host-connection.js';
@@ -53,6 +56,27 @@ export class HostClient {
       this.target?.packageId,
       this.target?.base,
     ));
+  }
+
+  /** Selects live staging before admission; existing supervisors retain their own captured authority. */
+  async ensureRun(action: 'submit' | 'start', simulate: boolean, signal: AbortSignal) {
+    if (action === 'start' && (await this.alive())) {
+      const { workday } = await this.request({ action: 'status' });
+      if (workday && workday.status !== 'stopped') return;
+    }
+    const discovered = this.context;
+    const policy = new PublicationPolicy().resolve(discovered);
+    if (!simulate && policy) {
+      this.capturedContext = await stagingContext(
+        discovered.source,
+        discovered.packageId,
+        this.directory,
+        runDestination(discovered, 'live'),
+        policy.operation.targetBranch,
+        signal,
+      );
+    }
+    await this.ensure(action);
   }
 
   /** Starts a host when necessary and waits for its local readiness, not an execution deadline. */

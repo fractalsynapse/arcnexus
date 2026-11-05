@@ -51,7 +51,7 @@ export class RunSelection {
     const workday = this.workday();
     const sourceRevision = git(this.context.source, 'rev-parse', 'HEAD').trim();
     return {
-      sourceChanged: sourceRevision !== this.context.base,
+      sourceChanged: sourceRevision !== (this.context.checkoutAtCapture ?? this.context.base),
       capturedRevision: this.context.base,
       sourceRevision,
       workday: workday ? reports.view(workday.id).run : undefined,
