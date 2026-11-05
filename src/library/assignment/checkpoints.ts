@@ -22,11 +22,7 @@ export function specificationFiles(
 ): FrozenTest[] {
   const observed = selected;
   const { documentation, testPaths } = specificationPaths(component, observed);
-  checkScope(
-    record.workspace,
-    observed,
-    documentationOnly ? documentation : [...documentation, ...testPaths],
-  );
+  checkScope(record.workspace, observed, component.allowedWritePaths);
   if (!observed.some((c) => covered(c.path, documentation)))
     throw new SpecificationValidationError(
       'Make an actual owned documentation edit describing the intended behavior before implementation.',

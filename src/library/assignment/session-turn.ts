@@ -1,6 +1,5 @@
 import { CheckedEditBridge } from './checked-edit-bridge.js';
 import { EngineeringContext } from './engineering-context.js';
-import { classifyComponentPath } from '../architecture/components.js';
 import { operationBridge } from '../operations/operations.js';
 import { runCodex, type AgentResult } from '../steward/codex.js';
 import { beginAttempt } from './attempts.js';
@@ -32,7 +31,7 @@ export class SessionTurn {
     this.originalPrompt = new EngineeringContext(state).render();
     this.evidence = new TurnEvidence(state);
     const { root, record, signal } = state.options;
-    const operations = operationBridge(root, record, signal, () => this.checkStage());
+    const operations = operationBridge(root, record, signal, () => this.state.safe());
     const edits = new CheckedEditBridge(state);
     edits.recover();
     this.operations = {
@@ -121,20 +120,6 @@ export class SessionTurn {
     });
   }
 
-  /** Rejects changes that are not permitted in the current engineering activity. */
-  private checkStage(activity = this.state.options.record.stage): void {
-    const { component, documentationOnly } = this.state;
-    this.state.safe();
-    for (const change of this.state.ownChanges()) {
-      const kind = classifyComponentPath(component, change.path);
-      if (
-        (documentationOnly && kind !== 'documentation') ||
-        (activity === 'specification' && !['documentation', 'tests'].includes(kind))
-      )
-        throw new Error(`Change outside workflow classification: ${change.path}`);
-    }
-  }
-
   /** Validates the structured response before accepting agent claims. */
   private acceptResult(result: AgentResult, frame: TurnFrame, readOnly: boolean): void {
     const { record, id } = this.state.options;
@@ -147,7 +132,7 @@ export class SessionTurn {
       basis: 'agent finding; not an architectural decision',
     }));
     if (typeof record.threadId === 'string') this.state.resumeId = record.threadId;
-    this.checkStage(frame.activity);
+    this.state.safe();
     if (readOnly && candidateDigest(record) !== frame.before)
       throw new Error('Read-only turn changed candidate source/index');
     validateRequests(

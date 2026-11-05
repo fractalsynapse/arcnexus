@@ -28,6 +28,25 @@ class SpecificationAdmissionScenarios {
     );
   }
 
+  /** An owned configuration edit can accompany specification work but cannot supply its evidence. */
+  ownedConfiguration(t: TestContext): void {
+    const record = this.workspace(t);
+    const paths = ['component.yaml', 'intent.md', 'tests/behavior.test.ts'];
+    const component = { schemaVersion: 6, allowedWritePaths: paths } as Component;
+    mkdirSync(join(record.workspace, 'tests'));
+    for (const path of paths) writeFileSync(join(record.workspace, path), path);
+    const edits = paths.map((path) => ({ path, kind: 'M' }));
+    assert.throws(() => specificationFiles(record, component, false, edits.slice(0, 1)), {
+      name: 'SpecificationValidationError',
+      identity: 'missing-documentation',
+    });
+    assert.deepEqual(specificationFiles(record, component, true, edits.slice(0, 2)), []);
+    assert.deepEqual(
+      specificationFiles(record, component, false, edits).map((test) => test.path),
+      ['tests/behavior.test.ts'],
+    );
+  }
+
   /** Supplies actual Git path inspection while keeping all fixture effects disposable. */
   private workspace(t: TestContext): RecordData {
     const workspace = mkdtempSync(join(tmpdir(), 'arcnexus-specification-admission-'));
@@ -62,6 +81,9 @@ test('missing regression source remains correctable without freezing documentati
 
 test('specification correction preserves cross-owner source rejection', () =>
   scenarios.unauthorized());
+
+test('owned configuration can accompany but never substitute for specification evidence', (t) =>
+  scenarios.ownedConfiguration(t));
 
 registerSuite({
   component: 'assignment',
