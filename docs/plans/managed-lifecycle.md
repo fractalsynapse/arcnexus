@@ -2738,3 +2738,13 @@ PR-check attempt after the approval, even though the previous one passed for
 the same head. Measure that extra pass separately from the required assembled
 merge verification. A future optimization should reuse a still-current successful
 PR check for approval-only continuation and keep retries for failed checks.
+
+The approval-only check passed. The isolated bare clone copied local branches,
+while the qualification checkout kept staging only as a remote-tracking branch.
+The publisher consequently stopped before merging. A Git merge-tree preview
+against that tracking revision (b0c8fc6) would integrate 666 changed files,
+including 50,454 insertions and 7,082 deletions. The approved delta is one
+guide with 34 insertions. Preserve the failed simulation and its approval.
+Validate target availability and base ancestry before spending time on PR checks,
+and reject assembly that would import unreviewed base history. A simulated
+target must have an explicit initialization policy before qualification begins.
