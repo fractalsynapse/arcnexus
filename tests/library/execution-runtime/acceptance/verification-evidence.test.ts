@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { EvidencePages } from '../../../../dist/library/report/report.js';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -13,6 +13,35 @@ import { GeneralFixture, nativeHostTest as test } from '../../testing/support/ge
 
 /** Verifies the independent model receives immutable host change evidence through a constrained tool. */
 class VerificationEvidenceScenarios {
+  /** Independent verification receives original worker assertions and their current comparison as evidence. */
+  async regressions(t: TestContext): Promise<void> {
+    const { f, context, record } = await this.fixture(t, false);
+    const original = Buffer.from('mistaken incidental assertion');
+    record.frozenTests = [
+      {
+        path: 'source.txt',
+        content: original.toString('base64'),
+        sha256: createHash('sha256').update(original).digest('hex'),
+      },
+    ];
+    record.regressionCheckpoint = { exitCode: 1, outputIncludes: 'EXPECTED_BEHAVIOR' };
+    await new Direction(f.state, context, new AbortController().signal).verify(
+      record,
+      'a',
+      'READ_HOST_EVIDENCE',
+      { criteria: ['Original behavior remains covered'] },
+    );
+    const trace = JSON.parse(readFileSync(f.calls + '.evidence', 'utf8').trim());
+    const comparison = JSON.parse(trace.artifacts.regressions);
+    assert.equal(comparison.files[0].status, 'changed');
+    assert.deepEqual(comparison.expectedFailure, record.regressionCheckpoint);
+    assert.equal(trace.artifacts['regression:source.txt'], original.toString('base64'));
+    assert.equal(
+      readFileSync(join(record.workspace, 'source.txt'), 'utf8'),
+      'observed candidate change\n',
+    );
+  }
+
   /** Goal assessment retrieves large exact input instead of duplicating retained assignments in its prompt. */
   async large(t: TestContext): Promise<void> {
     const { f, context, record } = await this.fixture(t, true);
@@ -271,6 +300,9 @@ test('verification retrieves referenced investigation bytes through its own MCP 
 
 test('goal assessment pages more than one megabyte of exact submitted input', (t) =>
   scenarios.large(t));
+
+test('independent verification inspects original regression and corrected candidate', (t) =>
+  scenarios.regressions(t));
 
 registerSuite({
   component: 'execution-runtime',

@@ -1,4 +1,3 @@
-
 ## Regression evidence and acceptance authority
 
 Worker-authored regression checkpoints preserve the original tests and observed

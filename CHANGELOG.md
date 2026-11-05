@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep worker regression checkpoints as review evidence so incidental test corrections do not redefine product acceptance (#273).
+
 ### Changed
 
 - Recover retained tasks through the installed runtime and one host launcher, recording runtime transitions without per-run supervisor copies (#266).

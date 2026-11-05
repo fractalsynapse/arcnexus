@@ -169,18 +169,20 @@ Checked edit paths are relative to the assignment workspace, never absolute path
 Context and tool metadata must state this explicitly; a displayed absolute workspace
 location is for reading and command context, not the spelling of `changes[].path`.
 
-
 Implementation and corrective turns must list the current frozen regression paths
 and digests. The host retains the original regression bytes outside the candidate
-and runs frozen checks independently. Changing an owned candidate test cannot
-replace that baseline. Turn context reflects the latest accepted checkpoint.
+for review alongside the observed failure. Candidate tests may correct incidental
+assertions while preserving coverage of the original objective. The host runs current
+checks and separately enforces trusted captured acceptance. Turn context reflects
+the retained checkpoint without elevating worker assertions to new requirements.
 
 Candidate review retains the full Git-base diff and separately reports
 `frozenRegressions` comparisons against the accepted checkpoint. `preserved` means
 current bytes match the frozen hash, even if specification work changed that file
 before freezing. It does not mean the test establishes acceptance or has good
 quality. Missing and changed files are explicit; unsafe paths and corrupt retained
-checkpoints fail capture. Review cannot replace the accepted baseline.
+checkpoints fail capture. Independent review assesses corrections against original
+acceptance and rejects missing or weakened criterion coverage.
 
 When `source.edit` rejects an attempted change to another steward's file, no file
 in the batch is changed. The result identifies the path and its owner from the

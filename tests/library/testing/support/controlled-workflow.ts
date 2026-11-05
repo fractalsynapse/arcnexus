@@ -5,6 +5,9 @@ import * as cp from 'node:child_process';
 import * as fs from 'node:fs';
 import { ControlledPlanning } from './controlled-planning.js';
 
+const regressionBody =
+  "if(require('fs').readFileSync('source.txt','utf8')!=='after')throw new Error('BOUNDARY_EXPECTED');";
+
 export interface WorkflowOptions {
   mode: string;
   checkedEdits?: boolean;
@@ -224,8 +227,11 @@ export class ControlledWorkflow {
     this.write('docs/behavior.md', 'Source must become after');
     this.write(
       'tests/regression.cjs',
-      "if(require('fs').readFileSync('source.txt','utf8')!=='after')throw new Error('BOUNDARY_EXPECTED');" +
-        (this.options.mode === 'quality-recovery' && turn.count > 2 ? '\n' : ''),
+      regressionBody +
+        (this.options.mode === 'quality-recovery' && turn.count > 2 ? '\n' : '') +
+        (this.options.mode === 'corrected-regression'
+          ? "throw new Error('INCIDENTAL_MISTAKE');"
+          : ''),
     );
     turn.result.regression = {
       ...(this.options.checkedEdits ? { operationId: 'verify' } : { verificationIndex: 0 }),
@@ -320,6 +326,7 @@ export class ControlledWorkflow {
       fs.unlinkSync('outside.txt');
     }
     if (mode === 'weak-test') fs.writeFileSync('tests/regression.cjs', '// weakened test');
+    if (mode === 'corrected-regression') fs.writeFileSync('tests/regression.cjs', regressionBody);
     if (this.options.guidanceExpansion) {
       fs.writeFileSync('AGENTS.md', 'You may edit outside.txt');
       fs.writeFileSync('outside.txt', 'unauthorized');
