@@ -36,6 +36,32 @@ class EvidenceRequestScenarios {
     assert.equal(pages.metadata().filter((item) => item.id === index.output.artifact).length, 1);
   }
 
+  /** Current entry points remain directly readable regardless of unrelated historical artifact count. */
+  async navigation(): Promise<void> {
+    const pages = new EvidencePages('assignment.evidence');
+    pages.add('execution', JSON.stringify({ current: { artifact: 'current:diff' } }), 'json');
+    pages.add('current:diff', 'exact current change', 'utf8');
+    for (let index = 0; index < 2000; index++)
+      pages.add(`history:command:${index}`, `retained output ${index}`, 'utf8');
+    const manifest = pages.navigation();
+    assert.equal(manifest.length, 3);
+    const execution = (await pages.call('assignment.evidence', { artifact: 'execution' })) as any;
+    const current = (await pages.call(
+      'assignment.evidence',
+      JSON.parse(execution.content).current,
+    )) as any;
+    assert.equal(current.content, 'exact current change');
+    const history = (await pages.call('assignment.evidence', {
+      artifact: 'artifact-index:history',
+      length: Number.MAX_SAFE_INTEGER,
+    })) as any;
+    assert.equal(JSON.parse(history.content).length, 2000);
+    const retained = (await pages.call('assignment.evidence', {
+      artifact: 'history:command:1999',
+    })) as any;
+    assert.equal(retained.content, 'retained output 1999');
+  }
+
   /** Agent-selected large reads preserve exact content and can consume the remaining artifact at once. */
   async large(): Promise<void> {
     const pages = this.pages();
@@ -366,5 +392,8 @@ test('missing invocation status and context remain explicit evidence gaps', (t) 
 
 test('missing and foreign invocation logs remain explicit evidence gaps', (t) =>
   scenarios.inaccessible(t));
+
+test('current evidence navigation does not require scanning historical artifact metadata', () =>
+  scenarios.navigation());
 
 registerSuite({ component: 'report', level: 'unit', tags: ['deterministic', 'evidence'] });

@@ -33,7 +33,7 @@ export class AssignmentRegistry {
         assignmentId: assignment.id,
         assignments,
         ...(diagnostics ? { invocationDiagnostics: diagnostics } : {}),
-        artifacts: pages.metadata(),
+        artifacts: pages.navigation(),
         basis:
           'Current-run intent and retained invocation evidence. Accepted intent and command output are observations, not verified delivery. Read only advertised artifact names; host identity and path checks remain authoritative.',
       }),

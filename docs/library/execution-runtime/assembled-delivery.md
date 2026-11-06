@@ -55,3 +55,9 @@ Ownership, checked edits, actual regression evidence, captured host checks,
 independent acceptance, recovery and staging gates remain mandatory. No execution
 limits are added. The release objective is a real engineering delivery through
 staging, not simulated evidence presented as real integration.
+
+Publication reuses accepted checks and independent review when source content,
+captured authority, environment, original goal and accountable criteria are unchanged.
+Changed target content uses the same checker again. Promotion performs fresh target
+checks and one independent goal assessment; it does not add a director verdict.
+Provider CI, repository review and revision-specific approval remain separate gates.

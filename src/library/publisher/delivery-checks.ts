@@ -1,3 +1,7 @@
+import { createHash } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { git } from '../operations/process.js';
+import { executionIdentity } from '../architecture/execution-context.js';
 import { AssemblyAcceptance } from './assembly-acceptance.js';
 import { PublicationEvidence } from '../report/report.js';
 import { PublicationPolicy } from './publication-policy.js';
@@ -28,7 +32,10 @@ export class DeliveryChecks {
     independent = false,
   ): Promise<SimulationCheckResult> {
     if (!/^[a-f0-9]{40,64}$/.test(head)) throw new Error('Expected immutable delivery head');
-    return this.checkRecord(this.record(head), signal, independent);
+    signal.throwIfAborted();
+    return (
+      this.retained(head, independent) ?? this.checkRecord(this.record(head), signal, independent)
+    );
   }
 
   /** Checks a journaled candidate through the same acceptance path used by ordinary publication. */
@@ -48,8 +55,7 @@ export class DeliveryChecks {
       );
       save(this.root, record);
       if (independent) evidence.push(...(await this.review(record, signal)));
-      record.status = 'completed';
-      return { status: 'passed', evidence, artifacts: this.artifacts(record) };
+      return this.accept(record, evidence, independent);
     } catch (error) {
       record.error = String(error);
       record.status = signal.aborted ? 'interrupted' : 'failed';
@@ -58,6 +64,71 @@ export class DeliveryChecks {
     } finally {
       save(this.root, record);
     }
+  }
+
+  /** Retains one completed acceptance receipt so publication can reuse the exact checked inputs. */
+  private accept(
+    record: RecordData,
+    evidence: string[],
+    independent: boolean,
+  ): SimulationCheckResult {
+    record.status = 'completed';
+    const result: SimulationCheckResult = {
+      status: 'passed',
+      evidence,
+      artifacts: this.artifacts(record),
+    };
+    record.acceptedChecks = {
+      key: this.key(record.base),
+      independent,
+      digest: candidateDigest(record),
+      result,
+    };
+    return result;
+  }
+
+  /** Reuses accepted bytes and criteria in this run; changed trees, authority or missing evidence require checks. */
+  private retained(head: string, independent: boolean): SimulationCheckResult | undefined {
+    const record = this.run.data?.candidateRecord as RecordData | undefined;
+    const accepted = record?.acceptedChecks as
+      | {
+          key: string;
+          independent: boolean;
+          digest: string;
+          result: SimulationCheckResult;
+        }
+      | undefined;
+    if (
+      !record ||
+      !accepted ||
+      record.status !== 'completed' ||
+      record.executionRunId !== this.run.id ||
+      accepted.key !== this.key(head) ||
+      (independent && !accepted.independent) ||
+      !existsSync(record.workspace) ||
+      accepted.digest !== candidateDigest(record) ||
+      accepted.result.evidence.some((path) => !existsSync(path)) ||
+      accepted.result.artifacts.some((artifact) => !existsSync(artifact.path))
+    )
+      return undefined;
+    return structuredClone(accepted.result);
+  }
+
+  /** Binds reuse to source content, captured authority, environment, goal and accountable acceptance criteria. */
+  private key(head: string): string {
+    return createHash('sha256')
+      .update(
+        JSON.stringify({
+          tree: git(this.context.source, 'rev-parse', head + '^{tree}').trim(),
+          authority: executionIdentity(this.context),
+          environment: this.run.environment,
+          objective: this.run.data?.promotionSourceObjective ?? this.run.objective,
+          assignments: this.assignments
+            .map(({ id, owner, objective, acceptance }) => ({ id, owner, objective, acceptance }))
+            .sort((a, b) => String(a.id).localeCompare(String(b.id))),
+        }),
+      )
+      .digest('hex');
   }
 
   /** Captures preparation authority before any command, preserving immutable environment identity. */
@@ -129,9 +200,9 @@ export class DeliveryChecks {
     ).verify(
       record,
       this.assignments[0]!.owner,
-      this.run.objective,
+      String(this.run.data.promotionSourceObjective ?? this.run.objective),
       evidence,
-      false,
+      this.run.mode === 'task',
       String(record.assemblyBase ?? this.context.base),
     );
   }

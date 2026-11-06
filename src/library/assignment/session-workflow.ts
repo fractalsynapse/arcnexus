@@ -129,13 +129,17 @@ export class SessionWorkflow {
     const feedback = await this.checkImplementation(attempt);
     delete record.activeImplementationAttempt;
     record.correctiveFeedback = feedback ?? '';
-    record.nextStage =
-      feedback === undefined || this.contributionReady() ? 'review' : 'implementation';
+    if (this.contributionReady()) this.finishStage();
+    else record.nextStage = feedback === undefined ? 'review' : 'implementation';
   }
 
   /** Reviews the assembled candidate and schedules correction or verified completion. */
   private async advanceReview(): Promise<void> {
     const { record } = this.state.options;
+    if (this.contributionReady()) {
+      this.finishStage();
+      return;
+    }
     const feedback = await this.review();
     if (feedback !== undefined) {
       record.correctiveFeedback = feedback;
@@ -151,6 +155,10 @@ export class SessionWorkflow {
   /** Completes the accepted checklist only after all required verification succeeds. */
   private finishStage(): void {
     const { root, record } = this.state.options;
+    if (this.contributionReady()) {
+      this.markAttempt({ status: 'prepared' });
+      record.outcome = 'prepared_for_assembly';
+    }
     if (this.state.planned && !this.contributionReady()) completePlan(root, record);
     record.status = this.contributionReady() ? 'prepared' : 'completed';
     record.nextStage = 'finished';
@@ -160,8 +168,9 @@ export class SessionWorkflow {
 
   /** Uses only host-derived related work; no worker response can waive final assembled verification. */
   private contributionReady(): boolean {
-    const group = this.state.options.record.contributionGroup;
-    return this.state.assignment.kind === 'change' && Array.isArray(group) && group.length > 1;
+    return (
+      this.state.options.record.generalExecution === true && this.state.assignment.kind === 'change'
+    );
   }
 
   /** Requires a valid read-only assignment plan before engineering stages. */

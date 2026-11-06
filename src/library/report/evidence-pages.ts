@@ -38,6 +38,24 @@ export class EvidencePages {
     }));
   }
 
+  /** Keeps entry-point navigation compact while retaining the complete artifact catalog on demand. */
+  navigation() {
+    const metadata = this.metadata().filter((item) => !item.id.startsWith('artifact-index:'));
+    const groups = new Map<string, typeof metadata>();
+    for (const item of metadata) {
+      if (!item.id.includes(':')) continue;
+      const prefix = item.id.split(':')[0]!;
+      const group = groups.get(prefix) ?? [];
+      group.push(item);
+      groups.set(prefix, group);
+    }
+    for (const [prefix, items] of groups)
+      this.add('artifact-index:' + prefix, JSON.stringify(items), 'json');
+    return this.metadata().filter(
+      (item) => !item.id.includes(':') || item.id.startsWith('artifact-index:'),
+    );
+  }
+
   /** Extends the declared operations with a fixed read-only artifact capability. */
   wrap(operations: OperationBridge): OperationBridge {
     return {
@@ -166,7 +184,7 @@ export class EvidencePages {
     return {
       name: this.name,
       description:
-        'Read pinned host evidence. Start with artifact=manifest, then read its artifacts. Follow nextOffset while a continuation is present; offsets and lengths count JavaScript string characters.',
+        'Read pinned host evidence. Start with artifact=manifest. Follow execution and assignment references directly for relevant evidence; artifact-index pages retain the full catalog when needed. Do not scan unrelated history. Follow nextOffset while a continuation is present; offsets and lengths count JavaScript string characters.',
       inputSchema: {
         type: 'object',
         properties: {

@@ -39,7 +39,7 @@ export class DirectionContext {
     const manifest = {
       runId: record.executionRunId,
       recordId: record.id,
-      artifacts: this.pages.metadata(),
+      artifacts: this.pages.navigation(),
     };
     this.pages.add('manifest', JSON.stringify(manifest), 'json');
     record.directionEvidence = this.pages.retain(join(root, 'runs', record.id), manifest);

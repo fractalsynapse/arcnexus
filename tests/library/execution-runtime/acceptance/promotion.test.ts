@@ -91,11 +91,7 @@ class PromotionScenarios {
   /** Reads exactly the artifacts advertised to the independent reviewer and compares them to host output. */
   private assertPublicationEvidence(check: any, reviewer: any): void {
     const manifest = reviewer.verificationEvidence;
-    const content = (id: string) => {
-      const artifact = manifest.artifacts.find((entry: { id: string }) => entry.id === id);
-      assert.ok(artifact, 'Missing review artifact: ' + id);
-      return readFileSync(join(manifest.directory, artifact.sha256), 'utf8');
-    };
+    const content = (id: string) => this.artifact(manifest, id);
     const execution = JSON.parse(content('execution'));
     assert.equal(execution.publication.head, check.base);
     assert.equal(execution.publication.recordId, check.id);
@@ -107,12 +103,20 @@ class PromotionScenarios {
         readFileSync(check.commands[command.index].log, 'utf8'),
       );
     assert.equal(execution.publication.sourceDeliveries.length, 1);
-    if (reviewer.activationRole === 'director-assessment') {
-      assert.equal(execution.verificationReports[0].assessment.status, 'completed');
-      assert.equal(execution.verificationReports[0].parentRecordId, check.id);
-      assert.equal(execution.promotionSourceObjective, 'Preserve the reviewed source improvement');
-      assert.match(reviewer.acceptanceCriteria[0], /freshly verified live candidate/);
-    }
+    assert.equal(reviewer.activationRole, 'verifier');
+    assert.equal(reviewer.acceptanceCriteria[0], 'Preserve the reviewed source improvement');
+  }
+
+  /** Resolves advertised nested indexes without assuming every historical artifact is in the root manifest. */
+  private artifact(manifest: any, id: string): string {
+    const artifacts = [...manifest.artifacts];
+    for (const index of manifest.artifacts.filter((entry: any) =>
+      entry.id.startsWith('artifact-index:'),
+    ))
+      artifacts.push(...JSON.parse(readFileSync(join(manifest.directory, index.sha256), 'utf8')));
+    const artifact = artifacts.find((entry: any) => entry.id === id);
+    assert.ok(artifact, 'Missing review artifact: ' + id);
+    return readFileSync(join(manifest.directory, artifact.sha256), 'utf8');
   }
 
   /** Checks fresh current-run review identities and retains original assignments without fabricating live completions. */
@@ -132,7 +136,7 @@ class PromotionScenarios {
     );
     assert.deepEqual(
       reports.map((r) => r.activationRole),
-      ['publication-checks', 'verifier', 'director-assessment'],
+      ['publication-checks', 'verifier'],
     );
     for (const review of reports.slice(1)) this.assertPublicationEvidence(reports[0], review);
     assert.equal(delivery.approval, undefined);

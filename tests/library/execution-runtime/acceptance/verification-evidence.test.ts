@@ -112,7 +112,7 @@ class VerificationEvidenceScenarios {
       ['docs/evidence.md', 'source.txt'],
     );
     assert.match(trace.artifacts.patch, /observed candidate change/);
-    const addition = trace.manifest.artifacts.find(
+    const addition = JSON.parse(trace.artifacts['artifact-index:added'] ?? '[]').find(
       (artifact: any) => artifact.path === 'docs/evidence.md',
     );
     if (!goal) assert.equal(trace.artifacts[addition.id], 'New captured evidence\n');

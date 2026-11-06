@@ -1,3 +1,4 @@
+import { AssembledDelivery } from './assembled-delivery.js';
 import { RunPromotion } from './run-promotion.js';
 import { RunFinalization } from './run-finalization.js';
 import { EvidenceRetention } from '../workspace/workspace.js';
@@ -16,7 +17,7 @@ import { InputError } from '../architecture/config.js';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ProjectExecution } from '../architecture/execution-context.js';
-import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/execution-types.js';
+import type { ExecutionRun } from '../coordination-store/execution-types.js';
 import { ExecutionStore } from '../coordination-store/execution-store.js';
 import { RunWorkspace } from './run-workspace.js';
 import type { RecordData } from '../workspace/state.js';
@@ -302,8 +303,11 @@ export class ProjectHost {
   private async advanceAssignments(run: ExecutionRun, signal: AbortSignal): Promise<void> {
     await this.collaboration.progress(run, signal);
     const ready = this.store.ready(run.id);
-    const assembly =
-      run.data.pendingAssembly || this.store.contributionGroups(run.id).ready().length;
+    const assembly = new AssembledDelivery(
+      this.root,
+      this.environments.contextFor(run),
+      this.store,
+    ).ready(run);
     if (
       (ready.length || assembly) &&
       (run.mode === 'task' || run.data.lastDispatch !== 'assignment')
@@ -380,7 +384,7 @@ export class ProjectHost {
     else this.store.updateRun(run.id, this.store.run(run.id).status, checkpoint);
   }
 
-  /** Requires all current obligations and a separate goal assessment; retained obsolete work is not delivery. */
+  /** Requires all current obligations and assembled goal acceptance; retained obsolete work is not delivery. */
   private async finishTask(run: ExecutionRun, signal: AbortSignal): Promise<void> {
     const assignments = this.store.requiredAssignments(run.id);
     if (assignments.some((a) => this.store.effective(a.id).status !== 'completed'))
@@ -393,29 +397,16 @@ export class ProjectHost {
     if (run.data.goalEvidence && run.data.goalCandidate === run.data.candidateRevision)
       return this.completeTask(run, signal);
     try {
-      await this.assessGoal(run, assignments, signal);
+      await new AssembledDelivery(
+        this.root,
+        this.environments.contextFor(run),
+        this.store,
+      ).assessGoal(run, assignments, signal);
       if (!signal.aborted) await this.completeTask(this.store.run(run.id), signal);
     } catch (error) {
       if (!(error instanceof VerificationIssue)) throw error;
       await this.redirect(run, error.result, false, signal);
     }
-  }
-
-  /** Retains goal acceptance as a checkpoint before publication or terminal run transitions. */
-  private async assessGoal(
-    run: ExecutionRun,
-    assignments: ExecutionAssignment[],
-    signal: AbortSignal,
-  ): Promise<void> {
-    const record = await this.workspaces(run).policy(run, signal);
-    const evidence = await this.workspaces(run)
-      .direction(run, signal)
-      .verify(record, run.owners[0]!, run.objective, assignments, true);
-    if (!signal.aborted)
-      this.store.updateRun(run.id, this.store.run(run.id).status, {
-        goalEvidence: evidence,
-        goalCandidate: run.data.candidateRevision,
-      });
   }
 
   /** Completes only after idempotent publication capture, so host loss cannot omit a verified delivery. */

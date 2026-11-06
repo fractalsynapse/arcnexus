@@ -4,7 +4,7 @@ import type { ExecutionAssignment, InboxRequest } from './execution-types.js';
 
 export interface InboxDecision {
   requestId: string;
-  action: 'accept' | 'reject' | 'clarify' | 'answer' | 'require_delivery';
+  action: 'accept' | 'reject' | 'clarify' | 'answer' | 'require_delivery' | 'feedback';
   text: string;
 }
 
@@ -41,7 +41,7 @@ export class InboxDecisions {
       (requester.data.milestones as Record<string, string> | undefined)?.[recipient.id] ??
       'delivered';
     const candidates: InboxDecision['action'][] = outgoing
-      ? ['answer', 'require_delivery']
+      ? ['answer', 'require_delivery', 'feedback']
       : ['accept', 'reject', 'clarify'];
     const availableActions = candidates.filter((action) =>
       this.available(request, recipient, requester, requiredMilestone, action),
@@ -92,7 +92,7 @@ export class InboxDecisions {
     const raw = this.db.get<InboxRequest>('request', decision.requestId);
     if (raw.retired) throw new Error('Cannot respond to a retired request');
     const request = new AssignmentReplacements(this.db).envelope(raw);
-    const requesterAction = ['answer', 'require_delivery'].includes(decision.action);
+    const requesterAction = ['answer', 'require_delivery', 'feedback'].includes(decision.action);
     if (actor !== (requesterAction ? request.from : request.assignmentId))
       throw new Error('Inbox reply has unauthorized sender');
     const recipient = this.db.get<ExecutionAssignment>('assignment', request.assignmentId);
@@ -115,6 +115,14 @@ export class InboxDecisions {
     recipient: ExecutionAssignment,
     decision: InboxDecision,
   ): void {
+    if (decision.action === 'feedback') {
+      recipient.status = 'ready';
+      recipient.data.continuationReason = `Feedback on ${decision.requestId}: ${decision.text}`;
+      recipient.data.reason = null;
+      recipient.data.blockedBy = null;
+      requester.status = 'waiting';
+      return;
+    }
     if (decision.action === 'require_delivery') {
       requester.data.milestones = {
         ...(requester.data.milestones as object),
@@ -138,6 +146,11 @@ export class InboxDecisions {
     requester: ExecutionAssignment,
     decision: InboxDecision,
   ): void {
+    if (
+      decision.action === 'feedback' &&
+      (this.terminal(requester) || recipient.data.clarification)
+    )
+      throw new Error('Feedback requires an active requester and no pending clarification');
     if (decision.action === 'require_delivery') {
       if (this.terminal(requester)) throw new Error('Cannot change a terminal requester');
       return;

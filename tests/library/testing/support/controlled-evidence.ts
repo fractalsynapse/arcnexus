@@ -20,14 +20,25 @@ export class ControlledEvidence {
       if (retryPage) await this.rejectedPage(client);
       if (forbidden) await this.rejectedArtifacts(client);
       const manifest = JSON.parse(await this.read(client, 'manifest'));
-      const artifacts: Record<string, string> = {};
-      for (const artifact of manifest.artifacts)
-        artifacts[artifact.id] = await this.read(client, artifact.id);
+      const artifacts = await this.artifacts(client, manifest.artifacts);
       appendFileSync(this.trace + '.evidence', JSON.stringify({ manifest, artifacts }) + '\n');
       return { manifest, artifacts };
     } finally {
       await client.close();
     }
+  }
+
+  /** Traverses retained catalog references through MCP without substituting direct filesystem reads. */
+  private async artifacts(client: Client, metadata: Array<{ id: string }>) {
+    const pending = [...metadata];
+    const result: Record<string, string> = {};
+    while (pending.length) {
+      const { id } = pending.shift()!;
+      if (Object.hasOwn(result, id)) continue;
+      result[id] = await this.read(client, id);
+      if (id.startsWith('artifact-index:')) pending.push(...JSON.parse(result[id]));
+    }
+    return result;
   }
 
   /** Builds the SDK client independently from the captured command transport. */

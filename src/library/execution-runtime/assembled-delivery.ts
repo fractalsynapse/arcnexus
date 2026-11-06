@@ -33,6 +33,11 @@ export class AssembledDelivery {
     private readonly store: ExecutionStore,
   ) {}
 
+  /** Reports whether the complete required contribution set can advance through the shared acceptance loop. */
+  ready(run: ExecutionRun): boolean {
+    return Boolean(run.data.pendingAssembly || this.group(run));
+  }
+
   /** Reconciles durable preparation before invoking checks; uncertain operations are never replayed. */
   async advance(run: ExecutionRun, signal: AbortSignal): Promise<boolean> {
     const pending = (run.data.pendingAssembly as PendingAssembly | undefined) ?? this.prepare(run);
@@ -52,6 +57,33 @@ export class AssembledDelivery {
     return true;
   }
 
+  /** Retains goal acceptance as a checkpoint before publication or terminal run transitions. */
+  async assessGoal(
+    run: ExecutionRun,
+    assignments: ExecutionAssignment[],
+    signal: AbortSignal,
+  ): Promise<void> {
+    const context = this.context;
+    const result = await new DeliveryChecks(this.root, context, run, assignments).check(
+      String(run.data.candidateRevision ?? context.base),
+      signal,
+      true,
+    );
+    if (result.status !== 'passed')
+      throw new VerificationIssue({
+        status: 'blocked',
+        criteria: [],
+        deficiencies: ['Assembled checks failed'],
+        summary: result.evidence.join(', '),
+      });
+    const evidence = result.evidence.slice(1);
+    if (!signal.aborted)
+      this.store.updateRun(run.id, this.store.run(run.id).status, {
+        goalEvidence: evidence,
+        goalCandidate: run.data.candidateRevision,
+      });
+  }
+
   /** Routes observed deficiencies to ordinary director correction while preserving uncertain effects. */
   private async verify(
     run: ExecutionRun,
@@ -68,7 +100,7 @@ export class AssembledDelivery {
         this.root,
         this.context,
         run,
-        assignments,
+        run.mode === 'task' ? this.store.requiredAssignments(run.id) : assignments,
       ).checkRecord(record, signal, true, records);
       if (result.status !== 'passed') {
         this.reject(run, pending, 'Assembled checks failed: ' + result.evidence.join(', '));
@@ -98,9 +130,25 @@ export class AssembledDelivery {
     });
   }
 
+  /** Tasks assemble all engineering obligations once; workdays retain independent bounded deliveries. */
+  private group(run: ExecutionRun): ExecutionAssignment[] | undefined {
+    const ready = this.store.contributionGroups(run.id).ready();
+    if (run.mode === 'workday') return ready[0];
+    const unfinished = this.store
+      .requiredAssignments(run.id)
+      .filter((item) => !item.data.replacedBy && item.status !== 'completed');
+    const prepared = ready.flat();
+    if (
+      !unfinished.length ||
+      unfinished.some((item) => !prepared.some((candidate) => candidate.id === item.id))
+    )
+      return undefined;
+    return prepared;
+  }
+
   /** Journals exact contributions before setup or model operations can produce uncertain side effects. */
   private prepare(run: ExecutionRun): PendingAssembly | undefined {
-    const group = this.store.contributionGroups(run.id).ready()[0];
+    const group = this.group(run);
     if (!group) return undefined;
     const contributions = group.map((item) => item.data.contribution as PreparedContribution);
     group.forEach((item, index) => this.contribution(item, contributions[index]!));
@@ -173,19 +221,25 @@ export class AssembledDelivery {
         candidateRecord: record,
         verifiedEvidence: evidence,
         assemblyBase: pending.base,
+        ...(run.mode === 'task' ? { goalEvidence: evidence, goalCandidate: pending.head } : {}),
       },
       pending.contributions,
     );
+    this.settleRecords(pending, record);
+    this.store.updateRun(run.id, this.store.run(run.id).status, { pendingAssembly: null });
+  }
+
+  /** Links each owner checkpoint to the accepted assembly without rewriting its original evidence. */
+  private settleRecords(pending: PendingAssembly, record: RecordData): void {
     for (const contribution of pending.contributions) {
       const source = this.record(contribution.recordId);
       if (source.deliveryRecordId === record.id && source.status === 'completed') continue;
       source.status = 'completed';
       source.outcome = 'verified_in_assembly';
       source.deliveryRecordId = record.id;
-      completePlan(this.root, source, evidence);
+      completePlan(this.root, source, record.assemblyEvidence as string[]);
       save(this.root, source);
     }
-    this.store.updateRun(run.id, this.store.run(run.id).status, { pendingAssembly: null });
   }
 
   /** Resolves private records without allowing identities or filesystem aliases to escape retained state. */

@@ -4,7 +4,7 @@
 
 ### Fixed
 
-- Verify dependent steward contributions together before advancing one candidate and publication, preserving component ownership and independent acceptance (#312).
+- Use one assembled verification and correction loop for steward contributions and the task goal; reuse unchanged acceptance during publication, preserve ownership, and route peer feedback through existing requests (#312).
 
 - Share authoritative execution evidence across direction, engineering, recovery and verification, preserving caller input, dependency identities and terminal pagination (#308).
 

@@ -50,7 +50,7 @@ class EngineeringContextScenarios {
     const ordinary = await this.context(6);
     const related = await this.context(6, ['implementation', 'tests']);
     assert.doesNotMatch(ordinary, /Related contribution workflow/);
-    assert.match(related, /host automatically records prepared source after review/);
+    assert.match(related, /host automatically records prepared source after implementation/);
     assert.match(related, /no preparation or handoff tool to call/);
     assert.match(related, /Preserve observed failed checks and genuine unresolved defects/);
     assert.match(related, /independently verifies the combined candidate before any delivery/);
@@ -72,7 +72,14 @@ class EngineeringContextScenarios {
     );
     const { EngineeringContext } = await import(path.href);
     const state = {
-      options: { id: 'owner', record: { workspace: '/candidate', contributionGroup } },
+      options: {
+        id: 'owner',
+        record: {
+          workspace: '/candidate',
+          contributionGroup,
+          generalExecution: Boolean(contributionGroup),
+        },
+      },
       resolved: { role: { id: 'engineer' }, context: [], related: [], owners: [], operations: [] },
       component: { schemaVersion, verification: [] },
       scope: ['owned'],

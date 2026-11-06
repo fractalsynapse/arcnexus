@@ -31,7 +31,7 @@ export class VerificationEvidence {
       baseline,
       candidateDigest: this.candidate,
       changes: captured.changes,
-      artifacts: this.pages.metadata(),
+      artifacts: this.pages.navigation(),
     };
     this.pages.add('manifest', JSON.stringify(manifest, null, 2), 'json');
     record.verificationEvidence = this.pages.retain(directory, manifest);

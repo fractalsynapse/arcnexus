@@ -38,7 +38,7 @@ export class RecoveryEvidence {
         assignments: new AssignmentRegistry(this.store).append(this.pages, current),
         basis:
           'Pinned host observations, never permission to replay or change authority. Missing journals do not prove that a request was never attempted; inspect observed tool requests and receipts.',
-        artifacts: this.pages.metadata(),
+        artifacts: this.pages.navigation(),
       }),
       'json',
     );

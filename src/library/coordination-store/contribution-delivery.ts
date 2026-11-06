@@ -1,3 +1,5 @@
+import { RequiredWork } from './required-work.js';
+import { AssignmentReplacements } from './assignment-replacements.js';
 import { CandidatePointers } from './candidate-pointers.js';
 import { ContributionGroups } from './contribution-groups.js';
 import type { ExecutionDatabase } from './execution-database.js';
@@ -116,10 +118,19 @@ export class ContributionDelivery {
 
   /** Checks the exact frozen contribution set before any member or candidate pointer can change. */
   private prepared(items: ExecutionAssignment[], prepared: PreparedContribution[]): void {
-    const all = this.db
-      .all<ExecutionAssignment>('assignment')
-      .filter((a) => a.runId === items[0]!.runId);
-    const group = new ContributionGroups(all).group(items[0]!.id);
+    const all = new RequiredWork(this.db, new AssignmentReplacements(this.db)).assignments(
+      items[0]!.runId,
+    );
+    const run = this.db.get<ExecutionRun>('run', items[0]!.runId);
+    const group =
+      run.mode === 'task'
+        ? all.filter(
+            (item) =>
+              !item.data.replacedBy &&
+              item.status !== 'completed' &&
+              ContributionGroups.engineering(item),
+          )
+        : new ContributionGroups(all).group(items[0]!.id);
     if (group.length !== items.length || group.some((a) => !items.some((b) => a.id === b.id)))
       throw new Error('Assembled delivery must include the complete related contribution set');
     if (

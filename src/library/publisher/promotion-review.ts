@@ -1,4 +1,3 @@
-import { PublicationEvidence } from '../report/report.js';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
@@ -7,7 +6,6 @@ import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/ex
 import type { DeliveryRecord } from '../coordination-store/delivery-types.js';
 import type { RecordData } from '../workspace/state.js';
 import { git } from '../operations/process.js';
-import { Direction } from '../task-intake/direction.js';
 import { candidateDigest } from '../change-inspection/changes.js';
 import type { SimulationCheckResult } from '../operations/simulated-pull-requests.js';
 import { DeliveryChecks } from './delivery-checks.js';
@@ -35,8 +33,9 @@ export class PromotionReview {
     if (checks.status !== 'passed' || checks.evidence.length < 2)
       throw new Error('Promotion requires current target checks and independent acceptance');
     const record = JSON.parse(readFileSync(checks.evidence[0]!, 'utf8')) as RecordData;
-    const goal = await this.assess(record, checks, signal);
-    const references = [...checks.evidence, ...goal];
+    this.assessments(record, checks);
+    const goal = checks.evidence.slice(1);
+    const references = checks.evidence;
     return {
       record,
       goalEvidence: goal,
@@ -47,34 +46,6 @@ export class PromotionReview {
           .digest('hex'),
       },
     };
-  }
-
-  /** Assesses the original goal with current evidence while retaining simulation provenance explicitly. */
-  private async assess(record: RecordData, checks: SimulationCheckResult, signal: AbortSignal) {
-    const before = candidateDigest(record);
-    const goal = await new Direction(this.root, this.context, signal, {
-      ...new PublicationEvidence(this.root, this.context.key).capture(
-        this.run,
-        record,
-        this.assignments,
-      ),
-      verificationReports: this.assessments(record, checks),
-      promotionSourceObjective: this.run.data.promotionSourceObjective,
-      promotionSource: this.source,
-      originalAssignments: this.assignments,
-      targetChecks: checks,
-    }).verify(
-      record,
-      this.assignments[0]!.owner,
-      this.run.objective,
-      this.assignments,
-      true,
-      this.context.base,
-    );
-    signal.throwIfAborted();
-    if (candidateDigest(record) !== before)
-      throw new Error('Promotion review changed target source');
-    return goal;
   }
 
   /** Rejects stale or foreign target assessments before exposing their candidate-bound verdicts. */

@@ -9,6 +9,7 @@ import {
 import { digest } from '../../../../dist/library/architecture/assignment.js';
 import type { ExecutionAssignment } from '../../../../dist/library/coordination-store/execution-types.js';
 import { DeliveryStore } from '../../../../dist/library/coordination-store/delivery-store.js';
+import { DeliveryChecks } from '../../../../dist/library/publisher/delivery-checks.js';
 import { Publisher } from '../../../../dist/library/publisher/publisher.js';
 import { AssembledDelivery } from '../../../../dist/library/execution-runtime/assembled-delivery.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
@@ -35,7 +36,7 @@ class AssemblyFixture {
   readonly regression;
 
   /** Captures a verification operation whose regression needs another owner's implementation. */
-  constructor(t: TestContext) {
+  constructor(t: TestContext, mode: 'task' | 'workday' = 'workday') {
     this.fixture = new GeneralFixture(t).fixture;
     writeFileSync(
       join(this.fixture.repo, 'verify.cjs'),
@@ -45,7 +46,7 @@ class AssemblyFixture {
     this.context = new ExecutionContext().resolve(this.fixture.repo);
     this.host = new ProjectHost(this.fixture.state, this.context);
     t.after(() => this.host.close());
-    this.run = this.runContext();
+    this.run = this.runContext(mode);
     this.implementation = this.host.store.enqueue(this.run.id, 'a', 'Implement shared behavior', [
       'Source implements behavior',
     ]);
@@ -58,9 +59,9 @@ class AssemblyFixture {
   }
 
   /** Uses an explicit simulated workday identity without inventing any upstream success receipts. */
-  private runContext() {
+  private runContext(mode: 'task' | 'workday') {
     const run = this.host.store.createRun(
-      'workday',
+      mode,
       this.context.owners,
       'Verify the dependent implementation and regression together',
       { id: 'controlled-assembly-environment', mode: 'simulation' },
@@ -137,6 +138,72 @@ class AssemblyFixture {
 
 /** Qualifies the assembled boundary through built runtime, SQLite, native operations and independent review wiring. */
 class AssemblyScenarios {
+  /** One independent assessment accepts the assembled task goal and both contributions together. */
+  async task(t: TestContext): Promise<void> {
+    const f = new AssemblyFixture(t, 'task');
+    await f.prepare(f.implementation, 'source.txt', 'assembled');
+    await f.prepare(
+      f.regression,
+      'b/regression.cjs',
+      "require('assert').equal(require('fs').readFileSync('source.txt','utf8'),'assembled');",
+    );
+    await new AssembledDelivery(f.fixture.state, f.context, f.host.store).advance(
+      f.host.store.run(f.run.id),
+      new AbortController().signal,
+    );
+    const run = f.host.store.run(f.run.id);
+    await this.reuse(f);
+    assert.equal(run.data.goalCandidate, run.data.candidateRevision);
+    const references = run.data.goalEvidence as string[];
+    assert.equal(references.length, 1);
+    const report = JSON.parse(readFileSync(references[0]!, 'utf8'));
+    assert.equal(report.activationRole, 'verifier');
+    assert.deepEqual(report.acceptanceCriteria, [
+      f.run.objective,
+      ...f.implementation.acceptance,
+      ...f.regression.acceptance,
+    ]);
+    assert.ok(f.host.store.assignments(f.run.id).every((item) => item.status === 'completed'));
+  }
+
+  /** Publication consumes the same accepted source without another operation or model activation. */
+  private async reuse(f: AssemblyFixture): Promise<void> {
+    const run = f.host.store.run(f.run.id);
+    const calls = readFileSync(f.fixture.calls, 'utf8');
+    const checks = new DeliveryChecks(
+      f.fixture.state,
+      f.context,
+      run,
+      f.host.store.requiredAssignments(run.id),
+    );
+    const result = await checks.check(
+      String(run.data.candidateRevision),
+      new AbortController().signal,
+      true,
+    );
+    assert.equal(result.status, 'passed');
+    assert.deepEqual(result.evidence.slice(1), run.data.goalEvidence);
+    assert.equal(readFileSync(f.fixture.calls, 'utf8'), calls);
+  }
+
+  /** Disconnected task obligations cannot be silently omitted from the accepted whole-goal candidate. */
+  async waitsForAll(t: TestContext): Promise<void> {
+    const f = new AssemblyFixture(t, 'task');
+    const extra = f.host.store.enqueue(f.run.id, 'c', 'Complete independent work', [
+      'Independent result',
+    ]);
+    await f.prepare(f.implementation, 'source.txt', 'assembled');
+    await f.prepare(f.regression, 'b/regression.cjs', "require('assert').ok(true);");
+    const assembly = new AssembledDelivery(f.fixture.state, f.context, f.host.store);
+    const signal = new AbortController().signal;
+    assert.equal(assembly.ready(f.host.store.run(f.run.id)), false);
+    assert.equal(await assembly.advance(f.host.store.run(f.run.id), signal), false);
+    assert.equal(f.host.store.run(f.run.id).data.candidateRevision, f.context.base);
+    await f.prepare(extra, 'c/result.txt', 'independent result');
+    assert.equal(await assembly.advance(f.host.store.run(f.run.id), signal), true);
+    assert.ok(f.host.store.assignments(f.run.id).every((item) => item.status === 'completed'));
+  }
+
   /** Observed red assembly checks retain source and return work to normal correction without delivery. */
   async rejects(t: TestContext): Promise<void> {
     const f = new AssemblyFixture(t);
@@ -239,6 +306,12 @@ test('failed assembled checks retain contributions and never claim delivery', (t
 
 test('dependent engineering contributions pass one assembled acceptance and independent review', (t) =>
   scenarios.accepts(t));
+
+test('one assembled independent review accepts task goal and owner criteria together', (t) =>
+  new AssemblyScenarios().task(t));
+
+test('task assembly waits for disconnected engineering obligations', (t) =>
+  scenarios.waitsForAll(t));
 
 registerSuite({
   component: 'execution-runtime',

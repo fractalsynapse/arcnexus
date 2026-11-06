@@ -45,7 +45,7 @@ class PreparedWorkflowScenario {
     assert.equal(record.outcome, 'prepared_for_assembly');
     assert.deepEqual(
       (record.turns as any[]).map((turn) => turn.activity),
-      ['planning', 'specification', 'implementation', 'review'],
+      ['planning', 'specification', 'implementation'],
     );
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'broken');
     assert.ok(record.commands.some((command) => command.exitCode !== 0));

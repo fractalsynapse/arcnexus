@@ -155,7 +155,7 @@ export type ActivationResult = { receipt?: string } & (
       kind: 'responses';
       actions: Array<{
         requestId: string;
-        action: 'accept' | 'reject' | 'clarify' | 'answer' | 'require_delivery';
+        action: 'accept' | 'reject' | 'clarify' | 'answer' | 'require_delivery' | 'feedback';
         text: string;
       }>;
     }

@@ -211,15 +211,13 @@ class AssignmentRegistryScenario {
     assert.deepEqual(intent.acceptance, ['Evidence-backed result']);
     assert.doesNotMatch(text, /FOREIGN_RUN_SENTINEL|FOREIGN_WORK_SENTINEL/);
     this.canonicalEvidence(observed, runId);
-    const intentArtifacts = observed.manifest.artifacts.filter((item: any) =>
-      item.id.endsWith(':intent'),
-    );
-    const diagnosticArtifacts = observed.manifest.artifacts.filter((item: any) =>
-      item.id.endsWith(':invocations'),
+    const intentArtifacts = Object.keys(observed.artifacts).filter((id) => id.endsWith(':intent'));
+    const diagnosticArtifacts = Object.keys(observed.artifacts).filter((id) =>
+      id.endsWith(':invocations'),
     );
     assert.equal(intentArtifacts.length, 2);
     assert.equal(diagnosticArtifacts.length, 1);
-    assert.equal(diagnosticArtifacts[0].id, observed.manifest.invocationDiagnostics.artifact);
+    assert.equal(diagnosticArtifacts[0], observed.manifest.invocationDiagnostics.artifact);
   }
 
   /** Exposes current-run facts while refusing to dereference a malformed retained record identity. */

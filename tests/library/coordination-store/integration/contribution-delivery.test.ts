@@ -91,6 +91,29 @@ class ContributionScenarios {
     assert.equal(f.store.assignment(f.tests.id).status, 'ready');
   }
 
+  /** Correlated feedback reopens only its prepared supplier and preserves accepted scope on retries. */
+  feedback(t: TestContext): void {
+    const f = new ContributionFixture(t);
+    f.prepare(f.tests.id);
+    const request = f.store
+      .inbox(f.implementation.id)
+      .find((item) => item.from === f.implementation.id)!;
+    const action = {
+      requestId: request.id,
+      action: 'feedback' as const,
+      text: 'Preserve the exact public field shape',
+    };
+    const before = f.store.assignment(f.tests.id);
+    f.store.respond(f.implementation.id, [action]);
+    assert.equal(f.store.assignment(f.tests.id).status, 'ready');
+    assert.deepEqual(f.store.assignment(f.tests.id).acceptance, before.acceptance);
+    assert.equal(f.store.assignment(f.tests.id).objective, before.objective);
+    f.prepare(f.tests.id);
+    f.store.respond(f.implementation.id, [action]);
+    assert.equal(f.store.assignment(f.tests.id).status, 'prepared');
+    assert.equal(f.candidate(), 'original');
+  }
+
   /** Related contributions publish together and exact repeated completion changes no candidate. */
   complete(t: TestContext): void {
     const f = new ContributionFixture(t);
@@ -220,6 +243,9 @@ test('external obligations block assembly without starving unrelated work', (t) 
 
 test('prepared contributions cannot restart before an observed correction', (t) =>
   scenarios.settled(t));
+
+test('existing request feedback preserves scope and does not replay on retry', (t) =>
+  scenarios.feedback(t));
 
 registerSuite({
   component: 'coordination-store',

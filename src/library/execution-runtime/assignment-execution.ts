@@ -85,7 +85,7 @@ export class AssignmentExecution {
       .join('\n');
     if (feedback && feedback !== record.continuationFeedback && record.nextStage === 'finished') {
       const resolved = record.resolvedAssignment as ResolvedAssignment;
-      record.nextStage = resolved.assignment.kind === 'change' ? 'review' : 'research';
+      record.nextStage = resolved.assignment.kind === 'change' ? 'implementation' : 'research';
       record.status = 'running';
     }
     record.continuationFeedback = feedback;
@@ -336,7 +336,7 @@ export class AssignmentExecution {
       base: current,
     });
     delete record.developmentHead;
-    if (record.nextStage === 'finished') record.nextStage = 'review';
+    if (record.nextStage === 'finished') record.nextStage = 'implementation';
     record.reconciledCandidateDigest = candidateDigest(record);
     record.reconciliationId = next.id;
     save(this.root, record);

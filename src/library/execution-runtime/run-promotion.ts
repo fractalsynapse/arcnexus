@@ -199,7 +199,7 @@ export class RunPromotion {
     });
   }
 
-  /** Captures new live delivery only after fresh target checks, independent review and director assessment. */
+  /** Captures new live delivery only after fresh target checks and one independent goal assessment. */
   private async verify(run: ExecutionRun, source: DeliveryRecord, signal: AbortSignal) {
     const store = this.deliveries();
     try {

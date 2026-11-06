@@ -23,7 +23,10 @@ export class VerificationAssessment {
   /** Builds indexed criteria from host-retained assignments rather than model-written completion claims. */
   criteria(objective: string, evidence: unknown, goal: boolean): string[] {
     if (goal) {
-      const assignments = Array.isArray(evidence) ? evidence : [];
+      const assignments = Array.isArray(evidence)
+        ? evidence
+        : ((evidence as { assignments?: Array<{ acceptance?: string[] }> } | undefined)
+            ?.assignments ?? []);
       return [objective, ...assignments.flatMap((assignment) => assignment.acceptance ?? [])];
     }
     const criteria = (evidence as { criteria?: string[] } | undefined)?.criteria;
