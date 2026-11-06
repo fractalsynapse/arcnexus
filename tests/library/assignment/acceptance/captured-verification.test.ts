@@ -35,7 +35,7 @@ class CapturedVerificationScenarios {
   }
 
   /** Verified fixture changes are used while candidate implementation and captured commands stay authoritative. */
-  async baseline(t: TestContext, broken: boolean): Promise<void> {
+  async baseline(t: TestContext, broken: boolean, ownedOnly = false): Promise<void> {
     const f = workflowFixture(t);
     writeFileSync(join(f.repo, 'tests/fixture.txt'), 'old');
     writeFileSync(
@@ -55,7 +55,7 @@ class CapturedVerificationScenarios {
       authority,
       base,
       verifiedTestPaths: ['tests/fixture.txt'],
-      trustedVerificationPaths: ['tests'],
+      trustedVerificationPaths: ownedOnly ? [] : ['tests'],
     });
     if (broken) await assert.rejects(() => verifier.verify(), /Command failed/);
     else await verifier.verify();
@@ -107,7 +107,7 @@ class CapturedVerificationScenarios {
         record: { generalExecution: true, source: f.repo, workspace: f.repo, ...baseline },
       },
       resolved: { base: baseline.authority ?? f.git('rev-parse', 'HEAD') },
-      component: { tests: [], verification: [check] },
+      component: { tests: [], allowedWritePaths: ['tests'], verification: [check] },
       safe: () => {},
       checks: async (commands: Array<{ command: string; args: string[] }>) => {
         for (const command of commands) {
@@ -125,6 +125,9 @@ test('verified removal of a test is preserved during captured checks', (t) => sc
 
 test('captured checks accept independently verified fixture changes', (t) =>
   scenarios.baseline(t, false));
+
+test('new verified owner tests need no duplicated authored verification paths', (t) =>
+  scenarios.baseline(t, false, true));
 
 test('verified fixture checks reject broken current implementation and preserve edits', (t) =>
   scenarios.baseline(t, true));
