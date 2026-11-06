@@ -5,7 +5,7 @@ parentId: cli-package
 purpose: Resume owner-scoped assignments through durable engineering and host
   verification stages
 objectives:
-  - Share captured acceptance checks between owner execution and assembled deliveries
+  - Prepare owner contributions with self-review in engineering for assembled verification
   - Make actual execution outcomes easy to inspect
 constraints:
   - Preserve captured authority and evidence

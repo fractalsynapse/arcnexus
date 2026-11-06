@@ -36,3 +36,22 @@ authority and the verified candidate's test baseline. Runtime composition does n
 grant workers broader write authority. The existing publisher accepts joint
 contribution attribution and advances one combined PR; it must not independently
 publish a red constituent merely because the combined delivery passed.
+
+## Approved single acceptance loop
+
+The architect approved this simpler boundary on 2026-11-06. Stewards include
+self-review in engineering and retain findings without a separate blocking review
+activation. A completed engineering checkpoint prepares an unverified contribution.
+The host assembles contributions and uses one independent verification/correction
+loop. Its final task assembly includes the original goal and all required acceptance
+criteria; no additional director completion assessment repeats that review.
+
+Feedback on an existing request references its identity and the new finding. It
+cannot rewrite scope or acceptance, and repeated delivery of the same feedback
+must not execute work twice. Current assignments and relevant evidence are directly
+navigable; complete historical artifacts remain available on demand.
+
+Ownership, checked edits, actual regression evidence, captured host checks,
+independent acceptance, recovery and staging gates remain mandatory. No execution
+limits are added. The release objective is a real engineering delivery through
+staging, not simulated evidence presented as real integration.
