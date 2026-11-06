@@ -8,6 +8,8 @@
 
 ### Changed
 
+- Reserve research for substantive questions; keep routine code discovery and evidence lookup within the engineering activity that needs them (#277).
+
 - Require verified director/steward self-repair within existing authority as part of the self-development lifecycle (#275).
 
 - Reuse settled dependency preparation across task/workday workspaces while keeping installed dependencies read-only and build outputs isolated (#268).
