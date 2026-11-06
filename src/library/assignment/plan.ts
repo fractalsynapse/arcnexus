@@ -161,14 +161,18 @@ function validateUpdates(record: RecordData, updates: unknown): Plan {
 }
 
 /** Records observed host checks without changing a steward's remaining checklist claims. */
-export function completePlan(root: string, record: RecordData): void {
+export function completePlan(
+  root: string,
+  record: RecordData,
+  evidence = record.commands.filter((c) => c.exitCode === 0).map((c) => c.log),
+): void {
   const plan = structuredClone(record.plan) as Plan | undefined;
   if (!plan) return;
   plan.hostChecks = [
     {
       id: 'final-verification',
       status: 'completed',
-      evidence: record.commands.filter((c) => c.exitCode === 0).map((c) => c.log),
+      evidence,
     },
   ];
   persist(root, record, plan, 'Required host checks passed');

@@ -302,7 +302,12 @@ export class ProjectHost {
   private async advanceAssignments(run: ExecutionRun, signal: AbortSignal): Promise<void> {
     await this.collaboration.progress(run, signal);
     const ready = this.store.ready(run.id);
-    if (ready.length && (run.mode === 'task' || run.data.lastDispatch !== 'assignment')) {
+    const assembly =
+      run.data.pendingAssembly || this.store.contributionGroups(run.id).ready().length;
+    if (
+      (ready.length || assembly) &&
+      (run.mode === 'task' || run.data.lastDispatch !== 'assignment')
+    ) {
       await this.dispatchAssignment(run, signal);
       return;
     }

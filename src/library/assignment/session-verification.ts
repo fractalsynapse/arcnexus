@@ -126,8 +126,14 @@ export class SessionVerification {
 
   /** Rechecks trusted characterization and original acceptance; worker regressions remain review evidence. */
   private async verifyCapturedAcceptance(): Promise<void> {
-    await new RefactorCheckpoint(this.state).verify();
-    await new CapturedVerification(this.state).verify();
+    await new CapturedVerification({
+      record: this.state.options.record,
+      component: this.state.component,
+      authorityBase: this.state.resolved.base,
+      verifiedBase: this.state.options.record.base,
+      checks: (checks, stage) => this.state.checks(checks, stage),
+    }).verify();
+    this.state.safe();
   }
 
   /** Requires an in-scope implementation both before checks and after their side effects. */

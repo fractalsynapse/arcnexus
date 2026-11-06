@@ -55,6 +55,10 @@ export class AssignmentExecution {
   async activate(assignment: ExecutionAssignment): Promise<ActivationResult> {
     const record = await this.record(assignment);
     new VerificationBaseline(this.context).capture(record);
+    record.contributionGroup = this.store
+      .contributionGroups(assignment.runId)
+      .group(assignment.id)
+      .map((item) => item.id);
     record.collaborationContext = {
       environment: this.store.run(assignment.runId).environment,
       trackingIssue:
@@ -155,7 +159,10 @@ export class AssignmentExecution {
     }
     if (actions?.length) return { kind: 'responses', actions };
     if (record.status === 'blocked') return { kind: 'blocked', reason: String(record.error) };
+    if (record.status === 'prepared') return this.prepareContribution(record);
     if (record.status !== 'completed') return { kind: 'continue' };
+    if ((record.resolvedAssignment as ResolvedAssignment).assignment.kind === 'change')
+      return this.prepareContribution(record);
     try {
       return await this.deliver(assignment, record, session);
     } catch (error) {
@@ -285,6 +292,7 @@ export class AssignmentExecution {
           reviews: new DeliveryEvidence(this.root).capture(dependency, false),
         })),
       ) +
+      '\nPrepared peers have contributed source for joint acceptance, not verified delivery. Continue your own engineering within component ownership; the host assembles and verifies related contributions together. Do not recreate the wait for a prepared peer to pass independently. Inspect its retained contribution and checkpoint evidence through assignment.evidence when needed. ' +
       '\nIf accepted intent is insufficient, return inboxActions with action=require_delivery, the existing requestId from General inbox requests (not the dependency assignment ID), and an explanation. Use only the envelope’s availableActions; incoming requests and outgoing dependencies have different reply authority. Completed delivery needs no acknowledgment. Do not create another request or restate accepted scope; this action strengthens only the existing milestone.';
   }
 
@@ -300,6 +308,7 @@ export class AssignmentExecution {
       evidence: item.evidence,
       accepted: item.data.accepted === true,
       deliveredRevision: item.data.deliveredRevision,
+      preparedContribution: item.data.contribution,
       reason: item.data.reason,
     };
   }
@@ -379,6 +388,19 @@ export class AssignmentExecution {
         objective: r.request,
         acceptance: r.acceptanceCriteria,
       })),
+    };
+  }
+
+  /** Pins a settled owner checkpoint as unverified source for the ordinary scheduler to retain. */
+  private prepareContribution(record: RecordData): ActivationResult {
+    return {
+      kind: 'prepared',
+      contribution: {
+        recordId: record.id,
+        base: record.base,
+        revision: this.snapshots.capture(record.workspace, record.base),
+        checkpoint: (record.checkpoint as { sha256: string }).sha256,
+      },
     };
   }
 

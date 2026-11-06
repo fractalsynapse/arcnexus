@@ -129,7 +129,8 @@ export class SessionWorkflow {
     const feedback = await this.checkImplementation(attempt);
     delete record.activeImplementationAttempt;
     record.correctiveFeedback = feedback ?? '';
-    record.nextStage = feedback === undefined ? 'review' : 'implementation';
+    record.nextStage =
+      feedback === undefined || this.contributionReady() ? 'review' : 'implementation';
   }
 
   /** Reviews the assembled candidate and schedules correction or verified completion. */
@@ -141,20 +142,26 @@ export class SessionWorkflow {
       record.nextStage = 'implementation';
       return;
     }
-    await this.verification.final();
-    this.markAttempt({ status: 'completed' });
-    record.outcome = 'ready_for_integration';
+    if (!this.contributionReady()) await this.verification.final();
+    this.markAttempt({ status: this.contributionReady() ? 'prepared' : 'completed' });
+    record.outcome = this.contributionReady() ? 'prepared_for_assembly' : 'ready_for_integration';
     this.finishStage();
   }
 
   /** Completes the accepted checklist only after all required verification succeeds. */
   private finishStage(): void {
     const { root, record } = this.state.options;
-    if (this.state.planned) completePlan(root, record);
-    record.status = 'completed';
+    if (this.state.planned && !this.contributionReady()) completePlan(root, record);
+    record.status = this.contributionReady() ? 'prepared' : 'completed';
     record.nextStage = 'finished';
     record.stage = 'finished';
-    this.state.journal('workflow', 'completed', { outcome: record.outcome });
+    this.state.journal('workflow', record.status, { outcome: record.outcome });
+  }
+
+  /** Uses only host-derived related work; no worker response can waive final assembled verification. */
+  private contributionReady(): boolean {
+    const group = this.state.options.record.contributionGroup;
+    return this.state.assignment.kind === 'change' && Array.isArray(group) && group.length > 1;
   }
 
   /** Requires a valid read-only assignment plan before engineering stages. */
@@ -230,6 +237,7 @@ export class SessionWorkflow {
       const feedback = this.commandFeedback(failed);
       this.markAttempt({ status: 'failed', feedback });
       this.state.journal('implementation', 'failed', { attempt, feedback });
+      if (this.contributionReady()) return feedback;
       return new SessionProgress(this.state).failure(
         'implementation-checkpoint',
         feedback,
@@ -247,7 +255,7 @@ export class SessionWorkflow {
   private async review(): Promise<string | undefined> {
     const review = await this.turns.perform(
       'review',
-      `Review the candidate diff without editing source. Host check results (captured evidence): ${JSON.stringify(this.state.options.record.commands.map(({ command, args, exitCode, durationMs, stage }) => ({ command, args, exitCode, durationMs, stage })))}. The earlier expected red-test failure was a specification checkpoint. Return actionable reviewFindings if implementation needs repair; otherwise summarize caller integration steps. Record caller handoff as review within captured role activities; do not claim release authority or publish.`,
+      `${this.contributionReady() ? 'Review your contribution for joint assembly with related owners. Observed failed checks remain unverified; do not claim acceptance. Fix defects within your contribution, but do not require absent peer changes to pass in your isolated workspace. The host checks the complete assembly before any delivery. Complete only your own preparation and handoff checklist. ' : ''}Review the candidate diff without editing source. Host check results (captured evidence): ${JSON.stringify(this.state.options.record.commands.map(({ command, args, exitCode, durationMs, stage }) => ({ command, args, exitCode, durationMs, stage })))}. The earlier expected red-test failure was a specification checkpoint. Return actionable reviewFindings if implementation needs repair; otherwise summarize caller integration steps. Record caller handoff as review within captured role activities; do not claim release authority or publish.`,
       true,
     );
     if (!review.reviewFindings.length) return undefined;

@@ -14,6 +14,7 @@ export class DevelopmentDeliveries {
 
   /** Captures verified changes in ancestry order, rejecting gaps and duplicate branch ownership. */
   capture(assignments: ExecutionAssignment[], candidate: RecordData, head: string) {
+    if (assignments.some((assignment) => assignment.data.deliveryRecordId)) return undefined;
     const entries = assignments.map((assignment) => this.entry(assignment));
     if (entries.every((entry) => entry === undefined)) return undefined;
     const changed = entries.filter((entry): entry is DevelopmentDelivery => !!entry);

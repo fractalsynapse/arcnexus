@@ -74,7 +74,7 @@ class CheckedPermissionScenarios {
       },
       turns: [],
       commands: [],
-      bindings: { tools: {} },
+      bindings: { tools: { codex: process.env.ARCNEXUS_TEST_CODEX!, node: process.execPath } },
     } as unknown as RecordData;
   }
 

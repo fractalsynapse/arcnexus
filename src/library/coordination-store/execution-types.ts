@@ -31,7 +31,15 @@ export const terminalRunStatuses: readonly RunStatus[] = [
 ];
 
 export type AssignmentStatus =
-  'ready' | 'running' | 'waiting' | 'completed' | 'blocked' | 'rejected' | 'failed' | 'interrupted';
+  | 'ready'
+  | 'running'
+  | 'waiting'
+  | 'prepared'
+  | 'completed'
+  | 'blocked'
+  | 'rejected'
+  | 'failed'
+  | 'interrupted';
 
 /** Only diagnosed unsuccessful assignments can be reopened by a director continuation. */
 export function canReopenAssignment(status: AssignmentStatus): boolean {
@@ -40,7 +48,12 @@ export function canReopenAssignment(status: AssignmentStatus): boolean {
 
 /** Ready or waiting checkpointed work can receive direction without dropping its dependencies. */
 export function canContinueAssignment(status: AssignmentStatus): boolean {
-  return status === 'ready' || status === 'waiting' || canReopenAssignment(status);
+  return (
+    status === 'ready' ||
+    status === 'waiting' ||
+    status === 'prepared' ||
+    canReopenAssignment(status)
+  );
 }
 
 export interface ExecutionRun {
@@ -59,6 +72,14 @@ export interface AssignmentContinuation {
   ownerId: string;
   reason: string;
   replacementChangeType?: 'behavior' | 'documentation' | 'refactor';
+}
+
+/** An attributed checkpoint snapshot remains unverified until its complete assembly is accepted. */
+export interface PreparedContribution {
+  recordId: string;
+  base: string;
+  revision: string;
+  checkpoint: string;
 }
 
 export interface ExecutionAssignment {
@@ -133,6 +154,7 @@ export type ActivationResult = { receipt?: string } & (
       requests: OwnerRequest[];
       actions: import('./inbox-decisions.js').InboxDecision[];
     }
+  | { kind: 'prepared'; contribution: PreparedContribution }
   | { kind: 'completed'; evidence: string[]; candidate?: Record<string, unknown> }
   | {
       kind: 'responses';

@@ -1,3 +1,4 @@
+import { AssembledDelivery } from './assembled-delivery.js';
 import { AssignmentDispatch } from './assignment-dispatch.js';
 import type { DirectorResult } from '../task-intake/direction.js';
 import type { ProjectExecution } from '../architecture/execution-context.js';
@@ -20,6 +21,9 @@ export class CollaborativeDispatch {
 
   /** Creates tracking before engineering, then yields through the unchanged sequential scheduler. */
   async step(run: ExecutionRun, signal: AbortSignal): Promise<void> {
+    const context = this.environments.contextFor(run);
+    const assembly = new AssembledDelivery(this.root, context, this.store);
+    if (await assembly.advance(run, signal)) return;
     const collaboration = new RunCollaboration(
       this.context,
       this.store,
@@ -27,12 +31,8 @@ export class CollaborativeDispatch {
       run,
       signal,
     );
-    const executor = new AssignmentExecution(
-      this.root,
-      this.environments.contextFor(run),
-      this.store,
-      signal,
-      (assignment) => collaboration.bridge(assignment),
+    const executor = new AssignmentExecution(this.root, context, this.store, signal, (assignment) =>
+      collaboration.bridge(assignment),
     );
     try {
       await new Scheduler(this.store, async (assignment) => {

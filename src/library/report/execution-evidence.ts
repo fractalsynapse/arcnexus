@@ -17,6 +17,7 @@ interface HostCommandEvidence {
 interface HostExecutionEvidence {
   run?: { id?: string };
   publication?: { recordId: string; observations: { hostCommands?: HostCommandEvidence[] } };
+  assemblies?: NonNullable<HostExecutionEvidence['assignments']>;
   assignments?: Array<{
     id: string;
     data?: Record<string, unknown>;
@@ -47,12 +48,15 @@ export class ExecutionEvidence {
     const assignments = evidence.assignments?.map((assignment) =>
       this.assignmentArtifacts(pages, assignment),
     );
-    pages.addSections('execution', { ...evidence, assignments }, [
+    const assemblies = evidence.assemblies?.map((assembly) =>
+      this.assignmentArtifacts(pages, assembly),
+    );
+    pages.addSections('execution', { ...evidence, assignments, assemblies }, [
       'events',
       'requests',
       'runtimeTransitions',
     ]);
-    return { ...evidence, assignments };
+    return { ...evidence, assignments, assemblies };
   }
 
   /** Makes each worker record and prior review independently discoverable instead of inlining their histories. */
@@ -85,7 +89,7 @@ export class ExecutionEvidence {
 
   /** Pins complete logs separately so criterion inspection need not page through unrelated command output. */
   private static indexCommandOutputs(pages: EvidencePages, evidence: HostExecutionEvidence): void {
-    for (const assignment of evidence.assignments ?? [])
+    for (const assignment of [...(evidence.assignments ?? []), ...(evidence.assemblies ?? [])])
       this.addCommandOutputs(
         pages,
         'execution:' + assignment.id,
@@ -138,6 +142,7 @@ export class ExecutionEvidence {
       requests: this.requests(assignments, ids),
       source: this.source(run),
       assignments: assignments.map((assignment) => this.assignment(assignment)),
+      assemblies: this.assemblies(run),
     };
   }
 
@@ -164,6 +169,7 @@ export class ExecutionEvidence {
       initialCandidateRevision: run.data.initialCandidateRevision,
       initialCandidateSourceRun: run.data.initialCandidateSourceRun,
       initialDirection: run.data.initialDirection,
+      redirection: run.data.redirection,
       callerObservations: this.callerObservations(run),
     };
   }
@@ -220,23 +226,64 @@ export class ExecutionEvidence {
     const id = assignment.data.recordId;
     if (!id) return null;
     try {
-      if (typeof id !== 'string' || !/^[a-f0-9-]{36}$/.test(id))
-        throw new Error('Invalid retained record identity');
-      const path = join(this.root, 'runs', id, 'report.json');
-      const stat = lstatSync(path);
-      if (!stat.isFile() || stat.nlink !== 1 || realpathSync(path) !== resolve(path))
-        throw new Error('Unsafe retained execution record');
-      const record = JSON.parse(readFileSync(path, 'utf8')) as RecordData;
-      if (
-        record.id !== id ||
-        record.executionRunId !== runId ||
-        record.assignmentId !== assignment.id
-      )
+      const record = this.readRecord(id, runId);
+      if (record.assignmentId !== assignment.id)
         throw new Error('Retained record belongs to a different run or assignment');
       return this.observations(record);
     } catch (error) {
       return { evidenceUnavailable: true, reason: String(error) };
     }
+  }
+
+  /** Includes current and recent combined checks so ordinary corrections can inspect their real outputs. */
+  private assemblies(run: ExecutionRun) {
+    const sources = [
+      run.data.pendingAssembly,
+      run.data.lastAssembly,
+      (run.data.candidateRecord as RecordData | undefined)?.assemblyAssignments && {
+        recordId: (run.data.candidateRecord as RecordData).id,
+      },
+    ].filter(Boolean) as Array<{ recordId: string }>;
+    return [...new Set(sources.map((item) => item.recordId))].map((id) =>
+      this.assembly(run.id, id),
+    );
+  }
+
+  /** Labels combined check observations without granting access to another run or record role. */
+  private assembly(runId: string, id: string) {
+    try {
+      const record = this.readRecord(id, runId);
+      if (
+        record.activationRole !== 'publication-checks' ||
+        !Array.isArray(record.assemblyAssignments)
+      )
+        throw new Error('Retained record is not an assembled delivery');
+      return {
+        id: 'assembly:' + id,
+        data: {
+          assignments: record.assemblyAssignments,
+          baseline: record.assemblyBase,
+          findings: record.assemblyFindings,
+        },
+        record: this.observations(record),
+      };
+    } catch (error) {
+      return { id: 'assembly:' + id, record: { evidenceUnavailable: true, reason: String(error) } };
+    }
+  }
+
+  /** Applies the same identity and filesystem checks to assignment and combined acceptance records. */
+  private readRecord(id: unknown, runId: string): RecordData {
+    if (typeof id !== 'string' || !/^[a-f0-9-]{36}$/.test(id))
+      throw new Error('Invalid retained record identity');
+    const path = join(this.root, 'runs', id, 'report.json');
+    const stat = lstatSync(path);
+    if (!stat.isFile() || stat.nlink !== 1 || realpathSync(path) !== resolve(path))
+      throw new Error('Unsafe retained execution record');
+    const record = JSON.parse(readFileSync(path, 'utf8')) as RecordData;
+    if (record.id !== id || record.executionRunId !== runId)
+      throw new Error('Retained record belongs to a different run or assignment');
+    return record;
   }
 
   /** Retains the actual owner catalog context supplied to engineering, without inferring private reasoning. */

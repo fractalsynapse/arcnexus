@@ -183,3 +183,5 @@ export async function runSteward(
 export { validateCheckpoint } from './continuation.js';
 
 export { recoverAssignmentEdits } from './edit-recovery.js';
+
+export { CapturedVerification, type CapturedVerificationContext } from './captured-verification.js';

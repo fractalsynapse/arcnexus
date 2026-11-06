@@ -103,12 +103,10 @@ class CapturedVerificationScenarios {
   private verifier(f: WorkflowFixture, observed = () => {}, baseline: any = {}) {
     const check = { command: process.execPath, args: ['verify.cjs', '--project', '.'] };
     return new CapturedVerification({
-      options: {
-        record: { generalExecution: true, source: f.repo, workspace: f.repo, ...baseline },
-      },
-      resolved: { base: baseline.authority ?? f.git('rev-parse', 'HEAD') },
+      record: { generalExecution: true, source: f.repo, workspace: f.repo, ...baseline },
+      authorityBase: baseline.authority ?? f.git('rev-parse', 'HEAD'),
+      verifiedBase: baseline.base ?? f.git('rev-parse', 'HEAD'),
       component: { tests: [], allowedWritePaths: ['tests'], verification: [check] },
-      safe: () => {},
       checks: async (commands: Array<{ command: string; args: string[] }>) => {
         for (const command of commands) {
           observed();

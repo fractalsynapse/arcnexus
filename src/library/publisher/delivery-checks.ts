@@ -1,3 +1,4 @@
+import { AssemblyAcceptance } from './assembly-acceptance.js';
 import { PublicationEvidence } from '../report/report.js';
 import { PublicationPolicy } from './publication-policy.js';
 import { join } from 'node:path';
@@ -27,11 +28,25 @@ export class DeliveryChecks {
     independent = false,
   ): Promise<SimulationCheckResult> {
     if (!/^[a-f0-9]{40,64}$/.test(head)) throw new Error('Expected immutable delivery head');
-    const record = this.record(head);
+    return this.checkRecord(this.record(head), signal, independent);
+  }
+
+  /** Checks a journaled candidate through the same acceptance path used by ordinary publication. */
+  async checkRecord(
+    record: RecordData,
+    signal: AbortSignal,
+    independent = false,
+    contributions: RecordData[] = [],
+  ): Promise<SimulationCheckResult> {
     const evidence = [join(this.root, 'runs', record.id, 'report.json')];
     try {
       await prepareWorkspace(this.root, record, signal);
       await this.verify(record, signal);
+      await new AssemblyAcceptance(this.root, record, signal).verify(
+        contributions,
+        String(record.assemblyBase ?? record.base),
+      );
+      save(this.root, record);
       if (independent) evidence.push(...(await this.review(record, signal)));
       record.status = 'completed';
       return { status: 'passed', evidence, artifacts: this.artifacts(record) };
@@ -46,7 +61,7 @@ export class DeliveryChecks {
   }
 
   /** Captures preparation authority before any command, preserving immutable environment identity. */
-  private record(head: string): RecordData {
+  record(head: string): RecordData {
     const record = createWorkspace(this.root, {
       project: this.context.source,
       base: head,
@@ -117,7 +132,7 @@ export class DeliveryChecks {
       this.run.objective,
       evidence,
       false,
-      this.context.base,
+      String(record.assemblyBase ?? this.context.base),
     );
   }
 

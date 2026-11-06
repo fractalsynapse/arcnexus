@@ -1,4 +1,4 @@
-import { dependencySatisfied } from './execution-types.js';
+import { ContributionGroups } from './contribution-groups.js';
 import type { ExecutionDatabase } from './execution-database.js';
 import type { AssignmentReplacements } from './assignment-replacements.js';
 import type { ExecutionAssignment, InboxRequest } from './execution-types.js';
@@ -39,7 +39,10 @@ export class RequiredWork {
           item.status === 'ready' &&
           ((Array.isArray(item.data.questions) && item.data.questions.length > 0) ||
             item.dependencies.every((id) =>
-              dependencySatisfied(item, this.db.get<ExecutionAssignment>('assignment', id)),
+              ContributionGroups.canEngineer(
+                item,
+                this.db.get<ExecutionAssignment>('assignment', id),
+              ),
             )),
       )
       .sort((a, b) => Number(a.data.readyOrder ?? 0) - Number(b.data.readyOrder ?? 0));

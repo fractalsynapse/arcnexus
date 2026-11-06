@@ -20,6 +20,7 @@ export class DirectionRecords {
       executionRunId: workspace.executionRunId,
       executionEnvironment: workspace.executionEnvironment,
       assignmentId: workspace.assignmentId,
+      assemblyAssignments: workspace.assemblyAssignments,
       parentRecordId: workspace.id,
       source: workspace.source,
       workspace: workspace.workspace,

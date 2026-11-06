@@ -25,7 +25,10 @@ export class DeliveryVerification {
       !reviews.some((review) => review.activationRole === 'director-assessment')
     )
       throw new Error('Missing independent goal assessment');
-    const last = assignments.find((assignment) => assignment.data.recordId === candidate.id);
+    const last = assignments.find(
+      (assignment) =>
+        (assignment.data.deliveryRecordId ?? assignment.data.recordId) === candidate.id,
+    );
     const accepted =
       last &&
       reviews.find(

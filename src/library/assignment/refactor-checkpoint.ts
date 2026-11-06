@@ -4,7 +4,6 @@ import { join } from 'node:path';
 import { digest } from '../architecture/assignment.js';
 import { classifyComponentPath, covered } from '../architecture/components.js';
 import { git } from '../operations/process.js';
-import { withFrozenTests } from './checkpoints.js';
 import type { SessionState } from './session-state.js';
 
 /** Preserves passing characterization coverage without inventing a behavioral change. */
@@ -32,14 +31,5 @@ export class RefactorCheckpoint {
     writeFileSync(join(this.state.dir, 'frozen-tests.json'), JSON.stringify(this.state.frozen));
     this.state.specificationFinished = true;
     this.state.checkpoint();
-  }
-
-  /** Rechecks the captured passing tests against the assembled implementation. */
-  async verify(): Promise<void> {
-    if (!this.state.options.record.characterization) return;
-    await withFrozenTests(this.state.options.record, this.state.frozen, async () => {
-      await this.state.checks(this.state.component.verification, 'characterization-after');
-      this.state.safe();
-    });
   }
 }

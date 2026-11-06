@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Verify dependent steward contributions together before advancing one candidate and publication, preserving component ownership and independent acceptance (#312).
+
 - Share authoritative execution evidence across direction, engineering, recovery and verification, preserving caller input, dependency identities and terminal pagination (#308).
 
 - Route actionable failed change reviews into the existing implementation correction checkpoint without accepting incomplete work (#309).
