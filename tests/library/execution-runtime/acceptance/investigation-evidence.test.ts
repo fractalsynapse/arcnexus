@@ -27,7 +27,10 @@ class InvestigationEvidenceScenarios {
     assert.equal(trace.manifest.runId, run.id);
     assert.equal(trace.manifest.assignmentId, investigator.id);
     assert.equal(trace.artifacts[source.id + ':checkpoint'], '{"original":"OBSERVED_CHECKPOINT"}');
-    assert.match(trace.artifacts.direction, /CALLER_CLARIFICATION: diagnose only/);
+    assert.equal(
+      JSON.parse(trace.artifacts.execution).run.redirection,
+      'CALLER_CLARIFICATION: diagnose only',
+    );
     assert.equal(JSON.parse(trace.artifacts[source.id + ':edit-index']).evidenceUnavailable, true);
     assert.equal(host.store.assignment(source.id).status, 'failed');
     assert.equal(host.store.assignment(investigator.id).owner, 'a');

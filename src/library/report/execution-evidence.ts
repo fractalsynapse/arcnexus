@@ -164,6 +164,7 @@ export class ExecutionEvidence {
       initialCandidateRevision: run.data.initialCandidateRevision,
       initialCandidateSourceRun: run.data.initialCandidateSourceRun,
       initialDirection: run.data.initialDirection,
+      redirection: run.data.redirection,
       callerObservations: this.callerObservations(run),
     };
   }
