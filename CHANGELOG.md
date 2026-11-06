@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Observe native test host shutdown without racing process disappearance (#280).
+
 - Keep worker regression checkpoints as review evidence so incidental test corrections do not redefine product acceptance (#273).
 
 ### Changed
