@@ -32,13 +32,15 @@ service id, status, and `endpointClosed` boolean. Absent or empty service histor
 produces exactly `No managed services recorded.` Both summaries use only captured
 record fields and leave the records unchanged.
 
-`## Captured test selection` lists the mandatory test suites captured in each
-component definition under `resolvedAssignment.context`. Each entry shows the
-captured component id, source path, test level, and SHA-256, sorted by source path
-in ascending, case-sensitive string order. Rendering reads only the captured
-assignment context and does not inspect test files or reorder the captured arrays.
-When historical records have no captured test selection, the section says
-`unavailable`. An explicitly captured empty suite list says `No tests captured.`
+## Captured test selection
+
+The report lists mandatory test suites captured in each component definition under
+`resolvedAssignment.context`. Each entry shows the captured component id, source
+path, test level, and SHA-256, sorted by source path in ascending, case-sensitive
+string order. Rendering reads only the captured assignment context and does not
+inspect test files or reorder the captured arrays. When historical records have no
+captured test selection, the section says `unavailable`. An explicitly captured
+empty suite list says `No tests captured.`
 
 ## Interpreting test and qualification evidence
 
@@ -103,21 +105,22 @@ evidence by reading mutable target files; preserve historical report readability
 Configured limits shown by legacy execution-progress reports are observations, not
 proof that general task/workday execution enforces them. The general execution
 interface does not accept work budgets; obsolete budget settings are rejected.
-Optional legacy execution-profile limits remain unset unless explicitly selected.
 This does not waive cancellation, process supervision, output limits, permissions,
-or independent host checks.
+or independent host checks. Optional legacy execution-profile limits remain unset
+unless explicitly selected.
 
 General execution remains in qualification. The qualification record retains live
 workday, lifecycle and self-development evidence, while the three-owner task gate
 and remaining migration work still prevent phase-three readiness. Deterministic
 tests do not substitute for the outstanding live demonstration.
-Implementation references for these projections are `src/library/report/execution-report.ts`
-and `src/library/report/execution-evidence.ts`; assignment and run fields are defined
+Implementation references for these projections are
+`src/library/report/execution-report.ts` and
+`src/library/report/execution-evidence.ts`; assignment and run fields are defined
 in `src/library/coordination-store/execution-types.ts`. Captured report checks are
-`report-format`, `report-lint`, and `report-tests` in the report component definition;
-`tests/library/execution-runtime/acceptance/verification-coverage.test.ts` covers
-separate owner and whole-goal verification. The qualification status is recorded in
-`docs/plans/general-agent-execution-qualification.md`.
+`report-format`, `report-lint`, and `report-tests` in the report component
+definition; `tests/library/execution-runtime/acceptance/verification-coverage.test.ts`
+covers separate owner and whole-goal verification. The qualification status is
+recorded in `docs/plans/general-agent-execution-qualification.md`.
 
 ## Coordination evidence
 
@@ -180,3 +183,19 @@ available, and omitted lengths use the default page size. Requests past the end
 of an artifact return only its remaining content with honest `nextOffset` and
 `complete` metadata. Invalid identities, offsets and malformed lengths still fail;
 read size never grants access to another artifact or changes its captured hash.
+
+## Retained invocation diagnostics
+
+The report exposes retained command diagnostics through the existing assignment
+evidence paging capability. Each diagnostic includes the record, assignment,
+invocation, and operation identities; observed exit status; canonical resolved
+invocation context; and complete combined stdout/stderr captured in the invocation
+log. Diagnostics include failed operations even when immediate command output was
+truncated or the operation is absent from the worker command list.
+
+A diagnostic is usable only when its invocation matches the captured record, run,
+assignment, and operation. Missing logs, missing status or context, uncertain
+results, foreign references, and unsafe paths remain explicit evidence gaps or safe
+rejections; they never imply success. Historical artifacts and invocation identities
+remain unchanged. The reader uses the existing immutable evidence paging path, with
+no second reader, execution authority, or total read-size quota.

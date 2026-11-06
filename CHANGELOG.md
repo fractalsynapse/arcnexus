@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Let engineering stewards retrieve complete retained operation diagnostics through the existing assignment evidence capability (#290).
+
 - Retire stale routing failure receipts and recognize reconciled routing during validated resume, preserving loop and uncertain-operation checks (#296).
 
 - Preserve complete large evidence responses and fragmented Unicode over the shared MCP bridge (#294).
