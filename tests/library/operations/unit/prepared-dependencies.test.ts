@@ -118,6 +118,20 @@ class DependencyScenarios {
     assert.deepEqual(PreparedDependencies.outputs(records[2]!), ['node_modules']);
   }
 
+  /** Reclaimed dependency copies are restored from the retained cache without rerunning installation. */
+  async restoreRemoved(): Promise<void> {
+    const record = this.record('reclaimed');
+    const preparation = new PreparedDependencies(this.root, record);
+    await preparation.run(this.operation, () => this.install(record));
+    rmSync(join(record.workspace, 'node_modules'), { recursive: true });
+    await preparation.run(this.operation, () => this.install(record));
+    assert.equal(this.installs, 1);
+    assert.equal(
+      readFileSync(join(record.workspace, 'node_modules/dependency'), 'utf8'),
+      'installed',
+    );
+  }
+
   /** Changed dependency inputs and environment identity require fresh observed preparation. */
   async invalidation(): Promise<void> {
     const first = this.record('first');
@@ -181,7 +195,14 @@ class DependencyScenarios {
   }
 }
 
-for (const name of ['schema', 'reuse', 'invalidation', 'interrupted', 'protection'] as const)
+for (const name of [
+  'schema',
+  'reuse',
+  'restoreRemoved',
+  'invalidation',
+  'interrupted',
+  'protection',
+] as const)
   test('prepared dependencies: ' + name, async () => {
     const scenario = new DependencyScenarios();
     try {

@@ -80,6 +80,11 @@ export class WorkspaceResources {
     if (!/^[a-zA-Z0-9_-]+$/.test(id)) throw new InputError('Invalid workspace identity');
     const directory = join(this.root, 'runs', id),
       path = join(directory, 'report.json');
+    const expiration = join(this.root, 'expired-evidence', id + '.json');
+    if (!existsSync(path) && existsSync(expiration))
+      throw new InputError(
+        'Workspace evidence expired under retention policy; receipt: ' + expiration,
+      );
     try {
       if (lstatSync(directory).isSymbolicLink() || !lstatSync(path).isFile())
         throw new Error('Unsafe workspace receipt');
@@ -99,6 +104,7 @@ export class WorkspaceResources {
   /** Exposes lifecycle and location fields, keeping model turns, operation output and bindings private. */
   private project(record: RecordData, timeline = readTimeline(join(this.root, 'runs', record.id))) {
     const cleanup = this.cleanup(record.id);
+    const dependencies = this.dependencies(record.id);
     return {
       id: record.id,
       source: record.source,
@@ -114,8 +120,20 @@ export class WorkspaceResources {
       executionRunId: record.executionRunId,
       assignmentId: record.assignmentId,
       retained: record.executionRunId !== undefined || record.assignmentId !== undefined,
-      revision: this.query.revision({ record, cleanup, timeline }),
+      dependencyCleanup: dependencies,
+      revision: this.query.revision({ record, cleanup, dependencies, timeline }),
     };
+  }
+
+  /** Includes dependency reclamation in resource revisions without changing original run status. */
+  private dependencies(id: string) {
+    const path = join(this.root, 'runs', id, 'dependency-cleanup.json');
+    if (!existsSync(path)) return undefined;
+    if (!lstatSync(path).isFile()) throw new InputError('Unsafe dependency cleanup receipt');
+    const receipt = JSON.parse(readFileSync(path, 'utf8'));
+    if (receipt.id !== id || !['removing', 'reclaimed'].includes(receipt.status))
+      throw new InputError('Invalid dependency cleanup receipt');
+    return { status: receipt.status, outputs: receipt.outputs, finishedAt: receipt.finishedAt };
   }
 
   /** Reads the separate durable removal receipt without changing original execution evidence. */
