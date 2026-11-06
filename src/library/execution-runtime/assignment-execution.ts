@@ -109,7 +109,7 @@ export class AssignmentExecution {
     const resolved = record.resolvedAssignment as ResolvedAssignment;
     const pages =
       resolved.assignment.kind === 'change'
-        ? new AssignmentRegistry(this.store).capture(assignment)
+        ? new AssignmentRegistry(this.store, this.root).capture(assignment)
         : new RecoveryEvidence(this.root, this.store).capture(assignment);
     record.investigationEvidence = pages.retain(join(this.root, 'runs', record.id), {
       runId: assignment.runId,

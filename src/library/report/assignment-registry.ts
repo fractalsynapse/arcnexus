@@ -1,25 +1,33 @@
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import type { ExecutionAssignment } from '../coordination-store/execution-types.js';
 import { EvidencePages } from './evidence-pages.js';
+import { InvocationDiagnostics } from './invocation-diagnostics.js';
 
-/** Projects current-run work intent without exposing another assignment's private checkpoint or source. */
+/** Projects current-run work intent and optional invocation pages without exposing arbitrary private paths. */
 export class AssignmentRegistry {
-  /** Binds discovery to the supervising host's authoritative store, never agent-supplied filesystem paths. */
-  constructor(private readonly store: ExecutionStore) {}
+  /** Binds discovery to the host store and, when supplied, its private evidence root. */
+  constructor(
+    private readonly store: ExecutionStore,
+    private readonly root?: string,
+  ) {}
 
-  /** Captures a complete paged registry for an engineering activation with no investigation permissions. */
+  /** Captures assignment intent and optional retained diagnostics in one paged capability. */
   capture(assignment: ExecutionAssignment): EvidencePages {
     const pages = new EvidencePages('assignment.evidence');
     const assignments = this.append(pages, assignment);
+    const diagnostics = this.root
+      ? new InvocationDiagnostics(this.root, this.store).append(pages, assignment)
+      : undefined;
     pages.add(
       'manifest',
       JSON.stringify({
         runId: assignment.runId,
         assignmentId: assignment.id,
         assignments,
+        ...(diagnostics ? { invocationDiagnostics: diagnostics } : {}),
         artifacts: pages.metadata(),
         basis:
-          'Current-run intent only. Accepted intent is not verified delivery. Read an intent artifact before deliberately linking work; host matching and milestone checks remain authoritative. No private checkpoints or source are included.',
+          'Current-run intent and retained invocation evidence. Accepted intent and command output are observations, not verified delivery. Read only advertised artifact names; host identity and path checks remain authoritative.',
       }),
       'json',
     );
