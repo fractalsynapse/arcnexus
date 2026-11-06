@@ -80,6 +80,7 @@ export interface ResolvedAssignment {
   role: Role;
   compositionProfile?: CompositionProfile;
   executionProfile: ExecutionProfile;
+  activityProfiles?: Record<string, ExecutionProfile>;
   verification: VerificationCheck[];
   artifacts: Array<{ path: string; sha256: string; content: string }>;
   pendingChecks: string[];
@@ -231,11 +232,22 @@ class AssignmentResolver {
       role: catalog.roles[component.role]!,
       ...(execution.compositionProfile ? { compositionProfile: execution.compositionProfile } : {}),
       executionProfile: execution.executionProfile,
+      activityProfiles: this.activityProfiles(),
       verification: [...component.verification, ...(this.options.additionalVerification ?? [])],
       artifacts: captureCheckArtifacts(assignment),
       pendingChecks: [...pendingChecks],
     };
     return { ...data, digest: digest(JSON.stringify(data)) };
+  }
+
+  /** Captures activity settings once; explicit director/verifier profiles do not inherit worker overrides. */
+  private activityProfiles(): Record<string, ExecutionProfile> | undefined {
+    if (this.options.executionProfile) return undefined;
+    const entries = Object.entries(this.component.activityProfiles ?? {});
+    if (!entries.length) return undefined;
+    return Object.fromEntries(
+      entries.map(([activity, id]) => [activity, structuredClone(this.catalog.profiles[id]!)]),
+    );
   }
 
   /** Captures owner identities and repository-relative routing paths without granting write access. */

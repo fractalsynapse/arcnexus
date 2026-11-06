@@ -175,3 +175,28 @@ Behavioral work requires component-owned documentation and regression locations.
 The steward selects those files; assignment authors cannot grant or narrow ownership. Test-only characterization of
 existing behavior uses the refactor workflow, with passing captured checks rather
 than invented documentation edits or failing tests.
+
+## Activity execution profiles (#277)
+
+The accepted activity-profile increment adds an optional `activityProfiles` mapping
+beside the inherited `executionProfile`. Values name shared execution profiles;
+model settings remain authored only in those profiles. Each activity inherits the
+nearest explicit value independently; omitted activities use the effective default.
+Supported keys are research, documentation, design, testing, implementation, review
+and release. Unknown keys or unresolved profiles fail validation.
+
+The existing host workflow selects one primary activity per model turn. Planning
+and coordination use the default; research and review use their matching overrides.
+Specification uses design, except documentation-only work uses documentation.
+Implementation and correction use implementation, except documentation-only work
+uses documentation. Other activities may occur within the same turn without changing
+models midway. This mapping does not introduce a second workflow or change role
+permissions. A release override has no effect until a release model turn exists;
+the current publisher remains deterministic.
+
+Assignments capture the effective profiles with their original authority. Each turn
+records its selected profile and actual model settings, including continuation turns.
+Existing captured assignments without overrides retain their default. Director and
+independent verifier profiles remain separate from steward activity overrides.
+ArcNexus uses Luna by default, Astra for research, and Sol for documentation, design
+and steward review; independent verification remains Astra.

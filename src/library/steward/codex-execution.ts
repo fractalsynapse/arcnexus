@@ -84,7 +84,7 @@ export class CodexExecution<T extends object = AgentResult> {
       configOverrides: permissions.configOverrides,
     });
     const options = {
-      model: this.input.model,
+      model: this.configuration.settings.model,
       modelReasoningEffort: profile?.reasoning ?? ('medium' as const),
       workingDirectory: this.input.record.workspace,
       approvalPolicy: 'never' as const,

@@ -56,6 +56,7 @@ export async function runCodex(
   signal: AbortSignal,
   resumeId?: string,
   operations?: OperationBridge,
+  activity?: string,
 ): Promise<AgentResult> {
   return new CodexExecution({
     root,
@@ -66,6 +67,7 @@ export async function runCodex(
     signal,
     resumeId,
     operations,
+    activity,
   }).run();
 }
 

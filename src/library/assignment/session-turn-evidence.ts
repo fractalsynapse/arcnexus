@@ -141,6 +141,10 @@ export class TurnEvidence {
     summary.durationMs = Date.now() - frame.start;
     summary.commandEnd = record.commands.length;
     summary.threadId = record.threadId;
+    const settings = record.settings as Record<string, unknown> | undefined;
+    summary.executionProfile = settings?.executionProfile;
+    summary.model = settings?.model;
+    summary.primaryActivity = settings?.activity;
     this.usage(summary);
     captureChanges(root, record);
     observe(root, record, 'changes.captured', {

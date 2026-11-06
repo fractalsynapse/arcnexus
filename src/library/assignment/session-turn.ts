@@ -74,7 +74,7 @@ export class SessionTurn {
     );
     frame.before = before;
     try {
-      const result = await this.invoke(frame.prompt);
+      const result = await this.invoke(frame.prompt, activity);
       this.acceptResult(result, frame, readOnly);
       this.completed(frame);
       return result;
@@ -110,18 +110,37 @@ export class SessionTurn {
   }
 
   /** Invokes the SDK adapter with the current thread and activity context. */
-  private async invoke(prompt: string): Promise<AgentResult> {
+  private async invoke(prompt: string, activity: string): Promise<AgentResult> {
     const { root, record, executable, model, signal } = this.state.options;
-    return runCodex(root, record, prompt, executable, model, signal, this.state.resumeId, {
-      ...this.evidence.wrap(this.operations),
-      call: async (name, args) => {
-        const before = record.readOnlyTurn ? candidateDigest(record) : undefined;
-        const result = await this.evidence.wrap(this.operations).call(name, args);
-        if (before && candidateDigest(record) !== before)
-          throw new Error('Read-only operation changed source');
-        return result;
+    return runCodex(
+      root,
+      record,
+      prompt,
+      executable,
+      model,
+      signal,
+      this.state.resumeId,
+      {
+        ...this.evidence.wrap(this.operations),
+        call: async (name, args) => {
+          const before = record.readOnlyTurn ? candidateDigest(record) : undefined;
+          const result = await this.evidence.wrap(this.operations).call(name, args);
+          if (before && candidateDigest(record) !== before)
+            throw new Error('Read-only operation changed source');
+          return result;
+        },
       },
-    });
+      this.primaryActivity(activity),
+    );
+  }
+
+  /** Maps host stages to one activity without splitting mixed-activity turns. */
+  private primaryActivity(activity: string): string {
+    if (activity === 'specification')
+      return this.state.documentationOnly ? 'documentation' : 'design';
+    if (activity === 'implementation' || activity === 'correction')
+      return this.state.documentationOnly ? 'documentation' : 'implementation';
+    return activity;
   }
 
   /** Validates the structured response before accepting agent claims. */

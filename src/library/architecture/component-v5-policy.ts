@@ -4,6 +4,7 @@ import { ancestry, covered, scopePath } from './component-paths.js';
 import { InputError } from './config.js';
 
 export interface ComponentV5Fields {
+  activityProfiles?: Record<string, string>;
   standards?: string[];
   standardSnapshots?: Array<{
     id: string;
@@ -57,6 +58,7 @@ export class ComponentV5Policy {
     const lineage = ancestry(this.authored, component.id);
     component.policy = {};
     this.scalars(component, lineage);
+    this.activities(component, lineage);
     component.access = { readPaths: this.reads(lineage), writeDirectories: [] };
     component.policy.reads = {
       value: [...component.access.readPaths],
@@ -73,6 +75,24 @@ export class ComponentV5Policy {
       component[key] = source[key]!;
       component.policy![key] = { value: source[key], source: source.id };
     }
+  }
+
+  /** Inherits each activity independently while recording the declaration that selected it. */
+  private activities(component: Component, lineage: Component[]): void {
+    const profiles: Record<string, string> = {};
+    for (const declaration of lineage)
+      for (const [activity, profile] of Object.entries(declaration.activityProfiles ?? {})) {
+        if (!Object.hasOwn(this.authored.profiles, profile))
+          throw new InputError(
+            `Unknown activity execution profile for ${declaration.id}: ${profile}`,
+          );
+        profiles[activity] = profile;
+        component.policy![`activityProfiles.${activity}`] = {
+          value: profile,
+          source: declaration.id,
+        };
+      }
+    if (Object.keys(profiles).length) component.activityProfiles = profiles;
   }
 
   /** Records every contributing declaration while deduplicating required inherited policy values. */

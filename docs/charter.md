@@ -146,8 +146,10 @@ resolved in the [retrospective](phase-one-retrospective.md), with linked accepta
 evidence. Luna-sized models are the intended steward baseline; use `gpt-6-luna`
 for worker live tests and assess their results separately from earlier Astra runs.
 The architect specifies **an Astra supervisor directing Luna stewards**: reserve
-Astra for high-level decomposition, architectural reasoning and review; use Luna
-for bounded component engineering. Human architectural authority remains final.
+Astra for high-level decomposition, research and independent verification; use Luna
+by default for bounded component engineering, with Sol overrides for documentation,
+design/specification and steward review. Activity profiles are inherited references
+to shared execution profiles; the publisher remains deterministic. Human architectural authority remains final.
 Deterministic runtime code schedules, enforces authority and records execution.
 The execution system supports eligible component stewards in one sequential lane.
 The current MVP qualification is defined below; steward counts follow actual work.

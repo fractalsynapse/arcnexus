@@ -113,6 +113,24 @@
               "minLength": 1
             }
           }
+        },
+        "activityProfiles": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "research",
+              "documentation",
+              "design",
+              "testing",
+              "implementation",
+              "review",
+              "release"
+            ]
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
@@ -225,6 +243,24 @@
                 "enum": ["source", "tests", "documentation", "unknown"]
               }
             }
+          }
+        },
+        "activityProfiles": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "research",
+              "documentation",
+              "design",
+              "testing",
+              "implementation",
+              "review",
+              "release"
+            ]
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
           }
         }
       }
@@ -384,6 +420,24 @@
                 }
               }
             ]
+          }
+        },
+        "activityProfiles": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "research",
+              "documentation",
+              "design",
+              "testing",
+              "implementation",
+              "review",
+              "release"
+            ]
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
           }
         }
       }
