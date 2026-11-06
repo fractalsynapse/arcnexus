@@ -61,3 +61,12 @@ captured authority, environment, original goal and accountable criteria are unch
 Changed target content uses the same checker again. Promotion performs fresh target
 checks and one independent goal assessment; it does not add a director verdict.
 Provider CI, repository review and revision-specific approval remain separate gates.
+
+## Native characterization migration
+
+Low-level session tests end at prepared contribution state; preparation is a
+successful session handoff, never verified delivery. Update their assertions and
+scripted activity inputs to that boundary. Review rejection, assembled correction,
+captured acceptance and goal coverage are qualified through the project host and
+canonical delivery checker. Do not restore the removed per-steward review loop or
+mark prepared work completed to preserve historical test expectations.
