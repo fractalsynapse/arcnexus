@@ -28,3 +28,11 @@ The implementation batch will:
 Focused checks cover contribution grouping and transaction failure first; integrated
 and native suites follow the coherent batch. The real paused task then exercises
 the same path. No scripted success counts toward the three clean cycles.
+
+Shared verification responsibility: assignment exposes its captured-acceptance checker
+through the existing steward API. The publisher's existing delivery checker uses
+that same checker for each assembled contribution, retaining the original executable
+authority and the verified candidate's test baseline. Runtime composition does not
+grant workers broader write authority. The existing publisher accepts joint
+contribution attribution and advances one combined PR; it must not independently
+publish a red constituent merely because the combined delivery passed.
