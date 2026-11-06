@@ -38,6 +38,7 @@ export interface WorkflowOptions {
   missingThread?: boolean;
   guidanceExpansion?: boolean;
   dependencyMutation?: boolean;
+  reviewStatus?: 'completed' | 'failed' | 'blocked';
 }
 
 export interface WorkflowTurn {
@@ -363,8 +364,13 @@ export class ControlledWorkflow {
       },
     ];
     if (this.options.mode === 'review-write') fs.writeFileSync('source.txt', 'review mutation');
-    if (this.options.mode === 'review-repair' && turn.count === (this.options.planning ? 4 : 3))
+    if (this.options.mode === 'review-repair' && turn.count === (this.options.planning ? 4 : 3)) {
       turn.result.reviewFindings = ['Needs a corrective pass'];
+      turn.result.status = this.options.reviewStatus ?? 'completed';
+      if (turn.result.status === 'blocked')
+        turn.result.blockers = ['Required evidence unavailable'];
+    }
+    if (this.options.mode === 'review-failure') turn.result.status = 'failed';
   }
 
   /** Returns an owner request, optionally naming an unknown owner for escalation coverage. */

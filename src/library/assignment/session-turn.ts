@@ -196,7 +196,7 @@ export class SessionTurn {
       (result.requests.length || result.inboxActions?.some((a) => a.action !== 'accept'))
     )
       record.status = 'waiting';
-    else if (result.status !== 'completed') {
+    else if (result.status !== 'completed' && !this.correctiveReview(result, activity)) {
       record.status = result.status;
       record.outcome = result.status;
       const reason = `Agent reported ${result.status}: ${result.blockers.join('; ')}`;
@@ -214,6 +214,17 @@ export class SessionTurn {
       !result.findings.length
     )
       throw new Error('Research/review requires evidence-backed findings');
+  }
+
+  /** Lets settled change-review findings reach the existing correction transition without accepting them. */
+  private correctiveReview(result: AgentResult, activity: string): boolean {
+    return (
+      activity === 'review' &&
+      this.state.assignment.kind === 'change' &&
+      result.status === 'failed' &&
+      result.blockers.length === 0 &&
+      result.reviewFindings.length > 0
+    );
   }
 
   /** Makes only semantic final-response errors correctable after completed execution and scope checks. */

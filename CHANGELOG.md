@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Route actionable failed change reviews into the existing implementation correction checkpoint without accepting incomplete work (#309).
+
 - Retire settled obsolete dependency work without requiring its failed supplier to be resumable, while preserving execution and uncertainty checks (#304).
 
 - Retire obsolete dependency requests through ordinary director admission while preserving shared work, checkpoints and history (#275).
