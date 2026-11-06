@@ -175,8 +175,8 @@ interruption handling and write denial before it is reported as delivered.
 ## Dependency reclamation (#302)
 
 `workspace cleanup` retains general-execution worktrees and their evidence, but may
-reclaim recorded prepared-dependency outputs after both the workspace and its run
-are complete (or the run is stopped). It requires repository execution ownership,
+reclaim recorded prepared-dependency outputs after the workspace is settled and
+its run is completed, stopped, cancelled or failed. It requires repository execution ownership,
 settled operations and stopped services. Paused, interrupted and uncertain work is
 preserved. Historical records without preparation receipts are not guessed from
 directory names. The shared preparation cache, build artifacts, source changes,

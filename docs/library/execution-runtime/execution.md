@@ -461,7 +461,7 @@ or import a new source revision (#259).
 ## Evidence retention (#302)
 
 `ARCNEXUS_EVIDENCE_MAX_BYTES` sets the retained-evidence ceiling in bytes; the
-default is 100,000,000,000 (100 GB). Values must be positive safe integers. At the
+default is 100,000,000,000 (100 GB). Values must be safe integers of at least two bytes. At the
 ceiling, expire the oldest eligible terminal-run evidence until usage reaches
 50% of the configured limit. Record expiration explicitly; unavailable historical
 evidence must never be reported as an observed verification pass.
