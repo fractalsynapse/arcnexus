@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Remove the evidence reader size ceiling so agents can request complete artifacts without repeated rejected reads (#286).
+
 - Keep verification and recovery indexes compact while retaining detailed evidence as independently readable artifacts (#279).
 
 - Observe native test host shutdown without racing process disappearance (#280).
