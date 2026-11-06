@@ -4,7 +4,7 @@
 
 ### Fixed
 
-- Retire stale routing failure receipts after newer scheduler outcomes commit so continuation resumes the current checkpoint (#296).
+- Retire stale routing failure receipts and recognize reconciled routing during validated resume, preserving loop and uncertain-operation checks (#296).
 
 - Preserve complete large evidence responses and fragmented Unicode over the shared MCP bridge (#294).
 

@@ -62,8 +62,6 @@ export class RunContinuation {
       throw new Error(
         'Candidate integrity requires attention; stop before starting validated work',
       );
-    if (run.status === 'needs_attention')
-      throw new Error('Resolve or stop the run requiring attention before new dispatch');
   }
 
   /** Restores validated assignment boundaries and leaves uncertain operation evidence untouched. */

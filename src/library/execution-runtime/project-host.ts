@@ -183,7 +183,7 @@ export class ProjectHost {
     else if (action === 'pause') this.pauseTask(run);
     else if (action === 'resume') {
       if (run.status !== 'running') {
-        if (!['paused', 'interrupted'].includes(run.status))
+        if (!['paused', 'interrupted', 'needs_attention'].includes(run.status))
           throw new InputError('Task cannot resume from ' + run.status);
         this.continuation(run);
       }

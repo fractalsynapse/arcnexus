@@ -9,6 +9,33 @@ import { GeneralFixture, nativeHostTest as test } from '../../testing/support/ge
 
 /** Exercises director diagnosis without losing retained plans or bypassing uncertain checkpoints. */
 class BlockedContinuationScenarios {
+  /** Reconciled routing is material progress; an unchanged receipt still reaches loop attention. */
+  async routingRecovery(t: TestContext): Promise<void> {
+    const { host, run, supplier } = await this.fixture(t);
+    host.store.updateAssignment(supplier.id, 'blocked', {
+      lastReceipt: 'current',
+      lastFailedOutcome: { receipt: 'historical' },
+    });
+    for (let failure = 0; failure < 5; failure++) {
+      host.store.fail(supplier.id, 'blocked', 'Retained routing failure');
+      await host.tick();
+    }
+    assert.equal(host.store.run(run.id).status, 'needs_attention');
+    host.store.updateAssignment(supplier.id, 'blocked', {
+      lastReceipt: 'current',
+      lastFailedOutcome: null,
+    });
+    host.taskControl('resume', run.id);
+    await host.tick();
+    assert.equal(host.store.run(run.id).status, 'running');
+    assert.equal(host.store.assignment(supplier.id).status, 'ready');
+    for (let failure = 0; failure < 4; failure++) {
+      host.store.fail(supplier.id, 'blocked', 'Still unchanged');
+      await host.tick();
+    }
+    assert.equal(host.store.run(run.id).status, 'needs_attention');
+  }
+
   /** Safe continuation preserves supplier identity and releases dependents only after verified delivery. */
   async safe(t: TestContext): Promise<void> {
     const { host, run, root, supplier } = await this.fixture(t);
@@ -184,6 +211,9 @@ class BlockedContinuationScenarios {
 }
 
 const scenarios = new BlockedContinuationScenarios();
+
+test('routing reconciliation permits continuation but unchanged receipts retain loop protection', (t) =>
+  scenarios.routingRecovery(t));
 
 test('director continuation preserves plans and required dependency delivery', (t) =>
   scenarios.safe(t));

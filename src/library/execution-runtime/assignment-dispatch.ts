@@ -156,6 +156,8 @@ export class AssignmentDispatch {
         candidate: materialCandidate(record),
         stage: record.nextStage ?? record.stage,
         specificationFinished: record.specificationFinished ?? false,
+        acknowledgedReceipt: assignment.data.lastReceipt,
+        failedReceipt: (assignment.data.lastFailedOutcome as { receipt?: string } | null)?.receipt,
         dependencies: this.store.inbox(assignment.id).map((request) => ({
           ...request,
           replies: request.replies.filter((reply) => reply.actor !== assignment.id),
