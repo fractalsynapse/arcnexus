@@ -85,6 +85,30 @@ Implement related removals and migrations together, with focused tests for trust
 recovery risks. Assemble the simplification before long integrated checks. Readiness
 comes from observed behavior, not the number of deleted files or new abstractions.
 
+## Dependent contributions and assembled verification
+
+Accepted November 6, 2026; implementation tracked in #312. Related engineering
+contributions may complete as one assembled delivery instead of requiring each
+owner's partial candidate to pass independently. This removes the deadlock where
+an implementation awaits a regression test that cannot pass without that same
+implementation.
+
+A prepared contribution is not verified delivery. Each steward retains its own
+branch, checked edits, component ownership, plan and observed checks. Within a
+related contribution group, prepared dependency work may unblock engineering;
+outside that group, the existing verified-delivery milestone remains required.
+The host reconciles attributed snapshots against the current verified candidate,
+runs captured checks and independent review on the combined result, and advances
+the verified candidate and all contributing delivery receipts atomically only
+when their criteria are satisfied. Failed checks, conflicts and missing evidence
+retain the contributions and return actionable findings through ordinary correction.
+They never promote a partial candidate or fabricate a delivered dependency.
+
+Use the same reconciliation, operation executor, evidence capture, verifier and
+publisher for one or several contributors. Do not introduce another scheduler,
+publication route or shared worker write authority. Keep uncertain operation and
+interruption recovery explicit; repeated completion cannot deliver twice.
+
 ## Qualification before expansion
 
 Apply the consecutive real-cycle threshold in AGENTS.md to this supported process.
