@@ -101,6 +101,39 @@ class WorkflowTests {
     assert.equal(JSON.parse(r.stdout).turns.length, 6);
   }
 
+  /** A failed assessment reaches correction while its original findings remain retained. */
+  failedReviewRequestsCorrection(t: TestContext): void {
+    const f = workflowFixture(t, 'review-repair');
+    f.configure({ reviewStatus: 'failed' });
+    const result = f.run();
+    assert.equal(result.status, 0, result.stderr);
+    const record = JSON.parse(result.stdout);
+    assert.deepEqual(
+      record.turns.map((turn: any) => turn.activity),
+      ['planning', 'specification', 'implementation', 'review', 'correction', 'review'],
+    );
+    assert.equal(record.outcome, 'ready_for_integration');
+    assert.ok(
+      record.attempts.some(
+        (attempt: any) =>
+          attempt.status === 'failed' && /Needs a corrective pass/.test(attempt.feedback),
+      ),
+    );
+  }
+
+  /** Missing correction findings and genuine blockers cannot be accepted as corrective review. */
+  rejectsNoncorrectiveReview(t: TestContext, blocked: boolean): void {
+    const f = workflowFixture(t, blocked ? 'review-repair' : 'review-failure');
+    if (blocked) f.configure({ reviewStatus: 'blocked' });
+    const result = f.run();
+    assert.equal(result.status, 1, result.stderr);
+    const record = JSON.parse(result.stdout);
+    assert.equal(record.agent.status, blocked ? 'blocked' : 'failed');
+    assert.match(record.error, new RegExp(`Agent reported ${record.agent.status}`));
+    assert.notEqual(record.status, 'completed');
+    assert.equal(record.turns.length, 4);
+  }
+
   /** Candidate test weakening cannot hide failure of the captured host check. */
   aWeakenedCurrentTestCannotReplaceFrozenAcceptance(t: TestContext) {
     const f = workflowFixture(t, 'weak-test');
@@ -260,6 +293,13 @@ test('automatic repair preserves frozen tests and cumulative usage', (t: any) =>
 
 test('review can request correction without an attempt allowance', (t: any) =>
   suite.reviewCanRequestCorrectionWithoutAnAttemptAllowance(t));
+
+test('failed review findings use the existing implementation correction transition', (t) =>
+  suite.failedReviewRequestsCorrection(t));
+
+for (const blocked of [false, true])
+  test(`review ${blocked ? 'blockers' : 'failure without findings'} prevents completion`, (t) =>
+    suite.rejectsNoncorrectiveReview(t, blocked));
 
 test('a weakened current test cannot replace the captured host check', (t: any) =>
   suite.aWeakenedCurrentTestCannotReplaceFrozenAcceptance(t));
