@@ -1,3 +1,5 @@
+import { dependencySatisfied } from './execution-types.js';
+import { RequiredWork } from './required-work.js';
 import { AssignmentReplacements } from './assignment-replacements.js';
 import { AssignmentAdmission } from './assignment-admission.js';
 import { requestMilestones, requestProposal, sharedRequestProblem } from './request-proposal.js';
@@ -7,9 +9,12 @@ import { RunRecords } from './run-records.js';
 import { InboxDecisions, type InboxDecision } from './inbox-decisions.js';
 import { randomUUID } from 'node:crypto';
 import { ExecutionDatabase } from './execution-database.js';
+import { DirectionAdmission } from './direction-admission.js';
 import type {
   AssignmentStatus,
   AssignmentContinuation,
+  DirectionAdmissionTransition,
+  DirectionProposal,
   ExecutionAssignment,
   ExecutionRun,
   InboxRequest,
@@ -31,11 +36,19 @@ export class ExecutionStore {
 
   private readonly admission: AssignmentAdmission;
 
+  private readonly directionAdmission: DirectionAdmission;
+
   /** Opens a new or retained general execution store without reading legacy workdays. */
   constructor(path: string, readOnly = false) {
     this.db = new ExecutionDatabase(path, readOnly);
     this.replacements = new AssignmentReplacements(this.db);
     this.admission = new AssignmentAdmission(this.db);
+    this.directionAdmission = new DirectionAdmission(
+      this.db,
+      this.admission,
+      this.replacements,
+      this.restoreContinuations.bind(this),
+    );
   }
 
   /** Projects related records from one consistent read transaction. */
@@ -93,16 +106,19 @@ export class ExecutionStore {
     return this.db.all<ExecutionAssignment>('assignment').filter((item) => item.runId === runId);
   }
 
+  /** Projects required work without deleting disconnected request history or claiming its completion. */
+  requiredAssignments(runId: string): ExecutionAssignment[] {
+    return new RequiredWork(this.db, this.replacements).assignments(runId);
+  }
+
+  /** Reads an exact retained request including its disposition and current assignment lineage. */
+  requestById(id: string): InboxRequest {
+    return this.replacements.envelope(this.db.get<InboxRequest>('request', id));
+  }
+
   /** Selects ready work whose dependencies have verified delivery. */
   ready(runId: string): ExecutionAssignment[] {
-    return this.assignments(runId)
-      .filter(
-        (item) =>
-          item.status === 'ready' &&
-          ((Array.isArray(item.data.questions) && item.data.questions.length > 0) ||
-            item.dependencies.every((id) => this.satisfied(item, id))),
-      )
-      .sort((a, b) => Number(a.data.readyOrder ?? 0) - Number(b.data.readyOrder ?? 0));
+    return new RequiredWork(this.db, this.replacements).ready(runId);
   }
 
   /** Captures continuation evidence without erasing earlier state. */
@@ -113,36 +129,29 @@ export class ExecutionStore {
     });
   }
 
+  /** Reports whether the exact host decision has already committed through ordinary admission. */
+  directionAdmitted(runId: string, id: string): boolean {
+    return this.directionAdmission.admitted(runId, id);
+  }
+
   /** Commits a complete director decision before the scheduler can see any of its assignments. */
   admitDirection(
     runId: string,
-    proposals: Array<{
-      owner: string;
-      objective: string;
-      acceptance: string[];
-      data: Record<string, unknown>;
-    }>,
+    proposals: DirectionProposal[],
     continuations: AssignmentContinuation[],
     checkpoint: Record<string, unknown>,
+    decision: Pick<DirectionAdmissionTransition, 'id' | 'retirements'> = {
+      id: randomUUID(),
+      retirements: [],
+    },
   ): void {
-    const created: string[] = [];
-    this.db.transaction('direction.admitted', { runId, created, continuations }, () => {
-      const run = this.run(runId);
-      this.restoreContinuations(runId, continuations);
-      for (const item of proposals)
-        created.push(
-          this.admission.create(runId, item.owner, item.objective, item.acceptance, item.data).id,
-        );
-      this.db.put('run', { ...run, data: { ...run.data, ...checkpoint } });
+    this.directionAdmission.admit(runId, {
+      id: decision.id,
+      proposals,
+      continuations,
+      checkpoint,
+      retirements: decision.retirements,
     });
-  }
-
-  /** Reactivates diagnosed work and restores only its propagated dependents to milestone waiting. */
-  continueAssignments(runId: string, continuations: AssignmentContinuation[]): void {
-    if (!continuations.length) return;
-    this.db.transaction('assignments.continued', { runId, continuations }, () =>
-      this.restoreContinuations(runId, continuations),
-    );
   }
 
   /** Restores diagnosed continuations and reconsidered waits within the admission transaction. */
@@ -200,6 +209,7 @@ export class ExecutionStore {
     const existing = this.db
       .all<InboxRequest>('request')
       .find((item) => origins.has(item.from) && item.key === request.key);
+    if (existing?.retired) throw new Error('Retired request identity cannot be recreated');
     if (existing) return this.repeated(existing, request);
     const sender = this.assignment(from);
     if (sender.data.replacedBy) throw new Error('Cannot request work from a retired assignment');
@@ -309,12 +319,7 @@ export class ExecutionStore {
 
   /** Distinguishes accepted intent from verified delivery for each dependency edge. */
   private satisfied(item: ExecutionAssignment, id: string): boolean {
-    const required = (item.data.milestones as Record<string, string> | undefined)?.[id];
-    const dependency = this.assignment(id);
-    return (
-      dependency.status === 'completed' ||
-      (required === 'accepted' && dependency.data.accepted === true)
-    );
+    return dependencySatisfied(item, this.assignment(id));
   }
 
   /** Wakes satisfied waiters and propagates rejected deliveries without disturbing unrelated work. */

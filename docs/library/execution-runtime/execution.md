@@ -457,3 +457,16 @@ with the host's captured identity. Compact status reports are projections, not
 authority records. Matching tasks retain that workday's environment and isolated
 staging even when upstream staging has advanced; this does not upgrade the host
 or import a new source revision (#259).
+
+### Obsolete dependency recovery
+
+A director may propose retirement of a specific obsolete request with its reason,
+paired with continuation of the requester. The host validates the request relationship
+and all affected retained checkpoints before ordinary direction admission changes
+readiness. This does not alter the requester's goal, criteria, ownership or edits.
+Uncertain operations and in-flight work remain blockers. A validated changed
+obligation is material progress, not an identical failed continuation.
+
+Scheduling and goal completion use the same required-work projection; archived
+request-only work stays visible as retained history without masquerading as verified
+delivery. The director still assesses the original goal against actual verification.

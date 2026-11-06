@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import type { RecordData } from '../workspace/state.js';
-import type { ExecutionRun } from '../coordination-store/execution-types.js';
+import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/execution-types.js';
 
 const summaryFields = [
   'prompt',
@@ -32,8 +32,25 @@ export class ExecutionReports {
   /** Produces lifecycle, accountable work, blockers, inbox counts and verified candidate evidence. */
   view(id: string) {
     const run = this.store.run(id);
-    const assignments = this.store.assignments(id).map((a) => ({
+    const required = new Set(this.store.requiredAssignments(id).map((a) => a.id));
+    const assignments = this.store.assignments(id).map((a) => this.assignment(a, required));
+    return {
+      run: this.summary(run),
+      assignments,
+      counts: {
+        ready: assignments.filter((a) => a.required && a.status === 'ready').length,
+        waiting: assignments.filter((a) => a.required && a.status === 'waiting').length,
+        verified: assignments.filter((a) => a.status === 'completed').length,
+      },
+      report: join(this.directory, 'reports', id + '.json'),
+    };
+  }
+
+  /** Keeps historical status visible while distinguishing current obligations from disconnected work. */
+  private assignment(a: ExecutionAssignment, required: Set<string>) {
+    return {
       id: a.id,
+      required: required.has(a.id),
       owner: a.owner,
       objective: a.objective,
       status: a.status,
@@ -47,16 +64,6 @@ export class ExecutionReports {
       reconciliation: a.data.reconciliation,
       progress: a.status === 'running' ? this.progress(a.data.recordId) : undefined,
       inbox: this.store.inbox(a.id).length,
-    }));
-    return {
-      run: this.summary(run),
-      assignments,
-      counts: {
-        ready: assignments.filter((a) => a.status === 'ready').length,
-        waiting: assignments.filter((a) => a.status === 'waiting').length,
-        verified: assignments.filter((a) => a.status === 'completed').length,
-      },
-      report: join(this.directory, 'reports', id + '.json'),
     };
   }
 

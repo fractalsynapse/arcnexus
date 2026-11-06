@@ -174,6 +174,7 @@ export class ControlledGeneral {
       rejectedOwners: [],
       questions: blocked ? ['Which authorized resolution should replace the blocked work?'] : [],
       assignments: idle || blocked ? [] : [this.assignment(owner, correction, prompt)],
+      dependencyRetirementProposal: null,
       continuations: [],
       dependency: null,
       architectureProposal: null,
@@ -203,6 +204,7 @@ export class ControlledGeneral {
       rejectedOwners: [],
       questions: [],
       assignments: [],
+      dependencyRetirementProposal: null,
       continuations: [
         {
           assignmentId: assignment.id,

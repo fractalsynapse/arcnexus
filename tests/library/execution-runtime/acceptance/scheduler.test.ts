@@ -24,7 +24,7 @@ class SchedulerScenarios {
     const diagnosis = [
       { assignmentId: assignment.id, ownerId: 'owner', reason: 'Correct routing' },
     ];
-    store.continueAssignments(run.id, diagnosis);
+    store.admitDirection(run.id, [], diagnosis, {});
     assert.equal(store.assignment(assignment.id).data.lastReceipt, 'rejected-routing');
     await new Scheduler(store, async () => ({
       kind: 'blocked',
@@ -34,7 +34,7 @@ class SchedulerScenarios {
     store.close();
     store = new ExecutionStore(path);
     t.after(() => store.close());
-    store.continueAssignments(run.id, diagnosis);
+    store.admitDirection(run.id, [], diagnosis, {});
     assert.equal(store.assignment(assignment.id).data.lastReceipt, 'current-checkpoint');
     assert.equal(store.assignment(assignment.id).data.lastFailedOutcome, null);
     assert.ok(JSON.stringify(store.events()).includes('Yield requires at least one request'));

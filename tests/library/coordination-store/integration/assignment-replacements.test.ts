@@ -79,9 +79,12 @@ class ReplacementScenario {
 
   /** Replacing accepted intent cannot turn a previously nonblocking loop into a deadlock. */
   cycle(): void {
-    this.store.continueAssignments(this.run.id, [
-      { assignmentId: this.first.id, ownerId: 'b', reason: 'Review the retained blocker' },
-    ]);
+    this.store.admitDirection(
+      this.run.id,
+      [],
+      [{ assignmentId: this.first.id, ownerId: 'b', reason: 'Review the retained blocker' }],
+      {},
+    );
     this.store.accept(this.first.id);
     this.store.link(this.first.id, this.sender.id);
     this.store.fail(this.first.id, 'failed', 'Needs a new workflow');

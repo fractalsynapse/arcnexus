@@ -154,6 +154,7 @@ class DirectorRecoveryScenarios {
       questions: [],
       architectureProposal: null,
       dependency: null,
+      dependencyRetirementProposal: null,
       summary: 'Diagnose',
       assignments: [],
       continuations: [
