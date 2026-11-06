@@ -103,21 +103,22 @@ evidence by reading mutable target files; preserve historical report readability
 Configured limits shown by legacy execution-progress reports are observations, not
 proof that general task/workday execution enforces them. The general execution
 interface does not accept work budgets; obsolete budget settings are rejected.
-Optional legacy execution-profile limits remain unset unless explicitly selected.
 This does not waive cancellation, process supervision, output limits, permissions,
-or independent host checks.
+or independent host checks. Optional legacy execution-profile limits remain unset
+unless explicitly selected.
 
 General execution remains in qualification. The qualification record retains live
 workday, lifecycle and self-development evidence, while the three-owner task gate
 and remaining migration work still prevent phase-three readiness. Deterministic
 tests do not substitute for the outstanding live demonstration.
-Implementation references for these projections are `src/library/report/execution-report.ts`
-and `src/library/report/execution-evidence.ts`; assignment and run fields are defined
+Implementation references for these projections are
+`src/library/report/execution-report.ts` and
+`src/library/report/execution-evidence.ts`; assignment and run fields are defined
 in `src/library/coordination-store/execution-types.ts`. Captured report checks are
-`report-format`, `report-lint`, and `report-tests` in the report component definition;
-`tests/library/execution-runtime/acceptance/verification-coverage.test.ts` covers
-separate owner and whole-goal verification. The qualification status is recorded in
-`docs/plans/general-agent-execution-qualification.md`.
+`report-format`, `report-lint`, and `report-tests` in the report component
+definition; `tests/library/execution-runtime/acceptance/verification-coverage.test.ts`
+covers separate owner and whole-goal verification. The qualification status is
+recorded in `docs/plans/general-agent-execution-qualification.md`.
 
 ## Coordination evidence
 
@@ -180,3 +181,15 @@ available, and omitted lengths use the default page size. Requests past the end
 of an artifact return only its remaining content with honest `nextOffset` and
 `complete` metadata. Invalid identities, offsets and malformed lengths still fail;
 read size never grants access to another artifact or changes its captured hash.
+
+## Retained invocation diagnostics
+
+The report exposes retained command diagnostics through the existing assignment
+evidence paging capability. Each diagnostic includes the invocation id, operation
+id, observed exit status, canonical resolved context, and combined output from the
+retained invocation log. The reader correlates diagnostics with captured record
+operations and the invocation journal, including failed operations absent from the
+worker command list. Missing, uncertain, foreign, or unsafe-path evidence remains
+an explicit gap or safe rejection, never reconstructed as success. Existing intent
+discovery, invocation identities, evidence history, and paging remain the single
+shared path.
