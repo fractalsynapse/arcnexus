@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Retire settled obsolete dependency work without requiring its failed supplier to be resumable, while preserving execution and uncertainty checks (#304).
+
 - Retire obsolete dependency requests through ordinary director admission while preserving shared work, checkpoints and history (#275).
 
 - Reclaim terminal dependency copies automatically and bound evidence retention with a configurable ceiling and oldest-first expiration to 50%, preserving active work and pending deliveries (#302).
