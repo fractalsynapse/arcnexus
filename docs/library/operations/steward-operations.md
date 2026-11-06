@@ -376,3 +376,17 @@ This keeps subprocess runtime identities usable for nested tool bindings and
 interpreter scripts in containers as well as native execution. Standard output
 remains separate from diagnostics; runtime warnings are retained in stderr and
 the combined operation log rather than being mistaken for structured results.
+
+## Repository collaboration format
+
+The shared repository-document boundary reads Markdown issue and PR templates from
+committed source. It fills their named sections from observed lifecycle facts and
+retains template provenance with the prepared document. Missing templates use readable
+Markdown sections; multiple issue templates or unsupported required sections require
+an explicit choice rather than silent selection. Runtime identities remain tracking
+metadata. Providers receive the same prepared title/body in simulation and live mode,
+and retries retain the original prepared document and correlation marker.
+
+The initial supported template format is Markdown with level-two section headings.
+GitHub YAML issue forms are not treated as Markdown templates. This contract does not
+add a model turn or allow a template to grant execution/publication authority.
