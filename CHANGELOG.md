@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Define canonical GitHub issue and pull-request templates with explicit acceptance and verification evidence (#293).
+
 - Use the verified candidate test baseline while preserving captured check authority and current implementation (#287).
 
 - Remove the evidence reader size ceiling so agents can request complete artifacts without repeated rejected reads (#286).
