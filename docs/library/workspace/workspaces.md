@@ -171,3 +171,18 @@ to the source worktree. No test or verification result is reused by this mechani
 
 This is implementation intent; qualification must prove actual reuse, invalidation,
 interruption handling and write denial before it is reported as delivered.
+
+## Dependency reclamation (#302)
+
+`workspace cleanup` retains general-execution worktrees and their evidence, but may
+reclaim recorded prepared-dependency outputs after both the workspace and its run
+are complete (or the run is stopped). It requires repository execution ownership,
+settled operations and stopped services. Paused, interrupted and uncertain work is
+preserved. Historical records without preparation receipts are not guessed from
+directory names. The shared preparation cache, build artifacts, source changes,
+branches and original reports remain intact.
+
+Cleanup validates all selected output paths before removal and records a separate
+receipt. Repeating it is safe. Normal dependency preparation can restore missing
+outputs from its retained cache. Dependency copies use full disk space when the
+filesystem cannot reflink; installation reuse does not imply storage deduplication.
