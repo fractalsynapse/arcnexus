@@ -17,6 +17,7 @@ import { save, type RecordData } from '../workspace/state.js';
 import { persistExecutionEvidence } from './evidence.js';
 
 export interface CodexInput {
+  activity?: string;
   responseContract?: 'initializer-result' | 'verification-result' | 'director-result';
   root: string;
   record: RecordData;
@@ -55,7 +56,9 @@ export class CodexConfiguration {
     this.launcher = join(this.dir, 'codex-launcher');
     this.pidFile = join(this.dir, 'codex.pid');
     this.client = new ClientHome(input);
-    this.profile = resolved.executionProfile;
+    this.profile =
+      (input.activity && resolved.activityProfiles?.[input.activity]) || resolved.executionProfile;
+    new ExecutionContext().validateProfile(this.profile);
     this.schema = this.resultSchema();
     const authority = this.authority(resolved);
     this.permissions = this.permissionPolicy(authority);
@@ -196,7 +199,9 @@ export class CodexConfiguration {
     return {
       clientProtocol: 1,
       evidenceMode: this.input.record.evidenceMode ?? 'unspecified',
-      model: this.input.model,
+      model: this.input.activity ? this.profile.model : this.input.model,
+      executionProfile: this.profile.id,
+      activity: this.input.activity,
       reasoning: this.profile.reasoning,
       permissionProfile: 'arcnexus',
       access: authority.access,

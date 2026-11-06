@@ -108,7 +108,8 @@ export class ComponentOperationPlans {
       !op.activities.every((activity) => this.catalog.roles[c.role]!.activities.includes(activity))
     )
       throw new InputError(`Operation activity outside role: ${op.id}`);
-    if (!this.catalog.profiles[c.executionProfile]!.operationCategories?.includes(op.category))
-      throw new InputError(`Operation category not permitted: ${op.id}`);
+    for (const id of [c.executionProfile, ...Object.values(c.activityProfiles ?? {})])
+      if (!this.catalog.profiles[id]!.operationCategories?.includes(op.category))
+        throw new InputError(`Operation category not permitted by ${id}: ${op.id}`);
   }
 }
