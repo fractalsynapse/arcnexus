@@ -16,6 +16,7 @@ interface HostExecutionEvidence {
   publication?: { recordId: string; observations: { hostCommands?: HostCommandEvidence[] } };
   assignments?: Array<{
     id: string;
+    verificationReports?: Array<Record<string, unknown>>;
     record?: {
       recordId?: string;
       observations?: { hostCommands?: HostCommandEvidence[]; timeline?: { events?: any[] } };
@@ -81,7 +82,32 @@ export class VerificationEvidence {
       throw new Error('Host execution evidence belongs to a different run');
     new ReferencedEvidence(root, record.executionRunId, this.pages).index(evidence);
     this.indexCommandOutputs(evidence);
-    this.pages.add('execution', JSON.stringify(evidence, null, 2), 'json');
+    const assignments = evidence.assignments?.map((assignment) => this.assignment(assignment));
+    this.pages.addSections('execution', { ...evidence, assignments }, [
+      'events',
+      'requests',
+      'runtimeTransitions',
+    ]);
+  }
+
+  /** Makes each worker record and prior review independently discoverable instead of inlining their histories. */
+  private assignment(assignment: NonNullable<HostExecutionEvidence['assignments']>[number]) {
+    const { record, verificationReports, ...intent } = assignment;
+    const prefix = 'execution:' + assignment.id;
+    return {
+      ...intent,
+      record:
+        record &&
+        this.pages.addSections(prefix + ':record', record, [
+          'activationInput',
+          'commands',
+          'operations',
+          'observations',
+        ]),
+      verificationReports: verificationReports?.map((review, index) =>
+        this.pages.addSections(prefix + ':review:' + index, review, ['observations']),
+      ),
+    };
   }
 
   /** Pins complete logs separately so criterion inspection need not page through unrelated command output. */

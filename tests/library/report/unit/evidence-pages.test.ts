@@ -8,6 +8,31 @@ import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises client correction without converting evidence integrity failures into ordinary responses. */
 class EvidenceRequestScenarios {
+  /** Large details stay losslessly paged while the index fits in one read and preserves missing evidence. */
+  async sections(): Promise<void> {
+    const pages = this.pages();
+    const original = { status: 'failed', output: 'evidence'.repeat(10000), missing: null };
+    const reference = pages.addSections('record', original, ['output', 'missing', 'absent']);
+    const result = (await pages.call('verification.evidence', reference)) as any;
+    assert.equal(result.complete, true);
+    const index = JSON.parse(result.content);
+    assert.equal(index.status, 'failed');
+    assert.equal('absent' in index, false);
+    let output = '',
+      offset = 0;
+    do {
+      const page = (await pages.call('verification.evidence', { ...index.output, offset })) as any;
+      output += page.content;
+      offset = page.nextOffset;
+      if (page.complete) break;
+    } while (offset < JSON.stringify(original.output).length);
+    assert.equal(JSON.parse(output), original.output);
+    const missing = (await pages.call('verification.evidence', index.missing)) as any;
+    assert.equal(missing.content, 'null');
+    assert.equal(typeof original.output, 'string');
+    assert.equal(pages.metadata().filter((item) => item.id === index.output.artifact).length, 1);
+  }
+
   /** Rejects malformed and foreign inputs without disclosure, then serves unchanged pinned content. */
   async corrective(): Promise<void> {
     const pages = this.pages();
@@ -56,6 +81,9 @@ class EvidenceRequestScenarios {
 }
 
 const scenarios = new EvidenceRequestScenarios();
+
+test('section indexes keep large evidence available without inline duplication', () =>
+  scenarios.sections());
 
 test('evidence request mistakes are correctable without exposing foreign content', () =>
   scenarios.corrective());

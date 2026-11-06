@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Keep verification and recovery indexes compact while retaining detailed evidence as independently readable artifacts (#279).
+
 - Keep worker regression checkpoints as review evidence so incidental test corrections do not redefine product acceptance (#273).
 
 ### Changed
