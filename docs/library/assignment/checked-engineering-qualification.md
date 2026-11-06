@@ -150,3 +150,20 @@ criteria without deficiencies. Final Astra director `de493781-596e-4088-94c9-026
 accepted all six goal criteria and independently reran the declared test operation.
 This refresh qualifies the changed production harness; it is separate from the earlier
 multi-owner/workday and real ArcNexus self-development demonstrations.
+
+## Verified candidate test baseline
+
+Each activation uses the host-selected, independently verified candidate as its
+baseline for tests and fixtures. The host classifies paths using the captured
+component catalog, including cross-owner test inputs. Candidate source edits,
+worker claims, and mutable branch tips cannot advance that baseline.
+
+Captured operation definitions, executable check inputs, ownership, and human
+acceptance criteria retain their original authority. Verification runs against the
+current candidate implementation; it never overlays implementation from a prior
+delivery. Independently assessed test changes enter the baseline only after their
+candidate is verified. Candidate bytes are restored after checks, including when
+checks fail. Removed baseline tests are not resurrected from an older revision.
+
+Use the existing candidate reconciliation and verification path. Per-dependency
+fixture reconstruction is superseded; retained evidence remains available.

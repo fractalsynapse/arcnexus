@@ -1,4 +1,5 @@
 import { developmentBase } from './development-base.js';
+import { VerificationBaseline } from './verification-baseline.js';
 import { assignmentIntent } from './assignment-intent.js';
 import { RequestAdmission } from './request-admission.js';
 import type { UpstreamBridge } from '../operations/upstream-bridge.js';
@@ -53,6 +54,7 @@ export class AssignmentExecution {
   /** Restores retained work, runs one stage and returns only a structured scheduler outcome. */
   async activate(assignment: ExecutionAssignment): Promise<ActivationResult> {
     const record = await this.record(assignment);
+    new VerificationBaseline(this.context).capture(record);
     record.collaborationContext = {
       environment: this.store.run(assignment.runId).environment,
       trackingIssue:

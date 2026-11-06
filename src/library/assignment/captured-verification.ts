@@ -7,9 +7,9 @@ import { git } from '../operations/process.js';
 import { withFrozenTests, type FrozenTest } from './checkpoints.js';
 import type { SessionState } from './session-state.js';
 
-/** Prevents candidate test or check-configuration edits from replacing active acceptance authority. */
+/** Checks candidate implementation against verified tests and captured executable authority. */
 export class CapturedVerification {
-  /** Uses immutable source blobs from the captured authority revision, outside worker-editable state. */
+  /** Uses host-selected Git revisions outside worker-editable state. */
   constructor(private readonly state: SessionState) {}
 
   /** Reruns observed checks against captured inputs when candidate edits changed them. */
@@ -24,7 +24,7 @@ export class CapturedVerification {
     this.state.safe();
   }
 
-  /** Captures owner tests, explicitly declared check inputs and tracked command files automatically. */
+  /** Separates verified tests from captured commands without restoring implementation files. */
   private inputs(): FrozenTest[] {
     const { record } = this.state.options;
     const scope = [
@@ -36,18 +36,40 @@ export class CapturedVerification {
         .flatMap((c) => ('command' in c ? [c.command, ...c.args] : []))
         .map(normalize),
     );
-    return git(record.source, 'ls-tree', '-r', '--name-only', this.state.resolved.base)
+    const tests = new Set((record.verifiedTestPaths ?? []) as string[]);
+    const authority = this.paths(this.state.resolved.base).filter(
+      (path) => files.has(path) || (!tests.has(path) && covered(path, scope)),
+    );
+    const baseline = tests.size
+      ? this.paths(record.base).filter(
+          (path) =>
+            tests.has(path) &&
+            !files.has(path) &&
+            covered(path, [...scope, ...(this.state.component.allowedWritePaths ?? [])]),
+        )
+      : [];
+    return [
+      ...authority.map((path) => this.input(this.state.resolved.base, path)),
+      ...baseline.map((path) => this.input(record.base, path)),
+    ];
+  }
+
+  /** Lists committed files without consulting an editable checkout or branch tip. */
+  private paths(revision: string): string[] {
+    return git(this.state.options.record.source, 'ls-tree', '-r', '--name-only', revision)
       .split('\n')
-      .filter((path) => path && (covered(path, scope) || files.has(path)))
-      .map((path) => {
-        const bytes = execFileSync('git', [
-          '-C',
-          record.source,
-          'show',
-          `${this.state.resolved.base}:${path}`,
-        ]);
-        return { path, content: bytes.toString('base64'), sha256: digest(bytes) };
-      });
+      .filter(Boolean);
+  }
+
+  /** Reads the exact host-selected blob and retains its content hash. */
+  private input(revision: string, path: string): FrozenTest {
+    const bytes = execFileSync('git', [
+      '-C',
+      this.state.options.record.source,
+      'show',
+      `${revision}:${path}`,
+    ]);
+    return { path, content: bytes.toString('base64'), sha256: digest(bytes) };
   }
 
   /** Treats a deleted input as changed and retains the original through the frozen-check wrapper. */
