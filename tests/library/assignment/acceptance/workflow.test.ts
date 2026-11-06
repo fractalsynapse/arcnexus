@@ -1,6 +1,6 @@
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
-import { validateContinuation } from '../../../../dist/library/assignment/steward.js';
+import { validateCheckpoint } from '../../../../dist/library/assignment/steward.js';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
@@ -161,10 +161,10 @@ class WorkflowTests {
     assert.equal(record.outcome, 'failed');
     assert.equal(record.safeCheckpoint, true);
     assert.match(record.error, /Agent reported failed/);
-    validateContinuation(f.state, record);
+    validateCheckpoint(f.state, record);
     assert.throws(
       () =>
-        validateContinuation(f.state, {
+        validateCheckpoint(f.state, {
           ...record,
           operationInvocations: [{ status: 'interrupted' }],
         }),

@@ -3,6 +3,11 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
+import { digest } from '../../../../dist/library/architecture/assignment.js';
+import { candidateDigest } from '../../../../dist/library/change-inspection/changes.js';
+import { git } from '../../../../dist/library/operations/process.js';
+import { validateCheckpoint } from '../../../../dist/library/assignment/steward.js';
+import type { RecordData } from '../../../../dist/library/workspace/state.js';
 import { AssignmentDispatch } from '../../../../dist/library/execution-runtime/assignment-dispatch.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import type { DirectorResult } from '../../../../dist/library/task-intake/direction.js';
@@ -11,6 +16,74 @@ import { generalCatalogFixture } from '../../testing/support/general-fixture.js'
 
 /** Exercises ordinary host direction admission against real persisted request and checkpoint state. */
 class DependencyRetirementScenarios {
+  /** A settled failed supplier remains historical work without gaining permission to run again. */
+  settledFailure(t: TestContext): void {
+    const f = this.fixture(t);
+    const record = this.failedRecord(f, f.supplier.id);
+    assert.throws(() => validateCheckpoint(f.state, record), /no safe checkpoint/);
+    f.dispatch.apply(f.run, f.decision);
+    assert.equal(f.host.store.assignment(f.source.id).status, 'ready');
+    assert.equal(f.host.store.assignment(f.supplier.id).status, 'failed');
+    assert.equal(f.host.store.requestById(f.request.id).retired, true);
+  }
+
+  /** Retirement cannot turn the same failed checkpoint into a runnable requester. */
+  failedRequester(t: TestContext): void {
+    const f = this.fixture(t);
+    this.failedRecord(f, f.source.id);
+    assert.throws(() => f.dispatch.apply(f.run, f.decision), /no safe checkpoint/);
+    assert.equal(f.host.store.requestById(f.request.id).retired, undefined);
+  }
+
+  /** The retention distinction never permits changed candidate bytes. */
+  changedRetention(t: TestContext): void {
+    const f = this.fixture(t);
+    this.failedRecord(f, f.supplier.id);
+    writeFileSync(join(f.repo, 'unobserved.txt'), 'Changed after checkpoint');
+    assert.throws(() => f.dispatch.apply(f.run, f.decision), /Candidate changed/);
+    assert.equal(f.host.store.requestById(f.request.id).retired, undefined);
+  }
+
+  /** Retention cannot discard uncertainty from unfinished inference. */
+  unfinishedTurn(t: TestContext): void {
+    const f = this.fixture(t);
+    this.failedRecord(f, f.supplier.id, 'running');
+    assert.throws(() => f.dispatch.apply(f.run, f.decision), /no safe checkpoint/);
+    assert.equal(f.host.store.requestById(f.request.id).retired, undefined);
+  }
+
+  /** Seeds a hashed terminal checkpoint against real Git bytes without claiming failed work passed. */
+  private failedRecord(
+    f: ReturnType<DependencyRetirementScenarios['fixture']>,
+    id: string,
+    turn = 'completed',
+  ) {
+    const directory = join(f.state, 'runs', id);
+    mkdirSync(directory, { recursive: true });
+    const record = {
+      id,
+      workspace: f.repo,
+      base: git(f.repo, 'rev-parse', 'HEAD').trim(),
+      status: 'failed',
+      safeCheckpoint: false,
+      operationInvocations: [],
+      resolvedAssignment: { digest: 'captured' },
+      continuationAuthority: 'captured',
+    } as unknown as RecordData;
+    const bytes = JSON.stringify({
+      status: 'failed',
+      turns: [{ status: turn }],
+      authorityHash: 'captured',
+      candidateDigest: candidateDigest(record),
+    });
+    const path = join(directory, 'checkpoint.json');
+    writeFileSync(path, bytes);
+    record.checkpoint = { path, sha256: digest(bytes) };
+    writeFileSync(join(directory, 'report.json'), JSON.stringify(record));
+    f.host.store.updateAssignment(id, 'failed', { recordId: id });
+    return record;
+  }
+
   /** Retires an obsolete subtree without deleting its evidence, changing criteria or inventing completion. */
   recover(t: TestContext): void {
     const f = this.fixture(t);
@@ -152,6 +225,18 @@ class DependencyRetirementScenarios {
 }
 
 const scenarios = new DependencyRetirementScenarios();
+
+test('ordinary retirement refuses an unfinished retained model turn', (t) =>
+  scenarios.unfinishedTurn(t));
+
+test('ordinary retirement retains settled failed work without resuming it', (t) =>
+  scenarios.settledFailure(t));
+
+test('ordinary retirement still requires a resumable requester', (t) =>
+  scenarios.failedRequester(t));
+
+test('ordinary retirement rejects changed retained candidate bytes', (t) =>
+  scenarios.changedRetention(t));
 
 test('ordinary host direction retires a request and retains disconnected history', (t) =>
   scenarios.recover(t));

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { validateContinuation } from '../assignment/steward.js';
+import { validateCheckpoint } from '../assignment/steward.js';
 import type { ExecutionRun } from '../coordination-store/execution-types.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import type { RecordData } from '../workspace/state.js';
@@ -79,7 +79,7 @@ export class RunContinuation {
         throw new Error(
           `Assignment ${assignment.id} has uncertain workspace preparation: ${pending.recordId}`,
         );
-      validateContinuation(this.root, record);
+      validateCheckpoint(this.root, record);
       this.store.updateAssignment(assignment.id, 'ready', { reconciliation: null });
     }
   }

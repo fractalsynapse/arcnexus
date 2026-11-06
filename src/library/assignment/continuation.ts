@@ -4,8 +4,12 @@ import { candidateDigest } from '../change-inspection/changes.js';
 import { assertServicesStopped } from '../operations/service-state.js';
 import type { RecordData } from '../workspace/state.js';
 
-/** Validates a completed durable boundary before a process can resume an assignment. */
-export function validateContinuation(root: string, record: RecordData): void {
+/** Validates retained authority and settled effects, requiring resumability only for execution. */
+export function validateCheckpoint(
+  root: string,
+  record: RecordData,
+  purpose: 'resume' | 'retain' = 'resume',
+): void {
   const invocations = (record.operationInvocations ?? []) as Array<{ status: string }>;
   if (invocations.some((op) => ['running', 'interrupted'].includes(op.status)))
     throw new Error('Operation completion is uncertain; inspect retained invocation evidence');
@@ -15,7 +19,7 @@ export function validateContinuation(root: string, record: RecordData): void {
   const bytes = readFileSync(checkpoint.path);
   if (digest(bytes) !== checkpoint.sha256) throw new Error('Checkpoint evidence changed');
   const value = JSON.parse(bytes.toString('utf8'));
-  if (!record.safeCheckpoint && !completedDiagnostic(value))
+  if (!record.safeCheckpoint && !completedDiagnostic(value, purpose))
     throw new Error('Activation has no safe checkpoint; uncertain operations must be inspected');
   const authority = record.resolvedAssignment as ResolvedAssignment;
   if (value.authorityHash !== authority.digest || record.continuationAuthority !== authority.digest)
@@ -26,10 +30,13 @@ export function validateContinuation(root: string, record: RecordData): void {
   assertServicesStopped(root, record.id);
 }
 
-/** Recognizes a retained post-turn diagnosis without treating unfinished inference as complete. */
-function completedDiagnostic(value: {
-  status?: string;
-  turns?: Array<{ status?: string }>;
-}): boolean {
-  return value.status === 'needs_attention' && value.turns?.at(-1)?.status === 'completed';
+/** Accepts completed diagnostic turns; settled failed turns authorize retention but never execution. */
+function completedDiagnostic(
+  value: { status?: string; turns?: Array<{ status?: string }> },
+  purpose: string,
+): boolean {
+  return (
+    (value.status === 'needs_attention' || (purpose === 'retain' && value.status === 'failed')) &&
+    value.turns?.at(-1)?.status === 'completed'
+  );
 }

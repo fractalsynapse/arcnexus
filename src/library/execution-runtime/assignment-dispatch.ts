@@ -4,7 +4,7 @@ import type { Assignment } from '../architecture/assignment.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ExecutionContext, type ProjectExecution } from '../architecture/execution-context.js';
-import { validateContinuation } from '../assignment/steward.js';
+import { validateCheckpoint } from '../assignment/steward.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import {
   canContinueAssignment,
@@ -116,7 +116,7 @@ export class AssignmentDispatch {
     visited.add(assignment.id);
     if (['running', 'interrupted'].includes(assignment.status) || assignment.data.pendingOutcome)
       throw new Error('Cannot retire in-flight supplier work');
-    this.checkpoint(assignment, true);
+    this.checkpoint(assignment, true, 'retain');
     for (const id of assignment.dependencies)
       this.retirementCheckpoints(this.store.effective(id), visited);
   }
@@ -189,7 +189,11 @@ export class AssignmentDispatch {
   }
 
   /** Verifies the retained workspace and refuses to replay an operation whose outcome is unknown. */
-  private checkpoint(assignment: ExecutionAssignment, changedObligation = false): void {
+  private checkpoint(
+    assignment: ExecutionAssignment,
+    changedObligation = false,
+    purpose: 'resume' | 'retain' = 'resume',
+  ): void {
     if (!assignment.data.recordId) {
       if (assignment.data.reconciliation)
         throw new Error('Checkpoint has uncertain workspace preparation');
@@ -204,7 +208,7 @@ export class AssignmentDispatch {
     const pending = assignment.data.reconciliation as { recordId: string } | null;
     if (pending && pending.recordId !== record.reconciliationId)
       throw new Error('Continuation has uncertain workspace preparation');
-    validateContinuation(this.root, record);
+    validateCheckpoint(this.root, record, purpose);
     if (assignment.status !== 'ready' && !changedObligation) this.diagnose(record, assignment);
   }
 

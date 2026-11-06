@@ -1,5 +1,5 @@
 import type { UpstreamBridge } from '../operations/upstream-bridge.js';
-import { validateContinuation } from './continuation.js';
+import { validateCheckpoint } from './continuation.js';
 import { initializeExecution, type InitializationEvidence } from '../task-intake/initializer.js';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -75,7 +75,7 @@ export class StewardSession {
   private async initializeSession(): Promise<void> {
     const { root, record, id, objective, model, executable, signal } = this;
     const retained = Boolean(record.continuation);
-    if (retained) validateContinuation(root, record);
+    if (retained) validateCheckpoint(root, record);
     this.state = new SessionState({
       root,
       record,
@@ -180,6 +180,6 @@ export async function runSteward(
   ).run();
 }
 
-export { validateContinuation } from './continuation.js';
+export { validateCheckpoint } from './continuation.js';
 
 export { recoverAssignmentEdits } from './edit-recovery.js';

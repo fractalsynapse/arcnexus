@@ -5,10 +5,7 @@ import type { TestContext } from 'node:test';
 import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
 import { loadBindings } from '../../../../dist/library/architecture/bindings.js';
 import { digest, resolveAssignment } from '../../../../dist/library/architecture/assignment.js';
-import {
-  StewardSession,
-  validateContinuation,
-} from '../../../../dist/library/assignment/steward.js';
+import { StewardSession, validateCheckpoint } from '../../../../dist/library/assignment/steward.js';
 import { createWorkspace } from '../../../../dist/library/workspace/workspace.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { minimalWorkflowFixture as workflowFixture } from '../../testing/support/workflow-fixture.js';
@@ -211,19 +208,19 @@ class ChecklistRecoveryScenarios {
       checkpoint.sha256 = digest(bytes);
     };
     capture();
-    assert.doesNotThrow(() => validateContinuation(f.state, record));
+    assert.doesNotThrow(() => validateCheckpoint(f.state, record));
     for (const status of ['running', 'failed']) {
       value.turns.at(-1).status = status;
       capture();
-      assert.throws(() => validateContinuation(f.state, record), /no safe checkpoint/);
+      assert.throws(() => validateCheckpoint(f.state, record), /no safe checkpoint/);
     }
     value.turns.at(-1).status = 'completed';
     capture();
     record.operationInvocations = [{ status: 'interrupted' }];
-    assert.throws(() => validateContinuation(f.state, record), /Operation completion is uncertain/);
+    assert.throws(() => validateCheckpoint(f.state, record), /Operation completion is uncertain/);
     record.operationInvocations = [];
     writeFileSync(join(record.workspace, 'source.txt'), 'unreviewed');
-    assert.throws(() => validateContinuation(f.state, record), /Candidate changed/);
+    assert.throws(() => validateCheckpoint(f.state, record), /Candidate changed/);
   }
 
   /** Captures an unlimited engineering profile and uses the production resumable session after every turn. */

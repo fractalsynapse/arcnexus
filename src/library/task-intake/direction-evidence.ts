@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { validateContinuation } from '../assignment/steward.js';
+import { validateCheckpoint } from '../assignment/steward.js';
 import {
   canContinueAssignment,
   type ExecutionAssignment,
@@ -94,7 +94,7 @@ export class DirectionEvidence {
       const pending = assignment.data.reconciliation as { recordId: string } | null;
       if (pending && pending.recordId !== record.reconciliationId)
         throw new Error('Workspace preparation has uncertain completion');
-      validateContinuation(this.root, record);
+      validateCheckpoint(this.root, record);
       return {
         eligible: true,
         reason: 'Retained checkpoint validates against captured authority and candidate',
