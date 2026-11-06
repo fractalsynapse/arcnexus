@@ -91,9 +91,17 @@ class SimulationFixture {
     assert.equal(resources.filter((resource) => resource.kind === 'issue').length, 1);
     const milestones = resources
       .filter((resource) => resource.kind === 'comment')
-      .map((comment) => JSON.parse(String(comment.data.body)).milestone);
-    assert.equal(milestones.filter((milestone) => milestone === 'verified_delivery').length, 3);
-    assert.ok(milestones.includes('waiting'));
+      .map((comment) => String(comment.data.body));
+    assert.equal(
+      milestones.filter((body) => /\*\*[abc]: verified component delivery\*\*/.test(body)).length,
+      3,
+    );
+    assert.ok(milestones.some((body) => /\*\*[abc]: waiting\*\*/.test(body)));
+    assert.ok(
+      milestones.every((body) =>
+        body.includes('A component delivery does not establish task completion'),
+      ),
+    );
   }
 
   /** Reads simulated issues independently of execution reports and closes the inspection connection. */
