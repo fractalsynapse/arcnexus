@@ -71,6 +71,26 @@ class ContributionScenarios {
     assert.deepEqual(f.store.contributionGroups(f.run.id).ready(), []);
   }
 
+  /** Prepared work stays settled until observed failure makes ordinary correction necessary. */
+  settled(t: TestContext): void {
+    const f = new ContributionFixture(t);
+    const contribution = f.prepare(f.tests.id);
+    const continuation = {
+      assignmentId: f.tests.id,
+      ownerId: 'tests',
+      reason: 'Await combined verification',
+    };
+    assert.throws(
+      () => f.store.admitDirection(f.run.id, [], [continuation], {}),
+      /Invalid retained assignment continuation/,
+    );
+    assert.equal(f.store.assignment(f.tests.id).status, 'prepared');
+    assert.deepEqual(f.store.assignment(f.tests.id).data.contribution, contribution);
+    f.store.fail(f.tests.id, 'failed', 'Observed combined deficiency');
+    f.store.admitDirection(f.run.id, [], [continuation], {});
+    assert.equal(f.store.assignment(f.tests.id).status, 'ready');
+  }
+
   /** Related contributions publish together and exact repeated completion changes no candidate. */
   complete(t: TestContext): void {
     const f = new ContributionFixture(t);
@@ -197,6 +217,9 @@ test('five nested contributions with shared owners form one atomic delivery', (t
 
 test('external obligations block assembly without starving unrelated work', (t) =>
   scenarios.external(t));
+
+test('prepared contributions cannot restart before an observed correction', (t) =>
+  scenarios.settled(t));
 
 registerSuite({
   component: 'coordination-store',

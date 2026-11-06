@@ -48,12 +48,7 @@ export function canReopenAssignment(status: AssignmentStatus): boolean {
 
 /** Ready or waiting checkpointed work can receive direction without dropping its dependencies. */
 export function canContinueAssignment(status: AssignmentStatus): boolean {
-  return (
-    status === 'ready' ||
-    status === 'waiting' ||
-    status === 'prepared' ||
-    canReopenAssignment(status)
-  );
+  return status === 'ready' || status === 'waiting' || canReopenAssignment(status);
 }
 
 export interface ExecutionRun {
