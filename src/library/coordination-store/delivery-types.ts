@@ -1,5 +1,11 @@
 import type { RunEnvironment } from './execution-types.js';
 
+export interface PublicationDocument {
+  title: string;
+  body: string;
+  template?: { path: string; revision: string; sha256: string };
+}
+
 /** Captures the original steward branch and its independently verified contribution. */
 export interface DevelopmentDelivery {
   assignmentId: string;
@@ -12,6 +18,7 @@ export interface DevelopmentDelivery {
 
 /** Immutable attribution and verification captured before publication authority is considered. */
 export interface DeliveryCapture {
+  publicationDocument?: PublicationDocument;
   id: string;
   projectId: string;
   packageId: string;

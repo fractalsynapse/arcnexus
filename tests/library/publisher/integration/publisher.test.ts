@@ -186,6 +186,25 @@ test('publisher captures actual reviewed changes once without publishing or appr
   assert.equal(f.store.list().length, 1);
 });
 
+test('historical delivery capture preserves original publication intent on recovery', (t) => {
+  const f = new PublisherFixture(t);
+  const delivery = f.capture();
+  assert.match(delivery.publicationDocument!.body, new RegExp(delivery.candidate));
+  const historicalStore = new DeliveryStore(join(f.root, 'historical.sqlite'));
+  t.after(() => historicalStore.close());
+  const historical = { ...delivery };
+  delete historical.publicationDocument;
+  historicalStore.capture(historical);
+  const recovered = new Publisher(f.root, historicalStore).capture(
+    'project',
+    f.run,
+    [f.assignment],
+    delivery.target,
+  );
+  assert.equal(recovered.publicationDocument, undefined);
+  assert.equal(recovered.candidate, delivery.candidate);
+});
+
 test('publisher rejects source changes after independent review', (t) => {
   const f = new PublisherFixture(t);
   writeFileSync(join(f.source, 'source.txt'), 'unreviewed');

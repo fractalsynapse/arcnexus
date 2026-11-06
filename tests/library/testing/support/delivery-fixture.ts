@@ -118,6 +118,10 @@ export class GitDeliveryFixture {
       base: this.repository.base,
       candidate,
       verification: { references: ['controlled-review'], digest: 'controlled-digest' },
+      publicationDocument: {
+        title: 'Update source behavior',
+        body: '## Summary\n\nVerified source update.\n\n## Verification\n\nControlled review passed.',
+      },
       target: { repository: 'repo', branch: 'staging' },
     });
   }

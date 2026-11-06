@@ -20,6 +20,10 @@ class PullRequestFixture {
     base: 'b'.repeat(40),
     candidate: 'c'.repeat(40),
     verification: { references: ['report'], digest: 'verified' },
+    publicationDocument: {
+      title: 'Fix cancelled promotion retries',
+      body: '## Summary\n\nRetry explicitly cancelled promotion attempts.',
+    },
     target: { repository: 'example/project', branch: 'staging' },
     version: 1,
     createdAt: '2026-11-03T00:00:00Z',
@@ -40,7 +44,11 @@ class PullRequestFixture {
     inputDigest: 'input',
     status: 'uncertain',
     attempt: 1,
-    input: { deliveryId: this.delivery.id },
+    input: {
+      deliveryId: this.delivery.id,
+      title: 'Fix cancelled promotion retries',
+      body: '## Summary\n\nRetry explicitly cancelled promotion attempts.',
+    },
   };
 
   readonly requests: Array<{ url: string; options: RequestInit }> = [];
@@ -132,6 +140,8 @@ test('GitHub delivery PR creation pins target and head without granting review o
   const f = new PullRequestFixture();
   const body = await f.create();
   assert.match(body, /arcnexus-effect:/);
+  assert.ok(body.startsWith(String(f.effect.input.body)));
+  assert.equal(JSON.parse(String(f.requests.at(-1)!.options.body)).title, f.effect.input.title);
   assert.equal(f.requests.filter((r) => r.options.method !== 'GET').length, 1);
   const request = f.requests.at(-1)!;
   assert.equal(request.url, 'https://api.github.com/repos/example/project/pulls');

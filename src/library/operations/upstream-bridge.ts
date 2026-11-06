@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { BridgeTool } from '../steward/bridge.js';
 import type { UpstreamExecution } from './upstream-execution.js';
+import type { RepositoryDocuments } from './repository-documents.js';
 
 /** Exposes collaboration intent through the existing MCP bridge without accepting worker authority. */
 export class UpstreamBridge {
@@ -13,6 +14,7 @@ export class UpstreamBridge {
     private readonly assignmentScope: string,
     private readonly signal: AbortSignal,
     available: Array<'issue.create' | 'issue.comment'>,
+    private readonly documents?: RepositoryDocuments,
   ) {
     this.tools = [...new Set(available)].map((operation) => this.tool(operation));
   }
@@ -30,6 +32,7 @@ export class UpstreamBridge {
     for (const field of allowed)
       if (input[field] === undefined) throw new Error('Missing collaboration field: ' + field);
     if (typeof input.key !== 'string' || !input.key.trim()) throw new Error('Expected retry key');
+    if (name === 'issue.create') this.documents?.validateIssue(input.body);
     const id = createHash('sha256')
       .update(JSON.stringify([this.assignmentScope, name, input.key]))
       .digest('hex');
@@ -45,7 +48,8 @@ export class UpstreamBridge {
         : { issueId: { type: ['string', 'integer'] } };
     return {
       name: operation,
-      description: 'Record collaboration intent. Reuse the same key only for an identical retry.',
+      description:
+        'Use readable Markdown and the repository issue template sections for new issues. Reuse the same key only for an identical retry.',
       inputSchema: {
         type: 'object',
         additionalProperties: false,

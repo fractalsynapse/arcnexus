@@ -76,6 +76,11 @@ export class DevelopmentDeliveries {
       target: parent.target,
       development: entry,
       parentDeliveryId: parent.id,
+      publicationDocument: parent.publicationDocument && {
+        ...parent.publicationDocument,
+        title: entry.owner + ': ' + parent.publicationDocument.title,
+        body: `This PR delivers only the ${entry.owner} contribution at candidate \`${entry.candidate}\`. The following evidence and criteria describe the assembled task; other contributions are separate PRs.\n\n${parent.publicationDocument.body}`,
+      },
     });
   }
 

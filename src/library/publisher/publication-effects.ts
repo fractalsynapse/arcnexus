@@ -33,7 +33,9 @@ export class PublicationEffects {
 
   /** Reuses immutable intent and reconciles uncertain results before permitting any new invocation. */
   async effect(operation: string, signal: AbortSignal, input: Record<string, unknown> = {}) {
-    return this.invoke(this.identity(operation), operation, signal, input);
+    const document =
+      operation === 'pull-request.create' ? this.delivery.publicationDocument : undefined;
+    return this.invoke(this.identity(operation), operation, signal, { ...document, ...input });
   }
 
   /** Reconciles unfinished observations before a host-authorized fresh simulated check attempt. */

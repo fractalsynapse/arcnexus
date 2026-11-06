@@ -4,7 +4,7 @@
 
 ### Fixed
 
-- Define canonical GitHub issue and pull-request templates with explicit acceptance and verification evidence (#293).
+- Use canonical repository templates for readable live and simulated issues and PRs, preserving retry identities and separate verification evidence (#293).
 
 - Use the verified candidate test baseline while preserving captured check authority and current implementation (#287).
 

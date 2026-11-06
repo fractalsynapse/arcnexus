@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto';
+import { trackingDocument } from './tracking-document.js';
+import { RepositoryDocuments } from '../operations/repository-documents.js';
 import { runDestination } from './run-destination.js';
 import { join } from 'node:path';
 import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
@@ -57,18 +59,7 @@ export class RunCollaboration {
   /** Preserves the original tracking intent through director reconsideration and interrupted receipts. */
   private trackingInput(key: string, assignment?: ExecutionAssignment): Record<string, unknown> {
     const prior = this.environments.effects.effects().find((effect) => effect.id === key);
-    return (
-      prior?.input ?? {
-        title: (assignment?.objective ?? this.run.objective).slice(0, 200),
-        body: JSON.stringify({
-          goal: assignment?.objective ?? this.run.objective,
-          acceptance: assignment?.acceptance ?? this.run.data.direction,
-          runId: this.run.id,
-          assignmentId: assignment?.id,
-          environment: this.run.environment,
-        }),
-      }
-    );
+    return prior?.input ?? { ...trackingDocument(this.context, this.run, assignment) };
   }
 
   /** Reconciles durable comments before projecting meaningful assignment state, never polling or model tokens. */
@@ -87,9 +78,25 @@ export class RunCollaboration {
       )
         continue;
       const input = this.milestone(assignment, issue.issueId);
-      const id = prefix + createHash('sha256').update(JSON.stringify(input)).digest('hex');
+      const id = prefix + this.milestoneIdentity(assignment, issue.issueId);
       if (!receipts.has(id)) await this.comment(assignment, id, input);
     }
+  }
+
+  /** Preserves existing semantic receipt identities when human-facing comment formatting changes. */
+  private milestoneIdentity(assignment: ExecutionAssignment, issueId: unknown): string {
+    const body = JSON.stringify(
+      {
+        assignmentId: assignment.id,
+        owner: assignment.owner,
+        milestone: assignment.status === 'completed' ? 'verified_delivery' : assignment.status,
+        dependencies: assignment.dependencies,
+        evidence: assignment.evidence,
+      },
+      null,
+      2,
+    );
+    return createHash('sha256').update(JSON.stringify({ issueId, body })).digest('hex');
   }
 
   /** Finishes retained intents first and returns receipts so unchanged observations create no new events. */
@@ -108,17 +115,15 @@ export class RunCollaboration {
   private milestone(assignment: ExecutionAssignment, issueId: unknown): Record<string, unknown> {
     return {
       issueId,
-      body: JSON.stringify(
-        {
-          assignmentId: assignment.id,
-          owner: assignment.owner,
-          milestone: assignment.status === 'completed' ? 'verified_delivery' : assignment.status,
-          dependencies: assignment.dependencies,
-          evidence: assignment.evidence,
-        },
-        null,
-        2,
-      ),
+      body: [
+        `**${assignment.owner}: ${assignment.status === 'completed' ? 'verified component delivery' : assignment.status}**`,
+        assignment.objective,
+        ...(assignment.data.reason ? [`Blocker: ${String(assignment.data.reason)}`] : []),
+        `Assignment: \`${assignment.id}\`.`,
+        `Dependencies: ${assignment.dependencies.length ? assignment.dependencies.join(', ') : 'none'}.`,
+        `Retained evidence: ${assignment.evidence.length ? assignment.evidence.join(', ') : 'none yet'}.`,
+        'A component delivery does not establish task completion or upstream integration.',
+      ].join('\n\n'),
     };
   }
 
@@ -154,6 +159,7 @@ export class RunCollaboration {
       `${this.run.environment.id}/${this.run.id}/${assignment.id}`,
       this.signal,
       actions,
+      new RepositoryDocuments(this.context.source, this.context.base),
     );
   }
 
