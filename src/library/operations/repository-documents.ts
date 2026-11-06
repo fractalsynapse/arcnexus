@@ -18,9 +18,7 @@ export class RepositoryDocuments {
       throw new Error('Issue body must be readable Markdown');
     const template = this.template('issue');
     if (!template) return;
-    const required = [...template.content.matchAll(/^## ([^\n]+)$/gm)].map((match) =>
-      match[1]!.trim(),
-    );
+    const required = this.headings(template.content);
     const present = new Set([...body.matchAll(/^## ([^\n]+)$/gm)].map((match) => match[1]!.trim()));
     const missing = required.filter((heading) => !present.has(heading));
     if (missing.length)
@@ -34,9 +32,7 @@ export class RepositoryDocuments {
     sections: Record<string, string>,
   ): PublicationDocument {
     const template = this.template(kind);
-    const headings = template
-      ? [...template.content.matchAll(/^## ([^\n]+)$/gm)].map((match) => match[1]!.trim())
-      : Object.keys(sections);
+    const headings = template ? this.headings(template.content) : Object.keys(sections);
     if (!headings.length)
       throw new Error('Repository template requires Markdown level-two sections');
     const body = headings
@@ -54,6 +50,16 @@ export class RepositoryDocuments {
     };
   }
 
+  /** Shares the supported section contract between host-generated and agent-authored documents. */
+  private headings(content: string): string[] {
+    const headings = [...content.matchAll(/^## ([^\n]+)$/gm)].map((match) => match[1]!.trim());
+    if (!headings.length)
+      throw new Error('Repository template requires Markdown level-two sections');
+    if (new Set(headings).size !== headings.length)
+      throw new Error('Repository template has duplicate section headings');
+    return headings;
+  }
+
   /** Rejects ambiguous or unsupported templates rather than publishing an invented interpretation. */
   private template(kind: 'issue' | 'pull-request') {
     const paths = git(this.source, 'ls-tree', '-r', '--name-only', this.revision).split('\n');
@@ -67,7 +73,7 @@ export class RepositoryDocuments {
       throw new Error('Multiple repository templates require explicit selection');
     const path = candidates[0];
     if (!path) return undefined;
-    if (!path.endsWith('.md'))
+    if (!/\.md$/i.test(path))
       throw new Error('GitHub issue forms require supported template selection');
     const content = git(this.source, 'show', `${this.revision}:${path}`);
     return {

@@ -49,6 +49,21 @@ class RepositoryDocumentScenarios {
     assert.throws(() => documents.prepare('issue', 'Title', {}), /Multiple repository templates/);
   }
 
+  /** Agent-authored issues cannot bypass the template format required of automatic tracking. */
+  malformed(t: TestContext): void {
+    const f = this.fixture(t, 'WORK.MD', 'Free-form unsupported template');
+    assert.throws(() => f.documents.prepare('issue', 'Title', {}), /level-two sections/);
+    assert.throws(() => f.documents.validateIssue('A worker body'), /level-two sections/);
+    writeFileSync(join(f.repo, '.github/ISSUE_TEMPLATE/WORK.MD'), '## Summary\n## Summary\n');
+    f.commit();
+    const repeated = new RepositoryDocuments(f.repo, f.git('rev-parse', 'HEAD'));
+    assert.throws(
+      () => repeated.prepare('issue', 'Title', { Summary: 'Work' }),
+      /duplicate section/,
+    );
+    assert.throws(() => repeated.validateIssue('## Summary\nWork'), /duplicate section/);
+  }
+
   /** Projects supplied facts as Markdown when the repository has no template. */
   absent(t: TestContext): void {
     const f = workflowFixture(t);
@@ -78,6 +93,9 @@ test('collaboration documents follow the committed repository template', (t) =>
   scenarios.captured(t));
 
 test('ambiguous and unsupported templates fail explicitly', (t) => scenarios.unsupported(t));
+
+test('agent and automatic issue paths reject the same unsupported templates', (t) =>
+  scenarios.malformed(t));
 
 test('repositories without templates receive readable Markdown', (t) => scenarios.absent(t));
 
