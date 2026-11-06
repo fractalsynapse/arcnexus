@@ -89,7 +89,6 @@ created or mounted before they exist. Existing ancestors are checked for aliases
 no maintained-source write permission is granted. Historical directory-permission
 conversion must not run ahead of this minimal confinement path (#138).
 
-
 The final harness retirement slice rejects non-minimal captured owner authority and
 obsolete profile budgets before constructing SDK permissions. It removes the writable
 legacy sandbox path and checklist-call quotas. Source-read-only confinement and the
