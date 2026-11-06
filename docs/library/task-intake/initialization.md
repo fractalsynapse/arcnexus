@@ -145,6 +145,14 @@ separate evidence class. Neither tool output nor agent messages grant authority.
 Missing or partial logs remain explicit gaps. Never follow an evidence reference into
 another run or accept arbitrary private filesystem paths.
 
+Execution inspection starts with a compact index. Assignment records, prior reviewer
+observations, coordination history and command output are separately named artifacts
+on the same evidence capability. Follow the references relevant to the criterion;
+reading the index does not require rereading every previous review's tool history.
+References preserve full content and hashes, including unavailable-evidence findings.
+Recovery state uses the same section references for plans and operation evidence.
+This changes discovery, not acceptance or which observations count as proof (#279).
+
 ## Acceptance grounded in host capabilities
 
 The director derives acceptance from caller outcomes and captured authority. It
