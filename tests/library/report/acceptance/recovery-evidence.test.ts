@@ -23,7 +23,12 @@ class RecoveryEvidenceScenarios {
     const state = (await pages.call('assignment.evidence', {
       artifact: f.source.id + ':state',
     })) as any;
-    assert.equal(JSON.parse(state.content).operationInvocations[0].status, 'interrupted');
+    assert.equal(state.complete, true);
+    const operations = (await pages.call(
+      'assignment.evidence',
+      JSON.parse(state.content).operationInvocations,
+    )) as any;
+    assert.equal(JSON.parse(operations.content)[0].status, 'interrupted');
     const checkpoint = (await pages.call('assignment.evidence', {
       artifact: f.source.id + ':checkpoint',
     })) as any;

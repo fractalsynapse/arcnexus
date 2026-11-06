@@ -9,6 +9,30 @@ import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises exact evidence retrieval and origin validation without granting filesystem access. */
 class ReferencedEvidenceScenarios {
+  /** Reusing an already observed record cannot attach its proof to another assignment in the same capture. */
+  rebound(t: TestContext): void {
+    const f = this.fixture(t);
+    const foreign = structuredClone(f.evidence.assignments[0]!);
+    foreign.id = 'foreign';
+    f.evidence.assignments.push(foreign);
+    assert.throws(() => f.reader.index(f.evidence), /different assignment/);
+  }
+
+  /** A later capture revalidates identity instead of retaining an earlier report's authorization. */
+  recapture(t: TestContext): void {
+    const f = this.fixture(t);
+    f.reader.index(f.evidence);
+    writeFileSync(
+      join(f.directory, 'report.json'),
+      JSON.stringify({
+        id: f.id,
+        executionRunId: 'foreign',
+        assignmentId: 'assignment',
+      }),
+    );
+    assert.throws(() => f.reader.index(f.evidence), /different run/);
+  }
+
   /** Retains repeated observations as one exact artifact and leaves verification snapshots unexpanded. */
   async observed(t: TestContext): Promise<void> {
     const f = this.fixture(t);
@@ -129,6 +153,12 @@ class ReferencedEvidenceScenarios {
 }
 
 const scenarios = new ReferencedEvidenceScenarios();
+
+test('observed record identity cannot be rebound within one evidence capture', (t) =>
+  scenarios.rebound(t));
+
+test('subsequent evidence captures revalidate originating record identity', (t) =>
+  scenarios.recapture(t));
 
 test('observed investigation artifacts are exact, deduplicated and nonrecursive', (t) =>
   scenarios.observed(t));

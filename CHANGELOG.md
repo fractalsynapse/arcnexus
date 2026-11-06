@@ -5,12 +5,15 @@
 ### Fixed
 
 - Accept architect feedback on safely paused tasks through the existing answer control (#283).
+- Keep verification and recovery indexes compact while retaining detailed evidence as independently readable artifacts (#279).
 
 - Observe native test host shutdown without racing process disappearance (#280).
 
 - Keep worker regression checkpoints as review evidence so incidental test corrections do not redefine product acceptance (#273).
 
 ### Changed
+
+- Reserve research for substantive questions; keep routine code discovery and evidence lookup within the engineering activity that needs them (#277).
 
 - Require verified director/steward self-repair within existing authority as part of the self-development lifecycle (#275).
 

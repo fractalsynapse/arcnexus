@@ -77,11 +77,15 @@ export class RecoveryEvidence {
         record.assignmentId !== assignment.id
       )
         throw new Error('Retained record belongs to a different run or assignment');
-      this.pages.add(
-        assignment.id + ':state',
-        JSON.stringify(this.state(record, assignment)),
-        'json',
-      );
+      this.pages.addSections(assignment.id + ':state', this.state(record, assignment), [
+        'assignment',
+        'plan',
+        'frozenTests',
+        'operationInvocations',
+        'operations',
+        'services',
+        'observations',
+      ]);
       this.file(assignment.id + ':checkpoint', directory, 'checkpoint.json');
       this.journals(assignment.id, directory);
       return { assignmentId: assignment.id, recordId: id, status: 'captured' };

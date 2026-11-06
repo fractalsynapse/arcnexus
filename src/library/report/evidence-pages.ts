@@ -54,6 +54,19 @@ export class EvidencePages {
     this.artifacts.set(id, { id, content, sha256, encoding, ...(path ? { path } : {}) });
   }
 
+  /** Pins selected sections separately so an index remains readable without dropping detailed evidence. */
+  addSections(id: string, value: Record<string, unknown>, sections: string[] = []) {
+    const index = { ...value };
+    for (const key of sections) {
+      if (value[key] === undefined) continue;
+      const artifact = id + ':' + key;
+      this.add(artifact, JSON.stringify(value[key]), 'json');
+      index[key] = { artifact };
+    }
+    this.add(id, JSON.stringify(index), 'json');
+    return { artifact: id };
+  }
+
   /** Saves immutable evidence copies by content hash and records the manifest for historical inspection. */
   retain(directory: string, manifest: unknown): unknown {
     const destination = join(directory, this.name.replace('.', '-'));

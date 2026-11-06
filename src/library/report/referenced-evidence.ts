@@ -15,6 +15,8 @@ export interface ReferencedExecutionEvidence {
 export class ReferencedEvidence {
   private readonly retained = new Map<string, { id: string; content: string }>();
 
+  private readonly records = new Map<string, string>();
+
   /** Binds source lookup to the host's private store and current immutable run identity. */
   constructor(
     private readonly root: string,
@@ -24,6 +26,7 @@ export class ReferencedEvidence {
 
   /** Annotates cloned observations only; retained reports and original artifact names remain unchanged. */
   index(evidence: ReferencedExecutionEvidence): void {
+    this.records.clear();
     for (const assignment of evidence.assignments ?? []) {
       for (const event of assignment.record?.observations?.timeline?.events ?? []) {
         const item = event.payload?.item;
@@ -45,9 +48,23 @@ export class ReferencedEvidence {
 
   /** Verifies originating identity and exposes the observed manifest's immediate artifacts only. */
   private reference(recordId: string | undefined, assignmentId: string, result: any): void {
+    const directory = this.validatedDirectory(recordId, assignmentId);
+    const content = this.pin(directory, recordId!, result);
+    if (content !== undefined && result.artifact === 'manifest')
+      result.verificationArtifacts = this.manifest(directory, recordId!, assignmentId, content);
+  }
+
+  /** Validates each originating report once per capture while rejecting reuse under a different assignment. */
+  private validatedDirectory(recordId: string | undefined, assignmentId: string): string {
     if (!recordId || !/^[a-f0-9-]{36}$/.test(recordId))
       throw new Error('Invalid investigation record identity');
     const directory = join(this.root, 'runs', recordId);
+    const known = this.records.get(recordId);
+    if (known !== undefined) {
+      if (known !== assignmentId)
+        throw new Error('Investigation belongs to a different assignment');
+      return directory;
+    }
     const record = JSON.parse(this.read(join(directory, 'report.json')));
     if (
       record.id !== recordId ||
@@ -55,9 +72,8 @@ export class ReferencedEvidence {
       record.assignmentId !== assignmentId
     )
       throw new Error('Investigation record belongs to a different run or assignment');
-    const content = this.pin(directory, recordId, result);
-    if (content !== undefined && result.artifact === 'manifest')
-      result.verificationArtifacts = this.manifest(directory, recordId, assignmentId, content);
+    this.records.set(recordId, assignmentId);
+    return directory;
   }
 
   /** Makes unread artifacts advertised by the observed manifest independently inspectable without recursion. */
