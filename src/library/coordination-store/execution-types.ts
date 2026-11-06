@@ -30,6 +30,11 @@ export function canReopenAssignment(status: AssignmentStatus): boolean {
   return status === 'failed' || status === 'blocked' || status === 'rejected';
 }
 
+/** Ready checkpointed work can receive direction without being replaced or replayed. */
+export function canContinueAssignment(status: AssignmentStatus): boolean {
+  return status === 'ready' || canReopenAssignment(status);
+}
+
 export interface ExecutionRun {
   id: string;
   environment?: RunEnvironment;
