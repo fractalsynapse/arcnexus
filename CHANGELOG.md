@@ -6,6 +6,8 @@
 
 - Keep verification and recovery indexes compact while retaining detailed evidence as independently readable artifacts (#279).
 
+- Observe native test host shutdown without racing process disappearance (#280).
+
 - Keep worker regression checkpoints as review evidence so incidental test corrections do not redefine product acceptance (#273).
 
 ### Changed
@@ -19,6 +21,8 @@
 - Recover retained tasks through the installed runtime and one host launcher, recording runtime transitions without per-run supervisor copies (#266).
 
 ### Added
+
+- Select inherited steward activity profiles per model turn while preserving one workflow, captured authority and separate independent verification (#277).
 
 - Publish each steward’s verified development branch through staging in delivery order, retain branch ancestry across dependencies, and reuse completed workday deliveries (#248).
 

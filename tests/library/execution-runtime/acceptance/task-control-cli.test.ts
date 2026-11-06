@@ -18,6 +18,14 @@ import { GeneralFixture, nativeHostTest as test } from '../../testing/support/ge
 
 /** Exercises asynchronous submission and identity controls through the actual detached supervisor. */
 class TaskControlCliScenario {
+  /** A live process remains observable, while a reaped process is accepted without a racy existence probe. */
+  processObservation(): void {
+    assert.equal(this.gone(process.pid), false);
+    const child = spawnSync(process.execPath, ['-e', ''], { encoding: 'utf8' });
+    assert.equal(child.status, 0, child.stderr);
+    assert.equal(this.gone(child.pid), true);
+  }
+
   /** Pauses an active turn, recovers through the installed runtime, and cancels from outside a checkout. */
   async run(t: TestContext): Promise<void> {
     const general = new GeneralFixture(t);
@@ -161,8 +169,12 @@ class TaskControlCliScenario {
 
   /** Treats reaped or zombie Linux processes as unable to dispatch further work. */
   private gone(pid: number): boolean {
-    const path = `/proc/${pid}/stat`;
-    return !existsSync(path) || readFileSync(path, 'utf8').split(' ')[2] === 'Z';
+    try {
+      return readFileSync(`/proc/${pid}/stat`, 'utf8').split(') ')[1]!.split(' ')[0] === 'Z';
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return true;
+      throw error;
+    }
   }
 
   /** Bounds fixture observation only; product work has no execution deadline. */
@@ -176,6 +188,9 @@ class TaskControlCliScenario {
 }
 
 const scenario = new TaskControlCliScenario();
+
+test('host cleanup distinguishes live and reaped processes without an existence race', () =>
+  scenario.processObservation());
 
 test('task controls recover the installed runtime outside a checkout', (t) => scenario.run(t));
 

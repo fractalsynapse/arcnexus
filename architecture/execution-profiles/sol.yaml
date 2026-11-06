@@ -1,0 +1,13 @@
+schemaVersion: 3
+id: sol
+model: gpt-6.1-sol
+reasoning: medium
+webSearch: live
+operationCategories:
+  - build
+  - unit-test
+  - integration-test
+  - cli-check
+  - http-check
+  - lint
+  - collaboration

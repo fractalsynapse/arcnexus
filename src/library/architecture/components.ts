@@ -374,11 +374,15 @@ class CatalogComponentValidator {
       !Object.hasOwn(catalog.profiles, c.executionProfile)
     )
       throw new InputError(`Missing role/execution profile for ${c.id}`);
-    validateOperations(
-      ids.map((id) => catalog.operations[id]!),
-      catalog.profiles[c.executionProfile]!,
-      env,
-    );
+    for (const id of [c.executionProfile, ...Object.values(c.activityProfiles ?? {})]) {
+      if (!Object.hasOwn(catalog.profiles, id))
+        throw new InputError(`Unknown activity execution profile for ${c.id}: ${id}`);
+      validateOperations(
+        ids.map((id) => catalog.operations[id]!),
+        catalog.profiles[id]!,
+        env,
+      );
+    }
   }
 
   /** Checks inherited constraints across the complete parent chain. */

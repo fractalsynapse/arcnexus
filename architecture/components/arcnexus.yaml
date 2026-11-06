@@ -12,6 +12,11 @@ constraints:
     project stewards, and dependency requests may activate further owners.
 role: systems-engineer
 executionProfile: luna
+activityProfiles:
+  research: astra
+  documentation: sol
+  design: sol
+  review: sol
 reads:
   - .
 operations:

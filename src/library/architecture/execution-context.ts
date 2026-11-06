@@ -48,7 +48,10 @@ export class ExecutionContext {
     const selected = this.selected(catalog, cwd, source, packageId, config.defaultPackage);
     const owners = this.owners(catalog, selected.id);
     this.validateProfiles(catalog, [
-      ...owners.map((id) => catalog.components[id]!.executionProfile),
+      ...owners.flatMap((id) => [
+        catalog.components[id]!.executionProfile,
+        ...Object.values(catalog.components[id]!.activityProfiles ?? {}),
+      ]),
       config.directorProfile,
       config.reviewerProfile,
     ]);

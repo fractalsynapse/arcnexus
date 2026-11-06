@@ -56,6 +56,42 @@ class ClientIsolationScenarios {
     }
   }
 
+  /** Continuation selects captured activity settings without replacing the default or reviewer profile. */
+  activityProfiles(t: TestContext): void {
+    const fixture = this.fixture(t);
+    const base = this.configuration(fixture);
+    const resolved = base.input.record.resolvedAssignment as any;
+    resolved.activityProfiles = {
+      research: {
+        ...resolved.executionProfile,
+        id: 'research',
+        model: 'research-model',
+        reasoning: 'high',
+      },
+    };
+    base.input.record.settings = base.settings;
+    const research = new CodexConfiguration({
+      ...base.input,
+      activity: 'research',
+      resumeId: 'retained',
+    });
+    assert.equal(research.settings.model, 'research-model');
+    assert.equal(research.settings.reasoning, 'high');
+    assert.equal(research.settings.executionProfile, 'research');
+    const fallback = new CodexConfiguration({ ...base.input, activity: 'implementation' });
+    assert.equal(fallback.settings.model, 'test');
+    assert.equal(resolved.executionProfile.id, 'test');
+    assert.equal(new CodexConfiguration(base.input).settings.executionProfile, 'test');
+  }
+
+  /** Existing captured runs without activity policy keep their explicit default settings. */
+  legacyProfiles(t: TestContext): void {
+    const base = this.configuration(this.fixture(t));
+    const research = new CodexConfiguration({ ...base.input, activity: 'research' });
+    assert.equal(research.settings.model, base.settings.model);
+    assert.equal(research.settings.executionProfile, base.settings.executionProfile);
+  }
+
   /** Authentication is private and configuration is neither inherited nor writable by the model. */
   privateState(t: TestContext): void {
     const fixture = this.fixture(t);
@@ -198,6 +234,12 @@ class ClientIsolationScenarios {
 }
 
 const scenarios = new ClientIsolationScenarios();
+
+test('captured runs without overrides retain their model policy', (t) =>
+  scenarios.legacyProfiles(t));
+
+test('model turns select captured activity profiles on retained threads and preserve fallback', (t) =>
+  scenarios.activityProfiles(t));
 
 test(
   'native model configuration exposes only the assignment bridge',
