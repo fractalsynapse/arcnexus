@@ -152,6 +152,7 @@ class AssemblyScenarios {
     );
     const run = f.host.store.run(f.run.id);
     await this.reuse(f);
+    this.publication(f, t);
     assert.equal(run.data.goalCandidate, run.data.candidateRevision);
     const references = run.data.goalEvidence as string[];
     assert.equal(references.length, 1);

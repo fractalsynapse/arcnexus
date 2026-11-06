@@ -20,11 +20,7 @@ export class DeliveryVerification {
     this.assignments(run, assignments);
     const references = this.references(run, assignments);
     const reviews = references.map((reference) => this.read(reference, run));
-    if (
-      run.mode === 'task' &&
-      !reviews.some((review) => review.activationRole === 'director-assessment')
-    )
-      throw new Error('Missing independent goal assessment');
+    this.goal(run, assignments, candidate, references, reviews);
     const last = assignments.find(
       (assignment) =>
         (assignment.data.deliveryRecordId ?? assignment.data.recordId) === candidate.id,
@@ -40,6 +36,29 @@ export class DeliveryVerification {
       references,
       digest: createHash('sha256').update(JSON.stringify(reviews)).digest('hex'),
     };
+  }
+
+  /** Accepts current assembled goal coverage while preserving readable historical director verdicts. */
+  private goal(
+    run: ExecutionRun,
+    assignments: ExecutionAssignment[],
+    candidate: RecordData,
+    references: string[],
+    reviews: any[],
+  ): void {
+    if (run.mode !== 'task') return;
+    const goals = run.data.goalEvidence as string[];
+    const criteria = [run.objective, ...assignments.flatMap((item) => item.acceptance)];
+    const accepted = reviews.some(
+      (review, index) =>
+        goals.includes(references[index]!) &&
+        (review.activationRole === 'director-assessment' ||
+          (review.activationRole === 'verifier' &&
+            review.parentRecordId === candidate.id &&
+            run.data.goalCandidate === run.data.candidateRevision &&
+            criteria.every((criterion) => review.acceptanceCriteria.includes(criterion)))),
+    );
+    if (!accepted) throw new Error('Missing independent goal assessment');
   }
 
   /** Refuses unfinished assignments and missing or mismatched independent worker assessments. */
@@ -82,14 +101,14 @@ export class DeliveryVerification {
     ).trim();
     if (observed !== accepted) throw new Error('Candidate changed after verified delivery');
     if (run.mode === 'task' && !Array.isArray(run.data.goalEvidence))
-      throw new Error('Task requires director goal acceptance before delivery');
+      throw new Error('Task requires independent goal acceptance before delivery');
   }
 
   /** Requires the goal assessment for tasks while workdays retain independent delivery assessments. */
   private references(run: ExecutionRun, assignments: ExecutionAssignment[]): string[] {
     const goals = run.data.goalEvidence as string[] | undefined;
     if (run.mode === 'task' && (!Array.isArray(goals) || !goals.length))
-      throw new Error('Missing director goal assessment');
+      throw new Error('Missing independent goal assessment');
     return [
       ...new Set([...assignments.flatMap((assignment) => assignment.evidence), ...(goals ?? [])]),
     ];
