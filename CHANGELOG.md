@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Retire obsolete dependency requests through ordinary director admission while preserving shared work, checkpoints and history (#275).
+
 - Reclaim terminal dependency copies automatically and bound evidence retention with a configurable ceiling and oldest-first expiration to 50%, preserving active work and pending deliveries (#302).
 
 - Let engineering stewards retrieve complete retained operation diagnostics through the existing assignment evidence capability (#290).

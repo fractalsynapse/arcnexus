@@ -243,6 +243,28 @@
           }
         ]
       }
+    },
+    "dependencyRetirementProposal": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "requestId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["requestId", "rationale"],
+          "additionalProperties": false
+        }
+      ]
     }
   },
   "required": [
@@ -252,6 +274,7 @@
     "rejectedOwners",
     "questions",
     "assignments",
+    "dependencyRetirementProposal",
     "dependency",
     "architectureProposal",
     "continuations"

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { assignmentIntent } from './assignment-intent.js';
 import type { Assignment } from '../architecture/assignment.js';
 import { readFileSync } from 'node:fs';
@@ -24,8 +25,45 @@ export class AssignmentDispatch {
     private readonly store: ExecutionStore,
   ) {}
 
+  /** Captures required assignments and current request identities from one consistent store snapshot. */
+  state(runId: string) {
+    return this.store.snapshot(() =>
+      this.store.requiredAssignments(runId).map((assignment) => ({
+        ...assignment,
+        inbox: this.store.inbox(assignment.id),
+      })),
+    );
+  }
+
   /** Validates every scope and checkpoint before any proposal can become runnable. */
   apply(run: ExecutionRun, result: DirectorResult, checkpoint: Record<string, unknown> = {}): void {
+    const id = createHash('sha256')
+      .update(
+        JSON.stringify({
+          runId: run.id,
+          result,
+          checkpoint,
+          history: this.store.run(run.id).data.directionHistory ?? [],
+        }),
+      )
+      .digest('hex');
+    if (this.store.directionAdmitted(run.id, id)) return;
+    const retirements = this.retirements(run, result);
+    const continuations = result.continuations.filter((item) =>
+      this.eligible(
+        run,
+        item,
+        retirements.some((retired) => retired.assignmentId === item.assignmentId),
+      ),
+    );
+    this.store.admitDirection(run.id, this.proposals(run, result), continuations, checkpoint, {
+      id,
+      retirements,
+    });
+  }
+
+  /** Resolves proposed owner authority and captures the director's context before admission. */
+  private proposals(run: ExecutionRun, result: DirectorResult) {
     for (const proposal of result.assignments) {
       const { ownerId, ...assignment } = proposal;
       new ExecutionContext().assignment(this.context, ownerId, {
@@ -35,19 +73,52 @@ export class AssignmentDispatch {
         hostChecks: [],
       });
     }
-    const continuations = result.continuations.filter((item) => this.eligible(run, item));
     const directionContext = {
       summary: result.summary,
       feedback: this.store.run(run.id).data.redirection,
       prompt: run.data.prompt,
     };
-    const proposals = result.assignments.map((proposal) => ({
+    return result.assignments.map((proposal) => ({
       owner: proposal.ownerId,
       objective: proposal.objective,
       acceptance: proposal.acceptanceCriteria,
       data: { proposal, directionContext },
     }));
-    this.store.admitDirection(run.id, proposals, continuations, checkpoint);
+  }
+
+  /** Checks the current request and supplier checkpoint before treating retirement as material progress. */
+  private retirements(run: ExecutionRun, result: DirectorResult) {
+    const proposal = result.dependencyRetirementProposal;
+    if (!proposal) return [];
+    if (!proposal.rationale.trim()) throw new Error('Request retirement requires a rationale');
+    const request = this.store.requestById(proposal.requestId);
+    const source = this.store.assignment(request.from);
+    const recipient = this.store.assignment(request.assignmentId);
+    if (
+      source.runId !== run.id ||
+      recipient.runId !== run.id ||
+      request.retired ||
+      !source.dependencies.includes(recipient.id) ||
+      !result.continuations.some(
+        (item) => item.assignmentId === source.id && !item.replacementChangeType,
+      )
+    )
+      throw new Error('Retirement requires the current requester continuation in this run');
+    if (['running', 'interrupted'].includes(recipient.status))
+      throw new Error('Cannot retire in-flight supplier work');
+    this.retirementCheckpoints(recipient, new Set());
+    return [{ assignmentId: source.id, requestId: request.id, rationale: proposal.rationale }];
+  }
+
+  /** Refuses uncertain descendants before disconnecting any request-only subtree. */
+  private retirementCheckpoints(assignment: ExecutionAssignment, visited: Set<string>): void {
+    if (visited.has(assignment.id)) return;
+    visited.add(assignment.id);
+    if (['running', 'interrupted'].includes(assignment.status) || assignment.data.pendingOutcome)
+      throw new Error('Cannot retire in-flight supplier work');
+    this.checkpoint(assignment, true);
+    for (const id of assignment.dependencies)
+      this.retirementCheckpoints(this.store.effective(id), visited);
   }
 
   /** Retains each owner's considered inputs and architectural questions independently. */
@@ -81,9 +152,10 @@ export class AssignmentDispatch {
   private eligible(
     run: ExecutionRun,
     continuation: DirectorResult['continuations'][number],
+    changedObligation = false,
   ): boolean {
     try {
-      this.validate(run, continuation);
+      this.validate(run, continuation, changedObligation);
       return true;
     } catch (error) {
       if (run.mode !== 'workday' || !(error instanceof Error) || error.name !== 'NeedsAttention')
@@ -94,7 +166,11 @@ export class AssignmentDispatch {
   }
 
   /** Refuses scope substitution and uncertain operations while preserving accepted engineering evidence. */
-  private validate(run: ExecutionRun, continuation: DirectorResult['continuations'][number]): void {
+  private validate(
+    run: ExecutionRun,
+    continuation: DirectorResult['continuations'][number],
+    changedObligation: boolean,
+  ): void {
     const assignment = this.store.assignment(continuation.assignmentId);
     if (assignment.runId !== run.id || assignment.owner !== continuation.ownerId)
       throw new Error('Continuation must name an existing owner assignment in this run');
@@ -109,11 +185,11 @@ export class AssignmentDispatch {
       throw new Error('Assignment already replaced; inspect its current successor');
     }
     this.replacementAuthority(assignment, continuation);
-    this.checkpoint(assignment);
+    this.checkpoint(assignment, changedObligation);
   }
 
   /** Verifies the retained workspace and refuses to replay an operation whose outcome is unknown. */
-  private checkpoint(assignment: ExecutionAssignment): void {
+  private checkpoint(assignment: ExecutionAssignment, changedObligation = false): void {
     if (!assignment.data.recordId) {
       if (assignment.data.reconciliation)
         throw new Error('Checkpoint has uncertain workspace preparation');
@@ -129,7 +205,7 @@ export class AssignmentDispatch {
     if (pending && pending.recordId !== record.reconciliationId)
       throw new Error('Continuation has uncertain workspace preparation');
     validateContinuation(this.root, record);
-    if (assignment.status !== 'ready') this.diagnose(record, assignment);
+    if (assignment.status !== 'ready' && !changedObligation) this.diagnose(record, assignment);
   }
 
   /** Rechecks a proposed fresh workflow against the original owner and all original criteria. */

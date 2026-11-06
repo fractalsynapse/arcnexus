@@ -199,3 +199,11 @@ inputs are paged rather than embedded repeatedly in the initial prompt; no evide
 is discarded and no execution quota is introduced. Each activation retains immutable
 content hashes and its own artifact names. Read the current manifest and follow
 page offsets until the relevant artifact is complete.
+
+## Dependency retirement proposals
+
+A director result includes the required `dependencyRetirementProposal` field. It is
+`null` when direction makes no dependency retirement proposal. When present, the
+proposal contains only a nonempty `requestId` and a nonempty `rationale`, so the host
+can correlate the proposed retirement with the request and understand its reason.
+This field records a proposal; it does not itself authorize or perform retirement.
