@@ -17,6 +17,7 @@ import { observe, readTimeline } from '../report/timeline.js';
 import { cleanupMembers, type Member } from './members.js';
 import { assertOutputs } from './outputs.js';
 import type { RecordData } from './state.js';
+import { DependencyCleanup } from './dependency-cleanup.js';
 
 interface CleanupIntent {
   schemaVersion: number;
@@ -66,6 +67,14 @@ export class WorkspaceCleanup {
   /** Executes this lifecycle through its configured collaborators and propagates failures. */
   run(): RecordData {
     this.resources();
+    if (this.record.executionRunId !== undefined || this.record.assignmentId !== undefined) {
+      if (
+        commonDirectory(this.record.workspace) !== this.record.commonDir ||
+        !registered(this.record.source, this.record.workspace)
+      )
+        throw new Error('Retained workspace repository identity changed');
+      return new DependencyCleanup(this.root, this.record).run();
+    }
     if (this.record.status === 'removed' || existsSync(this.receiptPath)) {
       if (lstatSync(this.record.workspace, { throwIfNoEntry: false }))
         throw new Error('Previously removed workspace path is occupied');
@@ -81,10 +90,6 @@ export class WorkspaceCleanup {
   /** Requires managed resources to be stopped before destructive removal. */
   private resources(): void {
     const { root, id, record } = this;
-    if (record.executionRunId !== undefined || record.assignmentId !== undefined)
-      throw new Error(
-        'Workspace is retained by general execution; its retention must be released before cleanup',
-      );
     if (['preparing', 'initializing', 'running'].includes(record.status))
       throw new Error('Workspace operation is active or incomplete; inspect before cleanup');
     assertServicesStopped(root, id);

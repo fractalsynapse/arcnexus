@@ -470,3 +470,23 @@ obligation is material progress, not an identical failed continuation.
 Scheduling and goal completion use the same required-work projection; archived
 request-only work stays visible as retained history without masquerading as verified
 delivery. The director still assesses the original goal against actual verification.
+
+## Evidence retention (#302)
+
+`ARCNEXUS_EVIDENCE_MAX_BYTES` sets the retained-evidence ceiling in bytes; the
+default is 100,000,000,000 (100 GB). Values must be safe integers of at least two bytes. At the
+ceiling, expire the oldest eligible terminal-run evidence until usage reaches
+50% of the configured limit. Record expiration explicitly; unavailable historical
+evidence must never be reported as an observed verification pass.
+
+Active or unfinished runs, uncertain operations and pending deliveries protect
+their evidence. Source repositories, candidate changes and dependency caches are
+not evidence and are not deleted by evidence retention. If protected evidence
+prevents reaching the target, refuse new engineering dispatch with an actionable
+storage diagnostic. Existing retained supervisors are not modified in place.
+
+Set the variable in the host or container environment before starting its supervisor,
+for example `ARCNEXUS_EVIDENCE_MAX_BYTES=20000000000` for a 20 GB ceiling and a
+10 GB cleanup target. Admission and activation checkpoints enforce the policy;
+this is not a filesystem quota on an operation's in-flight output. A running
+operation can temporarily exceed the ceiling before the next checkpoint.
