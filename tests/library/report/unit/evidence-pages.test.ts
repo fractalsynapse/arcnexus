@@ -33,6 +33,38 @@ class EvidenceRequestScenarios {
     assert.equal(pages.metadata().filter((item) => item.id === index.output.artifact).length, 1);
   }
 
+  /** Agent-selected large reads preserve exact content and can consume the remaining artifact at once. */
+  async large(): Promise<void> {
+    const pages = this.pages();
+    const original = 'evidence'.repeat(30000);
+    pages.add('large', original, 'utf8');
+    const first = (await pages.call('verification.evidence', {
+      artifact: 'large',
+      length: 100000,
+    })) as any;
+    assert.equal(first.content, original.slice(0, 100000));
+    assert.equal(first.nextOffset, 100000);
+    assert.equal(first.complete, false);
+    const rest = (await pages.call('verification.evidence', {
+      artifact: 'large',
+      offset: first.nextOffset,
+      length: Number.MAX_SAFE_INTEGER,
+    })) as any;
+    assert.equal(first.content + rest.content, original);
+    assert.equal(rest.complete, true);
+    assert.equal(rest.nextOffset, original.length);
+    assert.equal(rest.sha256, first.sha256);
+    const schema = pages.tools[0]!.inputSchema as any;
+    assert.equal('maximum' in schema.properties.length, false);
+    for (const length of [0, -1, 1.5, '100000', Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+      const result = (await pages.call('verification.evidence', {
+        artifact: 'large',
+        length,
+      })) as any;
+      assert.equal(result.status, 'rejected');
+    }
+  }
+
   /** Rejects malformed and foreign inputs without disclosure, then serves unchanged pinned content. */
   async corrective(): Promise<void> {
     const pages = this.pages();
@@ -81,6 +113,8 @@ class EvidenceRequestScenarios {
 }
 
 const scenarios = new EvidenceRequestScenarios();
+
+test('evidence reads have no artificial page size ceiling', () => scenarios.large());
 
 test('section indexes keep large evidence available without inline duplication', () =>
   scenarios.sections());

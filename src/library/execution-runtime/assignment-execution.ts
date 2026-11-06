@@ -64,12 +64,7 @@ export class AssignmentExecution {
     this.acknowledge(assignment, record);
     this.dependencyContext(assignment, record);
     record.inboxContext = this.inbox(assignment.id);
-    record.continuationFeedback = [
-      assignment.data.continuationReason,
-      record.continuationLoopWarning,
-    ]
-      .filter(Boolean)
-      .join('\n');
+    this.feedback(assignment, record);
     const session = this.session(assignment, record);
     if (Array.isArray(assignment.data.questions) && assignment.data.questions.length)
       return this.answer(assignment, record, session);
@@ -77,6 +72,19 @@ export class AssignmentExecution {
     else if (!record.pendingRequests && !record.pendingInboxActions) await session.step();
     const result = await this.outcome(assignment, record, session);
     return { ...result, receipt: (record.checkpoint as { sha256: string }).sha256 };
+  }
+
+  /** Ensures fresh direction reaches a model even when engineering finished before delivery review. */
+  private feedback(assignment: ExecutionAssignment, record: RecordData): void {
+    const feedback = [assignment.data.continuationReason, record.continuationLoopWarning]
+      .filter(Boolean)
+      .join('\n');
+    if (feedback && feedback !== record.continuationFeedback && record.nextStage === 'finished') {
+      const resolved = record.resolvedAssignment as ResolvedAssignment;
+      record.nextStage = resolved.assignment.kind === 'change' ? 'review' : 'research';
+      record.status = 'running';
+    }
+    record.continuationFeedback = feedback;
   }
 
   /** Reconstructs the owner session with host-bound tools and the captured engineering profile. */

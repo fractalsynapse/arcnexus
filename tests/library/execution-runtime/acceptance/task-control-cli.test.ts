@@ -36,6 +36,7 @@ class TaskControlCliScenario {
     const paused = command(f.root, 'task', 'pause', run.id);
     assert.ok(['paused', 'pausing'].includes(paused.run.status));
     await this.until(() => command(f.root, 'task', 'get', run.id).run.status === 'paused');
+    this.feedback(command, f.root, run.id);
     const retained = command(f.root, 'task', 'get', run.id);
     const metadata = this.metadata(general);
     process.kill(general.hostPid!, 'SIGKILL');
@@ -48,6 +49,18 @@ class TaskControlCliScenario {
     assert.equal(command(f.root, 'task', 'stop', run.id).run.status, 'cancelled');
     assert.equal(command(f.root, 'task', 'stop', run.id).run.status, 'cancelled');
     await this.stop(general);
+  }
+
+  /** Routes caller review through the real CLI while retaining pause for ordinary recovery. */
+  private feedback(
+    command: ReturnType<TaskControlCliScenario['command']>,
+    root: string,
+    id: string,
+  ): void {
+    const answered = command(root, 'task', 'answer', id, 'Preserve the original acceptance');
+    assert.equal(answered.run.status, 'paused');
+    assert.match(answered.run.data.prompt, /Architect response: Preserve the original acceptance/);
+    assert.equal(command(root, 'task', 'get', id).run.status, 'paused');
   }
 
   /** Resolves a registered package and submits work from a directory outside every checkout. */

@@ -4,6 +4,23 @@ import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import type { RecordData } from '../workspace/state.js';
 import type { ExecutionRun } from '../coordination-store/execution-types.js';
 
+const summaryFields = [
+  'prompt',
+  'questions',
+  'stewardshipReviews',
+  'architectureProposal',
+  'error',
+  'integrityError',
+  'pauseReason',
+  'authorityBase',
+  'authorityError',
+  'executionIdentity',
+  'candidateRevision',
+  'verifiedEvidence',
+  'goalEvidence',
+  'recoveryProposal',
+];
+
 /** Projects durable runs into compact CLI progress and inspectable reports without changing authority. */
 export class ExecutionReports {
   /** Uses the same authoritative store while retaining projections beneath its project directory. */
@@ -74,21 +91,6 @@ export class ExecutionReports {
 
   /** Omits large captured catalogs from streaming output while preserving actionable questions and evidence. */
   private summary(run: ExecutionRun) {
-    const fields = [
-      'questions',
-      'stewardshipReviews',
-      'architectureProposal',
-      'error',
-      'integrityError',
-      'pauseReason',
-      'authorityBase',
-      'authorityError',
-      'executionIdentity',
-      'candidateRevision',
-      'verifiedEvidence',
-      'goalEvidence',
-      'recoveryProposal',
-    ];
     const candidate = run.data.candidateRecord as { workspace?: string } | undefined;
     return {
       id: run.id,
@@ -98,7 +100,7 @@ export class ExecutionReports {
       status: run.status,
       createdAt: run.createdAt,
       data: {
-        ...Object.fromEntries(fields.map((key) => [key, run.data[key]])),
+        ...Object.fromEntries(summaryFields.map((key) => [key, run.data[key]])),
         candidateLocation: candidate?.workspace,
       },
     };

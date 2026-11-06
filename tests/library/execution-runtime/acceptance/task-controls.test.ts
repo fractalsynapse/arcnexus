@@ -41,6 +41,33 @@ class TaskControlScenarios {
     assert.equal(host.store.run(run.id).status, 'running');
   }
 
+  /** Paused feedback preserves retained work and only schedules direction after explicit resume. */
+  feedback(t: TestContext): void {
+    const host = this.host(t);
+    const run = host.submit('Repair the original defect');
+    const assignment = host.store.enqueue(run.id, 'c', 'Repair', ['Regression']);
+    host.store.updateRun(run.id, 'running', { initialized: true });
+    host.taskControl('pause', run.id);
+    const before = host.store.run(run.id);
+    const revision = new ResourceQuery().revision(host.reports.view(run.id));
+    host.taskControl('answer', run.id, 'Review found a false passing check', revision);
+    const retained = host.store.run(run.id);
+    assert.equal(retained.status, 'paused');
+    assert.equal(retained.data.initialized, false);
+    assert.equal(retained.objective, before.objective);
+    assert.equal(retained.data.authorityBase, before.data.authorityBase);
+    assert.equal(retained.data.candidateRevision, before.data.candidateRevision);
+    assert.match(String(retained.data.prompt), /Repair the original defect.*\nArchitect response:/);
+    assert.deepEqual(host.store.assignment(assignment.id), assignment);
+    assert.throws(() => host.taskControl('answer', run.id, 'Duplicate', revision), /Stale/);
+    host.taskControl('resume', run.id);
+    assert.equal(host.store.run(run.id).data.initialized, false);
+    for (const status of ['pausing', 'completed', 'cancelled'] as const) {
+      host.store.updateRun(run.id, status);
+      assert.throws(() => host.taskControl('answer', run.id, 'Response'), /safely paused/);
+    }
+  }
+
   /** Interrupted operations cannot be replayed by a resume request. */
   uncertain(t: TestContext): void {
     const host = this.host(t);
@@ -67,6 +94,9 @@ test('task pause resume and stop preserve assignments and terminality', (t) =>
   scenarios.lifecycle(t));
 
 test('task answers and revision checks reject invalid mutations', (t) => scenarios.answers(t));
+
+test('paused task feedback retains work and requires explicit resume', (t) =>
+  scenarios.feedback(t));
 
 test('task resume retains uncertain-operation blockers', (t) => scenarios.uncertain(t));
 

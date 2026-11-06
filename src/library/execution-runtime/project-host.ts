@@ -145,14 +145,14 @@ export class ProjectHost {
     return task;
   }
 
-  /** Retains a clarification response and schedules the director on the same task. */
+  /** Retains architect input for the same director without releasing an explicit pause. */
   answer(id: string, answer: string): void {
     if (!answer.trim()) throw new InputError('Task answer must not be empty');
     const run = this.store.run(id);
     this.authority.assert(run);
-    if (run.mode !== 'task' || run.status !== 'needs_input')
-      throw new InputError('Task is not awaiting input');
-    this.store.updateRun(id, 'running', {
+    if (run.mode !== 'task' || !['needs_input', 'paused'].includes(run.status))
+      throw new InputError('Task is not awaiting input or safely paused');
+    this.store.updateRun(id, run.status === 'paused' ? 'paused' : 'running', {
       prompt: String(run.data.prompt ?? run.objective) + '\nArchitect response: ' + answer,
       initialized: false,
     });

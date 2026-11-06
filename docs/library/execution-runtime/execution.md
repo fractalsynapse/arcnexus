@@ -329,8 +329,13 @@ and retains the goal, accepted plans, dependencies and unfinished assignment fil
 An explicit stop cancels active execution and may also cancel paused, interrupted
 or attention-required work. Delayed attached-client cancellation preserves retained
 interrupted and attention outcomes; it is not a new explicit stop request. Answer
-requires a nonempty response to an actual needs-input task. Terminal runs cannot
-resume. Application controls support expected-revision checks at the host mutation
+requires a nonempty response to a needs-input or safely paused task. Feedback to a
+paused task retains its pause and original work; ordinary resume validates the
+checkpoint and sends the accumulated response to the director before dispatch.
+The director may continue ready assignments at validated checkpoints, retaining
+their acknowledged operation receipts; running assignments remain ineligible and
+fresh workflow replacement still requires a diagnosed unsuccessful assignment.
+Running, pausing and terminal tasks reject answers. Terminal runs cannot resume. Application controls support expected-revision checks at the host mutation
 boundary; the CLI never fabricates authorization from a resource projection.
 
 Recovery validates captured execution and repository identity, then starts the

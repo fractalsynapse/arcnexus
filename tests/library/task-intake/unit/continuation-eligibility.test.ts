@@ -5,7 +5,7 @@ import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Checks the lifecycle information a real director receives before an activation has a checkpoint. */
 class ContinuationEligibilityScenarios {
-  /** Waiting, queued, retired and completed work cannot be restarted by a direction decision. */
+  /** Ready work accepts feedback while active, waiting, retired and completed work cannot restart. */
   project(): void {
     const evidence = new DirectionEvidence('/unused', 'run');
     const assignments = [
@@ -24,12 +24,12 @@ class ContinuationEligibilityScenarios {
     ]) as Array<{ checkpointEvidence: { continuation: { eligible: boolean } } }>;
     assert.deepEqual(
       result.map((item) => item.checkpointEvidence.continuation.eligible),
-      [false, false, false, false, false, true, true, true, false],
+      [true, false, false, false, false, true, true, true, false],
     );
   }
 }
 
-test('director eligibility distinguishes waiting from diagnosed failed work', () =>
+test('director eligibility permits ready feedback and distinguishes waiting from failed work', () =>
   new ContinuationEligibilityScenarios().project());
 
 registerSuite({ component: 'task-intake', level: 'unit', tags: ['deterministic', 'continuation'] });
