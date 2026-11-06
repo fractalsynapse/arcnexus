@@ -186,3 +186,9 @@ Cleanup validates all selected output paths before removal and records a separat
 receipt. Repeating it is safe. Normal dependency preparation can restore missing
 outputs from its retained cache. Dependency copies use full disk space when the
 filesystem cannot reflink; installation reuse does not imply storage deduplication.
+
+Terminal-run finalization invokes this same cleanup path after managed execution
+has settled. It uses retained workspace identities instead of rescanning complete
+reports each scheduler tick. Cleanup failures preserve work and remain visible;
+they do not rewrite a verified engineering result as failure. Pending publication
+and nonterminal runs prevent automatic reclamation.

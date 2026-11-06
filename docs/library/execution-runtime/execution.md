@@ -457,3 +457,17 @@ with the host's captured identity. Compact status reports are projections, not
 authority records. Matching tasks retain that workday's environment and isolated
 staging even when upstream staging has advanced; this does not upgrade the host
 or import a new source revision (#259).
+
+## Evidence retention (#302)
+
+`ARCNEXUS_EVIDENCE_MAX_BYTES` sets the retained-evidence ceiling in bytes; the
+default is 100,000,000,000 (100 GB). Values must be positive safe integers. At the
+ceiling, expire the oldest eligible terminal-run evidence until usage reaches
+50% of the configured limit. Record expiration explicitly; unavailable historical
+evidence must never be reported as an observed verification pass.
+
+Active or unfinished runs, uncertain operations and pending deliveries protect
+their evidence. Source repositories, candidate changes and dependency caches are
+not evidence and are not deleted by evidence retention. If protected evidence
+prevents reaching the target, refuse new engineering dispatch with an actionable
+storage diagnostic. Existing retained supervisors are not modified in place.
