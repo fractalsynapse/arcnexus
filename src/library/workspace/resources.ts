@@ -80,6 +80,11 @@ export class WorkspaceResources {
     if (!/^[a-zA-Z0-9_-]+$/.test(id)) throw new InputError('Invalid workspace identity');
     const directory = join(this.root, 'runs', id),
       path = join(directory, 'report.json');
+    const expiration = join(this.root, 'expired-evidence', id + '.json');
+    if (!existsSync(path) && existsSync(expiration))
+      throw new InputError(
+        'Workspace evidence expired under retention policy; receipt: ' + expiration,
+      );
     try {
       if (lstatSync(directory).isSymbolicLink() || !lstatSync(path).isFile())
         throw new Error('Unsafe workspace receipt');

@@ -24,6 +24,8 @@ import { save, statePath, stateRoot, type RecordData } from './state.js';
 
 export { assertGeneratedOutputs, assertOutputs } from './outputs.js';
 
+export { EvidenceRetention } from './evidence-retention.js';
+
 export { WorkspaceResources, type WorkspaceTarget } from './resources.js';
 
 export interface PrepareOptions {
@@ -336,7 +338,11 @@ export class WorkspaceDisposal {
   private remove(item: ReturnType<WorkspaceResources['get']>['workspace'], signal: AbortSignal) {
     signal.throwIfAborted();
     try {
-      if (!item.finishedAt && !['removed', 'completed'].includes(item.status))
+      if (
+        !item.finishedAt &&
+        !['removed', 'completed'].includes(item.status) &&
+        !(item.retained && item.status === 'prepared')
+      )
         throw new Error('Workspace is unfinished; inspect before cleanup');
       const result = cleanup(this.root, item.id);
       return {

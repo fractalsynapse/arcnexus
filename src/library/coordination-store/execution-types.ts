@@ -22,6 +22,14 @@ export const runStatuses = [
 
 export type RunStatus = (typeof runStatuses)[number];
 
+/** Terminal run states cannot dispatch more engineering without creating a new run. */
+export const terminalRunStatuses: readonly RunStatus[] = [
+  'completed',
+  'stopped',
+  'cancelled',
+  'failed',
+];
+
 export type AssignmentStatus =
   'ready' | 'running' | 'waiting' | 'completed' | 'blocked' | 'rejected' | 'failed' | 'interrupted';
 

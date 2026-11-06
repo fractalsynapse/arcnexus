@@ -4,7 +4,7 @@
 
 ### Fixed
 
-- Reclaim recorded dependency copies from completed workspaces in terminal runs while preserving source and execution evidence (#302).
+- Reclaim terminal dependency copies automatically and bound evidence retention with a configurable ceiling and oldest-first expiration to 50%, preserving active work and pending deliveries (#302).
 
 - Let engineering stewards retrieve complete retained operation diagnostics through the existing assignment evidence capability (#290).
 

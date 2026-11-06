@@ -11,6 +11,9 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { relativePath } from '../architecture/config.js';
 import { ExecutionStore } from '../coordination-store/execution-store.js';
+import { DeliveryStore } from '../coordination-store/delivery-store.js';
+import { terminalRunStatuses } from '../coordination-store/execution-types.js';
+import { deliveryRetainsEvidence } from './retention-catalog.js';
 import { git } from '../operations/process.js';
 import type { RecordData } from './state.js';
 
@@ -37,10 +40,13 @@ export class DependencyCleanup {
 
   /** Requires an authoritative terminal run and settled workspace operations, not a timestamp alone. */
   private terminal(): void {
-    if (this.record.status !== 'completed' || typeof this.record.executionRunId !== 'string')
+    if (
+      !['completed', 'prepared'].includes(this.record.status) ||
+      typeof this.record.executionRunId !== 'string'
+    )
       throw new Error('Workspace is retained by execution; completed run evidence is required');
     const runs = this.runs();
-    if (runs.length !== 1 || !['completed', 'stopped'].includes(runs[0]!.status))
+    if (runs.length !== 1 || !terminalRunStatuses.includes(runs[0]!.status))
       throw new Error('Workspace is retained by execution; its run is not unambiguously terminal');
     const invocations = this.record.operationInvocations as { status: string }[] | undefined;
     if (!invocations || invocations.some((operation) => operation.status !== 'completed'))
@@ -56,11 +62,34 @@ export class DependencyCleanup {
       if (!existsSync(path)) return [];
       const store = new ExecutionStore(path, true);
       try {
-        return store.runs().filter((run) => run.id === this.record.executionRunId);
+        const runs = store.runs().filter((run) => run.id === this.record.executionRunId);
+        if (
+          runs.some((run) => run.data.pendingPublication) ||
+          (runs.length && this.pendingDelivery(join(directory, project)))
+        )
+          throw new Error('Pending publication retains dependency outputs');
+        return runs;
       } finally {
         store.close();
       }
     });
+  }
+
+  /** Keeps dependencies needed by a retained publication or promotion until integration completes. */
+  private pendingDelivery(project: string): boolean {
+    const path = join(project, 'deliveries.sqlite');
+    if (!existsSync(path)) return false;
+    const store = new DeliveryStore(path, true);
+    try {
+      return store
+        .list()
+        .some(
+          (delivery) =>
+            delivery.runId === this.record.executionRunId && deliveryRetainsEvidence(delivery),
+        );
+    } finally {
+      store.close();
+    }
   }
 
   /** Uses successful preparation receipts rather than interpreting directory names as disposable. */

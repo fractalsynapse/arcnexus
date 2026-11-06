@@ -96,6 +96,7 @@ export class RunPublication {
     if (delivery.publication !== 'released' && !run.data.pendingPublication)
       this.execution.updateRun(run.id, run.status, {
         pendingPublication: id,
+        dependencyCleanup: null,
         publicationCheckAttempt: randomUUID(),
       });
     return { accepted: true, deliveryId: id, runId: run.id };

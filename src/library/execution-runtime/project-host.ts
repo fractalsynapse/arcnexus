@@ -1,4 +1,6 @@
 import { RunPromotion } from './run-promotion.js';
+import { RunFinalization } from './run-finalization.js';
+import { EvidenceRetention } from '../workspace/workspace.js';
 import { HostActivation } from './host-activation.js';
 import { RunPublication } from './run-publication.js';
 import { RunSelection } from './run-selection.js';
@@ -38,6 +40,8 @@ export class ProjectHost {
 
   private readonly selection: RunSelection;
 
+  private readonly finalization: RunFinalization;
+
   private readonly activation = new HostActivation();
 
   /** Opens durable project state without automatically replaying interrupted activations. */
@@ -52,6 +56,7 @@ export class ProjectHost {
     this.environments = new RunEnvironments(root, context, this.store);
     this.collaboration = new CollaborativeDispatch(root, context, this.store, this.environments);
     this.selection = new RunSelection(context, this.store);
+    this.finalization = new RunFinalization(root, this.store);
     this.authority = new RunAuthority(context, this.store);
     new HostRecovery(root, this.store, this.authority).recover();
   }
@@ -213,6 +218,7 @@ export class ProjectHost {
   /** Executes at most one activation so IPC controls remain responsive between checkpoints. */
   async tick(): Promise<void> {
     if (this.activation.busy || this.activation.closing) return;
+    this.finalization.sweep();
     const run = this.selection.next();
     if (!run) return;
     await this.activation.run(run.id, async (signal) => {
@@ -221,7 +227,7 @@ export class ProjectHost {
       } catch (error) {
         this.failure(run.id, error);
       } finally {
-        this.settle(run.id);
+        this.finalization.settle(run.id);
         this.reports.save(run.id);
       }
     });
@@ -252,6 +258,8 @@ export class ProjectHost {
 
   /** Captures a new run against the last compatible verified candidate. */
   private create(mode: 'task' | 'workday', objective: string, simulate = false): ExecutionRun {
+    if (!this.activation.busy) this.finalization.sweep();
+    new EvidenceRetention(this.root).enforce(!this.activation.busy);
     return new RunCreation(this.context, this.store, this.environments).create(
       mode,
       objective,
@@ -267,6 +275,7 @@ export class ProjectHost {
 
   /** Prepares context, advances ready assignments or invokes the mode-specific selection policy. */
   private async advance(run: ExecutionRun, signal: AbortSignal): Promise<void> {
+    new EvidenceRetention(this.root).enforce();
     this.authority.assert(run);
     if (run.data.pendingPublication)
       return new RunPublication(this.root, this.context, this.store).advance(
@@ -485,14 +494,5 @@ export class ProjectHost {
       String(run.data.candidateRevision),
     );
     this.store.updateRun(run.id, this.store.run(run.id).status, { workspace: record });
-  }
-
-  /** Completes pending control requests without allowing a worker result to overwrite user intent. */
-  private settle(id: string): void {
-    const run = this.store.run(id);
-    if (run.mode === 'task' && run.status !== 'running')
-      this.store.updateRun(id, run.status, { executionOwner: false });
-    if (run.status === 'pausing') this.store.updateRun(id, 'paused');
-    if (run.status === 'stopping') this.store.updateRun(id, 'stopped');
   }
 }

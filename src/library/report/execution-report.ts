@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import type { RecordData } from '../workspace/state.js';
@@ -19,6 +19,8 @@ const summaryFields = [
   'verifiedEvidence',
   'goalEvidence',
   'recoveryProposal',
+  'dependencyCleanup',
+  'storageError',
 ];
 
 /** Projects durable runs into compact CLI progress and inspectable reports without changing authority. */
@@ -44,6 +46,7 @@ export class ExecutionReports {
       evidence: a.evidence,
       reason: a.data.reason,
       recordId: a.data.recordId,
+      evidenceRetention: this.expiration(a.data.recordId),
       reconciliation: a.data.reconciliation,
       progress: a.status === 'running' ? this.progress(a.data.recordId) : undefined,
       inbox: this.store.inbox(a.id).length,
@@ -102,7 +105,17 @@ export class ExecutionReports {
       data: {
         ...Object.fromEntries(summaryFields.map((key) => [key, run.data[key]])),
         candidateLocation: candidate?.workspace,
+        evidenceRetention: this.expiration((run.data.workspace as RecordData | undefined)?.id),
       },
     };
+  }
+
+  /** Distinguishes deliberate historical expiration from evidence that disappeared unexpectedly. */
+  private expiration(id: unknown) {
+    if (typeof id !== 'string' || !/^[a-f0-9-]{36}$/.test(id)) return undefined;
+    const path = join(this.directory, '..', '..', 'expired-evidence', id + '.json');
+    if (!existsSync(path)) return undefined;
+    const receipt = JSON.parse(readFileSync(path, 'utf8'));
+    return { status: receipt.status, expiredAt: receipt.expiredAt, receipt: path };
   }
 }

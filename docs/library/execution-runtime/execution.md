@@ -471,3 +471,9 @@ their evidence. Source repositories, candidate changes and dependency caches are
 not evidence and are not deleted by evidence retention. If protected evidence
 prevents reaching the target, refuse new engineering dispatch with an actionable
 storage diagnostic. Existing retained supervisors are not modified in place.
+
+Set the variable in the host or container environment before starting its supervisor,
+for example `ARCNEXUS_EVIDENCE_MAX_BYTES=20000000000` for a 20 GB ceiling and a
+10 GB cleanup target. Admission and activation checkpoints enforce the policy;
+this is not a filesystem quota on an operation's in-flight output. A running
+operation can temporarily exceed the ceiling before the next checkpoint.
