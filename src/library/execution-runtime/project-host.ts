@@ -368,9 +368,9 @@ export class ProjectHost {
     else this.store.updateRun(run.id, this.store.run(run.id).status, checkpoint);
   }
 
-  /** Requires all assignments and a separate goal-level assessment before task completion. */
+  /** Requires all current obligations and a separate goal assessment; retained obsolete work is not delivery. */
   private async finishTask(run: ExecutionRun, signal: AbortSignal): Promise<void> {
-    const assignments = this.store.assignments(run.id);
+    const assignments = this.store.requiredAssignments(run.id);
     if (assignments.some((a) => this.store.effective(a.id).status !== 'completed'))
       return this.redirect(
         run,
@@ -436,11 +436,12 @@ export class ProjectHost {
   ): Promise<void> {
     this.observeGoalFailure(run, feedback);
     const record = await this.workspaces(run).policy(run, signal);
+    const dispatch = new AssignmentDispatch(this.root, this.context, this.store);
     const result = await new Direction(
       this.root,
       this.environments.contextFor(run),
       signal,
-    ).reconsider(record, run.objective, this.store.assignments(run.id), feedback, blocked);
+    ).reconsider(record, run.objective, dispatch.state(run.id), feedback, blocked);
     if (signal.aborted) return;
     this.store.updateRun(run.id, this.store.run(run.id).status, {
       redirection: feedback,

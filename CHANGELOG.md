@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Retire obsolete dependency requests through ordinary director admission while preserving shared work, checkpoints and history (#275).
+
 - Retire stale routing failure receipts and recognize reconciled routing during validated resume, preserving loop and uncertain-operation checks (#296).
 
 - Preserve complete large evidence responses and fragmented Unicode over the shared MCP bridge (#294).

@@ -180,3 +180,8 @@ available, and omitted lengths use the default page size. Requests past the end
 of an artifact return only its remaining content with honest `nextOffset` and
 `complete` metadata. Invalid identities, offsets and malformed lengths still fail;
 read size never grants access to another artifact or changes its captured hash.
+
+Execution views retain every assignment's observed status and evidence, including
+request-only work disconnected by an explicit director retirement. The `required`
+field distinguishes current goal obligations from that retained history. Ready and
+waiting counts cover required work; retirement never counts as verified delivery.

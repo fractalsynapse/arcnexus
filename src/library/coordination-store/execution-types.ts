@@ -30,9 +30,9 @@ export function canReopenAssignment(status: AssignmentStatus): boolean {
   return status === 'failed' || status === 'blocked' || status === 'rejected';
 }
 
-/** Ready checkpointed work can receive direction without being replaced or replayed. */
+/** Ready or waiting checkpointed work can receive direction without dropping its dependencies. */
 export function canContinueAssignment(status: AssignmentStatus): boolean {
-  return status === 'ready' || canReopenAssignment(status);
+  return status === 'ready' || status === 'waiting' || canReopenAssignment(status);
 }
 
 export interface ExecutionRun {
@@ -65,6 +65,18 @@ export interface ExecutionAssignment {
   data: Record<string, unknown>;
 }
 
+/** Applies the single dependency milestone rule to scheduling, continuation and retirement. */
+export function dependencySatisfied(
+  source: ExecutionAssignment,
+  dependency: ExecutionAssignment,
+): boolean {
+  const required = (source.data.milestones as Record<string, string> | undefined)?.[dependency.id];
+  return (
+    dependency.status === 'completed' ||
+    (required === 'accepted' && dependency.data.accepted === true)
+  );
+}
+
 export interface OwnerRequest {
   kind?: 'change' | 'research' | 'review' | null;
   changeType?: 'behavior' | 'documentation' | 'refactor' | null;
@@ -80,6 +92,30 @@ export interface InboxRequest extends OwnerRequest {
   id: string;
   from: string;
   assignmentId: string;
+  retired?: boolean;
+  retiredByAdmission?: string;
+  retirementRationale?: string;
+}
+
+export interface DirectionProposal {
+  owner: string;
+  objective: string;
+  acceptance: string[];
+  data: Record<string, unknown>;
+}
+
+export interface RequestRetirement {
+  assignmentId: string;
+  requestId: string;
+  rationale?: string;
+}
+
+export interface DirectionAdmissionTransition {
+  id: string;
+  proposals: DirectionProposal[];
+  continuations: AssignmentContinuation[];
+  checkpoint: Record<string, unknown>;
+  retirements: RequestRetirement[];
 }
 
 export type ActivationResult = { receipt?: string } & (
