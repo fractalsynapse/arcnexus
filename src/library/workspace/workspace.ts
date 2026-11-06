@@ -299,7 +299,9 @@ export class WorkspaceDisposal {
         throw new Error('Workspace revision changed; read the resource again');
       const items = selected.items.map((item) => this.remove(item, signal));
       return {
-        status: items.some((item) => item.status !== 'removed') ? 'partial' : 'completed',
+        status: items.some((item) => !['removed', 'dependencies_reclaimed'].includes(item.status))
+          ? 'partial'
+          : 'completed',
         items,
       };
     } finally {
@@ -334,12 +336,12 @@ export class WorkspaceDisposal {
   private remove(item: ReturnType<WorkspaceResources['get']>['workspace'], signal: AbortSignal) {
     signal.throwIfAborted();
     try {
-      if (!item.finishedAt && item.status !== 'removed')
+      if (!item.finishedAt && !['removed', 'completed'].includes(item.status))
         throw new Error('Workspace is unfinished; inspect before cleanup');
-      cleanup(this.root, item.id);
+      const result = cleanup(this.root, item.id);
       return {
         id: item.id,
-        status: 'removed',
+        status: String(result.cleanupStatus),
         revision: new WorkspaceResources(this.root).get(item.id).revision,
       };
     } catch (error) {
@@ -347,6 +349,8 @@ export class WorkspaceDisposal {
         id: item.id,
         status:
           !existsSync(item.location) ||
+          new WorkspaceResources(this.root).get(item.id).workspace.dependencyCleanup?.status ===
+            'removing' ||
           existsSync(join(this.root, 'runs', item.id, 'cleanup-intent.json'))
             ? 'needs_attention'
             : 'preserved',

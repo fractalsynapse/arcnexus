@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Reclaim recorded dependency copies from completed workspaces in terminal runs while preserving source and execution evidence (#302).
+
 - Let engineering stewards retrieve complete retained operation diagnostics through the existing assignment evidence capability (#290).
 
 - Retire stale routing failure receipts and recognize reconciled routing during validated resume, preserving loop and uncertain-operation checks (#296).
