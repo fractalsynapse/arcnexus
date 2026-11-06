@@ -3,6 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { connect } from 'node:net';
 import type { BridgeTool } from './bridge.js';
+import { BridgeResponseBuffer } from './bridge-response-buffer.js';
 
 /** Forwards constrained MCP requests to the private parent-owned operation connection. */
 class BridgeClient {
@@ -10,7 +11,9 @@ class BridgeClient {
 
   private sequence = 0;
 
-  private input = '';
+  private readonly input = new BridgeResponseBuffer();
+
+  private disconnectedState = false;
 
   private readonly pending = new Map<
     number,
@@ -25,7 +28,7 @@ class BridgeClient {
   /** Executes this lifecycle through its configured collaborators and propagates failures. */
   async run(): Promise<void> {
     this.socket.on('data', (data) => this.receive(data));
-    this.socket.on('error', () => {});
+    this.socket.on('error', () => this.disconnected());
     this.socket.on('close', () => this.disconnected());
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: (await this.request('list')) as BridgeTool[],
@@ -40,31 +43,26 @@ class BridgeClient {
     });
   }
 
-  /** Sends one correlated request over the private parent connection. */
+  /** Sends one correlated request, rejecting immediately after the parent disconnects. */
   private request(method: string, name?: string, args?: unknown): Promise<unknown> {
     return new Promise((resolve, reject) => {
+      if (this.disconnectedState) {
+        reject(new Error('ArcNexus host disconnected'));
+        return;
+      }
+
       const id = ++this.sequence;
       this.pending.set(id, { resolve, reject });
       this.socket.write(JSON.stringify({ id, method, name, args }) + '\n');
     });
   }
 
-  /** Buffers incoming bytes until complete response frames are available. */
+  /** Sends complete UTF-8 response frames to the correlated request handler. */
   private receive(data: Buffer): void {
-    this.input += data.toString();
-    if (Buffer.byteLength(this.input) > 256 * 1024) {
-      this.socket.destroy();
-      return;
-    }
-    let end: number;
-    while ((end = this.input.indexOf('\n')) >= 0) {
-      const line = this.input.slice(0, end);
-      this.input = this.input.slice(end + 1);
-      this.message(line);
-    }
+    for (const line of this.input.receive(data)) this.message(line);
   }
 
-  /** Resolves the pending call associated with one received response. */
+  /** Resolves or rejects the pending call associated with one received response. */
   private message(line: string): void {
     try {
       const message = JSON.parse(line);
@@ -77,10 +75,13 @@ class BridgeClient {
     }
   }
 
-  /** Rejects pending requests when the parent connection is lost. */
+  /** Rejects all pending requests once when the parent connection is lost. */
   private disconnected(): void {
+    if (this.disconnectedState) return;
+    this.disconnectedState = true;
     for (const pending of this.pending.values())
       pending.reject(new Error('ArcNexus host disconnected'));
+    this.pending.clear();
     process.exitCode = 1;
     void this.server.close();
     process.stdin.destroy();
