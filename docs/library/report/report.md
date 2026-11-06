@@ -32,13 +32,15 @@ service id, status, and `endpointClosed` boolean. Absent or empty service histor
 produces exactly `No managed services recorded.` Both summaries use only captured
 record fields and leave the records unchanged.
 
-`## Captured test selection` lists the mandatory test suites captured in each
-component definition under `resolvedAssignment.context`. Each entry shows the
-captured component id, source path, test level, and SHA-256, sorted by source path
-in ascending, case-sensitive string order. Rendering reads only the captured
-assignment context and does not inspect test files or reorder the captured arrays.
-When historical records have no captured test selection, the section says
-`unavailable`. An explicitly captured empty suite list says `No tests captured.`
+## Captured test selection
+
+The report lists mandatory test suites captured in each component definition under
+`resolvedAssignment.context`. Each entry shows the captured component id, source
+path, test level, and SHA-256, sorted by source path in ascending, case-sensitive
+string order. Rendering reads only the captured assignment context and does not
+inspect test files or reorder the captured arrays. When historical records have no
+captured test selection, the section says `unavailable`. An explicitly captured
+empty suite list says `No tests captured.`
 
 ## Interpreting test and qualification evidence
 
@@ -185,11 +187,15 @@ read size never grants access to another artifact or changes its captured hash.
 ## Retained invocation diagnostics
 
 The report exposes retained command diagnostics through the existing assignment
-evidence paging capability. Each diagnostic includes the invocation id, operation
-id, observed exit status, canonical resolved context, and combined output from the
-retained invocation log. The reader correlates diagnostics with captured record
-operations and the invocation journal, including failed operations absent from the
-worker command list. Missing, uncertain, foreign, or unsafe-path evidence remains
-an explicit gap or safe rejection, never reconstructed as success. Existing intent
-discovery, invocation identities, evidence history, and paging remain the single
-shared path.
+evidence paging capability. Each diagnostic includes the record, assignment,
+invocation, and operation identities; observed exit status; canonical resolved
+invocation context; and complete combined stdout/stderr captured in the invocation
+log. Diagnostics include failed operations even when immediate command output was
+truncated or the operation is absent from the worker command list.
+
+A diagnostic is usable only when its invocation matches the captured record, run,
+assignment, and operation. Missing logs, missing status or context, uncertain
+results, foreign references, and unsafe paths remain explicit evidence gaps or safe
+rejections; they never imply success. Historical artifacts and invocation identities
+remain unchanged. The reader uses the existing immutable evidence paging path, with
+no second reader, execution authority, or total read-size quota.
