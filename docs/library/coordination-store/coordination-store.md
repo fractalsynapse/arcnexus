@@ -39,16 +39,49 @@ An absent or still-uninitialized read-only registry projects empty collections a
 never creates schema. Unsupported/corrupt schemas still fail explicitly. A failed
 open closes its connection; reads never gain mutation authority while waiting.
 
-A task director can replace a diagnosed failed change assignment when it needs
-a fresh workspace or corrected workflow. Its decision references the predecessor
+A task director can replace a diagnosed failed change assignment when it needs a
+fresh workspace or corrected workflow. Its decision references the predecessor
 ID, owner, reason and replacement change type. The host checks the checkpoint
 for uncertain operations before admission. The store preserves the predecessor's
 status, evidence and workspace. Its successor inherits the original owner, goal,
-criteria and pending dependencies. Existing request IDs continue to identify
-the same conversations. A dependent waiting for replaced work resumes on
+criteria and pending dependencies. Existing request IDs continue to identify the
+same conversations. A dependent waiting for replaced work resumes on
 verified delivery. Inspection records both assignment IDs and the diagnosis.
 
 Execution transactions and read snapshots preserve their original failure even
 if rollback also fails. SQLite can already have aborted a transaction after a
 storage failure; its later rollback diagnostic must not conceal that cause.
 This does not establish operation completion or authorize a retry (#258).
+
+## Ordinary direction admission and obsolete requests
+
+Ordinary direction admission may replace dependency obligations that are no longer
+required by the accepted direction. The coordination-store transition validates
+that each retirement names a current request relationship owned by a continuing
+assignment, and checks linked assignments' execution states in the same transaction
+as admission. It rejects stale, duplicated, or unrelated request identities and
+refuses retirement while the recipient is running or interrupted, or while a
+correlated clarification remains in flight. A refusal leaves proposals,
+continuations, requests, and the run checkpoint unchanged.
+
+Retiring one request does not erase a dependency still required by another active
+request for the same supplier. The store retires the selected request and keeps the
+dependency edge until the last such request is retired. An explicit or ambiguous
+pre-existing dependency link is kept even after its associated request retires.
+If a preserved dependency remains unsatisfied, the continuing assignment remains
+waiting until that dependency is satisfied. These cases preserve obligations; they
+do not by themselves refuse admission.
+
+Successful admission retires only validated obsolete requests and persists the
+transition with the new direction checkpoint. Replaying the same admission resumes
+the original validated assignment checkpoint without recreating retired requests.
+The public execution-store contract exposes validation, retirement, and checkpoint
+commit as one bounded transition.
+
+Retirement extends the existing direction-admission entry point; there is no
+parallel retirement admission API. Retained request records and explicit dependency
+link events establish edge provenance, including for runs created before retirement
+was available. Ambiguous edges remain required. One required-work projection follows
+current dependency edges from director assignments and independently created work;
+request-only work disconnected by an explicit retirement remains inspectable but
+cannot dispatch or prevent goal assessment. Shared reachable work remains required.
