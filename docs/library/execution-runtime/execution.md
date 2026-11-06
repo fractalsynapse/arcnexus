@@ -174,6 +174,10 @@ require attention. Completed deliveries cannot be reopened.
 
 A known rejected routing outcome may be replaced by a new activation after its
 diagnosis is retained. Original requests and failure evidence remain inspectable.
+A subsequently committed outcome retires the previous failed-outcome pointer and
+records its current checkpoint receipt. Continuation acknowledges that current
+receipt; historical failure receipts cannot cause an obsolete request to replay.
+Failed or uncertain commits retain their recovery state until a transition commits.
 Dependents return to waiting for the original required milestone; continuation is
 neither acceptance nor delivery. Only assignments blocked by the resumed dependency
 are released from that propagated block. Other independent failures remain blocked.
