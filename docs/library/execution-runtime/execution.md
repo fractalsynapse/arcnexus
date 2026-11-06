@@ -178,6 +178,8 @@ A subsequently committed outcome retires the previous failed-outcome pointer and
 records its current checkpoint receipt. Continuation acknowledges that current
 receipt; historical failure receipts cannot cause an obsolete request to replay.
 Failed or uncertain commits retain their recovery state until a transition commits.
+Loop diagnosis includes acknowledged and failed routing receipts: resolving a stale
+outcome is material checkpoint progress, while repeating the same receipt state is not.
 Dependents return to waiting for the original required milestone; continuation is
 neither acceptance nor delivery. Only assignments blocked by the resumed dependency
 are released from that propagated block. Other independent failures remain blocked.
