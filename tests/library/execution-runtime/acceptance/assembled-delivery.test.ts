@@ -9,8 +9,7 @@ import {
 import { digest } from '../../../../dist/library/architecture/assignment.js';
 import type { ExecutionAssignment } from '../../../../dist/library/coordination-store/execution-types.js';
 import { DeliveryStore } from '../../../../dist/library/coordination-store/delivery-store.js';
-import { DeliveryChecks } from '../../../../dist/library/publisher/delivery-checks.js';
-import { Publisher } from '../../../../dist/library/publisher/publisher.js';
+import { DeliveryChecks, Publisher } from '../../../../dist/library/publisher/publisher.js';
 import { AssembledDelivery } from '../../../../dist/library/execution-runtime/assembled-delivery.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import { candidateDigest } from '../../../../dist/library/change-inspection/changes.js';
