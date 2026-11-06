@@ -2,6 +2,7 @@ import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import type { ExecutionAssignment } from '../coordination-store/execution-types.js';
 import { EvidencePages } from './evidence-pages.js';
 import { InvocationDiagnostics } from './invocation-diagnostics.js';
+import { ExecutionEvidence } from './execution-evidence.js';
 
 /** Projects current-run work intent and optional invocation pages without exposing arbitrary private paths. */
 export class AssignmentRegistry {
@@ -15,6 +16,13 @@ export class AssignmentRegistry {
   capture(assignment: ExecutionAssignment): EvidencePages {
     const pages = new EvidencePages('assignment.evidence');
     const assignments = this.append(pages, assignment);
+    if (this.root)
+      ExecutionEvidence.pin(
+        this.root,
+        assignment.runId,
+        pages,
+        new ExecutionEvidence(this.root, this.store).capture(assignment.runId),
+      );
     const diagnostics = this.root
       ? new InvocationDiagnostics(this.root, this.store).append(pages, assignment)
       : undefined;

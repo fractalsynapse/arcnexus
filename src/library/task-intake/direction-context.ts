@@ -3,7 +3,7 @@ import { DirectionEvidence } from './direction-evidence.js';
 import { join } from 'node:path';
 import { catalogContext, type Component } from '../architecture/components.js';
 import type { OperationBridge } from '../operations/operations.js';
-import { EvidencePages } from '../report/report.js';
+import { EvidencePages, ExecutionEvidence } from '../report/report.js';
 import type { RecordData } from '../workspace/state.js';
 
 export interface RetainedDirection {
@@ -25,10 +25,16 @@ export class DirectionContext {
     goal?: string,
   ) {
     this.catalog(catalog, goal);
+    const execution = ExecutionEvidence.pin(
+      root,
+      record.executionRunId,
+      this.pages,
+      record.hostExecutionEvidence,
+    );
     if (retained)
       this.state(String(record.executionRunId), {
         ...retained,
-        state: new DirectionEvidence(root, String(record.executionRunId)).capture(retained.state),
+        state: this.checkpoints(root, record, retained.state, execution?.assignments),
       });
     const manifest = {
       runId: record.executionRunId,
@@ -37,6 +43,18 @@ export class DirectionContext {
     };
     this.pages.add('manifest', JSON.stringify(manifest), 'json');
     record.directionEvidence = this.pages.retain(join(root, 'runs', record.id), manifest);
+  }
+
+  /** Joins role-specific eligibility to captured facts rather than rebuilding another execution projection. */
+  private checkpoints(root: string, record: RecordData, state: unknown, captured: unknown) {
+    const annotations = new DirectionEvidence(root, String(record.executionRunId)).capture(state);
+    if (!Array.isArray(annotations) || !Array.isArray(captured))
+      return { evidenceUnavailable: true, reason: 'Canonical execution evidence is unavailable' };
+    return annotations.map((annotation) => {
+      const assignment = captured.find((item) => item.id === annotation.id);
+      if (!assignment) throw new Error('Direction assignment is absent from canonical execution');
+      return { ...assignment, checkpointEvidence: annotation.checkpointEvidence };
+    });
   }
 
   /** Adds the existing bounded read capability while retaining operation confinement and cancellation. */

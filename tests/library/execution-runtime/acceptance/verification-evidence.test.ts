@@ -24,13 +24,12 @@ class VerificationEvidenceScenarios {
         { id: 'prior', verificationReports: [{ assessment: 'verified', observations: history }] },
       ],
     };
-    await new Direction(f.state, context, new AbortController().signal).verify(
+    await new Direction(f.state, context, new AbortController().signal, evidence).verify(
       record,
       'a',
       'READ_HOST_EVIDENCE',
       { criteria: ['Observed history'] },
       false,
-      evidence,
     );
     const trace = JSON.parse(readFileSync(f.calls + '.evidence', 'utf8').trim());
     assert.ok(trace.artifacts.execution.length < 8192);
@@ -147,13 +146,12 @@ class VerificationEvidenceScenarios {
       run: { id: 'current-run' },
       assignments: [{ id: 'assignment', record: { observations: { hostCommands: commands } } }],
     };
-    await new Direction(f.state, context, new AbortController().signal).verify(
+    await new Direction(f.state, context, new AbortController().signal, evidence).verify(
       record,
       'a',
       'READ_HOST_EVIDENCE',
       { criteria: ['Observed logs'] },
       false,
-      evidence,
     );
     const trace = JSON.parse(readFileSync(f.calls + '.evidence', 'utf8').trim());
     const index = JSON.parse(trace.artifacts.execution);
@@ -172,13 +170,12 @@ class VerificationEvidenceScenarios {
     const { f, context, record } = await this.fixture(t, false);
     record.executionRunId = 'current-run';
     const evidence = this.investigationEvidence(f.state);
-    await new Direction(f.state, context, new AbortController().signal).verify(
+    await new Direction(f.state, context, new AbortController().signal, evidence).verify(
       record,
       'a',
       'READ_HOST_EVIDENCE',
       { criteria: ['Observed investigation'] },
       false,
-      evidence,
     );
     const trace = JSON.parse(readFileSync(f.calls + '.evidence', 'utf8').trim());
     const index = JSON.parse(trace.artifacts.execution);
@@ -274,14 +271,9 @@ class VerificationEvidenceScenarios {
     record.executionRunId = 'current-run';
     await assert.rejects(
       () =>
-        new Direction(f.state, context, new AbortController().signal).verify(
-          record,
-          'a',
-          'READ_HOST_EVIDENCE',
-          { criteria: ['Observed'] },
-          false,
-          { run: { id: 'foreign-run' } },
-        ),
+        new Direction(f.state, context, new AbortController().signal, {
+          run: { id: 'foreign-run' },
+        }).verify(record, 'a', 'READ_HOST_EVIDENCE', { criteria: ['Observed'] }, false),
       /different run/,
     );
   }

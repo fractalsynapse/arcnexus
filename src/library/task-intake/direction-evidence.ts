@@ -54,31 +54,11 @@ export class DirectionEvidence {
     }
   }
 
-  /** Supplies checkpoint and command facts independently of the worker's completion claims. */
+  /** Adds only validated eligibility; retained checkpoint facts come from the canonical capture. */
   private project(record: RecordData, assignment: ExecutionAssignment) {
     return {
       recordId: record.id,
-      status: record.status,
-      stage: record.stage,
-      nextStage: record.nextStage,
-      threadId: record.threadId,
-      plan: record.plan,
-      checkpoint: record.checkpoint,
-      safeCheckpoint: record.safeCheckpoint,
       continuation: this.continuation(record, assignment),
-      candidate: { workspace: record.workspace, base: record.base, changes: record.changes },
-      commands: record.commands,
-      operations: record.operations,
-      currentOperation: record.currentOperation,
-      pendingReconciliation: assignment.data.reconciliation,
-      pendingDependencies: assignment.dependencies,
-      requiredMilestones: assignment.data.milestones,
-      pendingRequests: record.pendingRequests,
-      pendingInboxActions: record.pendingInboxActions,
-      regressionCheckpoint: record.regressionCheckpoint,
-      independentFindings: record.independentFindings,
-      workerResult: record.agent,
-      error: record.error,
     };
   }
 

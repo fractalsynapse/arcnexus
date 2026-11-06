@@ -109,13 +109,14 @@ export class EvidencePages {
     const { offset, length } = page;
     const content = artifact.content.slice(offset, offset + length);
     const nextOffset = offset + content.length;
+    const complete = nextOffset === artifact.content.length;
     return {
       artifact: artifact.id,
       sha256: artifact.sha256,
       totalCharacters: artifact.content.length,
       offset,
-      nextOffset,
-      complete: nextOffset === artifact.content.length,
+      nextOffset: complete ? null : nextOffset,
+      complete,
       content,
     };
   }
@@ -165,7 +166,7 @@ export class EvidencePages {
     return {
       name: this.name,
       description:
-        'Read pinned host evidence. Start with artifact=manifest, then read its artifacts. Follow nextOffset until complete; offsets and lengths count JavaScript string characters.',
+        'Read pinned host evidence. Start with artifact=manifest, then read its artifacts. Follow nextOffset while a continuation is present; offsets and lengths count JavaScript string characters.',
       inputSchema: {
         type: 'object',
         properties: {

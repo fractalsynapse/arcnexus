@@ -389,13 +389,18 @@ export class AssignmentExecution {
     session: StewardSession,
   ): Promise<ActivationResult> {
     await session.verifyFinal();
-    const evidence = await new Direction(this.root, this.context, this.signal).verify(
+    const direction = new Direction(
+      this.root,
+      this.context,
+      this.signal,
+      new ExecutionEvidence(this.root, this.store).capture(assignment.runId),
+    );
+    const evidence = await direction.verify(
       record,
       assignment.owner,
       assignment.objective,
       { criteria: assignment.acceptance, commands: record.commands, worker: record.agent },
       false,
-      new ExecutionEvidence(this.root, this.store).capture(assignment.runId),
     );
     const revision = this.snapshots.capture(record.workspace, record.base);
     return {

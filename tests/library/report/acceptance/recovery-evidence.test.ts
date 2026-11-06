@@ -21,7 +21,7 @@ class RecoveryEvidenceScenarios {
     assert.equal(manifest.runId, f.run.id);
     assert.equal(manifest.assignmentId, f.investigator.id);
     const state = (await pages.call('assignment.evidence', {
-      artifact: f.source.id + ':state',
+      artifact: 'execution:' + f.source.id + ':record',
     })) as any;
     assert.equal(state.complete, true);
     const operations = (await pages.call(
@@ -48,7 +48,7 @@ class RecoveryEvidenceScenarios {
       length: 999999,
     })) as any;
     assert.equal(large.complete, true);
-    assert.equal(large.nextOffset, large.totalCharacters);
+    assert.equal(large.nextOffset, null);
     for (const request of [
       { artifact: 'manifest', length: 0 },
       { artifact: '../report.json' },
@@ -81,10 +81,10 @@ class RecoveryEvidenceScenarios {
     assert.equal(JSON.parse(page.content).records[0].evidenceUnavailable, true);
     assert.doesNotMatch(page.content, /SECRET/);
     const missing = (await pages.call('assignment.evidence', {
-      artifact: f.source.id + ':state',
+      artifact: 'execution:' + f.source.id + ':record',
     })) as any;
-    assert.equal(missing.status, 'rejected');
-    assert.equal('content' in missing, false);
+    assert.equal(JSON.parse(missing.content).evidenceUnavailable, true);
+    assert.doesNotMatch(missing.content, /SECRET/);
     assert.throws(
       () =>
         new RecoveryEvidence(f.root, f.store).capture({ ...f.investigator, runId: randomUUID() }),

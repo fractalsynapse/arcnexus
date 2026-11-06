@@ -10,7 +10,7 @@ import { RunContinuation } from './run-continuation.js';
 import { ResourceQuery } from '../report/resource-query.js';
 import { HostRecovery } from './host-recovery.js';
 import { RunAuthority } from './run-authority.js';
-import { ExecutionEvidence, ExecutionReports } from '../report/report.js';
+import { ExecutionReports } from '../report/report.js';
 import { StewardshipPolicy } from '../workday/workday.js';
 import { InputError } from '../architecture/config.js';
 import { mkdirSync } from 'node:fs';
@@ -20,7 +20,7 @@ import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/ex
 import { ExecutionStore } from '../coordination-store/execution-store.js';
 import { RunWorkspace } from './run-workspace.js';
 import type { RecordData } from '../workspace/state.js';
-import { Direction, StewardshipRefusal, VerificationIssue } from '../task-intake/direction.js';
+import { StewardshipRefusal, VerificationIssue } from '../task-intake/direction.js';
 import { ProgressObserver } from '../report/progress.js';
 import type { InitializationResult } from '../architecture/initialization.js';
 import { AssignmentDispatch } from './assignment-dispatch.js';
@@ -325,16 +325,14 @@ export class ProjectHost {
   /** Runs task direction and retains interactive questions before any owner activation. */
   private async direct(run: ExecutionRun, signal: AbortSignal): Promise<void> {
     const input = this.workspaces(run).directionInput(run, this.reports);
-    const result = await new Direction(
-      this.root,
-      this.environments.contextFor(run),
-      signal,
-    ).propose(
-      await this.workspaces(run).policy(run, signal),
-      input.prompt,
-      undefined,
-      input.retained,
-    );
+    const result = await this.workspaces(run)
+      .direction(run, signal)
+      .propose(
+        await this.workspaces(run).policy(run, signal),
+        input.prompt,
+        undefined,
+        input.retained,
+      );
     if (signal.aborted) return;
     if (result.status !== 'ready') {
       this.clarification(run, result);
@@ -356,10 +354,10 @@ export class ProjectHost {
       return;
     }
     const { owner, fingerprint } = selected;
-    const workspace = await this.workspaces(run).policy(run, signal);
-    const result = await new Direction(this.root, context, signal)
+    const direction = this.workspaces(run).direction(run, signal);
+    const result = await direction
       .propose(
-        workspace,
+        await this.workspaces(run).policy(run, signal),
         'Self-directed stewardship based on captured purpose, objectives, questions and inbox.',
         owner,
         {
@@ -405,18 +403,9 @@ export class ProjectHost {
     signal: AbortSignal,
   ): Promise<void> {
     const record = await this.workspaces(run).policy(run, signal);
-    const evidence = await new Direction(
-      this.root,
-      this.environments.contextFor(run),
-      signal,
-    ).verify(
-      record,
-      run.owners[0]!,
-      run.objective,
-      assignments,
-      true,
-      new ExecutionEvidence(this.root, this.store).capture(run.id),
-    );
+    const evidence = await this.workspaces(run)
+      .direction(run, signal)
+      .verify(record, run.owners[0]!, run.objective, assignments, true);
     if (!signal.aborted)
       this.store.updateRun(run.id, this.store.run(run.id).status, {
         goalEvidence: evidence,
@@ -446,11 +435,9 @@ export class ProjectHost {
     this.observeGoalFailure(run, feedback);
     const record = await this.workspaces(run).policy(run, signal);
     const dispatch = new AssignmentDispatch(this.root, this.context, this.store);
-    const result = await new Direction(
-      this.root,
-      this.environments.contextFor(run),
-      signal,
-    ).reconsider(record, run.objective, dispatch.state(run.id), feedback, blocked);
+    const result = await this.workspaces(run)
+      .direction(run, signal)
+      .reconsider(record, run.objective, dispatch.state(run.id), feedback, blocked);
     if (signal.aborted) return;
     this.store.updateRun(run.id, this.store.run(run.id).status, {
       redirection: feedback,

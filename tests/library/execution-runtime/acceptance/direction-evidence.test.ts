@@ -28,7 +28,8 @@ class DirectionEvidenceScenarios {
     assert.equal(payload.currentRunId, run.id);
     const selected = payload.state.find((item: any) => item.id === assignment.id);
     const captured = JSON.parse(trace.artifacts[selected.artifact]);
-    if (large) assert.equal(captured.data.diagnostic.length, 1100006);
+    if (large)
+      assert.equal(JSON.parse(trace.artifacts[captured.data.artifact]).diagnostic.length, 1100006);
     const evidence = captured.checkpointEvidence;
     assert.deepEqual(
       JSON.parse(trace.artifacts.catalog)
@@ -36,7 +37,7 @@ class DirectionEvidenceScenarios {
         .sort(),
       ['a', 'b', 'c'],
     );
-    this.checkpoint(evidence, record, safe);
+    this.checkpoint(evidence, record, safe, captured, trace.artifacts);
     assert.equal(host.store.assignment(assignment.id).status, safe ? 'ready' : 'failed');
   }
 
@@ -56,7 +57,8 @@ class DirectionEvidenceScenarios {
     const selected = JSON.parse(trace.artifacts.state).state.find(
       (item: any) => item.id === assignment.id,
     );
-    assert.equal(JSON.parse(trace.artifacts[selected.artifact]).data.diagnostic.length, 1100000);
+    const captured = JSON.parse(trace.artifacts[selected.artifact]);
+    assert.equal(JSON.parse(trace.artifacts[captured.data.artifact]).diagnostic.length, 1100000);
     assert.ok(host.store.run(run.id).data.seen);
     assert.equal(host.store.assignment(assignment.id).status, 'blocked');
   }
@@ -89,16 +91,24 @@ class DirectionEvidenceScenarios {
   }
 
   /** Preserves complete observed checkpoint facts through paging for both safe and unsafe continuation. */
-  private checkpoint(evidence: any, record: any, safe: boolean): void {
+  private checkpoint(
+    evidence: any,
+    record: any,
+    safe: boolean,
+    captured: any,
+    artifacts: any,
+  ): void {
+    const facts = JSON.parse(artifacts[captured.record.artifact]);
     assert.equal(evidence.recordId, record.id);
-    assert.equal(evidence.threadId, record.threadId);
-    assert.equal(evidence.nextStage, 'research');
-    assert.deepEqual(evidence.plan, record.plan);
+    assert.equal(facts.threadId, record.threadId);
+    assert.equal(facts.nextStage, 'research');
+    assert.deepEqual(JSON.parse(artifacts[facts.plan.artifact]), record.plan);
     assert.equal(evidence.continuation.eligible, safe);
-    assert.equal(evidence.candidate.workspace, record.workspace);
-    assert.equal(evidence.candidate.base, record.base);
-    assert.deepEqual(evidence.checkpoint, record.checkpoint);
-    assert.ok(evidence.commands.some((command: any) => command.exitCode === 0));
+    assert.equal(facts.workspace, record.workspace);
+    assert.equal(facts.base, record.base);
+    assert.deepEqual(facts.checkpoint, record.checkpoint);
+    const commands = JSON.parse(artifacts[facts.commands.artifact]);
+    assert.ok(commands.some((command: any) => command.exitCode === 0));
   }
 
   /** Retains a real planned assignment and introduces a known failure after its checkpoint. */

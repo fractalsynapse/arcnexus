@@ -52,24 +52,23 @@ export class PromotionReview {
   /** Assesses the original goal with current evidence while retaining simulation provenance explicitly. */
   private async assess(record: RecordData, checks: SimulationCheckResult, signal: AbortSignal) {
     const before = candidateDigest(record);
-    const goal = await new Direction(this.root, this.context, signal).verify(
+    const goal = await new Direction(this.root, this.context, signal, {
+      ...new PublicationEvidence(this.root, this.context.key).capture(
+        this.run,
+        record,
+        this.assignments,
+      ),
+      verificationReports: this.assessments(record, checks),
+      promotionSourceObjective: this.run.data.promotionSourceObjective,
+      promotionSource: this.source,
+      originalAssignments: this.assignments,
+      targetChecks: checks,
+    }).verify(
       record,
       this.assignments[0]!.owner,
       this.run.objective,
       this.assignments,
       true,
-      {
-        ...new PublicationEvidence(this.root, this.context.key).capture(
-          this.run,
-          record,
-          this.assignments,
-        ),
-        verificationReports: this.assessments(record, checks),
-        promotionSourceObjective: this.run.data.promotionSourceObjective,
-        promotionSource: this.source,
-        originalAssignments: this.assignments,
-        targetChecks: checks,
-      },
       this.context.base,
     );
     signal.throwIfAborted();

@@ -102,17 +102,21 @@ export class DeliveryChecks {
       assignments: this.assignments,
       commands: record.commands,
     };
-    return new Direction(this.root, this.context, signal).verify(
-      record,
-      this.assignments[0]!.owner,
-      this.run.objective,
-      evidence,
-      false,
+    return new Direction(
+      this.root,
+      this.context,
+      signal,
       new PublicationEvidence(this.root, this.context.key).capture(
         this.run,
         record,
         this.assignments,
       ),
+    ).verify(
+      record,
+      this.assignments[0]!.owner,
+      this.run.objective,
+      evidence,
+      false,
       this.context.base,
     );
   }

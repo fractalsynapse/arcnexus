@@ -50,6 +50,7 @@ export class Direction {
     private readonly root: string,
     private readonly context: ProjectExecution,
     private readonly signal: AbortSignal,
+    private readonly executionEvidence?: unknown,
   ) {}
 
   /** Selects starting assignments or records no actionable stewardship work and precise questions. */
@@ -69,6 +70,7 @@ export class Direction {
       profile,
     );
     record.activationRole = owner ? 'stewardship' : 'director';
+    record.hostExecutionEvidence = this.executionEvidence;
     delete record.assignmentId;
     return this.proposal(record, prompt, owner, retained);
   }
@@ -129,7 +131,6 @@ export class Direction {
     objective: string,
     evidence: unknown,
     goal = false,
-    hostEvidence?: unknown,
     baseline = goal ? this.context.base : workspace.base,
   ): Promise<string[]> {
     const record = new DirectionRecords(this.root, this.context).create(
@@ -139,7 +140,7 @@ export class Direction {
       goal ? this.context.directorProfile : this.context.reviewerProfile,
     );
     record.activationRole = goal ? 'director-assessment' : 'verifier';
-    record.hostExecutionEvidence = hostEvidence;
+    record.hostExecutionEvidence = this.executionEvidence;
     record.frozenTests = workspace.frozenTests;
     record.regressionCheckpoint = workspace.regressionCheckpoint;
     record.acceptanceCriteria = new VerificationAssessment().criteria(objective, evidence, goal);
