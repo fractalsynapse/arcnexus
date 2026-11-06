@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Use the verified candidate test baseline while preserving captured check authority and current implementation (#287).
+
 - Keep verification and recovery indexes compact while retaining detailed evidence as independently readable artifacts (#279).
 
 - Observe native test host shutdown without racing process disappearance (#280).
