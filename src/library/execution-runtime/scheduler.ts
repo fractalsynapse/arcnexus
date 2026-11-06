@@ -56,6 +56,7 @@ export class Scheduler {
     this.apply(id, result);
     this.store.updateAssignment(id, this.store.assignment(id).status, {
       pendingOutcome: null,
+      lastFailedOutcome: null,
       lastReceipt: result.receipt ?? null,
     });
   }

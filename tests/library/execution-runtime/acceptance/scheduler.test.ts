@@ -9,6 +9,37 @@ import { Scheduler } from '../../../../dist/library/execution-runtime/scheduler.
 
 /** Exercises the built scheduler using deterministic engineering outcomes. */
 class SchedulerScenarios {
+  /** A newer committed blocker retires stale routing failure state across reopen and continuation. */
+  async currentReceipt(t: TestContext): Promise<void> {
+    const path = this.database(t);
+    let store = new ExecutionStore(path);
+    const run = store.createRun('task', ['owner'], 'Recover current checkpoint');
+    const assignment = store.enqueue(run.id, 'owner', 'Retained engineering');
+    await new Scheduler(store, async () => ({
+      kind: 'request',
+      requests: [],
+      receipt: 'rejected-routing',
+    })).step(run.id);
+    assert.equal(store.assignment(assignment.id).status, 'failed');
+    const diagnosis = [
+      { assignmentId: assignment.id, ownerId: 'owner', reason: 'Correct routing' },
+    ];
+    store.continueAssignments(run.id, diagnosis);
+    assert.equal(store.assignment(assignment.id).data.lastReceipt, 'rejected-routing');
+    await new Scheduler(store, async () => ({
+      kind: 'blocked',
+      reason: 'Transport needs repair',
+      receipt: 'current-checkpoint',
+    })).step(run.id);
+    store.close();
+    store = new ExecutionStore(path);
+    t.after(() => store.close());
+    store.continueAssignments(run.id, diagnosis);
+    assert.equal(store.assignment(assignment.id).data.lastReceipt, 'current-checkpoint');
+    assert.equal(store.assignment(assignment.id).data.lastFailedOutcome, null);
+    assert.ok(JSON.stringify(store.events()).includes('Yield requires at least one request'));
+  }
+
   /** Reopens durable state between activations while nested owners deliver in reverse order. */
   async nested(t: TestContext, count: number): Promise<void> {
     const path = this.database(t);
@@ -114,6 +145,9 @@ class SchedulerScenarios {
 }
 
 const scenarios = new SchedulerScenarios();
+
+test('committed outcomes retire stale failure receipts without erasing history', (t) =>
+  scenarios.currentReceipt(t));
 
 for (const count of [2, 3, 5])
   test(`built scheduler delivers ${count} dynamically selected owners across reopening`, (t) =>

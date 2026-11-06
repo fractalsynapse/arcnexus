@@ -75,6 +75,8 @@ class TaskControlScenarios {
     host.store.updateRun(run.id, 'interrupted', { uncertainPolicyRecords: ['uncertain'] });
     assert.throws(() => host.taskControl('resume', run.id), /uncertain/);
     assert.equal(host.store.run(run.id).status, 'needs_attention');
+    assert.throws(() => host.taskControl('resume', run.id), /uncertain/);
+    assert.equal(host.store.run(run.id).status, 'needs_attention');
     host.taskControl('stop', run.id);
     assert.equal(host.store.run(run.id).status, 'cancelled');
   }
