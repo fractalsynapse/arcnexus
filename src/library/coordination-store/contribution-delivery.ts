@@ -60,7 +60,9 @@ export class ContributionDelivery {
       if (!items.length || new Set(ids).size !== ids.length || !evidence.length)
         throw new Error('Verified delivery requires unique assignments and evidence');
       if (items.some((item) => item.runId !== items[0]!.runId || item.data.replacedBy))
-        throw new Error('Delivery contains foreign or replaced work');
+        throw new Error(
+          'Delivery contains foreign or replaced work; replaced evidence is immutable',
+        );
       if (items.every((item) => item.status === 'completed'))
         return this.duplicate(items, evidence, candidate);
       if (items.some((item) => item.status === 'completed')) throw new Error('Partial delivery');
