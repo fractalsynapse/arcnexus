@@ -1,4 +1,5 @@
 import { ClientHome } from './client-home.js';
+import { modelSelection } from './model-selection.js';
 import { ExecutionContext } from '../architecture/execution-context.js';
 import { SourceConfinement } from '../operations/confinement.js';
 import { readSchema } from '../architecture/schema.js';
@@ -199,7 +200,7 @@ export class CodexConfiguration {
     return {
       clientProtocol: 1,
       evidenceMode: this.input.record.evidenceMode ?? 'unspecified',
-      model: this.input.activity ? this.profile.model : this.input.model,
+      ...modelSelection(this.input.activity ? this.profile.model : this.input.model),
       executionProfile: this.profile.id,
       activity: this.input.activity,
       reasoning: this.profile.reasoning,

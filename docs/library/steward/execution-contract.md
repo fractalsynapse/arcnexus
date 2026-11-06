@@ -89,7 +89,6 @@ created or mounted before they exist. Existing ancestors are checked for aliases
 no maintained-source write permission is granted. Historical directory-permission
 conversion must not run ahead of this minimal confinement path (#138).
 
-
 The final harness retirement slice rejects non-minimal captured owner authority and
 obsolete profile budgets before constructing SDK permissions. It removes the writable
 legacy sandbox path and checklist-call quotas. Source-read-only confinement and the
@@ -135,3 +134,19 @@ missing authority, operation failures and persistence errors still abort executi
 It never replays commands or turns incomplete transport into a safe checkpoint.
 Existing runs keep their captured supervisor; a newly built supervisor does not
 retroactively repair a failed assignment or rewrite its retained evidence.
+
+## Temporary host model substitution
+
+During quota-constrained testing, the operator may set `ARCNEXUS_MODEL_SUBSTITUTIONS`
+to a JSON object mapping requested model names to replacement model names. Selection
+happens once at the shared Codex launch boundary, after activity-profile selection,
+for both new and retained turns. For example, `{"gpt-6-astra":"gpt-6.1-sol"}`
+replaces Astra while leaving Luna unchanged. Remove the setting to restore captured
+model selection. Invalid settings fail before model execution.
+
+Execution settings retain the requested and effective model. Substitution does not
+change the captured profile, reasoning, permissions, tools, acceptance, or prior
+evidence, and is not forwarded as a worker environment setting. Change deployment
+settings only at a safe checkpoint and restart the host before resuming. Current
+ArcNexus research, director and independent-review declarations temporarily select
+Sol directly; independent review remains a separate activation.
