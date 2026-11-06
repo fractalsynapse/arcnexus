@@ -470,3 +470,10 @@ obligation is material progress, not an identical failed continuation.
 Scheduling and goal completion use the same required-work projection; archived
 request-only work stays visible as retained history without masquerading as verified
 delivery. The director still assesses the original goal against actual verification.
+
+Retiring an obsolete obligation retains its settled supplier; it does not resume
+that supplier (#304). One checkpoint validator distinguishes retention from execution.
+A failed supplier with a completed turn, unchanged checkpoint and settled operations
+may remain retained even when its checkpoint cannot authorize another turn. The
+requester still needs a resumable checkpoint. In-flight operations, pending outcomes,
+uncertain preparation, changed candidate bytes and authority mismatches remain blockers.

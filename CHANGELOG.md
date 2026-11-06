@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Retire settled obsolete dependency work without requiring its failed supplier to be resumable, while preserving execution and uncertainty checks (#304).
+
 - Retire obsolete dependency requests through ordinary director admission while preserving shared work, checkpoints and history (#275).
 
 - Let engineering stewards retrieve complete retained operation diagnostics through the existing assignment evidence capability (#290).
