@@ -14,6 +14,14 @@ recoverable checkpoint. Installed-runtime recovery validates the retained checkp
 hash, authority, candidate, stopped services and settled operations before resuming
 the same assignment. In-flight or uncertain model/operation execution remains blocked.
 
+A completed read-only change review may report `failed` with actionable review
+findings and no blockers. Preserve that failed assessment and route its findings
+through the existing implementation correction checkpoint; it is not a delivered
+assignment or a reason to repeat unchanged review. Failed engineering, failed reviews
+without corrective findings, blocked results, source violations and uncertain
+execution retain their existing failure behavior. Correction must still pass host
+checks, subsequent review and independent verification before acceptance.
+
 ## Regression evidence and acceptance authority
 
 Worker-authored regression checkpoints preserve the original tests and observed
