@@ -13,6 +13,36 @@ import { GeneralFixture, nativeHostTest as test } from '../../testing/support/ge
 
 /** Verifies the independent model receives immutable host change evidence through a constrained tool. */
 class VerificationEvidenceScenarios {
+  /** Prior review histories remain accessible without making the execution index grow with their contents. */
+  async reviewHistory(t: TestContext): Promise<void> {
+    const { f, context, record } = await this.fixture(t, false);
+    record.executionRunId = 'current-run';
+    const history = { complete: true, output: 'observed tool output\n'.repeat(50000) };
+    const evidence = {
+      run: { id: 'current-run' },
+      assignments: [
+        { id: 'prior', verificationReports: [{ assessment: 'verified', observations: history }] },
+      ],
+    };
+    await new Direction(f.state, context, new AbortController().signal).verify(
+      record,
+      'a',
+      'READ_HOST_EVIDENCE',
+      { criteria: ['Observed history'] },
+      false,
+      evidence,
+    );
+    const trace = JSON.parse(readFileSync(f.calls + '.evidence', 'utf8').trim());
+    assert.ok(trace.artifacts.execution.length < 8192);
+    const index = JSON.parse(trace.artifacts.execution);
+    const review = JSON.parse(
+      trace.artifacts[index.assignments[0].verificationReports[0].artifact],
+    );
+    assert.equal(review.assessment, 'verified');
+    assert.deepEqual(JSON.parse(trace.artifacts[review.observations.artifact]), history);
+    assert.equal(evidence.assignments[0]!.verificationReports[0]!.observations, history);
+  }
+
   /** Independent verification receives original worker assertions and their current comparison as evidence. */
   async regressions(t: TestContext): Promise<void> {
     const { f, context, record } = await this.fixture(t, false);
@@ -127,7 +157,7 @@ class VerificationEvidenceScenarios {
     );
     const trace = JSON.parse(readFileSync(f.calls + '.evidence', 'utf8').trim());
     const index = JSON.parse(trace.artifacts.execution);
-    const indexed = index.assignments[0].record.observations.hostCommands;
+    const indexed = this.observations(trace, index.assignments[0].record).hostCommands;
     assert.equal(trace.artifacts[indexed[0].output.artifact], commands[0]!.output.content);
     assert.equal(trace.artifacts[indexed[1].output.artifact], '');
     assert.equal(indexed[0].exitCode, 0);
@@ -152,8 +182,8 @@ class VerificationEvidenceScenarios {
     );
     const trace = JSON.parse(readFileSync(f.calls + '.evidence', 'utf8').trim());
     const index = JSON.parse(trace.artifacts.execution);
-    const observed =
-      index.assignments[0].record.observations.timeline.events[0].payload.item.result;
+    const observed = this.observations(trace, index.assignments[0].record).timeline.events[0]
+      .payload.item.result;
     assert.equal(
       trace.artifacts[observed.verificationArtifacts[0].verificationArtifact],
       '{"transaction":"committed"}',
@@ -163,6 +193,12 @@ class VerificationEvidenceScenarios {
         .verificationArtifact,
       undefined,
     );
+  }
+
+  /** Follows the same named record and observation references advertised to the independent model. */
+  private observations(trace: any, reference: { artifact: string }) {
+    const record = JSON.parse(trace.artifacts[reference.artifact]);
+    return JSON.parse(trace.artifacts[record.observations.artifact]);
   }
 
   /** Pins a genuine investigation artifact in a same-run worker record before verification starts. */
@@ -275,6 +311,9 @@ class VerificationEvidenceScenarios {
 }
 
 const scenarios = new VerificationEvidenceScenarios();
+
+test('verification discovers prior review histories without inlining them in execution', (t) =>
+  scenarios.reviewHistory(t));
 
 for (const goal of [false, true])
   test(

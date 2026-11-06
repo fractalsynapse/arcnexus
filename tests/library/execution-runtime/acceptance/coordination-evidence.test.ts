@@ -32,7 +32,7 @@ class CoordinationEvidenceScenarios {
         .at(-1)!,
     );
     assert.ok(trace.artifacts.execution, 'Verifier needs pinned coordination evidence');
-    const execution = JSON.parse(trace.artifacts.execution);
+    const execution = this.execution(trace.artifacts);
     assert.equal(execution.run.id, run.id);
     assert.equal(execution.run.authorityBase, context.base);
     assert.equal(execution.run.initialCandidateRevision, context.base);
@@ -41,6 +41,32 @@ class CoordinationEvidenceScenarios {
     assert.equal(execution.source.status, '');
     this.requestsPrecedeWork(execution);
     this.observations(execution, f.calls, host, trace.artifacts);
+  }
+
+  /** Retrieves indexed sections from actual MCP responses before asserting chronology and supplier proof. */
+  private execution(artifacts: Record<string, string>) {
+    const execution = JSON.parse(artifacts.execution!);
+    this.sections(execution, ['events', 'requests', 'runtimeTransitions'], artifacts);
+    for (const assignment of execution.assignments) {
+      assignment.record = JSON.parse(artifacts[assignment.record.artifact]!);
+      this.sections(
+        assignment.record,
+        ['activationInput', 'commands', 'operations', 'observations'],
+        artifacts,
+      );
+      assignment.verificationReports = assignment.verificationReports.map((reference: any) => {
+        const review = JSON.parse(artifacts[reference.artifact]!);
+        this.sections(review, ['observations'], artifacts);
+        return review;
+      });
+    }
+    return execution;
+  }
+
+  /** Reads only named JSON section references, leaving command-output references intact for byte comparison. */
+  private sections(value: any, fields: string[], artifacts: Record<string, string>): void {
+    for (const field of fields)
+      if (value[field]?.artifact) value[field] = JSON.parse(artifacts[value[field].artifact]!);
   }
 
   /** Model envelopes use the reply schema identity, never the store's internal retry key. */
