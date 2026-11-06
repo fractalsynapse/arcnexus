@@ -20,6 +20,32 @@ import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Checks production client isolation with disposable configuration, never real credentials. */
 class ClientIsolationScenarios {
+  /** Host substitutions cover role and activity turns without changing captured authority or worker settings. */
+  substitutions(t: TestContext): void {
+    const prior = process.env.ARCNEXUS_MODEL_SUBSTITUTIONS;
+    t.after(() => {
+      if (prior === undefined) delete process.env.ARCNEXUS_MODEL_SUBSTITUTIONS;
+      else process.env.ARCNEXUS_MODEL_SUBSTITUTIONS = prior;
+    });
+    const base = this.configuration(this.fixture(t));
+    base.input.record.settings = base.settings;
+    process.env.ARCNEXUS_MODEL_SUBSTITUTIONS = '{"test":"replacement"}';
+    for (const activity of [undefined, 'research', 'review']) {
+      const selected = new CodexConfiguration({ ...base.input, activity, resumeId: 'retained' });
+      assert.equal(selected.settings.model, 'replacement');
+      assert.equal(selected.settings.requestedModel, 'test');
+      assert.deepEqual(selected.permissions, base.permissions);
+      assert.equal(selected.env.ARCNEXUS_MODEL_SUBSTITUTIONS, undefined);
+      assert.equal(selected.profile.model, 'test');
+    }
+    process.env.ARCNEXUS_MODEL_SUBSTITUTIONS = '{"different":"replacement"}';
+    assert.equal(new CodexConfiguration(base.input).settings.model, 'test');
+    for (const invalid of ['null', '[]', 'false', '{', '{"test":3}', '{"test":""}']) {
+      process.env.ARCNEXUS_MODEL_SUBSTITUTIONS = invalid;
+      assert.throws(() => new CodexConfiguration(base.input), /MODEL_SUBSTITUTIONS/);
+    }
+  }
+
   /** The installed runtime must not expose a personal MCP server through the production environment. */
   async native(t: TestContext): Promise<void> {
     const fixture = this.fixture(t);
@@ -234,6 +260,9 @@ class ClientIsolationScenarios {
 }
 
 const scenarios = new ClientIsolationScenarios();
+
+test('host model substitutions preserve captured authority and record effective selection', (t) =>
+  scenarios.substitutions(t));
 
 test('captured runs without overrides retain their model policy', (t) =>
   scenarios.legacyProfiles(t));

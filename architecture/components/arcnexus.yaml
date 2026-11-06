@@ -13,7 +13,7 @@ constraints:
 role: systems-engineer
 executionProfile: luna
 activityProfiles:
-  research: astra
+  research: sol
   documentation: sol
   design: sol
   review: sol
@@ -53,8 +53,8 @@ operations:
     - verify
 director:
   component: task-intake
-  profile: astra
-reviewerProfile: astra
+  profile: sol
+reviewerProfile: sol
 defaultPackage: cli-package
 verificationInputs:
   - package.json

@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Temporarily use Sol for research, direction and independent review, with recorded host substitutions for retained testing runs (#291).
+
 - Use the verified candidate test baseline while preserving captured check authority and current implementation (#287).
 
 - Remove the evidence reader size ceiling so agents can request complete artifacts without repeated rejected reads (#286).
