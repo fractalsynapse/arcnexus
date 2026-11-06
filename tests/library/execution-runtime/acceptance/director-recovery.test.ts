@@ -93,6 +93,29 @@ class DirectorRecoveryScenarios {
     assert.ok(host.store.ready(run.id).some((item) => item.id === unrelated.id));
   }
 
+  /** Ready work accepts feedback through the existing dispatcher without a duplicate assignment. */
+  readyFeedback(t: TestContext): void {
+    const f = new GeneralFixture(t).fixture;
+    const context = new ExecutionContext().resolve(f.repo);
+    const host = new ProjectHost(f.state, context);
+    t.after(() => host.store.close());
+    const run = host.submit('Correct the reviewed defect');
+    const assignment = host.store.enqueue(run.id, 'c', 'Existing correction', [
+      'Original criteria',
+    ]);
+    const decision = this.replacementDecision(assignment.id);
+    const { replacementChangeType: _replacement, ...continuation } = decision.continuations[0]!;
+    new AssignmentDispatch(f.state, context, host.store).apply(run, {
+      ...decision,
+      continuations: [{ ...continuation, reason: 'Correct the caller-reproduced false pass' }],
+    });
+    assert.equal(host.store.assignments(run.id).length, 1);
+    const retained = host.store.assignment(assignment.id);
+    assert.equal(retained.status, 'ready');
+    assert.equal(retained.data.continuationReason, 'Correct the caller-reproduced false pass');
+    assert.deepEqual(retained.acceptance, assignment.acceptance);
+  }
+
   /** Refuses fresh engineering before dispatch when an old managed invocation may still have effects. */
   uncertain(t: TestContext, mode: 'task' | 'workday' = 'task'): void {
     const f = new GeneralFixture(t).fixture;
@@ -170,6 +193,9 @@ test('workday direction replaces failed change work without blocking unrelated r
 for (const mode of ['task', 'workday'] as const)
   test(`${mode} replacement refuses interrupted operations before fresh engineering`, (t) =>
     scenarios.uncertain(t, mode));
+
+test('director feedback continues ready work without duplicate engineering', (t) =>
+  scenarios.readyFeedback(t));
 
 registerSuite({
   component: 'execution-runtime',

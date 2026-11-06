@@ -6,7 +6,7 @@ import { ExecutionContext, type ProjectExecution } from '../architecture/executi
 import { validateContinuation } from '../assignment/steward.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import {
-  canReopenAssignment,
+  canContinueAssignment,
   type ExecutionRun,
   type ExecutionAssignment,
 } from '../coordination-store/execution-types.js';
@@ -98,7 +98,7 @@ export class AssignmentDispatch {
     const assignment = this.store.assignment(continuation.assignmentId);
     if (assignment.runId !== run.id || assignment.owner !== continuation.ownerId)
       throw new Error('Continuation must name an existing owner assignment in this run');
-    if (!canReopenAssignment(assignment.status))
+    if (!canContinueAssignment(assignment.status))
       throw new Error('Continuation cannot reopen active or completed work');
     if (assignment.data.replacedBy) {
       if (
@@ -129,7 +129,7 @@ export class AssignmentDispatch {
     if (pending && pending.recordId !== record.reconciliationId)
       throw new Error('Continuation has uncertain workspace preparation');
     validateContinuation(this.root, record);
-    this.diagnose(record, assignment);
+    if (assignment.status !== 'ready') this.diagnose(record, assignment);
   }
 
   /** Rechecks a proposed fresh workflow against the original owner and all original criteria. */
