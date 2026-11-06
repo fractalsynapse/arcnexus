@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { test, type TestContext } from 'node:test';
+import { BridgeResponseBuffer } from '../../../../dist/library/steward/bridge-response-buffer.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises failed bridge startup in a real child process with a bounded test watchdog. */
@@ -33,11 +34,26 @@ class BridgeStartupScenarios {
     assert.match(result.stdout, /Private IPC path exceeds transport limit/);
     assert.deepEqual(readdirSync(temporary), []);
   }
+
+  /** Preserves a multibyte character split between incoming response-byte chunks. */
+  fragmentedUnicode(): void {
+    const response = JSON.stringify({ id: 7, result: { value: 'before 🧬 after' } }) + '\n';
+    const bytes = Buffer.from(response);
+    const split = bytes.indexOf(Buffer.from('🧬')) + 2;
+    const decoder = new BridgeResponseBuffer();
+
+    assert.deepEqual(decoder.receive(bytes.subarray(0, split)), []);
+    const frames = decoder.receive(bytes.subarray(split));
+    assert.equal(JSON.parse(frames[0]!).result.value, 'before 🧬 after');
+  }
 }
 
 const scenarios = new BridgeStartupScenarios();
 
 test('bridge startup rejects overlong paths and releases all resources', (t) =>
   scenarios.longAddress(t));
+
+test('bridge response preserves Unicode split across incoming chunks', () =>
+  scenarios.fragmentedUnicode());
 
 registerSuite({ component: 'steward', level: 'acceptance', tags: ['deterministic'] });

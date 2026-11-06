@@ -118,6 +118,9 @@ class PullRequestFixture {
       'repo',
       {
         deliveryId: this.git.id,
+        ...(operation === 'pull-request.create'
+          ? this.git.store.get(this.git.id).publicationDocument
+          : {}),
         ...(decision ? { decision } : {}),
       },
       this.git.signal,
@@ -128,6 +131,10 @@ class PullRequestFixture {
 test('simulated PRs require observed passing checks and separately recorded provider review', async (t) => {
   const f = new PullRequestFixture(t);
   await f.prepare();
+  const document = f.git.store.get(f.git.id).publicationDocument!;
+  const resource = f.store.resources().find((item) => item.kind === 'pull_request')!;
+  assert.equal(resource.data.title, document.title);
+  assert.equal(resource.data.body, document.body);
   const failed = await f.execute('failed-check', 'pull-request.check');
   assert.equal(failed.result!.checks, 'failed');
   await f.execute('review', 'pull-request.review', 'approved');

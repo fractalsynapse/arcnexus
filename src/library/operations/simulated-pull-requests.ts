@@ -1,3 +1,4 @@
+import { publicationContent } from './repository-documents.js';
 import type { DeliveryRecord } from '../coordination-store/delivery-types.js';
 import { ProviderStore, type ProviderResource } from '../coordination-store/provider-store.js';
 import type { ExternalEffect, ExternalObservation } from '../coordination-store/lifecycle-types.js';
@@ -66,6 +67,7 @@ export class SimulatedPullRequests {
       revision: 1,
       data: {
         deliveryId: this.delivery.id,
+        ...publicationContent(effect.input),
         environmentId: this.delivery.environment.id,
         runId: this.delivery.runId,
         target: this.delivery.target,
@@ -242,7 +244,9 @@ export class SimulatedPullRequests {
         ? ['deliveryId', 'decision']
         : effect.operation === 'pull-request.merge'
           ? ['deliveryId', 'targetHead']
-          : ['deliveryId'];
+          : effect.operation === 'pull-request.create'
+            ? ['deliveryId', 'title', 'body', 'template']
+            : ['deliveryId'];
     if (
       effect.environmentId !== this.delivery.environment.id ||
       effect.runId !== this.delivery.runId ||
@@ -251,6 +255,12 @@ export class SimulatedPullRequests {
       Object.keys(effect.input).some((key) => !allowed.includes(key))
     )
       throw new Error('Simulated PR intent is outside captured delivery authority');
+    if (
+      effect.operation === 'pull-request.create' &&
+      JSON.stringify(effect.input) !==
+        JSON.stringify({ deliveryId: this.delivery.id, ...this.delivery.publicationDocument })
+    )
+      throw new Error('Simulated PR document differs from captured delivery');
   }
 
   /** Exposes current lifecycle outcomes with explicit simulation provenance. */

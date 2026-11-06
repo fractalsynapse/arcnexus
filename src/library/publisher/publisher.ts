@@ -13,6 +13,7 @@ import { PromotionReview } from './promotion-review.js';
 import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
 import { DeliveryVerification } from './delivery-verification.js';
 import { DevelopmentDeliveries } from './development-deliveries.js';
+import { deliveryDocument } from './delivery-document.js';
 
 export interface PromotionInput {
   context: ProjectExecution;
@@ -42,7 +43,8 @@ export class Publisher {
     const candidate = run.data.candidateRecord as RecordData | undefined;
     if (!candidate) throw new Error('No verified candidate is available for delivery');
     const verification = new DeliveryVerification(this.root).capture(run, assignments, candidate);
-    const id = this.identity(projectId, run, String(run.data.candidateRevision ?? ''), target);
+    const revision = String(run.data.candidateRevision ?? '');
+    const id = this.identity(projectId, run, revision, target);
     return this.store.capture({
       id,
       projectId,
@@ -52,16 +54,28 @@ export class Publisher {
       environment: run.environment!,
       authorityDigest: String(run.data.executionIdentity ?? ''),
       base: String(run.data.authorityBase ?? ''),
-      candidate: String(run.data.candidateRevision ?? ''),
+      candidate: revision,
       candidateRecordId: candidate.id,
       verification,
+      publicationDocument: this.document(id, run, assignments, candidate, verification, revision),
       target,
-      developments: new DevelopmentDeliveries(this.root).capture(
-        assignments,
-        candidate,
-        String(run.data.candidateRevision ?? ''),
-      ),
+      developments: new DevelopmentDeliveries(this.root).capture(assignments, candidate, revision),
     });
+  }
+
+  /** Retains existing publication intent during recovery; new deliveries capture the current readable format. */
+  private document(
+    id: string,
+    run: ExecutionRun,
+    assignments: ExecutionAssignment[],
+    candidate: RecordData,
+    verification: DeliveryCapture['verification'],
+    head: string,
+  ) {
+    const retained = this.store.list().find((delivery) => delivery.id === id);
+    return retained
+      ? retained.publicationDocument
+      : deliveryDocument(run, assignments, candidate, verification, head);
   }
 
   /** Rechecks original delivery proof without trusting a workday's later candidate pointer or revised review claims. */
@@ -126,14 +140,25 @@ export class Publisher {
 
   /** Creates separate live attribution only after original proof and fresh target/goal verification pass. */
   async promote(input: PromotionInput, signal: AbortSignal) {
-    const { context, run, sourceRun, source, assignments, head, target } = input;
+    const { context, run, sourceRun, source, assignments, head } = input;
     this.resolveRetained(source, sourceRun, assignments);
     const proof = await new PromotionReview(this.root, context, source, run, assignments).verify(
       head,
       signal,
     );
-    const delivery = this.store.capture({
-      id: this.identity(context.key, run, head, target),
+    const delivery = this.capturePromotion(input, proof);
+    return { delivery, record: proof.record, goalEvidence: proof.goalEvidence };
+  }
+
+  /** Captures freshly verified target attribution independently of source simulation evidence. */
+  private capturePromotion(
+    input: PromotionInput,
+    proof: Awaited<ReturnType<PromotionReview['verify']>>,
+  ) {
+    const { context, run, source, head, target, assignments } = input;
+    const id = this.identity(context.key, run, head, target);
+    return this.store.capture({
+      id,
       projectId: context.key,
       runId: run.id,
       packageId: context.packageId,
@@ -144,10 +169,17 @@ export class Publisher {
       candidate: head,
       candidateRecordId: proof.record.id,
       verification: proof.verification,
+      publicationDocument: this.document(
+        id,
+        run,
+        assignments,
+        proof.record,
+        proof.verification,
+        head,
+      ),
       target,
       promotedFrom: source.id,
     });
-    return { delivery, record: proof.record, goalEvidence: proof.goalEvidence };
   }
 
   /** Keeps source identity, assignment attribution and captured authority separate from future target verification. */

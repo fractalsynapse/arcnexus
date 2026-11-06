@@ -150,3 +150,16 @@ evidence, and is not forwarded as a worker environment setting. Change deploymen
 settings only at a safe checkpoint and restart the host before resuming. Current
 ArcNexus research, director and independent-review declarations temporarily select
 Sol directly; independent review remains a separate activation.
+
+## Complete evidence transport
+
+The shared bridge carries complete host responses without a separate artifact-size
+ceiling. Decode UTF-8 only after assembling a complete response frame; socket chunks
+are not character boundaries. A large response must leave the same connection usable
+for later calls. Malformed frames and real disconnects fail explicitly and release
+pending callers rather than leaving them waiting.
+
+Socket-dependent bridge acceptance belongs in a native-host suite. Keep socket-free
+framing and startup checks in the existing deterministic suite; its captured selection
+metadata remains intact. Native skips in confined engineering checks are not evidence
+that the transport passed qualification.

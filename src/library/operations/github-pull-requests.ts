@@ -1,3 +1,4 @@
+import { publicationContent } from './repository-documents.js';
 import { createHash } from 'node:crypto';
 import type { DeliveryRecord } from '../coordination-store/delivery-types.js';
 import type { ExternalEffect, ExternalObservation } from '../coordination-store/lifecycle-types.js';
@@ -94,7 +95,7 @@ export class GitHubPullRequests {
     if (prior.length > 1) throw new Error('Ambiguous GitHub delivery PRs require reconciliation');
     if (prior.length === 1) return this.receipt(prior[0]);
     const response = await this.client.request('/pulls', signal, 'POST', {
-      title: 'ArcNexus verified delivery ' + this.delivery.id.slice(0, 12),
+      title: publicationContent(effect.input).title,
       body: this.body(effect),
       head: this.branch,
       base: this.delivery.target.branch,
@@ -149,15 +150,7 @@ export class GitHubPullRequests {
 
   /** Keeps model prose out of host identity while retaining links to immutable local verification evidence. */
   private body(effect: ExternalEffect): string {
-    return [
-      'Verified ArcNexus delivery: ' + this.delivery.id,
-      'Run: ' + this.delivery.runId,
-      'Candidate: ' + this.delivery.candidate,
-      'Verification digest: ' + this.delivery.verification.digest,
-      'This PR does not authorize main integration or package publication.',
-      '',
-      this.marker(effect),
-    ].join('\n');
+    return publicationContent(effect.input).body + '\n\n' + this.marker(effect);
   }
 
   /** Correlates the complete persisted intent, including its captured environment and input digest. */
@@ -199,7 +192,8 @@ export class GitHubPullRequests {
       effect.runId !== this.delivery.runId ||
       effect.target !== this.delivery.target.repository ||
       effect.operation !== 'pull-request.create' ||
-      JSON.stringify(effect.input) !== JSON.stringify({ deliveryId: this.delivery.id })
+      JSON.stringify(effect.input) !==
+        JSON.stringify({ deliveryId: this.delivery.id, ...this.delivery.publicationDocument })
     )
       throw new Error('GitHub PR intent is outside captured delivery authority');
   }

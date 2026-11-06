@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import {
@@ -28,6 +28,7 @@ class ProgressFixture {
   /** Captures explicit grants and opens ordinary host storage without starting engineering. */
   constructor(t: TestContext, comment = true) {
     this.fixture = generalCatalogFixture(t);
+    this.template();
     this.policy(comment);
     this.context = new ExecutionContext().resolve(this.fixture.repo);
     assert.deepEqual(this.context.bindings.tools, {});
@@ -38,6 +39,19 @@ class ProgressFixture {
       this.environments.effects.close();
       this.host.close();
     });
+  }
+
+  /** Adds an owned issue template to the captured fixture, with deliberately reordered headings. */
+  private template(): void {
+    mkdirSync(join(this.fixture.repo, '.github'), { recursive: true });
+    writeFileSync(
+      join(this.fixture.repo, '.github/ISSUE_TEMPLATE.md'),
+      '## Scope\n\n<!-- Scope -->\n## Summary\n\n<!-- Summary -->\n## Acceptance criteria\n',
+    );
+    const ownerPath = join(this.fixture.repo, 'architecture/components/a.json');
+    const owner = JSON.parse(readFileSync(ownerPath, 'utf8'));
+    owner.owns.push('.github');
+    writeFileSync(ownerPath, JSON.stringify(owner));
   }
 
   /** Uses committed shared-operation authority, including an explicit absent-comment case. */
@@ -98,6 +112,10 @@ class ProgressScenario {
   async milestones(t: TestContext, workday: boolean): Promise<void> {
     const f = new ProgressFixture(t);
     const { assignment, collaboration, provider } = await f.start(t, workday);
+    const issue = provider.resources().find((resource) => resource.kind === 'issue')!;
+    assert.match(String(issue.data.body), /^## Scope\n/);
+    assert.match(String(issue.data.body), /## Summary\n\n/);
+    assert.match(String(issue.data.body), /## Acceptance criteria/);
     await collaboration.progress();
     const events = f.environments.effects.events();
     await collaboration.progress();
@@ -106,13 +124,63 @@ class ProgressScenario {
     await collaboration.progress();
     const comments = provider.resources().filter((resource) => resource.kind === 'comment');
     assert.equal(comments.length, 2);
-    const bodies = comments.map((comment) => JSON.parse(String(comment.data.body)));
-    assert.deepEqual(
-      bodies.map((body) => body.milestone),
-      ['waiting', 'verified_delivery'],
-    );
-    assert.deepEqual(bodies[1].evidence, ['independent-review']);
+    const bodies = comments.map((comment) => String(comment.data.body));
+    assert.match(bodies[0]!, /\*\*a: waiting\*\*/);
+    assert.match(bodies[1]!, /\*\*a: verified component delivery\*\*/);
+    assert.match(bodies[1]!, /independent-review/);
     assert.ok(comments.every((comment) => comment.data.assignmentId === assignment.id));
+  }
+
+  /** Historical JSON comments keep their semantic receipt identity after the Markdown upgrade. */
+  async historical(t: TestContext): Promise<void> {
+    const f = new ProgressFixture(t);
+    const { run, assignment, collaboration, provider } = await f.start(t);
+    const tracking = f.environments.effects.effects()[0]!;
+    const issue = f.host.store.run(run.id).data.trackingIssue as { issueId: string };
+    const body = this.historicalBody(assignment);
+    const input = { issueId: issue.issueId, body };
+    const id =
+      run.id + ':progress:' + createHash('sha256').update(JSON.stringify(input)).digest('hex');
+    f.environments.effects.prepare({
+      ...tracking,
+      id,
+      assignmentId: assignment.id,
+      operation: 'issue.comment',
+      input,
+      definitionDigest: f.context.catalog.operations['issue-comment']!.definitionDigest!,
+    });
+    const effect = f.environments.effects.begin(id);
+    const result = await new SimulatedUpstream(
+      'simulated',
+      run.environment!.id,
+      tracking.target,
+      provider,
+    ).apply(effect, new AbortController().signal);
+    f.environments.effects.complete(id, effect.attempt, result);
+    await collaboration.progress();
+    const comments = provider.resources().filter((resource) => resource.kind === 'comment');
+    assert.equal(comments.length, 1);
+    assert.equal(comments[0]!.data.body, body);
+  }
+
+  /** Reproduces the released comment payload so migration checks compare actual prior identities. */
+  private historicalBody(assignment: {
+    id: string;
+    owner: string;
+    dependencies: string[];
+    evidence: string[];
+  }): string {
+    return JSON.stringify(
+      {
+        assignmentId: assignment.id,
+        owner: assignment.owner,
+        milestone: 'waiting',
+        dependencies: assignment.dependencies,
+        evidence: assignment.evidence,
+      },
+      null,
+      2,
+    );
   }
 
   /** A lost host receipt is recovered before a changed assignment produces its next comment. */
@@ -162,6 +230,9 @@ class ProgressScenario {
 }
 
 const scenario = new ProgressScenario();
+
+test('historical milestone receipts do not repost after a formatting upgrade', (t) =>
+  scenario.historical(t));
 
 for (const workday of [false, true])
   test(`${workday ? 'workday' : 'task'} milestones retain one authorized comment per meaningful state`, (t) =>

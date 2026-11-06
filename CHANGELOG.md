@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- Preserve complete large evidence responses and fragmented Unicode over the shared MCP bridge (#294).
+
+- Use canonical repository templates for readable live and simulated issues and PRs, preserving retry identities and separate verification evidence (#293).
+
 - Temporarily use Sol for research, direction and independent review, with recorded host substitutions for retained testing runs (#291).
 
 - Use the verified candidate test baseline while preserving captured check authority and current implementation (#287).
