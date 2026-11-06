@@ -89,42 +89,77 @@ export class InvocationDiagnostics {
     });
   }
 
-  /** Correlates a journal entry and operation result before reading its canonical combined log. */
+  /** Correlates invocation status with its retained operation before reading the combined log. */
   private diagnostic(
     assignment: ExecutionAssignment,
     record: RecordData,
     directory: string,
     invocation: any,
   ): unknown {
-    if (!this.identifier(invocation?.id)) return this.gap('Invalid invocation identity');
-    if (invocation.runId !== record.id || invocation.assignmentId !== assignment.id)
+    if (!this.matchesInvocation(assignment, record, invocation))
       return this.gap('Invocation belongs to a different run or assignment');
+    if (typeof invocation.status !== 'string' || !invocation.status)
+      return this.gap('Invocation status is unavailable');
+    const context = invocation.context;
+    if (!context || typeof context !== 'object' || Array.isArray(context))
+      return this.gap('Resolved invocation context is unavailable');
     const result = invocation.result;
     if (!result || typeof result.log !== 'string')
       return this.gap('Invocation has no retained command output');
-    if (!this.operation(record, invocation, result.log))
-      return this.gap('No matching retained operation result');
+    const operation = this.operation(record, invocation, result.log);
+    if (!operation) return this.gap('No matching retained operation result');
+    if (!this.exitStatusMatches(result, operation))
+      return this.gap('Invocation exit status differs from retained operation');
     try {
-      return {
-        recordId: record.id,
-        assignmentId: assignment.id,
-        invocationId: invocation.id,
-        operationId: invocation.operationId,
-        status: invocation.status,
-        exitCode: Number.isInteger(result.exitCode) ? result.exitCode : null,
-        resolvedContext: invocation.context ?? null,
-        outputComplete: invocation.status === 'completed' || invocation.status === 'failed',
-        combinedOutput: this.output(directory, invocation.id, result.log),
-      };
+      return this.project(assignment, record, directory, invocation, result);
     } catch {
       return this.gap('Retained invocation output is unavailable or unsafe');
     }
   }
 
-  /** Requires a matching captured operation, including a failed prerequisite absent from command history. */
-  private operation(record: RecordData, invocation: any, log: string): boolean {
+  /** Projects correlated identities, outcome, resolved context, and the complete retained combined log. */
+  private project(
+    assignment: ExecutionAssignment,
+    record: RecordData,
+    directory: string,
+    invocation: any,
+    result: any,
+  ): unknown {
+    return {
+      recordId: record.id,
+      assignmentId: assignment.id,
+      invocationId: invocation.id,
+      operationId: invocation.operationId,
+      status: invocation.status,
+      exitCode: result.exitCode,
+      resolvedContext: invocation.context,
+      outputComplete: invocation.status === 'completed' || invocation.status === 'failed',
+      combinedOutput: this.output(directory, invocation.id, result.log),
+    };
+  }
+
+  /** Confirms retained journal identities match the selected record and authorized assignment. */
+  private matchesInvocation(
+    assignment: ExecutionAssignment,
+    record: RecordData,
+    invocation: any,
+  ): boolean {
+    return (
+      this.identifier(invocation?.id) &&
+      invocation.runId === record.id &&
+      invocation.assignmentId === assignment.id
+    );
+  }
+
+  /** Rejects absent or contradictory exit status instead of projecting an unsupported result. */
+  private exitStatusMatches(result: any, operation: any): boolean {
+    return Number.isInteger(result.exitCode) && result.exitCode === operation.exitCode;
+  }
+
+  /** Finds the matching captured operation, including failed work absent from command history. */
+  private operation(record: RecordData, invocation: any, log: string): any | undefined {
     const operations = Array.isArray(record.operations) ? (record.operations as any[]) : [];
-    return operations.some(
+    return operations.find(
       (operation) =>
         (operation.id === invocation.operationId ||
           operation.failedOperationId === invocation.operationId) &&

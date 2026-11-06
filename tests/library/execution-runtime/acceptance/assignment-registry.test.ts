@@ -31,7 +31,9 @@ class AssignmentRegistryScenario {
       String(host.store.assignment(sender!.id).data.recordId),
       'report.json',
     );
-    const correction = JSON.parse(readFileSync(path, 'utf8')).requestCorrection;
+    const record = JSON.parse(readFileSync(path, 'utf8'));
+    const correction = record.requestCorrection;
+    assert.ok(correction, JSON.stringify({ status: record.status, error: record.error }));
     assert.match(correction.errors.join(' '), /Shared assignment acceptance differs/);
     assert.equal(host.store.assignments(run.id).length, 2);
     for (let turn = 0; turn < 8 && !host.store.inbox(sender!.id).length; turn++) await host.tick();

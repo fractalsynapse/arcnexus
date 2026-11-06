@@ -124,6 +124,42 @@ class EvidenceRequestScenarios {
     assert.equal(diagnostic.combinedOutput, 'stdout detail\nstderr detail\n');
   }
 
+  /** Refuses an invocation result that contradicts the correlated failed operation record. */
+  async inconsistentExit(t: TestContext): Promise<void> {
+    const fixture = this.diagnosticFixture(t, 'valid');
+    const path = join(fixture.root, 'runs', fixture.recordId, 'report.json');
+    const record = JSON.parse(readFileSync(path, 'utf8'));
+    record.operationInvocations[0].result.exitCode = 0;
+    writeFileSync(path, JSON.stringify(record));
+    const pages = new AssignmentRegistry(fixture.store, fixture.root).capture(fixture.assignment);
+    const manifest = await this.page(pages, 'manifest');
+    const index = await this.page(pages, manifest.invocationDiagnostics.artifact);
+    const diagnostic = JSON.parse(await this.complete(pages, index.invocations[0].artifact));
+    assert.equal(diagnostic.evidenceUnavailable, true);
+    assert.equal(diagnostic.reason, 'Invocation exit status differs from retained operation');
+  }
+
+  /** Keeps missing retained status and context as explicit diagnostic gaps. */
+  async incompleteMetadata(t: TestContext): Promise<void> {
+    const missingFields = [
+      ['status', 'Invocation status is unavailable'] as const,
+      ['context', 'Resolved invocation context is unavailable'] as const,
+    ];
+    for (const [field, reason] of missingFields) {
+      const fixture = this.diagnosticFixture(t, 'valid');
+      const path = join(fixture.root, 'runs', fixture.recordId, 'report.json');
+      const record = JSON.parse(readFileSync(path, 'utf8'));
+      delete record.operationInvocations[0][field];
+      writeFileSync(path, JSON.stringify(record));
+      const pages = new AssignmentRegistry(fixture.store, fixture.root).capture(fixture.assignment);
+      const manifest = await this.page(pages, 'manifest');
+      const index = await this.page(pages, manifest.invocationDiagnostics.artifact);
+      const diagnostic = JSON.parse(await this.complete(pages, index.invocations[0].artifact));
+      assert.equal(diagnostic.evidenceUnavailable, true);
+      assert.equal(diagnostic.reason, reason);
+    }
+  }
+
   /** Missing records, logs, and foreign paths remain pageable gaps without leaking private paths. */
   async inaccessible(t: TestContext): Promise<void> {
     for (const kind of ['missing', 'foreign', 'missing-record']) {
@@ -263,6 +299,12 @@ test('evidence request correction does not swallow retained integrity failures',
 
 test('assignment evidence pages complete retained invocation diagnostics', (t) =>
   scenarios.diagnostics(t));
+
+test('contradictory invocation status remains an explicit evidence gap', (t) =>
+  scenarios.inconsistentExit(t));
+
+test('missing invocation status and context remain explicit evidence gaps', (t) =>
+  scenarios.incompleteMetadata(t));
 
 test('missing and foreign invocation logs remain explicit evidence gaps', (t) =>
   scenarios.inaccessible(t));
