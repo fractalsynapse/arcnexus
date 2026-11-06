@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Retire stale routing failure receipts after newer scheduler outcomes commit so continuation resumes the current checkpoint (#296).
+
 - Preserve complete large evidence responses and fragmented Unicode over the shared MCP bridge (#294).
 
 - Use canonical repository templates for readable live and simulated issues and PRs, preserving retry identities and separate verification evidence (#293).
