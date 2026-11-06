@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { validateContinuation } from '../assignment/steward.js';
 import {
-  canReopenAssignment,
+  canContinueAssignment,
   type ExecutionAssignment,
 } from '../coordination-store/execution-types.js';
 import type { RecordData } from '../workspace/state.js';
@@ -84,7 +84,7 @@ export class DirectionEvidence {
 
   /** Distinguishes validated continuation from uncertain filesystem or managed-operation state. */
   private continuation(record: RecordData | undefined, assignment: ExecutionAssignment) {
-    if (!canReopenAssignment(assignment.status) || assignment.data.replacedBy)
+    if (!canContinueAssignment(assignment.status) || assignment.data.replacedBy)
       return {
         eligible: false,
         reason: 'Assignment cannot reopen from its current lifecycle state',

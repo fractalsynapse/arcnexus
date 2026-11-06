@@ -43,12 +43,14 @@ class RecoveryEvidenceScenarios {
   async invalid(t: TestContext): Promise<void> {
     const f = this.fixture(t);
     const pages = new RecoveryEvidence(f.root, f.store).capture(f.investigator);
-    const invalid = (await pages.call('assignment.evidence', {
+    const large = (await pages.call('assignment.evidence', {
       artifact: 'manifest',
       length: 999999,
     })) as any;
-    assert.equal(invalid.status, 'rejected');
+    assert.equal(large.complete, true);
+    assert.equal(large.nextOffset, large.totalCharacters);
     for (const request of [
+      { artifact: 'manifest', length: 0 },
       { artifact: '../report.json' },
       { artifact: 'manifest', runId: 'foreign' },
     ]) {

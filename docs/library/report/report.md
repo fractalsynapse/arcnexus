@@ -171,3 +171,12 @@ regular private file identity and content hash. Missing retained content is an
 explicit gap; foreign identities, aliases and hash mismatches fail capture.
 Historical verification snapshots are not recursively expanded. An invalid tool
 request remains a rejection in observations, never a claim of pinned content.
+
+## Evidence read sizes
+
+The shared evidence capability lets agents select a positive integer read length.
+ArcNexus imposes no maximum page length. Optional offset/length paging remains
+available, and omitted lengths use the default page size. Requests past the end
+of an artifact return only its remaining content with honest `nextOffset` and
+`complete` metadata. Invalid identities, offsets and malformed lengths still fail;
+read size never grants access to another artifact or changes its captured hash.

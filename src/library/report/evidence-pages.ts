@@ -12,7 +12,7 @@ interface Artifact {
   encoding: string;
 }
 
-/** Serves immutable host artifacts through bounded pages without accepting filesystem paths. */
+/** Serves immutable host artifacts through optional pages without accepting filesystem paths. */
 export class EvidencePages {
   private readonly artifacts = new Map<string, Artifact>();
 
@@ -91,7 +91,7 @@ export class EvidencePages {
     writeFileSync(path, content, { mode: 0o400, flag: 'wx' });
   }
 
-  /** Validates bounded transport pages without limiting how much evidence a reviewer may inspect. */
+  /** Validates requested evidence pages without limiting how much evidence a reviewer may inspect. */
   private read(args: unknown): unknown {
     const request = this.request(args);
     if (!request) return this.rejected('Invalid retained evidence arguments');
@@ -105,7 +105,6 @@ export class EvidencePages {
         minimumOffset: 0,
         maximumOffset: artifact.content.length,
         minimumLength: 1,
-        maximumLength: 32768,
       };
     const { offset, length } = page;
     const content = artifact.content.slice(offset, offset + length);
@@ -143,7 +142,7 @@ export class EvidencePages {
     };
   }
 
-  /** Rejects malformed or out-of-range page requests before slicing captured content. */
+  /** Rejects malformed lengths and out-of-range offsets before slicing captured content. */
   private page(
     request: Record<string, unknown>,
     total: number,
@@ -155,8 +154,7 @@ export class EvidencePages {
       !Number.isSafeInteger(length) ||
       Number(offset) < 0 ||
       Number(offset) > total ||
-      Number(length) < 1 ||
-      Number(length) > 32768
+      Number(length) < 1
     )
       return undefined;
     return { offset: Number(offset), length: Number(length) };
@@ -173,7 +171,7 @@ export class EvidencePages {
         properties: {
           artifact: { type: 'string' },
           offset: { type: 'integer', minimum: 0 },
-          length: { type: 'integer', minimum: 1, maximum: 32768 },
+          length: { type: 'integer', minimum: 1 },
         },
         required: ['artifact'],
         additionalProperties: false,

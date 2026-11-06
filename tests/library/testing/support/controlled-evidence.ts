@@ -64,10 +64,10 @@ export class ControlledEvidence {
   private async rejectedPage(client: Client): Promise<void> {
     const reply: any = await client.callTool({
       name: this.capability,
-      arguments: { artifact: 'manifest', offset: 0, length: 100000 },
+      arguments: { artifact: 'manifest', offset: 0, length: 0 },
     });
     const rejection = JSON.parse(reply.content[0].text);
-    if (reply.isError || rejection.status !== 'rejected' || rejection.maximumLength !== 32768)
+    if (reply.isError || rejection.status !== 'rejected' || rejection.minimumLength !== 1)
       throw new Error('Invalid page did not return recoverable bounds');
     if ('content' in rejection) throw new Error('Rejected page exposed content');
   }
