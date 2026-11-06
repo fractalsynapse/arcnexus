@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Accept architect feedback on safely paused tasks through the existing answer control (#283).
+
 - Observe native test host shutdown without racing process disappearance (#280).
 
 - Keep worker regression checkpoints as review evidence so incidental test corrections do not redefine product acceptance (#273).
