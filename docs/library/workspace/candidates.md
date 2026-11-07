@@ -39,3 +39,11 @@ settled operations and reconciled source match the retained transition. Recovery
 finishes that same transition without rerunning preparation. Incomplete or changed
 preparation remains blocked. Content conflicts retain both versions for owner
 correction; this does not authorize automatic conflict resolution or broader writes.
+
+For an ordinary text conflict entirely within the active change owner's component,
+materialize Git's conflict-marked result in that same successor workflow. Retain
+base, current, incoming and conflict evidence; tell the steward to resolve it through
+checked edits. This is unfinished engineering, not a merged or verified candidate.
+Unresolved markers prevent preparing a contribution. Cross-owner changes, nonregular
+files and conflicts without an editable text representation remain blocked. Required
+checks and independent assessment still evaluate the eventual assembled delivery.

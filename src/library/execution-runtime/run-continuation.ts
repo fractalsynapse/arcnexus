@@ -1,3 +1,4 @@
+import { ReconciledContinuation } from './reconciled-continuation.js';
 import { PromotionRecovery } from '../publisher/publisher.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -74,11 +75,7 @@ export class RunContinuation {
           'utf8',
         ),
       ) as RecordData;
-      const pending = assignment.data.reconciliation as { recordId: string } | null;
-      if (pending && pending.recordId !== record.reconciliationId)
-        throw new Error(
-          `Assignment ${assignment.id} has uncertain workspace preparation: ${pending.recordId}`,
-        );
+      new ReconciledContinuation(this.root, this.store).recover(assignment, record);
       validateCheckpoint(this.root, record);
       this.store.updateAssignment(assignment.id, 'ready', { reconciliation: null });
     }

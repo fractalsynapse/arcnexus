@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Preserve prior development branches during reconciled continuation and recover completed preparation through the shared checkpoint path without repeating setup (#331).
+
 - Qualify complete director catalog paging instead of rejecting catalog growth against an obsolete inline-prompt size assertion (#325).
 
 - Wait for observed host readiness and preserve caller cancellation across task, workday, and delivery controls instead of failing slow startup after a fixed window (#285).

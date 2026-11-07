@@ -1,3 +1,4 @@
+import { ReconciledContinuation } from './reconciled-continuation.js';
 import { createHash } from 'node:crypto';
 import { assignmentIntent } from './assignment-intent.js';
 import type { Assignment } from '../architecture/assignment.js';
@@ -207,9 +208,7 @@ export class AssignmentDispatch {
         'utf8',
       ),
     ) as RecordData;
-    const pending = assignment.data.reconciliation as { recordId: string } | null;
-    if (pending && pending.recordId !== record.reconciliationId)
-      throw new Error('Continuation has uncertain workspace preparation');
+    new ReconciledContinuation(this.root, this.store).recover(assignment, record);
     validateCheckpoint(this.root, record, purpose);
     if (canReopenAssignment(assignment.status) && !changedObligation)
       this.diagnose(record, assignment);

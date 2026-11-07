@@ -1,3 +1,4 @@
+import { ReconciledContinuation } from './reconciled-continuation.js';
 import { developmentBase } from './development-base.js';
 import { VerificationBaseline } from './verification-baseline.js';
 import { assignmentIntent } from './assignment-intent.js';
@@ -21,11 +22,7 @@ import type {
   ExecutionAssignment,
 } from '../coordination-store/execution-types.js';
 import { CandidateSnapshots } from '../workspace/candidates.js';
-import {
-  continueDevelopmentBranch,
-  createWorkspace,
-  prepareWorkspace,
-} from '../workspace/workspace.js';
+import { createWorkspace, prepareWorkspace } from '../workspace/workspace.js';
 import { save, type RecordData } from '../workspace/state.js';
 import { ProgressObserver } from '../report/progress.js';
 import { Direction, VerificationIssue } from '../task-intake/direction.js';
@@ -323,24 +320,7 @@ export class AssignmentExecution {
     const merged = this.snapshots.reconcile(record.base, current, incoming);
     if (merged.status !== 'merged') throw new Error('Candidate conflict: ' + merged.evidence);
     const next = await this.materialize(assignment, record, current, merged.revision);
-    record.previousWorkspaces = [
-      ...((record.previousWorkspaces ?? []) as string[]),
-      record.workspace,
-    ];
-    Object.assign(record, {
-      workspace: next.workspace,
-      branch: next.branch,
-      branchBase: record.branchBase ?? next.branchBase,
-      members: next.members,
-      materializationBinding: next.materializationBinding,
-      base: current,
-    });
-    delete record.developmentHead;
-    if (record.nextStage === 'finished') record.nextStage = 'implementation';
-    record.reconciledCandidateDigest = candidateDigest(record);
-    record.reconciliationId = next.id;
-    save(this.root, record);
-    this.store.updateAssignment(assignment.id, 'running', { reconciliation: null });
+    new ReconciledContinuation(this.root, this.store).complete(assignment, record, next);
     return record;
   }
 
@@ -362,7 +342,6 @@ export class AssignmentExecution {
     });
     await prepareWorkspace(this.root, next, this.signal);
     this.snapshots.apply(next.workspace, current, revision);
-    continueDevelopmentBranch(record, next);
     save(this.root, next);
     return next;
   }
