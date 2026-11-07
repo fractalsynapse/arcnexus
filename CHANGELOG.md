@@ -2,7 +2,13 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Focus the MVP on fresh real task delivery through staging, with canonical director, ownership and contribution-routing rules and deferred historical recovery (#337).
+
 ### Fixed
+
+- Publish assembled task changes from their independently reviewed engineering baseline instead of the architectural revision or verification checkout (#337).
 
 - Qualify complete director catalog paging instead of rejecting catalog growth against an obsolete inline-prompt size assertion (#325).
 

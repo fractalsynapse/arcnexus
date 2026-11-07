@@ -1,147 +1,94 @@
-# Reliable self-development MVP
+# Fresh-task self-development MVP
 
-Accepted architectural direction, November 5, 2026; implementation and qualification
-remain work to do. This is the current phase-two scope and acceptance contract.
-It supersedes the broader gates in the historical managed-lifecycle plan and linked
-execution/configuration plans. The simplification policy and reliability threshold
-are authored once in [AGENTS.md](../../AGENTS.md#simplification-and-reliability).
+Accepted architectural direction, November 7, 2026. This is the current phase-two
+scope, replacing the broader qualification requirements in earlier plans. It records
+intended behavior; implementation and observed qualification are reported separately.
+The governing coordination, simplification and reliability rules live in
+[AGENTS.md](../../AGENTS.md).
 
-## Supported envelope
+## Immediate outcome
 
-One platform, one sequential execution lane and the fixed container volume mount in
-the [deployment recipe](../release/container-qualification.md).
-Tasks and workdays are different intake policies for the same coordinator, assignment,
-verification and delivery process. The real director chooses eligible component
-stewards; ordinary inbox dependencies can activate others. No prescribed team size,
-parallel scheduling infrastructure or alternative simulation execution engine.
+Deliver one fresh, useful real engineering task through staging, then establish
+three consecutive clean self-development cycles before expanding scope. Use one
+platform, one repository execution lane and the existing fixed project-volume mount.
+The real director selects eligible project stewards; there is no prescribed team size.
 
-Use existing component definitions and straightforward platform/package composition.
-Architectural intent and operations each have one authored source. Keep necessary
-local attachment and managed repository discovery; defer transactional edits across
-multiple repositories, arbitrary relocation of unfinished runs, broad portfolio/CRUD
-conveniences and interface expansion. The fixed mount is the deployment contract;
-volume persistence and restart recovery at that mount remain required.
+Keep component ownership, checked edits, independent verification, supervised
+execution, cancellation and honest evidence. Preserve the existing services and
+store. Do not introduce another scheduler, database, framework, recovery mechanism,
+execution limit or publication route.
 
-Keep component ownership as the sole file-write authority, host-controlled checked
-edits, independent verification, supervision/cancellation and isolation of simulated
-upstream effects. Agents cannot grant themselves permissions or change their own
-acceptance baseline. Removing frozen-supervisor requirements does not remove these
-trust boundaries or allow reported failures to be rewritten as successes.
+## Existing path to make reliable
 
-## One process
+- Capture current upstream staging and the task's architectural authority separately.
+- Accept a prompt and let the real director create outcome-based assignments.
+- Execute stewards sequentially on their own branches and worktrees from the captured
+  staging revision. Route actual contribution dependencies through the existing inbox.
+- Reuse an assignment for the same accepted work. A separate request is not a reason
+  to implement the same contract twice or introduce a peer-agreement prerequisite.
+- Assemble related prepared contributions into the existing task candidate. Partial
+  cross-owner contributions need not build independently before assembly.
+- Run required assembled checks and one independent assessment of engineering and
+  task acceptance. Return concrete deficiencies to the responsible existing owners.
+- Publish one assembled task delivery through one staging PR. Steward branches retain
+  ownership and attribution; they do not each require a separate publication lifecycle.
+- Observe current CI, approval and repository review requirements before integration.
+  Main merges, real tags and production publication remain human-controlled.
 
-1. Accept intent through task or workday intake and record actionable work.
-2. Let the director/stewards select work within component authority. Persist inbox
-   requests and required delivery milestones through the existing coordination store.
-3. Execute each assignment in its own development branch/worktree from staging.
-   Stewards choose their engineering activities and files. The host enforces actual
-   authority, safe checkpoints and the applicable verification obligations.
-4. Assemble and independently verify the candidate using one evidence bundle and
-   reader. The same independent assessment covers engineering criteria and task-goal
-   readiness for integration; the director routes actionable corrections.
-5. Use one publisher route: verified development branch → staging PR → policy-allowed
-   integration. Simulation supplies isolated Git/upstream providers to this same
-   route. Promotion submits the verified changes to it under current live authority;
-   it does not create another engineering, verification or release algorithm.
+Publication uses the original engineering baseline retained with the accepted
+candidate. An assembled verification checkout and architectural source revision are
+not substitutes for that baseline. Use one interpretation throughout ordinary capture
+and validation; do not add another authored baseline field.
 
-Independent engineering acceptance precedes publication. The original goal remains
-visible to the reviewer, but future host integration/release receipts cannot be
-prerequisites for accepting engineering work. The publisher must still observe and
-record those outcomes before reporting lifecycle completion. This is a sequential
-handoff, not a waiver of publication requirements or another model assessment.
+The director plans and routes corrections. The independent verifier assesses the
+assembled engineering result against the task goal. Future publication receipts are
+not prerequisites for engineering acceptance; the publisher records actual integration.
 
-Source and runtime storage remain separate. Keep observed commands, outcomes, edits,
-reviews and delivery references in application storage. Every consumer uses the same
-paged evidence service; no inline copies of large artifacts or private-path-only proof.
-Use the existing store, operation executor and reporting services. Consolidate their
-callers and delete obsolete alternatives; do not add a new framework around them.
+## Checks and evidence
 
-Recovery uses the installed runtime after the host reaches a safe checkpoint or
-managed execution has stopped. Record the runtime transition, validate ownership,
-acceptance, candidate and pending-operation state, then continue through the same
-scheduler. Keep the existing run when compatible. An incompatible checkpoint gets an
-explicit migration or honest blocked result, not an automatic fresh run or blind
-operation replay. Historical evidence remains readable; frozen executable copies and
-parallel executable compatibility paths are not required. Do not hot-patch executing
-processes or let a worker modify its supervising code.
+Use owner-scoped checks during engineering and required repository checks on the
+assembled candidate. Run native-only checks in their supported environment; skipped
+cases do not establish acceptance. Test the actual production record shapes and
+services instead of approximate lifecycle fixtures. Reuse evidence whose relevant
+inputs have not changed. Provider CI remains independently required.
 
-Verification has one service. Engineering uses owner-scoped checks; assembled delivery
-uses the required repository checks. Reuse completed evidence when its source,
-authority, operation definition and relevant environment inputs are unchanged. An
-agent's earlier check cannot accept a later changed candidate. Provider-required CI
-and reviews still apply. Behavioral changes retain meaningful regression evidence; do not manufacture a
-red-before-every-edit ritual. Research, documentation and refactors use their
-appropriate checks.
+Use the existing evidence interface for current prepared changes, latest findings
+and retained observations. Do not require consumers to reconstruct current source
+from historical transcripts. Keep execution logs, databases, qualification receipts
+and efficiency observations outside the source repository.
 
-## Implementation order
+## Failure behavior
 
-- Establish this contract and reconcile conflicting active guidance. Pause work that
-  belongs to deferred scope, retaining its edits and evidence.
-- Unify evidence capture/retrieval and engineering/goal verification. Remove duplicate
-  prompt payloads and promotion-specific evidence assembly; exercise real handoffs.
-- Replace frozen-runner recovery with one normal checkpoint/restart path. Consolidate
-  run control and remove superseded executable recovery variants after migration.
-- Route preparation, engineering checks, delivery checks and promotion through the
-  same operation/verification services. Reuse valid evidence instead of repeating work.
-- Reduce the supported deployment and composition paths to this envelope. Keep one
-  active development lane and one publisher route; retire bypasses as their callers
-  migrate. Avoid mass deletion of useful implementations without checking callers.
-- Qualify the resulting lifecycle, then use it to deliver small subsequent increments.
+Ordinary engineering failures return to the accountable steward through the existing
+correction loop. Supported explicit pause/resume uses existing checkpoints. A broken
+or incompatible run stops with its edits and evidence retained; rescuing it is not a
+prerequisite for proving a fresh task. Uncertain upstream effects remain blocked until
+existing provider inspection reconciles them. Never replay them blindly or rewrite
+failure evidence as success.
 
-Implement related removals and migrations together, with focused tests for trust and
-recovery risks. Assemble the simplification before long integrated checks. Readiness
-comes from observed behavior, not the number of deleted files or new abstractions.
+## Deferred from this MVP gate
 
-## Dependent contributions and assembled verification
+- Recovery, migration or promotion of old failed deliveries and unfinished runs.
+- Simulation release qualification and simulation-to-live promotion qualification.
+- Self-directed workday lifecycle qualification.
+- Platform/package management expansion and cross-repository transactions.
+- OpenAPI, MCP web-service gateways and React UI implementation.
 
-Accepted November 6, 2026; implementation tracked in #312. Related engineering
-contributions may complete as one assembled delivery instead of requiring each
-owner's partial candidate to pass independently. This removes the deadlock where
-an implementation awaits a regression test that cannot pass without that same
-implementation.
+Preserve historical evidence. Existing deferred capabilities may remain when deleting
+them would create unrelated work, but they must not participate in or block the fresh
+live-task path. Do not integrate speculative recovery changes to preserve sunk work.
+Existing simulation confinement must not be weakened while that capability is deferred.
 
-A prepared contribution is not verified delivery. Each steward retains its own
-branch, checked edits, component ownership, plan and observed checks. Within a
-related contribution group, prepared dependency work may unblock engineering;
-outside that group, the existing verified-delivery milestone remains required.
-The host reconciles attributed snapshots against the current verified candidate,
-runs captured checks and independent review on the combined result, and advances
-the verified candidate and all contributing delivery receipts atomically only
-when their criteria are satisfied. Failed checks, conflicts and missing evidence
-retain the contributions and return actionable findings through ordinary correction.
-They never promote a partial candidate or fabricate a delivered dependency.
+## Qualification
 
-Dispatch owners come from validated assignments and continuations; a redundant
-selection summary cannot block or authorize dispatch. Derive its displayed owner set
-from those proposals while retaining raw model responses. A ready director decision
-with no further engineering may return fully prepared, previously rejected work to
-the same assembled assessment. It does not create a no-op worker turn or accept the
-delivery. Each reassessment consumes that decision; unchanged rejected work otherwise
-remains waiting for diagnosis, with the existing progress detector still active.
+Each counted cycle must deliver a useful real ArcNexus engineering improvement through
+real direction, component stewards, applicable checks, independent verification and
+staging integration. Record exact revisions and outcomes outside source. Apply the
+clean-cycle definition in AGENTS.md; ordinary review and approval remain part of the
+workflow. No scripted model, manual state repair or alternate publishing script counts
+as a clean cycle. Report deterministic tests, native enforcement, CI and real-agent
+results separately.
 
-Use the same reconciliation, operation executor, evidence capture, verifier and
-publisher for one or several contributors. Do not introduce another scheduler,
-publication route or shared worker write authority. Keep uncertain operation and
-interruption recovery explicit; repeated completion cannot deliver twice.
-
-## Qualification before expansion
-
-Apply the consecutive real-cycle threshold in AGENTS.md to this supported process.
-Each counted cycle must deliver a useful ArcNexus improvement through real direction,
-engineering, applicable tests, independent verification and the canonical staging
-workflow. Record exact revisions, outcomes and artifacts outside source. No scripted
-model, manual repair, discarded failed attempt or alternate publishing script can
-stand in for a successful cycle.
-
-Across qualification, exercise task and self-directed workday intake, a real inbox
-dependency, safe pause/resume, and restart with unfinished work at the fixed mount.
-Keep native source-write and simulated-upstream enforcement evidence separate. At
-least one useful simulated delivery must go through fresh live verification and the
-real staging workflow. Real main merges, tags and package publication remain human
-controlled. Qualification does not require an arbitrary number of participating owners.
-
-Do not repeat unrelated suites for each counted cycle. Reuse valid infrastructure and
-check evidence; repeat affected qualification when the process or its assumptions
-change. Deferred features are explicitly deferred, never reported as passed. Once the
-supported process is reliable, phase-three gateways expose these same application
-services and feature growth proceeds in small agent-delivered increments.
+The acceptance measure is merged engineering work. After the fresh delivery and three
+clean cycles, extend the working system in small useful increments. Deferred work is
+explicitly deferred, never claimed complete.

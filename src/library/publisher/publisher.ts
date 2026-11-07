@@ -55,7 +55,7 @@ export class Publisher {
       assignmentIds: assignments.map((assignment) => assignment.id),
       environment: run.environment!,
       authorityDigest: String(run.data.executionIdentity ?? ''),
-      base: String(run.data.authorityBase ?? ''),
+      base: this.engineeringBase(candidate),
       candidate: revision,
       candidateRecordId: candidate.id,
       verification,
@@ -199,11 +199,20 @@ export class Publisher {
       JSON.stringify(delivery.environment) !== JSON.stringify(run.environment) ||
       delivery.packageId !== run.data.packageId ||
       delivery.authorityDigest !== run.data.executionIdentity ||
-      delivery.base !== run.data.authorityBase ||
+      delivery.base !== this.engineeringBase(candidate) ||
       JSON.stringify(delivery.assignmentIds) !== JSON.stringify(assignments.map((a) => a.id)) ||
       (delivery.candidateRecordId !== undefined && delivery.candidateRecordId !== candidate.id)
     )
       throw new Error('Retained delivery attribution differs from its captured source');
+  }
+
+  /** Uses the original engineering parent, not the checkout used to verify an assembled tree. */
+  private engineeringBase(candidate: RecordData): string {
+    const base = Array.isArray(candidate.assemblyAssignments)
+      ? candidate.assemblyBase
+      : candidate.base;
+    if (typeof base !== 'string' || !base) throw new Error('Missing retained engineering baseline');
+    return base;
   }
 
   /** Hashes one immutable attribution tuple for both initial capture and retained-proof validation. */

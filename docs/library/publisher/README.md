@@ -5,6 +5,12 @@ an immutable delivery only after validating that the candidate still matches the
 independently reviewed result. Delivery approval is local authorization for that
 revision; it is not a GitHub review or permission to bypass CI.
 
+Ordinary delivery uses the retained engineering parent. For an assembled candidate,
+`assemblyBase` records that parent while `base` identifies the checkout used for
+verification. The independent review must agree with the assembly baseline.
+Architectural authority is validated separately and never substitutes for this parent.
+Historical wrong-base delivery repair is outside the fresh-task MVP.
+
 Coordination-store owns durable delivery transitions and external-effect receipts.
 Operations owns supervised effects and provider transport. Publisher owns the policy
 that connects verified engineering to those effects. Worker input cannot replace
