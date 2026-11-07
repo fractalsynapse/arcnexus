@@ -157,12 +157,10 @@ Do not claim completion or merge until applicable final checks pass. Batch size 
 not change ownership, confinement, review or release authority.
 
 Prioritize the working lifecycle and real self-development, then finish interface
-breadth using that lifecycle where reliable. For real qualification, the real
-director selects stewards from the actual project's eligible component catalog;
-dependencies can activate additional stewards. Supply useful goals, never a forced
-team, participant ceiling or scripted director. Owner counts follow the work, not a qualification quota. Keep deterministic
-scenarios in acceptance tests; real qualification follows the current MVP contract.
-Preserve host-controlled authority across ordinary recovery.
+breadth using that lifecycle where reliable. Apply the
+[coordination rules](#director-stewards-and-assignments) during real qualification.
+Keep deterministic scenarios in acceptance tests; real qualification follows the
+current MVP contract. Preserve host-controlled authority across ordinary recovery.
 
 For executable changes, test the assembled program and the default production wiring.
 Fast deterministic tests may use fakes; introducing or changing real harness

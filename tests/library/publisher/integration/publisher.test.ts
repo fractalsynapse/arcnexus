@@ -133,6 +133,8 @@ class PublisherFixture {
       JSON.stringify({
         id,
         parentRecordId: this.record.id,
+        base: this.record.base,
+        assemblyAssignments: this.record.assemblyAssignments,
         executionRunId: 'run',
         assignmentId: 'assignment',
         activationRole: role,
@@ -141,7 +143,7 @@ class PublisherFixture {
         acceptanceCriteria: ['Updated source'],
         verificationEvidence: {
           candidateDigest: candidateDigest(this.record),
-          baseline: this.record.base,
+          baseline: this.record.assemblyBase ?? this.record.base,
         },
         agent: this.assessment(),
       }),
@@ -173,7 +175,44 @@ class PublisherFixture {
       branch: 'staging',
     });
   }
+
+  /** Reproduces the host's assembled checkout while retaining its distinct engineering parent. */
+  assemble(): string {
+    const base = this.record.base;
+    const head = String(this.run.data.candidateRevision);
+    git(this.source, 'reset', '--hard', head);
+    this.record.base = head;
+    this.record.assemblyBase = base;
+    this.record.assemblyAssignments = [
+      {
+        id: this.assignment.id,
+        owner: this.assignment.owner,
+        recordId: this.record.id,
+        acceptance: this.assignment.acceptance,
+      },
+    ];
+    this.run.data.authorityBase = head;
+    this.assignment.data.deliveryRecordId = this.record.id;
+    this.assignment.evidence = [this.review('verifier')];
+    this.run.data.goalEvidence = [this.review('director-assessment')];
+    save(this.root, this.record);
+    return base;
+  }
 }
+
+test('assembled publication retains the reviewed engineering parent, not authority or checkout', (t) => {
+  const f = new PublisherFixture(t);
+  const base = f.assemble();
+  const delivery = f.capture();
+  assert.equal(delivery.base, base);
+  assert.notEqual(delivery.base, f.record.base);
+  assert.notEqual(delivery.base, f.run.data.authorityBase);
+  assert.equal(delivery.developments, undefined);
+  assert.deepEqual(f.capture(), delivery);
+  assert.equal(f.publisher.resolveRetained(delivery, f.run, [f.assignment]).id, f.record.id);
+  f.record.assemblyBase = f.record.base;
+  assert.throws(() => f.capture(), /differs from independent acceptance/);
+});
 
 test('publisher captures actual reviewed changes once without publishing or approving', (t) => {
   const f = new PublisherFixture(t);

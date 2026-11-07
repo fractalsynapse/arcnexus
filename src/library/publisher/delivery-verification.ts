@@ -30,7 +30,12 @@ export class DeliveryVerification {
       reviews.find(
         (review) => review.parentRecordId === candidate.id && review.activationRole === 'verifier',
       );
-    if (!accepted || accepted.verificationEvidence?.candidateDigest !== candidateDigest(candidate))
+    if (
+      !accepted ||
+      accepted.verificationEvidence?.candidateDigest !== candidateDigest(candidate) ||
+      (Array.isArray(candidate.assemblyAssignments) &&
+        accepted.verificationEvidence?.baseline !== candidate.assemblyBase)
+    )
       throw new Error('Delivery candidate differs from independent acceptance');
     return {
       references,

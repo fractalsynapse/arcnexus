@@ -8,6 +8,8 @@
 
 ### Fixed
 
+- Publish assembled task changes from their independently reviewed engineering baseline instead of the architectural revision or verification checkout (#337).
+
 - Qualify complete director catalog paging instead of rejecting catalog growth against an obsolete inline-prompt size assertion (#325).
 
 - Wait for observed host readiness and preserve caller cancellation across task, workday, and delivery controls instead of failing slow startup after a fixed window (#285).
