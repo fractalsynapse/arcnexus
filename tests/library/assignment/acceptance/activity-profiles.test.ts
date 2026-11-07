@@ -20,7 +20,6 @@ class ActivityTurnScenarios {
       planning: 'gpt-6-luna',
       specification: 'design-model',
       implementation: 'gpt-6-luna',
-      review: 'review-model',
     };
     const calls = readFileSync(f.calls, 'utf8')
       .trim()
@@ -35,7 +34,7 @@ class ActivityTurnScenarios {
     );
     assert.deepEqual(
       record.turns.map((turn: any) => turn.executionProfile),
-      ['luna', 'design', 'luna', 'review'],
+      ['luna', 'design', 'luna'],
     );
     assert.equal(new Set(record.turns.map((turn: any) => turn.threadId)).size, 1);
   }

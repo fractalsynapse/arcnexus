@@ -5,7 +5,7 @@ import type { ExecutionAssignment } from '../coordination-store/execution-types.
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import type { RecordData } from '../workspace/state.js';
 import { EvidencePages } from './evidence-pages.js';
-import { ExecutionObservations } from './execution-observations.js';
+import { ExecutionEvidence } from './execution-evidence.js';
 
 /** Captures current-run investigation facts without exposing private directories or granting recovery authority. */
 export class RecoveryEvidence {
@@ -23,7 +23,8 @@ export class RecoveryEvidence {
     if (current.runId !== assignment.runId || current.owner !== assignment.owner)
       throw new Error('Investigation assignment identity differs from the host store');
     const run = this.store.run(current.runId);
-    this.direction(current);
+    const execution = new ExecutionEvidence(this.root, this.store).capture(run.id);
+    ExecutionEvidence.pin(this.root, run.id, this.pages, execution);
     const records = this.store
       .assignments(run.id)
       .filter((item) => item.id !== current.id)
@@ -37,29 +38,11 @@ export class RecoveryEvidence {
         assignments: new AssignmentRegistry(this.store).append(this.pages, current),
         basis:
           'Pinned host observations, never permission to replay or change authority. Missing journals do not prove that a request was never attempted; inspect observed tool requests and receipts.',
-        artifacts: this.pages.metadata(),
+        artifacts: this.pages.navigation(),
       }),
       'json',
     );
     return this.pages;
-  }
-
-  /** Captures substantive direction and caller clarification without asking the worker to retrieve host files. */
-  private direction(current: ExecutionAssignment): void {
-    const run = this.store.run(current.runId);
-    this.pages.add(
-      'direction',
-      JSON.stringify({
-        runId: run.id,
-        objective: run.objective,
-        initialDirection: run.data.initialDirection,
-        directionHistory: run.data.directionHistory,
-        feedback: run.data.redirection,
-        prompt: run.data.prompt,
-        handoff: current.data.directionContext,
-      }),
-      'json',
-    );
   }
 
   /** Rejects foreign or aliased records before exposing any of their contents. */
@@ -77,46 +60,17 @@ export class RecoveryEvidence {
         record.assignmentId !== assignment.id
       )
         throw new Error('Retained record belongs to a different run or assignment');
-      this.pages.addSections(assignment.id + ':state', this.state(record, assignment), [
-        'assignment',
-        'plan',
-        'frozenTests',
-        'operationInvocations',
-        'operations',
-        'services',
-        'observations',
-      ]);
       this.file(assignment.id + ':checkpoint', directory, 'checkpoint.json');
       this.journals(assignment.id, directory);
-      return { assignmentId: assignment.id, recordId: id, status: 'captured' };
+      return {
+        assignmentId: assignment.id,
+        recordId: id,
+        status: 'captured',
+        artifact: 'execution:' + assignment.id + ':record',
+      };
     } catch (error) {
       return { assignmentId: assignment.id, evidenceUnavailable: true, reason: String(error) };
     }
-  }
-
-  /** Includes observed tool receipts and managed operation state separately from worker completion claims. */
-  private state(record: RecordData, assignment: ExecutionAssignment) {
-    return {
-      assignment,
-      recordId: record.id,
-      status: record.status,
-      stage: record.stage,
-      nextStage: record.nextStage,
-      safeCheckpoint: record.safeCheckpoint,
-      checkpoint: record.checkpoint,
-      base: record.base,
-      changes: record.changes,
-      plan: record.plan,
-      frozenTests: record.frozenTests,
-      regressionCheckpoint: record.regressionCheckpoint,
-      operationInvocations: record.operationInvocations,
-      operations: record.operations,
-      services: record.services,
-      currentOperation: record.currentOperation,
-      editRecovery: record.editRecovery,
-      error: record.error,
-      observations: new ExecutionObservations(join(this.root, 'runs', record.id)).capture(record),
-    };
   }
 
   /** Preserves transaction status and exact before/after bytes; absence stays an evidence gap. */

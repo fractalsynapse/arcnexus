@@ -54,31 +54,11 @@ export class DirectionEvidence {
     }
   }
 
-  /** Supplies checkpoint and command facts independently of the worker's completion claims. */
+  /** Adds only validated eligibility; retained checkpoint facts come from the canonical capture. */
   private project(record: RecordData, assignment: ExecutionAssignment) {
     return {
       recordId: record.id,
-      status: record.status,
-      stage: record.stage,
-      nextStage: record.nextStage,
-      threadId: record.threadId,
-      plan: record.plan,
-      checkpoint: record.checkpoint,
-      safeCheckpoint: record.safeCheckpoint,
       continuation: this.continuation(record, assignment),
-      candidate: { workspace: record.workspace, base: record.base, changes: record.changes },
-      commands: record.commands,
-      operations: record.operations,
-      currentOperation: record.currentOperation,
-      pendingReconciliation: assignment.data.reconciliation,
-      pendingDependencies: assignment.dependencies,
-      requiredMilestones: assignment.data.milestones,
-      pendingRequests: record.pendingRequests,
-      pendingInboxActions: record.pendingInboxActions,
-      regressionCheckpoint: record.regressionCheckpoint,
-      independentFindings: record.independentFindings,
-      workerResult: record.agent,
-      error: record.error,
     };
   }
 
@@ -89,7 +69,14 @@ export class DirectionEvidence {
         eligible: false,
         reason: 'Assignment cannot reopen from its current lifecycle state',
       };
-    if (!record) return { eligible: true, reason: 'No activation has started' };
+    if (!record)
+      return {
+        eligible: assignment.status !== 'prepared',
+        reason:
+          assignment.status === 'prepared'
+            ? 'Prepared work requires a checkpoint'
+            : 'No activation has started',
+      };
     try {
       const pending = assignment.data.reconciliation as { recordId: string } | null;
       if (pending && pending.recordId !== record.reconciliationId)

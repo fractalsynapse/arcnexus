@@ -20,7 +20,7 @@ class ContinuationScenarios {
     this.prepareState(f.state);
     let record = this.record(f);
     const stages: unknown[] = [];
-    for (let index = 0; index < 4; index++) {
+    for (let index = 0; index < 3; index++) {
       const session = new StewardSession(
         f.state,
         record,
@@ -50,7 +50,7 @@ class ContinuationScenarios {
     const record = this.record(f);
     this.refactorAuthority(record, f.repo);
     record.directionAccepted = true;
-    for (let stage = 0; stage < 4; stage++)
+    for (let stage = 0; stage < 3; stage++)
       await new StewardSession(
         f.state,
         record,
@@ -74,16 +74,17 @@ class ContinuationScenarios {
     writeFileSync(path, JSON.stringify({ ...operation, args: ['tests/baseline.cjs'] }));
   }
 
-  /** Checks distinct before/after characterization evidence and unchanged documentation. */
+  /** Retains pre-change characterization; assembled verification owns the post-change check. */
   private assertRefactor(record: RecordData): void {
-    assert.equal(record.status, 'completed');
+    assert.equal(record.status, 'prepared');
     assert.equal(record.characterization, true);
     assert.equal(record.regressionCheckpoint, undefined);
     assert.ok(
       record.commands.some((c) => c.stage === 'characterization-before' && c.exitCode === 0),
     );
-    assert.ok(
-      record.commands.some((c) => c.stage === 'characterization-after' && c.exitCode === 0),
+    assert.equal(
+      record.commands.some((c) => c.stage === 'characterization-after'),
+      false,
     );
     assert.equal(readFileSync(join(record.workspace, 'docs/behavior.md'), 'utf8'), 'Before');
   }
@@ -106,10 +107,10 @@ class ContinuationScenarios {
 
   /** Checks retained engineering evidence and the actual candidate after reopening. */
   private assertCompleted(record: RecordData, stages: unknown[]): void {
-    assert.equal(record.status, 'completed');
-    assert.deepEqual(stages, ['specification', 'implementation', 'review', 'finished']);
+    assert.equal(record.status, 'prepared');
+    assert.deepEqual(stages, ['specification', 'implementation', 'finished']);
     assert.equal(record.implementationAttempts, 1);
-    assert.equal((record.turns as unknown[]).length, 4);
+    assert.equal((record.turns as unknown[]).length, 3);
     assert.ok((record.frozenTests as unknown[]).length);
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'after');
   }

@@ -2,61 +2,81 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join, normalize } from 'node:path';
 import { digest } from '../architecture/assignment.js';
-import { covered } from '../architecture/components.js';
+import { covered, type Component } from '../architecture/components.js';
 import { git } from '../operations/process.js';
 import { withFrozenTests, type FrozenTest } from './checkpoints.js';
-import type { SessionState } from './session-state.js';
+import type { RecordData } from '../workspace/state.js';
+import type { VerificationCheck } from '../architecture/config.js';
+
+export interface CapturedVerificationContext {
+  record: RecordData;
+  component: Component;
+  authorityBase: string;
+  verifiedBase: string;
+  checks: (checks: VerificationCheck[], stage: string) => Promise<void>;
+}
 
 /** Checks candidate implementation against verified tests and captured executable authority. */
 export class CapturedVerification {
   /** Uses host-selected Git revisions outside worker-editable state. */
-  constructor(private readonly state: SessionState) {}
+  constructor(private readonly context: CapturedVerificationContext) {}
 
   /** Reruns observed checks against captured inputs when candidate edits changed them. */
   async verify(): Promise<void> {
-    const { record } = this.state.options;
+    const { record } = this.context;
     if (!record.generalExecution) return;
+    await this.characterization();
     const inputs = this.inputs();
     if (!inputs.some((input) => this.changed(input))) return;
     await withFrozenTests(record, inputs, async () => {
-      await this.state.checks(this.state.component.verification, 'captured-acceptance');
+      await this.context.checks(this.context.component.verification, 'captured-acceptance');
     });
-    this.state.safe();
+  }
+
+  /** Rechecks the original passing characterization through the same host service in both workflows. */
+  private async characterization(): Promise<void> {
+    const { record, component, checks } = this.context;
+    if (!record.characterization) return;
+    const frozen = record.frozenTests as FrozenTest[] | undefined;
+    if (!frozen?.length) throw new Error('Missing captured characterization evidence');
+    await withFrozenTests(record, frozen, () =>
+      checks(component.verification, 'characterization-after'),
+    );
   }
 
   /** Separates verified tests from captured commands without restoring implementation files. */
   private inputs(): FrozenTest[] {
-    const { record } = this.state.options;
+    const { record } = this.context;
     const scope = [
-      ...this.state.component.tests,
+      ...this.context.component.tests,
       ...((record.trustedVerificationPaths ?? []) as string[]),
     ];
     const files = new Set(
-      this.state.component.verification
+      this.context.component.verification
         .flatMap((c) => ('command' in c ? [c.command, ...c.args] : []))
         .map(normalize),
     );
     const tests = new Set((record.verifiedTestPaths ?? []) as string[]);
-    const authority = this.paths(this.state.resolved.base).filter(
+    const authority = this.paths(this.context.authorityBase).filter(
       (path) => files.has(path) || (!tests.has(path) && covered(path, scope)),
     );
     const baseline = tests.size
-      ? this.paths(record.base).filter(
+      ? this.paths(this.context.verifiedBase).filter(
           (path) =>
             tests.has(path) &&
             !files.has(path) &&
-            covered(path, [...scope, ...(this.state.component.allowedWritePaths ?? [])]),
+            covered(path, [...scope, ...(this.context.component.allowedWritePaths ?? [])]),
         )
       : [];
     return [
-      ...authority.map((path) => this.input(this.state.resolved.base, path)),
-      ...baseline.map((path) => this.input(record.base, path)),
+      ...authority.map((path) => this.input(this.context.authorityBase, path)),
+      ...baseline.map((path) => this.input(this.context.verifiedBase, path)),
     ];
   }
 
   /** Lists committed files without consulting an editable checkout or branch tip. */
   private paths(revision: string): string[] {
-    return git(this.state.options.record.source, 'ls-tree', '-r', '--name-only', revision)
+    return git(this.context.record.source, 'ls-tree', '-r', '--name-only', revision)
       .split('\n')
       .filter(Boolean);
   }
@@ -65,7 +85,7 @@ export class CapturedVerification {
   private input(revision: string, path: string): FrozenTest {
     const bytes = execFileSync('git', [
       '-C',
-      this.state.options.record.source,
+      this.context.record.source,
       'show',
       `${revision}:${path}`,
     ]);
@@ -75,9 +95,7 @@ export class CapturedVerification {
   /** Treats a deleted input as changed and retains the original through the frozen-check wrapper. */
   private changed(input: FrozenTest): boolean {
     try {
-      return (
-        digest(readFileSync(join(this.state.options.record.workspace, input.path))) !== input.sha256
-      );
+      return digest(readFileSync(join(this.context.record.workspace, input.path))) !== input.sha256;
     } catch {
       return true;
     }

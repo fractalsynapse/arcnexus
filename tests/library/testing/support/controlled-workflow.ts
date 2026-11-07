@@ -364,7 +364,10 @@ export class ControlledWorkflow {
       },
     ];
     if (this.options.mode === 'review-write') fs.writeFileSync('source.txt', 'review mutation');
-    if (this.options.mode === 'review-repair' && turn.count === (this.options.planning ? 4 : 3)) {
+    if (
+      this.options.mode === 'review-repair' &&
+      (turn.count === 2 || turn.count === (this.options.planning ? 4 : 3))
+    ) {
       turn.result.reviewFindings = ['Needs a corrective pass'];
       turn.result.status = this.options.reviewStatus ?? 'completed';
       if (turn.result.status === 'blocked')

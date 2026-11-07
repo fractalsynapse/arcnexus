@@ -36,6 +36,32 @@ class EvidenceRequestScenarios {
     assert.equal(pages.metadata().filter((item) => item.id === index.output.artifact).length, 1);
   }
 
+  /** Current entry points remain directly readable regardless of unrelated historical artifact count. */
+  async navigation(): Promise<void> {
+    const pages = new EvidencePages('assignment.evidence');
+    pages.add('execution', JSON.stringify({ current: { artifact: 'current:diff' } }), 'json');
+    pages.add('current:diff', 'exact current change', 'utf8');
+    for (let index = 0; index < 2000; index++)
+      pages.add(`history:command:${index}`, `retained output ${index}`, 'utf8');
+    const manifest = pages.navigation();
+    assert.equal(manifest.length, 3);
+    const execution = (await pages.call('assignment.evidence', { artifact: 'execution' })) as any;
+    const current = (await pages.call(
+      'assignment.evidence',
+      JSON.parse(execution.content).current,
+    )) as any;
+    assert.equal(current.content, 'exact current change');
+    const history = (await pages.call('assignment.evidence', {
+      artifact: 'artifact-index:history',
+      length: Number.MAX_SAFE_INTEGER,
+    })) as any;
+    assert.equal(JSON.parse(history.content).length, 2000);
+    const retained = (await pages.call('assignment.evidence', {
+      artifact: 'history:command:1999',
+    })) as any;
+    assert.equal(retained.content, 'retained output 1999');
+  }
+
   /** Agent-selected large reads preserve exact content and can consume the remaining artifact at once. */
   async large(): Promise<void> {
     const pages = this.pages();
@@ -55,7 +81,7 @@ class EvidenceRequestScenarios {
     })) as any;
     assert.equal(first.content + rest.content, original);
     assert.equal(rest.complete, true);
-    assert.equal(rest.nextOffset, original.length);
+    assert.equal(rest.nextOffset, null);
     assert.equal(rest.sha256, first.sha256);
     const schema = pages.tools[0]!.inputSchema as any;
     assert.equal('maximum' in schema.properties.length, false);
@@ -105,6 +131,53 @@ class EvidenceRequestScenarios {
     chmodSync(path, 0o600);
     writeFileSync(path, 'TAMPERED');
     assert.throws(() => pages.retain(root, {}), /content identity/);
+  }
+
+  /** Empty, single-page, multi-page, and exact-end reads expose only real continuations. */
+  async terminalCursor(): Promise<void> {
+    const pages = this.pages();
+    const artifacts = [
+      { id: 'empty', content: '', length: 4, expectedPages: 1 },
+      { id: 'single', content: 'single', length: 16, expectedPages: 1 },
+      { id: 'multi', content: 'abcdefgh', length: 4, expectedPages: 2 },
+      { id: 'exact-end', content: 'ends-here', length: 9, expectedPages: 1 },
+    ];
+    for (const artifact of artifacts) {
+      pages.add(artifact.id, artifact.content, 'text');
+      await this.assertArtifactPages(pages, artifact);
+    }
+  }
+
+  /** Follows continuations and verifies exact content, artifact identity, and terminal behavior. */
+  private async assertArtifactPages(
+    pages: EvidencePages,
+    artifact: { id: string; content: string; length: number; expectedPages: number },
+  ): Promise<void> {
+    let offset = 0;
+    let content = '';
+    let pageCount = 0;
+    let sha256: string | undefined;
+    while (true) {
+      const page = (await pages.call('verification.evidence', {
+        artifact: artifact.id,
+        offset,
+        length: artifact.length,
+      })) as any;
+      sha256 ??= page.sha256;
+      assert.equal(page.artifact, artifact.id);
+      assert.equal(page.sha256, sha256);
+      content += page.content;
+      pageCount += 1;
+      if (page.complete) {
+        assert.equal(page.nextOffset, null);
+        break;
+      }
+      assert.equal(typeof page.nextOffset, 'number');
+      assert.ok(page.nextOffset > offset);
+      offset = page.nextOffset;
+    }
+    assert.equal(content, artifact.content);
+    assert.equal(pageCount, artifact.expectedPages);
   }
 
   /** Pages full failed command output with retained identity and resolved invocation context. */
@@ -184,9 +257,14 @@ class EvidenceRequestScenarios {
   /** Builds a real temporary store, report, operation record, invocation journal, and retained log. */
   private diagnosticFixture(t: TestContext, kind: string) {
     const root = mkdtempSync(join(tmpdir(), 'arcnexus-invocation-evidence-'));
-    t.after(() => rmSync(root, { recursive: true, force: true }));
     const store = new ExecutionStore(join(root, 'diagnostics.sqlite'));
-    t.after(() => store.close());
+    t.after(() => {
+      try {
+        store.close();
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
     const run = store.createRun('task', ['report'], 'Inspect retained diagnostics');
     const assignment = store.enqueue(run.id, 'report', 'Read command diagnostics');
     const recordId = randomUUID();
@@ -268,8 +346,11 @@ class EvidenceRequestScenarios {
       })) as any;
       assert.equal(page.status, undefined);
       content += page.content;
+      if (page.complete) {
+        assert.equal(page.nextOffset, null);
+        return content;
+      }
       offset = page.nextOffset;
-      if (page.complete) return content;
     }
   }
 
@@ -297,6 +378,9 @@ test('assignment evidence request mistakes are correctable without disclosure', 
 test('evidence request correction does not swallow retained integrity failures', (t) =>
   scenarios.integrity(t));
 
+test('terminal evidence page has no self-pointing continuation cursor', () =>
+  scenarios.terminalCursor());
+
 test('assignment evidence pages complete retained invocation diagnostics', (t) =>
   scenarios.diagnostics(t));
 
@@ -308,5 +392,8 @@ test('missing invocation status and context remain explicit evidence gaps', (t) 
 
 test('missing and foreign invocation logs remain explicit evidence gaps', (t) =>
   scenarios.inaccessible(t));
+
+test('current evidence navigation does not require scanning historical artifact metadata', () =>
+  scenarios.navigation());
 
 registerSuite({ component: 'report', level: 'unit', tags: ['deterministic', 'evidence'] });

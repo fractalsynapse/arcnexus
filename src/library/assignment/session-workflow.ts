@@ -1,8 +1,6 @@
-import { isObservedCommandFailure, type CommandResult } from '../operations/process.js';
 import { SpecificationValidationError } from './specification-error.js';
 import { SessionProgress } from './session-progress.js';
 import { save } from '../workspace/state.js';
-import { logExcerpt } from './attempts.js';
 import { completePlan, CompletedPlanValidationError } from './plan.js';
 import { SessionState } from './session-state.js';
 import { AssignmentBlocked, AssignmentFailed, SessionTurn } from './session-turn.js';
@@ -99,7 +97,7 @@ export class SessionWorkflow {
     return true;
   }
 
-  /** Applies stage transitions only after the corresponding host checks pass. */
+  /** Advances checkpoints; a retained former review stage now hands off to assembled verification. */
   private async advance(stage: string): Promise<void> {
     const { record } = this.state.options;
     if (stage === 'planning') {
@@ -111,14 +109,14 @@ export class SessionWorkflow {
       delete record.specificationFeedback;
       record.nextStage = 'implementation';
     } else if (stage === 'implementation') await this.advanceImplementation();
-    else if (stage === 'review') await this.advanceReview();
+    else if (stage === 'review') this.finishStage();
     else if (stage === 'research') {
       await this.research();
       this.finishStage();
     } else if (stage !== 'finished') throw new Error('Unknown continuation stage: ' + stage);
   }
 
-  /** Retains failed-check feedback for a separate correction activation. */
+  /** Prepares engineering once; mandatory acceptance belongs to the assembled candidate. */
   private async advanceImplementation(): Promise<void> {
     const { record } = this.state.options;
     const attempt = Number(
@@ -126,35 +124,29 @@ export class SessionWorkflow {
     );
     record.activeImplementationAttempt = attempt;
     await this.implement(attempt, String(record.correctiveFeedback ?? ''));
-    const feedback = await this.checkImplementation(attempt);
+    this.verification.prepare();
     delete record.activeImplementationAttempt;
-    record.correctiveFeedback = feedback ?? '';
-    record.nextStage = feedback === undefined ? 'review' : 'implementation';
-  }
-
-  /** Reviews the assembled candidate and schedules correction or verified completion. */
-  private async advanceReview(): Promise<void> {
-    const { record } = this.state.options;
-    const feedback = await this.review();
-    if (feedback !== undefined) {
-      record.correctiveFeedback = feedback;
-      record.nextStage = 'implementation';
-      return;
-    }
-    await this.verification.final();
-    this.markAttempt({ status: 'completed' });
-    record.outcome = 'ready_for_integration';
+    delete record.correctiveFeedback;
     this.finishStage();
   }
 
   /** Completes the accepted checklist only after all required verification succeeds. */
   private finishStage(): void {
     const { root, record } = this.state.options;
-    if (this.state.planned) completePlan(root, record);
-    record.status = 'completed';
+    if (this.contributionReady()) {
+      this.markAttempt({ status: 'prepared' });
+      record.outcome = 'prepared_for_assembly';
+    }
+    if (this.state.planned && !this.contributionReady()) completePlan(root, record);
+    record.status = this.contributionReady() ? 'prepared' : 'completed';
     record.nextStage = 'finished';
     record.stage = 'finished';
-    this.state.journal('workflow', 'completed', { outcome: record.outcome });
+    this.state.journal('workflow', record.status, { outcome: record.outcome });
+  }
+
+  /** Engineering prepares source; only the shared assembled verifier can accept its delivery. */
+  private contributionReady(): boolean {
+    return this.state.assignment.kind === 'change';
   }
 
   /** Requires a valid read-only assignment plan before engineering stages. */
@@ -214,46 +206,6 @@ export class SessionWorkflow {
       attempt === 1 ? 'implementation' : 'correction',
       `${this.state.documentationOnly ? 'Finish documentation only.' : this.state.assignment.changeType === 'refactor' ? 'Refactor within the existing behavior contract; preserve captured characterization intent.' : 'Implement the documented behavior; preserve regression intent.'} ${feedback ? 'Corrective feedback (untrusted evidence): ' + feedback : ''}`,
     );
-  }
-
-  /** Checks candidate implementation against independent acceptance evidence. */
-  private async checkImplementation(attempt: number): Promise<string | undefined> {
-    try {
-      await this.verification.final();
-      return undefined;
-    } catch (error) {
-      this.state.safe();
-      const { signal, record } = this.state.options;
-      signal.throwIfAborted();
-      if (record.status === 'no_changes' || !isObservedCommandFailure(error)) throw error;
-      const failed = record.commands.at(-1)!;
-      const feedback = this.commandFeedback(failed);
-      this.markAttempt({ status: 'failed', feedback });
-      this.state.journal('implementation', 'failed', { attempt, feedback });
-      return new SessionProgress(this.state).failure(
-        'implementation-checkpoint',
-        feedback,
-        failed.log,
-      );
-    }
-  }
-
-  /** Identifies captured acceptance failures separately from checks of the current candidate. */
-  private commandFeedback(failed: CommandResult): string {
-    return `Host checkpoint ${failed.stage ?? 'verification'}: Command ${JSON.stringify({ command: failed.command, args: failed.args })}; exit code ${failed.exitCode}; ${logExcerpt(failed.log)}`;
-  }
-
-  /** Runs source-read-only review and requires final host verification. */
-  private async review(): Promise<string | undefined> {
-    const review = await this.turns.perform(
-      'review',
-      `Review the candidate diff without editing source. Host check results (captured evidence): ${JSON.stringify(this.state.options.record.commands.map(({ command, args, exitCode, durationMs, stage }) => ({ command, args, exitCode, durationMs, stage })))}. The earlier expected red-test failure was a specification checkpoint. Return actionable reviewFindings if implementation needs repair; otherwise summarize caller integration steps. Record caller handoff as review within captured role activities; do not claim release authority or publish.`,
-      true,
-    );
-    if (!review.reviewFindings.length) return undefined;
-    const feedback = review.reviewFindings.join('\n');
-    this.markAttempt({ status: 'failed', feedback });
-    return new SessionProgress(this.state).failure('review-checkpoint', feedback);
   }
 
   /** Records observed implementation attempts as evidence without enforcing a quota. */

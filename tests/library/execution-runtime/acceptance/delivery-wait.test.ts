@@ -56,14 +56,14 @@ class DeliveryWaitScenarios {
     const envelope = (id: string): any => store.inbox(id)[0];
     assert.equal(envelope(a.id).direction, 'outgoing');
     assert.equal(envelope(b.id).direction, 'incoming');
-    assert.deepEqual(envelope(a.id).availableActions, ['require_delivery']);
+    assert.deepEqual(envelope(a.id).availableActions, ['require_delivery', 'feedback']);
     assert.deepEqual(envelope(b.id).availableActions, ['reject', 'clarify']);
     store.respond(b.id, [{ ...action, action: 'clarify', text: 'Which format?' }]);
     assert.deepEqual(envelope(a.id).availableActions, ['answer', 'require_delivery']);
     assert.deepEqual(envelope(b.id).availableActions, ['reject']);
     store.respond(a.id, [{ ...action, action: 'answer', text: 'JSON' }]);
     store.respond(a.id, [action]);
-    assert.deepEqual(envelope(a.id).availableActions, []);
+    assert.deepEqual(envelope(a.id).availableActions, ['feedback']);
     assert.equal(envelope(a.id).requiredMilestone, 'delivered');
     store.complete(b.id, ['independent verification']);
     assert.equal(envelope(a.id).recipientStatus, 'completed');

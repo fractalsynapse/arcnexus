@@ -1,7 +1,7 @@
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
 import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
@@ -95,7 +95,7 @@ class StewardTests {
   /** Cancels an observed model stage while preserving its raw partial-turn evidence. */
   async retainsInterruptedTurnEvidence(t: TestContext, activity: string) {
     const f = workflowFixture(t, activity + '-timeout');
-    const child = this.start(t, f);
+    const child = this.start(t, f, activity === 'review' ? 'review' : 'change');
     await child.waitForReady(
       () => readFileSync(f.calls, 'utf8').includes(`"stage":"${activity}"`),
       'Agent must reach selected stage',
@@ -111,7 +111,7 @@ class StewardTests {
   }
 
   /** Starts bound minimal engineering with test-owned process cleanup and no execution deadline. */
-  private start(t: TestContext, f: any): TestProcess {
+  private start(t: TestContext, f: any, kind = 'change'): TestProcess {
     return new TestProcess(
       t,
       [
@@ -119,6 +119,8 @@ class StewardTests {
         'run',
         'sample',
         'Improve behavior',
+        '--kind',
+        kind,
         '--project',
         f.repo,
         '--codex-path',
@@ -128,16 +130,6 @@ class StewardTests {
       ],
       f.env,
     );
-  }
-
-  /** Declares a verified host operation route alongside an optional direct-shell limitation. */
-  private hostReady(f: any): boolean {
-    return readdirSync(join(f.state, 'runs')).some((id) => {
-      const run = join(f.state, 'runs', id);
-      return readdirSync(run)
-        .filter((path) => path.startsWith('invocation-') && path.endsWith('.log'))
-        .some((path) => readFileSync(join(run, path), 'utf8').includes('HOST_READY'));
-    });
   }
 
   /** Executes the inspected assignment with the same captured shared verification definition. */
@@ -165,9 +157,9 @@ class StewardTests {
     assert.ok(
       record.operationInvocations.some(
         (invocation: any) =>
-          invocation.purpose === 'verification' &&
+          invocation.purpose === 'red-test' &&
           invocation.definitionDigest === operation.definitionDigest &&
-          invocation.result.exitCode === 0,
+          invocation.result.exitCode === 1,
       ),
     );
   }
@@ -196,45 +188,6 @@ class StewardTests {
       join(f.root, 'minimal-bindings.json'),
     ];
   }
-
-  /** Verifies that final host verification cannot mutate maintained source. */
-  finalHostVerificationCannotMutateMaintainedSource(t: TestContext) {
-    const f = workflowFixture(t);
-    writeFileSync(
-      join(f.repo, 'verify.cjs'),
-      "const fs=require('fs'),cp=require('child_process');if(fs.existsSync('tests/regression.cjs'))require('./tests/regression.cjs');if(fs.readFileSync('source.txt','utf8')==='after'){fs.writeFileSync('outside.txt','secret');cp.execFileSync('git',['add','outside.txt']);fs.unlinkSync('outside.txt');}",
-    );
-    f.commit();
-    const r = f.run();
-    assert.equal(r.status, 1);
-    const v = JSON.parse(r.stdout);
-    assert.equal(existsSync(join(v.workspace, 'outside.txt')), false);
-    assert.ok(!v.stagedChanges.some((c: any) => c.path === 'outside.txt'));
-    const logs = v.operationInvocations
-      .filter((invocation: any) => invocation.result)
-      .map((invocation: any) => readFileSync(invocation.result.log, 'utf8'))
-      .join('\n');
-    assert.match(logs, /EROFS|EACCES|EPERM/);
-  }
-
-  /** Cancels an observed host check and preserves the completed engineering turn. */
-  async retainsInterruptedVerificationEvidence(t: TestContext) {
-    const f = workflowFixture(t);
-    writeFileSync(
-      join(f.repo, 'verify.cjs'),
-      "const fs=require('fs');if(fs.existsSync('tests/regression.cjs'))require('./tests/regression.cjs');if(fs.readFileSync('source.txt','utf8')==='after'){console.log('HOST_READY');setInterval(()=>{},1000)}",
-    );
-    f.commit();
-    const child = this.start(t, f);
-    await child.waitForReady(() => this.hostReady(f), 'Host verification must start');
-    child.kill('SIGINT');
-    assert.equal(await child.closed, 130);
-    const record = JSON.parse(child.stdout);
-    assert.equal(record.stage, 'verification');
-    assert.ok(this.hostReady(f));
-    assert.equal(record.agent.status, 'completed');
-    assert.equal(record.turns.length, 3);
-  }
 }
 
 const suite = new StewardTests();
@@ -261,12 +214,6 @@ for (const activity of ['specification', 'implementation', 'review'])
 
 test('run preserves inspected assignment and shared verification identity', (t) =>
   suite.inspectedSharedVerification(t));
-
-test('final host verification cannot mutate maintained source', (t: any) =>
-  suite.finalHostVerificationCannotMutateMaintainedSource(t));
-
-test('verification cancellation preserves the completed agent turn', (t) =>
-  suite.retainsInterruptedVerificationEvidence(t));
 
 registerSuite({
   component: 'assignment',

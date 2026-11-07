@@ -21,14 +21,18 @@ class ProgressTests {
     assert.match(events, /repeat-failing-check/);
   }
 
-  /** Verifies that repeated unverified implementation cycles stop with retained corrective work. */
-  repeatedCheckpoints(t: TestContext): void {
+  /** Verifies that failed engineering yields once to assembled correction with retained work. */
+  yieldsFailedEngineering(t: TestContext): void {
     const fixture = workflowFixture(t, 'exhaust');
     const result = fixture.run();
-    assert.equal(result.status, 1, result.stderr);
+    assert.equal(result.status, 0, result.stderr);
     const record = JSON.parse(result.stdout);
-    assert.equal(record.outcome, 'needs_attention');
-    assert.equal(record.implementationAttempts, 4);
+    assert.equal(record.outcome, 'prepared_for_assembly');
+    assert.equal(record.implementationAttempts, 1);
+    assert.equal(record.plan.hostChecks[0].status, 'pending');
+    assert.equal(record.correctiveFeedback, undefined);
+    assert.ok(!record.commands.some((command: any) => command.stage === 'verification'));
+    assert.equal(record.finalVerifiedDigest, undefined);
   }
 
   /** Verifies that observable repeated failures diagnose a loop then stop unchanged dispatch. */
@@ -51,8 +55,8 @@ const suite = new ProgressTests();
 test('observable repeated failures diagnose a loop then stop unchanged dispatch', (t) =>
   suite.repeatedFailures(t));
 
-test('repeated unverified implementation cycles stop with retained corrective work', (t) =>
-  suite.repeatedCheckpoints(t));
+test('failed engineering yields once to assembled correction with retained work', (t) =>
+  suite.yieldsFailedEngineering(t));
 
 test('repeated exposed SDK command failures stop the stream with retained raw events', (t) =>
   suite.observedShell(t));

@@ -309,7 +309,7 @@
             "type": "string"
           },
           "action": {
-            "enum": ["accept", "reject", "clarify", "answer", "require_delivery"]
+            "enum": ["accept", "reject", "clarify", "answer", "require_delivery", "feedback"]
           },
           "text": {
             "type": "string",

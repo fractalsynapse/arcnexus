@@ -45,6 +45,19 @@ class EngineeringContextScenarios {
     assert.doesNotMatch(prompt, /private/);
   }
 
+  /** Joint preparation remains automatic while independent acceptance and genuine blockers remain required. */
+  async contribution(): Promise<void> {
+    const ordinary = await this.context(6);
+    const related = await this.context(6, ['implementation', 'tests']);
+    assert.doesNotMatch(ordinary, /Related contribution workflow/);
+    assert.match(related, /host automatically records prepared source after implementation/);
+    assert.match(related, /no preparation or handoff tool to call/);
+    assert.match(related, /Preserve observed failed checks and genuine unresolved defects/);
+    assert.match(related, /independently verifies the combined candidate before any delivery/);
+    assert.match(related, /Pending host verification alone is not a blocker/);
+    assert.match(related, /Authorized edit paths: \["owned"\]/);
+  }
+
   /** Historical evidence cannot be rendered as a new engineering activation. */
   async historical(): Promise<void> {
     await assert.rejects(this.context(4), /version.six.*migrat/i);
@@ -52,14 +65,21 @@ class EngineeringContextScenarios {
   }
 
   /** Loads production context assembly with captured authority and a distinct frozen host check. */
-  private async context(schemaVersion: number): Promise<string> {
+  private async context(schemaVersion: number, contributionGroup?: string[]): Promise<string> {
     const path = new URL(
       '../../../../dist/library/assignment/engineering-context.js',
       import.meta.url,
     );
     const { EngineeringContext } = await import(path.href);
     const state = {
-      options: { id: 'owner', record: { workspace: '/candidate' } },
+      options: {
+        id: 'owner',
+        record: {
+          workspace: '/candidate',
+          contributionGroup,
+          generalExecution: Boolean(contributionGroup),
+        },
+      },
       resolved: { role: { id: 'engineer' }, context: [], related: [], owners: [], operations: [] },
       component: { schemaVersion, verification: [] },
       scope: ['owned'],
@@ -82,5 +102,8 @@ test('historical authority cannot create a new engineering context', () => scena
 
 test('turn checkpoint reflects newly frozen regressions without broadening authority', () =>
   scenarios.checkpoint());
+
+test('related contribution context distinguishes checkpoint completion from delivery', () =>
+  scenarios.contribution());
 
 registerSuite({ component: 'assignment', level: 'acceptance', tags: ['deterministic'] });

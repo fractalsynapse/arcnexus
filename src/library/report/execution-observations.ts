@@ -1,7 +1,22 @@
 import { existsSync, lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import type { RecordData } from '../workspace/state.js';
+import type { CommandResult } from '../operations/process.js';
 import { readTimeline, type TimelineEvent } from './timeline.js';
+
+interface ObservedCommand extends CommandResult {
+  invocationId?: string;
+  operationId?: string;
+  invocationStatus?: string;
+}
+
+interface ObservedInvocation {
+  id: string;
+  operationId: string;
+  status: string;
+  purpose: string;
+  result?: CommandResult;
+}
 
 /** Retains observed tool execution separately from trusted host checks and worker assertions. */
 export class ExecutionObservations {
@@ -24,16 +39,40 @@ export class ExecutionObservations {
           .filter((event) => this.tool(event))
           .map((event) => this.observation(event)),
       },
-      hostCommands: record.commands.map((command, index) => ({
+      hostCommands: this.commands(record).map((command, index) => ({
         index,
         command: command.command,
         args: command.args,
         startedAt: command.startedAt,
         exitCode: command.exitCode,
         stage: command.stage,
+        invocationId: command.invocationId,
+        operationId: command.operationId,
+        invocationStatus: command.invocationStatus,
         output: this.log(command.log),
       })),
     };
+  }
+
+  /** Includes prerequisite failures omitted by aborted checkpoints without duplicating retained log identities. */
+  private commands(record: RecordData) {
+    const commands = new Map<string, ObservedCommand>(
+      record.commands.map((command) => [command.log, { ...command }]),
+    );
+    const invocations = (record.operationInvocations ?? []) as ObservedInvocation[];
+    for (const invocation of invocations) {
+      if (!invocation.result) continue;
+      const result = invocation.result;
+      commands.set(result.log, {
+        ...result,
+        ...commands.get(result.log),
+        stage: commands.get(result.log)?.stage ?? invocation.purpose,
+        invocationId: invocation.id,
+        operationId: invocation.operationId,
+        invocationStatus: invocation.status,
+      });
+    }
+    return [...commands.values()];
   }
 
   /** Keeps observed tool payloads and ordering while excluding agent prose and reasoning. */

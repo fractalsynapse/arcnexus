@@ -1,3 +1,5 @@
+import { ContributionDelivery } from './contribution-delivery.js';
+import { ContributionGroups } from './contribution-groups.js';
 import { dependencySatisfied } from './execution-types.js';
 import { RequiredWork } from './required-work.js';
 import { AssignmentReplacements } from './assignment-replacements.js';
@@ -11,6 +13,7 @@ import { randomUUID } from 'node:crypto';
 import { ExecutionDatabase } from './execution-database.js';
 import { DirectionAdmission } from './direction-admission.js';
 import type {
+  PreparedContribution,
   AssignmentStatus,
   AssignmentContinuation,
   DirectionAdmissionTransition,
@@ -348,7 +351,7 @@ export class ExecutionStore {
         });
       else if (
         !item.data.clarification &&
-        item.dependencies.every((id) => this.satisfied(item, id))
+        item.dependencies.every((id) => ContributionGroups.canEngineer(item, this.assignment(id)))
       )
         this.db.put('assignment', { ...item, status: 'ready' });
     }
@@ -392,30 +395,34 @@ export class ExecutionStore {
     );
   }
 
-  /** Marks verified delivery and wakes all satisfied dependents in the same transaction. */
+  /** Retains a checkpointed contribution without claiming verified delivery. */
+  prepareContribution(id: string, contribution: PreparedContribution): void {
+    new ContributionDelivery(this.db, this.wake.bind(this)).prepare(id, contribution);
+  }
+
+  /** Projects related prepared work for the existing sequential host to assemble. */
+  contributionGroups(runId: string): ContributionGroups {
+    return new ContributionGroups(this.requiredAssignments(runId));
+  }
+
+  /** Marks verified delivery and wakes satisfied dependents through the common completion transition. */
   complete(id: string, evidence: string[], candidate?: Record<string, unknown>): void {
-    this.db.transaction('assignment.delivered', { id, evidence }, () => {
-      const assignment = this.assignment(id);
-      if (assignment.status === 'completed') {
-        if (
-          JSON.stringify(assignment.evidence) !== JSON.stringify(evidence) ||
-          assignment.data.deliveredRevision !== candidate?.candidateRevision
-        )
-          throw new Error('Duplicate delivery disagrees with retained verification');
-        return;
-      }
-      if (!evidence.length) throw new Error('Verified delivery requires evidence');
-      if (assignment.dependencies.some((dep) => !this.satisfied(assignment, dep)))
-        throw new Error('Undelivered dependencies');
-      this.db.put('assignment', {
-        ...assignment,
-        status: 'completed',
-        evidence,
-        data: { ...assignment.data, deliveredRevision: candidate?.candidateRevision },
-      });
-      if (candidate) new CandidatePointers(this.db).promote(assignment.runId, candidate);
-      this.wake(assignment.runId);
-    });
+    new ContributionDelivery(this.db, this.wake.bind(this)).complete([id], evidence, candidate);
+  }
+
+  /** Advances every exact prepared contribution and the assembled candidate in one transaction. */
+  completeAssembly(
+    ids: string[],
+    evidence: string[],
+    candidate: Record<string, unknown>,
+    prepared: PreparedContribution[],
+  ): void {
+    new ContributionDelivery(this.db, this.wake.bind(this)).complete(
+      ids,
+      evidence,
+      candidate,
+      prepared,
+    );
   }
 
   /** Publishes fresh verified promotion evidence to the environment's candidate pointer atomically. */

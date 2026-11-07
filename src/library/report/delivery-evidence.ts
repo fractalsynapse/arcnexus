@@ -42,13 +42,39 @@ export class DeliveryEvidence {
     if (
       record.id !== id ||
       record.executionRunId !== assignment.runId ||
-      record.assignmentId !== assignment.id ||
-      record.parentRecordId !== assignment.data.recordId ||
+      !this.attribution(record, assignment) ||
       record.activationRole !== 'verifier' ||
       record.status !== 'completed' ||
       (record.agent as { status?: string } | undefined)?.status !== 'completed'
     )
       throw new Error('Independent verification identity or completion does not match delivery');
+  }
+
+  /** Binds joint review to the exact contribution, acceptance and shared revision recorded on delivery. */
+  private attribution(record: RecordData, assignment: ExecutionAssignment): boolean {
+    if (!assignment.data.deliveryRecordId)
+      return (
+        record.assignmentId === assignment.id && record.parentRecordId === assignment.data.recordId
+      );
+    const members = record.assemblyAssignments as
+      | Array<{
+          id: string;
+          owner: string;
+          recordId: string;
+          contribution: unknown;
+          acceptance: string[];
+        }>
+      | undefined;
+    const member = members?.find((item) => item.id === assignment.id);
+    return Boolean(
+      member &&
+      member.owner === assignment.owner &&
+      member.recordId === assignment.data.recordId &&
+      JSON.stringify(member.contribution) === JSON.stringify(assignment.data.contribution) &&
+      JSON.stringify(member.acceptance) === JSON.stringify(assignment.acceptance) &&
+      record.base === assignment.data.deliveredRevision &&
+      record.parentRecordId === assignment.data.deliveryRecordId,
+    );
   }
 
   /** Separates the independent assessment, reviewed candidate and observed checks from worker claims. */

@@ -1,4 +1,5 @@
-import type { ExecutionReports } from '../report/report.js';
+import { Direction } from '../task-intake/direction.js';
+import { ExecutionEvidence, type ExecutionReports } from '../report/report.js';
 import { join } from 'node:path';
 import type { ProjectExecution } from '../architecture/execution-context.js';
 import type { ExecutionRun } from '../coordination-store/execution-types.js';
@@ -18,6 +19,16 @@ export class RunWorkspace {
     private readonly store: ExecutionStore,
   ) {
     this.snapshots = new CandidateSnapshots(context.source, join(root, 'snapshots'));
+  }
+
+  /** Captures the same authoritative facts for direction, stewardship and goal verification. */
+  direction(run: ExecutionRun, signal: AbortSignal): Direction {
+    return new Direction(
+      this.root,
+      this.context,
+      signal,
+      new ExecutionEvidence(this.root, this.store).capture(run.id),
+    );
   }
 
   /** Creates fresh planning context without treating a mutable delivery directory as authoritative. */

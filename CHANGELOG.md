@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- Use one assembled verification and correction loop for steward contributions and the task goal; reuse unchanged acceptance during publication, preserve ownership, and route peer feedback through existing requests (#312).
+
+- Share authoritative execution evidence across direction, engineering, recovery and verification, preserving caller input, dependency identities and terminal pagination (#308).
+
 - Route actionable failed change reviews into the existing implementation correction checkpoint without accepting incomplete work (#309).
 
 - Retire settled obsolete dependency work without requiring its failed supplier to be resumable, while preserving execution and uncertainty checks (#304).

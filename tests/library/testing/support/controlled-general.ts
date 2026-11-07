@@ -56,6 +56,13 @@ export class ControlledGeneral {
 
   /** Supplies two starting owners only for the controlled existing-work discovery scenario. */
   private startingWork(result: any, prompt: string): any {
+    if (prompt.includes('REASSESS_PREPARED'))
+      return {
+        ...result,
+        assignments: [],
+        continuations: [],
+        selectedOwners: [{ id: 'c', reason: 'Retained owner context, not a new dispatch' }],
+      };
     if (!prompt.includes('LINK_EXISTING_WORK')) return result;
     result.selectedOwners = ['a', 'b'].map((id) => ({ id, reason: 'Starting owner' }));
     result.assignments = [
@@ -364,7 +371,6 @@ export class ControlledGeneral {
     if (indexed) return this.indexedReview(prompt, JSON.parse(indexed[1]!));
     const result = this.result();
     if (
-      prompt.includes('As task director') &&
       prompt.includes('REPLAN_GOAL') &&
       !JSON.stringify(this.assessment ?? null).includes('Additional goal evidence')
     ) {
@@ -389,7 +395,6 @@ export class ControlledGeneral {
     if (prompt.includes('VERIFY_UNKNOWN')) assessments[1]!.index = criteria.length;
     if (prompt.includes('VERIFY_GAP')) assessments[1]!.evidence = [];
     const deficient =
-      prompt.includes('As task director') &&
       prompt.includes('REPLAN_GOAL') &&
       !JSON.stringify(this.assessment ?? null).includes('Additional goal evidence');
     return {

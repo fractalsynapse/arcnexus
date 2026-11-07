@@ -5,6 +5,7 @@ parentId: cli-package
 purpose: Persist transactional project runs, assignments, inbox dependencies and
   ordered evidence and durable external-effect intents
 objectives:
+  - Persist prepared contributions and atomic assembled delivery without fabricating milestones
   - Persist transactional project runs, assignments, inbox dependencies and
     ordered evidence and durable external-effect intents
 constraints:

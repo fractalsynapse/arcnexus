@@ -3,26 +3,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { candidateDigest, captureChanges } from '../change-inspection/changes.js';
 import type { OperationBridge } from '../operations/operations.js';
-import { EvidencePages, ReferencedEvidence } from '../report/report.js';
+import { EvidencePages, ExecutionEvidence } from '../report/report.js';
 import type { RecordData } from '../workspace/state.js';
-
-interface HostCommandEvidence {
-  index: number;
-  output?: { content?: string; artifact?: string };
-}
-
-interface HostExecutionEvidence {
-  run?: { id?: string };
-  publication?: { recordId: string; observations: { hostCommands?: HostCommandEvidence[] } };
-  assignments?: Array<{
-    id: string;
-    verificationReports?: Array<Record<string, unknown>>;
-    record?: {
-      recordId?: string;
-      observations?: { hostCommands?: HostCommandEvidence[]; timeline?: { events?: any[] } };
-    };
-  }>;
-}
 
 /** Pins host-observed changes and exposes only their retained artifacts to independent reviewers. */
 export class VerificationEvidence {
@@ -42,14 +24,14 @@ export class VerificationEvidence {
       'git-binary-patch',
     );
     this.addFiles(JSON.parse(readFileSync(join(directory, 'new-files.json'), 'utf8')));
-    this.execution(root, record);
+    ExecutionEvidence.pin(root, record.executionRunId, this.pages, record.hostExecutionEvidence);
     this.regressions(record);
     this.pages.add('assessment', JSON.stringify(input ?? null), 'json');
     const manifest = {
       baseline,
       candidateDigest: this.candidate,
       changes: captured.changes,
-      artifacts: this.pages.metadata(),
+      artifacts: this.pages.navigation(),
     };
     this.pages.add('manifest', JSON.stringify(manifest, null, 2), 'json');
     record.verificationEvidence = this.pages.retain(directory, manifest);
@@ -71,68 +53,6 @@ export class VerificationEvidence {
       JSON.stringify({ ...comparison, expectedFailure: record.regressionCheckpoint }),
       'json',
     );
-  }
-
-  /** Pins current-run host observations without accepting a foreign task as execution evidence. */
-  private execution(root: string, record: RecordData): void {
-    const evidence = structuredClone(record.hostExecutionEvidence) as
-      HostExecutionEvidence | undefined;
-    if (!evidence) return;
-    if (typeof record.executionRunId !== 'string' || evidence.run?.id !== record.executionRunId)
-      throw new Error('Host execution evidence belongs to a different run');
-    new ReferencedEvidence(root, record.executionRunId, this.pages).index(evidence);
-    this.indexCommandOutputs(evidence);
-    const assignments = evidence.assignments?.map((assignment) => this.assignment(assignment));
-    this.pages.addSections('execution', { ...evidence, assignments }, [
-      'events',
-      'requests',
-      'runtimeTransitions',
-    ]);
-  }
-
-  /** Makes each worker record and prior review independently discoverable instead of inlining their histories. */
-  private assignment(assignment: NonNullable<HostExecutionEvidence['assignments']>[number]) {
-    const { record, verificationReports, ...intent } = assignment;
-    const prefix = 'execution:' + assignment.id;
-    return {
-      ...intent,
-      record:
-        record &&
-        this.pages.addSections(prefix + ':record', record, [
-          'activationInput',
-          'commands',
-          'operations',
-          'observations',
-        ]),
-      verificationReports: verificationReports?.map((review, index) =>
-        this.pages.addSections(prefix + ':review:' + index, review, ['observations']),
-      ),
-    };
-  }
-
-  /** Pins complete logs separately so criterion inspection need not page through unrelated command output. */
-  private indexCommandOutputs(evidence: HostExecutionEvidence): void {
-    for (const assignment of evidence.assignments ?? [])
-      this.addCommandOutputs(
-        'execution:' + assignment.id,
-        assignment.record?.observations?.hostCommands ?? [],
-      );
-    if (evidence.publication)
-      this.addCommandOutputs(
-        'publication:' + evidence.publication.recordId,
-        evidence.publication.observations.hostCommands ?? [],
-      );
-  }
-
-  /** Labels each immutable output by its originating assignment or assembled check record. */
-  private addCommandOutputs(prefix: string, commands: HostCommandEvidence[]): void {
-    for (const command of commands) {
-      if (typeof command.output?.content !== 'string') continue;
-      const id = prefix + ':command:' + command.index;
-      this.pages.add(id, command.output.content, 'utf8');
-      delete command.output.content;
-      command.output.artifact = id;
-    }
   }
 
   /** Extends the declared operations with a fixed read-only artifact capability. */

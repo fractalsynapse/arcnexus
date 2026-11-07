@@ -1,3 +1,4 @@
+import { AssembledDelivery } from './assembled-delivery.js';
 import { RunPromotion } from './run-promotion.js';
 import { RunFinalization } from './run-finalization.js';
 import { EvidenceRetention } from '../workspace/workspace.js';
@@ -10,17 +11,17 @@ import { RunContinuation } from './run-continuation.js';
 import { ResourceQuery } from '../report/resource-query.js';
 import { HostRecovery } from './host-recovery.js';
 import { RunAuthority } from './run-authority.js';
-import { ExecutionEvidence, ExecutionReports } from '../report/report.js';
+import { ExecutionReports } from '../report/report.js';
 import { StewardshipPolicy } from '../workday/workday.js';
 import { InputError } from '../architecture/config.js';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ProjectExecution } from '../architecture/execution-context.js';
-import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/execution-types.js';
+import type { ExecutionRun } from '../coordination-store/execution-types.js';
 import { ExecutionStore } from '../coordination-store/execution-store.js';
 import { RunWorkspace } from './run-workspace.js';
 import type { RecordData } from '../workspace/state.js';
-import { Direction, StewardshipRefusal, VerificationIssue } from '../task-intake/direction.js';
+import { StewardshipRefusal, VerificationIssue } from '../task-intake/direction.js';
 import { ProgressObserver } from '../report/progress.js';
 import type { InitializationResult } from '../architecture/initialization.js';
 import { AssignmentDispatch } from './assignment-dispatch.js';
@@ -302,11 +303,21 @@ export class ProjectHost {
   private async advanceAssignments(run: ExecutionRun, signal: AbortSignal): Promise<void> {
     await this.collaboration.progress(run, signal);
     const ready = this.store.ready(run.id);
-    if (ready.length && (run.mode === 'task' || run.data.lastDispatch !== 'assignment')) {
+    const assembly = new AssembledDelivery(
+      this.root,
+      this.environments.contextFor(run),
+      this.store,
+    ).ready(run);
+    if (
+      (ready.length || assembly) &&
+      (run.mode === 'task' || run.data.lastDispatch !== 'assignment')
+    ) {
       await this.dispatchAssignment(run, signal);
       return;
     }
-    if (run.mode === 'workday') await this.stewardship(run, signal);
+    if (run.mode === 'workday' && run.data.lastAssembly && !ready.length)
+      await this.redirect(run, run.data.lastAssembly, true, signal);
+    else if (run.mode === 'workday') await this.stewardship(run, signal);
     else await this.finishTask(run, signal);
   }
 
@@ -325,23 +336,19 @@ export class ProjectHost {
   /** Runs task direction and retains interactive questions before any owner activation. */
   private async direct(run: ExecutionRun, signal: AbortSignal): Promise<void> {
     const input = this.workspaces(run).directionInput(run, this.reports);
-    const result = await new Direction(
-      this.root,
-      this.environments.contextFor(run),
-      signal,
-    ).propose(
-      await this.workspaces(run).policy(run, signal),
-      input.prompt,
-      undefined,
-      input.retained,
-    );
+    const result = await this.workspaces(run)
+      .direction(run, signal)
+      .propose(
+        await this.workspaces(run).policy(run, signal),
+        input.prompt,
+        undefined,
+        input.retained,
+      );
     if (signal.aborted) return;
     if (result.status !== 'ready') {
       this.clarification(run, result);
       return;
     }
-    if (run.mode === 'task' && !result.assignments.length && !result.continuations.length)
-      throw new Error('Task director returned no assignment or continuation');
     await this.collaboration.initialize(run, result, signal);
   }
 
@@ -356,10 +363,10 @@ export class ProjectHost {
       return;
     }
     const { owner, fingerprint } = selected;
-    const workspace = await this.workspaces(run).policy(run, signal);
-    const result = await new Direction(this.root, context, signal)
+    const direction = this.workspaces(run).direction(run, signal);
+    const result = await direction
       .propose(
-        workspace,
+        await this.workspaces(run).policy(run, signal),
         'Self-directed stewardship based on captured purpose, objectives, questions and inbox.',
         owner,
         {
@@ -377,51 +384,29 @@ export class ProjectHost {
     else this.store.updateRun(run.id, this.store.run(run.id).status, checkpoint);
   }
 
-  /** Requires all current obligations and a separate goal assessment; retained obsolete work is not delivery. */
+  /** Requires all current obligations and assembled goal acceptance; retained obsolete work is not delivery. */
   private async finishTask(run: ExecutionRun, signal: AbortSignal): Promise<void> {
     const assignments = this.store.requiredAssignments(run.id);
     if (assignments.some((a) => this.store.effective(a.id).status !== 'completed'))
       return this.redirect(
         run,
-        { error: 'Goal has undelivered assignments', assignments },
+        { error: 'Goal has undelivered assignments', assembly: run.data.lastAssembly, assignments },
         true,
         signal,
       );
     if (run.data.goalEvidence && run.data.goalCandidate === run.data.candidateRevision)
       return this.completeTask(run, signal);
     try {
-      await this.assessGoal(run, assignments, signal);
+      await new AssembledDelivery(
+        this.root,
+        this.environments.contextFor(run),
+        this.store,
+      ).assessGoal(run, assignments, signal);
       if (!signal.aborted) await this.completeTask(this.store.run(run.id), signal);
     } catch (error) {
       if (!(error instanceof VerificationIssue)) throw error;
       await this.redirect(run, error.result, false, signal);
     }
-  }
-
-  /** Retains goal acceptance as a checkpoint before publication or terminal run transitions. */
-  private async assessGoal(
-    run: ExecutionRun,
-    assignments: ExecutionAssignment[],
-    signal: AbortSignal,
-  ): Promise<void> {
-    const record = await this.workspaces(run).policy(run, signal);
-    const evidence = await new Direction(
-      this.root,
-      this.environments.contextFor(run),
-      signal,
-    ).verify(
-      record,
-      run.owners[0]!,
-      run.objective,
-      assignments,
-      true,
-      new ExecutionEvidence(this.root, this.store).capture(run.id),
-    );
-    if (!signal.aborted)
-      this.store.updateRun(run.id, this.store.run(run.id).status, {
-        goalEvidence: evidence,
-        goalCandidate: run.data.candidateRevision,
-      });
   }
 
   /** Completes only after idempotent publication capture, so host loss cannot omit a verified delivery. */
@@ -446,11 +431,9 @@ export class ProjectHost {
     this.observeGoalFailure(run, feedback);
     const record = await this.workspaces(run).policy(run, signal);
     const dispatch = new AssignmentDispatch(this.root, this.context, this.store);
-    const result = await new Direction(
-      this.root,
-      this.environments.contextFor(run),
-      signal,
-    ).reconsider(record, run.objective, dispatch.state(run.id), feedback, blocked);
+    const result = await this.workspaces(run)
+      .direction(run, signal)
+      .reconsider(record, run.objective, dispatch.state(run.id), feedback, blocked);
     if (signal.aborted) return;
     this.store.updateRun(run.id, this.store.run(run.id).status, {
       redirection: feedback,
@@ -466,6 +449,7 @@ export class ProjectHost {
     blocked: boolean,
   ): void {
     if (result.status !== 'ready') this.clarification(run, result);
+    else if (this.collaboration.reconsider(run, result)) return;
     else if (
       (blocked && !result.continuations.length) ||
       (!result.assignments.length && !result.continuations.length)

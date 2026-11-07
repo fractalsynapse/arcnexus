@@ -24,13 +24,12 @@ class VerificationEvidenceScenarios {
         { id: 'prior', verificationReports: [{ assessment: 'verified', observations: history }] },
       ],
     };
-    await new Direction(f.state, context, new AbortController().signal).verify(
+    await new Direction(f.state, context, new AbortController().signal, evidence).verify(
       record,
       'a',
       'READ_HOST_EVIDENCE',
       { criteria: ['Observed history'] },
       false,
-      evidence,
     );
     const trace = JSON.parse(readFileSync(f.calls + '.evidence', 'utf8').trim());
     assert.ok(trace.artifacts.execution.length < 8192);
@@ -93,6 +92,8 @@ class VerificationEvidenceScenarios {
       call.prompt.startsWith('Independent read-only verification.'),
     ).prompt;
     assert.ok(prompt.length < 100000, 'Goal prompt must not inline retained assignment records');
+    assert.match(prompt, /assess whether the engineering result is ready for them/);
+    assert.match(prompt, /publisher must still execute and record those outcomes/);
   }
 
   /** Both owner and whole-goal assessments can inspect accumulated tracked and untracked changes. */
@@ -113,7 +114,7 @@ class VerificationEvidenceScenarios {
       ['docs/evidence.md', 'source.txt'],
     );
     assert.match(trace.artifacts.patch, /observed candidate change/);
-    const addition = trace.manifest.artifacts.find(
+    const addition = JSON.parse(trace.artifacts['artifact-index:added'] ?? '[]').find(
       (artifact: any) => artifact.path === 'docs/evidence.md',
     );
     if (!goal) assert.equal(trace.artifacts[addition.id], 'New captured evidence\n');
@@ -147,13 +148,12 @@ class VerificationEvidenceScenarios {
       run: { id: 'current-run' },
       assignments: [{ id: 'assignment', record: { observations: { hostCommands: commands } } }],
     };
-    await new Direction(f.state, context, new AbortController().signal).verify(
+    await new Direction(f.state, context, new AbortController().signal, evidence).verify(
       record,
       'a',
       'READ_HOST_EVIDENCE',
       { criteria: ['Observed logs'] },
       false,
-      evidence,
     );
     const trace = JSON.parse(readFileSync(f.calls + '.evidence', 'utf8').trim());
     const index = JSON.parse(trace.artifacts.execution);
@@ -172,13 +172,12 @@ class VerificationEvidenceScenarios {
     const { f, context, record } = await this.fixture(t, false);
     record.executionRunId = 'current-run';
     const evidence = this.investigationEvidence(f.state);
-    await new Direction(f.state, context, new AbortController().signal).verify(
+    await new Direction(f.state, context, new AbortController().signal, evidence).verify(
       record,
       'a',
       'READ_HOST_EVIDENCE',
       { criteria: ['Observed investigation'] },
       false,
-      evidence,
     );
     const trace = JSON.parse(readFileSync(f.calls + '.evidence', 'utf8').trim());
     const index = JSON.parse(trace.artifacts.execution);
@@ -198,7 +197,11 @@ class VerificationEvidenceScenarios {
   /** Follows the same named record and observation references advertised to the independent model. */
   private observations(trace: any, reference: { artifact: string }) {
     const record = JSON.parse(trace.artifacts[reference.artifact]);
-    return JSON.parse(trace.artifacts[record.observations.artifact]);
+    const observations = JSON.parse(trace.artifacts[record.observations.artifact]);
+    for (const field of ['hostCommands', 'timeline'])
+      if (observations[field]?.artifact)
+        observations[field] = JSON.parse(trace.artifacts[observations[field].artifact]);
+    return observations;
   }
 
   /** Pins a genuine investigation artifact in a same-run worker record before verification starts. */
@@ -274,14 +277,9 @@ class VerificationEvidenceScenarios {
     record.executionRunId = 'current-run';
     await assert.rejects(
       () =>
-        new Direction(f.state, context, new AbortController().signal).verify(
-          record,
-          'a',
-          'READ_HOST_EVIDENCE',
-          { criteria: ['Observed'] },
-          false,
-          { run: { id: 'foreign-run' } },
-        ),
+        new Direction(f.state, context, new AbortController().signal, {
+          run: { id: 'foreign-run' },
+        }).verify(record, 'a', 'READ_HOST_EVIDENCE', { criteria: ['Observed'] }, false),
       /different run/,
     );
   }

@@ -65,9 +65,9 @@ class ContextTests {
     assert.match(record.turns.at(-1).reviewEvidence.sha256, /^[a-f0-9]{64}$/);
   }
 
-  /** Verifies that root revision review and candidate review both receive readable changes. */
-  rootRevisionReviewAndCandidateReviewBothReceiveReadableChanges(t: TestContext) {
-    for (const kind of ['review', 'change']) {
+  /** Verifies that root revision review receives readable changes. */
+  rootReviewReceivesChanges(t: TestContext) {
+    for (const kind of ['review']) {
       const f = workflowFixture(t);
       f.git('checkout', '--orphan', 'root-review');
       f.git('commit', '-m', 'Root minimal authority');
@@ -81,20 +81,7 @@ class ContextTests {
         JSON.stringify(evidence),
         kind === 'review' ? /Own sample responsibilities/ : /BOUNDARY_EXPECTED/,
       );
-      if (kind === 'change') this.checkpointEvidence(evidence);
     }
-  }
-
-  /** The actual review turn receives host comparisons for the accepted pre-freeze specification edits. */
-  private checkpointEvidence(evidence: any): void {
-    assert.equal(evidence.frozenRegressions.basis, 'frozen-regression-checkpoint');
-    assert.ok(evidence.frozenRegressions.files.length > 0);
-    for (const file of evidence.frozenRegressions.files) {
-      assert.equal(file.status, 'preserved');
-      assert.equal(file.currentSha256, file.frozenSha256);
-    }
-    assert.match(JSON.stringify(evidence.newFiles), /BOUNDARY_EXPECTED/);
-    assert.match(evidence.patch, /source\.txt/);
   }
 
   /** Verifies that revision review evidence excludes paths outside declared read authority. */
@@ -143,7 +130,7 @@ class ContextTests {
     const r = f.run();
     assert.equal(r.status, 0, r.stderr);
     const report = JSON.parse(r.stdout);
-    assert.equal(report.outcome, 'ready_for_integration');
+    assert.equal(report.outcome, 'prepared_for_assembly');
     assert.ok(report.commands.some((c: any) => c.exitCode === 1));
     assert.ok(report.regressionCheckpoint.outputIncludes === 'BOUNDARY_EXPECTED');
   }
@@ -174,7 +161,7 @@ class ContextTests {
       ['docs/behavior.md'],
     );
     assert.ok(!report.commands.some((c: any) => c.stage === 'red-test'));
-    assert.equal(report.status, 'completed');
+    assert.equal(report.status, 'prepared');
   }
 
   /** Runs an explicit documentation assignment through the assembled session with captured native bindings. */
@@ -229,8 +216,8 @@ test('bound command executes from supplied context with reset PATH and read-only
 test('review receives first-parent diff with hash, no unrelated history', (t: any) =>
   suite.reviewReceivesFirstParentDiffWithHashNoUnrelatedHistory(t));
 
-test('root revision review and candidate review both receive readable changes', (t: any) =>
-  suite.rootRevisionReviewAndCandidateReviewBothReceiveReadableChanges(t));
+test('root revision review receives readable changes', (t: any) =>
+  suite.rootReviewReceivesChanges(t));
 
 test('revision review evidence excludes paths outside declared read authority', (t: any) =>
   suite.revisionReviewEvidenceExcludesPathsOutsideDeclaredReadAuthority(t));

@@ -54,7 +54,7 @@ class ConfinementScenarios {
       outputs: [],
       temporaryRoot: root + '-private',
       executable: process.env.ARCNEXUS_TEST_CODEX!,
-      toolDirectories: [dirname(process.execPath)],
+      toolDirectories: [dirname(process.execPath), dirname(process.env.ARCNEXUS_TEST_CODEX!)],
     });
     const command = adapter.command(
       { command: 'node', args: ['-p', 'JSON.stringify({executable:process.execPath})'] },
@@ -81,6 +81,7 @@ class ConfinementScenarios {
       outputs: [],
       temporaryRoot: root + '-private',
       executable: process.env.ARCNEXUS_TEST_CODEX!,
+      toolDirectories: [dirname(process.execPath), dirname(process.env.ARCNEXUS_TEST_CODEX!)],
       network: true,
     });
     const script =
@@ -105,6 +106,7 @@ class ConfinementScenarios {
       outputs: ['generated'],
       temporaryRoot: root + '-private',
       executable: process.env.ARCNEXUS_TEST_CODEX!,
+      toolDirectories: [dirname(process.execPath), dirname(process.env.ARCNEXUS_TEST_CODEX!)],
     };
     const adapter = new module.SourceConfinement(authority);
     const script =
@@ -156,6 +158,7 @@ class ConfinementScenarios {
       outputs: ['generated'],
       temporaryRoot: join(root, '..', `${root.split('/').at(-1)}-private`),
       executable: process.env.ARCNEXUS_TEST_CODEX!,
+      toolDirectories: [dirname(process.execPath), dirname(process.env.ARCNEXUS_TEST_CODEX!)],
     });
     const script =
       "const f=require('fs');console.log('stdout-proof');console.error('stderr-proof');f.writeFileSync('generated/result','ok');for(const path of ['source.txt',process.env.CODEX_HOME+'/config.toml']){try{f.writeFileSync(path,'bad');process.exit(7)}catch(e){if(!['EROFS','EACCES','EPERM'].includes(e.code))throw e;}}";

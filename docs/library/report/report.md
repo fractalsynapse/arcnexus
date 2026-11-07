@@ -204,3 +204,43 @@ results, foreign references, and unsafe paths remain explicit evidence gaps or s
 rejections; they never imply success. Historical artifacts and invocation identities
 remain unchanged. The reader uses the existing immutable evidence paging path, with
 no second reader, execution authority, or total read-size quota.
+
+## Canonical execution evidence
+
+Direction, steward investigation, independent verification and publication consume
+the same captured execution facts and artifact assembly. The capture includes run
+identity, retained caller input with caller attribution, assignment state, correlated
+inbox requests and observed execution records. A consumer must not rebuild a smaller
+copy that silently omits those facts. Candidate/authority identity and unavailable
+historical evidence remain explicit; exposing input never accepts its claims.
+
+Consumers add only their distinct responsibilities: direction annotates validated
+continuation eligibility, investigation exposes checked-edit/checkpoint artifacts,
+and verification adds the candidate patch and acceptance assessment. These additions
+do not replace the common execution capture or introduce another reader or store.
+Historical retained artifacts remain readable without rewriting their content.
+
+Connected acceptance exercises capture through the actual consumer capability and
+its advertised artifacts. Testing a projection and a manually assembled pager
+separately does not establish that the production handoff preserves its evidence.
+
+## Caller observations and terminal pages
+
+The independent run evidence bundle may expose caller-provided observations retained
+with that exact run, including the original command context, exit status and combined
+output. Such observations keep caller attribution and originating run identity. They
+remain separate from host execution receipts, verified acceptance and worker claims;
+they do not qualify changed candidate bytes. Missing historical input is an explicit
+evidence gap, and foreign run identities cannot provide input for the current run.
+
+Evidence pages use JavaScript character offsets. A terminal page has no continuation
+offset; callers can follow each returned continuation and stop without repeating an
+empty terminal page. Content hashes, artifact identity and exact concatenation across
+pages remain stable.
+
+Command evidence includes observed results retained in the operation invocation ledger,
+including failed setup prerequisites that prevent a checkpoint from returning its command
+list. A result already present in the legacy command list appears once, correlated by
+its retained log identity. Invocation identity, purpose and status remain visible; partial
+or interrupted output does not establish successful completion. All consumers read these
+logs through the same pinned evidence pages, with the existing private-path validation.

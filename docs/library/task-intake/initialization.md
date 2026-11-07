@@ -207,3 +207,11 @@ A director result includes the required `dependencyRetirementProposal` field. It
 proposal contains only a nonempty `requestId` and a nonempty `rationale`, so the host
 can correlate the proposed retirement with the request and understand its reason.
 This field records a proposal; it does not itself authorize or perform retirement.
+
+Dispatch owner identities derive from validated assignments and continuations.
+The displayed selection summary uses those identities and the supplied selection
+reason, assignment objective or continuation reason. Raw director responses remain
+retained; their redundant selection lists cannot grant dispatch authority or stop
+a valid decision. Ready direction may request no further engineering when prepared
+contributions need assembled reassessment; this creates no no-op steward turn and
+does not accept the delivery.

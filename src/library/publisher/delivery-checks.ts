@@ -1,3 +1,8 @@
+import { createHash } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { git } from '../operations/process.js';
+import { executionIdentity } from '../architecture/execution-context.js';
+import { AssemblyAcceptance } from './assembly-acceptance.js';
 import { PublicationEvidence } from '../report/report.js';
 import { PublicationPolicy } from './publication-policy.js';
 import { join } from 'node:path';
@@ -27,14 +32,30 @@ export class DeliveryChecks {
     independent = false,
   ): Promise<SimulationCheckResult> {
     if (!/^[a-f0-9]{40,64}$/.test(head)) throw new Error('Expected immutable delivery head');
-    const record = this.record(head);
+    signal.throwIfAborted();
+    return (
+      this.retained(head, independent) ?? this.checkRecord(this.record(head), signal, independent)
+    );
+  }
+
+  /** Checks a journaled candidate through the same acceptance path used by ordinary publication. */
+  async checkRecord(
+    record: RecordData,
+    signal: AbortSignal,
+    independent = false,
+    contributions: RecordData[] = [],
+  ): Promise<SimulationCheckResult> {
     const evidence = [join(this.root, 'runs', record.id, 'report.json')];
     try {
       await prepareWorkspace(this.root, record, signal);
       await this.verify(record, signal);
+      await new AssemblyAcceptance(this.root, record, signal).verify(
+        contributions,
+        String(record.assemblyBase ?? record.base),
+      );
+      save(this.root, record);
       if (independent) evidence.push(...(await this.review(record, signal)));
-      record.status = 'completed';
-      return { status: 'passed', evidence, artifacts: this.artifacts(record) };
+      return this.accept(record, evidence, independent);
     } catch (error) {
       record.error = String(error);
       record.status = signal.aborted ? 'interrupted' : 'failed';
@@ -45,8 +66,73 @@ export class DeliveryChecks {
     }
   }
 
+  /** Retains one completed acceptance receipt so publication can reuse the exact checked inputs. */
+  private accept(
+    record: RecordData,
+    evidence: string[],
+    independent: boolean,
+  ): SimulationCheckResult {
+    record.status = 'completed';
+    const result: SimulationCheckResult = {
+      status: 'passed',
+      evidence,
+      artifacts: this.artifacts(record),
+    };
+    record.acceptedChecks = {
+      key: this.key(record.base),
+      independent,
+      digest: candidateDigest(record),
+      result,
+    };
+    return result;
+  }
+
+  /** Reuses accepted bytes and criteria in this run; changed trees, authority or missing evidence require checks. */
+  private retained(head: string, independent: boolean): SimulationCheckResult | undefined {
+    const record = this.run.data?.candidateRecord as RecordData | undefined;
+    const accepted = record?.acceptedChecks as
+      | {
+          key: string;
+          independent: boolean;
+          digest: string;
+          result: SimulationCheckResult;
+        }
+      | undefined;
+    if (
+      !record ||
+      !accepted ||
+      record.status !== 'completed' ||
+      record.executionRunId !== this.run.id ||
+      accepted.key !== this.key(head) ||
+      (independent && !accepted.independent) ||
+      !existsSync(record.workspace) ||
+      accepted.digest !== candidateDigest(record) ||
+      accepted.result.evidence.some((path) => !existsSync(path)) ||
+      accepted.result.artifacts.some((artifact) => !existsSync(artifact.path))
+    )
+      return undefined;
+    return structuredClone(accepted.result);
+  }
+
+  /** Binds reuse to source content, captured authority, environment, goal and accountable acceptance criteria. */
+  private key(head: string): string {
+    return createHash('sha256')
+      .update(
+        JSON.stringify({
+          tree: git(this.context.source, 'rev-parse', head + '^{tree}').trim(),
+          authority: executionIdentity(this.context),
+          environment: this.run.environment,
+          objective: this.run.data?.promotionSourceObjective ?? this.run.objective,
+          assignments: this.assignments
+            .map(({ id, owner, objective, acceptance }) => ({ id, owner, objective, acceptance }))
+            .sort((a, b) => String(a.id).localeCompare(String(b.id))),
+        }),
+      )
+      .digest('hex');
+  }
+
   /** Captures preparation authority before any command, preserving immutable environment identity. */
-  private record(head: string): RecordData {
+  record(head: string): RecordData {
     const record = createWorkspace(this.root, {
       project: this.context.source,
       base: head,
@@ -102,18 +188,22 @@ export class DeliveryChecks {
       assignments: this.assignments,
       commands: record.commands,
     };
-    return new Direction(this.root, this.context, signal).verify(
-      record,
-      this.assignments[0]!.owner,
-      this.run.objective,
-      evidence,
-      false,
+    return new Direction(
+      this.root,
+      this.context,
+      signal,
       new PublicationEvidence(this.root, this.context.key).capture(
         this.run,
         record,
         this.assignments,
       ),
-      this.context.base,
+    ).verify(
+      record,
+      this.assignments[0]!.owner,
+      String(this.run.data.promotionSourceObjective ?? this.run.objective),
+      evidence,
+      this.run.mode === 'task',
+      String(record.assemblyBase ?? this.context.base),
     );
   }
 

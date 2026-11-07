@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -9,6 +10,34 @@ import { Scheduler } from '../../../../dist/library/execution-runtime/scheduler.
 
 /** Exercises the built scheduler using deterministic engineering outcomes. */
 class SchedulerScenarios {
+  /** Replays a journaled prepared outcome without invoking engineering or declaring delivery. */
+  async prepared(t: TestContext): Promise<void> {
+    const store = new ExecutionStore(this.database(t));
+    t.after(() => store.close());
+    const run = store.createRun('task', ['owner'], 'Retain contribution');
+    const assignment = store.enqueue(run.id, 'owner', 'Related engineering');
+    const contribution = {
+      recordId: randomUUID(),
+      base: 'a'.repeat(40),
+      revision: 'b'.repeat(40),
+      checkpoint: 'c'.repeat(64),
+    };
+    store.updateAssignment(assignment.id, 'ready', {
+      recordId: contribution.recordId,
+      pendingOutcome: { kind: 'prepared', contribution, receipt: contribution.checkpoint },
+    });
+    await new Scheduler(store, async () => {
+      throw new Error('A journaled contribution must not replay engineering');
+    }).step(run.id);
+    const retained = store.assignment(assignment.id);
+    assert.equal(retained.status, 'prepared');
+    assert.deepEqual(retained.data.contribution, contribution);
+    assert.equal(retained.data.pendingOutcome, null);
+    assert.equal(retained.data.lastReceipt, contribution.checkpoint);
+    assert.deepEqual(retained.evidence, []);
+    assert.equal(store.run(run.id).data.candidateRevision, undefined);
+  }
+
   /** A newer committed blocker retires stale routing failure state across reopen and continuation. */
   async currentReceipt(t: TestContext): Promise<void> {
     const path = this.database(t);
@@ -145,6 +174,9 @@ class SchedulerScenarios {
 }
 
 const scenarios = new SchedulerScenarios();
+
+test('prepared scheduler receipts recover without replaying engineering or claiming delivery', (t) =>
+  scenarios.prepared(t));
 
 test('committed outcomes retire stale failure receipts without erasing history', (t) =>
   scenarios.currentReceipt(t));

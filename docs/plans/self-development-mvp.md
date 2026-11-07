@@ -37,11 +37,18 @@ trust boundaries or allow reported failures to be rewritten as successes.
    Stewards choose their engineering activities and files. The host enforces actual
    authority, safe checkpoints and the applicable verification obligations.
 4. Assemble and independently verify the candidate using one evidence bundle and
-   reader. The director assesses task-goal coverage from that same evidence.
+   reader. The same independent assessment covers engineering criteria and task-goal
+   readiness for integration; the director routes actionable corrections.
 5. Use one publisher route: verified development branch → staging PR → policy-allowed
    integration. Simulation supplies isolated Git/upstream providers to this same
    route. Promotion submits the verified changes to it under current live authority;
    it does not create another engineering, verification or release algorithm.
+
+Independent engineering acceptance precedes publication. The original goal remains
+visible to the reviewer, but future host integration/release receipts cannot be
+prerequisites for accepting engineering work. The publisher must still observe and
+record those outcomes before reporting lifecycle completion. This is a sequential
+handoff, not a waiver of publication requirements or another model assessment.
 
 Source and runtime storage remain separate. Keep observed commands, outcomes, edits,
 reviews and delivery references in application storage. Every consumer uses the same
@@ -84,6 +91,38 @@ appropriate checks.
 Implement related removals and migrations together, with focused tests for trust and
 recovery risks. Assemble the simplification before long integrated checks. Readiness
 comes from observed behavior, not the number of deleted files or new abstractions.
+
+## Dependent contributions and assembled verification
+
+Accepted November 6, 2026; implementation tracked in #312. Related engineering
+contributions may complete as one assembled delivery instead of requiring each
+owner's partial candidate to pass independently. This removes the deadlock where
+an implementation awaits a regression test that cannot pass without that same
+implementation.
+
+A prepared contribution is not verified delivery. Each steward retains its own
+branch, checked edits, component ownership, plan and observed checks. Within a
+related contribution group, prepared dependency work may unblock engineering;
+outside that group, the existing verified-delivery milestone remains required.
+The host reconciles attributed snapshots against the current verified candidate,
+runs captured checks and independent review on the combined result, and advances
+the verified candidate and all contributing delivery receipts atomically only
+when their criteria are satisfied. Failed checks, conflicts and missing evidence
+retain the contributions and return actionable findings through ordinary correction.
+They never promote a partial candidate or fabricate a delivered dependency.
+
+Dispatch owners come from validated assignments and continuations; a redundant
+selection summary cannot block or authorize dispatch. Derive its displayed owner set
+from those proposals while retaining raw model responses. A ready director decision
+with no further engineering may return fully prepared, previously rejected work to
+the same assembled assessment. It does not create a no-op worker turn or accept the
+delivery. Each reassessment consumes that decision; unchanged rejected work otherwise
+remains waiting for diagnosis, with the existing progress detector still active.
+
+Use the same reconciliation, operation executor, evidence capture, verifier and
+publisher for one or several contributors. Do not introduce another scheduler,
+publication route or shared worker write authority. Keep uncertain operation and
+interruption recovery explicit; repeated completion cannot deliver twice.
 
 ## Qualification before expansion
 

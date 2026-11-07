@@ -44,7 +44,7 @@ class AssignmentRegistryScenario {
     assert.deepEqual(host.store.assignment(supplier!.id).acceptance, supplier!.acceptance);
   }
 
-  /** Discovers a not-started supplier without granting checkpoint access or creating duplicate assignments. */
+  /** Discovers a not-started supplier through validated current-run evidence without duplicating work. */
   async run(t: TestContext): Promise<void> {
     const f = new GeneralFixture(t).fixture;
     const host = new ProjectHost(f.state, new ExecutionContext().resolve(f.repo));
@@ -209,20 +209,28 @@ class AssignmentRegistryScenario {
     assert.equal(intent.accepted, false);
     assert.equal(intent.objective, 'Supply shared evidence');
     assert.deepEqual(intent.acceptance, ['Evidence-backed result']);
-    assert.doesNotMatch(text, /PRIVATE_RECORD_SENTINEL|FOREIGN_RUN_SENTINEL|FOREIGN_WORK_SENTINEL/);
-    const intentArtifacts = observed.manifest.artifacts.filter((item: any) =>
-      item.id.endsWith(':intent'),
-    );
-    const diagnosticArtifacts = observed.manifest.artifacts.filter((item: any) =>
-      item.id.endsWith(':invocations'),
+    assert.doesNotMatch(text, /FOREIGN_RUN_SENTINEL|FOREIGN_WORK_SENTINEL/);
+    this.canonicalEvidence(observed, runId);
+    const intentArtifacts = Object.keys(observed.artifacts).filter((id) => id.endsWith(':intent'));
+    const diagnosticArtifacts = Object.keys(observed.artifacts).filter((id) =>
+      id.endsWith(':invocations'),
     );
     assert.equal(intentArtifacts.length, 2);
     assert.equal(diagnosticArtifacts.length, 1);
-    assert.equal(diagnosticArtifacts[0].id, observed.manifest.invocationDiagnostics.artifact);
-    assert.equal(
-      intentArtifacts.length + diagnosticArtifacts.length,
-      observed.manifest.artifacts.length,
-    );
+    assert.equal(diagnosticArtifacts[0], observed.manifest.invocationDiagnostics.artifact);
+  }
+
+  /** Exposes current-run facts while refusing to dereference a malformed retained record identity. */
+  private canonicalEvidence(observed: any, runId: string): void {
+    const execution = JSON.parse(observed.artifacts.execution);
+    assert.equal(execution.run.id, runId);
+    assert.equal(execution.assignments.length, 3);
+    const unrelated = execution.assignments.find((item: any) => item.owner === 'c');
+    const data = JSON.parse(observed.artifacts[unrelated.data.artifact]);
+    assert.equal(data.recordId, 'PRIVATE_RECORD_SENTINEL');
+    const record = JSON.parse(observed.artifacts[unrelated.record.artifact]);
+    assert.equal(record.evidenceUnavailable, true);
+    assert.match(record.reason, /Invalid retained record identity/);
   }
 }
 

@@ -41,7 +41,7 @@ class ExecutionLimitTests {
       assert.equal(resolved.executionProfile[key], undefined);
   }
 
-  /** Verifies that unconfigured turn and attempt quotas permit a verified fourth implementation attempt. */
+  /** Verifies that failed engineering prepares its contribution without a corrective-attempt allowance. */
   continuingWork(t: TestContext, operations: boolean): void {
     const fixture = operationFixture(t);
     fixture.configure(
@@ -52,8 +52,9 @@ class ExecutionLimitTests {
     const record = JSON.parse(result.stdout);
     if (operations) assert.equal(record.operationCalls, 25);
     else {
-      assert.equal(record.implementationAttempts, 4);
-      assert.equal(record.turns.length, 7);
+      assert.equal(record.implementationAttempts, 1);
+      assert.equal(record.outcome, 'prepared_for_assembly');
+      assert.equal(record.turns.length, 3);
     }
   }
 
@@ -83,7 +84,7 @@ nativeHostTest('unconfigured operation quota permits more than twenty-four succe
 );
 
 nativeHostTest(
-  'unconfigured turn and attempt quotas permit a verified fourth implementation attempt',
+  'failed engineering prepares its contribution without a corrective-attempt allowance',
   (t) => suite.continuingWork(t, false),
 );
 

@@ -4,6 +4,7 @@ type: library
 parentId: cli-package
 purpose: Schedule durable assignments and project execution lifecycles
 objectives:
+  - Assemble dependent owner contributions through the canonical verified-delivery path
   - Schedule durable assignments and project execution lifecycles
 constraints:
   - Preserve captured authority and evidence

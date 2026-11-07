@@ -5,23 +5,24 @@ parentId: cli-package
 purpose: Resume owner-scoped assignments through durable engineering and host
   verification stages
 objectives:
+  - Prepare owner contributions with self-review in engineering for assembled verification
   - Make actual execution outcomes easy to inspect
 constraints:
   - Preserve captured authority and evidence
-  - "regression-expectation
+  - 'regression-expectation
     (src/library/assignment/schemas/regression-expectation.json): Preserve
-    historical index expectations alongside stable operation identities"
-  - "general-agent-result
+    historical index expectations alongside stable operation identities'
+  - 'general-agent-result
     (src/library/assignment/schemas/general-agent-result.json): General
-    execution inbox protocol; legacy reports remain readable"
-  - "agent-result (src/library/assignment/schemas/agent-result.json): Preserve
-    supported historical versions and captured execution readers"
-  - "assignment (src/library/assignment/schemas/assignment.json): Preserve
-    supported historical versions and captured execution readers"
-  - "plan-updates (src/library/assignment/schemas/plan-updates.json): Preserve
-    supported historical versions and captured execution readers"
-  - "plan (src/library/assignment/schemas/plan.json): Preserve supported
-    historical versions and captured execution readers"
+    execution inbox protocol; legacy reports remain readable'
+  - 'agent-result (src/library/assignment/schemas/agent-result.json): Preserve
+    supported historical versions and captured execution readers'
+  - 'assignment (src/library/assignment/schemas/assignment.json): Preserve
+    supported historical versions and captured execution readers'
+  - 'plan-updates (src/library/assignment/schemas/plan-updates.json): Preserve
+    supported historical versions and captured execution readers'
+  - 'plan (src/library/assignment/schemas/plan.json): Preserve supported
+    historical versions and captured execution readers'
 owns:
   - src/library/assignment
   - tests/library/assignment

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { ExecutionDatabase } from './execution-database.js';
 import {
   canContinueAssignment,
+  canReopenAssignment,
   type ExecutionAssignment,
   type ExecutionRun,
 } from './execution-types.js';
@@ -52,7 +53,9 @@ export class AssignmentAdmission {
     )
       throw new Error('Invalid retained assignment continuation');
     const failed = assignment.data.lastFailedOutcome as { receipt?: string } | undefined;
-    const receipt = assignment.status === 'ready' ? assignment.data.lastReceipt : failed?.receipt;
+    const receipt = canReopenAssignment(assignment.status)
+      ? failed?.receipt
+      : assignment.data.lastReceipt;
     this.db.put('assignment', {
       ...assignment,
       status: 'ready',

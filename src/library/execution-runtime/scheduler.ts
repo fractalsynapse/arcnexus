@@ -64,6 +64,7 @@ export class Scheduler {
   /** Translates structured results into durable transitions; completion requires verification evidence. */
   private apply(id: string, result: ActivationResult): void {
     if (result.kind === 'completed') this.store.complete(id, result.evidence, result.candidate);
+    else if (result.kind === 'prepared') this.store.prepareContribution(id, result.contribution);
     else if (result.kind === 'blocked') this.store.fail(id, 'blocked', result.reason);
     else if (result.kind === 'inbox') this.store.exchange(id, result.requests, result.actions);
     else if (result.kind === 'responses') this.store.respond(id, result.actions);

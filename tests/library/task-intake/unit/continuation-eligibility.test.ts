@@ -17,6 +17,7 @@ class ContinuationEligibilityScenarios {
       'blocked',
       'failed',
       'rejected',
+      'prepared',
     ].map((status) => ({ runId: 'run', status, data: {} }));
     const result = evidence.capture([
       ...assignments,
@@ -24,7 +25,7 @@ class ContinuationEligibilityScenarios {
     ]) as Array<{ checkpointEvidence: { continuation: { eligible: boolean } } }>;
     assert.deepEqual(
       result.map((item) => item.checkpointEvidence.continuation.eligible),
-      [true, false, true, false, false, true, true, true, false],
+      [true, false, true, false, false, true, true, true, false, false],
     );
   }
 

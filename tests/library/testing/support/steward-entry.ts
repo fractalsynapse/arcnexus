@@ -67,7 +67,7 @@ class StewardEntry {
       values['codex-path'] ?? 'codex',
       this.controller.signal,
     );
-    if (this.record.status !== 'completed') process.exitCode = 1;
+    if (!['prepared', 'completed'].includes(this.record.status)) process.exitCode = 1;
   }
 
   /** Resolves committed component authority before any workspace is created. */

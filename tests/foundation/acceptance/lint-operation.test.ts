@@ -21,7 +21,7 @@ class LintOperationTests {
     const report = JSON.parse(result.stdout);
     assert.deepEqual(
       report.operations.map((op: any) => op.exitCode),
-      [1, 0, 0],
+      [1, 0],
       report.operations.map((op: any) => readFileSync(op.log, 'utf8')).join('\n'),
     );
     assert.match(
