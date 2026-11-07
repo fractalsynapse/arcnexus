@@ -237,3 +237,10 @@ Evidence pages use JavaScript character offsets. A terminal page has no continua
 offset; callers can follow each returned continuation and stop without repeating an
 empty terminal page. Content hashes, artifact identity and exact concatenation across
 pages remain stable.
+
+Command evidence includes observed results retained in the operation invocation ledger,
+including failed setup prerequisites that prevent a checkpoint from returning its command
+list. A result already present in the legacy command list appears once, correlated by
+its retained log identity. Invocation identity, purpose and status remain visible; partial
+or interrupted output does not establish successful completion. All consumers read these
+logs through the same pinned evidence pages, with the existing private-path validation.
