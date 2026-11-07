@@ -6,7 +6,19 @@ import type {
   PreparedContribution,
 } from '../coordination-store/execution-types.js';
 import { git } from '../operations/process.js';
-import { CandidateSnapshots } from '../workspace/candidates.js';
+import { CandidateSnapshots, type Reconciliation } from '../workspace/candidates.js';
+
+/** Identifies an ordinary source conflict without treating ownership or uncertain effects as recoverable. */
+export class ContributionConflict extends Error {
+  /** Retains the accountable owner and both source versions for the existing director correction loop. */
+  constructor(
+    readonly assignmentId: string,
+    readonly owner: string,
+    readonly conflict: Extract<Reconciliation, { status: 'conflict' }>,
+  ) {
+    super(`Contribution ${assignmentId} conflicts; retained evidence: ${conflict.evidence}`);
+  }
+}
 
 /** Reconciles attributed contribution objects without changing any steward workspace or verified pointer. */
 export class ContributionSnapshots {
@@ -33,8 +45,7 @@ export class ContributionSnapshots {
     for (const item of assignments) {
       const contribution = this.contribution(item);
       const result = this.snapshots.reconcile(contribution.base, revision, contribution.revision);
-      if (result.status !== 'merged')
-        throw new Error(`Contribution ${item.id} conflicts; retained evidence: ${result.evidence}`);
+      if (result.status !== 'merged') throw new ContributionConflict(item.id, item.owner, result);
       revision = result.revision;
     }
     return revision;
