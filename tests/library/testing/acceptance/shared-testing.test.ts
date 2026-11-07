@@ -91,7 +91,7 @@ class SharedTestingTests {
     const f = new ComponentTestFixture(t);
     f.operation('compile', [
       '-e',
-      "require('fs').writeSync(1,'passing output\\n'.repeat(12000));console.error('Error: LATE_BUILD_FAILURE');process.exit(1)",
+      "require('fs').writeSync(1,'passing output\\n'.repeat(12000));require('fs').writeSync(1,'Error: LATE_BUILD_FAILURE\\n');process.exit(1)",
     ]);
     f.commit();
     const result = f.run('run');

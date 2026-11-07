@@ -21,7 +21,11 @@ class DirectorIdentityScenarios {
       await host.tick();
       if (host.store.run(task.id).status !== 'running') break;
     }
-    assert.equal(host.store.run(task.id).status, 'completed');
+    assert.equal(
+      host.store.run(task.id).status,
+      'completed',
+      JSON.stringify(host.store.run(task.id).data),
+    );
     assert.deepEqual(
       host.store.assignments(task.id).map((a) => a.owner),
       ['a', 'b', 'c'],
@@ -63,7 +67,7 @@ class DirectorIdentityScenarios {
     assert.match(prompt, /combined stdout\/stderr/);
     assert.match(prompt, /owned documentation and regression scope/);
     assert.match(prompt, /test-only characterization of already correct behavior/);
-    assert.match(prompt, /automatically runs independent delivery verification/);
+    assert.match(prompt, /one independent assembled assessment/);
     assert.match(prompt, /independent review of this task is covered by the built-in reviewer/);
   }
 }

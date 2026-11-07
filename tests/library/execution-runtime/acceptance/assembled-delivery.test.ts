@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { TestContext } from 'node:test';
 import {
@@ -22,6 +22,7 @@ import { DeliveryEvidence } from '../../../../dist/library/report/report.js';
 import { CandidateSnapshots } from '../../../../dist/library/workspace/candidates.js';
 import { createWorkspace, prepareWorkspace } from '../../../../dist/library/workspace/workspace.js';
 import { save, type RecordData } from '../../../../dist/library/workspace/state.js';
+import { waitFor } from '../../testing/support/test-process.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
@@ -292,6 +293,69 @@ class AssemblyScenarios {
     assert.equal(assembly.ready(f.host.store.run(f.run.id)), true);
   }
 
+  /** Final assembled checks cannot write maintained source, even through captured verification commands. */
+  async confined(t: TestContext): Promise<void> {
+    const f = new AssemblyFixture(t);
+    await f.prepare(f.implementation, 'source.txt', 'assembled');
+    await f.prepare(
+      f.regression,
+      'b/regression.cjs',
+      "require('fs').writeFileSync('source.txt','unauthorized');",
+    );
+    await new AssembledDelivery(f.fixture.state, f.context, f.host.store).advance(
+      f.host.store.run(f.run.id),
+      new AbortController().signal,
+    );
+    const run = f.host.store.run(f.run.id);
+    const record = this.assemblyRecord(f, (run.data.lastAssembly as any).recordId);
+    assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'assembled');
+    assert.match(this.logs(f, record.id), /EROFS|EACCES|EPERM/);
+    assert.equal(run.data.candidateRevision, f.context.base);
+    assert.ok(f.host.store.assignments(f.run.id).every((item) => item.status === 'prepared'));
+  }
+
+  /** Cancellation retains prepared contributions and observed assembly command evidence without promotion. */
+  async cancelled(t: TestContext): Promise<void> {
+    const f = new AssemblyFixture(t);
+    const prepared = await f.prepare(f.implementation, 'source.txt', 'assembled');
+    await f.prepare(
+      f.regression,
+      'b/regression.cjs',
+      "console.log('ASSEMBLY_READY');setInterval(()=>{},1000);",
+    );
+    const controller = new AbortController();
+    t.after(() => controller.abort());
+    const result = new AssembledDelivery(f.fixture.state, f.context, f.host.store)
+      .advance(f.host.store.run(f.run.id), controller.signal)
+      .catch((error: unknown) => error);
+    await waitFor(() => {
+      const pending = f.host.store.run(f.run.id).data.pendingAssembly as any;
+      return Boolean(pending && this.logs(f, pending.recordId).includes('ASSEMBLY_READY'));
+    }, 'Assembly check must reach its cancellation boundary');
+    controller.abort();
+    await result;
+    const run = f.host.store.run(f.run.id);
+    const record = this.assemblyRecord(f, (run.data.pendingAssembly as any).recordId);
+    assert.equal(run.data.candidateRevision, f.context.base);
+    assert.ok((record.operationInvocations as any[])?.some((op: any) => op.status === 'cancelled'));
+    assert.deepEqual(this.assemblyRecord(f, prepared.id).checkpoint, prepared.checkpoint);
+    assert.ok(f.host.store.assignments(f.run.id).every((item) => item.status === 'prepared'));
+  }
+
+  /** Reads retained evidence without modifying the production checkpoint or candidate. */
+  private assemblyRecord(f: AssemblyFixture, id: string): RecordData {
+    return JSON.parse(readFileSync(join(f.fixture.state, 'runs', id, 'report.json'), 'utf8'));
+  }
+
+  /** Observes actual invocation logs while a managed check is running or completed. */
+  private logs(f: AssemblyFixture, id: string): string {
+    const directory = join(f.fixture.state, 'runs', id);
+    return readdirSync(directory)
+      .filter((path) => path.endsWith('.log'))
+      .map((path) => readFileSync(join(directory, path), 'utf8'))
+      .join('\n');
+  }
+
   /** Reuses a completed assessment after interruption immediately before atomic promotion. */
   async recovers(t: TestContext): Promise<void> {
     const f = new AssemblyFixture(t);
@@ -384,6 +448,12 @@ test('one assembled independent review accepts task goal and owner criteria toge
 
 test('task assembly waits for disconnected engineering obligations', (t) =>
   scenarios.waitsForAll(t));
+
+test('assembled host verification prevents maintained-source mutation', (t) =>
+  scenarios.confined(t));
+
+test('assembled verification cancellation preserves prepared evidence', (t) =>
+  scenarios.cancelled(t));
 
 registerSuite({
   component: 'execution-runtime',

@@ -92,6 +92,8 @@ class VerificationEvidenceScenarios {
       call.prompt.startsWith('Independent read-only verification.'),
     ).prompt;
     assert.ok(prompt.length < 100000, 'Goal prompt must not inline retained assignment records');
+    assert.match(prompt, /assess whether the engineering result is ready for them/);
+    assert.match(prompt, /publisher must still execute and record those outcomes/);
   }
 
   /** Both owner and whole-goal assessments can inspect accumulated tracked and untracked changes. */

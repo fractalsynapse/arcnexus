@@ -62,7 +62,8 @@ class MinimalWorkflowScenarios {
     assert.equal(record.regressionCheckpoint.operationId, 'verify');
     assert.equal(record.regressionCheckpoint.verificationIndex, undefined);
     assert.ok(record.operationInvocations.some((op: any) => op.result?.exitCode === 1));
-    assert.equal(record.operationInvocations.at(-1).result.exitCode, 0);
+    assert.ok(!record.operationInvocations.some((op: any) => op.purpose === 'verification'));
+    assert.ok(record.plan.hostChecks.every((check: any) => check.status === 'pending'));
     assert.ok(record.operationInvocations.every((op: any) => op.definitionDigest));
   }
 

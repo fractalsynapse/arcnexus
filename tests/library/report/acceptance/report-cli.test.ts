@@ -66,7 +66,9 @@ class ReportCliTests {
       'Findings and uncertainty',
     ])
       assert.ok(md.includes('## ' + heading), heading);
-    assert.ok(data.commands.some((c: any) => c.stage === 'verification'));
+    assert.ok(data.commands.some((c: any) => c.stage === 'red-test'));
+    assert.equal(data.outcome, 'prepared_for_assembly');
+    assert.ok(data.plan.hostChecks.every((check: any) => check.status === 'pending'));
     assert.match(md, /verification/);
     assert.match(md, /Actual turns: 3/);
     assert.match(md, /not complete effective Codex context/);
