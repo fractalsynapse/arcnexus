@@ -157,6 +157,8 @@ export class GitHubDelivery {
           ref: 'refs/heads/' + this.delivery.target.branch,
         },
       };
+    if (assembled && target === effect.input.targetHead)
+      return { status: 'absent', evidence: evidence + ':unchanged-target:' + target };
     if (
       target !== effect.input.targetHead &&
       this.contains(target, String(effect.input.targetHead))

@@ -350,7 +350,7 @@ test('known verification failure retries without becoming uncertain integration'
   assert.equal(f.checks, 3);
 });
 
-test('unconfirmed integration on unchanged staging cannot replay transport', async (t) => {
+test('unchanged staging permits only the same pinned compare-and-swap integration', async (t) => {
   const f = new LivePublicationFixture(t);
   f.ci = 'SUCCESS';
   f.integrationFault = 'unconfirmed';
@@ -358,7 +358,39 @@ test('unconfirmed integration on unchanged staging cannot replay transport', asy
   f.git.store.approve(f.id, current.version, current.candidate);
   await assert.rejects(f.publication.publish(f.git.signal), /Unconfirmed integration/);
   f.integrationFault = undefined;
+  const before = f.git.effects
+    .effects()
+    .find((effect) => effect.operation === 'pull-request.merge')!;
+  assert.equal((await f.publication.publish(f.git.signal)).integration, 'merged');
+  const after = f.git.effects.effect(before.id);
+  assert.equal(after.inputDigest, before.inputDigest);
+  assert.equal(after.attempt, 2);
+  assert.equal(f.checks, 3);
+});
+
+test('rewritten staging history remains unresolved instead of replaying integration', async (t) => {
+  const f = new LivePublicationFixture(t);
+  f.ci = 'SUCCESS';
+  f.integrationFault = 'unconfirmed';
+  const current = f.git.store.get(f.id);
+  f.git.store.approve(f.id, current.version, current.candidate);
+  await assert.rejects(f.publication.publish(f.git.signal), /Unconfirmed integration/);
+  const origin = f.git.repository.origin;
+  const orphan = git(
+    origin,
+    '-c',
+    'user.name=Test',
+    '-c',
+    'user.email=test@local',
+    'commit-tree',
+    current.base + '^{tree}',
+    '-m',
+    'Rewritten staging',
+  ).trim();
+  git(origin, 'update-ref', 'refs/heads/staging', orphan);
+  f.integrationFault = undefined;
   await assert.rejects(f.publication.publish(f.git.signal), /requires reconciliation/);
+  assert.equal(git(origin, 'rev-parse', 'staging').trim(), orphan);
   assert.equal(f.checks, 2);
 });
 

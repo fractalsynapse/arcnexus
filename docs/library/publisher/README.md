@@ -144,3 +144,8 @@ Failures observed before the integration transport starts remain known unapplied
 attempts. They may return through ordinary verification and retry; a model review
 finding is not an uncertain upstream push. Once transport starts, actual Git/provider
 reconciliation is still mandatory before another attempt.
+
+If the validated merge object is already pinned and the observed target still equals
+its exact expected revision, recovery may retry that same compare-and-swap integration.
+The pinned commit and expected-target lease make a duplicate transport attempt
+idempotent. Rewritten history or missing attribution remains unresolved.
