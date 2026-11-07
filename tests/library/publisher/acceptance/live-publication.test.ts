@@ -27,7 +27,7 @@ class LivePublicationFixture {
 
   afterCheck?: () => void;
 
-  integrationFault?: 'race' | 'lost-receipt';
+  integrationFault?: 'race' | 'lost-receipt' | 'unconfirmed';
 
   ci = 'PENDING';
 
@@ -140,6 +140,8 @@ class LivePublicationFixture {
       arg === 'https://github.com/example/project.git' ? this.git.repository.origin : arg,
     );
     const integration = args.some((arg) => arg.startsWith('--force-with-lease='));
+    if (integration && this.integrationFault === 'unconfirmed')
+      throw new Error('Unconfirmed integration transport');
     if (integration && this.integrationFault === 'race')
       git(this.git.repository.origin, 'update-ref', 'refs/heads/staging', this.head());
     const result = await execute({ ...command, args }, cwd, log, signal, { ...options, env });
@@ -297,10 +299,10 @@ test('changed target reconciles the old lease and verifies a fresh assembly', as
   const merge = f.git.effects
     .effects()
     .find((effect) => effect.operation === 'pull-request.merge')!;
-  assert.equal(merge.status, 'uncertain');
+  assert.equal(merge.status, 'prepared');
   const recovered = await f.publication.publish(f.git.signal);
   assert.equal(recovered.integration, 'merged');
-  assert.equal(f.git.effects.effect(merge.id).status, 'rejected');
+  assert.equal(f.git.effects.effect(merge.id).status, 'prepared');
   assert.equal(f.checks, 3);
 });
 
@@ -334,7 +336,7 @@ test('lost integration receipt recovers actual target without repeating verifica
   assert.equal(f.checks, 2);
 });
 
-test('unchanged target with unconfirmed integration remains blocked', async (t) => {
+test('known verification failure retries without becoming uncertain integration', async (t) => {
   const f = new LivePublicationFixture(t);
   f.ci = 'SUCCESS';
   const current = f.git.store.get(f.id);
@@ -343,6 +345,19 @@ test('unchanged target with unconfirmed integration remains blocked', async (t) 
     if (f.checks === 2) throw new Error('Unconfirmed check interruption');
   };
   await assert.rejects(f.publication.publish(f.git.signal), /Unconfirmed/);
+  f.afterCheck = undefined;
+  assert.equal((await f.publication.publish(f.git.signal)).integration, 'merged');
+  assert.equal(f.checks, 3);
+});
+
+test('unconfirmed integration on unchanged staging cannot replay transport', async (t) => {
+  const f = new LivePublicationFixture(t);
+  f.ci = 'SUCCESS';
+  f.integrationFault = 'unconfirmed';
+  const current = f.git.store.get(f.id);
+  f.git.store.approve(f.id, current.version, current.candidate);
+  await assert.rejects(f.publication.publish(f.git.signal), /Unconfirmed integration/);
+  f.integrationFault = undefined;
   await assert.rejects(f.publication.publish(f.git.signal), /requires reconciliation/);
   assert.equal(f.checks, 2);
 });

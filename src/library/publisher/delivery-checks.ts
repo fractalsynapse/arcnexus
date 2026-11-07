@@ -192,11 +192,7 @@ export class DeliveryChecks {
       this.root,
       this.context,
       signal,
-      new PublicationEvidence(this.root, this.context.key).capture(
-        this.run,
-        record,
-        this.assignments,
-      ),
+      new PublicationEvidence(this.root, this.context.key).capture(this.run, record),
     ).verify(
       record,
       this.assignments[0]!.owner,

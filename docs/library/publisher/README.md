@@ -139,3 +139,8 @@ lease is obsolete: retain its rejected observation and assemble a new target-spe
 attempt. Unknown outcomes and rewritten target history remain blocked. Every new
 assembly still requires current checks, independent verification and provider gates;
 changing staging never authorizes replay of an uncertain push.
+
+Failures observed before the integration transport starts remain known unapplied
+attempts. They may return through ordinary verification and retry; a model review
+finding is not an uncertain upstream push. Once transport starts, actual Git/provider
+reconciliation is still mandatory before another attempt.

@@ -120,20 +120,34 @@ export class LivePublication {
     return { status: 'unknown', evidence: effect.id, reason: 'Inspect interrupted verification' };
   }
 
-  /** Verifies the assembled target and reobserves provider requirements immediately before compare-and-swap transport. */
+  /** Dispatches integration only after current-target checks and independent acceptance complete. */
   private async merge(effect: ExternalEffect, signal: AbortSignal) {
     this.assertApproval();
-    if ((await this.ready(signal)).base !== effect.input.targetHead)
-      throw new Error('GitHub target changed before assembly');
-    const assembled = await this.push().assemble(effect, signal);
-    const verification = await this.context.checks(assembled, signal, true);
-    if (verification.status !== 'passed' || !verification.evidence.length)
-      throw new Error('Assembled live delivery verification failed');
-    if ((await this.ready(signal)).base !== effect.input.targetHead)
-      throw new Error('GitHub target changed during verification');
+    const { assembled, verification } = await this.checkedAssembly(effect, signal);
     this.assertApproval();
     const result = await this.push().integrate(effect, assembled, signal);
     return { ...result, verification };
+  }
+
+  /** Records known pre-integration failures as not applied, preserving uncertainty once push begins. */
+  private async checkedAssembly(effect: ExternalEffect, signal: AbortSignal) {
+    try {
+      if ((await this.ready(signal)).base !== effect.input.targetHead)
+        throw new Error('GitHub target changed before assembly');
+      const assembled = await this.push().assemble(effect, signal);
+      const verification = await this.context.checks(assembled, signal, true);
+      if (verification.status !== 'passed' || !verification.evidence.length)
+        throw new Error('Assembled live delivery verification failed');
+      if ((await this.ready(signal)).base !== effect.input.targetHead)
+        throw new Error('GitHub target changed during verification');
+      return { assembled, verification };
+    } catch (error) {
+      this.context.effects.reconcile(effect.id, effect.attempt, {
+        status: 'absent',
+        evidence: 'host-before-integration:' + effect.id,
+      });
+      throw error;
+    }
   }
 
   /** Observes current-head CI and repository review rules, never treating local approval as provider review. */
