@@ -1,29 +1,30 @@
 ---
 name: documentation-writer
-description: Use when writing or updating repository documentation, references, examples, or user instructions.
-references:
-  - docs/library/agent-guidance/guidance-maintenance.md
+description: Use when writing or updating documentation, references or user instructions with a clear purpose.
 ---
 
-# Write documentation that helps the next action
+# Write for the reader's next action
 
-Infer audience, purpose, and scope from the request. Use a tutorial for learning,
-a how-to for a task, reference for exact behavior, and explanation for rationale.
-These are writing tools, not four mandatory documents or approval stages.
+Follow the [project instructions](../../../AGENTS.md). Infer audience, purpose and
+scope from the request and existing material. Ask only about missing information
+that materially changes the result. A routine correction needs no outline approval.
 
-For behavior changes, describe the observable interface before implementing it.
-Update only affected surfaces. Keep planned behavior clearly separate from shipped
-capability; do not present a proposed command as something users can run today.
+Choose the form that serves the reader: a tutorial for learning, a how-to for a task,
+reference for exact behavior or explanation for understanding. These are useful
+distinctions, not a requirement to create four documents or a particular site.
+Reuse the project's format, terminology and canonical locations.
 
-Use plain language, small working examples, and links to canonical decisions.
-Verify repository facts locally and external technical claims against primary
-sources. Follow the project's research policy; do not forbid necessary research.
+For changed behavior, document the intended observable contract before implementation.
+Label proposed, unavailable and delivered capability distinctly. A rendered page does
+not establish that a documented capability works. Check claims against the actual
+artifact or current primary evidence, and identify any claim that cannot yet be verified.
 
-Review links, terminology, commands, and consistency with the current implementation
-or explicitly proposed contract. A routine correction needs no outline approval.
-No document-generation framework or new documentation site is needed by default.
+Use concise prose, meaningful structure and links to canonical decisions. Update affected
+surfaces without duplicating policy across documents. Research external technical facts
+within authorized access; user restrictions remain binding and resulting uncertainty
+must be stated. For this generic instruction collection, describe procedures without
+implementation examples, command recipes or prescribed technologies.
 
-Code documentation follows the same rule: class headers explain responsibility,
-method headers explain purpose and material effects or failure behavior. Avoid
-restating signatures. Keep examples aligned with the shared TypeScript standard
-and show blank lines between methods and top-level declarations.
+Review accuracy, consistency, local references and applicability with
+[verification](../verification-before-completion/SKILL.md). For substantial collaborative
+writing with unresolved content, use [doc-coauthoring](../doc-coauthoring/SKILL.md).

@@ -1,92 +1,57 @@
 ---
 name: release-workflow
-description: Use when starting repository changes, preparing a PR, integrating to staging, or preparing a release.
+description: Use when preparing project changes for review, integration or release under the project's delivery policy.
 ---
 
-# ArcNexus release workflow
+# Apply the project's delivery policy
 
-Use the [simplification rule](../../../AGENTS.md#simplification-and-reliability) and current MVP scope. Keep one development-branch → verified delivery → staging PR route. Reuse valid check evidence; remove superseded delivery paths rather than maintaining special release variants.
+Read the [project instructions](../../../AGENTS.md) and actual maintenance policy first.
+Discover whether version control, a tracker, reviews, builds, hosted checks and releases
+apply. Use their configured conventions and authority. This skill chooses no forge,
+branch model, version scheme, merge strategy or issue-closing milestone. Read-only work
+requires no mutation; projects without a tracker or release process do not need one
+introduced merely to use this skill.
 
-## Start a coherent implementation batch
+## Prepare a change
 
-1. Read AGENTS.md and the charter. Reuse accepted scope; read-only exploration does
-   not require an issue. Before editing, create/adopt one issue with observable
-   acceptance criteria. This skill authorizes issue/PR bookkeeping for that work.
-2. Fetch origin. Branch from current `origin/staging` as
-   `codex/<issue>-<description>`. Keep user work intact; never reset it. If staging
-   does not exist in a new repository, create it from the verified remote main tip.
-3. Follow the development cadence in [AGENTS.md](../../../AGENTS.md). Record changed
-   intent once for the accepted batch before product code. Write acceptance and
-   regression tests alongside implementation; use focused feedback during development
-   and defer long integrated suites until the batch is assembled. Refactors preserve
-   existing contracts; no artificial failing test or redundant docs commit is required.
-   Docs-only changes need document validation, not application test cycles.
-4. Commit logical increments as `<type>: <description> (#N)`. Push the branch for
-   review. Keep the issue's acceptance boxes accurate; do not duplicate every update
-   as a comment. Comment for decisions, blockers, or scope changes that need context.
+Confirm repository identity, current state and writable scope. Preserve unrelated work.
+Create or adopt the required work record and isolated work branch when project policy
+requires them, starting from its verified current base. Never treat a protected/default
+branch or an unknown setting as permission to write directly. Record changed intent before
+behavior changes, establish applicable acceptance/tests and make coherent increments.
+Use actual project commands; documentation-only work uses document validation.
 
-## Before a PR
+Before review, inspect the full diff and apply
+[verification](../verification-before-completion/SKILL.md). Include applicable changelog,
+version and documentation updates under project conventions. Release preparation uses
+the same review protections unless an authorized project exception explicitly applies.
+Describe the problem, resulting behavior, acceptance evidence, limitations and relevant
+work references. An unavailable required check remains outstanding.
 
-Reload this skill. Inspect the full diff and verify acceptance at the current revision.
-Sync current staging into the work branch if needed; resolve conflicts there.
+## Integrate within authority
 
-- Docs/instructions: check links, consistency, intended behavior, and diff whitespace.
-- Product behavior: run relevant tests, static checks, build, and the built program.
-  Exercise production wiring, not just injected fakes. Demonstrate a real harness
-  path when its behavior is introduced or changed; report live checks separately
-  from deterministic CI.
-- Use commands that actually exist in this repository. No manifest or CI means those
-  checks are unavailable, not passed. Never fabricate commands or evidence.
-- Add one human-readable `[Unreleased]` changelog entry from the PR title, with `(#N)`,
-  grouped under Added, Fixed, or Changed for developer/user-visible changes.
+Verify the exact candidate head, current base, required checks, review and merge authority.
+Refresh affected evidence if the candidate or integration result changes. Opening a review,
+merging, approving, publishing and communicating are distinct actions; perform only those
+authorized by the request or applicable standing policy. No tool capability grants approval
+rights, and passing checks alone does not authorize integration or production publication.
 
-Open a PR to `staging`, titled `<type>: <description> (#N)`. Include the problem and
-result, acceptance evidence, exact verification results/limitations, and `Part of #N`.
-Link the PR from the issue. A coherent instruction audit may touch many files; split
-by independently useful outcomes, not an arbitrary file-count threshold.
+After an authorized merge, clean up only task-owned resources covered by policy. Before
+branch deletion, verify repository identity, merged commit on the intended base, no later
+unlanded work, no other open review, worktree use or retention instruction. Squash integration
+requires recorded merge evidence rather than ancestry alone. Preserve long-lived branches
+and unrelated work, verify deletion against current remote/local state and prune stale refs
+when appropriate. If uncertain, retain the resource and report why.
 
-## Integration gate
+## Prepare a release only when requested
 
-An agent may squash-merge to staging only when acceptance is met, applicable local
-checks and CI pass, and review requirements are addressed. Inspect actual check runs
-and repository rules. If required review rules cannot be established, leave the PR
-open with that limitation. Verify checks and acceptance correspond to the current
-PR head and integration result; a newer commit invalidates earlier readiness claims
-until affected evidence is refreshed. Never approve a PR yourself. Missing CI does
-not count as green: leave the PR open and report the missing gate rather than adding unrelated
-infrastructure or silently waiving it.
+Identify the actual previous-release-to-candidate range and pin candidate/artifact identity.
+Derive shipping work from that range, not all historical merged requests. Verify acceptance
+individually; an empty checklist proves nothing. Apply the project's closure milestone and
+verified forge behavior. Omitting a closing reference does not remove partial work from
+the candidate; identify included deficits for the authorized release decision.
 
-After a merge, confirm its commit is on staging and no open PR uses the work branch.
-Delete that branch remotely and locally, fetch/prune, and verify with
-`git ls-remote --heads origin`. Squash merges need PR/commit evidence rather than
-`git branch --merged`; use local `git branch -D` only after confirming integration.
-Never delete main, staging, another open PR's branch, or unrelated unmerged work.
-
-## Release boundary
-
-Integration into staging is usable development progress, not a production release.
-Issues remain open until release. Agents may prepare an RC to main; only the
-maintainer approves/merges main, publishes tags, and authorizes production.
-
-When asked to prepare a release:
-
-- Determine the actual unreleased range from the previous release to candidate head.
-  Derive shipping PRs and linked issues from that range, not all historical merged PRs.
-- Check every closing issue's acceptance evidence; omit incomplete issues from the
-  closing list and name their deficit. Omitting `Closes #N` does not remove code from
-  the candidate: identify any partial implementation still included. The maintainer
-  decides whether that content may ship or must be completed/removed before release.
-  Include `Closes #N` only in the RC targeting the default main branch.
-- Version/changelog changes use an issue-linked branch and staging PR too; never
-  commit directly on staging. Follow the established version convention; if none
-  exists, settle it for the first release. Do not bump a version for every docs PR.
-- Keep only one active RC and record its candidate head SHA. A PR sourced from
-  staging changes when staging advances. Before declaring it ready, compare heads;
-  refresh the shipping list, changelog, closure list, and affected acceptance/CI/review
-  evidence. Identify added scope for the maintainer's decision; prior approval does
-  not silently approve it. Normal staging development need not stop while an RC waits.
-  Do not rewrite published tags. Hotfixes require maintainer direction.
-
-Prefer connected GitHub tools; use local Git and CLI for unsupported operations.
-Use HTTPS, structured bodies or `--body-file`, and preserve secrets. This file is
-the sole local release procedure; other skills must not introduce merge authority.
+Refresh scope, notes, closure references, checks and review if the candidate advances.
+Preserve published identities; correct a published artifact through the project's new-version
+or recovery procedure rather than silently replacing bytes. Report integration, publication
+and verified availability separately. Urgency or plan completion does not lift authority.

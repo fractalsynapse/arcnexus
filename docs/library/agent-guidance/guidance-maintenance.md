@@ -19,27 +19,43 @@ Use this procedure when changing repository instructions or bundled skills. The
    approval or another component's work, record the precise request for the owner;
    related-component context does not grant write authority.
 
+## Refresh shared skills
+
+The shared skill baseline is [Scaffold at 92cf2d0](https://github.com/fractalsynapse/scaffold/tree/92cf2d08fa28a7f4383bd34f4500193bcdfdb31a).
+The eleven shared skills in `.agents/skills/` match that revision byte for byte.
+The Scaffold initializer is used at the source during adoption. Put project-specific
+procedures in the ArcNexus skills and keep policy in AGENTS.md or its governing
+record. For a future refresh, compare the installed files with one reviewed source
+revision and verify links and the existing ArcNexus decision boundaries.
+
+The combined guidance reference experiment checks the project-owned
+`.agents/skills/arcnexus-guidance/SKILL.md` and this guide. It validates the declared
+reference and the assembled checkout with the supported CLI. Use the existing
+`experiments/checks/guidance-references.mjs --combined` entry point after building.
+Keep historical run inputs and evidence attached to their captured revisions.
+
 ## Validate tracked guidance
 
 From the repository root, run:
 
 ```sh
-node dist/cli.js guidance validate --project .
+node dist/cli.js validate --project .
 ```
 
 The validator inspects the Git-tracked inventory (including staged new files) using
 current working-tree bytes. Exit code `0` means no findings, `1` means validation
 findings, and `2` means an invalid invocation or unavailable Git project. Review
 each diagnostic and its path, then fix findings within this component's authority.
-With `--json`, the command reports version, project, status, skill and AGENTS
-inventories, and file-oriented diagnostics with stable codes. Text output lists each
-diagnostic and inventory totals. Rerun the command after corrections and retain its
-actual output and exit status for the handoff.
+With `--json`, the architecture report includes a `guidance` result with its source,
+status, skill and AGENTS inventories, and diagnostics with stable codes. Inspect
+that result separately from other architectural findings. Retain the actual output
+and exit status for handoff.
 
 This check validates skill frontmatter metadata and inventories tracked `AGENTS.md`
 files with readable/unreadable status. Skill metadata must be a YAML mapping, have a
-lowercase hyphenated `name` matching the skill directory, and a nonempty `description`;
-an empty tracked skill inventory is a finding. Optional `references` metadata, when
+lowercase hyphenated `name` matching the skill directory, and a nonempty `description`.
+The CLI allows an empty optional inventory. This repository maintains the declared
+shared and project-owned skill inventory. Optional `references` metadata, when
 present, must be a nonempty array of unique repository-relative paths to readable,
 tracked regular files. Entries must be nonempty strings. Absolute paths, traversal
 segments, missing or untracked files, directories, and paths traversing symlinks in

@@ -136,8 +136,9 @@ See [code quality](docs/foundation/quality.md) for the executable contract.
 
 ## Development and release
 
-Use [release-workflow](.agents/skills/release-workflow/SKILL.md) at the start of a
-change and before its PR. Read-only discussion/audit needs no branch; edits do.
+Use the shared [release workflow](.agents/skills/release-workflow/SKILL.md) and
+[ArcNexus release procedure](.agents/skills/arcnexus-release/SKILL.md) at the start
+of a change and before its PR. Read-only discussion/audit needs no branch; edits do.
 Create/adopt an issue, then branch from current `origin/staging` using
 `codex/<issue>-<description>`. Never edit directly on `main` or `staging`.
 
@@ -171,7 +172,7 @@ Keep commits and PRs issue-linked. Include a changelog entry for developer/user-
 changes. Agents may merge to staging only after applicable verification, green CI,
 and required review. Agents never approve PRs, merge to main, publish tags, or deploy
 production. Remove a merged work branch after confirming the merge and no other open
-PR uses it; retain main/staging. See the release skill for exact gates.
+PR uses it; retain main/staging. See the ArcNexus release procedure for exact gates.
 
 Use HTTPS for origin: `https://github.com/fractalsynapse/arcnexus.git`.
 
@@ -181,6 +182,11 @@ Check primary documentation before relying on external API, version, or tool-lim
 claims. A failed experiment proves its configuration, not a universal limitation.
 Record versions, flags, dependencies, exact command, and source for negative findings.
 Research should settle the current uncertainty, not become an open-ended phase.
+
+Use [shared verification](.agents/skills/verification-before-completion/SKILL.md) and
+[ArcNexus verification](.agents/skills/arcnexus-verification/SKILL.md) before claiming
+a result. For changes to this guidance, use the
+[ArcNexus guidance skill](.agents/skills/arcnexus-guidance/SKILL.md).
 
 Verify claims against observed evidence at the current revision. After three
 functionally identical attempts without progress, diagnose and change approach or

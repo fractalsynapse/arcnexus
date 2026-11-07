@@ -2,7 +2,7 @@ schemaVersion: 2
 kind: change
 changeType: documentation
 objective: "Maintain explicit documentation references for
-  .agents/skills/documentation-writer/SKILL.md. First inspect current validator
+  .agents/skills/arcnexus-guidance/SKILL.md. First inspect current validator
   and request the captured skill-references policy from guidance-validation; do
   not edit validator implementation. After verified delivery, add references
   including docs/library/agent-guidance/guidance-maintenance.md to that selected
@@ -26,7 +26,7 @@ objective: "Maintain explicit documentation references for
 expectedOutcome: Selected skill references validate through the delivered
   checker and maintenance documentation explains the rule
 acceptanceCriteria:
-  - Selected documentation-writer skill has valid references including
+  - Selected ArcNexus guidance skill has valid references including
     docs/library/agent-guidance/guidance-maintenance.md
   - Maintenance documentation explains optional references validation, tracked
     readable files, forbidden paths, and caller-owned integration
