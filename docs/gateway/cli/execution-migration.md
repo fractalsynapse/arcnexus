@@ -90,3 +90,21 @@ missing fields remain unavailable; recorded old limits are evidence, not active
 budgets. Reads do not start a host or load mutable source. Revision tokens change
 when retained timeline progress changes, including updates between report saves.
 Raw model turns, bindings and full event payloads remain outside this resource.
+
+## Caller cancellation during host acquisition (planned)
+
+Issue #285 carries the CLI caller's existing AbortSignal through task pause,
+resume, stop and answer controls, retained workday controls, and delivery publish
+and promote controls that acquire a host. Ordinary host acquisition receives the
+same signal. Task submission and workday start retain their existing signal path.
+
+SIGINT or SIGTERM interrupts readiness waiting promptly through the existing CLI
+cancellation handling and exit code 130. Cancelling the wait leaves the detached
+host's lifetime independent of the terminal. It does not introduce an execution
+deadline or automatically cancel unrelated retained work.
+
+Controls pass optional trailing signals through the execution-runtime public
+interfaces, preserving answer payloads and expected-revision positions. A control
+is dispatched once after readiness; an uncertain mutation response remains an
+error and is never automatically replayed by the CLI. Read-only retained queries
+continue to use their existing resource path.

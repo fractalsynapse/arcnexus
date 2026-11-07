@@ -30,11 +30,7 @@ class ModelContextScenarios {
       assert.equal(view.owns, undefined);
       assert.equal(view.capturedTests, undefined);
     }
-    const catalog = this.sharedStandards(context, before);
-    assert.ok(
-      JSON.stringify(catalog).length < 700000,
-      'Leave room for goal and review context within observed native input limit',
-    );
+    this.sharedStandards(context, before);
   }
 
   /** Shares standard bytes once while preserving every eligible owner and its standard references. */

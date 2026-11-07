@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
-import { GeneralFixture } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, generalCatalogFixture } from '../../testing/support/general-fixture.js';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import { DeliveryStore } from '../../../../dist/library/coordination-store/delivery-store.js';
@@ -14,7 +14,7 @@ import { git } from '../../../../dist/library/operations/process.js';
 
 /** Supplies recorded source proof while target operations, Git and verification use production services. */
 export class PromotionFixture {
-  readonly general: GeneralFixture;
+  readonly general: Pick<GeneralFixture, 'fixture'>;
 
   readonly context;
 
@@ -31,8 +31,8 @@ export class PromotionFixture {
   readonly delivery;
 
   /** Creates a clean target and explicitly controlled simulated source evidence without executing a fake campaign. */
-  constructor(t: TestContext) {
-    this.general = new GeneralFixture(t);
+  constructor(t: TestContext, portable = false) {
+    this.general = portable ? { fixture: generalCatalogFixture(t) } : new GeneralFixture(t);
     this.policy();
     const f = this.general.fixture;
     this.context = new ExecutionContext().resolve(f.repo);

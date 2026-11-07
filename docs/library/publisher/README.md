@@ -114,3 +114,18 @@ through the same paged publication evidence as the independent reviewer, plus th
 candidate-bound independent assessment. Private report paths alone do not establish
 validation. A foreign, incomplete or mismatched assessment must block promotion.
 Existing promotion goals and frozen supervisors are not rewritten.
+
+### Settled verification failures
+
+Promotion retains its check-record identity before executing preparation or target
+checks. A known failed operation is a completed observation, not an uncertain
+interruption. Ordinary task resume may retry that checkpoint using the same
+tracking issue and reconciled assembly, retaining earlier failures and their logs.
+Running or interrupted operations still require reconciliation; missing evidence
+is not permission to replay. Failed preparation must not leave a cache entry that
+permanently prevents the ordinary installer from running again. Successful
+preparation continues to use the existing environment-scoped reuse path.
+
+The CLI reports the failed check and its evidence location instead of replacing
+it with a generic acceptance error. Recovery neither skips current-target checks
+nor grants publication authority.

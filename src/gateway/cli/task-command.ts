@@ -67,6 +67,8 @@ export class TaskCommand {
       action,
       this.positionals[2]!,
       this.positionals[3],
+      undefined,
+      this.signal,
     );
     console.log(JSON.stringify(result, null, this.values.json ? undefined : 2));
   }

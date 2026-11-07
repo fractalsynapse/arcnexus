@@ -87,6 +87,36 @@ Obsolete executable limit configuration receives migration diagnostics; historic
 reports remain readable. A missing model thread can be replaced from validated
 checkpoint context with recorded provenance. An uncertain operation is never replayed.
 
+## Host readiness after restart (#285)
+
+Ordinary task answer/resume after a container restart waits for the retained
+production host to answer identity discovery, an observed startup failure, or caller
+cancellation. Ordinary host acquisition uses the same readiness observation. A
+missing or refused endpoint during initialization is not a startup failure, and
+elapsed startup time alone does not end the wait.
+
+A genuine startup failure reports the observed launch error, exit code or signal,
+and the retained project's `host.log` location. Failure details identify the
+observed startup attempt; an absent socket alone cannot establish process failure. Initialization and incompatible
+active authority are distinct outcomes. Discovery never silently replaces an
+incompatible retained authority. Concurrent callers retain one host per canonical
+repository through the existing ownership mechanism; repository identity, captured
+authority and retained checkpoints are validated before recovered work dispatches.
+
+Caller cancellation interrupts discovery and polling promptly without imposing an
+execution deadline or killing the detached host. Readiness observes identity only.
+Once ready, a control mutation is sent once with existing expected-revision and
+idempotency checks. A disconnected or otherwise uncertain mutation is surfaced for
+reconciliation and is never automatically replayed.
+
+Acceptance uses the built CLI and real production host/control transport,
+including initialization delayed beyond the former five-second window. Separate
+regressions cover missing host entry-module failure through retained CLI resume and
+ordinary host acquisition; both preserve the paused checkpoint and inspect retained
+startup diagnostics. Test-only delays and watchdogs do not become product options.
+Existing retained authority, checkpoint, concurrency and control-delivery coverage
+remains applicable; cancellation receives focused coverage.
+
 ## Delivery and qualification
 
 Implement in verified slices: general scheduling; durable continuation/candidates;
@@ -457,6 +487,26 @@ with the host's captured identity. Compact status reports are projections, not
 authority records. Matching tasks retain that workday's environment and isolated
 staging even when upstream staging has advanced; this does not upgrade the host
 or import a new source revision (#259).
+
+### Promotion staging context (#324)
+
+The #321/#322 correction requires promotion admission to carry the complete context
+already validated against the observed upstream staging revision. Retain its
+`observedStaging` repository and branch when acquiring or launching the host;
+reconstructing context from only package and revision loses that observation.
+
+A subsequent ordinary task with matching captured authority and observed staging
+destination reuses that host without requesting retirement. Different authority or
+staging destinations still use the existing admission safeguards: active work
+prevents replacement, and an inactive incompatible host follows ordinary retirement.
+Project/package identity, delivery revision, publication authority and destination
+validation remain required, with live and simulation environments kept separate.
+Controlled service regressions cover compatible reuse and both destination and
+authority drift without requiring a native model execution.
+
+This correction uses the existing admission and development-to-staging lifecycle.
+It preserves the verified delivery, PR #323 candidate and prior evidence; tracking
+continues on [issue #324](https://github.com/fractalsynapse/arcnexus/issues/324).
 
 ### Obsolete dependency recovery
 

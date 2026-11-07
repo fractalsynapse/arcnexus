@@ -51,7 +51,12 @@ export class WorkdayCommand {
     const result =
       action === 'status'
         ? new ExecutionResources().workday(this.positionals[2])
-        : await new ExecutionControls().workday(action, this.positionals[2]);
+        : await new ExecutionControls().workday(
+            action,
+            this.positionals[2],
+            undefined,
+            this.signal,
+          );
     console.log(JSON.stringify(result, null, this.values.json ? undefined : 2));
   }
 

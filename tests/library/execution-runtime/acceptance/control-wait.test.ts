@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { createServer, type Socket } from 'node:net';
 import type { TestContext } from 'node:test';
 import { HostClient } from '../../../../dist/library/execution-runtime/host-client.js';
+import { HostConnection } from '../../../../dist/library/execution-runtime/host-connection.js';
+import { HostReadiness } from '../../../../dist/library/execution-runtime/host-readiness.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
@@ -34,6 +36,22 @@ class ControlWaitScenarios {
     );
   }
 
+  /** Caller cancellation interrupts an identity-only readiness probe without sending a control. */
+  async cancelled(t: TestContext): Promise<void> {
+    const client = await this.endpoint(t, () => {});
+    const controller = new AbortController();
+    const waiting = new HostReadiness().wait(
+      new HostConnection(client.socket),
+      'repository-key',
+      undefined,
+      client.directory + '/host.log',
+      undefined,
+      controller.signal,
+    );
+    setTimeout(() => controller.abort(new Error('caller cancelled')), 50);
+    await assert.rejects(waiting, /caller cancelled/);
+  }
+
   /** Creates a private fixture endpoint and releases every socket even when an assertion fails. */
   private async endpoint(t: TestContext, respond: (socket: Socket) => void): Promise<HostClient> {
     const f = new GeneralFixture(t).fixture;
@@ -61,6 +79,10 @@ test('accepted control waits through a slow checkpoint without replay', { timeou
 
 test('control reports a disconnected host before its response', { timeout: 5000 }, (t) =>
   scenarios.disconnected(t),
+);
+
+test('readiness waiting stops promptly on caller cancellation', { timeout: 5000 }, (t) =>
+  scenarios.cancelled(t),
 );
 
 registerSuite({

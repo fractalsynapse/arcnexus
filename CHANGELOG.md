@@ -4,6 +4,14 @@
 
 ### Fixed
 
+- Qualify complete director catalog paging instead of rejecting catalog growth against an obsolete inline-prompt size assertion (#325).
+
+- Wait for observed host readiness and preserve caller cancellation across task, workday, and delivery controls instead of failing slow startup after a fixed window (#285).
+
+- Resume settled promotion check failures without recreating tracking or assembly, retain actionable diagnostics, and release failed dependency-cache builds for ordinary retry (#319).
+
+- Preserve the validated observed staging destination through promotion so subsequent compatible ordinary tasks reuse the host without an erroneous retirement attempt ([#324](https://github.com/fractalsynapse/arcnexus/issues/324)).
+
 - Use one assembled verification and correction loop for steward contributions and the task goal; reuse unchanged acceptance during publication, preserve ownership, and route peer feedback through existing requests (#312).
 
 - Share authoritative execution evidence across direction, engineering, recovery and verification, preserving caller input, dependency identities and terminal pagination (#308).

@@ -16,6 +16,39 @@ A new checkpoint re-executes its checks. Host regression checks and engineering 
 use this same ordering; a requested test cannot run against stale generated output
 merely because it was selected separately from its preparation prerequisite.
 
+## Equivalent dependency preparation (#324)
+
+The intended correction reuses the existing preparation store and operation
+checkpoint service. Setup and verification may reuse one successful installation
+across captured owners when their execution semantics, effective authority and
+relevant inputs agree. Unused owner IDs, owned paths and selected-test metadata
+must not trigger another installation. Context consumed by argument tokens remains
+part of the resolved command and must invalidate reuse when it changes execution.
+
+Preparation identity covers dependency paths and bytes, the bound command and
+resolved arguments, working directory, disposable output roots, effective reads,
+network policy, relevant tool/environment bindings, environment and repository
+isolation, and installed runtime identity. Definition bookkeeping alone is not
+execution semantics. Preparation reuse never grants operation authority: each
+request must still pass the existing captured owner, definition and operation
+admission checks, including requests satisfied by retained preparation.
+
+Restoring a preparation creates a private writable copy in the destination
+workspace, with no shared writable inode or directory alias. Maintained-input,
+overlapping-output and unsafe-path checks still run before removal or copying.
+Changed execution inputs require fresh successful preparation; failed and uncertain
+attempts retain their original evidence and cannot masquerade as reusable success.
+
+Reuse evidence identifies the successful preparation key, original operation and
+source record, and retains the original command result and raw log reference.
+It must not create a fresh command invocation or claim that verification ran.
+Executed commands continue to retain exit status, resolved invocation context and
+combined stdout/stderr logs through the ordinary supervised executor.
+
+This bounded correction preserves the verified candidate, PR #323 and prior
+observations. It uses issue #324 and the existing host development-to-staging
+delivery route; it adds no cache, scheduler or alternate execution path.
+
 For current schema-4 agent calls, an observed nonzero prerequisite exit returns
 failed feedback with the requested `id`, actual `failedOperationId`, diagnostic and
 `prerequisiteFailed: true`. The dependent command is not executed and its artifacts

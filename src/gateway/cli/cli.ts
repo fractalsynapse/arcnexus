@@ -102,7 +102,7 @@ class CliApplication {
   /** Routes application resource commands separately from engineering and qualification lifecycles. */
   private async resources(): Promise<void> {
     if (this.command === 'delivery')
-      return new DeliveryCommand(this.positionals, this.values).run();
+      return new DeliveryCommand(this.positionals, this.values, this.controller.signal).run();
     if (['component', 'standard'].includes(this.command!))
       return new ArchitectureResourceCommand(this.positionals, this.values).run();
     if (this.command === 'config') return new ConfigCommand(this.positionals, this.values).run();

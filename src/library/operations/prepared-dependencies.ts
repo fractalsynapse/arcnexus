@@ -16,7 +16,7 @@ import { relativePath } from '../architecture/config.js';
 import type { Component } from '../architecture/components.js';
 import type { ResolvedAssignment } from '../architecture/assignment.js';
 import { operationReads } from './operation-checkpoint.js';
-import { targetCommand } from '../architecture/bindings.js';
+import { targetCommand, type Bindings } from '../architecture/bindings.js';
 import { observe } from '../report/timeline.js';
 import { save, type RecordData } from '../workspace/state.js';
 import type { Operation } from './operations.js';
@@ -64,7 +64,28 @@ export class PreparedDependencies {
     if (existsSync(receipt))
       return this.restore(directory, JSON.parse(readFileSync(receipt, 'utf8')));
     mkdirSync(directory, { recursive: true, mode: 0o700 });
-    return this.install(directory, key, op, install);
+    return this.attempt(directory, key, op, install);
+  }
+
+  /** Discards only a failed cache build; raw operation evidence remains in its run directory. */
+  private async attempt(
+    directory: string,
+    key: string,
+    op: Operation,
+    install: () => Promise<CommandResult>,
+  ): Promise<CommandResult> {
+    const before = ((this.record.operationInvocations ?? []) as unknown[]).length;
+    try {
+      return await this.install(directory, key, op, install);
+    } catch (error) {
+      const invocations = (this.record.operationInvocations ?? []) as Array<{
+        operationId: string;
+        status: string;
+      }>;
+      const current = invocations.slice(before).findLast((item) => item.operationId === op.id);
+      if (current?.status === 'failed') rmSync(directory, { recursive: true, force: true });
+      throw error;
+    }
   }
 
   /** Publishes a receipt only after supervised installation and snapshot copying finish. */
@@ -133,32 +154,49 @@ export class PreparedDependencies {
     ];
   }
 
-  /** Anchors identity to input bytes, actual command, read authority, environment and installed runtime. */
+  /** Hashes the execution semantics used to identify reusable preparation. */
   private key(op: Operation): string {
-    if (op.kind !== 'command') throw new Error('Finite dependency command required');
-    const inputs = op.dependencyInputs!.map((path) => [
+    return createHash('sha256')
+      .update(JSON.stringify(this.identity(op)))
+      .digest('hex');
+  }
+
+  /** Retains dependency paths and exact bytes as execution inputs. */
+  private inputIdentity(op: Operation): Array<[string, string]> {
+    return op.dependencyInputs!.map((path) => [
       path,
       readFileSync(join(this.record.workspace, path)).toString('base64'),
     ]);
-    return createHash('sha256')
-      .update(
-        JSON.stringify({
-          inputs,
-          definition: op.definitionDigest,
-          command: targetCommand(this.record, op),
-          cwd: op.cwd,
-          outputs: op.generatedDirectories,
-          reads: operationReads(this.record, op),
-          bindings: this.record.bindings,
-          environment: this.record.executionEnvironment ?? this.record.id,
-          repository: this.record.commonDir,
-          runtime: installedRuntime().hash,
-          node: process.version,
-          platform: process.platform,
-          architecture: process.arch,
-        }),
-      )
-      .digest('hex');
+  }
+
+  /** Resolves only command, authority, isolation and runtime inputs that affect installation. */
+  private identity(op: Operation): Record<string, unknown> {
+    if (op.kind !== 'command') throw new Error('Finite dependency command required');
+    const bindings = this.record.bindings as Bindings | undefined;
+    const tools = Object.values(bindings?.tools ?? {}).filter(
+      (path): path is string => typeof path === 'string',
+    );
+    const environment = this.record.executionEnvironment as
+      { id?: string; mode?: string } | undefined;
+    const command = targetCommand(this.record, op);
+
+    return {
+      inputs: this.inputIdentity(op),
+      command: { command: command.command, args: command.args },
+      cwd: op.cwd,
+      timeoutSeconds: op.timeoutSeconds,
+      outputs: op.generatedDirectories,
+      reads: operationReads(this.record, op),
+      network: op.network,
+      toolDirectories: [...new Set(tools.map(dirname))],
+      confinementExecutable: bindings?.tools.codex ?? 'codex',
+      environment: { id: environment?.id ?? this.record.id, mode: environment?.mode },
+      repository: { id: op.repository, commonDir: this.record.commonDir },
+      runtime: installedRuntime().hash,
+      node: process.version,
+      platform: process.platform,
+      architecture: process.arch,
+    };
   }
 
   /** Removes only previously declared disposable roots before replacement, never maintained source. */
@@ -166,7 +204,11 @@ export class PreparedDependencies {
     for (const path of op.generatedDirectories)
       rmSync(join(this.record.workspace, path), { recursive: true, force: true });
     this.record.preparedDependencies = this.entries().filter(
-      (entry) => entry.operationId !== op.id,
+      (entry) =>
+        entry.operationId !== op.id &&
+        !entry.outputs.some((output) =>
+          op.generatedDirectories.some((path) => this.overlaps(output, path)),
+        ),
     );
     save(this.root, this.record);
   }

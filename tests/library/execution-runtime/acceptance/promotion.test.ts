@@ -2,10 +2,14 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { TestContext } from 'node:test';
+import { test as admissionTest, type TestContext } from 'node:test';
+import { DeliveryChecks } from '../../../../dist/library/publisher/publisher.js';
+import { save, type RecordData } from '../../../../dist/library/workspace/state.js';
 import { ExecutionControls } from '../../../../dist/library/execution-runtime/execution-controls.js';
+import { HostClient } from '../../../../dist/library/execution-runtime/host-client.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
+import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
+import { PromotionAdmissionScenario } from '../support/promotion-admission-scenario.js';
 import { PromotionFixture } from '../support/promotion-fixture.js';
 
 /** Qualifies promotion's real host/checkpoint/check wiring with explicitly controlled model and provider inputs. */
@@ -151,6 +155,41 @@ class PromotionScenarios {
     );
   }
 
+  /** A settled failed target check resumes the retained assembly without duplicating its issue. */
+  async failedRetry(t: TestContext): Promise<void> {
+    const f = new PromotionFixture(t);
+    const calls = f.tracking(t);
+    const queued = f.host.promote(f.delivery.id);
+    await f.host.tick();
+    const head = f.host.store.run(queued.runId).data.promotionHead;
+    const checks = t.mock.method(
+      DeliveryChecks.prototype,
+      'checkRecord',
+      async (record: RecordData) => this.failure(f, record),
+    );
+    await f.host.tick();
+    assert.equal(f.host.store.run(queued.runId).status, 'needs_attention');
+    assert.match(String(f.host.store.run(queued.runId).data.error), /settled dependency failure/);
+    checks.mock.restore();
+    f.host.taskControl('resume', queued.runId);
+    assert.equal(f.host.store.run(queued.runId).data.promotionStage, 'assembled');
+    await f.host.tick();
+    assert.equal(f.host.store.run(queued.runId).data.promotionStage, 'verified');
+    assert.equal(f.host.store.run(queued.runId).data.promotionHead, head);
+    assert.equal(calls.length, 1);
+    assert.equal(f.host.store.runs().length, 2);
+  }
+
+  /** Supplies one explicit external-failure observation at the verification boundary. */
+  private failure(f: PromotionFixture, record: RecordData) {
+    record.status = 'failed';
+    record.error = 'Controlled settled dependency failure';
+    record.operationInvocations = [{ status: 'failed' }];
+    save(f.general.fixture.state, record);
+    const path = join(f.general.fixture.state, 'runs', record.id, 'report.json');
+    return { status: 'failed' as const, evidence: [path], artifacts: [] };
+  }
+
   /** Invalid source proof cannot create a live run or upstream effect. */
   rejected(t: TestContext): void {
     const f = new PromotionFixture(t);
@@ -172,6 +211,71 @@ class PromotionScenarios {
   }
 }
 
+/** Stubs only staging revision lookup during promotion context capture. */
+function observeNativeStaging(t: TestContext, fixture: PromotionFixture): void {
+  fixture.credential(t);
+  t.mock.method(globalThis, 'fetch', async (url: string | URL, options: RequestInit) => {
+    assert.equal(
+      String(url),
+      'https://api.github.com/repos/example/promotion-fixture/git/ref/heads/staging',
+    );
+    assert.equal(options.method, 'GET');
+    return Response.json({
+      ref: 'refs/heads/staging',
+      object: { type: 'commit', sha: fixture.context.base },
+    });
+  });
+}
+
+/** Confirms destination or authority drift is refused while the promoted task remains active. */
+async function assertNativeMismatch(
+  repo: string,
+  state: string,
+  fixture: PromotionFixture,
+  mismatch: 'destination' | 'authority',
+): Promise<void> {
+  const target = {
+    packageId: fixture.context.packageId,
+    base:
+      mismatch === 'authority'
+        ? execFileSync('git', ['rev-parse', 'HEAD^'], {
+            cwd: repo,
+            encoding: 'utf8',
+          }).trim()
+        : fixture.context.base,
+    observedStaging:
+      mismatch === 'destination'
+        ? { ...fixture.delivery.target, branch: 'another-staging' }
+        : fixture.delivery.target,
+  };
+  await assert.rejects(
+    new HostClient(repo, state, target).ensure('submit'),
+    /Captured source\/package\/bindings changed/,
+  );
+}
+
+/** Exercises real HostRuntime launch and transport admission in qualified host runs. */
+async function nativeAdmission(
+  t: TestContext,
+  mismatch?: 'destination' | 'authority',
+): Promise<void> {
+  const fixture = new PromotionFixture(t);
+  observeNativeStaging(t, fixture);
+  const general = fixture.general as GeneralFixture;
+  const { repo, state } = general.fixture;
+  const client = new HostClient(repo, state);
+  await client.ensureRun('start', false, new AbortController().signal);
+  general.captureHost();
+  await new ExecutionControls(state).promote(fixture.delivery.id);
+  await client.ensureRun('submit', false, new AbortController().signal);
+  const identity = await client.request({ action: 'identity' });
+  assert.deepEqual(identity.observedStaging, fixture.delivery.target);
+  const task = await client.request({ action: 'submit', prompt: 'Ordinary follow-up' });
+  assert.equal(task.environment.mode, 'live');
+  if (mismatch) await assertNativeMismatch(repo, state, fixture, mismatch);
+}
+
+/** Runs portable service-path cases everywhere and real detached-host cases when qualified. */
 const scenarios = new PromotionScenarios();
 
 test('promotion validates host credentials before durable admission', (t) =>
@@ -180,12 +284,38 @@ test('promotion validates host credentials before durable admission', (t) =>
 test('promotion uses fresh target checks and independent reviews without relabeling simulation', (t) =>
   scenarios.verified(t));
 
+test('settled promotion failure resumes without recreating tracking or assembly', (t) =>
+  scenarios.failedRetry(t));
+
 test('promotion rejects altered source before creating live work', (t) => scenarios.rejected(t));
 
 test('interrupted promotion verification cannot silently replay', (t) => scenarios.interrupted(t));
 
 test('promotion uses the provider staging commit even when checkout HEAD grants publication', (t) =>
   scenarios.stagingAuthority(t));
+
+admissionTest(
+  'promotion preserves observed staging for subsequent compatible ordinary admission',
+  async (t) => new PromotionAdmissionScenario(t).compatible(),
+);
+
+admissionTest(
+  'promotion host rejects a different staging destination before replacement',
+  async (t) => new PromotionAdmissionScenario(t).incompatible('destination'),
+);
+
+admissionTest('promotion host rejects different authority before replacement', async (t) =>
+  new PromotionAdmissionScenario(t).incompatible('authority'),
+);
+
+test('qualified production promotion reuses its launched host for ordinary admission', (t) =>
+  nativeAdmission(t));
+
+test('qualified production promotion rejects changed staging destination during active work', (t) =>
+  nativeAdmission(t, 'destination'));
+
+test('qualified production promotion rejects changed authority during active work', (t) =>
+  nativeAdmission(t, 'authority'));
 
 registerSuite({
   component: 'execution-runtime',
