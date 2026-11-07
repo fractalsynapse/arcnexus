@@ -37,11 +37,18 @@ trust boundaries or allow reported failures to be rewritten as successes.
    Stewards choose their engineering activities and files. The host enforces actual
    authority, safe checkpoints and the applicable verification obligations.
 4. Assemble and independently verify the candidate using one evidence bundle and
-   reader. The director assesses task-goal coverage from that same evidence.
+   reader. The same independent assessment covers engineering criteria and task-goal
+   readiness for integration; the director routes actionable corrections.
 5. Use one publisher route: verified development branch → staging PR → policy-allowed
    integration. Simulation supplies isolated Git/upstream providers to this same
    route. Promotion submits the verified changes to it under current live authority;
    it does not create another engineering, verification or release algorithm.
+
+Independent engineering acceptance precedes publication. The original goal remains
+visible to the reviewer, but future host integration/release receipts cannot be
+prerequisites for accepting engineering work. The publisher must still observe and
+record those outcomes before reporting lifecycle completion. This is a sequential
+handoff, not a waiver of publication requirements or another model assessment.
 
 Source and runtime storage remain separate. Keep observed commands, outcomes, edits,
 reviews and delivery references in application storage. Every consumer uses the same
