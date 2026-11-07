@@ -133,7 +133,7 @@ nor grants publication authority.
 ### Changed staging during publication
 
 An explicit publication retry reconciles retained merge attempts before selecting
-current staging. A completed merge is reused even when staging has advanced beyond
+current staging from its actual branch ref, not the PR's retained base metadata. A completed merge is reused even when staging has advanced beyond
 it. If staging advanced without containing the attempted merge, the old target
 lease is obsolete: retain its rejected observation and assemble a new target-specific
 attempt. Unknown outcomes and rewritten target history remain blocked. Every new

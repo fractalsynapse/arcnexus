@@ -48,7 +48,7 @@ export class GitHubPullRequests {
     return {
       pullRequestId: number,
       head: this.head,
-      base: pull.baseRefOid,
+      base: await this.client.branchHead(this.delivery.target.branch, signal),
       environmentId: this.delivery.environment.id,
       simulation: false,
       ready: blockers.length === 0,
@@ -82,8 +82,6 @@ export class GitHubPullRequests {
       checks.contexts.totalCount < 1
     )
       blockers.push('Current-head CI evidence is missing or unsuccessful');
-    if (!/^[a-f0-9]{40,64}$/.test(String(pull.baseRefOid)))
-      blockers.push('Integration target revision is unavailable');
     return blockers;
   }
 

@@ -209,7 +209,7 @@ class LivePublicationFixture {
             headRefName: this.branch,
             headRepository: { nameWithOwner: 'example/project' },
             baseRefName: 'staging',
-            baseRefOid: this.head('staging'),
+            baseRefOid: this.git.store.get(this.id).base,
             state: 'OPEN',
             isDraft: false,
             mergeable: 'MERGEABLE',

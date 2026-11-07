@@ -55,6 +55,8 @@ class PullRequestFixture {
 
   readonly responses: unknown[] = [];
 
+  targetHead: unknown = 'd'.repeat(40);
+
   readonly signal = new AbortController().signal;
 
   readonly provider = new GitHubPullRequests(
@@ -63,6 +65,11 @@ class PullRequestFixture {
     async () => 'test-secret',
     async (url, options) => {
       this.requests.push({ url: String(url), options: options! });
+      if (String(url).endsWith('/git/ref/heads/staging'))
+        return Response.json({
+          ref: 'refs/heads/staging',
+          object: { type: 'commit', sha: this.targetHead },
+        });
       assert.notEqual(this.responses.length, 0, 'Unexpected provider request');
       return new Response(JSON.stringify(this.responses.shift()));
     },
@@ -193,6 +200,11 @@ test('GitHub readiness observes exact-head checks and reviews without creating p
   f.responses.push(f.gates());
   const result = await f.provider.readiness(17, f.signal);
   assert.equal(result.ready, true);
+  assert.equal(
+    result.base,
+    'd'.repeat(40),
+    'Use current branch ref rather than stale PR base metadata',
+  );
   assert.deepEqual(result.blockers, []);
   const request = f.requests[0]!;
   assert.equal(request.url, 'https://api.github.com/graphql');
@@ -213,13 +225,19 @@ test('GitHub readiness refuses missing CI, unknown or pending reviews and non-re
     { mergeable: 'CONFLICTING' },
     { isDraft: true },
     { state: 'CLOSED' },
-    { baseRefOid: null },
   ]) {
     f.responses.push(f.gates(state));
     assert.equal((await f.provider.readiness(17, f.signal)).ready, false, JSON.stringify(state));
   }
   f.responses.push(f.gates({}, { defaultBranchRef: { name: 'staging' } }));
   assert.equal((await f.provider.readiness(17, f.signal)).ready, false);
+});
+
+test('GitHub readiness refuses an unavailable current branch revision', async () => {
+  const f = new PullRequestFixture();
+  f.targetHead = null;
+  f.responses.push(f.gates());
+  await assert.rejects(f.provider.readiness(17, f.signal), /target revision is unavailable/);
 });
 
 test('GitHub readiness rejects substituted heads and partial GraphQL responses', async () => {
