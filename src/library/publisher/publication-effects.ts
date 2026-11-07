@@ -38,6 +38,35 @@ export class PublicationEffects {
     return this.invoke(this.identity(operation), operation, signal, { ...document, ...input });
   }
 
+  /** Reconciles older merge intents before creating an attempt bound to current staging. */
+  async merge(signal: AbortSignal, target: () => Promise<string>): Promise<ExternalEffect> {
+    const operation = 'pull-request.merge';
+    const previous = this.effects
+      .effects()
+      .filter(
+        (effect) =>
+          effect.operation === operation &&
+          effect.environmentId === this.delivery.environment.id &&
+          effect.runId === this.delivery.runId &&
+          effect.input.deliveryId === this.delivery.id,
+      );
+    for (const prior of previous) {
+      const effect =
+        prior.status === 'uncertain' ? await this.executor.recover(prior.id, signal) : prior;
+      if (effect.status === 'completed') return effect;
+      if (effect.status === 'uncertain')
+        throw new Error('Publication pull-request.merge requires reconciliation: uncertain');
+    }
+    const targetHead = await target();
+    const matching = previous.find((effect) => effect.input.targetHead === targetHead);
+    const id =
+      matching?.id ??
+      createHash('sha256')
+        .update(this.identity(operation) + ':' + targetHead)
+        .digest('hex');
+    return this.invoke(id, operation, signal, { targetHead });
+  }
+
   /** Reconciles unfinished observations before a host-authorized fresh simulated check attempt. */
   async refreshChecks(
     attempt: string,

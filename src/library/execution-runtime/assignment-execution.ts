@@ -5,12 +5,7 @@ import { VerificationBaseline } from './verification-baseline.js';
 import { assignmentIntent } from './assignment-intent.js';
 import { RequestAdmission } from './request-admission.js';
 import type { UpstreamBridge } from '../operations/upstream-bridge.js';
-import {
-  AssignmentRegistry,
-  DeliveryEvidence,
-  ExecutionEvidence,
-  RecoveryEvidence,
-} from '../report/report.js';
+import { DeliveryEvidence, ExecutionEvidence, RecoveryEvidence } from '../report/report.js';
 import { candidateDigest } from '../change-inspection/changes.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -110,13 +105,9 @@ export class AssignmentExecution {
     );
   }
 
-  /** Supplies intent discovery to engineers and private retained evidence only to read-only investigations. */
+  /** Supplies the same read-only intent, diagnostics and edit evidence to every assignment kind. */
   private investigation(assignment: ExecutionAssignment, record: RecordData) {
-    const resolved = record.resolvedAssignment as ResolvedAssignment;
-    const pages =
-      resolved.assignment.kind === 'change'
-        ? new AssignmentRegistry(this.store, this.root).capture(assignment)
-        : new RecoveryEvidence(this.root, this.store).capture(assignment);
+    const pages = new RecoveryEvidence(this.root, this.store).capture(assignment);
     record.investigationEvidence = pages.retain(join(this.root, 'runs', record.id), {
       runId: assignment.runId,
       assignmentId: assignment.id,

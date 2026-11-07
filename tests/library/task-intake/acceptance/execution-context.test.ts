@@ -3,11 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { ExecutionStore } from '../../../../dist/library/coordination-store/execution-store.js';
-import {
-  ExecutionEvidence,
-  RecoveryEvidence,
-  AssignmentRegistry,
-} from '../../../../dist/library/report/report.js';
+import { ExecutionEvidence, RecoveryEvidence } from '../../../../dist/library/report/report.js';
 import { DirectionContext } from '../../../../dist/library/task-intake/direction-context.js';
 import { VerificationEvidence } from '../../../../dist/library/task-intake/verification-evidence.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
@@ -63,12 +59,10 @@ class ExecutionContextScenarios {
   }
 
   /** Engineering and investigation use the same captured input and correlated request artifacts. */
-  async stewardship(t: TestContext, investigation: boolean): Promise<void> {
+  async stewardship(t: TestContext): Promise<void> {
     const f = this.fixture(t);
     try {
-      const pages = investigation
-        ? new RecoveryEvidence(f.state, f.store).capture(f.recipient)
-        : new AssignmentRegistry(f.store, f.state).capture(f.recipient);
+      const pages = new RecoveryEvidence(f.state, f.store).capture(f.recipient);
       const execution = await this.page(pages, 'assignment.evidence', 'execution');
       this.assertInput(execution, f.run.id, f.git('rev-parse', 'HEAD'));
       const requests = await this.page(pages, 'assignment.evidence', execution.requests.artifact);
@@ -197,9 +191,8 @@ test('retained caller input crosses production capture and independent verificat
 test('director retrieves correlated request identities for unstarted suppliers', (t) =>
   scenarios.direction(t));
 
-for (const investigation of [false, true])
-  test(`${investigation ? 'investigation' : 'engineering'} consumes canonical execution facts`, (t) =>
-    scenarios.stewardship(t, investigation));
+test('shared assignment capability consumes canonical execution facts', (t) =>
+  scenarios.stewardship(t));
 
 test('canonical consumers refuse foreign identities and retain missing-input gaps', (t) =>
   scenarios.boundaries(t));

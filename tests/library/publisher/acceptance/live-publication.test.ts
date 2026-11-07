@@ -27,7 +27,7 @@ class LivePublicationFixture {
 
   afterCheck?: () => void;
 
-  integrationFault?: 'race' | 'lost-receipt';
+  integrationFault?: 'race' | 'lost-receipt' | 'unconfirmed';
 
   ci = 'PENDING';
 
@@ -140,6 +140,8 @@ class LivePublicationFixture {
       arg === 'https://github.com/example/project.git' ? this.git.repository.origin : arg,
     );
     const integration = args.some((arg) => arg.startsWith('--force-with-lease='));
+    if (integration && this.integrationFault === 'unconfirmed')
+      throw new Error('Unconfirmed integration transport');
     if (integration && this.integrationFault === 'race')
       git(this.git.repository.origin, 'update-ref', 'refs/heads/staging', this.head());
     const result = await execute({ ...command, args }, cwd, log, signal, { ...options, env });
@@ -209,7 +211,7 @@ class LivePublicationFixture {
             headRefName: this.branch,
             headRepository: { nameWithOwner: 'example/project' },
             baseRefName: 'staging',
-            baseRefOid: this.head('staging'),
+            baseRefOid: this.git.store.get(this.id).base,
             state: 'OPEN',
             isDraft: false,
             mergeable: 'MERGEABLE',
@@ -282,7 +284,7 @@ test('failed live verification prevents branch and PR publication', async (t) =>
   assert.equal(f.git.effects.effects().length, 2);
 });
 
-test('changed integration target retains uncertainty and cannot be silently retried', async (t) => {
+test('changed target reconciles the old lease and verifies a fresh assembly', async (t) => {
   const f = new LivePublicationFixture(t);
   f.ci = 'SUCCESS';
   const current = f.git.store.get(f.id);
@@ -297,10 +299,11 @@ test('changed integration target retains uncertainty and cannot be silently retr
   const merge = f.git.effects
     .effects()
     .find((effect) => effect.operation === 'pull-request.merge')!;
-  assert.equal(merge.status, 'uncertain');
-  await assert.rejects(f.publication.publish(f.git.signal), /requires reconciliation/);
-  assert.equal(f.git.store.get(f.id).integration, 'pending');
-  assert.equal(f.checks, 2);
+  assert.equal(merge.status, 'prepared');
+  const recovered = await f.publication.publish(f.git.signal);
+  assert.equal(recovered.integration, 'merged');
+  assert.equal(f.git.effects.effect(merge.id).status, 'prepared');
+  assert.equal(f.checks, 3);
 });
 
 test('expected-target lease rejects a concurrent ancestor update at push time', async (t) => {
@@ -314,7 +317,8 @@ test('expected-target lease rejects a concurrent ancestor update at push time', 
   const head = git(origin, 'rev-parse', 'refs/heads/arcnexus/' + f.id).trim();
   assert.equal(git(origin, 'rev-parse', 'staging').trim(), head);
   assert.equal(f.git.store.get(f.id).integration, 'pending');
-  await assert.rejects(f.publication.publish(f.git.signal), /requires reconciliation/);
+  f.integrationFault = undefined;
+  assert.equal((await f.publication.publish(f.git.signal)).integration, 'merged');
 });
 
 test('lost integration receipt recovers actual target without repeating verification or mutation', async (t) => {
@@ -329,6 +333,93 @@ test('lost integration receipt recovers actual target without repeating verifica
   const recovered = await f.publication.publish(f.git.signal);
   assert.equal(recovered.integration, 'merged');
   assert.equal(git(f.git.repository.origin, 'rev-parse', 'staging').trim(), target);
+  assert.equal(f.checks, 2);
+});
+
+test('known verification failure retries without becoming uncertain integration', async (t) => {
+  const f = new LivePublicationFixture(t);
+  f.ci = 'SUCCESS';
+  const current = f.git.store.get(f.id);
+  f.git.store.approve(f.id, current.version, current.candidate);
+  f.afterCheck = () => {
+    if (f.checks === 2) throw new Error('Unconfirmed check interruption');
+  };
+  await assert.rejects(f.publication.publish(f.git.signal), /Unconfirmed/);
+  f.afterCheck = undefined;
+  assert.equal((await f.publication.publish(f.git.signal)).integration, 'merged');
+  assert.equal(f.checks, 3);
+});
+
+test('unchanged staging permits only the same pinned compare-and-swap integration', async (t) => {
+  const f = new LivePublicationFixture(t);
+  f.ci = 'SUCCESS';
+  f.integrationFault = 'unconfirmed';
+  const current = f.git.store.get(f.id);
+  f.git.store.approve(f.id, current.version, current.candidate);
+  await assert.rejects(f.publication.publish(f.git.signal), /Unconfirmed integration/);
+  f.integrationFault = undefined;
+  const before = f.git.effects
+    .effects()
+    .find((effect) => effect.operation === 'pull-request.merge')!;
+  assert.equal((await f.publication.publish(f.git.signal)).integration, 'merged');
+  const after = f.git.effects.effect(before.id);
+  assert.equal(after.inputDigest, before.inputDigest);
+  assert.equal(after.attempt, 2);
+  assert.equal(f.checks, 3);
+});
+
+test('rewritten staging history remains unresolved instead of replaying integration', async (t) => {
+  const f = new LivePublicationFixture(t);
+  f.ci = 'SUCCESS';
+  f.integrationFault = 'unconfirmed';
+  const current = f.git.store.get(f.id);
+  f.git.store.approve(f.id, current.version, current.candidate);
+  await assert.rejects(f.publication.publish(f.git.signal), /Unconfirmed integration/);
+  const origin = f.git.repository.origin;
+  const orphan = git(
+    origin,
+    '-c',
+    'user.name=Test',
+    '-c',
+    'user.email=test@local',
+    'commit-tree',
+    current.base + '^{tree}',
+    '-m',
+    'Rewritten staging',
+  ).trim();
+  git(origin, 'update-ref', 'refs/heads/staging', orphan);
+  f.integrationFault = undefined;
+  await assert.rejects(f.publication.publish(f.git.signal), /requires reconciliation/);
+  assert.equal(git(origin, 'rev-parse', 'staging').trim(), orphan);
+  assert.equal(f.checks, 2);
+});
+
+test('lost merge receipt recognizes integration below subsequent staging commits', async (t) => {
+  const f = new LivePublicationFixture(t);
+  f.ci = 'SUCCESS';
+  f.integrationFault = 'lost-receipt';
+  const current = f.git.store.get(f.id);
+  f.git.store.approve(f.id, current.version, current.candidate);
+  await assert.rejects(f.publication.publish(f.git.signal), /receipt loss/);
+  const origin = f.git.repository.origin;
+  const integrated = git(origin, 'rev-parse', 'staging').trim();
+  const advanced = git(
+    origin,
+    '-c',
+    'user.name=Test',
+    '-c',
+    'user.email=test@local',
+    'commit-tree',
+    integrated + '^{tree}',
+    '-p',
+    integrated,
+    '-m',
+    'Later staging work',
+  ).trim();
+  git(origin, 'update-ref', 'refs/heads/staging', advanced, integrated);
+  const recovered = await f.publication.publish(f.git.signal);
+  assert.equal(recovered.integration, 'merged');
+  assert.equal(git(origin, 'rev-parse', 'staging').trim(), advanced);
   assert.equal(f.checks, 2);
 });
 
