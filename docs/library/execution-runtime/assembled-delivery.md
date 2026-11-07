@@ -70,3 +70,10 @@ scripted activity inputs to that boundary. Review rejection, assembled correctio
 captured acceptance and goal coverage are qualified through the project host and
 canonical delivery checker. Do not restore the removed per-steward review loop or
 mark prepared work completed to preserve historical test expectations.
+
+Prepared contributions may receive new director findings before assembly. The existing
+continuation path validates their retained checkpoints and makes only the selected
+assignment ready, preserving its identity, original criteria, dependencies and peer
+contributions. Preparation is not acceptance or an immutable terminal state. A prepared
+assignment without a valid retained checkpoint cannot continue. Reopening prepared
+work is not an observed failed retry; actual failure diagnosis remains separate.
