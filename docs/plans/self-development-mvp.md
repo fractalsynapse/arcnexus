@@ -111,6 +111,14 @@ when their criteria are satisfied. Failed checks, conflicts and missing evidence
 retain the contributions and return actionable findings through ordinary correction.
 They never promote a partial candidate or fabricate a delivered dependency.
 
+Dispatch owners come from validated assignments and continuations; a redundant
+selection summary cannot block or authorize dispatch. Derive its displayed owner set
+from those proposals while retaining raw model responses. A ready director decision
+with no further engineering may return fully prepared, previously rejected work to
+the same assembled assessment. It does not create a no-op worker turn or accept the
+delivery. Each reassessment consumes that decision; unchanged rejected work otherwise
+remains waiting for diagnosis, with the existing progress detector still active.
+
 Use the same reconciliation, operation executor, evidence capture, verifier and
 publisher for one or several contributors. Do not introduce another scheduler,
 publication route or shared worker write authority. Keep uncertain operation and
