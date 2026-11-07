@@ -77,6 +77,7 @@ export class ReconciledContinuation {
       members: next.members,
       materializationBinding: next.materializationBinding,
       base: next.base,
+      reconciliationConflict: next.reconciliationConflict,
     });
     delete record.developmentHead;
     if (record.nextStage === 'finished') record.nextStage = 'implementation';

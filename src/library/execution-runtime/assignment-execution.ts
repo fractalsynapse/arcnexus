@@ -1,3 +1,4 @@
+import { ConflictCorrection } from './conflict-correction.js';
 import { ReconciledContinuation } from './reconciled-continuation.js';
 import { developmentBase } from './development-base.js';
 import { VerificationBaseline } from './verification-baseline.js';
@@ -77,7 +78,11 @@ export class AssignmentExecution {
 
   /** Ensures fresh direction reaches a model even when engineering finished before delivery review. */
   private feedback(assignment: ExecutionAssignment, record: RecordData): void {
-    const feedback = [assignment.data.continuationReason, record.continuationLoopWarning]
+    const feedback = [
+      assignment.data.continuationReason,
+      record.continuationLoopWarning,
+      ConflictCorrection.feedback(record),
+    ]
       .filter(Boolean)
       .join('\n');
     if (feedback && feedback !== record.continuationFeedback && record.nextStage === 'finished') {
@@ -318,7 +323,8 @@ export class AssignmentExecution {
     if (record.base === current) return record;
     const incoming = this.snapshots.capture(record.workspace, record.base);
     const merged = this.snapshots.reconcile(record.base, current, incoming);
-    if (merged.status !== 'merged') throw new Error('Candidate conflict: ' + merged.evidence);
+    if (merged.status === 'conflict')
+      ConflictCorrection.capture(this.context, assignment.owner, record, merged);
     const next = await this.materialize(assignment, record, current, merged.revision);
     new ReconciledContinuation(this.root, this.store).complete(assignment, record, next);
     return record;
@@ -337,6 +343,7 @@ export class AssignmentExecution {
     next.assignmentId = assignment.id;
     next.executionRunId = assignment.runId;
     next.executionEnvironment = record.executionEnvironment;
+    next.reconciliationConflict = record.reconciliationConflict;
     this.store.updateAssignment(assignment.id, 'running', {
       reconciliation: { recordId: next.id, workspace: next.workspace, current, revision },
     });
@@ -372,6 +379,7 @@ export class AssignmentExecution {
 
   /** Pins a settled owner checkpoint as unverified source for the ordinary scheduler to retain. */
   private prepareContribution(record: RecordData): ActivationResult {
+    ConflictCorrection.assertResolved(record);
     return {
       kind: 'prepared',
       contribution: {

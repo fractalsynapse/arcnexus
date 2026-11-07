@@ -5,7 +5,14 @@ import { join } from 'node:path';
 
 export type Reconciliation =
   | { status: 'merged'; revision: string }
-  | { status: 'conflict'; base: string; current: string; incoming: string; evidence: string };
+  | {
+      status: 'conflict';
+      base: string;
+      current: string;
+      incoming: string;
+      evidence: string;
+      revision: string;
+    };
 
 /** Captures private immutable Git snapshots without changing a source branch or index. */
 export class CandidateSnapshots {
@@ -50,7 +57,8 @@ export class CandidateSnapshots {
     if (result.status !== 1) throw new Error('Snapshot reconciliation failed: ' + result.stderr);
     const evidence = join(this.directory, randomUUID() + '.conflict.txt');
     writeFileSync(evidence, result.stdout + result.stderr, { mode: 0o600 });
-    return { status: 'conflict', base, current, incoming, evidence };
+    const revision = this.commit(result.stdout.split('\n')[0]!, [current, incoming]);
+    return { status: 'conflict', base, current, incoming, evidence, revision };
   }
 
   /** Applies an already checked reconciliation to a freshly prepared assignment workspace. */
