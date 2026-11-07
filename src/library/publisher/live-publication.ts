@@ -79,8 +79,11 @@ export class LivePublication {
       if (verification.result?.status !== 'passed') throw new Error('Live delivery checks failed');
       await this.effects.step('push', 'delivery.push', signal);
       await this.effects.step('pull_request', 'pull-request.create', signal);
-      this.assertApproval();
-      const merged = await this.effects.merge(signal, async () => (await this.ready(signal)).base);
+      const merged = await this.effects.merge(signal, async () => {
+        const target = (await this.ready(signal)).base;
+        this.assertApproval();
+        return target;
+      });
       if (merged.result?.merged !== true) throw new Error('Live integration was not verified');
       this.effects.complete('merge', merged.id);
       return this.effects.current();
