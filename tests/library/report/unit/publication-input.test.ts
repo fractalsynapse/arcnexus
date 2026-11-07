@@ -53,7 +53,8 @@ class PublicationInputScenarios {
     const pages = new EvidencePages('direction.evidence');
     ExecutionEvidence.pin(f.root, f.run.id, pages, captured);
     f.store.updateRun(f.run.id, 'needs_attention', { error: 'A later observation' });
-    const evidence = await this.artifact(pages, 'execution');
+    const page = await pages.call('direction.evidence', { artifact: 'execution' });
+    const evidence = JSON.parse((page as { content: string }).content);
     assert.equal(evidence.run.status, 'running');
     assert.equal(evidence.run.retainedError, error);
     assert.deepEqual(evidence.run.latestDirection, decision);
