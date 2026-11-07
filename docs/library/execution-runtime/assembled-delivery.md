@@ -77,3 +77,16 @@ assignment ready, preserving its identity, original criteria, dependencies and p
 contributions. Preparation is not acceptance or an immutable terminal state. A prepared
 assignment without a valid retained checkpoint cannot continue. Reopening prepared
 work is not an observed failed retry; actual failure diagnosis remains separate.
+
+## Further reduction of repeated work
+
+Engineering preparation does not run mandatory final acceptance checks. Stewards
+may use declared owner checks while developing; specification regression evidence,
+checked edits and safe checkpoints remain enforced. Mandatory final checks and
+independent review run on the assembled contribution set.
+
+A rejected assembly retains prepared owner contributions and its exact input set.
+The unchanged rejected set is not dispatched again. Correction reopens only the
+selected existing assignment; peers retain their checkpoints. Current assembly
+findings drive correction, with historical evidence available when relevant rather
+than a requirement to reread every failed predecessor.
