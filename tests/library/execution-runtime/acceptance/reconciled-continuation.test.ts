@@ -71,7 +71,9 @@ class ReconciledContinuationScenarios {
     const originalBytes = readFileSync(join(record.workspace, 'source.txt'));
     const preparedReport = readFileSync(join(f.state, 'runs', next.id, 'report.json'));
     const recovery = new ReconciledContinuation(f.state, host.store);
+    host.store.updateAssignment(assignment.id, 'running');
     recovery.recover(assignment, record);
+    assert.equal(host.store.assignment(assignment.id).status, 'running');
     assert.equal(record.workspace, next.workspace);
     assert.equal(record.branch, next.branch);
     assert.notEqual(record.branch, original.branch);
@@ -85,6 +87,20 @@ class ReconciledContinuationScenarios {
     recovery.recover(assignment, record);
     assert.deepEqual(record.previousWorkspaces, [original.workspace]);
     assert.deepEqual(readFileSync(join(f.state, 'runs', next.id, 'report.json')), preparedReport);
+  }
+
+  /** A crash after the filesystem checkpoint only needs the outstanding store acknowledgement. */
+  async acknowledgement(t: TestContext): Promise<void> {
+    const { f, host, record, assignment } = await this.fixture(t);
+    const recovery = new ReconciledContinuation(f.state, host.store);
+    recovery.recover(assignment, record);
+    const retained = JSON.stringify(record);
+    host.store.updateAssignment(assignment.id, 'failed', {
+      reconciliation: assignment.data.reconciliation,
+    });
+    recovery.recover(host.store.assignment(assignment.id), record);
+    assert.equal(host.store.assignment(assignment.id).data.reconciliation, null);
+    assert.equal(JSON.stringify(record), retained);
   }
 
   /** A preparation interruption stays uncertain and cannot dispatch or replay setup. */
@@ -122,6 +138,9 @@ test('completed reconciliation retains both branches and recovers without repeat
 test('interrupted reconciliation cannot replay preparation', (t) => scenarios.interrupted(t));
 
 test('changed reconciliation source cannot replace its checkpoint', (t) => scenarios.changed(t));
+
+test('durably adopted reconciliation only acknowledges its pending store transition', (t) =>
+  scenarios.acknowledgement(t));
 
 registerSuite({
   component: 'execution-runtime',

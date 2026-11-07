@@ -27,8 +27,14 @@ export class ReconciledContinuation {
   /** Accepts only a fully prepared, unchanged successor of the original validated checkpoint. */
   recover(assignment: ExecutionAssignment, record: RecordData): void {
     const pending = assignment.data.reconciliation as PendingReconciliation | undefined;
-    if (!pending || pending.recordId === record.reconciliationId) return;
+    if (!pending) return;
     validateCheckpoint(this.root, record);
+    if (pending.recordId === record.reconciliationId) {
+      this.store.updateAssignment(assignment.id, this.store.assignment(assignment.id).status, {
+        reconciliation: null,
+      });
+      return;
+    }
     const path = join(this.root, 'runs', pending.recordId, 'report.json');
     if (!existsSync(path)) throw new Error('Continuation has uncertain workspace preparation');
     const next = JSON.parse(readFileSync(path, 'utf8')) as RecordData;
@@ -84,6 +90,8 @@ export class ReconciledContinuation {
     record.reconciledCandidateDigest = candidateDigest(record);
     record.reconciliationId = next.id;
     save(this.root, record);
-    this.store.updateAssignment(assignment.id, assignment.status, { reconciliation: null });
+    this.store.updateAssignment(assignment.id, this.store.assignment(assignment.id).status, {
+      reconciliation: null,
+    });
   }
 }
