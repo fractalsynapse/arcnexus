@@ -15,7 +15,7 @@ interface HostCommandEvidence {
 }
 
 interface HostExecutionEvidence {
-  run?: { id?: string; promotionSourceRun?: unknown };
+  run?: { id?: string; promotionSourceRun?: unknown; callerObservations?: unknown };
   provenance?: HostExecutionEvidence;
   publication?: { recordId: string; observations: { hostCommands?: HostCommandEvidence[] } };
   assemblies?: NonNullable<HostExecutionEvidence['assignments']>;
@@ -50,6 +50,7 @@ export class ExecutionEvidence {
     if (!evidence) return;
     if (typeof runId !== 'string' || evidence.run?.id !== runId)
       throw new Error('Host execution evidence belongs to a different run');
+    this.pinCaller(pages, evidence, artifact);
     const provenance = this.pinProvenance(root, pages, evidence);
     new ReferencedEvidence(root, runId, pages).index(evidence);
     this.indexCommandOutputs(pages, evidence);
@@ -65,6 +66,14 @@ export class ExecutionEvidence {
       'runtimeTransitions',
     ]);
     return { ...evidence, provenance, assignments, assemblies };
+  }
+
+  /** Advertises caller observations once without burying them inside growing execution history. */
+  private static pinCaller(pages: EvidencePages, evidence: HostExecutionEvidence, prefix: string) {
+    if (!evidence.run || evidence.run.callerObservations === undefined) return;
+    const artifact = prefix + '-caller-observations';
+    pages.add(artifact, JSON.stringify(evidence.run.callerObservations), 'json');
+    evidence.run.callerObservations = { artifact };
   }
 
   /** Keeps the host-selected simulation source separately attributed in the same capability. */

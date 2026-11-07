@@ -24,8 +24,11 @@ class ExecutionContextScenarios {
       const bridge = adapter.wrap(this.operations());
       const manifest = await this.page(bridge, 'verification.evidence', 'manifest');
       assert.ok(manifest.artifacts.some((item: any) => item.id === 'execution'));
+      assert.ok(
+        manifest.artifacts.some((item: any) => item.id === 'execution-caller-observations'),
+      );
       assert.equal(manifest.candidateDigest, adapter.candidate);
-      const execution = await this.page(bridge, 'verification.evidence', 'execution');
+      const execution = await this.execution(bridge, 'verification.evidence');
       this.assertInput(execution, f.run.id, record.base);
       assert.equal(execution.agent, undefined);
       assert.equal(execution.run.verifiedEvidence, undefined);
@@ -45,7 +48,7 @@ class ExecutionContextScenarios {
         feedback: null,
       });
       const bridge = context.wrap(this.operations());
-      const execution = await this.page(bridge, 'direction.evidence', 'execution');
+      const execution = await this.execution(bridge, 'direction.evidence');
       this.assertInput(execution, f.run.id, record.base);
       const requests = await this.page(bridge, 'direction.evidence', execution.requests.artifact);
       assert.equal(requests.length, 1);
@@ -63,7 +66,7 @@ class ExecutionContextScenarios {
     const f = this.fixture(t);
     try {
       const pages = new RecoveryEvidence(f.state, f.store).capture(f.recipient);
-      const execution = await this.page(pages, 'assignment.evidence', 'execution');
+      const execution = await this.execution(pages, 'assignment.evidence');
       this.assertInput(execution, f.run.id, f.git('rev-parse', 'HEAD'));
       const requests = await this.page(pages, 'assignment.evidence', execution.requests.artifact);
       assert.equal(requests[0].id, f.request.id);
@@ -81,7 +84,7 @@ class ExecutionContextScenarios {
       const verifier = new VerificationEvidence(f.state, record, record.base).wrap(
         this.operations(),
       );
-      const execution = await this.page(verifier, 'verification.evidence', 'execution');
+      const execution = await this.execution(verifier, 'verification.evidence');
       assert.equal(execution.run.callerObservations.evidenceUnavailable, true);
       assert.doesNotMatch(JSON.stringify(record.hostExecutionEvidence), /FOREIGN_SECRET/);
       record.executionRunId = 'foreign';
@@ -148,6 +151,21 @@ class ExecutionContextScenarios {
     assert.equal(execution.run.candidateRevision, candidate);
     assert.equal(execution.run.authorityBase, 'captured');
     assert.equal(execution.run.objective, 'Original goal');
+  }
+
+  /** Follows the explicit caller page while checking that execution does not duplicate its input. */
+  private async execution(bridge: any, tool: string): Promise<any> {
+    const execution = await this.page(bridge, tool, 'execution');
+    assert.deepEqual(execution.run.callerObservations, {
+      artifact: 'execution-caller-observations',
+    });
+    assert.doesNotMatch(JSON.stringify(execution), /Caller command: node check/);
+    execution.run.callerObservations = await this.page(
+      bridge,
+      tool,
+      execution.run.callerObservations.artifact,
+    );
+    return execution;
   }
 
   /** Reads only advertised artifact names through the production capability's continuation contract. */
