@@ -1,8 +1,4 @@
-import {
-  requestProposal,
-  sharedRequestProblem,
-  type ExecutionStore,
-} from '../coordination-store/execution-store.js';
+import { requestProposal, type ExecutionStore } from '../coordination-store/execution-store.js';
 import type { ExecutionAssignment } from '../coordination-store/execution-types.js';
 import { assignmentIntent } from './assignment-intent.js';
 import { ExecutionContext, type ProjectExecution } from '../architecture/execution-context.js';
@@ -13,7 +9,7 @@ import { ProgressObserver } from '../report/progress.js';
 import type { AgentResult } from '../steward/codex.js';
 import { save, type RecordData } from '../workspace/state.js';
 
-/** Rejects invalid new dependency intent before recipients exist and retains a read-only correction checkpoint. */
+/** Rejects invalid dependency intent before recipients exist and retains correction evidence. */
 export class RequestAdmission {
   /** Uses captured package authority and the requester's existing private evidence directory. */
   constructor(
@@ -57,14 +53,17 @@ export class RequestAdmission {
     save(this.root, record);
   }
 
-  /** Shared-work links retain store matching rules; new known owners must pass the ordinary resolver. */
+  /** Uses canonical supplier identity for links and the ordinary resolver for distinct work. */
   private validate(
     sender: ExecutionAssignment,
     request: AgentResult['requests'][number],
     index: number,
   ): string[] {
-    if (request.assignmentId) return this.shared(sender, request, index);
+    if (request.assignmentId !== null && request.assignmentId !== undefined)
+      return this.shared(sender, request, index);
     try {
+      if (!request.acceptanceCriteria.length)
+        throw new InputError('Distinct new work requires acceptance criteria');
       new ExecutionContext().assignment(
         this.context,
         request.ownerId!,
@@ -81,23 +80,30 @@ export class RequestAdmission {
     }
   }
 
-  /** Leaves unknown supplier identities to routing and corrects conflicting terms on a known link. */
+  /** Rejects invalid supplier identities while leaving canonical contract resolution to the store. */
   private shared(
     sender: ExecutionAssignment,
     request: AgentResult['requests'][number],
     index: number,
   ): string[] {
+    const owner = request.ownerId ?? '';
+    if (!this.context.owners.includes(owner))
+      return [`Request ${index} to ${owner}: supplier owner is not eligible in this run.`];
     const linked = this.store
       .assignments(sender.runId)
-      .find((a) => a.id === request.assignmentId && a.owner === request.ownerId);
-    if (!linked) return [];
-    const mismatch = sharedRequestProblem(this.store.effective(linked.id), {
-      owner: linked.owner,
-      objective: request.request,
-      acceptance: request.acceptanceCriteria,
-      kind: request.kind,
-      changeType: request.changeType,
-    });
-    return mismatch ? [`Request ${index} to ${linked.owner}: ${mismatch}`] : [];
+      .find((assignment) => assignment.id === request.assignmentId);
+    if (!linked)
+      return [
+        `Request ${index} to ${owner}: invalid supplier assignment ${request.assignmentId}; it is unknown or outside this run.`,
+      ];
+    if (linked.id === sender.id)
+      return [
+        `Request ${index} to ${owner}: assignment ${linked.id} cannot link itself as a supplier.`,
+      ];
+    if (linked.owner !== owner)
+      return [
+        `Request ${index} to ${owner}: supplier assignment ${linked.id} belongs to ${linked.owner}.`,
+      ];
+    return [];
   }
 }

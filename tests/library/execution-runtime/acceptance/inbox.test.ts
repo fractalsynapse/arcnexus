@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { ExecutionStore } from '../../../../dist/library/coordination-store/execution-store.js';
+import type { OwnerRequest } from '../../../../dist/library/coordination-store/execution-types.js';
 import { Scheduler } from '../../../../dist/library/execution-runtime/scheduler.js';
 
 /** Proves correlated inbox decisions and journal replay against the built durable store. */
@@ -83,25 +84,53 @@ class InboxScenarios {
       changeType: 'documentation',
     });
     assert.equal(store.request(a.id, request).id, b.id);
+    const distinct = store.request(a.id, { ...request, key: 'distinct' });
+    assert.notEqual(distinct.id, b.id);
+    assert.equal(store.assignments(run.id).length, 3);
+    assert.deepEqual(distinct.data.proposal, b.data.proposal);
   }
 
-  /** A shared objective cannot silently change an existing recipient's accepted workflow. */
+  /** Reuses an explicit supplier while retaining its accepted work and the requester's purpose. */
   sharedScope(t: TestContext): void {
     const store = this.store(t);
     const run = store.createRun('task', ['a', 'b'], 'Shared work');
     const a = store.enqueue(run.id, 'a', 'Root');
-    const b = store.enqueue(run.id, 'b', 'Review');
-    store.updateAssignment(b.id, 'ready', { proposal: { kind: 'review' } });
+    const b = store.enqueue(run.id, 'b', 'Review', ['Canonical review evidence']);
+    store.updateAssignment(b.id, 'ready', {
+      accepted: true,
+      proposal: { kind: 'review', changeType: 'documentation' },
+    });
+    const canonical = store.assignment(b.id);
     const request = {
       key: 'shared',
       owner: 'b',
-      objective: 'Review',
-      acceptance: [],
+      objective: 'Use supplier findings for integration',
+      acceptance: ['Requester integration purpose'],
       existingAssignmentId: b.id,
       kind: 'change' as const,
+      changeType: 'behavior' as const,
     };
-    assert.throws(() => store.request(a.id, request), /Shared assignment/);
-    assert.equal(store.assignment(a.id).dependencies.length, 0);
+    assert.doesNotThrow(
+      () => store.request(a.id, request),
+      'Explicit supplier link must retain requester purpose',
+    );
+    assert.equal(store.request(a.id, request).id, b.id);
+    assert.equal(store.assignments(run.id).length, 2);
+    assert.deepEqual(store.assignment(b.id), canonical);
+    assert.deepEqual(store.assignment(a.id).dependencies, [b.id]);
+    this.sharedPurpose(store, a.id, request);
+  }
+
+  /** Checks that the durable inbox retains the original requester purpose and supplier relationship. */
+  private sharedPurpose(store: ExecutionStore, sender: string, request: OwnerRequest): void {
+    const messages = store.inbox(request.existingAssignmentId!);
+    assert.equal(messages.length, 1);
+    const message = messages[0]!;
+    assert.ok(message.id);
+    assert.equal(message.from, sender);
+    assert.equal(message.assignmentId, request.existingAssignmentId);
+    for (const [key, value] of Object.entries(request))
+      assert.deepEqual(message[key as keyof typeof message], value);
   }
 
   /** Correlates clarification, retries and rejection without releasing undelivered dependents. */
@@ -313,7 +342,7 @@ test('duplicate verified delivery cannot rewind the accumulated candidate', (t) 
 test('inbox requests preserve explicit recipient workflow without a file list', (t) =>
   scenarios.recipientScope(t));
 
-test('shared recipient work rejects conflicting workflow authority', (t) =>
+test('shared recipient work preserves canonical supplier fields and requester purpose', (t) =>
   scenarios.sharedScope(t));
 
 test('accepted inbox requests retain correlated clarification answers', (t) =>

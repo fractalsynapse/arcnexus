@@ -186,7 +186,7 @@ export class CheckedEditBridge {
     throw new EditRoutingError(
       path,
       owner,
-      `No edits were applied. Contact the ${owner} steward through the existing inbox protocol: return a requests entry with fromComponent=${this.state.component.id}, ownerId=${owner}, assignmentId=null for new work, and milestone=delivered for required changes. Describe the intended change to ${path}, its purpose, expected result, acceptance criteria and supporting evidence. The host validates the recipient and scope and assigns durable identities. Wait for verified delivery before relying on the change; acknowledgement alone is not delivery. Do not edit this path yourself or request broader permissions. If the owner is not eligible, report the architectural blocker.`,
+      `No edits were applied. Contact the ${owner} steward through the existing inbox protocol. First inspect assignment.evidence from the manifest and read the full intent for any matching existing ${owner} assignment. Link same accepted work with its assignmentId; describe your caller-specific need in request and use acceptanceCriteria=[] instead of copying supplier terms. The supplier's canonical accepted contract governs. Set milestone=delivered when required changes are needed. Request assignmentId=null with acceptance criteria only for distinct work. The host validates recipient and scope. Wait for verified delivery, not intent or acknowledgment. Do not edit this path yourself. If the owner is ineligible, report the architectural blocker.`,
     );
   }
 }

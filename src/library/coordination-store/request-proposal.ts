@@ -1,4 +1,4 @@
-import type { ExecutionAssignment, OwnerRequest } from './execution-types.js';
+import type { ExecutionAssignment, InboxRequest, OwnerRequest } from './execution-types.js';
 
 /** Resolves dependency workflow inheritance once for admission and durable recipient creation. */
 export function requestProposal(
@@ -30,21 +30,38 @@ export function requestMilestones(
   };
 }
 
-/** Returns the precise mismatch without merging another assignment or modifying either party. */
+/** Rejects an explicit link whose requested accountable owner differs from the supplier. */
 export function sharedRequestProblem(
   recipient: ExecutionAssignment,
   request: Pick<OwnerRequest, 'owner' | 'objective' | 'acceptance' | 'kind' | 'changeType'>,
 ): string | undefined {
-  const help = `Read assignment.evidence artifact=${recipient.id}:intent for the captured objective, acceptance and workflow. Use assignmentId=null for distinct bounded work.`;
-  if (
-    recipient.owner !== request.owner ||
-    recipient.objective !== request.objective ||
-    JSON.stringify(recipient.acceptance) !== JSON.stringify(request.acceptance)
-  )
-    return 'Shared assignment acceptance differs. ' + help;
-  const existing = recipient.data.proposal as Record<string, unknown> | undefined;
-  for (const key of ['kind', 'changeType'] as const)
-    if (existing && request[key] != null && request[key] !== existing[key])
-      return 'Shared assignment workflow or scope differs. ' + help;
+  if (recipient.owner !== request.owner)
+    return `Supplier owner differs from the requested owner. Read assignment.evidence artifact=${recipient.id}:intent to inspect canonical supplier scope.`;
   return undefined;
+}
+
+/** Rejects a self-link before it can mutate inbox or dependency state. */
+export function assertNotSelfLink(sender: ExecutionAssignment, request: OwnerRequest): void {
+  if (request.existingAssignmentId === sender.id)
+    throw Object.assign(new Error('An assignment cannot link itself as a supplier'), {
+      name: 'DependencyBlocked',
+    });
+}
+
+/** Stores workflow only on newly created work; explicit links preserve supplier workflow. */
+export function storeInitialProposal(
+  sender: ExecutionAssignment,
+  recipient: ExecutionAssignment,
+  request: OwnerRequest,
+): void {
+  if (request.existingAssignmentId === undefined)
+    recipient.data.proposal ??= requestProposal(sender, request);
+}
+
+/** Returns the original supplier identity only for an exact replay of its request envelope. */
+export function repeatedRequestAssignment(existing: InboxRequest, request: OwnerRequest): string {
+  const { id: _id, from: _from, assignmentId, ...original } = existing;
+  if (JSON.stringify(original) !== JSON.stringify(request))
+    throw new Error('Request identity reused with different content');
+  return assignmentId;
 }

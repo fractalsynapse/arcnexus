@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { readSchema } from '../../../../dist/library/architecture/schema.js';
+import { readSchema, validateSchema } from '../../../../dist/library/architecture/schema.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Verifies the assembled context communicates the usable write route without expanding authority. */
@@ -92,6 +92,73 @@ class EngineeringContextScenarios {
     return new EngineeringContext(state).render();
   }
 }
+
+/** Exercises the packaged inbox schema without duplicating supplier contract terms. */
+class InboxSchemaScenarios {
+  /** A deliberate supplier link carries only the caller need and an empty criteria array. */
+  linked(): void {
+    const result = this.result(this.request());
+    assert.doesNotThrow(
+      () => validateSchema('general-agent-result', result),
+      'explicit supplier links accept caller need without copied criteria',
+    );
+    const request = this.request();
+    request.acceptanceCriteria = [''];
+    assert.throws(() => validateSchema('general-agent-result', this.result(request)));
+  }
+
+  /** Full-criteria general requests and supported historical reports remain readable. */
+  historical(): void {
+    const request = this.request();
+    request.assignmentId = null;
+    request.acceptanceCriteria = ['The requested distinct outcome is demonstrated.'];
+    validateSchema('general-agent-result', this.result(request));
+    const { assignmentId, milestone, kind, changeType, ...legacy } = request;
+    assert.equal(assignmentId, null);
+    assert.equal(milestone, 'delivered');
+    assert.equal(kind, null);
+    assert.equal(changeType, null);
+    validateSchema('agent-result', this.result(legacy));
+  }
+
+  /** Supplies a caller-specific need whose supplier terms are intentionally absent. */
+  private request(): any {
+    return {
+      fromComponent: 'assignment',
+      ownerId: 'coordination-store',
+      assignmentId: 'supplier-assignment',
+      request: 'I need canonical linking for my worker inbox request.',
+      evidence: ['assignment.evidence: supplier-assignment:intent'],
+      acceptanceCriteria: [],
+      reason: 'The caller consumes the supplier public contract.',
+      milestone: 'delivered',
+      kind: null,
+      changeType: null,
+    };
+  }
+
+  /** Builds the required result envelope independently of workflow and report history. */
+  private result(request: any): any {
+    return {
+      status: 'completed',
+      summary: 'Request supplier behavior',
+      blockers: [],
+      findings: [],
+      activities: [],
+      regression: null,
+      reviewFindings: [],
+      requests: [request],
+    };
+  }
+}
+
+const inboxScenarios = new InboxSchemaScenarios();
+
+test('explicit supplier links accept caller need without copied criteria', () =>
+  inboxScenarios.linked());
+
+test('inbox schema preserves full criteria and historical result readers', () =>
+  inboxScenarios.historical());
 
 const scenarios = new EngineeringContextScenarios();
 

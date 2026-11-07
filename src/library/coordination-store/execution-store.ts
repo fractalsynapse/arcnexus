@@ -4,7 +4,13 @@ import { dependencySatisfied } from './execution-types.js';
 import { RequiredWork } from './required-work.js';
 import { AssignmentReplacements } from './assignment-replacements.js';
 import { AssignmentAdmission } from './assignment-admission.js';
-import { requestMilestones, requestProposal, sharedRequestProblem } from './request-proposal.js';
+import {
+  assertNotSelfLink,
+  repeatedRequestAssignment,
+  requestMilestones,
+  sharedRequestProblem,
+  storeInitialProposal,
+} from './request-proposal.js';
 import type { DeliveryRecord, PromotionCandidate } from './delivery-types.js';
 import { CandidatePointers } from './candidate-pointers.js';
 import { RunRecords } from './run-records.js';
@@ -213,16 +219,16 @@ export class ExecutionStore {
       .all<InboxRequest>('request')
       .find((item) => origins.has(item.from) && item.key === request.key);
     if (existing?.retired) throw new Error('Retired request identity cannot be recreated');
-    if (existing) return this.repeated(existing, request);
+    if (existing) return this.replacements.current(repeatedRequestAssignment(existing, request));
     const sender = this.assignment(from);
     if (sender.data.replacedBy) throw new Error('Cannot request work from a retired assignment');
+    assertNotSelfLink(sender, request);
     this.rejectRecursiveIntent(sender, request);
     const recipient = this.recipient(sender, request);
     const mismatch = sharedRequestProblem(recipient, request);
     if (mismatch) throw new Error(mismatch);
     sender.data.milestones = requestMilestones(sender, recipient.id, request);
-    const proposal = requestProposal(sender, request);
-    recipient.data.proposal ??= proposal;
+    storeInitialProposal(sender, recipient, request);
     this.db.put('assignment', recipient);
     this.db.put('request', { ...request, id: randomUUID(), from, assignmentId: recipient.id });
     this.connect(sender, recipient);
@@ -244,7 +250,7 @@ export class ExecutionStore {
     if (!recipient)
       throw Object.assign(
         new Error(
-          `Invalid supplier assignment ${request.existingAssignmentId}: link a known assignment of ${request.owner} in this run with matching scope, or use assignmentId=null to request new work. Tracking issue, message and requester identities are not supplier assignments.`,
+          `Invalid supplier assignment ${request.existingAssignmentId}: link a known assignment of ${request.owner} in this run, or use assignmentId=null to request new work. Tracking issue, message and requester identities are not supplier assignments.`,
         ),
         { name: 'DependencyBlocked' },
       );
@@ -268,14 +274,6 @@ export class ExecutionStore {
         ),
         { name: 'DependencyBlocked' },
       );
-  }
-
-  /** Rejects accidental mutation of an already delivered request. */
-  private repeated(existing: InboxRequest, request: OwnerRequest): ExecutionAssignment {
-    const { id: _id, from: _from, assignmentId, ...original } = existing;
-    if (JSON.stringify(original) !== JSON.stringify(request))
-      throw new Error('Request identity reused with different content');
-    return this.replacements.current(assignmentId);
   }
 
   /** Lists request envelopes addressed to or sent by this assignment. */
