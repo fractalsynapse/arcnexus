@@ -295,8 +295,7 @@ test('candidate guidance cannot authorize edits outside captured scope', (t: any
 test('corrected worker regression retains original failure evidence', (t) =>
   suite.correctedRegressionRetainsEvidence(t));
 
-test('final host checks are deferred to assembled correction', (t) =>
-  suite.defersFinalFailure(t));
+test('final host checks are deferred to assembled correction', (t) => suite.defersFinalFailure(t));
 
 registerSuite({
   component: 'assignment',
