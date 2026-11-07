@@ -47,3 +47,9 @@ checked edits. This is unfinished engineering, not a merged or verified candidat
 Unresolved markers prevent preparing a contribution. Cross-owner changes, nonregular
 files and conflicts without an editable text representation remain blocked. Required
 checks and independent assessment still evaluate the eventual assembled delivery.
+
+Before director reconsideration captures its evidence, the host reconciles any
+already completed preparation through that same checkpoint service. The director
+then sees current eligibility rather than a stale pending receipt that encourages
+unnecessary workflow restarts. Uncertain preparations remain visible and ineligible;
+planning never gains permission to replay them.
