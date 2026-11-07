@@ -111,14 +111,14 @@
               "type": "string",
               "minLength": 1
             },
-            "minItems": 1
+            "description": "Describe caller-specific acceptance for new work. When assignmentId links existing supplier work, use [] instead of copying or changing the supplier's canonical accepted criteria."
           },
           "reason": {
             "type": "string",
             "minLength": 1
           },
           "assignmentId": {
-            "description": "Use null to request new recipient work. A non-null ID links only an existing recipient assignment from the host inbox in this run, with matching owner, objective, acceptance and scope. Never use a tracking issue ID, request/message ID or your own assignment ID.",
+            "description": "Use null for distinct new recipient work. A non-null ID deliberately links an existing recipient assignment in this run; its canonical accepted objective, criteria, owner, and workflow govern, and requester text cannot rewrite or expand them. Never use a tracking issue ID, request/message ID, or your own assignment ID.",
             "type": ["string", "null"]
           },
           "milestone": {

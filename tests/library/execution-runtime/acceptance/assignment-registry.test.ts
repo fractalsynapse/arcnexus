@@ -16,12 +16,12 @@ import {
 
 /** Exercises engineering discovery and explicit supplier reuse through the real MCP and scheduler boundaries. */
 class AssignmentRegistryScenario {
-  /** Refuses a mismatched existing supplier intact, then admits distinct work through retained correction. */
-  async mismatch(t: TestContext): Promise<void> {
+  /** Links caller-specific criteria through the native harness without changing accepted supplier work. */
+  async callerPurpose(t: TestContext): Promise<void> {
     const f = new GeneralFixture(t).fixture;
     const host = new ProjectHost(f.state, new ExecutionContext().resolve(f.repo));
     t.after(() => host.close());
-    const run = host.submit('LINK_EXISTING_WORK MISMATCH_LINK: preserve distinct evidence');
+    const run = host.submit('LINK_EXISTING_WORK CALLER_PURPOSE_LINK: retain caller evidence');
     await host.tick();
     const [sender, supplier] = host.store.assignments(run.id);
     await host.tick();
@@ -32,16 +32,15 @@ class AssignmentRegistryScenario {
       'report.json',
     );
     const record = JSON.parse(readFileSync(path, 'utf8'));
-    const correction = record.requestCorrection;
-    assert.ok(correction, JSON.stringify({ status: record.status, error: record.error }));
-    assert.match(correction.errors.join(' '), /Shared assignment acceptance differs/);
+    assert.equal(record.requestCorrection, undefined);
     assert.equal(host.store.assignments(run.id).length, 2);
-    for (let turn = 0; turn < 8 && !host.store.inbox(sender!.id).length; turn++) await host.tick();
     const [request] = host.store.inbox(sender!.id);
     assert.ok(request);
-    assert.notEqual(request.assignmentId, supplier!.id);
+    assert.equal(request.assignmentId, supplier!.id);
+    assert.equal(request.objective, 'Use supplier evidence for caller integration');
     assert.deepEqual(request.acceptance, ['Distinct delivery evidence']);
-    assert.deepEqual(host.store.assignment(supplier!.id).acceptance, supplier!.acceptance);
+    assert.deepEqual(host.store.assignment(supplier!.id), supplier);
+    assert.deepEqual(host.store.assignment(sender!.id).dependencies, [supplier!.id]);
   }
 
   /** Discovers a not-started supplier through validated current-run evidence without duplicating work. */
@@ -243,8 +242,8 @@ nodeTest('engineering evidence provisioning reads retained diagnostics through c
 test('engineering discovers current-run supplier intent and links existing work through MCP', (t) =>
   scenarios.run(t));
 
-test('incompatible shared work returns to the requester before any new supplier is created', (t) =>
-  scenarios.mismatch(t));
+test('explicit supplier links retain caller criteria without changing accepted work', (t) =>
+  scenarios.callerPurpose(t));
 
 registerSuite({
   component: 'execution-runtime',

@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Reuse an explicitly linked accepted supplier assignment without copying its objective or acceptance criteria verbatim; preserve its owner, contract and workflow, validate identity, owner, run membership, replay and cycles, and create separate assignments for distinct work. Cross-owner edit rejections guide stewards to inspect assignment evidence and link matching work, keeping accepted intent distinct from verified delivery (#339).
+
 - Focus the MVP on fresh real task delivery through staging, with canonical director, ownership and contribution-routing rules and deferred historical recovery (#337).
 
 ### Fixed

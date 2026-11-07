@@ -85,3 +85,34 @@ was available. Ambiguous edges remain required. One required-work projection fol
 current dependency edges from director assignments and independently created work;
 request-only work disconnected by an explicit retirement remains inspectable but
 cannot dispatch or prevent goal assessment. Shared reachable work remains required.
+
+## Explicit supplier linking contract (#339)
+
+The following behavior is the accepted specification for the supplier-link change;
+the regression checkpoint precedes its implementation.
+
+An `OwnerRequest.existingAssignmentId` deliberately links existing supplier work.
+The store resolves that identity in the sender's run and checks the accountable
+owner. The supplier's existing objective, acceptance criteria and proposal workflow
+are canonical. Linking must not require the requester to copy them, replace them
+with caller terms, or fill a missing supplier workflow from the requester's workflow.
+
+The request's `objective`, `acceptance`, `kind` and `changeType` remain durable
+requester contribution purpose in the inbox envelope. They explain why the sender
+needs the supplier's contribution; they grant no additional supplier scope.
+For example, “use the durable linking contract in runtime admission” may link a
+store assignment whose accepted objective is “implement durable supplier linking.”
+Consumers inspect the linked assignment for supplier authority and the inbox
+request for requester purpose. Public link validation follows these semantics.
+
+Unknown identities, owner mismatches, foreign-run identities and self-links fail
+explicitly. A refusal rolls back the entire request exchange, including earlier
+new-work requests in that exchange, inbox records, milestone changes and dependency
+edges. Blocking cycle rejection continues to use the existing active wait graph.
+
+Request identity still binds the original caller envelope: exact replay returns the
+same supplier, while changed purpose, acceptance, workflow or supplier identity
+under the same key fails. The milestone belongs to the dependency obligation and
+does not change supplier scope. Omitting `existingAssignmentId` requests distinct
+new work through the existing assignment-creation path, even for the same owner.
+No prose-based assignment merging or separate linking lifecycle is introduced.

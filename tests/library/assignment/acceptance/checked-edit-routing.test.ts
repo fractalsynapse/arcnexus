@@ -22,9 +22,7 @@ class RoutingScenarios extends CheckedEditFixture {
     assert.equal(result.status, 'rejected');
     assert.equal(result.ownerId, 'recipient');
     assert.equal(result.reason, 'owner_boundary');
-    assert.match(result.recovery, /requests entry.*ownerId=recipient/);
-    assert.match(result.recovery, /acceptance criteria/);
-    assert.match(result.recovery, /milestone=delivered/);
+    this.linkingGuidance(result.recovery);
     assert.equal(
       readFileSync(join(state.options.record.workspace, 'owned/file.ts'), 'utf8'),
       'before',
@@ -35,6 +33,22 @@ class RoutingScenarios extends CheckedEditFixture {
     );
     assert.deepEqual(readdirSync(join(state.dir, 'checked-edits')), []);
     assert.deepEqual(state.scope, ['owned']);
+  }
+
+  /** Requires evidence-based reuse of accepted supplier work without granting cross-owner writes. */
+  private linkingGuidance(recovery: string): void {
+    assert.match(recovery, /existing inbox protocol/);
+    assert.match(
+      recovery,
+      /assignment\.evidence/,
+      'cross-owner rejection must inspect existing assignment evidence',
+    );
+    assert.match(recovery, /assignmentId/);
+    assert.match(recovery, /canonical accepted contract/);
+    assert.match(recovery, /distinct work/);
+    assert.match(recovery, /milestone=delivered/);
+    assert.match(recovery, /verified delivery/);
+    assert.match(recovery, /Do not edit this path yourself/);
   }
 
   /** Refuses guessed recipients, unsafe paths and dispatch outside the captured eligible catalog. */

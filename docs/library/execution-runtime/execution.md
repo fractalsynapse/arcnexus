@@ -164,9 +164,25 @@ The index includes starting assignments that have not acquired a workspace yet.
 Engineering receives owner, objective, acceptance, declared scope, status and
 accepted-intent metadata; private checkpoint/source evidence remains restricted to
 read-only investigations. Status alone is not verification evidence. Linking requires
-the observed supplier identity and matching intent and scope; similar wording does
-not authorize automatic merging. Clarify an incoming request when its contract is
-unclear instead of creating a new engineering assignment just to ask its requester.
+the observed supplier identity whose accepted work supplies the needed contribution;
+similar wording does not authorize automatic merging. Clarify an incoming request
+when its contract is unclear instead of creating a new engineering assignment just
+to ask its requester.
+
+### Explicit supplier links (#339)
+
+The intended admission contract treats a supplied `assignmentId` as an explicit
+link. Coordination-store validates that identity and accountable owner in the same
+run. Requester objective, acceptance criteria, kind and change type describe the
+contribution's purpose; differences from the supplier's accepted terms do not reject
+the link or replace its canonical objective, acceptance or workflow. The durable
+inbox retains the requester's purpose and requested workflow for that relationship.
+Reusing the link creates no duplicate supplier assignment.
+
+Without an assignment identity, distinct work follows ordinary new-assignment
+admission and creates a separate assignment with its requested workflow, including
+normal inheritance for null workflow terms. Existing identity, owner, cycle,
+idempotency and required-milestone checks continue to govern routing.
 
 Requests specify the required result, work kind and acceptance conditions. A null
 kind or change type inherits the originating workflow. The recipient steward alone
@@ -280,7 +296,7 @@ A requester can return a correlated inbox action `require_delivery` with the
 existing `requestId` and an explanation. The host strengthens that existing edge
 to verified delivery without requiring another copy of the recipient's objective or
 acceptance criteria. It creates no assignment and does not relax
-shared-request matching. The host checks sender authority and blocking cycles in
+explicit supplier identity validation. The host checks sender authority and blocking cycles in
 the same transaction; a rejected wait leaves the previous milestone and replies
 unchanged. Retries do not duplicate work, and unrelated ready assignments continue.
 Only actual verified delivery releases the wait; an acknowledgement cannot do so.
