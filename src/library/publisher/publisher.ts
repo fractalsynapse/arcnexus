@@ -1,3 +1,5 @@
+export { PromotionRecovery } from './promotion-recovery.js';
+
 export { PublicationPolicy, type CapturedPublicationPolicy } from './publication-policy.js';
 
 export { DeliveryChecks } from './delivery-checks.js';

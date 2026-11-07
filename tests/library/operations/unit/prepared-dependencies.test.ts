@@ -164,6 +164,24 @@ class DependencyScenarios {
     assert.equal(this.installs, 0);
   }
 
+  /** A recorded failure releases its cache build while preserving failure observations for retry. */
+  async failedRetry(): Promise<void> {
+    const record = this.record('failed');
+    await assert.rejects(
+      new PreparedDependencies(this.root, record).run(this.operation, async () => {
+        record.operationInvocations = [{ operationId: this.operation.id, status: 'failed' }];
+        throw new Error('observed HTTP403');
+      }),
+      /HTTP403/,
+    );
+    const next = this.record('retry');
+    await new PreparedDependencies(this.root, next).run(this.operation, () => this.install(next));
+    assert.equal(this.installs, 1);
+    assert.deepEqual(record.operationInvocations, [
+      { operationId: this.operation.id, status: 'failed' },
+    ]);
+  }
+
   /** Maintained outputs fail before removal and broad output grants cannot make dependencies writable. */
   async protection(): Promise<void> {
     const record = this.record('source');
@@ -201,6 +219,7 @@ for (const name of [
   'restoreRemoved',
   'invalidation',
   'interrupted',
+  'failedRetry',
   'protection',
 ] as const)
   test('prepared dependencies: ' + name, async () => {
