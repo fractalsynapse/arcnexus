@@ -184,14 +184,59 @@ quality. Missing and changed files are explicit; unsafe paths and corrupt retain
 checkpoints fail capture. Independent review assesses corrections against original
 acceptance and rejects missing or weakened criterion coverage.
 
+### Explicit supplier links (#339)
+
+A structured general inbox request may use a
+non-null `assignmentId` to deliberately link an existing supplier assignment from
+the current run. Inspect `assignment.evidence` starting with `manifest`, then read
+the supplier's full intent. Match the accountable owner and accepted work needed
+by the caller. Similar wording or a registry status alone does not establish a
+matching contract or verified delivery.
+
+For an explicit link, `request` describes the caller's need and `acceptanceCriteria`
+may be `[]`: neither field must copy the supplier objective or criteria. The link
+uses the supplier's canonical accepted contract, preserving its owner, objective,
+acceptance criteria and workflow. Caller text, supplied criteria, `kind` and
+`changeType` cannot rewrite or expand that assignment. Null workflow fields inherit
+the supplier workflow. Identity, owner, run membership, self-link and cycle checks
+remain host responsibilities; a link never grants the requester file-write scope.
+
+For example, after reading matching supplier intent, a caller can return:
+
+```json
+{
+  "fromComponent": "assignment",
+  "ownerId": "coordination-store",
+  "assignmentId": "<existing supplier assignment ID from manifest>",
+  "request": "I need the existing canonical linking behavior for worker inbox requests.",
+  "acceptanceCriteria": [],
+  "evidence": ["assignment.evidence: <supplier assignment ID>:intent"],
+  "reason": "The caller needs this supplier contribution through its public contract.",
+  "milestone": "delivered",
+  "kind": null,
+  "changeType": null
+}
+```
+
+For distinct new work use `assignmentId=null` and describe its outcome and nonempty
+acceptance criteria. The host retains supported historical result readers and
+requests carrying full criteria; an explicit link does not require converting old
+evidence. Use `accepted` only when intent suffices. Required code, tests or
+documentation use `delivered`, which requires host-verified artifacts. Acceptance,
+acknowledgement and prepared source are not delivery.
+
 When `source.edit` rejects an attempted change to another steward's file, no file
 in the batch is changed. The result identifies the path and its owner from the
-captured repository catalog. For an eligible owner, return an inbox request naming
-that steward, the intended change, purpose, supporting evidence, and acceptance
-criteria. Use the `delivered` milestone when the assignment depends on the change.
-The normal host checks and routes the request; the rejected edit itself neither
-creates a dependency nor grants authority. Unknown or ambiguous owners require an
-architectural decision. An ineligible steward cannot be activated by an edit error.
+captured repository catalog. For an eligible owner, inspect existing assignment
+evidence and link the same accepted work with its `assignmentId`; explain the
+caller's need without repeating supplier terms. Create another assignment only for
+distinct work. The rejection itself neither creates a dependency nor grants write
+authority. Unknown or ambiguous owners require an architectural decision. An
+ineligible steward cannot be activated by an edit error.
+
+Implement an owned public contract directly within approved architectural authority;
+peer agreement is not a prerequisite. Request a required supplier contribution
+through its existing assignment, and rely on it only at the requested milestone.
 
 Choose your own implementation files within captured component ownership. Neither
 a director nor an inbox requester can provide a file permission list.
