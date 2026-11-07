@@ -11,7 +11,7 @@ export class ExecutionControls {
   constructor(private readonly root = statePath()) {}
 
   /** Applies workday controls to a resolved identity, preserving historical terminal runs. */
-  async workday(action: string, id?: string, expectedRevision?: string) {
+  async workday(action: string, id?: string, expectedRevision?: string, signal?: AbortSignal) {
     if (!['pause', 'resume', 'stop'].includes(action))
       throw new InputError('Unknown workday control: ' + action);
     const resource = new ExecutionResources(this.root).workday(id);
@@ -24,6 +24,7 @@ export class ExecutionControls {
     const connection = await new RetainedHost(this.root, resource.project).connect(
       (resource.workday.data as Record<string, unknown>).executionIdentity,
       'workday-control',
+      signal,
     );
     await connection.request({
       action: 'workday-control',
@@ -35,24 +36,31 @@ export class ExecutionControls {
   }
 
   /** Requests publication from the original supervising runtime, preserving its repository lock and authority. */
-  async delivery(id: string, expectedRevision?: string) {
+  async delivery(id: string, expectedRevision?: string, signal?: AbortSignal) {
     const delivery = new DeliveryResources(this.root).get(id);
     if (expectedRevision !== undefined && delivery.revision !== expectedRevision)
       throw new InputError('Stale delivery revision');
     const connection = await new RetainedHost(this.root, delivery.projectId).connect(
       delivery.authorityDigest,
       'delivery-control',
+      signal,
     );
     return connection.request({ action: 'delivery-control', id, expectedRevision });
   }
 
-  /** Queues promotion against current target authority while preserving the simulation's immutable evidence. */
-  async promote(id: string, expectedRevision?: string) {
-    return new PromotionControl(this.root).request(id, expectedRevision);
+  /** Queues promotion under current target authority and forwards caller cancellation through acquisition. */
+  async promote(id: string, expectedRevision?: string, signal?: AbortSignal) {
+    return new PromotionControl(this.root).request(id, expectedRevision, signal);
   }
 
   /** Sends one mutation; uncertain responses are surfaced rather than automatically replayed. */
-  async task(action: string, id: string, answer?: string, expectedRevision?: string) {
+  async task(
+    action: string,
+    id: string,
+    answer?: string,
+    expectedRevision?: string,
+    signal?: AbortSignal,
+  ) {
     if (!['pause', 'resume', 'stop', 'answer'].includes(action))
       throw new InputError('Unknown task control: ' + action);
     if (action === 'answer' && !answer?.trim())
@@ -62,6 +70,8 @@ export class ExecutionControls {
       throw new InputError('Stale task revision; read the task again');
     const connection = await new RetainedHost(this.root, resource.project).connect(
       (resource.run.data as Record<string, unknown>).executionIdentity,
+      'task-control',
+      signal,
     );
     return connection.request({
       action: 'task-control',
