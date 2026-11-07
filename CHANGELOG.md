@@ -5,6 +5,7 @@
 ### Fixed
 
 - Give engineering and investigation one assignment evidence reader, including original checked-edit bytes and retained diagnostics for ordinary corrections (#328).
+- Reconcile obsolete staging merge attempts and verify a fresh target through ordinary publication retry, preserving uncertain outcomes and prior evidence (#330).
 
 - Qualify complete director catalog paging instead of rejecting catalog growth against an obsolete inline-prompt size assertion (#325).
 

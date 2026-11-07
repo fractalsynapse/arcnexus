@@ -22,7 +22,13 @@ export class DeliveryCommands {
     signal: AbortSignal,
     cwd = this.source,
   ): Promise<string> {
-    const directory = join(this.evidenceRoot, this.delivery.id, String(effect.attempt), step);
+    const directory = join(
+      this.evidenceRoot,
+      this.delivery.id,
+      effect.id,
+      String(effect.attempt),
+      step,
+    );
     mkdirSync(directory, { recursive: true, mode: 0o700 });
     const stdout = join(directory, 'stdout');
     const result = await this.runner(
