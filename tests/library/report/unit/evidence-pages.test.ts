@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { test, type TestContext } from 'node:test';
-import { AssignmentRegistry, EvidencePages } from '../../../../dist/library/report/report.js';
+import { RecoveryEvidence, EvidencePages } from '../../../../dist/library/report/report.js';
 import { ExecutionStore } from '../../../../dist/library/coordination-store/execution-store.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import type { RecordData } from '../../../../dist/library/workspace/state.js';
@@ -183,7 +183,7 @@ class EvidenceRequestScenarios {
   /** Pages full failed command output with retained identity and resolved invocation context. */
   async diagnostics(t: TestContext): Promise<void> {
     const fixture = this.diagnosticFixture(t, 'valid');
-    const pages = new AssignmentRegistry(fixture.store, fixture.root).capture(fixture.assignment);
+    const pages = new RecoveryEvidence(fixture.root, fixture.store).capture(fixture.assignment);
     const manifest = await this.page(pages, 'manifest');
     const index = await this.page(pages, manifest.invocationDiagnostics.artifact);
     const reference = index.invocations[0];
@@ -204,7 +204,7 @@ class EvidenceRequestScenarios {
     const record = JSON.parse(readFileSync(path, 'utf8'));
     record.operationInvocations[0].result.exitCode = 0;
     writeFileSync(path, JSON.stringify(record));
-    const pages = new AssignmentRegistry(fixture.store, fixture.root).capture(fixture.assignment);
+    const pages = new RecoveryEvidence(fixture.root, fixture.store).capture(fixture.assignment);
     const manifest = await this.page(pages, 'manifest');
     const index = await this.page(pages, manifest.invocationDiagnostics.artifact);
     const diagnostic = JSON.parse(await this.complete(pages, index.invocations[0].artifact));
@@ -224,7 +224,7 @@ class EvidenceRequestScenarios {
       const record = JSON.parse(readFileSync(path, 'utf8'));
       delete record.operationInvocations[0][field];
       writeFileSync(path, JSON.stringify(record));
-      const pages = new AssignmentRegistry(fixture.store, fixture.root).capture(fixture.assignment);
+      const pages = new RecoveryEvidence(fixture.root, fixture.store).capture(fixture.assignment);
       const manifest = await this.page(pages, 'manifest');
       const index = await this.page(pages, manifest.invocationDiagnostics.artifact);
       const diagnostic = JSON.parse(await this.complete(pages, index.invocations[0].artifact));
@@ -237,7 +237,7 @@ class EvidenceRequestScenarios {
   async inaccessible(t: TestContext): Promise<void> {
     for (const kind of ['missing', 'foreign', 'missing-record']) {
       const fixture = this.diagnosticFixture(t, kind);
-      const pages = new AssignmentRegistry(fixture.store, fixture.root).capture(fixture.assignment);
+      const pages = new RecoveryEvidence(fixture.root, fixture.store).capture(fixture.assignment);
       const manifest = await this.page(pages, 'manifest');
       const index = await this.page(pages, manifest.invocationDiagnostics.artifact);
       if (kind === 'missing-record') {
