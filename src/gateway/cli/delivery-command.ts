@@ -11,6 +11,7 @@ export class DeliveryCommand {
   constructor(
     private readonly positionals: string[],
     private readonly values: CliValues,
+    private readonly signal: AbortSignal,
   ) {}
 
   /** Delegates mutations to application services and exposes structured revision-bearing resource results. */
@@ -27,9 +28,13 @@ export class DeliveryCommand {
     const delivery = resources.get(this.positionals[2]!);
     if (action === 'approve') return this.render(resources.approve(delivery.id, delivery.revision));
     if (action === 'promote')
-      return this.render(await new ExecutionControls().promote(delivery.id, delivery.revision));
+      return this.render(
+        await new ExecutionControls().promote(delivery.id, delivery.revision, this.signal),
+      );
     if (action === 'publish')
-      return this.render(await new ExecutionControls().delivery(delivery.id, delivery.revision));
+      return this.render(
+        await new ExecutionControls().delivery(delivery.id, delivery.revision, this.signal),
+      );
     this.render(delivery);
   }
 

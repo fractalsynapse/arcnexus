@@ -28,7 +28,7 @@ export class ExecutionCommand {
   /** Applies one option-free workday control and prints its authoritative state. */
   async workday(action: string, simulate = false): Promise<void> {
     if (action === 'start') await this.client.ensureRun(action, simulate, this.signal);
-    else await this.client.ensure(action);
+    else await this.client.ensure(action, this.signal);
     console.log(JSON.stringify(await this.client.request({ action, simulate }), null, 2));
   }
 

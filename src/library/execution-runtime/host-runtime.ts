@@ -1,6 +1,6 @@
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import { installedRuntime } from '../operations/installed-runtime.js';
-import { spawn } from 'node:child_process';
+import { spawn, type ChildProcess } from 'node:child_process';
 import { closeSync, existsSync, openSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,10 +26,10 @@ export class HostRuntime {
   }
 
   /** Uses one detached launch path; the host validates durable state before dispatch. */
-  launch(root: string, context: string, socket: string): void {
+  launch(root: string, context: string, socket: string): ChildProcess {
     const log = openSync(join(dirname(context), 'host.log'), 'a', 0o600);
     try {
-      spawn(
+      const child = spawn(
         process.execPath,
         [
           join(this.directory, 'dist/library/execution-runtime/host-main.js'),
@@ -38,7 +38,9 @@ export class HostRuntime {
           socket,
         ],
         { detached: true, stdio: ['ignore', log, log] },
-      ).unref();
+      );
+      child.unref();
+      return child;
     } finally {
       closeSync(log);
     }

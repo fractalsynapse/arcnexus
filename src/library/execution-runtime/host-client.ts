@@ -10,6 +10,7 @@ import { digest, resolveBase } from '../architecture/assignment.js';
 import { existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { HostRuntime } from './host-runtime.js';
+import { HostReadiness } from './host-readiness.js';
 import { setTimeout as delay } from 'node:timers/promises';
 import {
   ExecutionContext,
@@ -61,7 +62,7 @@ export class HostClient {
 
   /** Selects live staging before admission; existing supervisors retain their own captured authority. */
   async ensureRun(action: 'submit' | 'start', simulate: boolean, signal: AbortSignal) {
-    if (await this.retainedAdmission(action, simulate)) return;
+    if (await this.retainedAdmission(action, simulate, signal)) return;
     const discovered = this.context;
     const branch = developmentTarget(discovered);
     const repository = githubDestination(discovered);
@@ -82,13 +83,17 @@ export class HostClient {
         'refs/heads/' + branch,
       );
     }
-    await this.ensure(action);
+    await this.ensure(action, signal);
   }
 
   /** Keeps an existing isolated workday in its own upstream environment, including task admission. */
-  private async retainedAdmission(action: string, simulate: boolean): Promise<boolean> {
-    if (!(await this.alive())) return false;
-    const { workday } = await this.request({ action: 'status' });
+  private async retainedAdmission(
+    action: string,
+    simulate: boolean,
+    signal: AbortSignal,
+  ): Promise<boolean> {
+    if (!(await this.alive(signal))) return false;
+    const { workday } = await this.request({ action: 'status' }, signal);
     if (!workday || workday.status === 'stopped') return false;
     if (action === 'start') return true;
     if (
@@ -97,7 +102,7 @@ export class HostClient {
       !['running', 'idle', 'paused', 'pausing'].includes(workday.status)
     )
       return false;
-    const identity = await this.request({ action: 'identity' });
+    const identity = await this.request({ action: 'identity' }, signal);
     if (identity.packageId !== this.context.packageId) return false;
     if (!identity.hostCapabilities?.includes('staging-snapshot'))
       throw new InputError(
@@ -107,28 +112,40 @@ export class HostClient {
     return true;
   }
 
-  /** Starts a host when necessary and waits for its local readiness, not an execution deadline. */
-  async ensure(action = 'status'): Promise<void> {
+  /** Starts a host when necessary and waits for local readiness or caller cancellation. */
+  async ensure(action = 'status', signal?: AbortSignal): Promise<void> {
+    signal?.throwIfAborted();
     if (!['status', 'stop', 'pause'].includes(action)) ContainerLifetime.assertOpen(this.root);
-    if (await this.alive()) {
-      if (await this.compatible(action)) return;
+    if (await this.alive(signal)) {
+      if (await this.compatible(action, signal)) return;
     }
-    this.launch();
-    await this.waitForHost();
-    await this.compatible(action);
+    signal?.throwIfAborted();
+    const child = this.launch();
+    const log = join(this.directory, 'host.log');
+    const lease = join(this.context.commonDir, 'arcnexus', 'host.lease.sqlite');
+    await new HostReadiness().wait(
+      new HostConnection(this.socket),
+      this.key,
+      child,
+      log,
+      undefined,
+      signal,
+      lease,
+    );
+    await this.compatible(action, signal);
   }
 
   /** Refuses authority drift during retained work and replaces an inactive host automatically. */
-  private async compatible(action: string): Promise<boolean> {
+  private async compatible(action: string, signal?: AbortSignal): Promise<boolean> {
     if (['status', 'stop', 'pause'].includes(action)) return true;
-    const context = (await this.request({ action: 'identity' })) as ProjectExecution;
+    const context = (await this.request({ action: 'identity' }, signal)) as ProjectExecution;
     if (
       executionIdentity(context) === executionIdentity(this.context) &&
       (!this.context.observedStaging ||
         JSON.stringify(context.observedStaging) === JSON.stringify(this.context.observedStaging))
     )
       return true;
-    const status = await this.request({ action: 'status' });
+    const status = await this.request({ action: 'status' }, signal);
     if (
       (status.workday && status.workday.status !== 'stopped') ||
       status.tasks.some((r: { status: string }) => ['running', 'pausing'].includes(r.status))
@@ -138,25 +155,25 @@ export class HostClient {
       );
     await this.request({ action: 'retire' });
     for (let observation = 0; observation < 100; observation++) {
-      if (!(await this.alive())) return false;
-      await delay(50);
+      if (!(await this.alive(signal))) return false;
+      await delay(50, undefined, { signal });
     }
     throw new Error('Old host did not release execution ownership');
   }
 
   /** Starts the detached host with private context and logs, leaving execution to its scheduler. */
-  private launch(): void {
+  private launch() {
     ContainerLifetime.assertOpen(this.root);
     const context = join(this.directory, 'context-' + randomUUID() + '.json');
     writeFileSync(context, JSON.stringify(this.context), { mode: 0o600 });
-    new HostRuntime().launch(this.root, context, this.socket);
+    return new HostRuntime().launch(this.root, context, this.socket);
   }
 
   /** Sends a structured control through the shared private transport. */
-  async request(request: HostRequest): Promise<any> {
+  async request(request: HostRequest, signal?: AbortSignal): Promise<any> {
     const connection = new HostConnection(this.socket);
     if (request.simulate === true) {
-      const identity = await connection.request({ action: 'identity' });
+      const identity = await connection.request({ action: 'identity' }, signal);
       if (!identity.hostCapabilities?.includes('simulation'))
         throw new InputError(
           'Captured host does not support simulation; end retained runs and restart with the updated runtime',
@@ -166,26 +183,28 @@ export class HostClient {
       request.action === 'submit' && this.expectedEnvironmentId
         ? { ...request, expectedEnvironmentId: this.expectedEnvironmentId }
         : request,
+      signal,
     );
   }
 
-  /** Confirms both process identity and an answering local endpoint before trusting a stale socket. */
-  private async alive(): Promise<boolean> {
+  /** Confirms both repository identity and an answering local endpoint before trusting a stale socket. */
+  private async alive(signal?: AbortSignal): Promise<boolean> {
     if (!existsSync(this.socket)) return false;
     try {
-      const identity = (await this.request({ action: 'identity' })) as ProjectExecution;
-      return identity.key === this.key;
-    } catch {
-      return false;
+      const identity = (await this.request({ action: 'identity' }, signal)) as ProjectExecution;
+      if (identity.key !== this.key) throw new InputError('Another host owns project execution');
+      return true;
+    } catch (error) {
+      if (signal?.aborted) throw signal.reason;
+      if (error instanceof InputError) throw error;
+      const code = (error as NodeJS.ErrnoException).code;
+      if (
+        code === 'ENOENT' ||
+        code === 'ECONNREFUSED' ||
+        (error as Error).message === 'Host discovery transport timed out'
+      )
+        return false;
+      throw error;
     }
-  }
-
-  /** Bounds host startup observation only; no agent work is subject to this readiness window. */
-  private async waitForHost(): Promise<void> {
-    for (let attempt = 0; attempt < 100; attempt++) {
-      if (await this.alive()) return;
-      await delay(50);
-    }
-    throw new Error('Execution host did not start; inspect ' + join(this.directory, 'host.log'));
   }
 }

@@ -11,7 +11,7 @@ export class PromotionControl {
   constructor(private readonly root: string) {}
 
   /** Validates the observed delivery, resolves its real source and queues one new live promotion task. */
-  async request(id: string, expectedRevision?: string) {
+  async request(id: string, expectedRevision?: string, signal?: AbortSignal) {
     const delivery = new DeliveryResources(this.root).get(id);
     if (expectedRevision !== undefined && expectedRevision !== delivery.revision)
       throw new InputError('Stale simulation delivery revision');
@@ -25,7 +25,7 @@ export class PromotionControl {
       join(this.root, 'projects', delivery.projectId),
       repository,
       branch,
-      new AbortController().signal,
+      signal ?? new AbortController().signal,
     );
     const client = new HostClient(source, this.root, {
       packageId: target.packageId,
@@ -33,7 +33,7 @@ export class PromotionControl {
     });
     if (client.context.key !== delivery.projectId)
       throw new InputError('Promotion repository identity changed');
-    await client.ensure('delivery-promote');
+    await client.ensure('delivery-promote', signal);
     const identity = await client.request({ action: 'identity' });
     if (!identity.hostCapabilities?.includes('delivery-promote'))
       throw new InputError('Current host does not support promotion; finish retained work first');
