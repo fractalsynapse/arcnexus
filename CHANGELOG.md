@@ -6,6 +6,8 @@
 
 - Give engineering and investigation one assignment evidence reader, including original checked-edit bytes and retained diagnostics for ordinary corrections (#328).
 
+- Qualify complete director catalog paging instead of rejecting catalog growth against an obsolete inline-prompt size assertion (#325).
+
 - Wait for observed host readiness and preserve caller cancellation across task, workday, and delivery controls instead of failing slow startup after a fixed window (#285).
 
 - Resume settled promotion check failures without recreating tracking or assembly, retain actionable diagnostics, and release failed dependency-cache builds for ordinary retry (#319).
