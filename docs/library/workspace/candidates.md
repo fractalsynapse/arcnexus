@@ -53,3 +53,10 @@ already completed preparation through that same checkpoint service. The director
 then sees current eligibility rather than a stale pending receipt that encourages
 unnecessary workflow restarts. Uncertain preparations remain visible and ineligible;
 planning never gains permission to replay them.
+
+A conflict discovered while assembling prepared contributions is a rejected assembly
+input, handled by the same director correction loop as observed verification gaps.
+Retain the exact contribution set and conflicting owner identity before requesting
+correction. Do not create a delivery-check record or replay assembly unchanged;
+changed source or an explicit diagnosed reassessment may retry. Ownership/integrity
+failures remain distinct from ordinary Git content conflicts.
