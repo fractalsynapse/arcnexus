@@ -28,7 +28,7 @@ class MinimalWorkflowScenarios {
     const result = fixture.run();
     assert.equal(result.status, 0, result.stderr);
     const record = JSON.parse(result.stdout);
-    assert.equal(record.outcome, 'ready_for_integration');
+    assert.equal(record.outcome, 'prepared_for_assembly');
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'after');
     assert.equal(
       readFileSync(join(record.workspace, 'new.txt'), 'utf8'),
@@ -52,10 +52,10 @@ class MinimalWorkflowScenarios {
     const result = fixture.run();
     assert.equal(result.status, 0, result.stderr);
     const record = JSON.parse(result.stdout);
-    assert.equal(record.outcome, 'ready_for_integration');
+    assert.equal(record.outcome, 'prepared_for_assembly');
     assert.deepEqual(
       record.turns.map((turn: any) => turn.activity),
-      ['planning', 'specification', 'implementation', 'review'],
+      ['planning', 'specification', 'implementation'],
     );
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'after');
     assert.equal(readdirSync(join(fixture.state, 'runs', record.id, 'checked-edits')).length, 2);

@@ -35,15 +35,26 @@ class DirectorIdentityScenarios {
       JSON.parse(readFileSync(join(root, 'runs', id, 'report.json'), 'utf8')),
     );
     const direction = reports.filter(
-      (r) =>
-        r.executionRunId === runId &&
-        ['director', 'director-assessment'].includes(r.activationRole),
+      (r) => r.executionRunId === runId && ['director', 'verifier'].includes(r.activationRole),
     );
     assert.ok(direction.some((r) => r.activationRole === 'director'));
-    assert.ok(direction.some((r) => r.activationRole === 'director-assessment'));
-    assert.ok(direction.every((r) => r.context.at(-1).id === 'c'));
+    assert.ok(direction.some((r) => r.activationRole === 'verifier'));
+    assert.ok(
+      direction
+        .filter((r) => r.activationRole === 'director')
+        .every((r) => r.context.at(-1).id === 'c'),
+    );
+    assert.ok(
+      !reports.some(
+        (r) => r.executionRunId === runId && r.activationRole === 'director-assessment',
+      ),
+    );
     const planning = direction.find((r) => r.activationRole === 'director')!;
-    const prompt = readFileSync(join(root, 'runs', planning.id, 'prompt.txt'), 'utf8');
+    this.planningPrompt(readFileSync(join(root, 'runs', planning.id, 'prompt.txt'), 'utf8'));
+  }
+
+  /** Keeps planning instructions distinct from the independently verified goal outcome. */
+  private planningPrompt(prompt: string): void {
     assert.match(
       prompt,
       /may propose future engineering assignments within captured owner authority/,
@@ -59,7 +70,7 @@ class DirectorIdentityScenarios {
 
 const scenarios = new DirectorIdentityScenarios();
 
-test('task planning and final assessment retain the captured director component', (t) =>
+test('task planning retains director identity and delegates goal acceptance to the verifier', (t) =>
   scenarios.identity(t));
 
 registerSuite({

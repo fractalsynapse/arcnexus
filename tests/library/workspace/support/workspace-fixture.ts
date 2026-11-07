@@ -87,7 +87,7 @@ export function managedScope(pid: number): string | undefined {
       if (scope) return scope;
     }
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    if (!['ENOENT', 'ESRCH'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error;
   }
   return undefined;
 }

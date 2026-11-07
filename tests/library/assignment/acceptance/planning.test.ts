@@ -25,7 +25,7 @@ class PlanningTests {
     const record = JSON.parse(r.stdout);
     assert.deepEqual(
       record.turns.map((t: any) => t.activity),
-      ['planning', 'specification', 'implementation', 'review'],
+      ['planning', 'specification', 'implementation'],
     );
     assert.equal(record.plan.items[0].status, 'completed');
     assert.equal(record.plan.items[0].basis, 'agent claim');
@@ -43,21 +43,15 @@ class PlanningTests {
     this.assertViewers(f.env, record.id);
   }
 
-  /** Requires workspace resource reads and following to expose retained progress and terminal state. */
+  /** Reads prepared progress without treating an unfinished delivery as a terminal followed run. */
   private assertViewers(env: NodeJS.ProcessEnv, id: string): void {
-    for (const options of [[], ['--follow']]) {
-      const viewed = spawnSync(
-        process.execPath,
-        [cli, 'workspace', 'get', id, ...options, '--json'],
-        {
-          env,
-          encoding: 'utf8',
-          timeout: 30 * 60 * 1000,
-        },
-      );
-      assert.equal(viewed.status, 0, viewed.stderr);
-      assert.ok(viewed.stdout.length);
-    }
+    const viewed = spawnSync(process.execPath, [cli, 'workspace', 'get', id, '--json'], {
+      env,
+      encoding: 'utf8',
+      timeout: 30 * 60 * 1000,
+    });
+    assert.equal(viewed.status, 0, viewed.stderr);
+    assert.ok(viewed.stdout.length);
   }
 
   /** Verifies the scenario rejects invalid plan before implementation. */
@@ -129,18 +123,18 @@ class PlanningTests {
     assert.equal(v.changes.length, 0);
   }
 
-  /** Verifies that planning preserves corrective work and cumulative usage. */
-  planningPreservesCorrectionAndCumulativeUsage(t: TestContext) {
+  /** Verifies that planning preserves prepared work and cumulative usage. */
+  planningPreservesPreparedWorkAndUsage(t: TestContext) {
     const f = planned(t, 'repair'),
       r = f.run();
     assert.equal(r.status, 0, r.stderr);
     const v = JSON.parse(r.stdout);
     assert.deepEqual(
       v.turns.map((t: any) => t.activity),
-      ['planning', 'specification', 'implementation', 'correction', 'review'],
+      ['planning', 'specification', 'implementation'],
     );
-    assert.equal(v.implementationAttempts, 2);
-    assert.equal(v.usage.input_tokens, 50);
+    assert.equal(v.implementationAttempts, 1);
+    assert.equal(v.usage.input_tokens, 30);
   }
 
   /** Verifies that checklist completion without evidence stops the assignment. */
@@ -167,7 +161,7 @@ class PlanningTests {
       r = f.run();
     assert.equal(r.status, 0, r.stderr);
     const v = JSON.parse(r.stdout);
-    assert.ok(v.plan.version >= 7);
+    assert.ok(v.plan.version >= 5);
     const events = readFileSync(join(f.state, 'runs', v.id, 'timeline.jsonl'), 'utf8');
     assert.match(events, /plan.updated/);
   }
@@ -235,8 +229,8 @@ for (const kind of ['research', 'review'])
   test(`planned ${kind} uses two source-read-only turns`, (t: any) =>
     suite.usesTwoReadOnlyTurns(t, kind));
 
-test('planning preserves corrective work and cumulative usage', (t: any) =>
-  suite.planningPreservesCorrectionAndCumulativeUsage(t));
+test('planning preserves prepared work and cumulative usage', (t: any) =>
+  suite.planningPreservesPreparedWorkAndUsage(t));
 
 test('checklist completion without evidence stops the assignment', (t: any) =>
   suite.checklistCompletionWithoutEvidenceStopsTheAssignment(t));

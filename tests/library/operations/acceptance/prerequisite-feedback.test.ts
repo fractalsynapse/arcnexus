@@ -30,9 +30,9 @@ class PrerequisiteFeedback {
     assert.deepEqual(replies[0].artifacts, []);
     assert.deepEqual(
       replies.slice(1).map((reply) => reply.status),
-      ['passed', 'passed'],
+      ['passed'],
     );
-    assert.equal(readFileSync(join(record.workspace, 'generated/dependent'), 'utf8'), 'xx');
+    assert.equal(readFileSync(join(record.workspace, 'generated/dependent'), 'utf8'), 'x');
     assert.equal(record.operations[0].failedOperationId, 'compile');
     await this.requiredCheckStillFails(f, record);
   }
@@ -47,7 +47,7 @@ class PrerequisiteFeedback {
       new OperationExecution(f.state, record, new AbortController().signal).run(op, 'verification'),
       (error: any) => error.operationId === 'compile' && error.commandResult.exitCode === 7,
     );
-    assert.equal(readFileSync(join(record.workspace, 'generated/dependent'), 'utf8'), 'xx');
+    assert.equal(readFileSync(join(record.workspace, 'generated/dependent'), 'utf8'), 'x');
     assert.equal(record.operationInvocations.at(-1).operationId, 'compile');
     assert.equal(record.operationInvocations.at(-1).status, 'failed');
   }

@@ -19,10 +19,10 @@ class OperationsTests {
       r = f.run();
     assert.equal(r.status, 0, r.stderr);
     const v = JSON.parse(r.stdout);
-    assert.equal(v.operations.length, 3);
+    assert.equal(v.operations.length, 2);
     assert.deepEqual(
       v.operations.map((o: any) => o.exitCode),
-      [1, 0, 0],
+      [1, 0],
     );
     assert.match(readFileSync(join(f.root, 'operations.jsonl'), 'utf8'), /BOUNDARY_EXPECTED/);
   }
@@ -51,7 +51,7 @@ class OperationsTests {
       .trim()
       .split('\n')
       .map((line) => JSON.parse(line));
-    assert.equal(replies.length, 3);
+    assert.equal(replies.length, 2);
     for (const reply of replies) {
       const rejection = JSON.parse(reply.content[0].text);
       assert.equal(rejection.status, 'rejected');

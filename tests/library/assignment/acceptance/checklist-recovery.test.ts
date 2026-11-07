@@ -31,7 +31,7 @@ class ChecklistRecoveryScenarios {
     );
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'before');
     for (let stage = 0; stage < 3; stage++) await step();
-    assert.equal(record.status, 'completed');
+    assert.equal(record.status, 'prepared');
     assert.equal(record.threadId, thread);
     assert.equal(record.specificationFeedback, undefined);
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'after');
@@ -55,7 +55,7 @@ class ChecklistRecoveryScenarios {
     assert.notEqual(readFileSync(join(record.workspace, 'docs/behavior.md'), 'utf8'), 'Before');
     const thread = record.threadId;
     for (let stage = 0; stage < 3; stage++) await step();
-    assert.equal(record.status, 'completed');
+    assert.equal(record.status, 'prepared');
     assert.equal(record.threadId, thread);
     assert.ok(
       record.commands.some((command) => command.stage === 'red-test' && command.exitCode !== 0),
@@ -93,15 +93,15 @@ class ChecklistRecoveryScenarios {
   async restrictedRole(t: TestContext): Promise<void> {
     const { record, step } = this.fixture(t, 'restricted-role');
     for (let stage = 0; stage < 4; stage++) await step();
-    assert.equal(record.status, 'completed');
-    assert.equal(record.outcome, 'ready_for_integration');
+    assert.equal(record.status, 'prepared');
+    assert.equal(record.outcome, 'prepared_for_assembly');
     assert.ok(record.commands.some((command) => command.stage === 'red-test'));
   }
 
   /** A worker that ignores its output schema cannot obtain forbidden authority through recovery. */
   async forbiddenActivity(t: TestContext): Promise<void> {
     const { record, step } = this.fixture(t, 'restricted-violation');
-    for (let stage = 0; stage < 3; stage++) await step();
+    for (let stage = 0; stage < 2; stage++) await step();
     await assert.rejects(step, /Role cannot perform release/);
     assert.equal(record.safeCheckpoint, false);
     assert.equal(record.status, 'failed');
@@ -133,7 +133,7 @@ class ChecklistRecoveryScenarios {
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'before');
     assert.equal(record.commands.at(-1)?.exitCode, 1);
     for (let stage = 0; stage < 3; stage++) await step();
-    assert.equal(record.status, 'completed');
+    assert.equal(record.status, 'prepared');
     assert.equal(record.threadId, thread);
     assert.equal(record.specificationFeedback, undefined);
     assert.match(readFileSync(f.calls, 'utf8'), /Specification checkpoint feedback/);
@@ -165,7 +165,7 @@ class ChecklistRecoveryScenarios {
     assert.match(String(record.specificationFeedback), /verify/);
     assert.equal(readFileSync(join(record.workspace, 'source.txt'), 'utf8'), 'before');
     for (let stage = 0; stage < 3; stage++) await step();
-    assert.equal(record.status, 'completed');
+    assert.equal(record.status, 'prepared');
     assert.equal(record.threadId, thread);
     assert.ok(record.commands.some((command) => command.stage === 'red-test'));
   }
@@ -188,10 +188,10 @@ class ChecklistRecoveryScenarios {
     assert.equal(record.nextStage, 'finished');
     assert.equal(record.safeCheckpoint, true);
     assert.equal(record.planFeedback, undefined);
-    assert.equal(record.status, 'completed');
+    assert.equal(record.status, 'prepared');
     assert.equal((record.plan as any).items[0].status, 'pending');
-    assert.equal((record.plan as any).hostChecks[0].status, 'completed');
-    assert.equal((record.turns as unknown[]).length, 4);
+    assert.equal((record.plan as any).hostChecks[0].status, 'pending');
+    assert.equal((record.turns as unknown[]).length, 3);
   }
 
   /** Recovers completed diagnostic evidence while refusing uncertain operations, turns and changed files. */

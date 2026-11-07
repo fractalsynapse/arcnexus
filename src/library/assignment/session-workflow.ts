@@ -99,7 +99,7 @@ export class SessionWorkflow {
     return true;
   }
 
-  /** Applies stage transitions only after the corresponding host checks pass. */
+  /** Advances checkpoints; a retained former review stage now hands off to assembled verification. */
   private async advance(stage: string): Promise<void> {
     const { record } = this.state.options;
     if (stage === 'planning') {
@@ -111,7 +111,7 @@ export class SessionWorkflow {
       delete record.specificationFeedback;
       record.nextStage = 'implementation';
     } else if (stage === 'implementation') await this.advanceImplementation();
-    else if (stage === 'review') await this.advanceReview();
+    else if (stage === 'review') this.finishStage();
     else if (stage === 'research') {
       await this.research();
       this.finishStage();
@@ -129,26 +129,6 @@ export class SessionWorkflow {
     const feedback = await this.checkImplementation(attempt);
     delete record.activeImplementationAttempt;
     record.correctiveFeedback = feedback ?? '';
-    if (this.contributionReady()) this.finishStage();
-    else record.nextStage = feedback === undefined ? 'review' : 'implementation';
-  }
-
-  /** Reviews the assembled candidate and schedules correction or verified completion. */
-  private async advanceReview(): Promise<void> {
-    const { record } = this.state.options;
-    if (this.contributionReady()) {
-      this.finishStage();
-      return;
-    }
-    const feedback = await this.review();
-    if (feedback !== undefined) {
-      record.correctiveFeedback = feedback;
-      record.nextStage = 'implementation';
-      return;
-    }
-    if (!this.contributionReady()) await this.verification.final();
-    this.markAttempt({ status: this.contributionReady() ? 'prepared' : 'completed' });
-    record.outcome = this.contributionReady() ? 'prepared_for_assembly' : 'ready_for_integration';
     this.finishStage();
   }
 
@@ -166,11 +146,9 @@ export class SessionWorkflow {
     this.state.journal('workflow', record.status, { outcome: record.outcome });
   }
 
-  /** Uses only host-derived related work; no worker response can waive final assembled verification. */
+  /** Engineering prepares source; only the shared assembled verifier can accept its delivery. */
   private contributionReady(): boolean {
-    return (
-      this.state.options.record.generalExecution === true && this.state.assignment.kind === 'change'
-    );
+    return this.state.assignment.kind === 'change';
   }
 
   /** Requires a valid read-only assignment plan before engineering stages. */
@@ -246,31 +224,13 @@ export class SessionWorkflow {
       const feedback = this.commandFeedback(failed);
       this.markAttempt({ status: 'failed', feedback });
       this.state.journal('implementation', 'failed', { attempt, feedback });
-      if (this.contributionReady()) return feedback;
-      return new SessionProgress(this.state).failure(
-        'implementation-checkpoint',
-        feedback,
-        failed.log,
-      );
+      return feedback;
     }
   }
 
   /** Identifies captured acceptance failures separately from checks of the current candidate. */
   private commandFeedback(failed: CommandResult): string {
-    return `Host checkpoint ${failed.stage ?? 'verification'}: Command ${JSON.stringify({ command: failed.command, args: failed.args })}; exit code ${failed.exitCode}; ${logExcerpt(failed.log)}`;
-  }
-
-  /** Runs source-read-only review and requires final host verification. */
-  private async review(): Promise<string | undefined> {
-    const review = await this.turns.perform(
-      'review',
-      `${this.contributionReady() ? 'Review your contribution for joint assembly with related owners. Observed failed checks remain unverified; do not claim acceptance. Fix defects within your contribution, but do not require absent peer changes to pass in your isolated workspace. The host checks the complete assembly before any delivery. Complete only your own preparation and handoff checklist. ' : ''}Review the candidate diff without editing source. Host check results (captured evidence): ${JSON.stringify(this.state.options.record.commands.map(({ command, args, exitCode, durationMs, stage }) => ({ command, args, exitCode, durationMs, stage })))}. The earlier expected red-test failure was a specification checkpoint. Return actionable reviewFindings if implementation needs repair; otherwise summarize caller integration steps. Record caller handoff as review within captured role activities; do not claim release authority or publish.`,
-      true,
-    );
-    if (!review.reviewFindings.length) return undefined;
-    const feedback = review.reviewFindings.join('\n');
-    this.markAttempt({ status: 'failed', feedback });
-    return new SessionProgress(this.state).failure('review-checkpoint', feedback);
+    return `Host checkpoint ${failed.stage ?? 'verification'}: exit code ${failed.exitCode}; ${logExcerpt(failed.log)}\nFull retained log: ${failed.log}`;
   }
 
   /** Records observed implementation attempts as evidence without enforcing a quota. */

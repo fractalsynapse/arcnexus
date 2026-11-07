@@ -95,7 +95,7 @@ class StewardTests {
   /** Cancels an observed model stage while preserving its raw partial-turn evidence. */
   async retainsInterruptedTurnEvidence(t: TestContext, activity: string) {
     const f = workflowFixture(t, activity + '-timeout');
-    const child = this.start(t, f);
+    const child = this.start(t, f, activity === 'review' ? 'review' : 'change');
     await child.waitForReady(
       () => readFileSync(f.calls, 'utf8').includes(`"stage":"${activity}"`),
       'Agent must reach selected stage',
@@ -111,7 +111,7 @@ class StewardTests {
   }
 
   /** Starts bound minimal engineering with test-owned process cleanup and no execution deadline. */
-  private start(t: TestContext, f: any): TestProcess {
+  private start(t: TestContext, f: any, kind = 'change'): TestProcess {
     return new TestProcess(
       t,
       [
@@ -119,6 +119,8 @@ class StewardTests {
         'run',
         'sample',
         'Improve behavior',
+        '--kind',
+        kind,
         '--project',
         f.repo,
         '--codex-path',
@@ -206,8 +208,10 @@ class StewardTests {
     );
     f.commit();
     const r = f.run();
-    assert.equal(r.status, 1);
+    assert.equal(r.status, 0);
     const v = JSON.parse(r.stdout);
+    assert.equal(v.status, 'prepared');
+    assert.equal(v.plan.hostChecks[0].status, 'pending');
     assert.equal(existsSync(join(v.workspace, 'outside.txt')), false);
     assert.ok(!v.stagedChanges.some((c: any) => c.path === 'outside.txt'));
     const logs = v.operationInvocations

@@ -364,7 +364,6 @@ export class ControlledGeneral {
     if (indexed) return this.indexedReview(prompt, JSON.parse(indexed[1]!));
     const result = this.result();
     if (
-      prompt.includes('As task director') &&
       prompt.includes('REPLAN_GOAL') &&
       !JSON.stringify(this.assessment ?? null).includes('Additional goal evidence')
     ) {
@@ -389,7 +388,6 @@ export class ControlledGeneral {
     if (prompt.includes('VERIFY_UNKNOWN')) assessments[1]!.index = criteria.length;
     if (prompt.includes('VERIFY_GAP')) assessments[1]!.evidence = [];
     const deficient =
-      prompt.includes('As task director') &&
       prompt.includes('REPLAN_GOAL') &&
       !JSON.stringify(this.assessment ?? null).includes('Additional goal evidence');
     return {

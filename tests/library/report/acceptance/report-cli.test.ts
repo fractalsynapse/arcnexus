@@ -68,7 +68,7 @@ class ReportCliTests {
       assert.ok(md.includes('## ' + heading), heading);
     assert.ok(data.commands.some((c: any) => c.stage === 'verification'));
     assert.match(md, /verification/);
-    assert.match(md, /Actual turns: 4/);
+    assert.match(md, /Actual turns: 3/);
     assert.match(md, /not complete effective Codex context/);
     assert.match(markdownReport(record), /Usage completeness: unavailable/);
   }

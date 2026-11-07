@@ -15,13 +15,13 @@ class WorkflowTests {
       r = f.run();
     assert.equal(r.status, 0, r.stderr);
     const v = JSON.parse(r.stdout);
-    assert.equal(v.outcome, 'ready_for_integration');
+    assert.equal(v.outcome, 'prepared_for_assembly');
     assert.deepEqual(
       v.turns.map((x: any) => x.activity),
-      ['planning', 'specification', 'implementation', 'review'],
+      ['planning', 'specification', 'implementation'],
     );
     assert.equal(v.implementationAttempts, 1);
-    assert.equal(v.usage.input_tokens, 40);
+    assert.equal(v.usage.input_tokens, 30);
     assert.equal(readFileSync(join(v.workspace, 'source.txt'), 'utf8'), 'after');
     assert.ok(existsSync(join(f.state, 'runs', v.id, 'activities.jsonl')));
     const calls = readFileSync(f.calls, 'utf8')
@@ -46,13 +46,13 @@ class WorkflowTests {
   /** Verifies the scenario rejects invalid workflow result. */
   rejectsInvalidWorkflowResult(t: TestContext, mode: any) {
     const f = workflowFixture(t, mode),
-      r = f.run();
+      r = f.run(...(mode === 'review-write' ? ['--kind', 'review'] : []));
     assert.equal(r.status, 1, r.stderr);
     assert.notEqual(JSON.parse(r.stdout).status, 'completed');
   }
 
-  /** Late failure diagnostics reach the corrective turn through the real SDK boundary. */
-  lateFailureReachesCorrection(t: TestContext): void {
+  /** Late failure diagnostics and their complete log survive the engineering handoff. */
+  retainsLateFailure(t: TestContext): void {
     const f = workflowFixture(t, 'repair');
     const verify = join(f.repo, 'verify.cjs');
     const original = readFileSync(verify, 'utf8');
@@ -70,77 +70,49 @@ class WorkflowTests {
       .trim()
       .split('\n')
       .map((line) => JSON.parse(line));
-    const correction = calls.find((call) => call.stage === 'correction');
-    assert.match(correction.prompt, /LATE_ACTUAL_FAILURE/);
-    assert.match(correction.prompt, /Full retained log:/);
+    assert.ok(!calls.some((call) => call.stage === 'correction'));
+    const record = JSON.parse(result.stdout);
+    assert.match(record.correctiveFeedback, /LATE_ACTUAL_FAILURE/);
+    assert.match(record.correctiveFeedback, /Full retained log:/);
+    assert.equal(record.status, 'prepared');
   }
 
-  /** Verifies that automatic repair preserves frozen tests and cumulative usage. */
-  automaticRepairPreservesFrozenTestsAndCumulativeUsage(t: TestContext) {
-    const f = workflowFixture(t, 'repair'),
-      r = f.run();
-    assert.equal(r.status, 0, r.stderr);
-    const v = JSON.parse(r.stdout);
-    assert.deepEqual(
-      v.turns.map((x: any) => x.activity),
-      ['planning', 'specification', 'implementation', 'correction', 'review'],
-    );
-    assert.equal(v.implementationAttempts, 2);
-    assert.equal(v.usage.input_tokens, 50);
-    assert.deepEqual(
-      v.turns.map((x: any) => x.usage.input_tokens),
-      [10, 10, 10, 10, 10],
-    );
-  }
-
-  /** Verifies that review can request correction without an attempt allowance. */
-  reviewCanRequestCorrectionWithoutAnAttemptAllowance(t: TestContext) {
-    const f = workflowFixture(t, 'review-repair'),
-      r = f.run();
-    assert.equal(r.status, 0, r.stderr);
-    assert.equal(JSON.parse(r.stdout).turns.length, 6);
-  }
-
-  /** A failed assessment reaches correction while its original findings remain retained. */
-  failedReviewRequestsCorrection(t: TestContext): void {
-    const f = workflowFixture(t, 'review-repair');
-    f.configure({ reviewStatus: 'failed' });
+  /** Keeps failed owner checks and usage for the single assembled correction loop. */
+  retainsPreparedFailure(t: TestContext): void {
+    const f = workflowFixture(t, 'repair');
     const result = f.run();
     assert.equal(result.status, 0, result.stderr);
     const record = JSON.parse(result.stdout);
-    assert.deepEqual(
-      record.turns.map((turn: any) => turn.activity),
-      ['planning', 'specification', 'implementation', 'review', 'correction', 'review'],
-    );
-    assert.equal(record.outcome, 'ready_for_integration');
-    assert.ok(
-      record.attempts.some(
-        (attempt: any) =>
-          attempt.status === 'failed' && /Needs a corrective pass/.test(attempt.feedback),
-      ),
-    );
+    assert.equal(record.status, 'prepared');
+    assert.equal(record.implementationAttempts, 1);
+    assert.equal(record.usage.input_tokens, 30);
+    assert.ok(record.commands.some((command: any) => command.exitCode !== 0));
+    assert.ok(record.correctiveFeedback);
+    assert.equal(record.plan.hostChecks[0].status, 'pending');
+    assert.ok(record.frozenTests.length);
   }
 
   /** Missing correction findings and genuine blockers cannot be accepted as corrective review. */
   rejectsNoncorrectiveReview(t: TestContext, blocked: boolean): void {
     const f = workflowFixture(t, blocked ? 'review-repair' : 'review-failure');
     if (blocked) f.configure({ reviewStatus: 'blocked' });
-    const result = f.run();
+    const result = f.run('--kind', 'review');
     assert.equal(result.status, 1, result.stderr);
     const record = JSON.parse(result.stdout);
     assert.equal(record.agent.status, blocked ? 'blocked' : 'failed');
     assert.match(record.error, new RegExp(`Agent reported ${record.agent.status}`));
     assert.notEqual(record.status, 'completed');
-    assert.equal(record.turns.length, 4);
+    assert.equal(record.turns.length, 2);
   }
 
-  /** Candidate test weakening cannot hide failure of the captured host check. */
-  aWeakenedCurrentTestCannotReplaceFrozenAcceptance(t: TestContext) {
+  /** Prepared test edits retain original acceptance inputs and cannot claim verified delivery. */
+  preparedEditsRetainFrozenAcceptance(t: TestContext) {
     const f = workflowFixture(t, 'weak-test');
     const r = f.run();
-    assert.equal(r.status, 1);
+    assert.equal(r.status, 0);
     const record = JSON.parse(r.stdout);
-    assert.equal(record.outcome, 'needs_attention');
+    assert.equal(record.outcome, 'prepared_for_assembly');
+    assert.equal(record.plan.hostChecks[0].status, 'pending');
     assert.equal(
       readFileSync(join(record.workspace, 'tests/regression.cjs'), 'utf8'),
       '// weakened test',
@@ -155,7 +127,7 @@ class WorkflowTests {
     const result = f.run();
     assert.equal(result.status, 0, result.stderr);
     const record = JSON.parse(result.stdout);
-    assert.equal(record.outcome, 'ready_for_integration');
+    assert.equal(record.outcome, 'prepared_for_assembly');
     const original = record.frozenTests.find((test: any) => test.path === 'tests/regression.cjs');
     assert.match(Buffer.from(original.content, 'base64').toString(), /INCIDENTAL_MISTAKE/);
     const current = readFileSync(join(record.workspace, original.path), 'utf8');
@@ -217,8 +189,9 @@ class WorkflowTests {
   preservesGitChangeEvidence(t: TestContext, mode: any) {
     const f = workflowFixture(t, mode),
       r = f.run();
-    assert.equal(r.status, 1);
+    assert.equal(r.status, 0);
     const v = JSON.parse(r.stdout);
+    assert.equal(v.status, 'prepared');
     assert.ok(v.stagedChanges.some((c: any) => c.path === 'source.txt'));
     if (mode === 'rename') {
       assert.ok(v.changes.some((c: any) => c.path === 'new.txt'));
@@ -288,21 +261,15 @@ for (const mode of [
 ])
   test(`host rejects ${mode}`, (t: any) => suite.rejectsInvalidWorkflowResult(t, mode));
 
-test('automatic repair preserves frozen tests and cumulative usage', (t: any) =>
-  suite.automaticRepairPreservesFrozenTestsAndCumulativeUsage(t));
-
-test('review can request correction without an attempt allowance', (t: any) =>
-  suite.reviewCanRequestCorrectionWithoutAnAttemptAllowance(t));
-
-test('failed review findings use the existing implementation correction transition', (t) =>
-  suite.failedReviewRequestsCorrection(t));
+test('prepared failures preserve regression evidence and usage for assembled correction', (t) =>
+  suite.retainsPreparedFailure(t));
 
 for (const blocked of [false, true])
   test(`review ${blocked ? 'blockers' : 'failure without findings'} prevents completion`, (t) =>
     suite.rejectsNoncorrectiveReview(t, blocked));
 
-test('a weakened current test cannot replace the captured host check', (t: any) =>
-  suite.aWeakenedCurrentTestCannotReplaceFrozenAcceptance(t));
+test('prepared test edits retain captured acceptance without claiming delivery', (t: any) =>
+  suite.preparedEditsRetainFrozenAcceptance(t));
 
 test('owner request yields a safe waiting checkpoint', (t: any) =>
   suite.ownerRequestYieldsSafeWaitingCheckpoint(t));
@@ -328,8 +295,8 @@ test('candidate guidance cannot authorize edits outside captured scope', (t: any
 test('corrected worker regression retains original failure evidence', (t) =>
   suite.correctedRegressionRetainsEvidence(t));
 
-test('late host diagnostics reach the corrective steward', (t) =>
-  suite.lateFailureReachesCorrection(t));
+test('late host diagnostics survive preparation for assembled correction', (t) =>
+  suite.retainsLateFailure(t));
 
 registerSuite({
   component: 'assignment',
