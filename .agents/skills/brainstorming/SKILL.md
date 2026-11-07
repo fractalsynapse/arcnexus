@@ -1,29 +1,30 @@
 ---
 name: brainstorming
-description: Use when a new capability or architectural decision needs its scope clarified; reuse already confirmed designs.
+description: Use when a requested outcome or consequential approach needs clarification before implementation.
 ---
 
-# Clarify the next useful capability
+# Clarify the outcome
 
-Apply the [simplification rule](../../../AGENTS.md#simplification-and-reliability): first look for a mechanism, duplicate fact or special path that can be removed. Repeated expensive failures call for a smaller supported design before more features.
+Follow the [project instructions](../../../AGENTS.md). Read the request, relevant
+project context and accepted decisions first. A clear request is sufficient to act;
+do not reopen answered questions or require a second approval.
 
-Read the charter, request, and relevant existing decisions. Reuse answers already
-provided. If intent and acceptance are clear, summarize the accepted outcome and
-proceed within authorization. Do not restart discovery or require a second approval.
+Identify the intended user, observable result, constraints and exclusions. State
+consequential assumptions. Ask one focused question when a missing decision changes
+what should be delivered; continue independent discovery while awaiting an answer.
+Explore alternatives when they help settle that decision. Preserve the project's
+architecture and technology choices unless changing them is authorized.
 
-If a material choice is missing, ask one focused question and continue independent
-work. Offer alternatives only when they help settle that choice. State consequential
-assumptions. Architectural changes outside approved scope need the architect's decision.
+Summarize the smallest useful outcome and its acceptance. A short chat or existing
+work record can suffice. Write a durable design only when the decisions warrant it,
+in the project's established location. Distinguish user requirements, recommendations
+and open questions. Visuals are optional aids using available tools, not a required
+server, artifact format or new dependency.
 
-Describe a coherent useful result, its observable acceptance, relevant constraints,
-and what is deferred. Use a short issue or chat description for small work. Write a
-short `docs/` design only when decisions need a durable reference; no compulsory
-workshop, visual server, or separate document for a routine change.
+A bounded experiment may resolve feasibility within authorization. Keep it isolated,
+state the question and stopping condition, and report observed evidence and limitations.
+Applicable project safeguards still hold; an experiment is not accepted delivery.
 
-For ArcNexus, favor a real objective → steward → verified change → report loop.
-Full UI, agent taxonomy, and general orchestration are not bootstrap prerequisites.
-Use the writing-plans skill only when the batch needs multiple implementation steps.
-
-For a consequential new written design, a focused independent reader check may test
-whether a builder can act without guessing architectural intent. It is optional,
-not a new approval gate. Do not dispatch agents for routine wording edits.
+Use [writing-plans](../writing-plans/SKILL.md) if the accepted work needs an ordered
+plan. Proceed when implementation is already authorized and material decisions are
+settled. If the user requested only exploration or design, deliver that scope and stop.

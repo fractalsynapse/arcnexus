@@ -1,35 +1,36 @@
 ---
 name: writing-plans
-description: Use when an agreed capability needs a multi-step implementation plan; not for routine edits.
+description: Use when an agreed outcome needs an ordered plan because of dependencies, risk or coordination.
 ---
 
-# Plan a coherent implementation batch
+# Plan a useful delivery
 
-Plan the smallest useful increment under the [simplification rule](../../../AGENTS.md#simplification-and-reliability). Name the canonical path, what duplication or mechanisms will be removed, what evidence can be reused, and the current MVP exclusions. Human-authorized scope retirement overrides preservation of obsolete contracts.
+Apply the [project instructions](../../../AGENTS.md) and read accepted requirements
+and current project state. Preserve the user's execution method and settled decisions.
+Use available tools directly; no execution framework, delegation or new installation
+is required. A routine edit needs no separate plan.
 
-Read the accepted charter/design and current repository. Do not re-open settled
-questions. Plan the accepted batch across its necessary responsibilities; later
-phases stay brief. Follow the cadence in [AGENTS.md](../../../AGENTS.md).
-Do not fragment a working lifecycle into tiny PRs with repeated long test cycles.
+Choose the smallest complete batch that can demonstrate useful behavior. Keep a
+short plan in the existing work record; use a separate document when it aids execution.
+Include only decisions the implementer needs:
 
-Use the issue for a short plan, or `docs/plans/<topic>.md` when a durable plan helps.
-Include:
+- The goal, observable acceptance, exclusions and source decisions.
+- Affected responsibilities and public boundaries; exact contracts only where another
+  component depends on them. Leave internal decomposition to the implementer.
+- Ordered work: record changed intent, establish applicable tests/checks, implement,
+  verify the assembled result, review and deliver under project policy.
+- Relevant failure cases, prerequisites and actual verification methods discovered
+  from the project. Mark unknown checks explicitly rather than inventing commands.
+- Any genuinely pending decisions or approvals and which steps depend on them.
 
-- Goal and the user-observable acceptance scenario.
-- Affected responsibilities/files and the public boundary that must stay stable.
-- Ordered dependencies: document changed intent, implement with meaningful tests,
-  qualify the assembled result, review and integrate. Identify focused checks useful
-  during development and the long suites deferred to final qualification. Refactors
-  preserve existing contracts; add characterization where it closes a real gap.
-  Fold setup into the behavior it enables; do not invent changes to satisfy a template.
-- Relevant failure cases, concrete verification commands once known, and explicit
-  exclusions/open decisions. Never invent commands for a nonexistent application.
+Describe actions, assertions and completion evidence in prose. Do not prewrite
+implementation or use sample code, assumed source layouts or a mandatory architecture.
+Name actual target files, contracts and check commands when discovered and useful.
+Split work where outcomes can meaningfully be accepted independently; avoid tiny tasks
+that repeat the same expensive verification without resolving new uncertainty.
 
-Specify public contracts precisely where necessary. Leave internal signatures and
-function decomposition to implementation unless another component depends on them.
-Do not prewrite the implementation or produce a plan larger than the capability.
-
-Default to native sequential execution within existing authorization. No required
-execution framework, subagents, or execution-method question. If the user asked only
-for planning, deliver the plan and stop before implementation. If implementation is
-already authorized, proceed once material architectural questions are resolved.
+Self-review requirement coverage, dependency order, boundary consistency, failure cases
+and proportion. Each step needs a checkable result. Track completion from evidence,
+not intention. Link the plan when useful. If execution is already authorized, proceed
+once pending decisions are resolved; if only planning was requested, deliver the plan.
+Use [verification](../verification-before-completion/SKILL.md) for completion claims.

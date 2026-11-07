@@ -1,17 +1,10 @@
 import { GuidanceValidator } from '../../guidance-validation/guidance.js';
 import assert from 'node:assert/strict';
-import {
-  mkdtempSync,
-  mkdirSync,
-  writeFileSync,
-  readFileSync,
-  rmSync,
-  existsSync,
-  symlinkSync,
-} from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { parseDocument } from 'yaml';
 
 /** Independently checks guidance reference against retained candidate evidence. */
 class GuidanceReferenceAcceptance {
@@ -102,19 +95,26 @@ class GuidanceReferenceAcceptance {
 
   /** Checks the assembled guidance and validator change through independent fixtures. */
   private combined(): void {
-    const skill = readFileSync('.agents/skills/documentation-writer/SKILL.md', 'utf8');
-    assert.match(skill, /references:/);
-    const path = existsSync('docs/library/agent-guidance/guidance-maintenance.md')
-      ? 'docs/library/agent-guidance/guidance-maintenance.md'
-      : 'docs/guidance-maintenance.md';
-    assert.ok(skill.includes(path));
+    const path = 'docs/library/agent-guidance/guidance-maintenance.md';
+    const skill = readFileSync('.agents/skills/arcnexus-guidance/SKILL.md', 'utf8');
+    const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(skill);
+    assert.ok(frontmatter, 'ArcNexus guidance must have YAML frontmatter');
+    const metadata = parseDocument(frontmatter[1]!, { version: '1.1' });
+    assert.deepEqual(metadata.errors, []);
+    const { references } = metadata.toJS() as { references?: unknown };
+    assert.ok(
+      Array.isArray(references) && references.includes(path),
+      'ArcNexus guidance must declare the maintenance guide in references',
+    );
     const guide = readFileSync(path, 'utf8');
     for (const pattern of [/references/i, /track/i, /readab/i, /integrat/i])
       assert.match(guide, pattern);
+
     const result = spawnSync(process.execPath, [this.cli, 'validate', '--project', '.'], {
-      encoding: 'utf8',
+      stdio: 'inherit',
     });
-    assert.equal(result.status, 0, result.stderr);
+    if (result.error) throw result.error;
+    assert.equal(result.status, 0, `ArcNexus validation failed: ${result.signal ?? result.status}`);
   }
 }
 

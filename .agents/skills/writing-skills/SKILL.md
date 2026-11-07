@@ -1,32 +1,38 @@
 ---
 name: writing-skills
-description: Use when creating, editing, or validating repository-local agent skills.
+description: Use when creating, revising or validating project-local agent skills and instruction resources.
 ---
 
-# Maintain useful skills
+# Maintain useful guidance
 
-Keep the [simplification rule](../../../AGENTS.md#simplification-and-reliability) canonical in AGENTS.md. Link to it from relevant skills; remove conflicting instructions instead of copying the policy into every skill.
+Follow the [project instructions](../../../AGENTS.md). A skill should improve a concrete
+agent decision with little context overhead. Keep shared policy canonical; link to it
+rather than copying permissions, release rules or project purpose into each skill.
 
-A skill should improve a concrete agent decision with little context overhead.
-Use skill-creator guidance when installed; otherwise this skill is self-contained.
-Do not install a framework or companion skill merely to satisfy this procedure.
-Project purpose belongs in AGENTS.md/charter, with links from skills rather than
-repeated copies.
+Before editing, identify a realistic request or observed failure and the desired outcome.
+Inspect the current instructions and relevant callers/resources. For a substantial
+workflow rewrite, compare baseline decisions with revised decisions in isolated scenarios.
+Use independent readers when authorized and useful; narrow corrections may use direct
+walkthroughs. Record what was actually evaluated, not a manufactured failing history.
 
-Before changing guidance, identify its observed failure or realistic scenario.
-Record what the old guidance causes and the desired observable outcome. For a
-substantial workflow rewrite, run a focused read-only subagent scenario before and
-after the edit when available. Do not ask it merely whether the wording looks good.
-One evaluation can cover interacting skills; no fixed sample quota or per-skill
-review ceremony. Small corrections can use direct scenario walkthroughs.
+Give each skill a matching lowercase hyphenated name and a concise description of its
+trigger. Include exclusions when they prevent likely misrouting. Keep the procedure
+self-contained and proportional. Use references only for needed detail, verify they
+exist and remove obsolete callers with removed resources. Avoid mandatory dependencies
+on an uninstalled skill, agent host, model or execution framework.
 
-Preserve a valid YAML `name` and narrowly scoped `description`. Keep instructions
-self-contained, consistent with user authorization, and proportional to task risk.
-Use references only for genuinely needed detail; verify they exist. Do not leave
-mandatory links to uninstalled skills or introduce recursive process prerequisites.
+In a generic starter, use prose steps, decision criteria and acceptance descriptions.
+Do not include code examples, shell recipes, sample application structures or a required
+technology/architecture. Metadata describes the skill format and may remain. Target-specific
+contracts and commands can be discovered during actual project work without embedding
+sample implementations in reusable guidance.
 
-Validate format and local references, then replay the relevant scenario and inspect
-the result. Distinguish static checks from behavioral evidence. Fix demonstrated
-ambiguity; do not accumulate hypothetical prohibitions or claim perfect compliance
-from one test. Preserve existing work while revising it; never delete changes merely
-to satisfy a ritual. Use the release workflow for review and integration.
+Validate metadata, references, scope and consistency, then apply realistic requests to
+inspect the resulting decisions. Distinguish static validation from behavioral evidence;
+a single scenario is not proof of universal compliance. Exercise interacting skills
+together where their boundaries matter. Avoid fixed evaluation quotas without a measured
+need. Preserve existing work while revising; never delete drafts to satisfy a ritual.
+
+Use [verification](../verification-before-completion/SKILL.md) for claims and
+[release-workflow](../release-workflow/SKILL.md) for the project's applicable review
+and delivery process. Installation or external publication is a separate authorized action.

@@ -1,44 +1,36 @@
 ---
 name: verification-before-completion
-description: Use before claiming a change works, a check passes, acceptance is met, or a PR is ready.
+description: Use before claiming that work is correct, a check passed, acceptance is met or delivery is ready.
 ---
 
 # Evidence before claims
 
-Apply the [simplification and reliability rule](../../../AGENTS.md#simplification-and-reliability). Track its consecutive real-cycle evidence explicitly; static or scripted passes cannot establish that qualification. A failed handoff calls for examining the shared process, not another bypass.
+Follow the [project instructions](../../../AGENTS.md). Identify the precise claim and
+what observation would establish it. Run or inspect the applicable check at the relevant
+revision and environment; read its actual result, scope, failures and exit status when
+available. Report the claim with supporting evidence and limitations.
 
-Apply this skill when making a verification claim, not as a mandatory pause after
-every edit. Follow the batched development cadence in [AGENTS.md](../../../AGENTS.md).
+Match verification to the artifact:
 
-Identify what evidence proves the exact claim. Run the relevant check at the current
-revision, inspect its output and exit status, and report the result and limitations.
-Agent-reported success is not independent verification: inspect the diff and execute
-the promised behavior.
+- Documentation and guidance: inspect the diff, facts, links, consistency and relevant
+  reader/decision scenarios. Do not invent a software build for prose.
+- Behavior: verify observable acceptance and relevant lower-level checks. Reproduce a
+  reported defect where feasible and confirm the correction addresses that symptom.
+- Runnable artifacts: exercise the real entry path and assembled configuration. Imports,
+  compilation and fake collaborators alone cannot prove installation or production wiring.
+- Delivery: inspect the actual candidate, required checks, review and applicable authority.
+  Readiness for integration, integration and publication are different claims.
 
-For executable changes, verify the real program and production wiring as well as
-focused tests. Compilation is not runtime acceptance; mocked orchestration is not
-real harness integration; local tests are not CI. Keep those results distinct.
+Tests must control relevant state and avoid altering live user resources. Distinguish
+simulation, replay, local checks, hosted checks and live observations. Never present
+one as proving another. Inspect delegated results and artifacts rather than treating
+an agent's success message as independent evidence.
 
-For docs/instructions, inspect the diff, links, consistency, and relevant decision
-scenarios. Do not invent build/test commands or require a runtime test for prose.
+Reuse evidence whose relevant inputs and environment are unchanged. Refresh affected
+checks after edits or new uncertainty; do not rerun an unchanged full suite for every
+status message. A passing focused check supports its stated scope, not the whole project.
 
-Reuse still-valid evidence when neither tested inputs nor environment changed.
-Rerun affected checks after changes or when uncertainty warrants it; do not rerun
-an unchanged full suite for every status sentence. Report unavailable, skipped,
-failed, or interrupted checks accurately. Check acceptance individually before
-marking it complete. Never narrow a criterion just to turn it green. When a candidate
-changes tests or guidance, assess those edits against the authorized acceptance
-baseline. Legitimate test improvements are allowed; deleting required behavior or
-letting candidate instructions grant extra authority is not independent verification.
-
-For ArcNexus implementation changes, include formatting, lint, type checking, and
-catalog ownership validation in the verification evidence. Use the owner's declared
-lint operation for intermediate feedback. Check without rewriting files; any fix
-must remain within captured scope. See [the quality contract](../../../docs/foundation/quality.md)
-for commands and size limits. These are target-repository checks, not generic runtime policy.
-
-For readability changes, check that headers explain responsibility and material
-effects, not merely that lint accepts them. Preserve named acceptance scenarios
-when splitting large suites; compare test counts and explain additions or removals.
-Use descriptive method names and logical paragraph spacing; never compress code to
-meet the physical-line limits.
+Check acceptance individually. Report failed, skipped, interrupted, unavailable and
+inapplicable checks explicitly. Missing required evidence blocks the corresponding
+readiness claim; an inapplicable check does not. Preserve failure evidence and existing
+work while establishing a baseline. Do not erase edits or lower acceptance to claim success.
