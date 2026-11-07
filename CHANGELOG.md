@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Wait for observed host readiness and preserve caller cancellation across task, workday, and delivery controls instead of failing slow startup after a fixed window (#285).
+
 - Resume settled promotion check failures without recreating tracking or assembly, retain actionable diagnostics, and release failed dependency-cache builds for ordinary retry (#319).
 
 - Use one assembled verification and correction loop for steward contributions and the task goal; reuse unchanged acceptance during publication, preserve ownership, and route peer feedback through existing requests (#312).
