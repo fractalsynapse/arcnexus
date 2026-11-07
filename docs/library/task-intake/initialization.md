@@ -200,6 +200,12 @@ is discarded and no execution quota is introduced. Each activation retains immut
 content hashes and its own artifact names. Read the current manifest and follow
 page offsets until the relevant artifact is complete.
 
+Catalog growth is qualified through this paged contract, not an aggregate prompt-size
+ceiling. The catalog index advertises every eligible owner and its artifact; full
+owner context is retrieved separately. Acceptance must demonstrate complete retrieval
+of large owner artifacts without mutating the captured catalog or inlining those
+artifacts into the index.
+
 ## Dependency retirement proposals
 
 A director result includes the required `dependencyRetirementProposal` field. It is
