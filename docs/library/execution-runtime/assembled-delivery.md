@@ -86,8 +86,10 @@ checked edits and safe checkpoints remain enforced. Mandatory final checks and
 independent review run on the assembled contribution set.
 
 A rejected assembly retains prepared owner contributions and its exact input set.
-The unchanged rejected set is not dispatched again. Correction reopens only the
-selected existing assignment; peers retain their checkpoints. Current assembly
+The unchanged rejected set waits for a new director decision. A ready decision
+requiring no more engineering admits one reassessment through the same assembled
+checks, preserving all owner checkpoints. Actual engineering corrections reopen
+only the selected existing assignment; peers retain their checkpoints. Current assembly
 findings drive correction, with historical evidence available when relevant rather
 than a requirement to reread every failed predecessor.
 
@@ -97,3 +99,7 @@ observations; they do not need every line of a successful log to establish its e
 status. Pin command metadata separately from SDK tool history, retain complete logs
 on demand, and use pagination to inspect relevant sections rather than requiring
 exhaustive reading. Missing required observations remain explicit gaps.
+
+Independent acceptance establishes engineering readiness for integration. Later
+publisher receipts remain required lifecycle outcomes, not prerequisites for
+starting publication. A ready assessment never claims those future operations ran.
