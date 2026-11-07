@@ -250,3 +250,13 @@ list. A result already present in the legacy command list appears once, correlat
 its retained log identity. Invocation identity, purpose and status remain visible; partial
 or interrupted output does not establish successful completion. All consumers read these
 logs through the same pinned evidence pages, with the existing private-path validation.
+
+## Promotion provenance through the shared reader
+
+Promotion retains its source-run identity in the authoritative store. The common
+execution evidence capture exposes that source's original assignments, plans,
+coordination and observations as labelled simulation provenance, through the same
+paged reader used for current live observations. Publication does not substitute a
+summary of earlier verdicts for their underlying evidence. Source observations
+retain their original run and environment; they never establish current-target
+checks or grant live authority. Unrelated runs remain inaccessible.
