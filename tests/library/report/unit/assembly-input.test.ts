@@ -11,8 +11,8 @@ import { registerSuite } from '../../../../dist/library/testing/suite.js';
 /** Captures real stored assembly observations through the canonical role-independent evidence path. */
 class AssemblyInputScenario {
   /** A director can inspect exact failing combined output without a new capability or caller retrieval. */
-  async run(t: TestContext): Promise<void> {
-    const f = this.fixture(t);
+  async run(t: TestContext, legacyCommand = true): Promise<void> {
+    const f = this.fixture(t, legacyCommand);
     const pages = new EvidencePages('direction.evidence');
     ExecutionEvidence.pin(
       f.root,
@@ -27,7 +27,9 @@ class AssemblyInputScenario {
     assert.deepEqual(data.findings, ['Missing behavior']);
     const record = await this.json(pages, assembly.record.artifact);
     const observations = await this.json(pages, record.observations.artifact);
+    assert.equal(observations.hostCommands.length, 1);
     const command = observations.hostCommands[0];
+    assert.equal(command.invocationStatus, 'failed');
     assert.equal(command.exitCode, 1);
     const output = await pages.call('direction.evidence', { artifact: command.output.artifact });
     assert.equal((output as any).content, 'precise combined failure\n');
@@ -42,14 +44,20 @@ class AssemblyInputScenario {
     return JSON.parse(((await pages.call('direction.evidence', { artifact })) as any).content);
   }
 
-  /** Retains one failed assembled check with real log bytes and authoritative run references. */
-  private fixture(t: TestContext) {
+  /** Creates an isolated coordination store and removes all retained fixture evidence after inspection. */
+  private storage(t: TestContext) {
     const root = mkdtempSync(join(tmpdir(), 'arcnexus-assembly-evidence-'));
     const store = new ExecutionStore(join(root, 'execution.sqlite'));
     t.after(() => {
       store.close();
       rmSync(root, { recursive: true, force: true });
     });
+    return { root, store };
+  }
+
+  /** Retains one failed assembled check with real log bytes and authoritative run references. */
+  private fixture(t: TestContext, legacyCommand: boolean) {
+    const { root, store } = this.storage(t);
     const run = store.createRun('task', ['owner'], 'Fix the combined failure');
     const item = store.enqueue(run.id, 'owner', 'Contribute behavior');
     const id = randomUUID();
@@ -57,6 +65,7 @@ class AssemblyInputScenario {
     mkdirSync(directory, { recursive: true });
     const log = join(directory, 'check.log');
     writeFileSync(log, 'precise combined failure\n');
+    const result = { command: 'node', args: ['check'], exitCode: 1, durationMs: 1, log };
     const record = {
       id,
       executionRunId: run.id,
@@ -65,7 +74,10 @@ class AssemblyInputScenario {
       assemblyAssignments: [{ id: item.id, owner: item.owner }],
       assemblyBase: 'baseline',
       assemblyFindings: ['Missing behavior'],
-      commands: [{ command: 'node', args: ['check'], exitCode: 1, durationMs: 1, log }],
+      commands: legacyCommand ? [result] : [],
+      operationInvocations: [
+        { id: 'failed-build', operationId: 'build', status: 'failed', purpose: 'setup', result },
+      ],
     };
     writeFileSync(join(directory, 'report.json'), JSON.stringify(record));
     store.updateRun(run.id, 'running', { lastAssembly: { recordId: id } });
@@ -75,5 +87,8 @@ class AssemblyInputScenario {
 
 test('canonical execution evidence exposes combined check failures and rejects foreign records', (t) =>
   new AssemblyInputScenario().run(t));
+
+test('canonical execution evidence exposes failed prerequisites absent from checkpoint commands', (t) =>
+  new AssemblyInputScenario().run(t, false));
 
 registerSuite({ component: 'report', level: 'unit', tags: ['deterministic'] });
