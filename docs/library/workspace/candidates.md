@@ -25,3 +25,17 @@ additional prohibition on editing that owned file. Such changes remain candidate
 proposals: the host continues using the run's captured architecture, permissions
 and acceptance until a new run captures approved authority. Existing supervisors
 and retained evidence are not rewritten (#252).
+
+## Retained continuation branches (#331)
+
+When verified staging advances, reconcile the owner's attributed changes against
+that candidate in a successor worktree cut from observed staging. Keep the previous
+branch, commits and unfinished worktree intact. The successor uses its own development
+branch; transferring the old branch name is unnecessary and can reject valid
+assembled publication history.
+
+A recorded preparation is reusable only when its completed report, workspace identity,
+settled operations and reconciled source match the retained transition. Recovery
+finishes that same transition without rerunning preparation. Incomplete or changed
+preparation remains blocked. Content conflicts retain both versions for owner
+correction; this does not authorize automatic conflict resolution or broader writes.
