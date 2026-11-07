@@ -27,8 +27,9 @@ class AssemblyInputScenario {
     assert.deepEqual(data.findings, ['Missing behavior']);
     const record = await this.json(pages, assembly.record.artifact);
     const observations = await this.json(pages, record.observations.artifact);
-    assert.equal(observations.hostCommands.length, 1);
-    const command = observations.hostCommands[0];
+    const commands = await this.json(pages, observations.hostCommands.artifact);
+    assert.equal(commands.length, 1);
+    const command = commands[0];
     assert.equal(command.invocationStatus, 'failed');
     assert.equal(command.exitCode, 1);
     const output = await pages.call('direction.evidence', { artifact: command.output.artifact });

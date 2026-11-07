@@ -54,6 +54,7 @@ class CoordinationEvidenceScenarios {
         ['activationInput', 'commands', 'operations', 'observations'],
         artifacts,
       );
+      this.sections(assignment.record.observations, ['hostCommands', 'timeline'], artifacts);
       assignment.verificationReports = assignment.verificationReports.map((reference: any) => {
         const review = JSON.parse(artifacts[reference.artifact]!);
         this.sections(review, ['observations'], artifacts);

@@ -184,7 +184,7 @@ export class EvidencePages {
     return {
       name: this.name,
       description:
-        'Read pinned host evidence. Start with artifact=manifest. Follow execution and assignment references directly for relevant evidence; artifact-index pages retain the full catalog when needed. Do not scan unrelated history. Follow nextOffset while a continuation is present; offsets and lengths count JavaScript string characters.',
+        'Read pinned host evidence. Start with artifact=manifest. Follow execution and assignment references directly for relevant evidence; artifact-index pages retain the full catalog when needed. Do not scan unrelated history. Use offset and length to inspect relevant sections, following nextOffset when more context is needed. A partial page does not invalidate separate trusted host completion records. Offsets and lengths count JavaScript string characters.',
       inputSchema: {
         type: 'object',
         properties: {

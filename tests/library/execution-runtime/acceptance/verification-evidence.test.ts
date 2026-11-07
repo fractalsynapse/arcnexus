@@ -195,7 +195,11 @@ class VerificationEvidenceScenarios {
   /** Follows the same named record and observation references advertised to the independent model. */
   private observations(trace: any, reference: { artifact: string }) {
     const record = JSON.parse(trace.artifacts[reference.artifact]);
-    return JSON.parse(trace.artifacts[record.observations.artifact]);
+    const observations = JSON.parse(trace.artifacts[record.observations.artifact]);
+    for (const field of ['hostCommands', 'timeline'])
+      if (observations[field]?.artifact)
+        observations[field] = JSON.parse(trace.artifacts[observations[field].artifact]);
+    return observations;
   }
 
   /** Pins a genuine investigation artifact in a same-run worker record before verification starts. */

@@ -69,22 +69,34 @@ export class ExecutionEvidence {
     return {
       ...intent,
       data: data && pages.addSections(prefix + ':data', data, ['proposal', 'directionContext']),
-      record:
-        record &&
-        pages.addSections(prefix + ':record', record, [
-          'activationInput',
-          'commands',
-          'operations',
-          'operationInvocations',
-          'plan',
-          'frozenTests',
-          'services',
-          'observations',
-        ]),
+      record: record && this.recordArtifacts(pages, prefix, record),
       verificationReports: verificationReports?.map((review, index) =>
         pages.addSections(prefix + ':review:' + index, review, ['observations']),
       ),
     };
+  }
+
+  /** Separates trusted command metadata from potentially large SDK histories in the same evidence catalog. */
+  private static recordArtifacts(
+    pages: EvidencePages,
+    prefix: string,
+    record: NonNullable<NonNullable<HostExecutionEvidence['assignments']>[number]['record']>,
+  ) {
+    const observations =
+      record.observations &&
+      pages.addSections(prefix + ':record:observations', record.observations, [
+        'hostCommands',
+        'timeline',
+      ]);
+    return pages.addSections(prefix + ':record', { ...record, observations }, [
+      'activationInput',
+      'commands',
+      'operations',
+      'operationInvocations',
+      'plan',
+      'frozenTests',
+      'services',
+    ]);
   }
 
   /** Pins complete logs separately so criterion inspection need not page through unrelated command output. */
