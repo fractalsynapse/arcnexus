@@ -40,6 +40,26 @@ class PublicationInputScenarios {
     await this.assertPublicationBundle(fixture, bundle, input);
   }
 
+  /** A resumed director reads the actual rejected proposal and error through the same pinned evidence. */
+  async admissionFailure(t: TestContext): Promise<void> {
+    const f = this.publicationFixture(t);
+    const decision = {
+      continuations: [{ assignmentId: 'prepared', replacementChangeType: 'documentation' }],
+    };
+    const error = 'Replacement requires a diagnosed assignment of the same owner and run';
+    f.store.updateRun(f.run.id, 'needs_attention', { error, directionHistory: [decision] });
+    f.store.updateRun(f.run.id, 'running');
+    const captured = new ExecutionEvidence(f.root, f.store).capture(f.run.id);
+    const pages = new EvidencePages('direction.evidence');
+    ExecutionEvidence.pin(f.root, f.run.id, pages, captured);
+    f.store.updateRun(f.run.id, 'needs_attention', { error: 'A later observation' });
+    const evidence = await this.artifact(pages, 'execution');
+    assert.equal(evidence.run.status, 'running');
+    assert.equal(evidence.run.retainedError, error);
+    assert.deepEqual(evidence.run.latestDirection, decision);
+    assert.equal(evidence.run.goalEvidence, undefined);
+  }
+
   /** Original engineering observations survive promotion through the actual shared capability. */
   async provenance(t: TestContext): Promise<void> {
     const f = this.publicationFixture(t);
@@ -250,5 +270,8 @@ test('missing and foreign caller observations remain explicit gaps', (t) =>
 
 test('publication exposes original promotion observations without changing their attribution', (t) =>
   scenarios.provenance(t));
+
+test('canonical direction evidence retains rejected proposals and errors across resume', (t) =>
+  scenarios.admissionFailure(t));
 
 registerSuite({ component: 'report', level: 'unit', tags: ['deterministic', 'evidence'] });
