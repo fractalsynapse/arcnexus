@@ -30,7 +30,9 @@ class ProgressTests {
     assert.equal(record.outcome, 'prepared_for_assembly');
     assert.equal(record.implementationAttempts, 1);
     assert.equal(record.plan.hostChecks[0].status, 'pending');
-    assert.ok(record.correctiveFeedback);
+    assert.equal(record.correctiveFeedback, undefined);
+    assert.ok(!record.commands.some((command: any) => command.stage === 'verification'));
+    assert.equal(record.finalVerifiedDigest, undefined);
   }
 
   /** Verifies that observable repeated failures diagnose a loop then stop unchanged dispatch. */

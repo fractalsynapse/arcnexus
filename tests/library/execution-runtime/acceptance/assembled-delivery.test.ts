@@ -279,12 +279,17 @@ class AssemblyScenarios {
     );
     const assembly = new AssembledDelivery(f.fixture.state, f.context, f.host.store);
     await assembly.advance(f.host.store.run(f.run.id), new AbortController().signal);
-    assert.ok(f.host.store.assignments(f.run.id).every((item) => item.status === 'failed'));
+    assert.ok(f.host.store.assignments(f.run.id).every((item) => item.status === 'prepared'));
     const run = f.host.store.run(f.run.id);
     assert.equal(run.data.candidateRevision, f.context.base);
     assert.equal(run.data.pendingAssembly, null);
     assert.match(String((run.data.lastAssembly as any).reason), /Assembled checks failed/);
+    assert.equal(new AssembledDelivery(f.fixture.state, f.context, f.host.store).ready(run), false);
     assert.ok(f.host.store.assignments(f.run.id).every((item) => item.evidence.length === 0));
+    const peer = f.host.store.assignment(f.regression.id);
+    await f.prepare(f.implementation, 'source.txt', 'assembled');
+    assert.deepEqual(f.host.store.assignment(f.regression.id), peer);
+    assert.equal(assembly.ready(f.host.store.run(f.run.id)), true);
   }
 
   /** Reuses a completed assessment after interruption immediately before atomic promotion. */

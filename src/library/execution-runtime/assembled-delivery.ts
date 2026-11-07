@@ -122,8 +122,6 @@ export class AssembledDelivery {
     record.assemblyFindings = finding;
     save(this.root, record);
     const reason = typeof finding === 'string' ? finding : JSON.stringify(finding);
-    for (const id of pending.assignments)
-      this.store.fail(id, 'failed', `Assembly ${pending.recordId}: ${reason}`);
     this.store.updateRun(run.id, this.store.run(run.id).status, {
       pendingAssembly: null,
       lastAssembly: { ...pending, reason },
@@ -133,7 +131,7 @@ export class AssembledDelivery {
   /** Tasks assemble all engineering obligations once; workdays retain independent bounded deliveries. */
   private group(run: ExecutionRun): ExecutionAssignment[] | undefined {
     const ready = this.store.contributionGroups(run.id).ready();
-    if (run.mode === 'workday') return ready[0];
+    if (run.mode === 'workday') return ready.find((group) => !this.rejected(run, group));
     const unfinished = this.store
       .requiredAssignments(run.id)
       .filter((item) => !item.data.replacedBy && item.status !== 'completed');
@@ -143,7 +141,24 @@ export class AssembledDelivery {
       unfinished.some((item) => !prepared.some((candidate) => candidate.id === item.id))
     )
       return undefined;
-    return prepared;
+    return this.rejected(run, prepared) ? undefined : prepared;
+  }
+
+  /** Suppresses only the exact rejected source set; a changed contribution permits new acceptance. */
+  private rejected(run: ExecutionRun, group: ExecutionAssignment[]): boolean {
+    const previous = run.data.lastAssembly as PendingAssembly | undefined;
+    return Boolean(
+      previous &&
+      previous.base === String(run.data.candidateRevision ?? this.context.base) &&
+      previous.assignments.length === group.length &&
+      group.every((item) => {
+        const index = previous.assignments.indexOf(item.id);
+        return (
+          index >= 0 &&
+          JSON.stringify(previous.contributions[index]) === JSON.stringify(item.data.contribution)
+        );
+      }),
+    );
   }
 
   /** Journals exact contributions before setup or model operations can produce uncertain side effects. */
@@ -226,7 +241,10 @@ export class AssembledDelivery {
       pending.contributions,
     );
     this.settleRecords(pending, record);
-    this.store.updateRun(run.id, this.store.run(run.id).status, { pendingAssembly: null });
+    this.store.updateRun(run.id, this.store.run(run.id).status, {
+      pendingAssembly: null,
+      lastAssembly: null,
+    });
   }
 
   /** Links each owner checkpoint to the accepted assembly without rewriting its original evidence. */

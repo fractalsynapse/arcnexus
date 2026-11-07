@@ -74,7 +74,7 @@ class ContinuationScenarios {
     writeFileSync(path, JSON.stringify({ ...operation, args: ['tests/baseline.cjs'] }));
   }
 
-  /** Checks distinct before/after characterization evidence and unchanged documentation. */
+  /** Retains pre-change characterization; assembled verification owns the post-change check. */
   private assertRefactor(record: RecordData): void {
     assert.equal(record.status, 'prepared');
     assert.equal(record.characterization, true);
@@ -82,8 +82,9 @@ class ContinuationScenarios {
     assert.ok(
       record.commands.some((c) => c.stage === 'characterization-before' && c.exitCode === 0),
     );
-    assert.ok(
-      record.commands.some((c) => c.stage === 'characterization-after' && c.exitCode === 0),
+    assert.equal(
+      record.commands.some((c) => c.stage === 'characterization-after'),
+      false,
     );
     assert.equal(readFileSync(join(record.workspace, 'docs/behavior.md'), 'utf8'), 'Before');
   }

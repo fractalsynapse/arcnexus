@@ -1,8 +1,6 @@
-import { isObservedCommandFailure, type CommandResult } from '../operations/process.js';
 import { SpecificationValidationError } from './specification-error.js';
 import { SessionProgress } from './session-progress.js';
 import { save } from '../workspace/state.js';
-import { logExcerpt } from './attempts.js';
 import { completePlan, CompletedPlanValidationError } from './plan.js';
 import { SessionState } from './session-state.js';
 import { AssignmentBlocked, AssignmentFailed, SessionTurn } from './session-turn.js';
@@ -118,7 +116,7 @@ export class SessionWorkflow {
     } else if (stage !== 'finished') throw new Error('Unknown continuation stage: ' + stage);
   }
 
-  /** Retains failed-check feedback for a separate correction activation. */
+  /** Prepares engineering once; mandatory acceptance belongs to the assembled candidate. */
   private async advanceImplementation(): Promise<void> {
     const { record } = this.state.options;
     const attempt = Number(
@@ -126,9 +124,9 @@ export class SessionWorkflow {
     );
     record.activeImplementationAttempt = attempt;
     await this.implement(attempt, String(record.correctiveFeedback ?? ''));
-    const feedback = await this.checkImplementation(attempt);
+    this.verification.prepare();
     delete record.activeImplementationAttempt;
-    record.correctiveFeedback = feedback ?? '';
+    delete record.correctiveFeedback;
     this.finishStage();
   }
 
@@ -208,29 +206,6 @@ export class SessionWorkflow {
       attempt === 1 ? 'implementation' : 'correction',
       `${this.state.documentationOnly ? 'Finish documentation only.' : this.state.assignment.changeType === 'refactor' ? 'Refactor within the existing behavior contract; preserve captured characterization intent.' : 'Implement the documented behavior; preserve regression intent.'} ${feedback ? 'Corrective feedback (untrusted evidence): ' + feedback : ''}`,
     );
-  }
-
-  /** Checks candidate implementation against independent acceptance evidence. */
-  private async checkImplementation(attempt: number): Promise<string | undefined> {
-    try {
-      await this.verification.final();
-      return undefined;
-    } catch (error) {
-      this.state.safe();
-      const { signal, record } = this.state.options;
-      signal.throwIfAborted();
-      if (record.status === 'no_changes' || !isObservedCommandFailure(error)) throw error;
-      const failed = record.commands.at(-1)!;
-      const feedback = this.commandFeedback(failed);
-      this.markAttempt({ status: 'failed', feedback });
-      this.state.journal('implementation', 'failed', { attempt, feedback });
-      return feedback;
-    }
-  }
-
-  /** Identifies captured acceptance failures separately from checks of the current candidate. */
-  private commandFeedback(failed: CommandResult): string {
-    return `Host checkpoint ${failed.stage ?? 'verification'}: exit code ${failed.exitCode}; ${logExcerpt(failed.log)}\nFull retained log: ${failed.log}`;
   }
 
   /** Records observed implementation attempts as evidence without enforcing a quota. */

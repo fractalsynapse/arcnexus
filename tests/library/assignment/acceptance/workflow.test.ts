@@ -51,8 +51,8 @@ class WorkflowTests {
     assert.notEqual(JSON.parse(r.stdout).status, 'completed');
   }
 
-  /** Late failure diagnostics and their complete log survive the engineering handoff. */
-  retainsLateFailure(t: TestContext): void {
+  /** Preparation does not run a final check even when that check would emit a late failure. */
+  defersFinalFailure(t: TestContext): void {
     const f = workflowFixture(t, 'repair');
     const verify = join(f.repo, 'verify.cjs');
     const original = readFileSync(verify, 'utf8');
@@ -72,12 +72,12 @@ class WorkflowTests {
       .map((line) => JSON.parse(line));
     assert.ok(!calls.some((call) => call.stage === 'correction'));
     const record = JSON.parse(result.stdout);
-    assert.match(record.correctiveFeedback, /LATE_ACTUAL_FAILURE/);
-    assert.match(record.correctiveFeedback, /Full retained log:/);
+    assert.equal(record.correctiveFeedback, undefined);
+    assert.ok(!record.commands.some((command: any) => command.stage === 'verification'));
     assert.equal(record.status, 'prepared');
   }
 
-  /** Keeps failed owner checks and usage for the single assembled correction loop. */
+  /** Keeps expected-red evidence and usage without claiming final acceptance. */
   retainsPreparedFailure(t: TestContext): void {
     const f = workflowFixture(t, 'repair');
     const result = f.run();
@@ -87,7 +87,7 @@ class WorkflowTests {
     assert.equal(record.implementationAttempts, 1);
     assert.equal(record.usage.input_tokens, 30);
     assert.ok(record.commands.some((command: any) => command.exitCode !== 0));
-    assert.ok(record.correctiveFeedback);
+    assert.equal(record.correctiveFeedback, undefined);
     assert.equal(record.plan.hostChecks[0].status, 'pending');
     assert.ok(record.frozenTests.length);
   }
@@ -295,8 +295,8 @@ test('candidate guidance cannot authorize edits outside captured scope', (t: any
 test('corrected worker regression retains original failure evidence', (t) =>
   suite.correctedRegressionRetainsEvidence(t));
 
-test('late host diagnostics survive preparation for assembled correction', (t) =>
-  suite.retainsLateFailure(t));
+test('final host checks are deferred to assembled correction', (t) =>
+  suite.defersFinalFailure(t));
 
 registerSuite({
   component: 'assignment',

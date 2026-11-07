@@ -315,7 +315,9 @@ export class ProjectHost {
       await this.dispatchAssignment(run, signal);
       return;
     }
-    if (run.mode === 'workday') await this.stewardship(run, signal);
+    if (run.mode === 'workday' && run.data.lastAssembly && !ready.length)
+      await this.redirect(run, run.data.lastAssembly, true, signal);
+    else if (run.mode === 'workday') await this.stewardship(run, signal);
     else await this.finishTask(run, signal);
   }
 
@@ -390,7 +392,7 @@ export class ProjectHost {
     if (assignments.some((a) => this.store.effective(a.id).status !== 'completed'))
       return this.redirect(
         run,
-        { error: 'Goal has undelivered assignments', assignments },
+        { error: 'Goal has undelivered assignments', assembly: run.data.lastAssembly, assignments },
         true,
         signal,
       );
