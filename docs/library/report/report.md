@@ -239,6 +239,13 @@ remain separate from host execution receipts, verified acceptance and worker cla
 they do not qualify changed candidate bytes. Missing historical input is an explicit
 evidence gap, and foreign run identities cannot provide input for the current run.
 
+Caller observations have a directly advertised `execution-caller-observations` page
+in the same evidence capability. The execution summary references that page instead
+of repeating the growing caller transcript. Reviewers inspect it before declaring
+external qualification missing, retain its attribution, and compare tested source
+content and environment with the candidate being assessed. A new assembly commit
+with identical source content does not by itself invalidate observed tests.
+
 Evidence pages use JavaScript character offsets. A terminal page has no continuation
 offset; callers can follow each returned continuation and stop without repeating an
 empty terminal page. Content hashes, artifact identity and exact concatenation across
