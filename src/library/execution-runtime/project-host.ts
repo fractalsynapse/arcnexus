@@ -431,9 +431,10 @@ export class ProjectHost {
     this.observeGoalFailure(run, feedback);
     const record = await this.workspaces(run).policy(run, signal);
     const dispatch = new AssignmentDispatch(this.root, this.context, this.store);
+    const state = dispatch.state(run.id);
     const result = await this.workspaces(run)
       .direction(run, signal)
-      .reconsider(record, run.objective, dispatch.state(run.id), feedback, blocked);
+      .reconsider(record, run.objective, state, feedback, blocked);
     if (signal.aborted) return;
     this.store.updateRun(run.id, this.store.run(run.id).status, {
       redirection: feedback,

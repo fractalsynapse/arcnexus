@@ -1,3 +1,4 @@
+import { AssignmentDispatch } from '../../../../dist/library/execution-runtime/assignment-dispatch.js';
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -103,6 +104,19 @@ class ReconciledContinuationScenarios {
     assert.equal(JSON.stringify(record), retained);
   }
 
+  /** Planning reads the completed transition rather than recommending a restart from stale state. */
+  async direction(t: TestContext): Promise<void> {
+    const { f, host, record, next, assignment } = await this.fixture(t);
+    const dispatch = new AssignmentDispatch(f.state, host.context, host.store);
+    const state = dispatch.state(assignment.runId).find((item) => item.id === assignment.id)!;
+    assert.equal(state.data.reconciliation, null);
+    const retained = JSON.parse(
+      readFileSync(join(f.state, 'runs', record.id, 'report.json'), 'utf8'),
+    );
+    assert.equal(retained.workspace, next.workspace);
+    assert.equal(retained.reconciliationId, next.id);
+  }
+
   /** A preparation interruption stays uncertain and cannot dispatch or replay setup. */
   async interrupted(t: TestContext): Promise<void> {
     const { f, host, record, next, assignment } = await this.fixture(t);
@@ -113,6 +127,8 @@ class ReconciledContinuationScenarios {
       () => new ReconciledContinuation(f.state, host.store).recover(assignment, record),
       /uncertain workspace preparation/,
     );
+    const state = new AssignmentDispatch(f.state, host.context, host.store).state(assignment.runId);
+    assert.ok(state.find((item) => item.id === assignment.id)!.data.reconciliation);
     assert.equal(record.workspace, originalWorkspace);
     assert.ok(host.store.assignment(assignment.id).data.reconciliation);
   }
@@ -141,6 +157,9 @@ test('changed reconciliation source cannot replace its checkpoint', (t) => scena
 
 test('durably adopted reconciliation only acknowledges its pending store transition', (t) =>
   scenarios.acknowledgement(t));
+
+test('director state settles completed preparation before evidence capture', (t) =>
+  scenarios.direction(t));
 
 registerSuite({
   component: 'execution-runtime',
