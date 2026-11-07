@@ -5,7 +5,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { ExecutionStore } from '../../../../dist/library/coordination-store/execution-store.js';
-import { dependencySatisfied } from '../../../../dist/library/coordination-store/execution-types.js';
+import {
+  dependencySatisfied,
+  type PreparedContribution,
+} from '../../../../dist/library/coordination-store/execution-types.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises actual SQLite contribution transitions without assuming that prepared source is accepted. */
@@ -71,24 +74,49 @@ class ContributionScenarios {
     assert.deepEqual(f.store.contributionGroups(f.run.id).ready(), []);
   }
 
-  /** Prepared work stays settled until observed failure makes ordinary correction necessary. */
+  /** New director findings reopen only the selected unaccepted contribution without fabricating failure. */
   settled(t: TestContext): void {
     const f = new ContributionFixture(t);
     const contribution = f.prepare(f.tests.id);
+    const implementation = f.prepare(f.implementation.id);
+    f.store.updateAssignment(f.tests.id, 'prepared', {
+      lastReceipt: 'prepared-receipt',
+      lastFailedOutcome: { receipt: 'older-failure' },
+    });
+    const before = f.store.assignment(f.tests.id);
     const continuation = {
       assignmentId: f.tests.id,
       ownerId: 'tests',
-      reason: 'Await combined verification',
+      reason: 'Caller review observed a missing assertion before assembly',
     };
-    assert.throws(
-      () => f.store.admitDirection(f.run.id, [], [continuation], {}),
-      /Invalid retained assignment continuation/,
-    );
-    assert.equal(f.store.assignment(f.tests.id).status, 'prepared');
-    assert.deepEqual(f.store.assignment(f.tests.id).data.contribution, contribution);
-    f.store.fail(f.tests.id, 'failed', 'Observed combined deficiency');
     f.store.admitDirection(f.run.id, [], [continuation], {});
-    assert.equal(f.store.assignment(f.tests.id).status, 'ready');
+    const after = f.store.assignment(f.tests.id);
+    assert.equal(after.status, 'ready');
+    assert.equal(after.objective, before.objective);
+    assert.deepEqual(after.acceptance, before.acceptance);
+    assert.deepEqual(after.data.contribution, contribution);
+    assert.equal(after.data.lastReceipt, 'prepared-receipt');
+    assert.equal(f.store.assignment(f.implementation.id).status, 'prepared');
+    this.rejectsStalePrepared(f, implementation, contribution);
+  }
+
+  /** Earlier assembled acceptance cannot promote source whose contribution was reopened. */
+  private rejectsStalePrepared(
+    f: ContributionFixture,
+    implementation: PreparedContribution,
+    contribution: PreparedContribution,
+  ): void {
+    assert.throws(
+      () =>
+        f.store.completeAssembly(
+          [f.implementation.id, f.tests.id],
+          ['stale review'],
+          { candidateRevision: 'assembled', assemblyBase: 'original' },
+          [implementation, contribution],
+        ),
+      /changed after verification/,
+    );
+    assert.equal(f.candidate(), 'original');
   }
 
   /** Correlated feedback reopens only its prepared supplier and preserves accepted scope on retries. */
@@ -241,7 +269,7 @@ test('five nested contributions with shared owners form one atomic delivery', (t
 test('external obligations block assembly without starving unrelated work', (t) =>
   scenarios.external(t));
 
-test('prepared contributions cannot restart before an observed correction', (t) =>
+test('director feedback reopens prepared work while preserving peers and invalidating stale acceptance', (t) =>
   scenarios.settled(t));
 
 test('existing request feedback preserves scope and does not replay on retry', (t) =>

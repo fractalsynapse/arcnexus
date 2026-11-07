@@ -7,10 +7,15 @@ import {
   executionIdentity,
 } from '../../../../dist/library/architecture/execution-context.js';
 import { digest } from '../../../../dist/library/architecture/assignment.js';
-import type { ExecutionAssignment } from '../../../../dist/library/coordination-store/execution-types.js';
+import type {
+  ExecutionAssignment,
+  PreparedContribution,
+} from '../../../../dist/library/coordination-store/execution-types.js';
 import { DeliveryStore } from '../../../../dist/library/coordination-store/delivery-store.js';
 import { DeliveryChecks, Publisher } from '../../../../dist/library/publisher/publisher.js';
 import { AssembledDelivery } from '../../../../dist/library/execution-runtime/assembled-delivery.js';
+import { AssignmentDispatch } from '../../../../dist/library/execution-runtime/assignment-dispatch.js';
+import type { DirectorResult } from '../../../../dist/library/task-intake/direction.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import { candidateDigest } from '../../../../dist/library/change-inspection/changes.js';
 import { DeliveryEvidence } from '../../../../dist/library/report/report.js';
@@ -137,6 +142,65 @@ class AssemblyFixture {
 
 /** Qualifies the assembled boundary through built runtime, SQLite, native operations and independent review wiring. */
 class AssemblyScenarios {
+  /** Director findings resume validated preparation without rewriting peers or permitting stale checkpoints. */
+  async correctsPrepared(t: TestContext): Promise<void> {
+    const f = new AssemblyFixture(t, 'task');
+    const record = await f.prepare(f.implementation, 'source.txt', 'unfinished');
+    await f.prepare(f.regression, 'b/regression.cjs', '// retained peer');
+    const peer = f.host.store.assignment(f.regression.id);
+    const dispatch = new AssignmentDispatch(f.fixture.state, f.context, f.host.store);
+    const result = this.correction(f.implementation, 'Caller observed a missing behavior');
+    dispatch.apply(f.host.store.run(f.run.id), result);
+    assert.equal(f.host.store.assignment(f.implementation.id).status, 'ready');
+    assert.deepEqual(f.host.store.assignment(f.regression.id), peer);
+    assert.equal(f.host.store.run(f.run.id).data.candidateRevision, f.context.base);
+    assert.equal(
+      new AssembledDelivery(f.fixture.state, f.context, f.host.store).ready(f.run),
+      false,
+    );
+    const retained = JSON.parse(
+      readFileSync(join(f.fixture.state, 'runs', record.id, 'report.json'), 'utf8'),
+    );
+    assert.equal(retained.continuationLoopWarning, undefined);
+    this.rejectsChangedCheckpoint(f, record, dispatch);
+  }
+
+  /** A fresh finding cannot override changed checkpoint evidence or mutate scheduling on rejection. */
+  private rejectsChangedCheckpoint(
+    f: AssemblyFixture,
+    record: RecordData,
+    dispatch: AssignmentDispatch,
+  ): void {
+    const contribution = f.host.store.assignment(f.implementation.id).data.contribution;
+    f.host.store.prepareContribution(f.implementation.id, contribution as PreparedContribution);
+    writeFileSync((record.checkpoint as { path: string }).path, 'corrupt evidence');
+    assert.throws(
+      () =>
+        dispatch.apply(
+          f.host.store.run(f.run.id),
+          this.correction(f.implementation, 'Another finding'),
+        ),
+      /Checkpoint evidence changed/,
+    );
+    assert.equal(f.host.store.assignment(f.implementation.id).status, 'prepared');
+  }
+
+  /** Supplies a normal continuation proposal without changing the owner's accepted scope. */
+  private correction(item: ExecutionAssignment, reason: string): DirectorResult {
+    return {
+      status: 'ready',
+      summary: reason,
+      selectedOwners: [],
+      rejectedOwners: [],
+      questions: [],
+      assignments: [],
+      dependency: null,
+      architectureProposal: null,
+      continuations: [{ assignmentId: item.id, ownerId: item.owner, reason }],
+      dependencyRetirementProposal: null,
+    };
+  }
+
   /** One independent assessment accepts the assembled task goal and both contributions together. */
   async task(t: TestContext): Promise<void> {
     const f = new AssemblyFixture(t, 'task');
@@ -297,6 +361,9 @@ class AssemblyScenarios {
 }
 
 const scenarios = new AssemblyScenarios();
+
+test('director correction resumes prepared checkpoints without losing peers or weakening validation', (t) =>
+  scenarios.correctsPrepared(t));
 
 test('completed assembly recovery never repeats its independent model assessment', (t) =>
   scenarios.recovers(t));

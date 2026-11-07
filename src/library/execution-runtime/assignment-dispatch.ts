@@ -8,6 +8,7 @@ import { validateCheckpoint } from '../assignment/steward.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import {
   canContinueAssignment,
+  canReopenAssignment,
   type ExecutionRun,
   type ExecutionAssignment,
 } from '../coordination-store/execution-types.js';
@@ -195,6 +196,7 @@ export class AssignmentDispatch {
     purpose: 'resume' | 'retain' = 'resume',
   ): void {
     if (!assignment.data.recordId) {
+      if (assignment.status === 'prepared') throw new Error('Prepared work requires a checkpoint');
       if (assignment.data.reconciliation)
         throw new Error('Checkpoint has uncertain workspace preparation');
       return;
@@ -209,7 +211,8 @@ export class AssignmentDispatch {
     if (pending && pending.recordId !== record.reconciliationId)
       throw new Error('Continuation has uncertain workspace preparation');
     validateCheckpoint(this.root, record, purpose);
-    if (assignment.status !== 'ready' && !changedObligation) this.diagnose(record, assignment);
+    if (canReopenAssignment(assignment.status) && !changedObligation)
+      this.diagnose(record, assignment);
   }
 
   /** Rechecks a proposed fresh workflow against the original owner and all original criteria. */

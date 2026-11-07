@@ -69,7 +69,14 @@ export class DirectionEvidence {
         eligible: false,
         reason: 'Assignment cannot reopen from its current lifecycle state',
       };
-    if (!record) return { eligible: true, reason: 'No activation has started' };
+    if (!record)
+      return {
+        eligible: assignment.status !== 'prepared',
+        reason:
+          assignment.status === 'prepared'
+            ? 'Prepared work requires a checkpoint'
+            : 'No activation has started',
+      };
     try {
       const pending = assignment.data.reconciliation as { recordId: string } | null;
       if (pending && pending.recordId !== record.reconciliationId)

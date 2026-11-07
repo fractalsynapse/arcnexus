@@ -46,9 +46,9 @@ export function canReopenAssignment(status: AssignmentStatus): boolean {
   return status === 'failed' || status === 'blocked' || status === 'rejected';
 }
 
-/** Ready or waiting checkpointed work can receive direction without dropping its dependencies. */
+/** Unaccepted checkpointed work can receive direction without dropping its dependencies. */
 export function canContinueAssignment(status: AssignmentStatus): boolean {
-  return status === 'ready' || status === 'waiting' || canReopenAssignment(status);
+  return ['ready', 'waiting', 'prepared'].includes(status) || canReopenAssignment(status);
 }
 
 export interface ExecutionRun {
