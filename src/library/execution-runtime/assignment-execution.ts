@@ -1,14 +1,11 @@
+import { ConflictCorrection } from './conflict-correction.js';
+import { ReconciledContinuation } from './reconciled-continuation.js';
 import { developmentBase } from './development-base.js';
 import { VerificationBaseline } from './verification-baseline.js';
 import { assignmentIntent } from './assignment-intent.js';
 import { RequestAdmission } from './request-admission.js';
 import type { UpstreamBridge } from '../operations/upstream-bridge.js';
-import {
-  AssignmentRegistry,
-  DeliveryEvidence,
-  ExecutionEvidence,
-  RecoveryEvidence,
-} from '../report/report.js';
+import { DeliveryEvidence, ExecutionEvidence, RecoveryEvidence } from '../report/report.js';
 import { candidateDigest } from '../change-inspection/changes.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -21,11 +18,7 @@ import type {
   ExecutionAssignment,
 } from '../coordination-store/execution-types.js';
 import { CandidateSnapshots } from '../workspace/candidates.js';
-import {
-  continueDevelopmentBranch,
-  createWorkspace,
-  prepareWorkspace,
-} from '../workspace/workspace.js';
+import { createWorkspace, prepareWorkspace } from '../workspace/workspace.js';
 import { save, type RecordData } from '../workspace/state.js';
 import { ProgressObserver } from '../report/progress.js';
 import { Direction, VerificationIssue } from '../task-intake/direction.js';
@@ -80,7 +73,11 @@ export class AssignmentExecution {
 
   /** Ensures fresh direction reaches a model even when engineering finished before delivery review. */
   private feedback(assignment: ExecutionAssignment, record: RecordData): void {
-    const feedback = [assignment.data.continuationReason, record.continuationLoopWarning]
+    const feedback = [
+      assignment.data.continuationReason,
+      record.continuationLoopWarning,
+      ConflictCorrection.feedback(record),
+    ]
       .filter(Boolean)
       .join('\n');
     if (feedback && feedback !== record.continuationFeedback && record.nextStage === 'finished') {
@@ -108,13 +105,9 @@ export class AssignmentExecution {
     );
   }
 
-  /** Supplies intent discovery to engineers and private retained evidence only to read-only investigations. */
+  /** Supplies the same read-only intent, diagnostics and edit evidence to every assignment kind. */
   private investigation(assignment: ExecutionAssignment, record: RecordData) {
-    const resolved = record.resolvedAssignment as ResolvedAssignment;
-    const pages =
-      resolved.assignment.kind === 'change'
-        ? new AssignmentRegistry(this.store, this.root).capture(assignment)
-        : new RecoveryEvidence(this.root, this.store).capture(assignment);
+    const pages = new RecoveryEvidence(this.root, this.store).capture(assignment);
     record.investigationEvidence = pages.retain(join(this.root, 'runs', record.id), {
       runId: assignment.runId,
       assignmentId: assignment.id,
@@ -321,26 +314,10 @@ export class AssignmentExecution {
     if (record.base === current) return record;
     const incoming = this.snapshots.capture(record.workspace, record.base);
     const merged = this.snapshots.reconcile(record.base, current, incoming);
-    if (merged.status !== 'merged') throw new Error('Candidate conflict: ' + merged.evidence);
+    if (merged.status === 'conflict')
+      ConflictCorrection.capture(this.context, assignment.owner, record, merged);
     const next = await this.materialize(assignment, record, current, merged.revision);
-    record.previousWorkspaces = [
-      ...((record.previousWorkspaces ?? []) as string[]),
-      record.workspace,
-    ];
-    Object.assign(record, {
-      workspace: next.workspace,
-      branch: next.branch,
-      branchBase: record.branchBase ?? next.branchBase,
-      members: next.members,
-      materializationBinding: next.materializationBinding,
-      base: current,
-    });
-    delete record.developmentHead;
-    if (record.nextStage === 'finished') record.nextStage = 'implementation';
-    record.reconciledCandidateDigest = candidateDigest(record);
-    record.reconciliationId = next.id;
-    save(this.root, record);
-    this.store.updateAssignment(assignment.id, 'running', { reconciliation: null });
+    new ReconciledContinuation(this.root, this.store).complete(assignment, record, next);
     return record;
   }
 
@@ -357,12 +334,12 @@ export class AssignmentExecution {
     next.assignmentId = assignment.id;
     next.executionRunId = assignment.runId;
     next.executionEnvironment = record.executionEnvironment;
+    next.reconciliationConflict = record.reconciliationConflict;
     this.store.updateAssignment(assignment.id, 'running', {
       reconciliation: { recordId: next.id, workspace: next.workspace, current, revision },
     });
     await prepareWorkspace(this.root, next, this.signal);
     this.snapshots.apply(next.workspace, current, revision);
-    continueDevelopmentBranch(record, next);
     save(this.root, next);
     return next;
   }
@@ -393,6 +370,7 @@ export class AssignmentExecution {
 
   /** Pins a settled owner checkpoint as unverified source for the ordinary scheduler to retain. */
   private prepareContribution(record: RecordData): ActivationResult {
+    ConflictCorrection.assertResolved(record);
     return {
       kind: 'prepared',
       contribution: {

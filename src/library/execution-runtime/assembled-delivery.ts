@@ -14,7 +14,7 @@ import { DeliveryChecks } from '../publisher/publisher.js';
 import { save, type RecordData } from '../workspace/state.js';
 import { VerificationIssue } from '../task-intake/direction.js';
 import { VerificationBaseline } from './verification-baseline.js';
-import { ContributionSnapshots } from './contribution-snapshots.js';
+import { ContributionConflict, ContributionSnapshots } from './contribution-snapshots.js';
 
 interface PendingAssembly {
   base: string;
@@ -155,7 +155,8 @@ export class AssembledDelivery {
 
   /** Suppresses only the exact rejected source set; a changed contribution permits new acceptance. */
   private rejected(run: ExecutionRun, group: ExecutionAssignment[]): boolean {
-    const previous = run.data.lastAssembly as PendingAssembly | undefined;
+    const previous = run.data.lastAssembly as
+      Pick<PendingAssembly, 'base' | 'assignments' | 'contributions'> | undefined;
     return Boolean(
       !run.data.assemblyRetry &&
       previous &&
@@ -178,7 +179,27 @@ export class AssembledDelivery {
     const contributions = group.map((item) => item.data.contribution as PreparedContribution);
     group.forEach((item, index) => this.contribution(item, contributions[index]!));
     const base = String(run.data.candidateRevision ?? this.context.base);
-    const head = new ContributionSnapshots(this.root, this.context).assemble(base, group);
+    const head = this.reconcile(run, base, group, contributions);
+    if (!head) return undefined;
+    const record = this.assemblyRecord(run, base, head, group);
+    const pending = {
+      base,
+      head,
+      recordId: record.id,
+      assignments: group.map((item) => item.id),
+      contributions,
+    };
+    this.store.updateRun(run.id, run.status, { pendingAssembly: pending, assemblyRetry: false });
+    return pending;
+  }
+
+  /** Creates the sole check record only after all attributed source reconciles successfully. */
+  private assemblyRecord(
+    run: ExecutionRun,
+    base: string,
+    head: string,
+    group: ExecutionAssignment[],
+  ): RecordData {
     const record = new DeliveryChecks(this.root, this.context, run, group).record(head);
     record.assemblyBase = base;
     const baseline: RecordData = { ...record, base };
@@ -192,15 +213,32 @@ export class AssembledDelivery {
       acceptance: item.acceptance,
     }));
     save(this.root, record);
-    const pending = {
-      base,
-      head,
-      recordId: record.id,
-      assignments: group.map((item) => item.id),
-      contributions,
-    };
-    this.store.updateRun(run.id, run.status, { pendingAssembly: pending, assemblyRetry: false });
-    return pending;
+    return record;
+  }
+
+  /** Retains known source conflicts as rejected inputs so ordinary direction selects the correcting owner. */
+  private reconcile(
+    run: ExecutionRun,
+    base: string,
+    group: ExecutionAssignment[],
+    contributions: PreparedContribution[],
+  ): string | undefined {
+    try {
+      return new ContributionSnapshots(this.root, this.context).assemble(base, group);
+    } catch (error) {
+      if (!(error instanceof ContributionConflict)) throw error;
+      this.store.updateRun(run.id, this.store.run(run.id).status, {
+        assemblyRetry: false,
+        lastAssembly: {
+          base,
+          assignments: group.map((item) => item.id),
+          contributions,
+          reason: error.message,
+          conflict: { assignmentId: error.assignmentId, owner: error.owner, ...error.conflict },
+        },
+      });
+      return undefined;
+    }
   }
 
   /** Verifies that a prepared snapshot still belongs to the settled owner checkpoint being assembled. */

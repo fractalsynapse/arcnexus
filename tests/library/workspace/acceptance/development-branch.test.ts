@@ -4,7 +4,6 @@ import { join } from 'node:path';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import {
   assertIdentity,
-  continueDevelopmentBranch,
   createWorkspace,
   prepareWorkspace,
 } from '../../../../dist/library/workspace/workspace.js';
@@ -38,7 +37,7 @@ test('each steward branch starts at observed staging and retains verified candid
   assert.equal(existsSync(stale.workspace), false);
 });
 
-test('a verified dependency preserves the steward branch and the previous unfinished worktree', async (t) => {
+test('a verified dependency uses a successor branch and preserves unfinished owner work', async (t) => {
   const f = fixture(t);
   mkdirSync(join(f.state, 'runs'), { recursive: true });
   const first = createWorkspace(f.state, { project: f.repo });
@@ -52,9 +51,9 @@ test('a verified dependency preserves the steward branch and the previous unfini
   for (const record of [first, next])
     Object.assign(record, { executionRunId: 'run', assignmentId: 'owner-assignment' });
   writeFileSync(join(next.workspace, 'source.txt'), 'reconciled edit');
-  continueDevelopmentBranch(first, next);
-  assert.equal(next.branch, ownBranch);
-  assert.equal(f.git('rev-parse', ownBranch), next.base);
+  assert.notEqual(next.branch, ownBranch);
+  assert.equal(f.git('rev-parse', ownBranch), first.base);
+  assert.equal(f.git('rev-parse', next.branch), next.base);
   assert.equal(readFileSync(join(first.workspace, 'source.txt'), 'utf8'), 'unfinished edit');
   assert.equal(readFileSync(join(next.workspace, 'source.txt'), 'utf8'), 'reconciled edit');
 });
@@ -77,8 +76,7 @@ test('a published steward branch can continue without losing its archived eviden
   await prepareWorkspace(f.state, next, new AbortController().signal);
   for (const record of [first, next])
     Object.assign(record, { executionRunId: 'run', assignmentId: 'owner-assignment' });
-  continueDevelopmentBranch(first, next);
-  assert.equal(next.branch, first.branch);
+  assert.notEqual(next.branch, first.branch);
   assert.equal(f.git('rev-parse', first.branch), published);
   assert.equal(readFileSync(join(first.workspace, 'source.txt'), 'utf8'), 'verified edit');
   assertIdentity(next);

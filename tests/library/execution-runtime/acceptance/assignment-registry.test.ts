@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test as nodeTest, type TestContext } from 'node:test';
@@ -7,6 +7,7 @@ import { ExecutionContext } from '../../../../dist/library/architecture/executio
 import { AssignmentExecution } from '../../../../dist/library/execution-runtime/assignment-execution.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import { ExecutionStore } from '../../../../dist/library/coordination-store/execution-store.js';
+import { CheckedEdits } from '../../../../dist/library/workspace/checked-edits.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import {
   GeneralFixture,
@@ -86,6 +87,46 @@ class AssignmentRegistryScenario {
     assert.equal(continued.diagnostic.combinedOutput, 'stdout from failed command\nstderr details');
   }
 
+  /** Every assignment kind retrieves its own original bytes through the actual session evidence binding. */
+  async ownEdits(t: TestContext, kind: string): Promise<void> {
+    const prepared = this.diagnosticAssignment(t);
+    const record = this.retainedRecord(prepared.f, prepared.assignment, prepared.recordId);
+    record.resolvedAssignment.assignment.kind = kind;
+    const before = this.retainedEdit(prepared);
+    const { pages, manifest } = await this.assignmentEvidence(prepared, record);
+    assert.ok(manifest.records.some((item: any) => item.assignmentId === prepared.assignment.id));
+    const index = await this.pageJson(pages, prepared.assignment.id + ':edit-index');
+    assert.deepEqual(index.files, ['owned-update.json']);
+    const journal = await this.pageJson(pages, prepared.assignment.id + ':edit:' + index.files[0]);
+    assert.equal(journal.status, 'committed');
+    assert.equal(Buffer.from(journal.changes[0].before, 'base64').toString(), before);
+    assert.equal(Buffer.from(journal.changes[0].after, 'base64').toString(), 'Truncated');
+    assert.equal(readFileSync(join(prepared.f.repo, 'owned.md'), 'utf8'), 'Truncated');
+  }
+
+  /** Produces the journal through the real checked edit transaction, outside the editable source. */
+  private retainedEdit(prepared: ReturnType<AssignmentRegistryScenario['diagnosticAssignment']>) {
+    const before = 'Original documentation Ω\n'.repeat(2000);
+    writeFileSync(join(prepared.f.repo, 'owned.md'), before);
+    new CheckedEdits(
+      prepared.f.repo,
+      join(prepared.f.state, 'runs', prepared.recordId, 'checked-edits'),
+      'captured-owner-authority',
+      (path) => assert.equal(path, 'owned.md'),
+    ).apply({
+      id: 'owned-update',
+      changes: [
+        {
+          path: 'owned.md',
+          operation: 'update',
+          expectedSha256: createHash('sha256').update(before).digest('hex'),
+          content: 'Truncated',
+        },
+      ],
+    });
+    return before;
+  }
+
   /** Reads the session's assignment capability and confirms caller references cannot expand it. */
   private async assignmentEvidence(
     prepared: ReturnType<AssignmentRegistryScenario['diagnosticAssignment']>,
@@ -108,13 +149,21 @@ class AssignmentRegistryScenario {
       recordId: 'foreign-record',
     });
     assert.equal(foreign.status, 'rejected');
-    return { manifest, diagnostic };
+    return { pages, manifest, diagnostic };
   }
 
-  /** Reads one complete JSON artifact using only its advertised name in the existing evidence capability. */
+  /** Retrieves complete JSON across advertised pages without direct private filesystem access. */
   private async pageJson(pages: any, artifact: string) {
-    const page = (await pages.call('assignment.evidence', { artifact })) as { content: string };
-    return JSON.parse(page.content);
+    let content = '';
+    let offset = 0;
+    while (true) {
+      const page = await pages.call('assignment.evidence', { artifact, offset, length: 1024 });
+      assert.equal(page.offset, offset);
+      content += page.content;
+      if (page.complete) return JSON.parse(content);
+      assert.ok(page.nextOffset > offset);
+      offset = page.nextOffset;
+    }
   }
 
   /** Builds an authoritative assignment and store without launching an external model process. */
@@ -200,7 +249,7 @@ class AssignmentRegistryScenario {
     assert.equal(observed.manifest.runId, runId);
     assert.equal(observed.manifest.assignmentId, sender);
     assert.ok(observed.manifest.invocationDiagnostics);
-    assert.equal(observed.manifest.records, undefined);
+    assert.ok(observed.manifest.records.some((item: any) => item.assignmentId === sender));
     assert.equal(observed.manifest.assignments.length, 2);
     const entry = observed.manifest.assignments.find((item: any) => item.assignmentId === supplier);
     const intent = JSON.parse(observed.artifacts[entry.artifact]);
@@ -239,6 +288,12 @@ const scenarios = new AssignmentRegistryScenario();
 nodeTest('engineering evidence provisioning reads retained diagnostics through continuation', (t) =>
   scenarios.diagnostics(t),
 );
+
+for (const kind of ['change', 'review'])
+  nodeTest(
+    `${kind} session reads its own checked edit before bytes through the shared capability`,
+    (t) => scenarios.ownEdits(t, kind),
+  );
 
 test('engineering discovers current-run supplier intent and links existing work through MCP', (t) =>
   scenarios.run(t));

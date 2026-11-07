@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -36,9 +36,94 @@ class PublicationInputScenarios {
     const bundle = new PublicationEvidence(fixture.root, fixture.project).capture(
       fixture.run,
       this.publicationRecord(fixture.run),
-      [],
     );
     await this.assertPublicationBundle(fixture, bundle, input);
+  }
+
+  /** A resumed director reads the actual rejected proposal and error through the same pinned evidence. */
+  async admissionFailure(t: TestContext): Promise<void> {
+    const f = this.publicationFixture(t);
+    const decision = {
+      continuations: [{ assignmentId: 'prepared', replacementChangeType: 'documentation' }],
+    };
+    const error = 'Replacement requires a diagnosed assignment of the same owner and run';
+    f.store.updateRun(f.run.id, 'needs_attention', { error, directionHistory: [decision] });
+    f.store.updateRun(f.run.id, 'running');
+    const captured = new ExecutionEvidence(f.root, f.store).capture(f.run.id);
+    const pages = new EvidencePages('direction.evidence');
+    ExecutionEvidence.pin(f.root, f.run.id, pages, captured);
+    f.store.updateRun(f.run.id, 'needs_attention', { error: 'A later observation' });
+    const page = await pages.call('direction.evidence', { artifact: 'execution' });
+    const evidence = JSON.parse((page as { content: string }).content);
+    assert.equal(evidence.run.status, 'running');
+    assert.equal(evidence.run.retainedError, error);
+    assert.deepEqual(evidence.run.latestDirection, decision);
+    assert.equal(evidence.run.goalEvidence, undefined);
+  }
+
+  /** Original engineering observations survive promotion through the actual shared capability. */
+  async provenance(t: TestContext): Promise<void> {
+    const f = this.publicationFixture(t);
+    const source = this.sourceRecord(f);
+    f.store.updateRun(f.run.id, f.run.status, { promotionSourceRun: source.id });
+    const run = f.store.run(f.run.id);
+    const bundle = new PublicationEvidence(f.root, f.project).capture(
+      run,
+      this.publicationRecord(run),
+    );
+    const pages = new EvidencePages('verification.evidence');
+    ExecutionEvidence.pin(f.root, run.id, pages, bundle);
+    const current = await this.artifact(pages, 'execution');
+    const original = await this.artifact(pages, current.provenance.artifact);
+    assert.equal(current.run.environment.mode, 'live');
+    assert.equal(original.run.environment.mode, 'simulation');
+    assert.equal(original.run.id, source.id);
+    const record = await this.artifact(pages, original.assignments[0].record.artifact);
+    assert.deepEqual(await this.artifact(pages, record.plan.artifact), {
+      objective: 'Original design',
+    });
+    const observations = await this.artifact(pages, record.observations.artifact);
+    const commands = await this.artifact(pages, observations.hostCommands.artifact);
+    const output = await pages.call('verification.evidence', {
+      artifact: commands[0].output.artifact,
+    });
+    assert.equal((output as any).content, 'Native production regression passed\n');
+    const forged = structuredClone(bundle) as any;
+    forged.provenance.run.id = randomUUID();
+    assert.throws(() => ExecutionEvidence.pin(f.root, run.id, pages, forged), /captured source/);
+  }
+
+  /** Retains an explicit simulation assignment with its original plan and observed command bytes. */
+  private sourceRecord(f: PublicationFixture) {
+    const source = f.store.createRun('task', ['report'], 'Original engineering', {
+      id: 'sim',
+      mode: 'simulation',
+    });
+    const assignment = f.store.enqueue(source.id, 'report', 'Implement change', ['Native proof']);
+    const id = randomUUID();
+    const directory = join(f.root, 'runs', id);
+    mkdirSync(directory, { recursive: true });
+    const log = join(directory, 'command.log');
+    writeFileSync(log, 'Native production regression passed\n');
+    writeFileSync(
+      join(directory, 'report.json'),
+      JSON.stringify({
+        id,
+        executionRunId: source.id,
+        assignmentId: assignment.id,
+        plan: { objective: 'Original design' },
+        status: 'completed',
+        commands: [{ command: 'node', args: ['--test', 'native.test.js'], exitCode: 0, log }],
+      }),
+    );
+    f.store.updateAssignment(assignment.id, 'prepared', { recordId: id });
+    return source;
+  }
+
+  /** Reconstructs one advertised JSON artifact through the production page boundary. */
+  private async artifact(pages: EvidencePages, id: string): Promise<any> {
+    const metadata = pages.metadata().find((artifact) => artifact.id === id)!;
+    return JSON.parse(await this.readVerificationArtifact(pages, id, metadata.totalCharacters));
   }
 
   /** Gives the production publication projection its required independently checked record identity. */
@@ -168,7 +253,10 @@ class PublicationInputScenarios {
     });
     const lifecycle = new LifecycleStore(join(directory, 'lifecycle.sqlite'));
     lifecycle.close();
-    const run = store.createRun('task', ['report'], 'Assess the captured candidate');
+    const run = store.createRun('task', ['report'], 'Assess the captured candidate', {
+      id: 'live',
+      mode: 'live',
+    });
     return { root, project, store, run };
   }
 }
@@ -180,5 +268,11 @@ test('publication bundle preserves caller input through pinned verification page
 
 test('missing and foreign caller observations remain explicit gaps', (t) =>
   scenarios.callerObservationGaps(t));
+
+test('publication exposes original promotion observations without changing their attribution', (t) =>
+  scenarios.provenance(t));
+
+test('canonical direction evidence retains rejected proposals and errors across resume', (t) =>
+  scenarios.admissionFailure(t));
 
 registerSuite({ component: 'report', level: 'unit', tags: ['deterministic', 'evidence'] });

@@ -129,3 +129,23 @@ preparation continues to use the existing environment-scoped reuse path.
 The CLI reports the failed check and its evidence location instead of replacing
 it with a generic acceptance error. Recovery neither skips current-target checks
 nor grants publication authority.
+
+### Changed staging during publication
+
+An explicit publication retry reconciles retained merge attempts before selecting
+current staging from its actual branch ref, not the PR's retained base metadata. A completed merge is reused even when staging has advanced beyond
+it. If staging advanced without containing the attempted merge, the old target
+lease is obsolete: retain its rejected observation and assemble a new target-specific
+attempt. Unknown outcomes and rewritten target history remain blocked. Every new
+assembly still requires current checks, independent verification and provider gates;
+changing staging never authorizes replay of an uncertain push.
+
+Failures observed before the integration transport starts remain known unapplied
+attempts. They may return through ordinary verification and retry; a model review
+finding is not an uncertain upstream push. Once transport starts, actual Git/provider
+reconciliation is still mandatory before another attempt.
+
+If the validated merge object is already pinned and the observed target still equals
+its exact expected revision, recovery may retry that same compare-and-swap integration.
+The pinned commit and expected-target lease make a duplicate transport attempt
+idempotent. Rewritten history or missing attribution remains unresolved.

@@ -25,3 +25,38 @@ additional prohibition on editing that owned file. Such changes remain candidate
 proposals: the host continues using the run's captured architecture, permissions
 and acceptance until a new run captures approved authority. Existing supervisors
 and retained evidence are not rewritten (#252).
+
+## Retained continuation branches (#331)
+
+When verified staging advances, reconcile the owner's attributed changes against
+that candidate in a successor worktree cut from observed staging. Keep the previous
+branch, commits and unfinished worktree intact. The successor uses its own development
+branch; transferring the old branch name is unnecessary and can reject valid
+assembled publication history.
+
+A recorded preparation is reusable only when its completed report, workspace identity,
+settled operations and reconciled source match the retained transition. Recovery
+finishes that same transition without rerunning preparation. Incomplete or changed
+preparation remains blocked. Content conflicts retain both versions for owner
+correction; this does not authorize automatic conflict resolution or broader writes.
+
+For an ordinary text conflict entirely within the active change owner's component,
+materialize Git's conflict-marked result in that same successor workflow. Retain
+base, current, incoming and conflict evidence; tell the steward to resolve it through
+checked edits. This is unfinished engineering, not a merged or verified candidate.
+Unresolved markers prevent preparing a contribution. Cross-owner changes, nonregular
+files and conflicts without an editable text representation remain blocked. Required
+checks and independent assessment still evaluate the eventual assembled delivery.
+
+Before director reconsideration captures its evidence, the host reconciles any
+already completed preparation through that same checkpoint service. The director
+then sees current eligibility rather than a stale pending receipt that encourages
+unnecessary workflow restarts. Uncertain preparations remain visible and ineligible;
+planning never gains permission to replay them.
+
+A conflict discovered while assembling prepared contributions is a rejected assembly
+input, handled by the same director correction loop as observed verification gaps.
+Retain the exact contribution set and conflicting owner identity before requesting
+correction. Do not create a delivery-check record or replay assembly unchanged;
+changed source or an explicit diagnosed reassessment may retry. Ownership/integrity
+failures remain distinct from ordinary Git content conflicts.

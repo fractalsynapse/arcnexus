@@ -104,7 +104,10 @@ class PromotionScenarios {
         content(command.output.artifact),
         readFileSync(check.commands[command.index].log, 'utf8'),
       );
-    assert.equal(execution.publication.sourceDeliveries.length, 1);
+    const source = JSON.parse(content(execution.provenance.artifact));
+    assert.equal(source.run.environment.mode, 'simulation');
+    assert.equal(source.run.id, execution.run.promotionSourceRun);
+    assert.equal(source.assignments.length, 1);
     assert.equal(reviewer.activationRole, 'verifier');
     assert.equal(reviewer.acceptanceCriteria[0], 'Preserve the reviewed source improvement');
   }

@@ -1,3 +1,4 @@
+import { ReconciledContinuation } from './reconciled-continuation.js';
 import { createHash } from 'node:crypto';
 import { assignmentIntent } from './assignment-intent.js';
 import type { Assignment } from '../architecture/assignment.js';
@@ -28,12 +29,30 @@ export class AssignmentDispatch {
 
   /** Captures required assignments and current request identities from one consistent store snapshot. */
   state(runId: string) {
+    for (const assignment of this.store.requiredAssignments(runId)) this.reconcile(assignment);
     return this.store.snapshot(() =>
       this.store.requiredAssignments(runId).map((assignment) => ({
         ...assignment,
         inbox: this.store.inbox(assignment.id),
       })),
     );
+  }
+
+  /** Settles completed preparation before planning; uncertain evidence remains available and unchanged. */
+  private reconcile(assignment: ExecutionAssignment): void {
+    if (!assignment.data.reconciliation || !assignment.data.recordId) return;
+    try {
+      const record = JSON.parse(
+        readFileSync(
+          join(this.root, 'runs', String(assignment.data.recordId), 'report.json'),
+          'utf8',
+        ),
+      ) as RecordData;
+      new ReconciledContinuation(this.root, this.store).recover(assignment, record);
+    } catch {
+      // Direction projects the retained pending receipt and checkpoint failure as ineligible.
+      // No operation is replayed, and no failed recovery is reported as success.
+    }
   }
 
   /** Validates every scope and checkpoint before any proposal can become runnable. */
@@ -207,9 +226,7 @@ export class AssignmentDispatch {
         'utf8',
       ),
     ) as RecordData;
-    const pending = assignment.data.reconciliation as { recordId: string } | null;
-    if (pending && pending.recordId !== record.reconciliationId)
-      throw new Error('Continuation has uncertain workspace preparation');
+    new ReconciledContinuation(this.root, this.store).recover(assignment, record);
     validateCheckpoint(this.root, record, purpose);
     if (canReopenAssignment(assignment.status) && !changedObligation)
       this.diagnose(record, assignment);

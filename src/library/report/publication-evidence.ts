@@ -1,11 +1,10 @@
 import { join } from 'node:path';
 import { ExecutionStore } from '../coordination-store/execution-store.js';
 import { LifecycleStore } from '../coordination-store/lifecycle-store.js';
-import type { ExecutionAssignment, ExecutionRun } from '../coordination-store/execution-types.js';
+import type { ExecutionRun } from '../coordination-store/execution-types.js';
 import type { RecordData } from '../workspace/state.js';
 import { ExecutionObservations } from './execution-observations.js';
 import { ExecutionEvidence } from './execution-evidence.js';
-import { DeliveryEvidence } from './delivery-evidence.js';
 
 /** Pins pre-integration observations to the specific checked Git revision without predicting release. */
 export class PublicationEvidence {
@@ -16,7 +15,7 @@ export class PublicationEvidence {
   ) {}
 
   /** Supplies real run history, prior supplier verdicts and complete outputs of the assembled checks. */
-  capture(run: ExecutionRun, record: RecordData, assignments: ExecutionAssignment[]) {
+  capture(run: ExecutionRun, record: RecordData) {
     if (
       record.activationRole !== 'publication-checks' ||
       record.executionRunId !== run.id ||
@@ -38,24 +37,11 @@ export class PublicationEvidence {
           observations: new ExecutionObservations(join(this.root, 'runs', record.id)).capture(
             record,
           ),
-          sourceDeliveries: this.sources(run, assignments),
         },
       };
     } finally {
       store.close();
     }
-  }
-
-  /** Distinguishes original simulation verdicts from current-target verification during promotion. */
-  private sources(run: ExecutionRun, assignments: ExecutionAssignment[]) {
-    const evidence = new DeliveryEvidence(this.root);
-    return assignments
-      .filter((a) => a.runId !== run.id)
-      .map((a) => ({
-        runId: a.runId,
-        assignmentId: a.id,
-        verificationReports: evidence.capture(a, false),
-      }));
   }
 
   /** Reports only this run's upstream activity and separates uncertain intents from completed receipts. */
