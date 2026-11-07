@@ -30,9 +30,11 @@ export class PromotionReview {
       this.run,
       this.assignments,
     ).check(head, signal, true);
-    if (checks.status !== 'passed' || checks.evidence.length < 2)
-      throw new Error('Promotion requires current target checks and independent acceptance');
     const record = JSON.parse(readFileSync(checks.evidence[0]!, 'utf8')) as RecordData;
+    if (checks.status !== 'passed' || checks.evidence.length < 2)
+      throw new Error(
+        `${record.error ?? 'Promotion requires current target checks and independent acceptance'}; evidence: ${checks.evidence[0]}`,
+      );
     this.assessments(record, checks);
     const goal = checks.evidence.slice(1);
     const references = checks.evidence;

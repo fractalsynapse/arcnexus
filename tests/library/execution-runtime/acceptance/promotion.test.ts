@@ -3,6 +3,8 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
+import { DeliveryChecks } from '../../../../dist/library/publisher/publisher.js';
+import { save, type RecordData } from '../../../../dist/library/workspace/state.js';
 import { ExecutionControls } from '../../../../dist/library/execution-runtime/execution-controls.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
@@ -151,6 +153,41 @@ class PromotionScenarios {
     );
   }
 
+  /** A settled failed target check resumes the retained assembly without duplicating its issue. */
+  async failedRetry(t: TestContext): Promise<void> {
+    const f = new PromotionFixture(t);
+    const calls = f.tracking(t);
+    const queued = f.host.promote(f.delivery.id);
+    await f.host.tick();
+    const head = f.host.store.run(queued.runId).data.promotionHead;
+    const checks = t.mock.method(
+      DeliveryChecks.prototype,
+      'checkRecord',
+      async (record: RecordData) => this.failure(f, record),
+    );
+    await f.host.tick();
+    assert.equal(f.host.store.run(queued.runId).status, 'needs_attention');
+    assert.match(String(f.host.store.run(queued.runId).data.error), /settled dependency failure/);
+    checks.mock.restore();
+    f.host.taskControl('resume', queued.runId);
+    assert.equal(f.host.store.run(queued.runId).data.promotionStage, 'assembled');
+    await f.host.tick();
+    assert.equal(f.host.store.run(queued.runId).data.promotionStage, 'verified');
+    assert.equal(f.host.store.run(queued.runId).data.promotionHead, head);
+    assert.equal(calls.length, 1);
+    assert.equal(f.host.store.runs().length, 2);
+  }
+
+  /** Supplies one explicit external-failure observation at the verification boundary. */
+  private failure(f: PromotionFixture, record: RecordData) {
+    record.status = 'failed';
+    record.error = 'Controlled settled dependency failure';
+    record.operationInvocations = [{ status: 'failed' }];
+    save(f.general.fixture.state, record);
+    const path = join(f.general.fixture.state, 'runs', record.id, 'report.json');
+    return { status: 'failed' as const, evidence: [path], artifacts: [] };
+  }
+
   /** Invalid source proof cannot create a live run or upstream effect. */
   rejected(t: TestContext): void {
     const f = new PromotionFixture(t);
@@ -179,6 +216,9 @@ test('promotion validates host credentials before durable admission', (t) =>
 
 test('promotion uses fresh target checks and independent reviews without relabeling simulation', (t) =>
   scenarios.verified(t));
+
+test('settled promotion failure resumes without recreating tracking or assembly', (t) =>
+  scenarios.failedRetry(t));
 
 test('promotion rejects altered source before creating live work', (t) => scenarios.rejected(t));
 

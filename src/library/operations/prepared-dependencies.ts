@@ -64,7 +64,28 @@ export class PreparedDependencies {
     if (existsSync(receipt))
       return this.restore(directory, JSON.parse(readFileSync(receipt, 'utf8')));
     mkdirSync(directory, { recursive: true, mode: 0o700 });
-    return this.install(directory, key, op, install);
+    return this.attempt(directory, key, op, install);
+  }
+
+  /** Discards only a failed cache build; raw operation evidence remains in its run directory. */
+  private async attempt(
+    directory: string,
+    key: string,
+    op: Operation,
+    install: () => Promise<CommandResult>,
+  ): Promise<CommandResult> {
+    const before = ((this.record.operationInvocations ?? []) as unknown[]).length;
+    try {
+      return await this.install(directory, key, op, install);
+    } catch (error) {
+      const invocations = (this.record.operationInvocations ?? []) as Array<{
+        operationId: string;
+        status: string;
+      }>;
+      const current = invocations.slice(before).findLast((item) => item.operationId === op.id);
+      if (current?.status === 'failed') rmSync(directory, { recursive: true, force: true });
+      throw error;
+    }
   }
 
   /** Publishes a receipt only after supervised installation and snapshot copying finish. */
