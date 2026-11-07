@@ -260,3 +260,10 @@ paged reader used for current live observations. Publication does not substitute
 summary of earlier verdicts for their underlying evidence. Source observations
 retain their original run and environment; they never establish current-target
 checks or grant live authority. Unrelated runs remain inaccessible.
+
+The canonical execution bundle exposes the latest director proposal and retained
+host error alongside run status. A retained error remains historical evidence after
+resume; it is not a new acceptance criterion. Direction uses that feedback to correct
+an inadmissible proposal rather than repeating it without knowing why it failed.
+Prepared contributions use ordinary checkpoint continuation for owned corrections;
+fresh workflow replacement remains restricted to diagnosed unsuccessful assignments.
