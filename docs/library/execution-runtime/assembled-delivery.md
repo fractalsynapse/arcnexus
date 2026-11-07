@@ -90,3 +90,10 @@ The unchanged rejected set is not dispatched again. Correction reopens only the
 selected existing assignment; peers retain their checkpoints. Current assembly
 findings drive correction, with historical evidence available when relevant rather
 than a requirement to reread every failed predecessor.
+
+Trusted host completion and exit-status records establish whether a declared check
+ran and passed. Reviewers inspect coverage, changed tests and criterion-specific
+observations; they do not need every line of a successful log to establish its exit
+status. Pin command metadata separately from SDK tool history, retain complete logs
+on demand, and use pagination to inspect relevant sections rather than requiring
+exhaustive reading. Missing required observations remain explicit gaps.
