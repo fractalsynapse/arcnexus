@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Focus the MVP on fresh real task delivery through staging, with canonical director, ownership and contribution-routing rules and deferred historical recovery (#337).
+
 ### Fixed
 
 - Qualify complete director catalog paging instead of rejecting catalog growth against an obsolete inline-prompt size assertion (#325).

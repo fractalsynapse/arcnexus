@@ -156,8 +156,8 @@ The current MVP qualification is defined below; steward counts follow actual wor
 The real director selects from actual project components; callers do not prescribe
 the team or replace direction with a scripted result.
 
-- Phase two uses a verified owner delivery as its dependency milestone. The host
-  assembles verified deliveries through the canonical staging route.
+- Phase two assembles related prepared owner contributions before independent
+  verification and publishes one task delivery through the canonical staging route.
   Durable checkpoints support explicit pause/resume and validated recovery.
   Uncertain operations are never replayed automatically. Historical two-owner
   workdays remain inspectable but cannot resume under the new scheduler.

@@ -28,6 +28,23 @@ safe checkpoint; retaining a frozen supervisor is not a requirement. Record runt
 changes and reconcile uncertain operations before continuing. Preserve prior evidence
 and edits; never rewrite a failed observation as success.
 
+## Director, stewards and assignments
+
+- The director chooses stewards from the real component catalog, with no prescribed
+  count. Callers supply goals, not a fixed team.
+- Assignments describe outcomes, technical requirements and acceptance criteria,
+  not permitted files. The accountable steward discovers which files need changes.
+- Component ownership is the only file-write scope. Never add per-assignment file
+  permission lists or grant access through another steward's request.
+- An inbox request links to an existing assignment when it requests that same
+  accepted work. Preserve its accountable owner and acceptance criteria.
+- Create another assignment only for distinct work. Do not duplicate implementation
+  merely because another steward requests its result.
+- Do not require agents to obtain peer agreement before implementing their own
+  public contract within approved architectural authority.
+- Dependencies represent required contributions, not conversational acknowledgments
+  or agreement-only exchanges.
+
 ## Working style
 
 - Deliver coherent implementation batches against accepted outcomes. Implement related
@@ -54,7 +71,15 @@ Simplify within the human-approved architecture as a continuing engineering duty
 Use one canonical process and one authored source for each responsibility. Remove
 superseded implementations, bypasses, duplicate state projections and redundant work;
 do not add wrappers or compatibility paths merely to preserve unnecessary machinery.
-Different gateways and live/simulated providers use the same application lifecycle.
+Do not add layers, frameworks, alternate orchestration or recovery paths to work
+around a failing process. Fix the existing path directly and remove unnecessary
+machinery. Different gateways and live/simulated providers use the same application
+lifecycle.
+
+Prioritize a working MVP: one fresh real engineering task through staging, followed
+by the consecutive clean cycles below. Historical recovery and feature breadth must
+not become prerequisites for proving that path. Ask what could be removed if this
+had to deliver within an hour; this is a scope test, not an execution deadline.
 
 Disproportionate debugging, repeated handoff failures or operator workarounds are
 signals that the design is too complicated. Diagnose the boundary, remove unnecessary
@@ -187,8 +212,3 @@ Keep descriptive scenario names without meaningless numeric suffixes. Preserve t
 500/30 physical-line limits without compressing code or deleting useful explanation.
 Lint checks header presence and spacing; review must still assess whether the
 explanation helps a newcomer. See [the readable TypeScript standard](docs/foundation/typescript-standard.md).
-
-Component ownership is the sole source of file write authority. Assign outcomes,
-technical requirements and acceptance criteria; leave discovery and selection of
-implementation files to the accountable steward. Request a different steward's
-work through its inbox. Never add a per-assignment file permission list.
