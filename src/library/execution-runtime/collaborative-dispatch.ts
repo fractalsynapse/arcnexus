@@ -47,12 +47,32 @@ export class CollaborativeDispatch {
 
   /** Persists actionable direction before creating tracking and before any engineering activation. */
   async initialize(run: ExecutionRun, result: DirectorResult, signal: AbortSignal): Promise<void> {
+    if (
+      run.mode === 'task' &&
+      !result.assignments.length &&
+      !result.continuations.length &&
+      !this.reconsider(run, result)
+    )
+      throw new Error(
+        'Task director returned no assignment, continuation or prepared reassessment',
+      );
     new AssignmentDispatch(this.root, this.context, this.store).apply(run, result, {
       initialized: true,
       initialDirection: run.data.initialDirection ?? result,
       direction: result,
     });
     if (run.mode === 'task') await this.tracking(this.store.run(run.id), signal);
+  }
+
+  /** A ready no-edit decision can reconsider prepared delivery, never resolve unfinished engineering. */
+  reconsider(run: ExecutionRun, result: DirectorResult): boolean {
+    if (result.status !== 'ready' || result.assignments.length || result.continuations.length)
+      return false;
+    return new AssembledDelivery(
+      this.root,
+      this.environments.contextFor(run),
+      this.store,
+    ).reconsider(this.store.run(run.id));
   }
 
   /** Flushes retained milestone effects before dispatch or final assessment after a recovered checkpoint. */

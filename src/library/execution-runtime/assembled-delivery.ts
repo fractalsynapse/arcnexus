@@ -38,6 +38,15 @@ export class AssembledDelivery {
     return Boolean(run.data.pendingAssembly || this.group(run));
   }
 
+  /** Admits one diagnosed reassessment without changing prepared source or accepting prior review gaps. */
+  reconsider(run: ExecutionRun): boolean {
+    if (!run.data.lastAssembly || run.data.pendingAssembly) return false;
+    const proposed = { ...run, data: { ...run.data, assemblyRetry: true } };
+    if (!this.group(proposed)) return false;
+    this.store.updateRun(run.id, this.store.run(run.id).status, { assemblyRetry: true });
+    return true;
+  }
+
   /** Reconciles durable preparation before invoking checks; uncertain operations are never replayed. */
   async advance(run: ExecutionRun, signal: AbortSignal): Promise<boolean> {
     const pending = (run.data.pendingAssembly as PendingAssembly | undefined) ?? this.prepare(run);
@@ -148,6 +157,7 @@ export class AssembledDelivery {
   private rejected(run: ExecutionRun, group: ExecutionAssignment[]): boolean {
     const previous = run.data.lastAssembly as PendingAssembly | undefined;
     return Boolean(
+      !run.data.assemblyRetry &&
       previous &&
       previous.base === String(run.data.candidateRevision ?? this.context.base) &&
       previous.assignments.length === group.length &&
@@ -189,7 +199,7 @@ export class AssembledDelivery {
       assignments: group.map((item) => item.id),
       contributions,
     };
-    this.store.updateRun(run.id, run.status, { pendingAssembly: pending });
+    this.store.updateRun(run.id, run.status, { pendingAssembly: pending, assemblyRetry: false });
     return pending;
   }
 

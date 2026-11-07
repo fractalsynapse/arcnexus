@@ -56,6 +56,13 @@ export class ControlledGeneral {
 
   /** Supplies two starting owners only for the controlled existing-work discovery scenario. */
   private startingWork(result: any, prompt: string): any {
+    if (prompt.includes('REASSESS_PREPARED'))
+      return {
+        ...result,
+        assignments: [],
+        continuations: [],
+        selectedOwners: [{ id: 'c', reason: 'Retained owner context, not a new dispatch' }],
+      };
     if (!prompt.includes('LINK_EXISTING_WORK')) return result;
     result.selectedOwners = ['a', 'b'].map((id) => ({ id, reason: 'Starting owner' }));
     result.assignments = [

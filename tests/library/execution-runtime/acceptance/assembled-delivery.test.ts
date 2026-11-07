@@ -41,7 +41,7 @@ class AssemblyFixture {
   readonly regression;
 
   /** Captures a verification operation whose regression needs another owner's implementation. */
-  constructor(t: TestContext, mode: 'task' | 'workday' = 'workday') {
+  constructor(t: TestContext, mode: 'task' | 'workday' = 'workday', hosted = false) {
     this.fixture = new GeneralFixture(t).fixture;
     writeFileSync(
       join(this.fixture.repo, 'verify.cjs'),
@@ -51,7 +51,7 @@ class AssemblyFixture {
     this.context = new ExecutionContext().resolve(this.fixture.repo);
     this.host = new ProjectHost(this.fixture.state, this.context);
     t.after(() => this.host.close());
-    this.run = this.runContext(mode);
+    this.run = hosted ? this.host.submit('REASSESS_PREPARED') : this.runContext(mode);
     this.implementation = this.host.store.enqueue(this.run.id, 'a', 'Implement shared behavior', [
       'Source implements behavior',
     ]);
@@ -271,7 +271,7 @@ class AssemblyScenarios {
 
   /** Observed red assembly checks retain source and return work to normal correction without delivery. */
   async rejects(t: TestContext): Promise<void> {
-    const f = new AssemblyFixture(t);
+    const f = new AssemblyFixture(t, 'task', true);
     await f.prepare(f.implementation, 'source.txt', 'wrong');
     await f.prepare(
       f.regression,
@@ -287,10 +287,34 @@ class AssemblyScenarios {
     assert.match(String((run.data.lastAssembly as any).reason), /Assembled checks failed/);
     assert.equal(new AssembledDelivery(f.fixture.state, f.context, f.host.store).ready(run), false);
     assert.ok(f.host.store.assignments(f.run.id).every((item) => item.evidence.length === 0));
+    await this.reassesses(f, assembly);
     const peer = f.host.store.assignment(f.regression.id);
     await f.prepare(f.implementation, 'source.txt', 'assembled');
     assert.deepEqual(f.host.store.assignment(f.regression.id), peer);
     assert.equal(assembly.ready(f.host.store.run(f.run.id)), true);
+  }
+
+  /** Ready direction with no new engineering consumes one reassessment without changing owner checkpoints. */
+  private async reassesses(f: AssemblyFixture, assembly: AssembledDelivery): Promise<void> {
+    const assignments = f.host.store.assignments(f.run.id);
+    const previous = f.host.store.run(f.run.id).data.lastAssembly;
+    f.host.store.updateRun(f.run.id, 'running', {
+      prompt: 'REASSESS_PREPARED',
+      initialized: false,
+    });
+    await f.host.tick();
+    const run = f.host.store.run(f.run.id);
+    assert.equal(run.status, 'running', String(run.data.error));
+    assert.equal(run.data.initialized, true);
+    assert.deepEqual((run.data.direction as DirectorResult).selectedOwners, []);
+    assert.deepEqual(f.host.store.assignments(f.run.id), assignments);
+    assert.equal(assembly.ready(run), true);
+    await assembly.advance(run, new AbortController().signal);
+    const rejected = f.host.store.run(f.run.id);
+    assert.equal(assembly.ready(rejected), false);
+    assert.equal(rejected.data.candidateRevision, f.context.base);
+    assert.notDeepEqual(rejected.data.lastAssembly, previous);
+    assert.deepEqual(f.host.store.assignments(f.run.id), assignments);
   }
 
   /** Final assembled checks cannot write maintained source, even through captured verification commands. */

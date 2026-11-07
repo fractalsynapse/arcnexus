@@ -349,8 +349,6 @@ export class ProjectHost {
       this.clarification(run, result);
       return;
     }
-    if (run.mode === 'task' && !result.assignments.length && !result.continuations.length)
-      throw new Error('Task director returned no assignment or continuation');
     await this.collaboration.initialize(run, result, signal);
   }
 
@@ -451,6 +449,7 @@ export class ProjectHost {
     blocked: boolean,
   ): void {
     if (result.status !== 'ready') this.clarification(run, result);
+    else if (this.collaboration.reconsider(run, result)) return;
     else if (
       (blocked && !result.continuations.length) ||
       (!result.assignments.length && !result.continuations.length)
