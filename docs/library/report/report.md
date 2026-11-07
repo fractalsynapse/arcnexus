@@ -214,9 +214,15 @@ inbox requests and observed execution records. A consumer must not rebuild a sma
 copy that silently omits those facts. Candidate/authority identity and unavailable
 historical evidence remain explicit; exposing input never accepts its claims.
 
+Engineering and investigation use one assignment evidence reader, including the
+active assignment's own checkpoint and checked-edit journals. The advertised edit
+index leads to exact before/after bytes, so a steward can restore unrelated content
+without reconstructing it from prose or scanning its entire tool history. Missing
+records and unsafe aliases remain explicit gaps; reading a journal does not authorize
+replaying it or changing source outside the checked edit tool.
+
 Consumers add only their distinct responsibilities: direction annotates validated
-continuation eligibility, investigation exposes checked-edit/checkpoint artifacts,
-and verification adds the candidate patch and acceptance assessment. These additions
+continuation eligibility and verification adds the candidate patch and assessment. These additions
 do not replace the common execution capture or introduce another reader or store.
 Historical retained artifacts remain readable without rewriting their content.
 
