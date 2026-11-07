@@ -15,7 +15,8 @@ interface HostCommandEvidence {
 }
 
 interface HostExecutionEvidence {
-  run?: { id?: string };
+  run?: { id?: string; promotionSourceRun?: unknown };
+  provenance?: HostExecutionEvidence;
   publication?: { recordId: string; observations: { hostCommands?: HostCommandEvidence[] } };
   assemblies?: NonNullable<HostExecutionEvidence['assignments']>;
   assignments?: Array<{
@@ -38,11 +39,18 @@ export class ExecutionEvidence {
   ) {}
 
   /** Pins current-run host observations without accepting a foreign task as execution evidence. */
-  static pin(root: string, runId: unknown, pages: EvidencePages, input: unknown) {
+  static pin(
+    root: string,
+    runId: unknown,
+    pages: EvidencePages,
+    input: unknown,
+    artifact = 'execution',
+  ) {
     const evidence = structuredClone(input) as HostExecutionEvidence | undefined;
     if (!evidence) return;
     if (typeof runId !== 'string' || evidence.run?.id !== runId)
       throw new Error('Host execution evidence belongs to a different run');
+    const provenance = this.pinProvenance(root, pages, evidence);
     new ReferencedEvidence(root, runId, pages).index(evidence);
     this.indexCommandOutputs(pages, evidence);
     const assignments = evidence.assignments?.map((assignment) =>
@@ -51,12 +59,26 @@ export class ExecutionEvidence {
     const assemblies = evidence.assemblies?.map((assembly) =>
       this.assignmentArtifacts(pages, assembly),
     );
-    pages.addSections('execution', { ...evidence, assignments, assemblies }, [
+    pages.addSections(artifact, { ...evidence, provenance, assignments, assemblies }, [
       'events',
       'requests',
       'runtimeTransitions',
     ]);
-    return { ...evidence, assignments, assemblies };
+    return { ...evidence, provenance, assignments, assemblies };
+  }
+
+  /** Keeps the host-selected simulation source separately attributed in the same capability. */
+  private static pinProvenance(
+    root: string,
+    pages: EvidencePages,
+    evidence: HostExecutionEvidence,
+  ) {
+    const source = evidence.provenance;
+    if (!source) return;
+    if (!source.run?.id || source.run.id !== evidence.run?.promotionSourceRun)
+      throw new Error('Promotion provenance differs from its captured source run');
+    this.pin(root, source.run.id, pages, source, 'promotion-source');
+    return { artifact: 'promotion-source' };
   }
 
   /** Makes each worker record and prior review independently discoverable instead of inlining their histories. */
@@ -132,7 +154,21 @@ export class ExecutionEvidence {
 
   /** Captures ordered coordination, provenance and observed work independently of worker summaries. */
   capture(runId: string) {
-    return this.store.snapshot(() => this.project(runId));
+    return this.store.snapshot(() => {
+      const evidence = this.project(runId);
+      const source = evidence.run.promotionSourceRun;
+      if (source === undefined) return evidence;
+      if (
+        typeof source !== 'string' ||
+        source === runId ||
+        evidence.run.environment?.mode !== 'live'
+      )
+        throw new Error('Invalid captured promotion source');
+      const provenance = this.project(source);
+      if (provenance.run.environment?.mode !== 'simulation')
+        throw new Error('Promotion source is not a simulation');
+      return { ...evidence, provenance };
+    });
   }
 
   /** Reads run and request identities from one store snapshot before resolving retained artifacts. */
@@ -173,6 +209,8 @@ export class ExecutionEvidence {
   private runSummary(run: ExecutionRun) {
     return {
       id: run.id,
+      environment: run.environment,
+      promotionSourceRun: run.data.promotionSourceRun,
       mode: run.mode,
       objective: run.objective,
       createdAt: run.createdAt,

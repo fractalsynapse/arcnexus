@@ -6,8 +6,9 @@ import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import type { RecordData } from '../workspace/state.js';
 import { EvidencePages } from './evidence-pages.js';
 import { ExecutionEvidence } from './execution-evidence.js';
+import { InvocationDiagnostics } from './invocation-diagnostics.js';
 
-/** Captures current-run investigation facts without exposing private directories or granting recovery authority. */
+/** Supplies one read-only assignment evidence capability for engineering and investigation. */
 export class RecoveryEvidence {
   private readonly pages = new EvidencePages('assignment.evidence');
 
@@ -25,16 +26,18 @@ export class RecoveryEvidence {
     const run = this.store.run(current.runId);
     const execution = new ExecutionEvidence(this.root, this.store).capture(run.id);
     ExecutionEvidence.pin(this.root, run.id, this.pages, execution);
-    const records = this.store
-      .assignments(run.id)
-      .filter((item) => item.id !== current.id)
-      .map((item) => this.assignment(item));
+    const records = this.store.assignments(run.id).map((item) => this.assignment(item));
+    const invocationDiagnostics = new InvocationDiagnostics(this.root, this.store).append(
+      this.pages,
+      current,
+    );
     this.pages.add(
       'manifest',
       JSON.stringify({
         runId: run.id,
         assignmentId: current.id,
         records,
+        invocationDiagnostics,
         assignments: new AssignmentRegistry(this.store).append(this.pages, current),
         basis:
           'Pinned host observations, never permission to replay or change authority. Missing journals do not prove that a request was never attempted; inspect observed tool requests and receipts.',

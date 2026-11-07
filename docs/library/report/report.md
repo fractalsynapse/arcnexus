@@ -214,9 +214,15 @@ inbox requests and observed execution records. A consumer must not rebuild a sma
 copy that silently omits those facts. Candidate/authority identity and unavailable
 historical evidence remain explicit; exposing input never accepts its claims.
 
+Engineering and investigation use one assignment evidence reader, including the
+active assignment's own checkpoint and checked-edit journals. The advertised edit
+index leads to exact before/after bytes, so a steward can restore unrelated content
+without reconstructing it from prose or scanning its entire tool history. Missing
+records and unsafe aliases remain explicit gaps; reading a journal does not authorize
+replaying it or changing source outside the checked edit tool.
+
 Consumers add only their distinct responsibilities: direction annotates validated
-continuation eligibility, investigation exposes checked-edit/checkpoint artifacts,
-and verification adds the candidate patch and acceptance assessment. These additions
+continuation eligibility and verification adds the candidate patch and assessment. These additions
 do not replace the common execution capture or introduce another reader or store.
 Historical retained artifacts remain readable without rewriting their content.
 
@@ -244,3 +250,13 @@ list. A result already present in the legacy command list appears once, correlat
 its retained log identity. Invocation identity, purpose and status remain visible; partial
 or interrupted output does not establish successful completion. All consumers read these
 logs through the same pinned evidence pages, with the existing private-path validation.
+
+## Promotion provenance through the shared reader
+
+Promotion retains its source-run identity in the authoritative store. The common
+execution evidence capture exposes that source's original assignments, plans,
+coordination and observations as labelled simulation provenance, through the same
+paged reader used for current live observations. Publication does not substitute a
+summary of earlier verdicts for their underlying evidence. Source observations
+retain their original run and environment; they never establish current-target
+checks or grant live authority. Unrelated runs remain inaccessible.

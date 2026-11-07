@@ -81,29 +81,7 @@ export class GitHubDelivery {
     this.assertMerge(effect);
     if ((await this.target(signal)) !== effect.input.targetHead)
       throw new Error('GitHub target changed before assembly');
-    const directory = await this.prepare(effect, signal);
-    const target = String(effect.input.targetHead);
-    await this.command(
-      directory,
-      'fetch-target',
-      [
-        'fetch',
-        '--no-tags',
-        '--',
-        `https://github.com/${this.delivery.target.repository}.git`,
-        target,
-      ],
-      signal,
-      await gitAuthorization(this.delivery.target.repository, this.credential),
-    );
-    await this.command(
-      directory,
-      'import-target',
-      ['fetch', '--no-tags', '--', join(directory, 'repository.git'), target],
-      signal,
-      {},
-      this.source,
-    );
+    await this.importTarget(effect, String(effect.input.targetHead), signal);
     return this.assembly().assemble(effect, this.head, signal);
   }
 
@@ -155,22 +133,73 @@ export class GitHubDelivery {
       '--format=%(objectname)',
       'refs/arcnexus/merges/' + effect.inputDigest,
     ).trim();
+    if (assembled) this.assembly().validate(effect, this.head, assembled);
+    const target = await this.target(signal);
+    await this.importTarget(effect, target, signal);
+    return this.mergeObservation(effect, assembled, target);
+  }
+
+  /** Distinguishes incorporated merges, obsolete leases and unresolved outcomes from actual ancestry. */
+  private mergeObservation(
+    effect: ExternalEffect,
+    assembled: string,
+    target: string,
+  ): ExternalObservation {
     const evidence = 'github-merge:' + effect.inputDigest;
-    if (assembled) {
-      this.assembly().validate(effect, this.head, assembled);
-      if ((await this.target(signal)) === assembled)
-        return {
-          status: 'completed',
-          evidence,
-          result: {
-            ...this.receipt(),
-            head: assembled,
-            merged: true,
-            ref: 'refs/heads/' + this.delivery.target.branch,
-          },
-        };
-    }
+    if (assembled && this.contains(target, assembled))
+      return {
+        status: 'completed',
+        evidence,
+        result: {
+          ...this.receipt(),
+          head: assembled,
+          merged: true,
+          ref: 'refs/heads/' + this.delivery.target.branch,
+        },
+      };
+    if (assembled && target === effect.input.targetHead)
+      return { status: 'absent', evidence: evidence + ':unchanged-target:' + target };
+    if (
+      target !== effect.input.targetHead &&
+      this.contains(target, String(effect.input.targetHead))
+    )
+      return {
+        status: 'rejected',
+        evidence: evidence + ':target:' + target,
+        reason: 'Target advanced without the retained assembly; the old lease is obsolete',
+      };
     return { status: 'unknown', evidence, reason: 'Inspect retained assembly and provider state' };
+  }
+
+  /** Reads ancestry from fetched objects, never from mutable local tracking branches. */
+  private contains(target: string, revision: string): boolean {
+    return !git(this.source, 'rev-list', '--max-count=1', revision, '--not', target).trim();
+  }
+
+  /** Fetches the observed upstream target into private storage before ancestry reconciliation. */
+  private async importTarget(effect: ExternalEffect, target: string, signal: AbortSignal) {
+    const directory = await this.prepare(effect, signal);
+    await this.command(
+      directory,
+      'fetch-target',
+      [
+        'fetch',
+        '--no-tags',
+        '--',
+        `https://github.com/${this.delivery.target.repository}.git`,
+        target,
+      ],
+      signal,
+      await gitAuthorization(this.delivery.target.repository, this.credential),
+    );
+    await this.command(
+      directory,
+      'import-target',
+      ['fetch', '--no-tags', '--', join(directory, 'repository.git'), target],
+      signal,
+      {},
+      this.source,
+    );
   }
 
   /** Rejects main, default-like and malformed destinations before target transport; provider gates additionally check default identity. */

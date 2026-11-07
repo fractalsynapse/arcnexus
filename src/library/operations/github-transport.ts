@@ -40,7 +40,7 @@ export class GitHubTransport {
     const query = `query($owner:String!,$name:String!,$number:Int!) {
       repository(owner:$owner,name:$name) { nameWithOwner defaultBranchRef { name }
         pullRequest(number:$number) { number url state isDraft headRefOid headRefName
-          headRepository { nameWithOwner } baseRefName baseRefOid
+          headRepository { nameWithOwner } baseRefName
           mergeable mergeStateStatus reviewDecision
           commits(last:1) { nodes { commit { oid statusCheckRollup {
             state contexts { totalCount }

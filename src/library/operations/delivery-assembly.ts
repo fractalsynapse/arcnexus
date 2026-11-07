@@ -51,7 +51,8 @@ export class DeliveryAssembly {
     );
     const tree = merged.split('\n')[0]!.trim();
     if (!/^[a-f0-9]{40,64}$/.test(tree)) throw new Error('Invalid assembled tree');
-    const args = ['commit-tree', tree, '-p', target, '-p', head, '-m', this.message()];
+    const parents = [...new Set([target, head])].flatMap((parent) => ['-p', parent]);
+    const args = ['commit-tree', tree, ...parents, '-m', this.message()];
     const commit = (await this.commands.run(effect, 'merge-commit', args, signal)).trim();
     this.validate(effect, head, commit);
     await this.commands.run(
@@ -70,7 +71,8 @@ export class DeliveryAssembly {
     this.commits.validate(this.source, head);
     if (!/^[a-f0-9]{40,64}$/.test(assembled)) throw new Error('Invalid assembled commit');
     const actual = git(this.source, 'show', '-s', '--format=%P%n%s', assembled).trim();
-    if (actual !== [String(effect.input.targetHead) + ' ' + head, this.message()].join('\n'))
+    const parents = [...new Set([String(effect.input.targetHead), head])].join(' ');
+    if (actual !== [parents, this.message()].join('\n'))
       throw new Error('Assembled merge differs from captured parents or attribution');
   }
 
