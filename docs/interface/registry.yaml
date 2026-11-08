@@ -174,6 +174,23 @@ contracts:
           outright for the first system, so revision 2 replaces bounds with full assembly by
           reference plus recorded measures, and confirms re-run authority and the single reviewer
 
+  - id: arcnexus/delivery
+    type: library
+    file: docs/interface/arcnexus-delivery.md
+    owner: delivery
+    stage: proposed
+    revision: 1
+    digest: 8b007305e44bd039b02d5b1e67f22584e4727c554fcbc508925c8698fa81da86
+    dependsOn: [arcnexus/project, arcnexus/coordination, arcnexus/verification, arcnexus/direction]
+    scenarios: 16
+    acceptedBy: null
+    acceptedAt: null
+    history: []
+    openQuestions:
+      - merge mechanics - provider merge or local merge with direct push
+      - what production release means for a private unpublished CLI package
+      - reconcile authority - inspect and record, or always a human gate
+
 protocol:
   id: arcnexus/contract-protocol
   file: docs/interface/README.md
@@ -220,7 +237,8 @@ supporting:
 # being proposed and then locked by the architect.
 queue:
   stage: libraries
-  inReview: []
+  inReview:
+    - arcnexus/delivery
   locked:
     - arcnexus/project
     - arcnexus/foundation
@@ -231,7 +249,6 @@ queue:
     - arcnexus/direction
     - arcnexus/verification
   waiting:
-    - arcnexus/delivery
     - arcnexus/report
     - arcnexus/guidance
     - arcnexus/testing
