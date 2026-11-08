@@ -19,3 +19,4 @@ jobs:
     uses: ./.github/workflows/verification.yaml
     with:
       distribution: true
+      native: true

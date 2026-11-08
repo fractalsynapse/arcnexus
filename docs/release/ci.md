@@ -19,6 +19,29 @@ introduced by the change. Existing whitespace outside the change is not a migrat
 requirement. Pull requests compare against their base; pushes compare against the
 previous branch head (falling back to the empty tree for a newly created branch).
 
+## Gate tiers
+
+The same `Repository checks` job runs at three depths, selected by the caller:
+
+| Trigger | Statics | Deterministic built-program suites | Native host qualification |
+| --- | --- | --- | --- |
+| Development PR → staging | yes | yes | **no** (`native: false`) |
+| Staging push | yes | yes | yes |
+| Main PR/push, published release | yes | yes | yes |
+| Nightly schedule and manual dispatch | yes | yes | yes, against `staging` |
+
+Native host qualification is the long tier: measured at 21m20s of a 36m46s run, against
+13m40s for the deterministic suites and about two minutes of statics. Running it on every push
+to a pull request made the feedback loop slower than the work it was checking, so a PR gate now
+proves statics plus the deterministic suite, and the native tier gates the branch the change
+lands on plus nightly. Nothing is skipped overall: a change cannot reach staging without the
+native tier, and staging is requalified nightly and on demand.
+
+Scheduled and dispatched runs check out `staging` explicitly through the `ref` input, because a
+scheduled workflow otherwise runs against the repository default branch.
+
+## Skill validation
+
 Skill validation requires YAML mapping frontmatter with a nonempty string `name`
 matching its directory and a nonempty string `description`. Names use lowercase
 letters, digits, and hyphens. Additional metadata is allowed. Missing frontmatter,
