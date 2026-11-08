@@ -1,0 +1,21 @@
+name: Nightly qualification
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch to qualify'
+        required: false
+        default: 'staging'
+permissions:
+  contents: read
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    uses: ./.github/workflows/verification.yaml
+    with:
+      native: true
+      ref: ${{ inputs.ref || 'staging' }}

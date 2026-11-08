@@ -6,6 +6,14 @@ on:
         type: boolean
         default: false
         required: false
+      native:
+        type: boolean
+        default: true
+        required: false
+      ref:
+        type: string
+        default: ''
+        required: false
 permissions:
   contents: read
 jobs:
@@ -19,6 +27,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+          ref: ${{ inputs.ref || github.sha }}
       - name: Normalize declared HTTPS repository identity
         run: git remote set-url origin "https://github.com/${{ github.repository }}.git"
       - name: Set up Node
@@ -75,6 +84,7 @@ jobs:
             --property=Delegate=yes --working-directory="$PWD" \
             --setenv="PATH=$PATH" --wait --pipe --collect npm test
       - name: Qualify native project hosts
+        if: inputs.native
         run: |
           sudo systemd-run --uid="$(id -u)" --gid="$(id -g)" \
             --property=Delegate=yes --working-directory="$PWD" \

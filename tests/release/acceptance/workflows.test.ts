@@ -29,6 +29,26 @@ class WorkflowTests {
       assert.deepEqual(workflow.permissions, { contents: 'read' });
     }
     assert.equal(production.jobs.verify.with.distribution, true);
+    assert.equal(
+      production.jobs.verify.with.native,
+      true,
+      'main and releases keep the native tier',
+    );
+  }
+
+  /** A scheduled run qualifies the native tier against staging explicitly, read-only. */
+  nightly(): void {
+    const workflow = this.read('nightly');
+    assert.ok(workflow.on.schedule, 'the native tier needs a scheduled qualification run');
+    assert.ok(workflow.on.workflow_dispatch, 'a maintainer can qualify staging on demand');
+    assert.equal(workflow.jobs.verify.with.native, true);
+    assert.match(
+      workflow.jobs.verify.with.ref,
+      /inputs\.ref \|\| 'staging'/,
+      'a scheduled run must qualify staging explicitly',
+    );
+    assert.deepEqual(workflow.permissions, { contents: 'read' });
+    assert.equal(workflow.jobs.verify.uses, './.github/workflows/verification.yaml');
   }
 
   /** Hosted tests retain ordinary-user confinement and delegated descendant supervision. */
@@ -69,13 +89,18 @@ class WorkflowTests {
     assert.match(bindings.run, /tools: \{ npm, node: process.execPath, codex \}/);
   }
 
-  /** Confined skips require a separate native host gate, without inference or privilege escalation for workers. */
+  /** Confined skips require a native host gate that cannot vanish; only its callers choose when. */
   nativeHosts(): void {
-    const steps = this.read('verification').jobs.repository.steps;
-    const native = steps.find((step: any) => step.name === 'Qualify native project hosts');
+    const verification = this.read('verification');
+    const native = verification.jobs.repository.steps.find(
+      (step: any) => step.name === 'Qualify native project hosts',
+    );
     assert.ok(native, 'Native host coverage must not disappear behind confined skips');
-    assert.equal(native.if, undefined);
+    assert.equal(native.if, 'inputs.native', 'the native tier is chosen by the caller, not lost');
     assert.notEqual(native['continue-on-error'], true);
+    assert.equal(verification.on.workflow_call.inputs.native.default, true);
+    assert.equal(this.read('development').jobs.verify.with.native, false);
+    assert.equal(this.read('staging').jobs.verify.with.native, true);
     assert.match(native.run, /--property=Delegate=yes/);
     assert.match(native.run, /--uid="\$\(id -u\)"/);
     assert.match(native.run, /ARCNEXUS_TEST_CODEX=\$ARCNEXUS_TEST_CODEX/);
@@ -122,6 +147,8 @@ test('native host qualification remains a required separate caller gate', () =>
   suite.nativeHosts());
 
 test('delivery lifecycle triggers and concurrency remain distinct', () => suite.lifecycles());
+
+test('nightly and dispatched runs qualify the native tier on staging', () => suite.nightly());
 
 test('delivery uses pinned read-only reusable verification', () => suite.verification());
 
