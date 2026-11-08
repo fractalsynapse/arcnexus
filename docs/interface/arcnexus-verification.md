@@ -1,8 +1,8 @@
 # Library contract — Verification
 
-Type contract: `library`. Stage: **proposed**. Owner: `verification` (absorbs the checking half of
-`publisher`, the verification modules of `assignment` and `task-intake`, and the evidence readers of
-`report`).
+Type contract: `library`. Stage: **locked** (revision 2). Owner: `verification` (absorbs the checking
+half of `publisher`, the verification modules of `assignment` and `task-intake`, and the evidence
+readers of `report`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-architecture-model.md`](arcnexus-architecture-model.md), [`arcnexus-coordination.md`](arcnexus-coordination.md), [`arcnexus-execution.md`](arcnexus-execution.md), [`arcnexus-direction.md`](arcnexus-direction.md).
 Depended on by: `delivery`, `direction` (corrections), the gateway, and every acceptance claim.
 
@@ -12,7 +12,9 @@ the most: in the last real end-to-end attempt, 40 of 49 failed runs stopped at
 `Independent verification needs attention`, one director made 56,273 identical evidence calls at
 the same offset, a reviewer consumed 1.7 million input tokens without citing the observation it was
 handed, and a review artifact of 2,048,073 characters was rejected at the harness input limit of
-2,115,566. Those are not model-quality problems. They are an unbounded interface.
+2,115,566. Those are not model-quality problems, and they are not solved by caps. They are an interface that
+inlined what should be referenced, repeated what should be assembled once, and never measured what
+it sent.
 
 ## Identity
 
@@ -31,7 +33,7 @@ handed, and a review artifact of 2,048,073 characters was rejected at the harnes
 | `checklist(candidate, plan)` | run the milestone's checklist **once** against the assembled candidate. Each item yields `passed`, `failed`, `skipped`, `unavailable` or `not-applicable` with the evidence id that supports it. |
 | `review(candidate, acceptance, measures)` | one independent, read-only assessment covering both the engineering criteria and, for a task, the original goal. One call, one verdict, one reviewer. |
 | `verdict(...)` | `accepted`, `rejected` with each deficiency tied to an acceptance id and the accountable owner, or `unavailable` when a required check could not run. `unavailable` is never folded into `accepted`. |
-| `evidenceSet(candidate, acceptance)` | the bounded bundle the reviewer may see: candidate digest, changed-path inventory, per-path diffs by reference, check results with exit status and log ids, and the acceptance text. Assembled to a stated cap; the producer, not the reviewer, is at fault when it exceeds. |
+| `evidenceSet(candidate, acceptance)` | the bundle the reviewer is given: candidate digest, changed-path inventory, per-path diffs **by reference**, check results with exit status and log ids, and the acceptance text. Nothing is truncated, sampled or omitted for size. The bundle's byte count, item count and composition are recorded as measures with the verdict, so a future limit is placed on evidence rather than on instinct. |
 | `reuse(inputs)` | evidence reuse keyed to input digest plus environment identity. Unchanged inputs are not re-run; changed inputs always are. |
 | `integrity(candidate, verdict)` | the verdict belongs to exactly this candidate digest. Any change to the candidate voids it. |
 | `classification(observation)` | distinguishes an expected failing regression assertion and a deliberate negative test — both normal verification — from a failed cycle. |
@@ -49,7 +51,8 @@ strength of an agent's own claim.
 | I1 | One verification gate per assembled candidate. No per-owner re-verification, no separate delivery-time re-check, no second goal assessment. |
 | I2 | A verdict cites acceptance ids and evidence ids. A prose summary without criterion mapping is not a verdict. |
 | I3 | Only `passed` supports an acceptance claim. `skipped`, `unavailable` and `not-applicable` are distinct outcomes and leave the candidate unaccepted when required. |
-| I4 | Reviewer input is bounded by construction. Exceeding the cap is a finding against the evidence producer and a reason to fix what it emits, never a licence to truncate silently or page through megabytes. |
+| I4 | **No limits in the first system.** Verification imposes no size, count, attempt or duration cap, and never truncates, samples or omits evidence to fit. Artefacts travel by reference and are read on demand, so a paging loop is unnecessary rather than forbidden. Where an external harness cannot accept an input, that is recorded as an unavailable check with the measured cause and byte count — never silently worked around by cutting content. |
+| I4b | Every bundle is measured: bytes, item count, the largest contributors, and the reviewer's token use. These are recorded as measures on the verdict so limits can be located later from observed evidence. |
 | I5 | The reviewer is independent: different profile, read-only, never the authoring steward, and never duplicated into a second review pass. |
 | I6 | Verification cannot repair what it reviews. Deficiencies return to `direction` as a correction milestone for the accountable owner. |
 | I7 | Verdicts are content-addressed to the candidate digest; a changed candidate invalidates the prior verdict rather than inheriting it. |
@@ -66,7 +69,8 @@ strength of an agent's own claim.
 | VI-1 | One candidate produces exactly one checklist run and one reviewer verdict; no owner-scoped re-verification pass executes in between. |
 | VI-2 | A verdict that cites no acceptance id, or cites one the plan does not contain, is rejected as invalid. |
 | VI-3 | A required check reported `skipped` or `unavailable` leaves the candidate unaccepted and the run blocked with the reason. |
-| VI-4 | An evidence set over the stated cap is refused with a finding naming the producer and the offending artefact; nothing is silently truncated and no paging loop is entered. |
+| VI-4 | A bundle is assembled in full at any size, with artefacts carried by reference and read on demand; the recorded measures name its bytes, item count and largest contributors, and no paging loop is entered. |
+| VI-4b | When an external harness cannot accept an input, the check is recorded `unavailable` with the measured byte count and cause; the content is never trimmed to make it fit and the candidate is not accepted. |
 | VI-5 | Changing any byte of the candidate voids the previous verdict; the same candidate reproduces it. |
 | VI-6 | Unchanged inputs reuse recorded evidence; a changed input digest forces a re-run. |
 | VI-7 | Verification cannot edit the candidate: an attempted write is refused by the checked-edit path, and no verification stage grants itself write authority. |
@@ -75,7 +79,7 @@ strength of an agent's own claim.
 | VI-10 | A rejected verdict names each failing acceptance id and its accountable owner, and direction turns it into a correction milestone rather than a new state. |
 | VI-11 | Live and simulated verification produce the same verdict shape with the same meaning, from the same code path. |
 | VI-12 | A regression whose input is built from an assignment-shaped fixture, while the production record differs, fails VI-12 rather than passing green. |
-| VI-13 | Verification cannot widen its own evidence read: private paths of another owner are not in the bundle, and requesting them is refused. |
+| VI-13 | The reviewer reads within its captured read scope. Widening that scope is an authority decision for the architect, never a size decision taken by verification. |
 | VI-14 | Deleting the duplicate re-verification, characterization re-check and promotion-review modules leaves no caller in the acceptance path. |
 | VI-15 | A verdict is recorded as evidence with its reviewer identity, profile and input digest, so a later run can show what was actually seen. |
 | VI-16 | Verification never merges, publishes or answers a human gate on anyone's behalf. |
@@ -88,7 +92,7 @@ strength of an agent's own claim.
 | `publisher/promotion-review` (131) and `delivery-verification` (147) | deleted with the promotion subsystem | one publication route, one meaning of accepted |
 | `assignment/captured-verification` (103) and `session-verification` (148) | folded into `checklist` and `classification` | no per-stage re-check of the same bytes |
 | `task-intake/verification-assessment` and `verification-evidence` | `review` — one call covering engineering and goal | direction stops judging its own plan; verification stops running twice |
-| `report/execution-evidence` (356), `evidence-pages` (200), `referenced-evidence` (138), `invocation-diagnostics` (204) | `evidenceSet` with a stated cap | the paging subsystem disappears because the bundle is bounded where it is produced |
+| `report/execution-evidence` (356), `evidence-pages` (200), `referenced-evidence` (138), `invocation-diagnostics` (204) | `evidenceSet` with artefacts by reference and full measurement | the paging subsystem is **replaced**, not capped: references make the repeat-read loop unnecessary, and measures make its cost visible |
 | `report/delivery-evidence`, `publication-evidence`, `recovery-evidence` | coordination entities and derived reports | removes mirrors of facts the store already holds |
 
 Migration lands in cleanup batch 3 (one gate) and is verified by VI-14 together with EX-17, CO-16
@@ -97,29 +101,37 @@ and DI-15: no caller left for the duplicate checking, and no caller left for wha
 ## Non-goals
 
 Continuous regression dashboards, flaky-test quarantine, coverage targets as acceptance, a second
-independent reviewer, performance benchmarking, security scanning, and any check whose only output is
-a paragraph an agent can agree with.
+independent reviewer, performance benchmarking, security scanning, any check whose only output is a
+paragraph an agent can agree with — and **no size, count, attempt or duration limits in the first
+system**. Limits are placed later from recorded measures, because where this project has used limits
+they cost time and lost work.
 
-## Open questions for the architect
+## Accepted decisions
 
-1. **Cap value.** I propose a reviewer input cap around 200,000 characters — comfortably below the
-   observed harness rejection at 2,115,566 and above the 139,660-byte turn prompts that worked — with
-   the diff carried by reference and read on demand. Do you want that number, or tighter?
-2. **Who may re-run verification.** I propose only an input or environment change re-runs it, and a
-   rejected verdict is re-run solely after a correction milestone changes the candidate. The
-   alternative allows an operator to request a fresh review of unchanged bytes; I would rather refuse
-   that, because re-reviewing identical input is how the 33-repeat-check defect class returned.
-3. **Goal assessment placement.** I propose one reviewer call covers engineering criteria and goal
-   acceptance, as the MVP plan states. The alternative is a separate goal assessor, which I count as a
-   second reviewer and would violate I1. Confirm before locking.
+1. **No limits.** The architect rejected caps on reviewer input for the first system: limits have
+   historically cost time and lost work, so the design measures and observes, and a limit is placed
+   only where evidence later says it belongs. I4 and I4b replace the proposed cap with assembly in
+   full, artefacts by reference, recorded measures, and an honest `unavailable` outcome when an
+   external harness refuses an input.
+2. **Re-run authority:** only a changed input digest or environment identity re-runs verification; a
+   rejected verdict is re-run after a correction changes the candidate, and identical bytes are never
+   re-reviewed on request (I8, VI-6).
+3. **One reviewer:** a single independent assessment covers the engineering criteria and, for a task,
+   the original goal. A separate goal assessor would be the second reviewer I1 forbids (I1, VI-1).
 
 ## Lock record
 
 ```yaml
 id: arcnexus/verification
-stage: proposed
-revision: 1
-acceptedBy: null
-acceptedAt: null
-changes: null
+stage: locked
+revision: 2
+acceptedBy: Adrian Webb (architect)
+acceptedAt: 2026-11-07
+changes:
+  - revision 2: locked with the architect's answers. The proposed reviewer input cap is removed
+    entirely — no size, count, attempt or duration limits in the first system; bundles are assembled
+    in full with artefacts by reference and every bundle measured, and an external harness refusal
+    becomes an unavailable check with its byte count rather than trimmed content (I4, I4b, VI-4,
+    VI-4b). Re-run authority and the single reviewer confirmed as proposed.
+  - revision 1: proposed in #356 with three open questions, all since answered
 ```

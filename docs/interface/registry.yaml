@@ -158,18 +158,21 @@ contracts:
     type: library
     file: docs/interface/arcnexus-verification.md
     owner: verification
-    stage: proposed
-    revision: 1
-    digest: e2678c41c7a51e4c5c0236a39a488add35e496a727f1175d3060192d0920e3da
+    stage: locked
+    revision: 2
+    digest: 258f78c7613e819f02e35e0d28fbb5ef04bfad6d4d0c928f75cf8b88e1c8cda9
     dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination, arcnexus/execution, arcnexus/direction]
-    scenarios: 16
-    acceptedBy: null
-    acceptedAt: null
-    history: []
-    openQuestions:
-      - reviewer input cap value (proposed 200000 characters)
-      - who may re-run verification on unchanged inputs (proposed: nobody)
-      - one reviewer call covering engineering and goal, or a separate goal assessor
+    scenarios: 17
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: 2026-11-07
+    history:
+      - revision: 1
+        stage: proposed
+        digest: e2678c41c7a51e4c5c0236a39a488add35e496a727f1175d3060192d0920e3da
+        note: >
+          proposed in #356 with three open questions; the architect rejected the reviewer input cap
+          outright for the first system, so revision 2 replaces bounds with full assembly by
+          reference plus recorded measures, and confirms re-run authority and the single reviewer
 
 protocol:
   id: arcnexus/contract-protocol
@@ -217,8 +220,7 @@ supporting:
 # being proposed and then locked by the architect.
 queue:
   stage: libraries
-  inReview:
-    - arcnexus/verification
+  inReview: []
   locked:
     - arcnexus/project
     - arcnexus/foundation
@@ -227,6 +229,7 @@ queue:
     - arcnexus/coordination
     - arcnexus/execution
     - arcnexus/direction
+    - arcnexus/verification
   waiting:
     - arcnexus/delivery
     - arcnexus/report
