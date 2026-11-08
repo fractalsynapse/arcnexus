@@ -1,9 +1,22 @@
 # ArcNexus
 
 Architecture-directed software development, with ArcNexus itself as an early target.
-The [charter](docs/charter.md) defines its purpose and phase gates. General execution
-is a phase-two extension; phase three remains blocked until the
-[qualification requirements](docs/plans/general-agent-execution-qualification.md) pass.
+The [charter](docs/charter.md) defines its purpose and phase gates, and the
+[self-development MVP](docs/plans/self-development-mvp.md) is the single current scope and
+acceptance contract. Earlier qualification plans are historical.
+
+## Accepted direction, not yet delivered
+
+On November 7, 2026 the architect accepted a reduced architecture: project knowledge in
+three author-separated spaces under [`.arc/`](.arc/README.md), goals turned by the director
+into sequential single-owner **milestones** using the
+[plan template](.arc/architecture/plan-template.md), the five Steps as the only activity
+vocabulary, one store, one process, one verification gate and one publication route, one
+configuration version with no migration readers, and a task/workday seam rather than two
+engines. The commands and behaviour described below are the **current** runtime, which still
+maintains the older multi-store lifecycle. Reducing it is tracked as ordered batches in the
+MVP plan. Self-development reliability so far: one delivery merged by ArcNexus itself,
+described in the operator record as an assisted recovery, and zero counted clean cycles.
 
 Requires Linux, Node >=22.13 <23, npm, Git, `setsid`, and an authenticated Codex CLI.
 

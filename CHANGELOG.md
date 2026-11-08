@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Record the accepted MVP architecture and the `.arc` knowledge structure: architecture, plans and learning separated by author; goals planned by the director as sequential single-owner milestones from a shared plan template; the five Steps as the only activity vocabulary with per-activity standards and execution profiles; one store, one process, one verification gate, one publication route and one configuration version; a task/workday seam; and `verify-release` defined against live CI/CD and hosted acceptance. Documentation and direction only — the runtime still behaves as described below, and no cycle is claimed. Guidance no longer conflicts with stating acceptance as a failing test before a behaviour change (#343).
+
 - Align shared agent skills with Scaffold and keep ArcNexus guidance and its reference experiment in project-owned skills (#341).
 
 - Reuse an explicitly linked accepted supplier assignment without copying its objective or acceptance criteria verbatim; preserve its owner, contract and workflow, validate identity, owner, run membership, replay and cycles, and create separate assignments for distinct work. Cross-owner edit rejections guide stewards to inspect assignment evidence and link matching work, keeping accepted intent distinct from verified delivery (#339).

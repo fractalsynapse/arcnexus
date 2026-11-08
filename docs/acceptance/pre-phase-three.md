@@ -1,9 +1,11 @@
 # Pre-phase-three qualification
 
 Historical qualification for the earlier #70 increment. Its evidence remains valid
-for that revision, but does not establish readiness under the later
-[managed-lifecycle gates](../plans/managed-lifecycle.md). Those gates remain open
-until their own real-agent simulation, promotion and container evidence is retained.
+for that revision, but does not establish readiness for the current contract, which is
+[the self-development MVP](../plans/self-development-mvp.md). The later
+[managed-lifecycle](../plans/managed-lifecycle.md) simulation, promotion and container
+evidence is deferred scope under that plan, not a gate on delivering a fresh real goal
+through staging.
 
 This gate covers readable configuration, enforceable component ownership, compact
 TypeScript, mandatory initialization, task proposals and progress-driven execution.

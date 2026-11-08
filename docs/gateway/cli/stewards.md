@@ -88,8 +88,10 @@ Host loss stops managed subprocesses and retains interrupted work. Recovery vali
 checkpoints and never automatically replays an operation whose completion is uncertain.
 A missing model thread may be replaced with a recorded continuation from captured
 context after validation. See the [general execution contract](../../library/execution-runtime/execution.md)
-and [qualification record](../../plans/general-agent-execution-qualification.md) for
-current evidence and remaining limitations.
+for current behaviour, [the self-development MVP](../../plans/self-development-mvp.md) for
+the accepted target architecture and remaining limitations, and the
+[qualification ledger](../../plans/general-agent-execution-qualification.md) for historical
+evidence only.
 
 Exit codes are `0` for verified completion/control success, `1` for blocked or
 unsuccessful execution, `2` for invalid input/preflight, and `130` for cancellation.

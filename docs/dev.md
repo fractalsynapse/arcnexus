@@ -7,7 +7,9 @@ ArcNexus is the Architecture Studio described below.
 
 ## Current direction and evidence
 
-Read the [charter](charter.md) for current architectural authority and the
+Read the [charter](charter.md) for current architectural authority, the
+[self-development MVP](plans/self-development-mvp.md) for the accepted phase-two
+architecture and acceptance, and the
 [phase-one retrospective](phase-one-retrospective.md) before designing coordination.
 Read the [pre-phase-two qualification](acceptance/pre-phase-two.md) for the current
 single-steward gate and preserved live evidence. The [operations qualification](acceptance/steward-operations.md) adds captured plans/checklists, managed operations, parent-loss supervision and selected prior findings, including a retained failed case and its verified workflow fix. Only the next useful slice needs a
@@ -16,7 +18,7 @@ detailed implementation plan.
 | Phase | Current status and next proof |
 | --- | --- |
 | 1. Single steward | Delivered: managed workspace/setup, SDK execution, verification, evidence and guarded cleanup. See the [implementation sequence](plans/phase-one.md), [live sample](acceptance/live-sample.md) and [self-development evidence](acceptance/self-development.md). |
-| 2. Managed lifecycle | In qualification. Earlier two-steward delivery is retained in [workday evidence](acceptance/workdays.md). The [managed lifecycle plan](plans/managed-lifecycle.md) tracks real multi-owner execution, simulated publication and promotion. |
+| 2. Reduced self-development loop | In progress. The accepted architecture is [the self-development MVP](plans/self-development-mvp.md): `.arc` knowledge spaces, director-generated sequential single-owner milestones from the [plan template](../.arc/architecture/plan-template.md), one store, one process, one verification gate and one publication route. The earlier [managed lifecycle plan](plans/managed-lifecycle.md) is a historical ledger; its simulated publication, promotion and container evidence is deferred scope, not a current gate. Two-steward delivery history remains in [workday evidence](acceptance/workdays.md). |
 | 3. Service APIs and UI | Begins after the phase-two gates pass. Expose the shared application services through OpenAPI, MCP and React. |
 | 4. Expanded governance | Planned: deepen inherited standards, contract validation and conformance checks based on actual use. |
 | 5. Multi-project operation | Planned: prove one real package relationship before broad composition and release coordination. |
