@@ -71,6 +71,23 @@ contracts:
           commands, fold `plan show` into `task status`, and let foreground `task run`
           prompt at gates while `--async` never does
 
+  - id: arcnexus/architecture-model
+    type: library
+    file: docs/interface/arcnexus-architecture-model.md
+    owner: architecture-model
+    stage: proposed
+    revision: 1
+    digest: 5defa8613fe034530ece7f34401d9822bd674215f642e9878a94e3c6b9f726c1
+    dependsOn: [arcnexus/project, arcnexus/foundation]
+    scenarios: 16
+    acceptedBy: null
+    acceptedAt: null
+    history: []
+    openQuestions:
+      - whether contract-integrity validation lives in architecture-model or a governance component
+      - whether editing .arc/architecture stays a human act applied from a proposal
+      - who owns docs/interface once architecture-maintenance collapses into project
+
 protocol:
   id: arcnexus/contract-protocol
   file: docs/interface/README.md
@@ -100,8 +117,9 @@ supporting:
 # being proposed and then locked by the architect.
 queue:
   stage: libraries
-  waiting:
+  inReview:
     - arcnexus/architecture-model
+  waiting:
     - arcnexus/coordination
     - arcnexus/execution
     - arcnexus/direction
