@@ -29,6 +29,20 @@ class WorkflowTests {
       assert.deepEqual(workflow.permissions, { contents: 'read' });
     }
     assert.equal(production.jobs.verify.with.distribution, true);
+    const nightly = this.read('nightly');
+    assert.ok(nightly.on.schedule, 'the native tier needs a scheduled qualification run');
+    assert.equal(nightly.jobs.verify.with.native, true);
+    assert.match(
+      nightly.jobs.verify.with.ref,
+      /inputs\.ref \|\| 'staging'/,
+      'a scheduled run must qualify staging explicitly',
+    );
+    assert.deepEqual(nightly.permissions, { contents: 'read' });
+    assert.equal(
+      production.jobs.verify.with.native,
+      true,
+      'main and releases keep the native tier',
+    );
   }
 
   /** Hosted tests retain ordinary-user confinement and delegated descendant supervision. */
@@ -69,13 +83,18 @@ class WorkflowTests {
     assert.match(bindings.run, /tools: \{ npm, node: process.execPath, codex \}/);
   }
 
-  /** Confined skips require a separate native host gate, without inference or privilege escalation for workers. */
+  /** Confined skips require a native host gate that cannot vanish; only its callers choose when. */
   nativeHosts(): void {
-    const steps = this.read('verification').jobs.repository.steps;
-    const native = steps.find((step: any) => step.name === 'Qualify native project hosts');
+    const verification = this.read('verification');
+    const native = verification.jobs.repository.steps.find(
+      (step: any) => step.name === 'Qualify native project hosts',
+    );
     assert.ok(native, 'Native host coverage must not disappear behind confined skips');
-    assert.equal(native.if, undefined);
+    assert.equal(native.if, 'inputs.native', 'the native tier is chosen by the caller, not lost');
     assert.notEqual(native['continue-on-error'], true);
+    assert.equal(verification.on.workflow_call.inputs.native.default, true);
+    assert.equal(this.read('development').jobs.verify.with.native, false);
+    assert.equal(this.read('staging').jobs.verify.with.native, true);
     assert.match(native.run, /--property=Delegate=yes/);
     assert.match(native.run, /--uid="\$\(id -u\)"/);
     assert.match(native.run, /ARCNEXUS_TEST_CODEX=\$ARCNEXUS_TEST_CODEX/);
