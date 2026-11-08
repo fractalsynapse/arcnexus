@@ -32,7 +32,9 @@ Component interfaces are recorded in [`docs/interface/`](docs/interface/README.m
 project → foundation → gateway → libraries → release. A contract at stage `locked` is
 architecture: only the human architect changes it, and its acceptance scenarios are the tests
 that drive implementation cleanup. Propose contract changes as a `component` milestone; never
-edit a locked interface to make current work pass.
+edit a locked interface to make current work pass. The host enforces this: `validate` reports a
+locked contract whose bytes differ from the registry, and a checked edit to a locked contract or
+to the registry is refused.
 
 Before any action that modifies the codebase, validate the request against the relevant
 contracts and architecture. If it conflicts, counter the request first: name the clause, state

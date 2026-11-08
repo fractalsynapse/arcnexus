@@ -17,9 +17,13 @@ contract holds; changing a contract is an architectural act.
 | `locked` | Accepted. The interface is fixed. | **Only the human architect.** An agent may propose a change through a `component` milestone; it may not edit a locked contract |
 
 Locking is recorded in [`registry.yaml`](registry.yaml): contract id, file, stage, revision,
-content digest, who accepted it and when. A locked contract whose digest changes without a
-new registry entry is a validation finding. Enforcement of that rule is a listed follow-up;
-until it exists, the rule is stated authority, not a checked guarantee.
+content digest, who accepted it and when. Enforcement is delivered, not promised. `arcnexus
+validate` recomputes every recorded digest at the validated revision and reports
+`contract-digest-mismatch`, `contract-acceptance-missing`, `contract-digest-missing`,
+`contract-file-missing` or `contract-stage-invalid`. The checked-edit path refuses a write to any
+locked contract file — and to the registry itself while anything is locked — using the locks
+captured at the run's base revision, so editing the registry inside a workspace unlocks nothing
+for the run that edited it.
 
 After a lock, the acceptance scenarios in that contract are the specification. A change
 request must add or amend scenarios **before** the interface text, so tests lead the contract

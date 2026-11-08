@@ -108,20 +108,19 @@ class ContractIntegrityScenarios {
 
 const scenarios = new ContractIntegrityScenarios();
 
-test('a locked contract matching its recorded digest reports no findings', (t) =>
+test('a locked contract matching its recorded digest reports no findings', () =>
   scenarios.matching());
 
-test('a locked contract edited without a new registry entry is reported', (t) =>
+test('a locked contract edited without a new registry entry is reported', () =>
   scenarios.mismatch());
 
-test('a locked contract without recorded acceptance is reported', (t) => scenarios.unaccepted());
+test('a locked contract without recorded acceptance is reported', () => scenarios.unaccepted());
 
-test('a missing contract file and an unknown stage are both reported', (t) => scenarios.defects());
+test('a missing contract file and an unknown stage are both reported', () => scenarios.defects());
 
-test('a project without a registry stays inert', (t) => scenarios.undeclared());
+test('a project without a registry stays inert', () => scenarios.undeclared());
 
-test('locked paths and the registry itself are named from captured locks', (t) =>
-  scenarios.locks());
+test('locked paths and the registry itself are named from captured locks', () => scenarios.locks());
 
 registerSuite({
   component: 'architecture',

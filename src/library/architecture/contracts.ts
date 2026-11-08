@@ -33,6 +33,22 @@ const registryPath = 'docs/interface/registry.yaml';
 
 const digest = (text: string) => createHash('sha256').update(text).digest('hex');
 
+/** Reports the digest defect for one record, if its bytes disagree with the record. */
+function digestFinding(record: ContractRecord, text: string): ContractFinding | undefined {
+  if (!record.digest)
+    return {
+      code: 'contract-digest-missing',
+      path: record.file,
+      detail: `${record.id} records no digest.`,
+    };
+  if (digest(text) === record.digest) return undefined;
+  return {
+    code: 'contract-digest-mismatch',
+    path: record.file,
+    detail: `${record.id} content differs from the recorded digest; a locked contract changes only on recorded human authority.`,
+  };
+}
+
 /** Reports the integrity defects for one contract record against the bytes at its revision. */
 function recordFindings(
   record: ContractRecord,
@@ -52,18 +68,8 @@ function recordFindings(
       path: record.file,
       detail: `${record.id} records ${record.file}, which is absent.`,
     });
-  if (!record.digest)
-    findings.push({
-      code: 'contract-digest-missing',
-      path: record.file,
-      detail: `${record.id} records no digest.`,
-    });
-  else if (digest(text) !== record.digest)
-    findings.push({
-      code: 'contract-digest-mismatch',
-      path: record.file,
-      detail: `${record.id} content differs from the recorded digest; a locked contract changes only on recorded human authority.`,
-    });
+  const mismatch = digestFinding(record, text);
+  if (mismatch) findings.push(mismatch);
   if (record.stage === 'locked' && (!record.acceptedBy || !record.acceptedAt))
     findings.push({
       code: 'contract-acceptance-missing',

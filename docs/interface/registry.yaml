@@ -138,8 +138,8 @@ protocol:
   file: docs/interface/README.md
   owner: architecture-maintenance
   stage: locked
-  revision: 3
-  digest: 98013cc58b446810523ce04a3bb2bb8ef4b766a9ece8e24f799aac78c6e6a7fb
+  revision: 4
+  digest: d46b8accae572f253b973b9491fc3b0ff3a36289d21da8f6444947ce78a0b10c
   acceptedBy: Adrian Webb (architect)
   acceptedAt: 2026-11-07
   history:
@@ -157,6 +157,13 @@ protocol:
       note: >
         added the ownership rule the architect directed — each contract file belongs to the
         component it describes, held by architecture-maintenance until that component exists
+    - revision: 4
+      stage: locked
+      digest: d46b8accae572f253b973b9491fc3b0ff3a36289d21da8f6444947ce78a0b10c
+      note: >
+        enforcement recorded as delivered: validate recomputes locked-contract digests with stable
+        finding codes, and the checked-edit path refuses a locked contract or the registry using
+        locks captured at the run's base revision (#353)
 
 supporting:
   - id: arcnexus/plan-template
