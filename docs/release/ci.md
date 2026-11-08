@@ -40,6 +40,14 @@ native tier, and staging is requalified nightly and on demand.
 Scheduled and dispatched runs check out `staging` explicitly through the `ref` input, because a
 scheduled workflow otherwise runs against the repository default branch.
 
+Two activation limits are worth knowing, because both make a change look inert:
+
+- A pull request cannot test its own workflow edits. GitHub runs `pull_request` events against
+  the base version of the workflow file, so a change to these tiers is proven by the *next*
+  pull request after it merges, not by its own.
+- `nightly.yaml` fires only once it exists on the repository default branch. Landing it on
+  staging is not enough; the schedule activates when the release reaches `main`.
+
 ## Skill validation
 
 Skill validation requires YAML mapping frontmatter with a nonempty string `name`
