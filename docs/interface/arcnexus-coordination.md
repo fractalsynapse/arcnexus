@@ -1,6 +1,6 @@
 # Library contract — Coordination
 
-Type contract: `library`. Stage: **proposed**. Owner: `coordination` (absorbs
+Type contract: `library`. Stage: **locked** (revision 2). Owner: `coordination` (absorbs
 `coordination-store` and `report`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-architecture-model.md`](arcnexus-architecture-model.md).
 Depended on by: `direction`, `execution`, `verification`, `delivery`, `report` consumers, the
@@ -30,10 +30,28 @@ store either lives in Git (code revisions) or is derived on read (reports).
 | `position(goalId)` | current milestone and Step, plus the owner cursor reserved for the workday seam |
 | `gates` | open question records with the answer stored as evidence; replaces the `needs_input` outcome and its clarification machinery |
 | `requests` | a link from one milestone to existing accepted work, with owner and acceptance preserved; replaces the dependency graph |
-| `evidence(put/get/list)` | artefacts by id with digest, size and kind; bounded range reads; retention honours the stated policy |
+| `evidence(put/get/list)` | artefacts by id with digest, size and kind; bounded range reads; retention per the policy below |
 | `measures(goalId)` | counters recorded, never inferred: wall time, model turns, added and removed lines, net change in stores/states/owners/subsystems, failures and blocks with cause |
 | `report(query)` | derived views computed on read: status, plan, evidence index, diagnostics. No report is stored |
 | `planRender(goalId)` | the deterministic committed record of a plan: milestones, acceptance, checklists, status and measures, written only by the runtime lane |
+
+### Goal identity, plan authority and retention
+
+**A goal is identified by the digest of its text.** A goal can be long, arbitrary prose, so the
+digest is the identity everywhere — store key, evidence path, plan file name — and the full text
+is stored once and rendered into the plan. Nothing uses a slug, a truncation or a title as an
+identity, and two goals that differ by one character are different goals.
+
+**The store is authoritative; the plan file is a render.** `.arc/plans/<goal-digest>.md` is
+produced deterministically from store state by the runtime lane and committed so a pull request
+still shows the reasoning. Editing the file changes nothing: the next render reproduces it, and a
+render that differs from its source state is a finding. One fact, one writer.
+
+**Retention.** Each goal carries a size cap, two gigabytes by default and configurable in project
+settings. When a goal exceeds it, only regenerable material is removed — dependency caches,
+compiled output, disposable scratch — and never authored evidence, diffs, verdicts, measures or
+events. Removal is recorded as an event naming what was dropped and how much, and a goal that
+cannot fit even after cache removal is reported as a finding instead of silently truncated.
 
 Entity kinds are exactly: `goal`, `milestone`, `step`, `execution`, `gate`, `request`,
 `evidence`, `measure`, `delivery`. Anything else is a property of one of these, not a new table.
@@ -75,6 +93,9 @@ readable as data.
 | I9 | The plan record has one writer: the runtime lane. Stewards never edit it directly. |
 | I10 | Code revisions live only in Git; the store holds ids and digests, never copies. |
 | I11 | Live and simulation share one schema. Isolation is a namespace plus a refusal, never a second store or a second publication engine. |
+| I12 | Goal identity is the digest of the goal text. No title, slug or truncation is used as an identifier. |
+| I13 | The committed plan is a deterministic render of store state. A file edited out of band is reproduced on the next render, and a render that disagrees with its source is a finding. |
+| I14 | Retention removes regenerable material only. Authored evidence, diffs, verdicts, measures and events are never automatically deleted, and every removal is recorded. |
 
 ## Acceptance scenarios
 
@@ -96,6 +117,9 @@ readable as data.
 | CO-14 | A simulated run writes into the simulation namespace only; any attempt to write a live record from it is refused. |
 | CO-15 | Reopening the store after an abrupt process exit yields the last committed state with no repair step, no reconciliation pass and no operator action. |
 | CO-16 | Deleting the recovery modules leaves no caller: no code path references a state it existed to rescue. |
+| CO-17 | The same goal text always resolves to the same goal id, and a single-character change produces a different id; a 4,000-character goal still resolves to one digest and one plan file. |
+| CO-18 | A hand-edited committed plan is reproduced away by the next render, and a render that disagrees with store state is reported rather than trusted. |
+| CO-19 | A goal over its retention cap loses only regenerable caches, keeps every authored artefact, records each removal as an event with its size, and reports a finding when it still cannot fit. |
 
 ## Migration
 
@@ -118,25 +142,28 @@ cross-repository transactions, event sourcing as the state model, analytics or d
 backup and archival policy beyond a stated retention cap, and any capability whose only purpose
 is reading historical configuration versions.
 
-## Open questions for the architect
+## Accepted decisions
 
-1. **Plan authority.** I propose the store is authoritative and `.arc/plans/<goal>.md` is a
-   deterministic render the runtime commits, so PRs still show reasoning and there is no second
-   source of truth. The alternative is the file being authoritative, which reintroduces two
-   writers over one fact. Which do you want?
-2. **Evidence retention.** A concrete cap per goal with automatic removal of regenerable caches
-   only — authored evidence, diffs and verdicts never deleted — or retain everything and accept
-   the disk growth the last nine days demonstrated?
-3. **Entities plus events, or events only?** I propose entities for current state and events for
-   history, because reporting needs both and neither alone is honest. Confirm before locking.
+1. **Store authoritative, plan committed as a render** — with the architect's amendment that a
+   goal is identified by the **digest of its text**, because a goal can be long. The full text is
+   stored once and rendered into the plan.
+2. **Retention as proposed:** per-goal cap, regenerable caches removed first and only, authored
+   evidence never automatically deleted, every removal recorded, over-cap reported.
+3. **Entities plus events**, as proposed: entities hold current state, events hold history, and
+   no third projection exists.
 
 ## Lock record
 
 ```yaml
 id: arcnexus/coordination
-stage: proposed
-revision: 1
-acceptedBy: null
-acceptedAt: null
-changes: null
+stage: locked
+revision: 2
+acceptedBy: Adrian Webb (architect)
+acceptedAt: 2026-11-07
+changes:
+  - revision 2: locked with the architect's answers — goal identity is the digest of the goal
+    text, the store is authoritative with the committed plan as a deterministic render,
+    per-goal retention that removes only regenerable caches, and entities plus events. Added
+    invariants I12–I14 and scenarios CO-17…CO-19
+  - revision 1: proposed in #351 with three open questions, all since answered
 ```

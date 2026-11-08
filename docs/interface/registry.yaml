@@ -96,18 +96,39 @@ contracts:
     type: library
     file: docs/interface/arcnexus-coordination.md
     owner: coordination
+    stage: locked
+    revision: 2
+    digest: b59e95e623b0d736d845f0fd9cab64464b0ec168fcab10840011b67f7a95272b
+    dependsOn: [arcnexus/project, arcnexus/architecture-model]
+    scenarios: 19
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: 2026-11-07
+    history:
+      - revision: 1
+        stage: proposed
+        digest: 1bb41eddc2db0a881584f26ec3b9b3c1b8cb7fce50e018164e5182410fb38470
+        note: >
+          proposed in #351 with three open questions; answered by the architect with one
+          amendment — goal identity is the digest of the goal text, the store is authoritative
+          with the committed plan as a deterministic render, per-goal retention that removes
+          only regenerable caches, and entities plus events
+
+  - id: arcnexus/execution
+    type: library
+    file: docs/interface/arcnexus-execution.md
+    owner: execution
     stage: proposed
     revision: 1
-    digest: 1bb41eddc2db0a881584f26ec3b9b3c1b8cb7fce50e018164e5182410fb38470
-    dependsOn: [arcnexus/project, arcnexus/architecture-model]
-    scenarios: 16
+    digest: a101a329f5d8a0027b5b60a17fa5587bde771693878ac0a2d8d60ec5376f2836
+    dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination]
+    scenarios: 18
     acceptedBy: null
     acceptedAt: null
     history: []
     openQuestions:
-      - whether the store or the committed plan file is authoritative for a plan
-      - evidence retention cap per goal versus unbounded retention
-      - entities plus events, or events only
+      - confinement default — bubblewrap in-process required, container profile optional
+      - lane ownership — execution holds the lane, direction holds ordering
+      - harness state — per-activation inside execution, or a shared machine-level home
 
 protocol:
   id: arcnexus/contract-protocol
@@ -149,14 +170,14 @@ supporting:
 queue:
   stage: libraries
   inReview:
-    - arcnexus/coordination
+    - arcnexus/execution
   locked:
     - arcnexus/project
     - arcnexus/foundation
     - arcnexus/cli-gateway
     - arcnexus/architecture-model
+    - arcnexus/coordination
   waiting:
-    - arcnexus/execution
     - arcnexus/direction
     - arcnexus/verification
     - arcnexus/delivery
