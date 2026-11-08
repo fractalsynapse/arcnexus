@@ -117,18 +117,22 @@ contracts:
     type: library
     file: docs/interface/arcnexus-execution.md
     owner: execution
-    stage: proposed
-    revision: 1
-    digest: a101a329f5d8a0027b5b60a17fa5587bde771693878ac0a2d8d60ec5376f2836
+    stage: locked
+    revision: 2
+    digest: 66e294ff8083b46dc85dda5890301ac5452390d6952a8b32c19ee19713a4bdcf
     dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination]
-    scenarios: 18
-    acceptedBy: null
-    acceptedAt: null
-    history: []
-    openQuestions:
-      - confinement default — bubblewrap in-process required, container profile optional
-      - lane ownership — execution holds the lane, direction holds ordering
-      - harness state — per-activation inside execution, or a shared machine-level home
+    scenarios: 19
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: 2026-11-07
+    history:
+      - revision: 1
+        stage: proposed
+        digest: a101a329f5d8a0027b5b60a17fa5587bde771693878ac0a2d8d60ec5376f2836
+        note: >
+          proposed in #352 with three open questions; answered by the architect — bubblewrap
+          required with the container kept as an opt-in deployment seam and concurrency
+          preclusion forbidden, the lane in execution with ordering in direction, and harness
+          state per activation
 
 protocol:
   id: arcnexus/contract-protocol
@@ -169,14 +173,14 @@ supporting:
 # being proposed and then locked by the architect.
 queue:
   stage: libraries
-  inReview:
-    - arcnexus/execution
+  inReview: []
   locked:
     - arcnexus/project
     - arcnexus/foundation
     - arcnexus/cli-gateway
     - arcnexus/architecture-model
     - arcnexus/coordination
+    - arcnexus/execution
   waiting:
     - arcnexus/direction
     - arcnexus/verification

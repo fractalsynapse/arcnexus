@@ -1,7 +1,7 @@
 # Library contract — Execution
 
-Type contract: `library`. Stage: **proposed**. Owner: `execution` (absorbs `execution-runtime`,
-`workspace`, `steward`, `operations` and `change-inspection`).
+Type contract: `library`. Stage: **locked** (revision 2). Owner: `execution` (absorbs
+`execution-runtime`, `workspace`, `steward`, `operations` and `change-inspection`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-architecture-model.md`](arcnexus-architecture-model.md), [`arcnexus-coordination.md`](arcnexus-coordination.md).
 Depended on by: `direction`, `verification`, `delivery`, the gateway, and every agent turn.
 
@@ -66,6 +66,7 @@ the difference between a documented rule and a rule a run cannot cross.
 | I11 | Assembly is a merge. Conflicts are retained and reported; they are not resolved by preference. |
 | I12 | Execution holds no lifecycle state. Status lives in coordination; execution returns outcomes. |
 | I13 | Model selection comes from the activity's profile. An operator substitution is permitted, recorded in evidence, and never changes captured authority. |
+| I14 | Nothing in the lane, workspace or confinement interface precludes a background host running several goals concurrently. The MVP runs one in-process lane, and the container deployment seam is retained so the later service is a deployment change rather than a redesign. |
 
 ## Acceptance scenarios
 
@@ -89,6 +90,7 @@ the difference between a documented rule and a rule a run cannot cross.
 | EX-16 | An operation outside the activity's declared categories, or with an unmet prerequisite, is refused before execution with the reason named. |
 | EX-17 | Deleting the recovery, retained-host, promotion-resume and lease modules leaves no caller in the execution path. |
 | EX-18 | An operator model substitution changes the model used, is recorded in evidence, and leaves captured authority and findings identical. |
+| EX-19 | Two lanes for two different projects can exist in one process without interference: the lane is obtained per project, holds no process-global mutable state, and neither activation observes the other's workspace, store or evidence. |
 
 ## Migration
 
@@ -112,24 +114,29 @@ Concurrency inside a project, distributed workers, priority scheduling, checkpoi
 dead run, self-healing of a broken workspace, budgets of any kind, agent-to-agent conversation, and
 any execution path that exists only to preserve a historical run.
 
-## Open questions for the architect
+## Accepted decisions
 
-1. **Confinement default.** I propose bubblewrap-in-the-process as the only required mechanism for
-   the MVP, with the container plus AppArmor, seccomp and cgroup subtree available as an opt-in
-   deployment profile. Confirm, because it changes what a fresh machine needs to run one cycle.
-2. **Lane ownership.** I placed the sequential lane in `execution` and plan ordering in
-   `direction`. The alternative is a small `scheduler` inside `direction`. Which do you prefer?
-3. **Harness scope.** `steward` currently manages Codex configuration, thread history and a
-   private client home. Should harness state stay per-activation inside `execution`, or move to a
-   shared machine-level home that multiple projects reuse?
+1. **Confinement default:** bubblewrap-in-process is the only required mechanism for a cycle; the
+   container with AppArmor, a generated seccomp profile and a dedicated cgroup subtree is an opt-in
+   deployment profile. **The container seam is retained** — the lane, workspace and confinement
+   interfaces must not assume a single foreground process, because this becomes a background
+   service running several goals at once (I14, EX-19).
+2. **Lane ownership:** `execution` holds the lane; `direction` holds plan ordering. The lane
+   executes; it does not decide what comes next.
+3. **Harness state:** per activation, inside `execution`. No shared machine-level home, so one
+   activation cannot inherit another's thread history or configuration, and disposal is local.
 
 ## Lock record
 
 ```yaml
 id: arcnexus/execution
-stage: proposed
-revision: 1
-acceptedBy: null
-acceptedAt: null
-changes: null
+stage: locked
+revision: 2
+acceptedBy: Adrian Webb (architect)
+acceptedAt: 2026-11-07
+changes:
+  - revision 2: locked with the architect's answers — bubblewrap required and the container kept as
+    an opt-in deployment seam with concurrency preclusion forbidden, the lane in execution with
+    ordering in direction, and harness state per activation. Added invariant I14 and scenario EX-19
+  - revision 1: proposed in #352 with three open questions, all since answered
 ```
