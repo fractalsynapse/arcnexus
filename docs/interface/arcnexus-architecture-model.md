@@ -119,25 +119,30 @@ Runtime caching layers, plugin discovery, architecture editing through the CLI, 
 DSL, conformance rules beyond what a deterministic check can prove, and any behaviour that
 exists to keep old runs executable.
 
-## Open questions for the architect
+## Accepted decisions
 
-1. **Who owns contract integrity?** I placed digest verification in `architecture-model`
-   (validation) and refusal in `execution`. The alternative is a small dedicated `governance`
-   component. Which do you want, given the owner-count target?
-2. **Definition editing.** With `proposeChange` writing proposals and the gateway exposing only
-   `component list|get`, editing `.arc/architecture/` becomes a human act applied from a
-   proposal. Confirm that, or ask for a human-authorized `arcnexus project configure` in the MVP.
-3. **Ownership of `docs/interface/`.** It is currently assigned to `architecture-maintenance`,
-   which collapses into `project`. Should the contract files belong to `project`, or to the
-   component each contract describes?
+1. **Contract integrity is split as proposed:** `architecture-model` performs digest
+   verification inside `validate`; `execution` performs admission refusal on the checked-edit
+   path. Neither reimplements the other.
+2. **Editing `.arc/architecture/` is a human act applied from a proposal.** `proposeChange`
+   writes the proposal; a human (or an agent a human explicitly delegates to) applies it. A UI,
+   API and MCP editing surface comes later and will be a new gateway contract, not an extension
+   of this one.
+3. **Contract files belong to the component each contract describes** — see the protocol's
+   ownership rule. This contract's file transfers to `architecture-model` when the ownership
+   re-cut lands, and is held by architecture-maintenance until then.
 
 ## Lock record
 
 ```yaml
 id: arcnexus/architecture-model
-stage: proposed
-revision: 1
-acceptedBy: null
-acceptedAt: null
-changes: null
+stage: locked
+revision: 2
+acceptedBy: Adrian Webb (architect)
+acceptedAt: 2026-11-07
+changes:
+  - revision 2: locked with the three open questions resolved by the architect — integrity split
+    between architecture-model and execution, architecture editing stays a human act applied
+    from a proposal, and contract files are owned by the component each describes
+  - revision 1: proposed in #350
 ```

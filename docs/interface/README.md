@@ -64,6 +64,17 @@ Anything a change to could break an external dependent or an internal relationsh
 Types, private helpers, file layout inside an owner's paths, and internal call order are not
 contract surface. Do not lock what you have not needed to depend on.
 
+## Ownership of contract files
+
+Each contract file is owned by the component it describes: the foundation contract belongs to
+foundation, the gateway contract to the gateway owner, a library contract to that library. A
+steward may therefore correct or extend the record of its own interface within its normal write
+scope, and may not touch another component's contract.
+
+Until a component exists in the catalog, its contract is held by the architecture-maintenance
+owner and transfers automatically when the ownership re-cut lands. Ownership here is about who
+may maintain the record; it never grants authority to change a `locked` interface.
+
 ## Naming
 
 One file per contract instance: `docs/interface/<project>-<component>.md`, for example

@@ -75,26 +75,47 @@ contracts:
     type: library
     file: docs/interface/arcnexus-architecture-model.md
     owner: architecture-model
+    stage: locked
+    revision: 2
+    digest: 975d6185283637f5dd31b142cda2cea1c3da09ccb39506605840d74e91fb94e5
+    dependsOn: [arcnexus/project, arcnexus/foundation]
+    scenarios: 16
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: 2026-11-07
+    history:
+      - revision: 1
+        stage: proposed
+        digest: 5defa8613fe034530ece7f34401d9822bd674215f642e9878a94e3c6b9f726c1
+        note: >
+          proposed in #350 with three open questions; all answered by the architect — keep the
+          integrity split between architecture-model and execution, keep .arc/architecture
+          editing a human act applied from a proposal, and let each contract be owned by the
+          component it describes
+
+  - id: arcnexus/coordination
+    type: library
+    file: docs/interface/arcnexus-coordination.md
+    owner: coordination
     stage: proposed
     revision: 1
-    digest: 5defa8613fe034530ece7f34401d9822bd674215f642e9878a94e3c6b9f726c1
-    dependsOn: [arcnexus/project, arcnexus/foundation]
+    digest: 1bb41eddc2db0a881584f26ec3b9b3c1b8cb7fce50e018164e5182410fb38470
+    dependsOn: [arcnexus/project, arcnexus/architecture-model]
     scenarios: 16
     acceptedBy: null
     acceptedAt: null
     history: []
     openQuestions:
-      - whether contract-integrity validation lives in architecture-model or a governance component
-      - whether editing .arc/architecture stays a human act applied from a proposal
-      - who owns docs/interface once architecture-maintenance collapses into project
+      - whether the store or the committed plan file is authoritative for a plan
+      - evidence retention cap per goal versus unbounded retention
+      - entities plus events, or events only
 
 protocol:
   id: arcnexus/contract-protocol
   file: docs/interface/README.md
   owner: architecture-maintenance
   stage: locked
-  revision: 2
-  digest: 89de6795dfea788f706360bef5341f54fb72a7c374457470761b6dd1fb535a68
+  revision: 3
+  digest: 98013cc58b446810523ce04a3bb2bb8ef4b766a9ece8e24f799aac78c6e6a7fb
   acceptedBy: Adrian Webb (architect)
   acceptedAt: 2026-11-07
   history:
@@ -102,6 +123,16 @@ protocol:
       stage: proposed
       digest: 236739f7e342b1ffebd4b9c63cdab3da4f899409eafa67e5b88b24daffb6c3dd
       note: added the contract-adherence rule requiring pre-edit validation and countering
+    - revision: 2
+      stage: locked
+      digest: 89de6795dfea788f706360bef5341f54fb72a7c374457470761b6dd1fb535a68
+      note: locked with the protocol and the stage-one contracts
+    - revision: 3
+      stage: locked
+      digest: 98013cc58b446810523ce04a3bb2bb8ef4b766a9ece8e24f799aac78c6e6a7fb
+      note: >
+        added the ownership rule the architect directed — each contract file belongs to the
+        component it describes, held by architecture-maintenance until that component exists
 
 supporting:
   - id: arcnexus/plan-template
@@ -118,9 +149,13 @@ supporting:
 queue:
   stage: libraries
   inReview:
+    - arcnexus/coordination
+  locked:
+    - arcnexus/project
+    - arcnexus/foundation
+    - arcnexus/cli-gateway
     - arcnexus/architecture-model
   waiting:
-    - arcnexus/coordination
     - arcnexus/execution
     - arcnexus/direction
     - arcnexus/verification

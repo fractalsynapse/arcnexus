@@ -13,6 +13,7 @@ constraints:
 owns:
   - tests/foundation
   - docs/foundation
+  - docs/interface/arcnexus-foundation.md
   - scripts/foundation
   - package.json
   - package-lock.json

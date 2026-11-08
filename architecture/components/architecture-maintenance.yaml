@@ -17,7 +17,11 @@ owns:
   - docs/phase-one-retrospective.md
   - docs/guidance-audit.md
   - docs/plans
-  - docs/interface
+  - docs/interface/README.md
+  - docs/interface/registry.yaml
+  - docs/interface/arcnexus-project.md
+  - docs/interface/arcnexus-architecture-model.md
+  - docs/interface/arcnexus-coordination.md
   - LICENSE
   - .arc/README.md
   - .arc/architecture

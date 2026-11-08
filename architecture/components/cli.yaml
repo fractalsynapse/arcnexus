@@ -13,5 +13,6 @@ owns:
   - src/gateway/cli
   - docs/gateway/cli
   - tests/gateway/cli
+  - docs/interface/arcnexus-cli-gateway.md
 api:
   - module: src/gateway/cli/cli.ts
