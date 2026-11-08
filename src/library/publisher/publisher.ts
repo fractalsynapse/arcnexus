@@ -2,7 +2,12 @@ export { PromotionRecovery } from './promotion-recovery.js';
 
 export { PublicationPolicy, type CapturedPublicationPolicy } from './publication-policy.js';
 
-export { DeliveryChecks } from './delivery-checks.js';
+export {
+  DeliveryChecks,
+  verdictAgrees,
+  type VerdictAgreement,
+  type VerificationVerdict,
+} from './delivery-checks.js';
 
 import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync, realpathSync } from 'node:fs';

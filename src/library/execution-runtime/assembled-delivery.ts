@@ -66,18 +66,16 @@ export class AssembledDelivery {
     return true;
   }
 
-  /** Retains goal acceptance as a checkpoint before publication or terminal run transitions. */
+  /** Reads the one assembled verdict as goal acceptance; a missing verdict runs the gate exactly once. */
   async assessGoal(
     run: ExecutionRun,
     assignments: ExecutionAssignment[],
     signal: AbortSignal,
   ): Promise<void> {
     const context = this.context;
-    const result = await new DeliveryChecks(this.root, context, run, assignments).check(
-      String(run.data.candidateRevision ?? context.base),
-      signal,
-      true,
-    );
+    const head = String(run.data.candidateRevision ?? context.base);
+    const checks = new DeliveryChecks(this.root, context, run, assignments);
+    const result = checks.verdict(head, true)?.result ?? (await checks.check(head, signal, true));
     if (result.status !== 'passed')
       throw new VerificationIssue({
         status: 'blocked',
