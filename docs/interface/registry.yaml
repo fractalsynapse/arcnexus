@@ -133,6 +133,23 @@ contracts:
           preclusion forbidden, the lane in execution with ordering in direction, and harness
           state per activation
 
+  - id: arcnexus/direction
+    type: library
+    file: docs/interface/arcnexus-direction.md
+    owner: direction
+    stage: proposed
+    revision: 1
+    digest: ed9fe67276c33e9534acb123c2d13751a60e05f8802c58c344075fa7c254c1c5
+    dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination]
+    scenarios: 16
+    acceptedBy: null
+    acceptedAt: null
+    history: []
+    openQuestions:
+      - termination depth - continue through release and verify-release, or stop at staging
+      - locked-contract conflict - insert a change-request gate, or refuse to plan
+      - reserve the stewardship directive shape now, or add it with workday
+
 protocol:
   id: arcnexus/contract-protocol
   file: docs/interface/README.md
@@ -179,7 +196,8 @@ supporting:
 # being proposed and then locked by the architect.
 queue:
   stage: libraries
-  inReview: []
+  inReview:
+    - arcnexus/direction
   locked:
     - arcnexus/project
     - arcnexus/foundation
@@ -188,7 +206,6 @@ queue:
     - arcnexus/coordination
     - arcnexus/execution
   waiting:
-    - arcnexus/direction
     - arcnexus/verification
     - arcnexus/delivery
     - arcnexus/report
