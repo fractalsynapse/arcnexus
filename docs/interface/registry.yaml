@@ -178,18 +178,39 @@ contracts:
     type: library
     file: docs/interface/arcnexus-delivery.md
     owner: delivery
+    stage: locked
+    revision: 2
+    digest: 36d0e0df0fe76946eb3b4adffd4b481c3b04282150815c6579a3434a94dca80b
+    dependsOn: [arcnexus/project, arcnexus/coordination, arcnexus/verification, arcnexus/direction]
+    scenarios: 17
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: 2026-11-07
+    history:
+      - revision: 1
+        stage: proposed
+        digest: 8b007305e44bd039b02d5b1e67f22584e4727c554fcbc508925c8698fa81da86
+        note: >
+          proposed in #359 with three open questions; answered by the architect — provider performs
+          the merge and returns its identity, the only human gates are a production release and a
+          blocking question needing an answer or external action, and publication scope today is the
+          CLI plus an npm package with container, runner and installer targets reserved
+
+  - id: arcnexus/release
+    type: release
+    file: docs/interface/arcnexus-release.md
+    owner: release
     stage: proposed
     revision: 1
-    digest: 8b007305e44bd039b02d5b1e67f22584e4727c554fcbc508925c8698fa81da86
-    dependsOn: [arcnexus/project, arcnexus/coordination, arcnexus/verification, arcnexus/direction]
+    digest: e31bfd5d3513210dae65bf62ecd02f3e81975c8b4a51559a7705aeade557ba9c
+    dependsOn: [arcnexus/project, arcnexus/delivery, arcnexus/verification]
     scenarios: 16
     acceptedBy: null
     acceptedAt: null
     history: []
     openQuestions:
-      - merge mechanics - provider merge or local merge with direct push
-      - what production release means for a private unpublished CLI package
-      - reconcile authority - inspect and record, or always a human gate
+      - package name - bare arcnexus or scoped @fractalsynapse/arcnexus
+      - versioning scheme - semver from package.json with v tags
+      - release verification depth - clean-prefix install smoke required or optional
 
 protocol:
   id: arcnexus/contract-protocol
@@ -238,7 +259,7 @@ supporting:
 queue:
   stage: libraries
   inReview:
-    - arcnexus/delivery
+    - arcnexus/release
   locked:
     - arcnexus/project
     - arcnexus/foundation
@@ -248,9 +269,8 @@ queue:
     - arcnexus/execution
     - arcnexus/direction
     - arcnexus/verification
+    - arcnexus/delivery
   waiting:
     - arcnexus/report
     - arcnexus/guidance
     - arcnexus/testing
-  then:
-    - arcnexus/release

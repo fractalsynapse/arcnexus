@@ -1,7 +1,7 @@
 # Library contract — Delivery
 
-Type contract: `library`. Stage: **proposed**. Owner: `delivery` (absorbs the publication half of
-`publisher`, the upstream transports in `operations`, and the delivery-record consumers in
+Type contract: `library`. Stage: **locked** (revision 2). Owner: `delivery` (absorbs the publication
+half of `publisher`, the upstream transports in `operations`, and the delivery-record consumers in
 `coordination-store`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-coordination.md`](arcnexus-coordination.md), [`arcnexus-verification.md`](arcnexus-verification.md), [`arcnexus-direction.md`](arcnexus-direction.md).
 Depended on by: `release`, the gateway, and every claim that work reached a branch.
@@ -26,7 +26,7 @@ accepted.
 | Service | Obligation |
 | --- | --- |
 | `capture(candidate, verdict)` | a delivery record bound to the verified candidate digest **and** the verdict that accepted it. Its base is the retained engineering baseline of the accepted assembly — not the architectural authority revision, and not a verification checkout. |
-| `integrate(delivery)` | commit to the goal's work branch, push, open the pull request against the base branch, wait for CI and any configured review requirement, merge, and record the merge identity returned by the provider. Automatic for staging. |
+| `integrate(delivery)` | commit to the goal's work branch, push, open the pull request against the base branch, wait for CI and any configured review requirement, **request the merge from the provider and record the identity it returns**. Automatic for staging. Publication targets belong to the `release` contract; delivery reaches the branch the policy names and no further. |
 | `prepareRelease(project, range)` | the release candidate: shipping changes derived from the pinned previous-release-to-candidate range, changelog and version edits, and the protected-branch pull request. Automated right up to the gate. |
 | `awaitGate(gate)` | the production boundary: ends the goal `blocked: awaiting release` naming precisely what the human must do, with the candidate, verdict and evidence references attached. |
 | `verifyRelease(releaseIdentity)` | live evidence for a release: pipeline status for the released revision, deployed health where the project kind has a deployment, and the project's live acceptance suite. Recorded as live, never as staging or simulated. |
@@ -46,9 +46,9 @@ ledger that re-states a fact Git and the provider already hold.
 | I1 | One publication route and one engine. Live and simulated differ by namespace and by an upstream refusal, never by a second implementation. |
 | I2 | **The engineering baseline is the retained assembly base.** The authority revision and the verification checkout are not substitutes for it, and a wrong base is a defect in this contract, not a condition to work around. |
 | I3 | No verdict, no delivery. A delivery record is meaningless without the candidate digest and the verdict id it came from. |
-| I4 | Staging integration is automatic once checks, CI and any configured review requirement pass. Only production release awaits a human; nothing in between is human-required. |
-| I5 | Upstream effects are observed, not assumed. An unknown outcome is resolved by inspecting provider state before retrying, and is never blindly replayed. |
-| I6 | The merge identity is recorded once, from the provider, and every view derives from it. No parallel milestone-receipt store exists for the same fact. |
+| I4 | Staging integration is automatic once checks and CI pass. **The only human gates in the system are a production release, and a blocking question that needs an answer or an external action.** No gate exists for staging, CI, review, or anything an agent can observe and act on itself. |
+| I5 | Upstream effects are observed, not assumed. An unknown outcome is resolved by inspecting provider state before retrying, and is never blindly replayed. It becomes a human gate only when the observation shows external action is genuinely required — a credential, a provider incident, an irreversible state — not merely because the outcome was uncertain. |
+| I6 | The merge is performed by the **provider**, which returns the merge identity; delivery records that identity once and every other view derives from it. No local merge-and-push path, and no parallel milestone-receipt store for the same fact. |
 | I7 | One pull request per accepted goal. Cross-owner contributions are assembled first and attributed within that delivery. |
 | I8 | Release verification is live or it is nothing. Simulated or staging evidence is never presented as proof of a release, and the check labels its own environment. |
 | I9 | Delivery publishes exactly the verified candidate: same digest, same scope, no opportunistic fixes. |
@@ -61,8 +61,9 @@ ledger that re-states a fact Git and the provider already hold.
 | DE-1 | A candidate without an accepting verdict cannot be captured; the refusal names the missing verdict. |
 | DE-2 | `capture` records the retained assembly base as the publication parent. A regression built from the **actual production assembled record**, not an assignment-shaped fixture, proves it; a fixture that hides the real record shape fails this scenario. |
 | DE-3 | Publishing from the architectural authority revision or from a verification checkout is refused with the three identities distinguished. |
-| DE-4 | `integrate` opens one pull request for the goal, waits for CI, merges when the gates are satisfied, and records the provider's merge identity without any human turn. |
-| DE-5 | A push whose outcome is unknown is followed by a provider inspection; the retry is justified by the observed state, and no blind replay occurs. |
+| DE-4 | `integrate` opens one pull request for the goal, waits for CI, requests the merge from the provider once gates are satisfied, and records the identity the provider returns — with no human turn and no local merge-and-push of the base branch. |
+| DE-5 | A push whose outcome is unknown is followed by a provider inspection; the retry is justified by the observed state, and no blind replay occurs. The uncertainty alone does not raise a human gate. |
+| DE-5b | An observation showing genuinely required external action — a missing credential the run cannot obtain, an irreversible provider state — raises a blocking-question gate naming that action, and nothing else does. |
 | DE-6 | A second delivery attempt for an already merged candidate is a no-op reporting the recorded merge identity, not a duplicate pull request. |
 | DE-7 | Conflicting contributions from two owners block assembly and retain both sides; delivery does not choose a winner. |
 | DE-8 | A simulated delivery cannot reach a live upstream and cannot produce a live release record, using the same code path as a live delivery. |
@@ -96,26 +97,33 @@ Cross-repository transactions, multi-branch release trains, deployment orchestra
 services, package-registry publication beyond what the release contract declares, automatic
 production merge under any configuration, and any recovery path for a historical failed delivery.
 
-## Open questions for the architect
+## Accepted decisions
 
-1. **Merge mechanics.** I propose the provider performs the merge and returns its identity, with the
-   existing compare-and-swap check that the target head is unchanged. The current code assembles a
-   local merge and pushes the branch directly. Provider merge keeps one source of truth; local push
-   keeps the merge deterministic and offline. Which do you want for the MVP?
-2. **What "production release" means for ArcNexus.** The package is private and unpublished, so
-   today the production gate is effectively the protected-branch merge. Should the contract treat
-   registry publication and container image release as declared-but-inactive targets, or name only
-   the protected-branch merge until a real publication route exists?
-3. **Reconcile authority.** Is inspect-and-record sufficient for an unknown upstream outcome, or
-   should an unresolved uncertainty always become a human gate rather than an agent observation?
+1. **Merge mechanics:** the **provider** performs the merge and returns its identity; delivery
+   records that identity and derives every view from it. No local merge-and-push path (I6, DE-4).
+2. **Human gates:** only a production release, and a blocking question that needs an answer or an
+   external action. Staging, CI and review are never gates. An uncertain upstream outcome is first an
+   observation, and becomes a gate only when the observation shows external action is genuinely
+   required (I4, I5, DE-5, DE-5b).
+3. **Publication scope today is the CLI.** Delivery reaches the branch the project policy names.
+   Container image, connected runner, package-registry and installer publication are declared as
+   reserved targets by the `release` contract — recorded direction, not implemented capability — so
+   they shape the interface without adding machinery now.
 
 ## Lock record
 
 ```yaml
 id: arcnexus/delivery
-stage: proposed
-revision: 1
-acceptedBy: null
-acceptedAt: null
-changes: null
+stage: locked
+revision: 2
+acceptedBy: Adrian Webb (architect)
+acceptedAt: 2026-11-07
+changes:
+  - revision 2: locked with the architect's answers — the provider performs the merge and returns its
+    identity; the only human gates are a production release and a blocking question needing an
+    answer or external action, so an uncertain upstream outcome is reconciled by observation before
+    it can become a gate (new I4, I5, I6, DE-4, DE-5, DE-5b); publication scope today is the CLI,
+    with container, runner, registry and installer targets reserved as declared direction in the
+    release contract
+  - revision 1: proposed in #359 with three open questions, all since answered
 ```
