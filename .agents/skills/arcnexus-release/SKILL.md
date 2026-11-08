@@ -13,9 +13,13 @@ Apply [AGENTS.md](../../../AGENTS.md) and the shared
 
 ## Prepare one delivery
 
-Create or adopt an issue with observable acceptance before editing. Verify the
+Create or adopt an issue with observable acceptance before editing. Validate the request
+against the relevant [component contracts](../../../docs/interface/README.md) and captured
+architecture; when it conflicts with a locked interface, counter it before acting and let the
+architect choose between changing the request and changing the contract. Verify the
 canonical HTTPS remote and its staging tip. Start the issue-numbered work branch
-as `codex/<issue>-<description>` from current origin/staging. Preserve user work
+as `<issue>-<description>` from current origin/staging; the branch names the work, never the
+tool performing it. Preserve user work
 and resolve conflicts on the work branch. Establishing staging in a new repository
 requires authority and a verified main baseline.
 

@@ -128,6 +128,12 @@ Agents never merge main, tag or publish: those are named human gates in the plan
 
 ## Ordered batches
 
+Component contracts are finalized and locked first, in
+[`docs/interface/`](../interface/README.md): project, then foundation, then the CLI gateway,
+then one library contract per component, then release. A locked contract's acceptance scenarios
+are the specification the batches below must satisfy. **Project replaces the platform and
+package pair**, so batch 5 renames that vocabulary rather than adding to it.
+
 Each batch is a real delivery through the existing loop, ends with a merged staging
 revision, and reports its simplification ledger.
 

@@ -45,8 +45,10 @@ as unavailable. Message volume and generated code volume are not progress metric
 
 ## Architectural vocabulary
 
-Keep the model small: platform, profiles, packages, foundations, dependencies,
-gateways, releases/environments, and libraries. Documentation and tests attach to
+Keep the model small: project, profiles, foundations, dependencies, gateways,
+releases/environments, and libraries. A **project** replaces the earlier platform and package
+pair: one repository, one knowledge root, one component catalog, one check catalog and one
+execution lane. Documentation and tests attach to
 relevant responsibilities. Architecture need not mirror directories or individual
 functions. Add concepts only when a real behavior cannot be represented clearly.
 
@@ -84,6 +86,15 @@ model. The unit of work is the **milestone**; the unit of a milestone is one of 
 **Steps** — documentation, design and contract tests, implementation, review, integration —
 and a Step is also the activity that selects its execution profile. There is no separate
 stage vocabulary.
+
+## Contracts and locks
+
+Component interfaces are finalized before implementation cleanup, in
+[`docs/interface/`](../docs/interface/README.md), and walked from the outside in: project,
+foundation, gateway, libraries, release. Each contract states what a component owes its
+dependents and never how it is built. A contract at stage `locked` changes only on recorded
+human authority; agents propose changes as `component` milestones. Locked acceptance scenarios
+become the tests that drive the cleanup, so behaviour is anchored while internals are rewritten.
 
 ## Constraints
 

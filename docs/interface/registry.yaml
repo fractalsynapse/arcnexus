@@ -1,0 +1,114 @@
+# Component contract registry
+# Stage values: draft | proposed | locked. Only the human architect may set `locked`,
+# and only the human architect may change a locked contract. Agents propose changes
+# through a `component` milestone; they never edit a locked file.
+# Enforcement: digest comparison against this registry is a listed follow-up test.
+# Until it exists this record is stated authority, not a checked guarantee.
+schemaVersion: 1
+project: arcnexus
+protocol: docs/interface/README.md
+authority:
+  lockOwner: Adrian Webb (architect)
+  agentMayChangeLocked: false
+  adherence: >
+    Before any action that modifies the codebase, validate the request against the relevant
+    contracts. On conflict, counter the request and wait for the architect to choose between
+    changing the request and changing the contract.
+
+contracts:
+  - id: arcnexus/project
+    type: project
+    file: docs/interface/arcnexus-project.md
+    owner: architecture-maintenance
+    stage: locked
+    revision: 2
+    digest: 3facf6c97079fe66217649b8a26dcf28b80483ad5851de7be0ef98379422cb3b
+    dependsOn: []
+    scenarios: 12
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: 2026-11-07
+    history:
+      - revision: 1
+        stage: proposed
+        digest: 133f9cf2ab5f1a317969b7fc46a5cafdb4c982e0d36d3e48d5e4b1ba1298e114
+        note: proposed in #346
+
+  - id: arcnexus/foundation
+    type: foundation
+    file: docs/interface/arcnexus-foundation.md
+    owner: foundation
+    stage: locked
+    revision: 1
+    digest: e5912fa3e523c9b17b976085168932a8862735eca52b2d7f589af9adb92b9b53
+    dependsOn: [arcnexus/project]
+    scenarios: 10
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: 2026-11-07
+    history:
+      - revision: 1
+        stage: proposed
+        digest: 0e9c1c88579d824bbfb95a51500776ad571042e6392ab3179a88d7d162bd8afb
+        note: proposed and locked unchanged in #346; the two command-surface reductions land in cleanup
+
+  - id: arcnexus/cli-gateway
+    type: gateway
+    file: docs/interface/arcnexus-cli-gateway.md
+    owner: cli
+    stage: locked
+    revision: 2
+    digest: 61271afed10cefa75658940d48544832a1f33bd3c8914737811d953aa849dc5b
+    dependsOn: [arcnexus/project, arcnexus/foundation]
+    scenarios: 20
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: 2026-11-07
+    history:
+      - revision: 1
+        stage: proposed
+        digest: 0c450928e2815267e835bdb9e78b3a740655738bc032079091fa6cd8b1dab206
+        note: >
+          proposed in #346 with three open questions; all answered by the architect — add
+          `inspect` as the activity-context preview, keep per-command options with their
+          commands, fold `plan show` into `task status`, and let foreground `task run`
+          prompt at gates while `--async` never does
+
+protocol:
+  id: arcnexus/contract-protocol
+  file: docs/interface/README.md
+  owner: architecture-maintenance
+  stage: locked
+  revision: 2
+  digest: 89de6795dfea788f706360bef5341f54fb72a7c374457470761b6dd1fb535a68
+  acceptedBy: Adrian Webb (architect)
+  acceptedAt: 2026-11-07
+  history:
+    - revision: 1
+      stage: proposed
+      digest: 236739f7e342b1ffebd4b9c63cdab3da4f899409eafa67e5b88b24daffb6c3dd
+      note: added the contract-adherence rule requiring pre-edit validation and countering
+
+supporting:
+  - id: arcnexus/plan-template
+    file: .arc/architecture/plan-template.md
+    owner: architecture-maintenance
+    stage: proposed
+    digest: 6c5251631ca545eadc5dba3a65b615814b58ab1d20ebc50fa9152e7be17a4c0f
+    note: >
+      Planning contract, not an interface contract. Gained a Contracts category and the rule
+      that a milestone touching a locked interface becomes a change request, not engineering.
+
+# Walk order. A contract is added here when its stage begins; it leaves the queue only by
+# being proposed and then locked by the architect.
+queue:
+  stage: libraries
+  waiting:
+    - arcnexus/architecture-model
+    - arcnexus/coordination
+    - arcnexus/execution
+    - arcnexus/direction
+    - arcnexus/verification
+    - arcnexus/delivery
+    - arcnexus/report
+    - arcnexus/guidance
+    - arcnexus/testing
+  then:
+    - arcnexus/release

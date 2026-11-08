@@ -17,6 +17,7 @@ owns:
   - docs/phase-one-retrospective.md
   - docs/guidance-audit.md
   - docs/plans
+  - docs/interface
   - LICENSE
   - .arc/README.md
   - .arc/architecture
