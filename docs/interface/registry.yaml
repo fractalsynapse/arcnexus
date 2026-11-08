@@ -54,18 +54,22 @@ contracts:
     type: gateway
     file: docs/interface/arcnexus-cli-gateway.md
     owner: cli
-    stage: proposed
-    revision: 1
-    digest: 0c450928e2815267e835bdb9e78b3a740655738bc032079091fa6cd8b1dab206
+    stage: locked
+    revision: 2
+    digest: 61271afed10cefa75658940d48544832a1f33bd3c8914737811d953aa849dc5b
     dependsOn: [arcnexus/project, arcnexus/foundation]
-    scenarios: 14
-    acceptedBy: null
-    acceptedAt: null
-    history: []
-    openQuestions:
-      - refuse-while-busy versus queueing a second goal
-      - deliver --async in the MVP or reserve it
-      - keep plan show separate from task status or collapse them
+    scenarios: 20
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: 2026-11-07
+    history:
+      - revision: 1
+        stage: proposed
+        digest: 0c450928e2815267e835bdb9e78b3a740655738bc032079091fa6cd8b1dab206
+        note: >
+          proposed in #346 with three open questions; all answered by the architect — add
+          `inspect` as the activity-context preview, keep per-command options with their
+          commands, fold `plan show` into `task status`, and let foreground `task run`
+          prompt at gates while `--async` never does
 
 protocol:
   id: arcnexus/contract-protocol
