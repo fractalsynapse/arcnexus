@@ -25,6 +25,32 @@ After a lock, the acceptance scenarios in that contract are the specification. A
 request must add or amend scenarios **before** the interface text, so tests lead the contract
 rather than follow it.
 
+## Contract adherence is the first act of any request
+
+These contracts are the absolute source of truth for what a component must support. An agent
+working in this project runs the check below **before** any action that modifies the codebase.
+Read-only analysis, review and answering questions do not require it.
+
+1. **Validate the request against the relevant contracts.** Name the contract files and the
+   clauses that govern the paths, interfaces and behaviour the request would change. Consult
+   `.arc/architecture/` for boundaries and the registry for stage.
+2. **If the request is consistent, proceed** within the owner's write scope.
+3. **If the request conflicts, counter it before acting.** State the conflict in one short
+   exchange: the clause, what the request would break, and the two available resolutions —
+   change the request, or change the contract through recorded human authority. Then stop and
+   wait. Do not partially comply, do not work around the clause, do not open a pull request
+   that quietly crosses it, and do not assume the requester meant to override it.
+4. **The human decides.** Only after that decision may anything change. A contract change is
+   recorded in the registry with a new revision, digest and reason; a request change is simply
+   re-planned.
+5. **Silence is not consent.** If the decision is unavailable, do the work that does not
+   depend on it and leave the conflicting part explicitly outstanding, with the clause named.
+
+Counter-ing a request is not disobedience to the human. The human owns purpose, boundaries and
+approved architecture, so an agent that silently damages a locked interface is the one that
+broke the instruction. Drift starts as one small "just get it working" exception; this rule
+exists to catch it at the first request instead of after nine days of divergence.
+
 ## What counts as contract surface
 
 Anything a change to could break an external dependent or an internal relationship:

@@ -17,7 +17,7 @@ an agent stewards.
 | remote | `https://github.com/fractalsynapse/arcnexus.git` | HTTPS; verified identity, never inferred from a directory name |
 | base branch | `staging` | new work branches from its current tip |
 | protected branch | `main` | human-only merge, tag and publication |
-| work branch | `codex/<issue>-<description>` | one issue per branch |
+| work branch | `<issue>-<description>` | one issue per branch; the convention names the work, never the tool or agent that performs it |
 | knowledge root | `.arc/` | `architecture/` human, `plans/` and `learning/` agents |
 | store | one SQLite file per project in application storage, keyed by verified repository identity | one store, one lane |
 | bindings | `.git/arcnexus/bindings.yaml` | machine-local, outside committed source authority |
@@ -113,13 +113,26 @@ repository materialization, remote project registration, and any notion of a pac
 from a project. If a future project needs several packages, it is several projects until a
 demonstrated requirement says otherwise.
 
+## Open items for later contracts
+
+- The runtime currently creates execution branches named `codex/run-<id>` inside managed
+  workspaces. That is an internal artifact of the execution engine, not the delivery
+  convention fixed above, and its naming is decided by the `execution` library contract. The
+  rule that a branch name must not encode which harness performed the work applies there too.
+- Repository branch-protection settings may still restrict branch patterns. Changing a
+  protection rule is a human action; the contract states the convention, not the permission.
+
 ## Lock record
 
 ```yaml
 id: arcnexus/project
-stage: proposed
-revision: 1
-acceptedBy: null
-acceptedAt: null
-changes: null
+stage: locked
+revision: 2
+acceptedBy: Adrian Webb (architect)
+acceptedAt: 2026-11-07
+changes:
+  - revision 2: locked; work branch convention changed to <issue>-<description> so branch
+    names do not encode the tool performing the work, and execution-branch naming was
+    assigned to the execution library contract
+  - revision 1: proposed in #346
 ```

@@ -31,7 +31,8 @@ each milestone carrying the five Steps.
 | Implementation step | Instruction: the smallest change that turns the recorded red green, plus the checks that keep it owned and scoped | Implement, run owner-scoped checks | Net new concepts versus removed ones |
 | Review step | Instruction: one independent verdict against the acceptance ids, from bounded evidence | Self-review inside the engineering turn; do not open a duplicate review assignment | Does the verdict cite criteria and evidence, not prose? |
 | Integration step | Instruction: staging PR, CI, required review, merge identity; name human gates instead of routing around them | Deliver through the one route | Is the merge identity recorded? |
-| Checklist items | `{id, step, criteria: [acceptance ids], text, evidence}` referencing acceptance by stable id, never by index | Mark status with the evidence that supports it | Does every acceptance criterion have at least one item? |
+| Checklist items | `{id, step, criteria:[acceptance ids], text, evidence}` referencing acceptance by stable id, never by index | Mark status with the evidence that supports it | Does every acceptance criterion have at least one item? |
+| Contracts | The contract files and clauses that govern the paths and interfaces this milestone changes, with their stage | Validate the request against those clauses **before** editing, and counter a conflicting instruction to the architect instead of crossing it | Did the milestone cite its governing contracts, and did any contract change go through recorded human authority? |
 | Simplification ledger | Instruction: name what was removed, what was unified, what was retained and the demonstrated requirement for retaining it, plus the one-hour answer | Delete before adding | Positive net concept delta with no cited requirement is a failed measure |
 
 ## The five Steps
@@ -67,6 +68,10 @@ is not an identifier: when acceptance is edited, indices shift and old evidence 
 points at the wrong thing.
 
 ## Sequence rules
+
+- A milestone that would change a `locked` contract is not planned as engineering work. It is
+  a change request: the director names the clause, presents the conflict, and stops until the
+  architect decides whether the contract or the request changes.
 
 - Milestones are strictly sequential and each has one owner. Work that needs another owner
   becomes the preceding milestone, not a parallel dependency.
