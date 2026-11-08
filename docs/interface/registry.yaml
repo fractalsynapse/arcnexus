@@ -199,18 +199,23 @@ contracts:
     type: release
     file: docs/interface/arcnexus-release.md
     owner: release
-    stage: proposed
-    revision: 1
-    digest: e31bfd5d3513210dae65bf62ecd02f3e81975c8b4a51559a7705aeade557ba9c
+    stage: locked
+    revision: 2
+    digest: 82a8daafa36e3e257859e2e5bc8c42bf7465dbfc240d7191b6accb4ffff69cb1
     dependsOn: [arcnexus/project, arcnexus/delivery, arcnexus/verification]
-    scenarios: 16
-    acceptedBy: null
-    acceptedAt: null
-    history: []
-    openQuestions:
-      - package name - bare arcnexus or scoped @fractalsynapse/arcnexus
-      - versioning scheme - semver from package.json with v tags
-      - release verification depth - clean-prefix install smoke required or optional
+    scenarios: 19
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: 2026-11-07
+    history:
+      - revision: 1
+        stage: proposed
+        digest: e31bfd5d3513210dae65bf62ecd02f3e81975c8b4a51559a7705aeade557ba9c
+        note: >
+          proposed in #359 with three open questions; answered by the architect — unscoped arcnexus
+          name, version tags with no v prefix, verification required after release, published by npm
+          trusted publishing on GitHub-hosted runners. The interpretation of "verify the release
+          after it is made" as a clean-prefix install from the registry is flagged in the contract
+          for correction
 
 protocol:
   id: arcnexus/contract-protocol
@@ -258,8 +263,7 @@ supporting:
 # being proposed and then locked by the architect.
 queue:
   stage: libraries
-  inReview:
-    - arcnexus/release
+  inReview: []
   locked:
     - arcnexus/project
     - arcnexus/foundation
@@ -270,6 +274,7 @@ queue:
     - arcnexus/direction
     - arcnexus/verification
     - arcnexus/delivery
+    - arcnexus/release
   waiting:
     - arcnexus/report
     - arcnexus/guidance

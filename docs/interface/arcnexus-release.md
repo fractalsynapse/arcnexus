@@ -1,6 +1,6 @@
 # Release contract — ArcNexus
 
-Type contract: `release`. Stage: **proposed**. Owner: `release`.
+Type contract: `release`. Stage: **locked** (revision 2). Owner: `release`.
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-delivery.md`](arcnexus-delivery.md), [`arcnexus-verification.md`](arcnexus-verification.md).
 Depended on by: the project's delivery policy, the gateway's reserved `release verify` command, and
 every claim that a version exists.
@@ -37,6 +37,25 @@ here as reserved targets so they shape the interface without costing a line of c
 Merge the protected branch, create or move a published tag, publish to a registry, deploy, or
 approve its own candidate. It also never widens acceptance: a release is built from a candidate that
 verification already accepted, with the same digest.
+
+## Package identity
+
+| Field | Value |
+| --- | --- |
+| name | `arcnexus` — unscoped. Verified available on the public registry on 2026-11-07 (`registry.npmjs.org/arcnexus` returns not-found). npm states unscoped packages are **always public** and are referred to by name alone; an npm user account is required before the first publish. |
+| fallback | `@fractalsynapse/arcnexus`, also currently free, if the bare name is disputed or an unscoped automation proves awkward |
+| version | `<major>.<minor>.<patch>`, starting `0.y.z`. **Git tags carry the version exactly — no `v` prefix** — so the tag, the `package.json` version and the published version are the same string |
+| manifest | `private: true` removed; `name`, `version`, `description`, `license`, `bin`, `engines`, `files` and `publishConfig.registry` declared; no install or postinstall scripts |
+| publish mechanism | npm **trusted publishing** (OIDC) from GitHub Actions on GitHub-hosted runners, with `permissions: id-token: write`. No long-lived access token stored in repository secrets; after the publisher is configured, npm recommends disallowing token-based publishing for the package entirely |
+
+Two operational constraints from npm's own documentation shape the first release, and both are
+the architect's action, not the runtime's:
+
+- **A newly created trusted publisher expires if its first successful publish does not happen
+  within two days.** So the publisher is configured only when a release is ready to go out.
+- **Trusted publishing supports GitHub-hosted runners only**, which is what this project's
+  workflows already use; a self-hosted runner would fall back to a granular access token with
+  2FA bypass, held by the human, never by a run.
 
 ## Publication targets are data
 
@@ -82,6 +101,9 @@ which is the seam the execution contract already fixed.
 | I9 | Reserved targets are visible when a caller asks what the project can release, so the direction is not re-litigated, and absent from every build and CI run. |
 | I10 | **The published package installs nothing and reaches nothing at install time.** No install or postinstall scripts, no network, no bundled harness. The package is the built CLI plus its runtime dependencies; Codex and friends are resolved through the machine bindings the project contract declares, and provisioning them is the reserved installer target's job. |
 | I11 | Publication happens only from a released tag, in the release pipeline, after a human merged the release. A branch head, a dirty tree or an untagged commit cannot publish, and the published version records the tag, commit and package integrity hash it came from. |
+| I12 | The tag, the `package.json` version and the published package version are **one identical string** in `<major>.<minor>.<patch>` form with no prefix. Any release step that derives a version by stripping or adding a prefix is a defect. |
+| I13 | A release is not verified until it has been **installed from the public registry into a clean prefix on a machine that never had the repository** and observed running. A build that only proves the tarball works from the working tree has not released anything. |
+| I14 | No run ever holds a registry credential. Publishing is performed by the release pipeline through a trusted publisher the human configured, or by the human directly; a missing or expired publisher is a blocking question naming the external action. |
 
 ## Acceptance scenarios
 
@@ -103,6 +125,9 @@ which is the seam the execution contract already fixed.
 | RE-14 | Publishing from a branch head, a dirty tree or an untagged commit is refused; publishing from the released tag records the tag, commit and package integrity hash together. |
 | RE-15 | A missing registry credential in the release pipeline raises a blocking question naming the external action required; it is never reported as a passed release and never retried blindly. |
 | RE-16 | The package declares its engine range, and an unsupported runtime fails with the declared range named rather than failing somewhere inside execution. |
+| RE-17 | The git tag, the manifest version and the published version are byte-identical, with no `v` prefix anywhere in the path from merge to registry, and the release workflow triggers on a version-shaped tag rather than a prefixed one. |
+| RE-18 | `verify` installs the published version from the registry into a clean prefix on a machine without the repository, runs `arcnexus --version` and a real no-model command, and reports the installed package integrity hash. A release that has not gone through this is reported unverified. |
+| RE-19 | No workflow, run or stored artifact holds a registry token. Publishing requires the configured trusted publisher; when it is missing, expired or unvalidated the pipeline raises a blocking question naming the human action instead of falling back to a secret. |
 
 ## Migration
 
@@ -110,7 +135,8 @@ which is the seam the execution contract already fixed.
 | --- | --- | --- |
 | Workflows run the entire suite on every push to staging and every pull request | fast static and owner-scoped checks gate a pull request; the full deterministic and native set runs on staging and nightly | removes the 25–37 minute per-push wall that dominated iteration cost, without weakening the assembled gate |
 | Container image, AppArmor profile, generated seccomp policy and dedicated cgroup subtree as the qualification environment | retained for native qualification; optional for a cycle | matches the locked execution seam I14 and the container demotion in the delivery batch |
-| No publishing implementation today; `package.json` is `"private": true` | public manifest with `publishConfig`, `files`, `bin`, `engines` and no install scripts; a release workflow that publishes on the released tag | the first active registry target; nothing else changes shape |
+| No publishing implementation today; `package.json` is `"private": true` | public manifest with `publishConfig`, `files`, `bin`, `engines` and no install scripts; a release workflow that publishes on a version-shaped tag | the first active registry target; nothing else changes shape |
+| No release pipeline exists | one workflow: build from the tag, pack, publish through a trusted publisher, then verify by installing from the registry into a clean prefix | publish and verification are one route, not a manual hand-off after merge |
 | Ad-hoc local image tags such as `arcnexus:phase2-fresh-337` | no release identity until `container-ghcr` is activated | stops treating a locally built image as a release artifact |
 | `docs/release/verification.md` describing promotion and publication machinery | rewritten against this contract and the delivery contract | removes instructions for paths that no longer exist |
 
@@ -120,26 +146,37 @@ Deploying external services, canary or progressive rollout, multi-architecture i
 attestation, installers, telemetry, and any release automation that would merge a protected branch
 or run a publish without a human — all of which stay reserved until their target is activated.
 
-## Open questions for the architect
+## Accepted decisions
 
-1. **Package name.** `arcnexus` on the public registry, or scoped as `@fractalsynapse/arcnexus`?
-   This is the one decision that cannot be reversed cleanly later, and it is set by whichever
-   registry location you create.
-2. **Versioning scheme.** I propose semver straight from `package.json` with tags like `v0.1.1`, the
-   changelog's `Unreleased` section becoming the release notes source, and `0.x` until the first
-   qualified self-development cycle. Confirm, or name another scheme.
-3. **Release verification depth today.** With no installer yet, I propose: pipeline result, published
-   package integrity check, and a clean-prefix install-and-run smoke from the tarball, plus the
-   project's live acceptance suite. Is the clean-machine smoke required to call a release verified,
-   or nice-to-have until the installer target activates?
+1. **Package name:** `arcnexus`, unscoped, verified free on the registry. The architect noted they
+   have only ever published scoped `<org>/<package>` names; npm's own documentation confirms
+   unscoped packages are supported, always public, and need only an npm account — so no scope is
+   required. `@fractalsynapse/arcnexus` stays as the recorded fallback.
+2. **Versioning:** `<major>.<minor>.<patch>`, starting at `0`, with **no `v` prefix** — the tag, the
+   manifest and the published version are one identical string (I12, RE-17).
+3. **Verification after release is required.** The architect answered the depth question as
+   "we definitely need to verify the release after it is made." **My interpretation, stated for
+   correction:** that means installing the published package from the registry into a clean prefix
+   on a machine that never had the repository and observing it run, not merely checking that CI
+   turned green (I13, RE-18). If they meant only pipeline status plus live acceptance against a
+   deployed target, I13 should be relaxed before the first release is attempted.
+4. **Publish mechanism:** npm trusted publishing from GitHub-hosted runners, with the two-day
+   first-publish constraint and the no-token-in-secrets posture recorded, because both change the
+   order in which the setup steps must happen (I14, RE-19).
 
 ## Lock record
 
 ```yaml
 id: arcnexus/release
-stage: proposed
-revision: 1
-acceptedBy: null
-acceptedAt: null
-changes: null
+stage: locked
+revision: 2
+acceptedBy: Adrian Webb (architect)
+acceptedAt: 2026-11-07
+changes:
+  - revision 2: locked with the architect's answers — unscoped `arcnexus` name confirmed against npm
+    docs and registry lookup, version tags with no `v` prefix and identical to the manifest version,
+    post-release verification required (interpretation flagged above), and publication by npm trusted
+    publishing on GitHub-hosted runners with the two-day first-publish constraint. Active targets:
+    cli-tag and npm-package; container, runner and installer targets remain reserved
+  - revision 1: proposed in #359 with three open questions, all since answered
 ```
