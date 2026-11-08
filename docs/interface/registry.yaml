@@ -6,7 +6,6 @@
 # Until it exists this record is stated authority, not a checked guarantee.
 schemaVersion: 1
 project: arcnexus
-protocol: docs/interface/README.md
 authority:
   lockOwner: Adrian Webb (architect)
   agentMayChangeLocked: false
