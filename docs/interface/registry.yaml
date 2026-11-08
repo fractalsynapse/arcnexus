@@ -1,0 +1,66 @@
+# Component contract registry
+# Stage values: draft | proposed | locked. Only the human architect may set `locked`,
+# and only the human architect may change a locked contract. Agents propose changes
+# through a `component` milestone; they never edit a locked file.
+# Enforcement: digest comparison against this registry is a listed follow-up test.
+# Until it exists this record is stated authority, not a checked guarantee.
+schemaVersion: 1
+project: arcnexus
+protocol: docs/interface/README.md
+authority:
+  lockOwner: human-architect
+  agentMayChangeLocked: false
+
+contracts:
+  - id: arcnexus/project
+    type: project
+    file: docs/interface/arcnexus-project.md
+    owner: architecture-maintenance
+    stage: proposed
+    revision: 1
+    digest: 133f9cf2ab5f1a317969b7fc46a5cafdb4c982e0d36d3e48d5e4b1ba1298e114
+    dependsOn: []
+    scenarios: 12
+    acceptedBy: null
+    acceptedAt: null
+    history: []
+
+  - id: arcnexus/foundation
+    type: foundation
+    file: docs/interface/arcnexus-foundation.md
+    owner: foundation
+    stage: proposed
+    revision: 1
+    digest: 0e9c1c88579d824bbfb95a51500776ad571042e6392ab3179a88d7d162bd8afb
+    dependsOn: [arcnexus/project]
+    scenarios: 10
+    acceptedBy: null
+    acceptedAt: null
+    history: []
+
+protocol:
+  id: arcnexus/contract-protocol
+  file: docs/interface/README.md
+  owner: architecture-maintenance
+  stage: proposed
+  digest: 236739f7e342b1ffebd4b9c63cdab3da4f899409eafa67e5b88b24daffb6c3dd
+
+# Walk order. A contract is added here when its stage begins; it is removed from the
+# queue only by being proposed, then locked by the architect.
+queue:
+  stage: gateway
+  next:
+    - id: arcnexus/cli-gateway
+      type: gateway
+      dependsOn: [arcnexus/project, arcnexus/foundation]
+  then:
+    - arcnexus/architecture-model
+    - arcnexus/coordination
+    - arcnexus/execution
+    - arcnexus/direction
+    - arcnexus/verification
+    - arcnexus/delivery
+    - arcnexus/report
+    - arcnexus/guidance
+    - arcnexus/testing
+    - arcnexus/release
