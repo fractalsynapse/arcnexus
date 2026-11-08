@@ -15,6 +15,51 @@ import { save, type RecordData } from '../workspace/state.js';
 import { Direction } from '../task-intake/direction.js';
 import { candidateDigest } from '../change-inspection/changes.js';
 
+/** The single accepted verdict for one candidate: its inputs, reviewer coverage and evidence. */
+export interface VerificationVerdict {
+  key: string;
+  digest: string;
+  independent: boolean;
+  result: SimulationCheckResult;
+}
+
+/** The facts a recorded verdict must still agree with before it can be read instead of re-checked. */
+export interface VerdictAgreement {
+  key: string;
+  digest: string;
+  independent: boolean;
+  completed: boolean;
+  sameRun: boolean;
+  workspacePresent: boolean;
+  evidencePresent: boolean;
+  artifactsPresent: boolean;
+}
+
+/**
+ * Reports whether a recorded verdict still describes exactly this candidate.
+ *
+ * A verdict is content-addressed to the candidate digest and the captured input key. Any change to
+ * source bytes, captured authority, environment, goal or accountable acceptance produces a different
+ * key; a missing workspace, evidence or artifact invalidates it. This is the only reuse rule in the
+ * acceptance path: there is no second gate and no mitigation cache beside it.
+ */
+export function verdictAgrees(
+  verdict: VerificationVerdict | undefined,
+  agreement: VerdictAgreement,
+): boolean {
+  if (!verdict) return false;
+  return (
+    verdict.key === agreement.key &&
+    verdict.digest === agreement.digest &&
+    (!agreement.independent || verdict.independent) &&
+    agreement.completed &&
+    agreement.sameRun &&
+    agreement.workspacePresent &&
+    agreement.evidencePresent &&
+    agreement.artifactsPresent
+  );
+}
+
 /** Runs captured publication checks on a fresh isolated head through the shared confined operation executor. */
 export class DeliveryChecks {
   /** Retains actual owner assignments and captured architecture instead of accepting caller-authored checks. */
@@ -25,7 +70,7 @@ export class DeliveryChecks {
     private readonly assignments: ExecutionAssignment[],
   ) {}
 
-  /** Preserves actual invocation evidence and distinguishes observed check failures from interruption. */
+  /** Produces the one verdict for a candidate, reusing the recorded verdict instead of re-checking. */
   async check(
     head: string,
     signal: AbortSignal,
@@ -34,8 +79,47 @@ export class DeliveryChecks {
     if (!/^[a-f0-9]{40,64}$/.test(head)) throw new Error('Expected immutable delivery head');
     signal.throwIfAborted();
     return (
-      this.retained(head, independent) ?? this.checkRecord(this.record(head), signal, independent)
+      this.verdict(head, independent)?.result ??
+      this.checkRecord(this.record(head), signal, independent)
     );
+  }
+
+  /**
+   * Returns the verdict recorded for exactly this candidate, or nothing.
+   *
+   * A verdict is content-addressed to the candidate digest and the captured input key, and is valid
+   * only while its evidence still exists. An invalid or absent verdict is reported as such rather
+   * than quietly re-running a gate that already happened.
+   */
+  verdict(head: string, independent = false): VerificationVerdict | undefined {
+    const record = this.candidate();
+    const verdict = record?.verdict as VerificationVerdict | undefined;
+    if (!record || !verdict || !this.valid(record, verdict, head, independent)) return undefined;
+    return structuredClone(verdict);
+  }
+
+  /** Assembles the facts a recorded verdict must agree with for this candidate. */
+  private valid(
+    record: RecordData,
+    verdict: VerificationVerdict,
+    head: string,
+    independent: boolean,
+  ): boolean {
+    return verdictAgrees(verdict, {
+      key: this.key(head),
+      digest: candidateDigest(record),
+      independent,
+      completed: record.status === 'completed',
+      sameRun: record.executionRunId === this.run.id,
+      workspacePresent: existsSync(record.workspace),
+      evidencePresent: !verdict.result.evidence.some((path) => !existsSync(path)),
+      artifactsPresent: !verdict.result.artifacts.some((artifact) => !existsSync(artifact.path)),
+    });
+  }
+
+  /** The candidate record this run's verdict belongs to. */
+  private candidate(): RecordData | undefined {
+    return this.run.data?.candidateRecord as RecordData | undefined;
   }
 
   /** Checks a journaled candidate through the same acceptance path used by ordinary publication. */
@@ -66,7 +150,7 @@ export class DeliveryChecks {
     }
   }
 
-  /** Retains one completed acceptance receipt so publication can reuse the exact checked inputs. */
+  /** Records the one verdict for these bytes so every later step reads it instead of re-checking. */
   private accept(
     record: RecordData,
     evidence: string[],
@@ -78,40 +162,13 @@ export class DeliveryChecks {
       evidence,
       artifacts: this.artifacts(record),
     };
-    record.acceptedChecks = {
+    record.verdict = {
       key: this.key(record.base),
       independent,
       digest: candidateDigest(record),
       result,
-    };
+    } satisfies VerificationVerdict;
     return result;
-  }
-
-  /** Reuses accepted bytes and criteria in this run; changed trees, authority or missing evidence require checks. */
-  private retained(head: string, independent: boolean): SimulationCheckResult | undefined {
-    const record = this.run.data?.candidateRecord as RecordData | undefined;
-    const accepted = record?.acceptedChecks as
-      | {
-          key: string;
-          independent: boolean;
-          digest: string;
-          result: SimulationCheckResult;
-        }
-      | undefined;
-    if (
-      !record ||
-      !accepted ||
-      record.status !== 'completed' ||
-      record.executionRunId !== this.run.id ||
-      accepted.key !== this.key(head) ||
-      (independent && !accepted.independent) ||
-      !existsSync(record.workspace) ||
-      accepted.digest !== candidateDigest(record) ||
-      accepted.result.evidence.some((path) => !existsSync(path)) ||
-      accepted.result.artifacts.some((artifact) => !existsSync(artifact.path))
-    )
-      return undefined;
-    return structuredClone(accepted.result);
   }
 
   /** Binds reuse to source content, captured authority, environment, goal and accountable acceptance criteria. */
