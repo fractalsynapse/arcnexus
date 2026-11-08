@@ -29,20 +29,26 @@ class WorkflowTests {
       assert.deepEqual(workflow.permissions, { contents: 'read' });
     }
     assert.equal(production.jobs.verify.with.distribution, true);
-    const nightly = this.read('nightly');
-    assert.ok(nightly.on.schedule, 'the native tier needs a scheduled qualification run');
-    assert.equal(nightly.jobs.verify.with.native, true);
-    assert.match(
-      nightly.jobs.verify.with.ref,
-      /inputs\.ref \|\| 'staging'/,
-      'a scheduled run must qualify staging explicitly',
-    );
-    assert.deepEqual(nightly.permissions, { contents: 'read' });
     assert.equal(
       production.jobs.verify.with.native,
       true,
       'main and releases keep the native tier',
     );
+  }
+
+  /** A scheduled run qualifies the native tier against staging explicitly, read-only. */
+  nightly(): void {
+    const workflow = this.read('nightly');
+    assert.ok(workflow.on.schedule, 'the native tier needs a scheduled qualification run');
+    assert.ok(workflow.on.workflow_dispatch, 'a maintainer can qualify staging on demand');
+    assert.equal(workflow.jobs.verify.with.native, true);
+    assert.match(
+      workflow.jobs.verify.with.ref,
+      /inputs\.ref \|\| 'staging'/,
+      'a scheduled run must qualify staging explicitly',
+    );
+    assert.deepEqual(workflow.permissions, { contents: 'read' });
+    assert.equal(workflow.jobs.verify.uses, './.github/workflows/verification.yaml');
   }
 
   /** Hosted tests retain ordinary-user confinement and delegated descendant supervision. */
@@ -141,6 +147,8 @@ test('native host qualification remains a required separate caller gate', () =>
   suite.nativeHosts());
 
 test('delivery lifecycle triggers and concurrency remain distinct', () => suite.lifecycles());
+
+test('nightly and dispatched runs qualify the native tier on staging', () => suite.nightly());
 
 test('delivery uses pinned read-only reusable verification', () => suite.verification());
 
