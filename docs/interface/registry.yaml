@@ -133,6 +133,47 @@ contracts:
           preclusion forbidden, the lane in execution with ordering in direction, and harness
           state per activation
 
+  - id: arcnexus/direction
+    type: library
+    file: docs/interface/arcnexus-direction.md
+    owner: direction
+    stage: locked
+    revision: 2
+    digest: 3ea6b95a48c7da0d9c1642a935a10699d51c3d4ae2475566dcb1e56522714074
+    dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination]
+    scenarios: 19
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: 2026-11-07
+    history:
+      - revision: 1
+        stage: proposed
+        digest: ed9fe67276c33e9534acb123c2d13751a60e05f8802c58c344075fa7c254c1c5
+        note: >
+          proposed in #356 with three open questions; answered by the architect — staging
+          integration is automatic and only production release awaits a human gate, a
+          locked-contract conflict inserts a change-request gate into the sequence, and the
+          stewardship directive is reserved rather than deferred silently
+
+  - id: arcnexus/verification
+    type: library
+    file: docs/interface/arcnexus-verification.md
+    owner: verification
+    stage: locked
+    revision: 2
+    digest: 258f78c7613e819f02e35e0d28fbb5ef04bfad6d4d0c928f75cf8b88e1c8cda9
+    dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination, arcnexus/execution, arcnexus/direction]
+    scenarios: 17
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: 2026-11-07
+    history:
+      - revision: 1
+        stage: proposed
+        digest: e2678c41c7a51e4c5c0236a39a488add35e496a727f1175d3060192d0920e3da
+        note: >
+          proposed in #356 with three open questions; the architect rejected the reviewer input cap
+          outright for the first system, so revision 2 replaces bounds with full assembly by
+          reference plus recorded measures, and confirms re-run authority and the single reviewer
+
 protocol:
   id: arcnexus/contract-protocol
   file: docs/interface/README.md
@@ -187,9 +228,9 @@ queue:
     - arcnexus/architecture-model
     - arcnexus/coordination
     - arcnexus/execution
-  waiting:
     - arcnexus/direction
     - arcnexus/verification
+  waiting:
     - arcnexus/delivery
     - arcnexus/report
     - arcnexus/guidance
