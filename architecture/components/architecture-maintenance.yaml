@@ -18,6 +18,8 @@ owns:
   - docs/guidance-audit.md
   - docs/plans
   - LICENSE
+  - .arc/README.md
+  - .arc/architecture
   - architecture/composition-profiles
   - architecture/execution-profiles
   - architecture/operations
