@@ -24,6 +24,7 @@ owns:
   - docs/interface/arcnexus-coordination.md
   - docs/interface/arcnexus-execution.md
   - docs/interface/arcnexus-direction.md
+  - docs/interface/arcnexus-verification.md
   - LICENSE
   - .arc/README.md
   - .arc/architecture

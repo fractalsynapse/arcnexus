@@ -1,7 +1,7 @@
 # Library contract — Direction
 
-Type contract: `library`. Stage: **proposed**. Owner: `direction` (absorbs `task-intake`, the
-planning half of `assignment`, `workday`, and the dispatch/admission parts of
+Type contract: `library`. Stage: **locked** (revision 2). Owner: `direction` (absorbs `task-intake`,
+the planning half of `assignment`, `workday`, and the dispatch/admission parts of
 `execution-runtime` and `coordination-store`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-architecture-model.md`](arcnexus-architecture-model.md), [`arcnexus-coordination.md`](arcnexus-coordination.md).
 Depended on by: `execution` (consumes ordering), `verification`, the gateway, and the workday
@@ -29,7 +29,7 @@ work, never judges its own plan, and never stores anything.
 | `owners(index, goal)` | the starting owner for each milestone, chosen from the bounded catalog index, requesting a full definition only when the index is insufficient. No prescribed team size; no team invented from prose. |
 | `sequence(milestones)` | deterministic ordering. A `Request` for another owner's contribution becomes the preceding milestone, never a parallel dependency, an agreement step, or a duplicate implementation. |
 | `revise(plan, observation)` | the Update-plan step: milestone and step status, a correction as the next milestone for the accountable owner, a retired request by linking it, and the reason. Same machinery as planning — there is no separate repair path. |
-| `directive(source, termination)` | the task/workday seam: `goal` source with `met-released-verified` or `stopped` termination, or `stewardship` source with `session-bound` or `idle-pass` termination and an owner cursor. One planner; the directive is the only difference. |
+| `directive(source, termination)` | the task/workday seam: `goal` source with `met-released-verified` or `stopped` termination, or the reserved `stewardship` source with `session-bound` or `idle-pass` termination and an owner cursor. One planner; the directive is the only difference. `stewardship` is refused with a clear error until workdays are built, so the shape exists without a second engine. |
 | `clarifications(plan)` | gate records for questions that need a human, answered through `task answer`. A question is a record, never a run status. |
 | `contractCheck(goal, plan, locks)` | validation against the locked contracts before any milestone is admitted. On conflict it emits a **change-request gate** naming the contract and clause; it never plans a milestone that crosses a locked interface. |
 
@@ -59,6 +59,8 @@ the lane itself belongs to `execution`.
 | I10 | Acceptance criteria are authored once per milestone. A request links to them; it never copies or expands them. |
 | I11 | The director's input is bounded: catalog index plus the requested definitions, within the project contract's context budget. |
 | I12 | Prohibitions the host already enforces are removed from prompts. Rules live in checks, not in paragraphs telling the model what not to do. |
+| I13 | **Staging integration is automatic.** A plan sequences staging merge as an ordinary milestone, completed when applicable checks, CI and any configured review requirement are satisfied. Only production release — protected-branch merge, tag, publication, deploy — awaits a human gate. The release path is automated right up to that boundary. |
+| I14 | The `stewardship` directive is reserved, not deferred silently: its shape exists, and using it before workdays are built refuses with a stated reason rather than inventing a planner. |
 
 ## Acceptance scenarios
 
@@ -80,6 +82,9 @@ the lane itself belongs to `execution`.
 | DI-14 | The plan render after `revise` differs from the previous render only in the fields the observation changed, so plan evolution is reviewable as a diff. |
 | DI-15 | Deleting the admission, retirement and required-work modules leaves no caller in the planning or execution path. |
 | DI-16 | Two goals in the same project cannot both be planned: the lane is busy, and the second is refused rather than queued. |
+| DI-17 | A goal whose plan ends in staging integration completes without any human turn: the staging merge milestone is planned, executed and recorded as an ordinary milestone, and the run closes. |
+| DI-18 | A plan reaching production release automates candidate scope, changelog, version and the protected-branch pull request, then ends `blocked: awaiting <release gate>` naming what the human must do. No agent merges to the protected branch, tags or deploys. |
+| DI-19 | A `stewardship` directive is refused with a stated reason and the reserved shape visible in the error; no second planner module is created to serve it. |
 
 ## Migration
 
@@ -102,26 +107,32 @@ Multi-goal prioritisation, cross-project planning, agent-to-agent negotiation, p
 gates, conversational acknowledgements as progress, budgets, and any capability that exists to
 resume an abandoned run.
 
-## Open questions for the architect
+## Accepted decisions
 
-1. **Termination depth.** I propose a task continues through `release` and `verify-release`
-   milestones and simply ends `blocked: awaiting <human gate>` where only you can act. The
-   alternative is stopping the directive at staging integration and requiring a new goal for
-   release. Which do you want?
-2. **Locked-contract conflicts.** I propose direction inserts a change-request gate into the
-   sequence so the plan shows the blocked decision. The alternative is refusing to plan at all
-   until the conflict is resolved outside the plan.
-3. **Workday reservation.** Reserve the `stewardship` directive shape now (fields present,
-   refused with a clear error until workday is built), or add it when workday starts? I propose
-   reserving it, because it is the seam you asked to keep.
+1. **Termination depth:** a task continues past staging. Staging integration is an ordinary
+   milestone the agent completes when checks, CI and any configured review requirement pass; the
+   release path is automated right up to production, where merge, tag, publication and deploy are
+   the human gate (I13, DI-17, DI-18). This matches the locked project contract, which reserves
+   only protected-branch merge, tagging, publication and contract locks to humans, and the locked
+   gateway contract, where a gate is any step only a human can complete.
+2. **Locked-contract conflicts:** direction inserts a **change-request gate** into the sequence so
+   the plan itself shows the blocked decision, and admits no milestone that crosses the clause
+   (I7, DI-8, DI-9).
+3. **Workday:** the `stewardship` directive shape is reserved now and refused with a stated reason
+   until workdays are built, keeping the seam without a second planner (I14, DI-19).
 
 ## Lock record
 
 ```yaml
 id: arcnexus/direction
-stage: proposed
-revision: 1
-acceptedBy: null
-acceptedAt: null
-changes: null
+stage: locked
+revision: 2
+acceptedBy: Adrian Webb (architect)
+acceptedAt: 2026-11-07
+changes:
+  - revision 2: locked with the architect's answers. Staging integration is automatic and only
+    production release awaits a human gate (new I13, DI-17, DI-18); a locked-contract conflict
+    inserts a change-request gate into the sequence; the stewardship directive is reserved rather
+    than deferred silently (new I14, DI-19)
+  - revision 1: proposed in #356 with three open questions, all since answered
 ```

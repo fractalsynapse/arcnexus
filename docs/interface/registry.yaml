@@ -137,18 +137,39 @@ contracts:
     type: library
     file: docs/interface/arcnexus-direction.md
     owner: direction
+    stage: locked
+    revision: 2
+    digest: 3ea6b95a48c7da0d9c1642a935a10699d51c3d4ae2475566dcb1e56522714074
+    dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination]
+    scenarios: 19
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: 2026-11-07
+    history:
+      - revision: 1
+        stage: proposed
+        digest: ed9fe67276c33e9534acb123c2d13751a60e05f8802c58c344075fa7c254c1c5
+        note: >
+          proposed in #356 with three open questions; answered by the architect — staging
+          integration is automatic and only production release awaits a human gate, a
+          locked-contract conflict inserts a change-request gate into the sequence, and the
+          stewardship directive is reserved rather than deferred silently
+
+  - id: arcnexus/verification
+    type: library
+    file: docs/interface/arcnexus-verification.md
+    owner: verification
     stage: proposed
     revision: 1
-    digest: ed9fe67276c33e9534acb123c2d13751a60e05f8802c58c344075fa7c254c1c5
-    dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination]
+    digest: e2678c41c7a51e4c5c0236a39a488add35e496a727f1175d3060192d0920e3da
+    dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination, arcnexus/execution, arcnexus/direction]
     scenarios: 16
     acceptedBy: null
     acceptedAt: null
     history: []
     openQuestions:
-      - termination depth - continue through release and verify-release, or stop at staging
-      - locked-contract conflict - insert a change-request gate, or refuse to plan
-      - reserve the stewardship directive shape now, or add it with workday
+      - reviewer input cap value (proposed 200000 characters)
+      - who may re-run verification on unchanged inputs (proposed: nobody)
+      - one reviewer call covering engineering and goal, or a separate goal assessor
 
 protocol:
   id: arcnexus/contract-protocol
@@ -197,7 +218,7 @@ supporting:
 queue:
   stage: libraries
   inReview:
-    - arcnexus/direction
+    - arcnexus/verification
   locked:
     - arcnexus/project
     - arcnexus/foundation
@@ -205,8 +226,8 @@ queue:
     - arcnexus/architecture-model
     - arcnexus/coordination
     - arcnexus/execution
+    - arcnexus/direction
   waiting:
-    - arcnexus/verification
     - arcnexus/delivery
     - arcnexus/report
     - arcnexus/guidance
