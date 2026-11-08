@@ -174,6 +174,49 @@ contracts:
           outright for the first system, so revision 2 replaces bounds with full assembly by
           reference plus recorded measures, and confirms re-run authority and the single reviewer
 
+  - id: arcnexus/delivery
+    type: library
+    file: docs/interface/arcnexus-delivery.md
+    owner: delivery
+    stage: locked
+    revision: 2
+    digest: 36d0e0df0fe76946eb3b4adffd4b481c3b04282150815c6579a3434a94dca80b
+    dependsOn: [arcnexus/project, arcnexus/coordination, arcnexus/verification, arcnexus/direction]
+    scenarios: 17
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: 2026-11-07
+    history:
+      - revision: 1
+        stage: proposed
+        digest: 8b007305e44bd039b02d5b1e67f22584e4727c554fcbc508925c8698fa81da86
+        note: >
+          proposed in #359 with three open questions; answered by the architect — provider performs
+          the merge and returns its identity, the only human gates are a production release and a
+          blocking question needing an answer or external action, and publication scope today is the
+          CLI plus an npm package with container, runner and installer targets reserved
+
+  - id: arcnexus/release
+    type: release
+    file: docs/interface/arcnexus-release.md
+    owner: release
+    stage: locked
+    revision: 2
+    digest: 82a8daafa36e3e257859e2e5bc8c42bf7465dbfc240d7191b6accb4ffff69cb1
+    dependsOn: [arcnexus/project, arcnexus/delivery, arcnexus/verification]
+    scenarios: 19
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: 2026-11-07
+    history:
+      - revision: 1
+        stage: proposed
+        digest: e31bfd5d3513210dae65bf62ecd02f3e81975c8b4a51559a7705aeade557ba9c
+        note: >
+          proposed in #359 with three open questions; answered by the architect — unscoped arcnexus
+          name, version tags with no v prefix, verification required after release, published by npm
+          trusted publishing on GitHub-hosted runners. The interpretation of "verify the release
+          after it is made" as a clean-prefix install from the registry is flagged in the contract
+          for correction
+
 protocol:
   id: arcnexus/contract-protocol
   file: docs/interface/README.md
@@ -230,10 +273,9 @@ queue:
     - arcnexus/execution
     - arcnexus/direction
     - arcnexus/verification
-  waiting:
     - arcnexus/delivery
+    - arcnexus/release
+  waiting:
     - arcnexus/report
     - arcnexus/guidance
     - arcnexus/testing
-  then:
-    - arcnexus/release
