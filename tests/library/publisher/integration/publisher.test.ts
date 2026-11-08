@@ -57,7 +57,8 @@ class PublisherFixture {
       evidence: [this.review('verifier')],
       data: { recordId: this.record.id, deliveredRevision: candidate },
     };
-    this.run.data.goalEvidence = [this.review('director-assessment')];
+    this.run.data.goalEvidence = undefined;
+    this.verdictOnCandidate();
     mkdirSync(join(this.root, 'runs', this.record.id), { recursive: true });
     save(this.root, this.record);
   }
@@ -151,6 +152,20 @@ class PublisherFixture {
     return path;
   }
 
+  /** Records the one independent assembled verdict that publication attests to. */
+  protected verdictOnCandidate(): void {
+    (this.record as any).verdict = {
+      key: 'fixture-inputs',
+      digest: candidateDigest(this.record),
+      independent: true,
+      result: {
+        status: 'passed',
+        evidence: [join(this.root, 'runs', String(this.record.id), 'report.json')],
+        artifacts: [],
+      },
+    };
+  }
+
   /** Supplies a complete synthetic criterion assessment at the model boundary. */
   private assessment() {
     return {
@@ -194,9 +209,15 @@ class PublisherFixture {
     this.run.data.authorityBase = head;
     this.assignment.data.deliveryRecordId = this.record.id;
     this.assignment.evidence = [this.review('verifier')];
-    this.run.data.goalEvidence = [this.review('director-assessment')];
+    this.verdictOnCandidate();
     save(this.root, this.record);
     return base;
+  }
+
+  /** Removes the recorded verdict and retains the candidate, as a candidate that was never gated. */
+  dropVerdict(): void {
+    delete (this.record as any).verdict;
+    save(this.root, this.record);
   }
 }
 
@@ -251,13 +272,13 @@ test('publisher rejects source changes after independent review', (t) => {
   assert.deepEqual(f.store.list(), []);
 });
 
-test('publisher refuses missing goal evidence and unfinished assignments', (t) => {
+test('publisher refuses a candidate without its verdict and unfinished assignments', (t) => {
   const f = new PublisherFixture(t);
   f.assignment.status = 'blocked';
   assert.throws(() => f.capture(), /unfinished/);
   f.assignment.status = 'completed';
-  f.run.data.goalEvidence = [];
-  assert.throws(() => f.capture(), /goal assessment/);
+  f.dropVerdict();
+  assert.throws(() => f.capture(), /independent assembled verdict/);
   assert.deepEqual(f.store.list(), []);
 });
 

@@ -7,6 +7,7 @@ import { candidateDigest } from '../change-inspection/changes.js';
 import { VerificationAssessment } from '../task-intake/direction.js';
 import { git } from '../operations/process.js';
 import { CandidateSnapshots } from '../workspace/candidates.js';
+import type { VerificationVerdict } from './delivery-checks.js';
 import type { RecordData } from '../workspace/state.js';
 
 /** Validates retained independent evidence against the exact candidate before publication capture. */
@@ -14,13 +15,31 @@ export class DeliveryVerification {
   /** Uses only host-owned evidence paths; caller-authored acceptance files are not publication authority. */
   constructor(private readonly root: string) {}
 
-  /** Requires completed accountable work, current source bytes and independently accepted evidence. */
+  /** Requires completed accountable work, current bytes and the one independent assembled verdict. */
   capture(run: ExecutionRun, assignments: ExecutionAssignment[], candidate: RecordData) {
     this.candidate(run, candidate);
     this.assignments(run, assignments);
-    const references = this.references(run, assignments);
+    const verdict = this.verdict(candidate);
+    const references = [
+      ...new Set([
+        ...assignments.flatMap((assignment) => assignment.evidence),
+        ...verdict.result.evidence.slice(1),
+      ]),
+    ];
     const reviews = references.map((reference) => this.read(reference, run));
-    this.goal(run, assignments, candidate, references, reviews);
+    this.attested(candidate, assignments, reviews);
+    return {
+      references,
+      digest: createHash('sha256').update(JSON.stringify(reviews)).digest('hex'),
+    };
+  }
+
+  /** Requires the reviewer record that accepted exactly these bytes against this engineering parent. */
+  private attested(
+    candidate: RecordData,
+    assignments: ExecutionAssignment[],
+    reviews: any[],
+  ): void {
     const last = assignments.find(
       (assignment) =>
         (assignment.data.deliveryRecordId ?? assignment.data.recordId) === candidate.id,
@@ -37,33 +56,24 @@ export class DeliveryVerification {
         accepted.verificationEvidence?.baseline !== candidate.assemblyBase)
     )
       throw new Error('Delivery candidate differs from independent acceptance');
-    return {
-      references,
-      digest: createHash('sha256').update(JSON.stringify(reviews)).digest('hex'),
-    };
   }
 
-  /** Accepts current assembled goal coverage while preserving readable historical director verdicts. */
-  private goal(
-    run: ExecutionRun,
-    assignments: ExecutionAssignment[],
-    candidate: RecordData,
-    references: string[],
-    reviews: any[],
-  ): void {
-    if (run.mode !== 'task') return;
-    const goals = run.data.goalEvidence as string[];
-    const criteria = [run.objective, ...assignments.flatMap((item) => item.acceptance)];
-    const accepted = reviews.some(
-      (review, index) =>
-        goals.includes(references[index]!) &&
-        (review.activationRole === 'director-assessment' ||
-          (review.activationRole === 'verifier' &&
-            review.parentRecordId === candidate.id &&
-            run.data.goalCandidate === run.data.candidateRevision &&
-            criteria.every((criterion) => review.acceptanceCriteria.includes(criterion)))),
-    );
-    if (!accepted) throw new Error('Missing independent goal assessment');
+  /**
+   * Reads the verdict recorded on the candidate itself.
+   *
+   * Publication attests to the one gate that already happened instead of reconstructing a second
+   * goal proof: the verdict must carry independent reviewer coverage and still describe these exact
+   * bytes. A missing or stale verdict is a refusal, never a re-review of the same candidate.
+   */
+  private verdict(candidate: RecordData): VerificationVerdict {
+    const verdict = candidate.verdict as VerificationVerdict | undefined;
+    if (!verdict?.independent)
+      throw new Error('Delivery requires one independent assembled verdict');
+    if (verdict.digest !== candidateDigest(candidate))
+      throw new Error('Delivery verdict describes different candidate bytes');
+    if (!verdict.result.evidence.length)
+      throw new Error('Delivery verdict carries no retained evidence');
+    return verdict;
   }
 
   /** Refuses unfinished assignments and missing or mismatched independent worker assessments. */
@@ -105,18 +115,6 @@ export class DeliveryVerification {
       `${String(run.data.candidateRevision)}^{tree}`,
     ).trim();
     if (observed !== accepted) throw new Error('Candidate changed after verified delivery');
-    if (run.mode === 'task' && !Array.isArray(run.data.goalEvidence))
-      throw new Error('Task requires independent goal acceptance before delivery');
-  }
-
-  /** Requires the goal assessment for tasks while workdays retain independent delivery assessments. */
-  private references(run: ExecutionRun, assignments: ExecutionAssignment[]): string[] {
-    const goals = run.data.goalEvidence as string[] | undefined;
-    if (run.mode === 'task' && (!Array.isArray(goals) || !goals.length))
-      throw new Error('Missing independent goal assessment');
-    return [
-      ...new Set([...assignments.flatMap((assignment) => assignment.evidence), ...(goals ?? [])]),
-    ];
   }
 
   /** Rejects foreign or incomplete reviews before incorporating their immutable content into the digest. */
@@ -135,7 +133,7 @@ export class DeliveryVerification {
       review.executionRunId !== run.id ||
       review.status !== 'completed' ||
       review.agent?.status !== 'completed' ||
-      !['verifier', 'director-assessment'].includes(review.activationRole) ||
+      review.activationRole !== 'verifier' ||
       JSON.stringify(review.executionEnvironment) !== JSON.stringify(run.environment)
     )
       throw new Error('Retained delivery review identity or completion mismatch');

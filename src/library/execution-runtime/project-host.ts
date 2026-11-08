@@ -394,8 +394,6 @@ export class ProjectHost {
         true,
         signal,
       );
-    if (run.data.goalEvidence && run.data.goalCandidate === run.data.candidateRevision)
-      return this.completeTask(run, signal);
     try {
       await new AssembledDelivery(
         this.root,
