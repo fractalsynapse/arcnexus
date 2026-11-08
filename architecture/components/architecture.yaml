@@ -38,6 +38,7 @@ api:
   - module: src/library/architecture/assignment.ts
   - module: src/library/architecture/bindings.ts
   - module: src/library/architecture/components.ts
+  - module: src/library/architecture/contracts.ts
   - module: src/library/architecture/file-classification.ts
   - module: src/library/architecture/config.ts
   - module: src/library/architecture/configuration.ts

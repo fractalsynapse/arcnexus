@@ -10,6 +10,7 @@ import type { Operation } from '../operations/operations.js';
 import { git } from '../operations/process.js';
 import { resolveMembers, type Member } from '../workspace/members.js';
 import { loadBindings, type Bindings } from './bindings.js';
+import { ContractRegistry, type ContractLock } from './contracts.js';
 import {
   ancestry,
   loadCatalog,
@@ -66,6 +67,7 @@ export interface ResolvedAssignment {
   configurationSources?: import('./configuration.js').ConfigurationSource[];
   schemaVersion: 1;
   priorEvidence: EvidenceSnapshot[];
+  contractLocks?: ContractLock[];
   operations: Operation[];
   environment: Environment;
   workspaceMembers: Omit<Member, 'workspace' | 'status'>[];
@@ -219,6 +221,7 @@ class AssignmentResolver {
       initialization: captureInitialization(catalog, component, this.options.initializerModel),
       schemaVersion: 1 as const,
       priorEvidence: capturePriorEvidence(assignment),
+      contractLocks: ContractRegistry.atRevision(this.repository, this.base).locks(),
       operations: execution.operations,
       environment: env,
       workspaceMembers: execution.workspaceMembers,
