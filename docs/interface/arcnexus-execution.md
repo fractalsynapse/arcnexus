@@ -94,16 +94,16 @@ the difference between a documented rule and a rule a run cannot cross.
 
 ## Migration
 
-| Current | Target | Effect |
-| --- | --- | --- |
-| detached host daemon, unix socket, `host.lease`, `host.json`, readiness probing, `retained-host` | the calling process is the host | removes ~700 lines of supervisor ceremony and the cold-host failure class that produced issue #285 |
-| `scheduler`, `run-selection`, `workday-selection`, `collaborative-dispatch`, `request-admission`, `assignment-recovery`, `policy-recovery`, `host-recovery` | `lane` | one executor, no alternate orchestration paths |
-| `run-promotion`, `promotion-control`, `promotion-recovery`, `promotion-review`, `promotion-assembly`, `simulation-repositories`, `run-publication` | move to `delivery`; promotion is deleted | removes the simulation→live promotion subsystem (~674 lines) |
-| `operations` live and simulated twins: `github-*` and `simulated-*`, `provider-store`, `upstream-bridge`, `network-qualification` | one transport plus a namespace refusal | removes 44 live-versus-simulation branch points and one publication engine |
-| `workspace`: `retention-catalog`, `evidence-retention`, `dependency-cleanup`, `cleanup` | disposal plus coordination's retention policy | removes ~700 lines of evidence garbage machinery that the cap and cache rule replaces |
-| `steward`: `thread-recovery`, `pending-calls`, `bridge-preflight`, `client-home` ceremony | harness execution with cancellation and evidence | keeps the bridge and tools; drops the rescue paths |
-| `change-inspection` | `snapshot` | absorbed, unchanged semantics, one fewer component |
-| container, AppArmor profile, generated seccomp, dedicated cgroup subtree as prerequisites | optional deployment profile | a cycle can complete on one machine without them; confinement itself is unchanged |
+| Current | Target | Effect | Status |
+| --- | --- | --- | --- |
+| detached host daemon, unix socket, `host.lease`, `host.json`, readiness probing, `retained-host` | the calling process is the host | removes ~700 lines of supervisor ceremony and the cold-host failure class that produced issue #285 | not started — batch 2 (one process) |
+| `scheduler`, `run-selection`, `workday-selection`, `collaborative-dispatch`, `request-admission`, `assignment-recovery`, `policy-recovery`, `host-recovery` | `lane` | one executor, no alternate orchestration paths | not started — batch 2 (one lane) |
+| `run-promotion`, `promotion-control`, `promotion-recovery`, `promotion-review`, `promotion-assembly`, `simulation-repositories`, `run-publication` | move to `delivery`; promotion is deleted | removes the simulation→live promotion subsystem (~674 lines) | partly done (#367) — the promotion modules are deleted; `run-publication` and `simulation-repositories` remain for the delivery-side move |
+| `operations` live and simulated twins: `github-*` and `simulated-*`, `provider-store`, `upstream-bridge`, `network-qualification` | one transport plus a namespace refusal | removes 44 live-versus-simulation branch points and one publication engine | partly done (#368, #372) — the simulated twins and provider store are gone; `github-*` stays as the one live transport, `upstream-bridge` and `network-qualification` remain |
+| `workspace`: `retention-catalog`, `evidence-retention`, `dependency-cleanup`, `cleanup` | disposal plus coordination's retention policy | removes ~700 lines of evidence garbage machinery that the cap and cache rule replaces | not started — batch 5 |
+| `steward`: `thread-recovery`, `pending-calls`, `bridge-preflight`, `client-home` ceremony | harness execution with cancellation and evidence | keeps the bridge and tools; drops the rescue paths | not started |
+| `change-inspection` | `snapshot` | absorbed, unchanged semantics, one fewer component | not started — batch 5 |
+| container, AppArmor profile, generated seccomp, dedicated cgroup subtree as prerequisites | optional deployment profile | a cycle can complete on one machine without them; confinement itself is unchanged | not started — batch 5 |
 
 Migration lands across cleanup batches 2, 3 and 4 (one process, one gate, one route) and is
 verified by EX-17 together with CO-16: nothing left to rescue, nobody left calling the rescue.
@@ -131,10 +131,15 @@ any execution path that exists only to preserve a historical run.
 ```yaml
 id: arcnexus/execution
 stage: locked
-revision: 2
+revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
 changes:
+  - revision 3: migration table gains a Status column recording implementation progress by pull
+    request — the promotion modules are deleted (#367) and the simulated twins with the provider
+    receipt store are gone (#368, #372), while the one-process, one-lane and workspace-disposal
+    rows remain not started in batches 2 and 5. Verified against the files that exist, not against
+    intent. No invariant or scenario changed.
   - revision 2: locked with the architect's answers — bubblewrap required and the container kept as
     an opt-in deployment seam with concurrency preclusion forbidden, the lane in execution with
     ordering in direction, and harness state per activation. Added invariant I14 and scenario EX-19
