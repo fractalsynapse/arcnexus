@@ -160,4 +160,76 @@ test('an aliased artifact is refused before it can be referenced or read', async
   );
 });
 
+/** Checks character-based continuation and corrective rejections through the retained capability. */
+class EvidenceReadScenarios {
+  /** Reconstructs Unicode and empty artifacts while preserving every advertised identity and offset. */
+  async reconstruct(t: TestContext, content: string): Promise<void> {
+    const f = new SetFixture(t);
+    f.set.add('unicode', content, 'utf8');
+    const reference = f.set.metadata()[0]!;
+    let offset = 0;
+    let reconstructed = '';
+    while (true) {
+      const page = (await f.set.call('direction.evidence', {
+        artifact: reference.id,
+        offset,
+        length: 7,
+      })) as any;
+      assert.equal(page.artifact, reference.id);
+      assert.equal(page.sha256, createHash('sha256').update(content).digest('hex'));
+      assert.equal(page.totalCharacters, content.length);
+      assert.equal(page.offset, offset);
+      reconstructed += page.content;
+      if (page.complete) {
+        assert.equal(page.nextOffset, null);
+        break;
+      }
+      assert.equal(page.nextOffset, offset + page.content.length);
+      assert.ok(page.nextOffset > offset);
+      offset = page.nextOffset;
+    }
+    assert.equal(reconstructed, content);
+    assert.equal(reference.totalCharacters, content.length);
+    assert.equal(reference.bytes, Buffer.byteLength(content));
+  }
+
+  /** Malformed bounds cannot return content or prevent a later valid request on the same capability. */
+  async invalid(t: TestContext): Promise<void> {
+    const f = new SetFixture(t);
+    f.set.add('known', 'retained bytes', 'utf8');
+    for (const request of [
+      null,
+      [],
+      {},
+      { artifact: '' },
+      { artifact: 'known', path: '/etc/passwd' },
+      { artifact: 'known', offset: -1 },
+      { artifact: 'known', offset: 0.5 },
+      { artifact: 'known', offset: '0' },
+      { artifact: 'known', offset: Number.MAX_SAFE_INTEGER + 1 },
+      { artifact: 'known', length: 0 },
+      { artifact: 'known', length: -1 },
+      { artifact: 'known', length: 0.5 },
+      { artifact: 'known', length: '4' },
+    ]) {
+      const page = (await f.set.call('direction.evidence', request)) as any;
+      assert.equal(page.status, 'rejected');
+      assert.equal('content' in page, false);
+    }
+    const valid = (await f.set.call('direction.evidence', { artifact: 'known' })) as any;
+    assert.equal(valid.content, 'retained bytes');
+    assert.equal(valid.complete, true);
+    assert.equal(valid.nextOffset, null);
+  }
+}
+
+test('Unicode evidence reconstructs exactly using character offsets and stable hashes', (t) =>
+  new EvidenceReadScenarios().reconstruct(t, '🙂é漢字\n'.repeat(40)));
+
+test('empty evidence is a terminal page with its exact content identity', (t) =>
+  new EvidenceReadScenarios().reconstruct(t, ''));
+
+test('invalid evidence arguments reject safely and preserve subsequent valid reads', (t) =>
+  new EvidenceReadScenarios().invalid(t));
+
 registerSuite({ component: 'report', level: 'unit', tags: ['deterministic'] });

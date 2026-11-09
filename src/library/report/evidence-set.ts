@@ -10,7 +10,7 @@ import {
 import { dirname, join, resolve } from 'node:path';
 
 /** Host-projected worker observations; no caller-supplied path is ever accepted. */
-export interface InvestigatedEvidence {
+interface InvestigatedEvidence {
   assignments?: Array<{
     id: string;
     record?: { recordId?: string; observations?: { timeline?: { events?: any[] } } };
@@ -18,7 +18,7 @@ export interface InvestigatedEvidence {
 }
 
 /** Where the private store keeps retained records, and which run is doing the looking. */
-export interface EvidenceHost {
+interface EvidenceHost {
   root: string;
   runId: string;
 }
@@ -27,7 +27,7 @@ import type { OperationBridge } from '../operations/operations.js';
 import type { BridgeTool } from '../steward/bridge.js';
 
 /** One advertised artifact: where it lives, what it is, and how big it measurably is. */
-export interface EvidenceArtifact {
+interface EvidenceArtifact {
   id: string;
   path: string;
   sha256: string;
@@ -441,21 +441,16 @@ export class EvidenceSet {
   }
 
   /** Rejects symlinked ancestors, shared inodes and non-regular files before reading bytes. */
-  private assertSafe(path: string, missing = false): void {
+  private assertSafe(path: string): void {
     let current = path;
     while (true) {
-      try {
-        const stat = lstatSync(current);
-        if (stat.isSymbolicLink() || (stat.isFile() && stat.nlink !== 1))
-          throw new Error('Unsafe evidence artifact alias');
-        if (current === path && !missing && !stat.isFile())
-          throw new Error('Evidence artifact is not a regular file');
-      } catch (error) {
-        if (!missing || (error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-      }
+      const stat = lstatSync(current);
+      if (stat.isSymbolicLink() || (stat.isFile() && stat.nlink !== 1))
+        throw new Error('Unsafe evidence artifact alias');
+      if (current === path && !stat.isFile())
+        throw new Error('Evidence artifact is not a regular file');
       if (current === dirname(current)) break;
       current = dirname(current);
     }
-    if (!missing && !existsSync(path)) throw new Error('Evidence artifact is missing');
   }
 }
