@@ -2,16 +2,25 @@ import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import type { DeliveryRecord } from '../coordination-store/delivery-types.js';
+import type { LifecycleStore } from '../coordination-store/lifecycle-store.js';
 import type { ExternalEffect, ExternalObservation } from '../coordination-store/lifecycle-types.js';
-import { ProviderStore } from '../coordination-store/provider-store.js';
 import type { CheckResult } from './check-result.js';
+import type { EvidenceChangeRecord } from './evidence-change-record.js';
 
-/** Publishes actual checked artifacts into an isolated release store without contacting a package registry. */
-export class SimulatedReleases {
-  /** Binds release scope and private artifact storage to the host's immutable verified delivery. */
+/**
+ * Records the release a simulated namespace intends, over its real captured artifacts.
+ *
+ * The effect journal is the record: what was proven, over which merged head, with which
+ * content-addressed build outputs. Nothing here claims a registry, a tag or a remote state. An
+ * interrupted retry that already captured bytes yields the same identity rather than a second one,
+ * so no separate receipt table is needed to prove it happened once.
+ */
+export class EvidenceRelease {
+  /** Binds release scope and private artifact storage to one immutable verified delivery. */
   constructor(
     private readonly delivery: DeliveryRecord,
-    private readonly store: ProviderStore,
+    private readonly change: EvidenceChangeRecord,
+    private readonly effects: LifecycleStore,
     private readonly artifactRoot: string,
   ) {
     this.delivery = structuredClone(delivery);
@@ -20,52 +29,48 @@ export class SimulatedReleases {
     mkdirSync(artifactRoot, { recursive: true, mode: 0o700 });
   }
 
-  /** Requires merged independent checks and copies their actual immutable outputs before committing a receipt. */
+  /** Requires a merged, independently verified delivery and its actual build outputs. */
   async apply(effect: ExternalEffect, signal: AbortSignal): Promise<Record<string, unknown>> {
     signal.throwIfAborted();
     this.assert(effect);
-    const prior = this.store.inspect(effect);
-    if (prior.status === 'completed') return prior.result;
-    const pr = this.store.resource(`${this.delivery.environment.id}:pr:${this.delivery.id}`);
-    const checks = pr.data.mergeChecks as CheckResult | undefined;
+    const verification = this.mergeVerification();
+    const state = this.change.state();
     if (
-      pr.data.state !== 'merged' ||
-      checks?.status !== 'passed' ||
-      !checks.evidence.length ||
-      !checks.artifacts.length ||
-      typeof pr.data.mergeHead !== 'string'
+      !state.merged ||
+      verification?.status !== 'passed' ||
+      !verification.evidence.length ||
+      !verification.artifacts.length
     )
       throw new Error('Release requires merged verification and actual captured build artifacts');
-    const artifacts = checks.artifacts.map((artifact) => this.capture(artifact));
+    const artifacts = verification.artifacts.map((artifact) => this.capture(artifact));
     signal.throwIfAborted();
-    return this.store.apply(effect, () => this.release(pr.data.mergeHead as string, artifacts));
-  }
-
-  /** Reconciles the durable release receipt; partial artifact copies alone never prove publication. */
-  inspect(effect: ExternalEffect): ExternalObservation {
-    this.assert(effect);
-    return this.store.inspect(effect);
-  }
-
-  /** Stores explicitly simulated release provenance separately from integration and engineering state. */
-  private release(head: string, artifacts: CheckResult['artifacts']) {
-    const id = `${this.delivery.environment.id}:release:${this.delivery.id}`;
-    const result = {
-      id,
+    return {
+      id: `${this.delivery.environment.id}:release:${this.delivery.id}`,
       deliveryId: this.delivery.id,
       environmentId: this.delivery.environment.id,
-      head,
+      head: state.mergeHead,
       artifacts,
       simulation: true,
     };
-    const prior = this.store.resources().find((resource) => resource.id === id);
-    if (prior) {
-      if (JSON.stringify(prior.data) !== JSON.stringify(result))
-        throw new Error('Simulated release attribution conflict');
-      return prior.data;
-    }
-    this.store.create({ id, kind: 'release', revision: 1, data: result });
-    return result;
+  }
+
+  /** A release is a local computation, so an uncertain one has nothing external to reconcile. */
+  inspect(effect: ExternalEffect): ExternalObservation {
+    this.assert(effect);
+    return { status: 'absent', evidence: 'local-computation:release.create' };
+  }
+
+  /** The independent verification that justified the merge, read from the merge effect itself. */
+  private mergeVerification(): CheckResult | undefined {
+    const merged = this.effects
+      .effects()
+      .find(
+        (effect) =>
+          effect.status === 'completed' &&
+          effect.operation === 'pull-request.merge' &&
+          String(effect.input.deliveryId ?? '') === this.delivery.id,
+      );
+    return merged?.result?.verification as CheckResult | undefined;
   }
 
   /** Checks captured artifact bytes and preserves content-addressed copies across interrupted retries. */

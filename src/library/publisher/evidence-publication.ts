@@ -1,11 +1,10 @@
 import { join } from 'node:path';
 import type { RepositoryMaterialization } from '../architecture/bindings.js';
 import type { DeliveryRecord } from '../coordination-store/delivery-types.js';
-import { ProviderStore } from '../coordination-store/provider-store.js';
 import type { ExternalEffect, ExternalObservation } from '../coordination-store/lifecycle-types.js';
 import { DeliveryGit } from '../operations/delivery-git.js';
-import { SimulatedPullRequests } from '../operations/simulated-pull-requests.js';
-import { SimulatedReleases } from '../operations/simulated-releases.js';
+import { EvidenceChangeRecord } from '../operations/evidence-change-record.js';
+import { EvidenceRelease } from '../operations/evidence-release.js';
 import type { CapturedPublicationPolicy } from './publication-policy.js';
 import type { PublicationContext, PublicationProvider } from './publication.js';
 
@@ -37,13 +36,11 @@ export class EvidencePublicationProvider implements PublicationProvider {
 
   readonly actions = actions;
 
-  private readonly provider: ProviderStore;
-
   private readonly git: DeliveryGit;
 
-  private readonly prs: SimulatedPullRequests;
+  private readonly change: EvidenceChangeRecord;
 
-  private readonly releases: SimulatedReleases;
+  private readonly release: EvidenceRelease;
 
   /** Binds one isolated provider store, checkout and artifact directory to the captured environment. */
   constructor(
@@ -51,10 +48,14 @@ export class EvidencePublicationProvider implements PublicationProvider {
     private readonly delivery: DeliveryRecord,
   ) {
     const { root, repositoryId, repository } = context;
-    this.provider = new ProviderStore(join(root, 'provider.sqlite'));
     this.git = new DeliveryGit(delivery, repositoryId, repository, join(root, 'publication'));
-    this.prs = new SimulatedPullRequests(delivery, this.provider, this.git, context.checks);
-    this.releases = new SimulatedReleases(delivery, this.provider, join(root, 'artifacts'));
+    this.change = new EvidenceChangeRecord(delivery, this.git, context.effects, context.checks);
+    this.release = new EvidenceRelease(
+      delivery,
+      this.change,
+      context.effects,
+      join(root, 'artifacts'),
+    );
   }
 
   /** Routes each operation to the component that owns it without changing effect semantics. */
@@ -76,7 +77,7 @@ export class EvidencePublicationProvider implements PublicationProvider {
 
   /** A prior gate may be reused only while its evidence still describes the current change record. */
   reuseCheck(effect: ExternalEffect): boolean {
-    return this.prs.currentCheck(effect);
+    return this.change.reuseCheck(effect);
   }
 
   /** The pushed head, which is also the head the gate must have verified. */
@@ -98,16 +99,14 @@ export class EvidencePublicationProvider implements PublicationProvider {
       throw new Error('Evidence publication policy lacks captured destination authority');
   }
 
-  /** Closes the namespace store without touching the supervising host's shared stores. */
-  close(): void {
-    this.provider.close();
-  }
+  /** Nothing is held open here: the namespace record lives in the host's effect journal. */
+  close(): void {}
 
   /** Selects the owner of an operation group; scheduling and verification stay with the route. */
   private adapter(effect: ExternalEffect) {
     if (effect.operation.startsWith('delivery.')) return this.git;
-    if (effect.operation.startsWith('pull-request.')) return this.prs;
-    return this.releases;
+    if (effect.operation.startsWith('pull-request.')) return this.change;
+    return this.release;
   }
 
   /** Reads the delivery freshly so intervening milestone state is seen. */
