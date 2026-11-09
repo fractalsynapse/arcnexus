@@ -1,6 +1,6 @@
 # Gateway contract — ArcNexus CLI
 
-Type contract: `gateway`. Stage: **locked** (revision 2). Owner: `cli`.
+Type contract: `gateway`. Stage: **locked** (revision 3). Owner: `cli`.
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-foundation.md`](arcnexus-foundation.md).
 
 The CLI is the first behavioural surface and the anchor for acceptance tests: what it promises
@@ -25,7 +25,7 @@ Options are stated with the command that accepts them. Only `--json`, `--help` a
 are global.
 
 ```text
-arcnexus task run [project] "<goal>" [--async] [--json]
+arcnexus task run [project] "<goal>" [--async] [--simulate] [--json]
 arcnexus task status [goal-id] [--follow] [--after <event-sequence>] [--json]
 arcnexus task stop [goal-id]
 arcnexus task answer <goal-id> "<response>"
@@ -41,7 +41,9 @@ arcnexus evidence get <id> [--offset <n>] [--length <n>] [--json]
 ```
 
 `task run` means: pursue this goal until it is met, released and verified, or until it is
-stopped. Without `--async` it streams progress and, when a gate question arises, **prompts the
+stopped. `--simulate` selects the evidence-package collaboration provider: the real lifecycle
+with no upstream and an evidence package instead of a remote. It is not a mock mode and grants no
+capability — see the collaboration-provider contract. Without `--async` it streams progress and, when a gate question arises, **prompts the
 terminal and records the answer as evidence**; with `--async` it never prompts and ends at
 `blocked: awaiting <gate>`. `task answer` resolves a pending gate on any run, interactive or
 not.
@@ -112,7 +114,7 @@ Removed, each with a one-line pointer to its replacement in the refusal message:
 | `config get/update/migrate` | bindings file under the project contract |
 | `workspace prepare/cleanup/list/get` | runtime-managed; read through `evidence get` |
 | `delivery approve/publish/promote` | human gates answered through `task answer`; release stage later |
-| `experiment inspect`, `--simulate` | deferred simulation lane; its isolation invariant stays tested |
+| `experiment inspect` | deferred campaign lane; the simulation lifecycle stays, under `--simulate` |
 | `task pause`, `task resume` | `task stop`, then a new `task run` reading the recorded position |
 | `task list/get/follow/inspect`, `workday list/get/history/follow/inspect` | `task status`, `evidence get` |
 | `inspect <component> <objective> --kind …` and the two legacy inspect forms | one `inspect [project] [component] [activity]` context preview |
@@ -122,7 +124,7 @@ Removed, each with a one-line pointer to its replacement in the refusal message:
 
 Options that once existed and are gone are refused with exit `2` and a stated reason, never
 silently ignored: `--model`, `--initializer-model`, `--codex-path`, `--max-attempts`,
-`--timeout-seconds`, `--composition-profile`, `--execution-profile`, `--simulate`, `--issue`,
+`--timeout-seconds`, `--composition-profile`, `--execution-profile`, `--issue`,
 `--mode`, `--output`, `--input`, `--base`, `--write`, `--workspace`, `--bindings`, `--kind`,
 `--category`, `--assignment`, `--activity` (activity is positional).
 
@@ -198,6 +200,7 @@ answer is recorded as evidence. No flag bypasses a gate and no agent answers its
 | GW-18 | A runtime-only value appears as a named placeholder and is never filled with invented content; the header lists what was substituted. |
 | GW-19 | Foreground `task run` prompts at a gate and records the answer; `task run --async` never prompts and ends `blocked: awaiting <gate>` with the question id in evidence. |
 | GW-20 | `inspect` with an unknown component or an activity outside the declared set is exit 2 naming the valid values. |
+| GW-21 | `task run --simulate "<goal>"` runs the same lifecycle as without the flag, records the provider as evidence-package, and performs no upstream call; omitting the flag cannot be chosen by an agent mid-run. |
 
 ## Migration
 
@@ -226,10 +229,14 @@ budget flags, and any gateway-side authority, retry or recovery behaviour.
 ```yaml
 id: arcnexus/cli-gateway
 stage: locked
-revision: 2
+revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
 changes:
+  - revision 3: `--simulate` restored as a delivered option by the architect. Simulation keeps
+    mode, so retiring its selector would leave a lifecycle with no way to reach it; it now selects
+    the evidence-package collaboration provider rather than a fake GitHub. The rejected-option list
+    loses it and the retired-command table no longer covers it.
   - revision 2: added `inspect` as the activity-context preview on the live generator;
     moved per-command options onto their commands and kept only `--json`, `--help` and
     `--version` global; folded `plan show` into `task status` under the one-fact-one-command

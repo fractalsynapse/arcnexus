@@ -55,12 +55,19 @@ contracts:
     owner: cli
     stage: locked
     revision: 2
-    digest: 61271afed10cefa75658940d48544832a1f33bd3c8914737811d953aa849dc5b
+    digest: f5a48b98aa992b128232fa13cc2b80662f62e39b5d97ca11c78b372a19c58d05
     dependsOn: [arcnexus/project, arcnexus/foundation]
     scenarios: 20
     acceptedBy: Adrian Webb (architect)
     acceptedAt: 2026-11-07
     history:
+      - revision: 3
+        stage: locked
+        digest: f5a48b98aa992b128232fa13cc2b80662f62e39b5d97ca11c78b372a19c58d05
+        note: >
+          --simulate restored as a delivered option by the architect: simulation keeps its mode, so
+          the flag selects the evidence-package collaboration provider rather than a mock; the
+          rejected-option list and the retired-command table no longer cover it
       - revision: 1
         stage: proposed
         digest: 0c450928e2815267e835bdb9e78b3a740655738bc032079091fa6cd8b1dab206
@@ -217,6 +224,19 @@ contracts:
           after it is made" as a clean-prefix install from the registry is flagged in the contract
           for correction
 
+  - id: arcnexus/collaboration-provider
+    type: library
+    file: docs/interface/arcnexus-collaboration-provider.md
+    owner: delivery
+    stage: proposed
+    revision: 1
+    digest: a7d405a3176fbe9224173a7e7f8da11076e1cbc1ff84f60174dfb0699274f038
+    dependsOn: [arcnexus/project, arcnexus/delivery, arcnexus/coordination]
+    scenarios: 7
+    acceptedBy: null
+    acceptedAt: null
+    history: []
+
 protocol:
   id: arcnexus/contract-protocol
   file: docs/interface/README.md
@@ -263,7 +283,8 @@ supporting:
 # being proposed and then locked by the architect.
 queue:
   stage: libraries
-  inReview: []
+  inReview:
+    - arcnexus/collaboration-provider
   locked:
     - arcnexus/project
     - arcnexus/foundation
@@ -276,6 +297,7 @@ queue:
     - arcnexus/delivery
     - arcnexus/release
   waiting:
+    - arcnexus/collaboration-provider
     - arcnexus/report
     - arcnexus/guidance
     - arcnexus/testing
