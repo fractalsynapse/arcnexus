@@ -27,7 +27,6 @@ api:
   - module: src/library/operations/delivery-commit.ts
   - module: src/library/operations/github-delivery.ts
   - module: src/library/operations/github-pull-requests.ts
-  - module: src/library/operations/simulated-pull-requests.ts
   - module: src/library/operations/check-result.ts
   - module: src/library/operations/evidence-change-record.ts
   - module: src/library/operations/evidence-release.ts
@@ -46,4 +45,3 @@ api:
   - module: src/library/operations/upstream-execution.ts
   - module: src/library/operations/github-upstream.ts
   - module: src/library/operations/upstream-bridge.ts
-  - module: src/library/operations/simulated-releases.ts
