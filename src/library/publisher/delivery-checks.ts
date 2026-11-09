@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import type { ProjectExecution } from '../architecture/execution-context.js';
 import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/execution-types.js';
 import { OperationExecution } from '../operations/operation-execution.js';
-import type { SimulationCheckResult } from '../operations/simulated-pull-requests.js';
+import type { CheckResult } from '../operations/check-result.js';
 import { createWorkspace, prepareWorkspace } from '../workspace/workspace.js';
 import { save, type RecordData } from '../workspace/state.js';
 import { Direction } from '../task-intake/direction.js';
@@ -20,7 +20,7 @@ export interface VerificationVerdict {
   key: string;
   digest: string;
   independent: boolean;
-  result: SimulationCheckResult;
+  result: CheckResult;
 }
 
 /** The facts a recorded verdict must still agree with before it can be read instead of re-checked. */
@@ -71,11 +71,7 @@ export class DeliveryChecks {
   ) {}
 
   /** Produces the one verdict for a candidate, reusing the recorded verdict instead of re-checking. */
-  async check(
-    head: string,
-    signal: AbortSignal,
-    independent = false,
-  ): Promise<SimulationCheckResult> {
+  async check(head: string, signal: AbortSignal, independent = false): Promise<CheckResult> {
     if (!/^[a-f0-9]{40,64}$/.test(head)) throw new Error('Expected immutable delivery head');
     signal.throwIfAborted();
     return (
@@ -128,7 +124,7 @@ export class DeliveryChecks {
     signal: AbortSignal,
     independent = false,
     contributions: RecordData[] = [],
-  ): Promise<SimulationCheckResult> {
+  ): Promise<CheckResult> {
     const evidence = [join(this.root, 'runs', record.id, 'report.json')];
     try {
       await prepareWorkspace(this.root, record, signal);
@@ -151,13 +147,9 @@ export class DeliveryChecks {
   }
 
   /** Records the one verdict for these bytes so every later step reads it instead of re-checking. */
-  private accept(
-    record: RecordData,
-    evidence: string[],
-    independent: boolean,
-  ): SimulationCheckResult {
+  private accept(record: RecordData, evidence: string[], independent: boolean): CheckResult {
     record.status = 'completed';
-    const result: SimulationCheckResult = {
+    const result: CheckResult = {
       status: 'passed',
       evidence,
       artifacts: this.artifacts(record),
@@ -276,7 +268,7 @@ export class DeliveryChecks {
   }
 
   /** Projects immutable copies captured by shared operations rather than mutable generated output paths. */
-  private artifacts(record: RecordData): SimulationCheckResult['artifacts'] {
+  private artifacts(record: RecordData): CheckResult['artifacts'] {
     const invocations = (record.operationInvocations ?? []) as Array<{
       status: string;
       artifacts: Array<{ artifact: string; sha256: string }>;
