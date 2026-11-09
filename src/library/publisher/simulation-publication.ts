@@ -28,7 +28,6 @@ const actions = [
   'delivery.push',
   'pull-request.create',
   'pull-request.check',
-  'pull-request.review',
   'pull-request.merge',
   'release.create',
 ];
@@ -73,7 +72,6 @@ export class SimulationPublication {
       await this.step('pull_request', 'pull-request.create', signal);
       const check = await this.effect('pull-request.check', signal);
       if (check.result!.checks !== 'passed') throw new Error('Publication checks failed');
-      await this.effect('pull-request.review', signal, { decision: 'approved' });
       this.assertApproval();
       const merged = await this.effect('pull-request.merge', signal);
       if (merged.result!.merged !== true) throw new Error('Assembled delivery verification failed');

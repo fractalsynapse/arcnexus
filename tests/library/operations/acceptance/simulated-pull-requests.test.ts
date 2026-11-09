@@ -28,6 +28,9 @@ class PullRequestFixture {
 
   artifacts: Array<{ path: string; sha256: string }> = [];
 
+  /** When false the gate reports only the candidate's own record, as an unaudited check would. */
+  reviewerCoverage = true;
+
   readonly reviewedHeads: Array<{ head: string; independent: boolean }> = [];
 
   private readonly authority = {
@@ -37,7 +40,6 @@ class PullRequestFixture {
     grants: [
       'pull-request.create',
       'pull-request.check',
-      'pull-request.review',
       'pull-request.merge',
       'release.create',
     ].map((operation) => ({ operation, target: 'repo', definitionDigest: 'policy' })),
@@ -88,7 +90,10 @@ class PullRequestFixture {
     if (this.result === 'interrupted') throw new Error('Controlled check interruption');
     return {
       status: this.result,
-      evidence: ['Controlled host check boundary'],
+      evidence: [
+        'Controlled host check boundary',
+        ...(this.reviewerCoverage && independent ? ['Independent reviewer coverage'] : []),
+      ],
       artifacts: this.artifacts,
     };
   }
@@ -128,7 +133,7 @@ class PullRequestFixture {
   }
 }
 
-test('simulated PRs require observed passing checks and separately recorded provider review', async (t) => {
+test('simulated PRs merge only with passing checks backed by reviewer coverage', async (t) => {
   const f = new PullRequestFixture(t);
   await f.prepare();
   const document = f.git.store.get(f.git.id).publicationDocument!;
@@ -137,12 +142,14 @@ test('simulated PRs require observed passing checks and separately recorded prov
   assert.equal(resource.data.body, document.body);
   const failed = await f.execute('failed-check', 'pull-request.check');
   assert.equal(failed.result!.checks, 'failed');
-  await f.execute('review', 'pull-request.review', 'approved');
   assert.throws(() => f.provider.ready(f.git.effects.effect('review')), /passing checks/);
   f.result = 'passed';
   const passed = await f.execute('passed-check', 'pull-request.check');
   const ready = f.provider.ready(passed);
-  assert.equal(ready.data.reviewSimulation, true);
+  assert.ok(
+    Array.isArray(ready.data.reviewerEvidence) && ready.data.reviewerEvidence.length,
+    'the one independent gate supplies reviewer coverage',
+  );
   assert.equal(ready.data.checkHead, ready.data.head);
   assert.deepEqual(await f.execute('passed-check', 'pull-request.check'), passed);
   assert.equal(f.checks, 2);
@@ -160,14 +167,13 @@ test('interrupted simulated checks retain uncertainty and are never silently rep
   assert.equal(f.store.resources()[0]!.data.checks, 'pending');
 });
 
-test('simulated provider rejection remains observable after otherwise passing checks', async (t) => {
+test('passing checks without reviewer coverage cannot satisfy the merge gate', async (t) => {
   const f = new PullRequestFixture(t);
   await f.prepare();
   f.result = 'passed';
+  f.reviewerCoverage = false;
   await f.execute('check', 'pull-request.check');
-  const rejection = await f.execute('review', 'pull-request.review', 'changes_requested');
-  assert.equal(rejection.result!.review, 'changes_requested');
-  assert.throws(() => f.provider.ready(rejection), /provider review/);
+  assert.throws(() => f.provider.ready(f.git.effects.effect('check')), /reviewer coverage/);
 });
 
 test('simulated merge integrates the actual assembled tree only after fresh independent assessment', async (t) => {
@@ -175,7 +181,6 @@ test('simulated merge integrates the actual assembled tree only after fresh inde
   await f.prepare();
   f.result = 'passed';
   await f.execute('check', 'pull-request.check');
-  await f.execute('review', 'pull-request.review', 'approved');
   const prior = f.git.provider.targetHead();
   const merged = await f.merge();
   assert.equal(merged.result!.merged, true);
@@ -195,7 +200,6 @@ test('failed assembled checks leave the target unchanged and report an unmerged 
   await f.prepare();
   f.result = 'passed';
   await f.execute('check', 'pull-request.check');
-  await f.execute('review', 'pull-request.review', 'approved');
   const prior = f.git.provider.targetHead();
   f.result = 'failed';
   const refused = await f.merge();
@@ -213,7 +217,6 @@ test('simulated release retains actual merged-check artifacts and deduplicates i
   f.artifacts = [{ path, sha256 }];
   f.result = 'passed';
   await f.execute('check', 'pull-request.check');
-  await f.execute('review', 'pull-request.review', 'approved');
   await f.merge();
   const release = await f.execute('release', 'release.create');
   const artifacts = release.result!.artifacts as Array<{ path: string; sha256: string }>;
@@ -228,7 +231,6 @@ test('simulated release rejects missing build artifacts', async (t) => {
   await f.prepare();
   f.result = 'passed';
   await f.execute('check', 'pull-request.check');
-  await f.execute('review', 'pull-request.review', 'approved');
   await f.merge();
   await assert.rejects(
     () => f.execute('release', 'release.create'),

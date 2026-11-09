@@ -33,7 +33,6 @@ export class SimulatedPullRequests {
     if (effect.operation === 'pull-request.merge') return this.merge(effect, signal);
     return this.store.apply(effect, () => {
       if (effect.operation === 'pull-request.create') return this.create(effect);
-      if (effect.operation === 'pull-request.review') return this.review(effect);
       throw new Error('Unsupported simulated PR operation');
     });
   }
@@ -87,7 +86,7 @@ export class SimulatedPullRequests {
     if (prior.status !== 'absent') throw new Error('Simulated check requires reconciliation');
     const resource = this.current(effect);
     this.store.start(effect);
-    const result = await this.checks(String(resource.data.head), signal);
+    const result = await this.checks(String(resource.data.head), signal, true);
     signal.throwIfAborted();
     if (!['passed', 'failed'].includes(result.status) || !result.evidence.length)
       throw new Error('Simulated check lacks observed host evidence');
@@ -97,6 +96,7 @@ export class SimulatedPullRequests {
         checks: result.status,
         checkHead: resource.data.head,
         checkEvidence: result.evidence,
+        reviewerEvidence: result.evidence.slice(1),
         artifacts: result.artifacts,
       });
       return this.receipt(updated);
@@ -158,20 +158,6 @@ export class SimulatedPullRequests {
     });
   }
 
-  /** Records explicitly synthetic provider review; this never substitutes for independent engineering acceptance. */
-  private review(effect: ExternalEffect): Record<string, unknown> {
-    const resource = this.current(effect);
-    const decision = effect.input.decision;
-    if (!['approved', 'changes_requested'].includes(String(decision)))
-      throw new Error('Expected simulated provider review decision');
-    const updated = this.store.update(this.id, resource.revision, {
-      review: decision,
-      reviewHead: resource.data.head,
-      reviewSimulation: true,
-    });
-    return this.receipt(updated);
-  }
-
   /** Confirms the original check, provider evidence and actual pushed revision before reusing a pass. */
   currentCheck(effect: ExternalEffect): boolean {
     this.assert(effect);
@@ -196,10 +182,12 @@ export class SimulatedPullRequests {
     if (
       resource.data.checks !== 'passed' ||
       resource.data.checkHead !== resource.data.head ||
-      resource.data.review !== 'approved' ||
-      resource.data.reviewHead !== resource.data.head
+      !Array.isArray(resource.data.reviewerEvidence) ||
+      !resource.data.reviewerEvidence.length
     )
-      throw new Error('Simulated PR requires current passing checks and provider review');
+      throw new Error(
+        'Simulated PR requires current passing checks with independent reviewer coverage',
+      );
     return resource;
   }
 
@@ -231,13 +219,11 @@ export class SimulatedPullRequests {
   /** Validates complete host intent and prevents cross-environment or target substitution. */
   private assert(effect: ExternalEffect): void {
     const allowed =
-      effect.operation === 'pull-request.review'
-        ? ['deliveryId', 'decision']
-        : effect.operation === 'pull-request.merge'
-          ? ['deliveryId', 'targetHead']
-          : effect.operation === 'pull-request.create'
-            ? ['deliveryId', 'title', 'body', 'template']
-            : ['deliveryId'];
+      effect.operation === 'pull-request.merge'
+        ? ['deliveryId', 'targetHead']
+        : effect.operation === 'pull-request.create'
+          ? ['deliveryId', 'title', 'body', 'template']
+          : ['deliveryId'];
     if (
       effect.environmentId !== this.delivery.environment.id ||
       effect.runId !== this.delivery.runId ||
