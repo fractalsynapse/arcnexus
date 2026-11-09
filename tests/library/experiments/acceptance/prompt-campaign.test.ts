@@ -29,7 +29,7 @@ class PromptCampaignScenarios {
       report.cases[0].task.assignments.map((a: any) => a.owner),
       ['a', 'b', 'c'],
     );
-    assert.ok(report.cases[0].task.run.data.goalEvidence.length);
+    assert.ok(report.cases[0].task.run.data.verifiedEvidence.length);
     assert.equal(f.git('status', '--porcelain'), '');
     assert.ok(existsSync(report.cases[0].state));
   }

@@ -133,9 +133,17 @@ export class PublicationFixture {
       candidateRevision: candidate,
       candidateRecord: this.record,
     });
-    this.host.store.updateRun(this.source.id, 'completed', {
-      goalEvidence: [this.review('director-assessment')],
-    });
+    (this.record as Record<string, unknown>).verdict = {
+      key: 'fixture-inputs',
+      digest: candidateDigest(this.record),
+      independent: true,
+      result: {
+        status: 'passed',
+        evidence: [join(f.state, 'runs', this.record.id, 'report.json')],
+        artifacts: [],
+      },
+    };
+    this.host.store.updateRun(this.source.id, 'completed', {});
     return new Publisher(f.state, this.deliveries).capture(
       this.context.key,
       this.host.store.run(this.source.id),
