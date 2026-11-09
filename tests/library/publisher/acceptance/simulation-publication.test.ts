@@ -1,3 +1,4 @@
+import { deliveryStatus } from '../../../../dist/library/coordination-store/delivery-types.js';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
@@ -92,13 +93,13 @@ test('publication retains pending PR until revision approval then completes and 
   const f = new PublicationFixture(t);
   await assert.rejects(() => f.publication.publish(f.git.signal), /requires approval/);
   const pending = f.git.store.get(f.git.id);
-  assert.equal(pending.delivery, 'pushed');
-  assert.equal(pending.integration, 'pending');
+  assert.equal(deliveryStatus(pending).delivery, 'pushed');
+  assert.equal(deliveryStatus(pending).integration, 'pending');
   assert.equal(f.git.provider.targetHead(), f.git.repository.base);
   f.git.store.approve(pending.id, pending.version, pending.candidate);
   const released = await f.instance(t, 'approval-only').publish(f.git.signal);
-  assert.equal(released.integration, 'merged');
-  assert.equal(released.publication, 'released');
+  assert.equal(deliveryStatus(released).integration, 'merged');
+  assert.equal(deliveryStatus(released).publication, 'released');
   assert.equal(f.checks, 2);
   assert.deepEqual(await f.publication.publish(f.git.signal), released);
   assert.equal(f.checks, 2);
@@ -118,7 +119,7 @@ test('explicit simulated check refresh retains failed evidence and all original 
   f.result = 'passed';
   const retry = f.instance(t, 'retained-retry');
   const released = await retry.publish(f.git.signal);
-  assert.equal(released.publication, 'released');
+  assert.equal(deliveryStatus(released).publication, 'released');
   assert.equal(f.checks, 3);
   assert.deepEqual(
     f.git.effects.effects().find((e) => e.id === failed.id),
@@ -140,7 +141,7 @@ test('explicit simulated check refresh cannot bypass an uncertain earlier check'
   await assert.rejects(() => retry.publish(f.git.signal), /uncertain|reconciliation|unknown/i);
   assert.equal(f.checks, 1);
   assert.equal(f.git.effects.effects().length, 4);
-  assert.equal(f.git.store.get(f.git.id).integration, 'pending');
+  assert.equal(deliveryStatus(f.git.store.get(f.git.id)).integration, 'pending');
 });
 
 registerSuite({

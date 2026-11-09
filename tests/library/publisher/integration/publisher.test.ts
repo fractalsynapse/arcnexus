@@ -1,3 +1,4 @@
+import { deliveryStatus } from '../../../../dist/library/coordination-store/delivery-types.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
@@ -220,8 +221,8 @@ test('publisher captures actual reviewed changes once without publishing or appr
   assert.deepEqual(f.capture(), delivery);
   assert.equal(delivery.candidate, f.run.data.candidateRevision);
   assert.equal(delivery.approval, undefined);
-  assert.equal(delivery.delivery, 'retained');
-  assert.equal(delivery.integration, 'not_requested');
+  assert.equal(deliveryStatus(delivery).delivery, 'retained');
+  assert.equal(deliveryStatus(delivery).integration, 'not_requested');
   assert.equal(f.store.list().length, 1);
 });
 

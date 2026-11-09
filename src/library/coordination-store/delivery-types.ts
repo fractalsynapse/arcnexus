@@ -36,17 +36,68 @@ export interface DeliveryCapture {
   parentDeliveryId?: string;
 }
 
-/** Separates verified engineering, Git delivery, integration and release outcomes. */
+/**
+ * The recorded outcome of one publication route.
+ *
+ * The provider performs the merge and returns its identity; that identity is written once here and
+ * every other view — integrated, released, still open — derives from it, instead of three status
+ * columns and a receipt map all claiming the same fact (delivery contract I6).
+ */
+export interface DeliveryRoute {
+  /** head: the provider-returned merge identity. */
+  head: string;
+
+  /** receipt: the durable effect that produced it, kept so recovery can reconcile. */
+  receipt: string;
+
+  /** integratedAt: when the target actually moved. */
+  integratedAt: string;
+
+  /** released: whether this route's provider also recorded a release. Live routes never do. */
+  released: boolean;
+}
+
+/** Separates verified engineering from the one recorded publication outcome. */
 export interface DeliveryRecord extends DeliveryCapture {
   version: number;
   createdAt: string;
   engineering: 'verified';
-  delivery: 'retained' | 'committed' | 'pushed';
-  integration: 'not_requested' | 'pending' | 'merged';
-  publication: 'not_requested' | 'released';
+  route?: DeliveryRoute;
   approval?: { candidate: string; authorizedAt: string };
   receipts: Partial<Record<DeliveryMilestone, string>>;
   blocker?: string;
 }
 
 export type DeliveryMilestone = 'commit' | 'push' | 'pull_request' | 'merge' | 'release';
+
+/** The legacy status vocabulary, computed from the one recorded route. */
+export function deliveryStatus(delivery: DeliveryRecord): {
+  delivery: 'retained' | 'committed' | 'pushed';
+  integration: 'not_requested' | 'pending' | 'merged';
+  publication: 'not_requested' | 'released';
+} {
+  return {
+    delivery: delivery.receipts.push
+      ? 'pushed'
+      : delivery.receipts.commit
+        ? 'committed'
+        : 'retained',
+    integration: delivery.route
+      ? 'merged'
+      : delivery.receipts.pull_request
+        ? 'pending'
+        : 'not_requested',
+    publication: delivery.route?.released ? 'released' : 'not_requested',
+  };
+}
+
+/**
+ * True when the delivery's publication route has reached its recorded end.
+ *
+ * The route is complete once the provider's merge identity is recorded and the release the route
+ * declared has been captured. A live route declares none, because production release stays a human
+ * gate, so its merge is the end. This is the one place that question is asked.
+ */
+export function routeComplete(delivery: DeliveryRecord): boolean {
+  return !!delivery.route && (delivery.route.released || delivery.environment.mode === 'live');
+}

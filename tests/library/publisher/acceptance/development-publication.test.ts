@@ -1,3 +1,4 @@
+import { deliveryStatus } from '../../../../dist/library/coordination-store/delivery-types.js';
 import assert from 'node:assert/strict';
 import { randomUUID, createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -198,7 +199,7 @@ for (const count of [3, 5]) {
     const parent = scenario.parent();
     await scenario.publish(parent);
     scenario.verify();
-    assert.equal(scenario.fixture.store.get(parent.id).publication, 'released');
+    assert.equal(deliveryStatus(scenario.fixture.store.get(parent.id)).publication, 'released');
     const effects = scenario.fixture.effects.effects();
     await scenario.publish(parent);
     assert.deepEqual(scenario.fixture.effects.effects(), effects);

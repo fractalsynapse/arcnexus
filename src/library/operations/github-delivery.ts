@@ -29,7 +29,7 @@ export class GitHubDelivery {
     if (
       delivery.environment.mode !== 'live' ||
       delivery.engineering !== 'verified' ||
-      !['committed', 'pushed'].includes(delivery.delivery) ||
+      !delivery.receipts.commit ||
       !/^[a-f0-9]{64}$/.test(delivery.id) ||
       !/^[a-f0-9]{40,64}$/.test(head)
     )

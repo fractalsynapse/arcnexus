@@ -28,10 +28,7 @@ class PullRequestFixture {
     version: 1,
     createdAt: '2026-11-03T00:00:00Z',
     engineering: 'verified',
-    delivery: 'pushed',
-    integration: 'not_requested',
-    publication: 'not_requested',
-    receipts: {},
+    receipts: { commit: 'effect-commit', push: 'effect-push' },
   };
 
   readonly effect: ExternalEffect = {

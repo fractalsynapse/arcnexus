@@ -1,3 +1,4 @@
+import { deliveryStatus } from '../../../../dist/library/coordination-store/delivery-types.js';
 import assert from 'node:assert/strict';
 import type { TestContext } from 'node:test';
 import {
@@ -231,13 +232,13 @@ test('live publication retains PR and refreshes CI without repeating verified ef
   const f = new LivePublicationFixture(t);
   await assert.rejects(f.publication.publish(f.git.signal), /CI evidence/);
   const pending = f.git.store.get(f.id);
-  assert.equal(pending.integration, 'pending');
-  assert.equal(pending.delivery, 'pushed');
+  assert.equal(deliveryStatus(pending).integration, 'pending');
+  assert.equal(deliveryStatus(pending).delivery, 'pushed');
   f.ci = 'SUCCESS';
   await assert.rejects(f.publication.publish(f.git.signal), /requires approval/);
   f.git.store.approve(f.id, f.git.store.get(f.id).version, pending.candidate);
   const merged = await f.publication.publish(f.git.signal);
-  assert.equal(merged.integration, 'merged');
+  assert.equal(deliveryStatus(merged).integration, 'merged');
   assert.deepEqual(await f.publication.publish(f.git.signal), merged);
   assert.equal(f.checks, 2);
   assert.equal(
@@ -249,7 +250,7 @@ test('live publication retains PR and refreshes CI without repeating verified ef
   assert.notEqual(target, pending.base);
   assert.equal(git(f.git.repository.origin, 'show', 'staging:source.txt'), 'reviewed candidate');
   assert.equal(git(f.git.repository.origin, 'rev-parse', 'staging^1').trim(), pending.base);
-  assert.equal(f.git.store.get(f.id).publication, 'not_requested');
+  assert.equal(deliveryStatus(f.git.store.get(f.id)).publication, 'not_requested');
 });
 
 test('live provider pushes and integrates the captured steward development branch', async (t) => {
@@ -258,7 +259,7 @@ test('live provider pushes and integrates the captured steward development branc
   f.git.store.approve(f.id, delivery.version, delivery.candidate);
   f.ci = 'SUCCESS';
   const merged = await f.publication.publish(f.git.signal);
-  assert.equal(merged.integration, 'merged');
+  assert.equal(deliveryStatus(merged).integration, 'merged');
   assert.equal(f.pull.head.ref, f.branch);
   assert.equal(
     git(f.git.repository.origin, 'rev-parse', 'refs/heads/' + f.branch).trim(),
@@ -281,7 +282,7 @@ test('failed live verification prevents branch and PR publication', async (t) =>
   const f = new LivePublicationFixture(t);
   f.checkStatus = 'failed';
   await assert.rejects(f.publication.publish(f.git.signal), /checks failed/);
-  assert.equal(f.git.store.get(f.id).delivery, 'committed');
+  assert.equal(deliveryStatus(f.git.store.get(f.id)).delivery, 'committed');
   assert.deepEqual(f.requests, []);
   assert.equal(f.git.effects.effects().length, 2);
 });
@@ -303,7 +304,7 @@ test('changed integration target retains uncertainty and cannot be silently retr
     .find((effect) => effect.operation === 'pull-request.merge')!;
   assert.equal(merge.status, 'uncertain');
   await assert.rejects(f.publication.publish(f.git.signal), /requires reconciliation/);
-  assert.equal(f.git.store.get(f.id).integration, 'pending');
+  assert.equal(deliveryStatus(f.git.store.get(f.id)).integration, 'pending');
   assert.equal(f.checks, 2);
 });
 
@@ -317,7 +318,7 @@ test('expected-target lease rejects a concurrent ancestor update at push time', 
   const origin = f.git.repository.origin;
   const head = git(origin, 'rev-parse', 'refs/heads/arcnexus/' + f.id).trim();
   assert.equal(git(origin, 'rev-parse', 'staging').trim(), head);
-  assert.equal(f.git.store.get(f.id).integration, 'pending');
+  assert.equal(deliveryStatus(f.git.store.get(f.id)).integration, 'pending');
   await assert.rejects(f.publication.publish(f.git.signal), /requires reconciliation/);
 });
 
@@ -328,10 +329,10 @@ test('lost integration receipt recovers actual target without repeating verifica
   const current = f.git.store.get(f.id);
   f.git.store.approve(f.id, current.version, current.candidate);
   await assert.rejects(f.publication.publish(f.git.signal), /receipt loss/);
-  assert.equal(f.git.store.get(f.id).integration, 'pending');
+  assert.equal(deliveryStatus(f.git.store.get(f.id)).integration, 'pending');
   const target = git(f.git.repository.origin, 'rev-parse', 'staging').trim();
   const recovered = await f.publication.publish(f.git.signal);
-  assert.equal(recovered.integration, 'merged');
+  assert.equal(deliveryStatus(recovered).integration, 'merged');
   assert.equal(git(f.git.repository.origin, 'rev-parse', 'staging').trim(), target);
   assert.equal(f.checks, 2);
 });
