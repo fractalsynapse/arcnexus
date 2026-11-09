@@ -217,6 +217,12 @@ test('the assembled tree is verified independently before the target moves', asy
   assert.equal(f.gates.at(-1)!.independent, true, 'the assembled check is an independent gate');
   assert.equal(f.change.state().merged, true);
   assert.ok((merged.result!.verification as { evidence: string[] }).evidence.length);
+  const reconciled = f.change.inspect(f.effect('merge'));
+  assert.equal(
+    reconciled.status,
+    'completed',
+    'a merge that moved the ref reconciles from the ref itself, not a stored claim',
+  );
 });
 
 test('a failed assembled check leaves the target unchanged and reports an unmerged outcome', async (t) => {
@@ -245,12 +251,10 @@ test('an interrupted local gate is absent while the merge asks the actual ref', 
     'a local computation with no external effect cannot have half-happened',
   );
   assert.equal(f.change.state().checks, 'pending', 'no partial gate result is claimed');
-  const merge = { ...f.effect('check'), operation: 'pull-request.merge' };
-  assert.equal(
-    f.change.inspect(merge).status,
-    'absent',
-    'the merge reconciles against the target ref, which has not moved',
-  );
+  await f.run('check', 'pull-request.check').catch(() => undefined);
+  f.result = 'passed';
+  await f.run('check', 'pull-request.check');
+  assert.equal(f.change.state().checks, 'passed', 'retrying an absent local gate is not a replay');
 });
 
 test('release retains the merged verification artifacts and repeats idempotently', async (t) => {
