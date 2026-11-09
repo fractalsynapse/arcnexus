@@ -2,6 +2,7 @@ import { publicationContent } from './repository-documents.js';
 import type { DeliveryRecord } from '../coordination-store/delivery-types.js';
 import { ProviderStore, type ProviderResource } from '../coordination-store/provider-store.js';
 import type { CheckResult } from './check-result.js';
+import { integrateAssembled, type MergeAdapter } from './merge-protocol.js';
 import type { ExternalEffect, ExternalObservation } from '../coordination-store/lifecycle-types.js';
 import type { DeliveryGit } from './delivery-git.js';
 
@@ -103,7 +104,32 @@ export class SimulatedPullRequests {
     });
   }
 
-  /** Rechecks the assembled tree independently before locking provider review and atomically moving the target. */
+  /** Journals provider state around each protocol step so an interrupted merge reconciles. */
+  private mergeAdapter(): MergeAdapter {
+    return {
+      gates: async (item) => {
+        this.ready(item);
+        return { base: this.git.targetHead() };
+      },
+      began: (item) => this.store.start(item),
+      assemble: (item, signal) => this.git.assemble(item, signal),
+      progressed: (item, assembled, verification) =>
+        this.store.checkpoint(item, () => {
+          const current = this.ready(item);
+          return this.store.update(this.id, current.revision, {
+            mergeInProgress: item.id,
+            mergeHead: assembled,
+            mergeChecks: verification,
+          });
+        }),
+      refused: (item, _assembled, verification) =>
+        this.blockMerge(item, this.current(item), verification),
+      integrate: async (item, assembled, cancellation) =>
+        this.finishMerge(item, await this.git.integrate(item, assembled, cancellation)),
+    };
+  }
+
+  /** Integrates under the shared merge protocol, journaling provider state around each step. */
   private async merge(
     effect: ExternalEffect,
     signal: AbortSignal,
@@ -111,24 +137,10 @@ export class SimulatedPullRequests {
     const prior = this.inspect(effect);
     if (prior.status === 'completed') return prior.result;
     if (prior.status !== 'absent') throw new Error('Simulated merge requires reconciliation');
-    const resource = this.ready(effect);
-    this.store.start(effect);
-    const assembled = await this.git.assemble(effect, signal);
-    const checked = await this.checks(assembled, signal, true);
-    signal.throwIfAborted();
-    if (!checked.evidence.length) throw new Error('Assembled merge has no verification evidence');
-    if (checked.status !== 'passed') return this.blockMerge(effect, resource, checked);
-    this.store.checkpoint(effect, () => {
-      this.ready(effect);
-      return this.store.update(this.id, resource.revision, {
-        mergeInProgress: effect.id,
-        mergeHead: assembled,
-        mergeChecks: checked,
-      });
-    });
-    return this.finishMerge(effect, await this.git.integrate(effect, assembled, signal));
+    return integrateAssembled(this.mergeAdapter(), effect, this.checks, () => undefined, signal);
   }
 
+  /** Authorization for a simulated merge is the engine's, so the protocol asks for nothing here. */
   /** Records an observed rejection without claiming integration or losing passed engineering evidence. */
   private blockMerge(effect: ExternalEffect, resource: ProviderResource, checked: CheckResult) {
     return this.store.apply(effect, () => {
