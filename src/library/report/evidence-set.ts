@@ -135,9 +135,10 @@ export class EvidenceSet {
   }
 
   /** Adopts an artifact the host already retained, measuring it without rewriting a byte. */
-  adopt(id: string, path: string, encoding: string): void {
+  adopt(id: string, path: string, encoding: string): EvidenceArtifact {
     this.assertSafe(path);
     this.reference(id, path, encoding);
+    return this.artifacts.get(id)!;
   }
 
   /**
