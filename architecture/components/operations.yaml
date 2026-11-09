@@ -23,7 +23,6 @@ api:
   - module: src/library/operations/repository-documents.ts
   - module: src/library/operations/installed-runtime.ts
   - module: src/library/operations/prepared-dependencies.ts
-  - module: src/library/operations/promotion-assembly.ts
   - module: src/library/operations/delivery-assembly.ts
   - module: src/library/operations/delivery-commit.ts
   - module: src/library/operations/github-delivery.ts

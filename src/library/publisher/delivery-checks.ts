@@ -179,7 +179,7 @@ export class DeliveryChecks {
           tree: git(this.context.source, 'rev-parse', head + '^{tree}').trim(),
           authority: executionIdentity(this.context),
           environment: this.run.environment,
-          objective: this.run.data?.promotionSourceObjective ?? this.run.objective,
+          objective: this.run.objective,
           assignments: this.assignments
             .map(({ id, owner, objective, acceptance }) => ({ id, owner, objective, acceptance }))
             .sort((a, b) => String(a.id).localeCompare(String(b.id))),
@@ -257,7 +257,7 @@ export class DeliveryChecks {
     ).verify(
       record,
       this.assignments[0]!.owner,
-      String(this.run.data.promotionSourceObjective ?? this.run.objective),
+      this.run.objective,
       evidence,
       this.run.mode === 'task',
       String(record.assemblyBase ?? this.context.base),

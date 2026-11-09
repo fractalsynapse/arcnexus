@@ -5,7 +5,7 @@ import { githubBranchHead } from '../operations/github-upstream.js';
 import { PublicationPolicy } from '../publisher/publisher.js';
 import { runDestination } from './run-destination.js';
 
-/** Pins live engineering and promotion to upstream staging before a host can capture working authority. */
+/** Pins live engineering to upstream staging before a host can capture working authority. */
 export async function stagingContext(
   source: string,
   packageId: string,

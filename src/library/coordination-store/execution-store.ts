@@ -11,7 +11,7 @@ import {
   sharedRequestProblem,
   storeInitialProposal,
 } from './request-proposal.js';
-import type { DeliveryRecord, PromotionCandidate } from './delivery-types.js';
+import type { DeliveryRecord } from './delivery-types.js';
 import { CandidatePointers } from './candidate-pointers.js';
 import { RunRecords } from './run-records.js';
 import { InboxDecisions, type InboxDecision } from './inbox-decisions.js';
@@ -421,11 +421,6 @@ export class ExecutionStore {
       candidate,
       prepared,
     );
-  }
-
-  /** Publishes fresh verified promotion evidence to the environment's candidate pointer atomically. */
-  promotion(runId: string, delivery: DeliveryRecord, proof: PromotionCandidate) {
-    new CandidatePointers(this.db).acceptPromotion(runId, delivery, proof);
   }
 
   /** Reads a transactional candidate pointer without crossing live or simulation environments. */

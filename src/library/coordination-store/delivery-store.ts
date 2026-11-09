@@ -19,8 +19,6 @@ export class DeliveryStore {
         for (const [key, value] of Object.entries(input))
           if (JSON.stringify(existing[key as keyof DeliveryCapture]) !== JSON.stringify(value))
             throw new Error('Delivery identity reused with changed attribution');
-        if (existing.promotedFrom !== input.promotedFrom)
-          throw new Error('Delivery promotion attribution changed');
         return existing;
       }
       this.db.put('delivery', {
@@ -165,7 +163,5 @@ export class DeliveryStore {
       !['live', 'simulation'].includes(input.environment.mode)
     )
       throw new Error('Delivery capture requires complete attribution and verification');
-    if (input.promotedFrom && input.environment.mode !== 'live')
-      throw new Error('Promotion creates a new live delivery');
   }
 }

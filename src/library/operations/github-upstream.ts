@@ -11,7 +11,7 @@ export async function githubHostCredential(): Promise<string> {
   return token;
 }
 
-/** Pins a promotion to the provider's target without updating a checkout or a Git ref. */
+/** Reads the provider's target head without updating a checkout or a Git ref. */
 export async function githubBranchHead(
   repository: string,
   branch: string,

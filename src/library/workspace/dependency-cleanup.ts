@@ -75,7 +75,7 @@ export class DependencyCleanup {
     });
   }
 
-  /** Keeps dependencies needed by a retained publication or promotion until integration completes. */
+  /** Keeps dependencies needed by a retained publication until integration completes. */
   private pendingDelivery(project: string): boolean {
     const path = join(project, 'deliveries.sqlite');
     if (!existsSync(path)) return false;

@@ -32,14 +32,8 @@ export class RunContinuation {
     this.store.updateRun(run.id, 'running', {
       seen: {},
       pauseReason: null,
-      candidateRevision: String(
-        run.data.promotionSource
-          ? run.data.candidateRevision
-          : (delivery?.data.candidateRevision ?? this.base),
-      ),
-      candidateRecord: run.data.promotionSource
-        ? run.data.candidateRecord
-        : (delivery?.data.candidateRecord ?? run.data.candidateRecord),
+      candidateRevision: String(delivery?.data.candidateRevision ?? this.base),
+      candidateRecord: delivery?.data.candidateRecord ?? run.data.candidateRecord,
     });
   }
 

@@ -23,51 +23,6 @@ class CandidateFixture {
     });
   }
 
-  /** Supplies explicitly controlled proof metadata to exercise the atomic pointer transition. */
-  promotion() {
-    const environment: RunEnvironment = { id: 'live', mode: 'live' };
-    const run = this.store.createRun('task', ['a'], 'Promote', environment);
-    this.store.updateRun(run.id, 'running', {
-      authorityBase: 'base',
-      packageId: 'package',
-      executionIdentity: 'authority',
-      promotionSource: 'simulation-delivery',
-      promotionStage: 'verifying',
-    });
-    const delivery = this.capture(run.id, environment);
-    const proof = {
-      record: { id: 'record', base: 'promoted', executionRunId: run.id, status: 'completed' },
-      goalEvidence: ['goal'],
-    };
-    return { run, delivery, proof };
-  }
-
-  /** Defines immutable delivery provenance separately from its mutable live run checkpoint. */
-  private capture(runId: string, environment: RunEnvironment): DeliveryRecord {
-    return {
-      id: 'promotion',
-      projectId: 'project',
-      packageId: 'package',
-      runId,
-      assignmentIds: ['original-simulation-assignment'],
-      environment,
-      authorityDigest: 'authority',
-      base: 'base',
-      candidate: 'promoted',
-      candidateRecordId: 'record',
-      verification: { references: ['target-checks', 'review', 'goal'], digest: 'controlled' },
-      target: { repository: 'example/project', branch: 'staging' },
-      promotedFrom: 'simulation-delivery',
-      version: 1,
-      createdAt: 'fixture',
-      engineering: 'verified',
-      delivery: 'retained',
-      integration: 'not_requested',
-      publication: 'not_requested',
-      receipts: {},
-    };
-  }
-
   /** Delivers one verified assignment through the production candidate transaction. */
   deliver(revision: string, environment?: RunEnvironment) {
     const run = this.store.createRun('task', ['a', 'b', 'c'], 'Useful goal', environment);
@@ -78,7 +33,7 @@ class CandidateFixture {
   }
 }
 
-test('candidate promotion never crosses live, simulation or separate simulation identities', (t) => {
+test('candidate pointer never crosses live, simulation or separate simulation identities', (t) => {
   const f = new CandidateFixture(t);
   const environments: RunEnvironment[] = [
     { id: 'shared-name', mode: 'live' },
@@ -113,33 +68,7 @@ test('run environment survives lifecycle updates and cannot be replaced by candi
   assert.deepEqual(report.run.environment, retained.environment);
 });
 
-test('promotion atomically retains goal proof and duplicate acceptance cannot rewind later work', (t) => {
-  const f = new CandidateFixture(t);
-  const { run, delivery, proof } = f.promotion();
-  f.store.promotion(run.id, delivery, proof);
-  assert.equal(f.store.latestDelivery('base', 'package', run.environment)!.id, run.id);
-  assert.deepEqual(f.store.run(run.id).data.goalEvidence, ['goal']);
-  assert.equal(f.store.run(run.id).data.pendingPublication, delivery.id);
-  assert.deepEqual(f.store.assignments(run.id), []);
-  const later = f.deliver('later', run.environment);
-  f.store.promotion(run.id, delivery, proof);
-  assert.equal(f.store.latestDelivery('base', 'package', run.environment)!.id, later.id);
-});
 
-test('promotion refuses mismatched target authority and missing goal proof without pointer mutation', (t) => {
-  const f = new CandidateFixture(t);
-  const { run, delivery, proof } = f.promotion();
-  assert.throws(
-    () => f.store.promotion(run.id, { ...delivery, authorityDigest: 'foreign' }, proof),
-    /authority/,
-  );
-  assert.throws(
-    () => f.store.promotion(run.id, delivery, { ...proof, goalEvidence: [] }),
-    /goal evidence/,
-  );
-  assert.equal(f.store.latestDelivery('base', 'package', run.environment), undefined);
-  assert.equal(f.store.run(run.id).data.promotionStage, 'verifying');
-});
 
 registerSuite({
   component: 'coordination-store',

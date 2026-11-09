@@ -31,7 +31,7 @@ import { ProgressObserver } from '../report/progress.js';
 import { Direction, VerificationIssue } from '../task-intake/direction.js';
 import type { AgentResult } from '../steward/codex.js';
 
-/** Executes one owner stage in an isolated workspace and verifies delivery before promotion. */
+/** Executes one owner stage in an isolated workspace and verifies delivery before assembly. */
 export class AssignmentExecution {
   private readonly snapshots: CandidateSnapshots;
 

@@ -19,16 +19,6 @@ import { DeliveryVerification } from './delivery-verification.js';
 import { DevelopmentDeliveries } from './development-deliveries.js';
 import { deliveryDocument } from './delivery-document.js';
 
-export interface PromotionInput {
-  context: ProjectExecution;
-  run: ExecutionRun;
-  sourceRun: ExecutionRun;
-  source: DeliveryRecord;
-  assignments: ExecutionAssignment[];
-  head: string;
-  target: DeliveryCapture['target'];
-}
-
 /** Captures verified engineering as immutable publication input without granting upstream authority. */
 export class Publisher {
   /** Retains the private evidence root and durable delivery writer owned by the supervising host. */

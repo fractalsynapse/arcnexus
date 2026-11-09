@@ -31,16 +31,9 @@ export interface DeliveryCapture {
   candidateRecordId?: string;
   verification: { references: string[]; digest: string };
   target: { repository: string; branch: string };
-  promotedFrom?: string;
   developments?: DevelopmentDelivery[];
   development?: DevelopmentDelivery;
   parentDeliveryId?: string;
-}
-
-/** Fresh target workspace and goal evidence retained separately from the source simulation's assignments. */
-export interface PromotionCandidate {
-  record: Record<string, unknown>;
-  goalEvidence: string[];
 }
 
 /** Separates verified engineering, Git delivery, integration and release outcomes. */

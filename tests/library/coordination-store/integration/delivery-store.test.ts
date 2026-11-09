@@ -103,10 +103,6 @@ test('missing evidence and simulated promotion fail before capture', (t) => {
     () => f.store.capture({ ...f.capture, verification: { references: [], digest: '' } }),
     /verification/,
   );
-  assert.throws(
-    () => f.store.capture({ ...f.capture, promotedFrom: 'previous-simulation' }),
-    /new live/,
-  );
   assert.deepEqual(f.store.list(), []);
 });
 
