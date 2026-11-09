@@ -30,6 +30,7 @@ api:
   - module: src/library/operations/simulated-pull-requests.ts
   - module: src/library/operations/check-result.ts
   - module: src/library/operations/evidence-package-upstream.ts
+  - module: src/library/operations/merge-protocol.ts
   - module: src/library/operations/delivery-git.ts
   - module: src/library/operations/operation-execution.ts
   - module: src/library/operations/confinement.ts

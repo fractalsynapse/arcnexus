@@ -2,6 +2,7 @@ import { publicationContent } from './repository-documents.js';
 import type { DeliveryRecord } from '../coordination-store/delivery-types.js';
 import { ProviderStore, type ProviderResource } from '../coordination-store/provider-store.js';
 import type { CheckResult } from './check-result.js';
+import { integrateAssembled, type MergeAdapter } from './merge-protocol.js';
 import type { ExternalEffect, ExternalObservation } from '../coordination-store/lifecycle-types.js';
 import type { DeliveryGit } from './delivery-git.js';
 
@@ -33,7 +34,6 @@ export class SimulatedPullRequests {
     if (effect.operation === 'pull-request.merge') return this.merge(effect, signal);
     return this.store.apply(effect, () => {
       if (effect.operation === 'pull-request.create') return this.create(effect);
-      if (effect.operation === 'pull-request.review') return this.review(effect);
       throw new Error('Unsupported simulated PR operation');
     });
   }
@@ -87,7 +87,7 @@ export class SimulatedPullRequests {
     if (prior.status !== 'absent') throw new Error('Simulated check requires reconciliation');
     const resource = this.current(effect);
     this.store.start(effect);
-    const result = await this.checks(String(resource.data.head), signal);
+    const result = await this.checks(String(resource.data.head), signal, true);
     signal.throwIfAborted();
     if (!['passed', 'failed'].includes(result.status) || !result.evidence.length)
       throw new Error('Simulated check lacks observed host evidence');
@@ -97,13 +97,39 @@ export class SimulatedPullRequests {
         checks: result.status,
         checkHead: resource.data.head,
         checkEvidence: result.evidence,
+        reviewerEvidence: result.evidence.slice(1),
         artifacts: result.artifacts,
       });
       return this.receipt(updated);
     });
   }
 
-  /** Rechecks the assembled tree independently before locking provider review and atomically moving the target. */
+  /** Journals provider state around each protocol step so an interrupted merge reconciles. */
+  private mergeAdapter(): MergeAdapter {
+    return {
+      gates: async (item) => {
+        this.ready(item);
+        return { base: this.git.targetHead() };
+      },
+      began: (item) => this.store.start(item),
+      assemble: (item, signal) => this.git.assemble(item, signal),
+      progressed: (item, assembled, verification) =>
+        this.store.checkpoint(item, () => {
+          const current = this.ready(item);
+          return this.store.update(this.id, current.revision, {
+            mergeInProgress: item.id,
+            mergeHead: assembled,
+            mergeChecks: verification,
+          });
+        }),
+      refused: (item, _assembled, verification) =>
+        this.blockMerge(item, this.current(item), verification),
+      integrate: async (item, assembled, cancellation) =>
+        this.finishMerge(item, await this.git.integrate(item, assembled, cancellation)),
+    };
+  }
+
+  /** Integrates under the shared merge protocol, journaling provider state around each step. */
   private async merge(
     effect: ExternalEffect,
     signal: AbortSignal,
@@ -111,24 +137,10 @@ export class SimulatedPullRequests {
     const prior = this.inspect(effect);
     if (prior.status === 'completed') return prior.result;
     if (prior.status !== 'absent') throw new Error('Simulated merge requires reconciliation');
-    const resource = this.ready(effect);
-    this.store.start(effect);
-    const assembled = await this.git.assemble(effect, signal);
-    const checked = await this.checks(assembled, signal, true);
-    signal.throwIfAborted();
-    if (!checked.evidence.length) throw new Error('Assembled merge has no verification evidence');
-    if (checked.status !== 'passed') return this.blockMerge(effect, resource, checked);
-    this.store.checkpoint(effect, () => {
-      this.ready(effect);
-      return this.store.update(this.id, resource.revision, {
-        mergeInProgress: effect.id,
-        mergeHead: assembled,
-        mergeChecks: checked,
-      });
-    });
-    return this.finishMerge(effect, await this.git.integrate(effect, assembled, signal));
+    return integrateAssembled(this.mergeAdapter(), effect, this.checks, () => undefined, signal);
   }
 
+  /** Authorization for a simulated merge is the engine's, so the protocol asks for nothing here. */
   /** Records an observed rejection without claiming integration or losing passed engineering evidence. */
   private blockMerge(effect: ExternalEffect, resource: ProviderResource, checked: CheckResult) {
     return this.store.apply(effect, () => {
@@ -158,20 +170,6 @@ export class SimulatedPullRequests {
     });
   }
 
-  /** Records explicitly synthetic provider review; this never substitutes for independent engineering acceptance. */
-  private review(effect: ExternalEffect): Record<string, unknown> {
-    const resource = this.current(effect);
-    const decision = effect.input.decision;
-    if (!['approved', 'changes_requested'].includes(String(decision)))
-      throw new Error('Expected simulated provider review decision');
-    const updated = this.store.update(this.id, resource.revision, {
-      review: decision,
-      reviewHead: resource.data.head,
-      reviewSimulation: true,
-    });
-    return this.receipt(updated);
-  }
-
   /** Confirms the original check, provider evidence and actual pushed revision before reusing a pass. */
   currentCheck(effect: ExternalEffect): boolean {
     this.assert(effect);
@@ -196,10 +194,12 @@ export class SimulatedPullRequests {
     if (
       resource.data.checks !== 'passed' ||
       resource.data.checkHead !== resource.data.head ||
-      resource.data.review !== 'approved' ||
-      resource.data.reviewHead !== resource.data.head
+      !Array.isArray(resource.data.reviewerEvidence) ||
+      !resource.data.reviewerEvidence.length
     )
-      throw new Error('Simulated PR requires current passing checks and provider review');
+      throw new Error(
+        'Simulated PR requires current passing checks with independent reviewer coverage',
+      );
     return resource;
   }
 
@@ -231,13 +231,11 @@ export class SimulatedPullRequests {
   /** Validates complete host intent and prevents cross-environment or target substitution. */
   private assert(effect: ExternalEffect): void {
     const allowed =
-      effect.operation === 'pull-request.review'
-        ? ['deliveryId', 'decision']
-        : effect.operation === 'pull-request.merge'
-          ? ['deliveryId', 'targetHead']
-          : effect.operation === 'pull-request.create'
-            ? ['deliveryId', 'title', 'body', 'template']
-            : ['deliveryId'];
+      effect.operation === 'pull-request.merge'
+        ? ['deliveryId', 'targetHead']
+        : effect.operation === 'pull-request.create'
+          ? ['deliveryId', 'title', 'body', 'template']
+          : ['deliveryId'];
     if (
       effect.environmentId !== this.delivery.environment.id ||
       effect.runId !== this.delivery.runId ||

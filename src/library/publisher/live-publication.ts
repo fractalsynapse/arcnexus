@@ -10,6 +10,7 @@ import { execute } from '../operations/process.js';
 import type { CheckResult } from '../operations/check-result.js';
 import type { CapturedPublicationPolicy } from './publication-policy.js';
 import { PublicationEffects } from './publication-effects.js';
+import { integrateAssembled } from '../operations/merge-protocol.js';
 
 export interface LivePublicationContext {
   root: string;
@@ -115,20 +116,20 @@ export class LivePublication {
     return { status: 'unknown', evidence: effect.id, reason: 'Inspect interrupted verification' };
   }
 
-  /** Verifies the assembled target and reobserves provider requirements immediately before compare-and-swap transport. */
+  /** Integrates under the shared merge protocol, keeping GitHub as the source of truth. */
   private async merge(effect: ExternalEffect, signal: AbortSignal) {
-    this.assertApproval();
-    if ((await this.ready(signal)).base !== effect.input.targetHead)
-      throw new Error('GitHub target changed before assembly');
-    const assembled = await this.push().assemble(effect, signal);
-    const verification = await this.context.checks(assembled, signal, true);
-    if (verification.status !== 'passed' || !verification.evidence.length)
-      throw new Error('Assembled live delivery verification failed');
-    if ((await this.ready(signal)).base !== effect.input.targetHead)
-      throw new Error('GitHub target changed during verification');
-    this.assertApproval();
-    const result = await this.push().integrate(effect, assembled, signal);
-    return { ...result, verification };
+    return integrateAssembled(
+      {
+        gates: (_item, cancellation) => this.ready(cancellation),
+        assemble: (item, cancellation) => this.push().assemble(item, cancellation),
+        integrate: (item, assembled, cancellation) =>
+          this.push().integrate(item, assembled, cancellation),
+      },
+      effect,
+      this.context.checks,
+      () => this.assertApproval(),
+      signal,
+    );
   }
 
   /** Observes current-head CI and repository review rules, never treating local approval as provider review. */
