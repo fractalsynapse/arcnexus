@@ -108,17 +108,21 @@ export class RunPublication {
     run: ExecutionRun,
     environments: RunEnvironments,
     signal: AbortSignal,
-  ): Promise<void> {
+  ): Promise<boolean> {
     if (!run.data.pendingPublication) this.capture(run);
     const retained = this.execution.run(run.id);
     if (!(retained.data.pendingPublication || retained.data.deliveryId) || !retained.environment)
-      return;
+      return true;
     const store = new DeliveryStore(
       join(this.root, 'projects', this.context.key, 'deliveries.sqlite'),
     );
+    let closed = false;
     try {
       await this.publish(retained, environments, store, signal);
       this.integrated(retained, environments, store);
+      closed = routeComplete(
+        store.get(String(retained.data.pendingPublication ?? retained.data.deliveryId)),
+      );
     } catch (error) {
       if (signal.aborted) throw error;
       this.execution.updateRun(run.id, this.execution.run(run.id).status, {
@@ -126,11 +130,38 @@ export class RunPublication {
       });
     } finally {
       store.close();
+      this.pointer(run, retained, closed);
+    }
+    return closed;
+  }
+
+  /** Whether the delivery this run is waiting on has actually reached its recorded end. */
+  private routeClosed(store: DeliveryStore, run: ExecutionRun): boolean {
+    const id = String(run.data.pendingPublication ?? run.data.deliveryId ?? '');
+    if (!id) return true;
+    return routeComplete(store.get(id));
+  }
+
+  /**
+   * Retains or releases the retry pointer according to whether the provider actually integrated.
+   *
+   * A refused merge - CI still running, review rules not met - is a normal wait, not a finished
+   * delivery. Clearing the pointer there parked the work permanently: nothing else knew a live
+   * delivery was outstanding, so no later activation could reconcile it by observation.
+   */
+  private pointer(run: ExecutionRun, retained: ExecutionRun, closed: boolean): void {
+    if (closed) {
       if (run.data.pendingPublication)
         this.execution.updateRun(run.id, this.execution.run(run.id).status, {
           pendingPublication: null,
         });
+      return;
     }
+    const id = String(retained.data.pendingPublication ?? retained.data.deliveryId ?? '');
+    if (!id) return;
+    this.execution.updateRun(run.id, this.execution.run(run.id).status, {
+      pendingPublication: id,
+    });
   }
 
   /** Makes the verified staging merge the next engineering baseline while retaining original delivery attribution. */
