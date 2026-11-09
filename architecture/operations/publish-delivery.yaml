@@ -5,6 +5,7 @@ kind: upstream
 action: delivery.publish
 repository: arcnexus
 targetBranch: staging
+automaticMerge: true
 cwd: .
 category: collaboration
 activities: []
