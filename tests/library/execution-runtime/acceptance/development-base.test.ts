@@ -7,10 +7,10 @@ import { developmentBase } from '../../../../dist/library/execution-runtime/deve
 import { git } from '../../../../dist/library/operations/process.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
-import { PromotionFixture } from '../support/promotion-fixture.js';
+import { PublicationFixture } from '../support/publication-fixture.js';
 
 test('steward admission uses isolated staging and rejects a stale authority before dispatch', async (t) => {
-  const f = new PromotionFixture(t);
+  const f = new PublicationFixture(t);
   const source = f.context.source;
   const origin = join(f.general.fixture.root, 'development.git');
   git(source, 'clone', '--bare', '--no-local', '--', source, origin);
@@ -38,9 +38,9 @@ test('steward admission uses isolated staging and rejects a stale authority befo
 });
 
 test('live admission pins upstream staging while the caller stays on their development branch', async (t) => {
-  const f = new PromotionFixture(t);
+  const f = new PublicationFixture(t);
   const { repo, root } = f.general.fixture;
-  const upstream = 'example/promotion-fixture';
+  const upstream = 'example/publication-fixture';
   writeFileSync(join(repo, 'source.txt'), 'Unpublished caller change');
   f.general.fixture.commit();
   const checkout = git(repo, 'rev-parse', 'HEAD').trim();
@@ -70,7 +70,7 @@ test('live admission pins upstream staging while the caller stays on their devel
 
 /** Pins a controlled provider's actual staging head while the caller has only a development branch. */
 async function simulatedWorkday(t: import('node:test').TestContext) {
-  const f = new PromotionFixture(t);
+  const f = new PublicationFixture(t);
   const { repo, root } = f.general.fixture;
   f.general.fixture.git('switch', '-c', 'unpublished');
   writeFileSync(join(repo, 'source.txt'), 'Caller-only change');
@@ -84,7 +84,7 @@ async function simulatedWorkday(t: import('node:test').TestContext) {
     repo,
     f.context.packageId,
     root,
-    'example/promotion-fixture',
+    'example/publication-fixture',
     'staging',
     new AbortController().signal,
   );

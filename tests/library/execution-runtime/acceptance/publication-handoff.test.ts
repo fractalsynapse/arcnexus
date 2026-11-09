@@ -4,7 +4,7 @@ import { RunPublication } from '../../../../dist/library/execution-runtime/run-p
 import { Publisher } from '../../../../dist/library/publisher/publisher.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
-import { PromotionFixture } from '../support/promotion-fixture.js';
+import { PublicationFixture } from '../support/publication-fixture.js';
 
 /** Covers automatic publication after handing verified candidate state between actual run identities. */
 class PublicationHandoffScenarios {
@@ -70,7 +70,7 @@ class PublicationHandoffScenarios {
 
   /** Reuses recorded review inputs while candidate snapshots, run storage and publisher services stay real. */
   private fixture(t: TestContext) {
-    const f = new PromotionFixture(t);
+    const f = new PublicationFixture(t);
     const workday = f.host.store.createRun(
       'workday',
       f.context.owners,

@@ -1,4 +1,3 @@
-import { PromotionRecovery } from '../publisher/publisher.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { validateCheckpoint } from '../assignment/steward.js';
@@ -25,15 +24,12 @@ export class RunContinuation {
         throw new Error(
           'Policy checkpoint or operation completion is uncertain; inspect retained evidence',
         );
-      if (run.data.promotionStage === 'verifying')
-        new PromotionRecovery(this.root).assertSettledFailure(run);
       this.restoreCheckpoints(run);
     } catch (error) {
       this.store.updateRun(run.id, 'needs_attention', { error: String(error) });
       throw error;
     }
     this.store.updateRun(run.id, 'running', {
-      ...(run.data.promotionStage === 'verifying' ? { promotionStage: 'assembled' } : {}),
       seen: {},
       pauseReason: null,
       candidateRevision: String(
