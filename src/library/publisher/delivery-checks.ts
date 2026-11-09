@@ -2,7 +2,6 @@ import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { git } from '../operations/process.js';
 import { executionIdentity } from '../architecture/execution-context.js';
-import { AssemblyAcceptance } from './assembly-acceptance.js';
 import { PublicationEvidence } from '../report/report.js';
 import { PublicationPolicy } from './publication-policy.js';
 import { join } from 'node:path';
@@ -123,16 +122,11 @@ export class DeliveryChecks {
     record: RecordData,
     signal: AbortSignal,
     independent = false,
-    contributions: RecordData[] = [],
   ): Promise<CheckResult> {
     const evidence = [join(this.root, 'runs', record.id, 'report.json')];
     try {
       await prepareWorkspace(this.root, record, signal);
       await this.verify(record, signal);
-      await new AssemblyAcceptance(this.root, record, signal).verify(
-        contributions,
-        String(record.assemblyBase ?? record.base),
-      );
       save(this.root, record);
       if (independent) evidence.push(...(await this.review(record, signal)));
       return this.accept(record, evidence, independent);

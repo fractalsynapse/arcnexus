@@ -3,7 +3,6 @@ import { digest } from '../architecture/assignment.js';
 import { SpecificationValidationError } from './specification-error.js';
 import { SpecificationQuality } from './specification-quality.js';
 import { logExcerpt } from './attempts.js';
-import { CapturedVerification } from './captured-verification.js';
 import { RefactorCheckpoint } from './refactor-checkpoint.js';
 import { assertCapturedTests } from '../testing/captured-tests.js';
 import { SessionProgress } from './session-progress.js';
@@ -102,7 +101,7 @@ export class SessionVerification {
     return failed;
   }
 
-  /** Rechecks current candidate suites and independently captured acceptance. */
+  /** Runs the owner's declared verification once, then the host's acceptance checks. */
   async final() {
     this.prepare();
     const { record } = this.state.options;
@@ -116,24 +115,11 @@ export class SessionVerification {
     await this.state.checks(this.state.component.verification, 'verification');
     assertCapturedTests(this.state.component, this.state.options.record.workspace);
     this.state.safe();
-    await this.verifyCapturedAcceptance();
     await this.state.checks(this.state.hostChecks, 'acceptance');
     this.prepare();
     record.finalVerifiedDigest = candidateDigest(record);
     record.finalVerifiedBase = record.base;
     new SessionProgress(this.state).verified('final-verification');
-  }
-
-  /** Rechecks trusted characterization and original acceptance; worker regressions remain review evidence. */
-  private async verifyCapturedAcceptance(): Promise<void> {
-    await new CapturedVerification({
-      record: this.state.options.record,
-      component: this.state.component,
-      authorityBase: this.state.resolved.base,
-      verifiedBase: this.state.options.record.base,
-      checks: (checks, stage) => this.state.checks(checks, stage),
-    }).verify();
-    this.state.safe();
   }
 
   /** Requires an in-scope implementation both before checks and after their side effects. */

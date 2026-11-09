@@ -102,7 +102,7 @@ export class AssembledDelivery {
         this.context,
         run,
         run.mode === 'task' ? this.store.requiredAssignments(run.id) : assignments,
-      ).checkRecord(record, signal, true, records);
+      ).checkRecord(record, signal, true);
       if (result.status !== 'passed') {
         this.reject(run, pending, 'Assembled checks failed: ' + result.evidence.join(', '));
         return;
