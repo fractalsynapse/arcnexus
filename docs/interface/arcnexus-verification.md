@@ -86,14 +86,14 @@ strength of an agent's own claim.
 
 ## Migration
 
-| Current | Target | Effect |
-| --- | --- | --- |
-| `publisher/delivery-checks` (236) run per owner, again at assembly, again as `delivery.verify`, plus `assembly-acceptance` | `checklist` once on the assembled candidate | removes the re-verification chain and the `acceptedChecks` cache that existed to mitigate it |
-| `publisher/promotion-review` (131) and `delivery-verification` (147) | deleted with the promotion subsystem | one publication route, one meaning of accepted |
-| `assignment/captured-verification` (103) and `session-verification` (148) | folded into `checklist` and `classification` | no per-stage re-check of the same bytes |
-| `task-intake/verification-assessment` and `verification-evidence` | `review` — one call covering engineering and goal | direction stops judging its own plan; verification stops running twice |
-| `report/execution-evidence` (356), `evidence-pages` (200), `referenced-evidence` (138), `invocation-diagnostics` (204) | `evidenceSet` with artefacts by reference and full measurement | the paging subsystem is **replaced**, not capped: references make the repeat-read loop unnecessary, and measures make its cost visible |
-| `report/delivery-evidence`, `publication-evidence`, `recovery-evidence` | coordination entities and derived reports | removes mirrors of facts the store already holds |
+| Current | Target | Effect | Status |
+| --- | --- | --- | --- |
+| `publisher/delivery-checks` (236) run per owner, again at assembly, again as `delivery.verify`, plus `assembly-acceptance` | `checklist` once on the assembled candidate | removes the re-verification chain and the `acceptedChecks` cache that existed to mitigate it | partly done (#362, #375) — per-owner replay and the assembly `AssemblyAcceptance` chain are deleted, and verdict reuse replaced the `acceptedChecks` cache; a provider-declared `delivery.verify` step remains in the live route |
+| `publisher/promotion-review` (131) and `delivery-verification` (147) | deleted with the promotion subsystem | one publication route, one meaning of accepted | partly done (#367, #374) — `promotion-review` is deleted and publication now attests to the one recorded verdict; `delivery-verification` remains as the capture attestation |
+| `assignment/captured-verification` (103) and `session-verification` (148) | folded into `checklist` and `classification` | no per-stage re-check of the same bytes | partly done (#375) — `captured-verification` is deleted with no caller left; `session-verification` remains as the single owner-side verification and has not yet been folded into `checklist`/`classification` |
+| `task-intake/verification-assessment` and `verification-evidence` | `review` — one call covering engineering and goal | direction stops judging its own plan; verification stops running twice | not started |
+| `report/execution-evidence` (356), `evidence-pages` (200), `referenced-evidence` (138), `invocation-diagnostics` (204) | `evidenceSet` with artefacts by reference and full measurement | the paging subsystem is **replaced**, not capped: references make the repeat-read loop unnecessary, and measures make its cost visible | not started — this is step 3c |
+| `report/delivery-evidence`, `publication-evidence`, `recovery-evidence` | coordination entities and derived reports | removes mirrors of facts the store already holds | not started |
 
 Migration lands in cleanup batch 3 (one gate) and is verified by VI-14 together with EX-17, CO-16
 and DI-15: no caller left for the duplicate checking, and no caller left for what it rescued.
@@ -124,10 +124,17 @@ they cost time and lost work.
 ```yaml
 id: arcnexus/verification
 stage: locked
-revision: 2
+revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
 changes:
+  - revision 3: migration table gains a Status column recording cleanup batch 3 and 4 against the
+    files that exist — `assembly-acceptance` and `captured-verification` deleted with no caller
+    left (#375, VI-14 checked), the `acceptedChecks` cache replaced by content-addressed verdict
+    reuse (#362), promotion-review deleted (#367), and publication now attesting to the one
+    recorded verdict rather than reconstructing a second goal proof (#374). Rows still open remain
+    visible, including step 3c's evidence-by-reference replacement. Invariants, scenarios and
+    targets unchanged.
   - revision 2: locked with the architect's answers. The proposed reviewer input cap is removed
     entirely — no size, count, attempt or duration limits in the first system; bundles are assembled
     in full with artefacts by reference and every bundle measured, and an external harness refusal

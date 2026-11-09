@@ -169,8 +169,8 @@ contracts:
     file: docs/interface/arcnexus-verification.md
     owner: verification
     stage: locked
-    revision: 2
-    digest: 258f78c7613e819f02e35e0d28fbb5ef04bfad6d4d0c928f75cf8b88e1c8cda9
+    revision: 3
+    digest: 598ea485cf7d37987f155d2dedac2f843f27ea55747b6ee8ae0f55c83ec80b9c
     dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination, arcnexus/execution, arcnexus/direction]
     scenarios: 17
     acceptedBy: Adrian Webb (architect)
@@ -189,8 +189,8 @@ contracts:
     file: docs/interface/arcnexus-delivery.md
     owner: delivery
     stage: locked
-    revision: 3
-    digest: c7c71ffa7040e7bc2b86e25a6a27febaffd99a3505233ed28cd1370c24b7e69d
+    revision: 4
+    digest: af42202ff89e6bb593b8235de488d765689966b40ed32b2c6d8371e96eae10bc
     dependsOn: [arcnexus/project, arcnexus/coordination, arcnexus/verification, arcnexus/direction]
     scenarios: 17
     acceptedBy: Adrian Webb (architect)
