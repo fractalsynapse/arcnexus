@@ -68,8 +68,6 @@ test('run environment survives lifecycle updates and cannot be replaced by candi
   assert.deepEqual(report.run.environment, retained.environment);
 });
 
-
-
 registerSuite({
   component: 'coordination-store',
   level: 'integration',
