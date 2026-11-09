@@ -4,24 +4,24 @@ import { linkSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
-import { EvidenceSet, ReferencedEvidence } from '../../../../dist/library/report/report.js';
+import { EvidenceSet } from '../../../../dist/library/report/report.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises exact evidence retrieval and origin validation without granting filesystem access. */
-class ReferencedEvidenceScenarios {
+class InvestigatedEvidenceScenarios {
   /** Reusing an already observed record cannot attach its proof to another assignment in the same capture. */
   rebound(t: TestContext): void {
     const f = this.fixture(t);
     const foreign = structuredClone(f.evidence.assignments[0]!);
     foreign.id = 'foreign';
     f.evidence.assignments.push(foreign);
-    assert.throws(() => f.reader.index(f.evidence), /different assignment/);
+    assert.throws(() => f.pages.investigate(f.evidence, f.host), /different assignment/);
   }
 
   /** A later capture revalidates identity instead of retaining an earlier report's authorization. */
   recapture(t: TestContext): void {
     const f = this.fixture(t);
-    f.reader.index(f.evidence);
+    f.pages.investigate(f.evidence, f.host);
     writeFileSync(
       join(f.directory, 'report.json'),
       JSON.stringify({
@@ -30,7 +30,7 @@ class ReferencedEvidenceScenarios {
         assignmentId: 'assignment',
       }),
     );
-    assert.throws(() => f.reader.index(f.evidence), /different run/);
+    assert.throws(() => f.pages.investigate(f.evidence, f.host), /different run/);
   }
 
   /** Retains repeated observations as one exact artifact and leaves verification snapshots unexpanded. */
@@ -41,7 +41,7 @@ class ReferencedEvidenceScenarios {
     const historical = structuredClone(events[0]!);
     historical.payload.item.tool = 'verification.evidence';
     events.push(historical);
-    f.reader.index(f.evidence);
+    f.pages.investigate(f.evidence, f.host);
     const result = events[0]!.payload.item.result;
     const page = (await f.pages.call('verification.evidence', {
       artifact: result.verificationArtifact,
@@ -57,7 +57,7 @@ class ReferencedEvidenceScenarios {
   missing(t: TestContext): void {
     const f = this.fixture(t);
     rmSync(f.path);
-    f.reader.index(f.evidence);
+    f.pages.investigate(f.evidence, f.host);
     const result =
       f.evidence.assignments[0]!.record.observations.timeline.events[0]!.payload.item.result;
     assert.equal(result.evidenceUnavailable, true);
@@ -85,7 +85,10 @@ class ReferencedEvidenceScenarios {
       if (kind === 'symlink') symlinkSync(target, f.path);
       else linkSync(target, f.path);
     }
-    assert.throws(() => f.reader.index(f.evidence), /different run|content identity|Unsafe/);
+    assert.throws(
+      () => f.pages.investigate(f.evidence, f.host),
+      /different run|content identity|Unsafe/,
+    );
     assert.equal(f.pages.metadata().length, 0);
   }
 
@@ -116,7 +119,7 @@ class ReferencedEvidenceScenarios {
       hash,
       path,
       pages,
-      reader: new ReferencedEvidence(root, 'current-run', pages),
+      host: { root, runId: 'current-run' } as const,
       evidence: this.evidence(id, hash),
     };
   }
@@ -152,7 +155,7 @@ class ReferencedEvidenceScenarios {
   }
 }
 
-const scenarios = new ReferencedEvidenceScenarios();
+const scenarios = new InvestigatedEvidenceScenarios();
 
 test('observed record identity cannot be rebound within one evidence capture', (t) =>
   scenarios.rebound(t));

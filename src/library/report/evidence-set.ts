@@ -1,6 +1,28 @@
 import { createHash } from 'node:crypto';
-import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
+
+/** Host-projected worker observations; no caller-supplied path is ever accepted. */
+export interface InvestigatedEvidence {
+  assignments?: Array<{
+    id: string;
+    record?: { recordId?: string; observations?: { timeline?: { events?: any[] } } };
+  }>;
+}
+
+/** Where the private store keeps retained records, and which run is doing the looking. */
+export interface EvidenceHost {
+  root: string;
+  runId: string;
+}
+
 import type { OperationBridge } from '../operations/operations.js';
 import type { BridgeTool } from '../steward/bridge.js';
 
@@ -35,6 +57,8 @@ export class EvidenceSet {
   private readonly artifacts = new Map<string, EvidenceArtifact>();
 
   private reads = 0;
+
+  private readonly investigations = new Map<string, string>();
 
   /** Binds the advertised capability name before any artifact is retained. */
   constructor(
@@ -77,6 +101,37 @@ export class EvidenceSet {
     const path = join(this.store, createHash('sha256').update(content).digest('hex'));
     this.persist(path, content);
     this.reference(id, path, encoding, sourcePath);
+  }
+
+  /**
+   * Makes another activation's retained investigation evidence inspectable from this capability.
+   *
+   * A worker's cloned observations name artifacts that live under a *different* record directory.
+   * Rather than copying their bytes, the set verifies each origin — the record belongs to this run
+   * and to the assignment that observed it, and rebinding one record under two assignments is
+   * refused — then adopts the file by reference. Missing content becomes an explicit gap; bytes
+   * that differ from their advertised identity, or that reach outside the store through a link,
+   * fail the capture.
+   */
+  investigate(evidence: InvestigatedEvidence, host: EvidenceHost): void {
+    this.investigations.clear();
+    for (const assignment of evidence.assignments ?? []) {
+      for (const event of assignment.record?.observations?.timeline?.events ?? []) {
+        const item = event.payload?.item;
+        if (
+          event.type !== 'codex.event' ||
+          event.payload?.type !== 'item.completed' ||
+          item?.type !== 'mcp_tool_call' ||
+          item.server !== 'arcnexus' ||
+          item.tool !== 'assignment.evidence' ||
+          item.result?.contentRetainedInPinnedArtifact !== true
+        )
+          continue;
+        const recordId = assignment.record?.recordId;
+        if (event.runId !== recordId) throw new Error('Foreign investigation observation');
+        this.investigateRecord(host, recordId, assignment.id, item.result);
+      }
+    }
   }
 
   /** Adopts an artifact the host already retained, measuring it without rewriting a byte. */
@@ -270,6 +325,108 @@ export class EvidenceSet {
       lines: content.length ? content.split('\n').length : 0,
       ...(sourcePath ? { sourcePath } : {}),
     });
+  }
+
+  /** Verifies one originating record once per capture, then exposes its manifest's artifacts. */
+  private investigateRecord(
+    host: EvidenceHost,
+    recordId: string | undefined,
+    assignmentId: string,
+    result: any,
+  ): void {
+    const directory = this.investigationDirectory(host, recordId, assignmentId);
+    const content = this.investigateArtifact(directory, recordId!, result);
+    if (content !== undefined && result.artifact === 'manifest')
+      result.verificationArtifacts = this.investigationManifest(
+        directory,
+        recordId!,
+        assignmentId,
+        host,
+        content,
+      );
+  }
+
+  /** Rejects a record from another run, or the same record rebound to another assignment. */
+  private investigationDirectory(
+    host: EvidenceHost,
+    recordId: string | undefined,
+    assignmentId: string,
+  ): string {
+    if (!recordId || !/^[a-f0-9-]{36}$/.test(recordId))
+      throw new Error('Invalid investigation record identity');
+    const directory = join(host.root, 'runs', recordId);
+    const known = this.investigations.get(recordId);
+    if (known !== undefined) {
+      if (known !== assignmentId)
+        throw new Error('Investigation belongs to a different assignment');
+      return directory;
+    }
+    const record = JSON.parse(this.served(join(directory, 'report.json')));
+    if (
+      record.id !== recordId ||
+      record.executionRunId !== host.runId ||
+      record.assignmentId !== assignmentId
+    )
+      throw new Error('Investigation record belongs to a different run or assignment');
+    this.investigations.set(recordId, assignmentId);
+    return directory;
+  }
+
+  /** Exposes only the manifest's immediate artifacts, so historical verification is not expanded recursively. */
+  private investigationManifest(
+    directory: string,
+    recordId: string,
+    assignmentId: string,
+    host: EvidenceHost,
+    content: string,
+  ) {
+    const manifest = JSON.parse(content);
+    if (
+      manifest.runId !== host.runId ||
+      manifest.assignmentId !== assignmentId ||
+      !Array.isArray(manifest.artifacts)
+    )
+      throw new Error('Investigation manifest belongs to a different run or assignment');
+    return manifest.artifacts.map((artifact: any) => {
+      if (typeof artifact.id !== 'string')
+        throw new Error('Invalid investigation artifact identity');
+      const reference = { artifact: artifact.id, sha256: artifact.sha256 };
+      this.investigateArtifact(directory, recordId, reference);
+      return reference;
+    });
+  }
+
+  /** Adopts one retained artifact by reference, or records an explicit gap when its bytes are gone. */
+  private investigateArtifact(
+    directory: string,
+    recordId: string,
+    result: any,
+  ): string | undefined {
+    if (typeof result.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(result.sha256))
+      throw new Error('Invalid investigation artifact hash');
+    const path = join(directory, 'assignment-evidence', result.sha256);
+    const id = `observed:${recordId}:${result.sha256}`;
+    try {
+      const content = this.served(path);
+      if (createHash('sha256').update(content).digest('hex') !== result.sha256)
+        throw new Error('Investigation artifact differs from its content identity');
+      this.adopt(id, path, 'utf8');
+      result.verificationArtifact = id;
+      return content;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      result.evidenceUnavailable = true;
+      result.reason = 'Observed investigation artifact is no longer retained';
+      return;
+    }
+  }
+
+  /** Reads bytes only through a regular, unlinked file, so a reference can never escape the store. */
+  private served(path: string): string {
+    const stat = lstatSync(path);
+    if (!stat.isFile() || stat.nlink !== 1 || realpathSync(path) !== resolve(path))
+      throw new Error('Unsafe investigation evidence path');
+    return readFileSync(path, 'utf8');
   }
 
   /** Reuses identical content-addressed bytes and never overwrites a prior capture. */

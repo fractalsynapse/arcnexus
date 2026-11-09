@@ -7,7 +7,6 @@ import type { RecordData } from '../workspace/state.js';
 import { DeliveryEvidence } from './delivery-evidence.js';
 import { ExecutionObservations } from './execution-observations.js';
 import type { EvidenceSet } from './evidence-set.js';
-import { ReferencedEvidence } from './referenced-evidence.js';
 
 interface HostCommandEvidence {
   index: number;
@@ -43,7 +42,7 @@ export class ExecutionEvidence {
     if (!evidence) return;
     if (typeof runId !== 'string' || evidence.run?.id !== runId)
       throw new Error('Host execution evidence belongs to a different run');
-    new ReferencedEvidence(root, runId, pages).index(evidence);
+    pages.investigate(evidence, { root, runId });
     this.indexCommandOutputs(pages, evidence);
     const assignments = evidence.assignments?.map((assignment) =>
       this.assignmentArtifacts(pages, assignment),
