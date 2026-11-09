@@ -2,6 +2,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { InputError } from '../architecture/config.js';
 import { DeliveryStore } from '../coordination-store/delivery-store.js';
+import { deliveryStatus } from '../coordination-store/delivery-types.js';
 import { ResourceQuery, type ResourceQueryInput } from '../report/resource-query.js';
 import { statePath } from '../workspace/state.js';
 
@@ -74,6 +75,7 @@ export class DeliveryResources {
         if (delivery.projectId !== key) throw new Error('Delivery project identity mismatch');
         return {
           ...delivery,
+          ...deliveryStatus(delivery),
           mode: delivery.environment.mode,
           revision: this.query.revision(delivery),
         };

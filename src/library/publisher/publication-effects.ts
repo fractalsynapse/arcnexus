@@ -111,7 +111,9 @@ export class PublicationEffects {
   /** Makes receipt-to-milestone recovery idempotent after host loss. */
   complete(milestone: DeliveryMilestone, effectId: string): void {
     const current = this.current();
-    this.deliveries.complete(current.id, current.version, milestone, effectId);
+    const head =
+      milestone === 'merge' ? String(this.effects.effect(effectId)?.result?.head ?? '') : undefined;
+    this.deliveries.complete(current.id, current.version, milestone, effectId, head);
   }
 
   /** Reads current authorization rather than retaining a stale local approval snapshot. */

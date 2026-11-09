@@ -131,14 +131,10 @@ export class DevelopmentDeliveries {
     let last: DeliveryRecord | undefined;
     for (const entry of parent.developments!) {
       const child = this.retain(parent, entry, store);
-      if (child.delivery === 'retained') this.markBranch(entry);
+      if (!child.receipts.commit) this.markBranch(entry);
       await publish(child);
       last = store.get(child.id);
-      if (
-        last.integration !== 'merged' ||
-        (parent.environment.mode === 'simulation' && last.publication !== 'released')
-      )
-        throw new Error('Development branch integration is incomplete');
+      if (!last.route) throw new Error('Development branch integration is incomplete');
     }
     return last!;
   }

@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
 import type { ExecutionRun } from '../coordination-store/execution-types.js';
-import type { DeliveryRecord } from '../coordination-store/delivery-types.js';
+import { routeComplete, type DeliveryRecord } from '../coordination-store/delivery-types.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import { DeliveryStore } from '../coordination-store/delivery-store.js';
 import {
@@ -94,7 +94,7 @@ export class RunPublication {
       throw new Error('Delivery authority differs from retained run');
     if (run.data.pendingPublication && run.data.pendingPublication !== id)
       throw new Error('This run already has a queued publication');
-    if (delivery.publication !== 'released' && !run.data.pendingPublication)
+    if (!routeComplete(delivery) && !run.data.pendingPublication)
       this.execution.updateRun(run.id, run.status, {
         pendingPublication: id,
         dependencyCleanup: null,
@@ -137,8 +137,7 @@ export class RunPublication {
   private integrated(run: ExecutionRun, environments: RunEnvironments, store: DeliveryStore): void {
     const delivery = store.get(String(run.data.pendingPublication ?? run.data.deliveryId));
     const current = this.execution.run(run.id);
-    if (delivery.integration !== 'merged' || current.data.candidateRevision !== delivery.candidate)
-      return;
+    if (!delivery.route || current.data.candidateRevision !== delivery.candidate) return;
     const effect = environments.effects.effect(delivery.receipts.merge!);
     const head = effect.result?.head;
     if (
@@ -164,8 +163,7 @@ export class RunPublication {
     signal: AbortSignal,
   ) {
     const delivery = store.get(String(run.data.pendingPublication ?? run.data.deliveryId));
-    if (delivery.publication === 'released' || (delivery.blocker && !run.data.pendingPublication))
-      return;
+    if (routeComplete(delivery) || (delivery.blocker && !run.data.pendingPublication)) return;
     if (delivery.developments?.length) {
       new Publisher(this.root, store).resolveRetained(
         delivery,
@@ -188,11 +186,7 @@ export class RunPublication {
     signal: AbortSignal,
     delivery: DeliveryRecord,
   ): Promise<void> {
-    if (
-      delivery.publication === 'released' ||
-      (delivery.environment.mode === 'live' && delivery.integration === 'merged')
-    )
-      return;
+    if (routeComplete(delivery)) return;
     if (delivery.environment.mode === 'live') {
       await this.publishLive(run, environments, store, signal, delivery);
       return;

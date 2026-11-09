@@ -3,14 +3,11 @@ import { join } from 'node:path';
 import { ExecutionStore } from '../coordination-store/execution-store.js';
 import { DeliveryStore } from '../coordination-store/delivery-store.js';
 import { terminalRunStatuses, type ExecutionRun } from '../coordination-store/execution-types.js';
-import type { DeliveryRecord } from '../coordination-store/delivery-types.js';
+import { routeComplete, type DeliveryRecord } from '../coordination-store/delivery-types.js';
 
 /** Pending integration or simulated release still requires the original engineering evidence. */
 export function deliveryRetainsEvidence(delivery: DeliveryRecord): boolean {
-  return (
-    delivery.integration !== 'merged' ||
-    (delivery.environment.mode === 'simulation' && delivery.publication !== 'released')
-  );
+  return !routeComplete(delivery);
 }
 
 export interface RetainedEvidence {

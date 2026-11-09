@@ -27,7 +27,7 @@ export class DeliveryStore {
         createdAt: new Date().toISOString(),
         engineering: 'verified',
         delivery: 'retained',
-        integration: 'not_requested',
+        route: undefined,
         publication: 'not_requested',
         receipts: {},
       });
@@ -61,13 +61,14 @@ export class DeliveryStore {
     version: number,
     milestone: DeliveryMilestone,
     effectId: string,
+    mergedHead?: string,
   ): DeliveryRecord {
     if (!effectId.trim()) throw new Error('Delivery transition requires an effect receipt');
     return this.change(id, version, 'delivery.' + milestone, (delivery) => {
       const prior = delivery.receipts[milestone];
       if (prior && prior !== effectId) throw new Error('Delivery milestone receipt cannot change');
       if (prior) return {};
-      const state = this.transition(delivery, milestone);
+      const state = this.transition(delivery, milestone, mergedHead);
       return {
         ...state,
         receipts: { ...delivery.receipts, [milestone]: effectId },
@@ -111,29 +112,43 @@ export class DeliveryStore {
     });
   }
 
-  /** Enforces milestone ordering and keeps real releases outside this increment. */
+  /**
+   * Enforces milestone order and records the provider's merge identity once.
+   *
+   * Merge writes the identity; release marks the same route rather than a second status column, so
+   * every view derives from one recorded fact. Ordering and authorization keep the wording the
+   * delivery contract and its acceptance tests were written against.
+   */
   private transition(
     delivery: DeliveryRecord,
     milestone: DeliveryMilestone,
+    mergedHead?: string,
   ): Partial<DeliveryRecord> {
-    if (milestone === 'commit' && delivery.delivery === 'retained')
-      return { delivery: 'committed' };
-    if (milestone === 'push' && delivery.delivery === 'committed') return { delivery: 'pushed' };
-    if (
-      milestone === 'pull_request' &&
-      delivery.delivery === 'pushed' &&
-      delivery.integration === 'not_requested'
-    )
-      return { integration: 'pending' };
-    if (milestone === 'merge' && delivery.integration === 'pending')
-      return { integration: 'merged' };
-    if (
-      milestone === 'release' &&
-      delivery.integration === 'merged' &&
-      delivery.environment.mode === 'simulation'
-    )
-      return { publication: 'released' };
-    throw new Error('Delivery milestone is out of order or not authorized for this mode');
+    const required: Partial<Record<DeliveryMilestone, DeliveryMilestone>> = {
+      push: 'commit',
+      pull_request: 'push',
+      merge: 'pull_request',
+    };
+    const prior = required[milestone];
+    if (prior && !delivery.receipts[prior])
+      throw new Error('Delivery milestone is out of order or not authorized for this mode');
+    if (milestone === 'merge')
+      return {
+        route: {
+          head: mergedHead ?? '',
+          receipt: String(delivery.receipts.merge ?? ''),
+          integratedAt: new Date().toISOString(),
+          released: false,
+        },
+      };
+    if (milestone === 'release') {
+      if (!delivery.route)
+        throw new Error('Delivery milestone is out of order or not authorized for this mode');
+      if (delivery.environment.mode !== 'simulation')
+        throw new Error('Delivery milestone is out of order or not authorized for this mode');
+      return { route: { ...delivery.route, released: true } };
+    }
+    return {};
   }
 
   /** Rejects incomplete identities and absent verification without inventing supporting evidence. */

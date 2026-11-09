@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
+import { deliveryStatus } from '../../../../dist/library/coordination-store/delivery-types.js';
 import { DeliveryStore } from '../../../../dist/library/coordination-store/delivery-store.js';
 import type {
   DeliveryCapture,
@@ -59,9 +60,9 @@ test('delivery capture and approval cannot replace immutable engineering evidenc
     /candidate mismatch/,
   );
   const approved = f.store.approve(initial.id, initial.version, initial.candidate);
-  assert.equal(approved.delivery, 'retained');
-  assert.equal(approved.integration, 'not_requested');
-  assert.equal(approved.publication, 'not_requested');
+  assert.equal(deliveryStatus(approved).delivery, 'retained');
+  assert.equal(deliveryStatus(approved).integration, 'not_requested');
+  assert.equal(deliveryStatus(approved).publication, 'not_requested');
   assert.throws(() => f.store.approve(initial.id, initial.version, initial.candidate), /Stale/);
   assert.deepEqual(f.store.approve(approved.id, approved.version, approved.candidate), approved);
 });
@@ -74,12 +75,12 @@ test('publication milestones preserve ordering, idempotency and distinct outcome
   f.advance('push');
   const pending = f.advance('pull_request');
   assert.equal(pending.engineering, 'verified');
-  assert.equal(pending.integration, 'pending');
-  assert.equal(pending.publication, 'not_requested');
+  assert.equal(deliveryStatus(pending).integration, 'pending');
+  assert.equal(deliveryStatus(pending).publication, 'not_requested');
   assert.deepEqual(f.advance('pull_request'), pending);
   f.advance('merge');
   const published = f.advance('release');
-  assert.equal(published.publication, 'released');
+  assert.equal(deliveryStatus(published).publication, 'released');
   assert.throws(
     () => f.store.complete(published.id, published.version, 'release', 'other-effect'),
     /cannot change/,
@@ -93,8 +94,8 @@ test('real releases remain prohibited and failures do not erase completed milest
   assert.throws(() => f.advance('release'), /not authorized/);
   const merged = f.store.get('delivery');
   const blocked = f.store.block(merged.id, merged.version, 'Human-controlled publication required');
-  assert.equal(blocked.integration, 'merged');
-  assert.equal(blocked.publication, 'not_requested');
+  assert.equal(deliveryStatus(blocked).integration, 'merged');
+  assert.equal(deliveryStatus(blocked).publication, 'not_requested');
 });
 
 test('missing evidence and simulated promotion fail before capture', (t) => {
