@@ -124,14 +124,7 @@ export class DeliveryStore {
     milestone: DeliveryMilestone,
     mergedHead?: string,
   ): Partial<DeliveryRecord> {
-    const required: Partial<Record<DeliveryMilestone, DeliveryMilestone>> = {
-      push: 'commit',
-      pull_request: 'push',
-      merge: 'pull_request',
-    };
-    const prior = required[milestone];
-    if (prior && !delivery.receipts[prior])
-      throw new Error('Delivery milestone is out of order or not authorized for this mode');
+    this.order(delivery, milestone);
     if (milestone === 'merge')
       return {
         route: {
@@ -142,13 +135,25 @@ export class DeliveryStore {
         },
       };
     if (milestone === 'release') {
-      if (!delivery.route)
-        throw new Error('Delivery milestone is out of order or not authorized for this mode');
-      if (delivery.environment.mode !== 'simulation')
+      if (!delivery.route || delivery.environment.mode !== 'simulation')
         throw new Error('Delivery milestone is out of order or not authorized for this mode');
       return { route: { ...delivery.route, released: true } };
     }
     return {};
+  }
+
+  /** Rejects a milestone whose predecessor was never recorded, keeping the contract's wording. */
+  private order(delivery: DeliveryRecord, milestone: DeliveryMilestone): void {
+    const required: Partial<Record<DeliveryMilestone, DeliveryMilestone>> = {
+      push: 'commit',
+      pull_request: 'push',
+      merge: 'pull_request',
+    };
+    const prior = required[milestone];
+    if (prior && !delivery.receipts[prior])
+      throw new Error('Delivery milestone is out of order or not authorized for this mode');
+    if (milestone === 'release' && !delivery.receipts.merge)
+      throw new Error('Delivery milestone is out of order or not authorized for this mode');
   }
 
   /** Rejects incomplete identities and absent verification without inventing supporting evidence. */
