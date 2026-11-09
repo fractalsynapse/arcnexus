@@ -66,7 +66,7 @@ export class AssembledDelivery {
     return true;
   }
 
-  /** Reads the one assembled verdict as goal acceptance; a missing verdict runs the gate exactly once. */
+  /** Confirms the assembled verdict still stands for this candidate; runs the gate once if none does. */
   async assessGoal(
     run: ExecutionRun,
     assignments: ExecutionAssignment[],
@@ -82,12 +82,6 @@ export class AssembledDelivery {
         criteria: [],
         deficiencies: ['Assembled checks failed'],
         summary: result.evidence.join(', '),
-      });
-    const evidence = result.evidence.slice(1);
-    if (!signal.aborted)
-      this.store.updateRun(run.id, this.store.run(run.id).status, {
-        goalEvidence: evidence,
-        goalCandidate: run.data.candidateRevision,
       });
   }
 
@@ -244,7 +238,6 @@ export class AssembledDelivery {
         candidateRecord: record,
         verifiedEvidence: evidence,
         assemblyBase: pending.base,
-        ...(run.mode === 'task' ? { goalEvidence: evidence, goalCandidate: pending.head } : {}),
       },
       pending.contributions,
     );

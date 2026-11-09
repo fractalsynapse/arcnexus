@@ -58,7 +58,7 @@ class PublisherFixture {
       evidence: [this.review('verifier')],
       data: { recordId: this.record.id, deliveredRevision: candidate },
     };
-    this.run.data.goalEvidence = [this.review('director-assessment')];
+    this.verdictOn();
     mkdirSync(join(this.root, 'runs', this.record.id), { recursive: true });
     save(this.root, this.record);
   }
@@ -123,8 +123,22 @@ class PublisherFixture {
     };
   }
 
+  /** Records the one assembled verdict the candidate was accepted under, as the gate would. */
+  verdictOn(candidate: RecordData = this.record, independent = true): void {
+    (candidate as Record<string, unknown>).verdict = {
+      key: 'fixture-inputs',
+      digest: candidateDigest(candidate),
+      independent,
+      result: {
+        status: 'passed',
+        evidence: [join(this.root, 'runs', String(candidate.id), 'report.json')],
+        artifacts: [],
+      },
+    };
+  }
+
   /** Writes synthetic assessments only inside acceptance; no real-agent qualification is asserted. */
-  private review(role: string): string {
+  review(role: string): string {
     const id = randomUUID();
     const directory = join(this.root, 'runs', id);
     mkdirSync(directory, { recursive: true });
@@ -169,6 +183,17 @@ class PublisherFixture {
     };
   }
 
+  /** Removes the recorded verdict and retains the candidate, as a candidate that was never gated. */
+  dropVerdict(): void {
+    delete (this.record as Record<string, unknown>).verdict;
+    this.retain();
+  }
+
+  /** Retains the current candidate record so the host reads what the fixture just changed. */
+  retain(): void {
+    save(this.root, this.record);
+  }
+
   /** Exercises the public capture service with a host-supplied target, without executing publication. */
   capture() {
     return this.publisher.capture('project', this.run, [this.assignment], {
@@ -195,7 +220,7 @@ class PublisherFixture {
     this.run.data.authorityBase = head;
     this.assignment.data.deliveryRecordId = this.record.id;
     this.assignment.evidence = [this.review('verifier')];
-    this.run.data.goalEvidence = [this.review('director-assessment')];
+    this.verdictOn();
     save(this.root, this.record);
     return base;
   }
@@ -252,14 +277,38 @@ test('publisher rejects source changes after independent review', (t) => {
   assert.deepEqual(f.store.list(), []);
 });
 
-test('publisher refuses missing goal evidence and unfinished assignments', (t) => {
+test('publisher refuses unfinished assignments', (t) => {
   const f = new PublisherFixture(t);
   f.assignment.status = 'blocked';
   assert.throws(() => f.capture(), /unfinished/);
-  f.assignment.status = 'completed';
-  f.run.data.goalEvidence = [];
-  assert.throws(() => f.capture(), /goal assessment/);
   assert.deepEqual(f.store.list(), []);
+});
+
+test('delivery capture requires the one recorded verdict', (t) => {
+  const f = new PublisherFixture(t);
+  f.dropVerdict();
+  assert.throws(() => f.capture(), /independent assembled verdict/);
+  assert.deepEqual(f.store.list(), []);
+});
+
+test('a verdict describing different bytes is refused rather than trusted', (t) => {
+  const f = new PublisherFixture(t);
+  const stale = (f.record as Record<string, any>).verdict;
+  (f.record as Record<string, any>).verdict = { ...stale, digest: 'f'.repeat(64) };
+  f.retain();
+  assert.throws(() => f.capture(), /verdict describes different candidate bytes/);
+  assert.deepEqual(f.store.list(), []);
+});
+
+test('a second assessment no longer satisfies delivery acceptance', (t) => {
+  const f = new PublisherFixture(t);
+  f.dropVerdict();
+  f.run.data.goalEvidence = [f.review('director-assessment')];
+  assert.throws(
+    () => f.capture(),
+    /independent assembled verdict|director-assessment/,
+    'a reviewer-shaped extra opinion is not the gate',
+  );
 });
 
 test('retained delivery proof survives a newer candidate pointer and supports historical record metadata', (t) => {
