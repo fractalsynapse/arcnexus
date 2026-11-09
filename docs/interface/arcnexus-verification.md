@@ -92,7 +92,7 @@ strength of an agent's own claim.
 | `publisher/promotion-review` (131) and `delivery-verification` (147) | deleted with the promotion subsystem | one publication route, one meaning of accepted | partly done (#367, #374) — `promotion-review` is deleted and publication now attests to the one recorded verdict; `delivery-verification` remains as the capture attestation |
 | `assignment/captured-verification` (103) and `session-verification` (148) | folded into `checklist` and `classification` | no per-stage re-check of the same bytes | partly done (#375) — `captured-verification` is deleted with no caller left; `session-verification` remains as the single owner-side verification and has not yet been folded into `checklist`/`classification` |
 | `task-intake/verification-assessment` and `verification-evidence` | `review` — one call covering engineering and goal | direction stops judging its own plan; verification stops running twice | not started |
-| `report/execution-evidence` (356), `evidence-pages` (200), `referenced-evidence` (138), `invocation-diagnostics` (204) | `evidenceSet` with artefacts by reference and full measurement | the paging subsystem is **replaced**, not capped: references make the repeat-read loop unnecessary, and measures make its cost visible | not started — this is step 3c |
+| `report/execution-evidence` (356), `evidence-pages` (200), `referenced-evidence` (138), `invocation-diagnostics` (204) | `evidenceSet` with artefacts by reference and full measurement | the paging subsystem is **replaced**, not capped: references make the repeat-read loop unnecessary, and measures make its cost visible | done in substance (#377) — `evidence-pages` is deleted and `referenced-evidence` is folded into the set, which now verifies investigation origins and adopts bytes instead of copying them; retained logs are referenced rather than inlined. `execution-evidence` and `invocation-diagnostics` remain as host capture and correlation: with references they hold no duplicate evidence state, and moving their capture elsewhere would relocate code without removing a second source of truth |
 | `report/delivery-evidence`, `publication-evidence`, `recovery-evidence` | coordination entities and derived reports | removes mirrors of facts the store already holds | not started |
 
 Migration lands in cleanup batch 3 (one gate) and is verified by VI-14 together with EX-17, CO-16
@@ -124,11 +124,17 @@ they cost time and lost work.
 ```yaml
 id: arcnexus/verification
 stage: locked
-revision: 3
+revision: 4
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
 changes:
-  - revision 3: migration table gains a Status column recording cleanup batch 3 and 4 against the
+  - revision 4: status only, at the architect's standing direction to keep migration tables current.
+    Step 3c is stamped done in substance with the residual reading recorded on the row itself:
+    `evidence-pages` deleted, `referenced-evidence` folded into the set with its verification
+    preserved, logs referenced instead of inlined, and `execution-evidence`/`invocation-diagnostics`
+    retained because after the change they hold no duplicate evidence state — dissolving them would
+    relocate capture and correlation code without removing a second source of truth. No invariant,
+    scenario or target altered.  - revision 3: migration table gains a Status column recording cleanup batch 3 and 4 against the
     files that exist — `assembly-acceptance` and `captured-verification` deleted with no caller
     left (#375, VI-14 checked), the `acceptedChecks` cache replaced by content-addressed verdict
     reuse (#362), promotion-review deleted (#367), and publication now attesting to the one
