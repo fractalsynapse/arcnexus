@@ -1,7 +1,7 @@
 # Library contract — Collaboration provider
 
-Type contract: `library`. Stage: **proposed**. Owner: `delivery` (absorbs the upstream
-collaboration modules in `operations`).
+Type contract: `library`. Stage: **locked** (revision 1). Owner: `delivery` (absorbs the
+upstream collaboration modules in `operations`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-delivery.md`](arcnexus-delivery.md), [`arcnexus-coordination.md`](arcnexus-coordination.md).
 Depended on by: `delivery`, `direction`, the gateway, and every future forge or hosting integration.
 
@@ -75,9 +75,13 @@ observe.
 
 ```yaml
 id: arcnexus/collaboration-provider
-stage: proposed
+stage: locked
 revision: 1
-acceptedBy: null
-acceptedAt: null
-changes: null
+acceptedBy: Adrian Webb (architect)
+acceptedAt: 2026-11-08
+changes:
+  - revision 1: accepted by the architect as written, and made the governing seam for the
+    batch-4c work: simulation becomes an evidence-package provider behind the same four
+    operations rather than an imitation of GitHub, and future forges are provider
+    implementations plus a delivery-policy entry
 ```

@@ -14,7 +14,6 @@ import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/ex
 import type { DeliveryStore } from '../coordination-store/delivery-store.js';
 import type { DeliveryCapture, DeliveryRecord } from '../coordination-store/delivery-types.js';
 import type { RecordData } from '../workspace/state.js';
-import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
 import { DeliveryVerification } from './delivery-verification.js';
 import { DevelopmentDeliveries } from './development-deliveries.js';
 import { deliveryDocument } from './delivery-document.js';

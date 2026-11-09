@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { ExecutionStore } from '../../../../dist/library/coordination-store/execution-store.js';
-import type { DeliveryRecord } from '../../../../dist/library/coordination-store/delivery-types.js';
+
 import type { RunEnvironment } from '../../../../dist/library/coordination-store/execution-types.js';
 import { ExecutionReports } from '../../../../dist/library/report/report.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
