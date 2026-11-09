@@ -4,7 +4,7 @@ import { linkSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
-import { EvidencePages, ReferencedEvidence } from '../../../../dist/library/report/report.js';
+import { EvidenceSet, ReferencedEvidence } from '../../../../dist/library/report/report.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises exact evidence retrieval and origin validation without granting filesystem access. */
@@ -108,7 +108,7 @@ class ReferencedEvidenceScenarios {
     const hash = createHash('sha256').update(content).digest('hex');
     const path = join(directory, 'assignment-evidence', hash);
     writeFileSync(path, content);
-    const pages = new EvidencePages('verification.evidence');
+    const pages = new EvidenceSet('verification.evidence', directory);
     return {
       id,
       directory,

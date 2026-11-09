@@ -4,25 +4,28 @@ import { join, resolve } from 'node:path';
 import type { ExecutionAssignment } from '../coordination-store/execution-types.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import type { RecordData } from '../workspace/state.js';
-import { EvidencePages } from './evidence-pages.js';
+import { EvidenceSet } from './evidence-set.js';
 import { ExecutionEvidence } from './execution-evidence.js';
 
 /** Captures current-run investigation facts without exposing private directories or granting recovery authority. */
 export class RecoveryEvidence {
-  private readonly pages = new EvidencePages('assignment.evidence');
+  private pages!: EvidenceSet;
 
   /** Uses only the host store's current run and assignment identities to locate retained evidence. */
   constructor(
     private readonly root: string,
     private readonly store: ExecutionStore,
-  ) {}
+  ) {
+    this.pages = new EvidenceSet('assignment.evidence', join(root, 'runs', ''));
+  }
 
   /** Pins all available same-run observations and names missing evidence explicitly in the manifest. */
-  capture(assignment: ExecutionAssignment): EvidencePages {
+  capture(assignment: ExecutionAssignment): EvidenceSet {
     const current = this.store.assignment(assignment.id);
     if (current.runId !== assignment.runId || current.owner !== assignment.owner)
       throw new Error('Investigation assignment identity differs from the host store');
     const run = this.store.run(current.runId);
+    this.pages = new EvidenceSet('assignment.evidence', join(this.root, 'runs', run.id));
     const execution = new ExecutionEvidence(this.root, this.store).capture(run.id);
     ExecutionEvidence.pin(this.root, run.id, this.pages, execution);
     const records = this.store

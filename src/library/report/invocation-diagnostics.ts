@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 import type { ExecutionAssignment } from '../coordination-store/execution-types.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import type { RecordData } from '../workspace/state.js';
-import { EvidencePages } from './evidence-pages.js';
+import type { EvidenceSet } from './evidence-set.js';
 
 interface RetainedRecord {
   recordId?: string;
@@ -21,7 +21,7 @@ export class InvocationDiagnostics {
   ) {}
 
   /** Adds an invocation index and per-invocation pages to the existing assignment evidence capability. */
-  append(pages: EvidencePages, assignment: ExecutionAssignment) {
+  append(pages: EvidenceSet, assignment: ExecutionAssignment) {
     const current = this.store.assignment(assignment.id);
     if (current.runId !== assignment.runId || current.owner !== assignment.owner)
       throw new Error('Invocation evidence assignment identity differs from the host store');
@@ -67,7 +67,7 @@ export class InvocationDiagnostics {
 
   /** Adds one fixed page per retained invocation and returns only safe artifact references. */
   private appendInvocations(
-    pages: EvidencePages,
+    pages: EvidenceSet,
     assignment: ExecutionAssignment,
     record: RecordData,
     directory: string,

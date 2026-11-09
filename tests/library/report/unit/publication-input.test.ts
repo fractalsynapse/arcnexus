@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { test, type TestContext } from 'node:test';
 import {
-  EvidencePages,
+  EvidenceSet,
   ExecutionEvidence,
   PublicationEvidence,
 } from '../../../../dist/library/report/report.js';
@@ -59,7 +59,7 @@ class PublicationInputScenarios {
     bundle: unknown,
     input: string,
   ): Promise<void> {
-    const pages = new EvidencePages('verification.evidence');
+    const pages = new EvidenceSet('verification.evidence', fixture.root);
     pages.add('publication', JSON.stringify(bundle), 'json');
     const metadata = pages.metadata().find((artifact) => artifact.id === 'publication')!;
     const content = await this.readVerificationArtifact(
@@ -86,7 +86,7 @@ class PublicationInputScenarios {
   }
 
   /** Confirms an exact-end character offset yields an empty terminal page without a continuation. */
-  private async assertExactEnd(pages: EvidencePages, totalCharacters: number): Promise<void> {
+  private async assertExactEnd(pages: EvidenceSet, totalCharacters: number): Promise<void> {
     const page = (await pages.call('verification.evidence', {
       artifact: 'publication',
       offset: totalCharacters,
@@ -101,7 +101,7 @@ class PublicationInputScenarios {
 
   /** Reassembles pinned verification pages and preserves their artifact identity and hash. */
   private async readVerificationArtifact(
-    pages: EvidencePages,
+    pages: EvidenceSet,
     artifact: string,
     totalCharacters: number,
   ): Promise<string> {

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { EvidencePages } from './evidence-pages.js';
+import type { EvidenceSet } from './evidence-set.js';
 
 /** Host-projected worker observations; no caller-supplied path is accepted. */
 export interface ReferencedExecutionEvidence {
@@ -13,15 +13,13 @@ export interface ReferencedExecutionEvidence {
 
 /** Repins observed investigation artifacts without recursively expanding historical verification evidence. */
 export class ReferencedEvidence {
-  private readonly retained = new Map<string, { id: string; content: string }>();
-
   private readonly records = new Map<string, string>();
 
   /** Binds source lookup to the host's private store and current immutable run identity. */
   constructor(
     private readonly root: string,
     private readonly runId: string,
-    private readonly pages: EvidencePages,
+    private readonly pages: EvidenceSet,
   ) {}
 
   /** Annotates cloned observations only; retained reports and original artifact names remain unchanged. */
@@ -94,22 +92,15 @@ export class ReferencedEvidence {
     });
   }
 
-  /** Reuses immutable content for repeated pages while preserving exact original bytes and current IDs. */
-  private pin(directory: string, recordId: string, result: any): string | undefined {
+  /** Advertises the original bytes by reference; the set already dedupes by identity. */
+  private pin(directory: string, recordId: string, result: any): void {
     if (typeof result.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(result.sha256))
       throw new Error('Invalid investigation artifact hash');
     const id = `observed:${recordId}:${result.sha256}`;
-    const retained = this.retained.get(id);
-    if (retained) {
-      result.verificationArtifact = retained.id;
-      return retained.content;
-    }
-    const content = this.artifact(join(directory, 'assignment-evidence', result.sha256), result);
-    if (content === undefined) return;
-    this.pages.add(id, content, 'utf8');
-    this.retained.set(id, { id, content });
+    const path = join(directory, 'assignment-evidence', result.sha256);
+    if (this.artifact(path, result) === undefined) return;
+    this.pages.adopt(id, path, 'utf8');
     result.verificationArtifact = id;
-    return content;
   }
 
   /** Missing retained bytes stay explicit gaps; corruption and unsafe aliases remain capture failures. */

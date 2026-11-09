@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
-import { EvidencePages } from '../../../../dist/library/report/report.js';
+import { EvidenceSet } from '../../../../dist/library/report/report.js';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
@@ -217,7 +217,7 @@ class VerificationEvidenceScenarios {
         assignmentId: 'investigation',
       }),
     );
-    const pages = new EvidencePages('assignment.evidence');
+    const pages = new EvidenceSet('assignment.evidence', root);
     pages.add('unread-receipt', '{"transaction":"committed"}', 'json');
     pages.add(
       'manifest',

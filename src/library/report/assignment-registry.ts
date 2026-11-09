@@ -1,6 +1,7 @@
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
+import { join } from 'node:path';
 import type { ExecutionAssignment } from '../coordination-store/execution-types.js';
-import { EvidencePages } from './evidence-pages.js';
+import { EvidenceSet } from './evidence-set.js';
 import { InvocationDiagnostics } from './invocation-diagnostics.js';
 import { ExecutionEvidence } from './execution-evidence.js';
 
@@ -13,8 +14,10 @@ export class AssignmentRegistry {
   ) {}
 
   /** Captures assignment intent and optional retained diagnostics in one paged capability. */
-  capture(assignment: ExecutionAssignment): EvidencePages {
-    const pages = new EvidencePages('assignment.evidence');
+  capture(assignment: ExecutionAssignment): EvidenceSet {
+    const root = this.root;
+    if (!root) throw new Error('Assignment evidence requires the host private store');
+    const pages = new EvidenceSet('assignment.evidence', join(root, 'runs', assignment.runId));
     const assignments = this.append(pages, assignment);
     if (this.root)
       ExecutionEvidence.pin(
@@ -43,7 +46,7 @@ export class AssignmentRegistry {
   }
 
   /** Adds the same metadata index to an investigation without changing its existing evidence boundary. */
-  append(pages: EvidencePages, assignment: ExecutionAssignment) {
+  append(pages: EvidenceSet, assignment: ExecutionAssignment) {
     const current = this.store.assignment(assignment.id);
     if (current.runId !== assignment.runId || current.owner !== assignment.owner)
       throw new Error('Registry assignment identity differs from the host store');
