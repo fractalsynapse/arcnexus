@@ -57,13 +57,13 @@ these four operations.
 
 ## Migration from what exists today
 
-| Current | Target | Effect |
-| --- | --- | --- |
-| `operations/simulated-pull-requests.ts` (278), `simulated-releases.ts` (115), `simulated-upstream.ts` (100) — a fake GitHub shaped like GitHub's API | `evidence-package` provider over the four operations | deletes imitation; keeps the interaction record |
-| `coordination-store/provider-store.ts` (135) — simulated remote state database | evidence artefacts in the project store and application storage | one fewer database |
-| `publisher/simulation-publication.ts` (179) — a second publication engine | one engine, provider-routed | satisfies delivery I1 |
-| `execution-runtime/simulation-repositories.ts` (167) | retained | simulation still needs real local Git, just no remote |
-| `--simulate` | retained as the selector for the evidence-package provider | see the gateway contract revision |
+| Current | Target | Effect | Status |
+| --- | --- | --- | --- |
+| `operations/simulated-pull-requests.ts` (278), `simulated-releases.ts` (115), `simulated-upstream.ts` (100) — a fake GitHub shaped like GitHub's API | `evidence-package` provider over the four operations | deletes imitation; keeps the interaction record | done (#368, #372) — the fake GitHub is deleted; capture lives in `evidence-package-upstream.ts` and `evidence-change-record.ts` |
+| `coordination-store/provider-store.ts` (135) — simulated remote state database | evidence artefacts in the project store and application storage | one fewer database | done (#372) — the database is deleted; state derives from recorded effects and the evidence package |
+| `publisher/simulation-publication.ts` (179) — a second publication engine | one engine, provider-routed | satisfies delivery I1 | done (#370) — one engine, provider-routed |
+| `execution-runtime/simulation-repositories.ts` (167) | retained | simulation still needs real local Git, just no remote | retained as designed — simulation still needs real local Git |
+| `--simulate` | retained as the selector for the evidence-package provider | see the gateway contract revision | delivered — gateway contract revision 3 keeps it as the provider selector |
 
 ## Non-goals
 
@@ -76,10 +76,14 @@ observe.
 ```yaml
 id: arcnexus/collaboration-provider
 stage: locked
-revision: 1
+revision: 2
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-08
 changes:
+  - revision 2: migration table gains a Status column: the fake GitHub, the provider state database
+    and the second publication engine are recorded as deleted (#368, #370, #372) with capture now
+    living in the evidence package and the derived change record, and `--simulate` is recorded as
+    delivered by the gateway contract's revision 3. Targets and invariants unchanged.
   - revision 1: accepted by the architect as written, and made the governing seam for the
     batch-4c work: simulation becomes an evidence-package provider behind the same four
     operations rather than an imitation of GitHub, and future forges are provider

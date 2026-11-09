@@ -78,15 +78,15 @@ ledger that re-states a fact Git and the provider already hold.
 
 ## Migration
 
-| Current | Target | Effect |
-| --- | --- | --- |
-| `publisher/live-publication` (208) and `simulation-publication` (179) | one publication route with a namespace refusal | removes the twin engines and the 44 live-versus-simulation branch points |
-| `publisher/promotion-review` (131), promotion assembly and resume paths | deleted with the promotion subsystem | the simulation-to-live handoff stops being a lifecycle stage |
-| `publisher/publication-effects` (121) and the `lifecycle` external-effect intent store | `reconcile` observing provider state | removes the prepared/uncertain/completed ledger and its reconciliation code |
-| `coordination-store/delivery-store` triple status columns plus milestone receipts | one delivery entity in the project store | one recorded merge identity, derived views, no parallel ledgers (I6) |
-| `operations/simulated-pull-requests` (278), `simulated-releases` (115), `simulated-upstream` (100), `provider-store` | a simulation namespace over the same transport | removes a second fake-GitHub implementation while keeping the isolation invariant |
-| `arcnexus delivery approve/publish/promote` | retired per the gateway contract; gates answered through `task answer` | no operator command bypasses a human gate |
-| `publisher/delivery-checks` (236) and `delivery-verification` (147) | moved to `verification` as the single gate | publication stops re-verifying what was already accepted |
+| Current | Target | Effect | Status |
+| --- | --- | --- | --- |
+| `publisher/live-publication` (208) and `simulation-publication` (179) | one publication route with a namespace refusal | removes the twin engines and the 44 live-versus-simulation branch points | done (#370) — one `publication.ts` engine with live/evidence providers |
+| `publisher/promotion-review` (131), promotion assembly and resume paths | deleted with the promotion subsystem | the simulation-to-live handoff stops being a lifecycle stage | done (#367) — promotion subsystem deleted with no caller left |
+| `publisher/publication-effects` (121) and the `lifecycle` external-effect intent store | `reconcile` observing provider state | removes the prepared/uncertain/completed ledger and its reconciliation code | not started — both remain; reconcile-by-observation is batch 5 |
+| `coordination-store/delivery-store` triple status columns plus milestone receipts | one delivery entity in the project store | one recorded merge identity, derived views, no parallel ledgers (I6) | partly done (#371) — three status columns became one recorded `route` with derived views; the project-store move remains |
+| `operations/simulated-pull-requests` (278), `simulated-releases` (115), `simulated-upstream` (100), `provider-store` | a simulation namespace over the same transport | removes a second fake-GitHub implementation while keeping the isolation invariant | done (#368, #372) — the change record derives from recorded effects and `provider-store.ts` is deleted |
+| `arcnexus delivery approve/publish/promote` | retired per the gateway contract; gates answered through `task answer` | no operator command bypasses a human gate | partly done (#367) — `promote` and `publish` retired; `approve` is retained because `task answer` cannot yet record a delivery approval, recorded as a prerequisite |
+| `publisher/delivery-checks` (236) and `delivery-verification` (147) | moved to `verification` as the single gate | publication stops re-verifying what was already accepted | not started — both modules remain in publisher |
 
 Migration lands in cleanup batch 4 (one route) and is verified by DE-14 together with VI-14, EX-17,
 CO-16 and DI-15.
@@ -115,10 +115,18 @@ production merge under any configuration, and any recovery path for a historical
 ```yaml
 id: arcnexus/delivery
 stage: locked
-revision: 2
+revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
 changes:
+  - revision 3: migration table gains a Status column recording what implementation has actually
+    delivered against this contract, dated by pull request and verified by file existence rather
+    than by assumption — one publication route with live and evidence providers (#370), promotion
+    deleted (#367), the simulated twins and the provider receipt store retired with the change
+    record derived from effects (#368, #372), and the delivery-store status columns collapsed into
+    one recorded merge identity (#371). Rows still marked not started remain the plan; the
+    `delivery approve` row records why it cannot retire yet. No invariant, scenario or target was
+    altered — operational status only, at the architect's direction.
   - revision 2: locked with the architect's answers — the provider performs the merge and returns its
     identity; the only human gates are a production release and a blocking question needing an
     answer or external action, so an uncertain upstream outcome is reconciled by observation before
