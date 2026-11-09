@@ -159,7 +159,7 @@ export class EvidenceChangeRecord {
     if (prior.status === 'completed') return prior.result;
     if (prior.status !== 'absent') throw new Error('Simulated merge requires reconciliation');
     const merged = await integrateAssembled(
-      this.mergeAdapter(effect),
+      this.mergeAdapter(),
       effect,
       this.checks,
       () => undefined,
@@ -169,7 +169,7 @@ export class EvidenceChangeRecord {
   }
 
   /** The protocol needs no journaling hooks here: effects and the actual ref already record it. */
-  private mergeAdapter(effect: ExternalEffect): MergeAdapter {
+  private mergeAdapter(): MergeAdapter {
     return {
       gates: async () => {
         this.assertReady();
@@ -185,6 +185,7 @@ export class EvidenceChangeRecord {
     };
   }
 
+  /** The completed change operations for this delivery, in the order the journal holds them. */
   private journal(): ExternalEffect[] {
     return this.effects
       .effects()
@@ -196,6 +197,7 @@ export class EvidenceChangeRecord {
       );
   }
 
+  /** Reads one recorded result as change state without inventing missing fields. */
   private data(result?: Record<string, unknown>): Partial<ChangeState> {
     return (result ?? {}) as Partial<ChangeState>;
   }
@@ -215,6 +217,7 @@ export class EvidenceChangeRecord {
     return String(pushed.result.head);
   }
 
+  /** The state as far as it exists, so a head-only check before opening does not throw. */
   private recorded(): Partial<ChangeState> {
     try {
       return this.state();

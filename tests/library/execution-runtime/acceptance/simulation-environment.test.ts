@@ -6,7 +6,6 @@ import type { TestContext } from 'node:test';
 import { git } from '../../../../dist/library/operations/process.js';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
-import { ProviderStore } from '../../../../dist/library/coordination-store/provider-store.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { GeneralFixture, nativeHostTest as test } from '../../testing/support/general-fixture.js';
 
@@ -77,21 +76,22 @@ class SimulationFixture {
           this.context.key,
           'environments',
           environmentId,
-          'provider.sqlite',
+          'evidence-package.jsonl',
         ),
       ),
-      false,
+      true,
+      'collaboration is captured in the namespace evidence package',
     );
     return calls.length;
   }
 
-  /** Requires scheduler-generated waits and verified deliveries in the actual provider store. */
+  /** Requires scheduler-generated waits and verified deliveries in the captured evidence package. */
   assertProgress(environmentId: string): void {
-    const resources = this.issues(environmentId);
-    assert.equal(resources.filter((resource) => resource.kind === 'issue').length, 1);
-    const milestones = resources
-      .filter((resource) => resource.kind === 'comment')
-      .map((comment) => String(comment.data.body));
+    const captured = this.packageEntries(environmentId);
+    assert.equal(captured.filter((entry) => entry.operation === 'issue.create').length, 1);
+    const milestones = captured
+      .filter((entry) => entry.operation === 'issue.comment')
+      .map((entry) => String(entry.payload.body));
     assert.equal(
       milestones.filter((body) => /\*\*[abc]: verified component delivery\*\*/.test(body)).length,
       3,
@@ -104,22 +104,48 @@ class SimulationFixture {
     );
   }
 
-  /** Reads simulated issues independently of execution reports and closes the inspection connection. */
-  issues(environmentId: string) {
+  /** Requires the run to work in its own checkout, never the repository it was started from. */
+  assertIsolatedWorkspace(run: { data: Record<string, unknown>; environment?: unknown }): void {
+    const workspace = run.data.workspace as {
+      source: string;
+      workspace: string;
+      executionEnvironment: unknown;
+    };
+    assert.notEqual(workspace.source, this.general.fixture.repo);
+    assert.deepEqual(workspace.executionEnvironment, run.environment);
+    assert.equal(
+      loadProjectBindings(workspace.workspace).materializations!.sample!.source,
+      workspace.workspace,
+    );
+  }
+
+  /** Requires exactly one tracking record captured in that namespace's package. */
+  assertTracking(environmentId: string): void {
+    assert.equal(
+      this.packageEntries(environmentId).filter((entry) => entry.operation === 'issue.create')
+        .length,
+      1,
+      'exactly one tracking record captured in that namespace',
+    );
+  }
+
+  /** Reads the captured collaboration package directly, independently of any execution report. */
+  packageEntries(
+    environmentId: string,
+  ): Array<{ operation: string; payload: Record<string, unknown> }> {
     const path = join(
       this.general.fixture.state,
       'projects',
       this.context.key,
       'environments',
       environmentId,
-      'provider.sqlite',
+      'evidence-package.jsonl',
     );
-    const provider = new ProviderStore(path, true);
-    try {
-      return provider.resources();
-    } finally {
-      provider.close();
-    }
+    if (!existsSync(path)) return [];
+    return readFileSync(path, 'utf8')
+      .split('\n')
+      .filter((line) => line.trim())
+      .map((line) => JSON.parse(line) as { operation: string; payload: Record<string, unknown> });
   }
 }
 
@@ -132,18 +158,8 @@ test('simulation uses isolated Git source and creates tracking before the first 
   assert.equal(retained.status, 'running', JSON.stringify(retained.data));
   assert.equal(retained.environment!.mode, 'simulation');
   assert.equal(retained.data.initialized, true);
-  const workspace = retained.data.workspace as {
-    source: string;
-    workspace: string;
-    executionEnvironment: unknown;
-  };
-  assert.notEqual(workspace.source, f.general.fixture.repo);
-  assert.deepEqual(workspace.executionEnvironment, retained.environment);
-  assert.equal(
-    loadProjectBindings(workspace.workspace).materializations!.sample!.source,
-    workspace.workspace,
-  );
-  assert.equal(f.issues(retained.environment!.id).length, 1);
+  f.assertIsolatedWorkspace(retained);
+  f.assertTracking(String(retained.environment!.id));
   assert.ok(f.host.store.assignments(task.id).every((a) => !a.data.recordId));
   assert.equal(f.general.fixture.git('rev-parse', 'HEAD'), original);
   assert.equal(f.general.fixture.git('status', '--porcelain'), '');
@@ -198,7 +214,13 @@ test('changed simulation push destinations fail before another model activation'
   assert.equal(retained.status, 'needs_attention');
   assert.match(String(retained.data.error), /materialization changed/);
   assert.ok(f.host.store.assignments(task.id).every((assignment) => !assignment.data.recordId));
-  assert.equal(f.issues(retained.environment!.id).length, 1);
+  assert.equal(
+    f
+      .packageEntries(String(retained.environment!.id))
+      .filter((entry) => entry.operation === 'issue.create').length,
+    1,
+    'exactly one tracking record captured in that namespace',
+  );
   f.host.cancel(task.id);
 });
 

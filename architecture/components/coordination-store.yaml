@@ -23,4 +23,3 @@ api:
   - module: src/library/coordination-store/execution-types.ts
   - module: src/library/coordination-store/lifecycle-store.ts
   - module: src/library/coordination-store/lifecycle-types.ts
-  - module: src/library/coordination-store/provider-store.ts
