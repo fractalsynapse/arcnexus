@@ -3,17 +3,18 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { candidateDigest, captureChanges } from '../change-inspection/changes.js';
 import type { OperationBridge } from '../operations/operations.js';
-import { EvidencePages, ExecutionEvidence } from '../report/report.js';
+import { EvidenceSet, ExecutionEvidence } from '../report/report.js';
 import type { RecordData } from '../workspace/state.js';
 
 /** Pins host-observed changes and exposes only their retained artifacts to independent reviewers. */
 export class VerificationEvidence {
-  private readonly pages = new EvidencePages('verification.evidence');
+  private readonly pages: EvidenceSet;
 
   readonly candidate: string;
 
   /** Captures complete change evidence outside the editable candidate and rejects concurrent changes. */
   constructor(root: string, record: RecordData, baseline: string, input?: unknown) {
+    this.pages = new EvidenceSet('verification.evidence', join(root, 'runs', record.id));
     this.candidate = candidateDigest(record);
     const captured: RecordData = { ...record, base: baseline };
     captureChanges(root, captured);

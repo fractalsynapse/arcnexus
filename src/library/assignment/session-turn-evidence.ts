@@ -1,4 +1,4 @@
-import { EvidencePages } from '../report/report.js';
+import { EvidenceSet } from '../report/report.js';
 import type { OperationBridge } from '../operations/operations.js';
 import { frozenReview } from './checkpoints.js';
 import { readFileSync } from 'node:fs';
@@ -22,7 +22,7 @@ export interface TurnFrame {
 
 /** Retains prompts, SDK events, usage and structured outcomes for each model turn. */
 export class TurnEvidence {
-  private reviewPages?: EvidencePages;
+  private reviewPages?: EvidenceSet;
 
   /** Retains session state for per-turn evidence capture and cumulative usage accounting. */
   constructor(private readonly state: SessionState) {}
@@ -40,7 +40,7 @@ export class TurnEvidence {
 
   /** Pins complete review bytes and returns only bounded metadata for model transport. */
   reference(evidence: Record<string, unknown>): Record<string, unknown> {
-    const pages = new EvidencePages('review.evidence');
+    const pages = new EvidenceSet('review.evidence', this.state.dir);
     pages.add('review', JSON.stringify(evidence), 'json');
     const manifest = {
       basis: evidence.basis,

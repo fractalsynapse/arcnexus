@@ -6,8 +6,7 @@ import type { ExecutionAssignment, ExecutionRun } from '../coordination-store/ex
 import type { RecordData } from '../workspace/state.js';
 import { DeliveryEvidence } from './delivery-evidence.js';
 import { ExecutionObservations } from './execution-observations.js';
-import { EvidencePages } from './evidence-pages.js';
-import { ReferencedEvidence } from './referenced-evidence.js';
+import type { EvidenceSet } from './evidence-set.js';
 
 interface HostCommandEvidence {
   index: number;
@@ -38,12 +37,12 @@ export class ExecutionEvidence {
   ) {}
 
   /** Pins current-run host observations without accepting a foreign task as execution evidence. */
-  static pin(root: string, runId: unknown, pages: EvidencePages, input: unknown) {
+  static pin(root: string, runId: unknown, pages: EvidenceSet, input: unknown) {
     const evidence = structuredClone(input) as HostExecutionEvidence | undefined;
     if (!evidence) return;
     if (typeof runId !== 'string' || evidence.run?.id !== runId)
       throw new Error('Host execution evidence belongs to a different run');
-    new ReferencedEvidence(root, runId, pages).index(evidence);
+    pages.investigate(evidence, { root, runId });
     this.indexCommandOutputs(pages, evidence);
     const assignments = evidence.assignments?.map((assignment) =>
       this.assignmentArtifacts(pages, assignment),
@@ -61,7 +60,7 @@ export class ExecutionEvidence {
 
   /** Makes each worker record and prior review independently discoverable instead of inlining their histories. */
   private static assignmentArtifacts(
-    pages: EvidencePages,
+    pages: EvidenceSet,
     assignment: NonNullable<HostExecutionEvidence['assignments']>[number],
   ) {
     const { record, verificationReports, data, ...intent } = assignment;
@@ -78,7 +77,7 @@ export class ExecutionEvidence {
 
   /** Separates trusted command metadata from potentially large SDK histories in the same evidence catalog. */
   private static recordArtifacts(
-    pages: EvidencePages,
+    pages: EvidenceSet,
     prefix: string,
     record: NonNullable<NonNullable<HostExecutionEvidence['assignments']>[number]['record']>,
   ) {
@@ -100,7 +99,7 @@ export class ExecutionEvidence {
   }
 
   /** Pins complete logs separately so criterion inspection need not page through unrelated command output. */
-  private static indexCommandOutputs(pages: EvidencePages, evidence: HostExecutionEvidence): void {
+  private static indexCommandOutputs(pages: EvidenceSet, evidence: HostExecutionEvidence): void {
     for (const assignment of [...(evidence.assignments ?? []), ...(evidence.assemblies ?? [])])
       this.addCommandOutputs(
         pages,
@@ -117,7 +116,7 @@ export class ExecutionEvidence {
 
   /** Labels each immutable output by its originating assignment or assembled check record. */
   private static addCommandOutputs(
-    pages: EvidencePages,
+    pages: EvidenceSet,
     prefix: string,
     commands: HostCommandEvidence[],
   ): void {

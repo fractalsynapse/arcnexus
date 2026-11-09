@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { ExecutionStore } from '../../../../dist/library/coordination-store/execution-store.js';
-import { EvidencePages, ExecutionEvidence } from '../../../../dist/library/report/report.js';
+import { EvidenceSet, ExecutionEvidence } from '../../../../dist/library/report/report.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Captures real stored assembly observations through the canonical role-independent evidence path. */
@@ -13,7 +13,7 @@ class AssemblyInputScenario {
   /** A director can inspect exact failing combined output without a new capability or caller retrieval. */
   async run(t: TestContext, legacyCommand = true): Promise<void> {
     const f = this.fixture(t, legacyCommand);
-    const pages = new EvidencePages('direction.evidence');
+    const pages = new EvidenceSet('direction.evidence', f.root);
     ExecutionEvidence.pin(
       f.root,
       f.run.id,
@@ -41,7 +41,7 @@ class AssemblyInputScenario {
   }
 
   /** Reads only advertised artifact names from the same paged interface supplied to models. */
-  private async json(pages: EvidencePages, artifact: string): Promise<any> {
+  private async json(pages: EvidenceSet, artifact: string): Promise<any> {
     return JSON.parse(((await pages.call('direction.evidence', { artifact })) as any).content);
   }
 

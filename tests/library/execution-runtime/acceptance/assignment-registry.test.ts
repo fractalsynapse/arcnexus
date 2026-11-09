@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test as nodeTest, type TestContext } from 'node:test';
@@ -82,7 +82,13 @@ class AssignmentRegistryScenario {
     assert.equal(record.operationInvocations.length, 1);
     assert.equal(continued.diagnostic.exitCode, 17);
     assert.deepEqual(continued.diagnostic.resolvedContext, { ownerId: 'a', ownedPaths: ['owned'] });
-    assert.equal(continued.diagnostic.combinedOutput, 'stdout from failed command\nstderr details');
+    assert.equal(continued.log, 'stdout from failed command\nstderr details');
+    assert.equal(
+      createHash('sha256').update(continued.log).digest('hex'),
+      continued.diagnostic.log.sha256,
+      'the advertised digest matches the bytes the reference serves',
+    );
+    assert.equal(continued.diagnostic.log.bytes, Buffer.byteLength(continued.log));
   }
 
   /** Reads the session's assignment capability and confirms caller references cannot expand it. */
@@ -102,12 +108,26 @@ class AssignmentRegistryScenario {
     const manifest = await this.pageJson(pages, 'manifest');
     const index = await this.pageJson(pages, manifest.invocationDiagnostics.artifact);
     const diagnostic = await this.pageJson(pages, index.invocations[0].artifact);
+    const log = await this.pageBytes(pages, diagnostic.log);
     const foreign = await pages.call('assignment.evidence', {
       artifact: 'foreign-record:invocation:foreign-invocation',
       recordId: 'foreign-record',
     });
     assert.equal(foreign.status, 'rejected');
-    return { manifest, diagnostic };
+    return { manifest, diagnostic, log };
+  }
+
+  /** Reads a referenced artifact using only its advertised byte count. */
+  private async pageBytes(
+    pages: any,
+    reference: { artifact: string; bytes: number },
+  ): Promise<string> {
+    const page = (await pages.call('assignment.evidence', {
+      artifact: reference.artifact,
+      length: reference.bytes,
+    })) as { content: string; complete: boolean };
+    assert.equal(page.complete, true, 'the advertised size serves the whole artifact in one read');
+    return page.content;
   }
 
   /** Reads one complete JSON artifact using only its advertised name in the existing evidence capability. */

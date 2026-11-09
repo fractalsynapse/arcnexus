@@ -14,6 +14,8 @@ import { readSchema } from '../../../../dist/library/architecture/schema.js';
 
 /** Exercises actual request transactions and scheduler failure isolation with controlled activation results. */
 class RequestIdentityScenario {
+  readonly root: string;
+
   readonly store: ExecutionStore;
 
   readonly run;
@@ -24,11 +26,11 @@ class RequestIdentityScenario {
 
   /** Creates one current run and two genuine assignments in private durable storage. */
   constructor(t: TestContext) {
-    const root = mkdtempSync(join(tmpdir(), 'arcnexus-request-identity-'));
-    this.store = new ExecutionStore(join(root, 'execution.sqlite'));
+    this.root = mkdtempSync(join(tmpdir(), 'arcnexus-request-identity-'));
+    this.store = new ExecutionStore(join(this.root, 'execution.sqlite'));
     t.after(() => {
       this.store.close();
-      rmSync(root, { recursive: true, force: true });
+      rmSync(this.root, { recursive: true, force: true });
     });
     this.run = this.store.createRun('task', ['a', 'b'], 'Controlled goal');
     this.sender = this.store.enqueue(this.run.id, 'a', 'Request work');
@@ -207,7 +209,7 @@ class CanonicalSupplierScenario {
 
   /** Confirms the current-run manifest exposes the supplier's accepted canonical intent. */
   private async discover(): Promise<void> {
-    const pages = new AssignmentRegistry(this.store).capture(this.sender);
+    const pages = new AssignmentRegistry(this.store, this.f.state).capture(this.sender);
     const manifest = await this.page(pages, 'manifest');
     const entry = manifest.assignments.find((item: any) => item.owner === 'b');
     const intent = await this.page(pages, entry.artifact);

@@ -282,10 +282,8 @@ export function saveMarkdown(root: string, record: RecordData): void {
 
 export { DeliveryEvidence } from './delivery-evidence.js';
 
-export { EvidencePages } from './evidence-pages.js';
+export { EvidenceSet, type EvidenceArtifact } from './evidence-set.js';
 
 export { RecoveryEvidence } from './recovery-evidence.js';
-
-export { ReferencedEvidence } from './referenced-evidence.js';
 
 export { AssignmentRegistry } from './assignment-registry.js';

@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 import type { ExecutionAssignment } from '../coordination-store/execution-types.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import type { RecordData } from '../workspace/state.js';
-import { EvidencePages } from './evidence-pages.js';
+import type { EvidenceSet } from './evidence-set.js';
 
 interface RetainedRecord {
   recordId?: string;
@@ -21,7 +21,7 @@ export class InvocationDiagnostics {
   ) {}
 
   /** Adds an invocation index and per-invocation pages to the existing assignment evidence capability. */
-  append(pages: EvidencePages, assignment: ExecutionAssignment) {
+  append(pages: EvidenceSet, assignment: ExecutionAssignment) {
     const current = this.store.assignment(assignment.id);
     if (current.runId !== assignment.runId || current.owner !== assignment.owner)
       throw new Error('Invocation evidence assignment identity differs from the host store');
@@ -67,7 +67,7 @@ export class InvocationDiagnostics {
 
   /** Adds one fixed page per retained invocation and returns only safe artifact references. */
   private appendInvocations(
-    pages: EvidencePages,
+    pages: EvidenceSet,
     assignment: ExecutionAssignment,
     record: RecordData,
     directory: string,
@@ -78,7 +78,7 @@ export class InvocationDiagnostics {
       const artifact = assignment.id + ':invocation:' + id;
       pages.add(
         artifact,
-        JSON.stringify(this.diagnostic(assignment, record, directory, invocation)),
+        JSON.stringify(this.diagnostic(pages, artifact, assignment, record, directory, invocation)),
         'json',
       );
       return {
@@ -91,6 +91,8 @@ export class InvocationDiagnostics {
 
   /** Correlates invocation status with its retained operation before reading the combined log. */
   private diagnostic(
+    pages: EvidenceSet,
+    artifact: string,
     assignment: ExecutionAssignment,
     record: RecordData,
     directory: string,
@@ -111,14 +113,22 @@ export class InvocationDiagnostics {
     if (!this.exitStatusMatches(result, operation))
       return this.gap('Invocation exit status differs from retained operation');
     try {
-      return this.project(assignment, record, directory, invocation, result);
+      return this.project(pages, artifact, assignment, record, directory, invocation, result);
     } catch {
       return this.gap('Retained invocation output is unavailable or unsafe');
     }
   }
 
-  /** Projects correlated identities, outcome, resolved context, and the complete retained combined log. */
+  /**
+   * Projects correlated identities and outcome, and references the retained log by artifact.
+   *
+   * The combined log already exists as one file under the record directory. Inlining its bytes
+   * into this projection wrote a second copy of the same evidence; adopting it means a reviewer
+   * reads the identical bytes through the same capability, in full, while nothing is duplicated.
+   */
   private project(
+    pages: EvidenceSet,
+    artifact: string,
     assignment: ExecutionAssignment,
     record: RecordData,
     directory: string,
@@ -134,8 +144,24 @@ export class InvocationDiagnostics {
       exitCode: result.exitCode,
       resolvedContext: invocation.context,
       outputComplete: invocation.status === 'completed' || invocation.status === 'failed',
-      combinedOutput: this.output(directory, invocation.id, result.log),
+      log: this.referenceLog(pages, artifact, directory, invocation, result),
     };
+  }
+
+  /** Adopts the retained combined log once and publishes the reference a reviewer reads. */
+  private referenceLog(
+    pages: EvidenceSet,
+    artifact: string,
+    directory: string,
+    invocation: any,
+    result: any,
+  ): { artifact: string; sha256: string; bytes: number } {
+    const reference = pages.adopt(
+      artifact + ':log',
+      this.output(directory, invocation.id, result.log),
+      'utf8',
+    );
+    return { artifact: reference.id, sha256: reference.sha256, bytes: reference.bytes };
   }
 
   /** Confirms retained journal identities match the selected record and authorized assignment. */
@@ -172,7 +198,8 @@ export class InvocationDiagnostics {
     const expected = join(directory, 'invocation-' + id + '.log');
     if (resolve(path) !== resolve(expected) || dirname(resolve(path)) !== resolve(directory))
       throw new Error('Invocation output path is outside its retained record');
-    return this.file(path, directory);
+    this.file(path, directory);
+    return expected;
   }
 
   /** Rejects path aliases, symlinks, shared inodes, and non-file evidence before reading. */

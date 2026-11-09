@@ -3,7 +3,7 @@ import { DirectionEvidence } from './direction-evidence.js';
 import { join } from 'node:path';
 import { catalogContext, type Component } from '../architecture/components.js';
 import type { OperationBridge } from '../operations/operations.js';
-import { EvidencePages, ExecutionEvidence } from '../report/report.js';
+import { EvidenceSet, ExecutionEvidence } from '../report/report.js';
 import type { RecordData } from '../workspace/state.js';
 
 export interface RetainedDirection {
@@ -14,7 +14,7 @@ export interface RetainedDirection {
 
 /** Pins full direction inputs outside the prompt without filtering owners or discarding retained evidence. */
 export class DirectionContext {
-  private readonly pages = new EvidencePages('direction.evidence');
+  private readonly pages: EvidenceSet;
 
   /** Captures immutable catalog and checkpoint artifacts for one read-only model activation. */
   constructor(
@@ -24,6 +24,7 @@ export class DirectionContext {
     retained?: RetainedDirection,
     goal?: string,
   ) {
+    this.pages = new EvidenceSet('direction.evidence', join(root, 'runs', record.id));
     this.catalog(catalog, goal);
     const execution = ExecutionEvidence.pin(
       root,
