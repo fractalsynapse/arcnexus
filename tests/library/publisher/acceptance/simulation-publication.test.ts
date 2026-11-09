@@ -3,7 +3,11 @@ import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
-import { SimulationPublication } from '../../../../dist/library/publisher/publisher.js';
+import {
+  Publication,
+  EvidencePublicationProvider,
+  type EvidencePublicationContext,
+} from '../../../../dist/library/publisher/publisher.js';
 import type { CapturedPublicationPolicy } from '../../../../dist/library/publisher/publisher.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
@@ -13,7 +17,7 @@ import { GitDeliveryFixture } from '../../testing/support/delivery-fixture.js';
 class PublicationFixture {
   readonly git: GitDeliveryFixture;
 
-  readonly publication: SimulationPublication;
+  readonly publication: Publication;
 
   checks = 0;
 
@@ -47,18 +51,20 @@ class PublicationFixture {
   }
 
   /** Reopens provider orchestration with an explicit retained check intent and unchanged delivery authority. */
-  instance(t: TestContext, checkAttempt?: string): SimulationPublication {
-    const publication = new SimulationPublication(
-      {
-        root: this.git.root,
-        repositoryId: 'repo',
-        repository: this.git.repository,
-        effects: this.git.effects,
-        deliveries: this.git.store,
-        policy: this.policy,
-        checkAttempt,
-        checks: async () => this.check(),
-      },
+  instance(t: TestContext, checkAttempt?: string): Publication {
+    const context: EvidencePublicationContext = {
+      root: this.git.root,
+      repositoryId: 'repo',
+      repository: this.git.repository,
+      effects: this.git.effects,
+      deliveries: this.git.store,
+      policy: this.policy,
+      checkAttempt,
+      checks: async () => this.check(),
+    };
+    const publication = new Publication(
+      context,
+      new EvidencePublicationProvider(context, this.git.store.get(this.git.id)),
       this.git.store.get(this.git.id),
     );
     t.after(() => publication.close());

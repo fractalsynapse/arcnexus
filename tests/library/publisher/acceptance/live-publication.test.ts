@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import type { TestContext } from 'node:test';
 import {
-  LivePublication,
+  Publication,
+  GitHubPublicationProvider,
   type CapturedPublicationPolicy,
+  type GitHubPublicationContext,
 } from '../../../../dist/library/publisher/publisher.js';
 import { execute, git } from '../../../../dist/library/operations/process.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
@@ -17,7 +19,7 @@ class LivePublicationFixture {
 
   readonly branch: string;
 
-  readonly publication: LivePublication;
+  readonly publication: Publication;
 
   readonly requests: string[] = [];
 
@@ -60,19 +62,21 @@ class LivePublicationFixture {
       ? 'codex/run-11111111-1111-4111-8111-111111111111'
       : 'arcnexus/' + this.id;
     const delivery = this.capture();
-    this.publication = new LivePublication(
-      {
-        root: this.git.root,
-        repositoryId: 'repo',
-        source: this.git.repository.source,
-        effects: this.git.effects,
-        deliveries: this.git.store,
-        policy: this.policy,
-        credential: async () => 'controlled-secret',
-        checks: async (head, _signal, independent) => this.check(head, independent),
-        transport: async (url, options) => this.request(String(url), options!),
-        runner: (...args) => this.command(...args),
-      },
+    const context: GitHubPublicationContext = {
+      root: this.git.root,
+      repositoryId: 'repo',
+      source: this.git.repository.source,
+      effects: this.git.effects,
+      deliveries: this.git.store,
+      policy: this.policy,
+      credential: async () => 'controlled-secret',
+      checks: async (head, _signal, independent) => this.check(head, independent ?? false),
+      transport: async (url, options) => this.request(String(url), options!),
+      runner: (...args) => this.command(...args),
+    };
+    this.publication = new Publication(
+      context,
+      new GitHubPublicationProvider(context, delivery),
       delivery,
     );
   }
