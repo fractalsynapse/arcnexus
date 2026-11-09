@@ -175,13 +175,15 @@ export class Publisher {
   }
 }
 
-export {
-  SimulationPublication,
-  type SimulationPublicationContext,
-} from './simulation-publication.js';
+export { Publication, type PublicationContext, type PublicationProvider } from './publication.js';
 
 export { DeliveryResources } from './delivery-resources.js';
 
 export { DevelopmentDeliveries } from './development-deliveries.js';
 
-export { LivePublication, type LivePublicationContext } from './live-publication.js';
+export { GitHubPublicationProvider, type GitHubPublicationContext } from './github-publication.js';
+
+export {
+  EvidencePublicationProvider,
+  type EvidencePublicationContext,
+} from './evidence-publication.js';

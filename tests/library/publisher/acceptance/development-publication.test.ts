@@ -5,7 +5,9 @@ import { join } from 'node:path';
 import type { TestContext } from 'node:test';
 import {
   DevelopmentDeliveries,
-  SimulationPublication,
+  Publication,
+  EvidencePublicationProvider,
+  type EvidencePublicationContext,
 } from '../../../../dist/library/publisher/publisher.js';
 import { CandidateSnapshots } from '../../../../dist/library/workspace/candidates.js';
 import { assertIdentity } from '../../../../dist/library/workspace/workspace.js';
@@ -131,16 +133,18 @@ class DevelopmentScenario {
   async publish(parent: ReturnType<DevelopmentScenario['parent']>) {
     const f = this.fixture;
     await new DevelopmentDeliveries(f.root).publish(parent, f.store, async (child) => {
-      const publication = new SimulationPublication(
-        {
-          root: f.root,
-          repositoryId: 'repo',
-          repository: f.repository,
-          effects: f.effects,
-          deliveries: f.store,
-          policy: this.policy,
-          checks: async (head) => this.check(head),
-        },
+      const context: EvidencePublicationContext = {
+        root: f.root,
+        repositoryId: 'repo',
+        repository: f.repository,
+        effects: f.effects,
+        deliveries: f.store,
+        policy: this.policy,
+        checks: async (head: string) => this.check(head),
+      };
+      const publication = new Publication(
+        context,
+        new EvidencePublicationProvider(context, child),
         child,
       );
       try {

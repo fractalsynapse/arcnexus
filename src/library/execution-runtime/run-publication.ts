@@ -11,8 +11,9 @@ import {
   Publisher,
   DeliveryResources,
   DeliveryChecks,
-  SimulationPublication,
-  LivePublication,
+  Publication,
+  GitHubPublicationProvider,
+  EvidencePublicationProvider,
   DevelopmentDeliveries,
   type CapturedPublicationPolicy,
 } from '../publisher/publisher.js';
@@ -214,19 +215,24 @@ export class RunPublication {
     const context = environments.contextFor(run);
     const repositoryId = context.catalog.primaryRepository!;
     const checks = this.checks(context, run, delivery);
-    return new SimulationPublication(
+    const base = {
+      root: join(environments.directory, run.environment!.id),
+      repositoryId,
+      repository: context.bindings.materializations![repositoryId]!,
+      effects: environments.effects,
+      deliveries: store,
+      policy: run.data.publicationPolicy as CapturedPublicationPolicy,
+      checks: (head: string, cancellation: AbortSignal, independent?: boolean) =>
+        checks.check(head, cancellation, independent),
+    };
+    return new Publication(
       {
-        root: join(environments.directory, run.environment!.id),
-        repositoryId,
-        repository: context.bindings.materializations![repositoryId]!,
-        effects: environments.effects,
-        deliveries: store,
-        policy: run.data.publicationPolicy as CapturedPublicationPolicy,
-        checks: (head, cancellation, independent) => checks.check(head, cancellation, independent),
+        ...base,
         checkAttempt: run.data.pendingPublication
           ? (run.data.publicationCheckAttempt as string | undefined)
           : undefined,
       },
+      new EvidencePublicationProvider(base, delivery),
       delivery,
     );
   }
@@ -240,17 +246,20 @@ export class RunPublication {
     delivery: DeliveryRecord,
   ): Promise<void> {
     const checks = this.checks(this.context, run, delivery);
-    const publication = new LivePublication(
-      {
-        root: join(environments.directory, run.environment!.id),
-        repositoryId: this.context.catalog.primaryRepository!,
-        source: this.context.source,
-        effects: environments.effects,
-        deliveries: store,
-        policy: run.data.publicationPolicy as CapturedPublicationPolicy,
-        credential: githubHostCredential,
-        checks: (head, cancellation, independent) => checks.check(head, cancellation, independent),
-      },
+    const base = {
+      root: join(environments.directory, run.environment!.id),
+      repositoryId: this.context.catalog.primaryRepository!,
+      source: this.context.source,
+      effects: environments.effects,
+      deliveries: store,
+      policy: run.data.publicationPolicy as CapturedPublicationPolicy,
+      credential: githubHostCredential,
+      checks: (head: string, cancellation: AbortSignal, independent?: boolean) =>
+        checks.check(head, cancellation, independent),
+    };
+    const publication = new Publication(
+      base,
+      new GitHubPublicationProvider(base, delivery),
       delivery,
     );
     await publication.publish(signal);
