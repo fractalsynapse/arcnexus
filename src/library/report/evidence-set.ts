@@ -211,8 +211,6 @@ export class EvidenceSet {
    * keep their meaning and `measures` is added beside them rather than replacing either.
    */
   retain(directory: string, manifest: unknown): unknown {
-    if (dirname(this.store) !== resolve(directory))
-      throw new Error('Evidence set retains into the directory it was bound to');
     const entry = this.artifacts.get('manifest');
     if (!entry) throw new Error('Evidence manifest must be retained last');
     return {

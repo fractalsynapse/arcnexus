@@ -108,7 +108,7 @@ class AssignmentRegistryScenario {
     const manifest = await this.pageJson(pages, 'manifest');
     const index = await this.pageJson(pages, manifest.invocationDiagnostics.artifact);
     const diagnostic = await this.pageJson(pages, index.invocations[0].artifact);
-    const log = await this.pageText(pages, diagnostic.log.artifact);
+    const log = await this.pageBytes(pages, diagnostic.log);
     const foreign = await pages.call('assignment.evidence', {
       artifact: 'foreign-record:invocation:foreign-invocation',
       recordId: 'foreign-record',
@@ -117,20 +117,17 @@ class AssignmentRegistryScenario {
     return { manifest, diagnostic, log };
   }
 
-  /** Reads a referenced artifact whole, proving the reference resolves to the retained bytes. */
-  private async pageText(pages: any, artifact: string): Promise<string> {
-    let content = '';
-    let offset = 0;
-    for (;;) {
-      const page = (await pages.call('assignment.evidence', {
-        artifact,
-        offset,
-        length: 1 << 16,
-      })) as { content: string; nextOffset: number | null };
-      content += page.content;
-      if (page.nextOffset === null) return content;
-      offset = page.nextOffset;
-    }
+  /** Reads a referenced artifact using only its advertised byte count. */
+  private async pageBytes(
+    pages: any,
+    reference: { artifact: string; bytes: number },
+  ): Promise<string> {
+    const page = (await pages.call('assignment.evidence', {
+      artifact: reference.artifact,
+      length: reference.bytes,
+    })) as { content: string; complete: boolean };
+    assert.equal(page.complete, true, 'the advertised size serves the whole artifact in one read');
+    return page.content;
   }
 
   /** Reads one complete JSON artifact using only its advertised name in the existing evidence capability. */
