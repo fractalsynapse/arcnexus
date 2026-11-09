@@ -86,7 +86,7 @@ ledger that re-states a fact Git and the provider already hold.
 | `coordination-store/delivery-store` triple status columns plus milestone receipts | one delivery entity in the project store | one recorded merge identity, derived views, no parallel ledgers (I6) | partly done (#371) — three status columns became one recorded `route` with derived views; the project-store move remains |
 | `operations/simulated-pull-requests` (278), `simulated-releases` (115), `simulated-upstream` (100), `provider-store` | a simulation namespace over the same transport | removes a second fake-GitHub implementation while keeping the isolation invariant | done (#368, #372) — the change record derives from recorded effects and `provider-store.ts` is deleted |
 | `arcnexus delivery approve/publish/promote` | retired per the gateway contract; gates answered through `task answer` | no operator command bypasses a human gate | partly done (#367) — `promote` and `publish` retired; `approve` is retained because `task answer` cannot yet record a delivery approval, recorded as a prerequisite |
-| `publisher/delivery-checks` (236) and `delivery-verification` (147) | moved to `verification` as the single gate | publication stops re-verifying what was already accepted | not started — both modules remain in publisher |
+| `publisher/delivery-checks` (236) and `delivery-verification` (147) | moved to `verification` as the single gate | publication stops re-verifying what was already accepted | partly done (#374) — capture reads the one recorded verdict instead of reconstructing a second proof; the move of both modules into `verification` remains |
 
 Migration lands in cleanup batch 4 (one route) and is verified by DE-14 together with VI-14, EX-17,
 CO-16 and DI-15.
@@ -115,10 +115,13 @@ production merge under any configuration, and any recovery path for a historical
 ```yaml
 id: arcnexus/delivery
 stage: locked
-revision: 3
+revision: 4
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
 changes:
+  - revision 4: migration status updated for step 4e (#374) — publication reads the one recorded
+    verdict, so no second goal assessment remains; the delivery-checks and delivery-verification
+    move into `verification` is still open. Targets and invariants unchanged.
   - revision 3: migration table gains a Status column recording what implementation has actually
     delivered against this contract, dated by pull request and verified by file existence rather
     than by assumption — one publication route with live and evidence providers (#370), promotion
