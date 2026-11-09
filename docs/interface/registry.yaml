@@ -233,8 +233,8 @@ contracts:
     digest: 7272ac9c38fd924b99e2f93fbd4e25ceb38e4dc48af1a088b958911f47e1d8f2
     dependsOn: [arcnexus/project, arcnexus/delivery, arcnexus/coordination]
     scenarios: 7
-    acceptedBy: null
-    acceptedAt: null
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: 2026-11-08
     history: []
 
 protocol:
