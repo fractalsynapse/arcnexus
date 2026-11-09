@@ -1,9 +1,18 @@
 import { createHash } from 'node:crypto';
-import { appendFileSync, existsSync, readFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import type { ExternalEffect, ExternalObservation } from '../coordination-store/lifecycle-types.js';
 import type { UpstreamProvider } from './upstream-execution.js';
 
+interface PendingMarker {
+  kind: 'pending';
+  effectId: string;
+  inputDigest: string;
+  at: string;
+}
+
 interface PackageRecord {
+  kind: 'captured';
   sequence: number;
   effectId: string;
   operation: string;
@@ -44,6 +53,7 @@ export class EvidencePackageUpstream implements UpstreamProvider {
     const result = this.capture(effect);
     const records = this.records();
     const record: PackageRecord = {
+      kind: 'captured',
       sequence: records.length + 1,
       effectId: effect.id,
       operation: effect.operation,
@@ -54,7 +64,7 @@ export class EvidencePackageUpstream implements UpstreamProvider {
       result,
       digest: digest({ operation: effect.operation, payload: effect.input, target: this.target }),
     };
-    appendFileSync(this.packagePath, JSON.stringify(record) + '\n');
+    this.write(record);
     return result;
   }
 
@@ -63,8 +73,38 @@ export class EvidencePackageUpstream implements UpstreamProvider {
     signal.throwIfAborted();
     this.bind(effect);
     const record = this.find(effect.id);
-    if (!record) return { status: 'absent', evidence: this.packagePath };
-    return { status: 'completed', evidence: this.packagePath, result: record.result };
+    if (record) return { status: 'completed', evidence: this.packagePath, result: record.result };
+    const pending = this.pending().find((item) => item.effectId === effect.id);
+    if (pending && pending.inputDigest !== effect.inputDigest)
+      throw new Error('Evidence package idempotency identity conflict');
+    if (pending)
+      return {
+        status: 'unknown',
+        evidence: this.packagePath,
+        reason: 'Provider work began without a captured result',
+      };
+    return { status: 'absent', evidence: this.packagePath };
+  }
+
+  /**
+   * Journals that work began, before any result exists.
+   *
+   * Recovery guarantees depend on being able to say "this was attempted and its outcome is not
+   * recorded" rather than "it never happened". A second attempt on an unreconciled effect is
+   * refused so a caller cannot quietly double-capture.
+   */
+  markAttempted(effect: ExternalEffect): void {
+    this.bind(effect);
+    if (this.find(effect.id)) throw new Error('Evidence effect is already captured');
+    if (this.pending().some((item) => item.effectId === effect.id))
+      throw new Error('Evidence effect requires reconciliation before retry');
+    const marker: PendingMarker = {
+      kind: 'pending',
+      effectId: effect.id,
+      inputDigest: effect.inputDigest,
+      at: new Date().toISOString(),
+    };
+    this.write(marker);
   }
 
   /** The captured operations, in the order the run performed them. */
@@ -86,6 +126,7 @@ export class EvidencePackageUpstream implements UpstreamProvider {
       return { id, issueId: id, revision: 1, provider: 'evidence-package', simulation: true };
     }
     if (effect.operation === 'issue.comment') {
+      this.requireIssue('issue', String(payload.issueId ?? ''), 'Comment');
       const id = `${this.environmentId}:comment:${effect.id}`;
       return {
         id,
@@ -95,14 +136,33 @@ export class EvidencePackageUpstream implements UpstreamProvider {
         simulation: true,
       };
     }
-    if (effect.operation === 'issue.close')
+    if (effect.operation === 'issue.close') {
+      const record = this.requireIssue('issue', String(payload.issueId ?? ''), 'Closure');
+      const revision = payload.revision;
+      if (!Number.isSafeInteger(revision)) throw new Error('Expected issue revision');
+      if (record.result.revision !== revision)
+        throw new Error(`Stale closure: issue is at revision ${record.result.revision}`);
       return {
-        id: String(payload.issueId ?? ''),
-        revision: 2,
+        id: String(record.result.id),
+        revision: (revision as number) + 1,
         state: 'closed',
         provider: 'evidence-package',
       };
+    }
     throw new Error('Unsupported evidence-package operation: ' + effect.operation);
+  }
+
+  /**
+   * Resolves a captured record the new operation refers to.
+   *
+   * A comment or closure must point at an issue this package actually recorded in this namespace,
+   * so an effect cannot reference state it never created.
+   */
+  private requireIssue(kind: string, id: string, label: string): PackageRecord {
+    const record = this.records().find((entry) => entry.result.id === id);
+    if (!record || record.operation !== 'issue.create')
+      throw new Error(`${label} target is not an ${kind} in this environment`);
+    return record;
   }
 
   /** Locates the effect already captured, so a replay reuses its receipt. */
@@ -110,13 +170,29 @@ export class EvidencePackageUpstream implements UpstreamProvider {
     return this.records().find((record) => record.effectId === effectId);
   }
 
-  /** Reads the append-only package; a missing file is simply an empty history. */
+  /** Appends one line, creating the namespace directory the first time a run collaborates. */
+  private write(entry: PackageRecord | PendingMarker): void {
+    mkdirSync(dirname(this.packagePath), { recursive: true });
+    appendFileSync(this.packagePath, JSON.stringify(entry) + '\n');
+  }
+
+  /** Effects whose work was begun but whose result was never captured. */
+  private pending(): PendingMarker[] {
+    return this.lines().filter((line): line is PendingMarker => line.kind === 'pending');
+  }
+
   private records(): PackageRecord[] {
+    return this.lines().filter((line): line is PackageRecord => line.kind === 'captured');
+  }
+
+  /** Reads the append-only package; a missing file is simply an empty history. */
+  private lines(): Array<PackageRecord | PendingMarker> {
     if (!existsSync(this.packagePath)) return [];
     return readFileSync(this.packagePath, 'utf8')
       .split('\n')
       .filter((line) => line.trim())
-      .map((line) => JSON.parse(line) as PackageRecord);
+      .map((line) => JSON.parse(line) as PackageRecord | PendingMarker)
+      .filter((line) => line.kind === 'captured' || line.kind === 'pending');
   }
 }
 

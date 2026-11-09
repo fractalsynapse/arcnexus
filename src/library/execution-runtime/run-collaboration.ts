@@ -6,17 +6,14 @@ import { join } from 'node:path';
 import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
 import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/execution-types.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
-import { ProviderStore } from '../coordination-store/provider-store.js';
+import { EvidencePackageUpstream } from '../operations/evidence-package-upstream.js';
 import { githubHostCredential, GitHubUpstream } from '../operations/github-upstream.js';
-import { SimulatedUpstream } from '../operations/simulated-upstream.js';
 import { UpstreamExecution } from '../operations/upstream-execution.js';
 import { UpstreamBridge } from '../operations/upstream-bridge.js';
 import type { RunEnvironments } from './run-environments.js';
 
 /** Binds tracking and steward collaboration to the host's captured environment and operation grants. */
 export class RunCollaboration {
-  private providerStore?: ProviderStore;
-
   private readonly target: string;
 
   /** Retains the existing run/assignment stores without granting a worker access to them. */
@@ -164,9 +161,7 @@ export class RunCollaboration {
   }
 
   /** Releases provider connections once a direction or engineering activation has completed. */
-  close(): void {
-    this.providerStore?.close();
-  }
+  close(): void {}
 
   /** Resolves the same effect executor for real GitHub and isolated simulated providers. */
   private executor(owner: string, assignmentId?: string): UpstreamExecution {
@@ -186,14 +181,11 @@ export class RunCollaboration {
     const environment = this.environments.effects.environment(this.run.environment!.id);
     let provider;
     if (environment.mode === 'simulation') {
-      this.providerStore ??= new ProviderStore(
-        join(this.environments.directory, environment.id, 'provider.sqlite'),
-      );
-      provider = new SimulatedUpstream(
+      provider = new EvidencePackageUpstream(
         environment.providerId,
         environment.id,
         this.target,
-        this.providerStore,
+        join(this.environments.directory, environment.id, 'evidence-package.jsonl'),
       );
     } else
       provider = new GitHubUpstream(

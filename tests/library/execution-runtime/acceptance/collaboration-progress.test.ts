@@ -7,11 +7,10 @@ import {
   ExecutionContext,
   type ProjectExecution,
 } from '../../../../dist/library/architecture/execution-context.js';
-import { ProviderStore } from '../../../../dist/library/coordination-store/provider-store.js';
+import { EvidencePackageUpstream } from '../../../../dist/library/operations/evidence-package-upstream.js';
 import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
 import { RunEnvironments } from '../../../../dist/library/execution-runtime/run-environments.js';
 import { RunCollaboration } from '../../../../dist/library/execution-runtime/run-collaboration.js';
-import { SimulatedUpstream } from '../../../../dist/library/operations/simulated-upstream.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { generalCatalogFixture } from '../../testing/support/general-fixture.js';
 
@@ -98,11 +97,13 @@ class ProgressFixture {
     t.after(() => collaboration.close());
     await collaboration.tracking(workday ? assignment : undefined);
     this.host.store.updateAssignment(assignment.id, 'waiting');
-    const provider = new ProviderStore(
-      join(this.environments.directory, run.environment!.id, 'provider.sqlite'),
+    const pack = new EvidencePackageUpstream(
+      'inspector',
+      String(run.environment!.id),
+      'repo',
+      join(this.environments.directory, run.environment!.id, 'evidence-package.jsonl'),
     );
-    t.after(() => provider.close());
-    return { run, assignment, collaboration, provider };
+    return { run, assignment, collaboration, pack };
   }
 }
 
@@ -111,30 +112,30 @@ class ProgressScenario {
   /** Repeated observations are read-only and completion carries independently retained evidence. */
   async milestones(t: TestContext, workday: boolean): Promise<void> {
     const f = new ProgressFixture(t);
-    const { assignment, collaboration, provider } = await f.start(t, workday);
-    const issue = provider.resources().find((resource) => resource.kind === 'issue')!;
-    assert.match(String(issue.data.body), /^## Scope\n/);
-    assert.match(String(issue.data.body), /## Summary\n\n/);
-    assert.match(String(issue.data.body), /## Acceptance criteria/);
+    const { assignment, collaboration, pack } = await f.start(t, workday);
+    const issue = pack.entries().find((entry) => entry.operation === 'issue.create')!;
+    assert.match(String(issue.payload.body), /^## Scope\n/);
+    assert.match(String(issue.payload.body), /## Summary\n\n/);
+    assert.match(String(issue.payload.body), /## Acceptance criteria/);
     await collaboration.progress();
     const events = f.environments.effects.events();
     await collaboration.progress();
     assert.deepEqual(f.environments.effects.events(), events);
     f.host.store.complete(assignment.id, ['independent-review']);
     await collaboration.progress();
-    const comments = provider.resources().filter((resource) => resource.kind === 'comment');
+    const comments = pack.entries().filter((entry) => entry.operation === 'issue.comment');
     assert.equal(comments.length, 2);
-    const bodies = comments.map((comment) => String(comment.data.body));
+    const bodies = comments.map((comment) => String(comment.payload.body));
     assert.match(bodies[0]!, /\*\*a: waiting\*\*/);
     assert.match(bodies[1]!, /\*\*a: verified component delivery\*\*/);
     assert.match(bodies[1]!, /independent-review/);
-    assert.ok(comments.every((comment) => comment.data.assignmentId === assignment.id));
+    assert.ok(comments.every((comment) => comment.assignmentId === assignment.id));
   }
 
   /** Historical JSON comments keep their semantic receipt identity after the Markdown upgrade. */
   async historical(t: TestContext): Promise<void> {
     const f = new ProgressFixture(t);
-    const { run, assignment, collaboration, provider } = await f.start(t);
+    const { run, assignment, collaboration, pack } = await f.start(t);
     const tracking = f.environments.effects.effects()[0]!;
     const issue = f.host.store.run(run.id).data.trackingIssue as { issueId: string };
     const body = this.historicalBody(assignment);
@@ -150,17 +151,17 @@ class ProgressScenario {
       definitionDigest: f.context.catalog.operations['issue-comment']!.definitionDigest!,
     });
     const effect = f.environments.effects.begin(id);
-    const result = await new SimulatedUpstream(
+    const result = await new EvidencePackageUpstream(
       'simulated',
-      run.environment!.id,
+      String(run.environment!.id),
       tracking.target,
-      provider,
+      join(f.environments.directory, String(run.environment!.id), 'evidence-package.jsonl'),
     ).apply(effect, new AbortController().signal);
     f.environments.effects.complete(id, effect.attempt, result);
     await collaboration.progress();
-    const comments = provider.resources().filter((resource) => resource.kind === 'comment');
+    const comments = pack.entries().filter((entry) => entry.operation === 'issue.comment');
     assert.equal(comments.length, 1);
-    assert.equal(comments[0]!.data.body, body);
+    assert.equal(comments[0]!.payload.body, body);
   }
 
   /** Reproduces the released comment payload so migration checks compare actual prior identities. */
@@ -186,7 +187,7 @@ class ProgressScenario {
   /** A lost host receipt is recovered before a changed assignment produces its next comment. */
   async receiptLoss(t: TestContext): Promise<void> {
     const f = new ProgressFixture(t);
-    const { assignment, collaboration, provider } = await f.start(t);
+    const { assignment, collaboration, pack } = await f.start(t);
     const effects = f.environments.effects;
     const complete = effects.complete.bind(effects);
     effects.complete = () => {
@@ -194,18 +195,18 @@ class ProgressScenario {
     };
     await assert.rejects(collaboration.progress(), /Injected receipt loss/);
     effects.complete = complete;
-    assert.equal(provider.resources().filter((resource) => resource.kind === 'comment').length, 1);
+    assert.equal(pack.entries().filter((entry) => entry.operation === 'issue.comment').length, 1);
     f.host.store.complete(assignment.id, ['independent-review']);
     await collaboration.progress();
     await collaboration.progress();
-    assert.equal(provider.resources().filter((resource) => resource.kind === 'comment').length, 2);
+    assert.equal(pack.entries().filter((entry) => entry.operation === 'issue.comment').length, 2);
     assert.ok(effects.effects().every((effect) => effect.status === 'completed'));
   }
 
   /** Unknown provider progress cannot be replayed or concealed by a newer assignment observation. */
   async uncertain(t: TestContext): Promise<void> {
     const f = new ProgressFixture(t);
-    const { run, assignment, collaboration, provider } = await f.start(t);
+    const { run, assignment, collaboration, pack } = await f.start(t);
     const issue = f.host.store.run(run.id).data.trackingIssue as { issueId: string };
     const input = { issueId: issue.issueId, body: 'Retained uncertain milestone' };
     const id =
@@ -222,10 +223,10 @@ class ProgressScenario {
       definitionDigest: definition.definitionDigest!,
       input,
     });
-    provider.start(f.environments.effects.begin(id));
+    pack.markAttempted(f.environments.effects.begin(id));
     await assert.rejects(collaboration.progress(), /requires reconciliation/);
     assert.equal(f.environments.effects.effect(id).status, 'uncertain');
-    assert.equal(provider.resources().filter((resource) => resource.kind === 'comment').length, 0);
+    assert.equal(pack.entries().filter((entry) => entry.operation === 'issue.comment').length, 0);
   }
 }
 
@@ -246,23 +247,23 @@ test('uncertain progress prevents blind replay and new milestone dispatch', (t) 
 
 test('missing comment grants preserve tracking without inventing upstream authority', async (t) => {
   const f = new ProgressFixture(t, false);
-  const { collaboration, provider } = await f.start(t);
+  const { collaboration, pack } = await f.start(t);
   await collaboration.progress();
   assert.deepEqual(
-    provider.resources().map((resource) => resource.kind),
-    ['issue'],
+    pack.entries().map((entry) => entry.operation),
+    ['issue.create'],
   );
 });
 
 test('foreign-environment issue references cannot receive milestone comments', async (t) => {
   const f = new ProgressFixture(t);
-  const { assignment, collaboration, provider } = await f.start(t);
+  const { assignment, collaboration, pack } = await f.start(t);
   const tracking = f.environments.effects.effects()[0]!;
-  const foreign = await new SimulatedUpstream(
+  const foreign = await new EvidencePackageUpstream(
     'foreign',
     'foreign',
     tracking.target,
-    provider,
+    join(f.environments.directory, 'foreign', 'evidence-package.jsonl'),
   ).apply(
     { ...tracking, id: 'foreign-issue', environmentId: 'foreign' },
     new AbortController().signal,
@@ -271,8 +272,8 @@ test('foreign-environment issue references cannot receive milestone comments', a
     trackingIssue: { issueId: foreign.issueId },
   });
   await assert.rejects(collaboration.progress(), /not an issue in this environment/);
-  assert.equal(provider.resources().filter((resource) => resource.kind === 'comment').length, 0);
-  assert.equal(provider.resource(String(foreign.issueId)).revision, 1);
+  assert.equal(pack.entries().filter((entry) => entry.operation === 'issue.comment').length, 0);
+  assert.equal(foreign.revision, 1, 'the foreign namespace is untouched');
 });
 
 registerSuite({

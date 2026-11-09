@@ -4,8 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { LifecycleStore } from '../../../../dist/library/coordination-store/lifecycle-store.js';
-import { ProviderStore } from '../../../../dist/library/coordination-store/provider-store.js';
-import { SimulatedUpstream } from '../../../../dist/library/operations/simulated-upstream.js';
+import { EvidencePackageUpstream } from '../../../../dist/library/operations/evidence-package-upstream.js';
 import { UpstreamExecution } from '../../../../dist/library/operations/upstream-execution.js';
 import { UpstreamBridge } from '../../../../dist/library/operations/upstream-bridge.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
@@ -16,9 +15,12 @@ class UpstreamFixture {
 
   readonly store = new LifecycleStore(join(this.root, 'host.sqlite'));
 
-  readonly providerStore = new ProviderStore(join(this.root, 'provider.sqlite'));
-
-  readonly provider = new SimulatedUpstream('provider', 'sim', 'repo', this.providerStore);
+  readonly provider = new EvidencePackageUpstream(
+    'provider',
+    'sim',
+    'repo',
+    join(this.root, 'evidence-package.jsonl'),
+  );
 
   readonly authority = {
     environmentId: 'sim',
@@ -48,7 +50,6 @@ class UpstreamFixture {
     this.executor = new UpstreamExecution(this.store, this.provider, this.authority);
     t.after(() => {
       this.store.close();
-      this.providerStore.close();
       rmSync(this.root, { recursive: true, force: true });
     });
   }
@@ -72,7 +73,7 @@ test('simulation issue and comment retries retain one resource per intent', asyn
   const input = { issueId: issue.result!.id, body: 'Verified milestone' };
   await f.executor.execute('comment', 'issue.comment', 'repo', input, f.signal);
   await f.executor.execute('comment', 'issue.comment', 'repo', input, f.signal);
-  assert.equal(f.providerStore.resources().length, 2);
+  assert.equal(f.provider.entries().length, 2);
   assert.equal(f.store.effect('comment').attempt, 1);
 });
 
@@ -93,7 +94,7 @@ test('provider mutation before host receipt reconciles without creating another 
   assert.equal((await f.issue()).status, 'uncertain');
   assert.equal((await f.executor.recover(effect.id, f.signal)).status, 'completed');
   assert.equal(f.store.effect(effect.id).attempt, 1);
-  assert.equal(f.providerStore.resources().length, 1);
+  assert.equal(f.provider.entries().length, 1);
 });
 
 test('mode mismatch fails before mutation', (t) => {
@@ -116,7 +117,7 @@ test('mode mismatch fails before mutation', (t) => {
       ),
     /authority/,
   );
-  assert.equal(f.providerStore.resources().length, 0);
+  assert.equal(f.provider.entries().length, 0);
 });
 
 test('unauthorized destination fails before mutation', async (t) => {
@@ -132,7 +133,7 @@ test('unauthorized destination fails before mutation', async (t) => {
       ),
     /not authorized/,
   );
-  assert.equal(f.providerStore.resources().length, 0);
+  assert.equal(f.provider.entries().length, 0);
 });
 
 test('stale issue closure rejects atomically and cancellation produces no effect', async (t) => {
@@ -149,7 +150,11 @@ test('stale issue closure rejects atomically and cancellation produces no effect
       ),
     /Stale/,
   );
-  assert.equal(f.providerStore.resource(String(issue.result!.id)).data.state, 'open');
+  assert.equal(
+    f.provider.entries().filter((entry) => entry.operation === 'issue.close').length,
+    0,
+    'a rejected closure captures nothing',
+  );
   assert.equal(f.store.effect('close').status, 'uncertain');
   const controller = new AbortController();
   controller.abort();
@@ -183,7 +188,7 @@ test('collaboration bridge binds identities and rejects worker authority fields'
     /different intent/,
   );
   await assert.rejects(() => bridge.call('release.publish', input), /unavailable/);
-  assert.equal(f.providerStore.resources().length, 1);
+  assert.equal(f.provider.entries().length, 1);
 });
 
 test('recovery cannot declare absence while the upstream request is still active', async (t) => {

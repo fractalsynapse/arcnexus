@@ -95,12 +95,17 @@ test('evidence package answers recovery lookups with what was captured', async (
     new AbortController().signal,
   );
   assert.equal(absent.status, 'absent');
-  const result = await f.provider.apply(
-    f.effect('issue.close', { issueId: 'issue-9' }, 'close-1'),
+  const created = await f.provider.apply(
+    f.effect('issue.create', { title: 'Closeable', body: 'A real issue' }, 'close-src'),
     new AbortController().signal,
   );
+  const result = await f.provider.apply(
+    f.effect('issue.close', { issueId: String(created.issueId), revision: 1 }, 'close-1'),
+    new AbortController().signal,
+  );
+  assert.equal(result.revision, 2, 'a closure advances the state this package recorded');
   const seen = await f.provider.inspect(
-    f.effect('issue.close', { issueId: 'issue-9' }, 'close-1'),
+    f.effect('issue.close', { issueId: String(created.issueId), revision: 1 }, 'close-1'),
     new AbortController().signal,
   );
   assert.equal(seen.status, 'completed');
@@ -127,6 +132,45 @@ test('evidence package reaches no upstream and resolves no credential', async (t
   );
   assert.equal(fetch.mock.callCount(), 0);
   assert.equal(f.provider.mode, 'simulation');
+});
+
+test('begun but unreconciled work is unknown, not absent, and cannot be retried silently', async (t) => {
+  const f = new PackageFixture(t);
+  const effect = f.effect('issue.create', { title: 'Interrupted', body: 'Outcome unclear' }, 'p-1');
+  f.provider.markAttempted(effect);
+  const seen = await f.provider.inspect(effect, new AbortController().signal);
+  assert.equal(seen.status, 'unknown');
+  assert.match(seen.reason ?? '', /without a captured result/);
+  assert.throws(() => f.provider.markAttempted(effect), /requires reconciliation before retry/);
+  const result = await f.provider.apply(effect, new AbortController().signal);
+  const after = await f.provider.inspect(effect, new AbortController().signal);
+  assert.equal(after.status, 'completed');
+  assert.deepEqual(after.result, result, 'the captured result supersedes the marker');
+});
+
+test('an effect identity reused with different input is refused, not merged', async (t) => {
+  const f = new PackageFixture(t);
+  const first = f.effect('issue.comment', { body: 'One' }, 'shared');
+  f.provider.markAttempted(first);
+  await assert.rejects(
+    f.provider.inspect({ ...first, inputDigest: 'different' }, new AbortController().signal),
+    /idempotency identity conflict/,
+  );
+});
+
+test('an effect bound to another environment is refused rather than captured', async (t) => {
+  const f = new PackageFixture(t);
+  await assert.rejects(
+    f.provider.apply(
+      {
+        ...f.effect('issue.create', { title: 'Foreign', body: 'Elsewhere' }, 'x'),
+        environmentId: 'other',
+      },
+      new AbortController().signal,
+    ),
+    /bound to another environment/,
+  );
+  assert.equal(existsSync(f.path), false);
 });
 
 registerSuite({ component: 'operations', level: 'acceptance', tags: ['deterministic'] });
