@@ -6,9 +6,9 @@ import {
   type VerificationVerdict,
 } from '../../../../dist/library/publisher/publisher.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import type { SimulationCheckResult } from '../../../../dist/library/operations/simulated-pull-requests.js';
+import type { CheckResult } from '../../../../dist/library/operations/check-result.js';
 
-const result: SimulationCheckResult = {
+const result: CheckResult = {
   status: 'passed',
   evidence: ['report.json'],
   artifacts: [],

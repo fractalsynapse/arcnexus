@@ -24,7 +24,7 @@ interface PendingAssembly {
   contributions: PreparedContribution[];
 }
 
-/** Advances dependent source through existing delivery checks and one atomic candidate promotion. */
+/** Advances dependent source through existing delivery checks and one atomic candidate update. */
 export class AssembledDelivery {
   /** Shares the active repository lane, captured authority and ordinary durable store. */
   constructor(

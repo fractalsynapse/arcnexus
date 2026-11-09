@@ -4,7 +4,7 @@ import type { TestContext } from 'node:test';
 import { HostClient } from '../../../../dist/library/execution-runtime/host-client.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
-import { PromotionFixture } from '../support/promotion-fixture.js';
+import { PublicationFixture } from '../support/publication-fixture.js';
 
 /** Uses the production host's compact status projection across a controlled private IPC transport. */
 class RetainedAdmissionScenario {
@@ -20,7 +20,7 @@ class RetainedAdmissionScenario {
 
   /** Captures real package authority without dispatching model turns or managed operations. */
   constructor(t: TestContext) {
-    const prepared = new PromotionFixture(t);
+    const prepared = new PublicationFixture(t);
     this.fixture = prepared.general.fixture;
     this.context = prepared.context;
     this.host = prepared.host;

@@ -1,14 +1,9 @@
 import { publicationContent } from './repository-documents.js';
 import type { DeliveryRecord } from '../coordination-store/delivery-types.js';
 import { ProviderStore, type ProviderResource } from '../coordination-store/provider-store.js';
+import type { CheckResult } from './check-result.js';
 import type { ExternalEffect, ExternalObservation } from '../coordination-store/lifecycle-types.js';
 import type { DeliveryGit } from './delivery-git.js';
-
-export interface SimulationCheckResult {
-  status: 'passed' | 'failed';
-  evidence: string[];
-  artifacts: Array<{ path: string; sha256: string }>;
-}
 
 /** Models observable PR/check/review transitions against actual pushed Git delivery heads. */
 export class SimulatedPullRequests {
@@ -23,7 +18,7 @@ export class SimulatedPullRequests {
       head: string,
       signal: AbortSignal,
       independent?: boolean,
-    ) => Promise<SimulationCheckResult>,
+    ) => Promise<CheckResult>,
   ) {
     this.delivery = structuredClone(delivery);
     if (delivery.environment.mode !== 'simulation') throw new Error('Expected simulation delivery');
@@ -135,11 +130,7 @@ export class SimulatedPullRequests {
   }
 
   /** Records an observed rejection without claiming integration or losing passed engineering evidence. */
-  private blockMerge(
-    effect: ExternalEffect,
-    resource: ProviderResource,
-    checked: SimulationCheckResult,
-  ) {
+  private blockMerge(effect: ExternalEffect, resource: ProviderResource, checked: CheckResult) {
     return this.store.apply(effect, () => {
       this.store.update(this.id, resource.revision, { mergeChecks: checked });
       return {
@@ -154,7 +145,7 @@ export class SimulatedPullRequests {
   private finishMerge(effect: ExternalEffect, result: Record<string, unknown>) {
     return this.store.apply(effect, () => {
       const resource = this.store.resource(this.id);
-      const checks = resource.data.mergeChecks as SimulationCheckResult | undefined;
+      const checks = resource.data.mergeChecks as CheckResult | undefined;
       if (
         resource.data.mergeInProgress !== effect.id ||
         resource.data.mergeHead !== result.head ||

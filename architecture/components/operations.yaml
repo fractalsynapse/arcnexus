@@ -23,12 +23,13 @@ api:
   - module: src/library/operations/repository-documents.ts
   - module: src/library/operations/installed-runtime.ts
   - module: src/library/operations/prepared-dependencies.ts
-  - module: src/library/operations/promotion-assembly.ts
   - module: src/library/operations/delivery-assembly.ts
   - module: src/library/operations/delivery-commit.ts
   - module: src/library/operations/github-delivery.ts
   - module: src/library/operations/github-pull-requests.ts
   - module: src/library/operations/simulated-pull-requests.ts
+  - module: src/library/operations/check-result.ts
+  - module: src/library/operations/evidence-package-upstream.ts
   - module: src/library/operations/delivery-git.ts
   - module: src/library/operations/operation-execution.ts
   - module: src/library/operations/confinement.ts

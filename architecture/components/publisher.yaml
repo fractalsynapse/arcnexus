@@ -7,7 +7,6 @@ objectives:
   - Verify and publish assembled dependent contributions through one delivery route
 constraints:
   - Publication cannot substitute for independent engineering verification
-  - Simulation promotion creates fresh live authority and verification
   - Real main merges, tags and package publication remain human-controlled
 operations:
   publish-delivery: [agent]

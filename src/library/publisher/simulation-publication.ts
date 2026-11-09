@@ -5,11 +5,9 @@ import type { DeliveryStore } from '../coordination-store/delivery-store.js';
 import type { LifecycleStore } from '../coordination-store/lifecycle-store.js';
 import type { ExternalEffect } from '../coordination-store/lifecycle-types.js';
 import { ProviderStore } from '../coordination-store/provider-store.js';
+import type { CheckResult } from '../operations/check-result.js';
 import { DeliveryGit } from '../operations/delivery-git.js';
-import {
-  SimulatedPullRequests,
-  type SimulationCheckResult,
-} from '../operations/simulated-pull-requests.js';
+import { SimulatedPullRequests } from '../operations/simulated-pull-requests.js';
 import { SimulatedReleases } from '../operations/simulated-releases.js';
 import { PublicationEffects } from './publication-effects.js';
 import type { CapturedPublicationPolicy } from './publication-policy.js';
@@ -22,11 +20,7 @@ export interface SimulationPublicationContext {
   effects: LifecycleStore;
   deliveries: DeliveryStore;
   policy: CapturedPublicationPolicy;
-  checks: (
-    head: string,
-    signal: AbortSignal,
-    independent?: boolean,
-  ) => Promise<SimulationCheckResult>;
+  checks: (head: string, signal: AbortSignal, independent?: boolean) => Promise<CheckResult>;
 }
 
 const actions = [

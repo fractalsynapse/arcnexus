@@ -1,5 +1,3 @@
-export { PromotionRecovery } from './promotion-recovery.js';
-
 export { PublicationPolicy, type CapturedPublicationPolicy } from './publication-policy.js';
 
 export {
@@ -16,21 +14,9 @@ import type { ExecutionRun, ExecutionAssignment } from '../coordination-store/ex
 import type { DeliveryStore } from '../coordination-store/delivery-store.js';
 import type { DeliveryCapture, DeliveryRecord } from '../coordination-store/delivery-types.js';
 import type { RecordData } from '../workspace/state.js';
-import { PromotionReview } from './promotion-review.js';
-import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
 import { DeliveryVerification } from './delivery-verification.js';
 import { DevelopmentDeliveries } from './development-deliveries.js';
 import { deliveryDocument } from './delivery-document.js';
-
-export interface PromotionInput {
-  context: ProjectExecution;
-  run: ExecutionRun;
-  sourceRun: ExecutionRun;
-  source: DeliveryRecord;
-  assignments: ExecutionAssignment[];
-  head: string;
-  target: DeliveryCapture['target'];
-}
 
 /** Captures verified engineering as immutable publication input without granting upstream authority. */
 export class Publisher {
@@ -143,50 +129,6 @@ export class Publisher {
     const candidate = JSON.parse(readFileSync(path, 'utf8')) as RecordData;
     if (candidate.id !== id) throw new Error('Retained candidate receipt identity mismatch');
     return candidate;
-  }
-
-  /** Creates separate live attribution only after original proof and fresh target/goal verification pass. */
-  async promote(input: PromotionInput, signal: AbortSignal) {
-    const { context, run, sourceRun, source, assignments, head } = input;
-    this.resolveRetained(source, sourceRun, assignments);
-    const proof = await new PromotionReview(this.root, context, source, run, assignments).verify(
-      head,
-      signal,
-    );
-    const delivery = this.capturePromotion(input, proof);
-    return { delivery, record: proof.record, goalEvidence: proof.goalEvidence };
-  }
-
-  /** Captures freshly verified target attribution independently of source simulation evidence. */
-  private capturePromotion(
-    input: PromotionInput,
-    proof: Awaited<ReturnType<PromotionReview['verify']>>,
-  ) {
-    const { context, run, source, head, target, assignments } = input;
-    const id = this.identity(context.key, run, head, target);
-    return this.store.capture({
-      id,
-      projectId: context.key,
-      runId: run.id,
-      packageId: context.packageId,
-      assignmentIds: source.assignmentIds,
-      environment: run.environment!,
-      authorityDigest: executionIdentity(context),
-      base: context.base,
-      candidate: head,
-      candidateRecordId: proof.record.id,
-      verification: proof.verification,
-      publicationDocument: this.document(
-        id,
-        run,
-        assignments,
-        proof.record,
-        proof.verification,
-        head,
-      ),
-      target,
-      promotedFrom: source.id,
-    });
   }
 
   /** Keeps source identity, assignment attribution and captured authority separate from future target verification. */

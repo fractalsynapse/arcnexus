@@ -163,8 +163,6 @@ class HostServer {
   private dispatch(request: HostRequest): unknown {
     this.validate(request);
     if (request.action === 'identity') return this.identity();
-    if (request.action === 'delivery-promote')
-      return this.host.promote(String(request.id), request.expectedRevision);
     if (request.action === 'delivery-control')
       return this.host.publish(String(request.id), request.expectedRevision);
     if (request.action === 'workday-control')

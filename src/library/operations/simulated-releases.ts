@@ -4,7 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import type { DeliveryRecord } from '../coordination-store/delivery-types.js';
 import type { ExternalEffect, ExternalObservation } from '../coordination-store/lifecycle-types.js';
 import { ProviderStore } from '../coordination-store/provider-store.js';
-import type { SimulationCheckResult } from './simulated-pull-requests.js';
+import type { CheckResult } from './check-result.js';
 
 /** Publishes actual checked artifacts into an isolated release store without contacting a package registry. */
 export class SimulatedReleases {
@@ -27,7 +27,7 @@ export class SimulatedReleases {
     const prior = this.store.inspect(effect);
     if (prior.status === 'completed') return prior.result;
     const pr = this.store.resource(`${this.delivery.environment.id}:pr:${this.delivery.id}`);
-    const checks = pr.data.mergeChecks as SimulationCheckResult | undefined;
+    const checks = pr.data.mergeChecks as CheckResult | undefined;
     if (
       pr.data.state !== 'merged' ||
       checks?.status !== 'passed' ||
@@ -48,7 +48,7 @@ export class SimulatedReleases {
   }
 
   /** Stores explicitly simulated release provenance separately from integration and engineering state. */
-  private release(head: string, artifacts: SimulationCheckResult['artifacts']) {
+  private release(head: string, artifacts: CheckResult['artifacts']) {
     const id = `${this.delivery.environment.id}:release:${this.delivery.id}`;
     const result = {
       id,

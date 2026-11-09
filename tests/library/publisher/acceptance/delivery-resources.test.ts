@@ -81,6 +81,26 @@ test('built delivery CLI lists reads and approves retained revisions outside a c
   assert.match(invalid.stderr, /delivery|simulate|Simulation/);
 });
 
+test('built delivery CLI offers no promotion or publish mutation commands', (t) => {
+  const f = new ResourceFixture(t);
+  for (const action of ['promote', 'publish']) {
+    const refused = spawnSync(
+      process.execPath,
+      [resolve('dist/cli.js'), 'delivery', action, 'delivery'],
+      {
+        cwd: tmpdir(),
+        env: { ...process.env, ARCNEXUS_STATE_DIR: f.root },
+        encoding: 'utf8',
+      },
+    );
+    assert.equal(refused.status, 2, `delivery ${action} must not be accepted at all`);
+    assert.doesNotMatch(refused.stderr, /retired/, 'deletion leaves no retirement vocabulary');
+    assert.match(refused.stderr, /delivery list/, 'the usage line states what remains');
+  }
+  assert.equal(f.cli('get', 'delivery').environment.mode, 'simulation', 'reads still work');
+  assert.equal(f.cli('approve', 'delivery').approval.candidate, 'candidate');
+});
+
 registerSuite({
   component: 'publisher',
   level: 'acceptance',

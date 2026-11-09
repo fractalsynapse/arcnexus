@@ -1,4 +1,3 @@
-import { PromotionControl } from './promotion-control.js';
 import { DeliveryResources } from '../publisher/publisher.js';
 import { InputError } from '../architecture/config.js';
 import { statePath } from '../workspace/state.js';
@@ -46,11 +45,6 @@ export class ExecutionControls {
       signal,
     );
     return connection.request({ action: 'delivery-control', id, expectedRevision });
-  }
-
-  /** Queues promotion under current target authority and forwards caller cancellation through acquisition. */
-  async promote(id: string, expectedRevision?: string, signal?: AbortSignal) {
-    return new PromotionControl(this.root).request(id, expectedRevision, signal);
   }
 
   /** Sends one mutation; uncertain responses are surfaced rather than automatically replayed. */

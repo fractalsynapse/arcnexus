@@ -13,7 +13,7 @@ import { candidateDigest } from '../../../../dist/library/change-inspection/chan
 import { git } from '../../../../dist/library/operations/process.js';
 
 /** Supplies recorded source proof while target operations, Git and verification use production services. */
-export class PromotionFixture {
+export class PublicationFixture {
   readonly general: GeneralFixture;
 
   readonly context;
@@ -58,7 +58,7 @@ export class PromotionFixture {
     this.operations();
     const environment = join(f.repo, 'architecture/environment.yaml');
     const value = JSON.parse(readFileSync(environment, 'utf8'));
-    value.workspace.primary.repository = 'https://github.com/example/promotion-fixture.git';
+    value.workspace.primary.repository = 'https://github.com/example/publication-fixture.git';
     writeFileSync(environment, JSON.stringify(value));
     f.git('remote', 'set-url', 'origin', value.workspace.primary.repository);
     f.commit();
@@ -140,7 +140,7 @@ export class PromotionFixture {
       this.context.key,
       this.host.store.run(this.source.id),
       [this.host.store.assignment(this.assignment.id)],
-      { repository: 'example/promotion-fixture', branch: 'staging' },
+      { repository: 'example/publication-fixture', branch: 'staging' },
     );
   }
 
@@ -203,16 +203,16 @@ export class PromotionFixture {
     this.credential(t);
     t.mock.method(globalThis, 'fetch', async (url: string | URL, options: RequestInit) => {
       if (
-        String(url) !== 'https://api.github.com/repos/example/promotion-fixture/issues' ||
+        String(url) !== 'https://api.github.com/repos/example/publication-fixture/issues' ||
         options.method !== 'POST'
       )
-        throw new Error('Unexpected provider operation in promotion acceptance');
+        throw new Error('Unexpected provider operation in publication acceptance');
       calls.push(String(options.body));
       return new Response(
         JSON.stringify({
           id: 1,
           number: 1,
-          html_url: 'https://github.com/example/promotion-fixture/issues/1',
+          html_url: 'https://github.com/example/publication-fixture/issues/1',
         }),
       );
     });

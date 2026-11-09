@@ -262,7 +262,7 @@ export class RunPublication {
     run: ExecutionRun,
     delivery: DeliveryRecord,
   ): DeliveryChecks {
-    const sourceRun = run.data.promotionSourceRun ? String(run.data.promotionSourceRun) : run.id;
+    const sourceRun = run.id;
     const ids = this.reviewAssignments(delivery);
     const assignments = this.execution.assignments(sourceRun).filter((a) => ids.includes(a.id));
     const publication = { ...run, data: { ...run.data, publicationDeliveryId: delivery.id } };

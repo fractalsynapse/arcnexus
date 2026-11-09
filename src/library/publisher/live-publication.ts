@@ -7,7 +7,7 @@ import { DeliveryCommit } from '../operations/delivery-commit.js';
 import { GitHubDelivery } from '../operations/github-delivery.js';
 import { GitHubPullRequests } from '../operations/github-pull-requests.js';
 import { execute } from '../operations/process.js';
-import type { SimulationCheckResult } from '../operations/simulated-pull-requests.js';
+import type { CheckResult } from '../operations/check-result.js';
 import type { CapturedPublicationPolicy } from './publication-policy.js';
 import { PublicationEffects } from './publication-effects.js';
 
@@ -19,11 +19,7 @@ export interface LivePublicationContext {
   deliveries: DeliveryStore;
   policy: CapturedPublicationPolicy;
   credential: () => Promise<string>;
-  checks: (
-    head: string,
-    signal: AbortSignal,
-    independent: boolean,
-  ) => Promise<SimulationCheckResult>;
+  checks: (head: string, signal: AbortSignal, independent: boolean) => Promise<CheckResult>;
   transport?: typeof fetch;
   runner?: typeof execute;
 }

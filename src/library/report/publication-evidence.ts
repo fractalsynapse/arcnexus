@@ -46,7 +46,7 @@ export class PublicationEvidence {
     }
   }
 
-  /** Distinguishes original simulation verdicts from current-target verification during promotion. */
+  /** Distinguishes the verdicts captured for each execution environment. */
   private sources(run: ExecutionRun, assignments: ExecutionAssignment[]) {
     const evidence = new DeliveryEvidence(this.root);
     return assignments

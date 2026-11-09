@@ -1,5 +1,4 @@
 import { AssembledDelivery } from './assembled-delivery.js';
-import { RunPromotion } from './run-promotion.js';
 import { RunFinalization } from './run-finalization.js';
 import { EvidenceRetention } from '../workspace/workspace.js';
 import { HostActivation } from './host-activation.js';
@@ -119,15 +118,6 @@ export class ProjectHost {
   /** Queues publication under the sole repository host without overlapping active engineering. */
   publish(id: string, expectedRevision?: string) {
     return new RunPublication(this.root, this.context, this.store).request(id, expectedRevision);
-  }
-
-  /** Starts fresh-target promotion in the same task queue and repository execution lock. */
-  promote(id: string, expectedRevision?: string) {
-    return new RunPromotion(this.root, this.context, this.store, this.environments).request(
-      id,
-      expectedRevision,
-      (prompt) => this.submit(prompt),
-    );
   }
 
   /** Queues a goal without interrupting an in-flight safe checkpoint. */
@@ -282,11 +272,6 @@ export class ProjectHost {
       return new RunPublication(this.root, this.context, this.store).advance(
         run,
         this.environments,
-        signal,
-      );
-    if (run.data.promotionSource)
-      return new RunPromotion(this.root, this.context, this.store, this.environments).advance(
-        run,
         signal,
       );
     await this.environments.prepare(run, signal);

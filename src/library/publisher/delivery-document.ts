@@ -21,7 +21,7 @@ export function deliveryDocument(
       Changes:
         assignments
           .map((assignment) => `- ${assignment.owner}: ${assignment.objective}`)
-          .join('\n') || 'Verified promotion of the retained source delivery.',
+          .join('\n') || 'Verified delivery of the retained assembled candidate.',
       Verification: verificationSummary(run, head, verification),
       'Related issue': issue?.issueId
         ? run.environment?.mode === 'live'

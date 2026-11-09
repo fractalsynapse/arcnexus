@@ -1,5 +1,4 @@
 import { DeliveryResources } from '../../library/publisher/publisher.js';
-import { ExecutionControls } from '../../library/execution-runtime/execution-controls.js';
 import { ExecutionContext } from '../../library/architecture/execution-context.js';
 import { Portfolio } from '../../library/portfolio/portfolio.js';
 import { InputError } from '../../library/architecture/config.js';
@@ -18,23 +17,12 @@ export class DeliveryCommand {
   async run(): Promise<void> {
     const action = this.positionals[1];
     if (action === 'list') return this.list();
-    if (
-      !['get', 'approve', 'publish', 'promote'].includes(action ?? '') ||
-      this.positionals.length !== 3
-    )
-      throw new InputError('Expected delivery list [package] | get|approve|publish|promote <id>');
+    if (!['get', 'approve'].includes(action ?? '') || this.positionals.length !== 3)
+      throw new InputError('Expected delivery list [package] | get|approve <id>');
     this.options(['json']);
     const resources = new DeliveryResources();
     const delivery = resources.get(this.positionals[2]!);
     if (action === 'approve') return this.render(resources.approve(delivery.id, delivery.revision));
-    if (action === 'promote')
-      return this.render(
-        await new ExecutionControls().promote(delivery.id, delivery.revision, this.signal),
-      );
-    if (action === 'publish')
-      return this.render(
-        await new ExecutionControls().delivery(delivery.id, delivery.revision, this.signal),
-      );
     this.render(delivery);
   }
 
