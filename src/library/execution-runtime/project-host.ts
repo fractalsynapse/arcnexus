@@ -268,12 +268,15 @@ export class ProjectHost {
   private async advance(run: ExecutionRun, signal: AbortSignal): Promise<void> {
     new EvidenceRetention(this.root).enforce();
     this.authority.assert(run);
-    if (run.data.pendingPublication)
-      return new RunPublication(this.root, this.context, this.store).advance(
+    if (run.data.pendingPublication) {
+      const closed = await new RunPublication(this.root, this.context, this.store).advance(
         run,
         this.environments,
         signal,
       );
+      if (closed && run.mode === 'task') this.store.updateRun(run.id, 'completed');
+      return;
+    }
     await this.environments.prepare(run, signal);
     run = this.store.run(run.id);
     if (!run.data.workspace) await this.workspaces(run).prepare(run, signal);
@@ -395,13 +398,13 @@ export class ProjectHost {
   /** Completes only after idempotent publication capture, so host loss cannot omit a verified delivery. */
   private async completeTask(run: ExecutionRun, signal: AbortSignal): Promise<void> {
     if (this.store.run(run.id).status !== 'running') return;
-    await new RunPublication(this.root, this.context, this.store).advance(
+    const closed = await new RunPublication(this.root, this.context, this.store).advance(
       run,
       this.environments,
       signal,
     );
-    if (signal.aborted || this.store.run(run.id).status !== 'running') return;
-    this.store.updateRun(run.id, 'completed');
+    if (closed && !signal.aborted && this.store.run(run.id).status === 'running')
+      this.store.updateRun(run.id, 'completed');
   }
 
   /** Reactivates goal direction without discarding deliveries or fabricating resolution of blocked work. */
