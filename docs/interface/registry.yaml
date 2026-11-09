@@ -169,8 +169,8 @@ contracts:
     file: docs/interface/arcnexus-verification.md
     owner: verification
     stage: locked
-    revision: 3
-    digest: 598ea485cf7d37987f155d2dedac2f843f27ea55747b6ee8ae0f55c83ec80b9c
+    revision: 4
+    digest: 07cbaf2fa2f53364a7104613aad53e6ddbdbacf3012062ae42a35d5e0697f5ac
     dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination, arcnexus/execution, arcnexus/direction]
     scenarios: 17
     acceptedBy: Adrian Webb (architect)
@@ -178,7 +178,7 @@ contracts:
     history:
       - revision: 1
         stage: proposed
-        digest: e2678c41c7a51e4c5c0236a39a488add35e496a727f1175d3060192d0920e3da
+        digest: 07cbaf2fa2f53364a7104613aad53e6ddbdbacf3012062ae42a35d5e0697f5ac
         note: >
           proposed in #356 with three open questions; the architect rejected the reviewer input cap
           outright for the first system, so revision 2 replaces bounds with full assembly by
