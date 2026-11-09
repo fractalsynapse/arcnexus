@@ -118,51 +118,61 @@ export class EvidencePackageUpstream implements UpstreamProvider {
       throw new Error('Evidence package is bound to another environment');
   }
 
-  /** Issues, comments and closures are recorded with their real text; anything else is a gap. */
+  /** Dispatches only the collaboration operations this provider captures. */
   private capture(effect: ExternalEffect): Record<string, unknown> {
-    const payload = effect.input as Record<string, unknown>;
-    if (effect.operation === 'issue.create') {
-      const id = `${this.environmentId}:issue:${effect.id}`;
-      return { id, issueId: id, revision: 1, provider: 'evidence-package', simulation: true };
-    }
-    if (effect.operation === 'issue.comment') {
-      this.requireIssue('issue', String(payload.issueId ?? ''), 'Comment');
-      const id = `${this.environmentId}:comment:${effect.id}`;
-      return {
-        id,
-        issueId: String(payload.issueId ?? ''),
-        revision: 1,
-        provider: 'evidence-package',
-        simulation: true,
-      };
-    }
-    if (effect.operation === 'issue.close') {
-      const record = this.requireIssue('issue', String(payload.issueId ?? ''), 'Closure');
-      const revision = payload.revision;
-      if (!Number.isSafeInteger(revision)) throw new Error('Expected issue revision');
-      if (record.result.revision !== revision)
-        throw new Error(`Stale closure: issue is at revision ${record.result.revision}`);
-      return {
-        id: String(record.result.id),
-        revision: (revision as number) + 1,
-        state: 'closed',
-        provider: 'evidence-package',
-      };
-    }
+    if (effect.operation === 'issue.create') return this.issue(effect);
+    if (effect.operation === 'issue.comment') return this.comment(effect);
+    if (effect.operation === 'issue.close') return this.close(effect);
     throw new Error('Unsupported evidence-package operation: ' + effect.operation);
   }
 
+  /** Records a tracking issue with its real title and body and the namespace that owns it. */
+  private issue(effect: ExternalEffect): Record<string, unknown> {
+    const id = `${this.environmentId}:issue:${effect.id}`;
+    return { id, issueId: id, revision: 1, provider: 'evidence-package', simulation: true };
+  }
+
+  /** Records a comment against an issue this package already captured. */
+  private comment(effect: ExternalEffect): Record<string, unknown> {
+    const issue = this.requireIssue(effect.input, 'Comment');
+    const id = `${this.environmentId}:comment:${effect.id}`;
+    return {
+      id,
+      issueId: String(issue.id),
+      revision: 1,
+      provider: 'evidence-package',
+      simulation: true,
+    };
+  }
+
+  /** Closes only at the revision this package recorded, so a stale closure is rejected. */
+  private close(effect: ExternalEffect): Record<string, unknown> {
+    const issue = this.requireIssue(effect.input, 'Closure');
+    const revision = effect.input.revision;
+    if (!Number.isSafeInteger(revision)) throw new Error('Expected issue revision');
+    const captured = this.records().find((entry) => entry.result.id === issue.id)!;
+    if (captured.result.revision !== revision)
+      throw new Error(`Stale closure: issue is at revision ${captured.result.revision}`);
+    return {
+      id: String(issue.id),
+      revision: (revision as number) + 1,
+      state: 'closed',
+      provider: 'evidence-package',
+    };
+  }
+
   /**
-   * Resolves a captured record the new operation refers to.
+   * Resolves the issue an operation refers to.
    *
-   * A comment or closure must point at an issue this package actually recorded in this namespace,
-   * so an effect cannot reference state it never created.
+   * A comment or closure must point at an issue this package actually recorded, so an effect
+   * cannot reference state the run never created.
    */
-  private requireIssue(kind: string, id: string, label: string): PackageRecord {
+  private requireIssue(input: Record<string, unknown>, label: string): Record<string, unknown> {
+    const id = String(input.issueId ?? '');
     const record = this.records().find((entry) => entry.result.id === id);
     if (!record || record.operation !== 'issue.create')
-      throw new Error(`${label} target is not an ${kind} in this environment`);
-    return record;
+      throw new Error(`${label} target is not an issue in this environment`);
+    return record.result;
   }
 
   /** Locates the effect already captured, so a replay reuses its receipt. */
@@ -181,6 +191,7 @@ export class EvidencePackageUpstream implements UpstreamProvider {
     return this.lines().filter((line): line is PendingMarker => line.kind === 'pending');
   }
 
+  /** Captured collaboration records, in the order they were written. */
   private records(): PackageRecord[] {
     return this.lines().filter((line): line is PackageRecord => line.kind === 'captured');
   }

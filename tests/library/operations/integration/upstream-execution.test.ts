@@ -156,18 +156,24 @@ test('stale issue closure rejects atomically and cancellation produces no effect
     'a rejected closure captures nothing',
   );
   assert.equal(f.store.effect('close').status, 'uncertain');
+});
+
+test('cancellation stops an effect before it reaches the provider', async (t) => {
+  const f = new UpstreamFixture(t);
   const controller = new AbortController();
   controller.abort();
-  await assert.rejects(() =>
-    f.executor.execute(
-      'cancelled',
-      'issue.create',
-      'repo',
-      { title: 'No', body: 'No' },
-      controller.signal,
-    ),
+  await assert.rejects(
+    () =>
+      f.executor.execute(
+        'cancelled',
+        'issue.create',
+        'repo',
+        { title: 'No', body: 'No' },
+        controller.signal,
+      ),
+    /abort|cancelled|aborted/i,
   );
-  assert.equal(f.store.effects().length, 2);
+  assert.equal(f.provider.entries().length, 0, 'a cancelled effect captures nothing');
 });
 
 test('collaboration bridge binds identities and rejects worker authority fields', async (t) => {
