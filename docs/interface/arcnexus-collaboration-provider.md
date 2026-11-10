@@ -1,6 +1,6 @@
 # Library contract — Collaboration provider
 
-Type contract: `library`. Stage: **locked** (revision 1). Owner: `delivery` (absorbs the
+Type contract: `library`. Stage: **locked** (revision 3). Owner: `delivery` (absorbs the
 upstream collaboration modules in `operations`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-delivery.md`](arcnexus-delivery.md), [`arcnexus-coordination.md`](arcnexus-coordination.md).
 Depended on by: `delivery`, `direction`, the gateway, and every future forge or hosting integration.
@@ -37,7 +37,7 @@ these four operations.
 | --- | --- |
 | I1 | One engine, many providers. No second publication or collaboration implementation per environment. |
 | I2 | A provider exposes the four operations above or it is not a provider. Provider-specific capabilities do not leak into the engine as flags. |
-| I3 | Simulation captures, it does not imitate. The evidence package holds the real issue text, real diff, real check results and real verdict — never a synthetic "success" shaped like GitHub. |
+| I3 | Simulation captures, it does not imitate. The evidence package holds the real issue text, real diff, real check results and real verdict — never a synthetic "success" shaped like GitHub. The package is the single home for those bytes: every other view references them by id and digest rather than copying them, so a captured fact cannot exist in two places and disagree. |
 | I4 | An evidence-package run cannot reach a live upstream: no credential is resolved, no upstream client is constructed, no remote ref is written. |
 | I5 | Provider identity, the captured policy digest and the evidence package digest are recorded on every artifact, so a later reader can tell where an observation came from. |
 | I6 | `passed`, `failed`, `skipped`, `unavailable` and `not-applicable` mean the same thing under every provider. A provider never converts an unavailable check into a pass. |
@@ -76,10 +76,11 @@ observe.
 ```yaml
 id: arcnexus/collaboration-provider
 stage: locked
-revision: 2
+revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-08
 changes:
+  - revision 2: the evidence package is named the single home for captured bytes, with every other view referencing them by id and digest.
   - revision 2: migration table gains a Status column: the fake GitHub, the provider state database
     and the second publication engine are recorded as deleted (#368, #370, #372) with capture now
     living in the evidence package and the derived change record, and `--simulate` is recorded as

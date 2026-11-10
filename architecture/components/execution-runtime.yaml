@@ -13,6 +13,8 @@ owns:
   - tests/library/execution-runtime
   - docs/library/execution-runtime
 api:
+  - module: src/library/execution-runtime/run-workspace.ts
+  - module: src/library/execution-runtime/assignment-dispatch.ts
   - module: src/library/execution-runtime/execution-controls.ts
   - module: src/library/execution-runtime/execution-resources.ts
   - module: src/library/execution-runtime/host-client.ts

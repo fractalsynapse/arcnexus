@@ -30,6 +30,12 @@ interface Preparation {
   result: CommandResult;
 }
 
+/** One workspace root moved aside so an interrupted rebuild can be undone. */
+interface SetAside {
+  live: string;
+  stored: string;
+}
+
 /** Reuses settled installations within one environment without sharing writable filesystem aliases. */
 export class PreparedDependencies {
   /** Binds preparation receipts to host storage and the current isolated worktree. */
@@ -60,11 +66,14 @@ export class PreparedDependencies {
       throw new Error(
         'Dependency preparation is incomplete; inspect retained operation evidence: ' + directory,
       );
-    this.release(op);
-    if (existsSync(receipt))
-      return this.restore(directory, JSON.parse(readFileSync(receipt, 'utf8')));
+    const aside = this.release(op);
+    if (existsSync(receipt)) {
+      const result = this.restore(directory, JSON.parse(readFileSync(receipt, 'utf8')));
+      this.discard();
+      return result;
+    }
     mkdirSync(directory, { recursive: true, mode: 0o700 });
-    return this.attempt(directory, key, op, install);
+    return this.attempt(directory, key, op, install, aside);
   }
 
   /** Discards only a failed cache build; raw operation evidence remains in its run directory. */
@@ -73,11 +82,15 @@ export class PreparedDependencies {
     key: string,
     op: Operation,
     install: () => Promise<CommandResult>,
+    aside: SetAside[],
   ): Promise<CommandResult> {
     const before = ((this.record.operationInvocations ?? []) as unknown[]).length;
     try {
-      return await this.install(directory, key, op, install);
+      const result = await this.install(directory, key, op, install);
+      this.discard();
+      return result;
     } catch (error) {
+      this.replace(aside);
       const invocations = (this.record.operationInvocations ?? []) as Array<{
         operationId: string;
         status: string;
@@ -182,14 +195,53 @@ export class PreparedDependencies {
       .digest('hex');
   }
 
-  /** Removes only previously declared disposable roots before replacement, never maintained source. */
-  private release(op: Operation): void {
-    for (const path of op.generatedDirectories)
-      rmSync(join(this.record.workspace, path), { recursive: true, force: true });
+  /** Sets aside previously declared disposable roots before replacement, never maintained source. */
+  private release(op: Operation): SetAside[] {
+    const aside: SetAside[] = [];
+    for (const path of op.generatedDirectories) {
+      const live = join(this.record.workspace, path);
+      if (!existsSync(live)) continue;
+      const stored = join(this.quarantine, this.stamp(), path);
+      mkdirSync(dirname(stored), { recursive: true });
+      renameSync(live, stored);
+      aside.push({ live, stored });
+    }
     this.record.preparedDependencies = this.entries().filter(
       (entry) => entry.operationId !== op.id,
     );
     save(this.root, this.record);
+    return aside;
+  }
+
+  /**
+   * Returns every set-aside root after an interrupted rebuild.
+   *
+   * Outputs left by a failed preparation are not evidence of anything, so they are discarded and
+   * the previously held tree is put back rather than merged with them.
+   */
+  private replace(aside: SetAside[]): void {
+    for (const item of aside) {
+      if (!existsSync(item.stored)) continue;
+      rmSync(item.live, { recursive: true, force: true });
+      mkdirSync(dirname(item.live), { recursive: true });
+      renameSync(item.stored, item.live);
+    }
+    this.discard();
+  }
+
+  /** Drops set-aside copies once the replacement they were guarding is in place. */
+  private discard(): void {
+    rmSync(this.quarantine, { recursive: true, force: true });
+  }
+
+  /** One ignored holding area per workspace, so no stale tree is ever the only copy. */
+  private get quarantine(): string {
+    return join(this.record.workspace, '.prepared-stale');
+  }
+
+  /** Names a set-aside batch uniquely enough that concurrent runs cannot share a slot. */
+  private stamp(): string {
+    return [this.record.id, process.pid, Date.now()].join('-');
   }
 
   /** Materializes private copies so existing source confinement needs no symlink exceptions. */

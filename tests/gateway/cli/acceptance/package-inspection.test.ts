@@ -79,7 +79,7 @@ test('inspection services retain captured revisions while new CLI previews follo
   assert.equal((retained.context.at(-1) as any).purpose, 'Own test selection');
   const current = f.value(f.root, 'inspect', 'package', 'sample', 'Improve documentation');
   assert.equal(current.context.at(-1).purpose, 'Maintain the newly selected intent');
-  assert.equal(current.preview.activity, 'implement');
+  assert.equal(current.preview.activity, 'implementation');
   assert.notEqual(current.revision, retained.revision);
   assert.equal(existsSync(join(f.root, 'state')), false);
 });

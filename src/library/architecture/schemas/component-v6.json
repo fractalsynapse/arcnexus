@@ -116,17 +116,7 @@
         },
         "activityProfiles": {
           "type": "object",
-          "propertyNames": {
-            "enum": [
-              "research",
-              "documentation",
-              "design",
-              "testing",
-              "implementation",
-              "review",
-              "release"
-            ]
-          },
+          "propertyNames": { "type": "string", "minLength": 1 },
           "additionalProperties": {
             "type": "string",
             "minLength": 1
@@ -247,17 +237,7 @@
         },
         "activityProfiles": {
           "type": "object",
-          "propertyNames": {
-            "enum": [
-              "research",
-              "documentation",
-              "design",
-              "testing",
-              "implementation",
-              "review",
-              "release"
-            ]
-          },
+          "propertyNames": { "type": "string", "minLength": 1 },
           "additionalProperties": {
             "type": "string",
             "minLength": 1
@@ -424,17 +404,7 @@
         },
         "activityProfiles": {
           "type": "object",
-          "propertyNames": {
-            "enum": [
-              "research",
-              "documentation",
-              "design",
-              "testing",
-              "implementation",
-              "review",
-              "release"
-            ]
-          },
+          "propertyNames": { "type": "string", "minLength": 1 },
           "additionalProperties": {
             "type": "string",
             "minLength": 1

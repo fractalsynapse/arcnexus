@@ -1,6 +1,6 @@
 # Library contract — Delivery
 
-Type contract: `library`. Stage: **locked** (revision 2). Owner: `delivery` (absorbs the publication
+Type contract: `library`. Stage: **locked** (revision 3). Owner: `delivery` (absorbs the publication
 half of `publisher`, the upstream transports in `operations`, and the delivery-record consumers in
 `coordination-store`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-coordination.md`](arcnexus-coordination.md), [`arcnexus-verification.md`](arcnexus-verification.md), [`arcnexus-direction.md`](arcnexus-direction.md).
@@ -46,7 +46,7 @@ ledger that re-states a fact Git and the provider already hold.
 | I1 | One publication route and one engine. Live and simulated differ by namespace and by an upstream refusal, never by a second implementation. |
 | I2 | **The engineering baseline is the retained assembly base.** The authority revision and the verification checkout are not substitutes for it, and a wrong base is a defect in this contract, not a condition to work around. |
 | I3 | No verdict, no delivery. A delivery record is meaningless without the candidate digest and the verdict id it came from. |
-| I4 | Staging integration is automatic once checks and CI pass. **The only human gates in the system are a production release, and a blocking question that needs an answer or an external action.** No gate exists for staging, CI, review, or anything an agent can observe and act on itself. |
+| I4 | Staging integration is automatic once checks and CI pass. **The only human gates in the system are a production release, and a blocking question that needs an answer or an external action.** No gate exists for staging, CI, review, or anything an agent can observe and act on itself. An agent escalating to the director — or a director answering with a rebalanced sequence — is an in-loop step and never a human gate: it waits for no one outside the run, and only a question that genuinely needs a human decision surfaces as one. |
 | I5 | Upstream effects are observed, not assumed. An unknown outcome is resolved by inspecting provider state before retrying, and is never blindly replayed. It becomes a human gate only when the observation shows external action is genuinely required — a credential, a provider incident, an irreversible state — not merely because the outcome was uncertain. |
 | I6 | The merge is performed by the **provider**, which returns the merge identity; delivery records that identity once and every other view derives from it. No local merge-and-push path, and no parallel milestone-receipt store for the same fact. |
 | I7 | One pull request per accepted goal. Cross-owner contributions are assembled first and attributed within that delivery. |
@@ -115,10 +115,11 @@ production merge under any configuration, and any recovery path for a historical
 ```yaml
 id: arcnexus/delivery
 stage: locked
-revision: 4
+revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
 changes:
+  - revision 3: in-loop escalation between agent and director is stated not to be a human gate, so escalation cannot quietly become an approval queue.
   - revision 4: migration status updated for step 4e (#374) — publication reads the one recorded
     verdict, so no second goal assessment remains; the delivery-checks and delivery-verification
     move into `verification` is still open. Targets and invariants unchanged.

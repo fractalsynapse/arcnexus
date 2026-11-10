@@ -41,17 +41,55 @@ test('a verified merge that never reconciled is the outstanding route', () => {
 
 test('a completed route is not adopted again', () => {
   const integrated = stuck({
-    route: { head: 'h', receipt: 'e4', integratedAt: 'now', released: false },
+    route: {
+      head: 'h',
+      receipt: 'e4',
+      integratedAt: 'now',
+      released: false,
+      releaseExpected: false,
+    },
   });
   assert.equal(outstandingRoute([integrated], 'project', 'env'), undefined);
 });
 
-test('a simulated route still owes its recorded release', () => {
-  const simulated = stuck({
+test('a route that declared a release still owes it until it is recorded', () => {
+  const owed = stuck({
     environment: { id: 'env', mode: 'simulation' },
-    route: { head: 'h', receipt: 'e4', integratedAt: 'now', released: false },
+    route: {
+      head: 'h',
+      receipt: 'e4',
+      integratedAt: 'now',
+      released: false,
+      releaseExpected: true,
+    },
   });
-  assert.equal(outstandingRoute([simulated], 'project', 'env')?.id, 'delivery-a');
+  assert.equal(outstandingRoute([owed], 'project', 'env')?.id, 'delivery-a');
+  const settled = stuck({
+    environment: { id: 'env', mode: 'simulation' },
+    route: { head: 'h', receipt: 'e4', integratedAt: 'now', released: true, releaseExpected: true },
+  });
+  assert.equal(
+    outstandingRoute([settled], 'project', 'env'),
+    undefined,
+    'the namespace closes once the declared release is recorded',
+  );
+});
+
+const settledRoute = {
+  head: 'h',
+  receipt: 'e4',
+  integratedAt: 'now',
+  released: false,
+  releaseExpected: false,
+};
+
+test('a route declaring no release ends at the merge identity', () => {
+  assert.equal(outstandingRoute([stuck({ route: settledRoute })], 'project', 'env'), undefined);
+});
+
+test('the same recorded route means the same thing in either namespace', () => {
+  const simulated = stuck({ environment: { id: 'env', mode: 'simulation' }, route: settledRoute });
+  assert.equal(outstandingRoute([simulated], 'project', 'env'), undefined);
 });
 
 test('work that never reached a merge receipt cannot hijack a new run', () => {

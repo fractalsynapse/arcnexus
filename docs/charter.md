@@ -84,8 +84,11 @@ it attaches to an activity and reaches every steward performing that activity.
 Plans and milestones are workflow, not architecture, and never belong in the architectural
 model. The unit of work is the **milestone**; the unit of a milestone is one of the five
 **Steps** — documentation, design and contract tests, implementation, review, integration —
-and a Step is also the activity that selects its execution profile. There is no separate
-stage vocabulary.
+and each Step runs as the activity that selects its execution profile. One vocabulary serves
+both: the six activities the role definitions declare — `research`, `documentation`,
+`testing`, `implementation`, `review`, `release`, in that order — where the design and
+contract-test Step is **testing**, the integration Step is **release**, and `research` is
+available to every Step. There is no separate stage vocabulary.
 
 ## Contracts and locks
 
@@ -237,7 +240,7 @@ the team or replace direction with a scripted result.
 
 1. Single steward and real CLI engineering result.
 2. Reduce the lifecycle to the accepted MVP architecture: one store, one lane, one gate,
-   one publication route, Steps as the only activity vocabulary, and plans generated from
+   one publication route, one activity vocabulary declared by the role definitions, and plans generated from
    the plan template. Deliver one fresh goal through staging, then repeat it cleanly before
    expanding interface or portfolio breadth.
 3. Self-directed workdays on the same loop, using the directive seam: stewardship goal
@@ -263,7 +266,7 @@ decisions should update this charter rather than require readers to reconstruct 
 On November 7, 2026, after reviewing why no self-development cycle had completed, the
 architect confirmed the reduced direction recorded here: the `.arc` knowledge structure,
 plans generated from a single template, milestones as the unit of work with one owner each,
-Steps as the only activity vocabulary, one store, one lane, one verification gate, one
+one activity vocabulary — the six activities a role declares — one store, one lane, one verification gate, one
 publication route, one configuration version, and the task/workday seam. That decision is
 current policy; the implementation it describes is not yet delivered.
 

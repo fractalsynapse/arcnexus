@@ -1,6 +1,7 @@
 import { PublicApiCatalog } from './public-api.js';
 import { normalizeOperation } from '../operations/operation-definition.js';
 import { ComponentOperationPlans } from './component-operation-plans.js';
+import { declareActivities } from './activities.js';
 import { ancestry, covered, scopePath } from './component-paths.js';
 import { ComponentV5Resolver } from './component-v5.js';
 import type { ComponentV5Fields } from './component-v5-policy.js';
@@ -272,6 +273,8 @@ class CatalogLoader {
           throw new InputError(`Identity must match filename: ${path}`);
         if (Object.hasOwn(target, value.id))
           throw new InputError(`Duplicate definition: ${value.id}`);
+        if (schema === 'role')
+          value.activities = declareActivities(value.activities, `role ${value.id}`);
         Object.defineProperty(target, value.id, { value, enumerable: true, configurable: true });
       }
   }

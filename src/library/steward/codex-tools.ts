@@ -8,7 +8,7 @@ import type { CodexConfiguration } from './codex-configuration.js';
 const planTool: BridgeTool = {
   name: 'plan.update',
   description:
-    'Update steward checklist items only, never hostChecks. New items require a reasoned plan revision first. Completion is an agent claim.',
+    'Update steward checklist items in plan.items with the evidence supporting each claim. Buckets run in plan order: an item in a later activity waits while an earlier activity holds items that are not terminal. hostChecks are recorded by the host. Every claim is an agent assertion until verified.',
   inputSchema: {
     type: 'object',
     properties: {

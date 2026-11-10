@@ -1,6 +1,6 @@
 # Library contract — Coordination
 
-Type contract: `library`. Stage: **locked** (revision 2). Owner: `coordination` (absorbs
+Type contract: `library`. Stage: **locked** (revision 3). Owner: `coordination` (absorbs
 `coordination-store` and `report`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-architecture-model.md`](arcnexus-architecture-model.md).
 Depended on by: `direction`, `execution`, `verification`, `delivery`, `report` consumers, the
@@ -27,7 +27,7 @@ store either lives in Git (code revisions) or is derived on read (reports).
 | `open(project)` | one store handle per project with a single writer; a second writer is refused, not queued |
 | `put(kind, id, data, expectedVersion)` | transactional entity write with optimistic versioning; a stale writer fails instead of merging; identical content for an id is idempotent |
 | `append(event)` / `events(after, limit)` | append-only ordered journal of transitions, used for reporting and audit — never to repair state |
-| `position(goalId)` | current milestone and Step, plus the owner cursor reserved for the workday seam |
+| `position(goalId)` | current milestone and Step, plus the owner cursor for a component-scoped planning directive |
 | `gates` | open question records with the answer stored as evidence; replaces the `needs_input` outcome and its clarification machinery |
 | `requests` | a link from one milestone to existing accepted work, with owner and acceptance preserved; replaces the dependency graph |
 | `evidence(put/get/list)` | artefacts by id with digest, size and kind; bounded range reads; retention per the policy below |
@@ -54,7 +54,7 @@ events. Removal is recorded as an event naming what was dropped and how much, an
 cannot fit even after cache removal is reported as a finding instead of silently truncated.
 
 Entity kinds are exactly: `goal`, `milestone`, `step`, `execution`, `gate`, `request`,
-`evidence`, `measure`, `delivery`. Anything else is a property of one of these, not a new table.
+`evidence`, `measure`, `delivery`, `escalation`. Anything else is a property of one of these, not a new table.
 
 ## State vocabulary
 
@@ -90,7 +90,7 @@ readable as data.
 | I6 | Ids are stable; derived artefact ids are content-addressed. |
 | I7 | Evidence is bounded by size and retention policy; reports reference ids, never inline artefacts. |
 | I8 | No state value exists without a reader in the current path. |
-| I9 | The plan record has one writer: the runtime lane. Stewards never edit it directly. |
+| I9 | A plan's **content** is authored by the agent that owns the work; the **store** has one writer, the lane. An agent proposes plan and checklist content through its declared tool and the lane persists it, so authorship is never a second write path and out-of-band edits to a plan record are rejected. |
 | I10 | Code revisions live only in Git; the store holds ids and digests, never copies. |
 | I11 | Live and simulation share one schema. Isolation is a namespace plus a refusal, never a second store or a second publication engine. |
 | I12 | Goal identity is the digest of the goal text. No title, slug or truncation is used as an identifier. |
@@ -119,6 +119,7 @@ readable as data.
 | CO-16 | Deleting the recovery modules leaves no caller: no code path references a state it existed to rescue. |
 | CO-17 | The same goal text always resolves to the same goal id, and a single-character change produces a different id; a 4,000-character goal still resolves to one digest and one plan file. |
 | CO-18 | A hand-edited committed plan is reproduced away by the next render, and a render that disagrees with store state is reported rather than trusted. |
+| CO-20 | An escalation is stored as an `escalation` entity carrying its reason, goal identity, plan revision, open steps and evidence references; it reads as one owner waiting on another, is replayable as a directive input, and resolving it closes the entity without rewriting the goal or its acceptance. |
 | CO-19 | A goal over its retention cap loses only regenerable caches, keeps every authored artefact, records each removal as an event with its size, and reports a finding when it still cannot fit. |
 
 ## Migration
@@ -126,7 +127,7 @@ readable as data.
 | Current | Target | Effect |
 | --- | --- | --- |
 | `execution`, `deliveries`, `lifecycle`, `portfolio`, `provider`, `workday` databases + `container.lease`, `host.lease`, `evidence-retention.lease` | one project store; the single-writer lock is the store's own write lock | 7 databases and 3 lock files → 1 |
-| `report.json`, `timeline.jsonl`, `events.jsonl`, `activities.jsonl`, `checkpoint.json`, `receipt.json`, `host.json`, per-command evidence projections | entities + events + derived reports | removes the 3–4× mirror writes and the reconciliation code that existed to align them |
+| `report.json`, `timeline.jsonl`, `activities.jsonl`, `checkpoint.json`, `receipt.json`, `host.json`, per-command evidence projections | entities + events + derived reports | removes the 3–4× mirror writes and the reconciliation code that existed to align them. `events.jsonl` is **not** a projection to delete: it is the live per-activation harness journal, the evidence stream the store observes, retained as artefacts and referenced by digest rather than copied into entities |
 | 101 state literals across 12 enums | 18 literals on 5 record kinds | removes the states that required 4,288 lines of recovery, retained-host, promotion-resume and lease reclamation |
 | `coordination-store` (2,881 lines) + `report` (2,570 lines) | `coordination`, target ~1,400–1,800 lines | one owner for durable memory and its views |
 | delivery milestone receipts and external-effect ledgers | one `delivery` entity with the recorded merge identity | removes the four-place "merged at head X" projection that produced the current publication defect class |
@@ -157,10 +158,11 @@ is reading historical configuration versions.
 ```yaml
 id: arcnexus/coordination
 stage: locked
-revision: 2
+revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
 changes:
+  - revision 3: plan authorship is separated from store writing; `escalation` becomes a stored entity so a blocked owner waiting on a peer or the director is state a human can see, replayable as input; the live per-activation harness journal is named as evidence streamed into events rather than a projection to delete.
   - revision 2: locked with the architect's answers — goal identity is the digest of the goal
     text, the store is authoritative with the committed plan as a deterministic render,
     per-goal retention that removes only regenerable caches, and entities plus events. Added

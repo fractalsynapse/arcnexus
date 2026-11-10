@@ -1,6 +1,6 @@
 # Project contract — ArcNexus
 
-Type contract: `project`. Stage: **proposed**. Owner: `architecture-maintenance`.
+Type contract: `project`. Stage: **locked** (revision 3). Owner: `architecture-maintenance`.
 Supersedes: the `platform` and `package` component types, `architecture/environment.yaml`,
 `architecture/composition-profiles/`, and portfolio registration as a concept a user must
 learn.
@@ -52,7 +52,7 @@ owes:
    guidance, standards, checks, delivery policy, bindings identity and base revision.
 
 The knowledge spaces are part of the contract because their authorship is observable behaviour:
-`.arc/architecture/` is read as authority, `.arc/plans/` is written only by the runtime, and
+`.arc/architecture/` is read as authority, `.arc/plans/` is authored by the owning agents and persisted only by the runtime lane, and
 `.arc/learning/` is append-only and never authority for an active run.
 
 ## Invariants
@@ -127,10 +127,11 @@ demonstrated requirement says otherwise.
 ```yaml
 id: arcnexus/project
 stage: locked
-revision: 2
+revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
 changes:
+  - revision 3: plan content is authored by the owning agent and persisted only by the runtime lane, matching the single write path; the header is corrected to locked, which the registry already recorded.
   - revision 2: locked; work branch convention changed to <issue>-<description> so branch
     names do not encode the tool performing the work, and execution-branch naming was
     assigned to the execution library contract

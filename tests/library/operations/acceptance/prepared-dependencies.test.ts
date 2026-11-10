@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -106,6 +106,33 @@ class PreparationExecution {
     assert.equal(readFileSync(join(first.workspace, 'node_modules/proof'), 'utf8'), 'installed');
   }
 
+  /** Proves a failed rebuild returns the tree the workspace already had instead of losing it. */
+  async survivesFailedInstall(): Promise<void> {
+    const operation = this.operation();
+    const record = this.record('interrupted', operation);
+    mkdirSync(join(record.workspace, 'node_modules'), { recursive: true });
+    writeFileSync(join(record.workspace, 'node_modules/proof'), 'previously installed');
+    // Changed inputs force a fresh preparation; the installer then fails for a different reason.
+    writeFileSync(join(record.workspace, 'lock.json'), 'failing');
+    writeFileSync(join(record.workspace, 'install.js'), 'process.exit(1);');
+    const signal = new AbortController().signal;
+    await assert.rejects(() =>
+      new OperationExecution(this.root, record, signal).run(operation, 'setup'),
+    );
+    assert.equal(
+      readFileSync(join(record.workspace, 'node_modules/proof'), 'utf8'),
+      'previously installed',
+      'A failed dependency preparation must not discard the tree it already had',
+    );
+    assert.equal(existsSync(join(record.workspace, '.prepared-stale')), false);
+    assert.equal(this.entries(record).length, 0, 'The failed batch must retain no set-aside copy');
+  }
+
+  /** Reads retained preparation entries from one record. */
+  private entries(record: RecordData): unknown[] {
+    return (record.preparedDependencies ?? []) as unknown[];
+  }
+
   /** Removes disposable sources and private operation storage after assertions. */
   close(): void {
     for (const record of this.records) {
@@ -126,6 +153,21 @@ test(
     const scenario = new PreparationExecution();
     try {
       await scenario.run();
+    } finally {
+      scenario.close();
+    }
+  },
+);
+
+test(
+  'a failed dependency preparation restores the workspace tree it set aside',
+  {
+    skip: !process.env.ARCNEXUS_TEST_CODEX && 'Requires installed native confinement',
+  },
+  async () => {
+    const scenario = new PreparationExecution();
+    try {
+      await scenario.survivesFailedInstall();
     } finally {
       scenario.close();
     }

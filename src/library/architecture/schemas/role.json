@@ -25,9 +25,7 @@
     },
     "activities": {
       "type": "array",
-      "items": {
-        "enum": ["research", "documentation", "testing", "implementation", "review", "release"]
-      },
+      "items": { "type": "string", "minLength": 1 },
       "uniqueItems": true
     }
   },

@@ -12,6 +12,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node .tool-build/build.js",
     "check": "tsc --emitDeclarationOnly && tsc --noEmit && tsc -p tsconfig.tests.json --noEmit && tsc -p tsconfig.fixtures.json --noEmit && tsc -p tsconfig.tooling.json && tsc -p tsconfig.build.json --noEmit",
+    "scope": "node scripts/foundation/with-scope.mjs",
     "test": "npm run build && node dist/library/testing/npm-tests.js",
     "build:tests": "tsc -p tsconfig.build.json && node .tool-build/build.js --tests",
     "lint": "eslint src tests scripts fixtures experiments/checks qualification eslint.config.ts",

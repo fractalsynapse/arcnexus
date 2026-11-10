@@ -9,6 +9,9 @@ import { UpstreamExecution, type UpstreamProvider } from '../operations/upstream
 export class PublicationEffects {
   private readonly executor: UpstreamExecution;
 
+  /** Whether this route declares a release step; recorded with the merge, not inferred from namespace. */
+  private readonly releaseExpected: boolean;
+
   /** Captures a fixed provider and operation grant without accepting worker-supplied destinations. */
   constructor(
     private readonly effects: LifecycleStore,
@@ -18,6 +21,7 @@ export class PublicationEffects {
     definitionDigest: string,
     actions: string[],
   ) {
+    this.releaseExpected = actions.includes('release.create');
     this.delivery = structuredClone(delivery);
     this.executor = new UpstreamExecution(effects, provider, {
       environmentId: delivery.environment.id,
@@ -113,7 +117,14 @@ export class PublicationEffects {
     const current = this.current();
     const head =
       milestone === 'merge' ? String(this.effects.effect(effectId)?.result?.head ?? '') : undefined;
-    this.deliveries.complete(current.id, current.version, milestone, effectId, head);
+    this.deliveries.complete(
+      current.id,
+      current.version,
+      milestone,
+      effectId,
+      head,
+      this.releaseExpected,
+    );
   }
 
   /** Reads current authorization rather than retaining a stale local approval snapshot. */

@@ -182,12 +182,13 @@ The accepted activity-profile increment adds an optional `activityProfiles` mapp
 beside the inherited `executionProfile`. Values name shared execution profiles;
 model settings remain authored only in those profiles. Each activity inherits the
 nearest explicit value independently; omitted activities use the effective default.
-Supported keys are research, documentation, design, testing, implementation, review
-and release. Unknown keys or unresolved profiles fail validation.
+Supported keys are the activities the component's role declares: research,
+documentation, testing, implementation, review and release. A key outside that set, or
+one the role does not support, fails validation naming the valid activities.
 
 The existing host workflow selects one primary activity per model turn. Planning
 and coordination use the default; research and review use their matching overrides.
-Specification uses design, except documentation-only work uses documentation.
+Specification uses documentation.
 Implementation and correction use implementation, except documentation-only work
 uses documentation. Other activities may occur within the same turn without changing
 models midway. This mapping does not introduce a second workflow or change role
@@ -198,5 +199,5 @@ Assignments capture the effective profiles with their original authority. Each t
 records its selected profile and actual model settings, including continuation turns.
 Existing captured assignments without overrides retain their default. Director and
 independent verifier profiles remain separate from steward activity overrides.
-ArcNexus uses Luna by default, Astra for research, and Sol for documentation, design
-and steward review; independent verification remains Astra.
+ArcNexus uses Luna by default, Astra for research, and Sol for documentation and
+steward review; independent verification remains Astra.

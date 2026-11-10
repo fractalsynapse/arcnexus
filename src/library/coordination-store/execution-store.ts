@@ -12,6 +12,7 @@ import {
   storeInitialProposal,
 } from './request-proposal.js';
 import { CandidatePointers } from './candidate-pointers.js';
+import { Escalations } from './escalation-store.js';
 import { RunRecords } from './run-records.js';
 import { InboxDecisions, type InboxDecision } from './inbox-decisions.js';
 import { randomUUID } from 'node:crypto';
@@ -405,6 +406,12 @@ export class ExecutionStore {
   /** Marks verified delivery and wakes satisfied dependents through the common completion transition. */
   complete(id: string, evidence: string[], candidate?: Record<string, unknown>): void {
     new ContributionDelivery(this.db, this.wake.bind(this)).complete([id], evidence, candidate);
+    this.escalations.closeForAssignment(id, 'resolved by the owner’s verified delivery');
+  }
+
+  /** Recorded waits against the same authoritative database: opening captures goal identity, closing never rewrites it. */
+  get escalations(): Escalations {
+    return new Escalations(this.db);
   }
 
   /** Advances every exact prepared contribution and the assembled candidate in one transaction. */

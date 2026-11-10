@@ -1,6 +1,6 @@
 # Library contract — Verification
 
-Type contract: `library`. Stage: **locked** (revision 2). Owner: `verification` (absorbs the checking
+Type contract: `library`. Stage: **locked** (revision 3). Owner: `verification` (absorbs the checking
 half of `publisher`, the verification modules of `assignment` and `task-intake`, and the evidence
 readers of `report`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-architecture-model.md`](arcnexus-architecture-model.md), [`arcnexus-coordination.md`](arcnexus-coordination.md), [`arcnexus-execution.md`](arcnexus-execution.md), [`arcnexus-direction.md`](arcnexus-direction.md).
@@ -30,7 +30,7 @@ it sent.
 
 | Service | Obligation |
 | --- | --- |
-| `checklist(candidate, plan)` | run the milestone's checklist **once** against the assembled candidate. Each item yields `passed`, `failed`, `skipped`, `unavailable` or `not-applicable` with the evidence id that supports it. |
+| `checklist(candidate, plan)` | run the plan's steps **once** against the assembled candidate, in activity-bucket order, each yielding `passed`, `failed`, `skipped`, `unavailable` or `not-applicable` with the evidence id that supports it. This reports coverage of the plan; it is not the acceptance decision, which is the verdict below. |
 | `review(candidate, acceptance, measures)` | one independent, read-only assessment covering both the engineering criteria and, for a task, the original goal. One call, one verdict, one reviewer. |
 | `verdict(...)` | `accepted`, `rejected` with each deficiency tied to an acceptance id and the accountable owner, or `unavailable` when a required check could not run. `unavailable` is never folded into `accepted`. |
 | `evidenceSet(candidate, acceptance)` | the bundle the reviewer is given: candidate digest, changed-path inventory, per-path diffs **by reference**, check results with exit status and log ids, and the acceptance text. Nothing is truncated, sampled or omitted for size. The bundle's byte count, item count and composition are recorded as measures with the verdict, so a future limit is placed on evidence rather than on instinct. |
@@ -124,10 +124,11 @@ they cost time and lost work.
 ```yaml
 id: arcnexus/verification
 stage: locked
-revision: 4
+revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
 changes:
+  - revision 3: the checklist reports plan coverage and the verdict decides acceptance, so bucket completion cannot stand in for meeting the goal.
   - revision 4: status only, at the architect's standing direction to keep migration tables current.
     Step 3c is stamped done in substance with the residual reading recorded on the row itself:
     `evidence-pages` deleted, `referenced-evidence` folded into the set with its verification

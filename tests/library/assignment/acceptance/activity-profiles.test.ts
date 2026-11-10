@@ -58,7 +58,10 @@ class ActivityTurnScenarios {
     const component = JSON.parse(readFileSync(path, 'utf8'));
     writeFileSync(
       path,
-      JSON.stringify({ ...component, activityProfiles: { design: 'design', review: 'review' } }),
+      JSON.stringify({
+        ...component,
+        activityProfiles: { documentation: 'design', review: 'review' },
+      }),
     );
   }
 }
