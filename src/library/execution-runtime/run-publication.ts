@@ -25,6 +25,7 @@ import { git } from '../operations/process.js';
 import type { RecordData } from '../workspace/state.js';
 import type { RunEnvironments } from './run-environments.js';
 import { runDestination } from './run-destination.js';
+import { retainedFailureText } from './failure-text.js';
 
 /** Connects verified task/workday outcomes to durable Publisher input without changing run mode or authority. */
 export class RunPublication {
@@ -151,7 +152,7 @@ export class RunPublication {
     } catch (error) {
       if (signal.aborted) throw error;
       this.execution.updateRun(retained.id, this.execution.run(retained.id).status, {
-        publicationBlocker: String(error),
+        publicationBlocker: retainedFailureText(error),
       });
     } finally {
       this.pointer(retained, this.execution.run(retained.id), closed);

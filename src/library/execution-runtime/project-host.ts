@@ -25,6 +25,7 @@ import { ProgressObserver } from '../report/progress.js';
 import type { InitializationResult } from '../architecture/initialization.js';
 import { AssignmentDispatch } from './assignment-dispatch.js';
 import { CollaborativeDispatch } from './collaborative-dispatch.js';
+import { retainedFailureText } from './failure-text.js';
 
 /** Owns sequential project execution while task and workday policies select different work. */
 export class ProjectHost {
@@ -234,12 +235,16 @@ export class ProjectHost {
   private failure(id: string, error: unknown): void {
     const current = this.store.run(id);
     if (!['cancelled', 'stopping', 'stopped'].includes(current.status))
-      this.store.updateRun(id, 'needs_attention', { error: String(error) });
+      this.store.updateRun(id, 'needs_attention', { error: retainedFailureText(error) });
     if (!(error instanceof Error) || error.name !== 'CandidateIntegrityError') return;
-    this.store.updateRun(id, this.store.run(id).status, { integrityError: String(error) });
+    this.store.updateRun(id, this.store.run(id).status, {
+      integrityError: retainedFailureText(error),
+    });
     const workday = this.selection.workday();
     if (workday && workday.status !== 'stopped')
-      this.store.updateRun(workday.id, 'needs_attention', { integrityError: String(error) });
+      this.store.updateRun(workday.id, 'needs_attention', {
+        integrityError: retainedFailureText(error),
+      });
   }
 
   /** Projects current lifecycle and accountable assignments for the option-free status command. */

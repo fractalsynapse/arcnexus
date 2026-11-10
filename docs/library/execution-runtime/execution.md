@@ -73,6 +73,26 @@ earlier deliveries and the original goal; no completed checklist waives the miss
 criteria. Unresolved blocked work also receives director diagnosis, with required
 clarification/architectural decisions retained explicitly. Missing proof remains explicit.
 
+## Retained failure text (#386)
+
+Intended behavior for this change: the host retains one cause entry for a run
+failure in `error`, and one for a delivery failure in `publicationBlocker`, using
+the existing execution-store fields. Each entry is exactly `Error: ` followed by
+the original diagnostic message. For an Error object, the original message is its
+`message`; for a thrown string, it is the complete string.
+
+Formatting adds the prefix once. It does not append a stack, repeat the cause, or
+render the Error object's name as another prefix. Punctuation, leading and trailing
+whitespace, newlines and literal `Error:` text in the original message remain
+unchanged. In particular, a message beginning with literal `Error:` keeps that
+text after the one formatting-added prefix; stripping prefixes or trimming the
+message would lose diagnostic content.
+
+This correction belongs to the existing host run and publication failure
+producers. It adds no state, command, retention path or second source of truth.
+Owned acceptance exercises the normal host checkpoint and publication-blocker
+paths with controlled failures, asserting the complete retained string.
+
 ## Lifecycle
 
 Workdays expose running, idle, pausing, paused, stopping, stopped, interrupted and

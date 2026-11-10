@@ -131,7 +131,9 @@ export class RunWorkspace {
           `Policy workspace differs from verified snapshot ${revision}; retained ${observed}`,
         );
     } catch (error) {
-      throw Object.assign(new Error(String(error)), { name: 'CandidateIntegrityError' });
+      throw Object.assign(new Error(error instanceof Error ? error.message : String(error)), {
+        name: 'CandidateIntegrityError',
+      });
     }
   }
 }
