@@ -12,6 +12,17 @@
   with a time limit and stops the activation rather than hanging. `npm run scope` makes it runnable
   from a sandboxed session. (#389)
 
+**Measured result** (live model, 12 scenarios, clean tree at `136aa9c`, delegated scope): every
+scenario reached a valid terminal state — 6 `ready`, 3 `architecture_change_required`,
+3 `needs_clarification`, **no failures and no linter problems**. Suite wall time 1,569s; per scenario
+90.5s–200.2s (median 127.5s). Across 510 harness events the director made 426 tool calls and emitted
+36 messages, consuming 4,382,750 input tokens of which 3,706,368 were cache reads (84.6% reuse), with
+18,582 output and 4,242 reasoning tokens. Cost remains dominated by context re-supply, not by
+planning output: a single scenario used up to 700,948 input tokens to produce 2,508 output tokens.
+One notice repeated on every activation: the harness deprecates `features.use_legacy_landlock`, which
+our confinement passes explicitly. Evidence retained outside source at
+`~/.local/share/arcnexus/benchmarks/direction-corpus-2026-11-10.json`. (#389)
+
 - **Engineering commands can now run where confinement works** (foundation). Confinement puts each
   supervised command in a child cgroup, and under a sandbox that mounts `/sys/fs/cgroup` read-only
   that mkdir fails with `EROFS` — after which every `native-host` suite silently skips and the checks
