@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { join, resolve } from 'node:path';
 
 /**
@@ -94,7 +95,7 @@ class DirectionBenchmark {
     const usage = DirectionBenchmark.usage(journal);
     console.log(
       `  … ${Math.round(elapsed / 1000)}s events=${usage.events} tools=${usage.calls} ` +
-        `in=${usage.input} out=${usage.output} reasoning=${usage.reasoning} errors=${usage.errors}`,
+        `in=${usage.input} out=${usage.output} reasoning=${usage.reasoning} notices=${usage.notices.size}`,
     );
   }
 
@@ -113,7 +114,7 @@ class DirectionBenchmark {
     console.log(
       `  ${row.status}: owners=${row.owners} questions=${row.questions} ` +
         `events=${usage.events} tools=${usage.calls} in=${usage.input} cached=${usage.cached} ` +
-        `out=${usage.output} reasoning=${usage.reasoning} in ${row.seconds}s`,
+        `out=${usage.output} reasoning=${usage.reasoning} msgs=${usage.messages} in ${row.seconds}s`,
     );
     for (const problem of row.problems) console.log(`    ! ${problem}`);
     return row;
@@ -139,31 +140,58 @@ class DirectionBenchmark {
     return fresh.length ? fresh[0][0] : undefined;
   }
 
-  /** Totals the harness journal: event mix, tool calls, errors and token usage. */
+  /**
+   * Totals the harness journal: event mix, tool calls, messages, notices and token usage.
+   *
+   * Items carry their kind on `item.type` while the envelope says only `item.completed`, so the item
+   * is what counts. Error items are collected by message instead of merely totaled: the runtime
+   * passes a flag the harness now deprecates, and one notice repeated per activation must never be
+   * read as that many failures.
+   */
   static usage(journal) {
-    const total = { events: 0, calls: 0, errors: 0, input: 0, cached: 0, output: 0, reasoning: 0 };
+    const total = {
+      events: 0,
+      calls: 0,
+      messages: 0,
+      input: 0,
+      cached: 0,
+      output: 0,
+      reasoning: 0,
+      notices: new Set(),
+    };
     if (!journal || !existsSync(journal)) return total;
     for (const line of readFileSync(journal, 'utf8').split('\n').filter(Boolean)) {
-      let event;
-      try {
-        event = JSON.parse(line);
-      } catch {
-        continue;
-      }
+      const event = DirectionBenchmark.event(line);
+      if (!event) continue;
+      const kind = String(event.item?.type ?? event.type ?? '');
       total.events++;
-      const type = String(event.type ?? '');
-      if (type.includes('mcp_tool_call') || type.includes('command')) total.calls++;
-      if (type.includes('error')) total.errors++;
-      const usage = event.usage ?? event.item?.usage;
-      if (!usage) continue;
-      total.input += Number(usage.input_tokens ?? 0);
-      total.cached += Number(
-        usage.cached_input_tokens ?? usage.input_tokens_details?.cached_tokens ?? 0,
-      );
-      total.output += Number(usage.output_tokens ?? 0);
-      total.reasoning += Number(usage.reasoning_output_tokens ?? 0);
+      if (kind === 'mcp_tool_call' || kind === 'command_execution') total.calls++;
+      if (kind === 'agent_message') total.messages++;
+      if (kind === 'error' || event.type === 'error')
+        total.notices.add(String(event.item?.message ?? 'unspecified error'));
+      DirectionBenchmark.account(total, event.usage ?? event.item?.usage);
     }
     return total;
+  }
+
+  /** Parses one journal line, ignoring anything the harness wrote that is not JSON. */
+  static event(line) {
+    try {
+      return JSON.parse(line);
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** Adds one usage record to the totals, whichever token fields the harness chose to emit. */
+  static account(total, usage) {
+    if (!usage) return;
+    total.input += Number(usage.input_tokens ?? 0);
+    total.cached += Number(
+      usage.cached_input_tokens ?? usage.input_tokens_details?.cached_tokens ?? 0,
+    );
+    total.output += Number(usage.output_tokens ?? 0);
+    total.reasoning += Number(usage.reasoning_output_tokens ?? 0);
   }
 
   /** Reads the JSON report from probe output, tolerating any leading warnings. */
@@ -195,6 +223,7 @@ class DirectionBenchmark {
         seconds: row.seconds,
         events: row.usage.events,
         toolCalls: row.usage.calls,
+        messages: row.usage.messages,
         inputTokens: row.usage.input,
         cachedTokens: row.usage.cached,
         outputTokens: row.usage.output,
@@ -209,6 +238,8 @@ class DirectionBenchmark {
     );
     const cached = sum('input') ? Math.round((100 * sum('cached')) / sum('input')) : 0;
     console.log(`  cache reuse ${cached}% of input tokens`);
+    for (const notice of new Set(rows.flatMap((row) => [...row.usage.notices])))
+      console.log(`  notice: ${notice}`);
   }
 
   /** Parses `--flag value` arguments. */
@@ -219,7 +250,9 @@ class DirectionBenchmark {
   }
 }
 
-new DirectionBenchmark(process.argv.slice(2)).run().catch((error) => {
-  console.error('direction benchmark failed: ' + String(error));
-  process.exitCode = 2;
-});
+// Only the command line runs the suite; importing the class must not launch twelve activations.
+if (process.argv[1] === fileURLToPath(import.meta.url))
+  new DirectionBenchmark(process.argv.slice(2)).run().catch((error) => {
+    console.error('direction benchmark failed: ' + String(error));
+    process.exitCode = 2;
+  });
