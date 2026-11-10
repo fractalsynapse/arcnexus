@@ -206,6 +206,44 @@ owner context is retrieved separately. Acceptance must demonstrate complete retr
 of large owner artifacts without mutating the captured catalog or inlining those
 artifacts into the index.
 
+## Outstanding project waits
+
+Issue #403 specifies the following direction prompt contract. Before planning, each
+public `Direction.propose` activation reads the captured project's recorded
+outstanding escalations through the coordination store's public API. This includes
+waits from every run in that project, not just the current run. Closed escalations
+and waits in another project's store are excluded.
+
+When waits exist, append an `Outstanding project waits:` section to the existing
+instructions. Each row identifies the recorded owner and assignment, the exact
+escalation reason, and the number of recorded open steps. Owner, assignment and
+reason are JSON strings on one line, preserving quotes and newlines without turning
+a reason into prompt structure. Rows have this form:
+
+`- owner="<owner>"; assignment="<assignment>"; reason="<reason>"; open steps=<count>`
+
+Order rows by opening timestamp ascending, then by escalation id in ascending
+code-unit order when timestamps tie. Include every outstanding escalation, even
+when an assignment has several distinct recorded reasons. Unchanged store state
+must produce identical section bytes and ordering.
+
+When no waits exist, append no heading, row, whitespace or newline: the entire
+direction prompt must remain byte-identical to its previous rendering. A project
+with no coordination database has no recorded waits; reading it must not create a
+database. The section is derived input only, with no new store, persisted
+projection or copied escalation entity.
+
+A recorded wait is context for the existing planner, not an execution failure or
+human gate. Rendering it must not open, close or rewrite an escalation, change
+assignment activation, weaken confinement, or alter verification and delivery.
+Public direction-path regression cases use the built program to observe the
+populated section, tied timestamps, project/closed filtering and exact empty bytes.
+The prompt is retained before model dispatch. Deterministic cases deliberately
+cancel a public direction activation and inspect its retained prompt, asserting the
+cancellation separately from the prompt's content. A native completion case also
+checks the ready result and absence of a human gate. Prompt capture does not claim
+successful inference or native confinement qualification.
+
 ## Dependency retirement proposals
 
 A director result includes the required `dependencyRetirementProposal` field. It is

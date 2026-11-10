@@ -4,6 +4,10 @@
 
 ### Changed
 
+- **Direction prompts show outstanding project waits before planning**, including each wait's owner,
+  assignment, escalation reason, and open step count. Closed escalations and waits from other projects
+  are excluded; prompts remain unchanged when no waits are outstanding. (#403)
+
 - **Assignment reports show outstanding and resolved escalations**, retaining resolution history
   after an escalation is closed. (#398)
 
