@@ -45,3 +45,4 @@ Thumbs.db
 .fixture-build/
 
 .tool-build/
+.prepared-stale/

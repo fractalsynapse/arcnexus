@@ -3,6 +3,28 @@
 ## [Unreleased]
 
 ### Changed
+
+- **Engineering commands can now run where confinement works** (foundation). Confinement puts each
+  supervised command in a child cgroup, and under a sandbox that mounts `/sys/fs/cgroup` read-only
+  that mkdir fails with `EROFS` — after which every `native-host` suite silently skips and the checks
+  that exercise confinement, delivery-git and the real harness stop running anywhere but CI.
+  `scripts/foundation/with-scope.mjs` (also `npm run scope -- <command>`) starts the command as a
+  transient user service, which obtains cgroup delegation from the caller's own systemd user manager:
+  no widened filesystem access, no elevated approval, caller environment and exit status forwarded,
+  and a no-op when delegation is already present so nothing nests. With this, the operations
+  preparation suites ran locally for the first time. See
+  [scope-wrapped engineering commands](docs/foundation/scope-execution.md). (#389)
+
+- **A failed dependency preparation no longer costs the whole toolchain.** Setup operations declare
+  disposable outputs (`node_modules`, `.test-build`, `dist`) which were deleted _before_ the
+  installer ran, so any environmental failure — unwritable npm cache, denied cgroup, lost network —
+  left the workspace with an empty `node_modules` and no buildable toolchain, observed twice while
+  diagnosing the sandbox issue above. Preparation now renames those outputs aside into an ignored
+  `.prepared-stale/` (constant cost, no copy), discards the set-aside copy only once a replacement is
+  verified, and puts it back if the rebuild fails; a failed run's partial outputs are replaced rather
+  than merged, because they are not evidence. One native acceptance case proves the tree survives a
+  failing installer. (#389)
+
 - **Escalation is stored state, not error text** (coordination I9 entity kinds, CO-20). A blocked
   activation now opens an `escalation` entity carrying its reason, the goal identity and acceptance
   exactly as authorised, the plan revision the owner was executing, the checklist items still open
@@ -13,7 +35,6 @@
   the owner's delivery is verified. Repeating the same blocker does not stack entities, and closing
   one never rewrites its goal or acceptance. Five deterministic integration cases cover storage,
   replay across a reopened store, dedupe, resolution idempotency and closure by verified delivery. (#389)
-
 
 - **One canonical activity vocabulary.** Five lists existed for one concept: roles declared
   `research, documentation, testing, implementation, review, release` (and the role JSON schema
