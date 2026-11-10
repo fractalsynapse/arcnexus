@@ -3,7 +3,11 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { executionIdentity, type ProjectExecution } from '../architecture/execution-context.js';
 import type { ExecutionRun } from '../coordination-store/execution-types.js';
-import { routeComplete, type DeliveryRecord } from '../coordination-store/delivery-types.js';
+import {
+  routeComplete,
+  type DeliveryRecord,
+  outstandingRoute,
+} from '../coordination-store/delivery-types.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import { DeliveryStore } from '../coordination-store/delivery-store.js';
 import {
@@ -110,29 +114,75 @@ export class RunPublication {
     signal: AbortSignal,
   ): Promise<boolean> {
     if (!run.data.pendingPublication) this.capture(run);
+    const before = this.execution.run(run.id);
+    if (!before.data.pendingPublication && !before.data.deliveryId && before.environment)
+      this.reconcileOutstanding(before);
     const retained = this.execution.run(run.id);
     if (!(retained.data.pendingPublication || retained.data.deliveryId) || !retained.environment)
       return true;
     const store = new DeliveryStore(
       join(this.root, 'projects', this.context.key, 'deliveries.sqlite'),
     );
+    try {
+      return await this.settle(store, retained, environments, signal);
+    } finally {
+      store.close();
+    }
+  }
+
+  /**
+   * Publishes once and reports whether the route closed.
+   *
+   * The two outcomes are kept apart deliberately: a provider that declines to merge is a wait that
+   * retains its pointer, while a route that completed releases it. Anything else - an aborted
+   * caller - propagates instead of pretending to have finished.
+   */
+  private async settle(
+    store: DeliveryStore,
+    retained: ExecutionRun,
+    environments: RunEnvironments,
+    signal: AbortSignal,
+  ): Promise<boolean> {
     let closed = false;
     try {
       await this.publish(retained, environments, store, signal);
       this.integrated(retained, environments, store);
-      closed = routeComplete(
-        store.get(String(retained.data.pendingPublication ?? retained.data.deliveryId)),
-      );
+      closed = this.routeClosed(store, retained);
     } catch (error) {
       if (signal.aborted) throw error;
-      this.execution.updateRun(run.id, this.execution.run(run.id).status, {
+      this.execution.updateRun(retained.id, this.execution.run(retained.id).status, {
         publicationBlocker: String(error),
       });
     } finally {
-      store.close();
-      this.pointer(run, retained, closed);
+      this.pointer(retained, this.execution.run(retained.id), closed);
     }
     return closed;
+  }
+
+  /**
+   * Points this activation at a verified merge in the same namespace that never reconciled.
+   *
+   * The provider is asked by observation through the ordinary publication path, whose effects are
+   * already idempotent: a commit, push and change that really happened return their recorded
+   * receipts, and the merge is reconciled against the actual target rather than replayed. Without
+   * this, a delivery stranded by a refusal stays `pending` forever after the run that created it
+   * has finished, which is exactly what the first live cycles showed on staging.
+   */
+  private reconcileOutstanding(run: ExecutionRun): void {
+    const store = new DeliveryStore(
+      join(this.root, 'projects', this.context.key, 'deliveries.sqlite'),
+    );
+    try {
+      const outstanding = outstandingRoute(
+        store.list(),
+        this.context.key,
+        String(run.environment?.id ?? ''),
+      );
+      if (!outstanding) return;
+      this.execution.updateRun(run.id, run.status, { pendingPublication: outstanding.id });
+    } finally {
+      store.close();
+    }
   }
 
   /** Whether the delivery this run is waiting on has actually reached its recorded end. */

@@ -101,3 +101,25 @@ export function deliveryStatus(delivery: DeliveryRecord): {
 export function routeComplete(delivery: DeliveryRecord): boolean {
   return !!delivery.route && (delivery.route.released || delivery.environment.mode === 'live');
 }
+
+/**
+ * The delivery in this namespace whose verified merge was never observed to completion.
+ *
+ * A route belongs to the delivery, not to whichever run happened to be alive when the provider
+ * declined, so a project has to be able to ask the question. Only deliveries that already hold a
+ * merge receipt qualify: adopting an unverified route would let a stranded delivery hijack a new
+ * run's engineering.
+ */
+export function outstandingRoute(
+  deliveries: DeliveryRecord[],
+  projectId: string,
+  environmentId: string,
+): DeliveryRecord | undefined {
+  return deliveries.find(
+    (delivery) =>
+      delivery.projectId === projectId &&
+      delivery.environment.id === environmentId &&
+      !!delivery.receipts.merge &&
+      !routeComplete(delivery),
+  );
+}
