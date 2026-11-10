@@ -20,7 +20,7 @@ contracts:
     file: docs/interface/arcnexus-project.md
     owner: architecture-maintenance
     stage: locked
-    revision: 2
+    revision: 3
     digest: 97c205feb30066cafe484be38b1848230f9c17063fbdcfcbfeb3dd3734de2801
     dependsOn: []
     scenarios: 12
@@ -54,8 +54,8 @@ contracts:
     file: docs/interface/arcnexus-cli-gateway.md
     owner: cli
     stage: locked
-    revision: 2
-    digest: f5a48b98aa992b128232fa13cc2b80662f62e39b5d97ca11c78b372a19c58d05
+    revision: 4
+    digest: b6ec989355c42084bd94e68520e7a3d2f8778302359c2ad3ee69d3fac6041f21
     dependsOn: [arcnexus/project, arcnexus/foundation]
     scenarios: 20
     acceptedBy: Adrian Webb (architect)
@@ -82,7 +82,7 @@ contracts:
     file: docs/interface/arcnexus-architecture-model.md
     owner: architecture-model
     stage: locked
-    revision: 2
+    revision: 3
     digest: 267d328089079ca415184154e95aa7c1a417ff78c83b36e50acfa6221e376271
     dependsOn: [arcnexus/project, arcnexus/foundation]
     scenarios: 16
@@ -148,8 +148,8 @@ contracts:
     file: docs/interface/arcnexus-direction.md
     owner: direction
     stage: locked
-    revision: 2
-    digest: 362103c882054387f917e418a422880a4707fc2d3b5c82855be5fd0bfa745241
+    revision: 4
+    digest: 5a1dcda3399897015b4ebda9f74348a5125c731e9ccf97a4ac54b27a402fea45
     dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination]
     scenarios: 19
     acceptedBy: Adrian Webb (architect)
@@ -235,7 +235,7 @@ contracts:
     file: docs/interface/arcnexus-collaboration-provider.md
     owner: delivery
     stage: locked
-    revision: 2
+    revision: 3
     digest: 793adda146a145b7c6ef3d6a67959055856ec1f5ed984bd40e7b2a4b68d96f4a
     dependsOn: [arcnexus/project, arcnexus/delivery, arcnexus/coordination]
     scenarios: 7
@@ -283,10 +283,14 @@ supporting:
     file: .arc/architecture/plan-template.md
     owner: architecture-maintenance
     stage: proposed
-    digest: 6c5251631ca545eadc5dba3a65b615814b58ab1d20ebc50fa9152e7be17a4c0f
+    digest: 0d9e080b6d791496f1fea3ac6a4c178bf54e13a1d8a0ff5a664127bd4010bad6
     note: >
       Planning contract, not an interface contract. Gained a Contracts category and the rule
       that a milestone touching a locked interface becomes a change request, not engineering.
+      Amended under the architect's direction that the activities a role declares are the one
+      activity vocabulary: checklist items key on `activity` (six canonical names, canonical
+      order), the plan must declare every supported activity even when it carries no items, and
+      buckets run in that order without ever substituting for the verdict.
 
 # Walk order. A contract is added here when its stage begins; it leaves the queue only by
 # being proposed and then locked by the architect.

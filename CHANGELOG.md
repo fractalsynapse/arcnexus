@@ -23,6 +23,14 @@
   maps to `documentation`, which already resolved to `sol`, so model selection is unchanged. No
   role or operation declaration was edited. (#389)
 
+- Contract currency for the amended vocabulary: the CLI gateway contract's `activity` argument now
+  names the six declared activities (retiring `direction`, `design` and `integration` as activity
+  names, revision 4), and the direction contract states the director's model as an **execution
+  profile, not an activity** (revision 4) — `direction` is a component. The registry's `revision`
+  fields for five records lagged their contract headers (project, architecture-model,
+  collaboration-provider, and the two amended above); one resync pass now derives every record's
+  revision and digest from the authored file, which is what `validate` checks. (#389)
+
 - Plans are **bucketed by activity and run in one order**. `validateProposedPlan` requires a plan to
   declare every activity its role supports — a plan that leaves out `review` has silently decided
   to skip work the role exists to do — in canonical order, and `updatePlan` refuses to advance an

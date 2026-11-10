@@ -1,6 +1,6 @@
 # Gateway contract — ArcNexus CLI
 
-Type contract: `gateway`. Stage: **locked** (revision 3). Owner: `cli`.
+Type contract: `gateway`. Stage: **locked** (revision 4). Owner: `cli`.
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-foundation.md`](arcnexus-foundation.md).
 
 The CLI is the first behavioural surface and the anchor for acceptance tests: what it promises
@@ -67,7 +67,7 @@ tunable without spending a model turn or starting a run.
 | --- | --- |
 | `project` | resolved from the working directory when omitted |
 | `component` | a component id; omitted with `activity` renders the catalog index view |
-| `activity` | `direction` \| `research` \| `documentation` \| `design` \| `implementation` \| `review` \| `integration` — the same set the execution profiles resolve |
+| `activity` | one of `research` \| `documentation` \| `testing` \| `implementation` \| `review` \| `release`, narrowed to the activities the component's role declares — the same names plans, checklist items, operations and execution profiles resolve |
 | `--milestone` | a milestone id from an active plan, or a plan file, to render against real acceptance; otherwise a placeholder milestone |
 
 The rendered context contains, in assembly order: project identity and captured revision; the
@@ -237,6 +237,9 @@ changes:
     mode, so retiring its selector would leave a lifecycle with no way to reach it; it now selects
     the evidence-package collaboration provider rather than a fake GitHub. The rejected-option list
     loses it and the retired-command table no longer covers it.
+  - revision 4: the activity argument names the canonical activities a role declares;
+    `direction`, `design` and `integration` are retired as activity names, since the plan,
+    profile and operation vocabularies are now one set
   - revision 2: added `inspect` as the activity-context preview on the live generator;
     moved per-command options onto their commands and kept only `--json`, `--help` and
     `--version` global; folded `plan show` into `task status` under the one-fact-one-command

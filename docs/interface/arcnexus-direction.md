@@ -1,6 +1,6 @@
 # Library contract — Direction
 
-Type contract: `library`. Stage: **locked** (revision 3). Owner: `direction` (absorbs `task-intake`,
+Type contract: `library`. Stage: **locked** (revision 4). Owner: `direction` (absorbs `task-intake`,
 the planning half of `assignment`, `workday`, and the dispatch/admission parts of
 `execution-runtime` and `coordination-store`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-architecture-model.md`](arcnexus-architecture-model.md), [`arcnexus-coordination.md`](arcnexus-coordination.md).
@@ -19,7 +19,7 @@ work, never judges its own plan, and never stores anything.
 | paths | `src/library/direction`, `tests/library/direction`, `docs/library/direction` |
 | current surface | ~2,456 lines across five components: `task-intake` (9 files), `assignment/plan.ts`, `workday` (3 files), four `execution-runtime` dispatch and admission modules, four `coordination-store` request and dependency modules |
 | target size | ~700–900 lines |
-| model | the `direction` activity profile resolved by the project contract; planning runs read-only |
+| model | the director's execution profile resolved by the project contract — not an activity name; planning runs read-only |
 
 ## Provides
 
@@ -141,5 +141,8 @@ changes:
     owners and acceptance criteria while the owning agent authors its own bucketed plan; `activate`
     and planning both state the activity spine and its canonical ordering, and an escalation is
     returned, captured and replayable rather than treated as failure
+  - revision 4: the director's model selection is stated as an execution profile, not an
+    `direction` activity, because the six activities a role declares are the only activity
+    vocabulary and `direction` is a component, not an activity
   - revision 1: proposed in #356 with three open questions, all since answered
 ```
