@@ -97,10 +97,7 @@ export class ControlledPlanning {
   /** Builds the scripted plan, including deliberate scope or criterion faults when requested. */
   private plan(turn: WorkflowTurn): void {
     if (this.options.mode === 'planning-write') writeFileSync('source.txt', 'bad');
-    if (
-      this.options.omittedActivity &&
-      !turn.prompt.includes('Every checklist item activity must also appear in plan.activities')
-    )
+    if (this.options.omittedActivity && !turn.prompt.includes('EVERY activity the role supports'))
       throw new Error('ACTIVITY_MEMBERSHIP_REQUIRED');
     turn.result.plan = {
       approach: 'Check bounded behavior',
