@@ -68,6 +68,7 @@ export class AssignmentExecution {
     this.acknowledge(assignment, record);
     this.dependencyContext(assignment, record);
     record.inboxContext = this.inbox(assignment.id);
+    record.escalationContext = this.waits(assignment);
     this.feedback(assignment, record);
     const session = this.session(assignment, record);
     if (Array.isArray(assignment.data.questions) && assignment.data.questions.length)
@@ -75,7 +76,63 @@ export class AssignmentExecution {
     if (record.requestCorrection) await this.admission.correct(record, session);
     else if (!record.pendingRequests && !record.pendingInboxActions) await session.step();
     const result = await this.outcome(assignment, record, session);
+    this.settleWaits(assignment, record, result);
     return { ...result, receipt: (record.checkpoint as { sha256: string }).sha256 };
+  }
+
+  /** Outstanding waits this owner raised, or shares its accountability for, as directive input. */
+  private waits(assignment: ExecutionAssignment) {
+    return this.store.escalations
+      .outstanding()
+      .filter((item) => item.assignmentId === assignment.id || item.owner === assignment.owner);
+  }
+
+  /**
+   * Turns an outcome into durable wait state: a blocked owner records what it awaits, and an owner
+   * whose awaited work has just been admitted closes that wait. Neither rewrites the goal.
+   */
+  private settleWaits(
+    assignment: ExecutionAssignment,
+    record: RecordData,
+    result: ActivationResult,
+  ): void {
+    if (result.kind === 'blocked') this.escalate(assignment, record, result.reason);
+    if (result.kind !== 'request') return;
+    for (const item of this.store.escalations.outstanding(assignment.runId))
+      if (item.assignmentId === assignment.id)
+        this.store.escalations.close(item.id, 'the work this owner was waiting for was admitted');
+  }
+
+  /**
+   * Records a blocked owner's wait as an `escalation` entity.
+   *
+   * The store keeps the goal and acceptance exactly as they were authorised, the plan revision the
+   * owner was executing, the checklist items still open and the evidence already gathered, so the
+   * wait is readable state rather than error text and a resuming owner receives it as input.
+   */
+  private escalate(assignment: ExecutionAssignment, record: RecordData, reason: string): void {
+    const plan = record.plan as
+      | {
+          version?: number;
+          items?: Array<{ id: string; activity: string; status: string; evidence: string[] }>;
+        }
+      | undefined;
+    const open = (plan?.items ?? []).filter(
+      (item) => !['completed', 'skipped'].includes(item.status),
+    );
+    this.store.escalations.open({
+      runId: assignment.runId,
+      assignmentId: assignment.id,
+      owner: assignment.owner,
+      goal: { objective: assignment.objective, acceptance: assignment.acceptance },
+      reason,
+      planRevision: plan?.version,
+      openSteps: open.map(({ id, activity, status }) => ({ id, activity, status })),
+      evidence: [
+        ...new Set(open.flatMap((item) => item.evidence ?? [])),
+        ...record.commands.filter((c) => c.exitCode === 0).map((c) => c.log),
+      ],
+    });
   }
 
   /** Ensures fresh direction reaches a model even when engineering finished before delivery review. */

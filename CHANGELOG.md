@@ -3,6 +3,17 @@
 ## [Unreleased]
 
 ### Changed
+- **Escalation is stored state, not error text** (coordination I9 entity kinds, CO-20). A blocked
+  activation now opens an `escalation` entity carrying its reason, the goal identity and acceptance
+  exactly as authorised, the plan revision the owner was executing, the checklist items still open
+  with their activity buckets, and the evidence already gathered. `coordination-store/escalation-store.ts`
+  owns open/read/close against the same authoritative database — no parallel projection — and the
+  execution lane records the wait when an outcome is `blocked`, replays outstanding waits into the
+  resuming owner's context as directive input, and closes them when the awaited work is admitted or
+  the owner's delivery is verified. Repeating the same blocker does not stack entities, and closing
+  one never rewrites its goal or acceptance. Five deterministic integration cases cover storage,
+  replay across a reopened store, dedupe, resolution idempotency and closure by verified delivery. (#389)
+
 
 - **One canonical activity vocabulary.** Five lists existed for one concept: roles declared
   `research, documentation, testing, implementation, review, release` (and the role JSON schema
