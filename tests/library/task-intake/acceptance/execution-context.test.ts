@@ -1,3 +1,4 @@
+import { DirectionWaitScenarios } from './direction-waits-scenarios.js';
 import assert from 'node:assert/strict';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -12,6 +13,7 @@ import { DirectionContext } from '../../../../dist/library/task-intake/direction
 import { VerificationEvidence } from '../../../../dist/library/task-intake/verification-evidence.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import { workflowFixture } from '../../testing/support/workflow-fixture.js';
+import { nativeHostTest } from '../../testing/support/general-fixture.js';
 
 const callerInput = 'Caller command: node check.js\nExit: 7\nstdout: observed\nstderr: failure\n';
 
@@ -203,6 +205,24 @@ for (const investigation of [false, true])
 
 test('canonical consumers refuse foreign identities and retain missing-input gaps', (t) =>
   scenarios.boundaries(t));
+
+const waitScenarios = new DirectionWaitScenarios();
+
+test('direction prompt exposes every outstanding project wait before planning', (t) =>
+  waitScenarios.populated(t));
+
+test('direction prompt orders tied outstanding waits deterministically', (t) =>
+  waitScenarios.deterministic(t));
+
+test('direction prompt preserves exact empty bytes for closed and foreign waits', (t) =>
+  waitScenarios.empty(t));
+
+test('direction prompt without recorded state creates no coordination database', (t) =>
+  waitScenarios.absent(t));
+
+nativeHostTest('direction planning keeps recorded waits observational without a human gate', (t) =>
+  waitScenarios.completion(t),
+);
 
 registerSuite({
   component: 'task-intake',

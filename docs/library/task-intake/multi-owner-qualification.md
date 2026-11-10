@@ -18,12 +18,12 @@ requested during execution. The source authority was
 
 Evidence roots are beneath `/home/adrian/.local/state/arcnexus-qualification-109/`.
 
-| Task | Evidence root | Outcome and observed limitation |
-| --- | --- | --- |
-| `2b0d9664-b7b2-4993-8276-212d25c2e58b` | `multi-owner-20261102T035451Z` | `needs_input`; gateway → formatter → names activation occurred, but reused edit identities and incompatible shared-delivery criteria prevented completion. |
-| `b0f73af0-a148-42b2-aa5d-1fe360535013` | Same root | `needs_attention`; one names delivery completed independently, but a later overlapping names assignment conflicted in documentation and regression files. Both versions and the conflict evidence were retained. |
-| `91695d0d-8ead-49c2-8e62-7bf7e39c6772` | `multi-owner-guidance-20261102T043036Z` | `needs_input`; workers discovered the checked edit tool but submitted absolute paths, correctly rejected before mutation. |
-| `a8d94f1b-c0ae-493e-b27a-f2288bab9377` | Same guidance root | `needs_input`; relative checked edits worked, but implementation attempted to change a frozen names regression. The host rejected it and the director requested a specification restart decision. |
+| Task                                   | Evidence root                           | Outcome and observed limitation                                                                                                                                                                                  |
+| -------------------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `2b0d9664-b7b2-4993-8276-212d25c2e58b` | `multi-owner-20261102T035451Z`          | `needs_input`; gateway → formatter → names activation occurred, but reused edit identities and incompatible shared-delivery criteria prevented completion.                                                       |
+| `b0f73af0-a148-42b2-aa5d-1fe360535013` | Same root                               | `needs_attention`; one names delivery completed independently, but a later overlapping names assignment conflicted in documentation and regression files. Both versions and the conflict evidence were retained. |
+| `91695d0d-8ead-49c2-8e62-7bf7e39c6772` | `multi-owner-guidance-20261102T043036Z` | `needs_input`; workers discovered the checked edit tool but submitted absolute paths, correctly rejected before mutation.                                                                                        |
+| `a8d94f1b-c0ae-493e-b27a-f2288bab9377` | Same guidance root                      | `needs_input`; relative checked edits worked, but implementation attempted to change a frozen names regression. The host rejected it and the director requested a specification restart decision.                |
 
 The subsequent additive-compatibility task `13a34943-9913-4269-ba87-5b70d48b30b7`
 used the same guidance root and clean source authority. It activated gateway, names
@@ -68,7 +68,6 @@ in the earlier guidance root. This is neither a fresh candidate nor a qualificat
 of the caller installation's newer runtime. Subsequent qualification uses a separate
 cloned repository identity, its original declared origin, and a fresh candidate.
 
-
 Further retained attempts exposed integration defects rather than qualifying the gate:
 
 - `d6b7cbea-ffd4-4401-bc64-2bedeed95fb0` in
@@ -89,7 +88,6 @@ A new documentation goal uses the shipped v5 general fixture and requires three
 owners discovered from its public catalog. It is a separate live objective, not a
 reinterpretation of any failed feature task. Its evidence root is
 `multi-owner-v5-docs-20261102T083000Z`. It completed with CLI exit 0.
-
 
 ## Completed three-owner documentation goal
 
