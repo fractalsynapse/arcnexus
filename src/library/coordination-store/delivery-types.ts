@@ -53,8 +53,16 @@ export interface DeliveryRoute {
   /** integratedAt: when the target actually moved. */
   integratedAt: string;
 
-  /** released: whether this route's provider also recorded a release. Live routes never do. */
+  /** released: whether this route's provider also recorded a release. */
   released: boolean;
+
+  /**
+   * releaseExpected: whether the route that produced this merge declared a release step.
+   *
+   * Recorded from the operating route's own declared operations rather than inferred from the
+   * environment, because branching on provider identity would make one goal mean two things.
+   */
+  releaseExpected: boolean;
 }
 
 /** Separates verified engineering from the one recorded publication outcome. */
@@ -94,12 +102,14 @@ export function deliveryStatus(delivery: DeliveryRecord): {
 /**
  * True when the delivery's publication route has reached its recorded end.
  *
- * The route is complete once the provider's merge identity is recorded and the release the route
- * declared has been captured. A live route declares none, because production release stays a human
- * gate, so its merge is the end. This is the one place that question is asked.
+ * The route is complete once the provider's merge identity is recorded and, where that route
+ * declared a release step, the release has been captured. Derived from the recorded route alone,
+ * never from the environment: branching on namespace here would let the same goal mean two different
+ * things, which the collaboration and delivery contracts forbid. This is the one place that question
+ * is asked.
  */
 export function routeComplete(delivery: DeliveryRecord): boolean {
-  return !!delivery.route && (delivery.route.released || delivery.environment.mode === 'live');
+  return !!delivery.route && (!delivery.route.releaseExpected || delivery.route.released);
 }
 
 /**

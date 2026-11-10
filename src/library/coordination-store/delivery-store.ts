@@ -62,13 +62,14 @@ export class DeliveryStore {
     milestone: DeliveryMilestone,
     effectId: string,
     mergedHead?: string,
+    releaseExpected = false,
   ): DeliveryRecord {
     if (!effectId.trim()) throw new Error('Delivery transition requires an effect receipt');
     return this.change(id, version, 'delivery.' + milestone, (delivery) => {
       const prior = delivery.receipts[milestone];
       if (prior && prior !== effectId) throw new Error('Delivery milestone receipt cannot change');
       if (prior) return {};
-      const state = this.transition(delivery, milestone, mergedHead);
+      const state = this.transition(delivery, milestone, mergedHead, releaseExpected);
       return {
         ...state,
         receipts: { ...delivery.receipts, [milestone]: effectId },
@@ -123,6 +124,7 @@ export class DeliveryStore {
     delivery: DeliveryRecord,
     milestone: DeliveryMilestone,
     mergedHead?: string,
+    releaseExpected = false,
   ): Partial<DeliveryRecord> {
     this.order(delivery, milestone);
     if (milestone === 'merge')
@@ -132,10 +134,14 @@ export class DeliveryStore {
           receipt: String(delivery.receipts.merge ?? ''),
           integratedAt: new Date().toISOString(),
           released: false,
+          releaseExpected,
         },
       };
     if (milestone === 'release') {
-      if (!delivery.route || delivery.environment.mode !== 'simulation')
+      // Authorization may differ by namespace where a contract requires it - a real release is
+      // human-controlled - but what completion MEANS must not: routeComplete() reads only the
+      // recorded route, so the same goal cannot mean two different things per environment.
+      if (!delivery.route || delivery.route.released || delivery.environment.mode !== 'simulation')
         throw new Error('Delivery milestone is out of order or not authorized for this mode');
       return { route: { ...delivery.route, released: true } };
     }
