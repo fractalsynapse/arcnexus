@@ -52,7 +52,7 @@ owes:
    guidance, standards, checks, delivery policy, bindings identity and base revision.
 
 The knowledge spaces are part of the contract because their authorship is observable behaviour:
-`.arc/architecture/` is read as authority, `.arc/plans/` is written only by the runtime, and
+`.arc/architecture/` is read as authority, `.arc/plans/` is authored by the owning agents and persisted only by the runtime lane, and
 `.arc/learning/` is append-only and never authority for an active run.
 
 ## Invariants

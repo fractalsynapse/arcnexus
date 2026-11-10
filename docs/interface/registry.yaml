@@ -103,8 +103,8 @@ contracts:
     file: docs/interface/arcnexus-coordination.md
     owner: coordination
     stage: locked
-    revision: 2
-    digest: b59e95e623b0d736d845f0fd9cab64464b0ec168fcab10840011b67f7a95272b
+    3
+    digest: 1751d853de6f8804733fa2f605608d571dcee9b495cbbc5f282adf575c340aa3
     dependsOn: [arcnexus/project, arcnexus/architecture-model]
     scenarios: 19
     acceptedBy: Adrian Webb (architect)
@@ -124,8 +124,8 @@ contracts:
     file: docs/interface/arcnexus-execution.md
     owner: execution
     stage: locked
-    revision: 3
-    digest: eade2a944c18f94cc45e586d8d98073ef2fc318ffc2f3c5f6d0d7c3fd428cdd7
+    3
+    digest: a8a60e1781087e11e3dba60bf68995e8b65e306ba67c5052d5a49f5dd3994677
     dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination]
     scenarios: 19
     acceptedBy: Adrian Webb (architect)
@@ -148,8 +148,8 @@ contracts:
     file: docs/interface/arcnexus-direction.md
     owner: direction
     stage: locked
-    revision: 2
-    digest: 3ea6b95a48c7da0d9c1642a935a10699d51c3d4ae2475566dcb1e56522714074
+    2
+    digest: ccab8b9bc2564c974a06950747171d7671f1f85c414f3bbd71ebd8ccc07cca76
     dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination]
     scenarios: 19
     acceptedBy: Adrian Webb (architect)
@@ -169,8 +169,8 @@ contracts:
     file: docs/interface/arcnexus-verification.md
     owner: verification
     stage: locked
-    revision: 4
-    digest: 07cbaf2fa2f53364a7104613aad53e6ddbdbacf3012062ae42a35d5e0697f5ac
+    3
+    digest: 14d87b6affa387ca5a35e28f372c9a8b76019a7429b7c090f38242c910c933b6
     dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination, arcnexus/execution, arcnexus/direction]
     scenarios: 17
     acceptedBy: Adrian Webb (architect)
@@ -189,8 +189,8 @@ contracts:
     file: docs/interface/arcnexus-delivery.md
     owner: delivery
     stage: locked
-    revision: 4
-    digest: af42202ff89e6bb593b8235de488d765689966b40ed32b2c6d8371e96eae10bc
+    3
+    digest: 82b2e0d291587ffac9a3408cce296efe0526665caffcab60020c48f947591242
     dependsOn: [arcnexus/project, arcnexus/coordination, arcnexus/verification, arcnexus/direction]
     scenarios: 17
     acceptedBy: Adrian Webb (architect)

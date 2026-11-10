@@ -1,6 +1,6 @@
 # Library contract — Execution
 
-Type contract: `library`. Stage: **locked** (revision 2). Owner: `execution` (absorbs
+Type contract: `library`. Stage: **locked** (revision 3). Owner: `execution` (absorbs
 `execution-runtime`, `workspace`, `steward`, `operations` and `change-inspection`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-architecture-model.md`](arcnexus-architecture-model.md), [`arcnexus-coordination.md`](arcnexus-coordination.md).
 Depended on by: `direction`, `verification`, `delivery`, the gateway, and every agent turn.
@@ -26,8 +26,8 @@ and that boundary is the whole reason this contract exists.
 | --- | --- |
 | `lane(project)` | the single sequential executor for one project. It runs one activation at a time and reports the busy lane to coordination; it does not schedule, prioritise, rotate or queue |
 | `workspace(goalId, milestoneId)` | an isolated worktree at the milestone's captured base, with declared generated directories, setup operations resolved from the captured check catalog, and identity assertions that refuse a workspace belonging to another revision |
-| `checkedEdit(request)` | the only write route to maintained source: ownership scope from the capture × current step × symlink and alias rejection × expected-content-hash conflict. Returns the applied change or a typed refusal naming the owner and the reason |
-| `activate(component, activity, milestone)` | build context **through `architecture-model.contextFor`, the same generator `inspect` renders**, run the harness, stream events to coordination, and return a typed outcome with evidence references |
+| `checkedEdit(request)` | the only write route to maintained source: ownership scope from the capture × symlink and alias rejection × expected-content-hash conflict. Returns the applied change or a typed refusal naming the owner and the reason |
+| `activate(component, activity, milestone)` | assemble the four context layers — goal with its acceptance criteria, project characteristics, this component's profile, and the agent's own plan — **through `architecture-model.contextFor`, the same generator `inspect` renders**; run the harness with a live journal that records every emitted message, tool call and metric as it happens and streams them to coordination; and return a typed outcome with evidence references: delivered, blocked-with-escalation, question, or refusal. One runtime serves every role, so a fix to activation reaches the director, every steward and the verifier together |
 | `runOperation(id, args)` | resolve one declared operation from the capture — prerequisites, generated directories, network policy, artifacts — execute it under supervision, and return exit status, duration and log paths |
 | `confinement(policy)` | one mechanism: read-only source, declared writable outputs, declared network, capability probes. Identical for live and simulated work; only the upstream namespace differs |
 | `snapshot(workspace)` | candidate change inspection: staged, unstaged and untracked detected separately, with a content digest. Restoring a working file cannot hide a staged edit |
@@ -66,13 +66,14 @@ the difference between a documented rule and a rule a run cannot cross.
 | I11 | Assembly is a merge. Conflicts are retained and reported; they are not resolved by preference. |
 | I12 | Execution holds no lifecycle state. Status lives in coordination; execution returns outcomes. |
 | I13 | Model selection comes from the activity's profile. An operator substitution is permitted, recorded in evidence, and never changes captured authority. |
+| I15 | An activation's plan is bucketed by activity and its buckets run in one canonical order: a later activity cannot open items while an earlier activity still holds any that are not terminal. Bucket completion is never work completion — acceptance is decided by the independent verdict against the goal, so an activation with every bucket closed and the goal unmet has failed. |
 | I14 | Nothing in the lane, workspace or confinement interface precludes a background host running several goals concurrently. The MVP runs one in-process lane, and the container deployment seam is retained so the later service is a deployment change rather than a redesign. |
 
 ## Acceptance scenarios
 
 | Id | Given / when / then |
 | --- | --- |
-| EX-1 | A checked edit inside the owner's scope at the current step applies and records the change with its before and after digests. |
+| EX-1 | A checked edit inside the owner's scope applies and records the change with its before and after digests. |
 | EX-2 | The same edit against a stale expected hash is refused naming the file, and nothing is applied. |
 | EX-3 | An edit to a path owned by another component is refused naming that owner, and no duplicate milestone or agreement request is created. |
 | EX-4 | An edit targeting a locked contract file is refused for a run without recorded authority, and applied for one that carries it. |
@@ -90,6 +91,8 @@ the difference between a documented rule and a rule a run cannot cross.
 | EX-16 | An operation outside the activity's declared categories, or with an unmet prerequisite, is refused before execution with the reason named. |
 | EX-17 | Deleting the recovery, retained-host, promotion-resume and lease modules leaves no caller in the execution path. |
 | EX-18 | An operator model substitution changes the model used, is recorded in evidence, and leaves captured authority and findings identical. |
+| EX-20 | Planning a step under one activity and attempting it after a later bucket has opened is refused, and the refusal names the open earlier items; reordering the same plan into canonical buckets runs unchanged. |
+| EX-21 | An activation whose every bucket is closed while a criterion of the goal is unmet is recorded as failed, and no checklist state can mark it accepted. |
 | EX-19 | Two lanes for two different projects can exist in one process without interference: the lane is obtained per project, holds no process-global mutable state, and neither activation observes the other's workspace, store or evidence. |
 
 ## Migration
@@ -135,6 +138,7 @@ revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
 changes:
+  - revision 3: checked edits are scoped by ownership and capture only, dropping the step gate the settled design rejects; activation states the four context layers, the live journal and the typed outcomes including escalation; and plan steps bucket by activity with a canonical order that can never substitute for the verdict.
   - revision 3: migration table gains a Status column recording implementation progress by pull
     request — the promotion modules are deleted (#367) and the simulated twins with the provider
     receipt store are gone (#368, #372), while the one-process, one-lane and workspace-disposal

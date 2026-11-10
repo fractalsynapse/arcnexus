@@ -29,7 +29,7 @@ work, never judges its own plan, and never stores anything.
 | `owners(index, goal)` | the starting owner for each milestone, chosen from the bounded catalog index, requesting a full definition only when the index is insufficient. No prescribed team size; no team invented from prose. |
 | `sequence(milestones)` | deterministic ordering. A `Request` for another owner's contribution becomes the preceding milestone, never a parallel dependency, an agreement step, or a duplicate implementation. |
 | `revise(plan, observation)` | the Update-plan step: milestone and step status, a correction as the next milestone for the accountable owner, a retired request by linking it, and the reason. Same machinery as planning — there is no separate repair path. |
-| `directive(source, termination)` | the task/workday seam: `goal` source with `met-released-verified` or `stopped` termination, or the reserved `stewardship` source with `session-bound` or `idle-pass` termination and an owner cursor. One planner; the directive is the only difference. `stewardship` is refused with a clear error until workdays are built, so the shape exists without a second engine. |
+| `directive(scope, termination)` | the planning seam: **one role, `director`**, differing only in scope and termination — a goal-scoped directive terminates met-released-verified or stopped, a component-scoped directive terminates session-bound or idle-pass and carries an owner cursor. Self-directed component planning is not a fourth agent role, and a component-scoped directive is refused with a clear error until the seam that schedules it exists, so the shape is real without a second engine. |
 | `clarifications(plan)` | gate records for questions that need a human, answered through `task answer`. A question is a record, never a run status. |
 | `contractCheck(goal, plan, locks)` | validation against the locked contracts before any milestone is admitted. On conflict it emits a **change-request gate** naming the contract and clause; it never plans a milestone that crosses a locked interface. |
 
@@ -60,7 +60,7 @@ the lane itself belongs to `execution`.
 | I11 | The director's input is bounded: catalog index plus the requested definitions, within the project contract's context budget. |
 | I12 | Prohibitions the host already enforces are removed from prompts. Rules live in checks, not in paragraphs telling the model what not to do. |
 | I13 | **Staging integration is automatic.** A plan sequences staging merge as an ordinary milestone, completed when applicable checks, CI and any configured review requirement are satisfied. Only production release — protected-branch merge, tag, publication, deploy — awaits a human gate. The release path is automated right up to that boundary. |
-| I14 | The `stewardship` directive is reserved, not deferred silently: its shape exists, and using it before workdays are built refuses with a stated reason rather than inventing a planner. |
+| I14 | Component-scoped planning is one `director` activation with a narrower scope, not a separate role: the scope and termination are the only difference, and using it before the scheduling seam exists refuses with a stated reason rather than inventing a planner or a fourth role name. |
 
 ## Acceptance scenarios
 
@@ -75,7 +75,7 @@ the lane itself belongs to `execution`.
 | DI-7 | A failed step produces a correction milestone for the same owner with a stated diagnosis; no new state, retry counter or recovery path appears. |
 | DI-8 | A goal that conflicts with a locked contract yields a change-request gate naming the contract id and clause, and no milestone touching that path is admitted. |
 | DI-9 | Direction cannot write the registry or any locked contract file; the checked-edit refusal is observed, not merely asserted in the prompt. |
-| DI-10 | A `stewardship` directive produces the same plan machinery with an owner cursor and session termination; no second planner module is invoked. |
+| DI-10 | A component-scoped directive produces the same plan machinery, the same activity-bucketed checklist, and the same validation with an owner cursor and session termination; no second planner module is invoked. |
 | DI-11 | Director input for the full catalog stays within the project contract's bound, and the plan names what it withheld rather than truncating silently. |
 | DI-12 | Removing a prohibition paragraph that the host enforces leaves every scenario passing; removing an enforced check fails one. |
 | DI-13 | A clarification asked mid-milestone becomes a gate record; the run reports `blocked: awaiting <gate>` and resumes from position after `task answer`. |
@@ -84,7 +84,7 @@ the lane itself belongs to `execution`.
 | DI-16 | Two goals in the same project cannot both be planned: the lane is busy, and the second is refused rather than queued. |
 | DI-17 | A goal whose plan ends in staging integration completes without any human turn: the staging merge milestone is planned, executed and recorded as an ordinary milestone, and the run closes. |
 | DI-18 | A plan reaching production release automates candidate scope, changelog, version and the protected-branch pull request, then ends `blocked: awaiting <release gate>` naming what the human must do. No agent merges to the protected branch, tags or deploys. |
-| DI-19 | A `stewardship` directive is refused with a stated reason and the reserved shape visible in the error; no second planner module is created to serve it. |
+| DI-19 | A component-scoped directive is refused with a stated reason and the reserved shape visible in the error; no second planner module and no separate role name is created to serve it. |
 
 ## Migration
 
@@ -92,10 +92,10 @@ the lane itself belongs to `execution`.
 | --- | --- | --- |
 | `task-intake/direction.ts` with a ~2,500-character prohibition paragraph, plus `direction-context`, `direction-evidence`, `direction-record`, `proposal-store` | `plan`, `owners`, `contractCheck` over the locked template | prohibitions the host now enforces are deleted, not reworded |
 | `task-intake/initializer.ts` (291) and `initializer-checks` | folded into plan generation | no separate initialization vocabulary |
-| `assignment/plan.ts` (205) plus the `plan` and `plan-updates` schemas | checklist content as plan data authored by direction | removes worker-authored checklists with their own dependency validation |
+| `assignment/plan.ts` (205) plus the `plan` and `plan-updates` schemas | one plan structure carrying steps bucketed by activity, authored by the agent that owns the work and persisted by the lane | keeps a single authoring path and one validation rule, and removes worker plan formats the runtime must translate. Direction keeps goals, sequence, owners and acceptance criteria; it does not author another agent's steps |
 | `coordination-store/inbox-decisions` (195), `request-proposal`, `required-work`, `assignment-admission` | `sequence` plus the `Request` entity | admission, duplicate-delivery protection and cycle detection become unreachable by design |
 | `execution-runtime/run-selection`, `workday-selection`, `collaborative-dispatch`, `request-admission`, `direction-admission` (≈590 lines) | consumed by `execution.lane` reading plan order | deletes the alternate orchestration paths |
-| `workday/workday-config` (220), `workday-view`, `general-policy` | reserved `stewardship` directive source | workday returns as a directive, not a second engine |
+| `workday/workday-config` (220), `workday-view`, `general-policy` | reserved component-scoped `director` directive | workday returns as a directive of the one planner, not a second engine and not a fourth role |
 | `task-intake/verification-assessment`, `verification-evidence` | move to `verification` | direction stops judging its own plan |
 
 Migration lands in cleanup batches 3 and 5, and is verified by DI-15 together with EX-17 and
@@ -118,8 +118,9 @@ resume an abandoned run.
 2. **Locked-contract conflicts:** direction inserts a **change-request gate** into the sequence so
    the plan itself shows the blocked decision, and admits no milestone that crosses the clause
    (I7, DI-8, DI-9).
-3. **Workday:** the `stewardship` directive shape is reserved now and refused with a stated reason
-   until workdays are built, keeping the seam without a second planner (I14, DI-19).
+3. **Workday:** the component-scoped `director` directive shape is reserved now and refused with a
+   stated reason until workdays are built, keeping the seam without a second planner or a separate
+   role name (I14, DI-19).
 
 ## Lock record
 
@@ -134,5 +135,11 @@ changes:
     production release awaits a human gate (new I13, DI-17, DI-18); a locked-contract conflict
     inserts a change-request gate into the sequence; the stewardship directive is reserved rather
     than deferred silently (new I14, DI-19)
+  - revision 3: self-directed component planning is one `director` role with a narrower scope, so
+    the role set stays director, steward and verifier rather than adding a fourth name that reads like
+    a duplicate of steward; the plan-authorship split is corrected so direction keeps goals, sequence,
+    owners and acceptance criteria while the owning agent authors its own bucketed plan; `activate`
+    and planning both state the activity spine and its canonical ordering, and an escalation is
+    returned, captured and replayable rather than treated as failure
   - revision 1: proposed in #356 with three open questions, all since answered
 ```

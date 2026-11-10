@@ -30,7 +30,7 @@ allowed to re-derive those facts.
 | `importsAllowed(file, target)` | the import boundary: cross-owner imports only through declared public modules, no private-module reach, no cycles. |
 | `validate(catalog, inventory)` | findings with **stable codes**, each naming file and reason: architecture, ownership, guidance metadata, standards budgets, delivery policy, and contract integrity (below). Never a semantic judgement about prose quality. |
 | `capture(...)` | the immutable authority snapshot taken at admission: catalog bytes and digests, guidance and standards digests, check catalog, bindings identity, base revision, and the digests of every `locked` contract. This is what "captured authority" means everywhere else. |
-| `contextFor(component, activity, milestone?)` | the bounded model-facing view. A **catalog index** by default (id, purpose, objectives, constraints, one line each) and a full definition only when explicitly requested. Standards are filtered to the activity and capped: at most six, about 150 words each. |
+| `contextFor(component, activity, milestone?)` | the bounded model-facing view. The acting component's **own** definition arrives complete, because its ownership paths and verification operations are authority it cannot re-derive; every other component is a catalog index (id, purpose, objectives, constraints, one line each) unless explicitly requested. Standards are filtered to the activity and capped: at most six, about 150 words each. |
 | `operationsFor(component, activity)` | declared operations available to that activity with their digests, prerequisites and generated-output declarations. Resolution only — running them belongs to `execution`. |
 | `bindings(project)` | machine-local executables and repository paths, with the source recorded. A missing key is an error naming the key. |
 | `proposeChange(component, field, value)` | writes a **proposal** for the architect into `.arc/learning/`. It never edits `.arc/architecture/` and never changes an active run. |
@@ -70,7 +70,7 @@ interface stops at the edit that would have done it.
 | I5 | Validation is deterministic, offline and side-effect free; finding codes are stable across revisions. |
 | I6 | Model-facing context is bounded by construction: index by default, full definition on request, standards within budget. No paging subsystem exists to cope with an unbounded catalog. |
 | I7 | Guidance is validated as metadata and inventory; semantic approval stays with the reviewer. |
-| I8 | Standards attach to activities, not to bespoke prompts, and are shared once per catalog rather than copied per owner. |
+| I8 | Standards attach to activities, not to bespoke prompts, and are shared once per catalog rather than copied per owner. The set a context inherits is the project's and the component's own, narrowed to the activity being performed; activities order an agent's work as well as narrowing what it reads. |
 | I9 | A locked contract cannot be modified by a candidate without recorded human authority. |
 | I10 | The model reports what it withheld: any truncation, budget hit or unavailable definition is stated in the output, never silent. |
 
