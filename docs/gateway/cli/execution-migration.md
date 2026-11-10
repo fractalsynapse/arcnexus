@@ -59,7 +59,7 @@ current failure-mode coverage or weaken any captured live acceptance source.
 from any working directory. Without a prompt it presents captured ancestor context,
 effective owner policy, standards, public API, observed relationships and operation
 identities. With a prompt it adds a planning preview, not an accepted assignment or
-invented acceptance criteria. `--activity research|document|design|implement|review|release`
+invented acceptance criteria. `--activity research|documentation|testing|implementation|review|release`
 labels the requested context; a prompt defaults to implementation context.
 
 Inspection never starts a host, invokes a model, prepares a workspace or grants write

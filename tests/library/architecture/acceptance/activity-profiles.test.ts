@@ -24,12 +24,15 @@ class ActivityProfileScenarios {
     const catalog = loadCatalog(f.root, f.git('rev-parse', 'HEAD'));
     const leaf = catalog.components.sample!;
     assert.equal(leaf.executionProfile, 'luna');
-    assert.deepEqual(leaf.activityProfiles, { research: 'luna', design: 'sol', review: 'sol' });
+    assert.deepEqual(leaf.activityProfiles, { research: 'luna', testing: 'sol', review: 'sol' });
     assert.deepEqual(leaf.policy!['activityProfiles.research'], {
       value: 'luna',
       source: 'package',
     });
-    assert.deepEqual(leaf.policy!['activityProfiles.design'], { value: 'sol', source: 'platform' });
+    assert.deepEqual(leaf.policy!['activityProfiles.testing'], {
+      value: 'sol',
+      source: 'platform',
+    });
     f.put('architecture/execution-profiles/sol.json', this.profile('altered'));
     assert.equal(loadCatalog(f.root, f.git('rev-parse', 'HEAD')).profiles.sol!.model, 'test-sol');
   }
@@ -44,7 +47,7 @@ class ActivityProfileScenarios {
     const captured = resolveAssignment(f.root, base, 'sample', options);
     assert.equal(captured.executionProfile.id, 'luna');
     assert.equal(captured.activityProfiles!.research!.model, 'test-sol');
-    assert.equal(captured.activityProfiles!.design!.id, 'sol');
+    assert.equal(captured.activityProfiles!.testing!.id, 'sol');
     const director = resolveAssignment(f.root, base, 'sample', {
       ...options,
       executionProfile: 'sol',
@@ -78,7 +81,7 @@ class ActivityProfileScenarios {
         reads: ['.'],
         director: { component: 'sample', profile: 'sol' },
         reviewerProfile: 'sol',
-        activityProfiles: { research: 'sol', design: 'sol', review: 'sol' },
+        activityProfiles: { research: 'sol', testing: 'sol', review: 'sol' },
       }),
     );
     f.put(
@@ -146,7 +149,7 @@ class ActivityProfileScenarios {
         role: 'engineer',
         executionProfile: 'luna',
         reads: ['.'],
-        activityProfiles: { research: 'sol', design: 'sol', review: 'sol' },
+        activityProfiles: { research: 'sol', testing: 'sol', review: 'sol' },
       }),
     );
     return f;
