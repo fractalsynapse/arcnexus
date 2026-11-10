@@ -27,6 +27,8 @@ operations:
 owns:
   - src/library/task-intake
   - tests/library/task-intake
+  - scripts/direction-probe.mjs
+  - scripts/direction-corpus.json
   - docs/library/task-intake
 api:
   - module: src/library/task-intake/direction.ts
