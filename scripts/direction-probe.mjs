@@ -75,6 +75,17 @@ async function plan(root, context, store, run, goal, signal) {
   return { result, prompt: input.prompt };
 }
 
+/** Loads a previously captured director result and the prompt that produced it. */
+function replay(options_) {
+  const from = resolve(options_.from ?? '');
+  if (!options_.from || !existsSync(join(from, 'director-result.json')))
+    throw new Error('replay requires --from <capture directory> holding a director-result.json');
+  return {
+    result: JSON.parse(readFileSync(join(from, 'director-result.json'), 'utf8')),
+    prompt: readFileSync(join(from, 'prompt.txt'), 'utf8'),
+  };
+}
+
 /** Admits a director result through the host's own validator, then reads back what became runnable. */
 function admit(root, context, store, run, result) {
   new AssignmentDispatch(root, context, store).apply(store.run(run.id), result);
@@ -87,26 +98,48 @@ function admit(root, context, store, run, result) {
  * Each rule names a failure mode this project has actually hit: empty acceptance made the
  * per-criterion gate inert, and an unbounded team turned a small goal into a merge conflict.
  */
-function lint(assigned, result, context) {
+/** Rules about the proposal itself, which must be checked even when nothing is admitted. */
+function lintProposals(proposals, context) {
   const problems = [];
-  if (!assigned.length && result.status === 'ready' && !result.summary)
-    problems.push('ready with no justification recorded');
-  for (const item of assigned) {
-    if (!Array.isArray(item.acceptance) || !item.acceptance.length)
-      problems.push(`assignment ${item.id.slice(0, 8)} carries no acceptance criteria`);
-    if (item.objective.length < 24)
-      problems.push(`assignment ${item.id.slice(0, 8)} objective is not substantive`);
-  }
-  const owners = [...new Set(assigned.map((item) => item.owner))];
-  for (const owner of owners)
-    if (!context.catalog.components[owner]) problems.push('unknown owner proposed: ' + owner);
-  const ids = new Set(assigned.map((item) => item.id));
-  for (const item of assigned)
+  const ids = new Set(proposals.map((item) => item.id).filter(Boolean));
+  for (const item of proposals) {
+    const label = item.ownerId ?? '?';
+    if (!Array.isArray(item.acceptanceCriteria) || !item.acceptanceCriteria.length)
+      problems.push(`proposed ${label} assignment carries no acceptance criteria`);
+    if (String(item.objective ?? '').length < 24)
+      problems.push(`proposed ${label} objective is not substantive`);
+    if (!context.catalog.components[item.ownerId])
+      problems.push('unknown owner proposed: ' + String(item.ownerId));
     for (const dependency of item.dependencies ?? [])
-      if (!ids.has(dependency)) problems.push('dependency outside the plan: ' + dependency);
-  if (assigned.length > 4)
-    problems.push(`${assigned.length} assignments for one goal: check for fan-out`);
-  return { owners, problems, assignments: assigned.length };
+      if (ids.size && !ids.has(dependency))
+        problems.push('dependency outside the plan: ' + dependency);
+  }
+  return problems;
+}
+
+/**
+ * The mechanical questions worth asking of every plan, before any agent costs anything.
+ *
+ * Each rule names a failure mode this project has actually hit: empty acceptance made the
+ * per-criterion gate inert, and an unbounded team turned a small goal into a merge conflict.
+ */
+function lint(assigned, result, context) {
+  const proposals = result.assignments ?? [];
+  const problems = lintProposals(proposals, context);
+  if (!proposals.length && result.status === 'ready' && !result.summary)
+    problems.push('ready with no justification recorded');
+  if (proposals.length && assigned.length !== proposals.length)
+    problems.push(`admitted ${assigned.length} of ${proposals.length} proposals`);
+  if (!assigned.length && result.status === 'ready' && proposals.length)
+    problems.push('proposals admitted nothing');
+  if (proposals.length > 4)
+    problems.push(`${proposals.length} assignments for one goal: check for fan-out`);
+  return {
+    owners: [...new Set(proposals.map((item) => item.ownerId))],
+    problems,
+    proposals: proposals.length,
+    admitted: assigned.length,
+  };
 }
 
 /** Writes one capture directory outside source and returns its path. */
@@ -145,16 +178,10 @@ async function main() {
   const context = new ExecutionContext().resolve(options_.repo);
   const signal = new AbortController().signal;
   const { store, run } = lane(root, context, options_.goal ?? 'replayed direction capture');
-  let result;
-  let prompt;
-  if (options_.mode === 'live') {
-    ({ result, prompt } = await plan(root, context, store, run, options_.goal, signal));
-  } else {
-    if (!options_.from || !existsSync(join(options_.from, 'director-result.json')))
-      throw new Error('replay requires --from <capture directory> holding a director-result.json');
-    result = JSON.parse(readFileSync(join(options_.from, 'director-result.json'), 'utf8'));
-    prompt = readFileSync(join(options_.from, 'prompt.txt'), 'utf8');
-  }
+  const { result, prompt } =
+    options_.mode === 'live'
+      ? await plan(root, context, store, run, options_.goal, signal)
+      : replay(options_);
   const assigned = result.status === 'ready' ? admit(root, context, store, run, result) : [];
   const checks = lint(assigned, result, context);
   const report = {

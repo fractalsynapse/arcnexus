@@ -1,16 +1,49 @@
 {
   "scenarios": [
-    { "id": "single-owner-docs", "goal": "Correct the wording in docs/library/execution-runtime/execution.md where it describes verification stages so it matches what the code actually runs today. Keep the change to documentation and do not alter behavior." },
-    { "id": "behavior-with-tests", "goal": "When a delivery is refused by the provider because checks are still running, the retained blocker should say which requirement was unmet rather than a generic phrase. Change the behavior and add owned coverage that pins the message." },
-    { "id": "cross-component-feature", "goal": "Add a read-only CLI command that lists every delivery in a project with its route state and provider identity, backed by the store, rendered through the existing gateway output conventions, and covered by acceptance for both the command and the store query." },
-    { "id": "recursive-handoff", "goal": "Implement the direction probe report so it summarizes plan quality, but the summary needs a component that formats capture digests which the report owner should not own; have the appropriate owner contribute that piece and return the result to finish the task." },
+    {
+      "id": "single-owner-docs",
+      "goal": "Correct the wording in docs/library/execution-runtime/execution.md where it describes verification stages so it matches what the code actually runs today. Keep the change to documentation and do not alter behavior."
+    },
+    {
+      "id": "behavior-with-tests",
+      "goal": "When a delivery is refused by the provider because checks are still running, the retained blocker should say which requirement was unmet rather than a generic phrase. Change the behavior and add owned coverage that pins the message."
+    },
+    {
+      "id": "cross-component-feature",
+      "goal": "Add a read-only CLI command that lists every delivery in a project with its route state and provider identity, backed by the store, rendered through the existing gateway output conventions, and covered by acceptance for both the command and the store query."
+    },
+    {
+      "id": "recursive-handoff",
+      "goal": "Implement the direction probe report so it summarizes plan quality, but the summary needs a component that formats capture digests which the report owner should not own; have the appropriate owner contribute that piece and return the result to finish the task."
+    },
     { "id": "ambiguous-goal", "goal": "Make the validation output better." },
-    { "id": "missing-authority", "goal": "Let the runtime merge pull requests into main and publish the npm package automatically whenever staging is green, with no human step at all." },
-    { "id": "already-satisfied", "goal": "Ensure a delivery that the provider already integrated is never counted as pending again by a later activation, and that a refusal keeps the pointer so the next activation reconciles it by observation." },
-    { "id": "blocked-diagnosis", "goal": "A previous task failed its assembled verification with a conflict in the report component. Diagnose the retained failure and continue the existing assignment with the same owner, objective and acceptance criteria rather than starting unrelated work." },
-    { "id": "obsolete-request", "goal": "A retained dependency request from an earlier candidate is now demonstrably superseded because the supplier was replaced by an accepted change. Retire it correctly and continue whoever was waiting on it." },
-    { "id": "large-sequential-refactor", "goal": "Remove all remaining configuration version migration machinery so the runtime only ever reads current-version architecture files: drop the version readers, the migration writers, the operator migrate commands, and every test that exists only to prove migration, while keeping the catalog loader, ownership validation and guidance validation intact and green at every step." },
-    { "id": "unavailable-evidence", "goal": "For every confined command the runtime runs, retain a separate stdout and stderr stream file in addition to the combined log, because the reviewer requires stream-level separation as evidence." },
-    { "id": "unrelated-work", "goal": "Fix the duplicated Error prefix in retained failure causes, and while you are in there also rewrite the release workflow, add container support, and re-cut all component ownership." }
+    {
+      "id": "missing-authority",
+      "goal": "Let the runtime merge pull requests into main and publish the npm package automatically whenever staging is green, with no human step at all."
+    },
+    {
+      "id": "already-satisfied",
+      "goal": "Ensure a delivery that the provider already integrated is never counted as pending again by a later activation, and that a refusal keeps the pointer so the next activation reconciles it by observation."
+    },
+    {
+      "id": "blocked-diagnosis",
+      "goal": "A previous task failed its assembled verification with a conflict in the report component. Diagnose the retained failure and continue the existing assignment with the same owner, objective and acceptance criteria rather than starting unrelated work."
+    },
+    {
+      "id": "obsolete-request",
+      "goal": "A retained dependency request from an earlier candidate is now demonstrably superseded because the supplier was replaced by an accepted change. Retire it correctly and continue whoever was waiting on it."
+    },
+    {
+      "id": "large-sequential-refactor",
+      "goal": "Remove all remaining configuration version migration machinery so the runtime only ever reads current-version architecture files: drop the version readers, the migration writers, the operator migrate commands, and every test that exists only to prove migration, while keeping the catalog loader, ownership validation and guidance validation intact and green at every step."
+    },
+    {
+      "id": "unavailable-evidence",
+      "goal": "For every confined command the runtime runs, retain a separate stdout and stderr stream file in addition to the combined log, because the reviewer requires stream-level separation as evidence."
+    },
+    {
+      "id": "unrelated-work",
+      "goal": "Fix the duplicated Error prefix in retained failure causes, and while you are in there also rewrite the release workflow, add container support, and re-cut all component ownership."
+    }
   ]
 }
