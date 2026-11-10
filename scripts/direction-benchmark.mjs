@@ -23,16 +23,6 @@ class DirectionBenchmark {
     this.only = flags.get('--scenario');
   }
 
-  readonly corpus;
-
-  readonly probe;
-
-  readonly state;
-
-  readonly timeout;
-
-  readonly only;
-
   /** Runs every selected scenario in order, printing live progress and a final benchmark table. */
   async run() {
     const started = Date.now();
@@ -65,7 +55,7 @@ class DirectionBenchmark {
       ],
       { stdio: ['ignore', 'pipe', 'pipe'] },
     );
-    const output = DirectionBenchmark.collect(child);
+    const output = this.collect(child);
     const watch = setInterval(() => this.report(this.newest(before), Date.now() - clock), 10_000);
     await this.finished(child, output.closed);
     clearInterval(watch);
@@ -167,7 +157,9 @@ class DirectionBenchmark {
       const usage = event.usage ?? event.item?.usage;
       if (!usage) continue;
       total.input += Number(usage.input_tokens ?? 0);
-      total.cached += Number(usage.cached_input_tokens ?? usage.input_tokens_details?.cached_tokens ?? 0);
+      total.cached += Number(
+        usage.cached_input_tokens ?? usage.input_tokens_details?.cached_tokens ?? 0,
+      );
       total.output += Number(usage.output_tokens ?? 0);
       total.reasoning += Number(usage.reasoning_output_tokens ?? 0);
     }
@@ -227,9 +219,7 @@ class DirectionBenchmark {
   }
 }
 
-new DirectionBenchmark(process.argv.slice(2))
-  .run()
-  .catch((error) => {
-    console.error('direction benchmark failed: ' + String(error));
-    process.exitCode = 2;
-  });
+new DirectionBenchmark(process.argv.slice(2)).run().catch((error) => {
+  console.error('direction benchmark failed: ' + String(error));
+  process.exitCode = 2;
+});

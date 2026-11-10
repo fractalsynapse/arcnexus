@@ -4,6 +4,14 @@
 
 ### Changed
 
+- **The direction corpus is now a timed, metered benchmark.** `scripts/direction-benchmark.mjs` runs
+  every scenario through `scripts/direction-probe.mjs` as a subprocess — one planning chain, no
+  duplicated machinery — and prints the harness journal **while each activation is still running**
+  (event count, tool calls, tokens in/out/reasoning), then a per-scenario and suite table with wall
+  time, selected owners, questions, lint problems and a cache-reuse ratio. It bounds each scenario
+  with a time limit and stops the activation rather than hanging. `npm run scope` makes it runnable
+  from a sandboxed session. (#389)
+
 - **Engineering commands can now run where confinement works** (foundation). Confinement puts each
   supervised command in a child cgroup, and under a sandbox that mounts `/sys/fs/cgroup` read-only
   that mkdir fails with `EROFS` — after which every `native-host` suite silently skips and the checks
