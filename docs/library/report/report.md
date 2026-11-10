@@ -143,6 +143,22 @@ The report derives these summaries from the existing store; it adds no store,
 duplicate state, or separate escalation entity definition. This specification
 precedes implementation; regression checks establish delivery of the behavior.
 
+### Run escalation totals (intended behavior for #401)
+
+When a run has recorded escalations, its existing `counts` object also includes
+`outstandingEscalations` and `resolvedEscalations`. Each total counts escalation
+records belonging to that run across all its assignments, including resolved
+history. An unclosed record counts as outstanding; a closed record counts as
+resolved. Totals count waits, not owners, assignments, or open checklist steps.
+Escalations from other runs are excluded.
+
+Both totals appear when at least one escalation exists, including a zero for a
+state with no records. When the run has no escalations, neither key is added:
+existing counts and the complete serialized report remain unchanged, and no new
+section appears. Assignment-level escalation lists and existing evidence remain
+available as before. The totals are derived on read through the coordination
+store's public API without another store or duplicate durable state.
+
 ## Coordination evidence
 
 Reports summarize planned/actual/corrective turns, implementation attempts, elapsed

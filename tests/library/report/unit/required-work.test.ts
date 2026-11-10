@@ -108,6 +108,11 @@ class EscalationReportScenario {
       ],
       'outstanding escalation includes assignment, owner, reason and open step count',
     );
+    assert.deepEqual(
+      report.counts,
+      { ready: 1, waiting: 0, verified: 0, outstandingEscalations: 1, resolvedEscalations: 0 },
+      'run counts exclude foreign escalations from outstanding totals',
+    );
   }
 
   /** Retains a completed wait's resolution without advertising outstanding work. */
@@ -131,6 +136,11 @@ class EscalationReportScenario {
       ],
       'resolved escalation is labeled resolved and retains its resolution',
     );
+    assert.deepEqual(
+      report.counts,
+      { ready: 1, waiting: 0, verified: 0, outstandingEscalations: 0, resolvedEscalations: 1 },
+      'run counts include resolved escalation history',
+    );
   }
 
   /** Keeps resolved history and a later wait distinct for the same assignment. */
@@ -149,11 +159,23 @@ class EscalationReportScenario {
     );
     assert.equal(escalations.find((item) => item.id === history.id)?.status, 'resolved');
     assert.equal(escalations.find((item) => item.id === history.id)?.resolution, 'Earlier answer');
+    const assignment = f.store.enqueue(f.run.id, 'report', 'Second assignment wait');
+    this.open({ ...f, assignment }, 'Separate wait');
+    assert.deepEqual(
+      f.reports.view(f.run.id).counts,
+      { ready: 2, waiting: 0, verified: 0, outstandingEscalations: 2, resolvedEscalations: 1 },
+      'run counts aggregate escalation records across assignments',
+    );
   }
 
   /** Pins the complete pre-change serialized report for runs without escalation entities. */
   absent(t: TestContext): void {
     const f = this.fixture(t);
+    const foreign = f.store.createRun('task', ['report'], 'Another run');
+    const assignment = f.store.enqueue(foreign.id, 'report', 'Unrelated work');
+    const wait = this.open({ ...f, run: foreign, assignment }, 'Unrelated resolved wait');
+    f.store.escalations.close(wait.id, 'Foreign answer');
+    this.open({ ...f, run: foreign, assignment }, 'Unrelated outstanding wait');
     const path = join(f.root, 'reports', f.run.id + '.json');
     const expected = noEscalationReport
       .replace('"RUN_ID"', JSON.stringify(f.run.id))

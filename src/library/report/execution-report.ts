@@ -36,6 +36,7 @@ export class ExecutionReports {
     const run = this.store.run(id);
     const required = new Set(this.store.requiredAssignments(id).map((a) => a.id));
     const assignments = this.store.assignments(id).map((a) => this.assignment(a, required));
+    const escalations = assignments.flatMap((assignment) => assignment.escalations ?? []);
     return {
       run: this.summary(run),
       assignments,
@@ -43,6 +44,13 @@ export class ExecutionReports {
         ready: assignments.filter((a) => a.required && a.status === 'ready').length,
         waiting: assignments.filter((a) => a.required && a.status === 'waiting').length,
         verified: assignments.filter((a) => a.status === 'completed').length,
+        ...(escalations.length
+          ? {
+              outstandingEscalations: escalations.filter((item) => item.status === 'outstanding')
+                .length,
+              resolvedEscalations: escalations.filter((item) => item.status === 'resolved').length,
+            }
+          : {}),
       },
       report: join(this.directory, 'reports', id + '.json'),
     };
