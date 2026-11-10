@@ -1,9 +1,21 @@
 import assert from 'node:assert/strict';
-import type { TestContext } from 'node:test';
+import { readFileSync } from 'node:fs';
+import { test as deterministicTest, type TestContext } from 'node:test';
+import {
+  ExecutionContext,
+  executionIdentity,
+} from '../../../../dist/library/architecture/execution-context.js';
+import { DeliveryStore } from '../../../../dist/library/coordination-store/delivery-store.js';
+import { ProjectHost } from '../../../../dist/library/execution-runtime/project-host.js';
+import { RunEnvironments } from '../../../../dist/library/execution-runtime/run-environments.js';
 import { RunPublication } from '../../../../dist/library/execution-runtime/run-publication.js';
+import { CandidateSnapshots } from '../../../../dist/library/workspace/candidates.js';
 import { Publisher } from '../../../../dist/library/publisher/publisher.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { nativeHostTest as test } from '../../testing/support/general-fixture.js';
+import {
+  generalCatalogFixture,
+  nativeHostTest as test,
+} from '../../testing/support/general-fixture.js';
 import { PublicationFixture } from '../support/publication-fixture.js';
 
 /** Covers automatic publication after handing verified candidate state between actual run identities. */
@@ -110,6 +122,116 @@ for (const field of [
 
 test('explicit publisher still rejects foreign-run candidate identity', (t) =>
   scenarios.explicit(t));
+
+/** Exercises retained causes through production host checkpoints with controlled failing collaborators. */
+class RetainedFailureScenarios {
+  /** A run preparation failure retains one formatted message in durable state and its saved report. */
+  async run(t: TestContext, failure: unknown, message: string): Promise<void> {
+    const f = generalCatalogFixture(t);
+    const host = new ProjectHost(f.state, new ExecutionContext().resolve(f.repo));
+    t.after(() => host.close());
+    const run = host.submit('Retain the original diagnostic');
+    t.mock.method(RunEnvironments.prototype, 'prepare', async () => {
+      throw failure;
+    });
+    await host.tick();
+    const retained = host.store.run(run.id);
+    assert.equal(retained.status, 'needs_attention');
+    assert.equal(
+      retained.data.error,
+      'Error: ' + message,
+      'run retains exactly one formatted cause',
+    );
+    const reportPath = host.reports.view(run.id).report;
+    const report = JSON.parse(readFileSync(reportPath, 'utf8'));
+    assert.equal(report.run.data.error, 'Error: ' + message);
+    assert.equal(retained.data.publicationBlocker, undefined);
+  }
+
+  /** Integrity validation retains the original diagnostic through the host's existing failure path. */
+  async integrity(t: TestContext): Promise<void> {
+    const f = generalCatalogFixture(t);
+    const host = new ProjectHost(f.state, new ExecutionContext().resolve(f.repo));
+    t.after(() => host.close());
+    const run = host.submit('Retain the original integrity diagnostic');
+    const diagnostic = ' \tCandidate Error: mismatch\n  retained detail\t ';
+    t.mock.method(CandidateSnapshots.prototype, 'capture', () => {
+      throw new Error(diagnostic);
+    });
+    await host.tick();
+    const retained = host.store.run(run.id);
+    assert.equal(retained.status, 'needs_attention');
+    assert.equal(retained.data.error, 'Error: ' + diagnostic);
+    assert.equal(retained.data.integrityError, 'Error: ' + diagnostic);
+  }
+
+  /** Delivery storage failure uses the existing publication path without replacing engineering state. */
+  async delivery(t: TestContext, failure: unknown, message: string): Promise<void> {
+    const f = generalCatalogFixture(t);
+    const context = new ExecutionContext().resolve(f.repo);
+    const host = new ProjectHost(f.state, context);
+    t.after(() => host.close());
+    const run = host.store.createRun('task', context.owners, 'Retain delivery failure', {
+      id: 'controlled-delivery-environment',
+      mode: 'simulation',
+    });
+    host.store.updateRun(run.id, 'completed', {
+      executionIdentity: executionIdentity(context),
+      pendingPublication: 'retained-delivery-pointer',
+    });
+    t.mock.method(DeliveryStore.prototype, 'get', () => {
+      throw failure;
+    });
+    await host.tick();
+    const retained = host.store.run(run.id);
+    assert.equal(
+      retained.data.publicationBlocker,
+      'Error: ' + message,
+      'delivery retains exactly one formatted cause',
+    );
+    assert.equal(retained.status, 'completed');
+    assert.equal(retained.data.pendingPublication, 'retained-delivery-pointer');
+    assert.equal(retained.data.error, undefined);
+  }
+}
+
+const retainedFailures = new RetainedFailureScenarios();
+
+deterministicTest('integrity failure retains the original formatted diagnostic', (t) =>
+  retainedFailures.integrity(t),
+);
+
+const plainDiagnostic = 'Cannot read retained evidence: resource unavailable.';
+
+const spacedDiagnostic = ' \tRead failed; keep punctuation! Error: embedded\n  detail\t ';
+
+const literalDiagnostic = 'Error: original diagnostic; Error: embedded\n\t  ';
+
+const failureCases = [
+  { name: 'Error object', failure: new Error(plainDiagnostic), message: plainDiagnostic },
+  {
+    name: 'typed Error object',
+    failure: new TypeError(spacedDiagnostic),
+    message: spacedDiagnostic,
+  },
+  { name: 'literal prefix', failure: new Error(literalDiagnostic), message: literalDiagnostic },
+  { name: 'diagnostic string', failure: spacedDiagnostic, message: spacedDiagnostic },
+  {
+    name: 'nested cause',
+    failure: new Error(plainDiagnostic, { cause: new Error('Nested cause must not be repeated') }),
+    message: plainDiagnostic,
+  },
+];
+
+for (const { name, failure, message } of failureCases) {
+  deterministicTest('retained run failure preserves exactly one cause: ' + name, (t) =>
+    retainedFailures.run(t, failure, message),
+  );
+
+  deterministicTest('retained delivery failure preserves exactly one cause: ' + name, (t) =>
+    retainedFailures.delivery(t, failure, message),
+  );
+}
 
 registerSuite({
   component: 'execution-runtime',
