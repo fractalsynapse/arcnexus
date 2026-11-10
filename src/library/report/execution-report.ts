@@ -50,6 +50,8 @@ export class ExecutionReports {
 
   /** Keeps historical status visible while distinguishing current obligations from disconnected work. */
   private assignment(a: ExecutionAssignment, required: Set<string>) {
+    const escalations = this.escalations(a);
+
     return {
       id: a.id,
       required: required.has(a.id),
@@ -67,7 +69,24 @@ export class ExecutionReports {
       reconciliation: a.data.reconciliation,
       progress: a.status === 'running' ? this.progress(a.data.recordId) : undefined,
       inbox: this.store.inbox(a.id).length,
+      ...(escalations.length ? { escalations } : {}),
     };
+  }
+
+  /** Lists one assignment's escalation history with explicit outstanding and resolved states. */
+  private escalations(assignment: ExecutionAssignment) {
+    return this.store.escalations
+      .forAssignment(assignment)
+      .filter((item) => item.runId === assignment.runId)
+      .map((item) => ({
+        id: item.id,
+        assignmentId: item.assignmentId,
+        owner: item.owner,
+        status: item.closedAt ? 'resolved' : 'outstanding',
+        reason: item.reason,
+        openStepCount: item.openSteps.length,
+        ...(item.closedAt ? { resolution: item.resolution ?? 'unavailable' } : {}),
+      }));
   }
 
   /** Reads host-observed stage and completed command evidence without exposing private model reasoning. */

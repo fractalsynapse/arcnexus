@@ -122,6 +122,27 @@ definition; `tests/library/execution-runtime/acceptance/verification-coverage.te
 covers separate owner and whole-goal verification. The qualification status is
 recorded in `docs/plans/general-agent-execution-qualification.md`.
 
+### Escalation waits (intended behavior for #398)
+
+Each run-report assignment with recorded escalations includes an `escalations`
+list derived on read through the coordination store's public escalation API.
+Each entry identifies the escalation, waiting assignment (`assignmentId`), owner,
+reason, `openStepCount`, and status. An unclosed escalation has status
+`outstanding`: the owner is waiting for another contribution or decision, and
+this wait does not itself establish an execution failure.
+
+A closed escalation has status `resolved` and includes its recorded `resolution`.
+Its step count describes the steps recorded when the wait opened; it does not
+represent current outstanding work. Resolved history stays visible alongside
+outstanding waits and is never labeled outstanding. Reports include only
+escalations belonging to their run and corresponding assignment.
+
+Assignments without escalations omit the list. A run with no escalations retains
+its exact existing serialized report output, including field order and formatting.
+The report derives these summaries from the existing store; it adds no store,
+duplicate state, or separate escalation entity definition. This specification
+precedes implementation; regression checks establish delivery of the behavior.
+
 ## Coordination evidence
 
 Reports summarize planned/actual/corrective turns, implementation attempts, elapsed
