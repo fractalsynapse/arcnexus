@@ -13,7 +13,7 @@ import { join, resolve } from 'node:path';
  * each run rather than only after it, because a stalled or looping activation is the thing worth
  * seeing while it happens.
  */
-class DirectionBenchmark {
+export class DirectionBenchmark {
   /** Resolves the corpus, probe, state root and per-scenario limit from caller arguments. */
   constructor(args) {
     const flags = DirectionBenchmark.flags(args);
