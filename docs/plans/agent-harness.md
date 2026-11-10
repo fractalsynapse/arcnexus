@@ -21,6 +21,52 @@ deciding its own next bounded work), `steward` (deliver one assignment), and `ve
 independent assessment of an assembled candidate). They differ only in the layers they receive and
 the operations they may perform.
 
+## Activities are the plan's spine
+
+Every role already declares the activities it performs — the catalog validates each operation's
+`activities` against the acting role, so an activity is an **authorization and standards axis today**.
+The harness adds the second half: activities are also the **shape of the plan**, so the same machinery
+that gates tools and selects standards also orders work. No new configuration is introduced; the role
+definitions that exist now become the source for both.
+
+Each activation follows one process with three role-specific chains:
+
+| Role | Chain |
+| --- | --- |
+| director | research → documentation → implementation (**the plan and assignments**) → review → release |
+| steward | research → documentation → design and testing → implementation → review → integration |
+| verifier | research → documentation → review → release (**the review decision and report**) |
+| question answer | research → documentation → review → release |
+
+So the director's *deliverable* is a plan and a set of assignments, authored, checked and reviewed
+through the same activity discipline a steward uses to change code. There is no privileged planning
+step outside the process, and no role that skips documentation.
+
+**Bucket, then run.** Planning assigns each step to its activity first; execution then proceeds in a
+deterministic activity order rather than in the order items occurred to the agent. Steps sharing an
+activity stay together so they draw one activity profile and one standards set, and the deterministic
+order is what makes the guardrails meaningful: an activity's checks are known before its items start,
+and a later activity cannot begin while an earlier one still has open items.
+
+```
+bucket by activity  →  order activities canonically  →  complete a bucket before the next opens
+```
+
+**Completion of a bucket is not completion of the work.** The activity sequence structures effort;
+acceptance is still the independent verdict against goal and criteria. An agent that finishes every
+bucket without meeting the goal has failed, and an agent that meets the goal while its plan was
+revised mid-flight has succeeded — the structure exists to keep guardrails correct, not to become the
+standard.
+
+**The loops nest inside this sequence, and two pairs genuinely cycle.** A peer request issued during
+implementation suspends that bucket, runs the recipient's **whole chain from its start**, and returns
+into the same bucket with the delivered artifact — it is not a shortcut into the middle of another
+agent's plan. Review is likewise a full loop rather than a step inside the work it reviews: a
+deficiency returns to the accountable owner as a new activation, not as a note appended to the run
+that produced it. Both pairs can repeat, and the bound is the run's turn and effect budgets, not a
+rule about which activity may run twice.
+
+
 ## The activation frame
 
 An agent runs in a **frame**, which is the unit of work, evidence, recovery and testing:
