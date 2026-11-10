@@ -4,6 +4,13 @@
 
 ### Changed
 
+- **Assignment reports show outstanding and resolved escalations**, retaining resolution history
+  after an escalation is closed. (#398)
+
+- **Run summaries include escalation counts when the run has escalations.** The run-scoped
+  `outstandingEscalations` and `resolvedEscalations` counts summarise outstanding and resolved
+  escalations; output for runs without escalations is unchanged. (#401)
+
 - **The direction corpus is now a timed, metered benchmark.** `scripts/direction-benchmark.mjs` runs
   every scenario through `scripts/direction-probe.mjs` as a subprocess — one planning chain, no
   duplicated machinery — and prints the harness journal **while each activation is still running**
