@@ -141,7 +141,7 @@ function announce(directory, report) {
 async function main() {
   const options_ = options(process.argv.slice(2));
   const root = join(options_.state, 'arcnexus', 'state');
-  mkdirSync(root, { recursive: true, mode: 0o700 });
+  mkdirSync(join(root, 'runs'), { recursive: true, mode: 0o700 });
   const context = new ExecutionContext().resolve(options_.repo);
   const signal = new AbortController().signal;
   const { store, run } = lane(root, context, options_.goal ?? 'replayed direction capture');
