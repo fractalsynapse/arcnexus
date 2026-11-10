@@ -134,10 +134,9 @@ export class SessionTurn {
     );
   }
 
-  /** Maps host stages to one activity without splitting mixed-activity turns. */
+  /** Maps host turn stages onto the canonical activity whose profile and context they perform. */
   private primaryActivity(activity: string): string {
-    if (activity === 'specification')
-      return this.state.documentationOnly ? 'documentation' : 'design';
+    if (activity === 'specification') return 'documentation';
     if (activity === 'implementation' || activity === 'correction')
       return this.state.documentationOnly ? 'documentation' : 'implementation';
     return activity;

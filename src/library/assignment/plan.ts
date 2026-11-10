@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ResolvedAssignment } from '../architecture/assignment.js';
+import { activityRank, declareActivities, missingActivities } from '../architecture/activities.js';
 import { validateSchema } from '../architecture/schema.js';
 import { observe } from '../report/timeline.js';
 import { save, type RecordData } from '../workspace/state.js';
@@ -118,15 +119,33 @@ function validateProposedPlan(value: unknown, resolved: ResolvedAssignment): Pla
   const plan = validateSchema<Plan>('plan', value);
   const ids = new Set(plan.items.map((i) => i.id));
   if (ids.size !== plan.items.length) throw new Error('Duplicate checklist identity');
-  const allowed = resolved.role.activities;
-  for (const a of plan.activities)
-    if (!allowed.includes(a.activity)) throw new Error('Plan activity outside role');
+  validatePlanActivities(plan, resolved);
   validatePlanItems(plan, resolved, ids);
   validatePlanDependencies(plan, ids);
   for (let n = 0; n < resolved.assignment.acceptanceCriteria.length; n++)
     if (!plan.items.some((i) => i.criteria.includes(n)))
       throw new Error('Plan omits acceptance criterion');
   return plan;
+}
+
+/**
+ * Requires the plan to declare the role's whole activity sequence in canonical order.
+ *
+ * Activities are the spine: items bucket under them and the buckets run in one order, so a plan
+ * that omits a supported activity has silently decided to skip work the role exists to do. An
+ * activity with no checklist item is still declared — documentation and review run even when
+ * nothing on the checklist forces them; the plan states the order, the verdict decides the work.
+ */
+function validatePlanActivities(plan: Plan, resolved: ResolvedAssignment): void {
+  const declared = plan.activities.map((a) => a.activity);
+  const ordered = declareActivities(declared, 'plan activities');
+  const supported = resolved.role.activities;
+  for (const missing of missingActivities(supported, declared))
+    throw new Error(`Plan omits supported activity: ${missing}`);
+  if (declared.some((activity, index) => activity !== ordered[index]))
+    throw new Error(
+      `Plan activities out of canonical order; expected ${ordered.join(', ') || 'no activities'}`,
+    );
 }
 
 export function updatePlan(root: string, record: RecordData, updates: unknown): void {
@@ -147,6 +166,7 @@ function validateUpdates(record: RecordData, updates: unknown): Plan {
   for (const update of values) {
     const item = plan.items.find((i) => i.id === update.id);
     if (!item) throw new Error('Unknown checklist item');
+    requireOpenBucket(plan, item);
     if (
       update.status === 'completed' &&
       (!update.evidence.length ||
@@ -158,6 +178,27 @@ function validateUpdates(record: RecordData, updates: unknown): Plan {
     Object.assign(item, update, { basis: 'agent claim' });
   }
   return plan;
+}
+
+/**
+ * Refuses progress in a later activity bucket while an earlier bucket still holds open work.
+ *
+ * The order a plan declares is the order it runs: research before documentation, review before
+ * release. An item stays open until it is completed or skipped, so advancing past an open earlier
+ * item is refused with that item named. Updates apply in the order given, so a batch that closes
+ * its earlier work first may open the next bucket in the same call, and reordering the same plan
+ * into canonical buckets runs unchanged.
+ */
+function requireOpenBucket(plan: Plan, item: PlanItem): void {
+  const open = plan.items.filter(
+    (candidate) => !['completed', 'skipped'].includes(candidate.status),
+  );
+  const ahead = open.filter(
+    (candidate) => activityRank(candidate.activity) < activityRank(item.activity),
+  );
+  if (!ahead.length) return;
+  const waiting = ahead.map((i) => `${i.id} (${i.activity})`).join(', ');
+  throw new Error(`Bucket order: ${item.id} waits for ${waiting}`);
 }
 
 /** Records observed host checks without changing a steward's remaining checklist claims. */

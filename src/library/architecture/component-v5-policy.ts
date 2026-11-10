@@ -1,6 +1,7 @@
 import { posix } from 'node:path';
 import type { Catalog, Component } from './components.js';
 import { ancestry, covered, scopePath } from './component-paths.js';
+import { requireActivity } from './activities.js';
 import { InputError } from './config.js';
 
 export interface ComponentV5Fields {
@@ -81,7 +82,13 @@ export class ComponentV5Policy {
   private activities(component: Component, lineage: Component[]): void {
     const profiles: Record<string, string> = {};
     for (const declaration of lineage)
-      for (const [activity, profile] of Object.entries(declaration.activityProfiles ?? {})) {
+      for (const [declared, profile] of Object.entries(declaration.activityProfiles ?? {})) {
+        const activity = requireActivity(declared, `component ${declaration.id}`);
+        const supported = this.authored.roles[component.role]?.activities ?? [];
+        if (!supported.includes(activity))
+          throw new InputError(
+            `Activity profile outside role ${component.role}: ${declaration.id}: ${activity}`,
+          );
         if (!Object.hasOwn(this.authored.profiles, profile))
           throw new InputError(
             `Unknown activity execution profile for ${declaration.id}: ${profile}`,

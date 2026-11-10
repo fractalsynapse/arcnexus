@@ -4,6 +4,33 @@
 
 ### Changed
 
+- **One canonical activity vocabulary.** Five lists existed for one concept: roles declared
+  `research, documentation, testing, implementation, review, release` (and the role JSON schema
+  enumerated exactly those six); operations used the same six; `architecture/inspection.ts` kept a
+  private list `research, document, design, implement, review, release`; the specification turn was
+  labelled `design`, a name no role declares; the component JSON schema's `activityProfiles` keys
+  enumerated a seven-name union of both; and the CLI gateway contract listed
+  `direction … design … integration`. The consequences were real: `inspect <component> testing`
+  was refused while `design` was accepted, so a checklist item could not be placed in the activity
+  every role declares; an activity-profile override keyed to a name no plan can use (`design: sol`
+  on the platform) was reachable only through the specification turn's private alias; and standards,
+  operations and profiles keyed to one vocabulary silently missed work recorded under another.
+  `architecture/activities.ts` now owns the names and their order; `inspection`, the turn-stage
+  fold and catalog validation read it; the two JSON-schema enums are gone — a schema cannot import
+  the list, so a duplicated enum is only drift waiting to happen, and the constraint now lives in
+  code that also names the valid values as GW-20 requires; the dead `design: sol` override was
+  removed; and the gateway contract's activity row matches the declared set. The specification turn
+  maps to `documentation`, which already resolved to `sol`, so model selection is unchanged. No
+  role or operation declaration was edited. (#389)
+
+- Plans are **bucketed by activity and run in one order**. `validateProposedPlan` requires a plan to
+  declare every activity its role supports — a plan that leaves out `review` has silently decided
+  to skip work the role exists to do — in canonical order, and `updatePlan` refuses to advance an
+  item while an earlier bucket holds work that is not terminal, naming the items it waits for. An
+  activity with no checklist item remains declared: documentation and review run when listed even
+  when nothing on the checklist forces them, and the independent verdict against the goal, not
+  bucket closure, decides whether the work is done. (#389)
+
 - The harness document gained **activities as the plan's spine**: role activity declarations, which today only gate operations and select standards, also define each chain — director research→documentation→implementation(plan and assignments)→review→release; steward research→documentation→design and testing→implementation→review→integration; verifier research→documentation→review→release(report); questions take the shortened chain. Planning buckets steps by activity, execution runs the buckets in canonical order so an activity's profile and standards apply to a coherent group, and a later bucket cannot open while an earlier one holds open items. Bucket completion is explicitly **not** work completion: acceptance remains the independent verdict against goal and criteria, so finishing every bucket without meeting the goal is a failure and revising a plan mid-flight is not a violation. Both genuine cycles are named — peer request suspends a bucket, runs the recipient's whole chain from its start and returns into the same bucket; review is a full activation returning to the accountable owner as a new activation rather than a note on the run that produced it — bounded by the existing turn and effect budgets rather than by rules about which activity may repeat. No new configuration: the role and activity definitions already in the catalog are the source. (#389)
 
 - Added a **direction-stage probe** so the director can be exercised and scored across diverse goals without dispatching any agent (`scripts/direction-probe.mjs`, `scripts/direction-corpus.json`). It is a mirror, not a second engine: it drives the same `RunWorkspace.prepare` → `directionInput` → `policy` → `Direction.propose` chain and the host's own `AssignmentDispatch.apply` admission, then stops before any steward activation, tracking issue or push - so a plan the probe admits is a plan the lane would have admitted. `live` mode performs one confined source-read-only model activation; `replay` mode pushes a captured director result back through admission with no model call at all, making host-stage behaviour deterministic and cheap to re-test. Twelve scenarios cover the failure modes this project has actually hit or fears: empty acceptance, team fan-out, cross-component work, recursive handoff, ambiguity, missing authority, already-satisfied goals, blocked diagnosis, superseded requests, a large sequential refactor, demands for unavailable evidence, and unrelated work smuggled into one goal. A mechanical linter flags each one. Captures are written outside source. (#389)

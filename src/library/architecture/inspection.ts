@@ -2,11 +2,10 @@ export { StandardResources, type StandardResourceTarget } from './standard-resou
 
 import { ancestry, componentContext, loadCatalog } from './components.js';
 import { loadProjectBindings, type Bindings } from './bindings.js';
+import { requireActivity } from './activities.js';
 import { InputError } from './config.js';
 
 export { ComponentResources, type ComponentResourceTarget } from './component-resources.js';
-
-const activities = ['research', 'document', 'design', 'implement', 'review', 'release'];
 
 export interface InspectionRequest {
   source: string;
@@ -43,7 +42,7 @@ export class ArchitectureInspection {
         ? {
             preview: {
               prompt: request.prompt,
-              activity: request.activity ?? 'implement',
+              activity: request.activity ?? 'implementation',
               requiresPlanning: true,
             },
           }
@@ -56,7 +55,6 @@ export class ArchitectureInspection {
     for (const key of ['source', 'revision', 'packageId', 'componentId', 'prompt'] as const)
       if (request[key] !== undefined && !request[key]!.trim())
         throw new InputError('Empty inspection input: ' + key);
-    if (request.activity !== undefined && !activities.includes(request.activity))
-      throw new InputError('Unsupported inspection activity: ' + request.activity);
+    if (request.activity !== undefined) requireActivity(request.activity, 'inspection');
   }
 }

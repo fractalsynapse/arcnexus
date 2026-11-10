@@ -15,7 +15,6 @@ executionProfile: luna
 activityProfiles:
   research: sol
   documentation: sol
-  design: sol
   review: sol
 reads:
   - .
