@@ -29,14 +29,23 @@ The harness adds the second half: activities are also the **shape of the plan**,
 that gates tools and selects standards also orders work. No new configuration is introduced; the role
 definitions that exist now become the source for both.
 
-Each activation follows one process with three role-specific chains:
+Each activation follows one process. The activity names are the six the role declarations own, in
+their one canonical order — research, documentation, testing, implementation, review, release — so
+these chains are emphases within that order, not alternative vocabularies. The design-and-contract
+step of a milestone is the `testing` activity; the integration step is `release`.
 
-| Role | Chain |
+| Role | What each activity is for in that chain |
 | --- | --- |
-| director | research → documentation → implementation (**the plan and assignments**) → review → release |
-| steward | research → documentation → design and testing → implementation → review → integration |
-| verifier | research → documentation → review → release (**the review decision and report**) |
-| question answer | research → documentation → review → release |
+| director | `implementation` produces **the plan and the assignments**, not a source change |
+| steward | `testing` states the acceptance as an observed failure before `implementation` turns it green |
+| verifier | `testing` and `implementation` are examined and declined; `release` is **the decision and report** |
+| question answer | shortened emphasis: research, documentation, review, release |
+
+A plan declares **every** activity its role supports, in canonical order, even when an activity
+carries no checklist item — documentation and review are performed because they are listed, and the
+plan records what such a bucket examined and why nothing needed checking. Whether the supported set
+should instead be narrowed per **agent mode** (so a verifier is not asked to declare an
+`implementation` bucket at all) is open: see #394.
 
 So the director's *deliverable* is a plan and a set of assignments, authored, checked and reviewed
 through the same activity discipline a steward uses to change code. There is no privileged planning
