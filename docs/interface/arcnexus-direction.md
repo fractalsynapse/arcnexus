@@ -1,6 +1,6 @@
 # Library contract — Direction
 
-Type contract: `library`. Stage: **locked** (revision 2). Owner: `direction` (absorbs `task-intake`,
+Type contract: `library`. Stage: **locked** (revision 3). Owner: `direction` (absorbs `task-intake`,
 the planning half of `assignment`, `workday`, and the dispatch/admission parts of
 `execution-runtime` and `coordination-store`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-architecture-model.md`](arcnexus-architecture-model.md), [`arcnexus-coordination.md`](arcnexus-coordination.md).
@@ -127,7 +127,7 @@ resume an abandoned run.
 ```yaml
 id: arcnexus/direction
 stage: locked
-revision: 2
+revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
 changes:

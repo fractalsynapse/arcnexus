@@ -1,6 +1,6 @@
 # Library contract — Collaboration provider
 
-Type contract: `library`. Stage: **locked** (revision 2). Owner: `delivery` (absorbs the
+Type contract: `library`. Stage: **locked** (revision 3). Owner: `delivery` (absorbs the
 upstream collaboration modules in `operations`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-delivery.md`](arcnexus-delivery.md), [`arcnexus-coordination.md`](arcnexus-coordination.md).
 Depended on by: `delivery`, `direction`, the gateway, and every future forge or hosting integration.
@@ -76,7 +76,7 @@ observe.
 ```yaml
 id: arcnexus/collaboration-provider
 stage: locked
-revision: 2
+revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-08
 changes:

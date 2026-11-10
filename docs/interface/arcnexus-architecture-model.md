@@ -1,6 +1,6 @@
 # Library contract — Architecture model
 
-Type contract: `library`. Stage: **proposed**. Owner: `architecture-model` (absorbs
+Type contract: `library`. Stage: **locked** (revision 3). Owner: `architecture-model` (absorbs
 `architecture` and `guidance-validation`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-foundation.md`](arcnexus-foundation.md).
 Depended on by: every other library contract, `direction`, `coordination`, `execution`,
@@ -137,10 +137,11 @@ exists to keep old runs executable.
 ```yaml
 id: arcnexus/architecture-model
 stage: locked
-revision: 2
+revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
 changes:
+  - revision 3: the acting component's own profile is supplied complete because its ownership and verification operations cannot be re-derived, while other components stay indexed; standards narrowing by activity is distinguished from activities ordering an agent's work; the header is corrected to locked, which the registry already recorded.
   - revision 2: locked with the three open questions resolved by the architect — integrity split
     between architecture-model and execution, architecture editing stays a human act applied
     from a proposal, and contract files are owned by the component each describes
