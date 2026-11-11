@@ -65,8 +65,55 @@ export class RunQueryCommand {
       throw new InputError('Unsupported run query option');
   }
 
-  /** Keeps rendering outside application services and emits one JSON object per observation. */
+  /** Keeps report presentation in this renderer and preserves the machine-readable resource shape. */
   private render(value: unknown): void {
-    console.log(JSON.stringify(value, null, this.values.json ? undefined : 2));
+    const output = JSON.stringify(value, null, this.values.json ? undefined : 2);
+    const waits = this.values.json ? '' : this.outstandingWaits(value);
+    console.log(output + waits);
+  }
+
+  /** Appends sorted outstanding task waits while preserving resolved history in the report. */
+  private outstandingWaits(value: unknown): string {
+    if (this.mode !== 'task') return '';
+    const waits = this.orderedOutstandingWaits(value);
+    if (waits.length === 0) return '';
+
+    const lines = waits.map(
+      (wait) =>
+        '- owner=' +
+        wait.owner +
+        '; assignment=' +
+        wait.assignmentId +
+        '; reason=' +
+        JSON.stringify(wait.reason) +
+        '; open steps=' +
+        wait.openStepCount,
+    );
+    return '\n\nOutstanding waits (' + waits.length + '):\n' + lines.join('\n');
+  }
+
+  /** Sorts report escalations by stable identities and excludes resolved history. */
+  private orderedOutstandingWaits(value: unknown) {
+    const report = value as {
+      assignments?: Array<{
+        escalations?: Array<{
+          id: string;
+          assignmentId: string;
+          owner: string;
+          status: string;
+          reason: string;
+          openStepCount: number;
+        }>;
+      }>;
+    };
+    return (report.assignments ?? [])
+      .flatMap((assignment) => assignment.escalations ?? [])
+      .filter((wait) => wait.status === 'outstanding')
+      .sort(
+        (first, second) =>
+          first.owner.localeCompare(second.owner, 'en') ||
+          first.assignmentId.localeCompare(second.assignmentId, 'en') ||
+          first.id.localeCompare(second.id, 'en'),
+      );
   }
 }
