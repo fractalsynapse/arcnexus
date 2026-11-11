@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { TestContext } from 'node:test';
+import { test as startupTest, type TestContext } from 'node:test';
+import { HostStartReclamationScenario } from '../support/host-start-reclamation-scenario.js';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { ExecutionLease } from '../../../../dist/library/coordination-store/execution-store.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
@@ -38,6 +39,11 @@ const scenario = new CanonicalHostScenario();
 
 test('alternate IPC endpoints cannot acquire another canonical project lease', (t) =>
   scenario.run(t));
+
+startupTest(
+  'production host startup reclaims abandoned resources and protects another live project',
+  (t) => new HostStartReclamationScenario().run(t),
+);
 
 registerSuite({
   component: 'execution-runtime',

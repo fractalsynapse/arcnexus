@@ -2,13 +2,14 @@ import { ContainerLifetime } from './container-lifetime.js';
 import { InputError } from '../architecture/config.js';
 import { ExecutionLease } from '../coordination-store/execution-store.js';
 import { createServer, type Socket } from 'node:net';
-import { chmodSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { HostRuntime } from './host-runtime.js';
 import type { ProjectExecution } from '../architecture/execution-context.js';
 import { processStart } from '../operations/service-state.js';
 import { ProjectHost } from './project-host.js';
 import type { HostRequest } from './host-client.js';
+import { WorkspaceReclamation } from '../workspace/workspace.js';
 
 const hostCapabilities = [
   'task-control',
@@ -39,7 +40,9 @@ class HostServer {
     private readonly contextFile: string,
   ) {
     ContainerLifetime.assertOpen(this.root);
+    mkdirSync(this.root, { recursive: true, mode: 0o700 });
     this.lease = new ExecutionLease(join(context.commonDir, 'arcnexus', 'host.lease.sqlite'));
+    new WorkspaceReclamation(this.root).reclaim();
     this.host = new ProjectHost(root, context);
   }
 

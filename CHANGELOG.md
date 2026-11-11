@@ -4,6 +4,13 @@
 
 ### Changed
 
+- **Workspace operation scratch is reclaimed safely.** Terminal records remove their operation
+  temporary roots and sibling configuration directories after operations stop; running records keep
+  both. Abandoned scratch and retained workspaces can be reclaimed only with established resource
+  identity and no live process owner, preserving existing cleanup guards. Activation journals,
+  invocation logs and reports remain in application storage, and the private-home confinement
+  redirect is unchanged. (#404)
+
 - **A reasoned plan revision may carry its progress claims** (#407). `plan.update` refused any call
   that sent `revision` together with `updates`, so an agent that wanted to replan and record what it
   had already finished in one action was rejected outright — and nothing told it why: the sentence
