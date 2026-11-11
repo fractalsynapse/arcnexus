@@ -58,8 +58,7 @@ export class CodexConfiguration {
     this.pidFile = join(this.dir, 'codex.pid');
     this.client = new ClientHome(input);
     this.profile =
-      (input.activity && resolved.activities[input.activity]?.profile) ||
-      resolved.executionProfile;
+      (input.activity && resolved.activities[input.activity]?.profile) || resolved.executionProfile;
     new ExecutionContext().validateProfile(this.profile);
     this.schema = this.resultSchema();
     const authority = this.authority(resolved);

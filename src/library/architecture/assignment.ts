@@ -251,7 +251,7 @@ class AssignmentResolver {
       context,
       related: component.relatedIds.map((id) => catalog.components[id]!),
       mode: modeFor(assignment),
-      activities: this.activityRoles(execution.executionProfile),
+      activities: this.activityRoles(),
       ...(execution.compositionProfile ? { compositionProfile: execution.compositionProfile } : {}),
       executionProfile: execution.executionProfile,
       verification: [...component.verification, ...(this.options.additionalVerification ?? [])],
@@ -270,7 +270,7 @@ class AssignmentResolver {
    * director or independent verifier) replaces every activity profile, because that activation is
    * running under a named model choice rather than the component's routing.
    */
-  private activityRoles(defaultProfile: ExecutionProfile): Record<string, ResolvedActivity> {
+  private activityRoles(): Record<string, ResolvedActivity> {
     const explicit = this.options.executionProfile;
     return Object.fromEntries(
       Object.entries(this.component.activities ?? {}).map(([name, config]) => {

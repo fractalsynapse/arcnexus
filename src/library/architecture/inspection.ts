@@ -1,8 +1,11 @@
 export { StandardResources, type StandardResourceTarget } from './standard-resources.js';
 
 import { ancestry, componentContext, loadCatalog } from './components.js';
+import type { Catalog, Component } from './components.js';
 import { loadProjectBindings, type Bindings } from './bindings.js';
-import { requireActivity } from './activities.js';
+import { requireActivity, type Activity } from './activities.js';
+import { modeSequences, type Mode } from './modes.js';
+import { renderFrame } from './frame.js';
 import { InputError } from './config.js';
 
 export { ComponentResources, type ComponentResourceTarget } from './component-resources.js';
@@ -14,6 +17,7 @@ export interface InspectionRequest {
   componentId: string;
   prompt?: string;
   activity?: string;
+  mode?: Mode;
 }
 
 /** Presents revision-bound architectural context without creating execution authority or accepted work. */
@@ -26,28 +30,41 @@ export class ArchitectureInspection {
     const context = ancestry(catalog, componentId);
     if (!context.some((component) => component.type === 'package' && component.id === packageId))
       throw new InputError('Inspection component is outside the selected package');
-    const component = context.at(-1)!;
+    const { component, mode, activity } = resolvePosition(catalog, context, request);
     return {
+      mode,
+      activity,
+      frame: this.frame(catalog, context, request, bindings),
       revision,
       packageId,
       componentId,
-      context: context.map(componentContext),
-      policy: component.policy,
-      publicApi: component.publicApi ?? [],
-      imports: component.observedImports ?? [],
-      consumers: component.observedConsumers ?? [],
-      operations: component.operations ?? {},
-      ...(request.activity ? { activity: request.activity } : {}),
-      ...(request.prompt !== undefined
-        ? {
-            preview: {
-              prompt: request.prompt,
-              activity: request.activity ?? 'implementation',
-              requiresPlanning: true,
-            },
-          }
-        : {}),
+      ...inventory(component, context),
+      ...(request.prompt !== undefined ? { preview: { prompt: request.prompt, activity } } : {}),
     };
+  }
+
+  /**
+   * Resolves which position and activity an inspection is asking about, then renders its frame.
+   *
+   * A mode name in the component slot asks what that position would be shown. Steward remains the
+   * default and unnamed, because every component already is the steward view of itself; the
+   * director resolves to the component the platform actually directs from.
+   */
+  private frame(
+    catalog: Catalog,
+    context: Component[],
+    request: InspectionRequest,
+    bindings?: Bindings,
+  ) {
+    const { component, mode, activity } = resolvePosition(catalog, context, request);
+    return renderFrame({
+      catalog,
+      component,
+      activity,
+      mode,
+      ...(request.prompt ? { goal: request.prompt } : {}),
+      ...(bindings ? { bindings } : {}),
+    });
   }
 
   /** Rejects empty explicit inputs and unsupported activities before loading source. */
@@ -56,5 +73,67 @@ export class ArchitectureInspection {
       if (request[key] !== undefined && !request[key]!.trim())
         throw new InputError('Empty inspection input: ' + key);
     if (request.activity !== undefined) requireActivity(request.activity, 'inspection');
+    if (request.mode && !['director', 'steward', 'verifier'].includes(request.mode))
+      throw new InputError('Unsupported inspection mode: ' + request.mode);
   }
+}
+
+/** The first activity a mode runs that this component actually holds. */
+function activityFor(mode: Mode, activities?: Record<string, unknown>): string {
+  const held = Object.keys(activities ?? {});
+  return modeSequences[mode].find((candidate) => held.includes(candidate)) ?? held[0] ?? 'research';
+}
+
+/** The platform whose direction authority the director position borrows. */
+function platform(catalog: import('./components.js').Catalog) {
+  const platforms = Object.values(catalog.components).filter((c) => c.type === 'platform');
+  if (platforms.length !== 1)
+    throw new InputError('Inspection needs exactly one platform to resolve direction');
+  const declaring = platforms[0];
+  if (!declaring?.director) throw new InputError('Platform declares no director component');
+  return declaring;
+}
+
+/** Which position and activity an inspection is asking about. */
+function resolvePosition(
+  catalog: Catalog,
+  context: Component[],
+  request: InspectionRequest,
+): { component: Component; mode: Mode; activity: Activity } {
+  const requested = request.mode ?? (request.componentId as Mode);
+  const mode: Mode = ['director', 'steward', 'verifier'].includes(requested)
+    ? (requested as Mode)
+    : 'steward';
+  let component = context.at(-1)!;
+  if (mode === 'director' && !holds(component, activityFor(mode, component.activities)))
+    component = directed(catalog);
+  const activity = (
+    request.activity
+      ? requireActivity(request.activity, 'inspection')
+      : activityFor(mode, component.activities)
+  ) as Activity;
+  return { component, mode, activity };
+}
+
+/** True when the component holds this activity at all. */
+function holds(component: Component, activity: string): boolean {
+  return component.activities?.[activity] !== undefined;
+}
+
+/** The component the platform actually directs from. */
+function directed(catalog: Catalog): Component {
+  const id = platform(catalog).director!.component;
+  return catalog.components[id] ?? Object.values(catalog.components).at(-1)!;
+}
+
+/** The component's own architectural inventory, as captured at the inspected revision. */
+function inventory(component: Component, context: Component[]) {
+  return {
+    context: context.map(componentContext),
+    policy: component.policy,
+    publicApi: component.publicApi ?? [],
+    imports: component.observedImports ?? [],
+    consumers: component.observedConsumers ?? [],
+    operations: component.operations ?? {},
+  };
 }

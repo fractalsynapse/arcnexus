@@ -83,7 +83,8 @@ export interface ComponentActivity {
   operations?: ActivityOperation[];
 }
 
-export type ActivityOperation = string | { id: string; usage?: string; with?: Record<string, unknown> };
+export type ActivityOperation =
+  string | { id: string; usage?: string; with?: Record<string, unknown> };
 
 export interface ExecutionProfile {
   schemaVersion: 1 | 2 | 3;
@@ -279,21 +280,30 @@ class CatalogLoader {
           schema,
           catalog.configurationSources,
         );
-        const id = String(value.id);
-        if (
-          Number(value.schemaVersion) < 5 &&
-          path.replace(/\.(json|ya?ml)$/, '') !== `architecture/${directory}/${id}`
-        )
-          throw new InputError(`Identity must match filename: ${path}`);
-        if (Object.hasOwn(target, id)) throw new InputError(`Duplicate definition: ${id}`);
-        if (schema === 'role') value.activity = requireActivity(String(value.activity), `role ${id}`);
-        value.id = id;
-        Object.defineProperty(target, id, {
-          value: value as unknown as Component & Role & ExecutionProfile,
-          enumerable: true,
-          configurable: true,
-        });
+        this.define(target, schema, directory, path, value);
       }
+  }
+
+  /** Registers one parsed definition after checking identity and vocabulary. */
+  private define(
+    target: Record<string, unknown>,
+    schema: string,
+    directory: string,
+    path: string,
+    value: Record<string, unknown>,
+  ): void {
+    const id = String(value.id);
+    const legacy = Number(value.schemaVersion) < 5;
+    if (legacy && path.replace(/\.(json|ya?ml)$/, '') !== `architecture/${directory}/${id}`)
+      throw new InputError(`Identity must match filename: ${path}`);
+    if (Object.hasOwn(target, id)) throw new InputError(`Duplicate definition: ${id}`);
+    if (schema === 'role') value.activity = requireActivity(String(value.activity), `role ${id}`);
+    value.id = id;
+    Object.defineProperty(target, id, {
+      value: value as unknown as Component & Role & ExecutionProfile,
+      enumerable: true,
+      configurable: true,
+    });
   }
 
   /** Loads a referenced operation without granting it to unrelated owners. */
@@ -415,7 +425,9 @@ class CatalogComponentValidator {
       for (const entry of config.operations ?? []) {
         const id = typeof entry === 'string' ? entry : entry.id;
         if (!Object.hasOwn(c.operations ?? {}, id))
-          throw new InputError(`Activity operation not declared by component: ${c.id}.${activity}: ${id}`);
+          throw new InputError(
+            `Activity operation not declared by component: ${c.id}.${activity}: ${id}`,
+          );
       }
     }
   }

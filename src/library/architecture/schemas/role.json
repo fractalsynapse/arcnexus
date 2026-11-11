@@ -4,9 +4,7 @@
   "type": "object",
   "properties": {
     "schemaVersion": {
-      "enum": [
-        4
-      ]
+      "enum": [4]
     },
     "id": {
       "type": "string",
@@ -18,14 +16,7 @@
       "minLength": 1
     },
     "activity": {
-      "enum": [
-        "research",
-        "documentation",
-        "testing",
-        "implementation",
-        "review",
-        "release"
-      ]
+      "enum": ["research", "documentation", "testing", "implementation", "review", "release"]
     },
     "responsibilities": {
       "type": "array",
@@ -58,12 +49,6 @@
       "minLength": 1
     }
   },
-  "required": [
-    "schemaVersion",
-    "id",
-    "purpose",
-    "activity",
-    "responsibilities"
-  ],
+  "required": ["schemaVersion", "id", "purpose", "activity", "responsibilities"],
   "additionalProperties": false
 }

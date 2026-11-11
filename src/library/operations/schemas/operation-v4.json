@@ -15,12 +15,7 @@
       "minLength": 1
     },
     "kind": {
-      "enum": [
-        "command",
-        "service",
-        "http",
-        "upstream"
-      ]
+      "enum": ["command", "service", "http", "upstream"]
     },
     "repository": {
       "type": "string",
@@ -55,9 +50,7 @@
           {
             "type": "object",
             "additionalProperties": false,
-            "required": [
-              "context"
-            ],
+            "required": ["context"],
             "properties": {
               "context": {
                 "enum": [
@@ -113,11 +106,7 @@
           "maximum": 2147483
         }
       },
-      "required": [
-        "port",
-        "readinessPath",
-        "expectedStatus"
-      ]
+      "required": ["port", "readinessPath", "expectedStatus"]
     },
     "http": {
       "type": "object",
@@ -137,11 +126,7 @@
           "maximum": 599
         }
       },
-      "required": [
-        "serviceId",
-        "path",
-        "expectedStatus"
-      ]
+      "required": ["serviceId", "path", "expectedStatus"]
     },
     "prerequisites": {
       "type": "array",
@@ -159,9 +144,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "domains"
-          ],
+          "required": ["domains"],
           "properties": {
             "domains": {
               "type": "array",
@@ -177,12 +160,7 @@
       ]
     },
     "action": {
-      "enum": [
-        "issue.create",
-        "issue.comment",
-        "issue.close",
-        "delivery.publish"
-      ]
+      "enum": ["issue.create", "issue.comment", "issue.close", "delivery.publish"]
     },
     "targetBranch": {
       "type": "string",
@@ -222,21 +200,14 @@
         }
       },
       "then": {
-        "required": [
-          "action"
-        ],
+        "required": ["action"],
         "properties": {
           "command": false,
           "args": false,
           "service": false,
           "http": false,
           "action": {
-            "enum": [
-              "issue.create",
-              "issue.comment",
-              "issue.close",
-              "delivery.publish"
-            ]
+            "enum": ["issue.create", "issue.comment", "issue.close", "delivery.publish"]
           },
           "network": false,
           "prerequisites": false,
@@ -276,19 +247,13 @@
                   "maximum": 599
                 }
               },
-              "required": [
-                "serviceId",
-                "path",
-                "expectedStatus"
-              ]
+              "required": ["serviceId", "path", "expectedStatus"]
             },
             "command": false,
             "args": false,
             "service": false
           },
-          "required": [
-            "http"
-          ]
+          "required": ["http"]
         },
         "else": {
           "properties": {
@@ -306,9 +271,7 @@
                   {
                     "type": "object",
                     "additionalProperties": false,
-                    "required": [
-                      "context"
-                    ],
+                    "required": ["context"],
                     "properties": {
                       "context": {
                         "enum": [
@@ -325,10 +288,7 @@
               }
             }
           },
-          "required": [
-            "command",
-            "args"
-          ]
+          "required": ["command", "args"]
         }
       }
     },
@@ -366,17 +326,11 @@
                 "maximum": 2147483
               }
             },
-            "required": [
-              "port",
-              "readinessPath",
-              "expectedStatus"
-            ]
+            "required": ["port", "readinessPath", "expectedStatus"]
           },
           "http": false
         },
-        "required": [
-          "service"
-        ]
+        "required": ["service"]
       },
       "else": {
         "properties": {
@@ -388,11 +342,7 @@
       "if": {
         "properties": {
           "kind": {
-            "enum": [
-              "command",
-              "service",
-              "http"
-            ]
+            "enum": ["command", "service", "http"]
           }
         }
       },
@@ -412,9 +362,7 @@
             "const": "delivery.publish"
           }
         },
-        "required": [
-          "action"
-        ]
+        "required": ["action"]
       },
       "then": {
         "properties": {
@@ -426,9 +374,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "targetBranch"
-        ]
+        "required": ["targetBranch"]
       },
       "else": {
         "properties": {
@@ -439,9 +385,7 @@
     },
     {
       "if": {
-        "required": [
-          "dependencyInputs"
-        ],
+        "required": ["dependencyInputs"],
         "properties": {
           "dependencyInputs": {}
         }

@@ -39,6 +39,27 @@ export function executionIdentity(context: ProjectExecution): string {
 
 /** Resolves package context and frozen execution defaults from the current directory. */
 export class ExecutionContext {
+  /** Requires every profile a component or platform routes work to actually exist. */
+  private validateConfiguredProfiles(
+    catalog: import('./components.js').Catalog,
+    owners: string[],
+    config: { directorProfile?: string; reviewerProfile?: string },
+  ): void {
+    this.validateProfiles(
+      catalog,
+      [
+        ...owners.flatMap((id) => [
+          catalog.components[id]!.executionProfile,
+          ...Object.values(catalog.components[id]!.activities ?? {}).flatMap((a) =>
+            a.profile ? [a.profile] : [],
+          ),
+        ]),
+        config.directorProfile,
+        config.reviewerProfile,
+      ].filter((id): id is string => id !== undefined),
+    );
+  }
+
   /** Discovers repository, committed authority and machine bindings; ambiguous packages fail. */
   resolve(cwd: string, packageId?: string, revision = 'HEAD'): ProjectExecution {
     const { source, base, commonDir, bindings } = this.discovery(cwd, revision);
@@ -47,16 +68,7 @@ export class ExecutionContext {
     const config = this.defaults(source, base, catalog);
     const selected = this.selected(catalog, cwd, source, packageId, config.defaultPackage);
     const owners = this.owners(catalog, selected.id);
-    this.validateProfiles(catalog, [
-      ...owners.flatMap((id) => [
-        catalog.components[id]!.executionProfile,
-        ...Object.values(catalog.components[id]!.activities ?? {}).flatMap((a) =>
-          a.profile ? [a.profile] : [],
-        ),
-      ]),
-      config.directorProfile,
-      config.reviewerProfile,
-    ]);
+    this.validateConfiguredProfiles(catalog, owners, config);
     return {
       source,
       base,

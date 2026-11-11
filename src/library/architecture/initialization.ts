@@ -165,7 +165,6 @@ function fallback(repository: string): Component {
   };
 }
 
-
 function initializerProfile(
   catalog: Catalog,
   component: Component,
@@ -200,7 +199,9 @@ function activityRoles(
 }
 
 /** The read-only intake position: research only, so an initializer can never plan a source change. */
-function fallbackActivities(catalog?: Catalog): Record<string, { role: Role; instructions?: string[] }> {
+function fallbackActivities(
+  catalog?: Catalog,
+): Record<string, { role: Role; instructions?: string[] }> {
   const researcher = catalog?.roles.researcher ?? {
     schemaVersion: 4 as const,
     id: 'researcher',

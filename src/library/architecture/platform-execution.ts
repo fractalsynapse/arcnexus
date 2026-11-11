@@ -50,8 +50,7 @@ export class PlatformExecution {
       !ancestry(this.catalog, director.id).some((c) => c.id === platform.id)
     )
       throw new InputError('Director must be an executable component in the declaring platform');
-    if (!director.activities?.research)
-      throw new InputError('Director role must permit research');
+    if (!director.activities?.research) throw new InputError('Director role must permit research');
     for (const id of [platform.director.profile, platform.reviewerProfile])
       if (!this.catalog.profiles[id]) throw new InputError(`Unknown execution profile: ${id}`);
     return director;
