@@ -11,3 +11,5 @@ instructions:
   - Reuse existing code and remove superseded implementation rather than wrapping it
   - No placeholder implementation and no simulated output presented as delivered behaviour
   - "Fit the TypeScript standard: cohesive classes, documented headers, 500/30 line limits"
+standards:
+  - readable-typescript
