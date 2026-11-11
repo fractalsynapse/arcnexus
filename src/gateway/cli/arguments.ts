@@ -28,6 +28,7 @@ Inspection, evidence and diagnostics:
   inspect: --assignment <file> replaces objective
   validate [package]
   inspect <package> <component> [prompt] [--activity research|documentation|testing|implementation|review|release]
+    [--mode director|steward|verifier]
   experiment inspect <manifest> --bindings <file> [--json]
   workday inspect <historical-manifest> --project <repository> [--base <ref>] [--bindings <file>] [--json]
   workday history <historical-workday-id> [--json]

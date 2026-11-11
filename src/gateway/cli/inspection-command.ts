@@ -1,3 +1,4 @@
+import type { Mode } from '../../library/architecture/modes.js';
 import { ArchitectureInspection } from '../../library/architecture/inspection.js';
 import { InputError } from '../../library/architecture/config.js';
 import { Portfolio } from '../../library/portfolio/portfolio.js';
@@ -15,7 +16,7 @@ export class InspectionCommand {
   run(): void {
     if (this.positionals.length < 3 || this.positionals.length > 4)
       throw new InputError('Expected inspect <package> <component> [prompt]');
-    if (Object.keys(this.values).some((key) => !['json', 'activity'].includes(key)))
+    if (Object.keys(this.values).some((key) => !['json', 'activity', 'mode'].includes(key)))
       throw new InputError('Unsupported package inspection option');
     const portfolio = new Portfolio();
     try {
@@ -27,8 +28,11 @@ export class InspectionCommand {
         componentId: this.positionals[2]!,
         prompt: this.positionals[3],
         activity: this.values.activity,
+        ...(this.values.mode ? { mode: this.values.mode as Mode } : {}),
       });
-      console.log(JSON.stringify(result, null, this.values.json ? undefined : 2));
+      if (this.values.json) console.log(JSON.stringify(result));
+      else
+        console.log(`${result.frame}\n\nDeclared operations: ${JSON.stringify(result.operations)}`);
     } finally {
       portfolio.close();
     }
