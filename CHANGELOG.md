@@ -4,6 +4,10 @@
 
 ### Changed
 
+- **Terminal task output shows outstanding waits in stable order**, including the waiting owner,
+  assignment, reason, and open step count. Resolved history remains explicit; output without
+  outstanding waits and machine-readable reports remain unchanged. (#413)
+
 - **Assembled verification requires a changelog change for source changes.** Whenever the
   candidate contains a path classified as source, it must also contain a `CHANGELOG.md` change.
   (#400; tracking #411)

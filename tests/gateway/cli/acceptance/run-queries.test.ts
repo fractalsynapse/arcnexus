@@ -4,6 +4,7 @@ import { once } from 'node:events';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { TaskWaitScenarios } from '../support/task-wait-scenarios.js';
 import { RunQueryFixture } from '../support/run-query-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
@@ -124,5 +125,14 @@ test('event cursors retain correlated updates and omit unrelated run activity', 
   const empty = f.value('task', 'follow', task.id, '--after', String(latest.cursor));
   assert.deepEqual(empty.events, []);
 });
+
+const waits = new TaskWaitScenarios();
+
+test('task status lists outstanding waits in stable owner/assignment/escalation order', (t) =>
+  waits.outstanding(t));
+
+test('task status without waits preserves existing terminal bytes', (t) => waits.absent(t));
+
+test('resolved-only task status preserves existing terminal bytes', (t) => waits.resolved(t));
 
 registerSuite({ component: 'cli', level: 'acceptance', tags: ['deterministic'] });

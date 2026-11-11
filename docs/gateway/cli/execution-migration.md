@@ -108,3 +108,28 @@ interfaces, preserving answer payloads and expected-revision positions. A contro
 is dispatched once after readiness; an uncertain mutation response remains an
 error and is never automatically replayed by the CLI. Read-only retained queries
 continue to use their existing resource path.
+
+## Outstanding task waits (planned, #413)
+
+Terminal task status, currently read with `task get <id>` or `task follow <id>`,
+keeps the existing report and appends `Outstanding waits (<count>):` only when
+that report contains outstanding escalations. Each line gives `owner`,
+`assignment`, `reason` (as a JSON string), then `open steps`, in that order.
+Quotes and line breaks in reasons use JSON escaping, keeping each wait on one line:
+
+```text
+Outstanding waits (1):
+- owner=cli; assignment=<id>; reason="Waiting on report API"; open steps=2
+```
+
+Lines sort by owner, assignment ID, then escalation ID in ascending order. The
+summary uses the report's escalation facts, already read through the coordination
+store public API; it creates no separate persisted view. It describes the selected
+task in its project and excludes other tasks and projects.
+
+With no outstanding escalations, terminal output remains byte-for-byte unchanged
+and has no empty wait heading. Resolved escalations stay in the report with explicit
+`resolved` status and their resolution; the summary neither lists nor counts them.
+`--json` retains the existing report shape, including escalation history and its
+outstanding/resolved counts. Read-only status observation changes no execution,
+activation, scheduling, verification, delivery or human-gate behavior.
