@@ -12,6 +12,8 @@ import {
 } from '../../../../dist/library/workspace/workspace.js';
 import { ExecutionReports } from '../../../../dist/library/report/report.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
+import { OperationScratchScenarios } from '../support/operation-scratch-scenarios.js';
+import { ReclamationOwnershipScenarios } from '../support/reclamation-ownership-scenarios.js';
 
 /** Exercises real durable stores and filesystem expiration without invoking models or native sandboxes. */
 class RetentionScenario {
@@ -179,6 +181,36 @@ test('evidence retention rejects invalid environment limits', (t) => {
   const scenario = new RetentionScenario(t, '-1');
   assert.throws(() => new EvidenceRetention(scenario.root), /ARCNEXUS_EVIDENCE_MAX_BYTES/);
 });
+
+for (const status of ['completed', 'failed', 'cancelled'])
+  test('terminal record reclaims operation scratch: ' + status, (t) =>
+    new OperationScratchScenarios(t).terminal(status),
+  );
+
+for (const scenario of [
+  'running',
+  'activeOperation',
+  'evidence',
+  'abandoned',
+  'liveOwner',
+  'unidentified',
+] as const)
+  test('operation scratch reclamation: ' + scenario, (t) =>
+    new OperationScratchScenarios(t)[scenario](),
+  );
+
+test('reclamation removes a clean abandoned workspace and preserves its report', (t) =>
+  new OperationScratchScenarios(t).eligibleWorkspace(t));
+
+for (const scenario of [
+  'preparedContinuation',
+  'preparedWorkspace',
+  'unknownWorkspaceOwner',
+  'liveHostTakeover',
+] as const)
+  test('workspace reclamation ownership: ' + scenario, (t) =>
+    new ReclamationOwnershipScenarios(t)[scenario](t),
+  );
 
 registerSuite({
   component: 'workspace',

@@ -563,3 +563,29 @@ for example `ARCNEXUS_EVIDENCE_MAX_BYTES=20000000000` for a 20 GB ceiling and a
 10 GB cleanup target. Admission and activation checkpoints enforce the policy;
 this is not a filesystem quota on an operation's in-flight output. A running
 operation can temporarily exceed the ceiling before the next checkpoint.
+
+## Startup resource reclamation (#404)
+
+Intended behavior for this batch: ordinary project-host startup invokes the workspace
+reclamation capability before publishing readiness or dispatching engineering. It
+examines retained records in the host's application storage and reclaims abandoned
+operation temporary roots, their sibling configuration directories, and eligible
+retained workspaces from earlier hosts on this machine.
+
+Reclamation requires positive resource identity and settled operations. A matching
+live process owner protects its scratch and workspace even when the record appears
+terminal, including a host serving another project in the same application storage.
+Unknown ownership, changed paths and unresolved operations remain protected; startup
+does not replay them. Workspace disposal retains the existing cleanup safety guards
+and retention rules for execution-linked workspaces. Prepared contributions remain
+available for continuation even when their previous host has exited.
+
+Activation journals, invocation logs and reports remain in application storage.
+Startup reclamation does not change the private-home redirect used to confine
+operations. It adds no cleaner daemon, TTL service, store or prepared-dependency
+snapshot bound, and changes no verification, delivery, release or human gate.
+
+The regression launches the built production host entry point with resources owned
+by an exited host and a live host for another project. Readiness must observe removal
+of the abandoned resources and preservation of the live resources and retained
+evidence. Implementation and assembled verification are pending at specification.

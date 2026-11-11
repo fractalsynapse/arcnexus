@@ -26,6 +26,8 @@ export { assertGeneratedOutputs, assertOutputs } from './outputs.js';
 
 export { EvidenceRetention } from './evidence-retention.js';
 
+export { WorkspaceReclamation } from './reclamation.js';
+
 export { WorkspaceResources, type WorkspaceTarget } from './resources.js';
 
 export interface PrepareOptions {
