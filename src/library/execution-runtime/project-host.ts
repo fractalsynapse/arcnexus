@@ -23,7 +23,9 @@ import type { RecordData } from '../workspace/state.js';
 import { StewardshipRefusal, VerificationIssue } from '../task-intake/direction.js';
 import { ProgressObserver } from '../report/progress.js';
 import type { InitializationResult } from '../architecture/initialization.js';
+import type { RunStance } from '../coordination-store/execution-types.js';
 import { AssignmentDispatch } from './assignment-dispatch.js';
+import { recordPlanOutcome } from './plan-stance.js';
 import { CollaborativeDispatch } from './collaborative-dispatch.js';
 import { retainedFailureText } from './failure-text.js';
 
@@ -122,15 +124,23 @@ export class ProjectHost {
   }
 
   /** Queues a goal without interrupting an in-flight safe checkpoint. */
-  submit(prompt: string, simulate = false, expectedEnvironmentId?: string): ExecutionRun {
+  submit(
+    prompt: string,
+    simulate = false,
+    expectedEnvironmentId?: string,
+    stance: RunStance = { kind: 'goal' },
+  ): ExecutionRun {
     if (!prompt.trim()) throw new InputError('Task prompt must not be empty');
+    // A plan run exists to be read, so it can never reach upstream: sealing is part of the stance,
+    // not a caller option that could be forgotten.
+    simulate = simulate || stance.kind === 'plan';
     const workday = this.selection.workday();
     const reusable = simulate && this.environments.reusable('simulation', workday);
     if (expectedEnvironmentId && expectedEnvironmentId !== reusable)
       throw new InputError(
         'Simulated workday changed before admission; submit again to capture staging',
       );
-    const task = this.create('task', prompt, simulate);
+    const task = this.create('task', prompt, simulate, stance);
     if (workday && ['running', 'idle'].includes(workday.status))
       this.store.updateRun(
         workday.id,
@@ -253,7 +263,12 @@ export class ProjectHost {
   }
 
   /** Captures a new run against the last compatible verified candidate. */
-  private create(mode: 'task' | 'workday', objective: string, simulate = false): ExecutionRun {
+  private create(
+    mode: 'task' | 'workday',
+    objective: string,
+    simulate = false,
+    stance: RunStance = { kind: 'goal' },
+  ): ExecutionRun {
     if (!this.activation.busy) this.finalization.sweep();
     new EvidenceRetention(this.root).enforce(!this.activation.busy);
     return new RunCreation(this.context, this.store, this.environments).create(
@@ -261,6 +276,7 @@ export class ProjectHost {
       objective,
       simulate,
       mode === 'task' ? this.selection.workday() : undefined,
+      stance,
     );
   }
 
@@ -340,6 +356,11 @@ export class ProjectHost {
     if (signal.aborted) return;
     if (result.status !== 'ready') {
       this.clarification(run, result);
+      return;
+    }
+    const stance: RunStance = (run.data.stance as RunStance | undefined) ?? { kind: 'goal' };
+    if (stance.kind === 'plan') {
+      recordPlanOutcome(this.store, run, result);
       return;
     }
     await this.collaboration.initialize(run, result, signal);

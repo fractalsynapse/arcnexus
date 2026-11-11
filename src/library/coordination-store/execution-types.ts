@@ -162,3 +162,13 @@ export type ActivationResult = { receipt?: string } & (
   | { kind: 'continue' }
   | { kind: 'blocked'; reason: string }
 );
+
+/**
+ * What one run was asked to produce.
+ *
+ * `goal` is the whole loop. `plan` stops after direction: the proposal is retained and nothing is
+ * dispatched, so no assignment, tracking issue, branch, pull request or release can be created by a
+ * run that only asked to see the plan. In-place component stances are added separately because they
+ * change where work is written, which is a different guarantee from stopping early.
+ */
+export type RunStance = { kind: 'goal' } | { kind: 'plan' };

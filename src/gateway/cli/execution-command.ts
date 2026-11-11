@@ -33,9 +33,19 @@ export class ExecutionCommand {
   }
 
   /** Submits a prompt and streams changed state until completion, cancellation or missing input. */
-  async task(prompt: string, asynchronous = false, simulate = false): Promise<void> {
+  async task(
+    prompt: string,
+    asynchronous = false,
+    simulate = false,
+    stance?: { kind: 'plan' },
+  ): Promise<void> {
     await this.client.ensureRun('submit', simulate, this.signal);
-    const run = (await this.client.request({ action: 'submit', prompt, simulate })) as ExecutionRun;
+    const run = (await this.client.request({
+      action: 'submit',
+      prompt,
+      simulate,
+      ...(stance ? { stance } : {}),
+    })) as ExecutionRun;
     if (asynchronous) {
       console.log(JSON.stringify(run));
       return;

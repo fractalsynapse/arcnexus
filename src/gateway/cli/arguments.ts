@@ -48,6 +48,7 @@ const cliOptions = {
   limit: { type: 'string' },
   cursor: { type: 'string' },
   component: { type: 'string' },
+  plan: { type: 'boolean' },
   activity: { type: 'string' },
   level: { type: 'string' },
   category: { type: 'string' },

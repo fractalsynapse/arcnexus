@@ -1,3 +1,4 @@
+import type { RunStance } from '../coordination-store/execution-types.js';
 import { InputError } from '../architecture/config.js';
 import type { ProjectExecution } from '../architecture/execution-context.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
@@ -21,6 +22,7 @@ export class RunCreation {
     objective: string,
     simulate: boolean,
     workday?: ExecutionRun,
+    stance?: RunStance,
   ): ExecutionRun {
     this.validateSource(simulate, workday);
     const environment = this.environments.capture(simulate, workday);
@@ -35,6 +37,7 @@ export class RunCreation {
       authorityBase: this.context.base,
       executionIdentity: executionIdentity(this.context),
       packageId: this.context.packageId,
+      ...(stance ? { stance } : {}),
     });
     return this.store.run(run.id);
   }

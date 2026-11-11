@@ -44,7 +44,9 @@ export class TaskCommand {
   private async submit(): Promise<void> {
     if (![3, 4].includes(this.positionals.length))
       throw new InputError('Expected task run [package] "<prompt>"');
-    if (Object.keys(this.values).some((key) => !['async', 'json', 'simulate'].includes(key)))
+    if (
+      Object.keys(this.values).some((key) => !['async', 'json', 'simulate', 'plan'].includes(key))
+    )
       throw new InputError('Invalid task run options');
     if (!this.positionals.at(-1)!.trim()) throw new InputError('Task prompt must not be empty');
     const packageReference = this.positionals.length === 4 ? this.positionals[2] : undefined;
@@ -52,6 +54,7 @@ export class TaskCommand {
       this.positionals.at(-1)!,
       this.values.async,
       this.values.simulate,
+      this.values.plan ? { kind: 'plan' } : undefined,
     );
   }
 

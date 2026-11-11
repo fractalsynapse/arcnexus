@@ -187,6 +187,7 @@ class HostServer {
         String(request.prompt ?? ''),
         request.simulate,
         request.expectedEnvironmentId,
+        request.stance,
       );
     if (request.action === 'task-status') return this.host.reports.view(String(request.id));
     return this.runControl(request);
