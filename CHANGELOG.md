@@ -3,6 +3,9 @@
 ## [Unreleased]
 
 ### Changed
+
+- **Roles are activity-scoped positions; ownership is declared only by the component** (#394, architect-directed). The architecture model contract gains **I11**: a role declares the activities it performs and the standing detail individual to that position — responsibilities, instructions, standards, tool surface, execution profile — and is reusable by every component engaging it, so one `researcher` description serves research anywhere; ownership of files comes solely from a component, and a role grants no write scope. Roles map to activities: `researcher`, `technical-writer`, `designer`, `systems-engineer`, `tester`, `release-engineer`. In the direction contract, what I14 and DI-19 unify is the **mode** set (director, steward, verifier), not roles — the word role there would now mislead. The harness document is rewritten on the two axes: a **mode** selects an activity **sequence**, a **role** supplies each step's standing detail, and a plan declares its mode's sequence with only activities its component engages a role to hold — so a verifier's plan has no `implementation` bucket, replacing #389's role-wide rule that forced one. Contract currency: architecture-model revision 4, direction revision 5, digests and registry revisions resynced from the authored files; `validate --json` is `status: valid`. Implementing the role catalog and the mode-sequence validation rule is the remaining work under #394. (#394)
+
 - **Both agent-authored `.arc` spaces now have a steward** (#391). `.arc/plans` is owned by
   `task-intake`, whose code authors and persists the director's plans, and `.arc/learning` is owned by `report`,
   whose stated purpose is projecting honest run, assignment and verification evidence **without changing
@@ -16,7 +19,6 @@
   reclamation sweep that inferred abandonment from missing metadata, its cost, the pattern shared with #393 and
   #400 (a green result produced by absence rather than presence), the cheapest check that now encodes it, and a
   proposed standard left for the architect rather than adopted. (#391)
-
 
 - **Successful preparation receipt publication discards superseded snapshot payloads for the same
   operation.** Receipts, the current snapshot, in-flight preparations, other operations’ snapshots,

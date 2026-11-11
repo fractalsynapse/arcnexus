@@ -82,8 +82,8 @@ contracts:
     file: docs/interface/arcnexus-architecture-model.md
     owner: architecture-model
     stage: locked
-    revision: 3
-    digest: 267d328089079ca415184154e95aa7c1a417ff78c83b36e50acfa6221e376271
+    revision: 4
+    digest: edc4d4eb10f60f0ef67feb9350d3e435e39b7c83df463a2f10d1ad19c035e552
     dependsOn: [arcnexus/project, arcnexus/foundation]
     scenarios: 16
     acceptedBy: Adrian Webb (architect)
@@ -148,8 +148,8 @@ contracts:
     file: docs/interface/arcnexus-direction.md
     owner: direction
     stage: locked
-    revision: 4
-    digest: 5a1dcda3399897015b4ebda9f74348a5125c731e9ccf97a4ac54b27a402fea45
+    revision: 5
+    digest: 5fec3c3cb971c97376f56d4c5d1a5ce391f1b518bcf23ac9d8d70df2cda921aa
     dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination]
     scenarios: 19
     acceptedBy: Adrian Webb (architect)
@@ -171,7 +171,14 @@ contracts:
     stage: locked
     revision: 3
     digest: 14d87b6affa387ca5a35e28f372c9a8b76019a7429b7c090f38242c910c933b6
-    dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination, arcnexus/execution, arcnexus/direction]
+    dependsOn:
+      [
+        arcnexus/project,
+        arcnexus/architecture-model,
+        arcnexus/coordination,
+        arcnexus/execution,
+        arcnexus/direction,
+      ]
     scenarios: 17
     acceptedBy: Adrian Webb (architect)
     acceptedAt: 2026-11-07

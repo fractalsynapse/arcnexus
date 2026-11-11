@@ -1,8 +1,9 @@
 # The agent harness
 
 **Status: architecture, authoritative.** The single agent process every activation in ArcNexus runs
-inside — director, self-directed stewardship, component steward, and independent reviewer alike.
-Nothing in the platform gets a bespoke agent runtime. Read [the charter](../charter.md) for purpose,
+inside — `director`, `steward`, `verifier`, or a question answer, each running as the role that
+holds the activity it is performing. Nothing in the platform gets a bespoke agent runtime, and no
+role gets a file. Read [the charter](../charter.md) for purpose,
 [`.arc/README.md`](../../.arc/README.md) for knowledge spaces, and the contracts in
 [`docs/interface/`](../interface/) for component obligations.
 
@@ -16,40 +17,58 @@ engine. Any fix to planning, evidence, escalation, journaling or recovery theref
 applies to every agent, the director included. A change that helps stewards but not the director is
 evidence the harness has been forked, and the fork is the defect.
 
-The roles are `director` (turn a goal into an executable sequence), `stewardship` (a component
-deciding its own next bounded work), `steward` (deliver one assignment), and `verifier` (one
-independent assessment of an assembled candidate). They differ only in the layers they receive and
-the operations they may perform.
+There are two different axes, and collapsing one into the other is the mistake this section exists
+to prevent:
+
+- **Mode** is what an agent is doing in the lane right now: `director` turns a goal into an
+  executable sequence, `steward` delivers one assignment, `verifier` renders one independent
+  assessment, and a question takes the shortened chain. A mode selects an **activity sequence**.
+- **Role** is a position, and there is one per activity: `researcher`, `technical-writer`,
+  `designer`, `systems-engineer`, `tester`, `release-engineer`. A role carries what is individual
+  to it and **reusable by every component** — responsibilities, standing instructions, standards,
+  tool surface and execution profile. Think of it as the résumé the agent brings to the post.
+
+They differ only in the layers they receive and the operations they may perform. The point of the
+role section of the architecture is reuse: the same researcher context serves research work in any
+component, so the catalog does not re-describe a position once per owner.
+
+## Ownership belongs to the component, never to the role
+
+A component declares the files it owns and the responsibilities, instructions and acceptance detail
+specific to them. It is where ownership lives and where a role's standing detail is combined with
+the component's particular subject matter. A role grants no write scope and holds no path: role
+`tester` cannot review a file nobody owns, and `release-engineer` integrates nothing that has no
+component accountable for it. Authority to write therefore has exactly one source, and it is not a
+matter of which position an activation happens to be running.
 
 ## Activities are the plan's spine
 
-Every role already declares the activities it performs — the catalog validates each operation's
-`activities` against the acting role, so an activity is an **authorization and standards axis today**.
-The harness adds the second half: activities are also the **shape of the plan**, so the same machinery
-that gates tools and selects standards also orders work. No new configuration is introduced; the role
-definitions that exist now become the source for both.
+The catalog already validates each operation's `activities` against the acting role, so an activity
+is an **authorization and standards axis**. The harness adds the second half: activities are also the
+**shape of the plan**, so the same machinery that gates tools and selects standards also orders work.
 
-Each activation follows one process. The activity names are the six the role declarations own, in
-their one canonical order — research, documentation, testing, implementation, review, release — so
-these chains are emphases within that order, not alternative vocabularies. The design-and-contract
-step of a milestone is the `testing` activity; the integration step is `release`.
+Each activation follows one process, and its sequence is its **mode's**, drawn from the six canonical
+activity names in their one order — research, documentation, testing, implementation, review,
+release. The design-and-contract-test step of a milestone is the `testing` activity; the integration
+step is `release`. These are positions in one order, not parallel vocabularies.
 
-| Role | What each activity is for in that chain |
-| --- | --- |
-| director | `implementation` produces **the plan and the assignments**, not a source change |
-| steward | `testing` states the acceptance as an observed failure before `implementation` turns it green |
-| verifier | `testing` and `implementation` are examined and declined; `release` is **the decision and report** |
-| question answer | shortened emphasis: research, documentation, review, release |
+| Mode | Activity sequence | Who holds each step |
+| --- | --- | --- |
+| director | research → documentation → implementation → review → release | `release` and `implementation` here produce **the plan and the assignments**, not a source change |
+| steward | research → documentation → testing → implementation → review → release | `testing` states acceptance as an observed failure before `implementation` turns it green |
+| verifier | research → documentation → review → release | `review` is the independent verdict; `release` is **the decision and report** |
+| question answer | research → documentation → review → release | the answer is the deliverable |
 
-A plan declares **every** activity its role supports, in canonical order, even when an activity
-carries no checklist item — documentation and review are performed because they are listed, and the
-plan records what such a bucket examined and why nothing needed checking. Whether the supported set
-should instead be narrowed per **agent mode** (so a verifier is not asked to declare an
-`implementation` bucket at all) is open: see #394.
+A plan declares **every activity in its mode's sequence**, in canonical order, and each activity it
+declares must be one the component engages a role to hold. An activity in the sequence that carries
+no checklist item is still declared and still performed — documentation and review happen because
+they are listed — and the plan records what such a bucket examined and why nothing needed checking.
+A mode that does not include an activity never declares it: a verifier's plan has no `implementation`
+bucket, because that is not the post it is standing in.
 
 So the director's *deliverable* is a plan and a set of assignments, authored, checked and reviewed
 through the same activity discipline a steward uses to change code. There is no privileged planning
-step outside the process, and no role that skips documentation.
+step outside the process, and no mode that skips documentation.
 
 **Bucket, then run.** Planning assigns each step to its activity first; execution then proceeds in a
 deterministic activity order rather than in the order items occurred to the agent. Steps sharing an
@@ -188,10 +207,11 @@ finds it impossible **within its ownership or its acceptance criteria** stops an
 | director | L1 + L2 for the goal | set/revise sequence, sub-goals, owners; answer escalations; ask the human one blocking question | name files; edit any component; weaken a goal |
 | steward | L3 + L4 for one assignment | revise its own plan and checklist; edit inside owned paths; request peers; escalate | touch goal, acceptance, tests, or others' paths |
 | verifier | the candidate and the acceptance text | issue one independent verdict per candidate revision | edit anything; delegate |
-| stewardship | L2 + L3 for one component | choose bounded next work it owns; report no useful work honestly | assign other owners |
+| steward (self-directed) | L2 + L3 for one component | choose bounded next work its component owns; report no useful work honestly | assign other owners |
 
-Every row is the same harness with a different L-layer mix and tool surface. That is the entire
-implementation cost of the role system.
+Every row is a **mode**: the same harness with a different L-layer mix, tool surface and activity
+sequence, while the **role** supplying each step's standing detail stays shared across components.
+That is the entire implementation cost of the role system.
 
 ## What is protected
 
