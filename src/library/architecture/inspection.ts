@@ -67,6 +67,27 @@ export class ArchitectureInspection {
     });
   }
 
+  /**
+   * Lists the components of a package with the activities each holds, as one readable line each.
+   *
+   * The index exists so an operator can discover a component id and its activities before asking for
+   * a frame, rather than guessing identifiers from directory names.
+   */
+  index(target: { source: string; base: string; packageId: string }, bindings?: Bindings): string {
+    const catalog = loadCatalog(
+      target.source,
+      target.base,
+      bindings ?? loadProjectBindings(target.source),
+    );
+    const rows = Object.values(catalog.components)
+      .filter((component) => component.type !== 'platform')
+      .map(
+        (component) =>
+          `${component.id.padEnd(26)} ${component.type.padEnd(10)} ${Object.keys(component.activities ?? {}).join(',')}`,
+      );
+    return [`package ${target.packageId} at ${target.base.slice(0, 8)}`, ...rows].join('\n');
+  }
+
   /** Rejects empty explicit inputs and unsupported activities before loading source. */
   private validate(request: InspectionRequest): void {
     for (const key of ['source', 'revision', 'packageId', 'componentId', 'prompt'] as const)

@@ -12,29 +12,89 @@ export class InspectionCommand {
     private readonly values: CliValues,
   ) {}
 
-  /** Resolves one explicit target and renders context without accepting an engineering assignment. */
+  /** Rejects flags this command does not read, so a typo cannot silently change the stance. */
+  private checkOptions(): void {
+    const allowed = ['json', 'activity', 'mode', 'milestone'];
+    for (const key of Object.keys(this.values))
+      if (!allowed.includes(key)) throw new InputError('Unsupported inspection option: ' + key);
+  }
+
+  /**
+   * Renders the frame a component would be shown for one activity, or the catalog index.
+   *
+   * Positionals follow the contract `[project] [component] [activity]`: a leading reference that
+   * resolves as a registered package names the project, anything else names the component and the
+   * project comes from the working directory. The goal is never an argument here — an inspected
+   * frame shows placeholders for what only a live assignment can know, so two people can compare
+   * what they were shown.
+   */
   run(): void {
-    if (this.positionals.length < 3 || this.positionals.length > 4)
-      throw new InputError('Expected inspect <package> <component> [prompt]');
-    if (Object.keys(this.values).some((key) => !['json', 'activity', 'mode'].includes(key)))
-      throw new InputError('Unsupported package inspection option');
+    if (this.positionals.length > 4)
+      throw new InputError('Expected inspect [project] [component] [activity]');
+    this.checkOptions();
     const portfolio = new Portfolio();
     try {
-      const target = portfolio.packageTarget(this.positionals[1]);
-      const result = new ArchitectureInspection().inspect({
+      const { project, componentId, activity } = this.targets(portfolio);
+      const target = portfolio.packageTarget(project);
+      const inspection = new ArchitectureInspection();
+      if (!componentId) {
+        this.print(inspection.index(target), !!this.values.json);
+        return;
+      }
+      const result = inspection.inspect({
         source: target.source,
         revision: target.base,
         packageId: target.packageId,
-        componentId: this.positionals[2]!,
-        prompt: this.positionals[3],
-        activity: this.values.activity,
+        componentId,
+        ...(activity ? { activity } : {}),
         ...(this.values.mode ? { mode: this.values.mode as Mode } : {}),
       });
-      if (this.values.json) console.log(JSON.stringify(result));
-      else
-        console.log(`${result.frame}\n\nDeclared operations: ${JSON.stringify(result.operations)}`);
+      this.print(result, !!this.values.json);
     } finally {
       portfolio.close();
     }
+  }
+
+  /**
+   * Splits positionals into project, component and activity under the contract's optional grammar.
+   *
+   * A leading reference names a project only when it actually resolves as one; otherwise the working
+   * directory supplies the project and the leading word is the component. Without that test the same
+   * positional would be ambiguous between the two roles.
+   */
+  private targets(portfolio: Portfolio): {
+    project?: string;
+    componentId?: string;
+    activity?: string;
+  } {
+    const [first, second, third] = this.positionals.slice(1);
+    const named = first !== undefined && this.resolvesAsProject(portfolio, first);
+    if (!named && third !== undefined)
+      throw new InputError(
+        `Inspection resolved no project from '${first}'; pass [component] [activity] or register the package`,
+      );
+    const activity = (named ? third : second) ?? this.values.activity;
+    return {
+      ...(named ? { project: first } : {}),
+      componentId: named ? second : first,
+      ...(activity ? { activity } : {}),
+    };
+  }
+
+  /** True when a reference names a registered package rather than a component of this project. */
+  private resolvesAsProject(portfolio: Portfolio, reference: string): boolean {
+    try {
+      portfolio.packageTarget(reference);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /** Prints readable text by default and the raw structure under `--json`. */
+  private print(payload: unknown, json: boolean): void {
+    if (json) console.log(JSON.stringify(payload));
+    else if (typeof payload === 'string') console.log(payload);
+    else console.log((payload as { frame?: string }).frame ?? JSON.stringify(payload, null, 2));
   }
 }
