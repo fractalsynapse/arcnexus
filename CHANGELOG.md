@@ -4,6 +4,10 @@
 
 ### Changed
 
+- **Successful preparation receipt publication discards superseded snapshot payloads for the same
+  operation.** Receipts, the current snapshot, in-flight preparations, other operations’ snapshots,
+  and retained execution evidence are preserved. (#404, behavior 2)
+
 - **Terminal task output shows outstanding waits in stable order**, including the waiting owner,
   assignment, reason, and open step count. Resolved history remains explicit; output without
   outstanding waits and machine-readable reports remain unchanged. (#413)

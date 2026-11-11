@@ -1,6 +1,14 @@
 import { validateSchema } from '../../../../dist/library/architecture/schema.js';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -207,6 +215,147 @@ class DependencyScenarios {
     assert.equal(policy.filesystem[join(record.workspace, 'dist')], 'write');
   }
 
+  /** Receipt publication bounds settled snapshots while retaining receipts and historical evidence. */
+  async boundsSnapshotsAfterReceipt(): Promise<void> {
+    const evidence = this.retainedEvidence();
+    const first = await this.prepared('first');
+    const old = this.snapshot(first);
+    const oldReceipt = readFileSync(join(old, 'receipt.json'), 'utf8');
+    const middle = this.snapshot(await this.prepared('middle', 'middle'));
+    const middleReceipt = readFileSync(join(middle, 'receipt.json'), 'utf8');
+    const current = this.snapshot(await this.prepared('current', 'current'));
+
+    assert.equal(
+      readFileSync(join(current, 'outputs/node_modules/dependency'), 'utf8'),
+      'installed',
+    );
+    assert.equal(
+      JSON.parse(readFileSync(join(current, 'receipt.json'), 'utf8')).recordId,
+      'current',
+    );
+    assert.equal(readFileSync(join(old, 'receipt.json'), 'utf8'), oldReceipt);
+    assert.equal(readFileSync(join(middle, 'receipt.json'), 'utf8'), middleReceipt);
+    for (const [path, bytes] of evidence) assert.equal(readFileSync(path, 'utf8'), bytes);
+    assert.equal(
+      existsSync(join(old, 'outputs')),
+      false,
+      'Superseded preparation snapshot payload must be discarded',
+    );
+    assert.equal(existsSync(join(middle, 'outputs')), false);
+  }
+
+  /** A historical receipt without a snapshot requires installation again when its inputs return. */
+  async rebuildsDiscardedSnapshot(): Promise<void> {
+    await this.prepared('original');
+    const newer = this.snapshot(await this.prepared('newer', 'changed'));
+    const restored = this.snapshot(await this.prepared('returned'));
+
+    assert.equal(this.installs, 3, 'A discarded preparation snapshot must be rebuilt');
+    assert.equal(
+      readFileSync(join(restored, 'outputs/node_modules/dependency'), 'utf8'),
+      'installed',
+    );
+    assert.equal(
+      JSON.parse(readFileSync(join(restored, 'receipt.json'), 'utf8')).recordId,
+      'returned',
+    );
+    assert.equal(existsSync(join(newer, 'outputs')), false);
+    assert.equal(existsSync(join(newer, 'receipt.json')), true);
+  }
+
+  /** Publishing one operation's receipt leaves a different operation's settled snapshot intact. */
+  async preservesOtherOperation(): Promise<void> {
+    const other = { ...this.operation, id: 'other-install', definitionDigest: 'other-recipe' };
+    const record = await this.prepared('other', 'original', other);
+    const directory = this.snapshot(record, other.id);
+    const receipt = readFileSync(join(directory, 'receipt.json'), 'utf8');
+    const old = this.snapshot(await this.prepared('first'));
+    await this.prepared('replacement', 'changed');
+
+    assert.equal(
+      readFileSync(join(directory, 'outputs/node_modules/dependency'), 'utf8'),
+      'installed',
+    );
+    assert.equal(readFileSync(join(directory, 'receipt.json'), 'utf8'), receipt);
+    assert.equal(
+      existsSync(join(old, 'outputs')),
+      false,
+      'Receipt publication must reclaim only its own superseded snapshot',
+    );
+  }
+
+  /** A paused installer keeps its directory until it can publish its own complete snapshot. */
+  async preservesInFlightPreparation(): Promise<void> {
+    await this.prepared('previous');
+    const active = this.record('in-flight');
+    writeFileSync(join(active.workspace, 'lock.json'), 'pending');
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const running = new PreparedDependencies(this.root, active).run(this.operation, async () => {
+      const result = await this.install(active);
+      await gate;
+      return result;
+    });
+    const inFlight = this.incompleteSnapshot();
+
+    try {
+      await this.prepared('settled', 'settled');
+      assert.equal(existsSync(inFlight), true);
+      assert.equal(existsSync(join(inFlight, 'receipt.json')), false);
+    } finally {
+      release();
+      await running;
+    }
+    assert.equal(
+      readFileSync(join(inFlight, 'outputs/node_modules/dependency'), 'utf8'),
+      'installed',
+    );
+    assert.equal(existsSync(join(inFlight, 'receipt.json')), true);
+  }
+
+  /** Runs the public preparation contract with controlled input bytes and an observed installer. */
+  private async prepared(
+    id: string,
+    input = 'original',
+    operation = this.operation,
+  ): Promise<RecordData> {
+    const record = this.record(id);
+    writeFileSync(join(record.workspace, 'lock.json'), input);
+    await new PreparedDependencies(this.root, record).run(operation, () => this.install(record));
+    return record;
+  }
+
+  /** Locates a retained snapshot using the published operation identity instead of a guessed key. */
+  private snapshot(record: RecordData, operationId = this.operation.id): string {
+    const entries = record.preparedDependencies as Array<{ key: string; operationId: string }>;
+    const entry = entries.find((item) => item.operationId === operationId);
+    assert.ok(entry, 'Preparation must retain its published identity');
+    return join(this.root, 'prepared-dependencies', entry.key);
+  }
+
+  /** Finds the real incomplete directory created by the public run while its installer is paused. */
+  private incompleteSnapshot(): string {
+    const root = join(this.root, 'prepared-dependencies');
+    const paths = readdirSync(root).map((key) => join(root, key));
+    const incomplete = paths.filter((path) => !existsSync(join(path, 'receipt.json')));
+    assert.equal(incomplete.length, 1);
+    return incomplete[0]!;
+  }
+
+  /** Seeds prior durable evidence whose exact bytes must survive later preparation publications. */
+  private retainedEvidence(): Array<[string, string]> {
+    const directory = join(this.root, 'runs', 'historical');
+    mkdirSync(directory, { recursive: true });
+    return ['journal.jsonl', 'invocation-original.log', 'report.json'].map((name) => {
+      const path = join(directory, name);
+      const bytes = 'Retained evidence: ' + name;
+      writeFileSync(path, bytes);
+      return [path, bytes];
+    });
+  }
+
   /** Removes only disposable test resources after all assertions complete. */
   close(): void {
     rmSync(this.root, { recursive: true, force: true });
@@ -221,6 +370,10 @@ for (const name of [
   'interrupted',
   'failedRetry',
   'protection',
+  'boundsSnapshotsAfterReceipt',
+  'rebuildsDiscardedSnapshot',
+  'preservesOtherOperation',
+  'preservesInFlightPreparation',
 ] as const)
   test('prepared dependencies: ' + name, async () => {
     const scenario = new DependencyScenarios();

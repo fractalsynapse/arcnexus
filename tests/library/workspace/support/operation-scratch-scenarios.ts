@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import fs from 'node:fs';
+import { syncBuiltinESMExports } from 'node:module';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -9,6 +11,7 @@ import { pathToFileURL } from 'node:url';
 import { generalCatalogFixture } from '../../testing/support/general-fixture.js';
 import * as workspace from '../../../../dist/library/workspace/workspace.js';
 import { save, type RecordData } from '../../../../dist/library/workspace/state.js';
+import { SourceConfinement } from '../../../../dist/library/operations/confinement.js';
 
 /** Exercises record transitions and abandoned scratch against real disposable files and process owners. */
 export class OperationScratchScenarios {
@@ -103,23 +106,21 @@ export class OperationScratchScenarios {
     this.assertScratch(false, 'evidence retention must not pin disposable operation scratch');
   }
 
-  /** Establishes an actual earlier process owner through the public save path, then reclaims after exit. */
+  /** Proves absence through an exited recorded owner and preserves retained evidence on repeated startup passes. */
   abandoned(): void {
-    const module = pathToFileURL(resolve('dist/library/workspace/state.js')).href;
-    const script =
-      'const { save } = await import(process.argv[1]); save(process.argv[2], JSON.parse(process.argv[3]));';
-    const result = spawnSync(
-      process.execPath,
-      ['--input-type=module', '-e', script, module, this.root, JSON.stringify(this.record)],
-      { encoding: 'utf8' },
-    );
-    assert.equal(result.status, 0, result.stderr);
-    const files = this.evidenceFiles();
-    this.reclaim();
+    const files = [...this.evidenceFiles(), ...this.preparationFiles()];
+    this.saveFromExitedProcess(this.root, this.record);
+    const report = join(this.directory, 'report.json');
+    const stored = JSON.parse(readFileSync(report, 'utf8'));
+    assert.notEqual(stored.operationScratchIdentity.ownerPid, process.pid);
+    assert.match(stored.operationScratchIdentity.ownerStart, /^\d+$/);
+    const before = new Map([...files, report].map((path) => [path, readFileSync(path)]));
+    assert.deepEqual(this.reclaim().scratch, [this.id]);
     this.assertScratch(false, 'abandoned operation scratch must be reclaimed');
-    for (const file of files) assert.equal(readFileSync(file, 'utf8'), 'retained:' + file);
+    for (const [path, bytes] of before) assert.deepEqual(readFileSync(path), bytes);
     assert.ok(existsSync(join(this.record.workspace, 'source.txt')));
     this.reclaim();
+    for (const [path, bytes] of before) assert.deepEqual(readFileSync(path), bytes);
   }
 
   /** A live process protects its resources even when the stored record appears terminal. */
@@ -131,6 +132,100 @@ export class OperationScratchScenarios {
     this.reclaim();
     this.assertScratch(true, 'live process owner must protect operation scratch');
     assert.ok(existsSync(join(this.record.workspace, 'source.txt')));
+  }
+
+  /** Retains both roots when a persisted owner field is missing, malformed or protected as PID 1. */
+  ownerIdentity(field: 'ownerPid' | 'ownerStart', value: unknown): void {
+    const stored = this.terminalRecord();
+    if (value === undefined) delete stored.operationScratchIdentity[field];
+    else stored.operationScratchIdentity[field] = value;
+    const path = join(this.directory, 'report.json');
+    writeFileSync(path, JSON.stringify(stored));
+    const before = readFileSync(path);
+    assert.deepEqual(this.reclaim().scratch, []);
+    this.assertScratch(true, 'uncertain recorded process ownership must preserve scratch');
+    assert.deepEqual(readFileSync(path), before);
+  }
+
+  /** Simulates an unreadable process identity while the kernel still confirms that its process exists. */
+  unreadableOwner(t: TestContext): void {
+    writeFileSync(join(this.directory, 'report.json'), JSON.stringify(this.terminalRecord()));
+    const original = fs.readFileSync;
+    let denied = 0;
+    const mocked = t.mock.method(fs, 'readFileSync', (path: any, ...options: any[]) => {
+      if (path === '/proc/' + process.pid + '/stat') {
+        denied++;
+        throw Object.assign(new Error('Process identity unavailable'), { code: 'EACCES' });
+      }
+      return Reflect.apply(original, fs, [path, ...options]);
+    });
+    syncBuiltinESMExports();
+    try {
+      assert.deepEqual(this.reclaim().scratch, []);
+      assert.ok(denied > 0, 'reclamation must attempt to read the recorded process identity');
+      this.assertScratch(true, 'unreadable process identity must preserve scratch');
+    } finally {
+      mocked.mock.restore();
+      syncBuiltinESMExports();
+    }
+  }
+
+  /** An exited owner alone cannot override resource identity, invocation or service shutdown guards. */
+  startupGuard(guard: 'resource' | 'invocation' | 'service'): void {
+    this.saveFromExitedProcess(this.root, this.record);
+    const path = join(this.directory, 'report.json');
+    const stored = JSON.parse(readFileSync(path, 'utf8'));
+    stored.status = 'completed';
+    if (guard === 'resource') stored.operationScratchIdentity.temporary.inode += 1;
+    if (guard === 'invocation') stored.operationInvocations[0].status = 'running';
+    if (guard === 'service') {
+      const directory = join(this.directory, 'services');
+      mkdirSync(directory);
+      writeFileSync(
+        join(directory, 'service.json'),
+        JSON.stringify({ runId: this.id, status: 'running' }),
+      );
+    }
+    writeFileSync(path, JSON.stringify(stored));
+    assert.deepEqual(this.reclaim().scratch, []);
+    this.assertScratch(true, guard + ' guard must preserve abandoned scratch');
+  }
+
+  /** Startup retains the private-home redirect and read-only configuration for a live recorded owner. */
+  confinementRedirect(t: TestContext): void {
+    const fixture = generalCatalogFixture(t);
+    this.record.workspace = fixture.repo;
+    const adapter = new SourceConfinement({
+      workspace: fixture.repo,
+      reads: ['.'],
+      outputs: [],
+      temporaryRoot: this.temporary,
+      executable: process.execPath,
+    });
+    const environment = adapter.environment({ HOME: '/caller-home', CODEX_HOME: '/caller-config' });
+    assert.equal(environment.HOME, this.temporary);
+    assert.equal(environment.TMPDIR, this.temporary);
+    assert.equal(environment.CODEX_HOME, this.temporary + '-configuration');
+    assert.equal(adapter.filesystem[this.temporary], 'write');
+    assert.equal(adapter.filesystem[this.temporary + '-configuration'], 'read');
+    const support = join(this.temporary + '-configuration', 'node-stdio.mjs');
+    const before = readFileSync(support);
+    writeFileSync(join(this.directory, 'report.json'), JSON.stringify(this.terminalRecord()));
+    assert.deepEqual(this.reclaim().scratch, []);
+    this.assertScratch(true, 'live owner must preserve private-home resources');
+    assert.deepEqual(
+      adapter.environment({ HOME: '/caller-home', CODEX_HOME: '/caller-config' }),
+      environment,
+    );
+    assert.deepEqual(readFileSync(support), before);
+  }
+
+  /** Captures valid resource ownership before marking only the persisted lifecycle as terminal. */
+  private terminalRecord(): any {
+    save(this.root, this.record);
+    const stored = JSON.parse(readFileSync(join(this.directory, 'report.json'), 'utf8'));
+    stored.status = 'completed';
+    return stored;
   }
 
   /** Reclaims an abandoned clean worktree through the existing guarded cleanup path and retains its report. */
@@ -200,17 +295,41 @@ export class OperationScratchScenarios {
     assert.ok(existsSync(join(this.record.workspace, 'source.txt')));
   }
 
-  /** Runs the public startup capability with a runtime assertion so its missing export is an observed regression. */
-  private reclaim(): void {
-    const exports = workspace as unknown as {
-      WorkspaceReclamation?: new (root: string) => { reclaim(): unknown };
+  /** Exercises the public startup path and exposes its actual removals to scenario assertions. */
+  private reclaim(): { scratch: string[]; workspaces: string[] } {
+    return new workspace.WorkspaceReclamation(this.root).reclaim();
+  }
+
+  /** Seeds an explicitly referenced preparation snapshot and receipt outside disposable scratch. */
+  private preparationFiles(): string[] {
+    const key = 'in-force-preparation';
+    const result = {
+      command: process.execPath,
+      args: [],
+      cwd: this.record.workspace,
+      startedAt: this.record.startedAt,
+      durationMs: 0,
+      exitCode: 0,
+      log: join(this.directory, 'operation.log'),
     };
-    assert.equal(
-      typeof exports.WorkspaceReclamation,
-      'function',
-      'workspace must export public WorkspaceReclamation capability',
-    );
-    new exports.WorkspaceReclamation!(this.root).reclaim();
+    const entry = {
+      key,
+      operationId: 'setup',
+      recordId: this.id,
+      outputs: ['node_modules'],
+      result,
+    };
+    this.record.preparedDependencies = [entry];
+    const directory = join(this.root, 'prepared-dependencies', key);
+    const files = [
+      join(directory, 'receipt.json'),
+      join(directory, 'outputs', 'node_modules', 'dependency'),
+      join(this.record.workspace, 'node_modules', 'dependency'),
+    ];
+    for (const path of files) mkdirSync(resolve(path, '..'), { recursive: true });
+    writeFileSync(files[0]!, JSON.stringify(entry));
+    for (const path of files.slice(1)) writeFileSync(path, 'retained preparation snapshot');
+    return files;
   }
 
   /** Seeds representative retained journal, invocation and report locations outside disposable scratch. */
@@ -218,6 +337,7 @@ export class OperationScratchScenarios {
     const files = [
       join(this.directory, 'events.jsonl'),
       join(this.directory, 'operation.log'),
+      join(this.directory, 'invocation-operation.log'),
       join(this.directory, 'report.md'),
       join(this.root, 'private', 'steward', 'activation', 'events.jsonl'),
       join(this.root, 'projects', 'project', 'reports', 'run.md'),

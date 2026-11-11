@@ -5,6 +5,7 @@ import {
   cpSync,
   existsSync,
   lstatSync,
+  readdirSync,
   mkdirSync,
   readFileSync,
   renameSync,
@@ -68,9 +69,12 @@ export class PreparedDependencies {
       );
     const aside = this.release(op);
     if (existsSync(receipt)) {
-      const result = this.restore(directory, JSON.parse(readFileSync(receipt, 'utf8')));
-      this.discard();
-      return result;
+      const entry = JSON.parse(readFileSync(receipt, 'utf8')) as Preparation;
+      if (this.hasSnapshot(directory, entry)) {
+        const result = this.restore(directory, entry);
+        this.discard();
+        return result;
+      }
     }
     mkdirSync(directory, { recursive: true, mode: 0o700 });
     return this.attempt(directory, key, op, install, aside);
@@ -111,8 +115,10 @@ export class PreparedDependencies {
     const receipt = join(directory, 'receipt.json');
     const result = await install();
     if (result.exitCode !== 0) throw new Error('Dependency preparation did not succeed');
+    const outputs = join(directory, 'outputs');
+    rmSync(outputs, { recursive: true, force: true });
     for (const output of op.generatedDirectories)
-      this.copy(join(this.record.workspace, output), join(directory, 'outputs', output));
+      this.copy(join(this.record.workspace, output), join(outputs, output));
     const entry = {
       key,
       operationId: op.id,
@@ -123,6 +129,7 @@ export class PreparedDependencies {
     writeFileSync(receipt + '.tmp', JSON.stringify(entry), { mode: 0o600 });
     renameSync(receipt + '.tmp', receipt);
     this.retain(entry);
+    this.reclaimSuperseded(op.id, key);
     return result;
   }
 
@@ -256,6 +263,30 @@ export class PreparedDependencies {
       result: entry.result,
     });
     return entry.result;
+  }
+
+  /** Confirms every declared payload still exists before reusing a published receipt. */
+  private hasSnapshot(directory: string, entry: Preparation): boolean {
+    return entry.outputs.every((output) => existsSync(join(directory, 'outputs', output)));
+  }
+
+  /** Removes only settled payloads whose retained receipt identifies this operation. */
+  private reclaimSuperseded(operationId: string, currentKey: string): void {
+    const root = join(this.root, 'prepared-dependencies');
+    for (const key of readdirSync(root)) {
+      if (key === currentKey) continue;
+      const directory = join(root, key);
+      const receipt = join(directory, 'receipt.json');
+      if (!existsSync(receipt)) continue;
+      let entry: Preparation;
+      try {
+        entry = JSON.parse(readFileSync(receipt, 'utf8')) as Preparation;
+      } catch {
+        continue;
+      }
+      if (entry.operationId === operationId)
+        rmSync(join(directory, 'outputs'), { recursive: true, force: true });
+    }
   }
 
   /** Records installation identity without claiming a new command invocation or verification pass. */
