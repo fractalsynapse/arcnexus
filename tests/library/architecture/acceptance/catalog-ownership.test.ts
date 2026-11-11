@@ -30,6 +30,45 @@ class CatalogOwnershipTests {
     }
   }
 
+  /**
+   * Requires every `.arc` space the README documents to have exactly one component steward.
+   *
+   * `.arc/plans/` and `.arc/learning/` hold agent-authored files and may sit empty in a clean checkout, so the
+   * existing per-file ownership pass cannot see them: the gap only appears when a cycle first writes there and is
+   * refused. This reads the documented spaces straight from the table and asserts authored `owns` coverage, so
+   * adding or renaming a space without a steward fails the suite instead of failing a live run.
+   */
+  documentedArcSpacesHaveExactlyOneSteward(): void {
+    const spaces = readFileSync('.arc/README.md', 'utf8')
+      .split('\n')
+      .map((line) => line.match(/^\|\s*`(\.arc[^`]+)`/))
+      .filter((match): match is RegExpMatchArray => !!match)
+      .map((match) => match[1]!.replace(/\/+$/, ''));
+    assert.ok(
+      spaces.length >= 3,
+      'expected the documented .arc spaces, found: ' + spaces.join(', '),
+    );
+    for (const space of spaces) {
+      const stewards = this.components()
+        .filter((c: any) =>
+          (c.owns ?? []).some((path: string) => space === path || space.startsWith(path + '/')),
+        )
+        .map((c: any) => c.id);
+      assert.equal(
+        stewards.length,
+        1,
+        `${space} must have exactly one steward, found ${stewards.join(', ') || 'none'}`,
+      );
+    }
+  }
+
+  /** Reads the authored component declarations, including their ownership lists. */
+  private components(): any[] {
+    return readdirSync('architecture/components', { withFileTypes: true })
+      .filter((entry) => entry.isFile() && /\.(?:json|yaml|yml)$/.test(entry.name))
+      .map((entry) => parse(readFileSync('architecture/components/' + entry.name, 'utf8')));
+  }
+
   /** Resolves all effective owners through one complete production validation instead of rebuilding per owner. */
   private catalog(): any {
     const r = spawnSync(
@@ -46,5 +85,8 @@ const suite = new CatalogOwnershipTests();
 
 test('built validation assigns every real source module to one executable owner', () =>
   suite.builtValidationAssignsEveryRealSourceModuleToOneExecutableOwner());
+
+test('every documented .arc space has exactly one component steward', () =>
+  suite.documentedArcSpacesHaveExactlyOneSteward());
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });
