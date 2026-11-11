@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ResolvedAssignment } from '../architecture/assignment.js';
 import { activityRank, declareActivities, missingActivities } from '../architecture/activities.js';
+import { modeSequence } from '../architecture/modes.js';
 import { validateSchema } from '../architecture/schema.js';
 import { observe } from '../report/timeline.js';
 import { save, type RecordData } from '../workspace/state.js';
@@ -139,7 +140,7 @@ function validateProposedPlan(value: unknown, resolved: ResolvedAssignment): Pla
 function validatePlanActivities(plan: Plan, resolved: ResolvedAssignment): void {
   const declared = plan.activities.map((a) => a.activity);
   const ordered = declareActivities(declared, 'plan activities');
-  const supported = resolved.role.activities;
+  const supported = modeSequence(resolved.mode, Object.keys(resolved.activities));
   for (const missing of missingActivities(supported, declared))
     throw new Error(`Plan omits supported activity: ${missing}`);
   if (declared.some((activity, index) => activity !== ordered[index]))
@@ -229,7 +230,7 @@ function validatePlanDependencies(plan: Plan, ids: Set<string>): void {
 }
 
 function validatePlanItems(plan: Plan, resolved: ResolvedAssignment, ids: Set<string>): void {
-  const allowed = resolved.role.activities;
+  const allowed = Object.keys(resolved.activities);
   for (const i of plan.items) {
     if (!plan.activities.some((a) => a.activity === i.activity))
       throw new Error(

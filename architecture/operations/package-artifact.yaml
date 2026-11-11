@@ -5,7 +5,6 @@ kind: command
 repository: arcnexus
 cwd: .
 category: cli-check
-activities: []
 command: tar
 args:
   - -czf

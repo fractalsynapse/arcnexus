@@ -1,7 +1,6 @@
 repository: arcnexus
 cwd: .
 category: cli-check
-activities: []
 generatedDirectories:
   - .fixture-build
   - .test-build

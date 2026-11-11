@@ -1,3 +1,4 @@
+import { modeFor, type Mode } from './modes.js';
 import { OwnershipValidator } from './ownership.js';
 import { ComponentOperationPlans } from './component-operation-plans.js';
 import { validateOwnerWorkflow } from './assignment-scope.js';
@@ -6,6 +7,7 @@ import { isUtf8 } from 'node:buffer';
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join } from 'node:path';
+import type { ActivityOperation } from './components.js';
 import type { Operation } from '../operations/operations.js';
 import { git } from '../operations/process.js';
 import { resolveMembers, type Member } from '../workspace/members.js';
@@ -79,14 +81,30 @@ export interface ResolvedAssignment {
   assignment: Assignment;
   context: Component[];
   related: Component[];
-  role: Role;
+  mode: Mode;
+  activities: Record<string, ResolvedActivity>;
   compositionProfile?: CompositionProfile;
   executionProfile: ExecutionProfile;
-  activityProfiles?: Record<string, ExecutionProfile>;
   verification: VerificationCheck[];
   artifacts: Array<{ path: string; sha256: string; content: string }>;
   pendingChecks: string[];
   digest: string;
+}
+
+export interface ResolvedActivity {
+  role: Role;
+  operations: Array<{ id: string; usage?: string; with?: Record<string, unknown> }>;
+  instructions?: string[];
+  profile?: ExecutionProfile;
+}
+
+/** Normalizes an activity operation written either as a bare id or as an entry with overrides. */
+export function resolveActivityOperation(entry: ActivityOperation): {
+  id: string;
+  usage?: string;
+  with?: Record<string, unknown>;
+} {
+  return typeof entry === 'string' ? { id: entry } : { ...entry };
 }
 
 export const digest = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
@@ -232,10 +250,10 @@ class AssignmentResolver {
       assignment,
       context,
       related: component.relatedIds.map((id) => catalog.components[id]!),
-      role: catalog.roles[component.role]!,
+      mode: modeFor(assignment),
+      activities: this.activityRoles(execution.executionProfile),
       ...(execution.compositionProfile ? { compositionProfile: execution.compositionProfile } : {}),
       executionProfile: execution.executionProfile,
-      activityProfiles: this.activityProfiles(),
       verification: [...component.verification, ...(this.options.additionalVerification ?? [])],
       artifacts: captureCheckArtifacts(assignment),
       pendingChecks: [...pendingChecks],
@@ -243,13 +261,30 @@ class AssignmentResolver {
     return { ...data, digest: digest(JSON.stringify(data)) };
   }
 
-  /** Captures activity settings once; explicit director/verifier profiles do not inherit worker overrides. */
-  private activityProfiles(): Record<string, ExecutionProfile> | undefined {
-    if (this.options.executionProfile) return undefined;
-    const entries = Object.entries(this.component.activityProfiles ?? {});
-    if (!entries.length) return undefined;
+  /**
+   * Captures the resolved position, direction and settings for every activity this component holds.
+   *
+   * The role is resolved from the catalog at capture time so a later edit to a role definition cannot
+   * change what an already-authorized activation was told; the profile is the activity's own when the
+   * component declared one and the component default otherwise. An explicit caller profile (the
+   * director or independent verifier) replaces every activity profile, because that activation is
+   * running under a named model choice rather than the component's routing.
+   */
+  private activityRoles(defaultProfile: ExecutionProfile): Record<string, ResolvedActivity> {
+    const explicit = this.options.executionProfile;
     return Object.fromEntries(
-      entries.map(([activity, id]) => [activity, structuredClone(this.catalog.profiles[id]!)]),
+      Object.entries(this.component.activities ?? {}).map(([name, config]) => {
+        const profileId = explicit ?? config.profile;
+        return [
+          name,
+          {
+            role: structuredClone(this.catalog.roles[config.role]!),
+            operations: (config.operations ?? []).map(resolveActivityOperation),
+            ...(config.instructions ? { instructions: [...config.instructions] } : {}),
+            ...(profileId ? { profile: structuredClone(this.catalog.profiles[profileId]!) } : {}),
+          },
+        ];
+      }),
     );
   }
 

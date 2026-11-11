@@ -5,10 +5,6 @@ kind: command
 repository: arcnexus
 cwd: .
 category: build
-activities:
-  - implementation
-  - review
-  - testing
 command: npm
 args:
   - run

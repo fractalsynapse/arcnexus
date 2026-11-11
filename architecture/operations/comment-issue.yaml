@@ -6,6 +6,5 @@ action: issue.comment
 repository: arcnexus
 cwd: .
 category: collaboration
-activities: []
 generatedDirectories: []
 artifacts: []

@@ -5,10 +5,6 @@ kind: command
 repository: arcnexus
 cwd: .
 category: lint
-activities:
-  - documentation
-  - implementation
-  - testing
 command: node
 args:
   - scripts/foundation/format-proposal.mjs

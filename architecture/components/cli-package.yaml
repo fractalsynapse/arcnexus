@@ -12,3 +12,5 @@ repository: arcnexus
 classification:
   - path: docs/acceptance
     kind: documentation
+activities:
+  {}

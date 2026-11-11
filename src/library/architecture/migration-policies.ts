@@ -16,7 +16,7 @@ interface Declaration {
   [key: string]: unknown;
 }
 
-type Scalar = 'role' | 'executionProfile' | 'testProfile';
+type Scalar = 'executionProfile' | 'testProfile';
 
 /** Reduces authored policy without changing effective execution authority or local architectural facts. */
 export class MigrationPolicies {
@@ -38,7 +38,7 @@ export class MigrationPolicies {
     for (const parent of ordered) {
       const children = ordered.filter((child) => child.parentId === parent.id);
       if (!children.length) continue;
-      for (const key of ['role', 'executionProfile', 'testProfile'] as const)
+      for (const key of ['executionProfile', 'testProfile'] as const)
         this.scalar(parent, children, key);
       this.reads(parent, children);
       this.operations(parent, children);
@@ -126,7 +126,7 @@ export class MigrationPolicies {
   /** Removes explicit duplicates already supplied by ancestors without moving objectives or ownership. */
   private prune(child: Declaration): void {
     const ancestors = this.lineage(child).slice(0, -1);
-    for (const key of ['role', 'executionProfile', 'testProfile'] as const) {
+    for (const key of ['executionProfile', 'testProfile'] as const) {
       const inherited = ancestors.findLast((ancestor) => ancestor[key] !== undefined)?.[key];
       if (child[key] !== undefined && child[key] === inherited) delete child[key];
     }

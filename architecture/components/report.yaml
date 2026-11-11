@@ -11,6 +11,22 @@ constraints:
   - Preserve JSON evidence and existing report fields except explicitly recorded terminal evidence expiration
   - Use the captured execution record without inspecting mutable target files
   - Preserve observed evidence and identify runtime changes across recovery
+activities:
+  research:
+    role: researcher
+    operations: [report-format]
+  documentation:
+    role: technical-writer
+    operations: [report-format]
+  testing:
+    role: designer
+    operations: [report-format]
+  implementation:
+    role: systems-engineer
+    operations: [report-format]
+  review:
+    role: reviewer
+    operations: [report-format]
 operations:
   report-format:
     - agent

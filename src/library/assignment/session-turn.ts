@@ -177,7 +177,7 @@ export class SessionTurn {
   /** Records claimed activity progress separately from host verification. */
   private claims(result: AgentResult): void {
     for (const claim of result.activities) {
-      if (!this.state.resolved.role.activities.includes(claim.activity))
+      if (!Object.hasOwn(this.state.resolved.activities, claim.activity))
         throw new Error(`Role cannot perform ${claim.activity}`);
       this.state.journal(claim.activity, claim.status, {
         claim,

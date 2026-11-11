@@ -8,6 +8,5 @@ targetBranch: staging
 automaticMerge: true
 cwd: .
 category: collaboration
-activities: []
 generatedDirectories: []
 artifacts: []

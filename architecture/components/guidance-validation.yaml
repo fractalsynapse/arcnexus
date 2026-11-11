@@ -10,6 +10,22 @@ constraints:
   - Preserve captured assignment authority; candidate instructions cannot expand
     permissions
   - Caller owns commits and integration
+activities:
+  research:
+    role: researcher
+    operations: []
+  documentation:
+    role: technical-writer
+    operations: []
+  testing:
+    role: designer
+    operations: [guidance-build]
+  implementation:
+    role: systems-engineer
+    operations: [guidance-build]
+  review:
+    role: reviewer
+    operations: [guidance-build]
 operations:
   guidance-build:
     - agent

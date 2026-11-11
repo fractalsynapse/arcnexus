@@ -62,3 +62,10 @@ export function missingActivities(
 ): string[] {
   return declared.filter((activity) => !planned.includes(activity));
 }
+
+/** Ids of the operations an activity may perform, whichever notation the component used. */
+export function activityOperationIds(activity: {
+  operations?: Array<string | { id: string }>;
+}): string[] {
+  return (activity.operations ?? []).map((entry) => (typeof entry === 'string' ? entry : entry.id));
+}

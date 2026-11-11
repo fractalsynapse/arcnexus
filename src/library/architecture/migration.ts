@@ -140,9 +140,11 @@ export class ConfigurationMigration {
           JSON.stringify([...next.allowedWritePaths].sort())
       )
         throw new InputError('Migration changes exact ownership; resolve explicitly: ' + old.id);
-      for (const key of ['role', 'executionProfile', 'testProfile'] as const)
+      for (const key of ['executionProfile', 'testProfile'] as const)
         if (old[key] !== next[key])
           throw new InputError('Migration changes effective ' + key + ': ' + old.id);
+      if (JSON.stringify(old.activities ?? null) !== JSON.stringify(next.activities ?? null))
+        throw new InputError('Migration changes effective activities: ' + old.id);
       if (
         old.access.readPaths.some((path) => !covered(standardPath(path), next.access.readPaths)) ||
         next.access.readPaths.some(

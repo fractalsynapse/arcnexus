@@ -1,7 +1,6 @@
 import { posix } from 'node:path';
-import type { Catalog, Component } from './components.js';
+import type { Catalog, Component, ComponentActivity } from './components.js';
 import { ancestry, covered, scopePath } from './component-paths.js';
-import { requireActivity } from './activities.js';
 import { InputError } from './config.js';
 
 export interface ComponentV5Fields {
@@ -70,7 +69,7 @@ export class ComponentV5Policy {
 
   /** Captures the nearest explicit scalar declaration without inventing execution defaults. */
   private scalars(component: Component, lineage: Component[]): void {
-    for (const key of ['role', 'executionProfile', 'testProfile'] as const) {
+    for (const key of ['executionProfile', 'testProfile'] as const) {
       const source = [...lineage].reverse().find((entry) => entry[key] !== undefined);
       if (!source) continue;
       component[key] = source[key]!;
@@ -78,28 +77,34 @@ export class ComponentV5Policy {
     }
   }
 
-  /** Inherits each activity independently while recording the declaration that selected it. */
+  /**
+   * Resolves each declared activity, inheriting its role and profile from the nearest ancestor.
+   *
+   * A component states which activities it performs and the operations those activities may run;
+   * the role holding an activity and the execution profile it runs under come from the nearest
+   * ancestor that named them, so a platform can route `research` to a cheaper model once and every
+   * component beneath it inherits that choice without re-declaring it. Operations are never
+   * inherited: an activity may only run operations the component itself declares, because an
+   * operation is executable authority tied to the paths this component owns.
+   */
   private activities(component: Component, lineage: Component[]): void {
-    const profiles: Record<string, string> = {};
-    for (const declaration of lineage)
-      for (const [declared, profile] of Object.entries(declaration.activityProfiles ?? {})) {
-        const activity = requireActivity(declared, `component ${declaration.id}`);
-        const supported = this.authored.roles[component.role]?.activities ?? [];
-        if (!supported.includes(activity))
-          throw new InputError(
-            `Activity profile outside role ${component.role}: ${declaration.id}: ${activity}`,
-          );
-        if (!Object.hasOwn(this.authored.profiles, profile))
-          throw new InputError(
-            `Unknown activity execution profile for ${declaration.id}: ${profile}`,
-          );
-        profiles[activity] = profile;
-        component.policy![`activityProfiles.${activity}`] = {
-          value: profile,
-          source: declaration.id,
-        };
-      }
-    if (Object.keys(profiles).length) component.activityProfiles = profiles;
+    const resolved: Record<string, ComponentActivity> = {};
+    for (const [activity, declared] of Object.entries(component.activities ?? {})) {
+      const author = [...lineage]
+        .reverse()
+        .find((entry) => entry.activities?.[activity] !== undefined);
+      const inherited = author?.activities?.[activity];
+      resolved[activity] = {
+        ...inherited,
+        ...declared,
+        operations: declared?.operations ?? [],
+      };
+      component.policy![`activities.${activity}`] = {
+        value: resolved[activity],
+        source: author?.id ?? component.id,
+      };
+    }
+    if (Object.keys(resolved).length) component.activities = resolved;
   }
 
   /** Records every contributing declaration while deduplicating required inherited policy values. */

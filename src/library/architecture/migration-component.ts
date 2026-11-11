@@ -58,7 +58,6 @@ export class MigrationComponent {
       'objectives',
       'constraints',
       'questions',
-      'role',
       'executionProfile',
       'testProfile',
     ] as const)

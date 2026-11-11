@@ -8,6 +8,22 @@ objectives:
   - Schedule durable assignments and project execution lifecycles
 constraints:
   - Preserve captured authority and evidence
+activities:
+  research:
+    role: researcher
+    operations: []
+  documentation:
+    role: technical-writer
+    operations: []
+  testing:
+    role: designer
+    operations: []
+  implementation:
+    role: systems-engineer
+    operations: []
+  review:
+    role: reviewer
+    operations: []
 owns:
   - src/library/execution-runtime
   - tests/library/execution-runtime

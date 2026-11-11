@@ -10,12 +10,29 @@ constraints:
   - Native agent commits and upstream mutations are forbidden; only captured
     host operations may deliver changes. The director selects from all eligible
     project stewards, and dependency requests may activate further owners.
-role: systems-engineer
 executionProfile: luna
-activityProfiles:
-  research: sol
-  documentation: sol
-  review: sol
+activities:
+  research:
+    role: researcher
+    profile: sol
+    operations: [component-format-check, component-lint, component-tests]
+  documentation:
+    role: technical-writer
+    profile: sol
+    operations: [component-format, component-format-check, component-lint]
+  testing:
+    role: designer
+    operations: [component-format, component-format-check, component-lint, component-tests]
+  implementation:
+    role: systems-engineer
+    operations: [component-format, component-format-check, component-lint, component-tests]
+  review:
+    role: reviewer
+    profile: sol
+    operations: [component-format-check, component-lint, component-tests]
+  release:
+    role: release-engineer
+    operations: [migrated-recipe-43b539fb85a57c26, migrated-recipe-719d77e27c5d9798, migrated-recipe-df6d67ddacf5bf0c, migrated-recipe-f1691da2bfa5a18c, migrated-recipe-f36c9dcd75620b35]
 reads:
   - .
 operations:

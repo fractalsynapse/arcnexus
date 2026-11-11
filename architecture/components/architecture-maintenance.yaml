@@ -9,6 +9,19 @@ objectives:
 constraints:
   - Caller accepts architectural authority changes
   - Candidate definition edits never change authority for an active execution
+activities:
+  research:
+    role: researcher
+    operations: []
+  documentation:
+    role: technical-writer
+    operations: []
+  implementation:
+    role: systems-engineer
+    operations: []
+  review:
+    role: reviewer
+    operations: []
 owns:
   - README.md
   - CHANGELOG.md

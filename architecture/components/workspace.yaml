@@ -13,6 +13,22 @@ constraints:
     historical versions and captured execution readers'
   - 'environment (src/library/workspace/schemas/environment.json): Preserve
     supported historical versions and captured execution readers'
+activities:
+  research:
+    role: researcher
+    operations: []
+  documentation:
+    role: technical-writer
+    operations: []
+  testing:
+    role: designer
+    operations: []
+  implementation:
+    role: systems-engineer
+    operations: []
+  review:
+    role: reviewer
+    operations: []
 owns:
   - src/library/workspace
   - tests/library/workspace

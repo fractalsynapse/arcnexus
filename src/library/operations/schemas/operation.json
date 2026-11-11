@@ -4,7 +4,10 @@
   "additionalProperties": false,
   "properties": {
     "schemaVersion": {
-      "enum": [2, 3]
+      "enum": [
+        2,
+        3
+      ]
     },
     "id": {
       "type": "string",
@@ -15,7 +18,11 @@
       "minLength": 1
     },
     "kind": {
-      "enum": ["command", "service", "http"]
+      "enum": [
+        "command",
+        "service",
+        "http"
+      ]
     },
     "repository": {
       "type": "string",
@@ -26,15 +33,14 @@
       "minLength": 1
     },
     "category": {
-      "enum": ["build", "unit-test", "integration-test", "cli-check", "http-check", "lint"]
-    },
-    "activities": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
+      "enum": [
+        "build",
+        "unit-test",
+        "integration-test",
+        "cli-check",
+        "http-check",
+        "lint"
+      ]
     },
     "command": {
       "type": "string",
@@ -84,7 +90,10 @@
             }
           }
         },
-        "required": ["command", "args"]
+        "required": [
+          "command",
+          "args"
+        ]
       }
     },
     "service": {
@@ -111,7 +120,11 @@
           "maximum": 2147483
         }
       },
-      "required": ["port", "readinessPath", "expectedStatus"]
+      "required": [
+        "port",
+        "readinessPath",
+        "expectedStatus"
+      ]
     },
     "http": {
       "type": "object",
@@ -131,7 +144,11 @@
           "maximum": 599
         }
       },
-      "required": ["serviceId", "path", "expectedStatus"]
+      "required": [
+        "serviceId",
+        "path",
+        "expectedStatus"
+      ]
     }
   },
   "required": [
@@ -142,7 +159,6 @@
     "repository",
     "cwd",
     "category",
-    "activities",
     "generatedDirectories",
     "artifacts",
     "probes"
@@ -176,13 +192,19 @@
                 "maximum": 599
               }
             },
-            "required": ["serviceId", "path", "expectedStatus"]
+            "required": [
+              "serviceId",
+              "path",
+              "expectedStatus"
+            ]
           },
           "command": false,
           "args": false,
           "service": false
         },
-        "required": ["http"]
+        "required": [
+          "http"
+        ]
       },
       "else": {
         "properties": {
@@ -197,7 +219,10 @@
             }
           }
         },
-        "required": ["command", "args"]
+        "required": [
+          "command",
+          "args"
+        ]
       }
     },
     {
@@ -234,11 +259,17 @@
                 "maximum": 2147483
               }
             },
-            "required": ["port", "readinessPath", "expectedStatus"]
+            "required": [
+              "port",
+              "readinessPath",
+              "expectedStatus"
+            ]
           },
           "http": false
         },
-        "required": ["service"]
+        "required": [
+          "service"
+        ]
       },
       "else": {
         "properties": {

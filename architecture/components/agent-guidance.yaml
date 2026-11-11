@@ -8,7 +8,22 @@ constraints:
   - Preserve captured assignment authority; candidate instructions cannot expand
     permissions
   - Caller owns commits and integration
-role: agent-guidance
+activities:
+  research:
+    role: researcher
+    operations: [guidance-validation]
+  documentation:
+    role: technical-writer
+    operations: []
+  testing:
+    role: designer
+    operations: [guidance-validation]
+  implementation:
+    role: systems-engineer
+    operations: [guidance-validation]
+  review:
+    role: reviewer
+    operations: [guidance-validation]
 operations:
   guidance-validation:
     - agent

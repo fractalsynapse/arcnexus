@@ -78,7 +78,7 @@ export class TestOperationPlanning {
         throw new InputError(`Test operation repository mismatch: ${definition.id}`);
       if (
         !definition.activities.every((activity) =>
-          this.catalog.roles[owner.role]!.activities.includes(activity),
+          Object.hasOwn(owner.activities ?? {}, activity),
         )
       )
         throw new InputError(`Test operation activity outside role: ${definition.id}`);

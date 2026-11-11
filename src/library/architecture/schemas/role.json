@@ -4,16 +4,28 @@
   "type": "object",
   "properties": {
     "schemaVersion": {
-      "enum": [1, 3]
+      "enum": [
+        4
+      ]
     },
     "id": {
       "type": "string",
       "minLength": 1,
-      "pattern": "^[a-zA-Z0-9_-]+$"
+      "pattern": "^[a-z0-9-]+$"
     },
     "purpose": {
       "type": "string",
       "minLength": 1
+    },
+    "activity": {
+      "enum": [
+        "research",
+        "documentation",
+        "testing",
+        "implementation",
+        "review",
+        "release"
+      ]
     },
     "responsibilities": {
       "type": "array",
@@ -21,14 +33,37 @@
         "type": "string",
         "minLength": 1
       },
+      "uniqueItems": true,
+      "minItems": 1
+    },
+    "instructions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "minItems": 1
+    },
+    "standards": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "uniqueItems": true
     },
-    "activities": {
-      "type": "array",
-      "items": { "type": "string", "minLength": 1 },
-      "uniqueItems": true
+    "executionProfile": {
+      "type": "string",
+      "minLength": 1
     }
   },
-  "required": ["schemaVersion", "id", "purpose", "responsibilities", "activities"],
+  "required": [
+    "schemaVersion",
+    "id",
+    "purpose",
+    "activity",
+    "responsibilities"
+  ],
   "additionalProperties": false
 }

@@ -8,6 +8,25 @@ objectives:
 constraints:
   - Publication cannot substitute for independent engineering verification
   - Real main merges, tags and package publication remain human-controlled
+activities:
+  research:
+    role: researcher
+    operations: []
+  documentation:
+    role: technical-writer
+    operations: []
+  testing:
+    role: designer
+    operations: []
+  implementation:
+    role: systems-engineer
+    operations: []
+  review:
+    role: reviewer
+    operations: []
+  release:
+    role: release-engineer
+    operations: [package-artifact]
 operations:
   publish-delivery: [agent]
   package-artifact: [delivery]

@@ -15,6 +15,22 @@ constraints:
   - 'command-diagnostics (src/library/operations/diagnostics.ts): Keep
     model-facing excerpts within 16 KiB and preserve complete raw logs
     separately'
+activities:
+  research:
+    role: researcher
+    operations: []
+  documentation:
+    role: technical-writer
+    operations: []
+  testing:
+    role: designer
+    operations: []
+  implementation:
+    role: systems-engineer
+    operations: []
+  review:
+    role: reviewer
+    operations: []
 owns:
   - src/library/operations
   - tests/library/operations

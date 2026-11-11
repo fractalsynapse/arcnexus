@@ -1,7 +1,7 @@
 import { PublicApiCatalog } from './public-api.js';
 import { normalizeOperation } from '../operations/operation-definition.js';
 import { ComponentOperationPlans } from './component-operation-plans.js';
-import { declareActivities } from './activities.js';
+import { requireActivity, type Activity } from './activities.js';
 import { ancestry, covered, scopePath } from './component-paths.js';
 import { ComponentV5Resolver } from './component-v5.js';
 import type { ComponentV5Fields } from './component-v5-policy.js';
@@ -53,7 +53,7 @@ export interface Component extends ComponentV4Fields, ComponentV5Fields {
   documentation: string[];
   tests: string[];
   relatedIds: string[];
-  role: string;
+  activities: Record<string, ComponentActivity>;
   executionProfile: string;
   members?: {
     foundations: string[];
@@ -65,12 +65,25 @@ export interface Component extends ComponentV4Fields, ComponentV5Fields {
 }
 
 export interface Role {
-  schemaVersion: 1 | 3;
+  schemaVersion: 4;
   id: string;
   purpose: string;
+  activity: Activity;
   responsibilities: string[];
-  activities: string[];
+  instructions?: string[];
+  standards?: string[];
+  executionProfile?: string;
 }
+
+/** One activity as configured by a component: the role holding it, its local direction and its operations. */
+export interface ComponentActivity {
+  role: string;
+  instructions?: string[];
+  profile?: string;
+  operations?: ActivityOperation[];
+}
+
+export type ActivityOperation = string | { id: string; usage?: string; with?: Record<string, unknown> };
 
 export interface ExecutionProfile {
   schemaVersion: 1 | 2 | 3;
@@ -259,23 +272,27 @@ class CatalogLoader {
       for (const path of paths.filter(
         (p) => p.startsWith(`architecture/${directory}/`) && isConfiguration(p),
       )) {
-        const value = read<Component & Role & ExecutionProfile>(
+        const value = read<Record<string, unknown>>(
           repository,
           base,
           path,
           schema,
           catalog.configurationSources,
         );
+        const id = String(value.id);
         if (
           Number(value.schemaVersion) < 5 &&
-          path.replace(/\.(json|ya?ml)$/, '') !== `architecture/${directory}/${value.id}`
+          path.replace(/\.(json|ya?ml)$/, '') !== `architecture/${directory}/${id}`
         )
           throw new InputError(`Identity must match filename: ${path}`);
-        if (Object.hasOwn(target, value.id))
-          throw new InputError(`Duplicate definition: ${value.id}`);
-        if (schema === 'role')
-          value.activities = declareActivities(value.activities, `role ${value.id}`);
-        Object.defineProperty(target, value.id, { value, enumerable: true, configurable: true });
+        if (Object.hasOwn(target, id)) throw new InputError(`Duplicate definition: ${id}`);
+        if (schema === 'role') value.activity = requireActivity(String(value.activity), `role ${id}`);
+        value.id = id;
+        Object.defineProperty(target, id, {
+          value: value as unknown as Component & Role & ExecutionProfile,
+          enumerable: true,
+          configurable: true,
+        });
       }
   }
 
@@ -369,22 +386,36 @@ class CatalogComponentValidator {
       const op = catalog.operations[id];
       if (!Object.hasOwn(catalog.operations, id) || op?.repository !== c.repository)
         throw new InputError('Missing operation or conflicting repository owner: ' + id);
-      if (!op.activities.every((a) => catalog.roles[c.role]?.activities.includes(a)))
-        throw new InputError('Operation activity outside role');
+      if (!c.activities || !Object.keys(c.activities).length)
+        throw new InputError(`Component declares no activities: ${c.id}`);
     }
-    if (
-      !Object.hasOwn(catalog.roles, c.role) ||
-      !Object.hasOwn(catalog.profiles, c.executionProfile)
-    )
-      throw new InputError(`Missing role/execution profile for ${c.id}`);
-    for (const id of [c.executionProfile, ...Object.values(c.activityProfiles ?? {})]) {
-      if (!Object.hasOwn(catalog.profiles, id))
+    if (!Object.hasOwn(catalog.profiles, c.executionProfile))
+      throw new InputError(`Missing execution profile for ${c.id}`);
+    this.declaredActivities(c, catalog);
+    for (const id of [c.executionProfile, ...Object.values(c.activities).map((a) => a.profile ?? '')]) {
+      if (id && !Object.hasOwn(catalog.profiles, id))
         throw new InputError(`Unknown activity execution profile for ${c.id}: ${id}`);
       validateOperations(
         ids.map((id) => catalog.operations[id]!),
         catalog.profiles[id]!,
         env,
       );
+    }
+  }
+
+  /** Requires each declared activity to name a real role whose home activity matches it. */
+  private declaredActivities(c: Component, catalog: Catalog): void {
+    for (const [declared, config] of Object.entries(c.activities ?? {})) {
+      const activity = requireActivity(declared, `component ${c.id}`);
+      const role = catalog.roles[config.role];
+      if (!role) throw new InputError(`Unknown role for ${c.id}.${activity}: ${config.role}`);
+      if (role.activity !== activity)
+        throw new InputError(`Role ${config.role} holds ${role.activity}, not ${activity}`);
+      for (const entry of config.operations ?? []) {
+        const id = typeof entry === 'string' ? entry : entry.id;
+        if (!Object.hasOwn(c.operations ?? {}, id))
+          throw new InputError(`Activity operation not declared by component: ${c.id}.${activity}: ${id}`);
+      }
     }
   }
 

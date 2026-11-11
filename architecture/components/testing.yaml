@@ -11,6 +11,22 @@ constraints:
   - Keep generated output separate from maintained source
   - "test-profile (src/library/testing/schemas/test-profile.json): Node profile
     version 1 uses fixed commands and literal suite metadata"
+activities:
+  research:
+    role: researcher
+    operations: []
+  documentation:
+    role: technical-writer
+    operations: []
+  testing:
+    role: designer
+    operations: []
+  implementation:
+    role: systems-engineer
+    operations: []
+  review:
+    role: reviewer
+    operations: []
 owns:
   - src/library/testing
   - tests/library/testing

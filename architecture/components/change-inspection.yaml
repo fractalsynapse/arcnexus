@@ -12,6 +12,22 @@ constraints:
   - Do not edit architecture or unrelated files
   - "candidate-changes (src/library/change-inspection/changes.ts): Preserve
     path/change-kind evidence and exact scope and symlink rejection semantics"
+activities:
+  research:
+    role: researcher
+    operations: []
+  documentation:
+    role: technical-writer
+    operations: []
+  testing:
+    role: designer
+    operations: []
+  implementation:
+    role: systems-engineer
+    operations: []
+  review:
+    role: reviewer
+    operations: []
 owns:
   - src/library/change-inspection
   - tests/library/change-inspection

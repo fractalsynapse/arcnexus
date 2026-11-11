@@ -10,6 +10,22 @@ objectives:
 constraints:
   - Do not weaken independent acceptance to make candidate work pass
   - Keep generated output separate from maintained source
+activities:
+  research:
+    role: researcher
+    operations: []
+  documentation:
+    role: technical-writer
+    operations: []
+  testing:
+    role: designer
+    operations: []
+  implementation:
+    role: systems-engineer
+    operations: []
+  review:
+    role: reviewer
+    operations: []
 owns:
   - tests/foundation
   - docs/foundation

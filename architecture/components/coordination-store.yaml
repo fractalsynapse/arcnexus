@@ -10,6 +10,22 @@ objectives:
     ordered evidence and durable external-effect intents
 constraints:
   - Preserve captured authority and evidence
+activities:
+  research:
+    role: researcher
+    operations: []
+  documentation:
+    role: technical-writer
+    operations: []
+  testing:
+    role: designer
+    operations: []
+  implementation:
+    role: systems-engineer
+    operations: []
+  review:
+    role: reviewer
+    operations: []
 owns:
   - src/library/coordination-store
   - tests/library/coordination-store

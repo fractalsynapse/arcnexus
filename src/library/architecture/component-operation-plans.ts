@@ -1,3 +1,4 @@
+import { activityOperationIds } from './activities.js';
 import {
   OperationArguments,
   OperationOrder,
@@ -104,11 +105,9 @@ export class ComponentOperationPlans {
       throw new InputError(`Operation repository mismatch: ${op.id}`);
     if (usage !== 'agent' && ['service', 'upstream'].includes(op.kind))
       throw new InputError(`Required lifecycle operations must be finite: ${op.id}`);
-    if (
-      !op.activities.every((activity) => this.catalog.roles[c.role]!.activities.includes(activity))
-    )
-      throw new InputError(`Operation activity outside role: ${op.id}`);
-    for (const id of [c.executionProfile, ...Object.values(c.activityProfiles ?? {})])
+    if (!Object.values(c.activities ?? {}).some((a) => activityOperationIds(a).includes(op.id)))
+      throw new InputError(`Operation belongs to no declared activity: ${op.id}`);
+    for (const id of [c.executionProfile, ...Object.values(c.activities ?? {}).map((a) => a.profile ?? '')])
       if (!this.catalog.profiles[id]!.operationCategories?.includes(op.category))
         throw new InputError(`Operation category not permitted by ${id}: ${op.id}`);
   }

@@ -22,6 +22,22 @@ constraints:
     supported historical versions and captured execution readers"
   - "experiment-v3 (src/library/experiments/schemas/experiment-v3.json):
     Prompt-driven cases preserve shared task authority and evidence"
+activities:
+  research:
+    role: researcher
+    operations: []
+  documentation:
+    role: technical-writer
+    operations: []
+  testing:
+    role: designer
+    operations: []
+  implementation:
+    role: systems-engineer
+    operations: []
+  review:
+    role: reviewer
+    operations: []
 owns:
   - src/library/experiments
   - tests/library/experiments

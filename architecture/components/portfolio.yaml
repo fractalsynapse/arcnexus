@@ -4,6 +4,22 @@ type: library
 parentId: cli-package
 purpose: Resolve registered platforms and packages and commit validated
   architectural updates in a persistent managed project volume
+activities:
+  research:
+    role: researcher
+    operations: []
+  documentation:
+    role: technical-writer
+    operations: []
+  testing:
+    role: designer
+    operations: []
+  implementation:
+    role: systems-engineer
+    operations: []
+  review:
+    role: reviewer
+    operations: []
 owns:
   - src/library/portfolio
   - tests/library/portfolio

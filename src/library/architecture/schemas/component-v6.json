@@ -4,7 +4,12 @@
     {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schemaVersion", "id", "type", "purpose"],
+      "required": [
+        "schemaVersion",
+        "id",
+        "type",
+        "purpose"
+      ],
       "properties": {
         "schemaVersion": {
           "const": 6
@@ -14,7 +19,9 @@
           "minLength": 1
         },
         "type": {
-          "enum": ["platform"]
+          "enum": [
+            "platform"
+          ]
         },
         "purpose": {
           "type": "string",
@@ -60,10 +67,6 @@
           },
           "uniqueItems": true
         },
-        "role": {
-          "type": "string",
-          "minLength": 1
-        },
         "executionProfile": {
           "type": "string",
           "minLength": 1
@@ -79,7 +82,14 @@
             "minItems": 1,
             "uniqueItems": true,
             "items": {
-              "enum": ["preflight", "setup", "refresh", "verify", "delivery", "agent"]
+              "enum": [
+                "preflight",
+                "setup",
+                "refresh",
+                "verify",
+                "delivery",
+                "agent"
+              ]
             }
           }
         },
@@ -102,7 +112,10 @@
         "director": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["component", "profile"],
+          "required": [
+            "component",
+            "profile"
+          ],
           "properties": {
             "component": {
               "type": "string",
@@ -114,12 +127,100 @@
             }
           }
         },
-        "activityProfiles": {
+        "activities": {
           "type": "object",
-          "propertyNames": { "type": "string", "minLength": 1 },
+          "propertyNames": {
+            "enum": [
+              "research",
+              "documentation",
+              "testing",
+              "implementation",
+              "review",
+              "release"
+            ]
+          },
           "additionalProperties": {
-            "type": "string",
-            "minLength": 1
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "role"
+            ],
+            "properties": {
+              "role": {
+                "type": "string",
+                "minLength": 1
+              },
+              "instructions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "Component-specific direction for an agent holding this activity"
+              },
+              "profile": {
+                "type": "string",
+                "minLength": 1
+              },
+              "operations": {
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": {
+                        "required": [
+                          "id"
+                        ],
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "usage": {
+                            "enum": [
+                              "preflight",
+                              "setup",
+                              "refresh",
+                              "verify",
+                              "delivery",
+                              "agent"
+                            ]
+                          },
+                          "with": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
           }
         }
       }
@@ -127,7 +228,13 @@
     {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schemaVersion", "id", "type", "purpose", "parentId"],
+      "required": [
+        "schemaVersion",
+        "id",
+        "type",
+        "purpose",
+        "parentId"
+      ],
       "properties": {
         "schemaVersion": {
           "const": 6
@@ -137,7 +244,9 @@
           "minLength": 1
         },
         "type": {
-          "enum": ["package"]
+          "enum": [
+            "package"
+          ]
         },
         "purpose": {
           "type": "string",
@@ -183,10 +292,6 @@
           },
           "uniqueItems": true
         },
-        "role": {
-          "type": "string",
-          "minLength": 1
-        },
         "executionProfile": {
           "type": "string",
           "minLength": 1
@@ -202,7 +307,14 @@
             "minItems": 1,
             "uniqueItems": true,
             "items": {
-              "enum": ["preflight", "setup", "refresh", "verify", "delivery", "agent"]
+              "enum": [
+                "preflight",
+                "setup",
+                "refresh",
+                "verify",
+                "delivery",
+                "agent"
+              ]
             }
           }
         },
@@ -223,24 +335,120 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["path", "kind"],
+            "required": [
+              "path",
+              "kind"
+            ],
             "properties": {
               "path": {
                 "type": "string",
                 "minLength": 1
               },
               "kind": {
-                "enum": ["source", "tests", "documentation", "unknown"]
+                "enum": [
+                  "source",
+                  "tests",
+                  "documentation",
+                  "unknown"
+                ]
               }
             }
           }
         },
-        "activityProfiles": {
+        "activities": {
           "type": "object",
-          "propertyNames": { "type": "string", "minLength": 1 },
+          "propertyNames": {
+            "enum": [
+              "research",
+              "documentation",
+              "testing",
+              "implementation",
+              "review",
+              "release"
+            ]
+          },
           "additionalProperties": {
-            "type": "string",
-            "minLength": 1
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "role"
+            ],
+            "properties": {
+              "role": {
+                "type": "string",
+                "minLength": 1
+              },
+              "instructions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "Component-specific direction for an agent holding this activity"
+              },
+              "profile": {
+                "type": "string",
+                "minLength": 1
+              },
+              "operations": {
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": {
+                        "required": [
+                          "id"
+                        ],
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "usage": {
+                            "enum": [
+                              "preflight",
+                              "setup",
+                              "refresh",
+                              "verify",
+                              "delivery",
+                              "agent"
+                            ]
+                          },
+                          "with": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
           }
         }
       }
@@ -248,7 +456,14 @@
     {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schemaVersion", "id", "type", "purpose", "parentId", "owns"],
+      "required": [
+        "schemaVersion",
+        "id",
+        "type",
+        "purpose",
+        "parentId",
+        "owns"
+      ],
       "properties": {
         "schemaVersion": {
           "const": 6
@@ -258,7 +473,12 @@
           "minLength": 1
         },
         "type": {
-          "enum": ["foundation", "gateway", "library", "release"]
+          "enum": [
+            "foundation",
+            "gateway",
+            "library",
+            "release"
+          ]
         },
         "purpose": {
           "type": "string",
@@ -304,10 +524,6 @@
           },
           "uniqueItems": true
         },
-        "role": {
-          "type": "string",
-          "minLength": 1
-        },
         "executionProfile": {
           "type": "string",
           "minLength": 1
@@ -323,7 +539,14 @@
             "minItems": 1,
             "uniqueItems": true,
             "items": {
-              "enum": ["preflight", "setup", "refresh", "verify", "delivery", "agent"]
+              "enum": [
+                "preflight",
+                "setup",
+                "refresh",
+                "verify",
+                "delivery",
+                "agent"
+              ]
             }
           }
         },
@@ -346,7 +569,9 @@
               {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["module"],
+                "required": [
+                  "module"
+                ],
                 "properties": {
                   "module": {
                     "type": "string",
@@ -357,7 +582,10 @@
               {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["module", "export"],
+                "required": [
+                  "module",
+                  "export"
+                ],
                 "properties": {
                   "module": {
                     "type": "string",
@@ -372,7 +600,9 @@
               {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["schema"],
+                "required": [
+                  "schema"
+                ],
                 "properties": {
                   "schema": {
                     "type": "string",
@@ -383,7 +613,11 @@
               {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["module", "export", "schema"],
+                "required": [
+                  "module",
+                  "export",
+                  "schema"
+                ],
                 "properties": {
                   "module": {
                     "type": "string",
@@ -402,12 +636,100 @@
             ]
           }
         },
-        "activityProfiles": {
+        "activities": {
           "type": "object",
-          "propertyNames": { "type": "string", "minLength": 1 },
+          "propertyNames": {
+            "enum": [
+              "research",
+              "documentation",
+              "testing",
+              "implementation",
+              "review",
+              "release"
+            ]
+          },
           "additionalProperties": {
-            "type": "string",
-            "minLength": 1
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "role"
+            ],
+            "properties": {
+              "role": {
+                "type": "string",
+                "minLength": 1
+              },
+              "instructions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "Component-specific direction for an agent holding this activity"
+              },
+              "profile": {
+                "type": "string",
+                "minLength": 1
+              },
+              "operations": {
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": {
+                        "required": [
+                          "id"
+                        ],
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "usage": {
+                            "enum": [
+                              "preflight",
+                              "setup",
+                              "refresh",
+                              "verify",
+                              "delivery",
+                              "agent"
+                            ]
+                          },
+                          "with": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
           }
         }
       }

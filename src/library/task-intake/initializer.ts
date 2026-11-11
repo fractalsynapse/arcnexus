@@ -153,7 +153,19 @@ class Initializer {
       ...base,
       componentId: this.snapshot.componentId,
       context: this.snapshot.context,
-      role: this.snapshot.role,
+      mode: 'steward' as const,
+      // Intake is read-only routing: it holds exactly the research activity, and every captured
+      // operation is reachable from it because nothing else may be planned from this frame.
+      activities: Object.fromEntries(
+        Object.entries(this.snapshot.activities).map(([name, config]) => [
+          name,
+          {
+            role: config.role,
+            operations: this.snapshot.operations.map((operation) => ({ id: operation.id })),
+            ...(config.instructions ? { instructions: config.instructions } : {}),
+          },
+        ]),
+      ),
       executionProfile: this.snapshot.profile,
       operations: this.snapshot.operations,
       assignment: {
@@ -211,7 +223,7 @@ class Initializer {
       'Captured assignment: ' +
         JSON.stringify(this.input.envelope ?? this.input.resolved.assignment),
       'Initializer responsibility: ' +
-        JSON.stringify({ context: this.snapshot.context, role: this.snapshot.role }),
+        JSON.stringify({ context: this.snapshot.context, activities: this.snapshot.activities }),
       'Captured catalog: ' + JSON.stringify(this.catalog()),
       ...this.proposalInstructions(),
       'Repository revision: ' + this.input.record.base,
