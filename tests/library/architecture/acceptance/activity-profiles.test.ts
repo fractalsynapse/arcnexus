@@ -46,17 +46,19 @@ class ActivityProfileScenarios {
     const options = { objective: 'Research current behavior', kind: 'research' };
     const captured = resolveAssignment(f.root, base, 'sample', options);
     assert.equal(captured.executionProfile.id, 'luna');
-    assert.equal(captured.activityProfiles!.research!.model, 'test-sol');
-    assert.equal(captured.activityProfiles!.testing!.id, 'sol');
+    assert.equal(captured.activities.research!.profile!.model, 'test-sol');
+    assert.equal(captured.activities.testing!.profile!.id, 'sol');
     const director = resolveAssignment(f.root, base, 'sample', {
       ...options,
       executionProfile: 'sol',
     });
     assert.equal(director.executionProfile.id, 'sol');
-    assert.equal(director.activityProfiles, undefined);
+    // An explicit caller profile replaces activity routing everywhere, not just the default.
+    assert.equal(director.activities.research!.profile!.id, 'sol');
+    assert.equal(director.activities.testing!.profile!.id, 'sol');
     f.put('architecture/execution-profiles/sol.json', this.profile('new-model'));
     f.commit();
-    assert.equal(captured.activityProfiles!.research!.model, 'test-sol');
+    assert.equal(captured.activities.research!.profile!.model, 'test-sol');
   }
 
   /** Alternate models cannot bypass the captured operation-category policy. */

@@ -4,7 +4,7 @@ import { InputError } from '../../library/architecture/config.js';
 export const help = `ArcNexus
   workday start [package] [--simulate]
   workday pause|resume|stop|status [id]
-  task run [package] "<prompt>" [--async] [--simulate]
+  task run [package] "<prompt>" [--plan] [--async] [--simulate]
   task pause|resume|stop <id> | answer <id> "<response>"
   task list [field=value...] | get <id> [--follow] | follow <id>
   workday list [field=value...] | get <id> [--follow]
@@ -24,7 +24,7 @@ export const help = `ArcNexus
   component list <package> [field=value...] | get <package> <id>
   test inspect|run [package] [--component <id>] [--level unit|integration|acceptance] [--category regression] [--tag <tag>] [--json]
 Inspection, evidence and diagnostics:
-  inspect <component-id> <objective> --project <repository> [--kind change|research|review] [--json]
+  inspect [project] [component] [activity] [--mode director|steward|verifier] [--json]
   inspect: --assignment <file> replaces objective
   validate [package]
   inspect [project] [component] [activity] [--mode director|steward|verifier] [--milestone <id|file>]
@@ -43,12 +43,12 @@ const cliOptions = {
   write: { type: 'boolean' },
   async: { type: 'boolean' },
   simulate: { type: 'boolean' },
+  plan: { type: 'boolean' },
   follow: { type: 'boolean' },
   search: { type: 'string' },
   limit: { type: 'string' },
   cursor: { type: 'string' },
   component: { type: 'string' },
-  plan: { type: 'boolean' },
   activity: { type: 'string' },
   level: { type: 'string' },
   category: { type: 'string' },
