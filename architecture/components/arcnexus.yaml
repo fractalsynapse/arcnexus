@@ -25,7 +25,7 @@ activities:
     operations: [component-format, component-format-check, component-lint, component-tests]
   implementation:
     role: systems-engineer
-    operations: [component-format, component-format-check, component-lint, component-tests]
+    operations: [comment-issue, component-format, component-format-check, component-lint, component-tests]
   review:
     role: reviewer
     profile: sol

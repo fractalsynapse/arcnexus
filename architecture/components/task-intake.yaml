@@ -33,7 +33,7 @@ activities:
     operations: []
   implementation:
     role: systems-engineer
-    operations: []
+    operations: [track-issue]
   review:
     role: reviewer
     operations: []

@@ -105,8 +105,14 @@ export class ComponentOperationPlans {
       throw new InputError(`Operation repository mismatch: ${op.id}`);
     if (usage !== 'agent' && ['service', 'upstream'].includes(op.kind))
       throw new InputError(`Required lifecycle operations must be finite: ${op.id}`);
-    if (!Object.values(c.activities ?? {}).some((a) => activityOperationIds(a).includes(op.id)))
-      throw new InputError(`Operation belongs to no declared activity: ${op.id}`);
+    // Only agent-invoked operations are gated by an activity. Setup, preflight, refresh, verify and
+    // delivery operations are host lifecycle steps chosen by the plan profile, so requiring every
+    // component to attach them to an activity would invent an activity for work no agent performs.
+    if (
+      (c.operations?.[op.id] ?? []).includes('agent') &&
+      !Object.values(c.activities ?? {}).some((a) => activityOperationIds(a).includes(op.id))
+    )
+      throw new InputError(`Agent operation belongs to no declared activity: ${op.id}`);
     for (const id of [c.executionProfile, ...Object.values(c.activities ?? {}).map((a) => a.profile ?? '')])
       if (!this.catalog.profiles[id]!.operationCategories?.includes(op.category))
         throw new InputError(`Operation category not permitted by ${id}: ${op.id}`);

@@ -20,7 +20,7 @@ activities:
     operations: []
   implementation:
     role: systems-engineer
-    operations: []
+    operations: [publish-delivery]
   review:
     role: reviewer
     operations: []

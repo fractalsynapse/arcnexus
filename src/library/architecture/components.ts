@@ -392,8 +392,9 @@ class CatalogComponentValidator {
     if (!Object.hasOwn(catalog.profiles, c.executionProfile))
       throw new InputError(`Missing execution profile for ${c.id}`);
     this.declaredActivities(c, catalog);
-    for (const id of [c.executionProfile, ...Object.values(c.activities).map((a) => a.profile ?? '')]) {
-      if (id && !Object.hasOwn(catalog.profiles, id))
+    const profiles = Object.values(c.activities).flatMap((a) => (a.profile ? [a.profile] : []));
+    for (const id of [c.executionProfile, ...profiles]) {
+      if (!Object.hasOwn(catalog.profiles, id))
         throw new InputError(`Unknown activity execution profile for ${c.id}: ${id}`);
       validateOperations(
         ids.map((id) => catalog.operations[id]!),
