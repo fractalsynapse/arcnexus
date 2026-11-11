@@ -21,6 +21,23 @@ simulation record and creates a different live delivery after current-target
 reconciliation and fresh verification. Real main merges, tags and package publication
 remain outside this increment's automatic authority.
 
+## Assembled changelog requirement
+
+Implementation intent for #400: assembled verification must refuse a candidate
+when any changed path is classified as source and `CHANGELOG.md` is unchanged.
+The refusal must name the missing changelog and remain a retained validation
+finding rather than an execution crash. A changelog change satisfies this
+requirement; candidates changing only tests or documentation do not require one.
+
+The check uses captured file classification and compares the assembled candidate
+with its retained `assemblyBase`, rather than its verification checkout or the
+architectural authority revision. A changelog change from an earlier delivery
+outside that assembled change set does not satisfy the requirement. The rule
+belongs to the existing assembled checks and adds no store, subsystem or file
+permission list. The documentation-only
+workflow, activation, confinement, independent verification, delivery authority
+and human gates retain their existing behavior.
+
 ## Delivery services
 
 `delivery list [package]` and `delivery get <id>` read retained state without starting

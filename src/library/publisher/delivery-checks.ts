@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { git } from '../operations/process.js';
 import { executionIdentity } from '../architecture/execution-context.js';
+import { classifyComponentPath, covered } from '../architecture/components.js';
 import { PublicationEvidence } from '../report/report.js';
 import { PublicationPolicy } from './publication-policy.js';
 import { join } from 'node:path';
@@ -126,6 +127,12 @@ export class DeliveryChecks {
     const evidence = [join(this.root, 'runs', record.id, 'report.json')];
     try {
       await prepareWorkspace(this.root, record, signal);
+      const finding = this.changelogFinding(record);
+      if (finding) {
+        record.error = finding;
+        record.status = 'failed';
+        return { status: 'failed', evidence, artifacts: [] };
+      }
       await this.verify(record, signal);
       save(this.root, record);
       if (independent) evidence.push(...(await this.review(record, signal)));
@@ -248,6 +255,31 @@ export class DeliveryChecks {
       this.run.mode === 'task',
       String(record.assemblyBase ?? this.context.base),
     );
+  }
+
+  /** Finds source changes against the retained assembly parent and requires their changelog in that set. */
+  private changelogFinding(record: RecordData): string | undefined {
+    if (typeof record.assemblyBase !== 'string') return undefined;
+    const changed = git(
+      record.workspace,
+      'diff',
+      '--name-only',
+      '--no-renames',
+      '-z',
+      record.assemblyBase,
+      record.base,
+      '--',
+    )
+      .split('\0')
+      .filter(Boolean);
+    const sourcePaths = changed.filter((path) => {
+      const owner = this.context.owners
+        .map((id) => this.context.catalog.components[id])
+        .find((component) => component && covered(path, component.allowedWritePaths));
+      return owner && classifyComponentPath(owner, path) === 'source';
+    });
+    if (!sourcePaths.length || changed.includes('CHANGELOG.md')) return undefined;
+    return `Missing CHANGELOG.md change for assembled source paths: ${sourcePaths.join(', ')}`;
   }
 
   /** Counts an observed failed command as a check failure while preserving uncertain execution for recovery. */

@@ -4,6 +4,10 @@
 
 ### Changed
 
+- **Assembled verification requires a changelog change for source changes.** Whenever the
+  candidate contains a path classified as source, it must also contain a `CHANGELOG.md` change.
+  (#400; tracking #411)
+
 - **Workspace operation scratch is reclaimed safely.** Terminal records remove their operation
   temporary roots and sibling configuration directories after operations stop; running records keep
   both. Abandoned scratch and retained workspaces can be reclaimed only with established resource
