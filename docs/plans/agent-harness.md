@@ -25,8 +25,11 @@ to prevent:
   assessment, and a question takes the shortened chain. A mode selects an **activity sequence**.
 - **Role** is a position, and there is one per activity: `researcher`, `technical-writer`,
   `designer`, `systems-engineer`, `tester`, `release-engineer`. A role carries what is individual
-  to it and **reusable by every component** — responsibilities, standing instructions, standards,
-  tool surface and execution profile. Think of it as the résumé the agent brings to the post.
+  to it and **reusable by every component** — responsibilities, standing instructions, standards
+  and execution profile. Think of it as the résumé the agent brings to the post. A role declares
+  **no operations**: commands, permissions and test tags differ per owner, so they belong to the
+  component and stay coupled to its ownership and activity responsibilities. Nothing restricts
+  which component engages which role; the **pair** is what yields a single capability in context.
 
 They differ only in the layers they receive and the operations they may perform. The point of the
 role section of the architecture is reuse: the same researcher context serves research work in any
