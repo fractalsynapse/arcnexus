@@ -15,6 +15,7 @@ operations:
   report-format:
     - agent
 owns:
+  - .arc/learning
   - src/library/report
   - tests/library/report
   - docs/library/report

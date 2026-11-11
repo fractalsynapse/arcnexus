@@ -25,6 +25,7 @@ operations:
   track-issue:
     - agent
 owns:
+  - .arc/plans
   - src/library/task-intake
   - tests/library/task-intake
   - scripts/direction-probe.mjs

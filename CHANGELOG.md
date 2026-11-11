@@ -3,6 +3,20 @@
 ## [Unreleased]
 
 ### Changed
+- **Both agent-authored `.arc` spaces now have a steward** (#391). `.arc/plans` is owned by
+  `task-intake`, whose code authors and persists the director's plans, and `.arc/learning` is owned by `report`,
+  whose stated purpose is projecting honest run, assignment and verification evidence **without changing
+  authority** — which is exactly the charter rule that learning is history and proposals, never permission. The
+  gap was latent rather than visible: `.arc/learning/` and `.arc/plans/` had no tracked files, so the per-file
+  ownership pass had nothing to check, while the first agent that wrote there would be refused for having no
+  owner — which is why every cycle record so far landed in application storage where the architect never reviews
+  it. `catalog-ownership.test.ts` now asserts every space documented in `.arc/README.md` resolves to exactly one
+  authored `owns` entry, observed red as `found none` before the declarations were added, and
+  `.arc/learning/2026-11-11-cycle-9-reclamation-refusal.md` is the first real record: the verifier's refusal of a
+  reclamation sweep that inferred abandonment from missing metadata, its cost, the pattern shared with #393 and
+  #400 (a green result produced by absence rather than presence), the cheapest check that now encodes it, and a
+  proposed standard left for the architect rather than adopted. (#391)
+
 
 - **Successful preparation receipt publication discards superseded snapshot payloads for the same
   operation.** Receipts, the current snapshot, in-flight preparations, other operations’ snapshots,
