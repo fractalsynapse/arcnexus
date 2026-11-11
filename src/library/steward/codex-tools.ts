@@ -8,7 +8,7 @@ import type { CodexConfiguration } from './codex-configuration.js';
 const planTool: BridgeTool = {
   name: 'plan.update',
   description:
-    'Update steward checklist items in plan.items with the evidence supporting each claim. Buckets run in plan order: an item in a later activity waits while an earlier activity holds items that are not terminal. hostChecks are recorded by the host. Every claim is an agent assertion until verified.',
+    'Update checklist items in plan.items with the evidence supporting each claim. Items may only advance in bucket order: an item in a later activity waits while an earlier activity holds items that are not terminal. To change the plan itself, pass revision with a reason; a revision replaces the plan, and updates sent in the same call are claims about items in the plan you are replacing them with, applied after the replacement. hostChecks are recorded by the host. Every claim is an agent assertion until verified.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -113,10 +113,11 @@ export class CodexTools {
       throw new Error('Invalid plan update arguments');
     const input = args as { updates?: unknown; revision?: unknown; reason?: string };
     if (input.revision) {
-      if (input.updates || typeof input.reason !== 'string' || !input.reason.trim())
-        throw new Error('Plan revision requires reason and excludes progress updates');
+      if (typeof input.reason !== 'string' || !input.reason.trim())
+        throw new Error('Plan revision requires a reason');
       acceptPlan(root, record, input.revision, input.reason);
-    } else updatePlan(root, record, input.updates);
+    }
+    if (input.updates) updatePlan(root, record, input.updates);
     return { status: 'recorded', plan: record.plan };
   }
 
