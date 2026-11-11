@@ -113,7 +113,10 @@ export class ComponentOperationPlans {
       !Object.values(c.activities ?? {}).some((a) => activityOperationIds(a).includes(op.id))
     )
       throw new InputError(`Agent operation belongs to no declared activity: ${op.id}`);
-    for (const id of [c.executionProfile, ...Object.values(c.activities ?? {}).map((a) => a.profile ?? '')])
+    for (const id of [
+      c.executionProfile,
+      ...Object.values(c.activities ?? {}).flatMap((a) => (a.profile ? [a.profile] : [])),
+    ])
       if (!this.catalog.profiles[id]!.operationCategories?.includes(op.category))
         throw new InputError(`Operation category not permitted by ${id}: ${op.id}`);
   }

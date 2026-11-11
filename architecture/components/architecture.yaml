@@ -49,6 +49,7 @@ api:
   - module: src/library/architecture/component-update.ts
   - module: src/library/architecture/inspection.ts
   - module: src/library/architecture/activities.ts
+  - module: src/library/architecture/modes.ts
   - module: src/library/architecture/validation.ts
   - module: src/library/architecture/migration.ts
   - module: src/library/architecture/execution-context.ts

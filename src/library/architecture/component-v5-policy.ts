@@ -78,30 +78,37 @@ export class ComponentV5Policy {
   }
 
   /**
-   * Resolves each declared activity, inheriting its role and profile from the nearest ancestor.
+   * Resolves each declared activity, inheriting role, profile and operations from the lineage.
    *
-   * A component states which activities it performs and the operations those activities may run;
-   * the role holding an activity and the execution profile it runs under come from the nearest
-   * ancestor that named them, so a platform can route `research` to a cheaper model once and every
-   * component beneath it inherits that choice without re-declaring it. Operations are never
-   * inherited: an activity may only run operations the component itself declares, because an
-   * operation is executable authority tied to the paths this component owns.
+   * A component states which activities it performs; the role holding an activity and the profile
+   * it runs under come from the nearest ancestor that named them, so a platform can route
+   * `research` to a cheaper model once and every component beneath it inherits that choice without
+   * re-declaring it. Activity operations accumulate the same way the component's own operations map
+   * does: an activity inherited from an ancestor carries that ancestor's bindings, and a component
+   * adds to them rather than silently losing the operations its own plans are allowed to run. The
+   * bound is still ownership, not lineage — an operation may only write inside paths this component
+   * owns, because confinement grants are resolved from its own scope.
    */
   private activities(component: Component, lineage: Component[]): void {
     const resolved: Record<string, ComponentActivity> = {};
-    for (const [activity, declared] of Object.entries(component.activities ?? {})) {
-      const author = [...lineage]
-        .reverse()
-        .find((entry) => entry.activities?.[activity] !== undefined);
-      const inherited = author?.activities?.[activity];
-      resolved[activity] = {
-        ...inherited,
-        ...declared,
-        operations: declared?.operations ?? [],
-      };
+    for (const activity of Object.keys(component.activities ?? {})) {
+      // Lineage runs platform → package → component, so the last entry that names the activity is
+      // the most specific authority for role and profile, while operations accumulate across all of
+      // them: an inherited activity keeps the operations the ancestor bound to it.
+      const authors = lineage.filter((entry) => entry.activities?.[activity]);
+      const author = authors.at(-1);
+      const nearest = author?.activities?.[activity];
+      if (!author || !nearest)
+        throw new InputError(`Activity lost its declaring owner: ${component.id}.${activity}`);
+      const operations = [
+        ...new Set(
+          authors.flatMap((entry) => (entry.activities?.[activity] ?? {}).operations ?? []),
+        ),
+      ];
+      resolved[activity] = { ...nearest, operations };
       component.policy![`activities.${activity}`] = {
         value: resolved[activity],
-        source: author?.id ?? component.id,
+        source: author.id,
       };
     }
     if (Object.keys(resolved).length) component.activities = resolved;

@@ -50,7 +50,9 @@ export class ExecutionContext {
     this.validateProfiles(catalog, [
       ...owners.flatMap((id) => [
         catalog.components[id]!.executionProfile,
-        ...Object.values(catalog.components[id]!.activityProfiles ?? {}),
+        ...Object.values(catalog.components[id]!.activities ?? {}).flatMap((a) =>
+          a.profile ? [a.profile] : [],
+        ),
       ]),
       config.directorProfile,
       config.reviewerProfile,
