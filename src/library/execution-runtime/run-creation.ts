@@ -53,10 +53,14 @@ export class RunCreation {
    * because "Source checkout must be clean" describes a rule they never agreed to for in-place work.
    */
   private validateInPlace(stance: Extract<RunStance, { kind: 'component' }>): void {
-    const dirty = git(this.context.source, 'status', '--porcelain', '--untracked-files=all')
+    // Porcelain records are `XY path`, except renames and copies which are `XY source -> target`.
+    // Both ends of a rename count: the destination is written even when the source sits outside the
+    // component's scope, and a move out of scope still removes work the component owns.
+    const dirty = git(this.context.source, 'status', '--untracked-files=all', '--porcelain')
       .split('\n')
       .filter(Boolean)
-      .map((line) => line.slice(3).trim());
+      .flatMap((line) => (/^[RC]/.test(line) ? line.slice(3).split(' -> ') : [line.slice(3)]))
+      .map(unquotePath);
     if (!dirty.length) return;
     if (stance.fanOut || !stance.component)
       throw new InputError('in-place work in progress; commit or stash');
@@ -88,4 +92,17 @@ export class RunCreation {
     if (git(context.source, 'rev-parse', 'HEAD').trim() !== expected)
       throw new InputError('Source revision changed; stop and start against updated authority');
   }
+}
+
+/**
+ * Returns a porcelain path as a filesystem path.
+ *
+ * Git quotes any path containing a space, so an unquoted comparison would treat "src/library/a
+ * b.ts" as a different file from src/library/a and let in-place work overlap operator edits it was
+ * supposed to refuse.
+ */
+function unquotePath(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith('"') || !trimmed.endsWith('"')) return trimmed;
+  return trimmed.slice(1, -1).replace(/\\(["\\])/g, '$1');
 }
