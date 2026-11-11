@@ -44,6 +44,33 @@ the component's particular subject matter. A role grants no write scope and hold
 component accountable for it. Authority to write therefore has exactly one source, and it is not a
 matter of which position an activation happens to be running.
 
+## The component activity is the unit of configuration
+
+An activity is not just a label on a checklist item. Inside a component, each supported activity
+declares three things together:
+
+| Field | What it says | Why it lives there |
+| --- | --- | --- |
+| `role` | which position performs this activity here | roles are reusable, but **which** one holds an activity is a component decision |
+| `instructions` | what this component's work in that activity requires | the same `tester` résumé applies everywhere; "run the owned test profile with tag X" does not |
+| `operations` | what that activity may execute here | commands, scripts and test tags differ per owner, so they belong to the activity that invokes them |
+
+**Operations are authored once, on the component side.** An operation definition keeps its command,
+category, cwd, probes and artifacts — the mechanical facts of running it — and stops carrying a list of
+activities that claim to own it. Today both exist: operation files declare `activities:` while components
+map `operations: {id: [usage…]}`, so the same relation is written in two places and can disagree. That
+duplication is the defect this section exists to remove, and the component side is the authority because
+ownership is where the coupling to files and responsibilities lives.
+
+The **usage** axis (`agent`, `verify`, `setup`, `preflight`, `refresh`, `delivery`) stays with the
+component: it says *when* an operation runs in the lifecycle, which is a different question from which
+activity is allowed to invoke it.
+
+Nothing restricts which role a component selects for an activity. The value is the pairing: the
+component's scope, operations and instructions combined with the role's responsibilities, standing
+instructions, standards and execution profile produce **one capability** in the agent context, which is
+what an activation actually runs on.
+
 ## Activities are the plan's spine
 
 The catalog already validates each operation's `activities` against the acting role, so an activity
