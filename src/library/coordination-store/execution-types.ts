@@ -171,4 +171,16 @@ export type ActivationResult = { receipt?: string } & (
  * run that only asked to see the plan. In-place component stances are added separately because they
  * change where work is written, which is a different guarantee from stopping early.
  */
-export type RunStance = { kind: 'goal' } | { kind: 'plan' };
+export type RunStance =
+  | { kind: 'goal' }
+  | { kind: 'plan' }
+  /**
+   * In-place work on the current checkout: one component, optionally one activity of it.
+   *
+   * `fanOut` marks the `--activity`-without-`--component` case, where several components would
+   * write into the same checkout at once. That case demands a strictly clean tree, while a single
+   * component may proceed on a dirty tree provided the uncommitted paths do not intersect what it
+   * owns — two components editing the same file in one checkout is corruption, one component
+   * reading a file an operator is editing is not that same hazard.
+   */
+  | { kind: 'component'; component?: string; activity?: string; fanOut: boolean };
