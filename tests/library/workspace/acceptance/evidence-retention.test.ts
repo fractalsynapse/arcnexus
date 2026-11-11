@@ -212,6 +212,30 @@ for (const scenario of [
     new ReclamationOwnershipScenarios(t)[scenario](t),
   );
 
+for (const [name, field, value] of [
+  ['PID 1 with an unrelated start token', 'ownerPid', 1],
+  ['missing PID', 'ownerPid', undefined],
+  ['malformed PID', 'ownerPid', 'unreadable'],
+  ['fractional PID', 'ownerPid', 2.5],
+  ['missing start token', 'ownerStart', undefined],
+  ['malformed start token', 'ownerStart', 'unreadable'],
+  ['empty start token', 'ownerStart', ''],
+] as const)
+  test('startup scratch reclamation retains ' + name, (t) =>
+    new OperationScratchScenarios(t).ownerIdentity(field, value),
+  );
+
+test('startup scratch reclamation retains an owner whose process identity is unreadable', (t) =>
+  new OperationScratchScenarios(t).unreadableOwner(t));
+
+for (const guard of ['resource', 'invocation', 'service'] as const)
+  test('startup scratch reclamation preserves the ' + guard + ' safety guard', (t) =>
+    new OperationScratchScenarios(t).startupGuard(guard),
+  );
+
+test('startup scratch reclamation preserves the private-home confinement redirect', (t) =>
+  new OperationScratchScenarios(t).confinementRedirect(t));
+
 registerSuite({
   component: 'workspace',
   level: 'acceptance',

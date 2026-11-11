@@ -76,6 +76,26 @@ Host operations execute candidate code at the existing trusted command boundary;
 they are not complete OS isolation. Publishing and peer coordination remain outside
 this contract.
 
+## Preparation snapshot retention (#404)
+
+The intended receipt-publication contract is specified here before implementation.
+A successful dependency preparation publishes its receipt after installation and
+snapshot copying finish. Publication discards only snapshot payloads under
+superseded keys for that operation, retaining its current snapshot and every
+receipt. Repeated successful preparations therefore retain at most one settled
+snapshot payload for that operation.
+
+A preparation without a published receipt is still in flight or unresolved and
+remains untouched. Another operation's snapshots, activation journals, invocation
+logs and run reports are preserved. Retained receipts describe past observations;
+a receipt whose snapshot was discarded cannot restore dependencies. Returning to
+that key runs the ordinary installer again and publishes a fresh snapshot.
+
+This retention runs at successful receipt publication. It introduces no background
+cleaner, TTL, store or scheduled job. Private-home confinement, activation,
+verification, delivery, release authority and human gates retain their existing
+behavior.
+
 ## Declared finite operations (#42)
 
 Version-2 components explicitly list `operationIds`. Definitions under
