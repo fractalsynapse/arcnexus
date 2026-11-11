@@ -83,7 +83,7 @@ contracts:
     owner: architecture-model
     stage: locked
     revision: 6
-    digest: 0813806e0d447b5f57a1b56d4955fa98ba23cce265a9215eba356bac0c54ca4e
+    digest: 6f5921924914f7c3eee109e44c07558a753df19218f1cc50b3d679212fc0a236
     dependsOn: [arcnexus/project, arcnexus/foundation]
     scenarios: 16
     acceptedBy: Adrian Webb (architect)
@@ -149,7 +149,7 @@ contracts:
     owner: direction
     stage: locked
     revision: 5
-    digest: 5fec3c3cb971c97376f56d4c5d1a5ce391f1b518bcf23ac9d8d70df2cda921aa
+    digest: 03ee4cceaa0055dc3bf2e43ca9495df26e68658295fb3d5c610bff3f9add08d1
     dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination]
     scenarios: 19
     acceptedBy: Adrian Webb (architect)
