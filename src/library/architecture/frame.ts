@@ -112,6 +112,22 @@ function standardIds(catalog: Catalog, component: Component, role: Role): string
   );
 }
 
+/** Everything one frame states, whether resolved from a catalog or from a captured assignment. */
+export interface ResolvedFrame {
+  component: Component;
+  activity: Activity;
+  mode: Mode;
+  position: Role;
+  instructions: string[];
+  standards: string[];
+  operations: Array<{ id: string; usage?: string; with?: Record<string, unknown> }>;
+  profile?: string;
+  goal?: string;
+  acceptance?: string[];
+  milestone?: Record<string, unknown>;
+  knownOwners?: string[];
+}
+
 /** Names the layers a preview cannot know, so equality against a live frame is checkable. */
 export const framePlaceholders = [
   'goal',
@@ -124,22 +140,23 @@ export const framePlaceholders = [
 ] as const;
 
 /**
- * Renders the architectural frame as ordered text.
+ * Renders the architectural frame from already-resolved parts.
  *
- * Deterministic by construction: every section is emitted in this fixed order, collections keep the
- * order the catalog declared them in, and nothing here reads the clock, the filesystem or a hostname.
+ * This is the single renderer both `inspect` and a live activation go through: `inspect` resolves
+ * the parts from the catalog at a revision, an activation resolves them from the assignment it
+ * captured at dispatch, and neither may hold its own copy of this text. Sections emit in fixed
+ * order, collections keep declared order, and nothing reads the clock, the filesystem or a hostname,
+ * so two renders of the same parts are byte-identical and a difference is always a real change.
  */
-export function renderFrame(input: FrameInput): string {
-  const frame = activityFrame(input);
-  const { component, mode, catalog } = input;
-  const goal = input.goal ?? `[placeholder:goal]`;
-  const acceptance = input.acceptance ?? ['[placeholder:acceptance]'];
+export function renderResolvedFrame(frame: ResolvedFrame): string {
+  const goal = frame.goal ?? '[placeholder:goal]';
+  const acceptance = frame.acceptance ?? ['[placeholder:acceptance]'];
   const lines = [
-    `Mode: ${mode} · Activity: ${frame.activity} · Position: ${frame.role.id}`,
-    `Position purpose: ${frame.role.purpose}`,
-    `Position responsibilities: ${frame.role.responsibilities.join(' | ')}`,
-    `Component: ${component.id} (${component.type}) · owns ${(component.owns ?? []).join(', ')}`,
-    `Component purpose: ${component.purpose}`,
+    `Mode: ${frame.mode} \u00b7 Activity: ${frame.activity} \u00b7 Position: ${frame.position.id}`,
+    `Position purpose: ${frame.position.purpose}`,
+    `Position responsibilities: ${frame.position.responsibilities.join(' | ')}`,
+    `Component: ${frame.component.id} (${frame.component.type}) \u00b7 owns ${(frame.component.owns ?? []).join(', ')}`,
+    `Component purpose: ${frame.component.purpose}`,
     `Goal: ${goal}`,
     `Acceptance: ${acceptance.join(' | ')}`,
     `Activity direction: ${frame.instructions.join(' | ') || 'none declared beyond the position'}`,
@@ -149,11 +166,35 @@ export function renderFrame(input: FrameInput): string {
         .join(', ') || 'none'
     }`,
     `Standards in force: ${frame.standards.join(', ') || 'none'}`,
-    `Execution profile: ${frame.profile ?? `component default ${component.executionProfile}`}`,
-    `Known owners: ${catalogComponentIds(catalog).join(', ')}`,
+    `Execution profile: ${frame.profile ?? `component default ${frame.component.executionProfile}`}`,
   ];
-  if (input.milestone) lines.push(`Milestone: ${JSON.stringify(input.milestone)}`);
+  if (frame.knownOwners) lines.push(`Known owners: ${frame.knownOwners.join(', ')}`);
+  if (frame.milestone) lines.push(`Milestone: ${JSON.stringify(frame.milestone)}`);
   return lines.join('\n');
+}
+
+/**
+ * Resolves an activity from the catalog and renders its frame — the `inspect` entry point.
+ *
+ * An activation reaches the same renderer through `renderResolvedFrame` with parts resolved from its
+ * captured assignment; both paths must agree, which is what makes EX-6 checkable.
+ */
+export function renderFrame(input: FrameInput): string {
+  const frame = activityFrame(input);
+  return renderResolvedFrame({
+    component: input.component,
+    activity: frame.activity,
+    mode: input.mode,
+    position: frame.role,
+    instructions: frame.instructions,
+    standards: frame.standards,
+    operations: frame.operations,
+    ...(frame.profile ? { profile: frame.profile } : {}),
+    ...(input.goal ? { goal: input.goal } : {}),
+    ...(input.acceptance ? { acceptance: input.acceptance } : {}),
+    ...(input.milestone ? { milestone: input.milestone } : {}),
+    knownOwners: catalogComponentIds(input.catalog),
+  });
 }
 
 /** Component ids in catalog order, used so the same catalog always renders the same line. */

@@ -95,6 +95,7 @@ export interface ResolvedActivity {
   role: Role;
   operations: Array<{ id: string; usage?: string; with?: Record<string, unknown> }>;
   instructions?: string[];
+  standards: string[];
   profile?: ExecutionProfile;
 }
 
@@ -280,11 +281,26 @@ class AssignmentResolver {
           {
             role: structuredClone(this.catalog.roles[config.role]!),
             operations: (config.operations ?? []).map(resolveActivityOperation),
+            standards: this.standardsFor(config.role),
             ...(config.instructions ? { instructions: [...config.instructions] } : {}),
             ...(profileId ? { profile: structuredClone(this.catalog.profiles[profileId]!) } : {}),
           },
         ];
       }),
+    );
+  }
+
+  /**
+   * Standards in force for an activity: the component's, plus those the position carries.
+   *
+   * Resolved at capture so a running activation never consults the catalog again, and a later edit
+   * to a standard definition cannot silently change what an already-dispatched assignment was told.
+   */
+  private standardsFor(roleId: string): string[] {
+    const known = new Set((this.catalog.standards ?? []).map((standard) => standard.id));
+    const role = this.catalog.roles[roleId];
+    return [...new Set([...(this.component.standards ?? []), ...(role?.standards ?? [])])].filter(
+      (id) => known.has(id),
     );
   }
 

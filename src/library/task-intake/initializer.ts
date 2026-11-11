@@ -146,6 +146,21 @@ class Initializer {
     return record;
   }
 
+  /** Intake holds only its snapshot's activities, and every captured operation is reachable from them. */
+  private intakeActivities() {
+    return Object.fromEntries(
+      Object.entries(this.snapshot.activities).map(([name, config]) => [
+        name,
+        {
+          role: config.role,
+          operations: this.snapshot.operations.map((operation) => ({ id: operation.id })),
+          standards: config.role.standards ?? [],
+          ...(config.instructions ? { instructions: config.instructions } : {}),
+        },
+      ]),
+    );
+  }
+
   /** Builds the read-only intake assignment from the caller’s captured envelope. */
   private assignment(): ResolvedAssignment {
     const { digest: _digest, ...base } = this.input.resolved;
@@ -154,18 +169,7 @@ class Initializer {
       componentId: this.snapshot.componentId,
       context: this.snapshot.context,
       mode: 'steward' as const,
-      // Intake is read-only routing: it holds exactly the research activity, and every captured
-      // operation is reachable from it because nothing else may be planned from this frame.
-      activities: Object.fromEntries(
-        Object.entries(this.snapshot.activities).map(([name, config]) => [
-          name,
-          {
-            role: config.role,
-            operations: this.snapshot.operations.map((operation) => ({ id: operation.id })),
-            ...(config.instructions ? { instructions: config.instructions } : {}),
-          },
-        ]),
-      ),
+      activities: this.intakeActivities(),
       executionProfile: this.snapshot.profile,
       operations: this.snapshot.operations,
       assignment: {
