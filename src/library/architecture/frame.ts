@@ -104,9 +104,11 @@ function activityInstructions(declared: ComponentActivity): string[] {
  * inside a component inherited every standard that component had ever needed.
  */
 function standardIds(catalog: Catalog, component: Component, role: Role): string[] {
-  const known = Object.keys(catalog.standards ?? {});
+  const known = new Set(
+    (catalog.standards ?? []).map((standard) => (standard as { id: string }).id),
+  );
   return [...new Set([...(component.standards ?? []), ...(role.standards ?? [])])].filter((id) =>
-    known.includes(id),
+    known.has(id),
   );
 }
 
