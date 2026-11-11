@@ -4,6 +4,22 @@
 
 ### Changed
 
+- **A reasoned plan revision may carry its progress claims** (#407). `plan.update` refused any call
+  that sent `revision` together with `updates`, so an agent that wanted to replan and record what it
+  had already finished in one action was rejected outright — and nothing told it why: the sentence
+  describing that rule had been removed from the tool description in `8cd40a5` while the enforcement
+  stayed, and live cycle 5 (`9adfaefc`) ended `needs_attention` with all three milestones carrying
+  `Plan revision requires reason and excludes progress updates`. A revision now requires only what
+  the contract actually makes an invariant — an explanation — and claims sent in the same call apply
+  **after** the replacement, so one call records the new plan and then the claims against it (two
+  plan artifacts, versions incremented per persistence, because neither is silently folded away). A
+  claim naming an item the revised plan lacks is still refused by the existing unknown-item path,
+  with the accepted replan retained. The tool description now states the semantics positively
+  instead of forbidding a payload shape. Three native-host acceptance cases pin replacement-with-
+  claims, refusal without a reason, and rejection of a claim against an absent item; the bucket
+  guard was confirmed **not** to be the trigger (no `Bucket order` diagnostic anywhere in the run).
+  (#407)
+
 - **Direction prompts show outstanding project waits before planning**, including each wait's owner,
   assignment, escalation reason, and open step count. Closed escalations and waits from other projects
   are excluded; prompts remain unchanged when no waits are outstanding. (#403)
