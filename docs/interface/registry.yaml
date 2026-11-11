@@ -82,8 +82,8 @@ contracts:
     file: docs/interface/arcnexus-architecture-model.md
     owner: architecture-model
     stage: locked
-    revision: 5
-    digest: e1535db96ff54bcf844f8378c889c46220c06f42e600221cc1905762ff997e28
+    revision: 6
+    digest: 0813806e0d447b5f57a1b56d4955fa98ba23cce265a9215eba356bac0c54ca4e
     dependsOn: [arcnexus/project, arcnexus/foundation]
     scenarios: 16
     acceptedBy: Adrian Webb (architect)

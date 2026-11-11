@@ -55,6 +55,8 @@ declares three things together:
 | `instructions` | what this component's work in that activity requires | the same `tester` résumé applies everywhere; "run the owned test profile with tag X" does not |
 | `operations` | what that activity may execute here | commands, scripts and test tags differ per owner, so they belong to the activity that invokes them |
 
+**An operation names only the act.** An operation specification says what running it means — command, arguments, cwd, category, probes, artifacts, network — and never mentions an activity. Activities are the sole domain of the component, and the component is the **integrator**: it is where roles, operations, standards, execution profiles and ownership are brought together into one authorized whole. Because an operation describes only itself, it is reusable across the activities of any component exactly as a role is, and an activity may override the parameters it receives — supplying a **declared** parameter of that operation, never rewriting its command or escaping its category and confinement.
+
 **Operations are authored once, on the component side.** An operation definition keeps its command,
 category, cwd, probes and artifacts — the mechanical facts of running it — and stops carrying a list of
 activities that claim to own it. Today both exist: operation files declare `activities:` while components
