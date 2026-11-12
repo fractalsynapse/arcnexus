@@ -11,7 +11,7 @@ import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
 class StandardResourceScenarios {
   /** Validates ordinary composition before any missing-service assertion can hide invalid setup. */
   private fixture(t: TestContext) {
-    const f = new ComponentV5Fixture(t, 6);
+    const f = new ComponentV5Fixture(t);
     f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     const path = 'architecture/components/maintenance.json';
     const owner = JSON.parse(readFileSync(join(f.root, path), 'utf8'));

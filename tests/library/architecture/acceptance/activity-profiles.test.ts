@@ -142,7 +142,7 @@ class ActivityProfileScenarios {
 
   /** Supplies shared profiles without adding model choices to component leaves. */
   private fixture(t: TestContext): ComponentV5Fixture {
-    const f = new ComponentV5Fixture(t, 6);
+    const f = new ComponentV5Fixture(t);
     f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     f.put('architecture/execution-profiles/sol.json', this.profile('test-sol'));
     f.put(

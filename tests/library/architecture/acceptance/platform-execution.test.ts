@@ -165,14 +165,14 @@ class PlatformExecutionScenarios {
 
   /** Missing execution requirements never trigger implicit model or initializer selection. */
   missing(t: TestContext): void {
-    const fixture = new ComponentV5Fixture(t, 6);
+    const fixture = new ComponentV5Fixture(t);
     fixture.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     assert.throws(() => new ExecutionContext().resolve(fixture.root), /director.*reviewer/i);
   }
 
   /** Supplies explicit director/reviewer profiles once on the platform and leaves the leaf minimal. */
   private fixture(t: TestContext): ComponentV5Fixture {
-    const fixture = new ComponentV5Fixture(t, 6);
+    const fixture = new ComponentV5Fixture(t);
     fixture.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     fixture.put(
       'architecture/components/platform.json',

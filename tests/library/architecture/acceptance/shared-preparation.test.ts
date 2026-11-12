@@ -151,7 +151,7 @@ class SharedPreparationScenarios {
 
   /** Captures a minimal package with one shared setup definition and no environment commands. */
   private fixture(t: TestContext, local = false): ComponentV5Fixture {
-    const f = new ComponentV5Fixture(t, 6);
+    const f = new ComponentV5Fixture(t);
     if (!local) f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     f.put('architecture/environment.json', {
       schemaVersion: local ? 5 : 4,

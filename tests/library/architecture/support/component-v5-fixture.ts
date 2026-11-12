@@ -11,10 +11,7 @@ export class ComponentV5Fixture {
   readonly root = mkdtempSync(join(tmpdir(), 'component-v5-'));
 
   /** Captures a clean source revision and removes only this fixture after the scenario. */
-  constructor(
-    t: TestContext,
-    private readonly version: 5 | 6 = 5,
-  ) {
+  constructor(t: TestContext) {
     t.after(() => rmSync(this.root, { recursive: true, force: true }));
     this.git('init', '-b', 'main');
     this.git('config', 'user.name', 'Test');
@@ -107,12 +104,12 @@ export class ComponentV5Fixture {
 
   /** Rejects malformed ordinary setup using the same packaged schema as production loading. */
   component(id: string, type: string, extra: object = {}): any {
-    return validateSchema(`component-v${this.version}`, this.uncheckedComponent(id, type, extra));
+    return validateSchema('component-v6', this.uncheckedComponent(id, type, extra));
   }
 
   /** Builds deliberately malformed declarations only for explicit production rejection scenarios. */
   uncheckedComponent(id: string, type: string, extra: object = {}): any {
-    return { schemaVersion: this.version, id, type, purpose: 'Own bounded behavior', ...extra };
+    return { schemaVersion: 6, id, type, purpose: 'Own bounded behavior', ...extra };
   }
 
   /** Writes source or JSON without interpreting candidate content as current authority. */

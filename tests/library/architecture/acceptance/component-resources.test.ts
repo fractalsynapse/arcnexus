@@ -11,7 +11,7 @@ import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
 class ComponentResourceScenarios {
   /** Requires valid fixture authority before checking the absent or implemented API. */
   private fixture(t: TestContext) {
-    const f = new ComponentV5Fixture(t, 6);
+    const f = new ComponentV5Fixture(t);
     f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     f.put(
       'architecture/components/deep.json',
