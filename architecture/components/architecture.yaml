@@ -82,7 +82,6 @@ api:
   - { module: src/library/architecture/config.ts }
   - { module: src/library/architecture/configuration.ts }
   - { module: src/library/architecture/initialization.ts }
-  - { module: src/library/architecture/permissions.ts }
   - { module: src/library/architecture/schema.ts }
   - { module: src/library/architecture/build-schemas.ts }
   - { module: src/library/architecture/catalog-view.ts }
