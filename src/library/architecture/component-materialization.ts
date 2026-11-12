@@ -6,7 +6,7 @@ import { ComponentMaterializationPolicy } from './component-materialization-poli
 import { RevisionArtifacts } from './revision-artifacts.js';
 import { InputError } from './config.js';
 
-/** Materializes effective v5 components from immutable authored intent and captured source. */
+/** Materializes effective components from immutable authored intent and captured source. */
 export class ComponentMaterializer {
   private readonly authored: Catalog;
 
@@ -18,7 +18,7 @@ export class ComponentMaterializer {
     this.policy = new ComponentMaterializationPolicy(this.authored);
   }
 
-  /** Resolves all v5 definitions and derives package membership from parent identity. */
+  /** Resolves every definition and derives package membership from parent identity. */
   resolve(): void {
     for (const component of Object.values(this.catalog.components)) {
       this.component(component);

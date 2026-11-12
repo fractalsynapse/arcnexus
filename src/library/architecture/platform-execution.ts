@@ -3,7 +3,7 @@ import { ancestry, scopePath } from './component-paths.js';
 import { InputError } from './config.js';
 import { git } from '../operations/process.js';
 
-/** Resolves v5 execution authority from its single platform declaration. */
+/** Resolves execution authority from the catalog's single platform declaration. */
 export class PlatformExecution {
   /** Keeps profile and component lookups pinned to the captured catalog. */
   constructor(private readonly catalog: Catalog) {}
