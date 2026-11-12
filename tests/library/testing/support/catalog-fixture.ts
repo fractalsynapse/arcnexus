@@ -53,6 +53,23 @@ export const componentFields = {
   patterns: [],
 };
 
+/**
+ * Fields a container document may declare.
+ *
+ * A platform or package contains owners and names its source root; it neither owns leaf paths nor
+ * runs verification, and it has no discovery, documentation or access grants of its own. Sharing the
+ * leaf base with containers produced documents matching no schema branch, after which every
+ * legitimate key looked like the offense, which cost several rounds of diagnosis.
+ */
+export const containerFields = {
+  schemaVersion: 6,
+  repository: 'sample',
+  purpose: 'Contain test owners',
+  objectives: [],
+  constraints: [],
+  activities: {},
+};
+
 export const members = {
   foundations: [],
   dependencies: [],

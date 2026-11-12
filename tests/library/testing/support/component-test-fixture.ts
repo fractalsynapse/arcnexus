@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, readFileSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import type { TestContext } from 'node:test';
-import { catalogFixture, componentFields } from './catalog-fixture.js';
+import { catalogFixture, componentFields, containerFields } from './catalog-fixture.js';
 
 /** Builds a real catalog and a tiny Node profile without invoking inference. */
 export class ComponentTestFixture {
@@ -55,7 +55,7 @@ export class ComponentTestFixture {
   /** Writes sample ownership, profile references and tracked fixture tests. */
   private catalog(): void {
     const fields = this.fields();
-    this.containers(fields);
+    this.containers();
     this.put('architecture/components/sample.yaml', {
       ...fields,
       id: 'sample',
@@ -76,11 +76,13 @@ export class ComponentTestFixture {
   }
 
   /** Defines platform and package containment without granting blanket source ownership. */
-  private containers(fields: ReturnType<ComponentTestFixture['fields']>): void {
+  private containers(): void {
     this.put('architecture/components/platform.yaml', {
-      ...fields,
+      ...containerFields,
       id: 'platform',
       type: 'platform',
+      executionProfile: 'luna',
+      reads: ['.'],
       initialization: { schemaVersion: 3, componentId: 'sample' },
       coverageExclusions: [
         { path: 'architecture', reason: 'Fixture configuration' },
@@ -89,12 +91,11 @@ export class ComponentTestFixture {
       ],
     });
     this.put('architecture/components/package.yaml', {
-      ...fields,
+      ...containerFields,
       id: 'package',
       type: 'package',
       parentId: 'platform',
-      repository: 'sample',
-      repositoryRoot: '.',
+      root: '.',
     });
   }
 
