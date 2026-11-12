@@ -139,7 +139,18 @@ export class ComponentFixture {
 
   /** Builds deliberately malformed declarations only for explicit production rejection scenarios. */
   uncheckedComponent(id: string, type: string, extra: object = {}): any {
-    return { schemaVersion: 6, id, type, purpose: 'Own bounded behavior', ...extra };
+    // A leaf declares at least one activity, each stating its position, model, operations and
+    // direction; scenarios that need the opposite supply their own declarations through extra.
+    return {
+      schemaVersion: 6,
+      id,
+      type,
+      purpose: 'Own bounded behavior',
+      ...(type === 'library' || type === 'foundation' || type === 'gateway' || type === 'release'
+        ? { activities: selectedActivities('luna') }
+        : {}),
+      ...extra,
+    };
   }
 
   /** Writes source or JSON without interpreting candidate content as current authority. */
