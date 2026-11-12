@@ -71,10 +71,7 @@ export class MinimalTestFixture extends ComponentTestFixture {
     if (!this.git('remote').trim().split('\n').includes('origin'))
       this.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     this.put('architecture/environment.yaml', {
-      schemaVersion: 3,
-      prerequisites: [],
-      setup: [],
-      generatedDirectories: ['.test-build'],
+      schemaVersion: 4,
       workspace: {
         primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
         dependencies: [],
