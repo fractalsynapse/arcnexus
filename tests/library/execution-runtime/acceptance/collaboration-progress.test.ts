@@ -72,7 +72,6 @@ class ProgressFixture {
           repository: 'sample',
           cwd: '.',
           category: 'cli-check',
-          activities: [],
           generatedDirectories: [],
           artifacts: [],
         }),

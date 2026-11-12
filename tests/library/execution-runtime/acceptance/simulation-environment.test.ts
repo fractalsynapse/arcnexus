@@ -47,7 +47,6 @@ class SimulationFixture {
           repository: 'sample',
           cwd: '.',
           category: 'cli-check',
-          activities: [],
           generatedDirectories: [],
           artifacts: [],
         }),

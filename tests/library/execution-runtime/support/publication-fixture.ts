@@ -87,7 +87,6 @@ export class PublicationFixture {
           repository: 'sample',
           cwd: '.',
           category: 'cli-check',
-          activities: [],
           generatedDirectories: [],
           artifacts: [],
           ...(id === 'publish' ? { targetBranch: 'staging' } : {}),
