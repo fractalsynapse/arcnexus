@@ -17,7 +17,6 @@ export interface InspectionRequest {
   componentId: string;
   prompt?: string;
   activity?: string;
-  mode?: Mode;
 }
 
 /** Presents revision-bound architectural context without creating execution authority or accepted work. */
@@ -25,10 +24,19 @@ export class ArchitectureInspection {
   /** Validates package scope and projects the same captured catalog used by engineering. */
   inspect(request: InspectionRequest, bindings?: Bindings) {
     this.validate(request);
-    const { source, revision, packageId, componentId } = request;
+    const { source, revision, packageId } = request;
     const catalog = loadCatalog(source, revision, bindings ?? loadProjectBindings(source));
-    const context = ancestry(catalog, componentId);
-    if (!context.some((component) => component.type === 'package' && component.id === packageId))
+    // `director` and `verifier` name positions rather than components, so they resolve to the
+    // component that position is exercised on before any ancestry lookup happens.
+    const target = position(catalog, request.componentId);
+    const context = ancestry(catalog, target.componentId);
+    // A reserved position names neither a component nor a package member: `verifier` reviews the goal
+    // as the platform that owns verification authority sees it, so the package containment rule that
+    // applies to component names is not meaningful for it.
+    if (
+      positionMode(request.componentId) === 'steward' &&
+      !context.some((component) => component.type === 'package' && component.id === packageId)
+    )
       throw new InputError('Inspection component is outside the selected package');
     const { component, mode, activity } = resolvePosition(catalog, context, request);
     return {
@@ -37,7 +45,7 @@ export class ArchitectureInspection {
       frame: this.frame(catalog, context, request, bindings),
       revision,
       packageId,
-      componentId,
+      componentId: target.componentId,
       ...inventory(component, context),
       ...(request.prompt !== undefined ? { preview: { prompt: request.prompt, activity } } : {}),
     };
@@ -94,8 +102,6 @@ export class ArchitectureInspection {
       if (request[key] !== undefined && !request[key]!.trim())
         throw new InputError('Empty inspection input: ' + key);
     if (request.activity !== undefined) requireActivity(request.activity, 'inspection');
-    if (request.mode && !['director', 'steward', 'verifier'].includes(request.mode))
-      throw new InputError('Unsupported inspection mode: ' + request.mode);
   }
 }
 
@@ -121,10 +127,7 @@ function resolvePosition(
   context: Component[],
   request: InspectionRequest,
 ): { component: Component; mode: Mode; activity: Activity } {
-  const requested = request.mode ?? (request.componentId as Mode);
-  const mode: Mode = ['director', 'steward', 'verifier'].includes(requested)
-    ? (requested as Mode)
-    : 'steward';
+  const mode = positionMode(request.componentId);
   let component = context.at(-1)!;
   if (mode === 'director' && !holds(component, activityFor(mode, component.activities)))
     component = directed(catalog);
@@ -156,5 +159,24 @@ function inventory(component: Component, context: Component[]) {
     imports: component.observedImports ?? [],
     consumers: component.observedConsumers ?? [],
     operations: component.operations ?? {},
+  };
+}
+
+/** The position named by the component slot: reserved identifiers, or steward for a component. */
+function positionMode(componentId: string): Mode {
+  return componentId === 'director' || componentId === 'verifier'
+    ? (componentId as Mode)
+    : 'steward';
+}
+
+/** Resolves a reserved position name to the component its frame is drawn from. */
+function position(catalog: Catalog, componentId: string): { componentId: string } {
+  if (componentId !== 'director' && componentId !== 'verifier') return { componentId };
+  const declaring = Object.values(catalog.components).find((c) => c.type === 'platform');
+  if (!declaring) throw new InputError('Inspection needs a platform to resolve a position');
+  // Direction belongs to the component the platform directs from; verification reviews the goal, so
+  // it is drawn against the platform that owns that authority.
+  return {
+    componentId: componentId === 'director' ? declaring.director!.component : declaring.id,
   };
 }

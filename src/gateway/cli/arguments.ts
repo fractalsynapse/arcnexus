@@ -24,10 +24,10 @@ export const help = `ArcNexus
   component list <package> [field=value...] | get <package> <id>
   test inspect|run [package] [--component <id>] [--level unit|integration|acceptance] [--category regression] [--tag <tag>] [--json]
 Inspection, evidence and diagnostics:
-  inspect [project] [component] [activity] [--mode director|steward|verifier] [--json]
+  inspect [project] [component|director|verifier] [activity] [--json]
   inspect: --assignment <file> replaces objective
   validate [package]
-  inspect [project] [component] [activity] [--mode director|steward|verifier] [--milestone <id|file>]
+  inspect [project] [component|director|verifier] [activity] [--milestone <id|file>]
   experiment inspect <manifest> --bindings <file> [--json]
   workday inspect <historical-manifest> --project <repository> [--base <ref>] [--bindings <file>] [--json]
   workday history <historical-workday-id> [--json]

@@ -1,7 +1,7 @@
 import { PublicApiCatalog } from './public-api.js';
 import { normalizeOperation } from '../operations/operation-definition.js';
 import { ComponentOperationPlans } from './component-operation-plans.js';
-import { requireActivity, type Activity } from './activities.js';
+import { requireActivity } from './activities.js';
 import { ancestry, covered, scopePath } from './component-paths.js';
 import { ComponentV5Resolver } from './component-v5.js';
 import type { ComponentV5Fields } from './component-v5-policy.js';

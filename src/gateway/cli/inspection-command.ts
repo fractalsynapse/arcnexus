@@ -1,4 +1,3 @@
-import type { Mode } from '../../library/architecture/modes.js';
 import { ArchitectureInspection } from '../../library/architecture/inspection.js';
 import { InputError } from '../../library/architecture/config.js';
 import { Portfolio } from '../../library/portfolio/portfolio.js';
@@ -14,7 +13,7 @@ export class InspectionCommand {
 
   /** Rejects flags this command does not read, so a typo cannot silently change the stance. */
   private checkOptions(): void {
-    const allowed = ['json', 'activity', 'mode', 'milestone'];
+    const allowed = ['json', 'activity', 'milestone'];
     for (const key of Object.keys(this.values))
       if (!allowed.includes(key)) throw new InputError('Unsupported inspection option: ' + key);
   }
@@ -47,7 +46,6 @@ export class InspectionCommand {
         packageId: target.packageId,
         componentId,
         ...(activity ? { activity } : {}),
-        ...(this.values.mode ? { mode: this.values.mode as Mode } : {}),
       });
       this.print(result, !!this.values.json);
     } finally {
@@ -73,10 +71,14 @@ export class InspectionCommand {
       throw new InputError(
         `Inspection resolved no project from '${first}'; pass [component] [activity] or register the package`,
       );
-    const activity = (named ? third : second) ?? this.values.activity;
+    const slot = named ? second : first;
+    const activity = ((named ? third : second) ?? this.values.activity) as string | undefined;
+    // The component slot carries the position: `director` and `verifier` are reserved identifiers for
+    // the positions that are not tied to one component, and any other name is the component whose
+    // steward view is wanted. There is no mode flag, because the slot already says what is being asked.
     return {
       ...(named ? { project: first } : {}),
-      componentId: named ? second : first,
+      componentId: slot,
       ...(activity ? { activity } : {}),
     };
   }
