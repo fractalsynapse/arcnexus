@@ -72,11 +72,10 @@ export class MinimalCatalogFixture {
   /** Supplies the inherited role and model policy used by static resolution. */
   private profiles(): void {
     this.put('architecture/roles/engineer.json', {
-      schemaVersion: 3,
+      schemaVersion: 4,
       id: 'engineer',
       purpose: 'Validate',
       responsibilities: ['Check'],
-      activities: ['research'],
     });
     this.put('architecture/execution-profiles/luna.json', {
       schemaVersion: 3,

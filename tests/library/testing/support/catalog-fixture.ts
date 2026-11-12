@@ -25,11 +25,10 @@ export const members = {
 export function catalogFixture(repo: any): any {
   for (const [path, value] of Object.entries({
     'roles/engineer': {
-      schemaVersion: 1,
+      schemaVersion: 4,
       id: 'engineer',
       purpose: 'Bounded engineering',
       responsibilities: ['Verify changes'],
-      activities: ['research', 'documentation', 'testing', 'implementation', 'review', 'release'],
     },
     'execution-profiles/luna': {
       schemaVersion: 1,

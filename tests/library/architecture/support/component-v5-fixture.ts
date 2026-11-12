@@ -38,11 +38,10 @@ export class ComponentV5Fixture {
       },
     });
     this.put('architecture/roles/engineer.json', {
-      schemaVersion: 3,
+      schemaVersion: 4,
       id: 'engineer',
       purpose: 'Engineer bounded changes',
       responsibilities: ['Verify changes'],
-      activities: ['research', 'testing', 'implementation', 'review'],
     });
     this.put('architecture/execution-profiles/luna.json', {
       schemaVersion: 3,

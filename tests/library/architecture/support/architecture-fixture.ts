@@ -117,11 +117,10 @@ export class ArchitectureFixture {
   /** Declares the fixture engineering role and Luna execution profile. */
   private execution(): void {
     this.put('architecture/roles/engineer.json', {
-      schemaVersion: 1,
+      schemaVersion: 4,
       id: 'engineer',
       purpose: 'Engineering',
       responsibilities: ['Verify bounded work'],
-      activities: ['research', 'documentation', 'testing', 'implementation', 'review', 'release'],
     });
     this.put('architecture/execution-profiles/luna.yaml', {
       schemaVersion: 1,
