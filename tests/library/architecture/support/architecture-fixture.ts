@@ -132,6 +132,34 @@ export class ArchitectureFixture {
     });
     this.component = { ...this.common, id: 'sample', type: 'library', parentId: 'package' };
     this.put('architecture/components/sample.json', this.component);
+    this.maintainer();
+  }
+
+  /**
+   * Adds the leaf that maintains the authored configuration and root files.
+   *
+   * Mirrors the real model: a library's own definition is covered implicitly, so it is not listed,
+   * and containers declare no ownership of their own, so their definition files belong here. Without
+   * this leaf every configuration file the fixture writes is unowned, which the ownership validator
+   * refuses one file at a time - the reason fixing README alone moved nothing.
+   */
+  private maintainer(): void {
+    this.put('architecture/components/maintenance.json', {
+      ...this.common,
+      id: 'maintenance',
+      type: 'library',
+      parentId: 'package',
+      owns: [
+        'README.md',
+        'source.txt',
+        'test.mjs',
+        'architecture/roles/engineer.json',
+        'architecture/execution-profiles',
+        'architecture/environment.json',
+        'architecture/components/platform.json',
+        'architecture/components/package.json',
+      ],
+    });
   }
 
   /** Declares the fixture engineering role and Luna execution profile. */
