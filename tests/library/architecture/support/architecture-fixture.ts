@@ -123,7 +123,7 @@ export class ArchitectureFixture {
       responsibilities: ['Verify bounded work'],
     });
     this.put('architecture/execution-profiles/luna.yaml', {
-      schemaVersion: 1,
+      schemaVersion: 3,
       id: 'luna',
       model: 'gpt-6-luna',
       reasoning: 'medium',
