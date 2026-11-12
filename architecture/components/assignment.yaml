@@ -2,54 +2,79 @@ schemaVersion: 6
 id: assignment
 type: library
 parentId: cli-package
-purpose: Resume owner-scoped assignments through durable engineering and host
-  verification stages
-objectives:
-  - Prepare owner contributions with self-review in engineering for assembled verification
-  - Make actual execution outcomes easy to inspect
-constraints:
-  - Preserve captured authority and evidence
-  - 'regression-expectation
-    (src/library/assignment/schemas/regression-expectation.json): Preserve
-    historical index expectations alongside stable operation identities'
-  - 'general-agent-result
-    (src/library/assignment/schemas/general-agent-result.json): General
-    execution inbox protocol; legacy reports remain readable'
-  - 'agent-result (src/library/assignment/schemas/agent-result.json): Preserve
-    supported historical versions and captured execution readers'
-  - 'assignment (src/library/assignment/schemas/assignment.json): Preserve
-    supported historical versions and captured execution readers'
-  - 'plan-updates (src/library/assignment/schemas/plan-updates.json): Preserve
-    supported historical versions and captured execution readers'
-  - 'plan (src/library/assignment/schemas/plan.json): Preserve supported
-    historical versions and captured execution readers'
+purpose: Resume owner-scoped assignments through durable engineering and host verification stages
+objectives: [
+    Prepare owner contributions with self-review in engineering for assembled verification,
+    Make actual
+    execution outcomes easy to inspect,
+  ]
+constraints: [
+    Preserve captured authority and evidence,
+    'regression-expectation (src/library/assignment/schemas/regression-expectation.json):
+    Preserve historical index expectations alongside stable operation identities',
+    'general-agent-result (src/library/assignment/schemas/general-agent-result.json):
+    General execution inbox protocol; legacy reports remain readable',
+    'agent-result (src/library/assignment/schemas/agent-result.json):
+    Preserve supported historical versions and captured execution readers',
+    'assignment (src/library/assignment/schemas/assignment.json):
+    Preserve supported historical versions and captured execution readers',
+    'plan-updates (src/library/assignment/schemas/plan-updates.json):
+    Preserve supported historical versions and captured execution readers',
+    'plan (src/library/assignment/schemas/plan.json):
+    Preserve supported historical versions and captured execution readers',
+  ]
 activities:
   research:
     role: researcher
+    profile: luna
     operations: []
+    instructions: [
+        Establish what Resume owner-scoped assignments through durable engineering and host verification
+        stages means in practice from this component's own sources and retained evidence before proposing any change
+        to src/library/assignment.,
+      ]
   documentation:
     role: technical-writer
+    profile: luna
     operations: []
+    instructions: [
+        'Keep the documentation under docs/library/assignment describing Resume owner-scoped assignments
+        through durable engineering and host verification stages as delivered behaviour, never as intent.',
+      ]
   testing:
     role: designer
+    profile: luna
     operations: []
+    instructions: [
+        Express acceptance for Resume owner-scoped assignments through durable engineering and host verification
+        stages as checks over its declared public contract in tests/library/assignment; observe the failure before
+        changing behaviour.,
+      ]
   implementation:
     role: systems-engineer
+    profile: luna
     operations: []
+    instructions: [
+        'Change only what this goal requires inside src/library/assignment, preserving the public contract
+        and the ownership boundaries that declare it.',
+      ]
   review:
     role: reviewer
+    profile: luna
     operations: []
-owns:
-  - src/library/assignment
-  - tests/library/assignment
-  - docs/library/assignment
+    instructions: [
+        Judge the candidate against the stated acceptance and the standards in force for Resume owner-scoped
+        assignments through durable engineering and host verification stages; refuse on unmet behaviour rather than
+        style.,
+      ]
+owns: [src/library/assignment, tests/library/assignment, docs/library/assignment]
 api:
-  - module: src/library/assignment/checkpoints.ts
-  - module: src/library/assignment/plan.ts
-  - module: src/library/assignment/steward.ts
-  - schema: src/library/assignment/schemas/regression-expectation.json
-  - schema: src/library/assignment/schemas/general-agent-result.json
-  - schema: src/library/assignment/schemas/agent-result.json
-  - schema: src/library/assignment/schemas/assignment.json
-  - schema: src/library/assignment/schemas/plan-updates.json
-  - schema: src/library/assignment/schemas/plan.json
+  - { module: src/library/assignment/checkpoints.ts }
+  - { module: src/library/assignment/plan.ts }
+  - { module: src/library/assignment/steward.ts }
+  - { schema: src/library/assignment/schemas/regression-expectation.json }
+  - { schema: src/library/assignment/schemas/general-agent-result.json }
+  - { schema: src/library/assignment/schemas/agent-result.json }
+  - { schema: src/library/assignment/schemas/assignment.json }
+  - { schema: src/library/assignment/schemas/plan-updates.json }
+  - { schema: src/library/assignment/schemas/plan.json }

@@ -3,36 +3,61 @@ id: execution-runtime
 type: library
 parentId: cli-package
 purpose: Schedule durable assignments and project execution lifecycles
-objectives:
-  - Assemble dependent owner contributions through the canonical verified-delivery path
-  - Schedule durable assignments and project execution lifecycles
-constraints:
-  - Preserve captured authority and evidence
+objectives: [
+    Assemble dependent owner contributions through the canonical verified-delivery path,
+    Schedule durable
+    assignments and project execution lifecycles,
+  ]
+constraints: [Preserve captured authority and evidence]
 activities:
   research:
     role: researcher
+    profile: luna
     operations: []
+    instructions: [
+        Establish what Schedule durable assignments and project execution lifecycles means in practice
+        from this component's own sources and retained evidence before proposing any change to src/library/execution-runtime.,
+      ]
   documentation:
     role: technical-writer
+    profile: luna
     operations: []
+    instructions: [
+        'Keep the documentation under docs/library/execution-runtime describing Schedule durable assignments
+        and project execution lifecycles as delivered behaviour, never as intent.',
+      ]
   testing:
     role: designer
+    profile: luna
     operations: []
+    instructions: [
+        Express acceptance for Schedule durable assignments and project execution lifecycles as checks
+        over its declared public contract in tests/library/execution-runtime; observe the failure before changing
+        behaviour.,
+      ]
   implementation:
     role: systems-engineer
+    profile: luna
     operations: []
+    instructions: [
+        'Change only what this goal requires inside src/library/execution-runtime, preserving the public
+        contract and the ownership boundaries that declare it.',
+      ]
   review:
     role: reviewer
+    profile: luna
     operations: []
+    instructions: [
+        Judge the candidate against the stated acceptance and the standards in force for Schedule durable
+        assignments and project execution lifecycles; refuse on unmet behaviour rather than style.,
+      ]
 owns:
-  - src/library/execution-runtime
-  - tests/library/execution-runtime
-  - docs/library/execution-runtime
+  [src/library/execution-runtime, tests/library/execution-runtime, docs/library/execution-runtime]
 api:
-  - module: src/library/execution-runtime/run-workspace.ts
-  - module: src/library/execution-runtime/assignment-dispatch.ts
-  - module: src/library/execution-runtime/execution-controls.ts
-  - module: src/library/execution-runtime/execution-resources.ts
-  - module: src/library/execution-runtime/host-client.ts
-  - module: src/library/execution-runtime/project-host.ts
-  - module: src/library/execution-runtime/scheduler.ts
+  - { module: src/library/execution-runtime/run-workspace.ts }
+  - { module: src/library/execution-runtime/assignment-dispatch.ts }
+  - { module: src/library/execution-runtime/execution-controls.ts }
+  - { module: src/library/execution-runtime/execution-resources.ts }
+  - { module: src/library/execution-runtime/host-client.ts }
+  - { module: src/library/execution-runtime/project-host.ts }
+  - { module: src/library/execution-runtime/scheduler.ts }

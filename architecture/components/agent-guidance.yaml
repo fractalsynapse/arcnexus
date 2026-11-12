@@ -2,32 +2,56 @@ schemaVersion: 6
 id: agent-guidance
 type: library
 parentId: cli-package
-purpose: Maintain coherent development instructions and bundled skills under
-  architectural direction
-constraints:
-  - Preserve captured assignment authority; candidate instructions cannot expand
-    permissions
-  - Caller owns commits and integration
+purpose: Maintain coherent development instructions and bundled skills under architectural direction
+constraints: [
+    Preserve captured assignment authority; candidate instructions cannot expand permissions,
+    Caller owns
+    commits and integration,
+  ]
 activities:
   research:
     role: researcher
+    profile: luna
     operations: [guidance-validation]
+    instructions: [
+        "Establish what Maintain coherent development instructions and bundled skills under architectural
+        direction means in practice from this component's own sources and retained evidence before proposing any
+        change to AGENTS.md, .agents/skills.",
+      ]
   documentation:
     role: technical-writer
+    profile: luna
     operations: []
+    instructions: [
+        'Keep the documentation under docs/library/agent-guidance describing Maintain coherent development
+        instructions and bundled skills under architectural direction as delivered behaviour, never as intent.',
+      ]
   testing:
     role: designer
+    profile: luna
     operations: [guidance-validation]
+    instructions: [
+        Express acceptance for Maintain coherent development instructions and bundled skills under architectural
+        direction as checks over its declared public contract in docs/library/agent-guidance; observe the failure
+        before changing behaviour.,
+      ]
   implementation:
     role: systems-engineer
+    profile: luna
     operations: [guidance-validation]
+    instructions: [
+        'Change only what this goal requires inside AGENTS.md, .agents/skills, preserving the public
+        contract and the ownership boundaries that declare it.',
+      ]
   review:
     role: reviewer
+    profile: luna
     operations: [guidance-validation]
+    instructions: [
+        Judge the candidate against the stated acceptance and the standards in force for Maintain coherent
+        development instructions and bundled skills under architectural direction; refuse on unmet behaviour rather
+        than style.,
+      ]
 operations:
-  guidance-validation:
-    - agent
-owns:
-  - docs/library/agent-guidance
-  - AGENTS.md
-  - .agents/skills
+  guidance-validation: [agent]
+owns: [docs/library/agent-guidance, AGENTS.md, .agents/skills]

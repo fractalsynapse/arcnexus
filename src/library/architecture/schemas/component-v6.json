@@ -118,7 +118,7 @@
           "additionalProperties": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["role"],
+            "required": ["role", "instructions", "profile", "operations"],
             "properties": {
               "role": {
                 "type": "string",
@@ -305,7 +305,7 @@
           "additionalProperties": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["role"],
+            "required": ["role", "instructions", "profile", "operations"],
             "properties": {
               "role": {
                 "type": "string",
@@ -538,7 +538,7 @@
           "additionalProperties": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["role"],
+            "required": ["role", "instructions", "profile", "operations"],
             "properties": {
               "role": {
                 "type": "string",

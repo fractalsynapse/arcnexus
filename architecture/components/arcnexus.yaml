@@ -2,88 +2,105 @@ schemaVersion: 6
 id: arcnexus
 type: platform
 purpose: Enable architecture-directed self-development
-objectives:
-  - Produce independently verifiable bounded work
-constraints:
-  - Human architectural authority is final
-  - Candidate changes cannot redefine active acceptance
-  - Native agent commits and upstream mutations are forbidden; only captured
-    host operations may deliver changes. The director selects from all eligible
-    project stewards, and dependency requests may activate further owners.
+objectives: [Produce independently verifiable bounded work]
+constraints: [
+    Human architectural authority is final,
+    Candidate changes cannot redefine active acceptance,
+    'Native
+    agent commits and upstream mutations are forbidden; only captured host operations may deliver changes. The director
+    selects from all eligible project stewards, and dependency requests may activate further owners.',
+  ]
 executionProfile: luna
 activities:
   research:
     role: researcher
     profile: sol
     operations: [component-format-check, component-lint, component-tests]
+    instructions: [
+        Establish what Enable architecture-directed self-development means in practice from this component's
+        own sources and retained evidence before proposing any change to arcnexus.,
+      ]
   documentation:
     role: technical-writer
     profile: sol
     operations: [component-format, component-format-check, component-lint]
+    instructions: [
+        'Keep the documentation under arcnexus describing Enable architecture-directed self-development
+        as delivered behaviour, never as intent.',
+      ]
   testing:
     role: designer
+    profile: luna
     operations: [component-format, component-format-check, component-lint, component-tests]
+    instructions: [
+        Express acceptance for Enable architecture-directed self-development as checks over its declared
+        public contract in arcnexus; observe the failure before changing behaviour.,
+      ]
   implementation:
     role: systems-engineer
-    operations: [comment-issue, component-format, component-format-check, component-lint, component-tests]
+    profile: luna
+    operations:
+      [comment-issue, component-format, component-format-check, component-lint, component-tests]
+    instructions: [
+        'Change only what this goal requires inside arcnexus, preserving the public contract and the
+        ownership boundaries that declare it.',
+      ]
   review:
     role: reviewer
     profile: sol
     operations: [component-format-check, component-lint, component-tests]
+    instructions: [
+        Judge the candidate against the stated acceptance and the standards in force for Enable architecture-directed
+        self-development; refuse on unmet behaviour rather than style.,
+      ]
   release:
     role: release-engineer
-    operations: [migrated-recipe-43b539fb85a57c26, migrated-recipe-719d77e27c5d9798, migrated-recipe-df6d67ddacf5bf0c, migrated-recipe-f1691da2bfa5a18c, migrated-recipe-f36c9dcd75620b35]
-reads:
-  - .
+    profile: luna
+    operations:
+      [
+        migrated-recipe-43b539fb85a57c26,
+        migrated-recipe-719d77e27c5d9798,
+        migrated-recipe-df6d67ddacf5bf0c,
+        migrated-recipe-f1691da2bfa5a18c,
+        migrated-recipe-f36c9dcd75620b35,
+      ]
+    instructions: [
+        'Publish only what the assembled verification accepted, and record exactly what shipped for Enable
+        architecture-directed self-development.',
+      ]
+reads: [.]
 operations:
-  migrated-recipe-43b539fb85a57c26:
-    - delivery
-  migrated-recipe-df6d67ddacf5bf0c:
-    - delivery
-  comment-issue:
-    - agent
-  migrated-recipe-f1691da2bfa5a18c:
-    - delivery
-  migrated-recipe-719d77e27c5d9798:
-    - delivery
-  migrated-recipe-f36c9dcd75620b35:
-    - delivery
-  migrated-recipe-eddf6384eb12cd8d:
-    - preflight
-  migrated-recipe-c6b0f27327a0cc0c:
-    - preflight
-  migrated-recipe-e09c2ec5bc9f2e64:
-    - preflight
-  migrated-recipe-e58bdff3c39641d2:
-    - setup
-  migrated-recipe-a7573c70ed1a3dfa:
-    - setup
-  component-tests:
-    - agent
-  component-lint:
-    - agent
-    - verify
-  component-format:
-    - agent
-  component-format-check:
-    - verify
-director:
-  component: task-intake
-  profile: sol
+  migrated-recipe-43b539fb85a57c26: [delivery]
+  migrated-recipe-df6d67ddacf5bf0c: [delivery]
+  comment-issue: [agent]
+  migrated-recipe-f1691da2bfa5a18c: [delivery]
+  migrated-recipe-719d77e27c5d9798: [delivery]
+  migrated-recipe-f36c9dcd75620b35: [delivery]
+  migrated-recipe-eddf6384eb12cd8d: [preflight]
+  migrated-recipe-c6b0f27327a0cc0c: [preflight]
+  migrated-recipe-e09c2ec5bc9f2e64: [preflight]
+  migrated-recipe-e58bdff3c39641d2: [setup]
+  migrated-recipe-a7573c70ed1a3dfa: [setup]
+  component-tests: [agent]
+  component-lint: [agent, verify]
+  component-format: [agent]
+  component-format-check: [verify]
+director: { component: task-intake, profile: sol }
 reviewerProfile: sol
 defaultPackage: cli-package
 verificationInputs:
-  - package.json
-  - package-lock.json
-  - scripts
-  - tests
-  - architecture/test-profiles
-  - eslint.config.ts
-  - tsconfig.json
-  - tsconfig.build.json
-  - tsconfig.tests.json
-  - tsconfig.fixtures.json
-  - tsconfig.tooling.json
+  [
+    package.json,
+    package-lock.json,
+    scripts,
+    tests,
+    architecture/test-profiles,
+    eslint.config.ts,
+    tsconfig.json,
+    tsconfig.build.json,
+    tsconfig.tests.json,
+    tsconfig.fixtures.json,
+    tsconfig.tooling.json,
+  ]
 testProfile: node
-standards:
-  - readable-typescript
+standards: [readable-typescript]

@@ -2,42 +2,68 @@ schemaVersion: 6
 id: report
 type: library
 parentId: cli-package
-purpose: Project honest run, assignment and verification evidence without
-  changing authority
-objectives:
-  - Make actual execution outcomes easy to inspect
-  - Supply canonical execution facts and pinned artifacts to every model consumer
-constraints:
-  - Preserve JSON evidence and existing report fields except explicitly recorded terminal evidence expiration
-  - Use the captured execution record without inspecting mutable target files
-  - Preserve observed evidence and identify runtime changes across recovery
+purpose: Project honest run, assignment and verification evidence without changing authority
+objectives: [
+    Make actual execution outcomes easy to inspect,
+    Supply canonical execution facts and pinned artifacts
+    to every model consumer,
+  ]
+constraints: [
+    Preserve JSON evidence and existing report fields except explicitly recorded terminal evidence expiration,
+    Use the captured execution record without inspecting mutable target files,
+    Preserve observed evidence and identify
+    runtime changes across recovery,
+  ]
 activities:
   research:
     role: researcher
+    profile: luna
     operations: [report-format]
+    instructions: [
+        "Establish what Project honest run, assignment and verification evidence without changing authority
+        means in practice from this component's own sources and retained evidence before proposing any change to
+        .arc/learning, src/library/report.",
+      ]
   documentation:
     role: technical-writer
+    profile: luna
     operations: [report-format]
+    instructions: [
+        'Keep the documentation under docs/library/report describing Project honest run, assignment and
+        verification evidence without changing authority as delivered behaviour, never as intent.',
+      ]
   testing:
     role: designer
+    profile: luna
     operations: [report-format]
+    instructions: [
+        'Express acceptance for Project honest run, assignment and verification evidence without changing
+        authority as checks over its declared public contract in tests/library/report; observe the failure before
+        changing behaviour.',
+      ]
   implementation:
     role: systems-engineer
+    profile: luna
     operations: [report-format]
+    instructions: [
+        'Change only what this goal requires inside .arc/learning, src/library/report, preserving the
+        public contract and the ownership boundaries that declare it.',
+      ]
   review:
     role: reviewer
+    profile: luna
     operations: [report-format]
+    instructions: [
+        'Judge the candidate against the stated acceptance and the standards in force for Project honest
+        run, assignment and verification evidence without changing authority; refuse on unmet behaviour rather than
+        style.',
+      ]
 operations:
-  report-format:
-    - agent
-owns:
-  - .arc/learning
-  - src/library/report
-  - tests/library/report
-  - docs/library/report
+  report-format: [agent]
+owns: [.arc/learning, src/library/report, tests/library/report, docs/library/report]
 api:
-  - module: src/library/report/resource-query.ts
-  - module: src/library/report/report.ts
-  - module: src/library/report/timeline.ts
-  - module: src/library/report/progress.ts
-  - module: src/library/report/workday-report.ts
+  - { module: src/library/report/resource-query.ts }
+  - { module: src/library/report/report.ts }
+  - { module: src/library/report/timeline.ts }
+  - { module: src/library/report/progress.ts }
+  - { module: src/library/report/workday-report.ts }
