@@ -44,42 +44,30 @@ class ArchitectureTests {
   /** Verifies that built validate enforces declared maintained file ownership. */
   builtValidateEnforcesDeclaredMaintainedFileOwnership(t: TestContext) {
     const f = fixture(t);
-    f.put('architecture/ownership.json', {
-      schemaVersion: 1,
-      maintainedPaths: ['source.txt'],
-      owners: [
-        {
-          component: 'sample',
-          paths: ['other.txt'],
-          publicModules: [],
-          directoryExceptions: ['.'],
-        },
-      ],
-    });
+    // Ownership derives from what components declare, so the refusal is provoked by a tracked file
+    // that no component claims rather than by a hand-authored policy the loader no longer reads.
+    f.component.owns = ['other.txt'];
+    f.put('architecture/components/sample.json', f.component);
+    f.put('orphan.txt', 'nobody maintains this');
     f.commit();
     const r = f.run('validate');
     assert.equal(r.status, 2, r.stderr);
-    assert.match(r.stderr, /source.txt.*owner|owner.*source.txt/);
+    assert.match(r.stderr, /orphan.txt.*owner|owner.*orphan.txt/);
   }
 
   /** Verifies that built validate rejects overlapping ownership even without changed files. */
   builtValidateRejectsOverlappingOwnershipEvenWithoutChangedFiles(t: TestContext) {
     const f = fixture(t);
+    // Two leaves claiming the same path is the overlap this scenario guards, stated through owned
+    // declarations instead of a policy file that nothing reads any more.
+    f.component.owns = ['shared.txt'];
+    f.put('architecture/components/sample.json', f.component);
     f.put('architecture/components/other.json', {
       ...f.component,
       id: 'other',
-      owns: ['source.txt'],
+      owns: ['shared.txt'],
     });
-    f.put('architecture/ownership.json', {
-      schemaVersion: 1,
-      maintainedPaths: ['source.txt'],
-      owners: ['sample', 'other'].map((component: any) => ({
-        component,
-        paths: ['source.txt'],
-        publicModules: [],
-        directoryExceptions: ['.'],
-      })),
-    });
+    f.put('shared.txt', 'claimed twice');
     f.commit();
     const r = f.run('validate');
     assert.equal(r.status, 2, r.stderr);
@@ -178,13 +166,9 @@ class ArchitectureTests {
     mkdirSync(join(f.repo, 'src'));
     writeFileSync(join(f.repo, 'src/a.ts'), "import './b.js';");
     writeFileSync(join(f.repo, 'src/b.ts'), "import './a.js';");
-    f.put('architecture/ownership.json', {
-      schemaVersion: 1,
-      maintainedPaths: ['src'],
-      owners: [
-        { component: 'sample', paths: ['src'], publicModules: [], directoryExceptions: ['.'] },
-      ],
-    });
+    // The cycle is what this scenario refuses, so ownership is stated the way the loader derives it.
+    f.component.owns = ['src'];
+    f.put('architecture/components/sample.json', f.component);
     f.commit();
     const r = f.run('validate');
     assert.equal(r.status, 2, r.stderr);
