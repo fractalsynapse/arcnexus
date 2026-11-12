@@ -47,14 +47,11 @@ export class WorkflowFixture {
     id: 'sample',
     type: 'library',
     purpose: 'Own sample behavior',
-    path: 'source.txt',
     objectives: ['Bounded change'],
     constraints: ['No commits'],
-    documentation: ['docs'],
-    tests: ['tests'],
-    access: { readPaths: ['.'], writeDirectories: ['.'] },
-    allowedWritePaths: ['source.txt', 'docs', 'tests', 'new.txt'],
-    verification: [{ command: 'node', args: ['verify.cjs'] }],
+    // Ownership is the write scope: path, access and allowed-write derivations all come from it,
+    // and verification comes from the operations bound to the component, so none is authored.
+    owns: ['source.txt', 'docs', 'tests', 'new.txt'],
   };
 
   private options: WorkflowOptions;
@@ -145,10 +142,11 @@ export class WorkflowFixture {
     writeFileSync(
       join(this.repo, 'architecture/environment.yaml'),
       JSON.stringify({
-        schemaVersion: 1,
-        prerequisites: [],
-        setup: [],
-        generatedDirectories: ['generated'],
+        schemaVersion: 4,
+        workspace: {
+          primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
+          dependencies: [],
+        },
       }),
     );
   }
