@@ -1,4 +1,3 @@
-import { validateContractSchemas } from './contract-schemas.js';
 import { RevisionArtifacts } from './revision-artifacts.js';
 import { posix } from 'node:path';
 import type { Catalog, Component } from './components.js';
@@ -63,7 +62,6 @@ export class ArchitectureReferences {
 
   /** Resolves captured inputs and rejects unsupported or inconsistent configuration. */
   resolve(): void {
-    const contracts = this.contracts();
     const standards = this.capturedStandards();
     for (const component of Object.values(this.catalog.components)) {
       if (component.schemaVersion === 6) {
@@ -74,21 +72,6 @@ export class ArchitectureReferences {
         });
         continue;
       }
-      if (component.schemaVersion === 5) {
-        component.patternSnapshots = component.patterns.map((id) => this.guidance(id));
-        continue;
-      }
-      if (component.schemaVersion !== 4) continue;
-      component.providedSnapshots = [...contracts.values()].filter(
-        (entry) => entry.owner === component.id,
-      );
-      component.patternSnapshots = (component.patternIds ?? []).map((id) => this.guidance(id));
-      component.contractSnapshots = (component.consumes ?? []).map((reference) => {
-        const contract = contracts.get(reference.id);
-        if (!contract || contract.version !== reference.version)
-          throw new Error(`Missing or incompatible contract: ${reference.id}`);
-        return contract;
-      });
     }
   }
 
@@ -99,30 +82,7 @@ export class ArchitectureReferences {
     return new Map(this.catalog.standards?.map((standard) => [standard.id, standard]));
   }
 
-  /** Resolves provided and consumed contract identities and supported versions. */
-  private contracts() {
-    const result = new Map<
-      string,
-      ContractDefinition & { owner: string; artifact?: ReferenceArtifact }
-    >();
-    for (const component of Object.values(this.catalog.components)) {
-      for (const definition of component.provides ?? []) {
-        if (result.has(definition.id)) throw new Error(`Duplicate contract: ${definition.id}`);
-        const path = this.ownedPath(component, definition.path);
-        const artifact = this.artifact(path, component.repository);
-        if (definition.kind === 'json-schema' && artifact) JSON.parse(artifact.text);
-        result.set(definition.id, { ...definition, path, owner: component.id, artifact });
-      }
-    }
-    validateContractSchemas(
-      [...result.values()]
-        .filter((entry) => entry.kind === 'json-schema' && entry.artifact)
-        .map((entry) => JSON.parse(entry.artifact!.text)),
-    );
-    return result;
-  }
-
-  /** Loads the referenced standard and optional supporting artifacts. */
+  /** Reads one captured guidance document, resolving its owner-declared path. */
   private guidance(id: string, kind: 'pattern' | 'standard' = 'pattern') {
     relativePath(id);
     const label = kind === 'standard' ? 'Standard' : 'Pattern';

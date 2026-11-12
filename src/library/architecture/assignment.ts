@@ -231,7 +231,6 @@ class AssignmentResolver {
 
   /** Resolves captured inputs and rejects unsupported or inconsistent configuration. */
   resolve(): ResolvedAssignment {
-    this.assertReferences();
     const { catalog, assignment, context, component, base, id, env } = this;
     const execution = this.execution();
     const data = {
@@ -314,14 +313,6 @@ class AssignmentResolver {
         eligible: this.options.eligibleOwners?.includes(owner.component),
       }));
     return { owners: Object.keys(components), ownership };
-  }
-
-  /** Rejects unresolved references before they can enter assignment context. */
-  private assertReferences(): void {
-    for (const component of this.context)
-      for (const contract of component.contractSnapshots ?? [])
-        if (!contract.artifact)
-          throw new InputError(`Missing repository binding for captured contract: ${contract.id}`);
   }
 
   /** Collects source snapshots used to reconstruct assignment authority. */

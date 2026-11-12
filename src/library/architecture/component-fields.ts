@@ -1,5 +1,3 @@
-import type { ContractDefinition, ReferenceArtifact } from './references.js';
-
 /**
  * The resolved fields a component acquires from its lineage and captured source.
  *
@@ -11,11 +9,6 @@ import type { ContractDefinition, ReferenceArtifact } from './references.js';
 export interface ComponentFields {
   testProfile?: string;
   capturedTests?: import('../testing/captured-tests.js').CapturedTest[];
-  provides?: ContractDefinition[];
-  consumes?: Array<{ id: string; version: string }>;
-  patternSnapshots?: Array<{ id: string; artifacts: ReferenceArtifact[] }>;
-  providedSnapshots?: Array<ContractDefinition & { owner: string; artifact?: ReferenceArtifact }>;
-  contractSnapshots?: Array<ContractDefinition & { owner: string; artifact?: ReferenceArtifact }>;
   repositoryRoot?: string;
   ownership?: {
     paths: string[];
@@ -24,7 +17,6 @@ export interface ComponentFields {
   };
   discovery?: { source: string[]; documentation: string[]; tests: string[]; exclude: string[] };
   coverageExclusions?: Array<{ path: string; reason: string }>;
-  patternIds?: string[];
   inventoryAvailability?: 'captured' | 'requires_repository_binding';
   inventory?: Array<{ path: string; kind: string; sha256: string }>;
 }

@@ -62,9 +62,5 @@ function contractView(component: Component) {
       id: standard.id,
       artifacts: standard.artifacts.map(({ path, sha256 }) => ({ path, sha256 })),
     })),
-    provides:
-      component.providedSnapshots?.map(({ artifact: _artifact, ...contract }) => contract) ?? [],
-    consumes:
-      component.contractSnapshots?.map(({ artifact: _artifact, ...contract }) => contract) ?? [],
   };
 }
