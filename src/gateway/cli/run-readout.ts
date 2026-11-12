@@ -10,6 +10,8 @@
 export class RunReadout {
   private cursor = 0;
 
+  private identifiers = new Set<string>();
+
   /** Binds the readout to a request function so it works for any host transport. */
   constructor(
     private readonly request: (action: string, extra?: Record<string, unknown>) => Promise<unknown>,
@@ -21,6 +23,10 @@ export class RunReadout {
 
   /** Prints each new event as one JSON object per line; returns how many lines were written. */
   async poll(): Promise<number> {
+    // Assignment updates name only their assignment, so the readout learns the run's assignment ids
+    // from the run itself and filters on the same identifier set the resource query uses. Without
+    // this, following a run would show its status changes but silently omit the work inside them.
+    if (!this.identifiers.size) await this.identify();
     const events = (await this.request('events', { after: this.cursor })) as EventRow[];
     let written = 0;
     for (const event of events) {
@@ -32,25 +38,35 @@ export class RunReadout {
     return written;
   }
 
+  /** Collects the run and assignment identities that a stream for this run must include. */
+  private async identify(): Promise<void> {
+    this.identifiers.add(this.runId);
+    const view = (await this.request('task-status')) as {
+      assignments?: Array<{ id?: string }>;
+    };
+    for (const assignment of view.assignments ?? [])
+      if (typeof assignment.id === 'string') this.identifiers.add(assignment.id);
+  }
+
   /** Prints the run summary as a single JSON object, the shape `--async` reports. */
   summary(run: unknown): void {
     process.stdout.write(`${JSON.stringify(run)}\n`);
   }
 
   /**
-   * True when an event names this run, or names no run at all and so describes its environment.
+   * True when an event names this run.
    *
-   * A store event carries the subject under whichever key its type uses: `id` for run and assignment
-   * mutations, `runId` for turn and activity records, `from`/`to` for transitions. The resource layer
-   * already filters on that set, so the streaming readout matches it rather than inventing a second
-   * rule that would show one command events the other withholds.
+   * A store event carries its subject under whichever key its type uses: `id` for run and assignment
+   * mutations, `runId` for turn and activity records, `from`/`to` for transitions. Events naming no
+   * run - host runtime changes, for instance - describe the machine rather than the work, so they are
+   * not part of a run's stream; including them replayed months of unrelated history before the run's
+   * first line. The resource query filters the same way, so both paths show the same events.
    */
   private belongsToRun(event: EventRow): boolean {
     const detail = (parse(event.data) ?? {}) as Record<string, unknown>;
-    const names = ['id', 'runId', 'from', 'to']
-      .map((key) => detail[key])
-      .filter((value): value is string => typeof value === 'string');
-    return names.length === 0 || names.includes(this.runId);
+    return ['id', 'runId', 'from', 'to'].some(
+      (key) => typeof detail[key] === 'string' && this.identifiers.has(detail[key] as string),
+    );
   }
 }
 
