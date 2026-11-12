@@ -1,4 +1,6 @@
 import { modeFor, type Mode } from './modes.js';
+import { standardsInForce } from './frame.js';
+import type { ComponentActivity } from './components.js';
 import { OwnershipValidator } from './ownership.js';
 import { ComponentOperationPlans } from './component-operation-plans.js';
 import { validateOwnerWorkflow } from './assignment-scope.js';
@@ -279,7 +281,7 @@ class AssignmentResolver {
           {
             role: structuredClone(this.catalog.roles[config.role]!),
             operations: (config.operations ?? []).map(resolveActivityOperation),
-            standards: this.standardsFor(config.role),
+            standards: this.standardsFor(config.role, config),
             ...(config.instructions ? { instructions: [...config.instructions] } : {}),
             ...(profileId ? { profile: structuredClone(this.catalog.profiles[profileId]!) } : {}),
           },
@@ -294,12 +296,8 @@ class AssignmentResolver {
    * Resolved at capture so a running activation never consults the catalog again, and a later edit
    * to a standard definition cannot silently change what an already-dispatched assignment was told.
    */
-  private standardsFor(roleId: string): string[] {
-    const known = new Set((this.catalog.standards ?? []).map((standard) => standard.id));
-    const role = this.catalog.roles[roleId];
-    return [...new Set([...(this.component.standards ?? []), ...(role?.standards ?? [])])].filter(
-      (id) => known.has(id),
-    );
+  private standardsFor(roleId: string, activity: ComponentActivity): string[] {
+    return standardsInForce(this.catalog, this.component, this.catalog.roles[roleId]!, activity);
   }
 
   /** Captures owner identities and repository-relative routing paths without granting write access. */

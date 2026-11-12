@@ -4,6 +4,12 @@
 
 ### Changed
 
+- **Standards are now declarable on an activity, and one resolver decides what binds** (#394,
+  architect ruling 2026-11-12): components, activities and roles may each declare standards; the set
+  in force for one activation is their union, limited to ids the catalog knows. Assignment capture
+  previously kept its own copy of that rule, so an inspection and a running agent could drift apart
+  the moment an activity declared a standard - both now call `standardsInForce`.
+
 - **Component ownership is now the only write authority** (#394, architect ruling 2026-11-12):
   `access.writeDirectories` was assigned exactly one value anywhere in the codebase - `[]` - so the
   directory-grant checks built on it could never fire, while `validateAccess` still _required_ the

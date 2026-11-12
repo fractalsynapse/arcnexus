@@ -87,6 +87,8 @@ export interface ComponentActivity {
   instructions?: string[];
   profile?: string;
   operations?: ActivityOperation[];
+  /** Standards this activity declares for itself, joined to the component's and the position's. */
+  standards?: string[];
 }
 
 export type ActivityOperation =

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
+import { loadCatalog } from '../../../../dist/library/architecture/components.js';
 import { ComponentFixture } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
@@ -113,8 +114,8 @@ class ActivityAuthoringScenarios {
     assert.equal(f.run('validate').status, 0);
   }
 
-  /** An activity's own standards are authorable and reach the rendered frame. */
-  standardsReachTheFrame(t: TestContext): void {
+  /** An activity's own standards are authorable and survive materialisation. */
+  standardsSurviveMaterialisation(t: TestContext): void {
     const f = new ComponentFixture(t);
     f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     f.put('package/standard/notes.md', 'A scope nothing else owns.\n');
@@ -136,10 +137,13 @@ class ActivityAuthoringScenarios {
     );
     f.commit();
     assert.equal(f.run('validate').status, 0, f.run('validate').stderr);
-    // Authoring surface only, for now: `ComponentActivity` has no standards field and frame.ts
-    // resolves standards from the component plus the catalog, so nothing reads this declaration
-    // yet. Landing the reader is the open standards question (#394); this pins that an activity
-    // *may* state its own standards so that change has something to bind to.
+    // Both frame paths resolve what is in force from the materialized activity, so a declared
+    // standard has to survive materialisation: `standardsInForce` unions component, position and
+    // activity, and assignment capture calls that same function rather than keeping its own copy.
+    const catalog = loadCatalog(f.root, f.git('rev-parse', 'HEAD'));
+    assert.deepEqual(catalog.components.standardised?.activities.research?.standards, [
+      'Sealed lanes never push',
+    ]);
   }
 }
 
@@ -157,7 +161,7 @@ test('validate refuses a role that carries an activity of its own', (t) =>
 test('one position may be selected by several activities in a component', (t) =>
   scenarios.onePositionManyActivities(t));
 
-test('an activity may declare its own standards and the frame shows them', (t) =>
-  scenarios.standardsReachTheFrame(t));
+test('an activity may declare its own standards and materialisation keeps them', (t) =>
+  scenarios.standardsSurviveMaterialisation(t));
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });

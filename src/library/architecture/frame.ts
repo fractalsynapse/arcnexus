@@ -65,7 +65,7 @@ export function activityFrame(input: FrameInput): ActivityFrame {
     activity,
     role,
     instructions: activityInstructions(declared),
-    standards: standardIds(catalog, component, role),
+    standards: standardsInForce(catalog, component, role, declared),
     operations: (declared.operations ?? []).map(toOperation),
     ...(declared.profile ? { profile: declared.profile } : {}),
   };
@@ -97,19 +97,30 @@ function activityInstructions(declared: ComponentActivity): string[] {
 }
 
 /**
- * Standards in force for this activity: the component's own, plus those the position carries.
+ * Standards in force for one activity - the single resolver both frame paths use.
  *
- * Architecture-model I8 says standards attach to activities rather than bespoke prompts and are
- * shared once per catalog. Before this, standards were attached by component only, so an activity
- * inside a component inherited every standard that component had ever needed.
+ * Architecture-model I8 attaches standards to activities rather than bespoke prompts, shared once
+ * per catalog; the architect's 2026-11-12 ruling adds that a component, an activity and a position
+ * may each declare them. The set is therefore their union, kept to ids the catalog actually knows
+ * so a typo cannot claim authority. Assignment capture calls the same function rather than keeping
+ * its own copy, because two resolvers are how an activation and an inspection drift apart.
  */
-function standardIds(catalog: Catalog, component: Component, role: Role): string[] {
+export function standardsInForce(
+  catalog: Catalog,
+  component: Component,
+  role: Role,
+  activity?: ComponentActivity,
+): string[] {
   const known = new Set(
     (catalog.standards ?? []).map((standard) => (standard as { id: string }).id),
   );
-  return [...new Set([...(component.standards ?? []), ...(role.standards ?? [])])].filter((id) =>
-    known.has(id),
-  );
+  return [
+    ...new Set([
+      ...(component.standards ?? []),
+      ...(role.standards ?? []),
+      ...(activity?.standards ?? []),
+    ]),
+  ].filter((id) => known.has(id));
 }
 
 /** Everything one frame states, whether resolved from a catalog or from a captured assignment. */
