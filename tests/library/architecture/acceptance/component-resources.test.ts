@@ -99,7 +99,10 @@ class ComponentResourceScenarios {
     const { revision, ...before } = service.get(target, 'sample');
     const path = 'architecture/components/unrelated-filename.json';
     const declaration = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
-    declaration.role = 'engineer';
+    // A field the inspected component does not expose, and that the current component shape
+    // actually allows: a component carries no role, so the old vehicle for this edit could no
+    // longer load. The question under test is byte-level source binding, not which field changed.
+    declaration.questions = ['What binds a token to its source?'];
     f.put(path, declaration);
     f.commit();
     const { revision: updated, ...after } = service.get(target, 'sample');
