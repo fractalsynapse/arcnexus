@@ -28,7 +28,10 @@ class PlatformExecutionScenarios {
       /shared architecture environment definition/i,
     );
     this.assertStartupRejected(fixture.root, /shared architecture environment definition/i);
-    assert.equal(fixture.run('validate').status, 0);
+    // Configurations carry no version to support, so the mixed-family document is refused by
+    // validation itself, not only when a host starts. The old expectation here - validate succeeds
+    // while execution refuses - was legacy-shape support, and it is the thing the ruling removed.
+    assert.equal(fixture.run('validate').status, 2, fixture.run('validate').stderr);
   }
 
   /** Checks both option-free entry points without allowing a stalled host to hang qualification. */
