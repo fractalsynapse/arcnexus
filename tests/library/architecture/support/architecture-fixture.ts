@@ -41,6 +41,9 @@ export class ArchitectureFixture {
         instructions: ['Establish what the sample component guarantees before changing it'],
       },
     },
+    // Verification derives from the operations a component binds, so the leaf binds its finite check
+    // here; a leaf that binds nothing is refused as an executable owner with no verification.
+    operations: { verify: ['verify'] },
   };
 
   component: any;
@@ -130,9 +133,29 @@ export class ArchitectureFixture {
       repository: 'sample',
       root: '.',
     });
+    this.verificationOperation();
     this.component = { ...this.common, id: 'sample', type: 'library', parentId: 'package' };
     this.put('architecture/components/sample.json', this.component);
     this.maintainer();
+  }
+
+  /** Declares the finite check the fixture's leaves bind as their verification. */
+  private verificationOperation(): void {
+    this.put('architecture/operations/verify.yaml', {
+      schemaVersion: 4,
+      id: 'verify',
+      purpose: 'Check the fixture behavior',
+      kind: 'command',
+      repository: 'sample',
+      cwd: '.',
+      category: 'unit-test',
+      command: 'node',
+      args: ['test.mjs'],
+      generatedDirectories: [],
+      artifacts: [],
+      prerequisites: [],
+      network: false,
+    });
   }
 
   /**
@@ -155,6 +178,7 @@ export class ArchitectureFixture {
         'test.mjs',
         'architecture/roles/engineer.json',
         'architecture/execution-profiles',
+        'architecture/operations/verify.yaml',
         'architecture/environment.json',
         'architecture/components/platform.json',
         'architecture/components/package.json',
@@ -180,6 +204,9 @@ export class ArchitectureFixture {
       commandTimeoutSeconds: 120,
       maxTurns: 3,
       maxCorrectiveTurns: 2,
+      // Operations outside this list are refused, so a fixture that binds a check must name the
+      // category that check uses.
+      operationCategories: ['unit-test'],
     });
   }
 
