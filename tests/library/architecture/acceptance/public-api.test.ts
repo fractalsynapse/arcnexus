@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises intentional public boundaries through the built catalog command and captured source. */
@@ -105,8 +105,8 @@ class PublicApiScenarios {
   }
 
   /** Supplies a minimal owned leaf with the scenario's intentional public entry points. */
-  private fixture(t: TestContext, api: unknown[]): ComponentV5Fixture {
-    const fixture = new ComponentV5Fixture(t);
+  private fixture(t: TestContext, api: unknown[]): ComponentFixture {
+    const fixture = new ComponentFixture(t);
     fixture.put(
       'architecture/components/unrelated-filename.json',
       fixture.component('sample', 'library', {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Checks symbol-level owner boundaries and generated consumer evidence through production catalog loading. */
@@ -97,8 +97,8 @@ class PublicImportScenarios {
   }
 
   /** Creates two disjoint owners with one intentionally exposed value and one private export. */
-  private fixture(t: TestContext, source: string): ComponentV5Fixture {
-    const fixture = new ComponentV5Fixture(t);
+  private fixture(t: TestContext, source: string): ComponentFixture {
+    const fixture = new ComponentFixture(t);
     fixture.put(
       'architecture/components/unrelated-filename.json',
       fixture.component('sample', 'library', {

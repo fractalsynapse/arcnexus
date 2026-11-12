@@ -2,14 +2,14 @@ import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Verifies minimal declarations through production catalog loading and ownership validation. */
-class ComponentV5Scenarios {
+class ComponentScenarios {
   /** Ignores runtime protection directories without modifying the real source checkout. */
   protectedDirectories(t: TestContext): void {
-    const f = new ComponentV5Fixture(t);
+    const f = new ComponentFixture(t);
     for (const name of ['.agents', '.aws', '.codex', '.git'])
       mkdirSync(join(f.root, 'architecture/components', name));
     const result = f.run('validate');
@@ -25,7 +25,7 @@ class ComponentV5Scenarios {
 
   /** Resolves inherited policy, implicit definition ownership and revision-bound file classification. */
   minimal(t: TestContext): void {
-    const f = new ComponentV5Fixture(t);
+    const f = new ComponentFixture(t);
     const r = f.run('validate');
     assert.equal(r.status, 0, r.stderr);
     const owner = JSON.parse(r.stdout).owners.sample;
@@ -52,7 +52,7 @@ class ComponentV5Scenarios {
 
   /** Rejects obsolete authored fields rather than silently deriving around contradictory authority. */
   obsolete(t: TestContext, field: string): void {
-    const f = new ComponentV5Fixture(t);
+    const f = new ComponentFixture(t);
     f.put(
       'architecture/components/unrelated-filename.json',
       f.uncheckedComponent('sample', 'library', {
@@ -69,7 +69,7 @@ class ComponentV5Scenarios {
 
   /** Prevents a descendant from widening an explicit read boundary. */
   reads(t: TestContext): void {
-    const f = new ComponentV5Fixture(t);
+    const f = new ComponentFixture(t);
     f.put(
       'architecture/components/package.json',
       f.component('package', 'package', {
@@ -92,7 +92,7 @@ class ComponentV5Scenarios {
 
   /** Finds both unowned existing files and ownership overlap before future files are created. */
   ownership(t: TestContext, overlap: boolean): void {
-    const f = new ComponentV5Fixture(t);
+    const f = new ComponentFixture(t);
     if (overlap)
       f.put(
         'architecture/components/other.json',
@@ -108,7 +108,7 @@ class ComponentV5Scenarios {
 
   /** Captures only committed source and changes its file inventory after a new revision. */
   revision(t: TestContext): void {
-    const f = new ComponentV5Fixture(t);
+    const f = new ComponentFixture(t);
     f.put('package/docs/added.md', 'New document');
     const before = f.run('validate');
     assert.equal(before.status, 0, before.stderr);
@@ -120,22 +120,22 @@ class ComponentV5Scenarios {
   }
 }
 
-const scenarios = new ComponentV5Scenarios();
+const scenarios = new ComponentScenarios();
 
-test('v5 ignores protected directories during catalog discovery', (t) =>
+test('ignores protected directories during catalog discovery', (t) =>
   scenarios.protectedDirectories(t));
 
-test('v5 derives minimal leaf policy, ownership and inventory', (t) => scenarios.minimal(t));
+test('derives minimal leaf policy, ownership and inventory', (t) => scenarios.minimal(t));
 
 for (const field of ['path', 'discovery', 'verification', 'relatedIds', 'provides', 'operationIds'])
   test(`v5 rejects retired ${field} declarations`, (t) => scenarios.obsolete(t, field));
 
-test('v5 rejects widened inherited read access', (t) => scenarios.reads(t));
+test('rejects widened inherited read access', (t) => scenarios.reads(t));
 
-test('v5 rejects unowned maintained files', (t) => scenarios.ownership(t, false));
+test('rejects unowned maintained files', (t) => scenarios.ownership(t, false));
 
-test('v5 rejects overlapping future ownership', (t) => scenarios.ownership(t, true));
+test('rejects overlapping future ownership', (t) => scenarios.ownership(t, true));
 
-test('v5 inventory is pinned to committed authority', (t) => scenarios.revision(t));
+test('inventory is pinned to committed authority', (t) => scenarios.revision(t));
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });

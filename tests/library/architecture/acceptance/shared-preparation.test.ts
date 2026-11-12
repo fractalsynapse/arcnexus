@@ -3,12 +3,12 @@ import { WorkspaceCliFixture } from '../../testing/support/workspace-cli-fixture
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { delimiter, join } from 'node:path';
 import { test, type TestContext } from 'node:test';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises shared setup operations through actual workspace preparation and installed confinement. */
 class SharedPreparationScenarios {
-  private readonly workspaces = new WeakMap<ComponentV5Fixture, WorkspaceCliFixture>();
+  private readonly workspaces = new WeakMap<ComponentFixture, WorkspaceCliFixture>();
 
   /** Uses captured Node identity even when the caller PATH contains an unrelated inaccessible executable. */
   boundRuntime(t: TestContext): void {
@@ -124,14 +124,14 @@ class SharedPreparationScenarios {
   }
 
   /** Uses private fixture evidence and returns the persisted report even when setup fails. */
-  private execute(f: ComponentV5Fixture) {
+  private execute(f: ComponentFixture) {
     const result = this.workspaces.get(f)!.prepare();
     const report = result.stdout.trim() ? JSON.parse(result.stdout) : undefined;
     return { result, report };
   }
 
   /** Registers valid initial authority before individual scenarios introduce their tested faults. */
-  private application(f: ComponentV5Fixture, t: TestContext): void {
+  private application(f: ComponentFixture, t: TestContext): void {
     const root = f.root + '-application',
       state = join(root, 'state');
     t.after(() => rmSync(root, { recursive: true, force: true }));
@@ -150,8 +150,8 @@ class SharedPreparationScenarios {
   }
 
   /** Captures a minimal package with one shared setup definition and no environment commands. */
-  private fixture(t: TestContext, local = false): ComponentV5Fixture {
-    const f = new ComponentV5Fixture(t);
+  private fixture(t: TestContext, local = false): ComponentFixture {
+    const f = new ComponentFixture(t);
     if (!local) f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     f.put('architecture/environment.json', {
       schemaVersion: local ? 5 : 4,
@@ -181,7 +181,7 @@ class SharedPreparationScenarios {
   }
 
   /** Supplies explicit director/reviewer authority required by production package preparation. */
-  private executionDefaults(f: ComponentV5Fixture): void {
+  private executionDefaults(f: ComponentFixture): void {
     const path = 'architecture/components/platform.json';
     const platform = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
     f.put(path, {
@@ -193,7 +193,7 @@ class SharedPreparationScenarios {
   }
 
   /** Gives package inheritance, source ownership and shared definitions distinct declarations. */
-  private components(f: ComponentV5Fixture): void {
+  private components(f: ComponentFixture): void {
     f.put(
       'architecture/components/package.json',
       f.component('package', 'package', {

@@ -6,7 +6,7 @@ import { test, type TestContext } from 'node:test';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { captureInitialization } from '../../../../dist/library/architecture/initialization.js';
 import { MigrationFixture } from '../support/migration-fixture.js';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises the platform as the only authored source of new execution defaults. */
@@ -104,7 +104,7 @@ class PlatformExecutionScenarios {
   }
 
   /** Adds one shared finite verification declaration for executable read-only assignments. */
-  private operational(t: TestContext): ComponentV5Fixture {
+  private operational(t: TestContext): ComponentFixture {
     const fixture = this.fixture(t);
     const path = 'architecture/components/platform.json';
     fixture.put(path, {
@@ -165,14 +165,14 @@ class PlatformExecutionScenarios {
 
   /** Missing execution requirements never trigger implicit model or initializer selection. */
   missing(t: TestContext): void {
-    const fixture = new ComponentV5Fixture(t);
+    const fixture = new ComponentFixture(t);
     fixture.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     assert.throws(() => new ExecutionContext().resolve(fixture.root), /director.*reviewer/i);
   }
 
   /** Supplies explicit director/reviewer profiles once on the platform and leaves the leaf minimal. */
-  private fixture(t: TestContext): ComponentV5Fixture {
-    const fixture = new ComponentV5Fixture(t);
+  private fixture(t: TestContext): ComponentFixture {
+    const fixture = new ComponentFixture(t);
     fixture.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     fixture.put(
       'architecture/components/platform.json',
@@ -207,12 +207,12 @@ test('new task and workday execution rejects legacy authority while migration re
 test('minimal host startup rejects legacy environment execution recipes', (t) =>
   scenarios.legacyEnvironment(t));
 
-test('v5 execution resolves platform defaults and captured director profile', (t) =>
+test('execution resolves platform defaults and captured director profile', (t) =>
   scenarios.singleSource(t));
 
-test('v5 execution rejects duplicate retired configuration', (t) => scenarios.duplicate(t));
+test('execution rejects duplicate retired configuration', (t) => scenarios.duplicate(t));
 
-test('v5 execution requires explicit director and reviewer configuration', (t) =>
+test('execution requires explicit director and reviewer configuration', (t) =>
   scenarios.missing(t));
 
 test('declared director assessment preserves package engineering boundaries', (t) =>

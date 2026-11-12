@@ -23,12 +23,12 @@ previous branch head (falling back to the empty tree for a newly created branch)
 
 The same `Repository checks` job runs at three depths, selected by the caller:
 
-| Trigger | Statics | Deterministic built-program suites | Native host qualification |
-| --- | --- | --- | --- |
-| Development PR → staging | yes | yes | **no** (`native: false`) |
-| Staging push | yes | yes | yes |
-| Main PR/push, published release | yes | yes | yes |
-| Nightly schedule and manual dispatch | yes | yes | yes, against `staging` |
+| Trigger                              | Statics | Deterministic built-program suites | Native host qualification |
+| ------------------------------------ | ------- | ---------------------------------- | ------------------------- |
+| Development PR → staging             | yes     | yes                                | **no** (`native: false`)  |
+| Staging push                         | yes     | yes                                | yes                       |
+| Main PR/push, published release      | yes     | yes                                | yes                       |
+| Nightly schedule and manual dispatch | yes     | yes                                | yes, against `staging`    |
 
 Native host qualification is the long tier: measured at 21m20s of a 36m46s run, against
 13m40s for the deterministic suites and about two minutes of statics. Running it on every push
@@ -43,7 +43,7 @@ scheduled workflow otherwise runs against the repository default branch.
 Two activation limits are worth knowing, because both make a change look inert:
 
 - A pull request cannot test its own workflow edits. GitHub runs `pull_request` events against
-  the base version of the workflow file, so a change to these tiers is proven by the *next*
+  the base version of the workflow file, so a change to these tiers is proven by the _next_
   pull request after it merges, not by its own.
 - `nightly.yaml` fires only once it exists on the repository default branch. Landing it on
   staging is not enough; the schedule activates when the release reaches `main`.

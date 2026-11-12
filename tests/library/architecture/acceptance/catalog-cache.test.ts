@@ -3,14 +3,14 @@ import { renameSync } from 'node:fs';
 import { test, type TestContext } from 'node:test';
 import { loadCatalog } from '../../../../dist/library/architecture/components.js';
 import { PublicApiCatalog } from '../../../../dist/library/architecture/public-api.js';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises derived-cache reuse and invalidation with real captured repositories. */
 class CatalogCacheScenarios {
   /** A captured derived snapshot can be reused without source rereads and without sharing mutable output. */
   reuse(t: TestContext): void {
-    const fixture = new ComponentV5Fixture(t);
+    const fixture = new ComponentFixture(t);
     const catalog = loadCatalog(fixture.root, fixture.git('rev-parse', 'HEAD'));
     const copy = structuredClone(catalog);
     copy.components.sample!.publicApi![0]!.exports[0]!.name = 'corrupted';
@@ -26,7 +26,7 @@ class CatalogCacheScenarios {
 
   /** Changed source or public declarations cannot reuse an incompatible analysis result. */
   invalidation(t: TestContext): void {
-    const fixture = new ComponentV5Fixture(t);
+    const fixture = new ComponentFixture(t);
     const original = loadCatalog(fixture.root, fixture.git('rev-parse', 'HEAD'));
     fixture.put('package/src/value.ts', 'export const fresh = 3;');
     fixture.commit();

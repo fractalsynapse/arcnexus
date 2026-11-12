@@ -7,7 +7,7 @@ import type { TestContext } from 'node:test';
 import { validateSchema } from '../../../../dist/library/architecture/schema.js';
 
 /** Builds a completely owned minimal catalog without legacy component fields. */
-export class ComponentV5Fixture {
+export class ComponentFixture {
   readonly root = mkdtempSync(join(tmpdir(), 'component-v5-'));
 
   /** Captures a clean source revision and removes only this fixture after the scenario. */

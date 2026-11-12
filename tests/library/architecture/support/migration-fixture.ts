@@ -2,10 +2,10 @@ import { readFileSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import type { TestContext } from 'node:test';
-import { ComponentV5Fixture } from './component-v5-fixture.js';
+import { ComponentFixture } from './component-fixture.js';
 
 /** Supplies fully owned historical declarations with explicit execution policy for real CLI migration. */
-export class MigrationFixture extends ComponentV5Fixture {
+export class MigrationFixture extends ComponentFixture {
   /** Replaces fixture declarations with a complete executable v4 family before capturing authority. */
   constructor(t: TestContext) {
     super(t);

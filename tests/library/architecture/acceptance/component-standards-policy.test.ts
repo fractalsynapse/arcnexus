@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises type discrimination and inherited authority through the built catalog loader. */
 class ComponentPolicyScenarios {
   /** Every executable type shares the same minimal ownership contract. */
   executable(t: TestContext, type: string): void {
-    const fixture = new ComponentV5Fixture(t);
+    const fixture = new ComponentFixture(t);
     fixture.put(
       'architecture/components/unrelated-filename.json',
       fixture.component('sample', type, {
@@ -22,7 +22,7 @@ class ComponentPolicyScenarios {
 
   /** Missing executable policies must not select a fallback model or role. */
   missing(t: TestContext, field: string): void {
-    const fixture = new ComponentV5Fixture(t);
+    const fixture = new ComponentFixture(t);
     const platform = fixture.component('platform', 'platform', {
       role: 'engineer',
       executionProfile: 'luna',
@@ -38,7 +38,7 @@ class ComponentPolicyScenarios {
 
   /** Containers cannot acquire write authority through fields intended only for executable owners. */
   container(t: TestContext): void {
-    const fixture = new ComponentV5Fixture(t);
+    const fixture = new ComponentFixture(t);
     fixture.put(
       'architecture/components/package.json',
       fixture.uncheckedComponent('package', 'package', {
@@ -55,7 +55,7 @@ class ComponentPolicyScenarios {
 
   /** Local paths cannot escape their declaring package before normalization. */
   traversal(t: TestContext): void {
-    const fixture = new ComponentV5Fixture(t);
+    const fixture = new ComponentFixture(t);
     fixture.put(
       'architecture/components/unrelated-filename.json',
       fixture.component('sample', 'library', {
@@ -76,8 +76,8 @@ for (const type of ['foundation', 'gateway', 'library', 'release'])
 for (const field of ['role', 'executionProfile'])
   test(`v5 requires inherited ${field}`, (t) => scenarios.missing(t, field));
 
-test('v5 rejects container ownership', (t) => scenarios.container(t));
+test('rejects container ownership', (t) => scenarios.container(t));
 
-test('v5 rejects package-relative traversal', (t) => scenarios.traversal(t));
+test('rejects package-relative traversal', (t) => scenarios.traversal(t));
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });

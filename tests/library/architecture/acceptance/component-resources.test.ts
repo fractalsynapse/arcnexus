@@ -5,13 +5,13 @@ import { test, type TestContext } from 'node:test';
 import { loadProjectBindings } from '../../../../dist/library/architecture/bindings.js';
 import { loadCatalog } from '../../../../dist/library/architecture/components.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 
 /** Exercises captured, package-scoped resources through the built public architecture boundary. */
 class ComponentResourceScenarios {
   /** Requires valid fixture authority before checking the absent or implemented API. */
   private fixture(t: TestContext) {
-    const f = new ComponentV5Fixture(t);
+    const f = new ComponentFixture(t);
     f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     f.put(
       'architecture/components/deep.json',

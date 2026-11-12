@@ -4,7 +4,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 
 /** Preserves immutable shared standards when minimal component policies are inherited. */
 class StandardsV6Scenarios {
@@ -53,8 +53,8 @@ class StandardsV6Scenarios {
   }
 
   /** Declares one owned pattern and inherits its identity from the platform. */
-  private fixture(t: TestContext): ComponentV5Fixture {
-    const f = new ComponentV5Fixture(t);
+  private fixture(t: TestContext): ComponentFixture {
+    const f = new ComponentFixture(t);
     this.upgrade(f);
     this.extend(f, 'platform', { standards: ['standard'] });
     const path = 'architecture/components/maintenance.json';
@@ -75,7 +75,7 @@ class StandardsV6Scenarios {
   }
 
   /** Converts only authored component versions; historical fixture behavior stays available separately. */
-  private upgrade(f: ComponentV5Fixture): void {
+  private upgrade(f: ComponentFixture): void {
     for (const file of readdirSync(join(f.root, 'architecture/components'))) {
       const path = 'architecture/components/' + file;
       const value = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
@@ -84,7 +84,7 @@ class StandardsV6Scenarios {
   }
 
   /** Updates only the intended declaration while retaining the fixture's existing execution authority. */
-  private extend(f: ComponentV5Fixture, id: string, fields: object): void {
+  private extend(f: ComponentFixture, id: string, fields: object): void {
     const path = `architecture/components/${id}.json`;
     f.put(path, { ...JSON.parse(readFileSync(join(f.root, path), 'utf8')), ...fields });
   }
@@ -92,14 +92,13 @@ class StandardsV6Scenarios {
 
 const scenarios = new StandardsV6Scenarios();
 
-test('v6 inherited standards capture immutable artifacts', (t) => scenarios.captures(t));
+test('inherited standards capture immutable artifacts', (t) => scenarios.captures(t));
 
-test('v6 inherited standards reject missing standards', (t) => scenarios.rejects(t, true));
+test('inherited standards reject missing standards', (t) => scenarios.rejects(t, true));
 
-test('v6 standard references cannot grant undeclared operations', (t) =>
-  scenarios.rejects(t, false));
+test('standard references cannot grant undeclared operations', (t) => scenarios.rejects(t, false));
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });
 
-test('v6 rejects retired pattern fields even alongside standards', (t) =>
+test('rejects retired pattern fields even alongside standards', (t) =>
   scenarios.rejectsRetiredField(t));

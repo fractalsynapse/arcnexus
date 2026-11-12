@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises composition without duplicated executable recipes or disposable-output declarations. */
@@ -25,8 +25,8 @@ class SharedEnvironmentScenarios {
   }
 
   /** Gives the operation registry its own accountable maintenance component. */
-  private fixture(t: TestContext): ComponentV5Fixture {
-    const fixture = new ComponentV5Fixture(t);
+  private fixture(t: TestContext): ComponentFixture {
+    const fixture = new ComponentFixture(t);
     fixture.put('architecture/environment.json', this.environment());
     fixture.put(
       'architecture/components/operations.json',

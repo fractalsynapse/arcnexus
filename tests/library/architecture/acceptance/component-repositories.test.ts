@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises implicit definition ownership without confusing two repository-relative namespaces. */
@@ -58,8 +58,8 @@ class RepositoryOwnershipScenarios {
 
   /** Captures two independent repositories and a single primary-authored dependency owner. */
   private fixture(t: TestContext) {
-    const fixture = new ComponentV5Fixture(t),
-      dependency = new ComponentV5Fixture(t);
+    const fixture = new ComponentFixture(t),
+      dependency = new ComponentFixture(t);
     fixture.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     dependency.git('remote', 'add', 'origin', 'https://example.invalid/other.git');
     this.owners(fixture);
@@ -70,7 +70,7 @@ class RepositoryOwnershipScenarios {
   }
 
   /** Declares dependency implementation and primary container-file maintenance without duplicate leaf paths. */
-  private owners(fixture: ComponentV5Fixture): void {
+  private owners(fixture: ComponentFixture): void {
     fixture.put(
       'architecture/components/other-package.json',
       fixture.component('other-package', 'package', {
@@ -99,11 +99,7 @@ class RepositoryOwnershipScenarios {
   }
 
   /** Refreshes only the declared dependency revision; the binding stays outside captured source. */
-  private bind(
-    fixture: ComponentV5Fixture,
-    dependency: ComponentV5Fixture,
-    bindings: string,
-  ): void {
+  private bind(fixture: ComponentFixture, dependency: ComponentFixture, bindings: string): void {
     fixture.put('architecture/environment.json', {
       schemaVersion: 4,
       workspace: {

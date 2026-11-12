@@ -5,13 +5,13 @@ import { test, type TestContext } from 'node:test';
 import { loadCatalog } from '../../../../dist/library/architecture/components.js';
 import { loadProjectBindings } from '../../../../dist/library/architecture/bindings.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 
 /** Exercises complete committed standard resources through the built public architecture service. */
 class StandardResourceScenarios {
   /** Validates ordinary composition before any missing-service assertion can hide invalid setup. */
   private fixture(t: TestContext) {
-    const f = new ComponentV5Fixture(t);
+    const f = new ComponentFixture(t);
     f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     const path = 'architecture/components/maintenance.json';
     const owner = JSON.parse(readFileSync(join(f.root, path), 'utf8'));

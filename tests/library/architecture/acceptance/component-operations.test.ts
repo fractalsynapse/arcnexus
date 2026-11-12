@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises shared operation planning through the assembled catalog loader. */
@@ -35,7 +35,7 @@ class SharedOperationScenarios {
   }
 
   /** Gives the captured test convention its own maintenance paths and shared runner reference. */
-  private testProfile(f: ComponentV5Fixture): void {
+  private testProfile(f: ComponentFixture): void {
     f.put(
       'architecture/components/operation-owner.json',
       f.component('operation-owner', 'library', {
@@ -148,7 +148,7 @@ class SharedOperationScenarios {
   }
 
   /** Captures the HTTP definition and its optional service usage as one owned configuration. */
-  private httpFixture(t: TestContext, declared: boolean): ComponentV5Fixture {
+  private httpFixture(t: TestContext, declared: boolean): ComponentFixture {
     const fixture = this.fixture(t);
     fixture.put(
       'architecture/components/package.json',
@@ -175,8 +175,8 @@ class SharedOperationScenarios {
   }
 
   /** Owns shared definitions explicitly and declares operation usages once at the package. */
-  private fixture(t: TestContext): ComponentV5Fixture {
-    const fixture = new ComponentV5Fixture(t);
+  private fixture(t: TestContext): ComponentFixture {
+    const fixture = new ComponentFixture(t);
     fixture.put(
       'architecture/components/operation-owner.json',
       fixture.component('operation-owner', 'library', {
@@ -218,26 +218,24 @@ class SharedOperationScenarios {
 
 const scenarios = new SharedOperationScenarios();
 
-test('v5 agent test availability can precede the first owned suite', (t) =>
+test('agent test availability can precede the first owned suite', (t) =>
   scenarios.firstSuite(t, false));
 
-test('v5 required checks reject an empty captured test selection', (t) =>
+test('required checks reject an empty captured test selection', (t) =>
   scenarios.firstSuite(t, true));
 
-test('v5 shares command definitions and retains inherited verification', (t) =>
-  scenarios.shared(t));
+test('shares command definitions and retains inherited verification', (t) => scenarios.shared(t));
 
-test('v5 operation planning rejects prerequisite cycles', (t) => scenarios.cycle(t));
+test('operation planning rejects prerequisite cycles', (t) => scenarios.cycle(t));
 
-test('v5 mandatory operation usages require finite actions', (t) => scenarios.service(t));
+test('mandatory operation usages require finite actions', (t) => scenarios.service(t));
 
 test('effective policy retains accumulated declaration provenance and implicit owned reads', (t) =>
   scenarios.provenance(t));
 
-test('v5 captures finite HTTP verification with a declared managed service', (t) =>
-  scenarios.http(t));
+test('captures finite HTTP verification with a declared managed service', (t) => scenarios.http(t));
 
-test('v5 refuses HTTP verification without managed service authority', (t) =>
+test('refuses HTTP verification without managed service authority', (t) =>
   scenarios.http(t, false));
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });

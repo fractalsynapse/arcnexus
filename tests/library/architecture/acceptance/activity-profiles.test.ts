@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 import { resolveAssignment } from '../../../../dist/library/architecture/assignment.js';
 import { loadCatalog } from '../../../../dist/library/architecture/components.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
@@ -74,7 +74,7 @@ class ActivityProfileScenarios {
   }
 
   /** Provides the required director and one shared finite check for executable assignments. */
-  private execution(f: ComponentV5Fixture): void {
+  private execution(f: ComponentFixture): void {
     f.put(
       'architecture/components/platform.json',
       f.component('platform', 'platform', {
@@ -98,7 +98,7 @@ class ActivityProfileScenarios {
   }
 
   /** Owns the shared check and supplies its literal command definition. */
-  private operation(f: ComponentV5Fixture): void {
+  private operation(f: ComponentFixture): void {
     f.put(
       'architecture/components/operations.json',
       f.component('operations', 'library', {
@@ -141,8 +141,8 @@ class ActivityProfileScenarios {
   }
 
   /** Supplies shared profiles without adding model choices to component leaves. */
-  private fixture(t: TestContext): ComponentV5Fixture {
-    const f = new ComponentV5Fixture(t);
+  private fixture(t: TestContext): ComponentFixture {
+    const f = new ComponentFixture(t);
     f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     f.put('architecture/execution-profiles/sol.json', this.profile('test-sol'));
     f.put(

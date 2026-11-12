@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
 import * as architecture from '../../../../dist/library/architecture/components.js';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Keeps proposed-file classification consistent with the revision-bound inventory. */
 class ClassificationScenarios {
   /** Classifies files before creation, without granting unknown files specification status. */
   proposed(t: TestContext): void {
-    const fixture = new ComponentV5Fixture(t);
+    const fixture = new ComponentFixture(t);
     const catalog = architecture.loadCatalog(fixture.root, fixture.git('rev-parse', 'HEAD'));
     const classify = (architecture as any).classifyComponentPath;
     assert.equal(typeof classify, 'function', 'The host requires one captured path classifier');
@@ -22,7 +22,7 @@ class ClassificationScenarios {
 
   /** Rejects contradictory classifications before a future file makes the conflict observable. */
   conflicting(t: TestContext): void {
-    const fixture = new ComponentV5Fixture(t);
+    const fixture = new ComponentFixture(t);
     fixture.put(
       'architecture/components/package.json',
       fixture.component('package', 'package', {
@@ -43,8 +43,8 @@ class ClassificationScenarios {
 
 const scenarios = new ClassificationScenarios();
 
-test('v5 classifies proposed paths using captured rules', (t) => scenarios.proposed(t));
+test('classifies proposed paths using captured rules', (t) => scenarios.proposed(t));
 
-test('v5 rejects classification conflicts on future paths', (t) => scenarios.conflicting(t));
+test('rejects classification conflicts on future paths', (t) => scenarios.conflicting(t));
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });

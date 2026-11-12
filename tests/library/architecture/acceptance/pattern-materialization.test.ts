@@ -4,10 +4,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 
 /** Preserves immutable shared standards when minimal component policies are inherited. */
-class PatternV5Scenarios {
+class PatternScenarios {
   /** Projects captured artifacts once and ignores uncommitted guidance changes. */
   captures(t: TestContext): void {
     const f = this.fixture(t);
@@ -43,8 +43,8 @@ class PatternV5Scenarios {
   }
 
   /** Declares one owned pattern and inherits its identity from the platform. */
-  private fixture(t: TestContext): ComponentV5Fixture {
-    const f = new ComponentV5Fixture(t);
+  private fixture(t: TestContext): ComponentFixture {
+    const f = new ComponentFixture(t);
     this.extend(f, 'platform', { patterns: ['standard'] });
     const path = 'architecture/components/maintenance.json';
     const maintenance = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
@@ -64,19 +64,18 @@ class PatternV5Scenarios {
   }
 
   /** Updates only the intended declaration while retaining the fixture's existing execution authority. */
-  private extend(f: ComponentV5Fixture, id: string, fields: object): void {
+  private extend(f: ComponentFixture, id: string, fields: object): void {
     const path = `architecture/components/${id}.json`;
     f.put(path, { ...JSON.parse(readFileSync(join(f.root, path), 'utf8')), ...fields });
   }
 }
 
-const scenarios = new PatternV5Scenarios();
+const scenarios = new PatternScenarios();
 
-test('v5 inherited patterns capture immutable artifacts', (t) => scenarios.captures(t));
+test('inherited patterns capture immutable artifacts', (t) => scenarios.captures(t));
 
-test('v5 inherited patterns reject missing standards', (t) => scenarios.rejects(t, true));
+test('inherited patterns reject missing standards', (t) => scenarios.rejects(t, true));
 
-test('v5 pattern references cannot grant undeclared operations', (t) =>
-  scenarios.rejects(t, false));
+test('pattern references cannot grant undeclared operations', (t) => scenarios.rejects(t, false));
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });
