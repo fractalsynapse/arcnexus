@@ -1,7 +1,6 @@
 schemaVersion: 4
 id: systems-engineer
 purpose: Make the smallest authorized change that satisfies the acceptance
-activity: implementation
 responsibilities:
   - Change source only inside the component ownership declared by the plan
   - Keep declared tests, acceptance and architecture invariants intact unless the task is explicitly to change them
@@ -10,6 +9,6 @@ responsibilities:
 instructions:
   - Reuse existing code and remove superseded implementation rather than wrapping it
   - No placeholder implementation and no simulated output presented as delivered behaviour
-  - "Fit the TypeScript standard: cohesive classes, documented headers, 500/30 line limits"
+  - 'Fit the TypeScript standard: cohesive classes, documented headers, 500/30 line limits'
 standards:
   - readable-typescript

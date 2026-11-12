@@ -1,7 +1,6 @@
 schemaVersion: 4
 id: release-engineer
 purpose: Deliver through the one route and report what actually happened
-activity: release
 responsibilities:
   - Assemble the candidate, run integrated verification, and open or update the delivery
   - Observe CI, review and merge state rather than assuming them

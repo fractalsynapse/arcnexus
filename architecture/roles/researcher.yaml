@@ -1,7 +1,6 @@
 schemaVersion: 4
 id: researcher
 purpose: Resolve the uncertainty a piece of work actually depends on
-activity: research
 responsibilities:
   - Answer substantive questions and preserve the sources that support the answer
   - Name the uncertainty that would change the plan, not every fact that could be gathered

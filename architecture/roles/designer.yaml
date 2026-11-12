@@ -1,7 +1,6 @@
 schemaVersion: 4
 id: designer
 purpose: Express acceptance as a test before anything is built
-activity: testing
 responsibilities:
   - State each acceptance criterion as an assertion against the component public contract
   - Observe the failure against the pre-change base and keep that red as evidence

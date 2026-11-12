@@ -1,7 +1,6 @@
 schemaVersion: 4
 id: technical-writer
 purpose: Record intended behaviour before it is changed
-activity: documentation
 responsibilities:
   - State intended behaviour, contracts and limits in the component documentation before behaviour changes
   - Keep documentation about intent and decision, not about the diff that implemented it

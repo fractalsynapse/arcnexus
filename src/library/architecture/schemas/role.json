@@ -15,9 +15,6 @@
       "type": "string",
       "minLength": 1
     },
-    "activity": {
-      "enum": ["research", "documentation", "testing", "implementation", "review", "release"]
-    },
     "responsibilities": {
       "type": "array",
       "items": {
@@ -49,6 +46,6 @@
       "minLength": 1
     }
   },
-  "required": ["schemaVersion", "id", "purpose", "activity", "responsibilities"],
+  "required": ["schemaVersion", "id", "purpose", "responsibilities"],
   "additionalProperties": false
 }

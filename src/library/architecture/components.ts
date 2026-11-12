@@ -68,7 +68,6 @@ export interface Role {
   schemaVersion: 4;
   id: string;
   purpose: string;
-  activity: Activity;
   responsibilities: string[];
   instructions?: string[];
   standards?: string[];
@@ -297,7 +296,6 @@ class CatalogLoader {
     if (legacy && path.replace(/\.(json|ya?ml)$/, '') !== `architecture/${directory}/${id}`)
       throw new InputError(`Identity must match filename: ${path}`);
     if (Object.hasOwn(target, id)) throw new InputError(`Duplicate definition: ${id}`);
-    if (schema === 'role') value.activity = requireActivity(String(value.activity), `role ${id}`);
     value.id = id;
     Object.defineProperty(target, id, {
       value: value as unknown as Component & Role & ExecutionProfile,
@@ -414,14 +412,12 @@ class CatalogComponentValidator {
     }
   }
 
-  /** Requires each declared activity to name a real role whose home activity matches it. */
+  /** Requires each declared activity to name a real role; the activity is chosen here, not by the role. */
   private declaredActivities(c: Component, catalog: Catalog): void {
     for (const [declared, config] of Object.entries(c.activities ?? {})) {
       const activity = requireActivity(declared, `component ${c.id}`);
       const role = catalog.roles[config.role];
       if (!role) throw new InputError(`Unknown role for ${c.id}.${activity}: ${config.role}`);
-      if (role.activity !== activity)
-        throw new InputError(`Role ${config.role} holds ${role.activity}, not ${activity}`);
       for (const entry of config.operations ?? []) {
         const id = typeof entry === 'string' ? entry : entry.id;
         if (!Object.hasOwn(c.operations ?? {}, id))
