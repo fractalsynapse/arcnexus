@@ -183,10 +183,12 @@ export async function prepareWorkspace(
   signal: AbortSignal,
 ): Promise<void> {
   signal.throwIfAborted();
+  // In-place work has nothing to prepare: the source is the operator's checkout and the branch is
+  // theirs already, so building a worktree is both forbidden and refused by git. All preparation
+  // callers pass through here, which is why one guard prevents a second workspace path from existing.
+  if (record.inPlace === true) return;
   if (record.environment.schemaVersion < 4)
-    throw new InputError(
-      'Preparation requires environment schema 4 or 5; migrate legacy recipes before execution',
-    );
+    throw new InputError('Preparation requires a captured environment of schema 4 or later');
   prepareBranch(record);
   record.materializationBinding = captureWorktreeBindings(
     record.workspace,
