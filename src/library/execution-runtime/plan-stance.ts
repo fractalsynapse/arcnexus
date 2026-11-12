@@ -49,9 +49,15 @@ export function recordInPlaceCompletion(store: ExecutionStore, run: ExecutionRun
     store.updateRun(run.id, 'stopped', { inPlaceOutcome: 'nothing admitted' });
     return true;
   }
+  const prepared = store
+    .assignments(run.id)
+    .filter((assignment) => assignment.status === 'prepared').length;
   store.updateRun(run.id, 'stopped', {
     inPlaceComplete: true,
-    inPlaceOutcome: `${String(run.data.inPlaceAdmitted)} assignment(s) planned in place`,
+    inPlaceOutcome:
+      `in place: ${String(run.data.inPlaceAdmitted)} assignment(s) planned` +
+      (prepared ? `, ${String(prepared)} prepared for the operator to judge` : '') +
+      '; nothing was assembled, committed or published',
   });
   return true;
 }

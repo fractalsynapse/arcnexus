@@ -27,6 +27,7 @@ import type { RunStance } from '../coordination-store/execution-types.js';
 import { AssignmentDispatch } from './assignment-dispatch.js';
 import { recordInPlaceCompletion, recordPlanOutcome } from './plan-stance.js';
 import { InPlaceActivation } from './in-place-activation.js';
+import { isInPlaceRun } from '../coordination-store/execution-types.js';
 import { CollaborativeDispatch } from './collaborative-dispatch.js';
 import { retainedFailureText } from './failure-text.js';
 
@@ -313,11 +314,10 @@ export class ProjectHost {
   private async advanceAssignments(run: ExecutionRun, signal: AbortSignal): Promise<void> {
     await this.collaboration.progress(run, signal);
     const ready = this.store.ready(run.id);
-    const assembly = new AssembledDelivery(
-      this.root,
-      this.environments.contextFor(run),
-      this.store,
-    ).ready(run);
+    // An in-place run has no candidate to assemble; its work already sits in the operator's checkout.
+    const assembly = isInPlaceRun(run)
+      ? null
+      : new AssembledDelivery(this.root, this.environments.contextFor(run), this.store).ready(run);
     if (
       (ready.length || assembly) &&
       (run.mode === 'task' || run.data.lastDispatch !== 'assignment')
