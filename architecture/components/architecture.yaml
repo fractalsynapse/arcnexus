@@ -77,7 +77,6 @@ api:
   - { module: src/library/architecture/modes.ts }
   - { module: src/library/architecture/frame.ts }
   - { module: src/library/architecture/validation.ts }
-  - { module: src/library/architecture/migration.ts }
   - { module: src/library/architecture/execution-context.ts }
   - { module: src/library/architecture/assignment.ts }
   - { module: src/library/architecture/bindings.ts }
