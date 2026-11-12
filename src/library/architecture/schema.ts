@@ -27,6 +27,33 @@ export function validateSchema<T>(name: string, value: unknown): T {
     validate = ajv.compile(readSchema(name));
     validators.set(name, validate);
   }
-  if (!validate(value)) throw new SchemaValidationError(name, ajv.errorsText(validate.errors));
+  if (!validate(value)) throw new SchemaValidationError(name, describe(validate.errors ?? []));
   return value as T;
+}
+
+/**
+ * Describes validation failures with the exact location and rule that failed.
+ *
+ * `ajv.errorsText` reports the rule but not where it fired, so an author told "data must NOT have
+ * additional properties" for a twelve-key document has to guess which key and which branch. Naming
+ * the instance path and the offending parameter turns an architecture error into something a person
+ * can fix without reading the schema source.
+ */
+function describe(
+  errors: { instancePath: string; message?: string; params: Record<string, unknown> }[],
+): string {
+  return errors
+    .slice(0, 6)
+    .map((error) => {
+      const where = error.instancePath || '#';
+      const found = [
+        error.params.additionalProperty,
+        error.params.missingProperty,
+        error.params.allowedValues,
+        error.params.comparison,
+      ].find((candidate) => candidate !== undefined);
+      const detail = Array.isArray(found) ? found.join('|') : (found ?? '');
+      return `${where}: ${error.message}${detail ? ` (${detail})` : ''}`;
+    })
+    .join('; ');
 }

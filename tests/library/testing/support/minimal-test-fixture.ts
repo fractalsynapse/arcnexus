@@ -14,7 +14,14 @@ export class MinimalTestFixture extends ComponentTestFixture {
       renameSync(join(this.repo, 'tests'), join(this.repo, packageRoot, 'tests'));
     }
     this.definition('platform', 'platform', {
-      role: 'engineer',
+      activities: {
+        research: {
+          role: 'engineer',
+          profile: 'luna',
+          operations: [],
+          instructions: ['Resolve what the sample platform actually does before proposing change'],
+        },
+      },
       executionProfile: 'luna',
       reads: ['.'],
     });
