@@ -116,10 +116,7 @@ export class ComponentV5Policy {
 
   /** Records every contributing declaration while deduplicating required inherited policy values. */
   private accumulate(component: Component, lineage: Component[]): void {
-    for (const key of [
-      'constraints',
-      component.schemaVersion === 6 ? 'standards' : 'patterns',
-    ] as const) {
+    for (const key of ['constraints', 'standards'] as const) {
       component[key] = [...new Set(lineage.flatMap((entry) => entry[key] ?? []))];
       component.policy![key] = {
         value: [...component[key]],
