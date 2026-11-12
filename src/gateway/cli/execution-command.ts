@@ -2,7 +2,7 @@ import { Portfolio } from '../../library/portfolio/portfolio.js';
 import { createInterface } from 'node:readline/promises';
 import { setTimeout as delay } from 'node:timers/promises';
 import { HostClient } from '../../library/execution-runtime/host-client.js';
-import type { ExecutionRun } from '../../library/coordination-store/execution-types.js';
+import type { ExecutionRun, RunStance } from '../../library/coordination-store/execution-types.js';
 
 /** Adapts the minimal user commands to persistent project execution. */
 export class ExecutionCommand {
@@ -37,9 +37,9 @@ export class ExecutionCommand {
     prompt: string,
     asynchronous = false,
     simulate = false,
-    stance?: { kind: 'plan' },
+    stance?: RunStance,
   ): Promise<void> {
-    await this.client.ensureRun('submit', simulate, this.signal);
+    await this.client.ensureRun('submit', simulate, this.signal, stance);
     const run = (await this.client.request({
       action: 'submit',
       prompt,

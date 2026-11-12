@@ -4,7 +4,7 @@ import { InputError } from '../../library/architecture/config.js';
 export const help = `ArcNexus
   workday start [package] [--simulate]
   workday pause|resume|stop|status [id]
-  task run [package] "<prompt>" [--plan] [--async] [--simulate]
+  task run [package] "<prompt>" [--plan | --component <id> [--activity <a>]] [--async] [--simulate]
   task pause|resume|stop <id> | answer <id> "<response>"
   task list [field=value...] | get <id> [--follow] | follow <id>
   workday list [field=value...] | get <id> [--follow]
@@ -82,15 +82,17 @@ export function argumentsForCommand() {
       options: cliOptions,
     });
     if (
-      parsed.positionals[0] !== 'test' &&
+      !['test', 'task'].includes(parsed.positionals[0] ?? '') &&
       (parsed.values.component ||
         parsed.values.level ||
         parsed.values.category ||
         parsed.values.tag)
     )
       throw new InputError('Test filters require the test command');
-    if (parsed.values.write !== undefined && parsed.positionals[0] !== 'config')
-      throw new InputError('--write requires config migrate');
+    if (parsed.values.write !== undefined)
+      // The only consumer of --write was config migrate, which is retired with configuration
+      // versioning; accepting the flag anywhere else would imply an authority that no longer exists.
+      throw new InputError('--write is retired with config migrate');
     if (
       parsed.values.workspace !== undefined &&
       parsed.positionals.slice(0, 2).join(' ') !== 'workspace cleanup'

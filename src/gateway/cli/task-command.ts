@@ -3,6 +3,7 @@ import { RunQueryCommand } from './run-query-command.js';
 import type { CliValues } from './arguments.js';
 import { ExecutionCommand } from './execution-command.js';
 import { InputError } from '../../library/architecture/config.js';
+import type { RunStance } from '../../library/coordination-store/execution-types.js';
 import { ProposalStore } from '../../library/task-intake/tasks.js';
 import { stateRoot } from '../../library/workspace/state.js';
 
@@ -44,18 +45,40 @@ export class TaskCommand {
   private async submit(): Promise<void> {
     if (![3, 4].includes(this.positionals.length))
       throw new InputError('Expected task run [package] "<prompt>"');
-    if (
-      Object.keys(this.values).some((key) => !['async', 'json', 'simulate', 'plan'].includes(key))
-    )
-      throw new InputError('Invalid task run options');
+    const allowed = ['async', 'json', 'simulate', 'plan', 'component', 'activity'];
+    for (const key of Object.keys(this.values))
+      if (!allowed.includes(key)) throw new InputError('Invalid task run option: ' + key);
     if (!this.positionals.at(-1)!.trim()) throw new InputError('Task prompt must not be empty');
     const packageReference = this.positionals.length === 4 ? this.positionals[2] : undefined;
     await new ExecutionCommand(this.signal, packageReference).task(
       this.positionals.at(-1)!,
       this.values.async,
       this.values.simulate,
-      this.values.plan ? { kind: 'plan' } : undefined,
+      this.stance(),
     );
+  }
+
+  /**
+   * Resolves the run's stance from the flags, refusing combinations that would mean two things.
+   *
+   * `--component` names who works, in place, on the current checkout. `--activity` without a
+   * component fans that activity across every component holding it, which is why the host then
+   * demands a strictly clean tree and proves no two components own overlapping scopes.
+   */
+  private stance(): RunStance | undefined {
+    const { plan, component, activity } = this.values;
+    if (plan && (component || activity))
+      throw new InputError('--plan cannot be combined with --component or --activity');
+    if (!activity)
+      return plan
+        ? { kind: 'plan' }
+        : component
+          ? { kind: 'component', component, fanOut: false }
+          : undefined;
+    const known = ['research', 'documentation', 'testing', 'implementation', 'review', 'release'];
+    if (!known.includes(activity)) throw new InputError('Unknown activity: ' + activity);
+    if (component) return { kind: 'component', component, activity, fanOut: false };
+    return { kind: 'component', activity, fanOut: true };
   }
 
   /** Dispatches identity-based controls independently of any current checkout. */
