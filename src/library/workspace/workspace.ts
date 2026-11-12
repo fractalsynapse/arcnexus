@@ -128,7 +128,14 @@ function inPlaceAuthority(options: PrepareOptions) {
     ).value,
   );
   assertNoSubmodules(source, base);
-  return { source, base, commonDir, env };
+  // A detached HEAD is refused rather than guessed at: "current branch" has no meaning there, and
+  // inventing one would put the operator's edits on a branch they never chose.
+  const branch = git(source, 'branch', '--show-current').trim();
+  if (!branch)
+    throw new InputError(
+      'In-place work requires a checked-out branch; the current checkout is detached',
+    );
+  return { source, base, commonDir, env, branch };
 }
 
 /**
@@ -137,17 +144,10 @@ function inPlaceAuthority(options: PrepareOptions) {
  * In-place work deliberately updates the current project, so the workspace record is the same shape
  * every writer already keys on (`record.workspace`) but pointed at the checkout instead of a
  * directory made under the state root. Authority capture runs unchanged, so component ownership and
- * checked-edit refusal apply to these writes exactly as they do to a candidate. A detached HEAD is
- * refused rather than guessed at: "current branch" has no meaning there, and inventing one would put
- * the operator's edits on a branch they never chose.
+ * checked-edit refusal apply to these writes exactly as they do to a candidate.
  */
 export function inPlaceWorkspace(root: string, options: PrepareOptions): RecordData {
-  const { source, base, env, commonDir } = inPlaceAuthority(options);
-  const branch = git(source, 'branch', '--show-current').trim();
-  if (!branch)
-    throw new InputError(
-      'In-place work requires a checked-out branch; the current checkout is detached',
-    );
+  const { source, base, env, commonDir, branch } = inPlaceAuthority(options);
   const id = randomUUID();
   // The per-run state directory holds attempt artifacts, transcripts and the report. Candidate
   // preparation makes it inside createWorkspace; in-place work needs it for the same reasons, and
