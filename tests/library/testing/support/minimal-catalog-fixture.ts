@@ -35,7 +35,14 @@ export class MinimalCatalogFixture {
       ...common,
       id: 'platform',
       type: 'platform',
-      role: 'engineer',
+      activities: {
+        research: {
+          role: 'engineer',
+          profile: 'luna',
+          instructions: ['Resolve the uncertainty the sample architecture actually depends on'],
+          operations: [],
+        },
+      },
       executionProfile: 'luna',
       reads: ['.'],
     });
