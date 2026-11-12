@@ -8,6 +8,14 @@ import { TaskWaitScenarios } from '../support/task-wait-scenarios.js';
 import { RunQueryFixture } from '../support/run-query-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
+/** Reads a streaming readout as event objects, ignoring blank output. */
+const readoutLines = (text: string | undefined): any[] =>
+  (text ?? '')
+    .trim()
+    .split('\n')
+    .filter((line) => line.trim())
+    .map((line) => JSON.parse(line));
+
 test('empty run lists never create state or require a repository', (t) => {
   const f = new RunQueryFixture(t);
   assert.deepEqual(f.value('task', 'list').items, []);
@@ -117,13 +125,18 @@ test('event cursors retain correlated updates and omit unrelated run activity', 
   writer.updateRun(other.id, 'completed');
   writer.updateRun(task.id, 'completed');
   writer.close();
-  const latest = f.value('task', 'get', task.id, '--follow', '--after', String(initial.cursor));
-  assert.equal(latest.events.length, 1);
-  assert.equal(latest.events[0].data.id, task.id);
-  assert.equal(latest.events[0].data.status, 'completed');
-  assert.ok(latest.cursor > initial.cursor);
-  const empty = f.value('task', 'follow', task.id, '--after', String(latest.cursor));
-  assert.deepEqual(empty.events, []);
+  // Following is the streaming readout: one JSON object per stored event on stdout, not an object
+  // wrapping an events array. The correlation guarantee is unchanged - only this run's events
+  // appear - so the assertions read lines rather than a projection that no longer exists.
+  const followed = f.command('task', 'get', task.id, '--follow', '--after', String(initial.cursor));
+  assert.equal(followed.status, 0, followed.stderr);
+  const lines = readoutLines(followed.stdout);
+  assert.equal(lines.length, 1);
+  assert.equal(lines[0].id, task.id);
+  assert.equal(lines[0].status, 'completed');
+  assert.ok(lines[0].sequence > initial.cursor);
+  const empty = f.command('task', 'follow', task.id, '--after', String(lines[0].sequence));
+  assert.deepEqual(readoutLines(empty.stdout), []);
 });
 
 const waits = new TaskWaitScenarios();
