@@ -34,22 +34,11 @@ export class ComponentTestFixture {
   private fields() {
     const base = {
       ...componentFields,
-      schemaVersion: 4,
-      path: '.',
       purpose: 'Test owner',
       objectives: [],
       constraints: [],
-      verification: [],
-      access: { readPaths: ['.'], writeDirectories: [] },
     };
-    const {
-      repository: _repository,
-      documentation: _documentation,
-      tests: _tests,
-      patterns: _patterns,
-      ...fields
-    } = base;
-    return fields;
+    return base;
   }
 
   /** Writes sample ownership, profile references and tracked fixture tests. */
@@ -61,14 +50,11 @@ export class ComponentTestFixture {
       id: 'sample',
       type: 'library',
       parentId: 'package',
-      ownership: { paths: ['tests'], publicModules: [], directoryExceptions: [] },
-      access: { readPaths: ['.'], writeDirectories: ['tests'] },
+      owns: ['tests'],
       testProfile: 'node',
-      verification: [{ command: process.execPath, args: ['-e', 'process.exit(0)'] }],
-      discovery: { source: [], documentation: [], tests: ['tests'], exclude: [] },
     });
     this.put('architecture/environment.yaml', {
-      schemaVersion: 1,
+      schemaVersion: 4,
       prerequisites: [],
       setup: [],
       generatedDirectories: ['.test-build'],
@@ -101,7 +87,7 @@ export class ComponentTestFixture {
   /** Declares the shared Node preparation and compiled-test runner once. */
   profile(overrides: Record<string, unknown> = {}): void {
     this.put('architecture/test-profiles/node.yaml', {
-      schemaVersion: 1,
+      schemaVersion: 2,
       id: 'node',
       adapter: 'node',
       outputRoot: '.test-build',
@@ -153,9 +139,7 @@ export class ComponentTestFixture {
       ...sample,
       id: 'other',
       testProfile: 'other',
-      ownership: { paths: ['tests/other'], publicModules: [], directoryExceptions: [] },
-      discovery: { ...sample.discovery, tests: ['tests/other'] },
-      access: { readPaths: ['.'], writeDirectories: ['tests/other'] },
+      owns: ['tests/other'],
     });
     this.otherProfile();
     this.commit();
@@ -164,7 +148,7 @@ export class ComponentTestFixture {
   /** Adds another owner profile to exercise preparation and runner compatibility. */
   private otherProfile(): void {
     this.put('architecture/test-profiles/other.yaml', {
-      schemaVersion: 1,
+      schemaVersion: 2,
       id: 'other',
       adapter: 'node',
       outputRoot: '.test-build',

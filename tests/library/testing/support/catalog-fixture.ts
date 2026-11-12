@@ -3,7 +3,6 @@ import { join } from 'node:path';
 
 export const componentFields = {
   schemaVersion: 6,
-  repository: 'sample',
   activities: {
     research: {
       role: 'engineer',
@@ -45,12 +44,9 @@ export const componentFields = {
   executionProfile: 'luna',
   parentId: 'package',
   owns: ['src/sample'],
-  interfaces: [],
-  documentation: [],
-  tests: [],
-  relatedIds: [],
+  objectives: [],
+  constraints: [],
   questions: [],
-  patterns: [],
 };
 
 /**
