@@ -160,7 +160,9 @@ function read<T>(
         ? `component-v${version}`
         : schema === 'operation' && version === 4
           ? 'operation-v4'
-          : schema,
+          : // Only the current schema per kind is accepted; a configuration naming another version is
+            // a validation failure, not a legacy path to preserve.
+            schema,
       structuredClone(source.value),
     );
   } catch (error) {

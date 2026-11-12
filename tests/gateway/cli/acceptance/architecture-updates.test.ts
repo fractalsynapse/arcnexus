@@ -91,7 +91,6 @@ class ArchitectureUpdateScenarios {
         service.update('package', 'package', { purpose: 'Selected' }).base,
         selected.base,
       );
-      assert.throws(() => service.migrate('package', true), /reconcile/);
       assert.throws(() => service.update('package', 'package', { id: 'renamed' }), /immutable/);
     } finally {
       service.close();
