@@ -378,11 +378,6 @@ class CatalogComponentValidator {
     validateAccess(c.access);
     for (const p of [...c.allowedWritePaths, ...c.documentation, ...c.tests]) scopePath(p);
     commands(c.verification);
-    if (
-      c.schemaVersion < 5 &&
-      c.allowedWritePaths.some((p) => !covered(p, c.access.writeDirectories))
-    )
-      throw new InputError(`Uncovered writable scope: ${c.id}`);
   }
 
   /** Checks referenced operations against the component profile and environment. */
