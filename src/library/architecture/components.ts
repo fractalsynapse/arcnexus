@@ -3,9 +3,9 @@ import { normalizeOperation } from '../operations/operation-definition.js';
 import { ComponentOperationPlans } from './component-operation-plans.js';
 import { requireActivity } from './activities.js';
 import { ancestry, covered, scopePath } from './component-paths.js';
-import { ComponentV5Resolver } from './component-v5.js';
+import { ComponentMaterializer } from './component-materialization.js';
 import type { ComponentFields } from './component-fields.js';
-import type { ComponentV5Fields } from './component-v5-policy.js';
+import type { MaterializedComponentFields } from './component-materialization-policy.js';
 import { captureComponentTests } from '../testing/captured-tests.js';
 import { repositoryRevisions, type RepositoryRevision } from './repository-revisions.js';
 import type { Bindings } from './bindings.js';
@@ -32,7 +32,7 @@ export { ancestry, covered, scopePath } from './component-paths.js';
 
 export { classifyComponentPath } from './file-classification.js';
 
-export interface Component extends ComponentFields, ComponentV5Fields {
+export interface Component extends ComponentFields, MaterializedComponentFields {
   initialization?: { schemaVersion: 3; componentId: string };
   schemaVersion: 1 | 2 | 3 | 4 | 5 | 6;
   operationIds?: string[];
@@ -209,7 +209,7 @@ class CatalogLoader {
     this.catalog.configurationSources.push(source);
     const env = environment(source.value, Object.values(this.catalog.operations));
     repositoryRevisions(this.catalog, env, this.repository, this.base, this.bindings);
-    new ComponentV5Resolver(this.catalog).resolve();
+    new ComponentMaterializer(this.catalog).resolve();
     if (!Object.keys(this.catalog.components).length) throw new InputError('No components defined');
     const validator = new CatalogComponentValidator(this.catalog, env);
     for (const component of Object.values(this.catalog.components)) validator.validate(component);

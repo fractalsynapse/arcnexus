@@ -3,7 +3,7 @@ import type { Catalog, Component, ComponentActivity } from './components.js';
 import { ancestry, covered, scopePath } from './component-paths.js';
 import { InputError } from './config.js';
 
-export interface ComponentV5Fields {
+export interface MaterializedComponentFields {
   activityProfiles?: Record<string, string>;
   standards?: string[];
   standardSnapshots?: Array<{
@@ -33,7 +33,7 @@ export interface ComponentV5Fields {
 }
 
 /** Resolves policy from original declarations without mutating ancestors during traversal. */
-export class ComponentV5Policy {
+export class ComponentMaterializationPolicy {
   /** Keeps an isolated authored catalog for stable inheritance and declaration provenance. */
   constructor(private readonly authored: Catalog) {}
 

@@ -2,20 +2,20 @@ import { classifyComponentPath, validateClassifications } from './file-classific
 import { git } from '../operations/process.js';
 import type { Catalog, Component } from './components.js';
 import { ancestry, covered } from './component-paths.js';
-import { ComponentV5Policy } from './component-v5-policy.js';
+import { ComponentMaterializationPolicy } from './component-materialization-policy.js';
 import { RevisionArtifacts } from './revision-artifacts.js';
 import { InputError } from './config.js';
 
 /** Materializes effective v5 components from immutable authored intent and captured source. */
-export class ComponentV5Resolver {
+export class ComponentMaterializer {
   private readonly authored: Catalog;
 
-  private readonly policy: ComponentV5Policy;
+  private readonly policy: ComponentMaterializationPolicy;
 
   /** Captures declarations before derived fields are added to the runtime catalog. */
   constructor(private readonly catalog: Catalog) {
     this.authored = structuredClone(catalog);
-    this.policy = new ComponentV5Policy(this.authored);
+    this.policy = new ComponentMaterializationPolicy(this.authored);
   }
 
   /** Resolves all v5 definitions and derives package membership from parent identity. */
