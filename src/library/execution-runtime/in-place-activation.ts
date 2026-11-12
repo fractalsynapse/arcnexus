@@ -32,32 +32,73 @@ export class InPlaceActivation {
     private readonly store: ExecutionStore,
   ) {}
 
-  /** Plans as the addressed component, admits its plan, and records anything that stopped it. */
+  /**
+   * Plans as each addressed component, admits what it proposes, and records what stopped it.
+   *
+   * One component named by the operator is one activation. `--activity` with no component is the
+   * fan-out the architect confirmed: N sequential activations against the same checkout, one per
+   * component holding that activity, which is why the stance guard demands a strictly clean tree and
+   * proves the scopes do not overlap before any of them run.
+   */
   async run(
     run: ExecutionRun,
     stance: Extract<RunStance, { kind: 'component' }>,
     signal: AbortSignal,
   ): Promise<void> {
-    if (!stance.component)
-      throw new InputError('In-place fan-out needs one addressed component per activation');
-    const outcome = await this.propose(run, stance, signal);
-    if (signal.aborted) return;
+    let admitted = 0;
+    for (const component of this.targets(stance)) {
+      admitted += await this.activate(run, component, stance, signal);
+      if (signal.aborted) return;
+    }
+    this.finish(run, admitted);
+  }
+
+  /** The components this stance addresses: one named owner, or every holder of the activity. */
+  private targets(stance: Extract<RunStance, { kind: 'component' }>): string[] {
+    if (stance.component) return [stance.component];
+    if (!stance.activity)
+      throw new InputError('In-place work names neither a component nor an activity');
+    const held = Object.values(this.context.catalog.components).filter(
+      (component) => component.owns?.length && component.activities?.[stance.activity as string],
+    );
+    if (!held.length) throw new InputError(`No component holds the activity ${stance.activity}`);
+    return held.map((component) => component.id);
+  }
+
+  /** Runs one activation and returns how many assignments it admitted. */
+  private async activate(
+    run: ExecutionRun,
+    component: string,
+    stance: Extract<RunStance, { kind: 'component' }>,
+    signal: AbortSignal,
+  ): Promise<number> {
+    const outcome = await this.propose(run, component, stance, signal);
+    if (signal.aborted) return 0;
     if (outcome.refusal) return this.record(run, this.refusalFields(outcome.refusal));
     if (!outcome.plan)
       return this.record(run, {
         inPlacePlanNotReady: outcome.notReady?.summary ?? null,
         inPlaceQuestions: outcome.notReady?.questions ?? [],
       });
+    const before = this.store.assignments(run.id).length;
     new AssignmentDispatch(this.root, this.context, this.store).apply(run, outcome.plan);
-    // Direction is complete once the component has planned. The goal path records this inside
-    // collaboration initialization, which an in-place run never enters: without the marker the
-    // scheduler re-runs direction every loop, which is the re-proposal loop that made the first live
-    // run admit twelve plans and execute none. The admitted count is recorded beside it because a
-    // component that answers "this is already satisfied" legitimately admits zero assignments, and an
-    // empty run must never be reported the same way as one that did the work.
+    return this.store.assignments(run.id).length - before;
+  }
+
+  /**
+   * Marks the run's direction complete and records what it achieved.
+   *
+   * The goal path records initialization inside collaboration initialization, which an in-place run
+   * never enters: without the marker the scheduler re-runs direction every loop, which is the
+   * re-proposal loop that once admitted twelve plans and executed none. The admitted count sits
+   * beside the marker because a component that answers "this is already satisfied" legitimately
+   * admits nothing, and an empty run must never read as delivered work.
+   */
+  private finish(run: ExecutionRun, admitted: number): void {
     this.store.updateRun(run.id, this.store.run(run.id).status, {
       initialized: true,
       inPlaceAdmitted: this.store.assignments(run.id).length,
+      inPlacePlanned: admitted,
     });
   }
 
@@ -69,6 +110,7 @@ export class InPlaceActivation {
    */
   private async propose(
     run: ExecutionRun,
+    component: string,
     stance: Extract<RunStance, { kind: 'component' }>,
     signal: AbortSignal,
   ): Promise<Proposal> {
@@ -78,7 +120,7 @@ export class InPlaceActivation {
       .propose(
         await workspaces.policy(run, signal),
         this.objective(run, stance),
-        stance.component,
+        component,
         undefined,
       )
       .catch(StewardshipRefusal.retain);
@@ -86,9 +128,10 @@ export class InPlaceActivation {
     return result.status === 'ready' ? { plan: result } : { notReady: result };
   }
 
-  /** Records an observation that stops the run without changing its authority. */
-  private record(run: ExecutionRun, fields: Record<string, unknown>): void {
+  /** Records an observation that stops the run and yields no admitted assignments. */
+  private record(run: ExecutionRun, fields: Record<string, unknown>): number {
     this.store.updateRun(run.id, 'needs_attention', fields);
+    return 0;
   }
 
   /** Fields naming who refused, so a report explains the refusal without re-reading records. */
