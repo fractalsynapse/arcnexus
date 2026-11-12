@@ -28,7 +28,7 @@ export interface Member {
 
 export function memberEnvironment(member: Member): Environment {
   return {
-    schemaVersion: 1,
+    schemaVersion: 4,
     prerequisites: member.definition.prerequisites,
     setup: member.definition.setup,
     generatedDirectories: member.definition.generatedDirectories,

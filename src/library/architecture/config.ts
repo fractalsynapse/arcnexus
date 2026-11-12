@@ -29,7 +29,7 @@ export interface WorkspaceDefinition {
 
 export interface Environment {
   workspace?: WorkspaceDefinition;
-  schemaVersion: 1 | 4 | 5;
+  schemaVersion: 4;
   prerequisites: Command[];
   setup: Command[];
   generatedDirectories: string[];
@@ -68,33 +68,18 @@ export function commands(value: unknown): Command[] {
 
 export function environment(value: unknown, operations: Operation[] = []): Environment {
   const version = (value as { schemaVersion?: number } | null)?.schemaVersion;
-  if (version === 4 || version === 5) {
+  if (version === 4) {
     if (operations.some((op) => op.schemaVersion !== 4))
-      throw new InputError('Shared environments require migrated operation definitions');
-    return sharedEnvironment(value, operations, version);
+      throw new InputError('Shared environments require current operation definitions');
+    return sharedEnvironment(value, operations);
   }
-  let v: Environment;
-  try {
-    v = validateSchema<Environment>('environment', value);
-  } catch (error) {
-    throw new InputError(String(error));
-  }
-  if (!v || !Array.isArray(v.generatedDirectories))
-    throw new InputError('Invalid environment definition');
-  validateWorkspace(v);
-  return {
-    ...(v.workspace ? { workspace: v.workspace } : {}),
-    schemaVersion: 1,
-    prerequisites: commands(v.prerequisites),
-    setup: commands(v.setup),
-    generatedDirectories: v.generatedDirectories.map(relativePath),
-  };
+  throw new InputError('Environment must be a shared architecture environment definition');
 }
 
 /** Derives disposable outputs from operation definitions while keeping composition recipe-free. */
-function sharedEnvironment(value: unknown, operations: Operation[], version: 4 | 5): Environment {
-  const input = validateSchema<{ schemaVersion: 4 | 5; workspace: WorkspaceDefinition }>(
-    `environment-v${version}`,
+function sharedEnvironment(value: unknown, operations: Operation[]): Environment {
+  const input = validateSchema<{ schemaVersion: 4; workspace: WorkspaceDefinition }>(
+    'environment-v4',
     value,
   );
   const outputs = (id: string) =>
@@ -104,7 +89,7 @@ function sharedEnvironment(value: unknown, operations: Operation[], version: 4 |
       ),
     ].map(relativePath);
   const result: Environment = {
-    schemaVersion: version,
+    schemaVersion: 4,
     prerequisites: [],
     setup: [],
     generatedDirectories: outputs(input.workspace.primary.id),

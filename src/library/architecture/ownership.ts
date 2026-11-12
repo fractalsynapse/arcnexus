@@ -4,8 +4,7 @@ import type ts from 'typescript';
 import { git } from '../operations/process.js';
 import type { Catalog } from './components.js';
 import { relativePath } from './config.js';
-import { ConfigurationReader, type ConfigurationSource } from './configuration.js';
-import { validateSchema } from './schema.js';
+import type { ConfigurationSource } from './configuration.js';
 
 interface Owner {
   component: string;
@@ -41,27 +40,11 @@ export class OwnershipValidator {
       .trim()
       .split('\n');
     files.forEach((file) => this.files.add(file));
-    if (Object.values(catalog.components).some((c) => c.schemaVersion >= 4)) {
-      this.versionFour(catalog, files);
-      return;
-    }
-    if (!files.some((p) => /^architecture\/ownership\.(json|ya?ml)$/.test(p))) return;
-    const source = new ConfigurationReader().definition(
-      this.repository,
-      this.base,
-      'architecture/ownership',
-    );
-    const policy = validateSchema<OwnershipPolicy>('ownership', source.value);
-    this.validateOwners(policy, catalog, files);
-    for (const file of files.filter((f) => policy.maintainedPaths.some((p) => covers(f, p)))) {
-      const owner = this.owner(file, policy);
-      if (/\.[cm]?[jt]sx?$/.test(file)) this.imports(file, owner, policy);
-    }
-    assertImportCycles(this.graph);
-    return source;
+    this.versionFour(catalog, files);
+    return undefined;
   }
 
-  /** Derives the v4 ownership index from component declarations. */
+  /** Derives the ownership index from what the components declare. */
   private versionFour(catalog: Catalog, files: string[]): void {
     const components = Object.values(catalog.components).filter(
       (c) => c.type === 'platform' || c.repository === catalog.primaryRepository,
