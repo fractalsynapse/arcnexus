@@ -50,6 +50,11 @@ export class ArchitectureFixture {
     t.after(() => rmSync(this.root, { recursive: true, force: true }));
     mkdirSync(this.repo);
     this.git('init', '-b', 'main');
+    // The environment declares a primary repository, so the checkout must carry that origin:
+    // binding identity compares the declared URL against it, and without the remote git's raw
+    // "No such remote 'origin'" surfaces instead of the behaviour these scenarios exercise.
+    if (!this.git('remote').trim().split('\n').includes('origin'))
+      this.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     this.git('config', 'user.name', 'Test');
     this.git('config', 'user.email', 'test@example.invalid');
     this.hierarchy();
@@ -153,10 +158,11 @@ export class ArchitectureFixture {
   /** Declares an empty preparation environment for catalog-focused scenarios. */
   private environment(): void {
     this.put('architecture/environment.json', {
-      schemaVersion: 1,
-      prerequisites: [],
-      setup: [],
-      generatedDirectories: [],
+      schemaVersion: 4,
+      workspace: {
+        primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
+        dependencies: [],
+      },
     });
   }
 }

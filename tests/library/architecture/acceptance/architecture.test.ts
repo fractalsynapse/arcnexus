@@ -68,7 +68,7 @@ class ArchitectureTests {
     f.put('architecture/components/other.json', {
       ...f.component,
       id: 'other',
-      allowedWritePaths: ['source.txt'],
+      owns: ['source.txt'],
     });
     f.put('architecture/ownership.json', {
       schemaVersion: 1,
@@ -142,12 +142,12 @@ class ArchitectureTests {
   /** Verifies the scenario rejects private cross owner imports. */
   rejectsPrivateCrossOwnerImports(t: TestContext, dynamic: any) {
     const f = fixture(t);
-    f.component.allowedWritePaths = ['src/sample'];
+    f.component.owns = ['src/sample'];
     f.put('architecture/components/sample.json', f.component);
     f.put('architecture/components/other.json', {
       ...f.component,
       id: 'other',
-      allowedWritePaths: ['src/other'],
+      owns: ['src/other'],
     });
     f.source(
       'src/sample/main.ts',
@@ -173,7 +173,7 @@ class ArchitectureTests {
   /** Verifies that built validate rejects aruntime module cycle. */
   builtValidateRejectsARuntimeModuleCycle(t: TestContext) {
     const f = fixture(t);
-    f.component.allowedWritePaths = ['src'];
+    f.component.owns = ['src'];
     f.put('architecture/components/sample.json', f.component);
     mkdirSync(join(f.repo, 'src'));
     writeFileSync(join(f.repo, 'src/a.ts'), "import './b.js';");
@@ -279,7 +279,7 @@ class ArchitectureTests {
     f.put('architecture/components/related.json', {
       ...f.component,
       id: 'related',
-      allowedWritePaths: ['other.txt'],
+      owns: ['other.txt'],
     });
     f.component.relatedIds = ['related'];
     f.put('architecture/components/sample.json', f.component);

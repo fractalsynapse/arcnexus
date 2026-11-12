@@ -96,10 +96,11 @@ class HandoffFixture {
       writeFileSync(
         join(f.repo, 'architecture/environment.yaml'),
         JSON.stringify({
-          schemaVersion: 1,
-          prerequisites: [],
-          setup: [{ command: 'node', args: ['refresh.cjs'] }],
-          generatedDirectories: ['generated'],
+          schemaVersion: 4,
+          workspace: {
+            primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
+            dependencies: [],
+          },
         }),
       );
     }
