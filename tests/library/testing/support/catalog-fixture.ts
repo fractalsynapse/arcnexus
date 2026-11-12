@@ -63,7 +63,6 @@ export const componentFields = {
  */
 export const containerFields = {
   schemaVersion: 6,
-  repository: 'sample',
   purpose: 'Contain test owners',
   objectives: [],
   constraints: [],

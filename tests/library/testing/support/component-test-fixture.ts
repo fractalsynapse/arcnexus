@@ -83,15 +83,14 @@ export class ComponentTestFixture {
       type: 'platform',
       executionProfile: 'luna',
       reads: ['.'],
-      initialization: { schemaVersion: 3, componentId: 'sample' },
-      coverageExclusions: [
-        { path: 'architecture', reason: 'Fixture configuration' },
-        { path: 'build.cjs', reason: 'Fixture preparation' },
-        { path: '.gitignore', reason: 'Fixture outputs' },
-      ],
+      defaultPackage: 'package',
+      verificationInputs: [],
     });
     this.put('architecture/components/package.yaml', {
       ...containerFields,
+      // The primary repository is derived for a platform, while a package names the repository whose
+      // sources it contains; the shared container base therefore carries it only for the package.
+      repository: 'sample',
       id: 'package',
       type: 'package',
       parentId: 'platform',
