@@ -4,6 +4,18 @@
 
 ### Changed
 
+- **No configuration versioning** (#394, architect ruling): `config migrate` is retired and the
+  version-upgrade engine is deleted; `config` reads and writes machine settings only and refuses
+  `config migrate` by name. Schemas that accepted older component and operation versions are removed,
+  so a configuration naming an unsupported version is a validation failure rather than a path kept
+  alive. Pin the installed arcnexus version to hold previous behaviour.
+- **Roles carry no activity** (#394, architect ruling): the `activity` field is removed from the role
+  schema and every role file; a role is a reusable position and the component's activity names it.
+- **Every component activity states all supported fields** (#394): `role`, `instructions`, `profile`
+  and `operations` are required, so local direction and routing are explicit.
+- **`inspect` names the position in the component slot** (#394, architect ruling): `director` and
+  `verifier` are reserved identifiers beside component names, and `--mode` is gone.
+
 - **Roles are activity-scoped positions; ownership is declared only by the component** (#394, architect-directed). The architecture model contract gains **I11**: a role declares the activities it performs and the standing detail individual to that position — responsibilities, instructions, standards, tool surface, execution profile — and is reusable by every component engaging it, so one `researcher` description serves research anywhere; ownership of files comes solely from a component, and a role grants no write scope. Roles map to activities: `researcher`, `technical-writer`, `designer`, `systems-engineer`, `tester`, `release-engineer`. In the direction contract, what I14 and DI-19 unify is the **mode** set (director, steward, verifier), not roles — the word role there would now mislead. The harness document is rewritten on the two axes: a **mode** selects an activity **sequence**, a **role** supplies each step's standing detail, and a plan declares its mode's sequence with only activities its component engages a role to hold — so a verifier's plan has no `implementation` bucket, replacing #389's role-wide rule that forced one. Contract currency: architecture-model revision 4, direction revision 5, digests and registry revisions resynced from the authored files; `validate --json` is `status: valid`. Implementing the role catalog and the mode-sequence validation rule is the remaining work under #394. (#394)
 
 - **Both agent-authored `.arc` spaces now have a steward** (#391). `.arc/plans` is owned by
