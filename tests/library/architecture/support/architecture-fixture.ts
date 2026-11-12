@@ -17,24 +17,30 @@ export class ArchitectureFixture {
 
   readonly repo = join(this.root, 'repo');
 
+  /**
+   * Fields a leaf owner declares.
+   *
+   * Ownership is expressed by `owns`; verification, discovery, access and documentation are derived
+   * from the owners and the bound operations, so authoring them is a load failure rather than a
+   * shortcut. Containers use containerCommon() instead - sharing this base produced documents that
+   * matched no schema branch, and every legitimate key then looked like the offense.
+   */
   readonly common = {
-    schemaVersion: 1,
-    repository: 'sample',
+    schemaVersion: 6,
     purpose: 'Own sample behavior',
-    path: '.',
     objectives: [],
     constraints: [],
     questions: [],
-    patterns: [],
-    interfaces: [],
-    documentation: ['README.md'],
-    tests: ['test.mjs'],
-    relatedIds: [],
-    role: 'engineer',
+    owns: ['src/sample'],
     executionProfile: 'luna',
-    access: { readPaths: ['.'], writeDirectories: ['.'] },
-    allowedWritePaths: ['source.txt'],
-    verification: [{ command: 'node', args: ['--version'] }],
+    activities: {
+      research: {
+        role: 'engineer',
+        profile: 'luna',
+        operations: [],
+        instructions: ['Establish what the sample component guarantees before changing it'],
+      },
+    },
   };
 
   component: any;
@@ -88,27 +94,36 @@ export class ArchitectureFixture {
     });
   }
 
-  /** Defines legacy platform, package and leaf ownership for ancestry acceptance. */
+  /** Fields a platform or package may declare: containment and roots, never leaf ownership. */
+  private containerCommon(id: string, type: string): Record<string, unknown> {
+    return {
+      schemaVersion: 6,
+      id,
+      type,
+      purpose: `Contain ${id} owners`,
+      objectives: [],
+      constraints: [],
+      questions: [],
+      executionProfile: 'luna',
+      activities: {},
+    };
+  }
+
+  /** Defines platform, package and leaf ownership for ancestry acceptance. */
   private hierarchy(): void {
     this.put('architecture/components/platform.json', {
-      ...this.common,
-      id: 'platform',
-      type: 'platform',
-      allowedWritePaths: ['.'],
+      ...this.containerCommon('platform', 'platform'),
+      reads: ['.'],
+      director: { component: 'sample', profile: 'luna' },
+      reviewerProfile: 'luna',
+      defaultPackage: 'package',
+      verificationInputs: [],
     });
     this.put('architecture/components/package.json', {
-      ...this.common,
-      id: 'package',
-      type: 'package',
+      ...this.containerCommon('package', 'package'),
       parentId: 'platform',
-      allowedWritePaths: ['.'],
-      members: {
-        foundations: [],
-        dependencies: [],
-        gateways: [],
-        libraries: ['sample'],
-        releases: [],
-      },
+      repository: 'sample',
+      root: '.',
     });
     this.component = { ...this.common, id: 'sample', type: 'library', parentId: 'package' };
     this.put('architecture/components/sample.json', this.component);
