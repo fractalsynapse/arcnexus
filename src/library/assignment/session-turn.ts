@@ -1,3 +1,4 @@
+import { modeSequence } from '../architecture/modes.js';
 import { CheckedEditBridge } from './checked-edit-bridge.js';
 import { EngineeringContext } from './engineering-context.js';
 import { operationBridge } from '../operations/operations.js';
@@ -132,7 +133,26 @@ export class SessionTurn {
   }
 
   /** Maps host turn stages onto the canonical activity whose profile and context they perform. */
+  /**
+   * Maps a turn's stage to the activity whose frame it acts under.
+   *
+   * `planning` is a stage, not one of the six activities: a steward produces its plan while holding
+   * the first activity its mode runs and its component actually has, normally research. Naming the
+   * stage in the frame instead would ask for authority the component never declared, and the frame
+   * is required to state exactly what the agent may do.
+   */
   private primaryActivity(activity: string): string {
+    if (activity === 'planning') {
+      const sequence = modeSequence(
+        this.state.resolved.mode,
+        Object.keys(this.state.resolved.activities),
+      );
+      if (!sequence.length)
+        throw new Error(
+          `Assignment holds no activity to plan under: ${this.state.assignment.objective.slice(0, 60)}`,
+        );
+      return sequence[0]!;
+    }
     if (activity === 'specification') return 'documentation';
     if (activity === 'implementation' || activity === 'correction')
       return this.state.documentationOnly ? 'documentation' : 'implementation';
