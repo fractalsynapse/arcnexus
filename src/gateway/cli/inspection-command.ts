@@ -66,6 +66,12 @@ export class InspectionCommand {
     activity?: string;
   } {
     const [first, second, third] = this.positionals.slice(1);
+    // An empty positional is a malformed request, not an absent one: slots are optional, but a shell
+    // that passes "" means someone asked for something and gave no name. Accepting it would let the
+    // surface silently fall back to a different inspection than the caller requested.
+    for (const slot of [first, second, third])
+      if (slot !== undefined && !slot.trim())
+        throw new InputError('Inspection positionals must name a project, component or activity');
     const named = first !== undefined && this.resolvesAsProject(portfolio, first);
     if (!named && third !== undefined)
       throw new InputError(
