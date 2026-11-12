@@ -19,7 +19,7 @@ export class TaskCommand {
   /** Rejects retired execution before dispatch and preserves read-only proposal inspection. */
   async run(): Promise<void> {
     const action = this.positionals[1];
-    if (['list', 'get', 'follow'].includes(action ?? ''))
+    if (['list', 'get', 'follow', 'status'].includes(action ?? ''))
       return new RunQueryCommand('task', this.positionals, this.values, this.signal).run();
     if (['pause', 'resume', 'stop', 'answer'].includes(action ?? '')) return this.control(action!);
     if (action === 'run') return this.submit();
