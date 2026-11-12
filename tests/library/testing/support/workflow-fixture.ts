@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import type { TestContext } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { catalogFixture, componentFields } from './catalog-fixture.js';
+import { catalogFixture, componentFields, containerFields } from './catalog-fixture.js';
 import type { WorkflowOptions } from './controlled-workflow.js';
 
 export const cli = resolve('dist/cli.js');
@@ -129,16 +129,80 @@ export class WorkflowFixture {
     );
   }
 
+  /** Writes one fixture component definition as JSON. */
+  private declare(id: string, value: unknown): void {
+    writeFileSync(join(this.repo, `architecture/components/${id}.json`), JSON.stringify(value));
+  }
+
+  /**
+   * Declares the containers the fixture's leaves are parented to.
+   *
+   * The leaves name `package` as their parent, so a catalog without that document cannot load, and
+   * every suite built on it reports whatever the assignment code did next rather than the missing
+   * component it actually created.
+   */
+  private containers(): void {
+    this.declare('platform', {
+      ...containerFields,
+      id: 'platform',
+      type: 'platform',
+      reads: ['.'],
+      director: { component: 'sample', profile: 'luna' },
+      reviewerProfile: 'luna',
+      defaultPackage: 'package',
+    });
+    this.declare('package', {
+      ...containerFields,
+      id: 'package',
+      type: 'package',
+      parentId: 'platform',
+      repository: 'sample',
+      root: '.',
+    });
+  }
+
+  /**
+   * Declares the leaf that maintains the configuration and root files the fixture commits.
+   *
+   * Containers own nothing of their own, so their definition files need an owner: this is the same
+   * role architecture-maintenance plays in this repository. The list names each path instead of
+   * declaring the `architecture` directory, because a folder covering this leaf's own definition -
+   * or another leaf's - is refused as a duplicate grant or an ownership overlap.
+   */
+  private maintainer(): void {
+    this.declare('maintainer', {
+      ...this.component,
+      id: 'maintainer',
+      purpose: 'Own shared fixture configuration',
+      parentId: 'package',
+      owns: [
+        '.gitignore',
+        'verify.cjs',
+        'architecture/environment.yaml',
+        'architecture/execution-profiles/luna.yaml',
+        'architecture/roles/engineer.yaml',
+        'architecture/components/platform.json',
+        'architecture/components/package.json',
+      ],
+    });
+  }
+
   /** Writes component definitions and disposable-output declarations for the fixture workspace. */
   private catalog(): void {
+    this.containers();
+    this.maintainer();
     writeFileSync(
       join(this.repo, 'architecture/components/sample.json'),
       JSON.stringify(this.component),
     );
-    writeFileSync(
-      join(this.repo, 'architecture/components/dependency.json'),
-      JSON.stringify({ ...this.component, id: 'dependency', purpose: 'Own dependency interface' }),
-    );
+    this.declare('dependency', {
+      ...this.component,
+      id: 'dependency',
+      purpose: 'Own dependency interface',
+      // Two leaves cannot claim one path: overlap is refused, and this leaf exists to be imported by
+      // the sample, not to share its write scope.
+      owns: ['dependency'],
+    });
     writeFileSync(
       join(this.repo, 'architecture/environment.yaml'),
       JSON.stringify({
