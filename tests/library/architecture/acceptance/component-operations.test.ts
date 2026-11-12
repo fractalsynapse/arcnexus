@@ -5,6 +5,14 @@ import { test, type TestContext } from 'node:test';
 import { ComponentFixture } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
+/** Declares an implementation activity carrying the component's own agent-invoked operations. */
+const implementationActivity = (operations: string[]) => ({
+  role: 'engineer',
+  profile: 'luna',
+  operations,
+  instructions: ['Make the shared check the thing this change is judged on'],
+});
+
 /** Exercises shared operation planning through the assembled catalog loader. */
 class SharedOperationScenarios {
   /** Retains an available test tool before the first suite while rejecting empty required checkpoints. */
@@ -94,6 +102,9 @@ class SharedOperationScenarios {
         owns: ['src', 'docs', 'tests'],
         reads: ['src'],
         constraints: ['Leaf constraint'],
+        // The leaf declares the activity that carries its own agent work, which is valid whether or
+        // not ancestor grants are ever allowed to reach it (see #428).
+        activities: { implementation: implementationActivity(['check']) },
         operations: { check: ['agent'] },
       }),
     );
