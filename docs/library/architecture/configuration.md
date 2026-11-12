@@ -176,15 +176,21 @@ The steward selects those files; assignment authors cannot grant or narrow owner
 existing behavior uses the refactor workflow, with passing captured checks rather
 than invented documentation edits or failing tests.
 
-## Activity execution profiles (#277)
+## Activity execution profiles (#277, activity model #394)
 
-The accepted activity-profile increment adds an optional `activityProfiles` mapping
-beside the inherited `executionProfile`. Values name shared execution profiles;
-model settings remain authored only in those profiles. Each activity inherits the
-nearest explicit value independently; omitted activities use the effective default.
-Supported keys are the activities the component's role declares: research,
-documentation, testing, implementation, review and release. A key outside that set, or
-one the role does not support, fails validation naming the valid activities.
+An activity states the execution profile its work runs under, next to its role, its
+bound operations and its own direction. There is no separate `activityProfiles`
+mapping: the selection lives inside `activities`, beside the position it belongs to.
+Model settings remain authored only in the shared execution profiles, never inline.
+
+Supported activity names are research, documentation, testing, implementation, review
+and release. A key outside that set fails validation naming the valid activities, and
+a declared activity missing any of its four fields is refused at load rather than
+resolved by a fallback.
+
+Whether an activity may inherit a profile from an ancestor instead of stating one is
+open in #428. Under the current shape every declared activity must state the field, so
+inheritance cannot be expressed and this document describes what is required.
 
 The existing host workflow selects one primary activity per model turn. Planning
 and coordination use the default; research and review use their matching overrides.
