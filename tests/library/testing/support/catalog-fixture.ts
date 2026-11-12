@@ -2,9 +2,46 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 export const componentFields = {
-  schemaVersion: 1,
+  schemaVersion: 6,
   repository: 'sample',
-  role: 'engineer',
+  activities: {
+    research: {
+      role: 'engineer',
+      profile: 'luna',
+      operations: [],
+      instructions: ['Carry out the research activity within the sample component scope'],
+    },
+    documentation: {
+      role: 'engineer',
+      profile: 'luna',
+      operations: [],
+      instructions: ['Carry out the documentation activity within the sample component scope'],
+    },
+    testing: {
+      role: 'engineer',
+      profile: 'luna',
+      operations: [],
+      instructions: ['Carry out the testing activity within the sample component scope'],
+    },
+    implementation: {
+      role: 'engineer',
+      profile: 'luna',
+      operations: [],
+      instructions: ['Carry out the implementation activity within the sample component scope'],
+    },
+    review: {
+      role: 'engineer',
+      profile: 'luna',
+      operations: [],
+      instructions: ['Carry out the review activity within the sample component scope'],
+    },
+    release: {
+      role: 'engineer',
+      profile: 'luna',
+      operations: [],
+      instructions: ['Carry out the release activity within the sample component scope'],
+    },
+  },
   executionProfile: 'luna',
   interfaces: [],
   documentation: [],
@@ -31,7 +68,7 @@ export function catalogFixture(repo: any): any {
       responsibilities: ['Verify changes'],
     },
     'execution-profiles/luna': {
-      schemaVersion: 1,
+      schemaVersion: 3,
       id: 'luna',
       model: 'gpt-6-luna',
       reasoning: 'medium',
