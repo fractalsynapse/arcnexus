@@ -3,6 +3,14 @@ import { test } from 'node:test';
 import { readSchema, validateSchema } from '../../../../dist/library/architecture/schema.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
+/** The per-activity grant a steward frame reads: position, direction, bound operations. */
+const implementationGrant = {
+  role: { id: 'engineer', responsibilities: ['Change within the owned scope and verify it'] },
+  instructions: ['Change only what this goal requires inside the owned scope'],
+  operations: [],
+  standards: [],
+};
+
 /** Verifies the assembled context communicates the usable write route without expanding authority. */
 class EngineeringContextScenarios {
   /** Minimal engineering discovers checked edits and preserves stage, scope and transaction restrictions. */
@@ -71,7 +79,20 @@ class EngineeringContextScenarios {
       import.meta.url,
     );
     const { EngineeringContext } = await import(path.href);
-    const state = {
+    return new EngineeringContext(this.contextState(schemaVersion, contributionGroup)).render(
+      'implementation',
+    );
+  }
+
+  /**
+   * A resolved context in the shape the frame reads.
+   *
+   * `render` requires the selected activity, so the grant, the mode and the assignment objective all
+   * live in the resolved context; a component states no role of its own, and the frame quotes the
+   * assignment rather than reaching for a working-tree goal.
+   */
+  private contextState(schemaVersion: number, contributionGroup?: string[]): any {
+    return {
       options: {
         id: 'owner',
         record: {
@@ -80,8 +101,16 @@ class EngineeringContextScenarios {
           generalExecution: Boolean(contributionGroup),
         },
       },
-      resolved: { role: { id: 'engineer' }, context: [], related: [], owners: [], operations: [] },
-      component: { schemaVersion, verification: [] },
+      resolved: {
+        mode: 'steward',
+        assignment: { objective: 'Expose the maintained write route', acceptanceCriteria: [] },
+        activities: { implementation: implementationGrant },
+        context: [],
+        related: [],
+        owners: [],
+        operations: [],
+      },
+      component: { id: 'sample', type: 'library', schemaVersion, verification: [] },
       scope: ['owned'],
       planned: true,
       assignment: {
@@ -89,7 +118,6 @@ class EngineeringContextScenarios {
         hostChecks: [{ id: 'check', command: 'secret-check-command' }],
       },
     };
-    return new EngineeringContext(state).render();
   }
 }
 
