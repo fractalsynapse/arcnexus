@@ -25,11 +25,11 @@ Options are stated with the command that accepts them. Only `--json`, `--help` a
 are global.
 
 ```text
-arcnexus task run [project] "<goal>" [--plan | --component <id> [--activity <a>]] [--async] [--simulate] [--json]
+arcnexus task run [project] "<goal>" [--async] [--simulate] [--json]
 arcnexus task status [goal-id] [--follow] [--after <event-sequence>] [--json]
 arcnexus task stop [goal-id]
 arcnexus task answer <goal-id> "<response>"
-arcnexus inspect [project] [component|director|verifier] [activity] [--milestone <id|file>] [--json]
+arcnexus inspect [project] [component] [activity] [--milestone <id|file>] [--json]
 arcnexus component list [project] [field=value ...] [--search <text>] [--limit <1-100>] [--cursor <token>] [--json]
 arcnexus component get <project> <id> [--json]
 arcnexus standard list <project> [field=value ...] [--search <text>] [--limit <1-100>] [--json]
@@ -108,17 +108,17 @@ arcnexus delivery status                  # read-only view of a published candid
 
 Removed, each with a one-line pointer to its replacement in the refusal message:
 
-| Retired                                                                     | Replacement                                                                  |
-| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `platform` and `package` create/update/remove/migrate/list/get              | `project` vocabulary; `component` and `standard` reads                       |
-| `config migrate`                                                            | none: configurations carry no version to upgrade; pin the installed arcnexus |
-| `workspace prepare/cleanup/list/get`                                        | runtime-managed; read through `evidence get`                                 |
-| `delivery approve/publish/promote`                                          | human gates answered through `task answer`; release stage later              |
-| `experiment inspect`                                                        | deferred campaign lane; the simulation lifecycle stays, under `--simulate`   |
-| `task pause`, `task resume`                                                 | `task stop`, then a new `task run` reading the recorded position             |
-| `task list/get/follow/inspect`, `workday list/get/history/follow/inspect`   | `task status`, `evidence get`                                                |
-| `inspect <component> <objective> --kind …` and the two legacy inspect forms | one `inspect [project] [component] [activity]` context preview               |
-| `guidance validate`, `run`                                                  | folded into `validate`; execution is `task run`                              |
+| Retired                                                                     | Replacement                                                                |
+| --------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `platform` and `package` create/update/remove/migrate/list/get              | `project` vocabulary; `component` and `standard` reads                     |
+| `config get/update`                                                         | bindings file under the project contract                                   |
+| `workspace prepare/cleanup/list/get`                                        | runtime-managed; read through `evidence get`                               |
+| `delivery approve/publish/promote`                                          | human gates answered through `task answer`; release stage later            |
+| `experiment inspect`                                                        | deferred campaign lane; the simulation lifecycle stays, under `--simulate` |
+| `task pause`, `task resume`                                                 | `task stop`, then a new `task run` reading the recorded position           |
+| `task list/get/follow/inspect`, `workday list/get/history/follow/inspect`   | `task status`, `evidence get`                                              |
+| `inspect <component> <objective> --kind …` and the two legacy inspect forms | one `inspect [project] [component] [activity]` context preview             |
+| `guidance validate`, `run`                                                  | folded into `validate`; execution is `task run`                            |
 
 ### 5. Rejected options
 

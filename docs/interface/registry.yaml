@@ -54,20 +54,13 @@ contracts:
     file: docs/interface/arcnexus-cli-gateway.md
     owner: cli
     stage: locked
-    revision: 6
-    digest: fa0fd39a9a68269eda19316b44f2daf3cfdc24384aa37510c7d65caca39e3f75
+    revision: 5
+    digest: a80d721cdf1c37bbdd5b834e224894d39c88b12221369add54aab8fefecd656c
     dependsOn: [arcnexus/project, arcnexus/foundation]
     scenarios: 20
     acceptedBy: Adrian Webb (architect)
     acceptedAt: 2026-11-07
-      - revision: 6
-        stage: locked
-        digest: fa0fd39a9a68269eda19316b44f2daf3cfdc24384aa37510c7d65caca39e3f75
-        note: >
-          architect rulings: `task run` gains the sealed `--plan` and in-place
-          `--component <id> [--activity <a>]` stances, `inspect` names the position in
-          the component slot with `director`/`verifier` beside component names, and
-          `config migrate` is retired because configurations carry no version to upgrade
+    history:
       - revision: 5
         stage: locked
         digest: a80d721cdf1c37bbdd5b834e224894d39c88b12221369add54aab8fefecd656c
