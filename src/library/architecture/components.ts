@@ -169,7 +169,11 @@ export function loadCatalog(repository: string, base: string, bindings?: Binding
   try {
     return new CatalogLoader(repository, base, bindings).load();
   } catch (error) {
-    throw new InputError(String(error));
+    // A rejected catalog is an input problem, but an unexpected internal failure is not: keeping the
+    // original error as the cause preserves the frame that names the statement which failed. Flattening
+    // it into a message is what made several fixture crashes impossible to attribute from output alone.
+    if (error instanceof InputError) throw error;
+    throw new InputError(String(error), { cause: error });
   }
 }
 
@@ -384,8 +388,8 @@ class CatalogComponentValidator {
   /** Checks referenced operations against the component profile and environment. */
   private operations(c: Component): void {
     const { catalog, env } = this;
-    if (c.schemaVersion >= 5 && ['platform', 'package'].includes(c.type)) return;
-    const ids = c.schemaVersion >= 5 ? Object.keys(c.operations ?? {}) : (c.operationIds ?? []);
+    if (['platform', 'package'].includes(c.type)) return;
+    const ids = Object.keys(c.operations ?? {});
     for (const id of ids) {
       const op = catalog.operations[id];
       if (!Object.hasOwn(catalog.operations, id) || op?.repository !== c.repository)
@@ -396,7 +400,11 @@ class CatalogComponentValidator {
     if (!Object.hasOwn(catalog.profiles, c.executionProfile))
       throw new InputError(`Missing execution profile for ${c.id}`);
     this.declaredActivities(c, catalog);
-    const profiles = Object.values(c.activities).flatMap((a) => (a.profile ? [a.profile] : []));
+    // A leaf may bind operations to activities without declaring any of its own; reading the map
+    // defensively keeps that shape a validation result rather than an internal crash.
+    const profiles = Object.values(c.activities ?? {}).flatMap((a) =>
+      a.profile ? [a.profile] : [],
+    );
     for (const id of [c.executionProfile, ...profiles]) {
       if (!Object.hasOwn(catalog.profiles, id))
         throw new InputError(`Unknown activity execution profile for ${c.id}: ${id}`);
