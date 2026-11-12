@@ -55,9 +55,10 @@ export class ComponentTestFixture {
     });
     this.put('architecture/environment.yaml', {
       schemaVersion: 4,
-      prerequisites: [],
-      setup: [],
-      generatedDirectories: ['.test-build'],
+      workspace: {
+        primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
+        dependencies: [],
+      },
     });
   }
 
