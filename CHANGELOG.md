@@ -4,6 +4,28 @@
 
 ### Changed
 
+- **`task run` gains two sealed stances** (#394, architect rulings): `--plan` stops after direction so
+  a plan can be read before anything is dispatched, and `--component <id> [--activity <a>]` works
+  **in place** in the current checkout at current HEAD with no worktree and no branch switching,
+  bypassing the director and verifier and never entering the delivery route. Both adopt the
+  simulation connectivity interface, so issues, comments and pull requests are recorded locally
+  through the same application lifecycle. `--activity` without `--component` fans out to every
+  component holding that activity as N sequential activations, gated by a strictly clean tree and a
+  check that the components' owned scopes do not overlap; a single component may run over uncommitted
+  work that does not intersect its scope, and the block reads "in-place work in progress; commit or
+  stash".
+- **`inspect` names the position in the component slot** (#394): `director` and `verifier` are
+  reserved identifiers beside component names, and there is no `--mode` flag; the inspected frame is
+  rendered by the same generator that builds an activation's, so a preview cannot diverge from the
+  run it describes.
+- **One run readout** (#394): streaming `task run` and following `task status` emit the same JSONL
+  event lines from one stored sequence, and `--async` prints a single summary object. The earlier
+  pair of renderers - whole-report snapshots printed whenever bytes differed, and a separate follow
+  projection - are gone.
+- **`config migrate` is retired** (#394, architect ruling): configurations are not versioned, so the
+  upgrade engine, its CLI surface and the version-selecting schemas are deleted; pin the installed
+  arcnexus release to hold previous behaviour.
+
 - **No configuration versioning** (#394, architect ruling): `config migrate` is retired and the
   version-upgrade engine is deleted; `config` reads and writes machine settings only and refuses
   `config migrate` by name. Schemas that accepted older component and operation versions are removed,
