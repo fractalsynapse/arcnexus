@@ -148,8 +148,13 @@ export function inPlaceWorkspace(root: string, options: PrepareOptions): RecordD
     throw new InputError(
       'In-place work requires a checked-out branch; the current checkout is detached',
     );
+  const id = randomUUID();
+  // The per-run state directory holds attempt artifacts, transcripts and the report. Candidate
+  // preparation makes it inside createWorkspace; in-place work needs it for the same reasons, and
+  // without it the activation fails writing its own evidence.
+  mkdirSync(join(root, 'runs', id), { mode: 0o700 });
   const record: RecordData = {
-    id: randomUUID(),
+    id,
     source,
     base,
     commonDir,
