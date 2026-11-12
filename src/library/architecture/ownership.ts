@@ -40,12 +40,17 @@ export class OwnershipValidator {
       .trim()
       .split('\n');
     files.forEach((file) => this.files.add(file));
-    this.versionFour(catalog, files);
+    this.deriveOwnership(catalog, files);
     return undefined;
   }
 
-  /** Derives the ownership index from what the components declare. */
-  private versionFour(catalog: Catalog, files: string[]): void {
+  /**
+   * Derives the ownership index from what the components declare and checks each maintained file.
+   *
+   * Ownership is never authored as a separate policy: the components' declared paths are the
+   * authority, so this builds the index from them and refuses gaps or collisions in one pass.
+   */
+  private deriveOwnership(catalog: Catalog, files: string[]): void {
     const components = Object.values(catalog.components).filter(
       (c) => c.type === 'platform' || c.repository === catalog.primaryRepository,
     );
