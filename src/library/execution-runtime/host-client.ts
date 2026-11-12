@@ -61,13 +61,34 @@ export class HostClient {
   }
 
   /** Selects live staging before admission; existing supervisors retain their own captured authority. */
-  async ensureRun(action: 'submit' | 'start', simulate: boolean, signal: AbortSignal) {
+  async ensureRun(
+    action: 'submit' | 'start',
+    simulate: boolean,
+    signal: AbortSignal,
+    stance?: { kind: string },
+  ) {
     if (await this.retainedAdmission(action, simulate, signal)) return;
     const discovered = this.context;
+    // An in-place submission stays on the operator's own checkout: current branch, current HEAD.
+    // Re-anchoring it to live staging would silently move the files the run was told to edit.
+    this.capturedContext =
+      stance?.kind === 'component'
+        ? this.checkoutContext(discovered)
+        : await this.stagingContext(discovered, signal);
+    await this.ensure(action, signal);
+  }
+
+  /** Resolves the current checkout as authority without relocating it, for work that edits in place. */
+  private checkoutContext(discovered: ProjectExecution): ProjectExecution {
+    return new ExecutionContext().resolve(discovered.source, discovered.packageId);
+  }
+
+  /** Anchors a run to live staging, or to its development branch when there is no remote. */
+  private async stagingContext(discovered: ProjectExecution, signal: AbortSignal) {
     const branch = developmentTarget(discovered);
     const repository = githubDestination(discovered);
-    if (repository) {
-      this.capturedContext = await stagingContext(
+    if (repository)
+      return stagingContext(
         discovered.source,
         discovered.packageId,
         this.directory,
@@ -76,14 +97,11 @@ export class HostClient {
         signal,
         false,
       );
-    } else {
-      this.capturedContext = new ExecutionContext().resolve(
-        discovered.source,
-        discovered.packageId,
-        'refs/heads/' + branch,
-      );
-    }
-    await this.ensure(action, signal);
+    return new ExecutionContext().resolve(
+      discovered.source,
+      discovered.packageId,
+      'refs/heads/' + branch,
+    );
   }
 
   /** Keeps an existing isolated workday in its own upstream environment, including task admission. */

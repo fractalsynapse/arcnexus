@@ -25,7 +25,7 @@ import { ProgressObserver } from '../report/progress.js';
 import type { InitializationResult } from '../architecture/initialization.js';
 import type { RunStance } from '../coordination-store/execution-types.js';
 import { AssignmentDispatch } from './assignment-dispatch.js';
-import { recordPlanOutcome } from './plan-stance.js';
+import { recordInPlaceCompletion, recordPlanOutcome } from './plan-stance.js';
 import { CollaborativeDispatch } from './collaborative-dispatch.js';
 import { retainedFailureText } from './failure-text.js';
 
@@ -133,7 +133,7 @@ export class ProjectHost {
     if (!prompt.trim()) throw new InputError('Task prompt must not be empty');
     // A plan run exists to be read, so it can never reach upstream: sealing is part of the stance,
     // not a caller option that could be forgotten.
-    simulate = simulate || stance.kind === 'plan';
+    simulate = simulate || stance.kind !== 'goal';
     const workday = this.selection.workday();
     const reusable = simulate && this.environments.reusable('simulation', workday);
     if (expectedEnvironmentId && expectedEnvironmentId !== reusable)
@@ -327,7 +327,7 @@ export class ProjectHost {
     if (run.mode === 'workday' && run.data.lastAssembly && !ready.length)
       await this.redirect(run, run.data.lastAssembly, true, signal);
     else if (run.mode === 'workday') await this.stewardship(run, signal);
-    else await this.finishTask(run, signal);
+    else if (!recordInPlaceCompletion(this.store, run)) await this.finishTask(run, signal);
   }
 
   /** Executes ready engineering and retains any verified workday delivery before another activation. */

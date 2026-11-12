@@ -109,6 +109,47 @@ function captureConfiguration(record: RecordData, options: PrepareOptions): void
   );
 }
 
+/**
+ * Records the operator's own checkout as the workspace: no worktree, no branch creation.
+ *
+ * In-place work deliberately updates the current project, so the workspace record is the same shape
+ * every writer already keys on (`record.workspace`) but pointed at the checkout instead of a
+ * directory made under the state root. Authority capture runs unchanged, so component ownership and
+ * checked-edit refusal apply to these writes exactly as they do to a candidate. A detached HEAD is
+ * refused rather than guessed at: "current branch" has no meaning there, and inventing one would put
+ * the operator's edits on a branch they never chose.
+ */
+export function inPlaceWorkspace(root: string, options: PrepareOptions): RecordData {
+  const { source, base, env, commonDir } = inspectSource(options);
+  const branch = git(source, 'branch', '--show-current').trim();
+  if (!branch)
+    throw new InputError(
+      'In-place work requires a checked-out branch; the current checkout is detached',
+    );
+  const record: RecordData = {
+    id: randomUUID(),
+    source,
+    base,
+    commonDir,
+    branch,
+    workspace: source,
+    inPlace: true,
+    status: 'ready',
+    startedAt: new Date().toISOString(),
+    environment: env,
+    commands: [],
+  };
+  record.bindings = options.bindings ?? loadBindings();
+  captureConfiguration(record, options);
+  WorkspaceOperations.capture(
+    record,
+    options.project,
+    options.authorityBase ?? record.base,
+    options.packageId,
+  );
+  return record;
+}
+
 export async function prepareWorkspace(
   root: string,
   record: RecordData,

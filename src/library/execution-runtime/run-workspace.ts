@@ -5,7 +5,12 @@ import type { ProjectExecution } from '../architecture/execution-context.js';
 import type { ExecutionRun } from '../coordination-store/execution-types.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
 import { CandidateSnapshots } from '../workspace/candidates.js';
-import { assertIdentity, createWorkspace, prepareWorkspace } from '../workspace/workspace.js';
+import {
+  assertIdentity,
+  createWorkspace,
+  inPlaceWorkspace,
+  prepareWorkspace,
+} from '../workspace/workspace.js';
 import type { RecordData } from '../workspace/state.js';
 
 /** Materializes policy context from immutable verified snapshots and journals uncertain setup. */
@@ -31,6 +36,30 @@ export class RunWorkspace {
     );
   }
 
+  /**
+   * Adopts the operator's checkout as this run's workspace, in place at current HEAD.
+   *
+   * There is no candidate revision to carry forward and no branch to create: the run works where the
+   * operator is standing, so the recorded base is the authority base and preparation is complete as
+   * soon as authority is captured.
+   */
+  private prepareInPlace(run: ExecutionRun): void {
+    const record = inPlaceWorkspace(this.root, {
+      project: this.context.source,
+      authorityBase: this.context.base,
+      packageId: this.context.packageId,
+      base: this.context.base,
+      bindings: this.context.bindings,
+    });
+    record.executionRunId = run.id;
+    record.executionEnvironment = run.environment;
+    this.store.updateRun(run.id, this.store.run(run.id).status, {
+      workspace: record,
+      workspacePrepared: true,
+      candidateRevision: record.base,
+    });
+  }
+
   /** Creates fresh planning context without treating a mutable delivery directory as authoritative. */
   async prepare(run: ExecutionRun, signal: AbortSignal): Promise<void> {
     const latest = this.store.latestDelivery(
@@ -39,6 +68,8 @@ export class RunWorkspace {
       run.environment,
     );
     const revision = String(latest?.data.candidateRevision ?? this.context.base);
+    if ((run.data.stance as { kind?: string } | undefined)?.kind === 'component')
+      return this.prepareInPlace(run);
     const record = createWorkspace(this.root, {
       project: this.context.source,
       authorityBase: this.context.base,
