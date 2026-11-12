@@ -58,11 +58,10 @@ function ownerView(component: Component) {
 /** Projects captured legacy contracts and patterns without repeating their source artifacts. */
 function contractView(component: Component) {
   return {
-    [component.schemaVersion === 6 ? 'standards' : 'patterns']:
-      (component.standardSnapshots ?? component.patternSnapshots)?.map((pattern) => ({
-        id: pattern.id,
-        artifacts: pattern.artifacts.map(({ path, sha256 }) => ({ path, sha256 })),
-      })) ?? [],
+    standards: (component.standardSnapshots ?? []).map((standard) => ({
+      id: standard.id,
+      artifacts: standard.artifacts.map(({ path, sha256 }) => ({ path, sha256 })),
+    })),
     provides:
       component.providedSnapshots?.map(({ artifact: _artifact, ...contract }) => contract) ?? [],
     consumes:

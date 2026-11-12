@@ -16,7 +16,6 @@ import { ContractRegistry, type ContractLock } from './contracts.js';
 import {
   ancestry,
   loadCatalog,
-  validateOperations,
   type Component,
   type Catalog,
   type CompositionProfile,
@@ -350,7 +349,7 @@ class AssignmentResolver {
       ...(options.bindings ? { bindings: options.bindings } : {}),
       ...(compositionProfile ? { compositionProfile } : {}),
       executionProfile,
-      operations: this.operations(executionProfile),
+      operations: this.operations(),
     };
   }
 
@@ -376,22 +375,14 @@ class AssignmentResolver {
     return { compositionProfile, executionProfile };
   }
 
-  /** Selects only operations authorized by both component and assignment. */
-  private operations(executionProfile: ExecutionProfile): Operation[] {
-    const { assignment, component, catalog, env } = this;
-    if (component.schemaVersion >= 5) {
-      if (assignment.operationIds)
-        throw new InputError('Assignments cannot substitute captured operation usages');
-      return (component.operationPlan?.agent ?? []).filter((op) =>
-        component.operations?.[op.id]?.includes('agent'),
-      );
-    }
-    const requestedOperations = assignment.operationIds ?? component.operationIds ?? [];
-    if (requestedOperations.some((id) => !(component.operationIds ?? []).includes(id)))
-      throw new InputError('Assignment widens operation authority');
-    const operations = requestedOperations.map((id) => catalog.operations[id]!);
-    validateOperations(operations, executionProfile, env);
-    return operations;
+  /** Selects the operations the component's agent activities actually bind. */
+  private operations(): Operation[] {
+    const { assignment, component } = this;
+    if (assignment.operationIds)
+      throw new InputError('Assignments cannot substitute captured operation usages');
+    return (component.operationPlan?.agent ?? []).filter((op) =>
+      component.operations?.[op.id]?.includes('agent'),
+    );
   }
 }
 

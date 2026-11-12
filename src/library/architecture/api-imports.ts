@@ -57,11 +57,6 @@ export class ApiImports {
 
   /** Named API entries expose only their selected exports, including when namespace values escape. */
   private boundary(owner: Component, source: string, path: string, symbols: string[]): void {
-    if (owner.schemaVersion < 5) {
-      if (!owner.ownership?.publicModules.includes(path))
-        throw new Error(`Private cross-owner import: ${source} -> ${path}`);
-      return;
-    }
     const entries = owner.publicApi?.filter((entry) => entry.module === path) ?? [];
     if (!entries.length) throw new Error(`Private cross-owner import: ${source} -> ${path}`);
     const allowed = new Set(entries.flatMap((entry) => entry.exports.map((symbol) => symbol.name)));

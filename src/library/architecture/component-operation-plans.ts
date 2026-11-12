@@ -81,9 +81,9 @@ export class ComponentOperationPlans {
     });
   }
 
-  /** Keeps legacy discovery readable while requiring a shared runner before assignment execution. */
+  /** Requires a shared test profile before a component may be assigned executable test work. */
   profileCheck(c: Component, executable = false): { id: string; run: string } | undefined {
-    if (c.schemaVersion < 6 || !c.testProfile) return undefined;
+    if (!c.testProfile) return undefined;
     const profile = this.catalog.configurationSources.find(
       (source) =>
         source.path.startsWith('architecture/test-profiles/') &&
