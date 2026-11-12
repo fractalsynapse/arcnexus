@@ -8,8 +8,6 @@ purpose:
 objectives: [Make actual execution outcomes easy to inspect]
 constraints: [
     Preserve captured authority and evidence,
-    'component-v4 (src/library/architecture/schemas/component-v4.json):
-    Preserve supported historical versions and captured execution readers',
     'component (src/library/architecture/schemas/component-v6.json):
     Preserve supported historical versions and captured execution readers',
     'composition-profile (src/library/architecture/schemas/composition-profile.json):
@@ -90,7 +88,6 @@ api:
   - { module: src/library/architecture/schema.ts }
   - { module: src/library/architecture/build-schemas.ts }
   - { module: src/library/architecture/catalog-view.ts }
-  - { schema: src/library/architecture/schemas/component-v4.json }
   - { schema: src/library/architecture/schemas/component-v6.json }
   - { schema: src/library/architecture/schemas/composition-profile.json }
   - { schema: src/library/architecture/schemas/execution-profile.json }

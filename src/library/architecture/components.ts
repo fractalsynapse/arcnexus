@@ -4,11 +4,11 @@ import { ComponentOperationPlans } from './component-operation-plans.js';
 import { requireActivity } from './activities.js';
 import { ancestry, covered, scopePath } from './component-paths.js';
 import { ComponentV5Resolver } from './component-v5.js';
+import type { ComponentFields } from './component-fields.js';
 import type { ComponentV5Fields } from './component-v5-policy.js';
 import { captureComponentTests } from '../testing/captured-tests.js';
 import { repositoryRevisions, type RepositoryRevision } from './repository-revisions.js';
 import type { Bindings } from './bindings.js';
-import { ComponentV4Resolver, type ComponentV4Fields } from './component-v4.js';
 import { ArchitectureReferences } from './references.js';
 import { validateInitialization } from './initialization.js';
 import type { Operation } from '../operations/operations.js';
@@ -32,7 +32,7 @@ export { ancestry, covered, scopePath } from './component-paths.js';
 
 export { classifyComponentPath } from './file-classification.js';
 
-export interface Component extends ComponentV4Fields, ComponentV5Fields {
+export interface Component extends ComponentFields, ComponentV5Fields {
   initialization?: { schemaVersion: 3; componentId: string };
   schemaVersion: 1 | 2 | 3 | 4 | 5 | 6;
   operationIds?: string[];
@@ -154,15 +154,10 @@ function read<T>(
   const source = new ConfigurationReader().revision(repository, base, path);
   sources.push(source);
   try {
-    const version = (source.value as { schemaVersion?: number }).schemaVersion;
     return validateSchema<T>(
-      schema === 'component' && (version === 4 || version === 5 || version === 6)
-        ? `component-v${version}`
-        : schema === 'operation' && version === 4
-          ? 'operation-v4'
-          : // Only the current schema per kind is accepted; a configuration naming another version is
-            // a validation failure, not a legacy path to preserve.
-            schema,
+      // Configurations carry no version to select on: one schema per kind, so a file naming an
+      // older shape fails validation instead of being upgraded by the loader.
+      schema === 'component' ? 'component-v6' : schema === 'operation' ? 'operation-v4' : schema,
       structuredClone(source.value),
     );
   } catch (error) {
@@ -214,7 +209,6 @@ class CatalogLoader {
     this.catalog.configurationSources.push(source);
     const env = environment(source.value, Object.values(this.catalog.operations));
     repositoryRevisions(this.catalog, env, this.repository, this.base, this.bindings);
-    new ComponentV4Resolver(this.catalog).resolve();
     new ComponentV5Resolver(this.catalog).resolve();
     if (!Object.keys(this.catalog.components).length) throw new InputError('No components defined');
     const validator = new CatalogComponentValidator(this.catalog, env);
