@@ -52,6 +52,9 @@ export class WorkflowFixture {
     // Ownership is the write scope: path, access and allowed-write derivations all come from it,
     // and verification comes from the operations bound to the component, so none is authored.
     owns: ['source.txt', 'docs', 'tests', 'new.txt'],
+    // Binding the verify operation is what makes this leaf executable: the assignment path requires
+    // an owner whose operation plan produced a verification check, and an unbound leaf has none.
+    operations: { verify: ['verify'] },
   };
 
   private options: WorkflowOptions;
@@ -67,6 +70,12 @@ export class WorkflowFixture {
     this.git('init', '-b', 'staging');
     this.git('config', 'user.name', 'Test');
     this.git('config', 'user.email', 'test@example.invalid');
+    // The environment declares a primary repository, so the checkout must carry that origin: binding
+    // identity compares the declared URL against it, and without a remote git's raw "No such remote
+    // 'origin'" surfaces instead of the assignment behavior these scenarios exercise. Guarded
+    // because a fixture that already established its remotes must not fail on a duplicate add.
+    if (!this.git('remote').trim().split('\n').includes('origin'))
+      this.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     this.files();
     this.catalog();
     this.configure({});
@@ -178,6 +187,7 @@ export class WorkflowFixture {
       owns: [
         '.gitignore',
         'verify.cjs',
+        'architecture/operations/verify.yaml',
         'architecture/environment.yaml',
         'architecture/execution-profiles/luna.yaml',
         'architecture/roles/engineer.yaml',
@@ -187,9 +197,33 @@ export class WorkflowFixture {
     });
   }
 
+  /** Declares the one finite check every fixture leaf binds as its verification. */
+  private verificationOperation(): void {
+    mkdirSync(join(this.repo, 'architecture/operations'), { recursive: true });
+    writeFileSync(
+      join(this.repo, 'architecture/operations/verify.yaml'),
+      JSON.stringify({
+        schemaVersion: 4,
+        id: 'verify',
+        purpose: 'Check the fixture behavior',
+        kind: 'command',
+        repository: 'sample',
+        cwd: '.',
+        category: 'unit-test',
+        command: 'node',
+        args: ['verify.cjs'],
+        generatedDirectories: [],
+        artifacts: [],
+        prerequisites: [],
+        network: false,
+      }),
+    );
+  }
+
   /** Writes component definitions and disposable-output declarations for the fixture workspace. */
   private catalog(): void {
     this.containers();
+    this.verificationOperation();
     this.maintainer();
     writeFileSync(
       join(this.repo, 'architecture/components/sample.json'),
