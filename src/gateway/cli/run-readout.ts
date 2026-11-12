@@ -35,6 +35,10 @@ export class RunReadout {
       process.stdout.write(`${JSON.stringify(eventLine(event))}\n`);
       written += 1;
     }
+    // Assignments are created after the run starts, so the identifier set must grow with the work.
+    // A set gathered once at startup silently filtered out every later assignment event - including
+    // the verification failure that ended an in-place run, whose stream showed only the plan.
+    if (written) await this.identify();
     return written;
   }
 
