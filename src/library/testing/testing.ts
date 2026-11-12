@@ -137,7 +137,7 @@ export class ComponentTesting {
   ): Promise<TestExecution> {
     if (!selection.operationPlan)
       throw new InputError(
-        'Migrate test profile to schemaVersion 2 and minimal components with arcnexus config migrate',
+        'Component has no test operation plan: declare a test profile naming a runner',
       );
     const result = this.record(selection, productionBuilt);
     try {

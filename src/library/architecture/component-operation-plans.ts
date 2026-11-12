@@ -82,22 +82,22 @@ export class ComponentOperationPlans {
   }
 
   /** Requires a shared test profile before a component may be assigned executable test work. */
-  profileCheck(c: Component, executable = false): { id: string; run: string } | undefined {
+  profileCheck(c: Component): { id: string; run: string } | undefined {
     if (!c.testProfile) return undefined;
     const profile = this.catalog.configurationSources.find(
       (source) =>
         source.path.startsWith('architecture/test-profiles/') &&
         (source.value as { id?: string }).id === c.testProfile,
-    )?.value as { schemaVersion: number; id: string; run?: string } | undefined;
-    if (profile?.schemaVersion === 1 && !executable) return undefined;
-    if (profile?.schemaVersion === 1)
-      throw new InputError('Migrate test profile to schemaVersion 2 with arcnexus config migrate');
-    if (profile?.schemaVersion !== 2 || !profile.run)
-      throw new InputError(`Missing executable test profile: ${c.testProfile}`);
+    )?.value as { id: string; run?: string } | undefined;
+
+    // A declared profile that resolves to nothing, or names no runner, cannot carry executable
+    // tests. The check is about presence and capability, not about a configuration version.
+    if (!profile?.run)
+      throw new InputError(`Test profile ${c.testProfile} declares no runner for ${c.id}`);
     return { id: profile.id, run: profile.run };
   }
 
-  /** Keeps implicit profile checks subject to the same role, repository and finite-operation authority. */
+  /** Resolves the runner a component's declared test profile names. */
   private validate(c: Component, op: Operation, usage: string): void {
     if (op.schemaVersion !== 4)
       throw new InputError(`Migrate operation ${op.id} to schemaVersion 4`);

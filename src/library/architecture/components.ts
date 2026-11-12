@@ -126,7 +126,7 @@ export function validateOperations(
   env: Environment,
 ): void {
   for (const op of operations) {
-    if (profile.schemaVersion < 2 || !profile.operationCategories?.includes(op.category))
+    if (!profile.operationCategories?.includes(op.category))
       throw new InputError('Operation category not permitted by execution profile: ' + op.id);
     const outputs =
       env.workspace && op.repository !== env.workspace.primary.id

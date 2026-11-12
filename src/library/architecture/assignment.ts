@@ -198,7 +198,7 @@ class AssignmentResolver {
   /** Requires an executable owner in the primary writable repository. */
   private validateTarget(): void {
     const { env, component } = this;
-    new ComponentOperationPlans(this.catalog).profileCheck(component, true);
+    new ComponentOperationPlans(this.catalog).profileCheck(component);
     if (env.workspace && component.repository !== env.workspace.primary.id)
       throw new InputError('Assignment component must belong to the writable primary repository');
     if (
