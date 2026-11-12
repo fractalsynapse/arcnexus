@@ -6,7 +6,7 @@ import { test, type TestContext } from 'node:test';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { captureInitialization } from '../../../../dist/library/architecture/initialization.js';
 import { MigrationFixture } from '../support/migration-fixture.js';
-import { ComponentFixture } from '../support/component-fixture.js';
+import { ComponentFixture, selectedActivities } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises the platform as the only authored source of new execution defaults. */
@@ -177,9 +177,9 @@ class PlatformExecutionScenarios {
     fixture.put(
       'architecture/components/platform.json',
       fixture.component('platform', 'platform', {
-        role: 'engineer',
         executionProfile: 'luna',
         reads: ['.'],
+        activities: selectedActivities('luna'),
         director: { component: 'maintenance', profile: 'director' },
         reviewerProfile: 'director',
         defaultPackage: 'maintenance-package',

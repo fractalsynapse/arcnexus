@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
-import { ComponentFixture } from '../support/component-fixture.js';
+import { ComponentFixture, selectedActivities } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises type discrimination and inherited authority through the built catalog loader. */
@@ -20,15 +20,22 @@ class ComponentPolicyScenarios {
     assert.equal(result.status, 0, result.stderr);
   }
 
-  /** Missing executable policies must not select a fallback model or role. */
+  /**
+   * Requires each activity to state its own authority.
+   *
+   * A component declares no role, so the position and model live on the activity that uses them.
+   * Dropping either one must be a load failure: silently selecting a fallback model or leaving work
+   * without an accountable position is the hazard this scenario guards.
+   */
   missing(t: TestContext, field: string): void {
     const fixture = new ComponentFixture(t);
-    const platform = fixture.component('platform', 'platform', {
-      role: 'engineer',
+    const platform = fixture.uncheckedComponent('platform', 'platform', {
       executionProfile: 'luna',
       reads: ['.'],
+      activities: selectedActivities('luna'),
     });
-    delete platform[field];
+    const activities = platform.activities as Record<string, any>;
+    delete activities.research[field];
     fixture.put('architecture/components/platform.json', platform);
     fixture.commit();
     const result = fixture.run('validate');
@@ -71,10 +78,11 @@ class ComponentPolicyScenarios {
 const scenarios = new ComponentPolicyScenarios();
 
 for (const type of ['foundation', 'gateway', 'library', 'release'])
-  test(`v5 resolves minimal ${type}`, (t) => scenarios.executable(t, type));
+  test(`resolves minimal ${type}`, (t) => scenarios.executable(t, type));
 
-for (const field of ['role', 'executionProfile'])
-  test(`v5 requires inherited ${field}`, (t) => scenarios.missing(t, field));
+for (const field of ['role', 'profile'])
+  test(`requires the authority each activity declares: ${field}`, (t) =>
+    scenarios.missing(t, field));
 
 test('rejects container ownership', (t) => scenarios.container(t));
 

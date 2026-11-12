@@ -6,6 +6,36 @@ import { join, resolve } from 'node:path';
 import type { TestContext } from 'node:test';
 import { validateSchema } from '../../../../dist/library/architecture/schema.js';
 
+/**
+ * Declares the activities a fixture component selects, each naming its position, model, operations
+ * and direction.
+ *
+ * A component carries no role of its own, so scenarios that need a role for some work state it on
+ * that activity. One helper keeps the four fixture documents from tripling the same literal.
+ */
+export function selectedActivities(profile: string, role = 'engineer'): Record<string, unknown> {
+  return {
+    research: {
+      role,
+      profile,
+      operations: [],
+      instructions: ['Establish what the component guarantees before proposing a change'],
+    },
+    testing: {
+      role,
+      profile,
+      operations: [],
+      instructions: ['Express acceptance as checks over the declared public contract'],
+    },
+    review: {
+      role,
+      profile,
+      operations: [],
+      instructions: ['Judge the candidate against the accepted behaviour, not the intent'],
+    },
+  };
+}
+
 /** Builds a completely owned minimal catalog without legacy component fields. */
 export class ComponentFixture {
   readonly root = mkdtempSync(join(tmpdir(), 'component-v5-'));
@@ -55,10 +85,10 @@ export class ComponentFixture {
     this.put(
       'architecture/components/platform.json',
       this.component('platform', 'platform', {
-        role: 'engineer',
         executionProfile: 'luna',
         reads: ['.'],
         constraints: ['Preserve authority'],
+        activities: selectedActivities('luna'),
       }),
     );
     this.put(

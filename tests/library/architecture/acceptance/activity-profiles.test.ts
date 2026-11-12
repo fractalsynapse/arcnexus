@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
-import { ComponentFixture } from '../support/component-fixture.js';
+import { ComponentFixture, selectedActivities } from '../support/component-fixture.js';
 import { resolveAssignment } from '../../../../dist/library/architecture/assignment.js';
 import { loadCatalog } from '../../../../dist/library/architecture/components.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
@@ -73,19 +73,28 @@ class ActivityProfileScenarios {
     assert.match(f.run('validate').stderr, /Operation category not permitted/);
   }
 
-  /** Provides the required director and one shared finite check for executable assignments. */
-  private execution(f: ComponentFixture): void {
+  /**
+   * Declares the platform whose activities select positions and models.
+   *
+   * The platform carries no role: each activity names the position, the model that work runs under,
+   * its operations and its own direction, which is what the resolved policy is expected to show.
+   */
+  private platform(f: ComponentFixture): void {
     f.put(
       'architecture/components/platform.json',
       f.component('platform', 'platform', {
-        role: 'engineer',
         executionProfile: 'luna',
         reads: ['.'],
         director: { component: 'sample', profile: 'sol' },
         reviewerProfile: 'sol',
-        activityProfiles: { research: 'sol', testing: 'sol', review: 'sol' },
+        activities: selectedActivities('sol'),
       }),
     );
+  }
+
+  /** Provides the required director and one shared finite check for executable assignments. */
+  private execution(f: ComponentFixture): void {
+    this.platform(f);
     f.put(
       'architecture/components/package.json',
       f.component('package', 'package', {
@@ -147,11 +156,12 @@ class ActivityProfileScenarios {
     f.put('architecture/execution-profiles/sol.json', this.profile('test-sol'));
     f.put(
       'architecture/components/platform.json',
+      // Per-activity profiles are authored on the activities themselves; a leaf declares no model
+      // choice, so the resolved policy must still show the platform's selection for each activity.
       f.component('platform', 'platform', {
-        role: 'engineer',
         executionProfile: 'luna',
         reads: ['.'],
-        activityProfiles: { research: 'sol', testing: 'sol', review: 'sol' },
+        activities: selectedActivities('sol'),
       }),
     );
     return f;
