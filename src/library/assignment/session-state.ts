@@ -177,7 +177,11 @@ export class SessionState {
   safe() {
     assertIdentity(this.options.record);
     checkScope(this.options.record.workspace, changes(this.options.record), this.scope);
-    assertGeneratedOutputs(this.options.record.workspace, this.options.record.environment);
+    assertGeneratedOutputs(
+      this.options.record.workspace,
+      this.options.record.environment,
+      this.options.record.inPlace === true,
+    );
   }
 
   /** Runs a complete verification checkpoint with shared preparation and retained partial evidence. */

@@ -154,7 +154,7 @@ export class StewardSession {
     await prepareCapabilities(this.root, this.record, this.signal);
     await this.state!.checks(this.state!.component.verification, 'baseline');
     assertIdentity(this.record);
-    assertOutputs(this.record.workspace, this.record.environment);
+    assertOutputs(this.record.workspace, this.record.environment, this.record.inPlace === true);
   }
 }
 
