@@ -69,7 +69,6 @@ owns:
     .arc/plans,
     src/library/task-intake,
     tests/library/task-intake,
-    scripts/direction-probe.mjs,
     scripts/direction-corpus.json,
     docs/library/task-intake,
   ]
