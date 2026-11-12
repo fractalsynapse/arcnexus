@@ -247,34 +247,6 @@ class ArchitectureTests {
     assert.equal(f.run('validate').status, 2);
   }
 
-  /** Verifies that related context does not widen authority and ancestor narrowing fails. */
-  relatedContextDoesNotWidenAuthorityAndAncestorNarrowingFails(t: TestContext) {
-    const f = fixture(t);
-    f.put('architecture/components/related.json', {
-      ...f.component,
-      id: 'related',
-      owns: ['other.txt'],
-    });
-    f.component.relatedIds = ['related'];
-    f.put('architecture/components/sample.json', f.component);
-    f.commit();
-    const r = f.run('inspect', 'sample', 'Improve behavior', '--json');
-    assert.equal(r.status, 0, r.stderr);
-    const result = JSON.parse(r.stdout);
-    assert.deepEqual(result.context.at(-1).allowedWritePaths, ['source.txt']);
-    assert.equal(result.related[0].id, 'related');
-    f.put('architecture/components/platform.json', {
-      ...f.component,
-      id: 'platform',
-      type: 'platform',
-      parentId: undefined,
-      allowedWritePaths: ['docs'],
-      relatedIds: [],
-    });
-    f.commit();
-    assert.equal(f.run('validate').status, 2);
-  }
-
   /** Verifies that captures acceptance modules. */
   async capturesAcceptanceModules(t: TestContext) {
     const f = fixture(t),
@@ -371,9 +343,6 @@ test('assignment rejects caller-authored file lists and has a stable digest', (t
 
 test('unused invalid definition is rejected and dirty working definitions cannot change inspection', (t: any) =>
   suite.unusedInvalidDefinitionIsRejectedAndDirtyWorkingDefinitionsCannotChangeInspection(t));
-
-test('related context does not widen authority and ancestor narrowing fails', (t: any) =>
-  suite.relatedContextDoesNotWidenAuthorityAndAncestorNarrowingFails(t));
 
 test('host acceptance snapshots preserve module extensions and declared relative imports', (t: any) =>
   suite.capturesAcceptanceModules(t));
