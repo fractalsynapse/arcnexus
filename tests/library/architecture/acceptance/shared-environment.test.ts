@@ -60,7 +60,6 @@ class SharedEnvironmentScenarios {
       args: ['--version'],
       cwd: '.',
       category: 'unit-test',
-      activities: ['testing'],
       generatedDirectories: ['generated'],
       artifacts: [],
     };

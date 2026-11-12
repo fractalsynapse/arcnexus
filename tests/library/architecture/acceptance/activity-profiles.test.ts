@@ -125,7 +125,6 @@ class ActivityProfileScenarios {
       args: ['--version'],
       cwd: '.',
       category: 'unit-test',
-      activities: ['testing'],
       prerequisites: [],
       generatedDirectories: [],
       artifacts: [],

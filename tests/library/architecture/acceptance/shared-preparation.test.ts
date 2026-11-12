@@ -230,7 +230,6 @@ class SharedPreparationScenarios {
       args: ['package/src/prepare.cjs', { context: 'ownerId' }],
       cwd: '.',
       category: 'unit-test',
-      activities: ['testing'],
       generatedDirectories: ['package/generated'],
       artifacts: ['package/generated/proof'],
     };

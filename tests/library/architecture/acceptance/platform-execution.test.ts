@@ -135,7 +135,6 @@ class PlatformExecutionScenarios {
       args: ['-e', 'process.exit(0)'],
       cwd: '.',
       category: 'unit-test',
-      activities: ['testing'],
       prerequisites: [],
       generatedDirectories: [],
       artifacts: [],

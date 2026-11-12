@@ -208,7 +208,6 @@ class SharedOperationScenarios {
       args: [{ context: 'ownerId' }, { context: 'packageRoot' }, { context: 'ownedPaths' }],
       cwd: '.',
       category: 'unit-test',
-      activities: ['testing'],
       prerequisites,
       generatedDirectories: [],
       artifacts: [],
