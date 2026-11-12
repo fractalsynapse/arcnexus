@@ -10,6 +10,13 @@ readiness. Readers require schema version 1 and exactly one initialized workday.
 Status and ordered events remain inspectable after execution ends. Opening a viewer
 does not initialize a missing database or resume interrupted work.
 
+## Escalation records
+
+An escalation records the owner waiting on another owner, the reason for the wait,
+and the assignment it blocks. Its `owner` identifies the waiting owner, `reason`
+contains the explanation and identifies the owner awaited, and `assignmentId`
+identifies the blocked assignment. The awaited owner is conveyed in the reason text.
+
 ## General execution inbox
 
 General execution uses the separate version-two store; version-one reports remain

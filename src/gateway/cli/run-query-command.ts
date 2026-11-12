@@ -1,4 +1,5 @@
 import { setTimeout as delay } from 'node:timers/promises';
+import { eventLine, type EventRow } from './run-readout.js';
 import { ExecutionResources } from '../../library/execution-runtime/execution-resources.js';
 import { InputError } from '../../library/architecture/config.js';
 import type { RunMode } from '../../library/coordination-store/execution-types.js';
@@ -23,7 +24,12 @@ export class RunQueryCommand {
       previous = '';
     while (!this.signal.aborted) {
       const result = resources.get(this.mode, input.id, after);
-      if (result.revision !== previous || result.events.length) this.render(result);
+      // Following emits the readout's JSONL lines; a single read prints the report object. Both come
+      // from the same stored sequence, so following and previewing cannot describe work differently.
+      if (input.follow)
+        for (const event of result.events)
+          process.stdout.write(`${JSON.stringify(eventLine(event as unknown as EventRow))}\n`);
+      else if (result.revision !== previous || result.events.length) this.render(result);
       previous = result.revision;
       after = result.cursor;
       if (
