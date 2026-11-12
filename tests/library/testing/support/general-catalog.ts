@@ -2,6 +2,33 @@ import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import type { WorkflowFixture } from './workflow-fixture.js';
 
+/**
+ * Declares the activities a general-catalog component selects.
+ *
+ * A component states no position of its own: each activity names its role, model, bound operations
+ * and its own direction, and the platform's director must declare research for itself.
+ */
+const activitiesFor = (id: string): Record<string, unknown> => ({
+  research: {
+    role: 'engineer',
+    profile: 'luna',
+    operations: [],
+    instructions: [`Establish what ${id} must keep true before changing it`],
+  },
+  testing: {
+    role: 'engineer',
+    profile: 'luna',
+    operations: [],
+    instructions: [`Express acceptance for ${id} as checks over its declared contract`],
+  },
+  review: {
+    role: 'engineer',
+    profile: 'luna',
+    operations: [],
+    instructions: [`Judge ${id} work against accepted behaviour, not intent`],
+  },
+});
+
 /** Builds reusable three-owner authority without provisioning or invoking a native harness. */
 export class GeneralCatalog {
   /** Retains the isolated fixture whose committed declarations this builder owns. */
@@ -23,6 +50,7 @@ export class GeneralCatalog {
           parentId: 'package',
           purpose: `Own ${id} responsibilities`,
           owns,
+          activities: activitiesFor(id),
         }),
       );
     }
@@ -63,7 +91,7 @@ export class GeneralCatalog {
         id: 'platform',
         type: 'platform',
         purpose: 'Controlled host acceptance',
-        role: 'engineer',
+        activities: activitiesFor('platform'),
         executionProfile: 'luna',
         reads: ['.'],
         constraints: ['No commits'],
