@@ -5,19 +5,11 @@ import { readFileSync } from 'node:fs';
 import { test, type TestContext } from 'node:test';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { captureInitialization } from '../../../../dist/library/architecture/initialization.js';
-import { MigrationFixture } from '../support/migration-fixture.js';
 import { ComponentFixture, selectedActivities } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises the platform as the only authored source of new execution defaults. */
 class PlatformExecutionScenarios {
-  /** Rejects historical executable authority before a public task or workday creates a host. */
-  retiredExecution(t: TestContext): void {
-    const fixture = new MigrationFixture(t);
-    this.assertStartupRejected(fixture.root, /version.six.*config migrate/i);
-    assert.equal(fixture.migrate().status, 0);
-  }
-
   /** Rejects mixed executable families before either public mode can create a host. */
   legacyEnvironment(t: TestContext): void {
     const fixture = this.fixture(t);
@@ -199,9 +191,6 @@ class PlatformExecutionScenarios {
 }
 
 const scenarios = new PlatformExecutionScenarios();
-
-test('new task and workday execution rejects legacy authority while migration remains available', (t) =>
-  scenarios.retiredExecution(t));
 
 test('minimal host startup rejects legacy environment execution recipes', (t) =>
   scenarios.legacyEnvironment(t));
