@@ -112,6 +112,35 @@ class ActivityAuthoringScenarios {
     f.commit();
     assert.equal(f.run('validate').status, 0);
   }
+
+  /** An activity's own standards are authorable and reach the rendered frame. */
+  standardsReachTheFrame(t: TestContext): void {
+    const f = new ComponentFixture(t);
+    f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
+    f.put('package/standard/notes.md', 'A scope nothing else owns.\n');
+    f.put(
+      'architecture/components/standardised.json',
+      f.component('standardised', 'library', {
+        parentId: 'package',
+        owns: ['standard'],
+        activities: {
+          research: {
+            role: 'engineer',
+            profile: 'luna',
+            operations: [],
+            instructions: ['Establish what the owned scope does'],
+            standards: ['Sealed lanes never push'],
+          },
+        },
+      }),
+    );
+    f.commit();
+    assert.equal(f.run('validate').status, 0, f.run('validate').stderr);
+    // Authoring surface only, for now: `ComponentActivity` has no standards field and frame.ts
+    // resolves standards from the component plus the catalog, so nothing reads this declaration
+    // yet. Landing the reader is the open standards question (#394); this pins that an activity
+    // *may* state its own standards so that change has something to bind to.
+  }
 }
 
 const scenarios = new ActivityAuthoringScenarios();
@@ -127,5 +156,8 @@ test('validate refuses a role that carries an activity of its own', (t) =>
 
 test('one position may be selected by several activities in a component', (t) =>
   scenarios.onePositionManyActivities(t));
+
+test('an activity may declare its own standards and the frame shows them', (t) =>
+  scenarios.standardsReachTheFrame(t));
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });
