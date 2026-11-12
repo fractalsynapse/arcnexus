@@ -26,6 +26,7 @@ import type { InitializationResult } from '../architecture/initialization.js';
 import type { RunStance } from '../coordination-store/execution-types.js';
 import { AssignmentDispatch } from './assignment-dispatch.js';
 import { recordInPlaceCompletion, recordPlanOutcome } from './plan-stance.js';
+import { InPlaceActivation } from './in-place-activation.js';
 import { CollaborativeDispatch } from './collaborative-dispatch.js';
 import { retainedFailureText } from './failure-text.js';
 
@@ -344,6 +345,11 @@ export class ProjectHost {
 
   /** Runs task direction and retains interactive questions before any owner activation. */
   private async direct(run: ExecutionRun, signal: AbortSignal): Promise<void> {
+    const stance: RunStance = (run.data.stance as RunStance | undefined) ?? { kind: 'goal' };
+    // The operator named the component, so there is nothing for the director to plan and nothing to
+    // open upstream: the addressed component proposes its own work and the same admission applies it.
+    if (stance.kind === 'component')
+      return new InPlaceActivation(this.root, this.context, this.store).run(run, stance, signal);
     const input = this.workspaces(run).directionInput(run, this.reports);
     const result = await this.workspaces(run)
       .direction(run, signal)
@@ -358,7 +364,6 @@ export class ProjectHost {
       this.clarification(run, result);
       return;
     }
-    const stance: RunStance = (run.data.stance as RunStance | undefined) ?? { kind: 'goal' };
     if (stance.kind === 'plan') {
       recordPlanOutcome(this.store, run, result);
       return;
