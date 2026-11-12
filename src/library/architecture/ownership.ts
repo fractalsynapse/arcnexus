@@ -132,11 +132,6 @@ export class OwnershipValidator {
         if (!files.includes(module)) throw new Error(`Missing public module: ${module}`);
       }
       if (component.repository !== catalog.primaryRepository && component.definition) continue;
-      for (const directory of component.access.writeDirectories) {
-        if (owner.directoryExceptions.includes(directory)) continue;
-        if (!owner.paths.some((p) => covers(directory, p)))
-          throw new Error(`Write directory outside ownership: ${owner.component}: ${directory}`);
-      }
       for (const writable of component.allowedWritePaths) {
         if (this.owner(writable, policy).component !== owner.component)
           throw new Error(`Writable ownership conflict: ${writable}`);

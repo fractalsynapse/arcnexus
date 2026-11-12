@@ -94,8 +94,17 @@ class PlatformExecutionScenarios {
     const change = execution.assignment(context, 'sample', { ...value, kind: 'change' });
     assert.equal(change.context.at(-1)?.schemaVersion, 6);
     assert.equal(change.executionProfile.id, 'luna');
-    assert.deepEqual(change.context.at(-1)?.access.writeDirectories, []);
+    this.writesFollowOwnership(change);
     assert.equal(execution.assignment(context, 'sample', value).executionProfile.id, 'luna');
+  }
+
+  /**
+   * Ownership is the only write authority, so a resolved assignment writes exactly its derived
+   * ownership scope rather than a separate grant that must be kept in step with it.
+   */
+  private writesFollowOwnership(assignment: any): void {
+    const leaf = assignment.context.at(-1);
+    assert.deepEqual(leaf?.allowedWritePaths, leaf?.ownership?.paths);
   }
 
   /** Adds one shared finite verification declaration for executable read-only assignments. */

@@ -150,7 +150,7 @@ function fallback(repository: string): Component {
     purpose: 'Confirm existing architectural responsibility without changing authority',
     objectives: ['Identify routing mismatches and missing responsibilities'],
     constraints: ['Source-read-only; no catalog-write authority; no recursion'],
-    access: { readPaths: ['.'], writeDirectories: [] },
+    access: { readPaths: ['.'] },
     allowedWritePaths: [],
     verification: [],
     questions: [],

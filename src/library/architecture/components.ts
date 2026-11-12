@@ -21,10 +21,17 @@ import {
   type Environment,
 } from './config.js';
 import { ConfigurationReader, isConfiguration, type ConfigurationSource } from './configuration.js';
-import { DirectoryGrants } from './directory-grants.js';
 import { OwnershipValidator } from './ownership.js';
-import { validateAccess, type AccessPolicy } from './permissions.js';
 import { validateSchema } from './schema.js';
+
+/** Resolved read scope for a component: its own declared reads plus inherited ones.
+ *
+ * Writing is not modelled here. A component's `owns` is the only statement of what it may
+ * write, so there is no second grant to keep in step with it.
+ */
+export interface AccessPolicy {
+  readPaths: string[];
+}
 
 export { componentContext, catalogContext } from './model-context.js';
 
@@ -227,15 +234,8 @@ class CatalogLoader {
     return this.catalog;
   }
 
-  /** Validates physical grants and exact maintained-source ownership after resolution. */
+  /** Validates exact maintained-source ownership against the captured tree after resolution. */
   private ownership(): void {
-    const grants = new DirectoryGrants(this.repository, this.base);
-    for (const component of Object.values(this.catalog.components))
-      if (
-        !this.catalog.primaryRepository ||
-        component.repository === this.catalog.primaryRepository
-      )
-        grants.validate(component);
     const ownership = new OwnershipValidator(this.repository, this.base).validate(this.catalog);
     if (ownership) this.catalog.configurationSources.push(ownership);
     this.boundOwnership();
@@ -374,7 +374,6 @@ class CatalogComponentValidator {
   /** Validates the component’s paths before they can become execution scope. */
   private paths(c: Component): void {
     scopePath(c.path);
-    validateAccess(c.access);
     for (const p of [...c.allowedWritePaths, ...c.documentation, ...c.tests]) scopePath(p);
     commands(c.verification);
   }
@@ -436,18 +435,11 @@ class CatalogComponentValidator {
       throw new InputError('Package owner must be a platform');
     if (parent && c.type !== 'package' && c.repository !== parent.repository)
       throw new InputError(`Conflicting repository ownership: ${c.id}`);
-    for (const a of ancestors.filter((a) => a.repository === c.repository)) {
-      if (
-        a.schemaVersion >= 3 &&
-        ['platform', 'package'].includes(a.type) &&
-        !a.allowedWritePaths.length &&
-        !a.access.writeDirectories.length
-      )
-        continue;
-      if (
-        c.allowedWritePaths.some((p) => !covered(p, a.allowedWritePaths)) ||
-        c.access.writeDirectories.some((p) => !covered(p, a.access.writeDirectories))
-      )
+    for (const a of ancestors.filter((entry) => entry.repository === c.repository)) {
+      // Ownership is the only write authority, so widening is judged against it alone. A container
+      // declares no scope of its own, which widens nothing and cannot be violated.
+      if (!a.allowedWritePaths.length) continue;
+      if (c.allowedWritePaths.some((p) => !covered(p, a.allowedWritePaths)))
         throw new InputError(`Child widens ancestor authority: ${c.id}`);
     }
   }

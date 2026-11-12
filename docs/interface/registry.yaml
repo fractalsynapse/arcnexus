@@ -90,13 +90,22 @@ contracts:
     file: docs/interface/arcnexus-architecture-model.md
     owner: architecture-model
     stage: locked
-    revision: 6
-    digest: 6f5921924914f7c3eee109e44c07558a753df19218f1cc50b3d679212fc0a236
+    revision: 7
+    digest: e3d6abee203a17b7d16c8b3ce9031e5595467135e2eb405ddd9b01a64499491b
     dependsOn: [arcnexus/project, arcnexus/foundation]
     scenarios: 16
     acceptedBy: Adrian Webb (architect)
     acceptedAt: 2026-11-07
     history:
+      - revision: 7
+        stage: locked
+        digest: e3d6abee203a17b7d16c8b3ce9031e5595467135e2eb405ddd9b01a64499491b
+        note: >
+          Module inventory updated under the architect's 2026-11-12 instruction that component
+          ownership is the sole source of truth for writes: `directory-grants.ts` and
+          `permissions.ts` are deleted with the grant projection they implemented. Invariant I2
+          ("ownership comes from declared paths only, no per-milestone file grants") is now the
+          only statement of write authority; `access` retains derived reads alone.
       - revision: 1
         stage: proposed
         digest: 5defa8613fe034530ece7f34401d9822bd674215f642e9878a94e3c6b9f726c1

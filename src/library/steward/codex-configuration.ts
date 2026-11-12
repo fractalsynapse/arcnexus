@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import type { ResolvedAssignment } from '../architecture/assignment.js';
 import { InputError } from '../architecture/config.js';
 import { targetEnvironment, toolDirectories } from '../architecture/bindings.js';
-import type { AccessPolicy } from '../architecture/permissions.js';
+import type { AccessPolicy } from '../architecture/components.js';
 import type { Plan } from '../assignment/plan.js';
 import type { OperationBridge } from '../operations/operations.js';
 import { execute, git } from '../operations/process.js';

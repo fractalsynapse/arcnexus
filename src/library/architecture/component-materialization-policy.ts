@@ -59,7 +59,7 @@ export class ComponentMaterializationPolicy {
     component.policy = {};
     this.scalars(component, lineage);
     this.activities(component, lineage);
-    component.access = { readPaths: this.reads(lineage), writeDirectories: [] };
+    component.access = { readPaths: this.reads(lineage) };
     component.policy.reads = {
       value: [...component.access.readPaths],
       source: [...lineage].reverse().find((entry) => entry.reads)?.id ?? component.id,

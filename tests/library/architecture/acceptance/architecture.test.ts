@@ -83,22 +83,6 @@ class ArchitectureTests {
     assert.match(r.stderr, /owner/);
   }
 
-  /** Verifies that built validate rejects asandbox directory outside declared ownership. */
-  builtValidateRejectsASandboxDirectoryOutsideDeclaredOwnership(t: TestContext) {
-    const f = fixture(t);
-    f.put('architecture/ownership.json', {
-      schemaVersion: 1,
-      maintainedPaths: ['source.txt'],
-      owners: [
-        { component: 'sample', paths: ['source.txt'], publicModules: [], directoryExceptions: [] },
-      ],
-    });
-    f.commit();
-    const r = f.run('validate');
-    assert.equal(r.status, 2, r.stderr);
-    assert.match(r.stderr, /Write directory outside ownership/);
-  }
-
   /** Verifies that built inspect preserves normalized equivalence and original source bytes. */
   builtInspectPreservesNormalizedEquivalenceAndOriginalSourceBytes(t: TestContext) {
     const f = fixture(t),
@@ -303,9 +287,6 @@ test('built validate enforces declared maintained-file ownership', (t: any) =>
 test('built validate rejects overlapping ownership even without changed files', (t: any) =>
   suite.builtValidateRejectsOverlappingOwnershipEvenWithoutChangedFiles(t));
 
-test('built validate rejects a sandbox directory outside declared ownership', (t: any) =>
-  suite.builtValidateRejectsASandboxDirectoryOutsideDeclaredOwnership(t));
-
 test('built inspect preserves normalized equivalence and original source bytes', (t: any) =>
   suite.builtInspectPreservesNormalizedEquivalenceAndOriginalSourceBytes(t));
 
@@ -342,7 +323,6 @@ for (const [name, mutate] of [
   ['missing parent', (c: any) => (c.parentId = 'missing')],
   ['cycle', (c: any) => (c.parentId = 'sample')],
   ['escaping path', (c: any) => (c.path = '../escape')],
-  ['uncovered write', (c: any) => (c.access.writeDirectories = ['docs'])],
   ['ownership', (c: any) => (c.repository = 'other')],
 ])
   test(`catalog rejects ${name}`, (t: any) => suite.rejectsInvalidCatalogReferences(t, mutate));

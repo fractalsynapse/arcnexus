@@ -41,7 +41,6 @@ function ownerView(component: Component) {
     ownershipBasis: component.ownership ? 'component-definition' : 'legacy-write-scope-only',
     ownedPaths: component.ownership?.paths ?? null,
     writeScope: component.allowedWritePaths,
-    directoryGrants: component.access.writeDirectories,
     directoryExceptions: component.ownership?.directoryExceptions ?? [],
     imports: component.observedImports ?? [],
     consumers: component.observedConsumers ?? [],

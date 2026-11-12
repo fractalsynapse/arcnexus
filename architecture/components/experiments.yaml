@@ -75,7 +75,6 @@ owns:
     qualification,
     fixtures,
     docs/acceptance,
-    scripts/check-permissions.mjs,
     scripts/check-report.mjs,
     scripts/check-sample.mjs,
     scripts/live-sample.mjs,

@@ -4,6 +4,17 @@
 
 ### Changed
 
+- **Component ownership is now the only write authority** (#394, architect ruling 2026-11-12):
+  `access.writeDirectories` was assigned exactly one value anywhere in the codebase - `[]` - so the
+  directory-grant checks built on it could never fire, while `validateAccess` still _required_ the
+  empty field on every component. Removed with it: `architecture/directory-grants.ts`,
+  `architecture/permissions.ts` (`validateAccess`, `readOnlyAccess`, `preparePermissions` and the
+  preparation class), the ownership loop that reported `Write directory outside ownership`, the
+  `directoryGrants` catalog-view field, and the `check-permissions` experiment plus its script shim.
+  `component.access` now carries derived **reads** only; writes come from `owns`, as invariant I2 of
+  the architecture-model contract always said. The locked contract's module inventory was amended
+  under this recorded instruction (registry revision 7, digest resynced after formatting).
+
 - **Component validation errors now name the real fault** (#394, architect ruling on the activity
   model): a schema that selects its shape with `oneOf` previously reported every branch's complaints,
   so a component whose only defect was a missing activity field was also told that `parentId` and
