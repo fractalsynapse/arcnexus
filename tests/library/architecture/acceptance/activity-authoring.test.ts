@@ -70,6 +70,48 @@ class ActivityAuthoringScenarios {
     const result = f.run('validate');
     assert.equal(result.status, 0, result.stderr);
   }
+
+  /**
+   * Refuses a role that carries an activity.
+   *
+   * A role is a reusable position and the component selects which role performs each activity, so a
+   * role naming an activity of its own would reintroduce the binding the model removed: two
+   * components could not reuse one position for different work without editing the role.
+   */
+  roleCarriesNoActivity(t: TestContext): void {
+    const f = new ComponentFixture(t);
+    f.put('architecture/roles/writer.json', {
+      schemaVersion: 4,
+      id: 'writer',
+      purpose: 'Write documentation',
+      responsibilities: ['Record what the owned scope does'],
+      activity: 'documentation',
+    });
+    f.commit();
+    const result = f.run('validate');
+    assert.equal(result.status, 2, `a role activity must be refused: ${result.stdout}`);
+    assert.match(result.stderr, /additional properties \(activity\)/, result.stderr);
+  }
+
+  /** Accepts one position selected by several activities in the same component. */
+  onePositionManyActivities(t: TestContext): void {
+    const f = new ComponentFixture(t);
+    f.put('package/dual/notes.md', 'A scope nothing else owns.\n');
+    const grant = { role: 'engineer', profile: 'luna', operations: [], instructions: [] };
+    f.put(
+      'architecture/components/dual.json',
+      f.component('dual', 'library', {
+        parentId: 'package',
+        owns: ['dual'],
+        activities: {
+          research: { ...grant, instructions: ['Establish what the owned scope does'] },
+          documentation: { ...grant, instructions: ['Record what the owned scope does'] },
+        },
+      }),
+    );
+    f.commit();
+    assert.equal(f.run('validate').status, 0);
+  }
 }
 
 const scenarios = new ActivityAuthoringScenarios();
@@ -79,5 +121,11 @@ test('validate refuses an activity omitting each required field by name', (t) =>
 
 test('validate accepts an activity that states all four supported fields', (t) =>
   scenarios.complete(t));
+
+test('validate refuses a role that carries an activity of its own', (t) =>
+  scenarios.roleCarriesNoActivity(t));
+
+test('one position may be selected by several activities in a component', (t) =>
+  scenarios.onePositionManyActivities(t));
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });

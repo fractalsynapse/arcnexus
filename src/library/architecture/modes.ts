@@ -3,12 +3,12 @@ import { activityRank, type Activity } from './activities.js';
 /**
  * The three ways an agent can stand in a lane, and the activity sequence each one runs.
  *
- * A mode is not a role. A **role** is a position that holds one activity — researcher,
- * technical-writer, designer, systems-engineer, reviewer, release-engineer — carrying the standing
- * responsibilities, instructions, standards and execution profile reusable across every component.
+ * A mode is not a role. A **role** is a reusable position — engineer, reviewer, release-engineer,
+ * designer — carrying standing responsibilities, instructions, standards and an execution profile,
+ * and it holds **no activity**: the component selects which role performs each activity it declares.
  * A **mode** is what an activation is doing in the lane, and it decides which activities the plan
- * must declare. Conflating them is what let one bundled role imply that every agent performs every
- * activity, which made a verifier declare implementation work it is not authorized to do.
+ * must declare. Conflating the two is what once let a bundled role imply that every agent performs
+ * every activity, which made a verifier declare implementation work it is not authorized to do.
  */
 export const modes = ['director', 'steward', 'verifier'] as const;
 
