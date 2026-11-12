@@ -142,16 +142,6 @@ class ArchitectureTests {
       dynamic ? "await import('../other/private.js');" : "import '../other/private.js';",
     );
     f.source('src/other/private.ts', 'export const value=1;');
-    f.put('architecture/ownership.json', {
-      schemaVersion: 1,
-      maintainedPaths: ['src'],
-      owners: ['sample', 'other'].map((component: any) => ({
-        component,
-        paths: ['src/' + component],
-        publicModules: [],
-        directoryExceptions: ['.'],
-      })),
-    });
     f.commit();
     const r = f.run('validate');
     assert.equal(r.status, 2, r.stderr);
