@@ -184,3 +184,14 @@ export type RunStance =
    * reading a file an operator is editing is not that same hazard.
    */
   | { kind: 'component'; component?: string; activity?: string; fanOut: boolean };
+
+/**
+ * True when a run addresses a component to work in place.
+ *
+ * Sealed stances share the simulated upstream connectivity, so environment mode alone cannot say
+ * whether the run owns an isolated candidate: an in-place run edits the operator's checkout and must
+ * therefore skip the steps that exist to build and protect a separate one.
+ */
+export function isInPlaceRun(run: { data?: Record<string, unknown> }): boolean {
+  return (run.data?.stance as { kind?: string } | undefined)?.kind === 'component';
+}
