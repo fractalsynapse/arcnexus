@@ -3,6 +3,33 @@ import { join } from 'node:path';
 import type { TestContext } from 'node:test';
 import { ComponentTestFixture } from './component-test-fixture.js';
 
+/**
+ * Declares the activities a fixture leaf selects.
+ *
+ * Each activity states its position, model, bound operations and its own direction, because a
+ * component carries no role of its own and the platform's director must declare research for itself.
+ */
+const leafActivities = (id: string): Record<string, unknown> => ({
+  research: {
+    role: 'engineer',
+    profile: 'luna',
+    operations: [],
+    instructions: [`Establish what ${id} must keep true before changing it`],
+  },
+  testing: {
+    role: 'engineer',
+    profile: 'luna',
+    operations: [],
+    instructions: [`Express acceptance for ${id} as checks over its declared contract`],
+  },
+  review: {
+    role: 'engineer',
+    profile: 'luna',
+    operations: [],
+    instructions: [`Judge ${id} work against accepted behaviour, not intent`],
+  },
+});
+
 /** Supplies minimal components while preserving the established Node test conventions. */
 export class MinimalTestFixture extends ComponentTestFixture {
   /** Creates explicit configuration ownership and an inherited test profile with no discovery fields. */
@@ -81,6 +108,7 @@ export class MinimalTestFixture extends ComponentTestFixture {
       id,
       type,
       purpose: 'Own test selection',
+      ...(type === 'platform' || type === 'package' ? {} : { activities: leafActivities(id) }),
       ...fields,
     });
   }
