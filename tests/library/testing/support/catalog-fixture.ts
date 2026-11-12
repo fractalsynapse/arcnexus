@@ -83,6 +83,7 @@ export function catalogFixture(repo: any): any {
     },
     'execution-profiles/luna': {
       schemaVersion: 3,
+      operationCategories: ['unit-test'],
       id: 'luna',
       model: 'gpt-6-luna',
       reasoning: 'medium',

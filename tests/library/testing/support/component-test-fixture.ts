@@ -56,6 +56,9 @@ export class ComponentTestFixture {
       parentId: 'package',
       owns: ['tests'],
       testProfile: 'node',
+      // Preparation and the runner are host lifecycle steps: setup compiles, verify runs the
+      // selected suites. Neither is an agent operation, so neither needs an activity binding.
+      operations: { compile: ['setup'], suites: ['verify'] },
     });
     this.put('architecture/environment.yaml', {
       schemaVersion: 4,
@@ -96,13 +99,46 @@ export class ComponentTestFixture {
       id: 'node',
       adapter: 'node',
       outputRoot: '.test-build',
-      preparation: [{ command: process.execPath, args: ['build.cjs'], purpose: 'tests' }],
+      preparation: [{ operation: 'compile', purpose: 'tests' }],
+      run: 'suites',
       ...overrides,
     });
-    this.put(
-      'build.cjs',
-      "const fs=require('fs'); fs.appendFileSync('prepared','built\\n'); fs.cpSync('tests','.test-build',{recursive:true}); for(const p of fs.readdirSync('.test-build',{recursive:true})) if(p.endsWith('.ts'))fs.renameSync('.test-build/'+p,'.test-build/'+p.replace(/\\.ts$/,'.js')); ",
+    this.runnerOperations();
+  }
+
+  /** Declares the setup and verify operations the shared profile references. */
+  private runnerOperations(): void {
+    this.runnerOperation('compile', 'Compile the fixture suites', ['build.cjs'], []);
+    this.runnerOperation(
+      'suites',
+      'Run the selected fixture suites',
+      ['--test', { context: 'selectedTestFiles' }],
+      ['compile'],
     );
+  }
+
+  /** Writes one finite fixture operation with the shared repository, category and output contract. */
+  private runnerOperation(
+    id: string,
+    purpose: string,
+    args: unknown[],
+    prerequisites: string[],
+  ): void {
+    this.put(`architecture/operations/${id}.yaml`, {
+      schemaVersion: 4,
+      id,
+      purpose,
+      kind: 'command',
+      repository: 'sample',
+      cwd: '.',
+      category: 'unit-test',
+      command: 'node',
+      args,
+      generatedDirectories: ['.test-build'],
+      artifacts: [],
+      prerequisites,
+      network: false,
+    });
   }
 
   /** Reads literal suite metadata and maps the source to its compiled test artifact. */
