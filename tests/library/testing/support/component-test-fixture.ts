@@ -21,6 +21,10 @@ export class ComponentTestFixture {
     this.git('init', '-b', 'main');
     this.git('config', 'user.name', 'Test');
     this.git('config', 'user.email', 'test@example.invalid');
+    // The fixture catalog declares a primary repository, so the checkout must actually have that
+    // origin: otherwise binding identity fails with git's raw 'No such remote' error and hides the
+    // behaviour every scenario in this family is meant to exercise.
+    this.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     catalogFixture(this.repo);
     this.catalog();
     this.profile();
