@@ -20,6 +20,15 @@ class ArchitectureTests {
       renameSync(source, source.replace('.json', '.yaml'));
       writeFileSync(source.replace('.json', '.yaml'), stringify(value));
     }
+    // Ownership follows the file: maintenance declared the JSON name, so after the rename nothing
+    // would own architecture/environment.yaml and validate would refuse the catalog for a reason
+    // unrelated to what this scenario inspects.
+    const maintenancePath = join(f.repo, 'architecture/components/maintenance.json');
+    const maintenance = JSON.parse(String(readFileSync(maintenancePath, 'utf8')));
+    maintenance.owns = (maintenance.owns as string[]).map((path: string) =>
+      path === 'architecture/environment.json' ? 'architecture/environment.yaml' : path,
+    );
+    writeFileSync(maintenancePath, JSON.stringify(maintenance));
     f.commit();
     const r = f.run('inspect', 'sample', 'Improve behavior', '--json');
     assert.equal(r.status, 0, r.stderr);
