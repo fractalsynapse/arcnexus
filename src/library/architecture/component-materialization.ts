@@ -21,7 +21,6 @@ export class ComponentMaterializer {
   /** Resolves all v5 definitions and derives package membership from parent identity. */
   resolve(): void {
     for (const component of Object.values(this.catalog.components)) {
-      if (component.schemaVersion < 5) continue;
       this.component(component);
       if (component.type === 'package') this.members(component);
     }
