@@ -16,8 +16,6 @@ constraints: [
     Preserve supported historical versions and captured execution readers',
     'ownership (src/library/architecture/schemas/ownership.json):
     Preserve supported historical versions and captured execution readers',
-    'pattern (src/library/architecture/schemas/pattern.json):
-    Preserve supported historical versions and captured execution readers',
     'role (src/library/architecture/schemas/role.json):
     Preserve supported historical versions and captured execution readers',
   ]
@@ -92,5 +90,4 @@ api:
   - { schema: src/library/architecture/schemas/composition-profile.json }
   - { schema: src/library/architecture/schemas/execution-profile.json }
   - { schema: src/library/architecture/schemas/ownership.json }
-  - { schema: src/library/architecture/schemas/pattern.json }
   - { schema: src/library/architecture/schemas/role.json }
