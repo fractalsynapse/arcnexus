@@ -149,10 +149,6 @@ function inPlaceAuthority(options: PrepareOptions) {
 export function inPlaceWorkspace(root: string, options: PrepareOptions): RecordData {
   const { source, base, env, commonDir, branch } = inPlaceAuthority(options);
   const id = randomUUID();
-  // The per-run state directory holds attempt artifacts, transcripts and the report. Candidate
-  // preparation makes it inside createWorkspace; in-place work needs it for the same reasons, and
-  // without it the activation fails writing its own evidence.
-  mkdirSync(join(root, 'runs', id), { mode: 0o700 });
   const record: RecordData = {
     id,
     source,
@@ -166,12 +162,33 @@ export function inPlaceWorkspace(root: string, options: PrepareOptions): RecordD
     environment: env,
     commands: [],
   };
+  return bindInPlaceWorkspace(root, record, options);
+}
+
+/**
+ * Binds an in-place record to the machine and captures its operation authority.
+ *
+ * The per-run state directory is created here because the candidate path makes it inside
+ * createWorkspace, and attempt artifacts, transcripts and the report all write into it. Operation
+ * execution reads the materialization binding to decide what an operation may reach, so an in-place
+ * run needs the same capture, bound to the operator's checkout rather than a generated worktree.
+ */
+function bindInPlaceWorkspace(
+  root: string,
+  record: RecordData,
+  options: PrepareOptions,
+): RecordData {
+  mkdirSync(join(root, 'runs', record.id as string), { mode: 0o700 });
   record.bindings = options.bindings ?? loadBindings();
   captureConfiguration(record, options);
+  record.materializationBinding = captureWorktreeBindings(
+    record.workspace,
+    record.bindings as Bindings,
+  );
   WorkspaceOperations.capture(
     record,
     options.project,
-    options.authorityBase ?? record.base,
+    options.authorityBase ?? (record.base as string),
     options.packageId,
   );
   return record;
