@@ -40,7 +40,10 @@ class ComponentPolicyScenarios {
     fixture.commit();
     const result = fixture.run('validate');
     assert.equal(result.status, 2);
-    assert.match(result.stderr, /Missing role\/execution profile/);
+    // Same guarantee, current wording: an activity that names no position or no model is refused at
+    // load rather than silently selecting a fallback. The message this asserted named a field the
+    // component shape no longer has.
+    assert.match(result.stderr, /must have required property '(role|profile)'/);
   }
 
   /** Containers cannot acquire write authority through fields intended only for executable owners. */

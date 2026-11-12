@@ -33,9 +33,9 @@ class PlatformExecutionScenarios {
     fixture.commit();
     assert.throws(
       () => new ExecutionContext().resolve(fixture.root),
-      /environment.*schema.*4.*migrat/i,
+      /shared architecture environment definition/i,
     );
-    this.assertStartupRejected(fixture.root, /environment.*schema.*4.*migrat/i);
+    this.assertStartupRejected(fixture.root, /shared architecture environment definition/i);
     assert.equal(fixture.run('validate').status, 0);
   }
 
