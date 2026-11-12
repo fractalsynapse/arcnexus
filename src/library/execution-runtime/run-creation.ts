@@ -52,6 +52,39 @@ export class RunCreation {
    * not intersect what the component owns; the block message names the operator's own options,
    * because "Source checkout must be clean" describes a rule they never agreed to for in-place work.
    */
+  /**
+   * Refuses fan-out whose components own overlapping paths.
+   *
+   * N activations writing one checkout are only safe because each component writes inside its own
+   * declared scope. Two components naming the same prefix would have both edit the same files in the
+   * same tree with no ordering between them, and no clean-tree rule can detect that: the scopes
+   * themselves collide. Ancestor and descendant naming counts as overlap, since owning `src/library`
+   * and owning `src/library/x` write to the same directory.
+   */
+  private validateFanOutOverlay(stance: Extract<RunStance, { kind: 'component' }>): void {
+    const held = Object.values(this.context.catalog.components).filter(
+      (component) =>
+        component.owns?.length &&
+        (stance.activity ? component.activities?.[stance.activity] : true),
+    );
+    for (const [index, left] of held.entries())
+      for (const right of held.slice(index + 1)) {
+        const clash = (left.owns ?? []).find((a) => (right.owns ?? []).some((b) => overlaps(a, b)));
+        if (clash)
+          throw new InputError(
+            `in-place fan-out cannot bound overlapping scopes: ${left.id} and ${right.id} both own ${clash}`,
+          );
+      }
+  }
+
+  /**
+   * Guards an in-place run against the operator's own uncommitted work.
+   *
+   * Fan-out first proves its scopes do not overlap, then requires a strictly clean
+   * checkout, because several components writing one tree cannot be bounded by path
+   * inspection alone. A single named component may proceed over uncommitted work as
+   * long as that work does not intersect what it owns.
+   */
   private validateInPlace(stance: Extract<RunStance, { kind: 'component' }>): void {
     // Porcelain records are `XY path`, except renames and copies which are `XY source -> target`.
     // Both ends of a rename count: the destination is written even when the source sits outside the
@@ -61,6 +94,7 @@ export class RunCreation {
       .filter(Boolean)
       .flatMap((line) => (/^[RC]/.test(line) ? line.slice(3).split(' -> ') : [line.slice(3)]))
       .map(unquotePath);
+    if (stance.fanOut) this.validateFanOutOverlay(stance);
     if (!dirty.length) return;
     if (stance.fanOut || !stance.component)
       throw new InputError('in-place work in progress; commit or stash');
@@ -105,4 +139,18 @@ function unquotePath(value: string): string {
   const trimmed = value.trim();
   if (!trimmed.startsWith('"') || !trimmed.endsWith('"')) return trimmed;
   return trimmed.slice(1, -1).replace(/\\(["\\])/g, '$1');
+}
+
+/**
+ * True when two declared ownership scopes name the same files or nest inside one another.
+ *
+ * A whole-repository scope is written `.` in some projects and `./` in others; it overlaps every
+ * other scope by definition, so it is matched before the prefix comparison rather than normalised
+ * into one, which would turn the entire tree into the string `src/...`.
+ */
+export function overlaps(left: string, right: string): boolean {
+  const a = left.replace(/^\.\//, '').replace(/\/$/, '') || '.';
+  const b = right.replace(/^\.\//, '').replace(/\/$/, '') || '.';
+  if (a === '.' || b === '.') return true;
+  return a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
 }
