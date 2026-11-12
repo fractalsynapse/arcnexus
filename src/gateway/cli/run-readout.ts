@@ -37,11 +37,20 @@ export class RunReadout {
     process.stdout.write(`${JSON.stringify(run)}\n`);
   }
 
-  /** True when an event names this run, or names no run at all and so describes its environment. */
+  /**
+   * True when an event names this run, or names no run at all and so describes its environment.
+   *
+   * A store event carries the subject under whichever key its type uses: `id` for run and assignment
+   * mutations, `runId` for turn and activity records, `from`/`to` for transitions. The resource layer
+   * already filters on that set, so the streaming readout matches it rather than inventing a second
+   * rule that would show one command events the other withholds.
+   */
   private belongsToRun(event: EventRow): boolean {
-    const parsed = parse(event.data);
-    const runId = (parsed as { runId?: string })?.runId;
-    return runId === undefined || runId === this.runId;
+    const detail = (parse(event.data) ?? {}) as Record<string, unknown>;
+    const names = ['id', 'runId', 'from', 'to']
+      .map((key) => detail[key])
+      .filter((value): value is string => typeof value === 'string');
+    return names.length === 0 || names.includes(this.runId);
   }
 }
 
