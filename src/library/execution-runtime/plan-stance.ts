@@ -29,7 +29,7 @@ export function recordPlanOutcome(
 }
 
 /**
- * Stops an in-place run once its work is done, instead of taking the delivery route.
+ * Ends an in-place run without the delivery route, stating honestly what it achieved.
  *
  * There is no candidate to integrate: nothing is committed, pushed, and no issue, comment, pull
  * request or release is opened. Returning true tells the caller the run is finished, so the goal
@@ -43,6 +43,15 @@ export function recordPlanOutcome(
 export function recordInPlaceCompletion(store: ExecutionStore, run: ExecutionRun): boolean {
   const stance = run.data.stance as { kind?: string } | undefined;
   if (stance?.kind !== 'component') return false;
-  store.updateRun(run.id, 'stopped', { inPlaceComplete: true });
+  // Nothing was admitted: the addressed component planned and found no work to do. Stopping is
+  // correct, claiming completion is not, so the outcome names what actually happened.
+  if (!Number(run.data.inPlaceAdmitted ?? 0)) {
+    store.updateRun(run.id, 'stopped', { inPlaceOutcome: 'nothing admitted' });
+    return true;
+  }
+  store.updateRun(run.id, 'stopped', {
+    inPlaceComplete: true,
+    inPlaceOutcome: `${String(run.data.inPlaceAdmitted)} assignment(s) planned in place`,
+  });
   return true;
 }

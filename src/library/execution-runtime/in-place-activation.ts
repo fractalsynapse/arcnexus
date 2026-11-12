@@ -49,11 +49,16 @@ export class InPlaceActivation {
         inPlaceQuestions: outcome.notReady?.questions ?? [],
       });
     new AssignmentDispatch(this.root, this.context, this.store).apply(run, outcome.plan);
-    // Direction is complete once the component's own plan is admitted. The goal path records this
-    // inside collaboration initialization, which an in-place run never enters: without the marker
-    // the scheduler re-runs direction every loop and admits another plan each time, which is the
-    // re-proposal loop that made the first live run admit twelve plans and execute none.
-    this.store.updateRun(run.id, this.store.run(run.id).status, { initialized: true });
+    // Direction is complete once the component has planned. The goal path records this inside
+    // collaboration initialization, which an in-place run never enters: without the marker the
+    // scheduler re-runs direction every loop, which is the re-proposal loop that made the first live
+    // run admit twelve plans and execute none. The admitted count is recorded beside it because a
+    // component that answers "this is already satisfied" legitimately admits zero assignments, and an
+    // empty run must never be reported the same way as one that did the work.
+    this.store.updateRun(run.id, this.store.run(run.id).status, {
+      initialized: true,
+      inPlaceAdmitted: this.store.assignments(run.id).length,
+    });
   }
 
   /**
