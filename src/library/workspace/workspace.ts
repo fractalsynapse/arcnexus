@@ -110,6 +110,28 @@ function captureConfiguration(record: RecordData, options: PrepareOptions): void
 }
 
 /**
+ * Resolves the operator's own checkout as authority, without the candidate clean-tree rule.
+ *
+ * In-place work may proceed over uncommitted files that do not intersect the addressed component's
+ * scope, and that decision belongs to the stance guard at run creation. Requiring a clean tree here
+ * would duplicate a rule from a different job and refuse work the ruling allows.
+ */
+function inPlaceAuthority(options: PrepareOptions) {
+  const source = realpathSync(git(resolve(options.project), 'rev-parse', '--show-toplevel').trim());
+  const base = git(source, 'rev-parse', '--verify', '--end-of-options', 'HEAD^{commit}').trim();
+  const commonDir = git(source, 'rev-parse', '--git-common-dir').trim();
+  const env = environment(
+    new ConfigurationReader().definition(
+      source,
+      options.authorityBase ?? base,
+      'architecture/environment',
+    ).value,
+  );
+  assertNoSubmodules(source, base);
+  return { source, base, commonDir, env };
+}
+
+/**
  * Records the operator's own checkout as the workspace: no worktree, no branch creation.
  *
  * In-place work deliberately updates the current project, so the workspace record is the same shape
@@ -120,7 +142,7 @@ function captureConfiguration(record: RecordData, options: PrepareOptions): void
  * the operator's edits on a branch they never chose.
  */
 export function inPlaceWorkspace(root: string, options: PrepareOptions): RecordData {
-  const { source, base, env, commonDir } = inspectSource(options);
+  const { source, base, env, commonDir } = inPlaceAuthority(options);
   const branch = git(source, 'branch', '--show-current').trim();
   if (!branch)
     throw new InputError(
