@@ -43,6 +43,8 @@ export const componentFields = {
     },
   },
   executionProfile: 'luna',
+  parentId: 'package',
+  owns: ['src/sample'],
   interfaces: [],
   documentation: [],
   tests: [],

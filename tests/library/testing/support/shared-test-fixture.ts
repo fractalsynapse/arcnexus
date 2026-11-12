@@ -101,7 +101,6 @@ export class SharedTestFixture extends MinimalTestFixture {
       repository: 'sample',
       cwd: '.',
       category: 'unit-test',
-      activities: ['testing'],
       command: 'node',
       args,
       generatedDirectories: ['.test-build'],

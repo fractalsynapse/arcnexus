@@ -114,7 +114,6 @@ export class GeneralCatalog {
         kind: 'command',
         command: 'node',
         args: ['verify.cjs'],
-        activities: [],
         generatedDirectories: [],
         artifacts: [],
         prerequisites: [],

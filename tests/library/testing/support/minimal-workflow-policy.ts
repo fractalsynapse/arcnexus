@@ -113,7 +113,6 @@ export class MinimalWorkflowPolicy {
       repository: 'sample',
       cwd: '.',
       category: 'unit-test',
-      activities: ['research', 'documentation', 'testing', 'implementation', 'review'],
       command: 'node',
       args: ['verify.cjs'],
       prerequisites: [],
