@@ -38,7 +38,11 @@ export class MinimalTestFixture extends ComponentTestFixture {
 
   /** Declares repository identity explicitly for the two package roots. */
   private environment(): void {
-    this.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
+    // The base fixture already established this checkout's origin for the repository its catalog
+    // declares; adding it a second time fails in git and masked the behavior every scenario below
+    // intends to exercise.
+    if (!this.git('remote').trim().split('\n').includes('origin'))
+      this.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     this.put('architecture/environment.yaml', {
       schemaVersion: 3,
       prerequisites: [],

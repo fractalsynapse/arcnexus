@@ -30,7 +30,11 @@ export class GeneralCatalog {
     this.profiles();
     this.operations();
     this.composition();
-    f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
+    // The declared primary repository needs a matching origin, but a fixture layered on another may
+    // already have established it: adding twice fails in git, and 51 gateway suites were reporting
+    // that clash instead of the behavior under test.
+    if (!f.git('remote').trim().split('\n').includes('origin'))
+      f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
   }
 
   /** Assigns shared scaffold maintenance to one executable owner, excluding its implicit definition. */
