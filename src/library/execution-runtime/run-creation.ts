@@ -89,19 +89,15 @@ export class RunCreation {
     // Porcelain records are `XY path`, except renames and copies which are `XY source -> target`.
     // Both ends of a rename count: the destination is written even when the source sits outside the
     // component's scope, and a move out of scope still removes work the component owns.
-    const dirty = git(this.context.source, 'status', '--untracked-files=all', '--porcelain')
-      .split('\n')
-      .filter(Boolean)
-      .flatMap((line) => (/^[RC]/.test(line) ? line.slice(3).split(' -> ') : [line.slice(3)]))
-      .map(unquotePath);
+    const dirty = porcelainPaths(
+      git(this.context.source, 'status', '--untracked-files=all', '--porcelain'),
+    );
     if (stance.fanOut) this.validateFanOutOverlay(stance);
     if (!dirty.length) return;
     if (stance.fanOut || !stance.component)
       throw new InputError('in-place work in progress; commit or stash');
-    const owned = (this.context.catalog.components[stance.component]?.owns ?? []).filter(
-      (path: string) => path.startsWith('src/') || path.startsWith('tests/'),
-    );
-    const blocked = dirty.filter((path) => owned.some((scope: string) => path.startsWith(scope)));
+    const owned = (this.context.catalog.components[stance.component]?.owns ?? []) as string[];
+    const blocked = inPlaceIntersections(dirty, owned);
     if (blocked.length)
       throw new InputError(
         `in-place work in progress; commit or stash (uncommitted paths inside ${stance.component}: ${blocked.join(', ')})`,
@@ -126,6 +122,34 @@ export class RunCreation {
     if (git(context.source, 'rev-parse', 'HEAD').trim() !== expected)
       throw new InputError('Source revision changed; stop and start against updated authority');
   }
+}
+
+/**
+ * Lists the paths a porcelain status block says are uncommitted, one entry per touched path.
+ *
+ * Records are `XY path`, except renames and copies (`XY source -> target`), where both ends count:
+ * the destination is written even when the source lies outside a component's scope, and a move out
+ * of scope still removes work the component owns.
+ */
+export function porcelainPaths(status: string): string[] {
+  return status
+    .split('\n')
+    .filter(Boolean)
+    .flatMap((line) => (/^[RC]/.test(line) ? line.slice(3).split(' -> ') : [line.slice(3)]))
+    .map(unquotePath);
+}
+
+/**
+ * The uncommitted paths that fall inside a component's owned scopes.
+ *
+ * Scope comparison is separator-aware (see `overlaps`), so a dirty `src/application/x.ts` is not
+ * mistaken for work inside `src/app`, and every owned scope counts - not only those under `src/` or
+ * `tests/`. A component maintaining `docs/` or `AGENTS.md` has uncommitted work inside its own
+ * scope just as much as one owning source, and admitting a run over it would let an activation
+ * overwrite or duplicate that work in the shared checkout.
+ */
+export function inPlaceIntersections(dirty: string[], owned: string[]): string[] {
+  return dirty.filter((path) => owned.some((scope) => overlaps(path, scope)));
 }
 
 /**
