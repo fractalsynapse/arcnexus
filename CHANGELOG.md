@@ -4,6 +4,15 @@
 
 ### Changed
 
+- **Component validation errors now name the real fault** (#394, architect ruling on the activity
+  model): a schema that selects its shape with `oneOf` previously reported every branch's complaints,
+  so a component whose only defect was a missing activity field was also told that `parentId` and
+  `owns` — the keys the chosen branch _requires_ — were unexpected. Validation still passes or fails
+  against the whole schema; only the reported detail changed, by re-checking the single branch the
+  value's `type` selects after a failure. `platform declaring owns` now reads
+  `must NOT have additional properties (owns)` and an activity without a model reads
+  `/activities/research: must have required property 'profile'`.
+
 - **`task run` gains two sealed stances** (#394, architect rulings): `--plan` stops after direction so
   a plan can be read before anything is dispatched, and `--component <id> [--activity <a>]` works
   **in place** in the current checkout at current HEAD with no worktree and no branch switching,
