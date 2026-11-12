@@ -10,12 +10,12 @@ logic and no project knowledge of its own.
 
 ## Identity
 
-| Field | Value |
-| --- | --- |
-| executable | `arcnexus` (built entry `dist/cli.js`) |
-| discovery | run from any directory inside the target repository; the project and owning component are resolved from the working directory |
-| help and version | `arcnexus --help`, `arcnexus --version` |
-| configuration | none required for normal use; machine bindings come from the project contract |
+| Field            | Value                                                                                                                         |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| executable       | `arcnexus` (built entry `dist/cli.js`)                                                                                        |
+| discovery        | run from any directory inside the target repository; the project and owning component are resolved from the working directory |
+| help and version | `arcnexus --help`, `arcnexus --version`                                                                                       |
+| configuration    | none required for normal use; machine bindings come from the project contract                                                 |
 
 ## Provides
 
@@ -63,12 +63,12 @@ that a live activation uses, with placeholders substituted only where runtime da
 injected. Activity content makes or breaks an assignment, so it must be reviewable, diffable and
 tunable without spending a model turn or starting a run.
 
-| Argument | Values |
-| --- | --- |
-| `project` | resolved from the working directory when omitted |
-| `component` | a component id; omitted with `activity` renders the catalog index view |
-| `activity` | one of `research` \| `documentation` \| `testing` \| `implementation` \| `review` \| `release`, narrowed to the activities the component's role declares — the same names plans, checklist items, operations and execution profiles resolve |
-| `--milestone` | a milestone id from an active plan, or a plan file, to render against real acceptance; otherwise a placeholder milestone |
+| Argument      | Values                                                                                                                                                                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `project`     | resolved from the working directory when omitted                                                                                                                                                                                            |
+| `component`   | a component id; omitted with `activity` renders the catalog index view                                                                                                                                                                      |
+| `activity`    | one of `research` \| `documentation` \| `testing` \| `implementation` \| `review` \| `release`, narrowed to the activities the component's role declares — the same names plans, checklist items, operations and execution profiles resolve |
+| `--milestone` | a milestone id from an active plan, or a plan file, to render against real acceptance; otherwise a placeholder milestone                                                                                                                    |
 
 The rendered context contains, in assembly order: project identity and captured revision; the
 component definition with objectives, constraints and measures; inherited parent definitions;
@@ -94,7 +94,7 @@ Rules:
 
 ### 3. Reserved names
 
-Fixed now so nothing invents them later. Refused as *not available in this build* with exit `2`,
+Fixed now so nothing invents them later. Refused as _not available in this build_ with exit `2`,
 never repurposed:
 
 ```text
@@ -108,17 +108,17 @@ arcnexus delivery status                  # read-only view of a published candid
 
 Removed, each with a one-line pointer to its replacement in the refusal message:
 
-| Retired | Replacement |
-| --- | --- |
-| `platform` and `package` create/update/remove/migrate/list/get | `project` vocabulary; `component` and `standard` reads |
-| `config get/update/migrate` | bindings file under the project contract |
-| `workspace prepare/cleanup/list/get` | runtime-managed; read through `evidence get` |
-| `delivery approve/publish/promote` | human gates answered through `task answer`; release stage later |
-| `experiment inspect` | deferred campaign lane; the simulation lifecycle stays, under `--simulate` |
-| `task pause`, `task resume` | `task stop`, then a new `task run` reading the recorded position |
-| `task list/get/follow/inspect`, `workday list/get/history/follow/inspect` | `task status`, `evidence get` |
-| `inspect <component> <objective> --kind …` and the two legacy inspect forms | one `inspect [project] [component] [activity]` context preview |
-| `guidance validate`, `run` | folded into `validate`; execution is `task run` |
+| Retired                                                                     | Replacement                                                                |
+| --------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `platform` and `package` create/update/remove/migrate/list/get              | `project` vocabulary; `component` and `standard` reads                     |
+| `config get/update`                                                         | bindings file under the project contract                                   |
+| `workspace prepare/cleanup/list/get`                                        | runtime-managed; read through `evidence get`                               |
+| `delivery approve/publish/promote`                                          | human gates answered through `task answer`; release stage later            |
+| `experiment inspect`                                                        | deferred campaign lane; the simulation lifecycle stays, under `--simulate` |
+| `task pause`, `task resume`                                                 | `task stop`, then a new `task run` reading the recorded position           |
+| `task list/get/follow/inspect`, `workday list/get/history/follow/inspect`   | `task status`, `evidence get`                                              |
+| `inspect <component> <objective> --kind …` and the two legacy inspect forms | one `inspect [project] [component] [activity]` context preview             |
+| `guidance validate`, `run`                                                  | folded into `validate`; execution is `task run`                            |
 
 ### 5. Rejected options
 
@@ -140,12 +140,12 @@ silently ignored: `--model`, `--initializer-model`, `--codex-path`, `--max-attem
 
 ### 7. Exit codes
 
-| Code | Meaning |
-| --- | --- |
-| 0 | verified completion or successful control action |
-| 1 | blocked, awaiting a named gate, or an unsuccessful execution |
-| 2 | invalid invocation: unknown, misplaced or rejected option; ambiguous or unresolved project; unavailable binding; reserved name |
-| 130 | cancelled by the caller; managed execution stopped and evidence retained |
+| Code | Meaning                                                                                                                        |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 0    | verified completion or successful control action                                                                               |
+| 1    | blocked, awaiting a named gate, or an unsuccessful execution                                                                   |
+| 2    | invalid invocation: unknown, misplaced or rejected option; ambiguous or unresolved project; unavailable binding; reserved name |
+| 130  | cancelled by the caller; managed execution stopped and evidence retained                                                       |
 
 ### 8. Cancellation and interruption
 
@@ -161,58 +161,58 @@ answer is recorded as evidence. No flag bypasses a gate and no agent answers its
 
 ## Invariants
 
-| # | Invariant |
-| --- | --- |
-| I1 | The gateway holds no policy or lifecycle logic: one command, one application service call. |
-| I2 | Project and component resolution comes from the working directory; ambiguity is an input error naming what was missing. |
-| I3 | One project has one lane. A second `task run` while a goal is active is refused with the active goal id; there is no queue machinery in the MVP. |
-| I4 | Every delivered command has a human form and a `--json` form with identical meaning. |
-| I5 | Output is bounded. No command inlines an unbounded artefact. |
-| I6 | Cancellation is honoured at any point and never leaves a half-applied change undocumented. |
-| I7 | Human gates are answered, not worked around. |
-| I8 | Unknown, misplaced and rejected options fail with a reason, never silently ignored. |
-| I9 | Reserved names are refused as unavailable, never implemented opportunistically. |
-| I10 | A human caller, a steward operation and CI run the same commands with the same results. |
-| I11 | One fact, one command. No two commands render the same state, and no command duplicates another's source. |
-| I12 | `inspect` uses the live context generator. Preview and execution cannot diverge, and placeholders are never replaced by invented content. |
+| #   | Invariant                                                                                                                                        |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| I1  | The gateway holds no policy or lifecycle logic: one command, one application service call.                                                       |
+| I2  | Project and component resolution comes from the working directory; ambiguity is an input error naming what was missing.                          |
+| I3  | One project has one lane. A second `task run` while a goal is active is refused with the active goal id; there is no queue machinery in the MVP. |
+| I4  | Every delivered command has a human form and a `--json` form with identical meaning.                                                             |
+| I5  | Output is bounded. No command inlines an unbounded artefact.                                                                                     |
+| I6  | Cancellation is honoured at any point and never leaves a half-applied change undocumented.                                                       |
+| I7  | Human gates are answered, not worked around.                                                                                                     |
+| I8  | Unknown, misplaced and rejected options fail with a reason, never silently ignored.                                                              |
+| I9  | Reserved names are refused as unavailable, never implemented opportunistically.                                                                  |
+| I10 | A human caller, a steward operation and CI run the same commands with the same results.                                                          |
+| I11 | One fact, one command. No two commands render the same state, and no command duplicates another's source.                                        |
+| I12 | `inspect` uses the live context generator. Preview and execution cannot diverge, and placeholders are never replaced by invented content.        |
 
 ## Acceptance scenarios
 
-| Id | Given / when / then |
-| --- | --- |
-| GW-1 | `task run "<goal>"` from a nested directory resolves the project and component, prints progress, and exits 0 only when the goal is verified and delivered. |
-| GW-2 | `task run` with no goal, or with a second positional, is exit 2 and writes no state. |
-| GW-3 | `task run` while another goal holds the lane is exit 2 naming the active goal; no queue row is created. |
-| GW-4 | `task status` renders milestones, Steps, checklist status, position, blockers and evidence references from one source; no second command reports the same state differently. |
-| GW-5 | `task stop` cancels managed execution, retains branch, workspace and evidence, and a later `task run` reads that position instead of replaying an uncertain operation. |
-| GW-6 | A gate that needs a human ends the run at exit 1 with a question id; `task answer` resumes and records the answer as evidence. |
-| GW-7 | `SIGINT` during execution exits 130 with retained evidence and no orphaned process. |
-| GW-8 | Every delivered command's `--json` form parses, carries `schemaVersion`, and reports the same facts as its human form. |
-| GW-9 | `evidence get <id> --offset --length` returns exactly the requested range and never the whole artefact. |
-| GW-10 | A rejected option (`--model`, `--simulate`, `--max-attempts`) is exit 2 with the replacement named. |
-| GW-11 | A reserved command (`workday start`, `release verify`) is exit 2 reporting it is not available in this build. |
-| GW-12 | `validate` reports ownership, architecture and guidance findings with paths, and exits non-zero when any tracked maintained path lacks exactly one owner. |
-| GW-13 | `test run <owner>` runs only that owner's suites and reports the count; `test run` runs the full set. |
-| GW-14 | The same command run by a steward operation and by a human produces the same exit status and the same evidence shape. |
+| Id    | Given / when / then                                                                                                                                                                                                                                                                    |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GW-1  | `task run "<goal>"` from a nested directory resolves the project and component, prints progress, and exits 0 only when the goal is verified and delivered.                                                                                                                             |
+| GW-2  | `task run` with no goal, or with a second positional, is exit 2 and writes no state.                                                                                                                                                                                                   |
+| GW-3  | `task run` while another goal holds the lane is exit 2 naming the active goal; no queue row is created.                                                                                                                                                                                |
+| GW-4  | `task status` renders milestones, Steps, checklist status, position, blockers and evidence references from one source; no second command reports the same state differently.                                                                                                           |
+| GW-5  | `task stop` cancels managed execution, retains branch, workspace and evidence, and a later `task run` reads that position instead of replaying an uncertain operation.                                                                                                                 |
+| GW-6  | A gate that needs a human ends the run at exit 1 with a question id; `task answer` resumes and records the answer as evidence.                                                                                                                                                         |
+| GW-7  | `SIGINT` during execution exits 130 with retained evidence and no orphaned process.                                                                                                                                                                                                    |
+| GW-8  | Every delivered command's `--json` form parses, carries `schemaVersion`, and reports the same facts as its human form.                                                                                                                                                                 |
+| GW-9  | `evidence get <id> --offset --length` returns exactly the requested range and never the whole artefact.                                                                                                                                                                                |
+| GW-10 | A rejected option (`--model`, `--simulate`, `--max-attempts`) is exit 2 with the replacement named.                                                                                                                                                                                    |
+| GW-11 | A reserved command (`workday start`, `release verify`) is exit 2 reporting it is not available in this build.                                                                                                                                                                          |
+| GW-12 | `validate` reports ownership, architecture and guidance findings with paths, and exits non-zero when any tracked maintained path lacks exactly one owner.                                                                                                                              |
+| GW-13 | `test run <owner>` runs only that owner's suites and reports the count; `test run` runs the full set.                                                                                                                                                                                  |
+| GW-14 | The same command run by a steward operation and by a human produces the same exit status and the same evidence shape.                                                                                                                                                                  |
 | GW-15 | `inspect <project> <component> implementation` renders the full activity context — component definition, inherited parents, role, activity standards, milestone acceptance and checklist, authorized scope, operations, bindings, evidence interface and schedule — in assembly order. |
-| GW-16 | `inspect` output equals a live activation's context for the same revision, component, activity and milestone, differing only in the declared placeholders. |
-| GW-17 | `inspect` writes no state, starts no host, calls no model and creates no workspace; repeated runs on an unchanged revision are byte-identical. |
-| GW-18 | A runtime-only value appears as a named placeholder and is never filled with invented content; the header lists what was substituted. |
-| GW-19 | Foreground `task run` prompts at a gate and records the answer; `task run --async` never prompts and ends `blocked: awaiting <gate>` with the question id in evidence. |
-| GW-20 | `inspect` with an unknown component or an activity outside the declared set is exit 2 naming the valid values. |
-| GW-21 | `task run --simulate "<goal>"` runs the same lifecycle as without the flag, records the provider as evidence-package, and performs no upstream call; omitting the flag cannot be chosen by an agent mid-run. |
+| GW-16 | `inspect` output equals a live activation's context for the same revision, component, activity and milestone, differing only in the declared placeholders.                                                                                                                             |
+| GW-17 | `inspect` writes no state, starts no host, calls no model and creates no workspace; repeated runs on an unchanged revision are byte-identical.                                                                                                                                         |
+| GW-18 | A runtime-only value appears as a named placeholder and is never filled with invented content; the header lists what was substituted.                                                                                                                                                  |
+| GW-19 | Foreground `task run` prompts at a gate and records the answer; `task run --async` never prompts and ends `blocked: awaiting <gate>` with the question id in evidence.                                                                                                                 |
+| GW-20 | `inspect` with an unknown component or an activity outside the declared set is exit 2 naming the valid values.                                                                                                                                                                         |
+| GW-21 | `task run --simulate "<goal>"` runs the same lifecycle as without the flag, records the provider as evidence-package, and performs no upstream call; omitting the flag cannot be chosen by an agent mid-run.                                                                           |
 
 ## Migration
 
-| Current surface | Change |
-| --- | --- |
-| 16 command modules and ~40 subcommands | 13 delivered subcommands plus 4 reserved names |
-| Two legacy `inspect` forms (`<component> <objective> --kind`, `<package> <component> [prompt] --activity`) | one `inspect [project] [component] [activity]` context preview over the live generator |
-| 34 accepted options | 3 global options plus per-command options; the rest are refused with a reason |
-| `needs_input` outcome and interactive clarification loop | one `blocked: awaiting <gate>` outcome, terminal prompting in the foreground, `task answer` otherwise |
-| FIFO task queue and workday pause/resume coordination | single lane, refuse-while-busy |
-| `platform`, `package`, `config`, `workspace`, `delivery`, `experiment`, `guidance` commands | retired as above |
-| inline catalog and evidence in output | bounded references by id |
+| Current surface                                                                                            | Change                                                                                                |
+| ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 16 command modules and ~40 subcommands                                                                     | 13 delivered subcommands plus 4 reserved names                                                        |
+| Two legacy `inspect` forms (`<component> <objective> --kind`, `<package> <component> [prompt] --activity`) | one `inspect [project] [component] [activity]` context preview over the live generator                |
+| 34 accepted options                                                                                        | 3 global options plus per-command options; the rest are refused with a reason                         |
+| `needs_input` outcome and interactive clarification loop                                                   | one `blocked: awaiting <gate>` outcome, terminal prompting in the foreground, `task answer` otherwise |
+| FIFO task queue and workday pause/resume coordination                                                      | single lane, refuse-while-busy                                                                        |
+| `platform`, `package`, `config`, `workspace`, `delivery`, `experiment`, `guidance` commands                | retired as above                                                                                      |
+| inline catalog and evidence in output                                                                      | bounded references by id                                                                              |
 
 Migration is one batch with the Project contract: retire the command families and their option
 parsing in the same change that removes platform and package, so no intermediate build offers

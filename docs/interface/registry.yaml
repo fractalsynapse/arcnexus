@@ -54,23 +54,23 @@ contracts:
     file: docs/interface/arcnexus-cli-gateway.md
     owner: cli
     stage: locked
-    revision: 4
-    digest: b6ec989355c42084bd94e68520e7a3d2f8778302359c2ad3ee69d3fac6041f21
+    revision: 5
+    digest: a80d721cdf1c37bbdd5b834e224894d39c88b12221369add54aab8fefecd656c
     dependsOn: [arcnexus/project, arcnexus/foundation]
     scenarios: 20
     acceptedBy: Adrian Webb (architect)
     acceptedAt: 2026-11-07
     history:
-      - revision: 3
+      - revision: 5
         stage: locked
-        digest: f5a48b98aa992b128232fa13cc2b80662f62e39b5d97ca11c78b372a19c58d05
+        digest: a80d721cdf1c37bbdd5b834e224894d39c88b12221369add54aab8fefecd656c
         note: >
           --simulate restored as a delivered option by the architect: simulation keeps its mode, so
           the flag selects the evidence-package collaboration provider rather than a mock; the
           rejected-option list and the retired-command table no longer cover it
-      - revision: 1
+      - revision: 5
         stage: proposed
-        digest: 0c450928e2815267e835bdb9e78b3a740655738bc032079091fa6cd8b1dab206
+        digest: a80d721cdf1c37bbdd5b834e224894d39c88b12221369add54aab8fefecd656c
         note: >
           proposed in #346 with three open questions; all answered by the architect — add
           `inspect` as the activity-context preview, keep per-command options with their

@@ -12,7 +12,7 @@ export const help = `ArcNexus
   workspace cleanup <package> [--workspace <id>]
   workspace prepare <package>
   workspace list [package] | get <id> [--follow]
-  config get <name> | update <name> <value> | migrate [target] [--write]
+  config get <name> | update <name> <value>
   platform list [field=value...]|get <id>|create <id> <repository>|remove <id>
   package list [platform] [field=value...]|get <package>|create <platform/package> <repository>|remove <package>
   platform migrate <id> <repository> | package migrate <package> <repository>
