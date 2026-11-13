@@ -232,7 +232,7 @@ introduce an implicit single-attempt quota.
 The preceding legacy formats describe archived evidence. They cannot execute
 through the current CLI. Filenames ending in `.historical.yaml` retain their recipes.
 
-The shipped general greeting fixture uses minimal v5 components and the same shared
+The shipped general greeting fixture uses the current component shape and the same shared
 operation model as production tasks. A platform declares engineering defaults and
 Astra director/reviewer profiles once; its three executable owners remain CLI,
 service and names. The CLI owner also maintains the package's shared scaffolding
