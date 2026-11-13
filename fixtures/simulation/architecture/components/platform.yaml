@@ -1,0 +1,46 @@
+schemaVersion: 6
+id: platform
+type: platform
+purpose: Contain the simulation fixture and direct its verified delivery
+executionProfile: luna
+reads:
+  - .
+constraints:
+  - Never commit, publish or change architecture.
+  - Request changes to another owner through the persisted inbox; never widen your own scope.
+director:
+  component: sample
+  profile: luna
+reviewerProfile: luna
+defaultPackage: package
+activities:
+  research:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Establish what the package guarantees before proposing a change
+  documentation:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Record the behaviour an owner and its callers can rely on
+  testing:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Express acceptance as checks over the declared public contract
+  implementation:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Change only what the goal requires inside the owned scope
+  review:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Reject weakened coverage or undeclared authority in the delivered change

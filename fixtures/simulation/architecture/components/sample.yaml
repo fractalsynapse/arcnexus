@@ -1,38 +1,19 @@
-schemaVersion: 3
+schemaVersion: 6
 id: sample
 type: library
-repository: sample
-executionProfile: luna
 purpose: Own sample behavior
-path: source.txt
 objectives:
   - Verified bounded change
 constraints:
   - No commits
 questions: []
-patterns: []
-interfaces: []
-documentation:
-  - docs
-tests:
-  - tests
-relatedIds:
-  - dependency
-allowedWritePaths:
+executionProfile: luna
+parentId: package
+owns:
   - source.txt
   - docs
   - tests
-access:
-  readPaths:
-    - .
-  writeDirectories:
-    - .
-verification:
-  - command: node
-    args:
-      - verify.mjs
-operationIds:
-  - verify
+  - simulation-contract.yaml
 activities:
   research:
     role: engineer

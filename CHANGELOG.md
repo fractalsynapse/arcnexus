@@ -4,6 +4,13 @@
 
 ### Changed
 
+- **Shipped test fixtures migrated to the current architecture** (#394): the `fixtures/*` catalogs were
+  a full schema generation behind — role documents declaring activities at superseded versions,
+  components authoring a `role`, operation documents carrying retired `probes`, environments in the old
+  executable-recipe shape, containers and a maintenance owner missing entirely. Loading them now
+  requires no retirement-era vocabulary, and the `experiments` suites that register them went from
+  1 failing to 0.
+
 - **`task status` reads, `task follow` streams** (#394): folding `status` into the following flag made
   the contract's read surface print event lines instead of the report document, so an operator asking
   what was outstanding got a transcript. A single read emits the document with its outstanding waits in
