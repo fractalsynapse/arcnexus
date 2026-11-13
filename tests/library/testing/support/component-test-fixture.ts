@@ -27,12 +27,41 @@ export class ComponentTestFixture {
     if (!this.git('remote').trim().split('\n').includes('origin'))
       this.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     catalogFixture(this.repo);
+    this.maintenanceOwner();
     this.catalog();
     this.profile();
     this.put('.gitignore', '.test-build/\nprepared\n');
     this.suite('unit', 'small', ['fast', 'deterministic']);
     this.suite('regression', 'boundary', ['deterministic'], 'integration');
     this.commit();
+  }
+
+  /**
+   * One maintenance owner for the shared documents this fixture authors.
+   *
+   * Every tracked file must resolve to exactly one owner, and containers own nothing - so the
+   * environment document, the role and profile directories, the operation definitions, the test
+   * profile and the two container definitions all need a maintenance component. Without one the
+   * catalog refuses to load and each suite in this family fails in setup rather than on its subject;
+   * the same single-maintainer rule the repository uses for `architecture-maintenance`.
+   */
+  private maintenanceOwner(): void {
+    this.put('architecture/components/maintenance.yaml', {
+      ...this.fields(),
+      id: 'maintenance',
+      type: 'foundation',
+      parentId: 'package',
+      owns: [
+        '.gitignore',
+        'architecture/environment.yaml',
+        'architecture/roles',
+        'architecture/execution-profiles',
+        'architecture/test-profiles',
+        'architecture/operations',
+        'architecture/components/platform.yaml',
+        'architecture/components/package.yaml',
+      ],
+    });
   }
 
   /** Builds shared version-four fixture component fields with explicit owned test roots. */
