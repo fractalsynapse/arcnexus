@@ -4,6 +4,29 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test as deterministicTest, type TestContext } from 'node:test';
 import { MinimalCatalogFixture } from '../../testing/support/minimal-catalog-fixture.js';
+
+/**
+ * Declares the activities the fixture's director component needs.
+ *
+ * Operations are reached through a declared activity, so the fixture states them the way a real
+ * component does: `research` because the platform names this leaf as its director, and `testing`
+ * because that is where the captured verification operation is bound.
+ */
+const changelogActivities = (): Record<string, unknown> => ({
+  research: {
+    role: 'engineer',
+    profile: 'luna',
+    operations: [],
+    instructions: ['Establish what the assembled delivery actually contains before it is checked'],
+  },
+  testing: {
+    role: 'engineer',
+    profile: 'luna',
+    operations: ['fixture-proof'],
+    instructions: ['Prove the assembled change against the declared verification input'],
+  },
+});
+
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import type {
   ExecutionRun,
@@ -18,12 +41,12 @@ import { GeneralFixture, nativeHostTest as test } from '../../testing/support/ge
 class DeliveryCheckPolicyScenario {
   /** Adds an independently failing check without changing engineering requirements. */
   private policy(repo: string): void {
-    const path = join(repo, 'architecture/components/platform.json');
+    const path = join(repo, '.arc/architecture/components/platform.json');
     const platform = JSON.parse(readFileSync(path, 'utf8'));
     platform.operations['delivery-proof'] = ['delivery'];
     writeFileSync(path, JSON.stringify(platform));
     writeFileSync(
-      join(repo, 'architecture/operations/delivery-proof.json'),
+      join(repo, '.arc/architecture/operations/delivery-proof.json'),
       JSON.stringify({
         schemaVersion: 4,
         id: 'delivery-proof',
@@ -133,14 +156,14 @@ class AssembledChangelogScenario {
   /** Supplies current execution declarations without adding applicable sandbox operations. */
   private execution(): void {
     const f = this.fixture;
-    f.put('architecture/environment.json', {
+    f.put('.arc/architecture/environment.json', {
       schemaVersion: 4,
       workspace: {
         primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
         dependencies: [],
       },
     });
-    const path = 'architecture/components/platform.json';
+    const path = '.arc/architecture/components/platform.json';
     const platform = JSON.parse(readFileSync(join(f.repo, path), 'utf8'));
     Object.assign(platform, {
       director: { component: 'sample', profile: 'luna' },
@@ -148,7 +171,7 @@ class AssembledChangelogScenario {
       defaultPackage: 'package',
     });
     f.put(path, platform);
-    f.put('architecture/execution-profiles/luna.json', {
+    f.put('.arc/architecture/execution-profiles/luna.json', {
       schemaVersion: 3,
       id: 'luna',
       model: 'gpt-6-luna',
@@ -162,27 +185,28 @@ class AssembledChangelogScenario {
   private classification(): void {
     const f = this.fixture;
     const definition = JSON.parse(
-      readFileSync(join(f.repo, 'architecture/components/package.json'), 'utf8'),
+      readFileSync(join(f.repo, '.arc/architecture/components/package.json'), 'utf8'),
     );
     definition.classification = [
       { path: 'source.asset', kind: 'source' },
       { path: 'docs', kind: 'documentation' },
     ];
-    f.put('architecture/components/package.json', definition);
+    f.put('.arc/architecture/components/package.json', definition);
   }
 
   /** Creates owned candidate files and one captured verification operation for the controlled executor. */
   private repository(): void {
     const f = this.fixture;
     rmSync(join(f.repo, 'tests'), { recursive: true, force: true });
-    f.put('architecture/components/sample.json', {
+    f.put('.arc/architecture/components/sample.json', {
       schemaVersion: 6,
       id: 'sample',
       type: 'library',
       parentId: 'package',
       purpose: 'Own the assembled changelog fixture',
-      owns: ['source.asset', 'docs', 'tests', 'CHANGELOG.md', 'architecture/operations'],
+      owns: ['source.asset', 'docs', 'tests', 'CHANGELOG.md', '.arc/architecture/operations'],
       operations: { 'fixture-proof': ['verify'] },
+      activities: changelogActivities(),
     });
     this.operation();
     for (const path of ['source.asset', 'docs/guide.asset', 'tests/case.txt', 'CHANGELOG.md'])
@@ -192,7 +216,7 @@ class AssembledChangelogScenario {
 
   /** Declares the finite verification input without claiming the controlled executor proves confinement. */
   private operation(): void {
-    this.fixture.put('architecture/operations/fixture-proof.json', {
+    this.fixture.put('.arc/architecture/operations/fixture-proof.json', {
       schemaVersion: 4,
       id: 'fixture-proof',
       kind: 'command',
@@ -200,7 +224,6 @@ class AssembledChangelogScenario {
       purpose: 'Controlled successful check',
       cwd: '.',
       category: 'cli-check',
-      activities: [],
       command: 'node',
       args: ['-e', 'process.exit(0)'],
       generatedDirectories: [],

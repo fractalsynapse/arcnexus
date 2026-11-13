@@ -1,0 +1,38 @@
+schemaVersion: 6
+id: package
+type: package
+parentId: platform
+purpose: A simulated program with separated sample and dependency behaviour
+objectives:
+  - Keep the sample behaviour verified while dependency changes stay bounded
+activities:
+  research:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Establish what the package guarantees before proposing a change
+  documentation:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Record the behaviour an owner and its callers can rely on
+  testing:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Express acceptance as checks over the declared public contract
+  implementation:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Change only what the goal requires inside the owned scope
+  review:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Reject weakened coverage or undeclared authority in the delivered change

@@ -1,0 +1,6 @@
+schemaVersion: 4
+workspace:
+  primary:
+    id: sample
+    repository: https://example.invalid/sample.git
+  dependencies: []

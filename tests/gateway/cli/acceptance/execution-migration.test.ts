@@ -30,7 +30,10 @@ class ExecutionMigrationScenarios {
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /workday start \[package\]/);
     assert.match(result.stdout, /workday pause\|resume\|stop\|status \[id\]/);
-    assert.match(result.stdout, /task run \[package\] "<prompt>" \[--async\]/);
+    assert.match(
+      result.stdout,
+      /task run \[package\] "<prompt>" \[--plan \| --component <id> \[--activity <a>\]\] \[--async\]/,
+    );
     assert.doesNotMatch(
       result.stdout,
       /max-attempts|timeout-seconds|task plan|legacy-run|workday run/,

@@ -9,7 +9,7 @@ export class PackageCliFixture extends SharedTestFixture {
   /** Declares a local default while retaining a separate maintenance package for scope checks. */
   constructor(t: TestContext) {
     super(t);
-    this.extend('architecture/components/platform.yaml', (value) => {
+    this.extend('.arc/architecture/components/platform.yaml', (value) => {
       value.defaultPackage = 'package';
     });
     this.commit();

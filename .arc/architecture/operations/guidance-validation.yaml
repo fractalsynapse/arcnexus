@@ -1,0 +1,17 @@
+schemaVersion: 4
+id: guidance-validation
+purpose: Check tracked skill metadata and instruction readability
+kind: command
+repository: arcnexus
+cwd: .
+category: cli-check
+command: node
+args:
+  - dist/cli.js
+  - validate
+  - --project
+  - .
+generatedDirectories: []
+artifacts: []
+prerequisites:
+  - check-guidance-validation-prerequisite

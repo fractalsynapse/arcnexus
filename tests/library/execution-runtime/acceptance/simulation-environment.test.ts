@@ -29,7 +29,7 @@ class SimulationFixture {
   /** Grants two shared upstream actions without overriding the host scheduler or model adapter. */
   private policy(): void {
     const f = this.general.fixture;
-    const path = join(f.repo, 'architecture/components/platform.json');
+    const path = join(f.repo, '.arc/architecture/components/platform.json');
     const platform = JSON.parse(readFileSync(path, 'utf8'));
     for (const [id, action] of [
       ['track', 'issue.create'],
@@ -37,7 +37,7 @@ class SimulationFixture {
     ]) {
       platform.operations[id!] = ['agent'];
       writeFileSync(
-        join(f.repo, `architecture/operations/${id}.yaml`),
+        join(f.repo, `.arc/architecture/operations/${id}.yaml`),
         JSON.stringify({
           schemaVersion: 4,
           id,
@@ -47,7 +47,6 @@ class SimulationFixture {
           repository: 'sample',
           cwd: '.',
           category: 'cli-check',
-          activities: [],
           generatedDirectories: [],
           artifacts: [],
         }),

@@ -10,6 +10,7 @@ import {
   type RepositoryMaterialization,
 } from '../architecture/bindings.js';
 import { SimulationRepositories } from './simulation-repositories.js';
+import { isInPlaceRun } from '../coordination-store/execution-types.js';
 
 /** Captures external mode and materializes simulation repositories without replacing architectural authority. */
 export class RunEnvironments {
@@ -59,9 +60,15 @@ export class RunEnvironments {
     return undefined;
   }
 
-  /** Prepares isolated Git objects once; uncertain filesystem transitions require inspection, never replay. */
+  /**
+   * Prepares isolated Git objects once; uncertain filesystem transitions require inspection, never replay.
+   *
+   * An in-place run is skipped even though it is sealed: it has no candidate repository to build, and
+   * building one would also demand the observed staging snapshot that only a simulated workday needs.
+   * Its connectivity stays simulated, which is a separate concern from where its files live.
+   */
   async prepare(run: ExecutionRun, signal: AbortSignal): Promise<void> {
-    if (run.environment?.mode !== 'simulation') return;
+    if (run.environment?.mode !== 'simulation' || isInPlaceRun(run)) return;
     const directory = this.repository(run.environment);
     const prepared = this.store
       .runs()
@@ -92,7 +99,8 @@ export class RunEnvironments {
 
   /** Supplies isolated source while retaining the same catalog, bindings, owner list and execution key. */
   contextFor(run: ExecutionRun): ProjectExecution {
-    if (run.environment?.mode !== 'simulation') return this.context;
+    // In-place work runs against the operator's own source; only its upstream connectivity is simulated.
+    if (run.environment?.mode !== 'simulation' || isInPlaceRun(run)) return this.context;
     const environment = this.effects.environment(run.environment.id);
     if (
       environment.mode !== 'simulation' ||

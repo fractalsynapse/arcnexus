@@ -24,14 +24,14 @@ export class ComponentUpdate {
       throw new InputError('Update requires the declaring repository');
     const path = catalog.configurationSources.find(
       (entry) =>
-        entry.path.startsWith('architecture/components/') &&
+        entry.path.startsWith('.arc/architecture/components/') &&
         (entry.value as { id?: string }).id === id,
     )?.path;
     if (!path) throw new InputError('Missing component definition: ' + id);
     const original = new ConfigurationReader().revision(source, base, path).value as object;
     const value = { ...original, ...this.fields(fields) };
     try {
-      validateSchema('component-v6', value);
+      validateSchema('component', value);
     } catch (error) {
       throw new InputError(String(error));
     }
@@ -53,13 +53,17 @@ export class ComponentUpdate {
     if (catalog.components[id]) throw new InputError('Component already exists: ' + id);
     const value = { schemaVersion: 6, id, parentId: packageId, ...this.fields(fields) };
     try {
-      validateSchema('component-v6', value);
+      validateSchema('component', value);
       if (!['foundation', 'gateway', 'library', 'release'].includes(String(fields.type)))
         throw new Error('Use platform/package management for containers');
     } catch (error) {
       throw new InputError(String(error));
     }
-    return { path: `architecture/components/${id}.yaml`, text: stringify(value), create: true };
+    return {
+      path: `.arc/architecture/components/${id}.yaml`,
+      text: stringify(value),
+      create: true,
+    };
   }
 
   /** Removes only the selected executable definition; references and remaining ownership are checked on the proposal. */
@@ -74,7 +78,7 @@ export class ComponentUpdate {
       throw new InputError('Removal requires the declaring repository');
     const path = catalog.configurationSources.find(
       (entry) =>
-        entry.path.startsWith('architecture/components/') &&
+        entry.path.startsWith('.arc/architecture/components/') &&
         (entry.value as { id?: string }).id === id,
     )?.path;
     if (!path) throw new InputError('Missing component definition: ' + id);

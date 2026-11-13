@@ -1,0 +1,35 @@
+schemaVersion: 6
+id: sample
+type: library
+purpose: Own sample behavior
+objectives:
+  - Verified bounded change
+constraints:
+  - No commits
+questions: []
+executionProfile: luna
+parentId: package
+owns:
+  - source.txt
+  - docs
+  - tests
+  - simulation-contract.yaml
+activities:
+  research:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Establish what this component guarantees before proposing a change
+  implementation:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Change only what the goal requires and prove it with this component own checks
+  review:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Reject weakened coverage or undeclared authority in the delivered change

@@ -1,0 +1,91 @@
+schemaVersion: 6
+id: testing
+type: library
+parentId: cli-package
+purpose: Discover, select and execute component tests through shared infrastructure
+objectives: [
+    Keep builds and deterministic tests reproducible,
+    'Maintain formatting, linting, CI and shared test
+    infrastructure',
+  ]
+constraints: [
+    Do not weaken independent acceptance to make candidate work pass,
+    Keep generated output separate from
+    maintained source,
+    'test-profile (src/library/testing/schemas/test-profile.json): Node profile version 1 uses
+    fixed commands and literal suite metadata',
+  ]
+activities:
+  research:
+    role: researcher
+    profile: luna
+    operations: []
+    instructions: [
+        "Establish what Discover, select and execute component tests through shared infrastructure means
+        in practice from this component's own sources and retained evidence before proposing any change to src/library/testing,
+        scripts/library/testing.",
+      ]
+  documentation:
+    role: technical-writer
+    profile: luna
+    operations: []
+    instructions: [
+        'Keep the documentation under docs/library/testing describing Discover, select and execute component
+        tests through shared infrastructure as delivered behaviour, never as intent.',
+      ]
+  testing:
+    role: designer
+    profile: luna
+    operations: []
+    instructions: [
+        'Express acceptance for Discover, select and execute component tests through shared infrastructure
+        as checks over its declared public contract in tests/library/testing; observe the failure before changing
+        behaviour.',
+      ]
+  implementation:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions: [
+        'Change only what this goal requires inside src/library/testing, scripts/library/testing, preserving
+        the public contract and the ownership boundaries that declare it.',
+      ]
+  review:
+    role: reviewer
+    profile: luna
+    operations: []
+    instructions: [
+        'Judge the candidate against the stated acceptance and the standards in force for Discover, select
+        and execute component tests through shared infrastructure; refuse on unmet behaviour rather than style.',
+      ]
+owns:
+  [
+    src/library/testing,
+    tests/library/testing,
+    docs/library/testing,
+    scripts/library/testing,
+    .arc/architecture/test-profiles,
+  ]
+api:
+  - { module: tests/library/testing/support/workspace-cli-fixture.ts }
+  - { module: tests/library/testing/support/delivery-fixture.ts }
+  - { module: tests/library/testing/support/shared-test-fixture.ts }
+  - { module: tests/library/testing/support/minimal-catalog-fixture.ts }
+  - { module: src/library/testing/testing.ts }
+  - { module: src/library/testing/suite.ts }
+  - { module: tests/library/testing/support/catalog-fixture.ts }
+  - { module: tests/library/testing/support/controlled-initializer.ts }
+  - { module: tests/library/testing/support/controlled-planning.ts }
+  - { module: tests/library/testing/support/controlled-workday.ts }
+  - { module: tests/library/testing/support/controlled-workflow.ts }
+  - { module: tests/library/testing/support/fixture-payloads.ts }
+  - { module: tests/library/testing/support/handoff-fixture.ts }
+  - { module: tests/library/testing/support/operations-fixture.ts }
+  - { module: tests/library/testing/support/test-process.ts }
+  - { module: tests/library/testing/support/workflow-fixture.ts }
+  - { module: tests/library/testing/support/structured-output-check.ts }
+  - { module: tests/library/testing/support/general-fixture.ts }
+  - { module: tests/library/testing/support/controlled-general.ts }
+  - { module: tests/library/testing/support/controlled-evidence.ts }
+  - { module: src/library/testing/captured-tests.ts }
+  - { schema: src/library/testing/schemas/test-profile.json }

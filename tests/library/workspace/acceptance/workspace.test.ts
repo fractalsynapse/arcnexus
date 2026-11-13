@@ -107,7 +107,7 @@ class WorkspaceTests {
   /** Rejects executable legacy preparation while retaining static configuration inspection. */
   rejectsLegacyPreparation(t: TestContext): void {
     const f = fixture(t);
-    const path = join(f.repo, 'architecture/environment.yaml');
+    const path = join(f.repo, '.arc/architecture/environment.yaml');
     writeFileSync(
       path,
       JSON.stringify({
@@ -175,14 +175,14 @@ class WorkspaceTests {
   /** Verifies that invalid configuration and missing prerequisite fail at their respective stages. */
   invalidConfigurationAndMissingPrerequisiteFailAtTheirRespectiveStages(t: TestContext) {
     const f = fixture(t);
-    const path = join(f.repo, 'architecture/operations/verify.yaml');
+    const path = join(f.repo, '.arc/architecture/operations/verify.yaml');
     const operation = JSON.parse(readFileSync(path, 'utf8'));
     writeFileSync(path, JSON.stringify({ ...operation, generatedDirectories: ['../escape'] }));
     f.git('add', '.');
     f.git('commit', '-m', 'invalid');
     assert.equal(f.prepare().status, 2);
     writeFileSync(path, JSON.stringify({ ...operation, command: 'arcnexus-nonexistent-tool' }));
-    const platformPath = join(f.repo, 'architecture/components/platform.json');
+    const platformPath = join(f.repo, '.arc/architecture/components/platform.json');
     const platform = JSON.parse(readFileSync(platformPath, 'utf8'));
     platform.operations.verify = ['preflight'];
     writeFileSync(platformPath, JSON.stringify(platform));

@@ -1,0 +1,12 @@
+schemaVersion: 4
+id: verify
+purpose: Exercise fixture verification
+kind: command
+repository: sample
+cwd: .
+category: unit-test
+command: node
+args:
+  - verify.mjs
+generatedDirectories: []
+artifacts: []

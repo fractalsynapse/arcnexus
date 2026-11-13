@@ -1,0 +1,69 @@
+schemaVersion: 6
+id: publisher
+type: library
+parentId: cli-package
+purpose: Retain verified deliveries and advance policy-authorized integration and publication
+objectives: [Verify and publish assembled dependent contributions through one delivery route]
+constraints: [
+    Publication cannot substitute for independent engineering verification,
+    'Real main merges, tags and
+    package publication remain human-controlled',
+  ]
+activities:
+  research:
+    role: researcher
+    profile: luna
+    operations: []
+    instructions: [
+        Establish what Retain verified deliveries and advance policy-authorized integration and publication
+        means in practice from this component's own sources and retained evidence before proposing any change to
+        src/library/publisher.,
+      ]
+  documentation:
+    role: technical-writer
+    profile: luna
+    operations: []
+    instructions: [
+        'Keep the documentation under docs/library/publisher describing Retain verified deliveries and
+        advance policy-authorized integration and publication as delivered behaviour, never as intent.',
+      ]
+  testing:
+    role: designer
+    profile: luna
+    operations: []
+    instructions: [
+        Express acceptance for Retain verified deliveries and advance policy-authorized integration and
+        publication as checks over its declared public contract in tests/library/publisher; observe the failure
+        before changing behaviour.,
+      ]
+  implementation:
+    role: systems-engineer
+    profile: luna
+    operations: [publish-delivery]
+    instructions: [
+        'Change only what this goal requires inside src/library/publisher, preserving the public contract
+        and the ownership boundaries that declare it.',
+      ]
+  review:
+    role: reviewer
+    profile: luna
+    operations: []
+    instructions: [
+        Judge the candidate against the stated acceptance and the standards in force for Retain verified
+        deliveries and advance policy-authorized integration and publication; refuse on unmet behaviour rather than
+        style.,
+      ]
+  release:
+    role: release-engineer
+    profile: luna
+    operations: [package-artifact]
+    instructions: [
+        'Publish only what the assembled verification accepted, and record exactly what shipped for Retain
+        verified deliveries and advance policy-authorized integration and publication.',
+      ]
+operations:
+  publish-delivery: [agent]
+  package-artifact: [delivery]
+owns: [src/library/publisher, tests/library/publisher, docs/library/publisher]
+api:
+  - { module: src/library/publisher/publisher.ts }

@@ -146,6 +146,21 @@ class Initializer {
     return record;
   }
 
+  /** Intake holds only its snapshot's activities, and every captured operation is reachable from them. */
+  private intakeActivities() {
+    return Object.fromEntries(
+      Object.entries(this.snapshot.activities).map(([name, config]) => [
+        name,
+        {
+          role: config.role,
+          operations: this.snapshot.operations.map((operation) => ({ id: operation.id })),
+          standards: config.role.standards ?? [],
+          ...(config.instructions ? { instructions: config.instructions } : {}),
+        },
+      ]),
+    );
+  }
+
   /** Builds the read-only intake assignment from the caller’s captured envelope. */
   private assignment(): ResolvedAssignment {
     const { digest: _digest, ...base } = this.input.resolved;
@@ -153,7 +168,8 @@ class Initializer {
       ...base,
       componentId: this.snapshot.componentId,
       context: this.snapshot.context,
-      role: this.snapshot.role,
+      mode: 'steward' as const,
+      activities: this.intakeActivities(),
       executionProfile: this.snapshot.profile,
       operations: this.snapshot.operations,
       assignment: {
@@ -211,7 +227,7 @@ class Initializer {
       'Captured assignment: ' +
         JSON.stringify(this.input.envelope ?? this.input.resolved.assignment),
       'Initializer responsibility: ' +
-        JSON.stringify({ context: this.snapshot.context, role: this.snapshot.role }),
+        JSON.stringify({ context: this.snapshot.context, activities: this.snapshot.activities }),
       'Captured catalog: ' + JSON.stringify(this.catalog()),
       ...this.proposalInstructions(),
       'Repository revision: ' + this.input.record.base,

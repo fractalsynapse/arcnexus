@@ -11,8 +11,8 @@ dependency:
   from: gateway
   to: identity
   contract: identity-label
-  delivery: "Verified formatIdentity result includes label `Identity: <id>` while
-    preserving id"
+  delivery: 'Verified formatIdentity result includes label `Identity: <id>` while
+    preserving id'
 acceptance:
   - id: combined
     command: node

@@ -25,9 +25,9 @@ export class StandardUpdate {
         : new ConfigurationReader().definition(
             target.source,
             target.base,
-            `architecture/standards/${id}`,
+            `.arc/architecture/standards/${id}`,
           );
-    const path = original?.path ?? `architecture/standards/${id}.yaml`;
+    const path = original?.path ?? `.arc/architecture/standards/${id}.yaml`;
     if (action === 'remove') return { path, text: null };
     const value = {
       ...(original?.value ?? { schemaVersion: 1, id, examples: [], operationIds: [] }),

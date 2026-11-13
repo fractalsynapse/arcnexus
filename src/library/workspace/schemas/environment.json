@@ -1,58 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://arcnexus.local/schemas/environment-v1",
+  "$id": "https://arcnexus.local/schemas/environment",
   "type": "object",
   "properties": {
     "schemaVersion": {
-      "enum": [1, 3]
-    },
-    "prerequisites": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "command": {
-            "type": "string",
-            "minLength": 1
-          },
-          "args": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": ["command", "args"],
-        "additionalProperties": false
-      }
-    },
-    "setup": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "command": {
-            "type": "string",
-            "minLength": 1
-          },
-          "args": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": ["command", "args"],
-        "additionalProperties": false
-      }
-    },
-    "generatedDirectories": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      },
-      "uniqueItems": true
+      "const": 4
     },
     "workspace": {
       "type": "object",
@@ -71,7 +23,7 @@
               "pattern": "^https://"
             }
           },
-          "required": ["id", "repository"],
+          "required": ["id"],
           "additionalProperties": false
         },
         "dependencies": {
@@ -96,64 +48,9 @@
               "path": {
                 "type": "string",
                 "minLength": 1
-              },
-              "prerequisites": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "command": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "args": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "required": ["command", "args"],
-                  "additionalProperties": false
-                }
-              },
-              "setup": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "command": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "args": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "required": ["command", "args"],
-                  "additionalProperties": false
-                }
-              },
-              "generatedDirectories": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "minLength": 1
-                }
               }
             },
-            "required": [
-              "id",
-              "repository",
-              "commit",
-              "path",
-              "prerequisites",
-              "setup",
-              "generatedDirectories"
-            ],
+            "required": ["id", "repository", "commit", "path"],
             "additionalProperties": false
           }
         }
@@ -162,6 +59,6 @@
       "additionalProperties": false
     }
   },
-  "required": ["schemaVersion", "prerequisites", "setup", "generatedDirectories"],
+  "required": ["schemaVersion", "workspace"],
   "additionalProperties": false
 }

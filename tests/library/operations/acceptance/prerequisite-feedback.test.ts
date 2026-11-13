@@ -59,14 +59,14 @@ class PrerequisiteFeedback {
       '-e',
       "const f=require('fs');f.mkdirSync('generated',{recursive:true});f.appendFileSync('generated/dependent','x');require('./verify.cjs');",
     ]);
-    const path = join(f.repo, 'architecture/components/platform.json');
+    const path = join(f.repo, '.arc/architecture/components/platform.json');
     const platform = JSON.parse(readFileSync(path, 'utf8'));
     platform.operations.compile = ['agent'];
     writeFileSync(path, JSON.stringify(platform));
-    const operation = join(f.repo, 'architecture/operations/agent-probe.yaml');
+    const operation = join(f.repo, '.arc/architecture/operations/agent-probe.yaml');
     const probe = JSON.parse(readFileSync(operation, 'utf8'));
     writeFileSync(
-      join(f.repo, 'architecture/operations/compile.yaml'),
+      join(f.repo, '.arc/architecture/operations/compile.yaml'),
       JSON.stringify({
         ...probe,
         id: 'compile',

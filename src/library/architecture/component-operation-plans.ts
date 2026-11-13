@@ -1,3 +1,4 @@
+import { activityOperationIds } from './activities.js';
 import {
   OperationArguments,
   OperationOrder,
@@ -6,6 +7,7 @@ import {
 import type { Operation } from '../operations/operations.js';
 import type { Catalog, Component } from './components.js';
 import { InputError } from './config.js';
+import { validateSchema } from './schema.js';
 import { compiledTestPath } from '../testing/captured-tests.js';
 
 /** Captures finite lifecycle plans and agent availability from a single definition registry. */
@@ -16,7 +18,8 @@ export class ComponentOperationPlans {
   /** Resolves every executable component independently of the number of participating owners. */
   resolve(): void {
     for (const c of Object.values(this.catalog.components)) {
-      if (c.schemaVersion < 5 || ['platform', 'package'].includes(c.type)) continue;
+      // Containers bind no operation plans of their own; leaves do, under the single component shape.
+      if (['platform', 'package'].includes(c.type)) continue;
       c.operationPlan = {};
       const context = this.context(c);
       for (const usage of ['preflight', 'setup', 'refresh', 'verify', 'delivery', 'agent'])
@@ -40,7 +43,7 @@ export class ComponentOperationPlans {
   private context(c: Component): OperationContext {
     const profile = this.catalog.configurationSources.find(
       (s) =>
-        s.path.startsWith('architecture/test-profiles/') &&
+        s.path.startsWith('.arc/architecture/test-profiles/') &&
         (s.value as { id?: string }).id === c.testProfile,
     );
     return {
@@ -80,23 +83,28 @@ export class ComponentOperationPlans {
     });
   }
 
-  /** Keeps legacy discovery readable while requiring a shared runner before assignment execution. */
-  profileCheck(c: Component, executable = false): { id: string; run: string } | undefined {
-    if (c.schemaVersion < 6 || !c.testProfile) return undefined;
-    const profile = this.catalog.configurationSources.find(
-      (source) =>
-        source.path.startsWith('architecture/test-profiles/') &&
-        (source.value as { id?: string }).id === c.testProfile,
-    )?.value as { schemaVersion: number; id: string; run?: string } | undefined;
-    if (profile?.schemaVersion === 1 && !executable) return undefined;
-    if (profile?.schemaVersion === 1)
-      throw new InputError('Migrate test profile to schemaVersion 2 with arcnexus config migrate');
-    if (profile?.schemaVersion !== 2 || !profile.run)
-      throw new InputError(`Missing executable test profile: ${c.testProfile}`);
+  /** Requires a shared test profile before a component may be assigned executable test work. */
+  profileCheck(c: Component): { id: string; run: string } | undefined {
+    if (!c.testProfile) return undefined;
+    const source = this.catalog.configurationSources.find(
+      (entry) =>
+        entry.path.startsWith('.arc/architecture/test-profiles/') &&
+        (entry.value as { id?: string }).id === c.testProfile,
+    );
+
+    // Architect ruling 2026-11-12: admission validates what it consumes. A profile reaching this
+    // point came from a captured document list, not necessarily from a load that schema-checked it,
+    // so a stale or fabricated shape must be refused here rather than acted upon.
+    const profile = source
+      ? validateSchema<{ id: string; run?: string }>('test-profile', source.value)
+      : undefined;
+    // A declared profile that resolves to nothing, or names no runner, cannot carry executable tests.
+    if (!profile?.run)
+      throw new InputError(`Test profile ${c.testProfile} declares no runner for ${c.id}`);
     return { id: profile.id, run: profile.run };
   }
 
-  /** Keeps implicit profile checks subject to the same role, repository and finite-operation authority. */
+  /** Resolves the runner a component's declared test profile names. */
   private validate(c: Component, op: Operation, usage: string): void {
     if (op.schemaVersion !== 4)
       throw new InputError(`Migrate operation ${op.id} to schemaVersion 4`);
@@ -104,11 +112,18 @@ export class ComponentOperationPlans {
       throw new InputError(`Operation repository mismatch: ${op.id}`);
     if (usage !== 'agent' && ['service', 'upstream'].includes(op.kind))
       throw new InputError(`Required lifecycle operations must be finite: ${op.id}`);
+    // Only agent-invoked operations are gated by an activity. Setup, preflight, refresh, verify and
+    // delivery operations are host lifecycle steps chosen by the plan profile, so requiring every
+    // component to attach them to an activity would invent an activity for work no agent performs.
     if (
-      !op.activities.every((activity) => this.catalog.roles[c.role]!.activities.includes(activity))
+      (c.operations?.[op.id] ?? []).includes('agent') &&
+      !Object.values(c.activities ?? {}).some((a) => activityOperationIds(a).includes(op.id))
     )
-      throw new InputError(`Operation activity outside role: ${op.id}`);
-    for (const id of [c.executionProfile, ...Object.values(c.activityProfiles ?? {})])
+      throw new InputError(`Agent operation belongs to no declared activity: ${op.id}`);
+    for (const id of [
+      c.executionProfile,
+      ...Object.values(c.activities ?? {}).flatMap((a) => (a.profile ? [a.profile] : [])),
+    ])
       if (!this.catalog.profiles[id]!.operationCategories?.includes(op.category))
         throw new InputError(`Operation category not permitted by ${id}: ${op.id}`);
   }

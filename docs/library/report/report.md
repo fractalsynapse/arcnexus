@@ -9,6 +9,19 @@ sorted by path in ascending, case-sensitive string order regardless of input ord
 Paths are rendered as literal text, including Markdown punctuation, HTML, and line
 breaks. Absent or empty changes produce `No changed files observed.`
 
+## Report output and authority
+
+Execution reports present captured run, assignment, command, and verification
+evidence for inspection. They are projections of retained records, not sources of
+acceptance authority: a reported status, command result, or evidence reference does
+not by itself authorize work or establish that a candidate meets its objective.
+Worker conclusions remain claims. Host-observed execution, owner delivery
+verification, independent assessment, and whole-goal assessment are distinct
+evidence with their own identities and scope. Missing or historical evidence is
+reported as unavailable rather than treated as success. The caller or authorized
+host decision-maker uses retained evidence to make decisions; report rendering does
+not make that decision.
+
 Markdown also includes `## Outcome` with the captured workflow outcome and
 `## Activities` with each captured activity/status pair. These sections use only
 fields already present in the execution record; records without workflow fields
@@ -242,7 +255,7 @@ rejections; they never imply success. Historical artifacts and invocation identi
 remain unchanged. The reader uses the existing immutable evidence paging path, with
 no second reader, execution authority, or total read-size quota.
 
-## Canonical execution evidence
+## Shared captured execution evidence
 
 Direction, steward investigation, independent verification and publication consume
 the same captured execution facts and artifact assembly. The capture includes run

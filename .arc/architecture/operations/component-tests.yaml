@@ -1,0 +1,21 @@
+schemaVersion: 4
+id: component-tests
+purpose: Run the active owner’s selected component suites
+kind: command
+repository: arcnexus
+cwd: .
+category: cli-check
+command: node
+args:
+  - --test
+  - context: selectedTestFiles
+generatedDirectories:
+  - .fixture-build
+  - .test-build
+  - .tool-build
+  - dist
+artifacts: []
+prerequisites:
+  - verify-guidance-validation
+  - prepare-tests
+network: true

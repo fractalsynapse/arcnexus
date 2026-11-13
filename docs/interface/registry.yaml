@@ -54,23 +54,31 @@ contracts:
     file: docs/interface/arcnexus-cli-gateway.md
     owner: cli
     stage: locked
-    revision: 4
-    digest: b6ec989355c42084bd94e68520e7a3d2f8778302359c2ad3ee69d3fac6041f21
+    revision: 6
+    digest: 9ddb274115402b0b3655dd8414cd6d810167afcf80e264e74736f0b2fc2267cd
     dependsOn: [arcnexus/project, arcnexus/foundation]
     scenarios: 20
     acceptedBy: Adrian Webb (architect)
     acceptedAt: 2026-11-07
     history:
-      - revision: 3
+      - revision: 6
         stage: locked
-        digest: f5a48b98aa992b128232fa13cc2b80662f62e39b5d97ca11c78b372a19c58d05
+        digest: 9ddb274115402b0b3655dd8414cd6d810167afcf80e264e74736f0b2fc2267cd
+        note: >
+          architect rulings: `task run` gains the sealed `--plan` stance and the in-place
+          `--component <id> [--activity <a>]` stance, `inspect` names the position in the
+          component slot with reserved `director`/`verifier` identifiers, and `config migrate`
+          is retired because configurations carry no version to upgrade
+      - revision: 5
+        stage: locked
+        digest: a80d721cdf1c37bbdd5b834e224894d39c88b12221369add54aab8fefecd656c
         note: >
           --simulate restored as a delivered option by the architect: simulation keeps its mode, so
           the flag selects the evidence-package collaboration provider rather than a mock; the
           rejected-option list and the retired-command table no longer cover it
-      - revision: 1
+      - revision: 5
         stage: proposed
-        digest: 0c450928e2815267e835bdb9e78b3a740655738bc032079091fa6cd8b1dab206
+        digest: a80d721cdf1c37bbdd5b834e224894d39c88b12221369add54aab8fefecd656c
         note: >
           proposed in #346 with three open questions; all answered by the architect — add
           `inspect` as the activity-context preview, keep per-command options with their
@@ -82,13 +90,29 @@ contracts:
     file: docs/interface/arcnexus-architecture-model.md
     owner: architecture-model
     stage: locked
-    revision: 6
-    digest: 6f5921924914f7c3eee109e44c07558a753df19218f1cc50b3d679212fc0a236
+    revision: 8
+    digest: 4656ae78ea48caf562784202e1c53a38bb69d07862cd8be33f3e73606f3ab0e1
     dependsOn: [arcnexus/project, arcnexus/foundation]
     scenarios: 16
     acceptedBy: Adrian Webb (architect)
     acceptedAt: 2026-11-07
     history:
+      - revision: 8
+        stage: locked
+        digest: 4656ae78ea48caf562784202e1c53a38bb69d07862cd8be33f3e73606f3ab0e1
+        note: >
+          Migration table records the version-suffixed schema files renamed to their kind
+          (component, operation, environment) and the version-keyed selection removed, under the
+          architect's 2026-11-12 ruling that the installed release is the pin.
+      - revision: 7
+        stage: locked
+        digest: e3d6abee203a17b7d16c8b3ce9031e5595467135e2eb405ddd9b01a64499491b
+        note: >
+          Module inventory updated under the architect's 2026-11-12 instruction that component
+          ownership is the sole source of truth for writes: `directory-grants.ts` and
+          `permissions.ts` are deleted with the grant projection they implemented. Invariant I2
+          ("ownership comes from declared paths only, no per-milestone file grants") is now the
+          only statement of write authority; `access` retains derived reads alone.
       - revision: 1
         stage: proposed
         digest: 5defa8613fe034530ece7f34401d9822bd674215f642e9878a94e3c6b9f726c1

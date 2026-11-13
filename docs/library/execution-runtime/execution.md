@@ -158,7 +158,7 @@ Report simulation, local checks, CI and live evidence separately.
 
 ## Project defaults
 
-Committed `architecture/execution.yaml` selects `directorProfile`, `reviewerProfile`
+Committed `.arc/architecture/execution.yaml` selects `directorProfile`, `reviewerProfile`
 and optional `defaultPackage`. ArcNexus uses its `astra` profile for direction and
 independent review; owners retain their declared engineering profiles. Local machine
 bindings are discovered at `<git-common-dir>/arcnexus/bindings.yaml`; `tools.codex`

@@ -1,0 +1,10 @@
+schemaVersion: 4
+id: comment-issue
+purpose: Record meaningful progress on the retained tracking issue
+kind: upstream
+action: issue.comment
+repository: arcnexus
+cwd: .
+category: collaboration
+generatedDirectories: []
+artifacts: []

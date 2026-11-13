@@ -5,16 +5,16 @@ import { test, type TestContext } from 'node:test';
 import { loadProjectBindings } from '../../../../dist/library/architecture/bindings.js';
 import { loadCatalog } from '../../../../dist/library/architecture/components.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 
 /** Exercises captured, package-scoped resources through the built public architecture boundary. */
 class ComponentResourceScenarios {
   /** Requires valid fixture authority before checking the absent or implemented API. */
   private fixture(t: TestContext) {
-    const f = new ComponentV5Fixture(t, 6);
+    const f = new ComponentFixture(t);
     f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     f.put(
-      'architecture/components/deep.json',
+      '.arc/architecture/components/deep.json',
       f.component('deep', 'library', {
         parentId: 'package',
         owns: ['deep'],
@@ -97,9 +97,12 @@ class ComponentResourceScenarios {
     const { f, target } = this.fixture(t);
     const service = await this.service();
     const { revision, ...before } = service.get(target, 'sample');
-    const path = 'architecture/components/unrelated-filename.json';
+    const path = '.arc/architecture/components/unrelated-filename.json';
     const declaration = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
-    declaration.role = 'engineer';
+    // A field the inspected component does not expose, and that the current component shape
+    // actually allows: a component carries no role, so the old vehicle for this edit could no
+    // longer load. The question under test is byte-level source binding, not which field changed.
+    declaration.questions = ['What binds a token to its source?'];
     f.put(path, declaration);
     f.commit();
     const { revision: updated, ...after } = service.get(target, 'sample');
@@ -118,7 +121,7 @@ class ComponentResourceScenarios {
     const before = service.get(target, 'sample');
     const page = service.list(target, { limit: 1 });
     f.put(
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
       f.component('sample', 'library', {
         parentId: 'package',
         owns: ['src', 'docs', 'tests'],

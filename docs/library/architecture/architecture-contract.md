@@ -6,12 +6,12 @@ For current schema-six execution, see [configuration](configuration.md) and
 [configuration migration](configuration-migration.md).
 
 Architecture files use YAML, with legacy JSON accepted through the same reader.
-Version 4 is described in [component-owned architecture](component-contracts-v4.md).
+Version 4 is described in [component-owned architecture](component-contracts.md).
 Versions 1–3 remain supported. Unknown fields, unsupported versions, missing references,
 cyclic ancestry, invalid paths and contradictory ownership fail before inference.
 Historical reports remain evidence and are not migrated.
 
-Components live in `architecture/components/<id>.yaml`. A platform contains packages;
+Components live in `.arc/architecture/components/<id>.yaml`. A platform contains packages;
 packages contain foundations, gateways, libraries and releases. Version-four package
 identity and roots are inherited by children. Each leaf owns its paths, public modules
 and directory exceptions; ordinary file inventories are discovered at the revision.
@@ -23,8 +23,8 @@ Composition profiles select packages, not ownership parents. `--composition-prof
 selects one for inspection/run; `--execution-profile` selects a declared worker
 profile. Selected composition must include the component's owning package.
 
-Roles in `architecture/roles/` describe responsibilities and activities. Execution
-profiles in `architecture/execution-profiles/` declare model, reasoning, research,
+Roles in `.arc/architecture/roles/` describe responsibilities and activities. Execution
+profiles in `.arc/architecture/execution-profiles/` declare model, reasoning, research,
 optional overall/command timeouts and turn limits. Missing limits remain unset. Luna/medium is the default. There is no
 automatic model fallback. Environment commands are executable/argument arrays;
 they never imply runtime installation or shell interpretation.

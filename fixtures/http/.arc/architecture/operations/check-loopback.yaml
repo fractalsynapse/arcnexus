@@ -1,0 +1,16 @@
+schemaVersion: 4
+id: check-loopback
+purpose: Check local loopback binding
+kind: command
+repository: http-sample
+cwd: .
+category: cli-check
+generatedDirectories: []
+artifacts: []
+prerequisites: []
+command: node
+args:
+  - -e
+  - const h=require('http').createServer();h.listen(0,'127.0.0.1',()=>{console.log(process.version+' loopback
+    '+h.address().port);h.close()})
+network: true

@@ -61,7 +61,8 @@ local rebuild. The integrity guard correctly invalidated that experiment. A fres
 full-suite run with the build held fixed passed all 178 tests. Live qualification
 used its separate frozen build throughout.
 
-ArcNexus CI and normal environment setup no longer require Python or uv. An existing
-optional manual sandbox diagnostic (`scripts/check-permissions.mjs`) still invokes
-Python; historical pinned target environments also retain their original toolchains.
-The application and new tooling implementation are TypeScript.
+ArcNexus CI and normal environment setup no longer require Python or uv. The optional
+manual sandbox diagnostic (`scripts/check-permissions.mjs`) was removed with the
+directory-grant layer it exercised, so nothing in the current tooling invokes Python;
+historical pinned target environments also retain their original toolchains. The
+application and new tooling implementation are TypeScript.

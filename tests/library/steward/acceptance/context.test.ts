@@ -24,7 +24,7 @@ class ContextTests {
       readFileSync(join(f.repo, 'verify.cjs'), 'utf8') +
         "if(require('child_process').spawnSync('target-node',['-e','process.exit(0)']).status!==0)throw new Error('NESTED_TOOL_UNAVAILABLE');",
     );
-    const path = join(f.repo, 'architecture/operations/verify.yaml');
+    const path = join(f.repo, '.arc/architecture/operations/verify.yaml');
     const operation = JSON.parse(readFileSync(path, 'utf8'));
     operation.command = 'target-node';
     writeFileSync(path, JSON.stringify(operation));
@@ -112,12 +112,15 @@ class ContextTests {
   private narrowReview(f: any): void {
     f.component.reads = ['docs'];
     f.component.owns = ['docs', 'tests', 'new.txt'];
-    writeFileSync(join(f.repo, 'architecture/components/sample.json'), JSON.stringify(f.component));
-    const path = join(f.repo, 'architecture/components/dependency.json');
+    writeFileSync(
+      join(f.repo, '.arc/architecture/components/sample.json'),
+      JSON.stringify(f.component),
+    );
+    const path = join(f.repo, '.arc/architecture/components/dependency.json');
     const dependency = JSON.parse(readFileSync(path, 'utf8'));
     dependency.owns.push('source.txt');
     writeFileSync(path, JSON.stringify(dependency));
-    const operationPath = join(f.repo, 'architecture/operations/verify.yaml');
+    const operationPath = join(f.repo, '.arc/architecture/operations/verify.yaml');
     const operation = JSON.parse(readFileSync(operationPath, 'utf8'));
     operation.args = ['-e', 'process.exit(0)'];
     writeFileSync(operationPath, JSON.stringify(operation));

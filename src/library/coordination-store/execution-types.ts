@@ -162,3 +162,36 @@ export type ActivationResult = { receipt?: string } & (
   | { kind: 'continue' }
   | { kind: 'blocked'; reason: string }
 );
+
+/**
+ * What one run was asked to produce.
+ *
+ * `goal` is the whole loop. `plan` stops after direction: the proposal is retained and nothing is
+ * dispatched, so no assignment, tracking issue, branch, pull request or release can be created by a
+ * run that only asked to see the plan. In-place component stances are added separately because they
+ * change where work is written, which is a different guarantee from stopping early.
+ */
+export type RunStance =
+  | { kind: 'goal' }
+  | { kind: 'plan' }
+  /**
+   * In-place work on the current checkout: one component, optionally one activity of it.
+   *
+   * `fanOut` marks the `--activity`-without-`--component` case, where several components would
+   * write into the same checkout at once. That case demands a strictly clean tree, while a single
+   * component may proceed on a dirty tree provided the uncommitted paths do not intersect what it
+   * owns — two components editing the same file in one checkout is corruption, one component
+   * reading a file an operator is editing is not that same hazard.
+   */
+  | { kind: 'component'; component?: string; activity?: string; fanOut: boolean };
+
+/**
+ * True when a run addresses a component to work in place.
+ *
+ * Sealed stances share the simulated upstream connectivity, so environment mode alone cannot say
+ * whether the run owns an isolated candidate: an in-place run edits the operator's checkout and must
+ * therefore skip the steps that exist to build and protect a separate one.
+ */
+export function isInPlaceRun(run: { data?: Record<string, unknown> }): boolean {
+  return (run.data?.stance as { kind?: string } | undefined)?.kind === 'component';
+}

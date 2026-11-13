@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import type { ResolvedAssignment } from '../architecture/assignment.js';
 import { InputError } from '../architecture/config.js';
 import { targetEnvironment, toolDirectories } from '../architecture/bindings.js';
-import type { AccessPolicy } from '../architecture/permissions.js';
+import type { AccessPolicy } from '../architecture/components.js';
 import type { Plan } from '../assignment/plan.js';
 import type { OperationBridge } from '../operations/operations.js';
 import { execute, git } from '../operations/process.js';
@@ -58,7 +58,8 @@ export class CodexConfiguration {
     this.pidFile = join(this.dir, 'codex.pid');
     this.client = new ClientHome(input);
     this.profile =
-      (input.activity && resolved.activityProfiles?.[input.activity]) || resolved.executionProfile;
+      (input.activity && resolved.activities?.[input.activity]?.profile) ||
+      resolved.executionProfile;
     new ExecutionContext().validateProfile(this.profile);
     this.schema = this.resultSchema();
     const authority = this.authority(resolved);
@@ -106,7 +107,7 @@ export class CodexConfiguration {
   private restrictActivities(schema: any): void {
     const resolved = this.input.record.resolvedAssignment as ResolvedAssignment | undefined;
     if (!resolved) return;
-    const activities = [...resolved.role.activities];
+    const activities = Object.keys(resolved.activities);
     schema.properties.activities.items.properties.activity.enum = activities;
     const plan = schema.properties.plan?.anyOf.find((entry: any) => entry.properties);
     if (!plan) return;

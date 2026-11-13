@@ -21,7 +21,7 @@ export class ComponentResources {
       .sort()
       .filter((id) => this.contains(catalog, target.packageId, id))
       .map((id) => this.project(catalog.components[id]!, target.base));
-    const types: string[] = readSchema('component-v6').oneOf.flatMap(
+    const types: string[] = readSchema('component').oneOf.flatMap(
       (entry: any) => entry.properties.type.enum,
     );
     return this.query.page(items, { id: null, type: types, parentId: null }, input, [

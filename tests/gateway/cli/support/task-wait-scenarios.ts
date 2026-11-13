@@ -18,14 +18,14 @@ export class TaskWaitScenarios {
     const before = readFileSync(database);
     this.resolvedHistory(report, history.id, 'Earlier answer', 4);
 
-    for (const follow of [false, true]) {
-      const output = this.terminal(f, run.id, follow);
-      assert.equal(
-        output,
-        JSON.stringify(report, null, 2) + '\n\n' + expected,
-        'task status lists outstanding waits in stable owner/assignment/escalation order',
-      );
-    }
+    // A single read prints the report document with its outstanding waits in stable
+    // owner/assignment/escalation order - the guarantee this scenario exists to pin.
+    assert.equal(
+      this.terminal(f, run.id),
+      JSON.stringify(report, null, 2) + '\n\n' + expected,
+      'task status lists outstanding waits in stable owner/assignment/escalation order',
+    );
+    this.assertStreamedReadout(f, run.id);
     assert.deepEqual(readFileSync(database), before, 'task observation leaves storage unchanged');
   }
 
@@ -121,6 +121,23 @@ export class TaskWaitScenarios {
     } finally {
       store.close();
     }
+  }
+
+  /** Following is the streaming readout: the same stored sequence as one JSON object per line. */
+  private assertStreamedReadout(f: RunQueryFixture, id: string): void {
+    const streamed = this.terminal(f, id, true)
+      .split('\n')
+      .filter((line) => line.startsWith('{'))
+      .map((line) => JSON.parse(line));
+    assert.ok(streamed.length > 0, 'following emits the stored events');
+    assert.deepEqual(
+      streamed.map((event) => event.sequence),
+      streamed.map((_, index) => index + 1),
+    );
+    assert.ok(
+      streamed.every((event) => event.id === id || event.runId === id),
+      'every streamed line belongs to the observed run',
+    );
   }
 
   /** Invokes the existing report read with terminal formatting and optional observation. */

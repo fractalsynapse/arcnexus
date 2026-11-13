@@ -1,0 +1,51 @@
+schemaVersion: 3
+id: identity
+type: library
+repository: sample
+executionProfile: luna
+purpose: Own identity contract
+path: identity
+objectives:
+  - Verified bounded change
+constraints:
+  - No commits
+questions: []
+patterns: []
+interfaces: []
+documentation:
+  - identity/README.md
+tests:
+  - identity/test.mjs
+relatedIds: []
+allowedWritePaths:
+  - identity
+access:
+  readPaths:
+    - .
+  writeDirectories:
+    - .
+verification:
+  - command: node
+    args:
+      - --test
+      - identity/test.mjs
+operationIds: []
+activities:
+  research:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Establish what this component guarantees before proposing a change
+  implementation:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Change only what the goal requires and prove it with this component own checks
+  review:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Reject weakened coverage or undeclared authority in the delivered change

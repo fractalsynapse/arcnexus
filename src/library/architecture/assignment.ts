@@ -1,3 +1,6 @@
+import { modeFor, type Mode } from './modes.js';
+import { standardsInForce } from './frame.js';
+import type { ComponentActivity } from './components.js';
 import { OwnershipValidator } from './ownership.js';
 import { ComponentOperationPlans } from './component-operation-plans.js';
 import { validateOwnerWorkflow } from './assignment-scope.js';
@@ -6,6 +9,7 @@ import { isUtf8 } from 'node:buffer';
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join } from 'node:path';
+import type { ActivityOperation } from './components.js';
 import type { Operation } from '../operations/operations.js';
 import { git } from '../operations/process.js';
 import { resolveMembers, type Member } from '../workspace/members.js';
@@ -14,7 +18,6 @@ import { ContractRegistry, type ContractLock } from './contracts.js';
 import {
   ancestry,
   loadCatalog,
-  validateOperations,
   type Component,
   type Catalog,
   type CompositionProfile,
@@ -79,14 +82,31 @@ export interface ResolvedAssignment {
   assignment: Assignment;
   context: Component[];
   related: Component[];
-  role: Role;
+  mode: Mode;
+  activities: Record<string, ResolvedActivity>;
   compositionProfile?: CompositionProfile;
   executionProfile: ExecutionProfile;
-  activityProfiles?: Record<string, ExecutionProfile>;
   verification: VerificationCheck[];
   artifacts: Array<{ path: string; sha256: string; content: string }>;
   pendingChecks: string[];
   digest: string;
+}
+
+export interface ResolvedActivity {
+  role: Role;
+  operations: Array<{ id: string; usage?: string; with?: Record<string, unknown> }>;
+  instructions?: string[];
+  standards: string[];
+  profile?: ExecutionProfile;
+}
+
+/** Normalizes an activity operation written either as a bare id or as an entry with overrides. */
+export function resolveActivityOperation(entry: ActivityOperation): {
+  id: string;
+  usage?: string;
+  with?: Record<string, unknown>;
+} {
+  return typeof entry === 'string' ? { id: entry } : { ...entry };
 }
 
 export const digest = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
@@ -166,7 +186,7 @@ class AssignmentResolver {
     this.context = ancestry(this.catalog, id);
     this.component = this.context.at(-1)!;
     this.env = environment(
-      new ConfigurationReader().definition(repository, base, 'architecture/environment').value,
+      new ConfigurationReader().definition(repository, base, '.arc/architecture/environment').value,
       Object.values(this.catalog.operations),
     );
     if (options.file && (options.objective !== undefined || options.kind !== undefined))
@@ -180,7 +200,7 @@ class AssignmentResolver {
   /** Requires an executable owner in the primary writable repository. */
   private validateTarget(): void {
     const { env, component } = this;
-    new ComponentOperationPlans(this.catalog).profileCheck(component, true);
+    new ComponentOperationPlans(this.catalog).profileCheck(component);
     if (env.workspace && component.repository !== env.workspace.primary.id)
       throw new InputError('Assignment component must belong to the writable primary repository');
     if (
@@ -213,7 +233,6 @@ class AssignmentResolver {
 
   /** Resolves captured inputs and rejects unsupported or inconsistent configuration. */
   resolve(): ResolvedAssignment {
-    this.assertReferences();
     const { catalog, assignment, context, component, base, id, env } = this;
     const execution = this.execution();
     const data = {
@@ -232,10 +251,10 @@ class AssignmentResolver {
       assignment,
       context,
       related: component.relatedIds.map((id) => catalog.components[id]!),
-      role: catalog.roles[component.role]!,
+      mode: modeFor(assignment),
+      activities: this.activityRoles(),
       ...(execution.compositionProfile ? { compositionProfile: execution.compositionProfile } : {}),
       executionProfile: execution.executionProfile,
-      activityProfiles: this.activityProfiles(),
       verification: [...component.verification, ...(this.options.additionalVerification ?? [])],
       artifacts: captureCheckArtifacts(assignment),
       pendingChecks: [...pendingChecks],
@@ -243,14 +262,42 @@ class AssignmentResolver {
     return { ...data, digest: digest(JSON.stringify(data)) };
   }
 
-  /** Captures activity settings once; explicit director/verifier profiles do not inherit worker overrides. */
-  private activityProfiles(): Record<string, ExecutionProfile> | undefined {
-    if (this.options.executionProfile) return undefined;
-    const entries = Object.entries(this.component.activityProfiles ?? {});
-    if (!entries.length) return undefined;
+  /**
+   * Captures the resolved position, direction and settings for every activity this component holds.
+   *
+   * The role is resolved from the catalog at capture time so a later edit to a role definition cannot
+   * change what an already-authorized activation was told; the profile is the activity's own when the
+   * component declared one and the component default otherwise. An explicit caller profile (the
+   * director or independent verifier) replaces every activity profile, because that activation is
+   * running under a named model choice rather than the component's routing.
+   */
+  private activityRoles(): Record<string, ResolvedActivity> {
+    const explicit = this.options.executionProfile;
     return Object.fromEntries(
-      entries.map(([activity, id]) => [activity, structuredClone(this.catalog.profiles[id]!)]),
+      Object.entries(this.component.activities ?? {}).map(([name, config]) => {
+        const profileId = explicit ?? config.profile;
+        return [
+          name,
+          {
+            role: structuredClone(this.catalog.roles[config.role]!),
+            operations: (config.operations ?? []).map(resolveActivityOperation),
+            standards: this.standardsFor(config.role, config),
+            ...(config.instructions ? { instructions: [...config.instructions] } : {}),
+            ...(profileId ? { profile: structuredClone(this.catalog.profiles[profileId]!) } : {}),
+          },
+        ];
+      }),
     );
+  }
+
+  /**
+   * Standards in force for an activity: the component's, plus those the position carries.
+   *
+   * Resolved at capture so a running activation never consults the catalog again, and a later edit
+   * to a standard definition cannot silently change what an already-dispatched assignment was told.
+   */
+  private standardsFor(roleId: string, activity: ComponentActivity): string[] {
+    return standardsInForce(this.catalog, this.component, this.catalog.roles[roleId]!, activity);
   }
 
   /** Captures owner identities and repository-relative routing paths without granting write access. */
@@ -264,14 +311,6 @@ class AssignmentResolver {
         eligible: this.options.eligibleOwners?.includes(owner.component),
       }));
     return { owners: Object.keys(components), ownership };
-  }
-
-  /** Rejects unresolved references before they can enter assignment context. */
-  private assertReferences(): void {
-    for (const component of this.context)
-      for (const contract of component.contractSnapshots ?? [])
-        if (!contract.artifact)
-          throw new InputError(`Missing repository binding for captured contract: ${contract.id}`);
   }
 
   /** Collects source snapshots used to reconstruct assignment authority. */
@@ -299,7 +338,7 @@ class AssignmentResolver {
       ...(options.bindings ? { bindings: options.bindings } : {}),
       ...(compositionProfile ? { compositionProfile } : {}),
       executionProfile,
-      operations: this.operations(executionProfile),
+      operations: this.operations(),
     };
   }
 
@@ -325,22 +364,14 @@ class AssignmentResolver {
     return { compositionProfile, executionProfile };
   }
 
-  /** Selects only operations authorized by both component and assignment. */
-  private operations(executionProfile: ExecutionProfile): Operation[] {
-    const { assignment, component, catalog, env } = this;
-    if (component.schemaVersion >= 5) {
-      if (assignment.operationIds)
-        throw new InputError('Assignments cannot substitute captured operation usages');
-      return (component.operationPlan?.agent ?? []).filter((op) =>
-        component.operations?.[op.id]?.includes('agent'),
-      );
-    }
-    const requestedOperations = assignment.operationIds ?? component.operationIds ?? [];
-    if (requestedOperations.some((id) => !(component.operationIds ?? []).includes(id)))
-      throw new InputError('Assignment widens operation authority');
-    const operations = requestedOperations.map((id) => catalog.operations[id]!);
-    validateOperations(operations, executionProfile, env);
-    return operations;
+  /** Selects the operations the component's agent activities actually bind. */
+  private operations(): Operation[] {
+    const { assignment, component } = this;
+    if (assignment.operationIds)
+      throw new InputError('Assignments cannot substitute captured operation usages');
+    return (component.operationPlan?.agent ?? []).filter((op) =>
+      component.operations?.[op.id]?.includes('agent'),
+    );
   }
 }
 

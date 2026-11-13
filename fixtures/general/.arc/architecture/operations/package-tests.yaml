@@ -1,0 +1,13 @@
+schemaVersion: 4
+kind: command
+repository: greetings
+cwd: .
+generatedDirectories: []
+artifacts: []
+prerequisites: []
+id: package-tests
+purpose: Observe the assembled public greeting contracts
+category: unit-test
+command: npm
+args:
+  - test

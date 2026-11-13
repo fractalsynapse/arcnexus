@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import type { TestContext } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { catalogFixture, componentFields } from './catalog-fixture.js';
+import { catalogFixture, componentFields, containerFields } from './catalog-fixture.js';
 import type { WorkflowOptions } from './controlled-workflow.js';
 
 export const cli = resolve('dist/cli.js');
@@ -47,14 +47,14 @@ export class WorkflowFixture {
     id: 'sample',
     type: 'library',
     purpose: 'Own sample behavior',
-    path: 'source.txt',
     objectives: ['Bounded change'],
     constraints: ['No commits'],
-    documentation: ['docs'],
-    tests: ['tests'],
-    access: { readPaths: ['.'], writeDirectories: ['.'] },
-    allowedWritePaths: ['source.txt', 'docs', 'tests', 'new.txt'],
-    verification: [{ command: 'node', args: ['verify.cjs'] }],
+    // Ownership is the write scope: path, access and allowed-write derivations all come from it,
+    // and verification comes from the operations bound to the component, so none is authored.
+    owns: ['source.txt', 'docs', 'tests', 'new.txt'],
+    // Binding the verify operation is what makes this leaf executable: the assignment path requires
+    // an owner whose operation plan produced a verification check, and an unbound leaf has none.
+    operations: { verify: ['verify'] },
   };
 
   private options: WorkflowOptions;
@@ -66,10 +66,16 @@ export class WorkflowFixture {
       rmSync(this.root, { recursive: true, force: true });
     });
     this.options = { mode, calls: this.calls };
-    mkdirSync(join(this.repo, 'architecture/components'), { recursive: true });
+    mkdirSync(join(this.repo, '.arc/architecture/components'), { recursive: true });
     this.git('init', '-b', 'staging');
     this.git('config', 'user.name', 'Test');
     this.git('config', 'user.email', 'test@example.invalid');
+    // The environment declares a primary repository, so the checkout must carry that origin: binding
+    // identity compares the declared URL against it, and without a remote git's raw "No such remote
+    // 'origin'" surfaces instead of the assignment behavior these scenarios exercise. Guarded
+    // because a fixture that already established its remotes must not fail on a duplicate add.
+    if (!this.git('remote').trim().split('\n').includes('origin'))
+      this.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     this.files();
     this.catalog();
     this.configure({});
@@ -132,23 +138,116 @@ export class WorkflowFixture {
     );
   }
 
+  /** Writes one fixture component definition as JSON. */
+  private declare(id: string, value: unknown): void {
+    writeFileSync(
+      join(this.repo, `.arc/architecture/components/${id}.json`),
+      JSON.stringify(value),
+    );
+  }
+
+  /**
+   * Declares the containers the fixture's leaves are parented to.
+   *
+   * The leaves name `package` as their parent, so a catalog without that document cannot load, and
+   * every suite built on it reports whatever the assignment code did next rather than the missing
+   * component it actually created.
+   */
+  private containers(): void {
+    this.declare('platform', {
+      ...containerFields,
+      id: 'platform',
+      type: 'platform',
+      reads: ['.'],
+      director: { component: 'sample', profile: 'luna' },
+      reviewerProfile: 'luna',
+      defaultPackage: 'package',
+    });
+    this.declare('package', {
+      ...containerFields,
+      id: 'package',
+      type: 'package',
+      parentId: 'platform',
+      repository: 'sample',
+      root: '.',
+    });
+  }
+
+  /**
+   * Declares the leaf that maintains the configuration and root files the fixture commits.
+   *
+   * Containers own nothing of their own, so their definition files need an owner: this is the same
+   * role architecture-maintenance plays in this repository. The list names each path instead of
+   * declaring the `architecture` directory, because a folder covering this leaf's own definition -
+   * or another leaf's - is refused as a duplicate grant or an ownership overlap.
+   */
+  private maintainer(): void {
+    this.declare('maintainer', {
+      ...this.component,
+      id: 'maintainer',
+      purpose: 'Own shared fixture configuration',
+      parentId: 'package',
+      owns: [
+        '.gitignore',
+        'verify.cjs',
+        '.arc/architecture/operations',
+        '.arc/architecture/environment.yaml',
+        '.arc/architecture/execution-profiles',
+        '.arc/architecture/roles',
+        '.arc/architecture/components/platform.json',
+        '.arc/architecture/components/package.json',
+      ],
+    });
+  }
+
+  /** Declares the one finite check every fixture leaf binds as its verification. */
+  private verificationOperation(): void {
+    mkdirSync(join(this.repo, '.arc/architecture/operations'), { recursive: true });
+    writeFileSync(
+      join(this.repo, '.arc/architecture/operations/verify.yaml'),
+      JSON.stringify({
+        schemaVersion: 4,
+        id: 'verify',
+        purpose: 'Check the fixture behavior',
+        kind: 'command',
+        repository: 'sample',
+        cwd: '.',
+        category: 'unit-test',
+        command: 'node',
+        args: ['verify.cjs'],
+        generatedDirectories: [],
+        artifacts: [],
+        prerequisites: [],
+        network: false,
+      }),
+    );
+  }
+
   /** Writes component definitions and disposable-output declarations for the fixture workspace. */
   private catalog(): void {
+    this.containers();
+    this.verificationOperation();
+    this.maintainer();
     writeFileSync(
-      join(this.repo, 'architecture/components/sample.json'),
+      join(this.repo, '.arc/architecture/components/sample.json'),
       JSON.stringify(this.component),
     );
+    this.declare('dependency', {
+      ...this.component,
+      id: 'dependency',
+      purpose: 'Own dependency interface',
+      // Two leaves cannot claim one path: overlap is refused, and this leaf exists to be imported by
+      // the sample, not to share its write scope.
+      owns: ['dependency'],
+    });
     writeFileSync(
-      join(this.repo, 'architecture/components/dependency.json'),
-      JSON.stringify({ ...this.component, id: 'dependency', purpose: 'Own dependency interface' }),
-    );
-    writeFileSync(
-      join(this.repo, 'architecture/environment.yaml'),
+      join(this.repo, '.arc/architecture/environment.yaml'),
       JSON.stringify({
-        schemaVersion: 1,
-        prerequisites: [],
-        setup: [],
-        generatedDirectories: ['generated'],
+        schemaVersion: 4,
+        workspace: {
+          primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
+          dependencies: [],
+        },
       }),
     );
   }

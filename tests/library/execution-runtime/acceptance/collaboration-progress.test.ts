@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import {
@@ -47,22 +47,50 @@ class ProgressFixture {
       join(this.fixture.repo, '.github/ISSUE_TEMPLATE.md'),
       '## Scope\n\n<!-- Scope -->\n## Summary\n\n<!-- Summary -->\n## Acceptance criteria\n',
     );
-    const ownerPath = join(this.fixture.repo, 'architecture/components/a.json');
+    const ownerPath = join(this.fixture.repo, '.arc/architecture/components/a.json');
     const owner = JSON.parse(readFileSync(ownerPath, 'utf8'));
     owner.owns.push('.github');
     writeFileSync(ownerPath, JSON.stringify(owner));
   }
 
+  /**
+   * Declares the activity that carries each inherited agent operation on every leaf.
+   *
+   * Operation availability comes from the shared package map, but a component may only be planned
+   * for agent work it states itself: each leaf names the activity binding these operations, which is
+   * how the real catalog authorises `track-issue`, `comment-issue` and the rest inside activities
+   * rather than inheriting a bare grant.
+   */
+  private declareActivity(ids: string[]): void {
+    const dir = join(this.fixture.repo, '.arc/architecture/components');
+    for (const name of readdirSync(dir)) {
+      const path = join(dir, name);
+      const doc = JSON.parse(readFileSync(path, 'utf8'));
+      if (['platform', 'package'].includes(doc.type)) continue;
+      const activity = doc.activities?.implementation ?? {
+        role: 'engineer',
+        profile: 'luna',
+        operations: [],
+        instructions: ['Deliver the owned change and retain its progress'],
+      };
+      activity.operations = [...new Set([...(activity.operations ?? []), ...ids])];
+      doc.activities = { ...(doc.activities ?? {}), implementation: activity };
+      writeFileSync(path, JSON.stringify(doc));
+    }
+  }
+
   /** Uses committed shared-operation authority, including an explicit absent-comment case. */
   private policy(comment: boolean): void {
     const f = this.fixture;
-    const path = join(f.repo, 'architecture/components/platform.json');
+    const bound: string[] = [];
+    const path = join(f.repo, '.arc/architecture/components/platform.json');
     const platform = JSON.parse(readFileSync(path, 'utf8'));
     for (const action of comment ? ['issue.create', 'issue.comment'] : ['issue.create']) {
       const id = action.replace('.', '-');
       platform.operations[id] = ['agent'];
+      bound.push(id);
       writeFileSync(
-        join(f.repo, `architecture/operations/${id}.yaml`),
+        join(f.repo, `.arc/architecture/operations/${id}.yaml`),
         JSON.stringify({
           schemaVersion: 4,
           id,
@@ -72,13 +100,13 @@ class ProgressFixture {
           repository: 'sample',
           cwd: '.',
           category: 'cli-check',
-          activities: [],
           generatedDirectories: [],
           artifacts: [],
         }),
       );
     }
     writeFileSync(path, JSON.stringify(platform));
+    this.declareActivity(bound);
     f.commit();
   }
 

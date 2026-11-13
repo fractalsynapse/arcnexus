@@ -1,0 +1,93 @@
+schemaVersion: 6
+id: operations
+type: library
+parentId: cli-package
+purpose:
+  Execute declared commands, supervise services and reconcile authorized upstream effects through captured
+  providers
+objectives: [
+    Execute captured engineering operations and preserve their evidence,
+    Stop managed subprocesses and
+    services when their execution scope ends,
+  ]
+constraints: [
+    Never infer setup commands or broaden captured operation authority,
+    Preserve caller cancellation and
+    resource ownership checks,
+    'operation (src/library/operations/schemas/operation.json): Preserve supported historical
+    versions and captured execution readers',
+    'command-diagnostics (src/library/operations/diagnostics.ts): Keep
+    model-facing excerpts within 16 KiB and preserve complete raw logs separately',
+  ]
+activities:
+  research:
+    role: researcher
+    profile: luna
+    operations: []
+    instructions: [
+        "Establish what Execute declared commands, supervise services and reconcile authorized upstream
+        effects through captured providers means in practice from this component's own sources and retained evidence
+        before proposing any change to src/library/operations.",
+      ]
+  documentation:
+    role: technical-writer
+    profile: luna
+    operations: []
+    instructions: [
+        'Keep the documentation under docs/library/operations describing Execute declared commands, supervise
+        services and reconcile authorized upstream effects through captured providers as delivered behaviour, never
+        as intent.',
+      ]
+  testing:
+    role: designer
+    profile: luna
+    operations: []
+    instructions: [
+        'Express acceptance for Execute declared commands, supervise services and reconcile authorized
+        upstream effects through captured providers as checks over its declared public contract in tests/library/operations;
+        observe the failure before changing behaviour.',
+      ]
+  implementation:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions: [
+        'Change only what this goal requires inside src/library/operations, preserving the public contract
+        and the ownership boundaries that declare it.',
+      ]
+  review:
+    role: reviewer
+    profile: luna
+    operations: []
+    instructions: [
+        'Judge the candidate against the stated acceptance and the standards in force for Execute declared
+        commands, supervise services and reconcile authorized upstream effects through captured providers; refuse
+        on unmet behaviour rather than style.',
+      ]
+owns: [src/library/operations, tests/library/operations, docs/library/operations]
+api:
+  - { module: src/library/operations/repository-documents.ts }
+  - { module: src/library/operations/installed-runtime.ts }
+  - { module: src/library/operations/prepared-dependencies.ts }
+  - { module: src/library/operations/delivery-assembly.ts }
+  - { module: src/library/operations/delivery-commit.ts }
+  - { module: src/library/operations/github-delivery.ts }
+  - { module: src/library/operations/github-pull-requests.ts }
+  - { module: src/library/operations/check-result.ts }
+  - { module: src/library/operations/evidence-change-record.ts }
+  - { module: src/library/operations/evidence-release.ts }
+  - { module: src/library/operations/evidence-package-upstream.ts }
+  - { module: src/library/operations/merge-protocol.ts }
+  - { module: src/library/operations/delivery-git.ts }
+  - { module: src/library/operations/operation-execution.ts }
+  - { module: src/library/operations/confinement.ts }
+  - { module: src/library/operations/operation-definition.ts }
+  - { module: src/library/operations/diagnostics.ts }
+  - { module: src/library/operations/operations.ts }
+  - { module: src/library/operations/probes.ts }
+  - { module: src/library/operations/process.ts }
+  - { module: src/library/operations/service-state.ts }
+  - { schema: src/library/operations/schemas/operation.json }
+  - { module: src/library/operations/upstream-execution.ts }
+  - { module: src/library/operations/github-upstream.ts }
+  - { module: src/library/operations/upstream-bridge.ts }

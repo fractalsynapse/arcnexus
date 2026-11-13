@@ -1,8 +1,0 @@
-schemaVersion: 6
-id: greetings
-type: package
-parentId: platform
-purpose: A small greeting program with strict separation of name, service and
-  CLI contracts
-objectives:
-  - Preserve default greetings while adding explicitly requested features

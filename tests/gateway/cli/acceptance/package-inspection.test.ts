@@ -23,23 +23,15 @@ test('registered architectural inspection captures context without starting engi
   assert.equal(f.git('status', '--porcelain'), '');
 });
 
-test('architectural prompt inspection previews declared activity without inventing acceptance', (t) => {
+test('activity inspection previews the declared activity frame without inventing acceptance', (t) => {
   const f = new PackageCliFixture(t);
   f.register();
-  const result = f.value(
-    f.root,
-    'inspect',
-    'package',
-    'sample',
-    'Review the boundary',
-    '--activity',
-    'review',
-  );
-  assert.deepEqual(result.preview, {
-    prompt: 'Review the boundary',
-    activity: 'review',
-    requiresPlanning: true,
-  });
+  // The activity is named, never inferred from prose: the component slot plus the activity slot are
+  // the whole request, and no acceptance is created by looking at it.
+  const result = f.value(f.root, 'inspect', 'package', 'sample', 'review');
+  assert.equal(result.mode, 'steward');
+  assert.equal(result.activity, 'review');
+  assert.match(result.frame, /Activity: review/);
   assert.equal(result.assignment, undefined);
   assert.equal(existsSync(join(f.root, 'state')), false);
   assert.equal(f.git('status', '--porcelain'), '');
@@ -66,7 +58,7 @@ test('inspection services retain captured revisions while new CLI previews follo
   const f = new PackageCliFixture(t);
   f.register();
   const revision = f.git('rev-parse', 'HEAD');
-  f.extend('architecture/components/sample.yaml', (value) => {
+  f.extend('.arc/architecture/components/sample.yaml', (value) => {
     value.purpose = 'Maintain the newly selected intent';
   });
   f.commit();
@@ -77,9 +69,9 @@ test('inspection services retain captured revisions while new CLI previews follo
     componentId: 'sample',
   });
   assert.equal((retained.context.at(-1) as any).purpose, 'Own test selection');
-  const current = f.value(f.root, 'inspect', 'package', 'sample', 'Improve documentation');
+  const current = f.value(f.root, 'inspect', 'package', 'sample', 'review');
   assert.equal(current.context.at(-1).purpose, 'Maintain the newly selected intent');
-  assert.equal(current.preview.activity, 'implementation');
+  assert.equal(current.activity, 'review');
   assert.notEqual(current.revision, retained.revision);
   assert.equal(existsSync(join(f.root, 'state')), false);
 });

@@ -230,7 +230,10 @@ class WorkflowTests {
   candidateGuidanceCannotAuthorizeEditsOutsideCapturedScope(t: TestContext) {
     const f = workflowFixture(t);
     f.component.owns.push('AGENTS.md');
-    writeFileSync(join(f.repo, 'architecture/components/sample.json'), JSON.stringify(f.component));
+    writeFileSync(
+      join(f.repo, '.arc/architecture/components/sample.json'),
+      JSON.stringify(f.component),
+    );
     f.commit();
     f.configure({ guidanceExpansion: true });
     const r = f.run();

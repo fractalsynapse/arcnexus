@@ -1,4 +1,3 @@
-import { validateContractSchemas } from './contract-schemas.js';
 import { RevisionArtifacts } from './revision-artifacts.js';
 import { posix } from 'node:path';
 import type { Catalog, Component } from './components.js';
@@ -50,20 +49,19 @@ export class ArchitectureReferences {
       '--name-only',
       this.base,
       '--',
-      'architecture/standards',
+      '.arc/architecture/standards',
     )
       .trim()
       .split('\n')
       .filter(isConfiguration);
     const ids = paths.map((path) =>
-      path.slice('architecture/standards/'.length).replace(/\.(json|ya?ml)$/, ''),
+      path.slice('.arc/architecture/standards/'.length).replace(/\.(json|ya?ml)$/, ''),
     );
-    return [...new Set(ids)].sort().map((id) => this.guidance(id, 'standard'));
+    return [...new Set(ids)].sort().map((id) => this.standard(id));
   }
 
   /** Resolves captured inputs and rejects unsupported or inconsistent configuration. */
   resolve(): void {
-    const contracts = this.contracts();
     const standards = this.capturedStandards();
     for (const component of Object.values(this.catalog.components)) {
       if (component.schemaVersion === 6) {
@@ -74,21 +72,6 @@ export class ArchitectureReferences {
         });
         continue;
       }
-      if (component.schemaVersion === 5) {
-        component.patternSnapshots = component.patterns.map((id) => this.guidance(id));
-        continue;
-      }
-      if (component.schemaVersion !== 4) continue;
-      component.providedSnapshots = [...contracts.values()].filter(
-        (entry) => entry.owner === component.id,
-      );
-      component.patternSnapshots = (component.patternIds ?? []).map((id) => this.guidance(id));
-      component.contractSnapshots = (component.consumes ?? []).map((reference) => {
-        const contract = contracts.get(reference.id);
-        if (!contract || contract.version !== reference.version)
-          throw new Error(`Missing or incompatible contract: ${reference.id}`);
-        return contract;
-      });
     }
   }
 
@@ -99,58 +82,35 @@ export class ArchitectureReferences {
     return new Map(this.catalog.standards?.map((standard) => [standard.id, standard]));
   }
 
-  /** Resolves provided and consumed contract identities and supported versions. */
-  private contracts() {
-    const result = new Map<
-      string,
-      ContractDefinition & { owner: string; artifact?: ReferenceArtifact }
-    >();
-    for (const component of Object.values(this.catalog.components)) {
-      for (const definition of component.provides ?? []) {
-        if (result.has(definition.id)) throw new Error(`Duplicate contract: ${definition.id}`);
-        const path = this.ownedPath(component, definition.path);
-        const artifact = this.artifact(path, component.repository);
-        if (definition.kind === 'json-schema' && artifact) JSON.parse(artifact.text);
-        result.set(definition.id, { ...definition, path, owner: component.id, artifact });
-      }
-    }
-    validateContractSchemas(
-      [...result.values()]
-        .filter((entry) => entry.kind === 'json-schema' && entry.artifact)
-        .map((entry) => JSON.parse(entry.artifact!.text)),
-    );
-    return result;
-  }
-
-  /** Loads the referenced standard and optional supporting artifacts. */
-  private guidance(id: string, kind: 'pattern' | 'standard' = 'pattern') {
+  /**
+   * Reads one captured standard and proves its checks belong to the owning component.
+   *
+   * A standard names operations that must exist in its owner's declared bindings; guidance paths
+   * resolve through that owner's repository, so a standard cannot reach outside its own authority.
+   */
+  private standard(id: string) {
     relativePath(id);
-    const label = kind === 'standard' ? 'Standard' : 'Pattern';
-    if (id.includes('/')) throw new Error(`Invalid ${kind} identity: ${id}`);
+    if (id.includes('/')) throw new Error(`Invalid standard identity: ${id}`);
     const source = new ConfigurationReader().definition(
       this.repository,
       this.base,
-      `architecture/${kind}s/${id}`,
+      `.arc/architecture/standards/${id}`,
     );
-    const pattern = validateSchema<GuidanceDefinition>(kind, source.value);
-    if (pattern.id !== id) throw new Error(`${label} identity mismatch: ${id}`);
-    const owner = this.catalog.components[pattern.owner];
-    if (!owner) throw new Error(`Missing ${kind} owner: ${pattern.owner}`);
-    for (const operation of pattern.operationIds)
-      if (
-        owner.schemaVersion >= 5
-          ? !owner.operations?.[operation]?.length
-          : !owner.operationIds?.includes(operation)
-      )
-        throw new Error(`${label} check outside owner's operations: ${operation}`);
+    const standard = validateSchema<GuidanceDefinition>('standard', source.value);
+    if (standard.id !== id) throw new Error(`Standard identity mismatch: ${id}`);
+    const owner = this.catalog.components[standard.owner];
+    if (!owner) throw new Error(`Missing standard owner: ${standard.owner}`);
+    for (const operation of standard.operationIds)
+      if (!owner.operations?.[operation]?.length)
+        throw new Error(`Standard check outside owner's operations: ${operation}`);
     if (!this.catalog.configurationSources.some((entry) => entry.path === source.path))
       this.catalog.configurationSources.push(source);
-    const artifacts = [pattern.document, ...pattern.examples].map((p) =>
-      this.artifact(this.ownedPath(owner, p), owner.repository),
+    const artifacts = [standard.document, ...standard.examples].map((path) =>
+      this.artifact(this.ownedPath(owner, path), owner.repository),
     );
     if (artifacts.some((artifact) => !artifact))
-      throw new Error(`${label} requires repository binding: ${pattern.owner}`);
-    return { ...pattern, artifacts: artifacts as ReferenceArtifact[] };
+      throw new Error(`Standard requires repository binding: ${standard.owner}`);
+    return { ...standard, artifacts: artifacts as ReferenceArtifact[] };
   }
 
   /** Checks whether the path belongs to the current owner’s captured scope. */

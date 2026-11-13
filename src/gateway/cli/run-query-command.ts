@@ -1,4 +1,5 @@
 import { setTimeout as delay } from 'node:timers/promises';
+import { eventLine, type EventRow } from './run-readout.js';
 import { ExecutionResources } from '../../library/execution-runtime/execution-resources.js';
 import { InputError } from '../../library/architecture/config.js';
 import type { RunMode } from '../../library/coordination-store/execution-types.js';
@@ -23,7 +24,12 @@ export class RunQueryCommand {
       previous = '';
     while (!this.signal.aborted) {
       const result = resources.get(this.mode, input.id, after);
-      if (result.revision !== previous || result.events.length) this.render(result);
+      // Following emits the readout's JSONL lines; a single read prints the report object. Both come
+      // from the same stored sequence, so following and previewing cannot describe work differently.
+      if (input.follow)
+        for (const event of result.events)
+          process.stdout.write(`${JSON.stringify(eventLine(event as unknown as EventRow))}\n`);
+      else if (result.revision !== previous || result.events.length) this.render(result);
       previous = result.revision;
       after = result.cursor;
       if (
@@ -51,12 +57,36 @@ export class RunQueryCommand {
   /** Validates observer-only options before reading persistence. */
   private readInput() {
     this.options(['json', 'follow', 'after']);
+    // A single read prints the report object; a stream is asked for, either by the `follow` verb or
+    // by `--follow`. Folding `status` in here made the contract's read surface emit event lines
+    // instead of the document, so an operator asking "what is outstanding" got a transcript.
     const follow = this.positionals[1] === 'follow' || this.values.follow === true;
-    if (this.positionals.length !== 3 || !this.positionals[2]?.trim())
-      throw new InputError('Expected ' + this.mode + ' get <id> [--follow]');
+    // The contract allows the identifier to be omitted: watching a run usually means the one just
+    // started, and making the operator paste a uuid to see progress is friction with no safety value.
+    if (this.positionals.length > 3) throw new InputError('Expected ' + this.mode + ' get [id]');
+    const requested = this.positionals[2]?.trim();
+    if (this.positionals.length === 2 && !this.values.json)
+      throw new InputError(
+        'Expected ' + this.mode + ' ' + this.positionals[1] + ' <id> [--follow]',
+      );
+    if (this.positionals.length === 2) {
+      const latest = this.latest();
+      if (!latest) throw new InputError('No ' + this.mode + ' run to watch; pass an id');
+      return { id: latest, follow, after: 0 };
+    }
+    if (!requested)
+      throw new InputError(
+        'Expected ' + this.mode + ' ' + this.positionals[1] + ' <id> [--follow]',
+      );
     if (this.values.after !== undefined && (!follow || !/^\d+$/.test(this.values.after)))
       throw new InputError('--after requires following with an exclusive event cursor');
-    return { id: this.positionals[2], follow, after: Number(this.values.after ?? 0) };
+    return { id: requested, follow, after: Number(this.values.after ?? 0) };
+  }
+
+  /** Newest run of this mode, so `task status` with no id reads the run just started. */
+  private latest(): string {
+    const rows = new ExecutionResources().list(this.mode, { limit: 1 });
+    return String((rows as { items?: Array<{ id: string }> }).items?.[0]?.id ?? '');
   }
 
   /** Rejects unsupported flags instead of silently changing the intended query. */

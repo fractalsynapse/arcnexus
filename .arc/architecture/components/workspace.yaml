@@ -1,0 +1,65 @@
+schemaVersion: 6
+id: workspace
+type: library
+parentId: cli-package
+purpose: Isolate assignments and reconcile verified candidate snapshots while preserving evidence
+objectives: [Preserve original run evidence across workspace lifecycle operations]
+constraints: [
+    No changes to source checkout or unrelated worktrees,
+    Retain all existing cleanup safety guards,
+    'bindings
+    (src/library/workspace/schemas/bindings.json): Preserve supported historical versions and captured execution
+    readers',
+  ]
+activities:
+  research:
+    role: researcher
+    profile: luna
+    operations: []
+    instructions: [
+        Establish what Isolate assignments and reconcile verified candidate snapshots while preserving
+        evidence means in practice from this component's own sources and retained evidence before proposing any
+        change to src/library/workspace.,
+      ]
+  documentation:
+    role: technical-writer
+    profile: luna
+    operations: []
+    instructions: [
+        'Keep the documentation under docs/library/workspace describing Isolate assignments and reconcile
+        verified candidate snapshots while preserving evidence as delivered behaviour, never as intent.',
+      ]
+  testing:
+    role: designer
+    profile: luna
+    operations: []
+    instructions: [
+        Express acceptance for Isolate assignments and reconcile verified candidate snapshots while preserving
+        evidence as checks over its declared public contract in tests/library/workspace; observe the failure before
+        changing behaviour.,
+      ]
+  implementation:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions: [
+        'Change only what this goal requires inside src/library/workspace, preserving the public contract
+        and the ownership boundaries that declare it.',
+      ]
+  review:
+    role: reviewer
+    profile: luna
+    operations: []
+    instructions: [
+        Judge the candidate against the stated acceptance and the standards in force for Isolate assignments
+        and reconcile verified candidate snapshots while preserving evidence; refuse on unmet behaviour rather than
+        style.,
+      ]
+owns: [src/library/workspace, tests/library/workspace, docs/library/workspace]
+api:
+  - { module: src/library/workspace/checked-edits.ts }
+  - { module: src/library/workspace/candidates.ts }
+  - { module: src/library/workspace/members.ts }
+  - { module: src/library/workspace/state.ts }
+  - { module: src/library/workspace/workspace.ts }
+  - { schema: src/library/workspace/schemas/bindings.json }

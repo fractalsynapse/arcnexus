@@ -4,11 +4,11 @@ codexPath: /absolute/codex
 projects:
   greetings:
     path: /absolute/configured-general-fixture
-    base: "0000000000000000000000000000000000000000"
+    base: '0000000000000000000000000000000000000000'
   fixture:
     path: /absolute/configured-general-fixture
-    base: "0000000000000000000000000000000000000000"
+    base: '0000000000000000000000000000000000000000'
   arcnexus:
     path: /absolute/arcnexus
-    base: "0000000000000000000000000000000000000000"
+    base: '0000000000000000000000000000000000000000'
 tools: {}

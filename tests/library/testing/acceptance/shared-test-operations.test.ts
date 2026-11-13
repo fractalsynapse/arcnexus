@@ -93,7 +93,7 @@ class SharedTestScenarios {
   /** Inherited test conventions remain valid for an owner with no suites and no redundant usages. */
   profileAuthority(t: TestContext): void {
     const f = new SharedTestFixture(t);
-    f.put('architecture/components/empty.yaml', {
+    f.put('.arc/architecture/components/empty.yaml', {
       schemaVersion: 6,
       id: 'empty',
       type: 'library',
@@ -116,12 +116,19 @@ class SharedTestScenarios {
     const f = new SharedTestFixture(t);
     if (restriction === 'category')
       f.extend(
-        'architecture/execution-profiles/luna.yaml',
+        '.arc/architecture/execution-profiles/luna.yaml',
         (value) => (value.operationCategories = []),
       );
     else if (restriction === 'activity')
-      f.extend('architecture/roles/engineer.yaml', (value) => (value.activities = ['research']));
-    else f.extend('architecture/operations/compile.yaml', (value) => (value.repository = 'other'));
+      f.extend(
+        '.arc/architecture/roles/engineer.yaml',
+        (value) => (value.activities = ['research']),
+      );
+    else
+      f.extend(
+        '.arc/architecture/operations/compile.yaml',
+        (value) => (value.repository = 'other'),
+      );
     f.commit();
     const result = f.run('inspect', 'sample');
     assert.equal(result.status, 2, result.stderr);
@@ -131,7 +138,7 @@ class SharedTestScenarios {
   /** Rejects a test profile that references an operation unavailable to its owner. */
   unavailable(t: TestContext): void {
     const f = new SharedTestFixture(t);
-    rmSync(join(f.repo, 'architecture/operations/compile.yaml'));
+    rmSync(join(f.repo, '.arc/architecture/operations/compile.yaml'));
     f.commit();
     const result = f.run('inspect', 'sample');
     assert.equal(result.status, 2);

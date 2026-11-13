@@ -52,10 +52,7 @@ export class PromptExperimentResolver {
     mode?: 'simulation' | 'live',
   ): PromptExperimentInput {
     const reader = new ConfigurationReader();
-    const definition = validateSchema<PromptDefinition>(
-      'experiment-v3',
-      reader.file(manifest).value,
-    );
+    const definition = validateSchema<PromptDefinition>('experiment', reader.file(manifest).value);
     const bindings = validateSchema<CampaignBindings>(
       'experiment-bindings',
       reader.file(bindingPath).value,
@@ -97,7 +94,7 @@ export class PromptExperimentResolver {
     const environment = new ConfigurationReader().definition(
       context.source,
       context.base,
-      'architecture/environment',
+      '.arc/architecture/environment',
     ).value as Environment;
     const { configurationSource: _source, ...captured } = context.bindings;
     const tools = { ...captured.tools, ...bindings.tools };

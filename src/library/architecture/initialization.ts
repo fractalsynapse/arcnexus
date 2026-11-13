@@ -8,7 +8,7 @@ export interface InitializationSnapshot {
   provenance: 'declared-component' | 'runtime-fallback';
   componentId: string;
   context: Component[];
-  role: Role;
+  activities: Record<string, { role: Role; instructions?: string[] }>;
   profile: ExecutionProfile;
   catalog: Component[];
   model: string;
@@ -84,8 +84,8 @@ export function validateInitialization(catalog: Catalog): void {
     const initializer = catalog.components[component.initialization.componentId];
     if (!initializer || !lineage(catalog, initializer).some((owner) => owner.id === component.id))
       throw new InputError('Initializer must belong to the declaring platform');
-    if (!catalog.roles[initializer.role]?.activities.includes('research'))
-      throw new InputError('Initializer role must permit research');
+    if (!initializer.activities?.research)
+      throw new InputError('Initializer component must hold the research activity');
   }
 }
 
@@ -104,7 +104,7 @@ export function captureInitialization(
     operations: (component.operationIds ?? []).map((id) => catalog.operations[id]!),
     componentId: component.id,
     context: identity ? lineage(catalog, component) : [component],
-    role: identity ? catalog.roles[component.role]! : fallbackRole(),
+    activities: identity ? activityRoles(catalog, component) : fallbackActivities(catalog),
     profile: { ...initializerProfile(catalog, component, !!identity), model, reasoning: 'medium' },
     catalog: Object.values(catalog.components),
     model,
@@ -131,7 +131,7 @@ function captureDirector(
     provenance: 'declared-component',
     componentId: component.id,
     context: lineage(catalog, component),
-    role: catalog.roles[component.role]!,
+    activities: activityRoles(catalog, component),
     profile: structuredClone(profile),
     operations,
     catalog: Object.values(catalog.components),
@@ -150,7 +150,7 @@ function fallback(repository: string): Component {
     purpose: 'Confirm existing architectural responsibility without changing authority',
     objectives: ['Identify routing mismatches and missing responsibilities'],
     constraints: ['Source-read-only; no catalog-write authority; no recursion'],
-    access: { readPaths: ['.'], writeDirectories: [] },
+    access: { readPaths: ['.'] },
     allowedWritePaths: [],
     verification: [],
     questions: [],
@@ -159,19 +159,9 @@ function fallback(repository: string): Component {
     documentation: [],
     tests: [],
     relatedIds: [],
-    role: 'runtime-intake',
+    activities: { research: { role: 'runtime-intake' } },
     executionProfile: 'runtime-intake',
     operationIds: [],
-  };
-}
-
-function fallbackRole(): Role {
-  return {
-    schemaVersion: 3,
-    id: 'runtime-intake',
-    purpose: 'Read-only routing confirmation',
-    responsibilities: ['Preserve captured authority'],
-    activities: ['research'],
   };
 }
 
@@ -190,4 +180,34 @@ function initializerProfile(
         webSearch: 'live',
         operationCategories: [],
       };
+}
+
+/** Resolves each activity a component holds to its role, inheriting an ancestor's when unspecified. */
+function activityRoles(
+  catalog: Catalog,
+  component: Component,
+): Record<string, { role: Role; instructions?: string[] }> {
+  return Object.fromEntries(
+    Object.entries(component.activities ?? {}).map(([name, config]) => [
+      name,
+      {
+        role: catalog.roles[config.role]!,
+        ...(config.instructions ? { instructions: config.instructions } : {}),
+      },
+    ]),
+  );
+}
+
+/** The read-only intake position: research only, so an initializer can never plan a source change. */
+function fallbackActivities(
+  catalog?: Catalog,
+): Record<string, { role: Role; instructions?: string[] }> {
+  const researcher = catalog?.roles.researcher ?? {
+    schemaVersion: 4 as const,
+    id: 'researcher',
+    purpose: 'Read-only routing confirmation',
+    activity: 'research' as const,
+    responsibilities: ['Confirm the routing question without changing authority'],
+  };
+  return { research: { role: researcher } };
 }

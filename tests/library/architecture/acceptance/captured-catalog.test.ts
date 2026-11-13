@@ -31,7 +31,7 @@ class CapturedCatalogScenario {
       assert.ok(calls.length > 0);
       assert.ok(
         !calls.some((args: string[]) =>
-          args.some((a) => a.endsWith('architecture/components/sample.json')),
+          args.some((a) => a.endsWith('.arc/architecture/components/sample.json')),
         ),
         'Captured owner definitions must not be reread during an activation',
       );

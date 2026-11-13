@@ -15,7 +15,7 @@ class ProjectOperationScenarios {
     const { catalog, owners, source } = this.context;
     const operations = owners.flatMap((id) =>
       catalog.components[id]!.operationPlan!.delivery!.filter(
-        (operation) => operation.id === 'migrated-recipe-f36c9dcd75620b35',
+        (operation) => operation.id === 'validate-architecture-and-guidance',
       ),
     );
     assert.equal(
@@ -81,7 +81,7 @@ class ProjectOperationScenarios {
         checks.some((op) => op.id === 'component-format-check'),
         id,
       );
-      assert.ok(!checks.some((op) => op.id === 'migrated-recipe-719d77e27c5d9798'), id);
+      assert.ok(!checks.some((op) => op.id === 'verify-all-repository-suites'), id);
       assert.ok(
         !checks.some(
           (op) => op.kind === 'command' && op.command === 'npm' && op.args.includes('lint'),
@@ -89,7 +89,7 @@ class ProjectOperationScenarios {
         id,
       );
       assert.ok(
-        owner.operationPlan!.delivery!.some((op) => op.id === 'migrated-recipe-719d77e27c5d9798'),
+        owner.operationPlan!.delivery!.some((op) => op.id === 'verify-all-repository-suites'),
         id,
       );
     }

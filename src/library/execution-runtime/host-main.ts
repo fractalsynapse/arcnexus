@@ -168,28 +168,31 @@ class HostServer {
     if (request.action === 'identity') return this.identity();
     if (request.action === 'delivery-control')
       return this.host.publish(String(request.id), request.expectedRevision);
-    if (request.action === 'workday-control')
-      return this.host.workdayControl(
-        String(request.control),
-        String(request.id),
-        request.expectedRevision,
-      );
-    if (request.action === 'task-control')
-      return this.host.taskControl(
-        String(request.control),
-        String(request.id),
-        request.answer,
-        request.expectedRevision,
-      );
+    // Workday and task lane controls take the same arguments and differ only in the store they
+    // address, so one clause keeps the transport from restating the same signature twice.
+    if (request.action === 'workday-control' || request.action === 'task-control')
+      return this.laneControl(request);
     if (request.action === 'retire') return this.retire();
     if (request.action === 'submit')
       return this.host.submit(
         String(request.prompt ?? ''),
         request.simulate,
         request.expectedEnvironmentId,
+        request.stance,
       );
     if (request.action === 'task-status') return this.host.reports.view(String(request.id));
+    // The stored event sequence is the single readout source, so a run and its preview cannot diverge.
+    if (request.action === 'events') return this.host.store.events(Number(request.after ?? 0));
     return this.runControl(request);
+  }
+
+  /** Routes a lane control to the workday or task store the control was addressed to. */
+  private laneControl(request: HostRequest): unknown {
+    const control = String(request.control);
+    const id = String(request.id);
+    if (request.action === 'workday-control')
+      return this.host.workdayControl(control, id, request.expectedRevision);
+    return this.host.taskControl(control, id, request.answer, request.expectedRevision);
   }
 
   /** Exposes a live process token for deployment shutdown without trusting retained PID files. */

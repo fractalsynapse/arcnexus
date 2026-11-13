@@ -3,22 +3,40 @@
   "$id": "https://arcnexus.local/schemas/test-profile",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "id", "adapter", "outputRoot", "preparation"],
+  "required": ["schemaVersion", "id", "adapter", "outputRoot", "preparation", "run"],
   "properties": {
-    "schemaVersion": { "const": 1 },
-    "id": { "type": "string", "minLength": 1 },
-    "adapter": { "const": "node" },
-    "outputRoot": { "type": "string", "minLength": 1 },
+    "schemaVersion": {
+      "const": 2
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "adapter": {
+      "const": "node"
+    },
+    "outputRoot": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_-]+$"
+    },
     "preparation": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["command", "args", "purpose"],
+        "required": ["operation", "purpose"],
         "properties": {
-          "command": { "type": "string", "minLength": 1 },
-          "args": { "type": "array", "items": { "type": "string" } },
-          "purpose": { "enum": ["production", "tests"] }
+          "operation": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          },
+          "purpose": {
+            "enum": ["production", "tests"]
+          }
         }
       }
     }

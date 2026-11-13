@@ -1,0 +1,81 @@
+schemaVersion: 6
+id: task-intake
+type: library
+parentId: cli-package
+purpose: Direct prompt tasks and independently assess goals and deliveries
+objectives: [
+    Interpret requests and identify accountable existing owners,
+    Report missing responsibilities and architectural
+    questions precisely,
+    Independently assess assembled goal acceptance and reconsider decomposition without a participant
+    ceiling,
+  ]
+constraints: [
+    Never silently broaden a captured assignment or grant write authority,
+    Director and verifier activations
+    are source-read-only and cannot apply architecture proposals,
+    'director-result (src/library/task-intake/schemas/director-result.json):
+    General run proposals and safe retained continuations; preserve initializer history',
+    'verification-result (src/library/task-intake/schemas/verification-result.json):
+    Indexed independent acceptance evidence; preserve historical agent-result reports',
+    'initializer-result (src/library/task-intake/schemas/initializer-result.json):
+    Preserve supported historical versions and captured execution readers',
+  ]
+activities:
+  research:
+    role: researcher
+    profile: luna
+    operations: []
+    instructions: [
+        "Establish what Direct prompt tasks and independently assess goals and deliveries means in practice
+        from this component's own sources and retained evidence before proposing any change to .arc/plans, src/library/task-intake.",
+      ]
+  documentation:
+    role: technical-writer
+    profile: luna
+    operations: []
+    instructions: [
+        'Keep the documentation under docs/library/task-intake describing Direct prompt tasks and independently
+        assess goals and deliveries as delivered behaviour, never as intent.',
+      ]
+  testing:
+    role: designer
+    profile: luna
+    operations: []
+    instructions: [
+        Express acceptance for Direct prompt tasks and independently assess goals and deliveries as checks
+        over its declared public contract in tests/library/task-intake; observe the failure before changing behaviour.,
+      ]
+  implementation:
+    role: systems-engineer
+    profile: luna
+    operations: [track-issue]
+    instructions: [
+        'Change only what this goal requires inside .arc/plans, src/library/task-intake, preserving the
+        public contract and the ownership boundaries that declare it.',
+      ]
+  review:
+    role: reviewer
+    profile: luna
+    operations: []
+    instructions: [
+        Judge the candidate against the stated acceptance and the standards in force for Direct prompt
+        tasks and independently assess goals and deliveries; refuse on unmet behaviour rather than style.,
+      ]
+operations:
+  track-issue: [agent]
+owns:
+  [
+    .arc/plans,
+    src/library/task-intake,
+    tests/library/task-intake,
+    scripts/direction-corpus.json,
+    docs/library/task-intake,
+  ]
+api:
+  - { module: src/library/task-intake/direction.ts }
+  - { module: src/library/task-intake/initializer.ts }
+  - { module: src/library/task-intake/tasks.ts }
+  - { schema: src/library/task-intake/schemas/director-result.json }
+  - { schema: src/library/task-intake/schemas/verification-result.json }
+  - { schema: src/library/task-intake/schemas/initializer-result.json }

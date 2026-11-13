@@ -41,14 +41,14 @@ reports and branches; it does not promise to erase Codex's own session storage.
 
 ## What actual use taught us
 
-| Observation | Consequence and smallest useful response |
-| --- | --- |
-| Two fresh identity-library runs installed dependencies and passed an external expiration-boundary check. | Keep testing the assembled application and real SDK boundary. Deterministic CI and live-model checks answer different questions. The same sample subsequently passed twice on Luna; this does not establish coordination reliability. |
+| Observation                                                                                                                                                           | Consequence and smallest useful response                                                                                                                                                                                                                                              |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Two fresh identity-library runs installed dependencies and passed an external expiration-boundary check.                                                              | Keep testing the assembled application and real SDK boundary. Deterministic CI and live-model checks answer different questions. The same sample subsequently passed twice on Luna; this does not establish coordination reliability.                                                 |
 | The first self-report candidate was correct but reported blocked when nested CLI tests hit sandbox `EPERM`; a fresh run with explicit verification handoff succeeded. | Clarify artifact readiness versus sandbox verification availability in shared guidance, while retaining mandatory host verification. [Issue #14](https://github.com/fractalsynapse/arcnexus/issues/14) tracks the observed gap. Do not reinterpret every blocked response as success. |
-| Host `python3 -m venv .venv` failed because ensurepip was absent. Installed uv supplied the declared local environment without installing a runtime. | Keep prerequisites explicit and failures inspectable. Do not infer that a runtime's presence guarantees every environment facility. See the [configuration and evidence](acceptance/live-sample.md). |
-| Cleanup originally overwrote execution status and timing, despite a green suite. | Preserve execution evidence independently of workspace lifecycle. A byte-for-byte before/after acceptance check caught it; ArcNexus implemented the fix itself. See [self-development](acceptance/self-development.md). |
-| Stable external supervisors and acceptance checks verified both self-changes. | Retain this boundary for coordination: candidate edits cannot redefine the current objective, permission, supervisor or acceptance criteria. |
-| Useful self-development happened with no UI, inbox or database. | Build only the next complete contract handoff. Do not make a full platform, agent framework or parallel execution a prerequisite. |
+| Host `python3 -m venv .venv` failed because ensurepip was absent. Installed uv supplied the declared local environment without installing a runtime.                  | Keep prerequisites explicit and failures inspectable. Do not infer that a runtime's presence guarantees every environment facility. See the [configuration and evidence](acceptance/live-sample.md).                                                                                  |
+| Cleanup originally overwrote execution status and timing, despite a green suite.                                                                                      | Preserve execution evidence independently of workspace lifecycle. A byte-for-byte before/after acceptance check caught it; ArcNexus implemented the fix itself. See [self-development](acceptance/self-development.md).                                                               |
+| Stable external supervisors and acceptance checks verified both self-changes.                                                                                         | Retain this boundary for coordination: candidate edits cannot redefine the current objective, permission, supervisor or acceptance criteria.                                                                                                                                          |
+| Useful self-development happened with no UI, inbox or database.                                                                                                       | Build only the next complete contract handoff. Do not make a full platform, agent framework or parallel execution a prerequisite.                                                                                                                                                     |
 
 Phase-one completion evidence included 39 product tests, six Python tests,
 TypeScript checking, ten skill validations, assembled-CLI smoke checks and CI.
@@ -61,14 +61,14 @@ and [self-development](acceptance/self-development.md) records.
 These recorded turns illustrate why small-model tests and bounded work matter.
 The first four used Astra; the final two used Luna:
 
-| Run | Elapsed seconds | Input tokens | Cached input tokens | Output tokens |
-| --- | ---: | ---: | ---: | ---: |
-| Identity `73ea97a8…` | 35.4 | 121,615 | 104,064 | 1,018 |
-| Identity `f19dcde8…` | 31.9 | 97,207 | 81,536 | 1,013 |
-| Self-report `c31724be…` | 113.9 | 257,088 | 224,896 | 3,424 |
-| Self-cleanup `43ad1f7a…` | 104.0 | 284,122 | 247,680 | 2,922 |
-| Luna identity `89a49ca1…` | 19.1 | 104,227 | 75,392 | 1,036 |
-| Luna identity `0b9c1446…` | 18.7 | 104,918 | 89,216 | 1,050 |
+| Run                       | Elapsed seconds | Input tokens | Cached input tokens | Output tokens |
+| ------------------------- | --------------: | -----------: | ------------------: | ------------: |
+| Identity `73ea97a8…`      |            35.4 |      121,615 |             104,064 |         1,018 |
+| Identity `f19dcde8…`      |            31.9 |       97,207 |              81,536 |         1,013 |
+| Self-report `c31724be…`   |           113.9 |      257,088 |             224,896 |         3,424 |
+| Self-cleanup `43ad1f7a…`  |           104.0 |      284,122 |             247,680 |         2,922 |
+| Luna identity `89a49ca1…` |            19.1 |      104,227 |              75,392 |         1,036 |
+| Luna identity `0b9c1446…` |            18.7 |      104,918 |              89,216 |         1,050 |
 
 These are SDK-reported aggregate turn token counts and application elapsed times,
 not initial prompt sizes or dollar/quota estimates. Cached input is a subset of

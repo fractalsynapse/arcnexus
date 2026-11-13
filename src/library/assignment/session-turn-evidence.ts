@@ -63,9 +63,7 @@ export class TurnEvidence {
   /** Constructs the read-only review view from captured assignment inputs. */
   private baseReview() {
     const { access } = this.state.component;
-    const paths = [...new Set([...access.readPaths, ...access.writeDirectories])].map(
-      (p) => ':(literal)' + p,
-    );
+    const paths = [...new Set(access.readPaths)].map((p) => ':(literal)' + p);
     const { record } = this.state.options;
     const patch = paths.length
       ? git(

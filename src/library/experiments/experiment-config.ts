@@ -177,10 +177,9 @@ class ExperimentResolver {
     private mode?: 'simulation' | 'live',
   ) {
     const value = this.read(manifestPath);
-    this.manifest = validateSchema<Definition>(
-      (value as { schemaVersion?: number }).schemaVersion === 2 ? 'experiment-v2' : 'experiment',
-      value,
-    );
+    // One experiment shape: a document written in an older shape fails validation rather than
+    // being routed to a schema kept for it.
+    this.manifest = validateSchema<Definition>('experiment', value);
     this.bindings = validateSchema<ExperimentBindings>(
       'experiment-bindings',
       this.read(bindingPath),

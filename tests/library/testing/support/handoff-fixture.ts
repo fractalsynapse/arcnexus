@@ -47,9 +47,12 @@ class HandoffFixture {
     writeFileSync(join(f.repo, 'dependency-docs/behavior.md'), 'Before');
     writeFileSync(join(f.repo, 'dependency-tests/.keep'), '');
     const definition = { ...f.component, schemaVersion: 2, operationIds: [] };
-    writeFileSync(join(f.repo, 'architecture/components/sample.json'), JSON.stringify(definition));
     writeFileSync(
-      join(f.repo, 'architecture/components/dependency.json'),
+      join(f.repo, '.arc/architecture/components/sample.json'),
+      JSON.stringify(definition),
+    );
+    writeFileSync(
+      join(f.repo, '.arc/architecture/components/dependency.json'),
       JSON.stringify({
         ...definition,
         id: 'dependency',
@@ -70,7 +73,7 @@ class HandoffFixture {
   private profile(): void {
     const f = this.f;
     const profile = JSON.parse(
-      String(readFileSync(join(f.repo, 'architecture/execution-profiles/luna.yaml'))),
+      String(readFileSync(join(f.repo, '.arc/architecture/execution-profiles/luna.yaml'))),
     );
     Object.assign(profile, {
       schemaVersion: 2,
@@ -79,7 +82,7 @@ class HandoffFixture {
       maxOperationCalls: 24,
     });
     writeFileSync(
-      join(f.repo, 'architecture/execution-profiles/luna.yaml'),
+      join(f.repo, '.arc/architecture/execution-profiles/luna.yaml'),
       JSON.stringify(profile),
     );
   }
@@ -94,12 +97,13 @@ class HandoffFixture {
         "const fs=require('fs');fs.mkdirSync('generated',{recursive:true});fs.writeFileSync('generated/value',fs.readFileSync('dependency.txt'));",
       );
       writeFileSync(
-        join(f.repo, 'architecture/environment.yaml'),
+        join(f.repo, '.arc/architecture/environment.yaml'),
         JSON.stringify({
-          schemaVersion: 1,
-          prerequisites: [],
-          setup: [{ command: 'node', args: ['refresh.cjs'] }],
-          generatedDirectories: ['generated'],
+          schemaVersion: 4,
+          workspace: {
+            primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
+            dependencies: [],
+          },
         }),
       );
     }

@@ -25,9 +25,9 @@ expectedOutcome: Add Operations and Managed services summaries to the Markdown
   it with reason, respecting dependency order. No commits; caller owns
   issue/branch/release steps.
 acceptanceCriteria:
-  - "Markdown has ## Operations with each captured operation id, passed when
+  - 'Markdown has ## Operations with each captured operation id, passed when
     exitCode=0 otherwise failed, durationMs and log path; ## Managed services
-    with id, status and endpointClosed boolean."
+    with id, status and endpointClosed boolean.'
   - Historical absent/empty arrays show exactly No managed operations recorded.
     and No managed services recorded.; never undefined/null. Preserve existing
     sections and do not mutate records.

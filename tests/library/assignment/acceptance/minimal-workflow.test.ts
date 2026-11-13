@@ -11,17 +11,17 @@ class MinimalWorkflowScenarios {
   /** Completes a real confined operation and applies its oversized output only through checked MCP edits. */
   proposal(t: TestContext): void {
     const fixture = minimalWorkflowFixture(t, 'proposal-edit');
-    const path = join(fixture.repo, 'architecture/operations/verify.yaml');
+    const path = join(fixture.repo, '.arc/architecture/operations/verify.yaml');
     const operation = JSON.parse(readFileSync(path, 'utf8'));
     operation.id = 'edit-proposal';
     operation.args = ['-e', this.proposalCommand()];
     writeFileSync(
-      join(fixture.repo, 'architecture/operations/edit-proposal.yaml'),
+      join(fixture.repo, '.arc/architecture/operations/edit-proposal.yaml'),
       JSON.stringify(operation),
     );
     fixture.component.operations = { 'edit-proposal': ['agent'] };
     writeFileSync(
-      join(fixture.repo, 'architecture/components/sample.json'),
+      join(fixture.repo, '.arc/architecture/components/sample.json'),
       JSON.stringify(fixture.component),
     );
     fixture.commit();

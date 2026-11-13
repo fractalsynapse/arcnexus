@@ -69,7 +69,7 @@ class ContinuationScenarios {
       join(f.repo, 'tests/baseline.cjs'),
       "require('node:assert/strict').equal(require('node:fs').readFileSync('source.txt','utf8').trim(),'before');",
     );
-    const path = join(f.repo, 'architecture/operations/verify.yaml');
+    const path = join(f.repo, '.arc/architecture/operations/verify.yaml');
     const operation = JSON.parse(readFileSync(path, 'utf8'));
     writeFileSync(path, JSON.stringify({ ...operation, args: ['tests/baseline.cjs'] }));
   }

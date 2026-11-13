@@ -5,23 +5,15 @@ import { readFileSync } from 'node:fs';
 import { test, type TestContext } from 'node:test';
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import { captureInitialization } from '../../../../dist/library/architecture/initialization.js';
-import { MigrationFixture } from '../support/migration-fixture.js';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture, selectedActivities } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises the platform as the only authored source of new execution defaults. */
 class PlatformExecutionScenarios {
-  /** Rejects historical executable authority before a public task or workday creates a host. */
-  retiredExecution(t: TestContext): void {
-    const fixture = new MigrationFixture(t);
-    this.assertStartupRejected(fixture.root, /version.six.*config migrate/i);
-    assert.equal(fixture.migrate().status, 0);
-  }
-
   /** Rejects mixed executable families before either public mode can create a host. */
   legacyEnvironment(t: TestContext): void {
     const fixture = this.fixture(t);
-    const path = 'architecture/environment.json';
+    const path = '.arc/architecture/environment.json';
     const current = JSON.parse(readFileSync(join(fixture.root, path), 'utf8'));
     fixture.put(path, {
       ...current,
@@ -33,10 +25,13 @@ class PlatformExecutionScenarios {
     fixture.commit();
     assert.throws(
       () => new ExecutionContext().resolve(fixture.root),
-      /environment.*schema.*4.*migrat/i,
+      /shared architecture environment definition/i,
     );
-    this.assertStartupRejected(fixture.root, /environment.*schema.*4.*migrat/i);
-    assert.equal(fixture.run('validate').status, 0);
+    this.assertStartupRejected(fixture.root, /shared architecture environment definition/i);
+    // Configurations carry no version to support, so the mixed-family document is refused by
+    // validation itself, not only when a host starts. The old expectation here - validate succeeds
+    // while execution refuses - was legacy-shape support, and it is the thing the ruling removed.
+    assert.equal(fixture.run('validate').status, 2, fixture.run('validate').stderr);
   }
 
   /** Checks both option-free entry points without allowing a stalled host to hang qualification. */
@@ -99,26 +94,35 @@ class PlatformExecutionScenarios {
     const change = execution.assignment(context, 'sample', { ...value, kind: 'change' });
     assert.equal(change.context.at(-1)?.schemaVersion, 6);
     assert.equal(change.executionProfile.id, 'luna');
-    assert.deepEqual(change.context.at(-1)?.access.writeDirectories, []);
+    this.writesFollowOwnership(change);
     assert.equal(execution.assignment(context, 'sample', value).executionProfile.id, 'luna');
   }
 
+  /**
+   * Ownership is the only write authority, so a resolved assignment writes exactly its derived
+   * ownership scope rather than a separate grant that must be kept in step with it.
+   */
+  private writesFollowOwnership(assignment: any): void {
+    const leaf = assignment.context.at(-1);
+    assert.deepEqual(leaf?.allowedWritePaths, leaf?.ownership?.paths);
+  }
+
   /** Adds one shared finite verification declaration for executable read-only assignments. */
-  private operational(t: TestContext): ComponentV5Fixture {
+  private operational(t: TestContext): ComponentFixture {
     const fixture = this.fixture(t);
-    const path = 'architecture/components/platform.json';
+    const path = '.arc/architecture/components/platform.json';
     fixture.put(path, {
       ...JSON.parse(readFileSync(join(fixture.root, path), 'utf8')),
       operations: { check: ['verify'] },
     });
     fixture.put(
-      'architecture/components/operations.json',
+      '.arc/architecture/components/operations.json',
       fixture.component('operations', 'library', {
         parentId: 'maintenance-package',
-        owns: ['architecture/operations'],
+        owns: ['.arc/architecture/operations'],
       }),
     );
-    fixture.put('architecture/operations/check.json', this.verification());
+    fixture.put('.arc/architecture/operations/check.json', this.verification());
     fixture.commit();
     return fixture;
   }
@@ -135,7 +139,6 @@ class PlatformExecutionScenarios {
       args: ['-e', 'process.exit(0)'],
       cwd: '.',
       category: 'unit-test',
-      activities: ['testing'],
       prerequisites: [],
       generatedDirectories: [],
       artifacts: [],
@@ -145,15 +148,15 @@ class PlatformExecutionScenarios {
   /** Rejects retired duplicate execution files rather than silently choosing one source. */
   duplicate(t: TestContext): void {
     const fixture = this.fixture(t);
-    fixture.put('architecture/execution.json', {
+    fixture.put('.arc/architecture/execution.json', {
       directorProfile: 'luna',
       reviewerProfile: 'luna',
     });
     fixture.put(
-      'architecture/components/old-execution-owner.json',
+      '.arc/architecture/components/old-execution-owner.json',
       fixture.component('old-execution-owner', 'library', {
         parentId: 'maintenance-package',
-        owns: ['architecture/execution.json'],
+        owns: ['.arc/architecture/execution.json'],
       }),
     );
     fixture.commit();
@@ -165,28 +168,28 @@ class PlatformExecutionScenarios {
 
   /** Missing execution requirements never trigger implicit model or initializer selection. */
   missing(t: TestContext): void {
-    const fixture = new ComponentV5Fixture(t, 6);
+    const fixture = new ComponentFixture(t);
     fixture.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     assert.throws(() => new ExecutionContext().resolve(fixture.root), /director.*reviewer/i);
   }
 
   /** Supplies explicit director/reviewer profiles once on the platform and leaves the leaf minimal. */
-  private fixture(t: TestContext): ComponentV5Fixture {
-    const fixture = new ComponentV5Fixture(t, 6);
+  private fixture(t: TestContext): ComponentFixture {
+    const fixture = new ComponentFixture(t);
     fixture.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     fixture.put(
-      'architecture/components/platform.json',
+      '.arc/architecture/components/platform.json',
       fixture.component('platform', 'platform', {
-        role: 'engineer',
         executionProfile: 'luna',
         reads: ['.'],
+        activities: selectedActivities('luna'),
         director: { component: 'maintenance', profile: 'director' },
         reviewerProfile: 'director',
         defaultPackage: 'maintenance-package',
         verificationInputs: ['architecture'],
       }),
     );
-    fixture.put('architecture/execution-profiles/director.json', {
+    fixture.put('.arc/architecture/execution-profiles/director.json', {
       schemaVersion: 3,
       id: 'director',
       model: 'configured-director-model',
@@ -201,18 +204,15 @@ class PlatformExecutionScenarios {
 
 const scenarios = new PlatformExecutionScenarios();
 
-test('new task and workday execution rejects legacy authority while migration remains available', (t) =>
-  scenarios.retiredExecution(t));
-
 test('minimal host startup rejects legacy environment execution recipes', (t) =>
   scenarios.legacyEnvironment(t));
 
-test('v5 execution resolves platform defaults and captured director profile', (t) =>
+test('execution resolves platform defaults and captured director profile', (t) =>
   scenarios.singleSource(t));
 
-test('v5 execution rejects duplicate retired configuration', (t) => scenarios.duplicate(t));
+test('execution rejects duplicate retired configuration', (t) => scenarios.duplicate(t));
 
-test('v5 execution requires explicit director and reviewer configuration', (t) =>
+test('execution requires explicit director and reviewer configuration', (t) =>
   scenarios.missing(t));
 
 test('declared director assessment preserves package engineering boundaries', (t) =>

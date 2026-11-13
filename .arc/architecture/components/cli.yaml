@@ -1,0 +1,59 @@
+schemaVersion: 6
+id: cli
+type: gateway
+parentId: cli-package
+purpose: Expose managed project and execution services through the command line
+objectives: [
+    Make tasks and workdays usable from local and registered project contexts,
+    Give callers accurate lifecycle
+    status and actionable errors,
+  ]
+constraints: [
+    Resolve execution settings from captured project policy,
+    Do not change sandbox permissions or verification
+    requirements,
+  ]
+activities:
+  research:
+    role: researcher
+    profile: luna
+    operations: []
+    instructions: [
+        Establish what Expose managed project and execution services through the command line means in
+        practice from this component's own sources and retained evidence before proposing any change to src/gateway/cli.,
+      ]
+  documentation:
+    role: technical-writer
+    profile: luna
+    operations: []
+    instructions: [
+        'Keep the documentation under docs/gateway/cli describing Expose managed project and execution
+        services through the command line as delivered behaviour, never as intent.',
+      ]
+  testing:
+    role: designer
+    profile: luna
+    operations: []
+    instructions: [
+        Express acceptance for Expose managed project and execution services through the command line
+        as checks over its declared public contract in tests/gateway/cli; observe the failure before changing behaviour.,
+      ]
+  implementation:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions: [
+        'Change only what this goal requires inside src/gateway/cli, preserving the public contract and
+        the ownership boundaries that declare it.',
+      ]
+  review:
+    role: reviewer
+    profile: luna
+    operations: []
+    instructions: [
+        Judge the candidate against the stated acceptance and the standards in force for Expose managed
+        project and execution services through the command line; refuse on unmet behaviour rather than style.,
+      ]
+owns: [src/gateway/cli, docs/gateway/cli, tests/gateway/cli, docs/interface/arcnexus-cli-gateway.md]
+api:
+  - { module: src/gateway/cli/cli.ts }

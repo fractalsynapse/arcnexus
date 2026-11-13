@@ -45,7 +45,9 @@ class CliTests {
     const owner = JSON.parse(result.stdout).context.at(-1);
     assert.ok(owner.allowedWritePaths.includes('tests/gateway/cli'));
     assert.ok(owner.allowedWritePaths.includes('src/gateway/cli'));
-    assert.deepEqual(owner.access.writeDirectories, []);
+    // Derived reads are all `access` holds: ownership above is the only statement of write scope,
+    // so a second write grant cannot reappear here unnoticed.
+    assert.deepEqual(Object.keys(owner.access), ['readPaths']);
     assert.ok(!owner.allowedWritePaths.includes('.'));
     assert.ok(!owner.allowedWritePaths.includes('src/cli.ts'));
   }

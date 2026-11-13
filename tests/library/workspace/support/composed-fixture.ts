@@ -26,7 +26,7 @@ export function composed(t: TestContext): any {
   const environment = workspaceEnvironment(dg('rev-parse', 'HEAD'));
   const bindings = writeBindings(f.root, dependency);
   const commit = () => {
-    writeFileSync(join(f.repo, 'architecture/environment.yaml'), JSON.stringify(environment));
+    writeFileSync(join(f.repo, '.arc/architecture/environment.yaml'), JSON.stringify(environment));
     if (f.git('status', '--porcelain')) f.commit();
   };
   const setup = (command: { command: string; args: string[] }) => writeSetup(f, command);
@@ -51,9 +51,9 @@ export function composed(t: TestContext): any {
 /** Keeps repository-specific verification on its package while inheriting common engineering policy. */
 function configureOwners(f: WorkflowFixture): void {
   const read = (id: string) =>
-    JSON.parse(readFileSync(join(f.repo, `architecture/components/${id}.json`), 'utf8'));
+    JSON.parse(readFileSync(join(f.repo, `.arc/architecture/components/${id}.json`), 'utf8'));
   const put = (id: string, value: object) =>
-    writeFileSync(join(f.repo, `architecture/components/${id}.json`), JSON.stringify(value));
+    writeFileSync(join(f.repo, `.arc/architecture/components/${id}.json`), JSON.stringify(value));
   const platform = read('platform'),
     primary = read('package');
   primary.operations = platform.operations;
@@ -72,17 +72,17 @@ function configureOwners(f: WorkflowFixture): void {
     owns: ['source.txt', '.gitignore'],
   });
   const maintenance = read('maintenance');
-  maintenance.owns.push('architecture/components/dependency-package.json');
+  maintenance.owns.push('.arc/architecture/components/dependency-package.json');
   put('maintenance', maintenance);
 }
 
 /** Captures the supplied recipe once under the dependency's explicit operation identity. */
 function writeSetup(f: WorkflowFixture, command: { command: string; args: string[] }): void {
   const template = JSON.parse(
-    readFileSync(join(f.repo, 'architecture/operations/verify.yaml'), 'utf8'),
+    readFileSync(join(f.repo, '.arc/architecture/operations/verify.yaml'), 'utf8'),
   );
   writeFileSync(
-    join(f.repo, 'architecture/operations/dependency-setup.yaml'),
+    join(f.repo, '.arc/architecture/operations/dependency-setup.yaml'),
     JSON.stringify({
       ...template,
       ...command,

@@ -82,11 +82,11 @@ class ComponentCommandScenarios {
     const f = new PackageCliFixture(t);
     f.register();
     const other = new PackageCliFixture(t);
-    other.extend('architecture/components/platform.yaml', (v) => {
+    other.extend('.arc/architecture/components/platform.yaml', (v) => {
       v.id = 'other';
     });
     for (const name of ['package', 'maintenance-package'])
-      other.extend(`architecture/components/${name}.yaml`, (v) => {
+      other.extend(`.arc/architecture/components/${name}.yaml`, (v) => {
         v.parentId = 'other';
       });
     other.commit();

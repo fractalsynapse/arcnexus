@@ -10,7 +10,6 @@ import { assertBehavioralTestScope } from '../testing/captured-tests.js';
 export function validateOwnerWorkflow(assignment: Assignment, component: Component): void {
   const writable = component.allowedWritePaths;
   if (
-    component.schemaVersion === 6 &&
     assignment.kind === 'change' &&
     (!assignment.changeType || assignment.changeType === 'behavior')
   ) {

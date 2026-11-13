@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises composition without duplicated executable recipes or disposable-output declarations. */
@@ -17,7 +17,7 @@ class SharedEnvironmentScenarios {
   /** Retired recipes fail visibly instead of being ignored beside operation references. */
   retired(t: TestContext): void {
     const fixture = this.fixture(t);
-    fixture.put('architecture/environment.json', { ...this.environment(), setup: [] });
+    fixture.put('.arc/architecture/environment.json', { ...this.environment(), setup: [] });
     fixture.commit();
     const result = fixture.run('validate');
     assert.equal(result.status, 2);
@@ -25,25 +25,25 @@ class SharedEnvironmentScenarios {
   }
 
   /** Gives the operation registry its own accountable maintenance component. */
-  private fixture(t: TestContext): ComponentV5Fixture {
-    const fixture = new ComponentV5Fixture(t);
-    fixture.put('architecture/environment.json', this.environment());
+  private fixture(t: TestContext): ComponentFixture {
+    const fixture = new ComponentFixture(t);
+    fixture.put('.arc/architecture/environment.json', this.environment());
     fixture.put(
-      'architecture/components/operations.json',
+      '.arc/architecture/components/operations.json',
       fixture.component('operations', 'library', {
         parentId: 'maintenance-package',
-        owns: ['architecture/operations'],
+        owns: ['.arc/architecture/operations'],
       }),
     );
     fixture.put(
-      'architecture/components/package.json',
+      '.arc/architecture/components/package.json',
       fixture.component('package', 'package', {
         parentId: 'platform',
         root: 'package',
         operations: { build: ['setup', 'refresh'] },
       }),
     );
-    fixture.put('architecture/operations/build.json', this.operation());
+    fixture.put('.arc/architecture/operations/build.json', this.operation());
     fixture.commit();
     return fixture;
   }
@@ -60,7 +60,6 @@ class SharedEnvironmentScenarios {
       args: ['--version'],
       cwd: '.',
       category: 'unit-test',
-      activities: ['testing'],
       generatedDirectories: ['generated'],
       artifacts: [],
     };

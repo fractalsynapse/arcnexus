@@ -1,0 +1,13 @@
+schemaVersion: 4
+id: check-runtime
+purpose: Check the declared runtime
+kind: command
+repository: http-sample
+cwd: .
+category: cli-check
+generatedDirectories: []
+artifacts: []
+prerequisites: []
+command: node
+args:
+  - --version

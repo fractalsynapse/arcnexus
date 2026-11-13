@@ -88,19 +88,18 @@ class DependencyScenarios {
       ...definition,
       purpose: 'Install dependencies',
       category: 'build',
-      activities: [],
     };
-    assert.equal(validateSchema('operation-v4', value), value);
+    assert.equal(validateSchema('operation', value), value);
     assert.throws(
-      () => validateSchema('operation-v4', { ...value, dependencyInputs: [] }),
+      () => validateSchema('operation', { ...value, dependencyInputs: [] }),
       /Invalid operation/,
     );
     assert.throws(
-      () => validateSchema('operation-v4', { ...value, artifacts: ['report.json'] }),
+      () => validateSchema('operation', { ...value, artifacts: ['report.json'] }),
       /Invalid operation/,
     );
     assert.throws(
-      () => validateSchema('operation-v4', { ...value, kind: 'service' }),
+      () => validateSchema('operation', { ...value, kind: 'service' }),
       /Invalid operation/,
     );
   }

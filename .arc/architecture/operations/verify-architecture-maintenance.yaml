@@ -1,0 +1,20 @@
+repository: arcnexus
+cwd: .
+category: cli-check
+generatedDirectories:
+  - .fixture-build
+  - .test-build
+  - .tool-build
+  - dist
+  - node_modules
+artifacts: []
+network: true
+schemaVersion: 4
+id: verify-architecture-maintenance
+purpose: Verify architecture-maintenance
+kind: command
+prerequisites: []
+command: npm
+args:
+  - run
+  - check

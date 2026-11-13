@@ -10,17 +10,17 @@ current authored access model.
 A component declares the paths it owns with `owns`. Paths are relative to the
 component's nearest package root. The catalog resolves these declarations at the
 captured Git revision. For a component in the primary repository, its definition
-file under `architecture/components/` is also owned implicitly. A package or
+file under `.arc/architecture/components/` is also owned implicitly. A package or
 platform is a container and does not receive the paths of its children.
 
 For example, the architecture component in
-[`architecture/components/architecture.yaml`](../../../architecture/components/architecture.yaml)
+[`.arc/architecture/components/architecture.yaml`](../../../architecture/components/architecture.yaml)
 declares `src/library/architecture`, `tests/library/architecture`, and
 `docs/library/architecture`. The runtime derives exact allowed edit paths from
 those declarations and the component definition. The captured inventory classifies
 files under that scope; file classification does not grant additional ownership.
-See the v6 [component schema](../../../src/library/architecture/schemas/component-v6.json),
-[ownership resolver](../../../src/library/architecture/component-v5.ts), and
+See the [component schema](../../../src/library/architecture/schemas/component.json),
+[ownership resolver](../../../src/library/architecture/component-materialization.ts), and
 [ownership validation](../../../src/library/architecture/ownership.ts).
 
 Component ownership is the sole source of maintained-file write authority.
@@ -37,7 +37,7 @@ boundary, but an explicit child declaration that adds paths outside its ancestor
 boundary is rejected. Required paths derived from the component's own ownership
 are added to its effective readable paths. Policy resolution records which
 declaration supplied reads; operation declarations and constraints accumulate
-along ancestry. See the v6 [policy resolver](../../../src/library/architecture/component-v5-policy.ts)
+along ancestry. See the v6 [policy resolver](../../../src/library/architecture/component-materialization-policy.ts)
 and the current [platform declaration](../../../architecture/components/arcnexus.yaml).
 
 A read boundary describes what the architecture authorizes. The effective runtime

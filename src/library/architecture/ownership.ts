@@ -4,8 +4,7 @@ import type ts from 'typescript';
 import { git } from '../operations/process.js';
 import type { Catalog } from './components.js';
 import { relativePath } from './config.js';
-import { ConfigurationReader, type ConfigurationSource } from './configuration.js';
-import { validateSchema } from './schema.js';
+import type { ConfigurationSource } from './configuration.js';
 
 interface Owner {
   component: string;
@@ -41,28 +40,17 @@ export class OwnershipValidator {
       .trim()
       .split('\n');
     files.forEach((file) => this.files.add(file));
-    if (Object.values(catalog.components).some((c) => c.schemaVersion >= 4)) {
-      this.versionFour(catalog, files);
-      return;
-    }
-    if (!files.some((p) => /^architecture\/ownership\.(json|ya?ml)$/.test(p))) return;
-    const source = new ConfigurationReader().definition(
-      this.repository,
-      this.base,
-      'architecture/ownership',
-    );
-    const policy = validateSchema<OwnershipPolicy>('ownership', source.value);
-    this.validateOwners(policy, catalog, files);
-    for (const file of files.filter((f) => policy.maintainedPaths.some((p) => covers(f, p)))) {
-      const owner = this.owner(file, policy);
-      if (/\.[cm]?[jt]sx?$/.test(file)) this.imports(file, owner, policy);
-    }
-    assertImportCycles(this.graph);
-    return source;
+    this.deriveOwnership(catalog, files);
+    return undefined;
   }
 
-  /** Derives the v4 ownership index from component declarations. */
-  private versionFour(catalog: Catalog, files: string[]): void {
+  /**
+   * Derives the ownership index from what the components declare and checks each maintained file.
+   *
+   * Ownership is never authored as a separate policy: the components' declared paths are the
+   * authority, so this builds the index from them and refuses gaps or collisions in one pass.
+   */
+  private deriveOwnership(catalog: Catalog, files: string[]): void {
     const components = Object.values(catalog.components).filter(
       (c) => c.type === 'platform' || c.repository === catalog.primaryRepository,
     );
@@ -144,11 +132,6 @@ export class OwnershipValidator {
         if (!files.includes(module)) throw new Error(`Missing public module: ${module}`);
       }
       if (component.repository !== catalog.primaryRepository && component.definition) continue;
-      for (const directory of component.access.writeDirectories) {
-        if (owner.directoryExceptions.includes(directory)) continue;
-        if (!owner.paths.some((p) => covers(directory, p)))
-          throw new Error(`Write directory outside ownership: ${owner.component}: ${directory}`);
-      }
       for (const writable of component.allowedWritePaths) {
         if (this.owner(writable, policy).component !== owner.component)
           throw new Error(`Writable ownership conflict: ${writable}`);

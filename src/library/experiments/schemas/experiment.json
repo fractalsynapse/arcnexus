@@ -1,9 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://arcnexus.local/schemas/experiment",
   "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "modes", "cases"],
   "properties": {
     "schemaVersion": {
-      "const": 1
+      "const": 3
     },
     "modes": {
       "type": "array",
@@ -18,6 +21,8 @@
       "minItems": 1,
       "items": {
         "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "project", "prompt", "expectedOutcome"],
         "properties": {
           "id": {
             "type": "string",
@@ -27,75 +32,15 @@
             "type": "string",
             "minLength": 1
           },
-          "base": {
-            "type": "string",
-            "pattern": "^[a-f0-9]{40}$"
-          },
-          "component": {
-            "type": "string",
-            "minLength": 1
-          },
-          "assignment": {
+          "prompt": {
             "type": "string",
             "minLength": 1
           },
           "expectedOutcome": {
-            "enum": ["ready_for_integration", "blocked", "research_completed", "review_completed"]
-          },
-          "acceptance": {
-            "type": "array",
-            "minItems": 1,
-            "items": {
-              "type": "object",
-              "properties": {
-                "command": {
-                  "type": "string",
-                  "minLength": 1
-                },
-                "args": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "artifacts": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                }
-              },
-              "required": ["command", "args", "artifacts"],
-              "additionalProperties": false
-            }
-          },
-          "maxAttempts": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "faultInjection": {
-            "type": "string",
-            "minLength": 1
-          },
-          "scenario": {
-            "enum": ["success", "repair", "boundary", "failure"]
-          },
-          "priorEvidenceIds": {
-            "type": "array",
-            "uniqueItems": true,
-            "items": {
-              "type": "string",
-              "minLength": 1
-            }
+            "enum": ["completed", "needs_input", "needs_attention", "failed"]
           }
-        },
-        "required": ["id", "project", "component", "assignment", "expectedOutcome", "acceptance"],
-        "additionalProperties": false
+        }
       }
     }
-  },
-  "required": ["schemaVersion", "modes", "cases"],
-  "additionalProperties": false,
-  "$id": "https://arcnexus.local/schemas/experiment-v1"
+  }
 }

@@ -1,0 +1,15 @@
+schemaVersion: 4
+id: component-format-check
+purpose: Check owned files within the repository's maintained-code formatting policy
+kind: command
+repository: arcnexus
+cwd: .
+category: lint
+command: node
+args:
+  - scripts/foundation/format-check.mjs
+  - --check
+  - context: ownedPaths
+generatedDirectories: []
+artifacts: []
+prerequisites: []

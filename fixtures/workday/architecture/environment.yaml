@@ -1,7 +1,0 @@
-schemaVersion: 3
-prerequisites:
-  - command: node
-    args:
-      - --version
-setup: []
-generatedDirectories: []

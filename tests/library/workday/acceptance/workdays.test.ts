@@ -108,7 +108,7 @@ function defineParticipants(f: any): void {
     tests: ['dependency-tests'],
   };
   writeFileSync(
-    join(f.repo, 'architecture/components/dependency.json'),
+    join(f.repo, '.arc/architecture/components/dependency.json'),
     JSON.stringify(dependency),
   );
   f.commit();

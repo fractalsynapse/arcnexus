@@ -1,0 +1,38 @@
+schemaVersion: 6
+id: cli
+type: gateway
+parentId: greetings
+purpose: Own command argument parsing and rendered CLI output. Delegate greeting construction to service.
+objectives:
+  - Maintain accurate documentation and observed coverage for the owned API
+owns:
+  - cli
+  - README.md
+  - package.json
+  - .arc/architecture/environment.yaml
+  - .arc/architecture/roles
+  - .arc/architecture/execution-profiles
+  - .arc/architecture/operations
+  - .arc/architecture/components/platform.yaml
+  - .arc/architecture/components/greetings.yaml
+api:
+  - module: cli/index.mjs
+activities:
+  research:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Establish what this component guarantees before proposing a change
+  implementation:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Change only what the goal requires and prove it with this component checks
+  review:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Reject weakened coverage or undeclared authority in the delivered change

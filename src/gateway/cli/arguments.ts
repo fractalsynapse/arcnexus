@@ -4,7 +4,7 @@ import { InputError } from '../../library/architecture/config.js';
 export const help = `ArcNexus
   workday start [package] [--simulate]
   workday pause|resume|stop|status [id]
-  task run [package] "<prompt>" [--async] [--simulate]
+  task run [package] "<prompt>" [--plan | --component <id> [--activity <a>]] [--async] [--simulate]
   task pause|resume|stop <id> | answer <id> "<response>"
   task list [field=value...] | get <id> [--follow] | follow <id>
   workday list [field=value...] | get <id> [--follow]
@@ -12,7 +12,7 @@ export const help = `ArcNexus
   workspace cleanup <package> [--workspace <id>]
   workspace prepare <package>
   workspace list [package] | get <id> [--follow]
-  config get <name> | update <name> <value> | migrate [target] [--write]
+  config get <name> | update <name> <value>
   platform list [field=value...]|get <id>|create <id> <repository>|remove <id>
   package list [platform] [field=value...]|get <package>|create <platform/package> <repository>|remove <package>
   platform migrate <id> <repository> | package migrate <package> <repository>
@@ -24,10 +24,10 @@ export const help = `ArcNexus
   component list <package> [field=value...] | get <package> <id>
   test inspect|run [package] [--component <id>] [--level unit|integration|acceptance] [--category regression] [--tag <tag>] [--json]
 Inspection, evidence and diagnostics:
-  inspect <component-id> <objective> --project <repository> [--kind change|research|review] [--json]
+  inspect [project] [component|director|verifier] [activity] [--json]
   inspect: --assignment <file> replaces objective
   validate [package]
-  inspect <package> <component> [prompt] [--activity research|documentation|testing|implementation|review|release]
+  inspect [project] [component|director|verifier] [activity] [--milestone <id|file>]
   experiment inspect <manifest> --bindings <file> [--json]
   workday inspect <historical-manifest> --project <repository> [--base <ref>] [--bindings <file>] [--json]
   workday history <historical-workday-id> [--json]
@@ -43,6 +43,7 @@ const cliOptions = {
   write: { type: 'boolean' },
   async: { type: 'boolean' },
   simulate: { type: 'boolean' },
+  plan: { type: 'boolean' },
   follow: { type: 'boolean' },
   search: { type: 'string' },
   limit: { type: 'string' },
@@ -81,15 +82,17 @@ export function argumentsForCommand() {
       options: cliOptions,
     });
     if (
-      parsed.positionals[0] !== 'test' &&
+      !['test', 'task'].includes(parsed.positionals[0] ?? '') &&
       (parsed.values.component ||
         parsed.values.level ||
         parsed.values.category ||
         parsed.values.tag)
     )
       throw new InputError('Test filters require the test command');
-    if (parsed.values.write !== undefined && parsed.positionals[0] !== 'config')
-      throw new InputError('--write requires config migrate');
+    if (parsed.values.write !== undefined)
+      // The only consumer of --write was config migrate, which is retired with configuration
+      // versioning; accepting the flag anywhere else would imply an authority that no longer exists.
+      throw new InputError('--write is retired with config migrate');
     if (
       parsed.values.workspace !== undefined &&
       parsed.positionals.slice(0, 2).join(' ') !== 'workspace cleanup'

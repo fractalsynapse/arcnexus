@@ -56,13 +56,13 @@ export class PublicationFixture {
   private policy(): void {
     const f = this.general.fixture;
     this.operations();
-    const environment = join(f.repo, 'architecture/environment.yaml');
+    const environment = join(f.repo, '.arc/architecture/environment.yaml');
     const value = JSON.parse(readFileSync(environment, 'utf8'));
     value.workspace.primary.repository = 'https://github.com/example/publication-fixture.git';
     writeFileSync(environment, JSON.stringify(value));
     f.git('remote', 'set-url', 'origin', value.workspace.primary.repository);
     f.commit();
-    const path = join(f.repo, 'architecture/components/a.json');
+    const path = join(f.repo, '.arc/architecture/components/a.json');
     const owner = JSON.parse(readFileSync(path, 'utf8'));
     owner.operations = { tracking: ['agent'], publish: ['agent'] };
     writeFileSync(path, JSON.stringify(owner));
@@ -77,7 +77,7 @@ export class PublicationFixture {
       ['publish', 'delivery.publish'],
     ])
       writeFileSync(
-        join(f.repo, `architecture/operations/${id}.yaml`),
+        join(f.repo, `.arc/architecture/operations/${id}.yaml`),
         JSON.stringify({
           schemaVersion: 4,
           id,
@@ -87,7 +87,6 @@ export class PublicationFixture {
           repository: 'sample',
           cwd: '.',
           category: 'cli-check',
-          activities: [],
           generatedDirectories: [],
           artifacts: [],
           ...(id === 'publish' ? { targetBranch: 'staging' } : {}),

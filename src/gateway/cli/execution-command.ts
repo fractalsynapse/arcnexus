@@ -2,7 +2,8 @@ import { Portfolio } from '../../library/portfolio/portfolio.js';
 import { createInterface } from 'node:readline/promises';
 import { setTimeout as delay } from 'node:timers/promises';
 import { HostClient } from '../../library/execution-runtime/host-client.js';
-import type { ExecutionRun } from '../../library/coordination-store/execution-types.js';
+import { RunReadout } from './run-readout.js';
+import type { ExecutionRun, RunStance } from '../../library/coordination-store/execution-types.js';
 
 /** Adapts the minimal user commands to persistent project execution. */
 export class ExecutionCommand {
@@ -33,9 +34,19 @@ export class ExecutionCommand {
   }
 
   /** Submits a prompt and streams changed state until completion, cancellation or missing input. */
-  async task(prompt: string, asynchronous = false, simulate = false): Promise<void> {
-    await this.client.ensureRun('submit', simulate, this.signal);
-    const run = (await this.client.request({ action: 'submit', prompt, simulate })) as ExecutionRun;
+  async task(
+    prompt: string,
+    asynchronous = false,
+    simulate = false,
+    stance?: RunStance,
+  ): Promise<void> {
+    await this.client.ensureRun('submit', simulate, this.signal, stance);
+    const run = (await this.client.request({
+      action: 'submit',
+      prompt,
+      simulate,
+      ...(stance ? { stance } : {}),
+    })) as ExecutionRun;
     if (asynchronous) {
       console.log(JSON.stringify(run));
       return;
@@ -45,14 +56,16 @@ export class ExecutionCommand {
 
   /** Observes an attached task while preserving cancellation ownership across external pauses. */
   private async followTask(run: ExecutionRun): Promise<void> {
-    let previous = '';
+    // One readout for every stance: the stored event sequence, emitted as JSON lines. Polling the
+    // report and printing it whenever the bytes differ made the stream a projection of a projection,
+    // so two runs of the same work could print differently for reasons unrelated to the run.
+    const readout = new RunReadout(
+      (action, extra) => this.client.request({ action, id: run.id, ...(extra ?? {}) }),
+      run.id,
+    );
     while (!this.signal.aborted) {
+      await readout.poll();
       const result = await this.client.request({ action: 'task-status', id: run.id });
-      const output = JSON.stringify(result);
-      if (output !== previous) {
-        console.log(output);
-        previous = output;
-      }
       if (result.run.status === 'needs_input' && (await this.answer(result.run))) continue;
       if (this.signal.aborted) break;
       if (!['running', 'pausing', 'paused'].includes(result.run.status)) {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
-import { ComponentV5Fixture } from '../support/component-v5-fixture.js';
+import { ComponentFixture } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Checks symbol-level owner boundaries and generated consumer evidence through production catalog loading. */
@@ -70,7 +70,7 @@ class PublicImportScenarios {
   cycle(t: TestContext): void {
     const fixture = this.fixture(t, "import {value} from '@value';export const result=value;");
     fixture.put(
-      'architecture/components/consumer.json',
+      '.arc/architecture/components/consumer.json',
       fixture.component('consumer', 'library', {
         parentId: 'package',
         owns: ['consumer'],
@@ -97,10 +97,10 @@ class PublicImportScenarios {
   }
 
   /** Creates two disjoint owners with one intentionally exposed value and one private export. */
-  private fixture(t: TestContext, source: string): ComponentV5Fixture {
-    const fixture = new ComponentV5Fixture(t);
+  private fixture(t: TestContext, source: string): ComponentFixture {
+    const fixture = new ComponentFixture(t);
     fixture.put(
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
       fixture.component('sample', 'library', {
         parentId: 'package',
         owns: ['src', 'docs', 'tests', 'tsconfig.json'],
@@ -108,7 +108,7 @@ class PublicImportScenarios {
       }),
     );
     fixture.put(
-      'architecture/components/consumer.json',
+      '.arc/architecture/components/consumer.json',
       fixture.component('consumer', 'library', {
         parentId: 'package',
         owns: ['consumer'],

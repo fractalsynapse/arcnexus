@@ -1,0 +1,15 @@
+schemaVersion: 4
+purpose: Exercise a managed local HTTP service
+repository: http-sample
+cwd: .
+category: http-check
+generatedDirectories: []
+artifacts: []
+id: health
+kind: http
+http:
+  serviceId: serve
+  path: /health
+  expectedStatus: 200
+network: true
+prerequisites: []

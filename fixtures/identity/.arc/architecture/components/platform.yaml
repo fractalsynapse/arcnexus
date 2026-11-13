@@ -1,0 +1,40 @@
+schemaVersion: 6
+id: platform
+type: platform
+purpose: Maintain the identity fixture under captured authority
+executionProfile: luna
+reads:
+  - .
+operations:
+  check-runtime:
+    - preflight
+  package-tests:
+    - agent
+    - verify
+  install-dependencies:
+    - setup
+director:
+  component: identity
+  profile: astra
+reviewerProfile: astra
+defaultPackage: identity-package
+activities:
+  research:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Establish what this platform guarantees before proposing a change
+  implementation:
+    role: systems-engineer
+    profile: luna
+    operations:
+      - package-tests
+    instructions:
+      - Change only what the goal requires and prove it with the package own checks
+  review:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Reject weakened coverage or undeclared authority in the delivered change

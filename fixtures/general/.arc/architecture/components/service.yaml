@@ -1,0 +1,30 @@
+schemaVersion: 6
+id: service
+type: library
+parentId: greetings
+purpose: Own greeting construction and public greeting APIs. Delegate all name transformation to names.
+objectives:
+  - Maintain accurate documentation and observed coverage for the owned API
+owns:
+  - service
+api:
+  - module: service/index.mjs
+activities:
+  research:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Establish what this component guarantees before proposing a change
+  implementation:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Change only what the goal requires and prove it with this component checks
+  review:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Reject weakened coverage or undeclared authority in the delivered change

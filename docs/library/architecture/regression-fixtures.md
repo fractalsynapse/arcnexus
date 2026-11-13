@@ -2,7 +2,7 @@
 
 Ordinary component fixtures must satisfy the packaged component schema before a
 scenario can reach its expected missing-behavior assertion. The shared
-`ComponentV5Fixture.component` builder validates v5/v6 declarations immediately;
+`ComponentFixture.component` builder validates v5/v6 declarations immediately;
 missing ownership or parent fields are setup errors, not regression evidence.
 Use the explicitly named `uncheckedComponent` builder only when the scenario
 intentionally tests malformed authored configuration. It must still assert the

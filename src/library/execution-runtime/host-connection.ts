@@ -1,7 +1,12 @@
+import type { RunStance } from '../coordination-store/execution-types.js';
 import { connect, type Socket } from 'node:net';
 import { InputError } from '../architecture/config.js';
 
 export interface HostRequest {
+  /** Early-stop stance retained by the host so a plan run cannot dispatch work. */
+  stance?: RunStance;
+  /** Exclusive event cursor for the single run readout. */
+  after?: number;
   action: string;
   simulate?: boolean;
   prompt?: string;

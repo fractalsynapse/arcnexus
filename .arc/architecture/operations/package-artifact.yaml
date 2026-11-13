@@ -1,0 +1,23 @@
+schemaVersion: 4
+id: package-artifact
+purpose: Retain a built CLI distribution for verified simulation releases
+kind: command
+repository: arcnexus
+cwd: .
+category: cli-check
+command: tar
+args:
+  - -czf
+  - .tool-build/arcnexus.tar.gz
+  - dist
+  - package.json
+  - package-lock.json
+  - architecture
+  - README.md
+generatedDirectories:
+  - .tool-build
+artifacts:
+  - .tool-build/arcnexus.tar.gz
+prerequisites:
+  - verify-guidance-validation
+network: false

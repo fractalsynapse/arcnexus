@@ -1,0 +1,74 @@
+schemaVersion: 6
+id: coordination-store
+type: library
+parentId: cli-package
+purpose:
+  Persist transactional project runs, assignments, inbox dependencies and ordered evidence and durable external-effect
+  intents
+objectives: [
+    Persist prepared contributions and atomic assembled delivery without fabricating milestones,
+    'Persist
+    transactional project runs, assignments, inbox dependencies and ordered evidence and durable external-effect
+    intents',
+  ]
+constraints: [Preserve captured authority and evidence]
+activities:
+  research:
+    role: researcher
+    profile: luna
+    operations: []
+    instructions: [
+        "Establish what Persist transactional project runs, assignments, inbox dependencies and ordered
+        evidence and durable external-effect intents means in practice from this component's own sources and retained
+        evidence before proposing any change to src/library/coordination-store.",
+      ]
+  documentation:
+    role: technical-writer
+    profile: luna
+    operations: []
+    instructions: [
+        'Keep the documentation under docs/library/coordination-store describing Persist transactional
+        project runs, assignments, inbox dependencies and ordered evidence and durable external-effect intents as
+        delivered behaviour, never as intent.',
+      ]
+  testing:
+    role: designer
+    profile: luna
+    operations: []
+    instructions: [
+        'Express acceptance for Persist transactional project runs, assignments, inbox dependencies and
+        ordered evidence and durable external-effect intents as checks over its declared public contract in tests/library/coordination-store;
+        observe the failure before changing behaviour.',
+      ]
+  implementation:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions: [
+        'Change only what this goal requires inside src/library/coordination-store, preserving the public
+        contract and the ownership boundaries that declare it.',
+      ]
+  review:
+    role: reviewer
+    profile: luna
+    operations: []
+    instructions: [
+        'Judge the candidate against the stated acceptance and the standards in force for Persist transactional
+        project runs, assignments, inbox dependencies and ordered evidence and durable external-effect intents;
+        refuse on unmet behaviour rather than style.',
+      ]
+owns:
+  [
+    src/library/coordination-store,
+    tests/library/coordination-store,
+    docs/library/coordination-store,
+  ]
+api:
+  - { module: src/library/coordination-store/delivery-types.ts }
+  - { module: src/library/coordination-store/delivery-store.ts }
+  - { module: src/library/coordination-store/portfolio-store.ts }
+  - { module: src/library/coordination-store/workday-store.ts }
+  - { module: src/library/coordination-store/execution-store.ts }
+  - { module: src/library/coordination-store/execution-types.ts }
+  - { module: src/library/coordination-store/lifecycle-store.ts }
+  - { module: src/library/coordination-store/lifecycle-types.ts }

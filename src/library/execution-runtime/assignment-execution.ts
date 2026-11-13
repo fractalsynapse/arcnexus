@@ -16,9 +16,10 @@ import { ExecutionContext, type ProjectExecution } from '../architecture/executi
 import type { ResolvedAssignment, Assignment } from '../architecture/assignment.js';
 import { StewardSession } from '../assignment/steward.js';
 import type { ExecutionStore } from '../coordination-store/execution-store.js';
-import type {
-  ActivationResult,
-  ExecutionAssignment,
+import {
+  isInPlaceRun,
+  type ActivationResult,
+  type ExecutionAssignment,
 } from '../coordination-store/execution-types.js';
 import { CandidateSnapshots } from '../workspace/candidates.js';
 import {
@@ -306,9 +307,11 @@ export class AssignmentExecution {
     return record;
   }
 
-  /** Shares staging resolution and branch provenance between new and reconciled steward workspaces. */
+  /** Resolves the steward workspace: staging branch provenance, or the checkout for in-place work. */
   private async developmentWorkspace(assignment: ExecutionAssignment, base: string) {
-    const environment = this.store.run(assignment.runId).environment;
+    const run = this.store.run(assignment.runId);
+    if (isInPlaceRun(run)) return run.data.workspace as RecordData;
+    const environment = run.environment;
     const branchBase = await developmentBase(
       this.context,
       environment?.mode,

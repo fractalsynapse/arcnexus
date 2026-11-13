@@ -1,0 +1,106 @@
+schemaVersion: 6
+id: arcnexus
+type: platform
+purpose: Enable architecture-directed self-development
+objectives: [Produce independently verifiable bounded work]
+constraints: [
+    Human architectural authority is final,
+    Candidate changes cannot redefine active acceptance,
+    'Native
+    agent commits and upstream mutations are forbidden; only captured host operations may deliver changes. The director
+    selects from all eligible project stewards, and dependency requests may activate further owners.',
+  ]
+executionProfile: luna
+activities:
+  research:
+    role: researcher
+    profile: sol
+    operations: [component-format-check, component-lint, component-tests]
+    instructions: [
+        Establish what Enable architecture-directed self-development means in practice from this component's
+        own sources and retained evidence before proposing any change to arcnexus.,
+      ]
+  documentation:
+    role: technical-writer
+    profile: sol
+    operations: [component-format, component-format-check, component-lint]
+    instructions: [
+        'Keep the documentation under arcnexus describing Enable architecture-directed self-development
+        as delivered behaviour, never as intent.',
+      ]
+  testing:
+    role: designer
+    profile: luna
+    operations: [component-format, component-format-check, component-lint, component-tests]
+    instructions: [
+        Express acceptance for Enable architecture-directed self-development as checks over its declared
+        public contract in arcnexus; observe the failure before changing behaviour.,
+      ]
+  implementation:
+    role: systems-engineer
+    profile: luna
+    operations:
+      [comment-issue, component-format, component-format-check, component-lint, component-tests]
+    instructions: [
+        'Change only what this goal requires inside arcnexus, preserving the public contract and the
+        ownership boundaries that declare it.',
+      ]
+  review:
+    role: reviewer
+    profile: sol
+    operations: [component-format-check, component-lint, component-tests]
+    instructions: [
+        Judge the candidate against the stated acceptance and the standards in force for Enable architecture-directed
+        self-development; refuse on unmet behaviour rather than style.,
+      ]
+  release:
+    role: release-engineer
+    profile: luna
+    operations:
+      [
+        check-maintained-source-formatting,
+        verify-all-repository-suites,
+        lint-maintained-code,
+        verify-architecture-maintenance,
+        validate-architecture-and-guidance,
+      ]
+    instructions: [
+        'Publish only what the assembled verification accepted, and record exactly what shipped for Enable
+        architecture-directed self-development.',
+      ]
+reads: [.]
+operations:
+  check-maintained-source-formatting: [delivery]
+  lint-maintained-code: [delivery]
+  comment-issue: [agent]
+  verify-architecture-maintenance: [delivery]
+  verify-all-repository-suites: [delivery]
+  validate-architecture-and-guidance: [delivery]
+  check-node-prerequisite: [preflight]
+  check-git-prerequisite: [preflight]
+  check-setsid-prerequisite: [preflight]
+  project-setup: [setup]
+  verify-guidance-validation: [setup]
+  component-tests: [agent]
+  component-lint: [agent, verify]
+  component-format: [agent]
+  component-format-check: [verify]
+director: { component: task-intake, profile: sol }
+reviewerProfile: sol
+defaultPackage: cli-package
+verificationInputs:
+  [
+    package.json,
+    package-lock.json,
+    scripts,
+    tests,
+    .arc/architecture/test-profiles,
+    eslint.config.ts,
+    tsconfig.json,
+    tsconfig.build.json,
+    tsconfig.tests.json,
+    tsconfig.fixtures.json,
+    tsconfig.tooling.json,
+  ]
+testProfile: node
+standards: [readable-typescript]

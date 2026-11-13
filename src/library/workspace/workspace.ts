@@ -96,7 +96,7 @@ function captureConfiguration(record: RecordData, options: PrepareOptions): void
     new ConfigurationReader().definition(
       record.source,
       options.authorityBase ?? record.base,
-      'architecture/environment',
+      '.arc/architecture/environment',
     ),
     ...(options.bindings?.configurationSource ? [options.bindings.configurationSource] : []),
   ];
@@ -109,16 +109,103 @@ function captureConfiguration(record: RecordData, options: PrepareOptions): void
   );
 }
 
+/**
+ * Resolves the operator's own checkout as authority, without the candidate clean-tree rule.
+ *
+ * In-place work may proceed over uncommitted files that do not intersect the addressed component's
+ * scope, and that decision belongs to the stance guard at run creation. Requiring a clean tree here
+ * would duplicate a rule from a different job and refuse work the ruling allows.
+ */
+function inPlaceAuthority(options: PrepareOptions) {
+  const source = realpathSync(git(resolve(options.project), 'rev-parse', '--show-toplevel').trim());
+  const base = git(source, 'rev-parse', '--verify', '--end-of-options', 'HEAD^{commit}').trim();
+  const commonDir = git(source, 'rev-parse', '--git-common-dir').trim();
+  const env = environment(
+    new ConfigurationReader().definition(
+      source,
+      options.authorityBase ?? base,
+      '.arc/architecture/environment',
+    ).value,
+  );
+  assertNoSubmodules(source, base);
+  // A detached HEAD is refused rather than guessed at: "current branch" has no meaning there, and
+  // inventing one would put the operator's edits on a branch they never chose.
+  const branch = git(source, 'branch', '--show-current').trim();
+  if (!branch)
+    throw new InputError(
+      'In-place work requires a checked-out branch; the current checkout is detached',
+    );
+  return { source, base, commonDir, env, branch };
+}
+
+/**
+ * Records the operator's own checkout as the workspace: no worktree, no branch creation.
+ *
+ * In-place work deliberately updates the current project, so the workspace record is the same shape
+ * every writer already keys on (`record.workspace`) but pointed at the checkout instead of a
+ * directory made under the state root. Authority capture runs unchanged, so component ownership and
+ * checked-edit refusal apply to these writes exactly as they do to a candidate.
+ */
+export function inPlaceWorkspace(root: string, options: PrepareOptions): RecordData {
+  const { source, base, env, commonDir, branch } = inPlaceAuthority(options);
+  const id = randomUUID();
+  const record: RecordData = {
+    id,
+    source,
+    base,
+    commonDir,
+    branch,
+    workspace: source,
+    inPlace: true,
+    status: 'ready',
+    startedAt: new Date().toISOString(),
+    environment: env,
+    commands: [],
+  };
+  return bindInPlaceWorkspace(root, record, options);
+}
+
+/**
+ * Binds an in-place record to the machine and captures its operation authority.
+ *
+ * The per-run state directory is created here because the candidate path makes it inside
+ * createWorkspace, and attempt artifacts, transcripts and the report all write into it. Operation
+ * execution reads the materialization binding to decide what an operation may reach, so an in-place
+ * run needs the same capture, bound to the operator's checkout rather than a generated worktree.
+ */
+function bindInPlaceWorkspace(
+  root: string,
+  record: RecordData,
+  options: PrepareOptions,
+): RecordData {
+  mkdirSync(join(root, 'runs', record.id as string), { mode: 0o700 });
+  record.bindings = options.bindings ?? loadBindings();
+  captureConfiguration(record, options);
+  record.materializationBinding = captureWorktreeBindings(
+    record.workspace,
+    record.bindings as Bindings,
+  );
+  WorkspaceOperations.capture(
+    record,
+    options.project,
+    options.authorityBase ?? (record.base as string),
+    options.packageId,
+  );
+  return record;
+}
+
 export async function prepareWorkspace(
   root: string,
   record: RecordData,
   signal: AbortSignal,
 ): Promise<void> {
   signal.throwIfAborted();
+  // In-place work has nothing to prepare: the source is the operator's checkout and the branch is
+  // theirs already, so building a worktree is both forbidden and refused by git. All preparation
+  // callers pass through here, which is why one guard prevents a second workspace path from existing.
+  if (record.inPlace === true) return;
   if (record.environment.schemaVersion < 4)
-    throw new InputError(
-      'Preparation requires environment schema 4 or 5; migrate legacy recipes before execution',
-    );
+    throw new InputError('Preparation requires a captured environment of schema 4 or later');
   prepareBranch(record);
   record.materializationBinding = captureWorktreeBindings(
     record.workspace,
@@ -198,7 +285,7 @@ function inspectSource(options: PrepareOptions) {
       new ConfigurationReader().definition(
         source,
         options.authorityBase ?? base,
-        'architecture/environment',
+        '.arc/architecture/environment',
       ).value,
     );
     assertNoSubmodules(source, base);

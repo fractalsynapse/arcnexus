@@ -62,12 +62,12 @@ export class MinimalWorkflowPolicy {
         owns: [
           '.gitignore',
           'verify.cjs',
-          'architecture/environment.yaml',
-          'architecture/roles',
-          'architecture/execution-profiles',
-          'architecture/operations',
-          'architecture/components/platform.json',
-          'architecture/components/package.json',
+          '.arc/architecture/environment.yaml',
+          '.arc/architecture/roles',
+          '.arc/architecture/execution-profiles',
+          '.arc/architecture/operations',
+          '.arc/architecture/components/platform.json',
+          '.arc/architecture/components/package.json',
         ],
       }),
     );
@@ -113,7 +113,6 @@ export class MinimalWorkflowPolicy {
       repository: 'sample',
       cwd: '.',
       category: 'unit-test',
-      activities: ['research', 'documentation', 'testing', 'implementation', 'review'],
       command: 'node',
       args: ['verify.cjs'],
       prerequisites: [],
@@ -141,7 +140,7 @@ export class MinimalWorkflowPolicy {
 
   /** Writes fixture declarations before their authority revision is committed. */
   private put(path: string, value: unknown): void {
-    const target = join(this.fixture.repo, 'architecture', path);
+    const target = join(this.fixture.repo, '.arc/architecture', path);
     mkdirSync(join(target, '..'), { recursive: true });
     writeFileSync(target, JSON.stringify(value));
   }

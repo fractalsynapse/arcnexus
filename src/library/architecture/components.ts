@@ -1,14 +1,14 @@
 import { PublicApiCatalog } from './public-api.js';
 import { normalizeOperation } from '../operations/operation-definition.js';
 import { ComponentOperationPlans } from './component-operation-plans.js';
-import { declareActivities } from './activities.js';
+import { requireActivity } from './activities.js';
 import { ancestry, covered, scopePath } from './component-paths.js';
-import { ComponentV5Resolver } from './component-v5.js';
-import type { ComponentV5Fields } from './component-v5-policy.js';
+import { ComponentMaterializer } from './component-materialization.js';
+import type { ComponentFields } from './component-fields.js';
+import type { MaterializedComponentFields } from './component-materialization-policy.js';
 import { captureComponentTests } from '../testing/captured-tests.js';
 import { repositoryRevisions, type RepositoryRevision } from './repository-revisions.js';
 import type { Bindings } from './bindings.js';
-import { ComponentV4Resolver, type ComponentV4Fields } from './component-v4.js';
 import { ArchitectureReferences } from './references.js';
 import { validateInitialization } from './initialization.js';
 import type { Operation } from '../operations/operations.js';
@@ -21,10 +21,17 @@ import {
   type Environment,
 } from './config.js';
 import { ConfigurationReader, isConfiguration, type ConfigurationSource } from './configuration.js';
-import { DirectoryGrants } from './directory-grants.js';
 import { OwnershipValidator } from './ownership.js';
-import { validateAccess, type AccessPolicy } from './permissions.js';
 import { validateSchema } from './schema.js';
+
+/** Resolved read scope for a component: its own declared reads plus inherited ones.
+ *
+ * Writing is not modelled here. A component's `owns` is the only statement of what it may
+ * write, so there is no second grant to keep in step with it.
+ */
+export interface AccessPolicy {
+  readPaths: string[];
+}
 
 export { componentContext, catalogContext } from './model-context.js';
 
@@ -32,7 +39,7 @@ export { ancestry, covered, scopePath } from './component-paths.js';
 
 export { classifyComponentPath } from './file-classification.js';
 
-export interface Component extends ComponentV4Fields, ComponentV5Fields {
+export interface Component extends ComponentFields, MaterializedComponentFields {
   initialization?: { schemaVersion: 3; componentId: string };
   schemaVersion: 1 | 2 | 3 | 4 | 5 | 6;
   operationIds?: string[];
@@ -53,7 +60,7 @@ export interface Component extends ComponentV4Fields, ComponentV5Fields {
   documentation: string[];
   tests: string[];
   relatedIds: string[];
-  role: string;
+  activities: Record<string, ComponentActivity>;
   executionProfile: string;
   members?: {
     foundations: string[];
@@ -65,12 +72,27 @@ export interface Component extends ComponentV4Fields, ComponentV5Fields {
 }
 
 export interface Role {
-  schemaVersion: 1 | 3;
+  schemaVersion: 4;
   id: string;
   purpose: string;
   responsibilities: string[];
-  activities: string[];
+  instructions?: string[];
+  standards?: string[];
+  executionProfile?: string;
 }
+
+/** One activity as configured by a component: the role holding it, its local direction and its operations. */
+export interface ComponentActivity {
+  role: string;
+  instructions?: string[];
+  profile?: string;
+  operations?: ActivityOperation[];
+  /** Standards this activity declares for itself, joined to the component's and the position's. */
+  standards?: string[];
+}
+
+export type ActivityOperation =
+  string | { id: string; usage?: string; with?: Record<string, unknown> };
 
 export interface ExecutionProfile {
   schemaVersion: 1 | 2 | 3;
@@ -113,7 +135,7 @@ export function validateOperations(
   env: Environment,
 ): void {
   for (const op of operations) {
-    if (profile.schemaVersion < 2 || !profile.operationCategories?.includes(op.category))
+    if (!profile.operationCategories?.includes(op.category))
       throw new InputError('Operation category not permitted by execution profile: ' + op.id);
     const outputs =
       env.workspace && op.repository !== env.workspace.primary.id
@@ -141,13 +163,10 @@ function read<T>(
   const source = new ConfigurationReader().revision(repository, base, path);
   sources.push(source);
   try {
-    const version = (source.value as { schemaVersion?: number }).schemaVersion;
     return validateSchema<T>(
-      schema === 'component' && (version === 4 || version === 5 || version === 6)
-        ? `component-v${version}`
-        : schema === 'operation' && version === 4
-          ? 'operation-v4'
-          : schema,
+      // One schema per kind, named for the kind: there is no version to select between, so a
+      // document written in an older shape fails validation rather than being upgraded by the loader.
+      schema,
       structuredClone(source.value),
     );
   } catch (error) {
@@ -159,7 +178,11 @@ export function loadCatalog(repository: string, base: string, bindings?: Binding
   try {
     return new CatalogLoader(repository, base, bindings).load();
   } catch (error) {
-    throw new InputError(String(error));
+    // A rejected catalog is an input problem, but an unexpected internal failure is not: keeping the
+    // original error as the cause preserves the frame that names the statement which failed. Flattening
+    // it into a message is what made several fixture crashes impossible to attribute from output alone.
+    if (error instanceof InputError) throw error;
+    throw new InputError(String(error), { cause: error });
   }
 }
 
@@ -182,7 +205,7 @@ class CatalogLoader {
     private readonly base: string,
     private readonly bindings?: Bindings,
   ) {
-    this.paths = git(repository, 'ls-tree', '-r', '--name-only', base, '--', 'architecture')
+    this.paths = git(repository, 'ls-tree', '-r', '--name-only', base, '--', '.arc/architecture')
       .split('\n')
       .sort();
   }
@@ -194,13 +217,12 @@ class CatalogLoader {
     const source = new ConfigurationReader().definition(
       this.repository,
       this.base,
-      'architecture/environment',
+      '.arc/architecture/environment',
     );
     this.catalog.configurationSources.push(source);
     const env = environment(source.value, Object.values(this.catalog.operations));
     repositoryRevisions(this.catalog, env, this.repository, this.base, this.bindings);
-    new ComponentV4Resolver(this.catalog).resolve();
-    new ComponentV5Resolver(this.catalog).resolve();
+    new ComponentMaterializer(this.catalog).resolve();
     if (!Object.keys(this.catalog.components).length) throw new InputError('No components defined');
     const validator = new CatalogComponentValidator(this.catalog, env);
     for (const component of Object.values(this.catalog.components)) validator.validate(component);
@@ -214,15 +236,8 @@ class CatalogLoader {
     return this.catalog;
   }
 
-  /** Validates physical grants and exact maintained-source ownership after resolution. */
+  /** Validates exact maintained-source ownership against the captured tree after resolution. */
   private ownership(): void {
-    const grants = new DirectoryGrants(this.repository, this.base);
-    for (const component of Object.values(this.catalog.components))
-      if (
-        !this.catalog.primaryRepository ||
-        component.repository === this.catalog.primaryRepository
-      )
-        grants.validate(component);
     const ownership = new OwnershipValidator(this.repository, this.base).validate(this.catalog);
     if (ownership) this.catalog.configurationSources.push(ownership);
     this.boundOwnership();
@@ -230,7 +245,6 @@ class CatalogLoader {
 
   /** Applies exact minimal ownership to every captured binding without reinterpreting historical catalogs. */
   private boundOwnership(): void {
-    if (Object.values(this.catalog.components).some((c) => c.schemaVersion < 5)) return;
     for (const [id, revision] of Object.entries(this.catalog.repositoryRevisions ?? {})) {
       if (id === this.catalog.primaryRepository) continue;
       new OwnershipValidator(revision.source, revision.base).validate({
@@ -243,7 +257,7 @@ class CatalogLoader {
   /** Enumerates supported definition files in the captured repository revision. */
   private files(directory: string): string[] {
     return this.paths.filter(
-      (path) => path.startsWith(`architecture/${directory}/`) && isConfiguration(path),
+      (path) => path.startsWith(`.arc/architecture/${directory}/`) && isConfiguration(path),
     );
   }
 
@@ -257,26 +271,38 @@ class CatalogLoader {
     ] as const;
     for (const [directory, schema, target] of groups)
       for (const path of paths.filter(
-        (p) => p.startsWith(`architecture/${directory}/`) && isConfiguration(p),
+        (p) => p.startsWith(`.arc/architecture/${directory}/`) && isConfiguration(p),
       )) {
-        const value = read<Component & Role & ExecutionProfile>(
+        const value = read<Record<string, unknown>>(
           repository,
           base,
           path,
           schema,
           catalog.configurationSources,
         );
-        if (
-          Number(value.schemaVersion) < 5 &&
-          path.replace(/\.(json|ya?ml)$/, '') !== `architecture/${directory}/${value.id}`
-        )
-          throw new InputError(`Identity must match filename: ${path}`);
-        if (Object.hasOwn(target, value.id))
-          throw new InputError(`Duplicate definition: ${value.id}`);
-        if (schema === 'role')
-          value.activities = declareActivities(value.activities, `role ${value.id}`);
-        Object.defineProperty(target, value.id, { value, enumerable: true, configurable: true });
+        this.define(target, schema, directory, path, value);
       }
+  }
+
+  /** Registers one parsed definition after checking identity and vocabulary. */
+  private define(
+    target: Record<string, unknown>,
+    schema: string,
+    directory: string,
+    path: string,
+    value: Record<string, unknown>,
+  ): void {
+    const id = String(value.id);
+    const legacy = Number(value.schemaVersion) < 5;
+    if (legacy && path.replace(/\.(json|ya?ml)$/, '') !== `.arc/architecture/${directory}/${id}`)
+      throw new InputError(`Identity must match filename: ${path}`);
+    if (Object.hasOwn(target, id)) throw new InputError(`Duplicate definition: ${id}`);
+    value.id = id;
+    Object.defineProperty(target, id, {
+      value: value as unknown as Component & Role & ExecutionProfile,
+      enumerable: true,
+      configurable: true,
+    });
   }
 
   /** Loads a referenced operation without granting it to unrelated owners. */
@@ -285,7 +311,7 @@ class CatalogLoader {
     const operation = normalizeOperation(
       read<Operation>(repository, base, path, 'operation', catalog.configurationSources),
     );
-    if (path.replace(/\.(json|ya?ml)$/, '') !== `architecture/operations/${operation.id}`)
+    if (path.replace(/\.(json|ya?ml)$/, '') !== `.arc/architecture/operations/${operation.id}`)
       throw new InputError('Operation identity must match filename');
     scopePath(operation.cwd);
     operation.generatedDirectories.forEach(scopePath);
@@ -314,7 +340,8 @@ class CatalogLoader {
       catalog.configurationSources,
     );
     if (
-      path.replace(/\.(json|ya?ml)$/, '') !== `architecture/composition-profiles/${profile.id}` ||
+      path.replace(/\.(json|ya?ml)$/, '') !==
+        `.arc/architecture/composition-profiles/${profile.id}` ||
       catalog.components[profile.platformId]?.type !== 'platform'
     )
       throw new InputError('Invalid composition platform');
@@ -350,34 +377,31 @@ class CatalogComponentValidator {
   /** Validates the component’s paths before they can become execution scope. */
   private paths(c: Component): void {
     scopePath(c.path);
-    validateAccess(c.access);
     for (const p of [...c.allowedWritePaths, ...c.documentation, ...c.tests]) scopePath(p);
     commands(c.verification);
-    if (
-      c.schemaVersion < 5 &&
-      c.allowedWritePaths.some((p) => !covered(p, c.access.writeDirectories))
-    )
-      throw new InputError(`Uncovered writable scope: ${c.id}`);
   }
 
   /** Checks referenced operations against the component profile and environment. */
   private operations(c: Component): void {
     const { catalog, env } = this;
-    if (c.schemaVersion >= 5 && ['platform', 'package'].includes(c.type)) return;
-    const ids = c.schemaVersion >= 5 ? Object.keys(c.operations ?? {}) : (c.operationIds ?? []);
+    if (['platform', 'package'].includes(c.type)) return;
+    const ids = Object.keys(c.operations ?? {});
     for (const id of ids) {
       const op = catalog.operations[id];
       if (!Object.hasOwn(catalog.operations, id) || op?.repository !== c.repository)
         throw new InputError('Missing operation or conflicting repository owner: ' + id);
-      if (!op.activities.every((a) => catalog.roles[c.role]?.activities.includes(a)))
-        throw new InputError('Operation activity outside role');
+      if (!c.activities || !Object.keys(c.activities).length)
+        throw new InputError(`Component declares no activities: ${c.id}`);
     }
-    if (
-      !Object.hasOwn(catalog.roles, c.role) ||
-      !Object.hasOwn(catalog.profiles, c.executionProfile)
-    )
-      throw new InputError(`Missing role/execution profile for ${c.id}`);
-    for (const id of [c.executionProfile, ...Object.values(c.activityProfiles ?? {})]) {
+    if (!Object.hasOwn(catalog.profiles, c.executionProfile))
+      throw new InputError(`Missing execution profile for ${c.id}`);
+    this.declaredActivities(c, catalog);
+    // A leaf may bind operations to activities without declaring any of its own; reading the map
+    // defensively keeps that shape a validation result rather than an internal crash.
+    const profiles = Object.values(c.activities ?? {}).flatMap((a) =>
+      a.profile ? [a.profile] : [],
+    );
+    for (const id of [c.executionProfile, ...profiles]) {
       if (!Object.hasOwn(catalog.profiles, id))
         throw new InputError(`Unknown activity execution profile for ${c.id}: ${id}`);
       validateOperations(
@@ -385,6 +409,22 @@ class CatalogComponentValidator {
         catalog.profiles[id]!,
         env,
       );
+    }
+  }
+
+  /** Requires each declared activity to name a real role; the activity is chosen here, not by the role. */
+  private declaredActivities(c: Component, catalog: Catalog): void {
+    for (const [declared, config] of Object.entries(c.activities ?? {})) {
+      const activity = requireActivity(declared, `component ${c.id}`);
+      const role = catalog.roles[config.role];
+      if (!role) throw new InputError(`Unknown role for ${c.id}.${activity}: ${config.role}`);
+      for (const entry of config.operations ?? []) {
+        const id = typeof entry === 'string' ? entry : entry.id;
+        if (!Object.hasOwn(c.operations ?? {}, id))
+          throw new InputError(
+            `Activity operation not declared by component: ${c.id}.${activity}: ${id}`,
+          );
+      }
     }
   }
 
@@ -398,18 +438,11 @@ class CatalogComponentValidator {
       throw new InputError('Package owner must be a platform');
     if (parent && c.type !== 'package' && c.repository !== parent.repository)
       throw new InputError(`Conflicting repository ownership: ${c.id}`);
-    for (const a of ancestors.filter((a) => a.repository === c.repository)) {
-      if (
-        a.schemaVersion >= 3 &&
-        ['platform', 'package'].includes(a.type) &&
-        !a.allowedWritePaths.length &&
-        !a.access.writeDirectories.length
-      )
-        continue;
-      if (
-        c.allowedWritePaths.some((p) => !covered(p, a.allowedWritePaths)) ||
-        c.access.writeDirectories.some((p) => !covered(p, a.access.writeDirectories))
-      )
+    for (const a of ancestors.filter((entry) => entry.repository === c.repository)) {
+      // Ownership is the only write authority, so widening is judged against it alone. A container
+      // declares no scope of its own, which widens nothing and cannot be violated.
+      if (!a.allowedWritePaths.length) continue;
+      if (c.allowedWritePaths.some((p) => !covered(p, a.allowedWritePaths)))
         throw new InputError(`Child widens ancestor authority: ${c.id}`);
     }
   }

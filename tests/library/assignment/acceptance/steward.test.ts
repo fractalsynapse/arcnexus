@@ -17,7 +17,7 @@ class StewardTests {
   /** Verifies the scenario uses explicit sdk settings. */
   usesExplicitSdkSettings(t: TestContext, expected: string) {
     const f = workflowFixture(t);
-    const path = join(f.repo, 'architecture/execution-profiles/luna.yaml');
+    const path = join(f.repo, '.arc/architecture/execution-profiles/luna.yaml');
     const profile = JSON.parse(readFileSync(path, 'utf8'));
     if (profile.model !== expected) {
       writeFileSync(path, JSON.stringify({ ...profile, model: expected }));

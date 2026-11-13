@@ -72,7 +72,7 @@ support; failure refuses execution rather than granting broad write access.
 
 ## Migration and delivery
 
-`arcnexus config migrate` previews a validated diff and diagnostics; `--write` applies
+`arcnexus config` reads and writes machine settings only; there is no configuration version to migrate.
 it to a clean checkout without commits/publication. Preserve IDs and authority, hoist
 identical defaults, consolidate semantically equivalent commands, retain exceptional
 classification and contract associations, and assign old excluded files an owner.

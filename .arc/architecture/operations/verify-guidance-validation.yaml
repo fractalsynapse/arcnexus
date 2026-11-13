@@ -1,0 +1,21 @@
+repository: arcnexus
+cwd: .
+category: cli-check
+generatedDirectories:
+  - .fixture-build
+  - .test-build
+  - .tool-build
+  - dist
+  - node_modules
+artifacts: []
+network: true
+schemaVersion: 4
+id: verify-guidance-validation
+purpose: Verify guidance-validation
+kind: command
+prerequisites:
+  - project-setup
+command: npm
+args:
+  - run
+  - build

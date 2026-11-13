@@ -26,16 +26,17 @@ export class WorkspaceOperations {
     packageId?: string,
   ): void {
     if (record.environment.schemaVersion < 4)
-      throw new InputError(
-        'Preparation requires environment schema 4 or 5; migrate legacy recipes before execution',
-      );
+      throw new InputError('Preparation requires a captured environment of schema 4 or later');
     const catalog = loadCatalog(record.source, authorityBase, record.bindings as Bindings);
     this.validate(catalog);
     record.operationCatalog = Object.values(catalog.components);
     record.preparationOwners = this.owners(catalog, record.source, project, packageId);
     record.environment = environment(
-      new ConfigurationReader().definition(record.source, authorityBase, 'architecture/environment')
-        .value,
+      new ConfigurationReader().definition(
+        record.source,
+        authorityBase,
+        '.arc/architecture/environment',
+      ).value,
       Object.values(catalog.operations),
     );
     const bindingSource = (record.bindings as Bindings).configurationSource;

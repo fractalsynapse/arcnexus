@@ -1,0 +1,13 @@
+schemaVersion: 4
+kind: command
+repository: greetings
+cwd: .
+generatedDirectories: []
+artifacts: []
+prerequisites: []
+id: check-runtime
+purpose: Verify the declared Node runtime is executable
+category: cli-check
+command: node
+args:
+  - --version

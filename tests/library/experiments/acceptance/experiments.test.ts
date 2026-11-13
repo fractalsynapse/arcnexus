@@ -53,7 +53,7 @@ class ExperimentFixture {
 
   readonly bindings = join(this.root, 'bindings.json');
 
-  readonly manifest = resolve('experiments/simulation.historical.yaml');
+  readonly manifest = resolve('experiments/pinned.yaml');
 
   readonly base: string;
 
@@ -66,6 +66,10 @@ class ExperimentFixture {
     this.git('init', '-q');
     this.git('config', 'user.name', 'Test');
     this.git('config', 'user.email', 'test@example.invalid');
+    // The simulation catalog names a primary repository, and binding identity resolves it through
+    // `origin`. Without the remote the loader dies on git's raw "No such remote" error and hides the
+    // behaviour this suite exists to exercise.
+    this.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     this.git('add', '.');
     this.git('commit', '-qm', 'fixture');
     this.base = this.git('rev-parse', 'HEAD');
@@ -73,7 +77,11 @@ class ExperimentFixture {
       schemaVersion: 1,
       runner: cli,
       projects: { fixture: { path: this.repo, base: this.base } },
-      tools: { node: process.execPath },
+      // The prompt resolver demands an explicit executable binding before it will resolve a campaign.
+      // This scenario only inspects, so nothing is launched: the binding states which executable a
+      // real run would use rather than leaving the resolver to assume one.
+      codexPath: process.execPath,
+      tools: { node: process.execPath, codex: process.execPath },
       priorEvidence: {},
       issues: {},
     };

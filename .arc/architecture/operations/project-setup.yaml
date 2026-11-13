@@ -1,0 +1,20 @@
+repository: arcnexus
+cwd: .
+category: cli-check
+generatedDirectories:
+  - node_modules
+artifacts: []
+network:
+  domains: [registry.npmjs.org]
+schemaVersion: 4
+id: project-setup
+purpose: Project setup
+kind: command
+prerequisites: []
+command: node
+args:
+  - scripts/foundation/install-dependencies.mjs
+dependencyInputs:
+  - package.json
+  - package-lock.json
+  - scripts/foundation/install-dependencies.mjs

@@ -1,0 +1,59 @@
+schemaVersion: 6
+id: change-inspection
+type: library
+parentId: cli-package
+purpose: Inspect candidate edits and retain complete review evidence
+objectives: ['Detect all staged, unstaged and untracked changes without losing candidate state']
+constraints: [
+    Do not change sandbox permissions or verification requirements,
+    Caller owns commits and integration,
+    Do not edit architecture or unrelated files,
+    'candidate-changes (src/library/change-inspection/changes.ts): Preserve
+    path/change-kind evidence and exact scope and symlink rejection semantics',
+  ]
+activities:
+  research:
+    role: researcher
+    profile: luna
+    operations: []
+    instructions: [
+        Establish what Inspect candidate edits and retain complete review evidence means in practice
+        from this component's own sources and retained evidence before proposing any change to src/library/change-inspection.,
+      ]
+  documentation:
+    role: technical-writer
+    profile: luna
+    operations: []
+    instructions: [
+        'Keep the documentation under docs/library/change-inspection describing Inspect candidate edits
+        and retain complete review evidence as delivered behaviour, never as intent.',
+      ]
+  testing:
+    role: designer
+    profile: luna
+    operations: []
+    instructions: [
+        Express acceptance for Inspect candidate edits and retain complete review evidence as checks
+        over its declared public contract in tests/library/change-inspection; observe the failure before changing
+        behaviour.,
+      ]
+  implementation:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions: [
+        'Change only what this goal requires inside src/library/change-inspection, preserving the public
+        contract and the ownership boundaries that declare it.',
+      ]
+  review:
+    role: reviewer
+    profile: luna
+    operations: []
+    instructions: [
+        Judge the candidate against the stated acceptance and the standards in force for Inspect candidate
+        edits and retain complete review evidence; refuse on unmet behaviour rather than style.,
+      ]
+owns:
+  [src/library/change-inspection, tests/library/change-inspection, docs/library/change-inspection]
+api:
+  - { module: src/library/change-inspection/changes.ts }

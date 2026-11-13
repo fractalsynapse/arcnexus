@@ -10,8 +10,8 @@ class StandardFixture extends PackageCliFixture {
   /** Gives definitions and their documentation explicit owners without inventing document contents during CRUD. */
   constructor(t: TestContext) {
     super(t);
-    this.extend('architecture/components/maintenance.yaml', (value) =>
-      value.owns.push('architecture/standards'),
+    this.extend('.arc/architecture/components/maintenance.yaml', (value) =>
+      value.owns.push('.arc/architecture/standards'),
     );
     this.put('tests/standard.md', 'An explicitly authored engineering standard.');
     this.commit();

@@ -34,7 +34,7 @@ the command runs directly and nothing is nested, so wrapping a wrapped command i
 ## Dependency preparation keeps the previous tree
 
 Setup operations declare disposable outputs — `node_modules`, `.test-build`, `dist` — which were
-formerly deleted *before* the installer ran. An install that then failed for an environmental reason
+formerly deleted _before_ the installer ran. An install that then failed for an environmental reason
 left the workspace with no toolchain at all, which turns one transient fault into a rebuild of
 everything. Preparation now **renames those outputs aside** into `.prepared-stale/` (ignored), runs
 the installer, discards the aside copy once the replacement is verified, and puts it back if the

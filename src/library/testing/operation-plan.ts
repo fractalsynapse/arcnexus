@@ -36,8 +36,6 @@ export class TestOperationPlanning {
       /architecture\/environment\.(json|ya?ml)$/.test(s.path),
     );
     const env = environment(source?.value, Object.values(this.catalog.operations));
-    if (env.schemaVersion < 4)
-      throw new InputError('Shared tests require environment schema 4 or 5');
     return { catalog: Object.values(this.catalog.components), environment: env, steps };
   }
 
@@ -76,12 +74,10 @@ export class TestOperationPlanning {
         throw new InputError(`Finite shared test command required: ${definition.id}`);
       if (definition.repository !== owner.repository)
         throw new InputError(`Test operation repository mismatch: ${definition.id}`);
-      if (
-        !definition.activities.every((activity) =>
-          this.catalog.roles[owner.role]!.activities.includes(activity),
-        )
-      )
-        throw new InputError(`Test operation activity outside role: ${definition.id}`);
+      // No activity membership assertion here: shared test qualification resolves host lifecycle
+      // operations (setup, verify) that may reach a component through its lineage, and operations
+      // describe only the act they perform. What is enforced is that the act is finite, belongs to
+      // this repository, and is permitted by the component's execution profile category.
       if (
         !this.catalog.profiles[owner.executionProfile]!.operationCategories?.includes(
           definition.category,

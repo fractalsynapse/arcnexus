@@ -1,0 +1,18 @@
+schemaVersion: 4
+id: guidance-build
+purpose: Run the captured guidance validator build
+kind: command
+repository: arcnexus
+cwd: .
+category: build
+command: npm
+args:
+  - run
+  - build
+generatedDirectories:
+  - .fixture-build
+  - .tool-build
+  - dist
+artifacts: []
+prerequisites:
+  - check-guidance-build-prerequisite

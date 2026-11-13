@@ -1,0 +1,20 @@
+repository: arcnexus
+cwd: .
+category: lint
+generatedDirectories:
+  - .fixture-build
+  - .test-build
+  - .tool-build
+  - dist
+  - node_modules
+artifacts: []
+network: true
+schemaVersion: 4
+id: lint-maintained-code
+purpose: Lint maintained TypeScript and JavaScript
+kind: command
+prerequisites: []
+command: npm
+args:
+  - run
+  - lint

@@ -102,7 +102,7 @@ without `=` is the optional platform; subsequent values must be filters.
 
 ## Registered configuration migration
 
-`config migrate [target] [--write]` accepts a registered platform or package (#167).
+`config` exposes only machine settings now; configuration carries no version to upgrade.
 Qualified package references are preferred; short references must be unambiguous
 across both resource types. With no target, migration uses the current repository.
 Resolution reads repository registration without requiring old configuration to

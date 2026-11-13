@@ -1,0 +1,44 @@
+schemaVersion: 6
+id: identity
+type: library
+parentId: identity-package
+purpose: Predictable identity and session helpers
+objectives:
+  - Small deterministic functions with explicit boundaries
+constraints:
+  - Keep normalizeIdentity behavior unchanged
+  - No added dependencies
+owns:
+  - .gitignore
+  - src
+  - tests
+  - package.json
+  - package-lock.json
+  - README.md
+  - .arc/architecture/environment.yaml
+  - .arc/architecture/roles
+  - .arc/architecture/execution-profiles
+  - .arc/architecture/operations
+  - .arc/architecture/components/platform.yaml
+  - .arc/architecture/components/package.yaml
+api:
+  - module: src/identity.mjs
+activities:
+  research:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Establish what this component guarantees before proposing a change
+  implementation:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Change only what the goal requires and prove it with this component checks
+  review:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Reject weakened coverage or undeclared authority in the delivered change

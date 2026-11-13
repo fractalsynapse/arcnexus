@@ -5,7 +5,7 @@ them from captured purposes, objectives, questions and inbox work. Both use the 
 sequential assignment dispatcher and retain candidate changes for caller integration.
 Component execution options and caller-authored acceptance files are not required.
 
-`architecture/environment.yaml` captures repository composition. Shared operations
+`.arc/architecture/environment.yaml` captures repository composition. Shared operations
 supply preparation and verification recipes once. Model commands and managed operations
 receive read-only maintained source; only the assignment-bound checked edit tool can
 apply authorized edits. Operation output roots are validated disposable paths.

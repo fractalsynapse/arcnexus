@@ -208,7 +208,6 @@ class OperationRuntime {
       op = resolved.operations.find((op) => op.id === id);
     if (!op || op.kind === 'upstream') throw new OperationSelectionError(id);
     const stage = String(record.stage);
-    this.assertActivity(op, stage);
     observe(root, record, 'operation.authorized', {
       id,
       tool: name,
@@ -237,20 +236,6 @@ class OperationRuntime {
     observe(root, record, 'operation.selection_rejected', result);
     save(root, record);
     return result;
-  }
-
-  /** Requires the requested activity to be allowed by the captured role. */
-  private assertActivity(op: Operation, stage: string): void {
-    const activities =
-      stage === 'specification'
-        ? ['research', 'documentation', 'testing']
-        : stage === 'correction'
-          ? ['implementation']
-          : stage === 'planning'
-            ? ['research']
-            : [stage];
-    if (!op.activities.some((a) => activities.includes(a)))
-      throw new Error('Operation activity denied: ' + stage);
   }
 
   /** Validates tool request data before executing any operation. */

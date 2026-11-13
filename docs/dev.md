@@ -15,13 +15,13 @@ Read the [pre-phase-two qualification](acceptance/pre-phase-two.md) for the curr
 single-steward gate and preserved live evidence. The [operations qualification](acceptance/steward-operations.md) adds captured plans/checklists, managed operations, parent-loss supervision and selected prior findings, including a retained failed case and its verified workflow fix. Only the next useful slice needs a
 detailed implementation plan.
 
-| Phase | Current status and next proof |
-| --- | --- |
-| 1. Single steward | Delivered: managed workspace/setup, SDK execution, verification, evidence and guarded cleanup. See the [implementation sequence](plans/phase-one.md), [live sample](acceptance/live-sample.md) and [self-development evidence](acceptance/self-development.md). |
+| Phase                            | Current status and next proof                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Single steward                | Delivered: managed workspace/setup, SDK execution, verification, evidence and guarded cleanup. See the [implementation sequence](plans/phase-one.md), [live sample](acceptance/live-sample.md) and [self-development evidence](acceptance/self-development.md).                                                                                                                                                                                                                                                                                                                                               |
 | 2. Reduced self-development loop | In progress. The accepted architecture is [the self-development MVP](plans/self-development-mvp.md): `.arc` knowledge spaces, director-generated sequential single-owner milestones from the [plan template](../.arc/architecture/plan-template.md), one store, one process, one verification gate and one publication route. The earlier [managed lifecycle plan](plans/managed-lifecycle.md) is a historical ledger; its simulated publication, promotion and container evidence is deferred scope, not a current gate. Two-steward delivery history remains in [workday evidence](acceptance/workdays.md). |
-| 3. Service APIs and UI | Begins after the phase-two gates pass. Expose the shared application services through OpenAPI, MCP and React. |
-| 4. Expanded governance | Planned: deepen inherited standards, contract validation and conformance checks based on actual use. |
-| 5. Multi-project operation | Planned: prove one real package relationship before broad composition and release coordination. |
+| 3. Service APIs and UI           | Begins after the phase-two gates pass. Expose the shared application services through OpenAPI, MCP and React.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 4. Expanded governance           | Planned: deepen inherited standards, contract validation and conformance checks based on actual use.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| 5. Multi-project operation       | Planned: prove one real package relationship before broad composition and release coordination.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 Pre-phase-three preparation adds YAML catalogs, mirrored owner directories, compact
 TypeScript and integrated linting (#63/#64, integrated). Initialization, inspectable
@@ -61,17 +61,18 @@ SDK, schema or API reference; use [stewards](gateway/cli/stewards.md) and
 historical sequencing differs.
 
 <!-- source-planning:milestones:start -->
+
 # 2. Build it in five progressively useful milestones
 
 I would structure development around five milestones, each with a working acceptance test.
 
-Milestone | What you build | What must actually work
---- | --- | ---
-**1. Single steward** | Codex execution, component definition, CLI | Give a component an objective; Codex changes code and runs tests
-**2. Two stewards** | Structured inbox and execution handoff | One steward requests a contract change; another responds; work continues
-**3. Architecture Studio UI** | React interface and Hono API | Select components, direct stewards, run workdays, review results
-**4. Architectural governance** | Parent inheritance, standards, constraints, verification | Stewards consistently follow architecture and deviations are reported
-**5. Multi-project operation** | Package composition, profiles, release management | Coordinate engineering work across packages and repositories
+| Milestone                       | What you build                                           | What must actually work                                                  |
+| ------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **1. Single steward**           | Codex execution, component definition, CLI               | Give a component an objective; Codex changes code and runs tests         |
+| **2. Two stewards**             | Structured inbox and execution handoff                   | One steward requests a contract change; another responds; work continues |
+| **3. Architecture Studio UI**   | React interface and Hono API                             | Select components, direct stewards, run workdays, review results         |
+| **4. Architectural governance** | Parent inheritance, standards, constraints, verification | Stewards consistently follow architecture and deviations are reported    |
+| **5. Multi-project operation**  | Package composition, profiles, release management        | Coordinate engineering work across packages and repositories             |
 
 I would not start the next milestone until the current milestone works end-to-end.
 
@@ -197,13 +198,13 @@ Now introduce the inbox.
 
 I would use five SQLite tables:
 
-Table | Stores
---- | ---
-workdays | Workday identity, status, start/end information
-assignments | Objectives, ownership, plans, status, dependencies
-messages | Structured requests and responses
-executions | Codex thread IDs, execution results, usage, duration
-events | Workday logs and significant actions
+| Table       | Stores                                               |
+| ----------- | ---------------------------------------------------- |
+| workdays    | Workday identity, status, start/end information      |
+| assignments | Objectives, ownership, plans, status, dependencies   |
+| messages    | Structured requests and responses                    |
+| executions  | Codex thread IDs, execution results, usage, duration |
+| events      | Workday logs and significant actions                 |
 
 Architectural definitions remain in JSON files, so you don't need tables for every architectural component.
 
@@ -354,12 +355,12 @@ The rest can wait.
 
 I would keep the initial React application to four conceptual components:
 
-Component | Responsibility
---- | ---
-App | Selected component and application state
-ComponentList | Display architectural hierarchy
-ComponentInspector | Display and edit selected component
-WorkdayPanel | Start workdays and display progress/results
+| Component          | Responsibility                              |
+| ------------------ | ------------------------------------------- |
+| App                | Selected component and application state    |
+| ComponentList      | Display architectural hierarchy             |
+| ComponentInspector | Display and edit selected component         |
+| WorkdayPanel       | Start workdays and display progress/results |
 
 Use ordinary React state, fetch(), and a small amount of CSS.
 
@@ -369,13 +370,13 @@ No Redux, Zustand, elaborate data-fetching architecture, or component framework 
 
 I would initially expose only these operations:
 
-Endpoint | Purpose
---- | ---
-GET /api/components | Retrieve the architecture
-POST /api/assignments | Direct a steward
-POST /api/workdays | Start a workday
-GET /api/workdays/:id | Read workday status and report
-GET /api/workdays/:id/events | Read execution progress
+| Endpoint                     | Purpose                        |
+| ---------------------------- | ------------------------------ |
+| GET /api/components          | Retrieve the architecture      |
+| POST /api/assignments        | Direct a steward               |
+| POST /api/workdays           | Start a workday                |
+| GET /api/workdays/:id        | Read workday status and report |
+| GET /api/workdays/:id/events | Read execution progress        |
 
 Component editing can be added with a simple update endpoint when you need it.
 
@@ -548,22 +549,23 @@ But none of those capabilities should require fundamentally changing the executi
 <!-- source-planning:milestones:end -->
 
 <!-- source-planning:principles:start -->
+
 # 9. Establish development rules for the AI building this application
 
 This may be more important than the specific technology choices.
 
 I would give the initial Codex agent a small set of strict engineering instructions.
 
-Rule | Reason
---- | ---
-**One working feature at a time** | Prevents incomplete subsystems from accumulating
-**No speculative abstractions** | Prevents unnecessary complexity
-**Prefer existing functions and modules** | Encourages reuse
-**One coherent responsibility per function** | Keeps implementation readable
-**No placeholder implementations** | Ensures the system actually works
-**No unnecessary dependencies** | Reduces maintenance and integration problems
-**Every change must pass relevant tests** | Prevents regressions
-**Do not expand scope without approval** | Protects architectural direction
+| Rule                                         | Reason                                           |
+| -------------------------------------------- | ------------------------------------------------ |
+| **One working feature at a time**            | Prevents incomplete subsystems from accumulating |
+| **No speculative abstractions**              | Prevents unnecessary complexity                  |
+| **Prefer existing functions and modules**    | Encourages reuse                                 |
+| **One coherent responsibility per function** | Keeps implementation readable                    |
+| **No placeholder implementations**           | Ensures the system actually works                |
+| **No unnecessary dependencies**              | Reduces maintenance and integration problems     |
+| **Every change must pass relevant tests**    | Prevents regressions                             |
+| **Do not expand scope without approval**     | Protects architectural direction                 |
 
 The placeholder rule deserves particular emphasis.
 
@@ -671,18 +673,18 @@ One of the hardest parts of building this application will be resisting attracti
 
 I would explicitly defer the following:
 
-Feature | Why it can wait
---- | ---
-AI decision model | Direct ownership-based routing is sufficient initially
-Multi-model orchestration | One Codex configuration is enough to validate the architecture
-Thousands of steward identities | Start with two
-Dynamic agent configuration | Inherit a small number of shared roles
-Full visual architecture diagrams | Component hierarchy is enough initially
-Comprehensive architectural language | Simple JSON definitions are enough initially
-Cross-repository release coordination | Prove single-repository coordination first
-Automated production deployments | Begin with verified local changes
-Distributed execution workers | One Node.js process is enough initially
-Sophisticated long-term memory | Component definitions and assignment history are enough initially
+| Feature                               | Why it can wait                                                   |
+| ------------------------------------- | ----------------------------------------------------------------- |
+| AI decision model                     | Direct ownership-based routing is sufficient initially            |
+| Multi-model orchestration             | One Codex configuration is enough to validate the architecture    |
+| Thousands of steward identities       | Start with two                                                    |
+| Dynamic agent configuration           | Inherit a small number of shared roles                            |
+| Full visual architecture diagrams     | Component hierarchy is enough initially                           |
+| Comprehensive architectural language  | Simple JSON definitions are enough initially                      |
+| Cross-repository release coordination | Prove single-repository coordination first                        |
+| Automated production deployments      | Begin with verified local changes                                 |
+| Distributed execution workers         | One Node.js process is enough initially                           |
+| Sophisticated long-term memory        | Component definitions and assignment history are enough initially |
 
 None of these features is inherently bad.
 
@@ -808,7 +810,7 @@ And I'd keep one operating rule throughout development:
 
 **Every development iteration must leave the application working, with a demonstrated new capability. Complexity must be justified by a real requirement, not an imagined future need.**
 
-For your situation, I would prioritize *reliably completing small engineering tasks* above every other feature.
+For your situation, I would prioritize _reliably completing small engineering tasks_ above every other feature.
 
 If the first version can take one architectural objective, activate one steward, produce a tested code change, and report exactly what happened, it has already accomplished the fundamental purpose of the system.
 

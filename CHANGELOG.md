@@ -4,6 +4,108 @@
 
 ### Changed
 
+- **The human-owned model now lives in the `.arc` knowledge root** (#394): the component, role,
+  standard, operation, environment and profile definitions moved from top-level `architecture/` to
+  `.arc/architecture/`, which is where `AGENTS.md`, `docs/charter.md` and the locked
+  `arcnexus-foundation` and `arcnexus-project` contracts have always said they belong. Loader paths,
+  component ownership declarations, shipped fixture trees and guidance references moved with them, so
+  a project checkout keeps one knowledge root: `.arc/architecture/` for the human model,
+  `.arc/plans/` and `.arc/learning/` for agent work. No contract file was edited to do this.
+- **A local-only project may declare an environment without a remote URL** (#394):
+  `workspace.primary.repository` is now optional, matching the TypeScript type that already marked it
+  so. Absence means exactly that — attach from the source path with no managed clone and no invented
+  origin — instead of failing validation with `must have required property 'repository'`.
+
+- **Shipped test fixtures migrated to the current architecture** (#394): the `fixtures/*` catalogs were
+  a full schema generation behind — role documents declaring activities at superseded versions,
+  components authoring a `role`, operation documents carrying retired `probes`, environments in the old
+  executable-recipe shape, containers and a maintenance owner missing entirely. Loading them now
+  requires no retirement-era vocabulary, and the `experiments` suites that register them went from
+  1 failing to 0.
+
+- **`task status` reads, `task follow` streams** (#394): folding `status` into the following flag made
+  the contract's read surface print event lines instead of the report document, so an operator asking
+  what was outstanding got a transcript. A single read emits the document with its outstanding waits in
+  stable owner/assignment/escalation order; JSONL arrives when following is asked for - the `follow`
+  verb or `--follow`.
+
+- **Admission validates the test profile it consumes** (#436, architect ruling 2026-11-12): a
+  component's declared `testProfile` is now schema-checked when an assignment is resolved, not only
+  when the catalog loads, so a captured or fabricated profile document in a stale shape is refused at
+  the point it would grant executable test work. `assignment-scope`'s synthetic source had to be
+  completed to the current shape (`adapter`, `outputRoot`, `preparation`) - the check caught a fixture
+  that had been authoring an incomplete document.
+
+- **An activity's model must resolve** (#394, ruling (B)): validation accepted an activity naming a
+  profile no document declares. Because (B) makes `profile` a required statement on every activity,
+  an unresolvable reference is now a load failure - `Unknown activity profile: <id>` - rather than
+  routing work to a model that does not exist.
+- **The activity-profile suite tests the current grammar** (#394): it had been authored against the
+  retired `activityProfiles` map and against inheritance of activities a leaf never declared. It now
+  proves that a component holds exactly the activities it declares, that a leaf's own model is
+  resolved with the leaf as its source, that an explicit caller selection overrides every activity,
+  and that a captured assignment keeps the profile contents it was authorized with.
+
+- **Standards are now declarable on an activity, and one resolver decides what binds** (#394,
+  architect ruling 2026-11-12): components, activities and roles may each declare standards; the set
+  in force for one activation is their union, limited to ids the catalog knows. Assignment capture
+  previously kept its own copy of that rule, so an inspection and a running agent could drift apart
+  the moment an activity declared a standard - both now call `standardsInForce`.
+
+- **Component ownership is now the only write authority** (#394, architect ruling 2026-11-12):
+  `access.writeDirectories` was assigned exactly one value anywhere in the codebase - `[]` - so the
+  directory-grant checks built on it could never fire, while `validateAccess` still _required_ the
+  empty field on every component. Removed with it: `architecture/directory-grants.ts`,
+  `architecture/permissions.ts` (`validateAccess`, `readOnlyAccess`, `preparePermissions` and the
+  preparation class), the ownership loop that reported `Write directory outside ownership`, the
+  `directoryGrants` catalog-view field, and the `check-permissions` experiment plus its script shim.
+  `component.access` now carries derived **reads** only; writes come from `owns`, as invariant I2 of
+  the architecture-model contract always said. The locked contract's module inventory was amended
+  under this recorded instruction (registry revision 7, digest resynced after formatting).
+
+- **Component validation errors now name the real fault** (#394, architect ruling on the activity
+  model): a schema that selects its shape with `oneOf` previously reported every branch's complaints,
+  so a component whose only defect was a missing activity field was also told that `parentId` and
+  `owns` — the keys the chosen branch _requires_ — were unexpected. Validation still passes or fails
+  against the whole schema; only the reported detail changed, by re-checking the single branch the
+  value's `type` selects after a failure. `platform declaring owns` now reads
+  `must NOT have additional properties (owns)` and an activity without a model reads
+  `/activities/research: must have required property 'profile'`.
+
+- **`task run` gains two sealed stances** (#394, architect rulings): `--plan` stops after direction so
+  a plan can be read before anything is dispatched, and `--component <id> [--activity <a>]` works
+  **in place** in the current checkout at current HEAD with no worktree and no branch switching,
+  bypassing the director and verifier and never entering the delivery route. Both adopt the
+  simulation connectivity interface, so issues, comments and pull requests are recorded locally
+  through the same application lifecycle. `--activity` without `--component` fans out to every
+  component holding that activity as N sequential activations, gated by a strictly clean tree and a
+  check that the components' owned scopes do not overlap; a single component may run over uncommitted
+  work that does not intersect its scope, and the block reads "in-place work in progress; commit or
+  stash".
+- **`inspect` names the position in the component slot** (#394): `director` and `verifier` are
+  reserved identifiers beside component names, and there is no `--mode` flag; the inspected frame is
+  rendered by the same generator that builds an activation's, so a preview cannot diverge from the
+  run it describes.
+- **One run readout** (#394): streaming `task run` and following `task status` emit the same JSONL
+  event lines from one stored sequence, and `--async` prints a single summary object. The earlier
+  pair of renderers - whole-report snapshots printed whenever bytes differed, and a separate follow
+  projection - are gone.
+- **`config migrate` is retired** (#394, architect ruling): configurations are not versioned, so the
+  upgrade engine, its CLI surface and the version-selecting schemas are deleted; pin the installed
+  arcnexus release to hold previous behaviour.
+
+- **No configuration versioning** (#394, architect ruling): `config migrate` is retired and the
+  version-upgrade engine is deleted; `config` reads and writes machine settings only and refuses
+  `config migrate` by name. Schemas that accepted older component and operation versions are removed,
+  so a configuration naming an unsupported version is a validation failure rather than a path kept
+  alive. Pin the installed arcnexus version to hold previous behaviour.
+- **Roles carry no activity** (#394, architect ruling): the `activity` field is removed from the role
+  schema and every role file; a role is a reusable position and the component's activity names it.
+- **Every component activity states all supported fields** (#394): `role`, `instructions`, `profile`
+  and `operations` are required, so local direction and routing are explicit.
+- **`inspect` names the position in the component slot** (#394, architect ruling): `director` and
+  `verifier` are reserved identifiers beside component names, and `--mode` is gone.
+
 - **Roles are activity-scoped positions; ownership is declared only by the component** (#394, architect-directed). The architecture model contract gains **I11**: a role declares the activities it performs and the standing detail individual to that position — responsibilities, instructions, standards, tool surface, execution profile — and is reusable by every component engaging it, so one `researcher` description serves research anywhere; ownership of files comes solely from a component, and a role grants no write scope. Roles map to activities: `researcher`, `technical-writer`, `designer`, `systems-engineer`, `tester`, `release-engineer`. In the direction contract, what I14 and DI-19 unify is the **mode** set (director, steward, verifier), not roles — the word role there would now mislead. The harness document is rewritten on the two axes: a **mode** selects an activity **sequence**, a **role** supplies each step's standing detail, and a plan declares its mode's sequence with only activities its component engages a role to hold — so a verifier's plan has no `implementation` bucket, replacing #389's role-wide rule that forced one. Contract currency: architecture-model revision 4, direction revision 5, digests and registry revisions resynced from the authored files; `validate --json` is `status: valid`. Implementing the role catalog and the mode-sequence validation rule is the remaining work under #394. (#394)
 
 - **Both agent-authored `.arc` spaces now have a steward** (#391). `.arc/plans` is owned by

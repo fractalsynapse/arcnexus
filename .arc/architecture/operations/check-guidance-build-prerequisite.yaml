@@ -1,0 +1,17 @@
+schemaVersion: 4
+id: check-guidance-build-prerequisite
+purpose: Check prerequisite for guidance-build
+kind: command
+repository: arcnexus
+cwd: .
+category: build
+generatedDirectories:
+  - .fixture-build
+  - .tool-build
+  - dist
+artifacts: []
+prerequisites: []
+command: node
+args:
+  - -e
+  - console.log(process.version);if(require('child_process').spawnSync(process.execPath,['--version']).status!==0)process.exit(1)

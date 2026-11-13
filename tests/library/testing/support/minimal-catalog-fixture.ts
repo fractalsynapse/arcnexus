@@ -16,7 +16,7 @@ export class MinimalCatalogFixture {
     this.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     this.git('config', 'user.name', 'Test');
     this.git('config', 'user.email', 'test@example.invalid');
-    this.put('architecture/environment.json', {
+    this.put('.arc/architecture/environment.json', {
       schemaVersion: 4,
       workspace: {
         primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
@@ -31,15 +31,22 @@ export class MinimalCatalogFixture {
   /** Provides inherited execution identity without requiring model execution for validation. */
   private catalog(): void {
     const common = { schemaVersion: 6, purpose: 'Validate bounded architecture' };
-    this.put('architecture/components/platform.json', {
+    this.put('.arc/architecture/components/platform.json', {
       ...common,
       id: 'platform',
       type: 'platform',
-      role: 'engineer',
+      activities: {
+        research: {
+          role: 'engineer',
+          profile: 'luna',
+          instructions: ['Resolve the uncertainty the sample architecture actually depends on'],
+          operations: [],
+        },
+      },
       executionProfile: 'luna',
       reads: ['.'],
     });
-    this.put('architecture/components/package.json', {
+    this.put('.arc/architecture/components/package.json', {
       ...common,
       id: 'package',
       type: 'package',
@@ -51,18 +58,18 @@ export class MinimalCatalogFixture {
 
   /** Assigns maintained files without repeating implicit definition ownership. */
   private owner(): void {
-    this.put('architecture/components/owner.json', {
+    this.put('.arc/architecture/components/owner.json', {
       schemaVersion: 6,
       purpose: 'Maintain architecture and guidance',
       id: 'owner',
       type: 'foundation',
       parentId: 'package',
       owns: [
-        'architecture/environment.json',
-        'architecture/roles',
-        'architecture/execution-profiles',
-        'architecture/components/platform.json',
-        'architecture/components/package.json',
+        '.arc/architecture/environment.json',
+        '.arc/architecture/roles',
+        '.arc/architecture/execution-profiles',
+        '.arc/architecture/components/platform.json',
+        '.arc/architecture/components/package.json',
         '.agents',
         'AGENTS.md',
       ],
@@ -71,14 +78,13 @@ export class MinimalCatalogFixture {
 
   /** Supplies the inherited role and model policy used by static resolution. */
   private profiles(): void {
-    this.put('architecture/roles/engineer.json', {
-      schemaVersion: 3,
+    this.put('.arc/architecture/roles/engineer.json', {
+      schemaVersion: 4,
       id: 'engineer',
       purpose: 'Validate',
       responsibilities: ['Check'],
-      activities: ['research'],
     });
-    this.put('architecture/execution-profiles/luna.json', {
+    this.put('.arc/architecture/execution-profiles/luna.json', {
       schemaVersion: 3,
       id: 'luna',
       model: 'gpt-6-luna',

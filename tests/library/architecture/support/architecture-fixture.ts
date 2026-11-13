@@ -17,24 +17,33 @@ export class ArchitectureFixture {
 
   readonly repo = join(this.root, 'repo');
 
+  /**
+   * Fields a leaf owner declares.
+   *
+   * Ownership is expressed by `owns`; verification, discovery, access and documentation are derived
+   * from the owners and the bound operations, so authoring them is a load failure rather than a
+   * shortcut. Containers use containerCommon() instead - sharing this base produced documents that
+   * matched no schema branch, and every legitimate key then looked like the offense.
+   */
   readonly common = {
-    schemaVersion: 1,
-    repository: 'sample',
+    schemaVersion: 6,
     purpose: 'Own sample behavior',
-    path: '.',
     objectives: [],
     constraints: [],
     questions: [],
-    patterns: [],
-    interfaces: [],
-    documentation: ['README.md'],
-    tests: ['test.mjs'],
-    relatedIds: [],
-    role: 'engineer',
+    owns: ['src/sample'],
     executionProfile: 'luna',
-    access: { readPaths: ['.'], writeDirectories: ['.'] },
-    allowedWritePaths: ['source.txt'],
-    verification: [{ command: 'node', args: ['--version'] }],
+    activities: {
+      research: {
+        role: 'engineer',
+        profile: 'luna',
+        operations: [],
+        instructions: ['Establish what the sample component guarantees before changing it'],
+      },
+    },
+    // Verification derives from the operations a component binds, so the leaf binds its finite check
+    // here; a leaf that binds nothing is refused as an executable owner with no verification.
+    operations: { verify: ['verify'] },
   };
 
   component: any;
@@ -44,6 +53,11 @@ export class ArchitectureFixture {
     t.after(() => rmSync(this.root, { recursive: true, force: true }));
     mkdirSync(this.repo);
     this.git('init', '-b', 'main');
+    // The environment declares a primary repository, so the checkout must carry that origin:
+    // binding identity compares the declared URL against it, and without the remote git's raw
+    // "No such remote 'origin'" surfaces instead of the behaviour these scenarios exercise.
+    if (!this.git('remote').trim().split('\n').includes('origin'))
+      this.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     this.git('config', 'user.name', 'Test');
     this.git('config', 'user.email', 'test@example.invalid');
     this.hierarchy();
@@ -88,43 +102,100 @@ export class ArchitectureFixture {
     });
   }
 
-  /** Defines legacy platform, package and leaf ownership for ancestry acceptance. */
+  /** Fields a platform or package may declare: containment and roots, never leaf ownership. */
+  private containerCommon(id: string, type: string): Record<string, unknown> {
+    return {
+      schemaVersion: 6,
+      id,
+      type,
+      purpose: `Contain ${id} owners`,
+      objectives: [],
+      constraints: [],
+      questions: [],
+      executionProfile: 'luna',
+      activities: {},
+    };
+  }
+
+  /** Defines platform, package and leaf ownership for ancestry acceptance. */
   private hierarchy(): void {
-    this.put('architecture/components/platform.json', {
-      ...this.common,
-      id: 'platform',
-      type: 'platform',
-      allowedWritePaths: ['.'],
+    this.put('.arc/architecture/components/platform.json', {
+      ...this.containerCommon('platform', 'platform'),
+      reads: ['.'],
+      director: { component: 'sample', profile: 'luna' },
+      reviewerProfile: 'luna',
+      defaultPackage: 'package',
+      verificationInputs: [],
     });
-    this.put('architecture/components/package.json', {
-      ...this.common,
-      id: 'package',
-      type: 'package',
+    this.put('.arc/architecture/components/package.json', {
+      ...this.containerCommon('package', 'package'),
       parentId: 'platform',
-      allowedWritePaths: ['.'],
-      members: {
-        foundations: [],
-        dependencies: [],
-        gateways: [],
-        libraries: ['sample'],
-        releases: [],
-      },
+      repository: 'sample',
+      root: '.',
     });
+    this.verificationOperation();
     this.component = { ...this.common, id: 'sample', type: 'library', parentId: 'package' };
-    this.put('architecture/components/sample.json', this.component);
+    this.put('.arc/architecture/components/sample.json', this.component);
+    this.maintainer();
+  }
+
+  /** Declares the finite check the fixture's leaves bind as their verification. */
+  private verificationOperation(): void {
+    this.put('.arc/architecture/operations/verify.yaml', {
+      schemaVersion: 4,
+      id: 'verify',
+      purpose: 'Check the fixture behavior',
+      kind: 'command',
+      repository: 'sample',
+      cwd: '.',
+      category: 'unit-test',
+      command: 'node',
+      args: ['test.mjs'],
+      generatedDirectories: [],
+      artifacts: [],
+      prerequisites: [],
+      network: false,
+    });
+  }
+
+  /**
+   * Adds the leaf that maintains the authored configuration and root files.
+   *
+   * Mirrors the real model: a library's own definition is covered implicitly, so it is not listed,
+   * and containers declare no ownership of their own, so their definition files belong here. Without
+   * this leaf every configuration file the fixture writes is unowned, which the ownership validator
+   * refuses one file at a time - the reason fixing README alone moved nothing.
+   */
+  private maintainer(): void {
+    this.put('.arc/architecture/components/maintenance.json', {
+      ...this.common,
+      id: 'maintenance',
+      type: 'library',
+      parentId: 'package',
+      owns: [
+        'README.md',
+        'source.txt',
+        'test.mjs',
+        '.arc/architecture/roles/engineer.json',
+        '.arc/architecture/execution-profiles',
+        '.arc/architecture/operations/verify.yaml',
+        '.arc/architecture/environment.json',
+        '.arc/architecture/components/platform.json',
+        '.arc/architecture/components/package.json',
+      ],
+    });
   }
 
   /** Declares the fixture engineering role and Luna execution profile. */
   private execution(): void {
-    this.put('architecture/roles/engineer.json', {
-      schemaVersion: 1,
+    this.put('.arc/architecture/roles/engineer.json', {
+      schemaVersion: 4,
       id: 'engineer',
       purpose: 'Engineering',
       responsibilities: ['Verify bounded work'],
-      activities: ['research', 'documentation', 'testing', 'implementation', 'review', 'release'],
     });
-    this.put('architecture/execution-profiles/luna.yaml', {
-      schemaVersion: 1,
+    this.put('.arc/architecture/execution-profiles/luna.yaml', {
+      schemaVersion: 3,
       id: 'luna',
       model: 'gpt-6-luna',
       reasoning: 'medium',
@@ -133,16 +204,20 @@ export class ArchitectureFixture {
       commandTimeoutSeconds: 120,
       maxTurns: 3,
       maxCorrectiveTurns: 2,
+      // Operations outside this list are refused, so a fixture that binds a check must name the
+      // category that check uses.
+      operationCategories: ['unit-test'],
     });
   }
 
   /** Declares an empty preparation environment for catalog-focused scenarios. */
   private environment(): void {
-    this.put('architecture/environment.json', {
-      schemaVersion: 1,
-      prerequisites: [],
-      setup: [],
-      generatedDirectories: [],
+    this.put('.arc/architecture/environment.json', {
+      schemaVersion: 4,
+      workspace: {
+        primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
+        dependencies: [],
+      },
     });
   }
 }

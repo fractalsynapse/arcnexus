@@ -1,4 +1,3 @@
-import { ConfigurationReader } from './configuration.js';
 import { PlatformExecution } from './platform-execution.js';
 import { realpathSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
@@ -39,6 +38,27 @@ export function executionIdentity(context: ProjectExecution): string {
 
 /** Resolves package context and frozen execution defaults from the current directory. */
 export class ExecutionContext {
+  /** Requires every profile a component or platform routes work to actually exist. */
+  private validateConfiguredProfiles(
+    catalog: import('./components.js').Catalog,
+    owners: string[],
+    config: { directorProfile?: string; reviewerProfile?: string },
+  ): void {
+    this.validateProfiles(
+      catalog,
+      [
+        ...owners.flatMap((id) => [
+          catalog.components[id]!.executionProfile,
+          ...Object.values(catalog.components[id]!.activities ?? {}).flatMap((a) =>
+            a.profile ? [a.profile] : [],
+          ),
+        ]),
+        config.directorProfile,
+        config.reviewerProfile,
+      ].filter((id): id is string => id !== undefined),
+    );
+  }
+
   /** Discovers repository, committed authority and machine bindings; ambiguous packages fail. */
   resolve(cwd: string, packageId?: string, revision = 'HEAD'): ProjectExecution {
     const { source, base, commonDir, bindings } = this.discovery(cwd, revision);
@@ -47,14 +67,7 @@ export class ExecutionContext {
     const config = this.defaults(source, base, catalog);
     const selected = this.selected(catalog, cwd, source, packageId, config.defaultPackage);
     const owners = this.owners(catalog, selected.id);
-    this.validateProfiles(catalog, [
-      ...owners.flatMap((id) => [
-        catalog.components[id]!.executionProfile,
-        ...Object.values(catalog.components[id]!.activityProfiles ?? {}),
-      ]),
-      config.directorProfile,
-      config.reviewerProfile,
-    ]);
+    this.validateConfiguredProfiles(catalog, owners, config);
     return {
       source,
       base,
@@ -148,20 +161,6 @@ export class ExecutionContext {
 
   /** Reads declarative director/reviewer profiles without selecting models in scheduling code. */
   private defaults(source: string, base: string, catalog: Catalog) {
-    const retired = Object.values(catalog.components).filter((c) => c.schemaVersion !== 6);
-    if (retired.length)
-      throw new InputError(
-        `New execution requires version-six components; run arcnexus config migrate: ${retired.map((c) => c.id).join(', ')}`,
-      );
-    const environment = new ConfigurationReader().definition(
-      source,
-      base,
-      'architecture/environment',
-    ).value as { schemaVersion: number };
-    if (environment.schemaVersion < 4)
-      throw new InputError(
-        'New execution requires environment schema 4 or 5; migrate inline setup to shared operations',
-      );
     return new PlatformExecution(catalog).defaults(source, base);
   }
 

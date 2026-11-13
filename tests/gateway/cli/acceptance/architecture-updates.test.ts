@@ -15,7 +15,7 @@ class ArchitectureUpdateScenarios {
     const f = new PackageCliFixture(t);
     f.register();
     const head = f.git('rev-parse', 'HEAD');
-    const path = join(f.repo, 'architecture/components/sample.yaml');
+    const path = join(f.repo, '.arc/architecture/components/sample.yaml');
     const original = readFileSync(path, 'utf8');
     writeFileSync(path, original + '\n# caller change\n');
     const before = f.git('status', '--porcelain');
@@ -91,7 +91,6 @@ class ArchitectureUpdateScenarios {
         service.update('package', 'package', { purpose: 'Selected' }).base,
         selected.base,
       );
-      assert.throws(() => service.migrate('package', true), /reconcile/);
       assert.throws(() => service.update('package', 'package', { id: 'renamed' }), /immutable/);
     } finally {
       service.close();

@@ -3,7 +3,7 @@ import { ancestry, scopePath } from './component-paths.js';
 import { InputError } from './config.js';
 import { git } from '../operations/process.js';
 
-/** Resolves v5 execution authority from its single platform declaration. */
+/** Resolves execution authority from the catalog's single platform declaration. */
 export class PlatformExecution {
   /** Keeps profile and component lookups pinned to the captured catalog. */
   constructor(private readonly catalog: Catalog) {}
@@ -20,13 +20,13 @@ export class PlatformExecution {
       '--name-only',
       base,
       '--',
-      'architecture/execution.json',
-      'architecture/execution.yaml',
-      'architecture/execution.yml',
+      '.arc/architecture/execution.json',
+      '.arc/architecture/execution.yaml',
+      '.arc/architecture/execution.yml',
     );
     if (retired.trim())
       throw new InputError(
-        'Retired execution configuration: move settings to the platform and remove architecture/execution',
+        'Retired execution configuration: move settings to the platform and remove .arc/architecture/execution',
       );
     const platform = platforms[0]!;
     this.director(platform);
@@ -50,8 +50,8 @@ export class PlatformExecution {
       !ancestry(this.catalog, director.id).some((c) => c.id === platform.id)
     )
       throw new InputError('Director must be an executable component in the declaring platform');
-    if (!this.catalog.roles[director.role]?.activities.includes('research'))
-      throw new InputError('Director role must permit research');
+    if (!director.activities?.research)
+      throw new InputError(`Director component must declare research: ${director.id}`);
     for (const id of [platform.director.profile, platform.reviewerProfile])
       if (!this.catalog.profiles[id]) throw new InputError(`Unknown execution profile: ${id}`);
     return director;

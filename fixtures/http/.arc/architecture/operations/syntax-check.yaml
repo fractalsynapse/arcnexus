@@ -1,0 +1,14 @@
+schemaVersion: 4
+id: syntax-check
+purpose: Check HTTP server syntax
+kind: command
+repository: http-sample
+cwd: .
+category: cli-check
+generatedDirectories: []
+artifacts: []
+prerequisites: []
+command: node
+args:
+  - --check
+  - server.mjs

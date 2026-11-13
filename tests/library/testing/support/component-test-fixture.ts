@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, readFileSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import type { TestContext } from 'node:test';
-import { catalogFixture, componentFields } from './catalog-fixture.js';
+import { catalogFixture, componentFields, containerFields } from './catalog-fixture.js';
 
 /** Builds a real catalog and a tiny Node profile without invoking inference. */
 export class ComponentTestFixture {
@@ -21,7 +21,13 @@ export class ComponentTestFixture {
     this.git('init', '-b', 'main');
     this.git('config', 'user.name', 'Test');
     this.git('config', 'user.email', 'test@example.invalid');
+    // The fixture catalog declares a primary repository, so the checkout must actually have that
+    // origin: otherwise binding identity fails with git's raw 'No such remote' error and hides the
+    // behaviour every scenario in this family is meant to exercise.
+    if (!this.git('remote').trim().split('\n').includes('origin'))
+      this.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     catalogFixture(this.repo);
+    this.maintenanceOwner();
     this.catalog();
     this.profile();
     this.put('.gitignore', '.test-build/\nprepared\n');
@@ -30,88 +36,139 @@ export class ComponentTestFixture {
     this.commit();
   }
 
+  /**
+   * One maintenance owner for the shared documents this fixture authors.
+   *
+   * Every tracked file must resolve to exactly one owner, and containers own nothing - so the
+   * environment document, the role and profile directories, the operation definitions, the test
+   * profile and the two container definitions all need a maintenance component. Without one the
+   * catalog refuses to load and each suite in this family fails in setup rather than on its subject;
+   * the same single-maintainer rule the repository uses for `architecture-maintenance`.
+   */
+  private maintenanceOwner(): void {
+    this.put('.arc/architecture/components/maintenance.yaml', {
+      ...this.fields(),
+      id: 'maintenance',
+      type: 'foundation',
+      parentId: 'package',
+      owns: [
+        '.gitignore',
+        '.arc/architecture/environment.yaml',
+        '.arc/architecture/roles',
+        '.arc/architecture/execution-profiles',
+        '.arc/architecture/test-profiles',
+        '.arc/architecture/operations',
+        '.arc/architecture/components/platform.yaml',
+        '.arc/architecture/components/package.yaml',
+      ],
+    });
+  }
+
   /** Builds shared version-four fixture component fields with explicit owned test roots. */
   private fields() {
     const base = {
       ...componentFields,
-      schemaVersion: 4,
-      path: '.',
       purpose: 'Test owner',
       objectives: [],
       constraints: [],
-      verification: [],
-      access: { readPaths: ['.'], writeDirectories: [] },
     };
-    const {
-      repository: _repository,
-      documentation: _documentation,
-      tests: _tests,
-      patterns: _patterns,
-      ...fields
-    } = base;
-    return fields;
+    return base;
   }
 
   /** Writes sample ownership, profile references and tracked fixture tests. */
   private catalog(): void {
     const fields = this.fields();
-    this.containers(fields);
-    this.put('architecture/components/sample.yaml', {
+    this.containers();
+    this.put('.arc/architecture/components/sample.yaml', {
       ...fields,
       id: 'sample',
       type: 'library',
       parentId: 'package',
-      ownership: { paths: ['tests'], publicModules: [], directoryExceptions: [] },
-      access: { readPaths: ['.'], writeDirectories: ['tests'] },
+      owns: ['tests'],
       testProfile: 'node',
-      verification: [{ command: process.execPath, args: ['-e', 'process.exit(0)'] }],
-      discovery: { source: [], documentation: [], tests: ['tests'], exclude: [] },
+      // Preparation and the runner are host lifecycle steps: setup compiles, verify runs the
+      // selected suites. Neither is an agent operation, so neither needs an activity binding.
+      operations: { compile: ['setup'], suites: ['verify'] },
     });
-    this.put('architecture/environment.yaml', {
-      schemaVersion: 1,
-      prerequisites: [],
-      setup: [],
-      generatedDirectories: ['.test-build'],
+    this.put('.arc/architecture/environment.yaml', {
+      schemaVersion: 4,
+      workspace: {
+        primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
+        dependencies: [],
+      },
     });
   }
 
   /** Defines platform and package containment without granting blanket source ownership. */
-  private containers(fields: ReturnType<ComponentTestFixture['fields']>): void {
-    this.put('architecture/components/platform.yaml', {
-      ...fields,
+  private containers(): void {
+    this.put('.arc/architecture/components/platform.yaml', {
+      ...containerFields,
       id: 'platform',
       type: 'platform',
-      initialization: { schemaVersion: 3, componentId: 'sample' },
-      coverageExclusions: [
-        { path: 'architecture', reason: 'Fixture configuration' },
-        { path: 'build.cjs', reason: 'Fixture preparation' },
-        { path: '.gitignore', reason: 'Fixture outputs' },
-      ],
+      executionProfile: 'luna',
+      reads: ['.'],
+      defaultPackage: 'package',
+      verificationInputs: [],
     });
-    this.put('architecture/components/package.yaml', {
-      ...fields,
+    this.put('.arc/architecture/components/package.yaml', {
+      ...containerFields,
+      // The primary repository is derived for a platform, while a package names the repository whose
+      // sources it contains; the shared container base therefore carries it only for the package.
+      repository: 'sample',
       id: 'package',
       type: 'package',
       parentId: 'platform',
-      repository: 'sample',
-      repositoryRoot: '.',
+      root: '.',
     });
   }
 
   /** Declares the shared Node preparation and compiled-test runner once. */
   profile(overrides: Record<string, unknown> = {}): void {
-    this.put('architecture/test-profiles/node.yaml', {
-      schemaVersion: 1,
+    this.put('.arc/architecture/test-profiles/node.yaml', {
+      schemaVersion: 2,
       id: 'node',
       adapter: 'node',
       outputRoot: '.test-build',
-      preparation: [{ command: process.execPath, args: ['build.cjs'], purpose: 'tests' }],
+      preparation: [{ operation: 'compile', purpose: 'tests' }],
+      run: 'suites',
       ...overrides,
     });
-    this.put(
-      'build.cjs',
-      "const fs=require('fs'); fs.appendFileSync('prepared','built\\n'); fs.cpSync('tests','.test-build',{recursive:true}); for(const p of fs.readdirSync('.test-build',{recursive:true})) if(p.endsWith('.ts'))fs.renameSync('.test-build/'+p,'.test-build/'+p.replace(/\\.ts$/,'.js')); ",
+    this.runnerOperations();
+  }
+
+  /** Declares the setup and verify operations the shared profile references. */
+  private runnerOperations(): void {
+    this.runnerOperation('compile', 'Compile the fixture suites', ['build.cjs'], []);
+    this.runnerOperation(
+      'suites',
+      'Run the selected fixture suites',
+      ['--test', { context: 'selectedTestFiles' }],
+      ['compile'],
     );
+  }
+
+  /** Writes one finite fixture operation with the shared repository, category and output contract. */
+  private runnerOperation(
+    id: string,
+    purpose: string,
+    args: unknown[],
+    prerequisites: string[],
+  ): void {
+    this.put(`.arc/architecture/operations/${id}.yaml`, {
+      schemaVersion: 4,
+      id,
+      purpose,
+      kind: 'command',
+      repository: 'sample',
+      cwd: '.',
+      category: 'unit-test',
+      command: 'node',
+      args,
+      generatedDirectories: ['.test-build'],
+      artifacts: [],
+      prerequisites,
+      network: false,
+    });
   }
 
   /** Reads literal suite metadata and maps the source to its compiled test artifact. */
@@ -143,19 +200,17 @@ export class ComponentTestFixture {
 
   /** Adds an unselected profile to verify irrelevant configuration does not alter execution. */
   unusedProfile(): void {
-    const path = 'architecture/components/sample.yaml';
+    const path = '.arc/architecture/components/sample.yaml';
     const sample = JSON.parse(readFileSync(join(this.repo, path), 'utf8'));
     sample.ownership.paths = ['tests/unit', 'tests/regression'];
     sample.discovery.tests = sample.ownership.paths;
     sample.access.writeDirectories = sample.ownership.paths;
     this.put(path, sample);
-    this.put('architecture/components/other.yaml', {
+    this.put('.arc/architecture/components/other.yaml', {
       ...sample,
       id: 'other',
       testProfile: 'other',
-      ownership: { paths: ['tests/other'], publicModules: [], directoryExceptions: [] },
-      discovery: { ...sample.discovery, tests: ['tests/other'] },
-      access: { readPaths: ['.'], writeDirectories: ['tests/other'] },
+      owns: ['tests/other'],
     });
     this.otherProfile();
     this.commit();
@@ -163,8 +218,8 @@ export class ComponentTestFixture {
 
   /** Adds another owner profile to exercise preparation and runner compatibility. */
   private otherProfile(): void {
-    this.put('architecture/test-profiles/other.yaml', {
-      schemaVersion: 1,
+    this.put('.arc/architecture/test-profiles/other.yaml', {
+      schemaVersion: 2,
       id: 'other',
       adapter: 'node',
       outputRoot: '.test-build',

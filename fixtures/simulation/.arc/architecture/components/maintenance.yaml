@@ -1,0 +1,42 @@
+schemaVersion: 6
+id: maintenance
+type: foundation
+parentId: package
+purpose: Own the simulation fixture shared catalog files
+executionProfile: luna
+reads:
+  - .
+owns:
+  - .gitignore
+  - .arc/architecture/environment.yaml
+  - .arc/architecture/roles
+  - .arc/architecture/execution-profiles
+  - .arc/architecture/test-profiles
+  - .arc/architecture/operations
+  - .arc/architecture/components/platform.yaml
+  - .arc/architecture/components/package.yaml
+activities:
+  research:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Read the catalog and the shared files it maintains
+  documentation:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Record catalog decisions and their consequences
+  implementation:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Apply the requested catalog change inside the maintained scope
+  review:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Reject weakened ownership or acceptance coverage in catalog edits

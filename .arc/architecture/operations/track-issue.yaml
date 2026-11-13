@@ -1,0 +1,10 @@
+schemaVersion: 4
+id: track-issue
+purpose: Create actionable run or assignment tracking
+kind: upstream
+action: issue.create
+repository: arcnexus
+cwd: .
+category: collaboration
+generatedDirectories: []
+artifacts: []

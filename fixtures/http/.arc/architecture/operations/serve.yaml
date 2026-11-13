@@ -1,0 +1,19 @@
+schemaVersion: 4
+purpose: Exercise a managed local HTTP service
+repository: http-sample
+cwd: .
+category: http-check
+generatedDirectories: []
+artifacts: []
+id: serve
+kind: service
+command: node
+args:
+  - server.mjs
+service:
+  port: 0
+  readinessPath: /health
+  expectedStatus: 200
+network: true
+prerequisites:
+  - check-loopback

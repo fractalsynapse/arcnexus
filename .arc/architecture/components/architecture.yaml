@@ -1,0 +1,92 @@
+schemaVersion: 6
+id: architecture
+type: library
+parentId: cli-package
+purpose:
+  Resolve architectural definitions and host-controlled assignment inputs; execution is owned by the assignment
+  component
+objectives: [Make actual execution outcomes easy to inspect]
+constraints: [
+    Preserve captured authority and evidence,
+    'component (src/library/architecture/schemas/component.json):
+    Preserve supported historical versions and captured execution readers',
+    'composition-profile (src/library/architecture/schemas/composition-profile.json):
+    Preserve supported historical versions and captured execution readers',
+    'execution-profile (src/library/architecture/schemas/execution-profile.json):
+    Preserve supported historical versions and captured execution readers',
+    'ownership (src/library/architecture/schemas/ownership.json):
+    Preserve supported historical versions and captured execution readers',
+    'role (src/library/architecture/schemas/role.json):
+    Preserve supported historical versions and captured execution readers',
+  ]
+activities:
+  research:
+    role: researcher
+    profile: luna
+    operations: []
+    instructions: [
+        Establish what Resolve architectural definitions and host-controlled assignment inputs; execution
+        is owned by the assignment component means in practice from this component's own sources and retained evidence
+        before proposing any change to src/library/architecture.,
+      ]
+  documentation:
+    role: technical-writer
+    profile: luna
+    operations: []
+    instructions: [
+        'Keep the documentation under docs/library/architecture describing Resolve architectural definitions
+        and host-controlled assignment inputs; execution is owned by the assignment component as delivered behaviour,
+        never as intent.',
+      ]
+  testing:
+    role: designer
+    profile: luna
+    operations: []
+    instructions: [
+        Express acceptance for Resolve architectural definitions and host-controlled assignment inputs;
+        execution is owned by the assignment component as checks over its declared public contract in tests/library/architecture;
+        observe the failure before changing behaviour.,
+      ]
+  implementation:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions: [
+        'Change only what this goal requires inside src/library/architecture, preserving the public contract
+        and the ownership boundaries that declare it.',
+      ]
+  review:
+    role: reviewer
+    profile: luna
+    operations: []
+    instructions: [
+        Judge the candidate against the stated acceptance and the standards in force for Resolve architectural
+        definitions and host-controlled assignment inputs; execution is owned by the assignment component; refuse
+        on unmet behaviour rather than style.,
+      ]
+owns: [src/library/architecture, tests/library/architecture, docs/library/architecture]
+api:
+  - { module: src/library/architecture/standard-update.ts }
+  - { module: src/library/architecture/component-update.ts }
+  - { module: src/library/architecture/inspection.ts }
+  - { module: src/library/architecture/activities.ts }
+  - { module: src/library/architecture/modes.ts }
+  - { module: src/library/architecture/frame.ts }
+  - { module: src/library/architecture/validation.ts }
+  - { module: src/library/architecture/execution-context.ts }
+  - { module: src/library/architecture/assignment.ts }
+  - { module: src/library/architecture/bindings.ts }
+  - { module: src/library/architecture/components.ts }
+  - { module: src/library/architecture/contracts.ts }
+  - { module: src/library/architecture/file-classification.ts }
+  - { module: src/library/architecture/config.ts }
+  - { module: src/library/architecture/configuration.ts }
+  - { module: src/library/architecture/initialization.ts }
+  - { module: src/library/architecture/schema.ts }
+  - { module: src/library/architecture/build-schemas.ts }
+  - { module: src/library/architecture/catalog-view.ts }
+  - { schema: src/library/architecture/schemas/component.json }
+  - { schema: src/library/architecture/schemas/composition-profile.json }
+  - { schema: src/library/architecture/schemas/execution-profile.json }
+  - { schema: src/library/architecture/schemas/ownership.json }
+  - { schema: src/library/architecture/schemas/role.json }

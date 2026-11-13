@@ -37,7 +37,7 @@ Mandatory initialization and task proposals preserve captured authority; cancell
 and observable loop guards replace implicit execution limits.
 
 Historical version-four ownership is defined in each component. See the
-[version-four contract](component-contracts-v4.md) for derived coverage, package roots,
+[version-four contract](component-contracts.md) for derived coverage, package roots,
 patterns, contracts and discovered inventories. Versions 1–3 preserve their existing
 interpretation. Empty version-three/four container permissions express containment,
 not a deny-all ceiling. Container nodes cannot execute assignments.
@@ -46,7 +46,7 @@ not a deny-all ceiling. Container nodes cannot execute assignments.
 
 Minimal platform declarations are the single source for `director` (component
 and profile), `reviewerProfile`, `defaultPackage`, and `verificationInputs`.
-New execution rejects a simultaneous `architecture/execution` file. Director models
+New execution rejects a simultaneous `.arc/architecture/execution` file. Director models
 and reasoning come from the selected profile; absent configuration never selects a
 hidden model or initializer. New execution requires schema six; historical version-five
 catalogs remain readable and migratable. Shared-operation preparation feeds the
@@ -102,7 +102,7 @@ available for inspection and explicit migration, not as alternate execution auth
 The [configuration migration](configuration-migration.md) upgrades supported families
 without changing historical reports or a running supervisor's captured authority.
 
-Inherited `standards` identities resolve definitions in `architecture/standards` and
+Inherited `standards` identities resolve definitions in `.arc/architecture/standards` and
 capture owned documentation/examples at the architectural revision. Missing standards,
 out-of-owner artifacts and checks outside the standard owner's declared operations
 fail validation. References do not grant execution or write authority. Inspection
@@ -176,15 +176,21 @@ The steward selects those files; assignment authors cannot grant or narrow owner
 existing behavior uses the refactor workflow, with passing captured checks rather
 than invented documentation edits or failing tests.
 
-## Activity execution profiles (#277)
+## Activity execution profiles (#277, activity model #394)
 
-The accepted activity-profile increment adds an optional `activityProfiles` mapping
-beside the inherited `executionProfile`. Values name shared execution profiles;
-model settings remain authored only in those profiles. Each activity inherits the
-nearest explicit value independently; omitted activities use the effective default.
-Supported keys are the activities the component's role declares: research,
-documentation, testing, implementation, review and release. A key outside that set, or
-one the role does not support, fails validation naming the valid activities.
+An activity states the execution profile its work runs under, next to its role, its
+bound operations and its own direction. There is no separate `activityProfiles`
+mapping: the selection lives inside `activities`, beside the position it belongs to.
+Model settings remain authored only in the shared execution profiles, never inline.
+
+Supported activity names are research, documentation, testing, implementation, review
+and release. A key outside that set fails validation naming the valid activities, and
+a declared activity missing any of its four fields is refused at load rather than
+resolved by a fallback.
+
+Whether an activity may inherit a profile from an ancestor instead of stating one is
+open in #428. Under the current shape every declared activity must state the field, so
+inheritance cannot be expressed and this document describes what is required.
 
 The existing host workflow selects one primary activity per model turn. Planning
 and coordination use the default; research and review use their matching overrides.
