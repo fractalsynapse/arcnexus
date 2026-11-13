@@ -10,11 +10,11 @@ contract holds; changing a contract is an architectural act.
 
 ## Stages
 
-| Stage      | Meaning                                      | Who may change it                                                                                                              |
-| ---------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `draft`    | Being written. Not reviewable.               | Any agent within its owner's scope                                                                                             |
-| `proposed` | Complete and ready for architectural review. | The owning steward, in response to review                                                                                      |
-| `locked`   | Accepted. The interface is fixed.            | **Only the human architect.** An agent may propose a change through a `component` milestone; it may not edit a locked contract |
+| Stage | Meaning | Who may change it |
+| --- | --- | --- |
+| `draft` | Being written. Not reviewable. | Any agent within its owner's scope |
+| `proposed` | Complete and ready for architectural review. | The owning steward, in response to review |
+| `locked` | Accepted. The interface is fixed. | **Only the human architect.** An agent may propose a change through a `component` milestone; it may not edit a locked contract |
 
 Locking is recorded in [`registry.yaml`](registry.yaml): contract id, file, stage, revision,
 content digest, who accepted it and when. Enforcement is delivered, not promised. `arcnexus
@@ -101,7 +101,7 @@ project ──┬── foundation ──┬── gateway (CLI) ──┬──
 ```
 
 1. **Project** — identity, knowledge structure, ownership map, delivery policy. Nothing may
-   depend on a component until what a project _is_ is settled. This replaces platform and
+   depend on a component until what a project *is* is settled. This replaces platform and
    package.
 2. **Foundation** — the shared build, type-check, format, lint, quality and test-selection
    substrate every other component consumes.
