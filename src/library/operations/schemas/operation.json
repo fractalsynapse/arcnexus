@@ -407,5 +407,5 @@
       }
     }
   ],
-  "$id": "https://arcnexus.local/schemas/operation-v4"
+  "$id": "https://arcnexus.local/schemas/operation"
 }

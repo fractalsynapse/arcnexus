@@ -164,9 +164,9 @@ function read<T>(
   sources.push(source);
   try {
     return validateSchema<T>(
-      // Configurations carry no version to select on: one schema per kind, so a file naming an
-      // older shape fails validation instead of being upgraded by the loader.
-      schema === 'component' ? 'component-v6' : schema === 'operation' ? 'operation-v4' : schema,
+      // One schema per kind, named for the kind: there is no version to select between, so a
+      // document written in an older shape fails validation rather than being upgraded by the loader.
+      schema,
       structuredClone(source.value),
     );
   } catch (error) {

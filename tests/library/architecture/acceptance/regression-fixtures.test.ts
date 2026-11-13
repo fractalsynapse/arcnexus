@@ -14,7 +14,7 @@ class RegressionFixtureScenarios {
       fixture.component('deep', 'library', { parentId: 'package' });
       reachedBehavior = true;
       assert.fail('ComponentResources exported publicly');
-    }, /Invalid component-v6.*owns/);
+    }, /Invalid component.*owns/);
     assert.equal(reachedBehavior, false);
     assert.throws(() => fixture.component('orphan', 'package'), /parentId/);
     assert.throws(() => fixture.component('bad', 'platform', { path: '.' }), /additional/);

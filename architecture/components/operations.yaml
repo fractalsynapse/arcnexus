@@ -14,7 +14,7 @@ constraints: [
     Never infer setup commands or broaden captured operation authority,
     Preserve caller cancellation and
     resource ownership checks,
-    'operation (src/library/operations/schemas/operation-v4.json): Preserve supported historical
+    'operation (src/library/operations/schemas/operation.json): Preserve supported historical
     versions and captured execution readers',
     'command-diagnostics (src/library/operations/diagnostics.ts): Keep
     model-facing excerpts within 16 KiB and preserve complete raw logs separately',
@@ -87,7 +87,7 @@ api:
   - { module: src/library/operations/probes.ts }
   - { module: src/library/operations/process.ts }
   - { module: src/library/operations/service-state.ts }
-  - { schema: src/library/operations/schemas/operation-v4.json }
+  - { schema: src/library/operations/schemas/operation.json }
   - { module: src/library/operations/upstream-execution.ts }
   - { module: src/library/operations/github-upstream.ts }
   - { module: src/library/operations/upstream-bridge.ts }

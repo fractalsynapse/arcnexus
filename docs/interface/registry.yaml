@@ -90,13 +90,20 @@ contracts:
     file: docs/interface/arcnexus-architecture-model.md
     owner: architecture-model
     stage: locked
-    revision: 7
-    digest: e3d6abee203a17b7d16c8b3ce9031e5595467135e2eb405ddd9b01a64499491b
+    revision: 8
+    digest: 4656ae78ea48caf562784202e1c53a38bb69d07862cd8be33f3e73606f3ab0e1
     dependsOn: [arcnexus/project, arcnexus/foundation]
     scenarios: 16
     acceptedBy: Adrian Webb (architect)
     acceptedAt: 2026-11-07
     history:
+      - revision: 8
+        stage: locked
+        digest: 4656ae78ea48caf562784202e1c53a38bb69d07862cd8be33f3e73606f3ab0e1
+        note: >
+          Migration table records the version-suffixed schema files renamed to their kind
+          (component, operation, environment) and the version-keyed selection removed, under the
+          architect's 2026-11-12 ruling that the installed release is the pin.
       - revision: 7
         stage: locked
         digest: e3d6abee203a17b7d16c8b3ce9031e5595467135e2eb405ddd9b01a64499491b

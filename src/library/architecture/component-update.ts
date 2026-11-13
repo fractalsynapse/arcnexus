@@ -31,7 +31,7 @@ export class ComponentUpdate {
     const original = new ConfigurationReader().revision(source, base, path).value as object;
     const value = { ...original, ...this.fields(fields) };
     try {
-      validateSchema('component-v6', value);
+      validateSchema('component', value);
     } catch (error) {
       throw new InputError(String(error));
     }
@@ -53,7 +53,7 @@ export class ComponentUpdate {
     if (catalog.components[id]) throw new InputError('Component already exists: ' + id);
     const value = { schemaVersion: 6, id, parentId: packageId, ...this.fields(fields) };
     try {
-      validateSchema('component-v6', value);
+      validateSchema('component', value);
       if (!['foundation', 'gateway', 'library', 'release'].includes(String(fields.type)))
         throw new Error('Use platform/package management for containers');
     } catch (error) {

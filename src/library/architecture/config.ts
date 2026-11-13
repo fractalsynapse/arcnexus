@@ -79,7 +79,7 @@ export function environment(value: unknown, operations: Operation[] = []): Envir
 /** Derives disposable outputs from operation definitions while keeping composition recipe-free. */
 function sharedEnvironment(value: unknown, operations: Operation[]): Environment {
   const input = validateSchema<{ schemaVersion: 4; workspace: WorkspaceDefinition }>(
-    'environment-v4',
+    'environment',
     value,
   );
   const outputs = (id: string) =>

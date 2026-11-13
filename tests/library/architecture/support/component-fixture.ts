@@ -38,7 +38,7 @@ export function selectedActivities(profile: string, role = 'engineer'): Record<s
 
 /** Builds a completely owned minimal catalog without legacy component fields. */
 export class ComponentFixture {
-  readonly root = mkdtempSync(join(tmpdir(), 'component-v5-'));
+  readonly root = mkdtempSync(join(tmpdir(), 'component-'));
 
   /** Captures a clean source revision and removes only this fixture after the scenario. */
   constructor(t: TestContext) {
@@ -134,7 +134,7 @@ export class ComponentFixture {
 
   /** Rejects malformed ordinary setup using the same packaged schema as production loading. */
   component(id: string, type: string, extra: object = {}): any {
-    return validateSchema('component-v6', this.uncheckedComponent(id, type, extra));
+    return validateSchema('component', this.uncheckedComponent(id, type, extra));
   }
 
   /** Builds deliberately malformed declarations only for explicit production rejection scenarios. */

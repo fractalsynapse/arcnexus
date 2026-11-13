@@ -6,7 +6,7 @@ For current schema-six execution, see [configuration](configuration.md) and
 [configuration migration](configuration-migration.md).
 
 Architecture files use YAML, with legacy JSON accepted through the same reader.
-Version 4 is described in [component-owned architecture](component-contracts-v4.md).
+Version 4 is described in [component-owned architecture](component-contracts.md).
 Versions 1–3 remain supported. Unknown fields, unsupported versions, missing references,
 cyclic ancestry, invalid paths and contradictory ownership fail before inference.
 Historical reports remain evidence and are not migrated.

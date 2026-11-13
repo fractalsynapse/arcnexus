@@ -37,7 +37,7 @@ Mandatory initialization and task proposals preserve captured authority; cancell
 and observable loop guards replace implicit execution limits.
 
 Historical version-four ownership is defined in each component. See the
-[version-four contract](component-contracts-v4.md) for derived coverage, package roots,
+[version-four contract](component-contracts.md) for derived coverage, package roots,
 patterns, contracts and discovered inventories. Versions 1–3 preserve their existing
 interpretation. Empty version-three/four container permissions express containment,
 not a deny-all ceiling. Container nodes cannot execute assignments.

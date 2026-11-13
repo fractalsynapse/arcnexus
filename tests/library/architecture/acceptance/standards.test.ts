@@ -49,7 +49,7 @@ class StandardsV6Scenarios {
     f.commit();
     const result = f.run('validate');
     assert.equal(result.status, 2);
-    assert.match(result.stderr, /Invalid component-v6/);
+    assert.match(result.stderr, /Invalid component/);
   }
 
   /** Declares one owned pattern and inherits its identity from the platform. */

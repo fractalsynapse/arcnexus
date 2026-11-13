@@ -19,7 +19,7 @@ declares `src/library/architecture`, `tests/library/architecture`, and
 `docs/library/architecture`. The runtime derives exact allowed edit paths from
 those declarations and the component definition. The captured inventory classifies
 files under that scope; file classification does not grant additional ownership.
-See the v6 [component schema](../../../src/library/architecture/schemas/component-v6.json),
+See the [component schema](../../../src/library/architecture/schemas/component.json),
 [ownership resolver](../../../src/library/architecture/component-materialization.ts), and
 [ownership validation](../../../src/library/architecture/ownership.ts).
 
