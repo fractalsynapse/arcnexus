@@ -89,7 +89,7 @@ class RepositoryOwnershipScenarios {
       '.arc/architecture/components/other-maintenance.json',
       fixture.component('other-maintenance', 'foundation', {
         parentId: 'other-package',
-        owns: ['architecture'],
+        owns: ['.arc/architecture'],
       }),
     );
     const path = '.arc/architecture/components/maintenance.json';
