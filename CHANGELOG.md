@@ -4,6 +4,16 @@
 
 ### Changed
 
+- **An activity's model must resolve** (#394, ruling (B)): validation accepted an activity naming a
+  profile no document declares. Because (B) makes `profile` a required statement on every activity,
+  an unresolvable reference is now a load failure - `Unknown activity profile: <id>` - rather than
+  routing work to a model that does not exist.
+- **The activity-profile suite tests the current grammar** (#394): it had been authored against the
+  retired `activityProfiles` map and against inheritance of activities a leaf never declared. It now
+  proves that a component holds exactly the activities it declares, that a leaf's own model is
+  resolved with the leaf as its source, that an explicit caller selection overrides every activity,
+  and that a captured assignment keeps the profile contents it was authorized with.
+
 - **Standards are now declarable on an activity, and one resolver decides what binds** (#394,
   architect ruling 2026-11-12): components, activities and roles may each declare standards; the set
   in force for one activation is their union, limited to ids the catalog knows. Assignment capture

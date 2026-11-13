@@ -105,6 +105,10 @@ export class ComponentMaterializationPolicy {
           authors.flatMap((entry) => (entry.activities?.[activity] ?? {}).operations ?? []),
         ),
       ];
+      // (B) makes the profile a required statement, so it must also resolve: an activity naming a
+      // model that no profile document declares would otherwise route work to nothing.
+      if (nearest.profile && !this.authored.profiles[nearest.profile])
+        throw new InputError(`Unknown activity profile: ${nearest.profile}`);
       resolved[activity] = { ...nearest, operations };
       component.policy![`activities.${activity}`] = {
         value: resolved[activity],
