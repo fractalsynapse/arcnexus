@@ -1,6 +1,6 @@
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { test } from 'node:test';
@@ -62,6 +62,40 @@ class CatalogOwnershipTests {
     }
   }
 
+  /**
+   * Requires every tracked file in this repository to resolve to exactly one component owner.
+   *
+   * The runtime validator already refuses an unowned or doubly owned path, but it reads the
+   * committed tree, so a file can enter the repository and only be noticed later by whoever runs
+   * `validate`. This walks `git ls-files` against the resolved owners, so coverage of source, tests,
+   * docs, scripts, fixtures and root files is a test result rather than an operator discovery.
+   */
+  everyTrackedFileHasExactlyOneOwner(): void {
+    const owners = this.catalog().owners as Record<string, any>;
+    const scopeOf = (owner: any): string[] => [
+      ...new Set([
+        ...(owner.ownedPaths ?? []),
+        ...(owner.writeScope ?? []),
+        ...(owner.definition?.path ? [owner.definition.path] : []),
+      ]),
+    ];
+    const covers = (file: string, root: string) =>
+      root === '.' || file === root || file.startsWith(root + '/');
+    const tracked = execFileSync('git', ['ls-files'], { encoding: 'utf8' }).trim().split('\n');
+    assert.ok(tracked.length > 100, 'expected the real repository file list');
+    const orphans: string[] = [];
+    const contested: string[] = [];
+    for (const file of tracked) {
+      const holders = Object.entries(owners)
+        .filter(([, owner]) => scopeOf(owner).some((path: string) => covers(file, path)))
+        .map(([id]) => id);
+      if (!holders.length) orphans.push(file);
+      else if (holders.length > 1) contested.push(`${file}: ${holders.join(', ')}`);
+    }
+    assert.deepEqual(orphans, [], `unowned tracked files: ${orphans.slice(0, 12).join(', ')}`);
+    assert.deepEqual(contested, [], `doubly owned files: ${contested.slice(0, 8).join(' | ')}`);
+  }
+
   /** Reads the authored component declarations, including their ownership lists. */
   private components(): any[] {
     return readdirSync('architecture/components', { withFileTypes: true })
@@ -88,5 +122,8 @@ test('built validation assigns every real source module to one executable owner'
 
 test('every documented .arc space has exactly one component steward', () =>
   suite.documentedArcSpacesHaveExactlyOneSteward());
+
+test('every tracked file belongs to exactly one component owner', () =>
+  suite.everyTrackedFileHasExactlyOneOwner());
 
 registerSuite({ component: 'architecture', level: 'acceptance', tags: ['deterministic'] });
