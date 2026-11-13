@@ -7,6 +7,7 @@ import {
 import type { Operation } from '../operations/operations.js';
 import type { Catalog, Component } from './components.js';
 import { InputError } from './config.js';
+import { validateSchema } from './schema.js';
 import { compiledTestPath } from '../testing/captured-tests.js';
 
 /** Captures finite lifecycle plans and agent availability from a single definition registry. */
@@ -85,14 +86,19 @@ export class ComponentOperationPlans {
   /** Requires a shared test profile before a component may be assigned executable test work. */
   profileCheck(c: Component): { id: string; run: string } | undefined {
     if (!c.testProfile) return undefined;
-    const profile = this.catalog.configurationSources.find(
-      (source) =>
-        source.path.startsWith('architecture/test-profiles/') &&
-        (source.value as { id?: string }).id === c.testProfile,
-    )?.value as { id: string; run?: string } | undefined;
+    const source = this.catalog.configurationSources.find(
+      (entry) =>
+        entry.path.startsWith('architecture/test-profiles/') &&
+        (entry.value as { id?: string }).id === c.testProfile,
+    );
 
-    // A declared profile that resolves to nothing, or names no runner, cannot carry executable
-    // tests. The check is about presence and capability, not about a configuration version.
+    // Architect ruling 2026-11-12: admission validates what it consumes. A profile reaching this
+    // point came from a captured document list, not necessarily from a load that schema-checked it,
+    // so a stale or fabricated shape must be refused here rather than acted upon.
+    const profile = source
+      ? validateSchema<{ id: string; run?: string }>('test-profile', source.value)
+      : undefined;
+    // A declared profile that resolves to nothing, or names no runner, cannot carry executable tests.
     if (!profile?.run)
       throw new InputError(`Test profile ${c.testProfile} declares no runner for ${c.id}`);
     return { id: profile.id, run: profile.run };

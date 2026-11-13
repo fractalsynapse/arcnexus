@@ -25,7 +25,9 @@ class AssignmentScopeScenarios {
       source.path.startsWith('architecture/test-profiles/'),
     )!;
     profile.value = { ...(profile.value as object), schemaVersion: 1 };
-    assert.throws(() => resolve(['docs', 'tests']), /Migrate test profile to schemaVersion 2/);
+    // The guarantee is that a profile document which is not the current shape cannot be admitted.
+    // Load-time validation is no longer the only place that checks, so the refusal is the schema's.
+    assert.throws(() => resolve(['docs', 'tests']), /Invalid test-profile/);
   }
 
   /** Allows future regression creation without requiring a preexisting suite inventory. */
@@ -126,7 +128,16 @@ class AssignmentScopeScenarios {
     catalog.configurationSources.push(
       new ConfigurationReader().parse(
         'architecture/test-profiles/node.json',
-        JSON.stringify({ schemaVersion: 2, id: 'node', run: 'check' }),
+        // A complete current-shape profile: admission validates what it consumes, so the synthetic
+        // source has to carry every field the schema requires, exactly as an authored document does.
+        JSON.stringify({
+          schemaVersion: 2,
+          id: 'node',
+          adapter: 'node',
+          outputRoot: '.test-build',
+          preparation: [],
+          run: 'check',
+        }),
       ),
     );
     return catalog;

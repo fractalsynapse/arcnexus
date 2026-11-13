@@ -4,6 +4,13 @@
 
 ### Changed
 
+- **Admission validates the test profile it consumes** (#436, architect ruling 2026-11-12): a
+  component's declared `testProfile` is now schema-checked when an assignment is resolved, not only
+  when the catalog loads, so a captured or fabricated profile document in a stale shape is refused at
+  the point it would grant executable test work. `assignment-scope`'s synthetic source had to be
+  completed to the current shape (`adapter`, `outputRoot`, `preparation`) - the check caught a fixture
+  that had been authoring an incomplete document.
+
 - **An activity's model must resolve** (#394, ruling (B)): validation accepted an activity naming a
   profile no document declares. Because (B) makes `profile` a required statement on every activity,
   an unresolvable reference is now a load failure - `Unknown activity profile: <id>` - rather than
