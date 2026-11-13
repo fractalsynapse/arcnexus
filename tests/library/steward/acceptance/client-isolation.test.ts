@@ -87,12 +87,15 @@ class ClientIsolationScenarios {
     const fixture = this.fixture(t);
     const base = this.configuration(fixture);
     const resolved = base.input.record.resolvedAssignment as any;
-    resolved.activityProfiles = {
+    resolved.activities = {
       research: {
-        ...resolved.executionProfile,
-        id: 'research',
-        model: 'research-model',
-        reasoning: 'high',
+        role: 'engineer',
+        profile: {
+          ...resolved.executionProfile,
+          id: 'research',
+          model: 'research-model',
+          reasoning: 'high',
+        },
       },
     };
     base.input.record.settings = base.settings;

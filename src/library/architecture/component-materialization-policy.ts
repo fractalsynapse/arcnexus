@@ -4,7 +4,6 @@ import { ancestry, covered, scopePath } from './component-paths.js';
 import { InputError } from './config.js';
 
 export interface MaterializedComponentFields {
-  activityProfiles?: Record<string, string>;
   standards?: string[];
   standardSnapshots?: Array<{
     id: string;
