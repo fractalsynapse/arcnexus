@@ -10,11 +10,11 @@ current authored access model.
 A component declares the paths it owns with `owns`. Paths are relative to the
 component's nearest package root. The catalog resolves these declarations at the
 captured Git revision. For a component in the primary repository, its definition
-file under `architecture/components/` is also owned implicitly. A package or
+file under `.arc/architecture/components/` is also owned implicitly. A package or
 platform is a container and does not receive the paths of its children.
 
 For example, the architecture component in
-[`architecture/components/architecture.yaml`](../../../architecture/components/architecture.yaml)
+[`.arc/architecture/components/architecture.yaml`](../../../architecture/components/architecture.yaml)
 declares `src/library/architecture`, `tests/library/architecture`, and
 `docs/library/architecture`. The runtime derives exact allowed edit paths from
 those declarations and the component definition. The captured inventory classifies

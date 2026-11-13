@@ -94,7 +94,7 @@ export class PromptExperimentResolver {
     const environment = new ConfigurationReader().definition(
       context.source,
       context.base,
-      'architecture/environment',
+      '.arc/architecture/environment',
     ).value as Environment;
     const { configurationSource: _source, ...captured } = context.bindings;
     const tools = { ...captured.tools, ...bindings.tools };

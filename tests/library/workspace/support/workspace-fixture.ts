@@ -45,15 +45,15 @@ export function fixture(t: any, setup: any = []): any {
 
 /** Captures each explicit test recipe as an operation without inferring command equivalence. */
 export function writeEnvironment(repo: string, setup: any[]): void {
-  const path = join(repo, 'architecture/components/platform.json');
+  const path = join(repo, '.arc/architecture/components/platform.json');
   const platform = JSON.parse(readFileSync(path, 'utf8'));
   const template = JSON.parse(
-    readFileSync(join(repo, 'architecture/operations/verify.yaml'), 'utf8'),
+    readFileSync(join(repo, '.arc/architecture/operations/verify.yaml'), 'utf8'),
   );
   for (const [index, command] of setup.entries()) {
     const id = `setup-${index}`;
     writeFileSync(
-      join(repo, `architecture/operations/${id}.yaml`),
+      join(repo, `.arc/architecture/operations/${id}.yaml`),
       JSON.stringify({ ...template, ...command, id }),
     );
     platform.operations[id] = ['setup'];

@@ -46,7 +46,7 @@ class ExecutionLimitTests {
 
   /** Removes the optional limits from the authored profile, optionally restating its version. */
   private stripLimits(fixture: ReturnType<typeof workflowFixture>, schemaVersion?: number): void {
-    const path = join(fixture.repo, 'architecture/execution-profiles/luna.yaml');
+    const path = join(fixture.repo, '.arc/architecture/execution-profiles/luna.yaml');
     const profile = JSON.parse(readFileSync(path, 'utf8'));
     if (schemaVersion !== undefined) profile.schemaVersion = schemaVersion;
     for (const key of [

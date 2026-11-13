@@ -38,11 +38,11 @@ export class GeneralCatalog {
   apply(): void {
     const f = this.fixture;
     for (const id of ['sample', 'dependency'])
-      rmSync(join(f.repo, `architecture/components/${id}.json`));
+      rmSync(join(f.repo, `.arc/architecture/components/${id}.json`));
     for (const id of ['a', 'b', 'c']) {
       const owns = id === 'a' ? this.maintenance() : [id];
       writeFileSync(
-        join(f.repo, `architecture/components/${id}.json`),
+        join(f.repo, `.arc/architecture/components/${id}.json`),
         JSON.stringify({
           schemaVersion: 6,
           id,
@@ -109,7 +109,7 @@ export class GeneralCatalog {
     };
     for (const [id, definition] of Object.entries(definitions))
       writeFileSync(
-        join(this.fixture.repo, `architecture/components/${id}.json`),
+        join(this.fixture.repo, `.arc/architecture/components/${id}.json`),
         JSON.stringify(definition),
       );
   }
@@ -117,7 +117,7 @@ export class GeneralCatalog {
   /** Selects a no-budget profile shared by scripted engineering and independent review. */
   private profiles(): void {
     writeFileSync(
-      join(this.fixture.repo, 'architecture/execution-profiles/luna.yaml'),
+      join(this.fixture.repo, '.arc/architecture/execution-profiles/luna.yaml'),
       JSON.stringify({
         schemaVersion: 3,
         id: 'luna',
@@ -132,9 +132,9 @@ export class GeneralCatalog {
   /** Declares one finite host check and composition without inline executable recipes. */
   private operations(): void {
     const f = this.fixture;
-    mkdirSync(join(f.repo, 'architecture/operations'), { recursive: true });
+    mkdirSync(join(f.repo, '.arc/architecture/operations'), { recursive: true });
     writeFileSync(
-      join(f.repo, 'architecture/operations/verify.yaml'),
+      join(f.repo, '.arc/architecture/operations/verify.yaml'),
       JSON.stringify({
         schemaVersion: 4,
         id: 'verify',
@@ -156,7 +156,7 @@ export class GeneralCatalog {
   private composition(): void {
     const f = this.fixture;
     writeFileSync(
-      join(f.repo, 'architecture/environment.yaml'),
+      join(f.repo, '.arc/architecture/environment.yaml'),
       JSON.stringify({
         schemaVersion: 4,
         workspace: {

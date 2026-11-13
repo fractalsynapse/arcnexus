@@ -56,7 +56,7 @@ class PolicyWorkspaceScenarios {
   /** An owner can consider its purpose before its declared future test directory exists. */
   async futureDirectory(t: TestContext): Promise<void> {
     const f = new GeneralFixture(t).fixture;
-    const path = join(f.repo, 'architecture/components/b.json');
+    const path = join(f.repo, '.arc/architecture/components/b.json');
     const component = JSON.parse(readFileSync(path, 'utf8'));
     component.owns.push('future/tests');
     writeFileSync(path, JSON.stringify(component));

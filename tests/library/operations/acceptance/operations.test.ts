@@ -165,7 +165,7 @@ class OperationsTests {
   /** Refuses a tracked source output root before a managed command receives write permission. */
   rejectsSourceOutput(t: TestContext): void {
     const f = fixture(t);
-    const path = join(f.repo, 'architecture/operations/verify.yaml');
+    const path = join(f.repo, '.arc/architecture/operations/verify.yaml');
     const operation = JSON.parse(readFileSync(path, 'utf8'));
     operation.generatedDirectories = ['source.txt'];
     writeFileSync(path, JSON.stringify(operation));
@@ -181,10 +181,10 @@ class OperationsTests {
   /** Verifies the scenario rejects incompatible operation catalog. */
   rejectsIncompatibleOperationCatalog(t: TestContext, defect: any) {
     const f = fixture(t),
-      p = join(f.repo, 'architecture/operations/verify.yaml'),
+      p = join(f.repo, '.arc/architecture/operations/verify.yaml'),
       op = JSON.parse(String(readFileSync(p)));
     if (defect === 'category') {
-      const path = join(f.repo, 'architecture/execution-profiles/luna.yaml'),
+      const path = join(f.repo, '.arc/architecture/execution-profiles/luna.yaml'),
         profile = JSON.parse(String(readFileSync(path)));
       profile.operationCategories = [];
       writeFileSync(path, JSON.stringify(profile));

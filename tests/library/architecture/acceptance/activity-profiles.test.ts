@@ -19,7 +19,7 @@ class ActivityProfileScenarios {
   ownDeclaration(t: TestContext): void {
     const f = this.fixture(t);
     f.put(
-      'architecture/components/platform.json',
+      '.arc/architecture/components/platform.json',
       f.component('platform', 'platform', {
         executionProfile: 'luna',
         reads: ['.'],
@@ -30,7 +30,7 @@ class ActivityProfileScenarios {
       }),
     );
     f.put(
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
       this.leaf(f, selectedActivities('luna')),
     );
     f.commit();
@@ -49,7 +49,7 @@ class ActivityProfileScenarios {
     // The leaf states its own model per activity and owns the operation it runs, so its
     // verification is derived rather than inherited from the package above it.
     f.put(
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
       this.leaf(
         f,
         {
@@ -89,7 +89,7 @@ class ActivityProfileScenarios {
     f: ComponentFixture,
     captured: { activities: Record<string, any> },
   ): void {
-    f.put('architecture/execution-profiles/sol.json', this.profile('new-model'));
+    f.put('.arc/architecture/execution-profiles/sol.json', this.profile('new-model'));
     f.commit();
     assert.equal(captured.activities.research.profile.model, 'test-sol');
   }
@@ -101,7 +101,7 @@ class ActivityProfileScenarios {
     // The operation is bound by the activity itself, so the model that activity names is the one
     // whose permitted categories are checked.
     f.put(
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
       this.leaf(
         f,
         {
@@ -114,7 +114,7 @@ class ActivityProfileScenarios {
         { check: ['verify'] },
       ),
     );
-    f.put('architecture/execution-profiles/sol.json', {
+    f.put('.arc/architecture/execution-profiles/sol.json', {
       ...this.profile('test-sol'),
       operationCategories: [],
     });
@@ -126,7 +126,7 @@ class ActivityProfileScenarios {
   invalid(t: TestContext, activity: string, profile: string): void {
     const f = this.fixture(t);
     f.put(
-      'architecture/components/package.json',
+      '.arc/architecture/components/package.json',
       f.uncheckedComponent('package', 'package', {
         parentId: 'platform',
         root: 'package',
@@ -163,7 +163,7 @@ class ActivityProfileScenarios {
   /** Platform authority plus one shared finite check owned by a dedicated component. */
   private execution(f: ComponentFixture): void {
     f.put(
-      'architecture/components/platform.json',
+      '.arc/architecture/components/platform.json',
       f.component('platform', 'platform', {
         executionProfile: 'luna',
         reads: ['.'],
@@ -173,10 +173,10 @@ class ActivityProfileScenarios {
       }),
     );
     f.put(
-      'architecture/components/operations.json',
+      '.arc/architecture/components/operations.json',
       f.component('operations', 'library', {
         parentId: 'maintenance-package',
-        owns: ['architecture/operations'],
+        owns: ['.arc/architecture/operations'],
       }),
     );
     this.operation(f);
@@ -184,7 +184,7 @@ class ActivityProfileScenarios {
 
   /** Owns the shared check and supplies its literal command definition. */
   private operation(f: ComponentFixture): void {
-    f.put('architecture/operations/check.json', {
+    f.put('.arc/architecture/operations/check.json', {
       schemaVersion: 4,
       id: 'check',
       purpose: 'Check behavior',
@@ -204,7 +204,7 @@ class ActivityProfileScenarios {
   private fixture(t: TestContext): ComponentFixture {
     const f = new ComponentFixture(t);
     f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
-    f.put('architecture/execution-profiles/sol.json', this.profile('test-sol'));
+    f.put('.arc/architecture/execution-profiles/sol.json', this.profile('test-sol'));
     return f;
   }
 

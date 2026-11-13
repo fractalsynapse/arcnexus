@@ -10,11 +10,11 @@ Where the implementation and a locked contract disagree, that is recorded in
 `src/library/architecture/schemas/component.json` validates a component document with a `oneOf` over
 three branches, selected by the `type` field:
 
-| branch | `type` values | required fields | fields it may add that others cannot |
-| --- | --- | --- | --- |
-| root | `platform` | `schemaVersion`, `id`, `type`, `purpose` | `defaultPackage`, `director`, `reviewerProfile`, `verificationInputs` |
-| container | `package` | the above **+ `parentId`** | `repository`, `root`, `classification` |
-| owner | `foundation`, `gateway`, `library`, `release` | the above **+ `parentId` + `owns`** | `api` |
+| branch    | `type` values                                 | required fields                          | fields it may add that others cannot                                  |
+| --------- | --------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------- |
+| root      | `platform`                                    | `schemaVersion`, `id`, `type`, `purpose` | `defaultPackage`, `director`, `reviewerProfile`, `verificationInputs` |
+| container | `package`                                     | the above **+ `parentId`**               | `repository`, `root`, `classification`                                |
+| owner     | `foundation`, `gateway`, `library`, `release` | the above **+ `parentId` + `owns`**      | `api`                                                                 |
 
 All three may declare `activities`, `operations`, `objectives`, `constraints`, `questions`, `reads`,
 `standards`, `executionProfile`, `testProfile`. Every branch sets `additionalProperties: false`, so a
@@ -48,7 +48,7 @@ grant it write scope.
   `ownership.paths`, and `allowedWritePaths` is derived from them (`component-materialization.ts`).
   Reads come from `reads` up the lineage (`access.readPaths`). There is no separate write grant:
   `DirectoryGrants` and `access.writeDirectories` were deleted as unreachable state.
-- **Operations are shared definitions, usages are declared by scope.** `architecture/operations/*.yaml`
+- **Operations are shared definitions, usages are declared by scope.** `.arc/architecture/operations/*.yaml`
   holds one definition per operation id; a component's `operations` map names which usages apply to it
   (`preflight`, `setup`, `refresh`, `verify`, `agent`, `delivery`). An operation bound with `agent`
   usage **must** appear in one of that component's declared activities, or
@@ -104,13 +104,13 @@ so each is testable before the next.
 Found while auditing, not assumed. Each is a decision for the architect, listed with its evidence.
 
 1. **The `project` type does not exist in code.** `docs/interface/arcnexus-project.md` is **locked at
-   revision 3** and states it *supersedes* "the `platform` and `package` component types,
-   `architecture/environment.yaml`, `architecture/composition-profiles/`, and portfolio registration as
+   revision 3** and states it _supersedes_ "the `platform` and `package` component types,
+   `.arc/architecture/environment.yaml`, `.arc/architecture/composition-profiles/`, and portfolio registration as
    a concept a user must learn". Searching `src/library/architecture` for a `project` type returns
    nothing; the schema still validates exactly `platform`, `package`, `foundation|gateway|library|release`.
    The implementation is therefore an entire model behind an approved contract.
 2. **The model is at the wrong root.** Locked `arcnexus-foundation` revision row prescribes
-   `architecture/standards/readable-typescript.yaml` → `.arc/architecture/standards/…`, and the project
+   `.arc/architecture/standards/readable-typescript.yaml` → `.arc/architecture/standards/…`, and the project
    contract names the knowledge root as `.arc/`. The code has never read `.arc/architecture/`
    (`git grep` over `src`: zero hits); all 60 model files live in top-level `architecture/`, and
    `.arc/architecture/` holds a single `plan-template.md`. Architect ruled 2026-11-13 to finish the

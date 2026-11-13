@@ -10,9 +10,9 @@ import { parse } from 'yaml';
 class CatalogOwnershipTests {
   /** Verifies that built validation assigns every real source module to one executable owner. */
   builtValidationAssignsEveryRealSourceModuleToOneExecutableOwner() {
-    const components = readdirSync('architecture/components', { withFileTypes: true })
+    const components = readdirSync('.arc/architecture/components', { withFileTypes: true })
       .filter((entry) => entry.isFile() && /\.(?:json|yaml|yml)$/.test(entry.name))
-      .map((entry) => parse(readFileSync('architecture/components/' + entry.name, 'utf8')))
+      .map((entry) => parse(readFileSync('.arc/architecture/components/' + entry.name, 'utf8')))
       .filter((c: any) => !['platform', 'package'].includes(c.type));
     const catalog = this.catalog();
     assert.deepEqual(Object.keys(catalog.owners).sort(), components.map((c: any) => c.id).sort());
@@ -102,9 +102,9 @@ class CatalogOwnershipTests {
 
   /** Reads the authored component declarations, including their ownership lists. */
   private components(): any[] {
-    return readdirSync('architecture/components', { withFileTypes: true })
+    return readdirSync('.arc/architecture/components', { withFileTypes: true })
       .filter((entry) => entry.isFile() && /\.(?:json|yaml|yml)$/.test(entry.name))
-      .map((entry) => parse(readFileSync('architecture/components/' + entry.name, 'utf8')));
+      .map((entry) => parse(readFileSync('.arc/architecture/components/' + entry.name, 'utf8')));
   }
 
   /** Resolves all effective owners through one complete production validation instead of rebuilding per owner. */

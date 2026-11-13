@@ -13,7 +13,7 @@ class PlatformExecutionScenarios {
   /** Rejects mixed executable families before either public mode can create a host. */
   legacyEnvironment(t: TestContext): void {
     const fixture = this.fixture(t);
-    const path = 'architecture/environment.json';
+    const path = '.arc/architecture/environment.json';
     const current = JSON.parse(readFileSync(join(fixture.root, path), 'utf8'));
     fixture.put(path, {
       ...current,
@@ -110,19 +110,19 @@ class PlatformExecutionScenarios {
   /** Adds one shared finite verification declaration for executable read-only assignments. */
   private operational(t: TestContext): ComponentFixture {
     const fixture = this.fixture(t);
-    const path = 'architecture/components/platform.json';
+    const path = '.arc/architecture/components/platform.json';
     fixture.put(path, {
       ...JSON.parse(readFileSync(join(fixture.root, path), 'utf8')),
       operations: { check: ['verify'] },
     });
     fixture.put(
-      'architecture/components/operations.json',
+      '.arc/architecture/components/operations.json',
       fixture.component('operations', 'library', {
         parentId: 'maintenance-package',
-        owns: ['architecture/operations'],
+        owns: ['.arc/architecture/operations'],
       }),
     );
-    fixture.put('architecture/operations/check.json', this.verification());
+    fixture.put('.arc/architecture/operations/check.json', this.verification());
     fixture.commit();
     return fixture;
   }
@@ -148,15 +148,15 @@ class PlatformExecutionScenarios {
   /** Rejects retired duplicate execution files rather than silently choosing one source. */
   duplicate(t: TestContext): void {
     const fixture = this.fixture(t);
-    fixture.put('architecture/execution.json', {
+    fixture.put('.arc/architecture/execution.json', {
       directorProfile: 'luna',
       reviewerProfile: 'luna',
     });
     fixture.put(
-      'architecture/components/old-execution-owner.json',
+      '.arc/architecture/components/old-execution-owner.json',
       fixture.component('old-execution-owner', 'library', {
         parentId: 'maintenance-package',
-        owns: ['architecture/execution.json'],
+        owns: ['.arc/architecture/execution.json'],
       }),
     );
     fixture.commit();
@@ -178,7 +178,7 @@ class PlatformExecutionScenarios {
     const fixture = new ComponentFixture(t);
     fixture.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     fixture.put(
-      'architecture/components/platform.json',
+      '.arc/architecture/components/platform.json',
       fixture.component('platform', 'platform', {
         executionProfile: 'luna',
         reads: ['.'],
@@ -189,7 +189,7 @@ class PlatformExecutionScenarios {
         verificationInputs: ['architecture'],
       }),
     );
-    fixture.put('architecture/execution-profiles/director.json', {
+    fixture.put('.arc/architecture/execution-profiles/director.json', {
       schemaVersion: 3,
       id: 'director',
       model: 'configured-director-model',

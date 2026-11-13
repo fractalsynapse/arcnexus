@@ -99,7 +99,7 @@ behavior.
 ## Declared finite operations (#42)
 
 Version-2 components explicitly list `operationIds`. Definitions under
-`architecture/operations/<id>.yaml` declare repository, cwd, fixed command/args,
+`.arc/architecture/operations/<id>.yaml` declare repository, cwd, fixed command/args,
 category, activities, timeoutSeconds (at most 120), generatedDirectories, artifacts,
 and prerequisite probes. Version-2 execution profiles permit categories and bound
 `maxOperationCalls` (default 24). Assignments may select a subset using operationIds.

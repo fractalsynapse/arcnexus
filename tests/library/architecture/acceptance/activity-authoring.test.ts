@@ -36,7 +36,7 @@ class ActivityAuthoringScenarios {
         },
       });
       delete declaration.activities.research[missing];
-      f.put(`architecture/components/incomplete-${missing}.json`, declaration);
+      f.put(`.arc/architecture/components/incomplete-${missing}.json`, declaration);
       f.commit();
       const result = f.run('validate');
       assert.equal(result.status, 2, `omitting ${missing} must be refused: ${result.stdout}`);
@@ -53,7 +53,7 @@ class ActivityAuthoringScenarios {
     const f = new ComponentFixture(t);
     f.put('package/complete/notes.md', 'A scope nothing else owns.\n');
     f.put(
-      'architecture/components/complete.json',
+      '.arc/architecture/components/complete.json',
       f.component('complete', 'library', {
         parentId: 'package',
         owns: ['complete'],
@@ -81,7 +81,7 @@ class ActivityAuthoringScenarios {
    */
   roleCarriesNoActivity(t: TestContext): void {
     const f = new ComponentFixture(t);
-    f.put('architecture/roles/writer.json', {
+    f.put('.arc/architecture/roles/writer.json', {
       schemaVersion: 4,
       id: 'writer',
       purpose: 'Write documentation',
@@ -100,7 +100,7 @@ class ActivityAuthoringScenarios {
     f.put('package/dual/notes.md', 'A scope nothing else owns.\n');
     const grant = { role: 'engineer', profile: 'luna', operations: [], instructions: [] };
     f.put(
-      'architecture/components/dual.json',
+      '.arc/architecture/components/dual.json',
       f.component('dual', 'library', {
         parentId: 'package',
         owns: ['dual'],
@@ -120,7 +120,7 @@ class ActivityAuthoringScenarios {
     f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     f.put('package/standard/notes.md', 'A scope nothing else owns.\n');
     f.put(
-      'architecture/components/standardised.json',
+      '.arc/architecture/components/standardised.json',
       f.component('standardised', 'library', {
         parentId: 'package',
         owns: ['standard'],

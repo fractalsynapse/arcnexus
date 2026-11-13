@@ -72,7 +72,7 @@ test('fresh built CLI registers isolated worktree identity without changing decl
   assert.match(capture.sha256, /^[a-f0-9]{64}$/);
   assert.equal(loadProjectBindings(f.workspace).materializations!.sample!.source, f.workspace);
   assert.match(
-    readFileSync(join(f.workspace, 'architecture/environment.json'), 'utf8'),
+    readFileSync(join(f.workspace, '.arc/architecture/environment.json'), 'utf8'),
     /example.invalid/,
   );
   assert.equal(f.git('status', '--porcelain'), '');
@@ -85,7 +85,7 @@ test('worktree discovery rejects changed remote and aliased private snapshot', (
   f.git('remote', 'set-url', 'origin', 'https://example.invalid/other.git');
   assert.throws(() => loadProjectBindings(f.workspace), /materialization changed/);
   f.git('remote', 'set-url', 'origin', f.remote);
-  const other = join(f.root, 'architecture/environment.json');
+  const other = join(f.root, '.arc/architecture/environment.json');
   rmSync(capture.path);
   symlinkSync(other, capture.path);
   assert.throws(() => loadProjectBindings(f.workspace), /Unsafe.*metadata/);

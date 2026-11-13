@@ -49,13 +49,13 @@ export class ArchitectureReferences {
       '--name-only',
       this.base,
       '--',
-      'architecture/standards',
+      '.arc/architecture/standards',
     )
       .trim()
       .split('\n')
       .filter(isConfiguration);
     const ids = paths.map((path) =>
-      path.slice('architecture/standards/'.length).replace(/\.(json|ya?ml)$/, ''),
+      path.slice('.arc/architecture/standards/'.length).replace(/\.(json|ya?ml)$/, ''),
     );
     return [...new Set(ids)].sort().map((id) => this.standard(id));
   }
@@ -94,7 +94,7 @@ export class ArchitectureReferences {
     const source = new ConfigurationReader().definition(
       this.repository,
       this.base,
-      `architecture/standards/${id}`,
+      `.arc/architecture/standards/${id}`,
     );
     const standard = validateSchema<GuidanceDefinition>('standard', source.value);
     if (standard.id !== id) throw new Error(`Standard identity mismatch: ${id}`);

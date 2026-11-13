@@ -10,11 +10,11 @@ class StandardCommandScenarios {
   /** Registers complete source before probing commands, so bad setup cannot mimic missing behavior. */
   private fixture(t: TestContext): PackageCliFixture {
     const f = new PackageCliFixture(t);
-    f.extend('architecture/components/maintenance.yaml', (v) =>
-      v.owns.push('architecture/standards'),
+    f.extend('.arc/architecture/components/maintenance.yaml', (v) =>
+      v.owns.push('.arc/architecture/standards'),
     );
     f.put('tests/examples/guide.md', 'Keep code readable.');
-    f.put('architecture/standards/readable.yaml', {
+    f.put('.arc/architecture/standards/readable.yaml', {
       schemaVersion: 1,
       id: 'readable',
       owner: 'sample',
@@ -52,7 +52,7 @@ class StandardCommandScenarios {
   /** Reports invalid unused guidance as preflight input failure rather than an execution failure. */
   malformed(t: TestContext): void {
     const f = this.fixture(t);
-    f.extend('architecture/standards/readable.yaml', (v) => v.operationIds.push('undeclared'));
+    f.extend('.arc/architecture/standards/readable.yaml', (v) => v.operationIds.push('undeclared'));
     f.commit();
     const result = f.command(f.root, 'standard', 'list', 'platform');
     assert.equal(result.status, 2, result.stderr);

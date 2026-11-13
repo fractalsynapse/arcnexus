@@ -11,7 +11,7 @@ class ComponentScenarios {
   protectedDirectories(t: TestContext): void {
     const f = new ComponentFixture(t);
     for (const name of ['.agents', '.aws', '.codex', '.git'])
-      mkdirSync(join(f.root, 'architecture/components', name));
+      mkdirSync(join(f.root, '.arc/architecture/components', name));
     const result = f.run('validate');
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(JSON.parse(result.stdout).components.sort(), [
@@ -35,7 +35,7 @@ class ComponentScenarios {
       'package/src',
       'package/docs',
       'package/tests',
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
     ]);
     // Write scope is ownership. The view carries no separate grant list that could diverge from it,
     // so the check is that both project the same declared scope rather than that a second list is
@@ -59,7 +59,7 @@ class ComponentScenarios {
   obsolete(t: TestContext, field: string): void {
     const f = new ComponentFixture(t);
     f.put(
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
       f.uncheckedComponent('sample', 'library', {
         parentId: 'package',
         owns: ['src', 'docs', 'tests'],
@@ -76,7 +76,7 @@ class ComponentScenarios {
   reads(t: TestContext): void {
     const f = new ComponentFixture(t);
     f.put(
-      'architecture/components/package.json',
+      '.arc/architecture/components/package.json',
       f.component('package', 'package', {
         parentId: 'platform',
         root: 'package',
@@ -84,7 +84,7 @@ class ComponentScenarios {
       }),
     );
     f.put(
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
       f.component('sample', 'library', {
         parentId: 'package',
         owns: ['src', 'docs', 'tests'],
@@ -100,7 +100,7 @@ class ComponentScenarios {
     const f = new ComponentFixture(t);
     if (overlap)
       f.put(
-        'architecture/components/other.json',
+        '.arc/architecture/components/other.json',
         f.component('other', 'library', {
           parentId: 'package',
           owns: ['src/future'],

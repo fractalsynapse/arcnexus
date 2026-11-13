@@ -46,7 +46,7 @@ not a deny-all ceiling. Container nodes cannot execute assignments.
 
 Minimal platform declarations are the single source for `director` (component
 and profile), `reviewerProfile`, `defaultPackage`, and `verificationInputs`.
-New execution rejects a simultaneous `architecture/execution` file. Director models
+New execution rejects a simultaneous `.arc/architecture/execution` file. Director models
 and reasoning come from the selected profile; absent configuration never selects a
 hidden model or initializer. New execution requires schema six; historical version-five
 catalogs remain readable and migratable. Shared-operation preparation feeds the
@@ -102,7 +102,7 @@ available for inspection and explicit migration, not as alternate execution auth
 The [configuration migration](configuration-migration.md) upgrades supported families
 without changing historical reports or a running supervisor's captured authority.
 
-Inherited `standards` identities resolve definitions in `architecture/standards` and
+Inherited `standards` identities resolve definitions in `.arc/architecture/standards` and
 capture owned documentation/examples at the architectural revision. Missing standards,
 out-of-owner artifacts and checks outside the standard owner's declared operations
 fail validation. References do not grant execution or write authority. Inspection

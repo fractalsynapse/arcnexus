@@ -11,16 +11,16 @@ A **project** is one Git repository, one `.arc/` knowledge root, one component c
 check catalog and one execution lane. It is the unit a caller points ArcNexus at and the unit
 an agent stewards.
 
-| Field | ArcNexus value | Rule |
-| --- | --- | --- |
-| id | `arcnexus` | stable; qualified as `<project>` or `<project>/<component>` |
-| remote | `https://github.com/fractalsynapse/arcnexus.git` | HTTPS; verified identity, never inferred from a directory name |
-| base branch | `staging` | new work branches from its current tip |
-| protected branch | `main` | human-only merge, tag and publication |
-| work branch | `<issue>-<description>` | one issue per branch; the convention names the work, never the tool or agent that performs it |
-| knowledge root | `.arc/` | `architecture/` human, `plans/` and `learning/` agents |
-| store | one SQLite file per project in application storage, keyed by verified repository identity | one store, one lane |
-| bindings | `.git/arcnexus/bindings.yaml` | machine-local, outside committed source authority |
+| Field            | ArcNexus value                                                                            | Rule                                                                                          |
+| ---------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| id               | `arcnexus`                                                                                | stable; qualified as `<project>` or `<project>/<component>`                                   |
+| remote           | `https://github.com/fractalsynapse/arcnexus.git`                                          | HTTPS; verified identity, never inferred from a directory name                                |
+| base branch      | `staging`                                                                                 | new work branches from its current tip                                                        |
+| protected branch | `main`                                                                                    | human-only merge, tag and publication                                                         |
+| work branch      | `<issue>-<description>`                                                                   | one issue per branch; the convention names the work, never the tool or agent that performs it |
+| knowledge root   | `.arc/`                                                                                   | `architecture/` human, `plans/` and `learning/` agents                                        |
+| store            | one SQLite file per project in application storage, keyed by verified repository identity | one store, one lane                                                                           |
+| bindings         | `.git/arcnexus/bindings.yaml`                                                             | machine-local, outside committed source authority                                             |
 
 ## Depends on
 
@@ -57,50 +57,50 @@ The knowledge spaces are part of the contract because their authorship is observ
 
 ## Invariants
 
-| # | Invariant |
-| --- | --- |
-| I1 | One project = one repository = one sequential lane = one store. Concurrency means more projects, not a scheduler. |
-| I2 | Project identity comes from the verified remote. A directory name is not identity. |
-| I3 | Every tracked maintained path resolves to exactly one owner. |
-| I4 | Authority is captured at admission. Candidate edits to architecture, guidance, standards, checks or permissions cannot change the active run. |
-| I5 | New work requires a clean committed checkout at the captured revision. Drift is an input error that writes no state. |
-| I6 | Exactly one publish grant with one target branch. A second grant is a finding. |
-| I7 | Bindings and credentials live outside source. A missing binding names the binding; it is never inferred from `PATH`. |
-| I8 | One configuration version. A file at another version is a finding with a stated reason, not a migration path. |
-| I9 | Plans and learning are agent-authored and never grant authority or weaken acceptance. |
-| I10 | Merging to the protected branch, tagging, publishing and contract locks are human-only. |
+| #   | Invariant                                                                                                                                     |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| I1  | One project = one repository = one sequential lane = one store. Concurrency means more projects, not a scheduler.                             |
+| I2  | Project identity comes from the verified remote. A directory name is not identity.                                                            |
+| I3  | Every tracked maintained path resolves to exactly one owner.                                                                                  |
+| I4  | Authority is captured at admission. Candidate edits to architecture, guidance, standards, checks or permissions cannot change the active run. |
+| I5  | New work requires a clean committed checkout at the captured revision. Drift is an input error that writes no state.                          |
+| I6  | Exactly one publish grant with one target branch. A second grant is a finding.                                                                |
+| I7  | Bindings and credentials live outside source. A missing binding names the binding; it is never inferred from `PATH`.                          |
+| I8  | One configuration version. A file at another version is a finding with a stated reason, not a migration path.                                 |
+| I9  | Plans and learning are agent-authored and never grant authority or weaken acceptance.                                                         |
+| I10 | Merging to the protected branch, tagging, publishing and contract locks are human-only.                                                       |
 
 ## Acceptance scenarios
 
 Each becomes one deterministic test in the owning suite during cleanup.
 
-| Id | Given / when / then |
-| --- | --- |
-| PRJ-1 | Resolve from a nested directory returns the project and the deepest applicable component; an unrelated directory returns an input error naming what was missing. |
-| PRJ-2 | Two equally applicable components for one path is an input error, not a tie-break. |
-| PRJ-3 | A tracked maintained path with zero owners or two owners fails validation, naming the path. |
-| PRJ-4 | Editing `.arc/architecture/` after admission does not change the active run's captured catalog; the next run sees the edit. |
-| PRJ-5 | A dirty working tree or a HEAD that differs from the captured base is refused before any store row is written. |
-| PRJ-6 | Two `delivery.publish` grants fail validation with the owner and file named. |
-| PRJ-7 | A missing executable binding fails with the binding name; setting `PATH` does not satisfy it. |
-| PRJ-8 | A configuration file at a non-current version produces a finding, and no reader attempts to interpret it. |
-| PRJ-9 | A plan or learning file that grants a permission, widens a scope or weakens a check is rejected as authority. |
-| PRJ-10 | Two projects on one machine get separate stores and lanes; neither observes the other's state. |
-| PRJ-11 | Identity is verified from the remote URL: a renamed local clone still resolves to the same project. |
-| PRJ-12 | A run that dies leaves its branch, workspace and evidence; a new run reads the recorded position rather than replaying an uncertain operation. |
+| Id     | Given / when / then                                                                                                                                              |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PRJ-1  | Resolve from a nested directory returns the project and the deepest applicable component; an unrelated directory returns an input error naming what was missing. |
+| PRJ-2  | Two equally applicable components for one path is an input error, not a tie-break.                                                                               |
+| PRJ-3  | A tracked maintained path with zero owners or two owners fails validation, naming the path.                                                                      |
+| PRJ-4  | Editing `.arc/architecture/` after admission does not change the active run's captured catalog; the next run sees the edit.                                      |
+| PRJ-5  | A dirty working tree or a HEAD that differs from the captured base is refused before any store row is written.                                                   |
+| PRJ-6  | Two `delivery.publish` grants fail validation with the owner and file named.                                                                                     |
+| PRJ-7  | A missing executable binding fails with the binding name; setting `PATH` does not satisfy it.                                                                    |
+| PRJ-8  | A configuration file at a non-current version produces a finding, and no reader attempts to interpret it.                                                        |
+| PRJ-9  | A plan or learning file that grants a permission, widens a scope or weakens a check is rejected as authority.                                                    |
+| PRJ-10 | Two projects on one machine get separate stores and lanes; neither observes the other's state.                                                                   |
+| PRJ-11 | Identity is verified from the remote URL: a renamed local clone still resolves to the same project.                                                              |
+| PRJ-12 | A run that dies leaves its branch, workspace and evidence; a new run reads the recorded position rather than replaying an uncertain operation.                   |
 
 ## Migration
 
-| Current concept | Becomes | Fate |
-| --- | --- | --- |
-| `architecture/components/arcnexus.yaml` (platform) + `cli-package.yaml` (package) | one `.arc/architecture/project.yaml` | merged; the `package` type disappears |
-| `architecture/environment.yaml` (primary + dependencies) | project `repositories` (one entry for the MVP) | folded in; multi-repo composition deferred |
-| `architecture/composition-profiles/local.yaml` | project `members` | concept removed |
-| portfolio store: repositories, registrations, materializations, architecture mutations | one project record in application storage | materialization, clone checkpoints and registry locking deleted |
-| `arcnexus platform` / `package` / `portfolio` commands | `arcnexus project` resource commands | replaced |
-| execution profiles, roles, standards, operations, test profiles | unchanged shape, relocated under `.arc/architecture/` | retained |
-| `.git/arcnexus/bindings.yaml` | unchanged | retained |
-| `verificationInputs`, `director`, `reviewerProfile`, `defaultPackage`, `testProfile` | project fields `checks`, `director`, `reviewer`, `testProfile` | retained, `defaultPackage` dropped |
+| Current concept                                                                        | Becomes                                                        | Fate                                                            |
+| -------------------------------------------------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------- |
+| `architecture/components/arcnexus.yaml` (platform) + `cli-package.yaml` (package)      | one `.arc/architecture/project.yaml`                           | merged; the `package` type disappears                           |
+| `architecture/environment.yaml` (primary + dependencies)                               | project `repositories` (one entry for the MVP)                 | folded in; multi-repo composition deferred                      |
+| `architecture/composition-profiles/local.yaml`                                         | project `members`                                              | concept removed                                                 |
+| portfolio store: repositories, registrations, materializations, architecture mutations | one project record in application storage                      | materialization, clone checkpoints and registry locking deleted |
+| `arcnexus platform` / `package` / `portfolio` commands                                 | `arcnexus project` resource commands                           | replaced                                                        |
+| execution profiles, roles, standards, operations, test profiles                        | unchanged shape, relocated under `.arc/architecture/`          | retained                                                        |
+| `.git/arcnexus/bindings.yaml`                                                          | unchanged                                                      | retained                                                        |
+| `verificationInputs`, `director`, `reviewerProfile`, `defaultPackage`, `testProfile`   | project fields `checks`, `director`, `reviewer`, `testProfile` | retained, `defaultPackage` dropped                              |
 
 Migration is a single batch: introduce the project definition, move the source, delete the
 package and portfolio machinery, and update the gateway commands. No compatibility reader and

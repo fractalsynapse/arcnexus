@@ -59,7 +59,7 @@ export class MinimalTestFixture extends ComponentTestFixture {
     // intends to exercise.
     if (!this.git('remote').trim().split('\n').includes('origin'))
       this.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
-    this.put('architecture/environment.yaml', {
+    this.put('.arc/architecture/environment.yaml', {
       schemaVersion: 4,
       workspace: {
         primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
@@ -74,13 +74,13 @@ export class MinimalTestFixture extends ComponentTestFixture {
     this.definition('maintenance', 'foundation', {
       parentId: 'maintenance-package',
       owns: [
-        'architecture/environment.yaml',
-        'architecture/roles',
-        'architecture/execution-profiles',
-        'architecture/test-profiles',
-        'architecture/components/platform.yaml',
-        'architecture/components/package.yaml',
-        'architecture/components/maintenance-package.yaml',
+        '.arc/architecture/environment.yaml',
+        '.arc/architecture/roles',
+        '.arc/architecture/execution-profiles',
+        '.arc/architecture/test-profiles',
+        '.arc/architecture/components/platform.yaml',
+        '.arc/architecture/components/package.yaml',
+        '.arc/architecture/components/maintenance-package.yaml',
         'build.cjs',
         '.gitignore',
       ],
@@ -107,7 +107,7 @@ export class MinimalTestFixture extends ComponentTestFixture {
 
   /** Writes one architectural declaration without legacy location or discovery duplication. */
   private definition(id: string, type: string, fields: object): void {
-    this.put(`architecture/components/${id}.yaml`, {
+    this.put(`.arc/architecture/components/${id}.yaml`, {
       schemaVersion: 6,
       id,
       type,

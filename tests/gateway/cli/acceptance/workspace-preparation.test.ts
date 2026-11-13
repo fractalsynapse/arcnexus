@@ -75,7 +75,7 @@ class WorkspacePreparationScenarios {
   private declareSetup(f: PackageCliFixture, args: string[]): void {
     f.operation('setup', args);
     f.extend(
-      'architecture/components/package.yaml',
+      '.arc/architecture/components/package.yaml',
       (value) => (value.operations = { setup: ['setup'] }),
     );
     f.commit();

@@ -13,11 +13,11 @@ class StandardResourceScenarios {
   private fixture(t: TestContext) {
     const f = new ComponentFixture(t);
     f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
-    const path = 'architecture/components/maintenance.json';
+    const path = '.arc/architecture/components/maintenance.json';
     const owner = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
-    f.put(path, { ...owner, owns: [...owner.owns, 'architecture/standards'] });
+    f.put(path, { ...owner, owns: [...owner.owns, '.arc/architecture/standards'] });
     for (const id of ['alpha', 'beta'])
-      f.put(`architecture/standards/${id}.json`, {
+      f.put(`.arc/architecture/standards/${id}.json`, {
         schemaVersion: 1,
         id,
         owner: 'sample',
@@ -77,8 +77,8 @@ class StandardResourceScenarios {
     assert.throws(() => service.list(target, { filters: ['secret=x'] }));
     assert.throws(() => service.list(target, { limit: 101 }));
     f.put(
-      'architecture/standards/alpha.yaml',
-      readFileSync(join(f.root, 'architecture/standards/alpha.json'), 'utf8'),
+      '.arc/architecture/standards/alpha.yaml',
+      readFileSync(join(f.root, '.arc/architecture/standards/alpha.json'), 'utf8'),
     );
     f.commit();
     assert.throws(
@@ -90,10 +90,10 @@ class StandardResourceScenarios {
   /** Keeps same-repository platforms separate even when their standard catalog shares a directory. */
   async foreign(t: TestContext): Promise<void> {
     const { f, target } = this.fixture(t);
-    const path = 'architecture/components/maintenance.json';
+    const path = '.arc/architecture/components/maintenance.json';
     const owner = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
-    f.put(path, { ...owner, owns: [...owner.owns, 'architecture/components/other.json'] });
-    f.put('architecture/components/other.json', f.component('other', 'platform'));
+    f.put(path, { ...owner, owns: [...owner.owns, '.arc/architecture/components/other.json'] });
+    f.put('.arc/architecture/components/other.json', f.component('other', 'platform'));
     f.commit();
     const service = await this.service();
     const other = { ...target, base: f.git('rev-parse', 'HEAD'), platformId: 'other' };
@@ -105,7 +105,7 @@ class StandardResourceScenarios {
   async invalidReference(t: TestContext): Promise<void> {
     const { f, target } = this.fixture(t);
     const service = await this.service();
-    const path = 'architecture/standards/alpha.json';
+    const path = '.arc/architecture/standards/alpha.json';
     const definition = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
     f.put(path, { ...definition, operationIds: ['undeclared'] });
     f.commit();

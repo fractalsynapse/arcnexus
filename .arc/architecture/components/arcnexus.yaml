@@ -94,7 +94,7 @@ verificationInputs:
     package-lock.json,
     scripts,
     tests,
-    architecture/test-profiles,
+    .arc/architecture/test-profiles,
     eslint.config.ts,
     tsconfig.json,
     tsconfig.build.json,

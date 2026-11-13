@@ -71,6 +71,6 @@ owns:
     tsconfig.tests.json,
     tsconfig.fixtures.json,
     tsconfig.tooling.json,
-    architecture/standards/readable-typescript.yaml,
+    .arc/architecture/standards/readable-typescript.yaml,
     tsconfig.build.json,
   ]

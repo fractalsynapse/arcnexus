@@ -15,7 +15,7 @@ class ArchitectureUpdateScenarios {
     const f = new PackageCliFixture(t);
     f.register();
     const head = f.git('rev-parse', 'HEAD');
-    const path = join(f.repo, 'architecture/components/sample.yaml');
+    const path = join(f.repo, '.arc/architecture/components/sample.yaml');
     const original = readFileSync(path, 'utf8');
     writeFileSync(path, original + '\n# caller change\n');
     const before = f.git('status', '--porcelain');

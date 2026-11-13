@@ -9,7 +9,7 @@ export class SharedTestFixture extends MinimalTestFixture {
   constructor(t: TestContext) {
     super(t);
     this.configuration();
-    this.put('architecture/execution-profiles/luna.yaml', {
+    this.put('.arc/architecture/execution-profiles/luna.yaml', {
       schemaVersion: 3,
       id: 'luna',
       model: 'fixture-model',
@@ -31,10 +31,10 @@ export class SharedTestFixture extends MinimalTestFixture {
   /** Adds a second independent test owner sharing the package's operations and profile. */
   anotherOwner(): void {
     this.extend(
-      'architecture/components/sample.yaml',
+      '.arc/architecture/components/sample.yaml',
       (value) => (value.owns = ['tests/unit', 'tests/regression']),
     );
-    this.put('architecture/components/other.yaml', {
+    this.put('.arc/architecture/components/other.yaml', {
       schemaVersion: 6,
       id: 'other',
       type: 'library',
@@ -52,9 +52,12 @@ export class SharedTestFixture extends MinimalTestFixture {
   /** Gives an unselected owner a failing shared preparation without affecting the selected profile. */
   override unusedProfile(): void {
     this.anotherOwner();
-    this.extend('architecture/components/other.yaml', (value) => (value.testProfile = 'other'));
+    this.extend(
+      '.arc/architecture/components/other.yaml',
+      (value) => (value.testProfile = 'other'),
+    );
     this.operation('unused', ['-e', 'process.exit(9)']);
-    this.put('architecture/test-profiles/other.yaml', {
+    this.put('.arc/architecture/test-profiles/other.yaml', {
       schemaVersion: 2,
       id: 'other',
       adapter: 'node',
@@ -67,21 +70,21 @@ export class SharedTestFixture extends MinimalTestFixture {
 
   /** Gives operation definitions one maintenance owner while the profile alone authorizes test execution. */
   private configuration(): void {
-    this.extend('architecture/components/platform.yaml', (value) => {
+    this.extend('.arc/architecture/components/platform.yaml', (value) => {
       value.director = { component: 'sample', profile: 'luna' };
       value.reviewerProfile = 'luna';
     });
-    this.extend('architecture/components/maintenance.yaml', (value) =>
-      value.owns.push('architecture/operations'),
+    this.extend('.arc/architecture/components/maintenance.yaml', (value) =>
+      value.owns.push('.arc/architecture/operations'),
     );
-    this.put('architecture/environment.yaml', {
+    this.put('.arc/architecture/environment.yaml', {
       schemaVersion: 4,
       workspace: {
         primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
         dependencies: [],
       },
     });
-    this.put('architecture/test-profiles/node.yaml', {
+    this.put('.arc/architecture/test-profiles/node.yaml', {
       schemaVersion: 2,
       id: 'node',
       adapter: 'node',
@@ -93,7 +96,7 @@ export class SharedTestFixture extends MinimalTestFixture {
 
   /** Defines one finite command with explicitly declared generated output and host context tokens. */
   operation(id: string, args: unknown[]): void {
-    this.put(`architecture/operations/${id}.yaml`, {
+    this.put(`.arc/architecture/operations/${id}.yaml`, {
       schemaVersion: 4,
       id,
       purpose: 'Run selected tests',

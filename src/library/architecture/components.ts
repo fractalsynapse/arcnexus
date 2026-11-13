@@ -217,7 +217,7 @@ class CatalogLoader {
     const source = new ConfigurationReader().definition(
       this.repository,
       this.base,
-      'architecture/environment',
+      '.arc/architecture/environment',
     );
     this.catalog.configurationSources.push(source);
     const env = environment(source.value, Object.values(this.catalog.operations));
@@ -257,7 +257,7 @@ class CatalogLoader {
   /** Enumerates supported definition files in the captured repository revision. */
   private files(directory: string): string[] {
     return this.paths.filter(
-      (path) => path.startsWith(`architecture/${directory}/`) && isConfiguration(path),
+      (path) => path.startsWith(`.arc/architecture/${directory}/`) && isConfiguration(path),
     );
   }
 
@@ -271,7 +271,7 @@ class CatalogLoader {
     ] as const;
     for (const [directory, schema, target] of groups)
       for (const path of paths.filter(
-        (p) => p.startsWith(`architecture/${directory}/`) && isConfiguration(p),
+        (p) => p.startsWith(`.arc/architecture/${directory}/`) && isConfiguration(p),
       )) {
         const value = read<Record<string, unknown>>(
           repository,
@@ -294,7 +294,7 @@ class CatalogLoader {
   ): void {
     const id = String(value.id);
     const legacy = Number(value.schemaVersion) < 5;
-    if (legacy && path.replace(/\.(json|ya?ml)$/, '') !== `architecture/${directory}/${id}`)
+    if (legacy && path.replace(/\.(json|ya?ml)$/, '') !== `.arc/architecture/${directory}/${id}`)
       throw new InputError(`Identity must match filename: ${path}`);
     if (Object.hasOwn(target, id)) throw new InputError(`Duplicate definition: ${id}`);
     value.id = id;
@@ -311,7 +311,7 @@ class CatalogLoader {
     const operation = normalizeOperation(
       read<Operation>(repository, base, path, 'operation', catalog.configurationSources),
     );
-    if (path.replace(/\.(json|ya?ml)$/, '') !== `architecture/operations/${operation.id}`)
+    if (path.replace(/\.(json|ya?ml)$/, '') !== `.arc/architecture/operations/${operation.id}`)
       throw new InputError('Operation identity must match filename');
     scopePath(operation.cwd);
     operation.generatedDirectories.forEach(scopePath);
@@ -340,7 +340,8 @@ class CatalogLoader {
       catalog.configurationSources,
     );
     if (
-      path.replace(/\.(json|ya?ml)$/, '') !== `architecture/composition-profiles/${profile.id}` ||
+      path.replace(/\.(json|ya?ml)$/, '') !==
+        `.arc/architecture/composition-profiles/${profile.id}` ||
       catalog.components[profile.platformId]?.type !== 'platform'
     )
       throw new InputError('Invalid composition platform');

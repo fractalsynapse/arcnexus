@@ -63,10 +63,10 @@ class InitializationTests {
     const fixture = workflowFixture(t);
     this.director(fixture, 'maintenance', 'astra');
     const profile = JSON.parse(
-      readFileSync(join(fixture.repo, 'architecture/execution-profiles/luna.yaml'), 'utf8'),
+      readFileSync(join(fixture.repo, '.arc/architecture/execution-profiles/luna.yaml'), 'utf8'),
     );
     writeFileSync(
-      join(fixture.repo, 'architecture/execution-profiles/astra.yaml'),
+      join(fixture.repo, '.arc/architecture/execution-profiles/astra.yaml'),
       JSON.stringify({ ...profile, id: 'astra', model: 'gpt-6-astra' }),
     );
     fixture.commit();
@@ -96,7 +96,7 @@ class InitializationTests {
     component: string,
     profile: string,
   ): void {
-    const path = join(fixture.repo, 'architecture/components/platform.json');
+    const path = join(fixture.repo, '.arc/architecture/components/platform.json');
     const platform = JSON.parse(readFileSync(path, 'utf8'));
     platform.director = { component, profile };
     writeFileSync(path, JSON.stringify(platform));
@@ -105,7 +105,7 @@ class InitializationTests {
   /** Verifies that minimal platform with reviewer requires declared director. */
   missingDeclaration(t: TestContext): void {
     const fixture = workflowFixture(t);
-    const path = join(fixture.repo, 'architecture/components/platform.json');
+    const path = join(fixture.repo, '.arc/architecture/components/platform.json');
     const platform = JSON.parse(readFileSync(path, 'utf8'));
     delete platform.director;
     writeFileSync(path, JSON.stringify(platform));

@@ -88,7 +88,7 @@ class RecoveryScenarios {
   /** Obsolete executable settings fail preflight instead of silently changing scheduling semantics. */
   defaults(t: TestContext): void {
     const f = new GeneralFixture(t).fixture;
-    const path = join(f.repo, 'architecture/components/platform.json');
+    const path = join(f.repo, '.arc/architecture/components/platform.json');
     const original = JSON.parse(readFileSync(path, 'utf8'));
     writeFileSync(path, JSON.stringify({ ...original, maxTurns: 5 }));
     f.commit();
@@ -100,13 +100,13 @@ class RecoveryScenarios {
 
   /** Gives the package a distinct finite check while retaining one accountable script owner. */
   private packageOperation(f: GeneralFixture['fixture']): void {
-    const path = join(f.repo, 'architecture/operations/verify.yaml');
+    const path = join(f.repo, '.arc/architecture/operations/verify.yaml');
     const operation = JSON.parse(readFileSync(path, 'utf8'));
     writeFileSync(
-      join(f.repo, 'architecture/operations/package-check.yaml'),
+      join(f.repo, '.arc/architecture/operations/package-check.yaml'),
       JSON.stringify({ ...operation, id: 'package-check', args: ['package-check.cjs'] }),
     );
-    const ownerPath = join(f.repo, 'architecture/components/a.json');
+    const ownerPath = join(f.repo, '.arc/architecture/components/a.json');
     const owner = JSON.parse(readFileSync(ownerPath, 'utf8'));
     owner.owns.push('package-check.cjs');
     writeFileSync(ownerPath, JSON.stringify(owner));
@@ -115,7 +115,7 @@ class RecoveryScenarios {
   /** A failing captured package check prevents engineering even when the owner's checks pass. */
   async packageChecks(t: TestContext): Promise<void> {
     const f = new GeneralFixture(t).fixture;
-    const path = join(f.repo, 'architecture/components/package.json');
+    const path = join(f.repo, '.arc/architecture/components/package.json');
     const component = JSON.parse(readFileSync(path, 'utf8'));
     component.operations = { 'package-check': ['verify'] };
     this.packageOperation(f);

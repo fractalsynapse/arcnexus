@@ -42,11 +42,11 @@ class ActivityTurnScenarios {
   /** Declares distinct model settings once and references them through the real component schema. */
   private profiles(f: ReturnType<typeof minimalWorkflowFixture>): void {
     const base = JSON.parse(
-      readFileSync(join(f.repo, 'architecture/execution-profiles/luna.yaml'), 'utf8'),
+      readFileSync(join(f.repo, '.arc/architecture/execution-profiles/luna.yaml'), 'utf8'),
     );
     for (const id of ['design', 'review'])
       writeFileSync(
-        join(f.repo, `architecture/execution-profiles/${id}.json`),
+        join(f.repo, `.arc/architecture/execution-profiles/${id}.json`),
         JSON.stringify({
           ...base,
           id,
@@ -54,7 +54,7 @@ class ActivityTurnScenarios {
           reasoning: 'high',
         }),
       );
-    const path = join(f.repo, 'architecture/components/sample.json');
+    const path = join(f.repo, '.arc/architecture/components/sample.json');
     const component = JSON.parse(readFileSync(path, 'utf8'));
     writeFileSync(
       path,

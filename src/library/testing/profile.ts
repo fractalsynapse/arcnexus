@@ -25,7 +25,7 @@ export function loadTestProfile(project: string, revision: string, id: string): 
   const source = new ConfigurationReader().definition(
     project,
     revision,
-    `architecture/test-profiles/${id}`,
+    `.arc/architecture/test-profiles/${id}`,
   );
   const profile = validateSchema<TestProfile>('test-profile', source.value);
   if (profile.id !== id) throw new Error(`Test profile identity mismatch: ${id}`);

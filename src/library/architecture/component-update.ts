@@ -24,7 +24,7 @@ export class ComponentUpdate {
       throw new InputError('Update requires the declaring repository');
     const path = catalog.configurationSources.find(
       (entry) =>
-        entry.path.startsWith('architecture/components/') &&
+        entry.path.startsWith('.arc/architecture/components/') &&
         (entry.value as { id?: string }).id === id,
     )?.path;
     if (!path) throw new InputError('Missing component definition: ' + id);
@@ -59,7 +59,11 @@ export class ComponentUpdate {
     } catch (error) {
       throw new InputError(String(error));
     }
-    return { path: `architecture/components/${id}.yaml`, text: stringify(value), create: true };
+    return {
+      path: `.arc/architecture/components/${id}.yaml`,
+      text: stringify(value),
+      create: true,
+    };
   }
 
   /** Removes only the selected executable definition; references and remaining ownership are checked on the proposal. */
@@ -74,7 +78,7 @@ export class ComponentUpdate {
       throw new InputError('Removal requires the declaring repository');
     const path = catalog.configurationSources.find(
       (entry) =>
-        entry.path.startsWith('architecture/components/') &&
+        entry.path.startsWith('.arc/architecture/components/') &&
         (entry.value as { id?: string }).id === id,
     )?.path;
     if (!path) throw new InputError('Missing component definition: ' + id);

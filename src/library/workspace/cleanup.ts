@@ -247,7 +247,7 @@ export class WorkspaceCleanup {
     const source = new ConfigurationReader().definition(
       workspace,
       base,
-      'architecture/environment',
+      '.arc/architecture/environment',
     ).value;
     const operations =
       (source as { schemaVersion: number }).schemaVersion >= 4

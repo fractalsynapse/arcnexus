@@ -46,20 +46,20 @@ export class ComponentTestFixture {
    * the same single-maintainer rule the repository uses for `architecture-maintenance`.
    */
   private maintenanceOwner(): void {
-    this.put('architecture/components/maintenance.yaml', {
+    this.put('.arc/architecture/components/maintenance.yaml', {
       ...this.fields(),
       id: 'maintenance',
       type: 'foundation',
       parentId: 'package',
       owns: [
         '.gitignore',
-        'architecture/environment.yaml',
-        'architecture/roles',
-        'architecture/execution-profiles',
-        'architecture/test-profiles',
-        'architecture/operations',
-        'architecture/components/platform.yaml',
-        'architecture/components/package.yaml',
+        '.arc/architecture/environment.yaml',
+        '.arc/architecture/roles',
+        '.arc/architecture/execution-profiles',
+        '.arc/architecture/test-profiles',
+        '.arc/architecture/operations',
+        '.arc/architecture/components/platform.yaml',
+        '.arc/architecture/components/package.yaml',
       ],
     });
   }
@@ -79,7 +79,7 @@ export class ComponentTestFixture {
   private catalog(): void {
     const fields = this.fields();
     this.containers();
-    this.put('architecture/components/sample.yaml', {
+    this.put('.arc/architecture/components/sample.yaml', {
       ...fields,
       id: 'sample',
       type: 'library',
@@ -90,7 +90,7 @@ export class ComponentTestFixture {
       // selected suites. Neither is an agent operation, so neither needs an activity binding.
       operations: { compile: ['setup'], suites: ['verify'] },
     });
-    this.put('architecture/environment.yaml', {
+    this.put('.arc/architecture/environment.yaml', {
       schemaVersion: 4,
       workspace: {
         primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
@@ -101,7 +101,7 @@ export class ComponentTestFixture {
 
   /** Defines platform and package containment without granting blanket source ownership. */
   private containers(): void {
-    this.put('architecture/components/platform.yaml', {
+    this.put('.arc/architecture/components/platform.yaml', {
       ...containerFields,
       id: 'platform',
       type: 'platform',
@@ -110,7 +110,7 @@ export class ComponentTestFixture {
       defaultPackage: 'package',
       verificationInputs: [],
     });
-    this.put('architecture/components/package.yaml', {
+    this.put('.arc/architecture/components/package.yaml', {
       ...containerFields,
       // The primary repository is derived for a platform, while a package names the repository whose
       // sources it contains; the shared container base therefore carries it only for the package.
@@ -124,7 +124,7 @@ export class ComponentTestFixture {
 
   /** Declares the shared Node preparation and compiled-test runner once. */
   profile(overrides: Record<string, unknown> = {}): void {
-    this.put('architecture/test-profiles/node.yaml', {
+    this.put('.arc/architecture/test-profiles/node.yaml', {
       schemaVersion: 2,
       id: 'node',
       adapter: 'node',
@@ -154,7 +154,7 @@ export class ComponentTestFixture {
     args: unknown[],
     prerequisites: string[],
   ): void {
-    this.put(`architecture/operations/${id}.yaml`, {
+    this.put(`.arc/architecture/operations/${id}.yaml`, {
       schemaVersion: 4,
       id,
       purpose,
@@ -200,13 +200,13 @@ export class ComponentTestFixture {
 
   /** Adds an unselected profile to verify irrelevant configuration does not alter execution. */
   unusedProfile(): void {
-    const path = 'architecture/components/sample.yaml';
+    const path = '.arc/architecture/components/sample.yaml';
     const sample = JSON.parse(readFileSync(join(this.repo, path), 'utf8'));
     sample.ownership.paths = ['tests/unit', 'tests/regression'];
     sample.discovery.tests = sample.ownership.paths;
     sample.access.writeDirectories = sample.ownership.paths;
     this.put(path, sample);
-    this.put('architecture/components/other.yaml', {
+    this.put('.arc/architecture/components/other.yaml', {
       ...sample,
       id: 'other',
       testProfile: 'other',
@@ -218,7 +218,7 @@ export class ComponentTestFixture {
 
   /** Adds another owner profile to exercise preparation and runner compatibility. */
   private otherProfile(): void {
-    this.put('architecture/test-profiles/other.yaml', {
+    this.put('.arc/architecture/test-profiles/other.yaml', {
       schemaVersion: 2,
       id: 'other',
       adapter: 'node',

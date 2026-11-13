@@ -41,12 +41,12 @@ class LintOperationTests {
       'no-restricted-syntax: [error, "Identifier[name=before]"]',
       'source.txt',
     ]);
-    const path = join(fixture.repo, 'architecture/operations/agent-probe.yaml');
+    const path = join(fixture.repo, '.arc/architecture/operations/agent-probe.yaml');
     const operation = JSON.parse(readFileSync(path, 'utf8'));
     operation.category = 'lint';
     operation.command = 'lint-tool';
     writeFileSync(path, JSON.stringify(operation));
-    const profilePath = join(fixture.repo, 'architecture/execution-profiles/luna.yaml');
+    const profilePath = join(fixture.repo, '.arc/architecture/execution-profiles/luna.yaml');
     const profile = JSON.parse(readFileSync(profilePath, 'utf8'));
     profile.operationCategories = ['unit-test', 'lint'];
     writeFileSync(profilePath, JSON.stringify(profile));

@@ -8,13 +8,13 @@ reads:
   - .
 owns:
   - .gitignore
-  - architecture/environment.yaml
-  - architecture/roles
-  - architecture/execution-profiles
-  - architecture/test-profiles
-  - architecture/operations
-  - architecture/components/platform.yaml
-  - architecture/components/package.yaml
+  - .arc/architecture/environment.yaml
+  - .arc/architecture/roles
+  - .arc/architecture/execution-profiles
+  - .arc/architecture/test-profiles
+  - .arc/architecture/operations
+  - .arc/architecture/components/platform.yaml
+  - .arc/architecture/components/package.yaml
 activities:
   research:
     role: engineer

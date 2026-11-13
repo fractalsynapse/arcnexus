@@ -19,7 +19,7 @@ class MaterializationFixture extends MinimalCatalogFixture {
   constructor(t: TestContext) {
     super(t);
     t.after(() => rmSync(this.volume, { recursive: true, force: true }));
-    this.put('architecture/environment.json', {
+    this.put('.arc/architecture/environment.json', {
       schemaVersion: 5,
       workspace: { primary: { id: 'sample' }, dependencies: [] },
     });
@@ -190,7 +190,7 @@ test('remote transport rejects embedded credentials without persisting or echoin
 
 test('a declared upstream remains enforced for schema-five materialization', native, (t) => {
   const f = new MaterializationFixture(t);
-  f.put('architecture/environment.json', {
+  f.put('.arc/architecture/environment.json', {
     schemaVersion: 5,
     workspace: {
       primary: { id: 'sample', repository: 'https://example.invalid/different.git' },

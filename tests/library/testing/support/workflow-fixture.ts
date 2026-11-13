@@ -66,7 +66,7 @@ export class WorkflowFixture {
       rmSync(this.root, { recursive: true, force: true });
     });
     this.options = { mode, calls: this.calls };
-    mkdirSync(join(this.repo, 'architecture/components'), { recursive: true });
+    mkdirSync(join(this.repo, '.arc/architecture/components'), { recursive: true });
     this.git('init', '-b', 'staging');
     this.git('config', 'user.name', 'Test');
     this.git('config', 'user.email', 'test@example.invalid');
@@ -140,7 +140,10 @@ export class WorkflowFixture {
 
   /** Writes one fixture component definition as JSON. */
   private declare(id: string, value: unknown): void {
-    writeFileSync(join(this.repo, `architecture/components/${id}.json`), JSON.stringify(value));
+    writeFileSync(
+      join(this.repo, `.arc/architecture/components/${id}.json`),
+      JSON.stringify(value),
+    );
   }
 
   /**
@@ -187,21 +190,21 @@ export class WorkflowFixture {
       owns: [
         '.gitignore',
         'verify.cjs',
-        'architecture/operations',
-        'architecture/environment.yaml',
-        'architecture/execution-profiles',
-        'architecture/roles',
-        'architecture/components/platform.json',
-        'architecture/components/package.json',
+        '.arc/architecture/operations',
+        '.arc/architecture/environment.yaml',
+        '.arc/architecture/execution-profiles',
+        '.arc/architecture/roles',
+        '.arc/architecture/components/platform.json',
+        '.arc/architecture/components/package.json',
       ],
     });
   }
 
   /** Declares the one finite check every fixture leaf binds as its verification. */
   private verificationOperation(): void {
-    mkdirSync(join(this.repo, 'architecture/operations'), { recursive: true });
+    mkdirSync(join(this.repo, '.arc/architecture/operations'), { recursive: true });
     writeFileSync(
-      join(this.repo, 'architecture/operations/verify.yaml'),
+      join(this.repo, '.arc/architecture/operations/verify.yaml'),
       JSON.stringify({
         schemaVersion: 4,
         id: 'verify',
@@ -226,7 +229,7 @@ export class WorkflowFixture {
     this.verificationOperation();
     this.maintainer();
     writeFileSync(
-      join(this.repo, 'architecture/components/sample.json'),
+      join(this.repo, '.arc/architecture/components/sample.json'),
       JSON.stringify(this.component),
     );
     this.declare('dependency', {
@@ -238,7 +241,7 @@ export class WorkflowFixture {
       owns: ['dependency'],
     });
     writeFileSync(
-      join(this.repo, 'architecture/environment.yaml'),
+      join(this.repo, '.arc/architecture/environment.yaml'),
       JSON.stringify({
         schemaVersion: 4,
         workspace: {

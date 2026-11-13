@@ -126,7 +126,7 @@ class SharedTestingTests {
   capturesMandatorySelection(t: TestContext): void {
     const f = new ComponentTestFixture(t);
     f.extend(
-      'architecture/components/sample.yaml',
+      '.arc/architecture/components/sample.yaml',
       (value) => (value.operations = { suites: ['verify'] }),
     );
     f.commit();
@@ -141,7 +141,7 @@ class SharedTestingTests {
     assert.ok(
       assignment.configurationSources.some(
         (source: any) =>
-          source.path === 'architecture/test-profiles/node.yaml' && source.sourceHash,
+          source.path === '.arc/architecture/test-profiles/node.yaml' && source.sourceHash,
       ),
     );
   }

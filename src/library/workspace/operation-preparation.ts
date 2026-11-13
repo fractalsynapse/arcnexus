@@ -32,8 +32,11 @@ export class WorkspaceOperations {
     record.operationCatalog = Object.values(catalog.components);
     record.preparationOwners = this.owners(catalog, record.source, project, packageId);
     record.environment = environment(
-      new ConfigurationReader().definition(record.source, authorityBase, 'architecture/environment')
-        .value,
+      new ConfigurationReader().definition(
+        record.source,
+        authorityBase,
+        '.arc/architecture/environment',
+      ).value,
       Object.values(catalog.operations),
     );
     const bindingSource = (record.bindings as Bindings).configurationSource;

@@ -34,17 +34,17 @@ class RequestWorkflowScenario {
 
   /** Captures a real Node-profile owner with no test-root write scope, making behavioral substitution invalid. */
   private profile(f: GeneralFixture['fixture']): void {
-    const ownerPath = join(f.repo, 'architecture/components/b.json');
+    const ownerPath = join(f.repo, '.arc/architecture/components/b.json');
     const owner = JSON.parse(readFileSync(ownerPath, 'utf8'));
     owner.testProfile = 'node';
     writeFileSync(ownerPath, JSON.stringify(owner));
-    const maintenancePath = join(f.repo, 'architecture/components/a.json');
+    const maintenancePath = join(f.repo, '.arc/architecture/components/a.json');
     const maintenance = JSON.parse(readFileSync(maintenancePath, 'utf8'));
-    maintenance.owns.push('architecture/test-profiles');
+    maintenance.owns.push('.arc/architecture/test-profiles');
     writeFileSync(maintenancePath, JSON.stringify(maintenance));
-    mkdirSync(join(f.repo, 'architecture/test-profiles'), { recursive: true });
+    mkdirSync(join(f.repo, '.arc/architecture/test-profiles'), { recursive: true });
     writeFileSync(
-      join(f.repo, 'architecture/test-profiles/node.yaml'),
+      join(f.repo, '.arc/architecture/test-profiles/node.yaml'),
       JSON.stringify({
         schemaVersion: 2,
         id: 'node',

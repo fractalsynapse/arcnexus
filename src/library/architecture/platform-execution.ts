@@ -20,13 +20,13 @@ export class PlatformExecution {
       '--name-only',
       base,
       '--',
-      'architecture/execution.json',
-      'architecture/execution.yaml',
-      'architecture/execution.yml',
+      '.arc/architecture/execution.json',
+      '.arc/architecture/execution.yaml',
+      '.arc/architecture/execution.yml',
     );
     if (retired.trim())
       throw new InputError(
-        'Retired execution configuration: move settings to the platform and remove architecture/execution',
+        'Retired execution configuration: move settings to the platform and remove .arc/architecture/execution',
       );
     const platform = platforms[0]!;
     this.director(platform);

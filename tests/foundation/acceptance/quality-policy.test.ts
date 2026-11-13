@@ -48,7 +48,7 @@ class RepositoryQualityPolicyScenarios {
 
   /** Required shared usages have one authored source rather than repeated leaf declarations. */
   authored(): void {
-    const directory = resolve('architecture/components');
+    const directory = resolve('.arc/architecture/components');
     for (const file of readdirSync(directory).filter((file) => file.endsWith('.yaml'))) {
       const component = YAML.parse(readFileSync(join(directory, file), 'utf8'));
       for (const id of this.ids) {

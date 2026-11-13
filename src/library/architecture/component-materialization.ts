@@ -78,7 +78,8 @@ export class ComponentMaterializer {
   /** Anchors implicit definition ownership to the catalog repository without widening local writes. */
   private definition(c: Component, paths: string[]): void {
     const source = this.catalog.configurationSources.find(
-      (s) => (s.value as Component).id === c.id && s.path.startsWith('architecture/components/'),
+      (s) =>
+        (s.value as Component).id === c.id && s.path.startsWith('.arc/architecture/components/'),
     );
     if (!source) throw new InputError(`Missing component definition: ${c.id}`);
     c.definition = {

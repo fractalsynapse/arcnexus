@@ -21,7 +21,7 @@ class SharedOperationScenarios {
     this.testProfile(f);
     rmSync(join(f.root, 'package/tests/value.test.ts'));
     f.put(
-      'architecture/components/package.json',
+      '.arc/architecture/components/package.json',
       f.component('package', 'package', {
         parentId: 'platform',
         root: 'package',
@@ -29,7 +29,7 @@ class SharedOperationScenarios {
         operations: { check: [required ? 'verify' : 'agent'] },
       }),
     );
-    f.put('architecture/operations/check.json', {
+    f.put('.arc/architecture/operations/check.json', {
       ...this.operation(),
       args: ['--test', { context: 'selectedTestFiles' }],
     });
@@ -45,13 +45,13 @@ class SharedOperationScenarios {
   /** Gives the captured test convention its own maintenance paths and shared runner reference. */
   private testProfile(f: ComponentFixture): void {
     f.put(
-      'architecture/components/operation-owner.json',
+      '.arc/architecture/components/operation-owner.json',
       f.component('operation-owner', 'library', {
         parentId: 'maintenance-package',
-        owns: ['architecture/operations', 'architecture/test-profiles'],
+        owns: ['.arc/architecture/operations', '.arc/architecture/test-profiles'],
       }),
     );
-    f.put('architecture/test-profiles/node.json', {
+    f.put('.arc/architecture/test-profiles/node.json', {
       schemaVersion: 2,
       id: 'node',
       adapter: 'node',
@@ -65,7 +65,7 @@ class SharedOperationScenarios {
   shared(t: TestContext): void {
     const fixture = this.fixture(t);
     fixture.put(
-      'architecture/components/second.json',
+      '.arc/architecture/components/second.json',
       fixture.component('second', 'library', {
         parentId: 'package',
         owns: ['second'],
@@ -90,7 +90,7 @@ class SharedOperationScenarios {
       'package/src',
       'package/docs',
       'package/tests',
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
     ]);
     assert.equal(owners.second.operationPlan.verify[0].args[0], 'second');
     assert.equal(owners.second.operationPlan.verify[0].id, 'check');
@@ -104,7 +104,7 @@ class SharedOperationScenarios {
   provenance(t: TestContext): void {
     const fixture = this.fixture(t);
     fixture.put(
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
       fixture.component('sample', 'library', {
         parentId: 'package',
         owns: ['src', 'docs', 'tests'],
@@ -131,8 +131,8 @@ class SharedOperationScenarios {
   /** Rejects a dependency cycle before building a partially executable checkpoint. */
   cycle(t: TestContext): void {
     const fixture = this.fixture(t);
-    fixture.put('architecture/operations/check.json', this.operation(['other']));
-    fixture.put('architecture/operations/other.json', {
+    fixture.put('.arc/architecture/operations/check.json', this.operation(['other']));
+    fixture.put('.arc/architecture/operations/other.json', {
       ...this.operation(['check']),
       id: 'other',
     });
@@ -145,7 +145,7 @@ class SharedOperationScenarios {
   /** Refuses indefinite service startup as a mandatory verification operation. */
   service(t: TestContext): void {
     const fixture = this.fixture(t);
-    fixture.put('architecture/operations/check.json', {
+    fixture.put('.arc/architecture/operations/check.json', {
       ...this.operation(),
       kind: 'service',
       service: { port: 0, readinessPath: '/', expectedStatus: 200 },
@@ -170,7 +170,7 @@ class SharedOperationScenarios {
   private httpFixture(t: TestContext, declared: boolean): ComponentFixture {
     const fixture = this.fixture(t, declared ? ['server'] : []);
     fixture.put(
-      'architecture/components/package.json',
+      '.arc/architecture/components/package.json',
       fixture.component('package', 'package', {
         parentId: 'platform',
         root: 'package',
@@ -178,12 +178,12 @@ class SharedOperationScenarios {
       }),
     );
     const { command: _command, args: _args, ...base } = this.operation();
-    fixture.put('architecture/operations/check.json', {
+    fixture.put('.arc/architecture/operations/check.json', {
       ...base,
       kind: 'http',
       http: { serviceId: 'server', path: '/', expectedStatus: 200 },
     });
-    fixture.put('architecture/operations/server.json', {
+    fixture.put('.arc/architecture/operations/server.json', {
       ...this.operation(),
       id: 'server',
       kind: 'service',
@@ -197,25 +197,25 @@ class SharedOperationScenarios {
   private fixture(t: TestContext, agentOperations: string[] = ['check']): ComponentFixture {
     const fixture = new ComponentFixture(t);
     fixture.put(
-      'architecture/components/operation-owner.json',
+      '.arc/architecture/components/operation-owner.json',
       fixture.component('operation-owner', 'library', {
         parentId: 'maintenance-package',
-        owns: ['architecture/operations'],
+        owns: ['.arc/architecture/operations'],
       }),
     );
     fixture.put(
-      'architecture/components/package.json',
+      '.arc/architecture/components/package.json',
       fixture.component('package', 'package', {
         parentId: 'platform',
         root: 'package',
         operations: { check: ['verify', 'agent'] },
       }),
     );
-    fixture.put('architecture/operations/check.json', this.operation());
+    fixture.put('.arc/architecture/operations/check.json', this.operation());
     // An agent-invoked operation must belong to an activity the running component declares, so the
     // leaf states that activity. The definitions stay shared at the package, which is the subject.
     fixture.put(
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
       this.sample(fixture, agentOperations),
     );
     return fixture;

@@ -58,7 +58,7 @@ test('inspection services retain captured revisions while new CLI previews follo
   const f = new PackageCliFixture(t);
   f.register();
   const revision = f.git('rev-parse', 'HEAD');
-  f.extend('architecture/components/sample.yaml', (value) => {
+  f.extend('.arc/architecture/components/sample.yaml', (value) => {
     value.purpose = 'Maintain the newly selected intent';
   });
   f.commit();

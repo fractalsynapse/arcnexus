@@ -252,7 +252,7 @@ class ChecklistRecoveryScenarios {
   private configure(f: ReturnType<typeof workflowFixture>, mode: string): void {
     if (mode === 'quality-recovery') this.qualityPolicy(f);
     if (mode.startsWith('restricted-')) {
-      const path = join(f.repo, 'architecture/roles/engineer.yaml');
+      const path = join(f.repo, '.arc/architecture/roles/engineer.yaml');
       const role = JSON.parse(readFileSync(path, 'utf8'));
       role.activities = role.activities.filter((activity: string) => activity !== 'release');
       writeFileSync(path, JSON.stringify(role));
@@ -262,11 +262,11 @@ class ChecklistRecoveryScenarios {
 
   /** Declares a finite mandatory check that rejects the controlled specification, not its baseline. */
   private qualityPolicy(f: ReturnType<typeof workflowFixture>): void {
-    const profilePath = join(f.repo, 'architecture/execution-profiles/luna.yaml');
+    const profilePath = join(f.repo, '.arc/architecture/execution-profiles/luna.yaml');
     const profile = JSON.parse(readFileSync(profilePath, 'utf8'));
     profile.operationCategories.push('lint');
     writeFileSync(profilePath, JSON.stringify(profile));
-    const path = join(f.repo, 'architecture/operations/verify.yaml');
+    const path = join(f.repo, '.arc/architecture/operations/verify.yaml');
     const operation = JSON.parse(readFileSync(path, 'utf8'));
     operation.id = 'spec-quality';
     operation.category = 'lint';
@@ -275,11 +275,14 @@ class ChecklistRecoveryScenarios {
       "const fs=require('fs');const p='tests/regression.cjs';if(fs.existsSync(p)&&!fs.readFileSync(p,'utf8').endsWith('\\n'))throw Error('FORMAT_REQUIRED')",
     ];
     writeFileSync(
-      join(f.repo, 'architecture/operations/spec-quality.yaml'),
+      join(f.repo, '.arc/architecture/operations/spec-quality.yaml'),
       JSON.stringify(operation),
     );
     f.component.operations = { 'spec-quality': ['verify'] };
-    writeFileSync(join(f.repo, 'architecture/components/sample.json'), JSON.stringify(f.component));
+    writeFileSync(
+      join(f.repo, '.arc/architecture/components/sample.json'),
+      JSON.stringify(f.component),
+    );
     f.commit();
   }
 }

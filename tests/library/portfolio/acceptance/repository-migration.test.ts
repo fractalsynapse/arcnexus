@@ -20,7 +20,7 @@ class MigrationFixture extends MinimalCatalogFixture {
   constructor(t: TestContext) {
     super(t);
     t.after(() => rmSync(this.volume, { recursive: true, force: true }));
-    this.put('architecture/environment.json', {
+    this.put('.arc/architecture/environment.json', {
       schemaVersion: 5,
       workspace: { primary: { id: 'sample' }, dependencies: [] },
     });

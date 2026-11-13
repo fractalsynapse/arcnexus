@@ -32,7 +32,7 @@ class StandardsV6Scenarios {
     const f = this.fixture(t);
     if (missing) this.extend(f, 'platform', { standards: ['absent'] });
     else {
-      const path = 'architecture/standards/standard.json';
+      const path = '.arc/architecture/standards/standard.json';
       const pattern = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
       f.put(path, { ...pattern, operationIds: ['undeclared'] });
     }
@@ -57,10 +57,10 @@ class StandardsV6Scenarios {
     const f = new ComponentFixture(t);
     this.upgrade(f);
     this.extend(f, 'platform', { standards: ['standard'] });
-    const path = 'architecture/components/maintenance.json';
+    const path = '.arc/architecture/components/maintenance.json';
     const maintenance = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
-    f.put(path, { ...maintenance, owns: [...maintenance.owns, 'architecture/standards'] });
-    f.put('architecture/standards/standard.json', {
+    f.put(path, { ...maintenance, owns: [...maintenance.owns, '.arc/architecture/standards'] });
+    f.put('.arc/architecture/standards/standard.json', {
       schemaVersion: 1,
       id: 'standard',
       owner: 'sample',
@@ -76,8 +76,8 @@ class StandardsV6Scenarios {
 
   /** Converts only authored component versions; historical fixture behavior stays available separately. */
   private upgrade(f: ComponentFixture): void {
-    for (const file of readdirSync(join(f.root, 'architecture/components'))) {
-      const path = 'architecture/components/' + file;
+    for (const file of readdirSync(join(f.root, '.arc/architecture/components'))) {
+      const path = '.arc/architecture/components/' + file;
       const value = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
       f.put(path, { ...value, schemaVersion: 6 });
     }
@@ -85,7 +85,7 @@ class StandardsV6Scenarios {
 
   /** Updates only the intended declaration while retaining the fixture's existing execution authority. */
   private extend(f: ComponentFixture, id: string, fields: object): void {
-    const path = `architecture/components/${id}.json`;
+    const path = `.arc/architecture/components/${id}.json`;
     f.put(path, { ...JSON.parse(readFileSync(join(f.root, path), 'utf8')), ...fields });
   }
 }

@@ -34,7 +34,7 @@ test('local test selection uses the declared default without portfolio registrat
   const result = f.value(f.repo, 'test', 'inspect', '--component', 'sample');
   assert.equal(result.packageId, 'package');
   assert.equal(existsSync(join(f.root, 'volume')), false);
-  f.extend('architecture/components/platform.yaml', (value) => {
+  f.extend('.arc/architecture/components/platform.yaml', (value) => {
     delete value.defaultPackage;
   });
   f.commit();

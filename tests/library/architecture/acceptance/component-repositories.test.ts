@@ -16,7 +16,7 @@ class RepositoryOwnershipScenarios {
     assert.deepEqual(owner.ownedPaths, ['package']);
     assert.deepEqual(owner.writeScope, ['package']);
     assert.equal(owner.definition.repository, 'sample');
-    assert.equal(owner.definition.path, 'architecture/components/other.json');
+    assert.equal(owner.definition.path, '.arc/architecture/components/other.json');
     assert.match(owner.definition.sourceHash, /^[a-f0-9]{64}$/);
     assert.ok(owner.inventory.every((file: any) => file.path.startsWith('package/')));
   }
@@ -35,7 +35,7 @@ class RepositoryOwnershipScenarios {
   /** Rejects competing implementation roots in a bound repository before reporting a valid catalog. */
   overlap(t: TestContext): void {
     const { fixture, bindings } = this.fixture(t);
-    const path = 'architecture/components/other-maintenance.json';
+    const path = '.arc/architecture/components/other-maintenance.json';
     const owner = JSON.parse(readFileSync(join(fixture.root, path), 'utf8'));
     owner.owns.push('package');
     fixture.put(path, owner);
@@ -72,35 +72,35 @@ class RepositoryOwnershipScenarios {
   /** Declares dependency implementation and primary container-file maintenance without duplicate leaf paths. */
   private owners(fixture: ComponentFixture): void {
     fixture.put(
-      'architecture/components/other-package.json',
+      '.arc/architecture/components/other-package.json',
       fixture.component('other-package', 'package', {
         parentId: 'platform',
         repository: 'other',
       }),
     );
     fixture.put(
-      'architecture/components/other.json',
+      '.arc/architecture/components/other.json',
       fixture.component('other', 'library', {
         parentId: 'other-package',
         owns: ['package'],
       }),
     );
     fixture.put(
-      'architecture/components/other-maintenance.json',
+      '.arc/architecture/components/other-maintenance.json',
       fixture.component('other-maintenance', 'foundation', {
         parentId: 'other-package',
         owns: ['architecture'],
       }),
     );
-    const path = 'architecture/components/maintenance.json';
+    const path = '.arc/architecture/components/maintenance.json';
     const owner = JSON.parse(readFileSync(join(fixture.root, path), 'utf8'));
-    owner.owns.push('architecture/components/other-package.json');
+    owner.owns.push('.arc/architecture/components/other-package.json');
     fixture.put(path, owner);
   }
 
   /** Refreshes only the declared dependency revision; the binding stays outside captured source. */
   private bind(fixture: ComponentFixture, dependency: ComponentFixture, bindings: string): void {
-    fixture.put('architecture/environment.json', {
+    fixture.put('.arc/architecture/environment.json', {
       schemaVersion: 4,
       workspace: {
         primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },

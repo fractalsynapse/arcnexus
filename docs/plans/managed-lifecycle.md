@@ -145,7 +145,7 @@ standalone guidance command after migrating its tests and declared operations/CI
 
 Component schema six uses `standards`; schema-five `patterns` remains historical
 inspection/migration input only after active fixtures migrate. Standard definitions
-retain their existing identity and artifact/check contract under `architecture/standards`.
+retain their existing identity and artifact/check contract under `.arc/architecture/standards`.
 The v4 recipe migration feeds the same final v6 conversion; v5 converts without
 re-authoring operations. Preview and write preserve owner scope by renaming exact
 standard-directory/file ownership declarations with their artifacts. Mixed old/new

@@ -96,7 +96,7 @@ function captureConfiguration(record: RecordData, options: PrepareOptions): void
     new ConfigurationReader().definition(
       record.source,
       options.authorityBase ?? record.base,
-      'architecture/environment',
+      '.arc/architecture/environment',
     ),
     ...(options.bindings?.configurationSource ? [options.bindings.configurationSource] : []),
   ];
@@ -124,7 +124,7 @@ function inPlaceAuthority(options: PrepareOptions) {
     new ConfigurationReader().definition(
       source,
       options.authorityBase ?? base,
-      'architecture/environment',
+      '.arc/architecture/environment',
     ).value,
   );
   assertNoSubmodules(source, base);
@@ -285,7 +285,7 @@ function inspectSource(options: PrepareOptions) {
       new ConfigurationReader().definition(
         source,
         options.authorityBase ?? base,
-        'architecture/environment',
+        '.arc/architecture/environment',
       ).value,
     );
     assertNoSubmodules(source, base);

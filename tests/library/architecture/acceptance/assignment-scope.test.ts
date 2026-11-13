@@ -22,7 +22,7 @@ class AssignmentScopeScenarios {
   legacyProfile(t: TestContext): void {
     const { resolve, catalog } = this.fixture(t);
     const profile = catalog.configurationSources.find((source) =>
-      source.path.startsWith('architecture/test-profiles/'),
+      source.path.startsWith('.arc/architecture/test-profiles/'),
     )!;
     profile.value = { ...(profile.value as object), schemaVersion: 1 };
     // The guarantee is that a profile document which is not the current shape cannot be admitted.
@@ -127,7 +127,7 @@ class AssignmentScopeScenarios {
     });
     catalog.configurationSources.push(
       new ConfigurationReader().parse(
-        'architecture/test-profiles/node.json',
+        '.arc/architecture/test-profiles/node.json',
         // A complete current-shape profile: admission validates what it consumes, so the synthetic
         // source has to carry every field the schema requires, exactly as an authored document does.
         JSON.stringify({

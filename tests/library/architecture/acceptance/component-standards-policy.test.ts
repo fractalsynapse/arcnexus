@@ -9,7 +9,7 @@ class ComponentPolicyScenarios {
   executable(t: TestContext, type: string): void {
     const fixture = new ComponentFixture(t);
     fixture.put(
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
       fixture.component('sample', type, {
         parentId: 'package',
         owns: ['src', 'docs', 'tests'],
@@ -36,7 +36,7 @@ class ComponentPolicyScenarios {
     });
     const activities = platform.activities as Record<string, any>;
     delete activities.research[field];
-    fixture.put('architecture/components/platform.json', platform);
+    fixture.put('.arc/architecture/components/platform.json', platform);
     fixture.commit();
     const result = fixture.run('validate');
     assert.equal(result.status, 2);
@@ -50,7 +50,7 @@ class ComponentPolicyScenarios {
   container(t: TestContext): void {
     const fixture = new ComponentFixture(t);
     fixture.put(
-      'architecture/components/package.json',
+      '.arc/architecture/components/package.json',
       fixture.uncheckedComponent('package', 'package', {
         parentId: 'platform',
         root: 'package',
@@ -67,7 +67,7 @@ class ComponentPolicyScenarios {
   traversal(t: TestContext): void {
     const fixture = new ComponentFixture(t);
     fixture.put(
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
       fixture.component('sample', 'library', {
         parentId: 'package',
         owns: ['../package'],

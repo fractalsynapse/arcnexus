@@ -31,7 +31,7 @@ class SharedPreparationScenarios {
       'package/src/prepare.cjs',
       "const f=require('fs'),p=require('path');const d=f.mkdtempSync(p.join(require('os').tmpdir(),'ipc-'));const sock=p.join(d,'host.sock');const s=require('net').createServer();s.listen(sock,()=>{f.statSync(sock);s.close(()=>{f.writeFileSync('package/generated/proof','ipc');f.rmSync(d,{recursive:true});});});",
     );
-    f.put('architecture/operations/prepare.json', { ...this.operation(), network: true });
+    f.put('.arc/architecture/operations/prepare.json', { ...this.operation(), network: true });
     f.commit();
     const { result, report } = this.execute(f);
     assert.equal(
@@ -68,13 +68,13 @@ class SharedPreparationScenarios {
   deduplicates(t: TestContext): void {
     const f = this.fixture(t);
     f.put(
-      'architecture/components/second.json',
+      '.arc/architecture/components/second.json',
       f.component('second', 'library', {
         parentId: 'package',
         owns: ['second'],
       }),
     );
-    f.put('architecture/operations/prepare.json', {
+    f.put('.arc/architecture/operations/prepare.json', {
       ...this.operation(),
       args: ['package/src/prepare.cjs', 'shared'],
     });
@@ -108,7 +108,7 @@ class SharedPreparationScenarios {
   /** Obsolete execution budgets are rejected before any setup operation can run. */
   budget(t: TestContext): void {
     const f = this.fixture(t);
-    f.put('architecture/execution-profiles/luna.json', {
+    f.put('.arc/architecture/execution-profiles/luna.json', {
       schemaVersion: 3,
       id: 'luna',
       model: 'configured-model',
@@ -153,7 +153,7 @@ class SharedPreparationScenarios {
   private fixture(t: TestContext, local = false): ComponentFixture {
     const f = new ComponentFixture(t);
     if (!local) f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
-    f.put('architecture/environment.json', {
+    f.put('.arc/architecture/environment.json', {
       schemaVersion: local ? 5 : 4,
       workspace: {
         primary: local
@@ -169,7 +169,7 @@ class SharedPreparationScenarios {
       'package/src/prepare.cjs',
       "require('fs').writeFileSync('package/generated/proof',process.argv[2]);",
     );
-    f.put('architecture/operations/prepare.json', this.operation());
+    f.put('.arc/architecture/operations/prepare.json', this.operation());
     f.put('.git/bindings.json', {
       schemaVersion: 1,
       repositories: {},
@@ -182,7 +182,7 @@ class SharedPreparationScenarios {
 
   /** Supplies explicit director/reviewer authority required by production package preparation. */
   private executionDefaults(f: ComponentFixture): void {
-    const path = 'architecture/components/platform.json';
+    const path = '.arc/architecture/components/platform.json';
     const platform = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
     f.put(path, {
       ...platform,
@@ -195,7 +195,7 @@ class SharedPreparationScenarios {
   /** Gives package inheritance, source ownership and shared definitions distinct declarations. */
   private components(f: ComponentFixture): void {
     f.put(
-      'architecture/components/package.json',
+      '.arc/architecture/components/package.json',
       f.component('package', 'package', {
         parentId: 'platform',
         root: 'package',
@@ -203,14 +203,14 @@ class SharedPreparationScenarios {
       }),
     );
     f.put(
-      'architecture/components/operations.json',
+      '.arc/architecture/components/operations.json',
       f.component('operations', 'library', {
         parentId: 'maintenance-package',
-        owns: ['architecture/operations'],
+        owns: ['.arc/architecture/operations'],
       }),
     );
     f.put(
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
       f.component('sample', 'library', {
         parentId: 'package',
         owns: ['src', 'docs', 'tests', '.gitignore'],

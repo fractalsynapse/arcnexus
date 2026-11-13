@@ -15,12 +15,12 @@ owns:
   - package.json
   - package-lock.json
   - README.md
-  - architecture/environment.yaml
-  - architecture/roles
-  - architecture/execution-profiles
-  - architecture/operations
-  - architecture/components/platform.yaml
-  - architecture/components/package.yaml
+  - .arc/architecture/environment.yaml
+  - .arc/architecture/roles
+  - .arc/architecture/execution-profiles
+  - .arc/architecture/operations
+  - .arc/architecture/components/platform.yaml
+  - .arc/architecture/components/package.yaml
 api:
   - module: src/identity.mjs
 activities:

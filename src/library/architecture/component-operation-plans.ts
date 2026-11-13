@@ -43,7 +43,7 @@ export class ComponentOperationPlans {
   private context(c: Component): OperationContext {
     const profile = this.catalog.configurationSources.find(
       (s) =>
-        s.path.startsWith('architecture/test-profiles/') &&
+        s.path.startsWith('.arc/architecture/test-profiles/') &&
         (s.value as { id?: string }).id === c.testProfile,
     );
     return {
@@ -88,7 +88,7 @@ export class ComponentOperationPlans {
     if (!c.testProfile) return undefined;
     const source = this.catalog.configurationSources.find(
       (entry) =>
-        entry.path.startsWith('architecture/test-profiles/') &&
+        entry.path.startsWith('.arc/architecture/test-profiles/') &&
         (entry.value as { id?: string }).id === c.testProfile,
     );
 

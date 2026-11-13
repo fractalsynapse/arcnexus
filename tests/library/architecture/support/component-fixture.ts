@@ -57,20 +57,20 @@ export class ComponentFixture {
 
   /** Supplies profile/role authority and a primary repository without inline execution recipes. */
   private environment(): void {
-    this.put('architecture/environment.json', {
+    this.put('.arc/architecture/environment.json', {
       schemaVersion: 4,
       workspace: {
         primary: { id: 'sample', repository: 'https://example.invalid/sample.git' },
         dependencies: [],
       },
     });
-    this.put('architecture/roles/engineer.json', {
+    this.put('.arc/architecture/roles/engineer.json', {
       schemaVersion: 4,
       id: 'engineer',
       purpose: 'Engineer bounded changes',
       responsibilities: ['Verify changes'],
     });
-    this.put('architecture/execution-profiles/luna.json', {
+    this.put('.arc/architecture/execution-profiles/luna.json', {
       schemaVersion: 3,
       id: 'luna',
       model: 'gpt-6-luna',
@@ -83,7 +83,7 @@ export class ComponentFixture {
   /** Declares container defaults and disjoint leaf scope, including catalog maintenance. */
   private containers(): void {
     this.put(
-      'architecture/components/platform.json',
+      '.arc/architecture/components/platform.json',
       this.component('platform', 'platform', {
         executionProfile: 'luna',
         reads: ['.'],
@@ -92,14 +92,14 @@ export class ComponentFixture {
       }),
     );
     this.put(
-      'architecture/components/package.json',
+      '.arc/architecture/components/package.json',
       this.component('package', 'package', {
         parentId: 'platform',
         root: 'package',
       }),
     );
     this.put(
-      'architecture/components/maintenance-package.json',
+      '.arc/architecture/components/maintenance-package.json',
       this.component('maintenance-package', 'package', {
         parentId: 'platform',
       }),
@@ -109,21 +109,21 @@ export class ComponentFixture {
   /** Assigns configuration maintenance and a leaf with implicit definition ownership. */
   private owners(): void {
     this.put(
-      'architecture/components/maintenance.json',
+      '.arc/architecture/components/maintenance.json',
       this.component('maintenance', 'foundation', {
         parentId: 'maintenance-package',
         owns: [
-          'architecture/environment.json',
-          'architecture/roles',
-          'architecture/execution-profiles',
-          'architecture/components/platform.json',
-          'architecture/components/package.json',
-          'architecture/components/maintenance-package.json',
+          '.arc/architecture/environment.json',
+          '.arc/architecture/roles',
+          '.arc/architecture/execution-profiles',
+          '.arc/architecture/components/platform.json',
+          '.arc/architecture/components/package.json',
+          '.arc/architecture/components/maintenance-package.json',
         ],
       }),
     );
     this.put(
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
       this.component('sample', 'library', {
         parentId: 'package',
         owns: ['src', 'docs', 'tests'],

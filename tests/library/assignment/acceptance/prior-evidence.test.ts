@@ -50,12 +50,12 @@ class PriorEvidenceTests {
 
   /** Makes setup wait at an observable generated-output gate without granting access to caller files. */
   private setupGate(f: any): void {
-    const path = join(f.repo, 'architecture/components/platform.json');
+    const path = join(f.repo, '.arc/architecture/components/platform.json');
     const platform = JSON.parse(readFileSync(path, 'utf8'));
     platform.operations['setup-gate'] = ['setup'];
     writeFileSync(path, JSON.stringify(platform));
     const operation = JSON.parse(
-      readFileSync(join(f.repo, 'architecture/operations/verify.yaml'), 'utf8'),
+      readFileSync(join(f.repo, '.arc/architecture/operations/verify.yaml'), 'utf8'),
     );
     operation.id = 'setup-gate';
     operation.args = [
@@ -63,7 +63,7 @@ class PriorEvidenceTests {
       "const fs=require('fs');fs.mkdirSync('generated',{recursive:true});fs.writeFileSync('generated/ready','ready');const timer=setInterval(()=>{if(fs.existsSync('generated/release'))clearInterval(timer)},25)",
     ];
     writeFileSync(
-      join(f.repo, 'architecture/operations/setup-gate.yaml'),
+      join(f.repo, '.arc/architecture/operations/setup-gate.yaml'),
       JSON.stringify(operation),
     );
     f.commit();

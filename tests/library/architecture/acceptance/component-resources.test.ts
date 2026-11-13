@@ -14,7 +14,7 @@ class ComponentResourceScenarios {
     const f = new ComponentFixture(t);
     f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     f.put(
-      'architecture/components/deep.json',
+      '.arc/architecture/components/deep.json',
       f.component('deep', 'library', {
         parentId: 'package',
         owns: ['deep'],
@@ -97,7 +97,7 @@ class ComponentResourceScenarios {
     const { f, target } = this.fixture(t);
     const service = await this.service();
     const { revision, ...before } = service.get(target, 'sample');
-    const path = 'architecture/components/unrelated-filename.json';
+    const path = '.arc/architecture/components/unrelated-filename.json';
     const declaration = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
     // A field the inspected component does not expose, and that the current component shape
     // actually allows: a component carries no role, so the old vehicle for this edit could no
@@ -121,7 +121,7 @@ class ComponentResourceScenarios {
     const before = service.get(target, 'sample');
     const page = service.list(target, { limit: 1 });
     f.put(
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
       f.component('sample', 'library', {
         parentId: 'package',
         owns: ['src', 'docs', 'tests'],

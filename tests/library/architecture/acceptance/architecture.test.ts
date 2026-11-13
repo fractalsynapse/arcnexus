@@ -15,25 +15,27 @@ class ArchitectureTests {
   builtCLIReadsYAMLAtACapturedRevisionAndSnapshotsSourceHashes(t: TestContext) {
     const f = fixture(t);
     for (const path of ['components/sample', 'environment']) {
-      const source = join(f.repo, 'architecture', path + '.json');
+      const source = join(f.repo, '.arc/architecture', path + '.json');
       const value = JSON.parse(String(readFileSync(source, 'utf8')));
       renameSync(source, source.replace('.json', '.yaml'));
       writeFileSync(source.replace('.json', '.yaml'), stringify(value));
     }
     // Ownership follows the file: maintenance declared the JSON name, so after the rename nothing
-    // would own architecture/environment.yaml and validate would refuse the catalog for a reason
+    // would own .arc/architecture/environment.yaml and validate would refuse the catalog for a reason
     // unrelated to what this scenario inspects.
-    const maintenancePath = join(f.repo, 'architecture/components/maintenance.json');
+    const maintenancePath = join(f.repo, '.arc/architecture/components/maintenance.json');
     const maintenance = JSON.parse(String(readFileSync(maintenancePath, 'utf8')));
     maintenance.owns = (maintenance.owns as string[]).map((path: string) =>
-      path === 'architecture/environment.json' ? 'architecture/environment.yaml' : path,
+      path === '.arc/architecture/environment.json' ? '.arc/architecture/environment.yaml' : path,
     );
     writeFileSync(maintenancePath, JSON.stringify(maintenance));
     f.commit();
     const r = f.run('inspect', 'sample', 'Improve behavior', '--json');
     assert.equal(r.status, 0, r.stderr);
     const snapshots = JSON.parse(r.stdout).configurationSources;
-    const source = snapshots.find((s: any) => s.path === 'architecture/components/sample.yaml');
+    const source = snapshots.find(
+      (s: any) => s.path === '.arc/architecture/components/sample.yaml',
+    );
     assert.match(source.sourceHash, /^[a-f0-9]{64}$/);
     assert.match(source.normalizedHash, /^[a-f0-9]{64}$/);
     assert.match(source.text, /id: sample/);
@@ -43,7 +45,7 @@ class ArchitectureTests {
   /** Verifies that built clirejects ambiguous jsonand yamlidentities. */
   builtCLIRejectsAmbiguousJSONAndYAMLIdentities(t: TestContext) {
     const f = fixture(t);
-    writeFileSync(join(f.repo, 'architecture/components/sample.yaml'), stringify(f.component));
+    writeFileSync(join(f.repo, '.arc/architecture/components/sample.yaml'), stringify(f.component));
     f.commit();
     const r = f.run('validate');
     assert.equal(r.status, 2, r.stderr);
@@ -56,7 +58,7 @@ class ArchitectureTests {
     // Ownership derives from what components declare, so the refusal is provoked by a tracked file
     // that no component claims rather than by a hand-authored policy the loader no longer reads.
     f.component.owns = ['other.txt'];
-    f.put('architecture/components/sample.json', f.component);
+    f.put('.arc/architecture/components/sample.json', f.component);
     f.put('orphan.txt', 'nobody maintains this');
     f.commit();
     const r = f.run('validate');
@@ -70,8 +72,8 @@ class ArchitectureTests {
     // Two leaves claiming the same path is the overlap this scenario guards, stated through owned
     // declarations instead of a policy file that nothing reads any more.
     f.component.owns = ['shared.txt'];
-    f.put('architecture/components/sample.json', f.component);
-    f.put('architecture/components/other.json', {
+    f.put('.arc/architecture/components/sample.json', f.component);
+    f.put('.arc/architecture/components/other.json', {
       ...f.component,
       id: 'other',
       owns: ['shared.txt'],
@@ -86,7 +88,7 @@ class ArchitectureTests {
   /** Verifies that built inspect preserves normalized equivalence and original source bytes. */
   builtInspectPreservesNormalizedEquivalenceAndOriginalSourceBytes(t: TestContext) {
     const f = fixture(t),
-      file = join(f.repo, 'architecture/components/sample.json');
+      file = join(f.repo, '.arc/architecture/components/sample.json');
     const before = JSON.parse(f.run('inspect', 'sample', 'Check hashes', '--json').stdout);
     rmSync(file);
     writeFileSync(
@@ -124,8 +126,8 @@ class ArchitectureTests {
   rejectsPrivateCrossOwnerImports(t: TestContext, dynamic: any) {
     const f = fixture(t);
     f.component.owns = ['src/sample'];
-    f.put('architecture/components/sample.json', f.component);
-    f.put('architecture/components/other.json', {
+    f.put('.arc/architecture/components/sample.json', f.component);
+    f.put('.arc/architecture/components/other.json', {
       ...f.component,
       id: 'other',
       owns: ['src/other'],
@@ -145,13 +147,13 @@ class ArchitectureTests {
   builtValidateRejectsARuntimeModuleCycle(t: TestContext) {
     const f = fixture(t);
     f.component.owns = ['src'];
-    f.put('architecture/components/sample.json', f.component);
+    f.put('.arc/architecture/components/sample.json', f.component);
     mkdirSync(join(f.repo, 'src'));
     writeFileSync(join(f.repo, 'src/a.ts'), "import './b.js';");
     writeFileSync(join(f.repo, 'src/b.ts'), "import './a.js';");
     // The cycle is what this scenario refuses, so ownership is stated the way the loader derives it.
     f.component.owns = ['src'];
-    f.put('architecture/components/sample.json', f.component);
+    f.put('.arc/architecture/components/sample.json', f.component);
     f.commit();
     const r = f.run('validate');
     assert.equal(r.status, 2, r.stderr);
@@ -161,8 +163,8 @@ class ArchitectureTests {
   /** Verifies the scenario rejects restricted yaml. */
   rejectsRestrictedYaml(t: TestContext, text: any) {
     const f = fixture(t);
-    rmSync(join(f.repo, 'architecture/components/sample.json'));
-    writeFileSync(join(f.repo, 'architecture/components/sample.yaml'), text);
+    rmSync(join(f.repo, '.arc/architecture/components/sample.json'));
+    writeFileSync(join(f.repo, '.arc/architecture/components/sample.yaml'), text);
     f.commit();
     const r = f.run('validate');
     assert.equal(r.status, 2, r.stderr);
@@ -189,7 +191,7 @@ class ArchitectureTests {
   rejectsInvalidCatalogReferences(t: TestContext, mutate: any) {
     const f = fixture(t);
     mutate(f.component);
-    f.put('architecture/components/sample.json', f.component);
+    f.put('.arc/architecture/components/sample.json', f.component);
     f.commit();
     const r = f.run('validate');
     assert.equal(r.status, 2, r.stderr);
@@ -227,11 +229,11 @@ class ArchitectureTests {
   ) {
     const f = fixture(t);
     f.component.purpose = 'Uncommitted purpose';
-    f.put('architecture/components/sample.json', f.component);
+    f.put('.arc/architecture/components/sample.json', f.component);
     const r = f.run('inspect', 'sample', 'Improve behavior', '--json');
     assert.equal(r.status, 0, r.stderr);
     assert.equal(JSON.parse(r.stdout).context.at(-1).purpose, 'Own sample behavior');
-    f.put('architecture/components/unused.json', {
+    f.put('.arc/architecture/components/unused.json', {
       ...f.component,
       id: 'unused',
       parentId: 'missing',

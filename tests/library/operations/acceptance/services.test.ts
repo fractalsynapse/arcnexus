@@ -52,7 +52,7 @@ class ServicesTests {
   /** Verifies that probe mutation stops before any planning or execution. */
   probeMutationStopsBeforeAnyPlanningOrExecution(t: TestContext) {
     const f = fixture(t);
-    const path = join(f.repo, 'architecture/operations/service-probe.yaml');
+    const path = join(f.repo, '.arc/architecture/operations/service-probe.yaml');
     const op = JSON.parse(readFileSync(path, 'utf8'));
     op.args = ['-e', "require('fs').writeFileSync('source.txt','changed')"];
     writeFileSync(path, JSON.stringify(op));
@@ -166,7 +166,7 @@ class ServicesTests {
     await new Promise((resolve: any) => server.listen(0, '127.0.0.1', resolve));
     t.after(() => server.close());
     const f = fixture(t),
-      path = join(f.repo, 'architecture/operations/test.json'),
+      path = join(f.repo, '.arc/architecture/operations/test.json'),
       op = JSON.parse(String(readFileSync(path)));
     op.service.port = (server.address() as import('node:net').AddressInfo).port;
     writeFileSync(path, JSON.stringify(op));
@@ -265,9 +265,12 @@ function fixture(t: any, mode = 'success'): any {
   const f = operationFixture(t);
   writeFileSync(join(f.repo, 'server.mjs'), readFileSync('.fixture-build/http/server.mjs'));
   f.component.owns.push('server.mjs');
-  writeFileSync(join(f.repo, 'architecture/components/sample.json'), JSON.stringify(f.component));
+  writeFileSync(
+    join(f.repo, '.arc/architecture/components/sample.json'),
+    JSON.stringify(f.component),
+  );
   const template = JSON.parse(
-    readFileSync(join(f.repo, 'architecture/operations/verify.yaml'), 'utf8'),
+    readFileSync(join(f.repo, '.arc/architecture/operations/verify.yaml'), 'utf8'),
   );
   const op = {
     ...template,
@@ -280,7 +283,7 @@ function fixture(t: any, mode = 'success'): any {
   };
   if (mode === 'not-ready') op.service.readinessPath = '/absent';
   if (mode === 'crash') op.args = ['-e', 'process.exit(2)'];
-  writeFileSync(join(f.repo, 'architecture/operations/test.json'), JSON.stringify(op));
+  writeFileSync(join(f.repo, '.arc/architecture/operations/test.json'), JSON.stringify(op));
   registerServiceProbe(f, template, mode);
   registerHttpCheck(f, op);
   f.commit();
@@ -299,8 +302,11 @@ function registerServiceProbe(f: any, template: any, mode: string): void {
     ],
   };
   if (mode === 'probe-fail') probe.args = ['-e', 'process.exit(9)'];
-  writeFileSync(join(f.repo, 'architecture/operations/service-probe.yaml'), JSON.stringify(probe));
-  const path = join(f.repo, 'architecture/components/platform.json');
+  writeFileSync(
+    join(f.repo, '.arc/architecture/operations/service-probe.yaml'),
+    JSON.stringify(probe),
+  );
+  const path = join(f.repo, '.arc/architecture/components/platform.json');
   const platform = JSON.parse(readFileSync(path, 'utf8'));
   platform.operations = {
     verify: ['verify'],
@@ -323,7 +329,10 @@ function registerHttpCheck(f: any, op: any): void {
   delete check.service;
   delete check.command;
   delete check.args;
-  writeFileSync(join(f.repo, 'architecture/operations/http-check.json'), JSON.stringify(check));
+  writeFileSync(
+    join(f.repo, '.arc/architecture/operations/http-check.json'),
+    JSON.stringify(check),
+  );
 }
 
 test('built CLI probes, starts owned HTTP service, checks it and ends its lease', (t: any) =>

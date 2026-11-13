@@ -70,7 +70,7 @@ class PublicImportScenarios {
   cycle(t: TestContext): void {
     const fixture = this.fixture(t, "import {value} from '@value';export const result=value;");
     fixture.put(
-      'architecture/components/consumer.json',
+      '.arc/architecture/components/consumer.json',
       fixture.component('consumer', 'library', {
         parentId: 'package',
         owns: ['consumer'],
@@ -100,7 +100,7 @@ class PublicImportScenarios {
   private fixture(t: TestContext, source: string): ComponentFixture {
     const fixture = new ComponentFixture(t);
     fixture.put(
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
       fixture.component('sample', 'library', {
         parentId: 'package',
         owns: ['src', 'docs', 'tests', 'tsconfig.json'],
@@ -108,7 +108,7 @@ class PublicImportScenarios {
       }),
     );
     fixture.put(
-      'architecture/components/consumer.json',
+      '.arc/architecture/components/consumer.json',
       fixture.component('consumer', 'library', {
         parentId: 'package',
         owns: ['consumer'],

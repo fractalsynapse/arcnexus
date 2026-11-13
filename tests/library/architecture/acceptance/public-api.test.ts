@@ -108,7 +108,7 @@ class PublicApiScenarios {
   private fixture(t: TestContext, api: unknown[]): ComponentFixture {
     const fixture = new ComponentFixture(t);
     fixture.put(
-      'architecture/components/unrelated-filename.json',
+      '.arc/architecture/components/unrelated-filename.json',
       fixture.component('sample', 'library', {
         parentId: 'package',
         owns: ['src', 'docs', 'tests'],

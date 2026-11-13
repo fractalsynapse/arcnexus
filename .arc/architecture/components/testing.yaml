@@ -64,7 +64,7 @@ owns:
     tests/library/testing,
     docs/library/testing,
     scripts/library/testing,
-    architecture/test-profiles,
+    .arc/architecture/test-profiles,
   ]
 api:
   - { module: tests/library/testing/support/workspace-cli-fixture.ts }

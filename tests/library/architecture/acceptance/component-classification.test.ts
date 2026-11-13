@@ -24,7 +24,7 @@ class ClassificationScenarios {
   conflicting(t: TestContext): void {
     const fixture = new ComponentFixture(t);
     fixture.put(
-      'architecture/components/package.json',
+      '.arc/architecture/components/package.json',
       fixture.component('package', 'package', {
         parentId: 'platform',
         root: 'package',

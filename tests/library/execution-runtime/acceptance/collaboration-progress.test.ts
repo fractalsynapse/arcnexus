@@ -47,7 +47,7 @@ class ProgressFixture {
       join(this.fixture.repo, '.github/ISSUE_TEMPLATE.md'),
       '## Scope\n\n<!-- Scope -->\n## Summary\n\n<!-- Summary -->\n## Acceptance criteria\n',
     );
-    const ownerPath = join(this.fixture.repo, 'architecture/components/a.json');
+    const ownerPath = join(this.fixture.repo, '.arc/architecture/components/a.json');
     const owner = JSON.parse(readFileSync(ownerPath, 'utf8'));
     owner.owns.push('.github');
     writeFileSync(ownerPath, JSON.stringify(owner));
@@ -62,7 +62,7 @@ class ProgressFixture {
    * rather than inheriting a bare grant.
    */
   private declareActivity(ids: string[]): void {
-    const dir = join(this.fixture.repo, 'architecture/components');
+    const dir = join(this.fixture.repo, '.arc/architecture/components');
     for (const name of readdirSync(dir)) {
       const path = join(dir, name);
       const doc = JSON.parse(readFileSync(path, 'utf8'));
@@ -83,14 +83,14 @@ class ProgressFixture {
   private policy(comment: boolean): void {
     const f = this.fixture;
     const bound: string[] = [];
-    const path = join(f.repo, 'architecture/components/platform.json');
+    const path = join(f.repo, '.arc/architecture/components/platform.json');
     const platform = JSON.parse(readFileSync(path, 'utf8'));
     for (const action of comment ? ['issue.create', 'issue.comment'] : ['issue.create']) {
       const id = action.replace('.', '-');
       platform.operations[id] = ['agent'];
       bound.push(id);
       writeFileSync(
-        join(f.repo, `architecture/operations/${id}.yaml`),
+        join(f.repo, `.arc/architecture/operations/${id}.yaml`),
         JSON.stringify({
           schemaVersion: 4,
           id,

@@ -21,7 +21,7 @@ class PortfolioFixture extends MinimalCatalogFixture {
   /** Changes declared platform identity while preserving inherited policies for ambiguity coverage. */
   platform(id: string): void {
     for (const name of ['platform', 'package']) {
-      const path = 'architecture/components/' + name + '.json';
+      const path = '.arc/architecture/components/' + name + '.json';
       const value = JSON.parse(readFileSync(join(this.root, path), 'utf8'));
       if (name === 'platform') value.id = id;
       else value.parentId = id;
@@ -167,7 +167,7 @@ test('malformed application settings fail preflight without replacing the config
 
 test('local-only schema-five projects attach without an invented origin', (t) => {
   const f = new PortfolioFixture(t);
-  f.put('architecture/environment.json', {
+  f.put('.arc/architecture/environment.json', {
     schemaVersion: 5,
     workspace: { primary: { id: 'sample' }, dependencies: [] },
   });

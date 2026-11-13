@@ -19,7 +19,7 @@ runtime completion, docs/test edits and independent acceptance for each candidat
 CI tests that the independent checker rejects missing and incorrect implementations
 and accepts the specified boundary. Those synthetic checker tests are not live evidence.
 
-For self-development, `architecture/environment.json` installs this repository's
+For self-development, `.arc/architecture/environment.json` installs this repository's
 npm dependencies and uses host-installed `uv` to create a local Python venv for
 the repository checks, with automatic Python downloads disabled.
 The captured verification includes TypeScript, built-CLI tests, Python acceptance

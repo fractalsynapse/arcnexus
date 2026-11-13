@@ -35,7 +35,7 @@ class ScopeOverlapScenarios {
   wholeRepository(): void {
     assert.equal(overlaps('.', 'src/app'), true, 'dot covers a scope');
     assert.equal(overlaps('src/app', '.'), true, 'covered by the dot form');
-    assert.equal(overlaps('./', 'architecture/roles'), true, 'dot-slash form');
+    assert.equal(overlaps('./', '.arc/architecture/roles'), true, 'dot-slash form');
     assert.equal(overlaps('.', '.'), true, 'two whole-repository scopes');
   }
 
