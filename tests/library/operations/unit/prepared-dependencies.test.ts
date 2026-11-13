@@ -88,7 +88,6 @@ class DependencyScenarios {
       ...definition,
       purpose: 'Install dependencies',
       category: 'build',
-      activities: [],
     };
     assert.equal(validateSchema('operation', value), value);
     assert.throws(
