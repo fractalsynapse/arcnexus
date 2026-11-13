@@ -78,7 +78,6 @@ export class MinimalTestFixture extends ComponentTestFixture {
         'architecture/roles',
         'architecture/execution-profiles',
         'architecture/test-profiles',
-        'architecture/operations',
         'architecture/components/platform.yaml',
         'architecture/components/package.yaml',
         'architecture/components/maintenance-package.yaml',
