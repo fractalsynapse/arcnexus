@@ -1,7 +1,7 @@
 schemaVersion: 2
 kind: change
 changeType: documentation
-objective: "Maintain explicit documentation references for
+objective: 'Maintain explicit documentation references for
   .agents/skills/arcnexus-guidance/SKILL.md. First inspect current validator
   and request the captured skill-references policy from guidance-validation; do
   not edit validator implementation. After verified delivery, add references
@@ -22,7 +22,7 @@ objective: "Maintain explicit documentation references for
   actually edit the selected skill frontmatter and update the existing
   docs/library/agent-guidance/guidance-maintenance.md, preserving applicable
   content. Returning only a description of future edits does not satisfy the
-  checkpoint."
+  checkpoint.'
 expectedOutcome: Selected skill references validate through the delivered
   checker and maintenance documentation explains the rule
 acceptanceCriteria:

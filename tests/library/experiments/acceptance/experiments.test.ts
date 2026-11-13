@@ -53,7 +53,7 @@ class ExperimentFixture {
 
   readonly bindings = join(this.root, 'bindings.json');
 
-  readonly manifest = resolve('experiments/simulation.historical.yaml');
+  readonly manifest = resolve('experiments/pinned.yaml');
 
   readonly base: string;
 

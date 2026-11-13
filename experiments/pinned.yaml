@@ -1,0 +1,20 @@
+schemaVersion: 3
+modes:
+  - simulation
+cases:
+  - id: success
+    project: fixture
+    prompt: Run the simulated happy path end to end and report the completed outcome
+    expectedOutcome: completed
+  - id: repair
+    project: fixture
+    prompt: Recover from the injected first-attempt defect and report the completed outcome
+    expectedOutcome: completed
+  - id: boundary
+    project: fixture
+    prompt: Stop at the declared ownership boundary and report what needs architect attention
+    expectedOutcome: needs_attention
+  - id: failure
+    project: fixture
+    prompt: Report the observed failure honestly rather than claiming a clean result
+    expectedOutcome: failed
