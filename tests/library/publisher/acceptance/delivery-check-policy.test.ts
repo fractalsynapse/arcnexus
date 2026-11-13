@@ -4,6 +4,29 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test as deterministicTest, type TestContext } from 'node:test';
 import { MinimalCatalogFixture } from '../../testing/support/minimal-catalog-fixture.js';
+
+/**
+ * Declares the activities the fixture's director component needs.
+ *
+ * Operations are reached through a declared activity, so the fixture states them the way a real
+ * component does: `research` because the platform names this leaf as its director, and `testing`
+ * because that is where the captured verification operation is bound.
+ */
+const changelogActivities = (): Record<string, unknown> => ({
+  research: {
+    role: 'engineer',
+    profile: 'luna',
+    operations: [],
+    instructions: ['Establish what the assembled delivery actually contains before it is checked'],
+  },
+  testing: {
+    role: 'engineer',
+    profile: 'luna',
+    operations: ['fixture-proof'],
+    instructions: ['Prove the assembled change against the declared verification input'],
+  },
+});
+
 import { ExecutionContext } from '../../../../dist/library/architecture/execution-context.js';
 import type {
   ExecutionRun,
@@ -183,25 +206,7 @@ class AssembledChangelogScenario {
       purpose: 'Own the assembled changelog fixture',
       owns: ['source.asset', 'docs', 'tests', 'CHANGELOG.md', '.arc/architecture/operations'],
       operations: { 'fixture-proof': ['verify'] },
-      // Operations are reached through a declared activity, so the fixture states one the way a real
-      // component does; without it the referenced operation could never be planned or executed.
-      executionProfile: 'luna',
-      activities: {
-        research: {
-          role: 'engineer',
-          profile: 'luna',
-          operations: [],
-          instructions: [
-            'Establish what the assembled delivery actually contains before it is checked',
-          ],
-        },
-        testing: {
-          role: 'engineer',
-          profile: 'luna',
-          operations: ['fixture-proof'],
-          instructions: ['Prove the assembled change against the declared verification input'],
-        },
-      },
+      activities: changelogActivities(),
     });
     this.operation();
     for (const path of ['source.asset', 'docs/guide.asset', 'tests/case.txt', 'CHANGELOG.md'])
