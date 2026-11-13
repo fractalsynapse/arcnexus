@@ -58,11 +58,11 @@ activities:
     profile: luna
     operations:
       [
-        migrated-recipe-43b539fb85a57c26,
-        migrated-recipe-719d77e27c5d9798,
-        migrated-recipe-df6d67ddacf5bf0c,
-        migrated-recipe-f1691da2bfa5a18c,
-        migrated-recipe-f36c9dcd75620b35,
+        check-maintained-source-formatting,
+        verify-all-repository-suites,
+        lint-maintained-code,
+        verify-architecture-maintenance,
+        validate-architecture-and-guidance,
       ]
     instructions: [
         'Publish only what the assembled verification accepted, and record exactly what shipped for Enable
@@ -70,17 +70,17 @@ activities:
       ]
 reads: [.]
 operations:
-  migrated-recipe-43b539fb85a57c26: [delivery]
-  migrated-recipe-df6d67ddacf5bf0c: [delivery]
+  check-maintained-source-formatting: [delivery]
+  lint-maintained-code: [delivery]
   comment-issue: [agent]
-  migrated-recipe-f1691da2bfa5a18c: [delivery]
-  migrated-recipe-719d77e27c5d9798: [delivery]
-  migrated-recipe-f36c9dcd75620b35: [delivery]
-  migrated-recipe-eddf6384eb12cd8d: [preflight]
-  migrated-recipe-c6b0f27327a0cc0c: [preflight]
-  migrated-recipe-e09c2ec5bc9f2e64: [preflight]
-  migrated-recipe-e58bdff3c39641d2: [setup]
-  migrated-recipe-a7573c70ed1a3dfa: [setup]
+  verify-architecture-maintenance: [delivery]
+  verify-all-repository-suites: [delivery]
+  validate-architecture-and-guidance: [delivery]
+  check-node-prerequisite: [preflight]
+  check-git-prerequisite: [preflight]
+  check-setsid-prerequisite: [preflight]
+  project-setup: [setup]
+  verify-guidance-validation: [setup]
   component-tests: [agent]
   component-lint: [agent, verify]
   component-format: [agent]

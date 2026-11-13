@@ -1,5 +1,5 @@
 schemaVersion: 4
-id: migrated-probe-3a85da8f1f18f009
+id: check-guidance-build-prerequisite
 purpose: Check prerequisite for guidance-build
 kind: command
 repository: arcnexus

@@ -7,7 +7,7 @@ artifacts: []
 network:
   domains: [registry.npmjs.org]
 schemaVersion: 4
-id: migrated-recipe-e58bdff3c39641d2
+id: project-setup
 purpose: Project setup
 kind: command
 prerequisites: []

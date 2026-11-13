@@ -54,7 +54,7 @@ activities:
       ]
 operations:
   guidance-build: [agent]
-  migrated-recipe-a7573c70ed1a3dfa: [verify]
+  verify-guidance-validation: [verify]
 owns:
   [
     src/library/guidance-validation,

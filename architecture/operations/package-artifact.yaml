@@ -19,5 +19,5 @@ generatedDirectories:
 artifacts:
   - .tool-build/arcnexus.tar.gz
 prerequisites:
-  - migrated-recipe-a7573c70ed1a3dfa
+  - verify-guidance-validation
 network: false

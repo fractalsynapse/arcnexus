@@ -10,11 +10,13 @@ generatedDirectories:
 artifacts: []
 network: true
 schemaVersion: 4
-id: migrated-recipe-eddf6384eb12cd8d
-purpose: Project prerequisites
+id: verify-all-repository-suites
+purpose: Verify all repository suites
 kind: command
-prerequisites: []
+prerequisites:
+  - verify-guidance-validation
+  - prepare-tests
 command: node
 args:
-  - -e
-  - if(process.versions.node.split('.')[0]!=='22')process.exit(1)
+  - --test
+  - .test-build/**/*.test.js

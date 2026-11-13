@@ -14,4 +14,4 @@ args:
 generatedDirectories: []
 artifacts: []
 prerequisites:
-  - migrated-probe-3a6cd81aa14001db
+  - check-guidance-validation-prerequisite

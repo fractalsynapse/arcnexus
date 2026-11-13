@@ -15,4 +15,4 @@ generatedDirectories:
   - dist
 artifacts: []
 prerequisites:
-  - migrated-probe-3a85da8f1f18f009
+  - check-guidance-build-prerequisite

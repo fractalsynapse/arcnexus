@@ -10,7 +10,7 @@ import { registerSuite } from '../../../dist/library/testing/suite.js';
 
 /** Qualifies this repository's authored quality policy without imposing it on generic target packages. */
 class RepositoryQualityPolicyScenarios {
-  private readonly ids = ['migrated-recipe-43b539fb85a57c26', 'migrated-recipe-df6d67ddacf5bf0c'];
+  private readonly ids = ['check-maintained-source-formatting', 'lint-maintained-code'];
 
   /** Every real steward inherits the engineering and assembled quality policy exactly once. */
   inherited(): void {

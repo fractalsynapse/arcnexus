@@ -1,6 +1,6 @@
 repository: arcnexus
 cwd: .
-category: lint
+category: cli-check
 generatedDirectories:
   - .fixture-build
   - .test-build
@@ -10,11 +10,12 @@ generatedDirectories:
 artifacts: []
 network: true
 schemaVersion: 4
-id: migrated-recipe-43b539fb85a57c26
-purpose: Check maintained-source formatting
+id: verify-guidance-validation
+purpose: Verify guidance-validation
 kind: command
-prerequisites: []
+prerequisites:
+  - project-setup
 command: npm
 args:
   - run
-  - format:check
+  - build

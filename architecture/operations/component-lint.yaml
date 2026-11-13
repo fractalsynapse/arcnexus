@@ -14,4 +14,4 @@ args:
 generatedDirectories: []
 artifacts: []
 prerequisites:
-  - migrated-recipe-e58bdff3c39641d2
+  - project-setup

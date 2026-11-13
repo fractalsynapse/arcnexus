@@ -10,11 +10,14 @@ generatedDirectories:
 artifacts: []
 network: true
 schemaVersion: 4
-id: migrated-recipe-51b1b212512a2d1a
-purpose: Prepare tests
+id: validate-architecture-and-guidance
+purpose: Validate architecture and guidance
 kind: command
-prerequisites: []
-command: npm
+prerequisites:
+  - verify-guidance-validation
+command: node
 args:
-  - run
-  - build:tests
+  - dist/cli.js
+  - validate
+  - --project
+  - .

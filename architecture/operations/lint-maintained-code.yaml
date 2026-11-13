@@ -1,6 +1,6 @@
 repository: arcnexus
 cwd: .
-category: cli-check
+category: lint
 generatedDirectories:
   - .fixture-build
   - .test-build
@@ -10,10 +10,11 @@ generatedDirectories:
 artifacts: []
 network: true
 schemaVersion: 4
-id: migrated-recipe-e09c2ec5bc9f2e64
-purpose: Project prerequisites
+id: lint-maintained-code
+purpose: Lint maintained TypeScript and JavaScript
 kind: command
 prerequisites: []
-command: setsid
+command: npm
 args:
-  - --version
+  - run
+  - lint

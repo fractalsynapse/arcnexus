@@ -1,15 +1,11 @@
 schemaVersion: 4
-id: migrated-probe-1e7d5605e777d725
-purpose: Check prerequisite for architecture-tests
+id: check-guidance-validation-prerequisite
+purpose: Check prerequisite for guidance-validation
 kind: command
 repository: arcnexus
 cwd: .
 category: cli-check
-generatedDirectories:
-  - .fixture-build
-  - .test-build
-  - .tool-build
-  - dist
+generatedDirectories: []
 artifacts: []
 prerequisites: []
 command: node
