@@ -13,7 +13,7 @@ class PagedReviewScenario {
   async run(t: TestContext): Promise<void> {
     const dir = mkdtempSync(join(tmpdir(), 'arcnexus-review-'));
     t.after(() => rmSync(dir, { recursive: true, force: true }));
-    const state: any = { dir, frozen: [], options: { record: {} } };
+    const state: any = this.baseState(dir);
     const evidence = new TurnEvidence(state);
     const captured = { patch: 'real patch α\n'.repeat(180000), newFiles: { added: 'complete' } };
     const reference = evidence.reference(captured);
@@ -34,11 +34,49 @@ class PagedReviewScenario {
     );
   }
 
+  /**
+   * The state a production turn prompt reads.
+   *
+   * `turnPrompt` renders the accepted engineering context before the evidence reference, so the
+   * fixture supplies the frame's inputs - a current component and the review activity with its
+   * position, direction and standards - rather than a partial object that only the evidence store
+   * happens to tolerate.
+   */
+  private baseState(dir: string): any {
+    return {
+      dir,
+      frozen: [],
+      options: { record: {} },
+      component: { schemaVersion: 6, id: 'sample', type: 'library', verification: [], owns: [] },
+      scope: ['owned'],
+      planned: true,
+      resolved: {
+        mode: 'steward',
+        context: [],
+        related: [],
+        owners: [],
+        operations: [],
+        assignment: { objective: 'Review complete changes', acceptanceCriteria: ['All changes'] },
+        activities: {
+          review: {
+            role: { id: 'reviewer', responsibilities: ['Review the complete change set'] },
+            instructions: ['Judge the delivered change against every acceptance criterion'],
+            operations: [],
+            standards: [],
+          },
+        },
+      },
+    };
+  }
+
   /** Uses actual prompt rendering with a minimal accepted plan context. */
   private prompt(state: any, reference: Record<string, unknown>): string {
+    // The rendered prompt quotes the assignment and its host checks, so the state carries both.
     state.assignment = {
+      kind: 'review',
       objective: 'Review complete changes',
       acceptanceCriteria: ['All changes'],
+      hostChecks: [],
     };
     const turn: any = Object.create(SessionTurn.prototype);
     turn.state = state;
