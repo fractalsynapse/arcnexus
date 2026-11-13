@@ -187,10 +187,10 @@ export class WorkflowFixture {
       owns: [
         '.gitignore',
         'verify.cjs',
-        'architecture/operations/verify.yaml',
+        'architecture/operations',
         'architecture/environment.yaml',
-        'architecture/execution-profiles/luna.yaml',
-        'architecture/roles/engineer.yaml',
+        'architecture/execution-profiles',
+        'architecture/roles',
         'architecture/components/platform.json',
         'architecture/components/package.json',
       ],

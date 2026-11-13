@@ -66,21 +66,20 @@ export class GeneralCatalog {
   }
 
   /** Assigns shared scaffold maintenance to one executable owner, excluding its implicit definition. */
+  /**
+   * The scope this add-on owns once it is stacked onto a base catalog.
+   *
+   * One component maintains shared configuration in a composed catalog, the way this repository uses
+   * `architecture-maintenance` for its root and architecture files, and every tracked file must
+   * resolve to exactly one owner. The base fixture's maintenance leaf already claims `.gitignore`, the
+   * operation scripts, the environment document, roles, profiles and the container definitions - so
+   * this list carries only the four paths nothing else claims, which I read off the documents on disk
+   * rather than guessing. A second claim on any of them makes the catalog refuse to load, and because
+   * `Portfolio.register` loads a catalog, registration itself fails and every suite that composes this
+   * fixture dies before reaching its subject.
+   */
   private maintenance(): string[] {
-    return [
-      'source.txt',
-      'docs',
-      'tests',
-      'new.txt',
-      '.gitignore',
-      'verify.cjs',
-      'architecture/environment.yaml',
-      'architecture/roles',
-      'architecture/execution-profiles',
-      'architecture/operations',
-      'architecture/components/platform.json',
-      'architecture/components/package.json',
-    ];
+    return ['source.txt', 'docs', 'tests', 'new.txt'];
   }
 
   /** Captures inherited policies once and keeps the package a context container. */
