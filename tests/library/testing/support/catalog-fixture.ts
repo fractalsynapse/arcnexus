@@ -94,7 +94,7 @@ export function catalogFixture(repo: any): any {
       maxCorrectiveTurns: 2,
     },
   })) {
-    mkdirSync(join(repo, 'architecture', path, '..'), { recursive: true });
-    writeFileSync(join(repo, 'architecture', path + '.yaml'), JSON.stringify(value));
+    mkdirSync(join(repo, '.arc/architecture', path, '..'), { recursive: true });
+    writeFileSync(join(repo, '.arc/architecture', path + '.yaml'), JSON.stringify(value));
   }
 }

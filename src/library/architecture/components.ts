@@ -205,7 +205,7 @@ class CatalogLoader {
     private readonly base: string,
     private readonly bindings?: Bindings,
   ) {
-    this.paths = git(repository, 'ls-tree', '-r', '--name-only', base, '--', 'architecture')
+    this.paths = git(repository, 'ls-tree', '-r', '--name-only', base, '--', '.arc/architecture')
       .split('\n')
       .sort();
   }
