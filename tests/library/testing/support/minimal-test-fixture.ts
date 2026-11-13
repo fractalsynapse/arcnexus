@@ -40,18 +40,7 @@ export class MinimalTestFixture extends ComponentTestFixture {
       mkdirSync(join(this.repo, packageRoot));
       renameSync(join(this.repo, 'tests'), join(this.repo, packageRoot, 'tests'));
     }
-    this.definition('platform', 'platform', {
-      activities: {
-        research: {
-          role: 'engineer',
-          profile: 'luna',
-          operations: [],
-          instructions: ['Resolve what the sample platform actually does before proposing change'],
-        },
-      },
-      executionProfile: 'luna',
-      reads: ['.'],
-    });
+    this.platformDefinition();
     this.definition('package', 'package', {
       parentId: 'platform',
       root: packageRoot,
@@ -89,12 +78,31 @@ export class MinimalTestFixture extends ComponentTestFixture {
         'architecture/roles',
         'architecture/execution-profiles',
         'architecture/test-profiles',
+        'architecture/operations',
         'architecture/components/platform.yaml',
         'architecture/components/package.yaml',
         'architecture/components/maintenance-package.yaml',
         'build.cjs',
         '.gitignore',
       ],
+    });
+  }
+
+  /** Declares the platform's authority: it directs and reviews through named positions, not itself. */
+  private platformDefinition(): void {
+    this.definition('platform', 'platform', {
+      activities: {
+        research: {
+          role: 'engineer',
+          profile: 'luna',
+          operations: [],
+          instructions: ['Resolve what the sample platform actually does before proposing change'],
+        },
+      },
+      executionProfile: 'luna',
+      reads: ['.'],
+      director: { component: 'sample', profile: 'luna' },
+      reviewerProfile: 'luna',
     });
   }
 
