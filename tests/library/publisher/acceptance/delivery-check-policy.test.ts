@@ -183,6 +183,25 @@ class AssembledChangelogScenario {
       purpose: 'Own the assembled changelog fixture',
       owns: ['source.asset', 'docs', 'tests', 'CHANGELOG.md', '.arc/architecture/operations'],
       operations: { 'fixture-proof': ['verify'] },
+      // Operations are reached through a declared activity, so the fixture states one the way a real
+      // component does; without it the referenced operation could never be planned or executed.
+      executionProfile: 'luna',
+      activities: {
+        research: {
+          role: 'engineer',
+          profile: 'luna',
+          operations: [],
+          instructions: [
+            'Establish what the assembled delivery actually contains before it is checked',
+          ],
+        },
+        testing: {
+          role: 'engineer',
+          profile: 'luna',
+          operations: ['fixture-proof'],
+          instructions: ['Prove the assembled change against the declared verification input'],
+        },
+      },
     });
     this.operation();
     for (const path of ['source.asset', 'docs/guide.asset', 'tests/case.txt', 'CHANGELOG.md'])
@@ -200,7 +219,6 @@ class AssembledChangelogScenario {
       purpose: 'Controlled successful check',
       cwd: '.',
       category: 'cli-check',
-      activities: [],
       command: 'node',
       args: ['-e', 'process.exit(0)'],
       generatedDirectories: [],
