@@ -69,6 +69,10 @@ class CatalogOwnershipTests {
    * committed tree, so a file can enter the repository and only be noticed later by whoever runs
    * `validate`. This walks `git ls-files` against the resolved owners, so coverage of source, tests,
    * docs, scripts, fixtures and root files is a test result rather than an operator discovery.
+   *
+   * Coverage is evaluated against committed authority, because that is what the validator
+   * reads: a file and the ownership declaration for it must land in the same commit, which is
+   * the behaviour worth enforcing rather than working around.
    */
   everyTrackedFileHasExactlyOneOwner(): void {
     const owners = this.catalog().owners as Record<string, any>;
