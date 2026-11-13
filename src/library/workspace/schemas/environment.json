@@ -23,7 +23,7 @@
               "pattern": "^https://"
             }
           },
-          "required": ["id", "repository"],
+          "required": ["id"],
           "additionalProperties": false
         },
         "dependencies": {

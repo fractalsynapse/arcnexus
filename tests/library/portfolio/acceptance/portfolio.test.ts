@@ -165,10 +165,10 @@ test('malformed application settings fail preflight without replacing the config
   assert.equal(readFileSync(path, 'utf8'), '{invalid');
 });
 
-test('local-only schema-five projects attach without an invented origin', (t) => {
+test('local-only projects attach without an invented origin', (t) => {
   const f = new PortfolioFixture(t);
   f.put('.arc/architecture/environment.json', {
-    schemaVersion: 5,
+    schemaVersion: 4,
     workspace: { primary: { id: 'sample' }, dependencies: [] },
   });
   f.git('remote', 'remove', 'origin');

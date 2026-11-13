@@ -4,6 +4,18 @@
 
 ### Changed
 
+- **The human-owned model now lives in the `.arc` knowledge root** (#394): the component, role,
+  standard, operation, environment and profile definitions moved from top-level `architecture/` to
+  `.arc/architecture/`, which is where `AGENTS.md`, `docs/charter.md` and the locked
+  `arcnexus-foundation` and `arcnexus-project` contracts have always said they belong. Loader paths,
+  component ownership declarations, shipped fixture trees and guidance references moved with them, so
+  a project checkout keeps one knowledge root: `.arc/architecture/` for the human model,
+  `.arc/plans/` and `.arc/learning/` for agent work. No contract file was edited to do this.
+- **A local-only project may declare an environment without a remote URL** (#394):
+  `workspace.primary.repository` is now optional, matching the TypeScript type that already marked it
+  so. Absence means exactly that — attach from the source path with no managed clone and no invented
+  origin — instead of failing validation with `must have required property 'repository'`.
+
 - **Shipped test fixtures migrated to the current architecture** (#394): the `fixtures/*` catalogs were
   a full schema generation behind — role documents declaring activities at superseded versions,
   components authoring a `role`, operation documents carrying retired `probes`, environments in the old
