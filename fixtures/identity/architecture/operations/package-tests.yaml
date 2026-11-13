@@ -5,12 +5,6 @@ kind: command
 repository: identity
 cwd: .
 category: unit-test
-activities:
-  - research
-  - documentation
-  - testing
-  - implementation
-  - review
 generatedDirectories: []
 artifacts: []
 prerequisites: []

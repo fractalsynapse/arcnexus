@@ -5,11 +5,6 @@ purpose: Exercise fixture verification
 kind: command
 cwd: .
 category: unit-test
-activities:
-  - research
-  - testing
-  - implementation
-  - review
 command: node
 args:
   - verify.mjs

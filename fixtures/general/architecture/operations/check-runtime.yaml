@@ -2,12 +2,6 @@ schemaVersion: 4
 kind: command
 repository: greetings
 cwd: .
-activities:
-  - research
-  - documentation
-  - testing
-  - implementation
-  - review
 generatedDirectories: []
 artifacts: []
 prerequisites: []

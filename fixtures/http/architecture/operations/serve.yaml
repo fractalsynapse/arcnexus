@@ -3,11 +3,6 @@ purpose: Exercise a managed local HTTP service
 repository: http-sample
 cwd: .
 category: http-check
-activities:
-  - research
-  - testing
-  - implementation
-  - review
 generatedDirectories: []
 artifacts: []
 id: serve

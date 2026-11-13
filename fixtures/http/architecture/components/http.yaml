@@ -18,3 +18,22 @@ owns:
   - architecture/components/package.yaml
 api:
   - module: server.mjs
+activities:
+  research:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Establish what this component guarantees before proposing a change
+  implementation:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Change only what the goal requires and prove it with this component checks
+  review:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Reject weakened coverage or undeclared authority in the delivered change

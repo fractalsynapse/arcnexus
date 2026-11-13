@@ -1,4 +1,4 @@
-schemaVersion: 3
+schemaVersion: 4
 id: systems-engineer
 purpose: Maintain an architectural responsibility under human direction
 responsibilities:
@@ -6,10 +6,3 @@ responsibilities:
   - Document intended behavior before implementation
   - Verify bounded changes and expose evidence
   - Escalate requests beyond component authority
-activities:
-  - research
-  - documentation
-  - testing
-  - implementation
-  - review
-  - release

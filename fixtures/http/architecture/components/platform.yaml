@@ -2,7 +2,6 @@ schemaVersion: 6
 id: platform
 type: platform
 purpose: Maintain the http fixture under captured authority
-role: systems-engineer
 executionProfile: luna
 reads:
   - .
@@ -21,3 +20,25 @@ director:
   profile: astra
 reviewerProfile: astra
 defaultPackage: http-package
+activities:
+  research:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Establish what this platform guarantees before proposing a change
+  implementation:
+    role: systems-engineer
+    profile: luna
+    operations:
+      - syntax-check
+      - serve
+      - health
+    instructions:
+      - Change only what the goal requires and prove it with the package own checks
+  review:
+    role: systems-engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Reject weakened coverage or undeclared authority in the delivered change

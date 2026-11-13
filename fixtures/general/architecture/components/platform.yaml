@@ -2,14 +2,12 @@ schemaVersion: 6
 id: platform
 type: platform
 purpose: Maintain a verified greeting package through its existing owners
-role: engineer
 executionProfile: luna
 reads:
   - .
 constraints:
   - Never commit, publish or change architecture.
-  - Request changes to another owner through the persisted inbox; do not edit
-    another owner.
+  - Request changes to another owner through the persisted inbox; do not edit another owner.
 operations:
   check-runtime:
     - preflight
@@ -23,3 +21,23 @@ reviewerProfile: astra
 defaultPackage: greetings
 verificationInputs:
   - package.json
+activities:
+  research:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Establish what this platform guarantees before proposing a change
+  implementation:
+    role: engineer
+    profile: luna
+    operations:
+      - package-tests
+    instructions:
+      - Change only what the goal requires and prove it with the package own checks
+  review:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Reject weakened coverage or undeclared authority in the delivered change

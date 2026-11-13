@@ -5,12 +5,6 @@ kind: command
 repository: identity
 cwd: .
 category: cli-check
-activities:
-  - research
-  - documentation
-  - testing
-  - implementation
-  - review
 generatedDirectories:
   - node_modules
 artifacts: []

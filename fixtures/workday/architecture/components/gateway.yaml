@@ -2,7 +2,6 @@ schemaVersion: 3
 id: gateway
 type: gateway
 repository: sample
-role: engineer
 executionProfile: luna
 purpose: Own gateway contract
 path: gateway
@@ -32,3 +31,22 @@ verification:
       - --test
       - gateway/test.mjs
 operationIds: []
+activities:
+  research:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Establish what this component guarantees before proposing a change
+  implementation:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Change only what the goal requires and prove it with this component own checks
+  review:
+    role: engineer
+    profile: luna
+    operations: []
+    instructions:
+      - Reject weakened coverage or undeclared authority in the delivered change
