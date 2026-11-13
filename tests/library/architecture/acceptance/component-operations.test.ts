@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
-import { ComponentFixture } from '../support/component-fixture.js';
+import { ComponentFixture, selectedActivities } from '../support/component-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Declares an implementation activity carrying the component's own agent-invoked operations. */
@@ -70,12 +70,20 @@ class SharedOperationScenarios {
         parentId: 'package',
         owns: ['second'],
         operations: {},
+        activities: {
+          ...selectedActivities('luna'),
+          implementation: implementationActivity(['check']),
+        },
       }),
     );
     fixture.commit();
     const result = fixture.run('validate');
     assert.equal(result.status, 0, result.stderr);
-    const owners = JSON.parse(result.stdout).owners;
+    this.assertSharedDefinitions(JSON.parse(result.stdout).owners);
+  }
+
+  /** Both owners plan the same shared definition, each resolved against its own scope. */
+  private assertSharedDefinitions(owners: Record<string, any>): void {
     assert.deepEqual(owners.sample.operationPlan.verify[0].args, [
       'sample',
       'package',
@@ -160,7 +168,7 @@ class SharedOperationScenarios {
 
   /** Captures the HTTP definition and its optional service usage as one owned configuration. */
   private httpFixture(t: TestContext, declared: boolean): ComponentFixture {
-    const fixture = this.fixture(t);
+    const fixture = this.fixture(t, declared ? ['server'] : []);
     fixture.put(
       'architecture/components/package.json',
       fixture.component('package', 'package', {
@@ -186,7 +194,7 @@ class SharedOperationScenarios {
   }
 
   /** Owns shared definitions explicitly and declares operation usages once at the package. */
-  private fixture(t: TestContext): ComponentFixture {
+  private fixture(t: TestContext, agentOperations: string[] = ['check']): ComponentFixture {
     const fixture = new ComponentFixture(t);
     fixture.put(
       'architecture/components/operation-owner.json',
@@ -204,7 +212,26 @@ class SharedOperationScenarios {
       }),
     );
     fixture.put('architecture/operations/check.json', this.operation());
+    // An agent-invoked operation must belong to an activity the running component declares, so the
+    // leaf states that activity. The definitions stay shared at the package, which is the subject.
+    fixture.put(
+      'architecture/components/unrelated-filename.json',
+      this.sample(fixture, agentOperations),
+    );
     return fixture;
+  }
+
+  /** The leaf under test, declaring the activity that carries its agent-invoked operations. */
+  private sample(f: ComponentFixture, agentOperations: string[]): unknown {
+    return f.component('sample', 'library', {
+      parentId: 'package',
+      owns: ['src', 'docs', 'tests'],
+      api: [{ module: 'src/value.ts' }],
+      activities: {
+        ...selectedActivities('luna'),
+        implementation: implementationActivity(agentOperations),
+      },
+    });
   }
 
   /** Defines a literal command with only fixed host context tokens. */

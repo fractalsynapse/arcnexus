@@ -37,7 +37,10 @@ class ComponentScenarios {
       'package/tests',
       'architecture/components/unrelated-filename.json',
     ]);
-    assert.deepEqual(owner.directoryGrants, []);
+    // Write scope is ownership. The view carries no separate grant list that could diverge from it,
+    // so the check is that both project the same declared scope rather than that a second list is
+    // empty.
+    assert.deepEqual(owner.writeScope, owner.ownedPaths);
     assert.equal(
       owner.inventory.find((v: any) => v.path === 'package/docs/value.md').kind,
       'documentation',
@@ -46,7 +49,9 @@ class ComponentScenarios {
       owner.inventory.find((v: any) => v.path === 'package/tests/value.test.ts').kind,
       'tests',
     );
-    assert.deepEqual(owner.policy.role, { value: 'engineer', source: 'platform' });
+    // A component carries no role: the position is named per activity and resolved to its declarer.
+    assert.equal(owner.policy['activities.research'].value.role, 'engineer');
+    assert.equal(owner.policy['activities.research'].source, 'sample');
     assert.deepEqual(owner.publicModules, ['package/src/value.ts']);
   }
 
