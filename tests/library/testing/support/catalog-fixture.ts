@@ -88,6 +88,10 @@ export function catalogFixture(repo: any): any {
       model: 'gpt-6-luna',
       reasoning: 'medium',
       webSearch: 'live',
+      timeoutSeconds: 900,
+      commandTimeoutSeconds: 120,
+      maxTurns: 3,
+      maxCorrectiveTurns: 2,
     },
   })) {
     mkdirSync(join(repo, 'architecture', path, '..'), { recursive: true });
