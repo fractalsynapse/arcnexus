@@ -57,8 +57,10 @@ export class RunQueryCommand {
   /** Validates observer-only options before reading persistence. */
   private readInput() {
     this.options(['json', 'follow', 'after']);
-    const follow =
-      ['follow', 'status'].includes(this.positionals[1] ?? '') || this.values.follow === true;
+    // A single read prints the report object; a stream is asked for, either by the `follow` verb or
+    // by `--follow`. Folding `status` in here made the contract's read surface emit event lines
+    // instead of the document, so an operator asking "what is outstanding" got a transcript.
+    const follow = this.positionals[1] === 'follow' || this.values.follow === true;
     // The contract allows the identifier to be omitted: watching a run usually means the one just
     // started, and making the operator paste a uuid to see progress is friction with no safety value.
     if (this.positionals.length > 3) throw new InputError('Expected ' + this.mode + ' get [id]');
@@ -81,7 +83,7 @@ export class RunQueryCommand {
     return { id: requested, follow, after: Number(this.values.after ?? 0) };
   }
 
-  /** Newest run of this mode, so `task status` with no id watches the run just started. */
+  /** Newest run of this mode, so `task status` with no id reads the run just started. */
   private latest(): string {
     const rows = new ExecutionResources().list(this.mode, { limit: 1 });
     return String((rows as { items?: Array<{ id: string }> }).items?.[0]?.id ?? '');

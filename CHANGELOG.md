@@ -4,6 +4,12 @@
 
 ### Changed
 
+- **`task status` reads, `task follow` streams** (#394): folding `status` into the following flag made
+  the contract's read surface print event lines instead of the report document, so an operator asking
+  what was outstanding got a transcript. A single read emits the document with its outstanding waits in
+  stable owner/assignment/escalation order; JSONL arrives when following is asked for - the `follow`
+  verb or `--follow`.
+
 - **Admission validates the test profile it consumes** (#436, architect ruling 2026-11-12): a
   component's declared `testProfile` is now schema-checked when an assignment is resolved, not only
   when the catalog loads, so a captured or fabricated profile document in a stale shape is refused at
