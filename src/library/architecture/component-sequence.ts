@@ -202,16 +202,12 @@ export class ComponentSequence {
       .sort();
   }
 
-  /** Knowledge-root paths this component holds for others, excluding its own definition. */
+  /** Knowledge-root paths this component holds. */
   private knowledgeContentPaths(member: SequenceMember): string[] {
-    // Every component implicitly owns its own definition inside the model root, and that is not
-    // stewardship of the knowledge root: `architecture` owning its own document says nothing about what
-    // other components read from it.
-    const directory = `${KNOWLEDGE_ROOT}architecture/components/${member.id}`;
-    const own = [`${directory}.yaml`, `${directory}.yml`, `${directory}.json`];
-    return member.allowedWritePaths.filter(
-      (path) => path.startsWith(KNOWLEDGE_ROOT) && !own.includes(path),
-    );
+    // No exclusion is needed any more: a component's own profile belongs to the steward of
+    // `.arc/architecture`, not to its subject, so every `.arc/` path a component holds is content it
+    // maintains for others. That separation is what this phase is meant to recognise.
+    return member.allowedWritePaths.filter((path) => path.startsWith(KNOWLEDGE_ROOT));
   }
 
   /** How much knowledge-root content a component holds, the ordering signal inside the phase. */

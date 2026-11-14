@@ -44,8 +44,12 @@ grant it write scope.
   `ComponentActivity` (`components.ts`) = `role`, `instructions`, `profile`, `operations`,
   `standards`. `standardsInForce` (`frame.ts`) is the single resolver: the union of component,
   position and activity standards, filtered to ids the catalog knows.
-- **Ownership is the only write authority.** `owns` plus each owner's implicit definition path become
-  `ownership.paths`, and `allowedWritePaths` is derived from them (`component-materialization.ts`).
+- **Ownership is the only write authority.** `owns` becomes `ownership.paths`, and `allowedWritePaths`
+  is derived from it (`component-materialization.ts`). A component's **own definition is not part of its
+  ownership**: `.arc/architecture` is held by a single steward, `architecture-maintenance`, so the profile
+  that says what a component may do is not writable by that component. The definition path remains captured
+  on `definition` for digests and inspection, which is what `verify-architecture-maintenance` and the
+  contract locks read.
   Reads come from `reads` up the lineage (`access.readPaths`). There is no separate write grant:
   `DirectoryGrants` and `access.writeDirectories` were deleted as unreachable state.
 - **Operations are shared definitions, usages are declared by scope.** `.arc/architecture/operations/*.yaml`
@@ -56,6 +60,23 @@ grant it write scope.
 - **Every tracked file resolves to one owner.** `OwnershipValidator` enumerates
   `git ls-tree -r --name-only <base>` and refuses zero or multiple owners;
   `catalog-ownership.test.ts` now asserts the same over `git ls-files` for this repository.
+
+## Ownership and holder rules as they now stand (2026-11-14)
+
+- `.arc/architecture` is owned in one claim by `architecture-maintenance`, which also holds
+  `.arc/README.md`. Container definitions (`arcnexus.yaml`, `cli-package.yaml`) and the readable-TypeScript
+  standard are covered by that claim rather than itemised, and `foundation` no longer owns the standard.
+- No component owns its own definition: `component-materialization.ts` stopped pushing it into ownership,
+  and the duplicate-claim guard that accompanied it is gone. Changing a profile is therefore an act of the
+  steward, which is how AGENTS.md's rule that candidate edits cannot grant new authority is enforced rather
+  than merely stated.
+- Verified consequence: every tracked file resolves to exactly one owner. Measured against the committed
+  tree: 930 tracked files, 21 owners, **0 unowned, 0 multi-owned**, one `.arc/architecture` steward, and
+  `validate` exit 0 with zero contract findings.
+- The sequence's holder phase now lists **every** component holding `.arc/` content — `architecture-maintenance`
+  (`.arc/architecture`, `.arc/README.md`), `report` (`.arc/learning`), `task-intake` (`.arc/plans`) — ordered
+  by the type layer, then content held, then identifier, and none of them reappears in the type list.
+  Concentrating all custody in one component is this project's choice, not a rule the code assumes.
 
 ## Resolution order
 

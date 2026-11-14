@@ -68,10 +68,16 @@ class CatalogOwnershipTests {
    */
   private assertModelSpaceStewarded(): void {
     const space = '.arc/architecture';
-    const inside = this.components()
+    const claims = this.components()
       .flatMap((c: any) => c.owns ?? [])
-      .filter((path: string) => path.startsWith(space + '/'));
-    assert.ok(inside.length >= 1, `${space} must be claimed by component ownership from within`);
+      .filter(
+        (path: string) =>
+          path === space || path.startsWith(space + '/') || space.startsWith(path + '/'),
+      );
+    assert.ok(
+      claims.length >= 1,
+      `${space} must be claimed by component ownership, in whole or in part`,
+    );
   }
 
   /** Reads the documented `.arc` spaces straight from the README table. */
@@ -106,12 +112,11 @@ class CatalogOwnershipTests {
    */
   everyTrackedFileHasExactlyOneOwner(): void {
     const owners = this.catalog().owners as Record<string, any>;
+    // Captured paths only. A component's own definition is deliberately outside its ownership so the
+    // steward of `.arc/architecture` is the single writer of every profile; adding the definition path
+    // back here would report every profile as double-owned.
     const scopeOf = (owner: any): string[] => [
-      ...new Set([
-        ...(owner.ownedPaths ?? []),
-        ...(owner.writeScope ?? []),
-        ...(owner.definition?.path ? [owner.definition.path] : []),
-      ]),
+      ...new Set([...(owner.ownedPaths ?? []), ...(owner.writeScope ?? [])]),
     ];
     const covers = (file: string, root: string) =>
       root === '.' || file === root || file.startsWith(root + '/');

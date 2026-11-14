@@ -133,11 +133,12 @@ class ComponentSequenceScenarios {
     const holders = entries.filter((entry) => entry.phase === 'model-maintainer');
     assert.deepEqual(
       holders.map((entry) => entry.id),
-      ['foundation', 'architecture-maintenance', 'report', 'task-intake'],
+      ['architecture-maintenance', 'report', 'task-intake'],
       'every knowledge-root holder is listed, not only the largest',
     );
     const components = entries.filter((entry) => entry.phase === 'component');
-    assert.equal(components[0]!.id, 'cli', 'the gateway leads the remaining components');
+    assert.equal(components[0]!.id, 'foundation', 'the foundation leads the remaining components');
+    assert.equal(components[1]!.id, 'cli', 'then the gateway');
     assert.equal(components.at(-1)!.id, 'release', 'release is last');
     assert.deepEqual(
       components.filter((entry) => holders.some((holder) => holder.id === entry.id)),
