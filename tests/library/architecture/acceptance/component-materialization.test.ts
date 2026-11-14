@@ -31,12 +31,7 @@ class ComponentScenarios {
     const owner = JSON.parse(r.stdout).owners.sample;
     assert.equal(owner.repository, 'sample');
     assert.equal(owner.packageRoot, 'package');
-    assert.deepEqual(owner.ownedPaths, [
-      'package/src',
-      'package/docs',
-      'package/tests',
-      '.arc/architecture/components/unrelated-filename.json',
-    ]);
+    assert.deepEqual(owner.ownedPaths, ['package/src', 'package/docs', 'package/tests']);
     // Write scope is ownership. The view carries no separate grant list that could diverge from it,
     // so the check is that both project the same declared scope rather than that a second list is
     // empty.
@@ -117,11 +112,13 @@ class ComponentScenarios {
     f.put('package/docs/added.md', 'New document');
     const before = f.run('validate');
     assert.equal(before.status, 0, before.stderr);
-    assert.equal(JSON.parse(before.stdout).owners.sample.inventory.length, 4);
+    // Three owned files: the profile is no longer part of the subject's inventory, so the baseline is
+    // one shorter than before. The scenario's point is the delta, not the absolute count.
+    assert.equal(JSON.parse(before.stdout).owners.sample.inventory.length, 3);
     f.commit();
     const after = f.run('validate');
     assert.equal(after.status, 0, after.stderr);
-    assert.equal(JSON.parse(after.stdout).owners.sample.inventory.length, 5);
+    assert.equal(JSON.parse(after.stdout).owners.sample.inventory.length, 4);
   }
 }
 

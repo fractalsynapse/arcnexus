@@ -206,7 +206,7 @@ class SharedPreparationScenarios {
       '.arc/architecture/components/operations.json',
       f.component('operations', 'library', {
         parentId: 'maintenance-package',
-        owns: ['.arc/architecture/operations'],
+        owns: [],
       }),
     );
     f.put(

@@ -59,7 +59,7 @@ class StandardsV6Scenarios {
     this.extend(f, 'platform', { standards: ['standard'] });
     const path = '.arc/architecture/components/maintenance.json';
     const maintenance = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
-    f.put(path, { ...maintenance, owns: [...maintenance.owns, '.arc/architecture/standards'] });
+    f.put(path, { ...maintenance, owns: [...maintenance.owns] });
     f.put('.arc/architecture/standards/standard.json', {
       schemaVersion: 1,
       id: 'standard',
