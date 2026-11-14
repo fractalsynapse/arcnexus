@@ -51,7 +51,9 @@ for (const selection of ['environment', 'configuration', 'default'])
       volume = join(f.root, selection === 'default' ? 'data/arcnexus' : 'configured');
       if (selection === 'configuration') f.value(f.root, 'config', 'update', 'volume', volume);
     }
-    for (const resource of ['workspace', 'task', 'workday'])
+    // Delivered read surfaces only: `workday list` is retired (cli-gateway SS4), and its refusal is
+    // asserted in execution-migration and run-queries rather than used here as a state observation.
+    for (const resource of ['workspace', 'task'])
       assert.deepEqual(f.value(f.root, resource, 'list').items, []);
     assert.equal(existsSync(volume), false);
     f.prepared(join(volume, 'state'));
