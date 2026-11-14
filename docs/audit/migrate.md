@@ -58,11 +58,10 @@ names its own verification. None is started; the order below is the dependency o
    wording), `testing/test-paths.ts:36` (`schemaVersion >= 5` path layout). Schema validation is the single
    refusal point. Verify: architecture, assignment, task-intake and testing profiles; expected-message
    tests retargeted, not deleted.
-2. **E2 — one identity field per concept.** Decide `defaultPackage` (currently authored, digest-locked,
-   returned by `defaults()`, and consulted only in an error path) and the package-level `repository`
-   (nothing requires a package to declare it; `component-operation-plans.ts:52` non-null-asserts the derived
-   `repositoryRoot`). Either make both authoritative or collapse them; the #442 empty-path incident is the
-   failure this prevents. Verify: operations, assignment, portfolio, workspace.
+2. **E2 — one identity field per concept.** Decide the package-level `repository`
+   (nothing requires a package to declare it, while `component-operation-plans.ts:52` non-null-asserts the
+   derived `repositoryRoot`), and make the depth-then-`defaultPackage` package resolution explicit about the
+   tie it resolved. The #442 empty-path incident is the failure this prevents. Verify: operations, assignment, portfolio, workspace.
 3. **E3 — make an activity's `profile` binding, not decoration.** It now selects a profile id at activation
    through `resolved.activities?.[activity]?.profile`, with a component-profile fallback. Verify: steward,
    task-intake, execution-runtime; the shipped frame-equality suite must stay green throughout.
