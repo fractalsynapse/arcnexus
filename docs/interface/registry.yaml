@@ -271,7 +271,7 @@ protocol:
   file: docs/interface/README.md
   owner: architecture-maintenance
   stage: locked
-  digest: d46b8accae572f253b973b9491fc3b0ff3a36289d21da8f6444947ce78a0b10c
+  digest: 2f21fd5bd0071f3600c7eb12f6aa5cca7358463ffce4a7aad1948c7d975acf02
   acceptedBy: Adrian Webb (architect)
   acceptedAt: 2026-11-07
   history:

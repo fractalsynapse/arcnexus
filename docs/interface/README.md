@@ -16,11 +16,14 @@ contract holds; changing a contract is an architectural act.
 | `proposed` | Complete and ready for architectural review. | The owning steward, in response to review |
 | `locked` | Accepted. The interface is fixed. | **Only the human architect.** An agent may propose a change through a `component` milestone; it may not edit a locked contract |
 
-Locking is recorded in [`registry.yaml`](registry.yaml): contract id, file, stage, revision,
-content digest, who accepted it and when. Enforcement is delivered, not promised. `arcnexus
+Locking is recorded in [`registry.yaml`](registry.yaml): contract id, file, stage, content digest,
+who accepted it and when. A contract's accepted state is identified by that digest alone. The registry's
+`history` lists accepted states the same way, and an entry whose bytes were never captured says
+`identity: unrecorded` rather than carrying a number no two documents agree on. Enforcement is delivered, not promised. `arcnexus
 validate` recomputes every recorded digest at the validated revision and reports
 `contract-digest-mismatch`, `contract-acceptance-missing`, `contract-digest-missing`,
-`contract-file-missing` or `contract-stage-invalid`. The checked-edit path refuses a write to any
+`contract-file-missing`, `contract-stage-invalid`, `contract-metadata-mismatch`,
+`contract-ordinal-restored` or `contract-history-unidentified`. The checked-edit path refuses a write to any
 locked contract file — and to the registry itself while anything is locked — using the locks
 captured at the run's base revision, so editing the registry inside a workspace unlocks nothing
 for the run that edited it.
@@ -45,8 +48,7 @@ Read-only analysis, review and answering questions do not require it.
    wait. Do not partially comply, do not work around the clause, do not open a pull request
    that quietly crosses it, and do not assume the requester meant to override it.
 4. **The human decides.** Only after that decision may anything change. A contract change is
-   recorded in the registry with a new revision, digest and reason; a request change is simply
-   re-planned.
+   recorded in the registry with a new digest and reason; a request change is simply re-planned.
 5. **Silence is not consent.** If the decision is unavailable, do the work that does not
    depend on it and leave the conflicting part explicitly outstanding, with the clause named.
 
