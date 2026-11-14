@@ -57,7 +57,7 @@ contracts:
     revision: 6
     digest: 9ddb274115402b0b3655dd8414cd6d810167afcf80e264e74736f0b2fc2267cd
     dependsOn: [arcnexus/project, arcnexus/foundation]
-    scenarios: 20
+    scenarios: 21
     acceptedBy: Adrian Webb (architect)
     acceptedAt: 2026-11-07
     history:
