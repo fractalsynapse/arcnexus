@@ -61,12 +61,4 @@ owns:
   - docs/interface/arcnexus-release.md
   - LICENSE
   - .arc/README.md
-  - .arc/architecture/plan-template.md
-  - .arc/architecture/composition-profiles
-  - .arc/architecture/execution-profiles
-  - .arc/architecture/test-profiles
-  - .arc/architecture/operations
-  - .arc/architecture/roles
-  - .arc/architecture/environment.yaml
-  - .arc/architecture/components/arcnexus.yaml
-  - .arc/architecture/components/cli-package.yaml
+  - .arc/architecture
