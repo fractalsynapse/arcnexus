@@ -49,7 +49,7 @@ contracts:
   file: docs/interface/arcnexus-cli-gateway.md
   owner: cli
   stage: locked
-  digest: c151d571390f05c63c1ab7ae6ef739f93fe44dac86866a55a72cf7349ad70cfd
+  digest: 22ccd93fa6f6197c8828c13c833c49bc1605177485df2fbd22c70109eeb84eb3
   dependsOn:
   - arcnexus/project
   - arcnexus/foundation
