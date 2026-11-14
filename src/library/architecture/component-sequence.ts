@@ -8,7 +8,7 @@ import type { Catalog } from './components.js';
  * inserting definitions, so the same catalog always yields the same sequence — but that order is
  * alphabetical by file name and carries no meaning, which left any prioritized walk of the catalog to the
  * judgement of whoever was reading it. This derivation makes the order a property of the architecture:
- * containers before the components whose defaults they supply, the steward of the model files before the
+ * containers before the components whose defaults they supply, the maintainer of the model files before the
  * components whose ownership declarations depend on it, then every remaining component only after the
  * components it relates to, with ties broken by identifier so the result is total and stable.
  */
@@ -30,7 +30,7 @@ export interface SequenceEntry {
   dependsOn: string[];
 }
 
-/** The model files whose steward must be examined before the components that reference it. */
+/** The model files whose maintainer must be examined before the components that reference it. */
 const MODEL_ROOT = '.arc/architecture/';
 
 /** Orders catalog components so a prioritized walk can be reproduced rather than asserted. */
@@ -98,12 +98,12 @@ export class ComponentSequence {
   }
 
   /**
-   * Places the steward of the shared model files before the components that read its declarations.
+   * Places the maintainer of the shared model files before the components that read its declarations.
    *
    * Ownership, roles, operations and profiles are authored in the model root, so an audit of any leaf is
    * provisional until the owner of those files has been examined. Selection is mechanical: the component
    * holding the most paths under the model root, ties broken by identifier, so no name is special-cased.
-   * The preference never outranks a real dependency: a steward that relates to a component not yet emitted
+   * The preference never outranks a real dependency: a maintainer that relates to a component not yet emitted
    * stays where the topological order puts it, because otherwise this override would silently break a
    * relation cycle the sequence is required to refuse.
    */
@@ -113,9 +113,9 @@ export class ComponentSequence {
       .map((member) => ({ member, held: this.modelPaths(member) }))
       .filter((entry) => entry.held > 0)
       .sort((a, b) => b.held - a.held || byIdentifier(a.member, b.member));
-    const steward = candidates[0];
-    if (!steward) return;
-    const member = steward.member;
+    const candidate = candidates[0];
+    if (!candidate) return;
+    const member = candidate.member;
     const known = new Set(this.leaves().map((candidate) => candidate.id));
     const blocked = this.related(member).filter((id) => known.has(id) && !emitted.has(id));
     if (blocked.length) return;

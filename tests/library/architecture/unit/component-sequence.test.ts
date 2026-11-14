@@ -13,7 +13,7 @@ import { loadCatalog } from '../../../../dist/library/architecture/components.js
  * the catalog it is meant to order.
  */
 class ComponentSequenceScenarios {
-  /** Verifies that containers precede the leaves whose defaults they supply, steward right after. */
+  /** Verifies that containers precede the leaves whose defaults they supply, maintainer right after. */
   lineage(): void {
     const entries = new ComponentSequence(this.catalog(this.tree())).entries();
     assert.deepEqual(
@@ -28,7 +28,7 @@ class ComponentSequenceScenarios {
     assert.deepEqual(entries[3]!.dependsOn, ['pkg']);
   }
 
-  /** Verifies that the steward is chosen by how much of the model root a component holds. */
+  /** Verifies that the maintainer is chosen by how much of the model root a component holds. */
   maintainer(): void {
     const tree = this.tree();
     tree.reader.allowedWritePaths = [
@@ -55,9 +55,9 @@ class ComponentSequenceScenarios {
   }
 
   /**
-   * Verifies that a relation cycle is refused instead of being broken by the steward preference.
+   * Verifies that a relation cycle is refused instead of being broken by the maintainer preference.
    *
-   * The steward override runs before the topological walk, so without the dependency guard it would emit one
+   * The maintainer override runs before the topological walk, so without the dependency guard it would emit one
    * half of a cycle first and the cycle would disappear from view — the failure this scenario pins.
    */
   cycle(): void {
@@ -107,9 +107,9 @@ class ComponentSequenceScenarios {
     assert.equal(new Set(ids).size, ids.length, 'every component appears exactly once');
     assert.equal(ids.length, Object.keys(catalog.components).length);
     assert.deepEqual(new ComponentSequence(catalog).ids(), ids, 'the derivation is reproducible');
-    const steward = entries.filter((entry) => entry.phase === 'model-maintainer');
-    assert.equal(steward.length, 1, 'exactly one component holds the shared model files');
-    assert.equal(steward[0]!.id, 'architecture-maintenance');
+    const maintainers = entries.filter((entry) => entry.phase === 'model-maintainer');
+    assert.equal(maintainers.length, 1, 'exactly one component holds the shared model files');
+    assert.equal(maintainers[0]!.id, 'architecture-maintenance');
   }
 
   /** Builds a catalog whose model-file dominance sits with `writer`, so placement is unambiguous. */
@@ -150,7 +150,7 @@ const scenarios = new ComponentSequenceScenarios();
 
 test('derived sequence places containers before their leaves', () => scenarios.lineage());
 
-test('derived sequence places the model steward before model readers', () =>
+test('derived sequence places the model maintainer before model readers', () =>
   scenarios.maintainer());
 
 test('derived sequence respects related components', () => scenarios.relations());
