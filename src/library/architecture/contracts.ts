@@ -8,8 +8,6 @@ export interface ContractRecord {
   file: string;
   owner: string;
   stage: string;
-  /** The revision the registry records for this contract, when it records one. */
-  revision?: number;
   /** The scenario count the registry records, when it records one. */
   scenarios?: number;
   digest?: string;
@@ -86,13 +84,13 @@ function metadataFindings(record: ContractRecord, text: string): ContractFinding
       path: record.file,
       detail: `${record.id} records stage '${record.stage}' while the contract states '${stage}'.`,
     });
-  const revision = /revision (\d+)/.exec(header)?.[1];
-  if (revision && record.revision !== undefined && Number(revision) !== record.revision)
-    findings.push({
-      code: 'contract-metadata-mismatch',
-      path: record.file,
-      detail: `${record.id} records revision ${record.revision} while the contract states ${revision}.`,
-    });
+  // Contract revision numbers are no longer enforced or compared. The architect retired the convention on
+  // 2026-11-14: the only consumer of a contract revision was this check, which compared one record of a
+  // number against a second record of the same number, while lock resolution, evidence and every gate use
+  // the content digest. Nothing outside this file reads `revision`, so agreement between two copies of an
+  // ordinal protected nothing. History is being rekeyed on digests, which cannot be reconstructed for
+  // states whose content was never captured; that reconciliation is tracked separately rather than guessed
+  // at here.
   if (record.scenarios !== undefined) {
     const ids = new Set(
       (text.match(/^\|\s*[A-Z]+-\d+[a-z]?\s*\|/gm) ?? []).map((row) => row.trim()),
@@ -172,7 +170,6 @@ export class ContractRegistry {
           file: String(entry.file),
           owner: String(entry.owner ?? ''),
           stage: String(entry.stage ?? ''),
-          revision: count(entry.revision),
           scenarios: count(entry.scenarios),
           digest: typeof entry.digest === 'string' ? entry.digest : undefined,
           acceptedBy: typeof entry.acceptedBy === 'string' ? entry.acceptedBy : undefined,

@@ -97,9 +97,7 @@ class ContractIntegrityScenarios {
   /** Accepts metadata that agrees, and skips what the registry does not record. */
   metadataAgreement(): void {
     const bytes = contractBytes('locked', 1, 3);
-    const agreed = ContractRegistry.fromText(
-      registry({ digest: digest(bytes), revision: '1', scenarios: '3' }),
-    );
+    const agreed = ContractRegistry.fromText(registry({ digest: digest(bytes), scenarios: '3' }));
     assert.deepEqual(agreed.integrityFindings(reader({ [contractPath]: bytes })), []);
     const unrecorded = ContractRegistry.fromText(registry({ digest: digest('x') }));
     assert.equal(
