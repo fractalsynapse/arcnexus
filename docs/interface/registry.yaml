@@ -5,7 +5,6 @@
 # Enforcement: digest comparison against this registry is a listed follow-up test.
 # Until it exists this record is stated authority, not a checked guarantee.
 schemaVersion: 1
-schemaVersion: 1
 project: arcnexus
 authority:
   lockOwner: Adrian Webb (architect)
