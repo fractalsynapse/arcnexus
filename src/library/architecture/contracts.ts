@@ -33,6 +33,19 @@ export interface ContractLock {
 
 const stages = new Set(['draft', 'proposed', 'locked']);
 
+/**
+ * Reads a registry count, which may be written as a number or as a quoted number.
+ *
+ * `registry.yaml` quotes some field values, so `revision: "4"` arrives as a string and a numeric check
+ * alone would discard it - leaving a contract's recorded revision unchecked. Absence stays absence: an
+ * unrecorded count is skipped by the checks, never guessed at.
+ */
+function count(value: unknown): number | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 const registryPath = 'docs/interface/registry.yaml';
 
 const digest = (text: string) => createHash('sha256').update(text).digest('hex');
@@ -159,8 +172,8 @@ export class ContractRegistry {
           file: String(entry.file),
           owner: String(entry.owner ?? ''),
           stage: String(entry.stage ?? ''),
-          revision: Number.isFinite(entry.revision) ? Number(entry.revision) : undefined,
-          scenarios: Number.isFinite(entry.scenarios) ? Number(entry.scenarios) : undefined,
+          revision: count(entry.revision),
+          scenarios: count(entry.scenarios),
           digest: typeof entry.digest === 'string' ? entry.digest : undefined,
           acceptedBy: typeof entry.acceptedBy === 'string' ? entry.acceptedBy : undefined,
           acceptedAt: typeof entry.acceptedAt === 'string' ? entry.acceptedAt : undefined,
