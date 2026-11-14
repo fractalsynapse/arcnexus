@@ -134,6 +134,13 @@ supply its inherited defaults, and cannot be judged as a consumer before the com
    `change-inspection`** — consumers of everything above.
 7. **Gateway and delivery: `cli`, `publisher`, `release`, `workday`, `portfolio`, `experiments`.**
 
+**This numbered list is the reporting priority, not the output of `ComponentSequence`.** The two orderings
+answer different questions and must not be confused: the code's holder phase is determined purely by who
+owns `.arc/` content (`architecture-maintenance`, `report`, `task-intake`) and is what any runtime walk
+should use, while the list above is the sequence in which audit reports are worth writing, which puts
+`foundation` third because its build and check standards are what other components are measured against.
+Where they disagree, the code is the fact and this list is the plan.
+
 Each phase produces `docs/audit/<component>.md`: file-level inventory with one-line purpose per file,
 the TypeScript classes and their interfaces with relationships, then a completeness rating against that
 component's specification with strengths, weaknesses and gaps. The final plan sequences fixes by phase
