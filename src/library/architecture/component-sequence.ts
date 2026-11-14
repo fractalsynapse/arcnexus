@@ -21,6 +21,7 @@ interface SequenceMember {
   parentId?: string;
   relatedIds: string[];
   allowedWritePaths: string[];
+  definitionPath?: string;
 }
 
 /** One component in the derived order, with the phase it was emitted in and what it waits on. */
@@ -46,8 +47,8 @@ export function componentTypeRank(type: string): number {
   return rank < 0 ? componentTypeOrder.length : rank;
 }
 
-/** The model files whose maintainer must be examined before the components that reference it. */
-const MODEL_ROOT = '.arc/architecture/';
+/** Knowledge-root files whose maintainer must be examined before the components that reference them. */
+const KNOWLEDGE_ROOT = '.arc/';
 
 /** Orders catalog components so a prioritized walk can be reproduced rather than asserted. */
 export class ComponentSequence {
@@ -61,6 +62,7 @@ export class ComponentSequence {
       parentId: component.parentId,
       relatedIds: component.relatedIds ?? [],
       allowedWritePaths: component.allowedWritePaths ?? [],
+      definitionPath: component.definition?.path,
     }));
   }
 
@@ -70,7 +72,7 @@ export class ComponentSequence {
     const emitted = new Set<string>();
     this.emitPlatform(entries, emitted);
     this.emitPackages(entries, emitted);
-    this.emitModelMaintainer(entries, emitted);
+    this.emitModelMaintainers(entries, emitted);
     entries.push(...this.orderRemaining(emitted));
     const missing = this.members.filter((member) => !emitted.has(member.id));
     if (missing.length)
@@ -114,35 +116,49 @@ export class ComponentSequence {
   }
 
   /**
-   * Places the maintainer of the shared model files before the components that read its declarations.
+   * Places every component that holds knowledge-root content, before the components reading through it.
    *
-   * The model root is loaded before the regular components, and ownership, roles, operations and every
-   * profile directory are authored inside it, so an audit of any leaf is provisional until the owner of
-   * those files has been examined. In this catalog that is `architecture-maintenance`, which holds all
-   * three profile directories; the rank is computed from what a component owns, never from its name. Selection is mechanical: the component
-   * holding the most paths under the model root, ties broken by identifier, so no name is special-cased.
-   * The preference never outranks a real dependency: a maintainer that relates to a component not yet emitted
-   * stays where the topological order puts it, because otherwise this override would silently break a
-   * relation cycle the sequence is required to refuse.
+   * `.arc/` is loaded ahead of the regular components: the model, its ownership declarations, roles,
+   * operations, every profile directory, the plan template and the agent-authored plan and learning spaces
+   * all live under it. A component holding any of that content is a maintainer of it, so the phase lists
+   * **every** holder rather than the largest — this catalog has four, and one project choosing to concentrate
+   * them in a single component is not a universal rule. Holders never reappear in the type list, and they
+   * are ordered by the same type layer as everything else, then by how much they hold, then by identifier.
+   *
+   * A component's own definition is excluded: it sits under `.arc/architecture/components/`, and counting it
+   * would place all 21 owners in this phase and empty the type list entirely. Holding knowledge content
+   * *for others* is the signal. A holder still waits on its relations, so a mutual relation between two
+   * holders is refused instead of being resolved by the preference.
    */
-  private emitModelMaintainer(entries: SequenceEntry[], emitted: Set<string>): void {
-    const candidates = this.leaves()
-      .filter((member) => !emitted.has(member.id))
-      .map((member) => ({ member, held: this.modelPaths(member) }))
-      .filter((entry) => entry.held > 0)
-      .sort((a, b) => b.held - a.held || byIdentifier(a.member, b.member));
-    const candidate = candidates[0];
-    if (!candidate) return;
-    const member = candidate.member;
-    const known = new Set(this.leaves().map((candidate) => candidate.id));
-    const blocked = this.related(member).filter((id) => known.has(id) && !emitted.has(id));
-    if (blocked.length) return;
-    entries.push({
-      id: member.id,
-      phase: 'model-maintainer',
-      dependsOn: this.waitFor(member, emitted),
-    });
-    emitted.add(member.id);
+  private emitModelMaintainers(entries: SequenceEntry[], emitted: Set<string>): void {
+    const pending = new Map(
+      this.leaves()
+        .filter((member) => this.knowledgeContentPaths(member).length > 0)
+        .map((member) => [member.id, member]),
+    );
+    while (pending.size) {
+      const ready = [...pending.values()].filter((member) =>
+        this.related(member).every((id) => emitted.has(id) || !pending.has(id)),
+      );
+      if (!ready.length)
+        throw new InputError(
+          `Component sequence has a cycle among: ${[...pending.keys()].sort().join(', ')}`,
+        );
+      ready.sort(
+        (a, b) =>
+          componentTypeRank(a.type) - componentTypeRank(b.type) ||
+          this.held(b) - this.held(a) ||
+          byIdentifier(a, b),
+      );
+      const member = ready[0]!;
+      pending.delete(member.id);
+      entries.push({
+        id: member.id,
+        phase: 'model-maintainer',
+        dependsOn: this.waitFor(member, emitted),
+      });
+      emitted.add(member.id);
+    }
   }
 
   /** Emits the remaining components by type layer, each only after every component it relates to. */
@@ -186,9 +202,21 @@ export class ComponentSequence {
       .sort();
   }
 
-  /** Counts how many owned paths fall under the shared model root. */
-  private modelPaths(member: SequenceMember): number {
-    return member.allowedWritePaths.filter((path) => path.startsWith(MODEL_ROOT)).length;
+  /** Knowledge-root paths this component holds for others, excluding its own definition. */
+  private knowledgeContentPaths(member: SequenceMember): string[] {
+    // Every component implicitly owns its own definition inside the model root, and that is not
+    // stewardship of the knowledge root: `architecture` owning its own document says nothing about what
+    // other components read from it.
+    const directory = `${KNOWLEDGE_ROOT}architecture/components/${member.id}`;
+    const own = [`${directory}.yaml`, `${directory}.yml`, `${directory}.json`];
+    return member.allowedWritePaths.filter(
+      (path) => path.startsWith(KNOWLEDGE_ROOT) && !own.includes(path),
+    );
+  }
+
+  /** How much knowledge-root content a component holds, the ordering signal inside the phase. */
+  private held(member: SequenceMember): number {
+    return this.knowledgeContentPaths(member).length;
   }
 }
 
