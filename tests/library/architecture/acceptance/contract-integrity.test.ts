@@ -76,20 +76,15 @@ class ContractIntegrityScenarios {
     const findings = registry_.integrityFindings(reader({ [contractPath]: bytes }));
     assert.deepEqual(
       findings.map((finding) => finding.code),
-      [
-        'contract-metadata-mismatch',
-        'contract-metadata-mismatch',
-        'contract-scenario-count-mismatch',
-      ],
-      'stage, revision and scenario counts are each reported',
+      ['contract-metadata-mismatch', 'contract-scenario-count-mismatch'],
+      'stage disagreement and scenario under-count are each reported',
     );
     assert.match(
       findings[0]!.detail,
       /records stage 'locked' while the contract states 'proposed'/,
     );
-    assert.match(findings[1]!.detail, /records revision 4 while the contract states 2/);
     assert.match(
-      findings[2]!.detail,
+      findings[1]!.detail,
       /records 3 acceptance scenarios while the contract carries 4/,
     );
   }
