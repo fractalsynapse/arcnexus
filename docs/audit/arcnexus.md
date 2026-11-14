@@ -121,10 +121,13 @@ The single-platform rule is enforced twice, deliberately: `PlatformExecution.def
    `package`, `foundation|gateway|library|release`. So this component is audited against a contract that
    says it should not exist — the largest single divergence in the catalog, and the reason the final plan
    must sequence the migration rather than patch around it.
-3. **`defaultPackage` is half-wired.** It is authored, digest-locked and returned by `defaults()`, yet the
-   only resolution site is an error path (`execution-context.ts`, "Ambiguous or missing package"). Grep for
-   `resolveDefaultPackage` in `src` returns nothing. A platform that names a default package which the
-   runtime never uses as a default is decoration, not behaviour.
+3. **`defaultPackage` works, but only as a tie-break, and my earlier reading of it was wrong.**
+   `execution-context.ts:170-181` resolves a path's package by **maximum declared depth**, and only when two
+   packages tie does it use `selected.find((c) => c.id === defaultId)` before throwing `Ambiguous or missing
+package; declare defaultPackage on the platform`. So the field is honoured — not decoration — but it is
+   invisible in the normal case, and the function name I claimed to grep (`resolveDefaultPackage`) does not
+   exist, which is itself the evidence that I had not read this block before writing it. Narrowed gap: the
+   tie-break is silent about _why_ depth tied, and no test I have located covers the tie path specifically.
 4. **The platform has no owner for its own concept.** It owns one file; the rules that make it a platform
    live in `architecture`'s paths and its consumers in `assignment`, `execution-runtime` and `steward`.
    Nothing in the catalog is accountable for the platform _as a concern_, which is precisely the kind of
