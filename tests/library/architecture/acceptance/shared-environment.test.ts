@@ -32,7 +32,7 @@ class SharedEnvironmentScenarios {
       '.arc/architecture/components/operations.json',
       fixture.component('operations', 'library', {
         parentId: 'maintenance-package',
-        owns: ['.arc/architecture/operations'],
+        owns: [],
       }),
     );
     fixture.put(

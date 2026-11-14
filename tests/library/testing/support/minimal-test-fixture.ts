@@ -73,17 +73,7 @@ export class MinimalTestFixture extends ComponentTestFixture {
     this.definition('maintenance-package', 'package', { parentId: 'platform' });
     this.definition('maintenance', 'foundation', {
       parentId: 'maintenance-package',
-      owns: [
-        '.arc/architecture/environment.yaml',
-        '.arc/architecture/roles',
-        '.arc/architecture/execution-profiles',
-        '.arc/architecture/test-profiles',
-        '.arc/architecture/components/platform.yaml',
-        '.arc/architecture/components/package.yaml',
-        '.arc/architecture/components/maintenance-package.yaml',
-        'build.cjs',
-        '.gitignore',
-      ],
+      owns: ['.arc/architecture', 'build.cjs', '.gitignore'],
     });
   }
 

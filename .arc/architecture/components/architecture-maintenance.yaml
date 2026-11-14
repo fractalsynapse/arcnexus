@@ -4,68 +4,61 @@ type: library
 parentId: cli-package
 purpose: Maintain architectural ownership definitions under caller authority
 objectives:
-- Maintain readable definitions with accountable, disjoint ownership
-- Propose architectural changes with explicit acceptance criteria
+  - Maintain readable definitions with accountable, disjoint ownership
+  - Propose architectural changes with explicit acceptance criteria
 constraints:
-- Caller accepts architectural authority changes
-- Candidate definition edits never change authority for an active execution
+  - Caller accepts architectural authority changes
+  - Candidate definition edits never change authority for an active execution
 activities:
   research:
     role: researcher
     profile: luna
     operations: []
     instructions:
-    - Establish what Maintain architectural ownership definitions under caller authority means in practice
-      from this component's own sources and retained evidence before proposing any change to README.md,
-      CHANGELOG.md.
+      - Establish what Maintain architectural ownership definitions under caller authority means in practice
+        from this component's own sources and retained evidence before proposing any change to README.md,
+        CHANGELOG.md.
   documentation:
     role: technical-writer
     profile: luna
     operations: []
     instructions:
-    - Keep the documentation under docs/charter.md describing Maintain architectural ownership definitions
-      under caller authority as delivered behaviour, never as intent.
+      - Keep the documentation under docs/charter.md describing Maintain architectural ownership definitions
+        under caller authority as delivered behaviour, never as intent.
   implementation:
     role: systems-engineer
     profile: luna
     operations: []
     instructions:
-    - Change only what this goal requires inside README.md, CHANGELOG.md, preserving the public contract
-      and the ownership boundaries that declare it.
+      - Change only what this goal requires inside README.md, CHANGELOG.md, preserving the public contract
+        and the ownership boundaries that declare it.
   review:
     role: reviewer
     profile: luna
     operations: []
     instructions:
-    - Judge the candidate against the stated acceptance and the standards in force for Maintain architectural
-      ownership definitions under caller authority; refuse on unmet behaviour rather than style.
+      - Judge the candidate against the stated acceptance and the standards in force for Maintain architectural
+        ownership definitions under caller authority; refuse on unmet behaviour rather than style.
 owns:
-- README.md
-- CHANGELOG.md
-- docs/charter.md
-- docs/dev.md
-- docs/phase-one-retrospective.md
-- docs/guidance-audit.md
-- docs/plans
-- docs/audit
-- docs/interface/README.md
-- docs/interface/registry.yaml
-- docs/interface/arcnexus-project.md
-- docs/interface/arcnexus-architecture-model.md
-- docs/interface/arcnexus-coordination.md
-- docs/interface/arcnexus-execution.md
-- docs/interface/arcnexus-direction.md
-- docs/interface/arcnexus-collaboration-provider.md
-- docs/interface/arcnexus-verification.md
-- docs/interface/arcnexus-delivery.md
-- docs/interface/arcnexus-release.md
-- LICENSE
-- .arc/README.md
-- .arc/architecture/plan-template.md
-- .arc/architecture/composition-profiles
-- .arc/architecture/execution-profiles
-- .arc/architecture/operations
-- .arc/architecture/roles
-- .arc/architecture/environment.yaml
-- .arc/architecture/components/arcnexus.yaml
-- .arc/architecture/components/cli-package.yaml
+  - README.md
+  - CHANGELOG.md
+  - docs/charter.md
+  - docs/dev.md
+  - docs/phase-one-retrospective.md
+  - docs/guidance-audit.md
+  - docs/plans
+  - docs/audit
+  - docs/interface/README.md
+  - docs/interface/registry.yaml
+  - docs/interface/arcnexus-project.md
+  - docs/interface/arcnexus-architecture-model.md
+  - docs/interface/arcnexus-coordination.md
+  - docs/interface/arcnexus-execution.md
+  - docs/interface/arcnexus-direction.md
+  - docs/interface/arcnexus-collaboration-provider.md
+  - docs/interface/arcnexus-verification.md
+  - docs/interface/arcnexus-delivery.md
+  - docs/interface/arcnexus-release.md
+  - LICENSE
+  - .arc/README.md
+  - .arc/architecture

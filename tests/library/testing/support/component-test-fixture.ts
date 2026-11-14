@@ -51,16 +51,7 @@ export class ComponentTestFixture {
       id: 'maintenance',
       type: 'foundation',
       parentId: 'package',
-      owns: [
-        '.gitignore',
-        '.arc/architecture/environment.yaml',
-        '.arc/architecture/roles',
-        '.arc/architecture/execution-profiles',
-        '.arc/architecture/test-profiles',
-        '.arc/architecture/operations',
-        '.arc/architecture/components/platform.yaml',
-        '.arc/architecture/components/package.yaml',
-      ],
+      owns: ['.gitignore', '.arc/architecture'],
     });
   }
 

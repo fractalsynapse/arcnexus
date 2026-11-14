@@ -44,8 +44,12 @@ grant it write scope.
   `ComponentActivity` (`components.ts`) = `role`, `instructions`, `profile`, `operations`,
   `standards`. `standardsInForce` (`frame.ts`) is the single resolver: the union of component,
   position and activity standards, filtered to ids the catalog knows.
-- **Ownership is the only write authority.** `owns` plus each owner's implicit definition path become
-  `ownership.paths`, and `allowedWritePaths` is derived from them (`component-materialization.ts`).
+- **Ownership is the only write authority.** `owns` becomes `ownership.paths`, and `allowedWritePaths`
+  is derived from it (`component-materialization.ts`). A component's **own definition is not part of its
+  ownership**: `.arc/architecture` is held by a single steward, `architecture-maintenance`, so the profile
+  that says what a component may do is not writable by that component. The definition path remains captured
+  on `definition` for digests and inspection, which is what `verify-architecture-maintenance` and the
+  contract locks read.
   Reads come from `reads` up the lineage (`access.readPaths`). There is no separate write grant:
   `DirectoryGrants` and `access.writeDirectories` were deleted as unreachable state.
 - **Operations are shared definitions, usages are declared by scope.** `.arc/architecture/operations/*.yaml`
@@ -56,6 +60,23 @@ grant it write scope.
 - **Every tracked file resolves to one owner.** `OwnershipValidator` enumerates
   `git ls-tree -r --name-only <base>` and refuses zero or multiple owners;
   `catalog-ownership.test.ts` now asserts the same over `git ls-files` for this repository.
+
+## Ownership and holder rules as they now stand (2026-11-14)
+
+- `.arc/architecture` is owned in one claim by `architecture-maintenance`, which also holds
+  `.arc/README.md`. Container definitions (`arcnexus.yaml`, `cli-package.yaml`) and the readable-TypeScript
+  standard are covered by that claim rather than itemised, and `foundation` no longer owns the standard.
+- No component owns its own definition: `component-materialization.ts` stopped pushing it into ownership,
+  and the duplicate-claim guard that accompanied it is gone. Changing a profile is therefore an act of the
+  steward, which is how AGENTS.md's rule that candidate edits cannot grant new authority is enforced rather
+  than merely stated.
+- Verified consequence: every tracked file resolves to exactly one owner. Measured against the committed
+  tree: 930 tracked files, 21 owners, **0 unowned, 0 multi-owned**, one `.arc/architecture` steward, and
+  `validate` exit 0 with zero contract findings.
+- The sequence's holder phase now lists **every** component holding `.arc/` content — `architecture-maintenance`
+  (`.arc/architecture`, `.arc/README.md`), `report` (`.arc/learning`), `task-intake` (`.arc/plans`) — ordered
+  by the type layer, then content held, then identifier, and none of them reappears in the type list.
+  Concentrating all custody in one component is this project's choice, not a rule the code assumes.
 
 ## Resolution order
 
@@ -75,6 +96,25 @@ also the order failures surface in:
     repositories
 11. `PublicApiCatalog.resolve()`
 
+## Ordering rules the implementation now enforces
+
+`ComponentSequence` (`src/library/architecture/component-sequence.ts`) emits every component exactly once:
+
+1. **platform** — the single authoritative root; two documents are refused, not resolved;
+2. **package** — containers, parent before child;
+3. **model-maintainer** — the component holding the most paths under `.arc/architecture/`. The phase exists
+   because the model root is loaded before the regular components: ownership, roles, operations and every
+   profile directory are authored inside it, so a leaf is provisional until its declarations have been
+   examined. In this catalog that is `architecture-maintenance`, which owns **all three profile directories**
+   — `composition-profiles`, `execution-profiles` and `test-profiles` — by the architect's direction of
+   2026-11-14; the rank is computed from what a component owns, never from its name;
+4. **component** — every remaining component, by the type layer below, then identifier.
+
+**Type layer:** `foundation` → `gateway` → `library` → `release`, exported as `componentTypeOrder` with
+`componentTypeRank` for any list that enumerates components, matching the contract walk in AGENTS.md. The
+layer is applied inside the final phase and the maintainer phase intentionally precedes it, so a library may
+sit ahead of the foundation — that is the documented exception, not an ordering bug.
+
 ## Audit sequence
 
 Ordering follows the connection rules, because a component cannot be judged before the containers that
@@ -93,6 +133,13 @@ supply its inherited defaults, and cannot be judged as a consumer before the com
 6. **Agent-facing layer: `steward`, `agent-guidance`, `guidance-validation`, `task-intake`, `report`,
    `change-inspection`** — consumers of everything above.
 7. **Gateway and delivery: `cli`, `publisher`, `release`, `workday`, `portfolio`, `experiments`.**
+
+**This numbered list is the reporting priority, not the output of `ComponentSequence`.** The two orderings
+answer different questions and must not be confused: the code's holder phase is determined purely by who
+owns `.arc/` content (`architecture-maintenance`, `report`, `task-intake`) and is what any runtime walk
+should use, while the list above is the sequence in which audit reports are worth writing, which puts
+`foundation` third because its build and check standards are what other components are measured against.
+Where they disagree, the code is the fact and this list is the plan.
 
 Each phase produces `docs/audit/<component>.md`: file-level inventory with one-line purpose per file,
 the TypeScript classes and their interfaces with relationships, then a completeness rating against that

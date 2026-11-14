@@ -172,17 +172,7 @@ export class ArchitectureFixture {
       id: 'maintenance',
       type: 'library',
       parentId: 'package',
-      owns: [
-        'README.md',
-        'source.txt',
-        'test.mjs',
-        '.arc/architecture/roles/engineer.json',
-        '.arc/architecture/execution-profiles',
-        '.arc/architecture/operations/verify.yaml',
-        '.arc/architecture/environment.json',
-        '.arc/architecture/components/platform.json',
-        '.arc/architecture/components/package.json',
-      ],
+      owns: ['README.md', 'source.txt', 'test.mjs', '.arc/architecture'],
     });
   }
 

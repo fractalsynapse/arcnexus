@@ -38,7 +38,7 @@ contracts:
     owner: foundation
     stage: locked
     revision: 1
-    digest: e5912fa3e523c9b17b976085168932a8862735eca52b2d7f589af9adb92b9b53
+    digest: cd17f59c9df5393a9e5fd47499074817ea5dbc150549a46099ac22317a0c676e
     dependsOn: [arcnexus/project]
     scenarios: 10
     acceptedBy: Adrian Webb (architect)
@@ -57,7 +57,7 @@ contracts:
     revision: 6
     digest: 9ddb274115402b0b3655dd8414cd6d810167afcf80e264e74736f0b2fc2267cd
     dependsOn: [arcnexus/project, arcnexus/foundation]
-    scenarios: 20
+    scenarios: 21
     acceptedBy: Adrian Webb (architect)
     acceptedAt: 2026-11-07
     history:
@@ -130,7 +130,7 @@ contracts:
     revision: 3
     digest: 1751d853de6f8804733fa2f605608d571dcee9b495cbbc5f282adf575c340aa3
     dependsOn: [arcnexus/project, arcnexus/architecture-model]
-    scenarios: 19
+    scenarios: 20
     acceptedBy: Adrian Webb (architect)
     acceptedAt: 2026-11-07
     history:
@@ -151,7 +151,7 @@ contracts:
     revision: 3
     digest: a8a60e1781087e11e3dba60bf68995e8b65e306ba67c5052d5a49f5dd3994677
     dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination]
-    scenarios: 19
+    scenarios: 21
     acceptedBy: Adrian Webb (architect)
     acceptedAt: 2026-11-07
     history:

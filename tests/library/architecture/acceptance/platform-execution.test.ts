@@ -119,7 +119,7 @@ class PlatformExecutionScenarios {
       '.arc/architecture/components/operations.json',
       fixture.component('operations', 'library', {
         parentId: 'maintenance-package',
-        owns: ['.arc/architecture/operations'],
+        owns: [],
       }),
     );
     fixture.put('.arc/architecture/operations/check.json', this.verification());
@@ -156,7 +156,7 @@ class PlatformExecutionScenarios {
       '.arc/architecture/components/old-execution-owner.json',
       fixture.component('old-execution-owner', 'library', {
         parentId: 'maintenance-package',
-        owns: ['.arc/architecture/execution.json'],
+        owns: [],
       }),
     );
     fixture.commit();

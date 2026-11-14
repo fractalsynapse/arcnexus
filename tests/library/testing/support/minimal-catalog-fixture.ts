@@ -64,15 +64,7 @@ export class MinimalCatalogFixture {
       id: 'owner',
       type: 'foundation',
       parentId: 'package',
-      owns: [
-        '.arc/architecture/environment.json',
-        '.arc/architecture/roles',
-        '.arc/architecture/execution-profiles',
-        '.arc/architecture/components/platform.json',
-        '.arc/architecture/components/package.json',
-        '.agents',
-        'AGENTS.md',
-      ],
+      owns: ['.arc/architecture', '.agents', 'AGENTS.md'],
     });
   }
 

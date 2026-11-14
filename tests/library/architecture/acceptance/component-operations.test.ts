@@ -48,7 +48,7 @@ class SharedOperationScenarios {
       '.arc/architecture/components/operation-owner.json',
       f.component('operation-owner', 'library', {
         parentId: 'maintenance-package',
-        owns: ['.arc/architecture/operations', '.arc/architecture/test-profiles'],
+        owns: [],
       }),
     );
     f.put('.arc/architecture/test-profiles/node.json', {
@@ -90,7 +90,6 @@ class SharedOperationScenarios {
       'package/src',
       'package/docs',
       'package/tests',
-      '.arc/architecture/components/unrelated-filename.json',
     ]);
     assert.equal(owners.second.operationPlan.verify[0].args[0], 'second');
     assert.equal(owners.second.operationPlan.verify[0].id, 'check');
@@ -200,7 +199,7 @@ class SharedOperationScenarios {
       '.arc/architecture/components/operation-owner.json',
       fixture.component('operation-owner', 'library', {
         parentId: 'maintenance-package',
-        owns: ['.arc/architecture/operations'],
+        owns: [],
       }),
     );
     fixture.put(
