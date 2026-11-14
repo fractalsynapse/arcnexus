@@ -30,6 +30,22 @@ export interface SequenceEntry {
   dependsOn: string[];
 }
 
+/**
+ * The component type layers, lowest first.
+ *
+ * Foundation standards precede the gateway that ships them, the libraries precede the release that
+ * publishes them, and this matches the documented contract walk (project -> foundation -> gateway ->
+ * libraries -> release). Every list of components in the product is expected to follow this layering, so
+ * the rank is exported rather than kept private to the sequence.
+ */
+export const componentTypeOrder = ['foundation', 'gateway', 'library', 'release'];
+
+/** Rank of a component type within {@link componentTypeOrder}; unknown types sort last, then by identifier. */
+export function componentTypeRank(type: string): number {
+  const rank = componentTypeOrder.indexOf(type);
+  return rank < 0 ? componentTypeOrder.length : rank;
+}
+
 /** The model files whose maintainer must be examined before the components that reference it. */
 const MODEL_ROOT = '.arc/architecture/';
 
@@ -100,8 +116,10 @@ export class ComponentSequence {
   /**
    * Places the maintainer of the shared model files before the components that read its declarations.
    *
-   * Ownership, roles, operations and profiles are authored in the model root, so an audit of any leaf is
-   * provisional until the owner of those files has been examined. Selection is mechanical: the component
+   * The model root is loaded before the regular components, and ownership, roles, operations and every
+   * profile directory are authored inside it, so an audit of any leaf is provisional until the owner of
+   * those files has been examined. In this catalog that is `architecture-maintenance`, which holds all
+   * three profile directories; the rank is computed from what a component owns, never from its name. Selection is mechanical: the component
    * holding the most paths under the model root, ties broken by identifier, so no name is special-cased.
    * The preference never outranks a real dependency: a maintainer that relates to a component not yet emitted
    * stays where the topological order puts it, because otherwise this override would silently break a
@@ -127,7 +145,7 @@ export class ComponentSequence {
     emitted.add(member.id);
   }
 
-  /** Emits the remaining components, each only after every component it relates to has been placed. */
+  /** Emits the remaining components by type layer, each only after every component it relates to. */
   private orderRemaining(emitted: Set<string>): SequenceEntry[] {
     const output: SequenceEntry[] = [];
     const pending = new Map(this.leaves().map((member) => [member.id, member]));
@@ -136,13 +154,12 @@ export class ComponentSequence {
     while (pending.size) {
       const ready = [...pending.values()]
         .filter((member) => this.related(member).every((id) => emitted.has(id) || !pending.has(id)))
-        .map((member) => member.id)
-        .sort();
+        .sort(byTypeLayer);
       if (!ready.length)
         throw new InputError(
           `Component sequence has a cycle among: ${[...pending.keys()].sort().join(', ')}`,
         );
-      const member = pending.get(ready[0]!)!;
+      const member = ready[0]!;
       pending.delete(member.id);
       output.push({ id: member.id, phase: 'component', dependsOn: this.waitFor(member, emitted) });
       emitted.add(member.id);
@@ -174,6 +191,10 @@ export class ComponentSequence {
     return member.allowedWritePaths.filter((path) => path.startsWith(MODEL_ROOT)).length;
   }
 }
+
+/** Orders members by component type layer, then by identifier for full determinism. */
+const byTypeLayer = (a: SequenceMember, b: SequenceMember): number =>
+  componentTypeRank(a.type) - componentTypeRank(b.type) || byIdentifier(a, b);
 
 /** Orders two members by identifier, the tie-break that makes the whole derivation reproducible. */
 const byIdentifier = (a: SequenceMember, b: SequenceMember): number =>

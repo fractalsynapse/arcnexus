@@ -64,6 +64,7 @@ owns:
   - .arc/architecture/plan-template.md
   - .arc/architecture/composition-profiles
   - .arc/architecture/execution-profiles
+  - .arc/architecture/test-profiles
   - .arc/architecture/operations
   - .arc/architecture/roles
   - .arc/architecture/environment.yaml

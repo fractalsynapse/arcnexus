@@ -75,6 +75,25 @@ also the order failures surface in:
     repositories
 11. `PublicApiCatalog.resolve()`
 
+## Ordering rules the implementation now enforces
+
+`ComponentSequence` (`src/library/architecture/component-sequence.ts`) emits every component exactly once:
+
+1. **platform** — the single authoritative root; two documents are refused, not resolved;
+2. **package** — containers, parent before child;
+3. **model-maintainer** — the component holding the most paths under `.arc/architecture/`. The phase exists
+   because the model root is loaded before the regular components: ownership, roles, operations and every
+   profile directory are authored inside it, so a leaf is provisional until its declarations have been
+   examined. In this catalog that is `architecture-maintenance`, which owns **all three profile directories**
+   — `composition-profiles`, `execution-profiles` and `test-profiles` — by the architect's direction of
+   2026-11-14; the rank is computed from what a component owns, never from its name;
+4. **component** — every remaining component, by the type layer below, then identifier.
+
+**Type layer:** `foundation` → `gateway` → `library` → `release`, exported as `componentTypeOrder` with
+`componentTypeRank` for any list that enumerates components, matching the contract walk in AGENTS.md. The
+layer is applied inside the final phase and the maintainer phase intentionally precedes it, so a library may
+sit ahead of the foundation — that is the documented exception, not an ordering bug.
+
 ## Audit sequence
 
 Ordering follows the connection rules, because a component cannot be judged before the containers that
