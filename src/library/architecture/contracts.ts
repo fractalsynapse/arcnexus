@@ -8,6 +8,10 @@ export interface ContractRecord {
   file: string;
   owner: string;
   stage: string;
+  /** The revision the registry records for this contract, when it records one. */
+  revision?: number;
+  /** The scenario count the registry records, when it records one. */
+  scenarios?: number;
   digest?: string;
   acceptedBy?: string;
   acceptedAt?: string;
@@ -49,6 +53,47 @@ function digestFinding(record: ContractRecord, text: string): ContractFinding | 
   };
 }
 
+/**
+ * Reports metadata defects: a registry entry that disagrees with the contract file it describes.
+ *
+ * The digest check proves the bytes match what was recorded; it says nothing about whether the
+ * registry's stage, revision and scenario count agree with the file. Three contracts today record a
+ * scenario count below the scenarios they carry, and two files still state a superseded stage or
+ * revision in their own header, so a reader consulting the contract - the documented way to learn an
+ * interface - gets a different answer than `validate` records. Absent metadata is not a defect: a
+ * registry that records no revision or count is skipped rather than guessed at.
+ */
+function metadataFindings(record: ContractRecord, text: string): ContractFinding[] {
+  const findings: ContractFinding[] = [];
+  const header = text.split('\n').slice(0, 6).join('\n');
+  const stage = /Stage: \*\*(\w+)\*\*/.exec(header)?.[1];
+  if (stage && stage !== record.stage)
+    findings.push({
+      code: 'contract-metadata-mismatch',
+      path: record.file,
+      detail: `${record.id} records stage '${record.stage}' while the contract states '${stage}'.`,
+    });
+  const revision = /revision (\d+)/.exec(header)?.[1];
+  if (revision && record.revision !== undefined && Number(revision) !== record.revision)
+    findings.push({
+      code: 'contract-metadata-mismatch',
+      path: record.file,
+      detail: `${record.id} records revision ${record.revision} while the contract states ${revision}.`,
+    });
+  if (record.scenarios !== undefined) {
+    const ids = new Set(
+      (text.match(/^\|\s*[A-Z]+-\d+[a-z]?\s*\|/gm) ?? []).map((row) => row.trim()),
+    );
+    if (ids.size && ids.size !== record.scenarios)
+      findings.push({
+        code: 'contract-scenario-count-mismatch',
+        path: record.file,
+        detail: `${record.id} records ${record.scenarios} acceptance scenarios while the contract carries ${ids.size}.`,
+      });
+  }
+  return findings;
+}
+
 /** Reports the integrity defects for one contract record against the bytes at its revision. */
 function recordFindings(
   record: ContractRecord,
@@ -70,6 +115,7 @@ function recordFindings(
     });
   const mismatch = digestFinding(record, text);
   if (mismatch) findings.push(mismatch);
+  findings.push(...metadataFindings(record, text));
   if (record.stage === 'locked' && (!record.acceptedBy || !record.acceptedAt))
     findings.push({
       code: 'contract-acceptance-missing',
@@ -113,6 +159,8 @@ export class ContractRegistry {
           file: String(entry.file),
           owner: String(entry.owner ?? ''),
           stage: String(entry.stage ?? ''),
+          revision: Number.isFinite(entry.revision) ? Number(entry.revision) : undefined,
+          scenarios: Number.isFinite(entry.scenarios) ? Number(entry.scenarios) : undefined,
           digest: typeof entry.digest === 'string' ? entry.digest : undefined,
           acceptedBy: typeof entry.acceptedBy === 'string' ? entry.acceptedBy : undefined,
           acceptedAt: typeof entry.acceptedAt === 'string' ? entry.acceptedAt : undefined,
