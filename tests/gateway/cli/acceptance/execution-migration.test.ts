@@ -5,7 +5,6 @@ import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { test, type TestContext } from 'node:test';
 import { TaskCommand } from '../../../../dist/gateway/cli/task-command.js';
-import { WorkdayCommand } from '../../../../dist/gateway/cli/workday-command.js';
 import { ExecutionControls } from '../../../../dist/library/execution-runtime/execution-controls.js';
 import { ExecutionCommand } from '../../../../dist/gateway/cli/execution-command.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
@@ -21,15 +20,23 @@ class ExecutionMigrationScenarios {
   retired(args: string[]): void {
     const result = spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8' });
     assert.equal(result.status, 2, result.stderr);
-    assert.match(result.stderr, /retired.*task run|retired.*workday start/i);
+    assert.match(result.stderr, /is retired; use task run/i);
+  }
+
+  /** Verifies the withheld workday surface refuses rather than dispatches (GW-11, SS3, SS4). */
+  reserved(args: string[], expected: RegExp): void {
+    const result = spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8' });
+    assert.equal(result.status, 2, result.stderr);
+    assert.match(result.stderr, expected);
   }
 
   /** Normal help exposes both simple modes without old proposal or budget requirements. */
   help(): void {
     const result = spawnSync(process.execPath, [cli, '--help'], { encoding: 'utf8' });
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /workday start \[package\]/);
-    assert.match(result.stdout, /workday pause\|resume\|stop\|status \[id\]/);
+    // The locked gateway contract delivers no workday command (SS2) and reserves its names (SS3, GW-11),
+    // so advertising them in help was the violation this assertion used to enforce.
+    assert.doesNotMatch(result.stdout, /workday/);
     assert.match(
       result.stdout,
       /task run \[package\] "<prompt>" \[--plan \| --component <id> \[--activity <a>\]\] \[--async\]/,
@@ -53,6 +60,37 @@ for (const args of [
     scenarios.retired(args));
 
 test('normal CLI help presents only the simple execution modes', () => scenarios.help());
+
+// SS3 reserves start|stop|status for a future self-directed loop; the migration row supersedes
+// pause/resume with a single lane that refuses while busy; SS4 retires the read verbs onto the delivered
+// surfaces. Each is asserted separately so a wrong class of refusal cannot satisfy another case.
+
+const reservedVerbs: string[] = ['start', 'stop', 'status'];
+
+for (const action of reservedVerbs)
+  test(`workday ${action} is reported unavailable in this build`, () =>
+    scenarios.reserved(['workday', action], /not available in this build.*self-directed loop/i));
+
+const supersededVerbs: string[] = ['pause', 'resume'];
+
+for (const action of supersededVerbs)
+  test(`workday ${action} is superseded by the single-lane refusal`, () =>
+    scenarios.reserved(['workday', action], /not available in this build.*one lane per project/i));
+
+const retiredVerbs: [string, string][] = [
+  ['list', 'task status'],
+  ['get', 'task status'],
+  ['history', 'evidence get'],
+  ['follow', 'evidence get'],
+  ['inspect', 'task status'],
+];
+
+for (const [action, replacement] of retiredVerbs)
+  test(`workday ${action} names its delivered replacement`, () =>
+    scenarios.reserved(['workday', action], new RegExp(`is retired; use ${replacement}`, 'i')));
+
+test('workday without an action is refused with the delivered alternative', () =>
+  scenarios.reserved(['workday'], /workday is not available in this build; use task run/i));
 
 /** Checks gateway cancellation forwarding without replacing the runtime lifecycle contract. */
 class ControlCancellationScenarios {
@@ -95,34 +133,12 @@ class ControlCancellationScenarios {
       'ordinary host readiness receives caller AbortSignal',
     );
   }
-
-  /** Preserves retained workday identity and surfaces cancellation without repeating a mutation. */
-  async workday(t: TestContext, action: string): Promise<void> {
-    const controller = new AbortController();
-    const reason = new Error('Cancelled while acquiring host');
-    const control = t.mock.method(ExecutionControls.prototype, 'workday', async () => {
-      controller.abort(reason);
-      throw reason;
-    });
-    const command = new WorkdayCommand(['workday', action, 'workday-id'], {}, controller.signal);
-    await assert.rejects(command.run(), (e) => e === reason);
-    assert.equal(control.mock.callCount(), 1, 'workday cancellation must not replay the control');
-    assert.deepEqual(
-      control.mock.calls[0]!.arguments,
-      [action, 'workday-id', undefined, controller.signal],
-      'workday controls forward caller AbortSignal',
-    );
-  }
 }
 
 const cancellation = new ControlCancellationScenarios();
 
 for (const action of ['pause', 'resume', 'stop', 'answer'])
   test(`task ${action} forwards cancellation without replay`, (t) => cancellation.task(t, action));
-
-for (const action of ['pause', 'resume', 'stop'])
-  test(`workday ${action} forwards cancellation without replay`, (t) =>
-    cancellation.workday(t, action));
 
 test('ordinary workday host readiness receives caller cancellation', (t) =>
   cancellation.ordinaryHost(t));

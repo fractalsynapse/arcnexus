@@ -5,7 +5,6 @@ import { PortfolioCommand } from './portfolio-command.js';
 import { ConfigCommand } from './config-command.js';
 import { AssignmentCommand } from './assignment-command.js';
 import { ExperimentCommand } from './experiment-command.js';
-import { WorkdayCommand } from './workday-command.js';
 import { TestCommand } from './test-command.js';
 import { TaskCommand } from './task-command.js';
 import { argumentsForCommand, help, type CliValues } from './arguments.js';
@@ -90,13 +89,47 @@ class CliApplication {
       case 'task':
         return new TaskCommand(this.positionals, this.values, this.controller.signal).run();
       case 'workday':
-        return new WorkdayCommand(this.positionals, this.values, this.controller.signal).run();
+        return this.refuseWorkday();
       case 'experiment':
         return new ExperimentCommand(this.positionals, this.values, this.controller.signal).run();
       case 'guidance':
         throw new InputError('Guidance validation is included in validate --project <repository>');
     }
     return this.inspectionCommand();
+  }
+
+  /**
+   * Refuses the withheld workday surface rather than dispatching it.
+   *
+   * The locked gateway contract delivers no workday command (arcnexus-cli-gateway SS2), reserves
+   * `start|stop|status` for a future self-directed loop built on the same plan machinery (SS3, GW-11), and
+   * retires the read verbs onto `task status` and `evidence get` (SS4). `pause` and `resume` are superseded
+   * outright: the migration row replaces queue and pause/resume coordination with a single lane that refuses
+   * while busy, so they are not reserved names awaiting a surface but coordination the design removed.
+   */
+  private async refuseWorkday(): Promise<void> {
+    const action = String(this.positionals[1] ?? '');
+    const retired: Record<string, string> = {
+      list: 'task status [goal-id]',
+      get: 'task status <goal-id>',
+      history: 'evidence get <id>',
+      follow: 'evidence get <id> [--after <sequence>]',
+      inspect: 'task status <goal-id> --json',
+      run: 'task run "<goal>"',
+    };
+    if (retired[action])
+      throw new InputError(`workday ${action} is retired; use ${retired[action]}`);
+    if (['start', 'stop', 'status'].includes(action))
+      throw new InputError(
+        `workday ${action} is not available in this build: the self-directed loop is reserved for a future surface on the same plan machinery`,
+      );
+    if (['pause', 'resume'].includes(action))
+      throw new InputError(
+        `workday ${action} is not available in this build: one lane per project refuses while busy instead of pausing and resuming`,
+      );
+    throw new InputError(
+      'workday is not available in this build; use task run "<goal>" and task status [goal-id]',
+    );
   }
 
   /** Routes application resource commands separately from engineering and qualification lifecycles. */

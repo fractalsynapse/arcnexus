@@ -2,12 +2,9 @@ import { parseArgs } from 'node:util';
 import { InputError } from '../../library/architecture/config.js';
 
 export const help = `ArcNexus
-  workday start [package] [--simulate]
-  workday pause|resume|stop|status [id]
   task run [package] "<prompt>" [--plan | --component <id> [--activity <a>]] [--async] [--simulate]
   task pause|resume|stop <id> | answer <id> "<response>"
   task list [field=value...] | get <id> [--follow] | follow <id>
-  workday list [field=value...] | get <id> [--follow]
   delivery list [package] | get <id> | approve <id> | publish <id>
   workspace cleanup <package> [--workspace <id>]
   workspace prepare <package>
@@ -29,9 +26,6 @@ Inspection, evidence and diagnostics:
   validate [package]
   inspect [project] [component|director|verifier] [activity] [--milestone <id|file>]
   experiment inspect <manifest> --bindings <file> [--json]
-  workday inspect <historical-manifest> --project <repository> [--base <ref>] [--bindings <file>] [--json]
-  workday history <historical-workday-id> [--json]
-  workday follow <historical-workday-id> [--json] [--after <sequence>]
   task inspect <historical-proposal-id> [--json]
 Lists: --search <text> --limit <1-100> --cursor <token>
 Run following: --after <event-sequence>
