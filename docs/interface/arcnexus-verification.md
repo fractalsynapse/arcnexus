@@ -1,6 +1,6 @@
 # Library contract — Verification
 
-Type contract: `library`. Stage: **locked** (revision 3). Owner: `verification` (absorbs the checking
+Type contract: `library`. Stage: **locked**. Owner: `verification` (absorbs the checking
 half of `publisher`, the verification modules of `assignment` and `task-intake`, and the evidence
 readers of `report`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-architecture-model.md`](arcnexus-architecture-model.md), [`arcnexus-coordination.md`](arcnexus-coordination.md), [`arcnexus-execution.md`](arcnexus-execution.md), [`arcnexus-direction.md`](arcnexus-direction.md).
@@ -124,28 +124,33 @@ they cost time and lost work.
 ```yaml
 id: arcnexus/verification
 stage: locked
-revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
-changes:
-  - revision 3: the checklist reports plan coverage and the verdict decides acceptance, so bucket completion cannot stand in for meeting the goal.
-  - revision 4: status only, at the architect's standing direction to keep migration tables current.
-    Step 3c is stamped done in substance with the residual reading recorded on the row itself:
-    `evidence-pages` deleted, `referenced-evidence` folded into the set with its verification
-    preserved, logs referenced instead of inlined, and `execution-evidence`/`invocation-diagnostics`
-    retained because after the change they hold no duplicate evidence state — dissolving them would
-    relocate capture and correlation code without removing a second source of truth. No invariant,
-    scenario or target altered.  - revision 3: migration table gains a Status column recording cleanup batch 3 and 4 against the
-    files that exist — `assembly-acceptance` and `captured-verification` deleted with no caller
-    left (#375, VI-14 checked), the `acceptedChecks` cache replaced by content-addressed verdict
-    reuse (#362), promotion-review deleted (#367), and publication now attesting to the one
-    recorded verdict rather than reconstructing a second goal proof (#374). Rows still open remain
-    visible, including step 3c's evidence-by-reference replacement. Invariants, scenarios and
-    targets unchanged.
-  - revision 2: locked with the architect's answers. The proposed reviewer input cap is removed
-    entirely — no size, count, attempt or duration limits in the first system; bundles are assembled
-    in full with artefacts by reference and every bundle measured, and an external harness refusal
-    becomes an unavailable check with its byte count rather than trimmed content (I4, I4b, VI-4,
-    VI-4b). Re-run authority and the single reviewer confirmed as proposed.
-  - revision 1: proposed in #356 with three open questions, all since answered
+history:
+  - >-
+    the checklist reports plan coverage and the verdict decides acceptance, so bucket
+    completion cannot stand in for meeting the goal.
+  - >-
+    status only, at the architect's standing direction to keep migration tables current.
+    Step 3c is stamped done in substance with the residual reading recorded on the row
+    itself: `evidence-pages` deleted, `referenced-evidence` folded into the set with its
+    verification preserved, logs referenced instead of inlined, and `execution-
+    evidence`/`invocation-diagnostics` retained because after the change they hold no
+    duplicate evidence state — dissolving them would relocate capture and correlation code
+    without removing a second source of truth. No invariant, scenario or target altered. -
+    revision 3: migration table gains a Status column recording cleanup batch 3 and 4
+    against the files that exist — `assembly-acceptance` and `captured-verification` deleted
+    with no caller left (#375, VI-14 checked), the `acceptedChecks` cache replaced by
+    content-addressed verdict reuse (#362), promotion-review deleted (#367), and publication
+    now attesting to the one recorded verdict rather than reconstructing a second goal proof
+    (#374). Rows still open remain visible, including step 3c's evidence-by-reference
+    replacement. Invariants, scenarios and targets unchanged.
+  - >-
+    locked with the architect's answers. The proposed reviewer input cap is removed entirely
+    — no size, count, attempt or duration limits in the first system; bundles are assembled
+    in full with artefacts by reference and every bundle measured, and an external harness
+    refusal becomes an unavailable check with its byte count rather than trimmed content
+    (I4, I4b, VI-4, VI-4b). Re-run authority and the single reviewer confirmed as proposed.
+  - >-
+    proposed in #356 with three open questions, all since answered
 ```

@@ -1,6 +1,6 @@
 # Gateway contract — ArcNexus CLI
 
-Type contract: `gateway`. Stage: **locked** (revision 4). Owner: `cli`.
+Type contract: `gateway`. Stage: **locked**. Owner: `cli`.
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-foundation.md`](arcnexus-foundation.md).
 
 The CLI is the first behavioural surface and the anchor for acceptance tests: what it promises
@@ -229,20 +229,23 @@ budget flags, and any gateway-side authority, retry or recovery behaviour.
 ```yaml
 id: arcnexus/cli-gateway
 stage: locked
-revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
-changes:
-  - revision 3: `--simulate` restored as a delivered option by the architect. Simulation keeps
-    mode, so retiring its selector would leave a lifecycle with no way to reach it; it now selects
-    the evidence-package collaboration provider rather than a fake GitHub. The rejected-option list
-    loses it and the retired-command table no longer covers it.
-  - revision 4: the activity argument names the canonical activities a role declares;
-    `direction`, `design` and `integration` are retired as activity names, since the plan,
-    profile and operation vocabularies are now one set
-  - revision 2: added `inspect` as the activity-context preview on the live generator;
-    moved per-command options onto their commands and kept only `--json`, `--help` and
-    `--version` global; folded `plan show` into `task status` under the one-fact-one-command
-    rule; foreground `task run` prompts at gates while `--async` never does
-  - revision 1: proposed in #346 with three open questions, all since answered by the architect
+history:
+  - >-
+    `--simulate` restored as a delivered option by the architect. Simulation keeps mode, so
+    retiring its selector would leave a lifecycle with no way to reach it; it now selects
+    the evidence-package collaboration provider rather than a fake GitHub. The rejected-
+    option list loses it and the retired-command table no longer covers it.
+  - >-
+    the activity argument names the canonical activities a role declares; `direction`,
+    `design` and `integration` are retired as activity names, since the plan, profile and
+    operation vocabularies are now one set
+  - >-
+    added `inspect` as the activity-context preview on the live generator; moved per-command
+    options onto their commands and kept only `--json`, `--help` and `--version` global;
+    folded `plan show` into `task status` under the one-fact-one-command rule; foreground
+    `task run` prompts at gates while `--async` never does
+  - >-
+    proposed in #346 with three open questions, all since answered by the architect
 ```

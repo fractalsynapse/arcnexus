@@ -1,6 +1,6 @@
 # Library contract — Architecture model
 
-Type contract: `library`. Stage: **locked** (revision 6). Owner: `architecture-model` (absorbs
+Type contract: `library`. Stage: **locked**. Owner: `architecture-model` (absorbs
 `architecture` and `guidance-validation`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-foundation.md`](arcnexus-foundation.md).
 Depended on by: every other library contract, `direction`, `coordination`, `execution`,
@@ -141,23 +141,31 @@ exists to keep old runs executable.
 ```yaml
 id: arcnexus/architecture-model
 stage: locked
-revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
-changes:
-  - revision 3: the acting component's own profile is supplied complete because its ownership and verification operations cannot be re-derived, while other components stay indexed; standards narrowing by activity is distinguished from activities ordering an agent's work; the header is corrected to locked, which the registry already recorded.
-  - revision 6: I13 states the integration rule — operations name only the act and never an
-    activity, activities are the sole domain of the component, operations are reusable across
+history:
+  - >-
+    the acting component's own profile is supplied complete because its ownership and
+    verification operations cannot be re-derived, while other components stay indexed;
+    standards narrowing by activity is distinguished from activities ordering an agent's
+    work; the header is corrected to locked, which the registry already recorded.
+  - >-
+    I13 states the integration rule — operations name only the act and never an activity,
+    activities are the sole domain of the component, operations are reusable across
     activities like roles, and activity-level parameter override is allowed within declared
     parameters only
-  - revision 5: I12 makes the component activity the unit of configuration — role, instructions
-    and allowed operations are declared per activity, so operations live on the component side
+  - >-
+    I12 makes the component activity the unit of configuration — role, instructions and
+    allowed operations are declared per activity, so operations live on the component side
     and role selection per activity is unrestricted
-  - revision 4: I11 states the role/ownership boundary the catalog assumes but never said —
-    roles are activity-scoped positions reusable across components and hold no file scope;
-    ownership is declared by the component alone
-  - revision 2: locked with the three open questions resolved by the architect — integrity split
-    between architecture-model and execution, architecture editing stays a human act applied
-    from a proposal, and contract files are owned by the component each describes
-  - revision 1: proposed in #350
+  - >-
+    I11 states the role/ownership boundary the catalog assumes but never said — roles are
+    activity-scoped positions reusable across components and hold no file scope; ownership
+    is declared by the component alone
+  - >-
+    locked with the three open questions resolved by the architect — integrity split between
+    architecture-model and execution, architecture editing stays a human act applied from a
+    proposal, and contract files are owned by the component each describes
+  - >-
+    proposed in #350
 ```

@@ -1,6 +1,6 @@
 # Release contract — ArcNexus
 
-Type contract: `release`. Stage: **locked** (revision 2). Owner: `release`.
+Type contract: `release`. Stage: **locked**. Owner: `release`.
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-delivery.md`](arcnexus-delivery.md), [`arcnexus-verification.md`](arcnexus-verification.md).
 Depended on by: the project's delivery policy, the gateway's reserved `release verify` command, and
 every claim that a version exists.
@@ -169,14 +169,16 @@ or run a publish without a human — all of which stay reserved until their targ
 ```yaml
 id: arcnexus/release
 stage: locked
-revision: 2
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
-changes:
-  - revision 2: locked with the architect's answers — unscoped `arcnexus` name confirmed against npm
-    docs and registry lookup, version tags with no `v` prefix and identical to the manifest version,
-    post-release verification required (interpretation flagged above), and publication by npm trusted
-    publishing on GitHub-hosted runners with the two-day first-publish constraint. Active targets:
-    cli-tag and npm-package; container, runner and installer targets remain reserved
-  - revision 1: proposed in #359 with three open questions, all since answered
+history:
+  - >-
+    locked with the architect's answers — unscoped `arcnexus` name confirmed against npm
+    docs and registry lookup, version tags with no `v` prefix and identical to the manifest
+    version, post-release verification required (interpretation flagged above), and
+    publication by npm trusted publishing on GitHub-hosted runners with the two-day first-
+    publish constraint. Active targets: cli-tag and npm-package; container, runner and
+    installer targets remain reserved
+  - >-
+    proposed in #359 with three open questions, all since answered
 ```

@@ -102,10 +102,10 @@ catalog (`architecture` model). It provides the substrate those contracts run on
 ```yaml
 id: arcnexus/foundation
 stage: locked
-revision: 1
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
-changes:
-  - revision 1: proposed in #346 and locked with the interface unchanged, including the two
-    proposed command-surface reductions, which land in the cleanup batches
+history:
+  - >-
+    proposed in #346 and locked with the interface unchanged, including the two proposed
+    command-surface reductions, which land in the cleanup batches
 ```
