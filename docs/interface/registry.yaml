@@ -38,7 +38,7 @@ contracts:
     owner: foundation
     stage: locked
     revision: 1
-    digest: e5912fa3e523c9b17b976085168932a8862735eca52b2d7f589af9adb92b9b53
+    digest: 145a39c6bc6e4720b5af4f201985ab398c1817ed93e161810fc101a50e6aaa3a
     dependsOn: [arcnexus/project]
     scenarios: 10
     acceptedBy: Adrian Webb (architect)

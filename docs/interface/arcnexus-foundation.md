@@ -1,6 +1,6 @@
 # Foundation contract — ArcNexus
 
-Type contract: `foundation`. Stage: **proposed**. Owner: `foundation`.
+Type contract: `foundation`. Stage: **locked** (revision 1). Owner: `foundation`.
 Depends on: [`arcnexus-project.md`](arcnexus-project.md).
 
 Foundation is the substrate every other component builds, checks and ships through. It owns
