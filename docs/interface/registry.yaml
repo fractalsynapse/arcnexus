@@ -151,7 +151,7 @@ contracts:
     revision: 3
     digest: a8a60e1781087e11e3dba60bf68995e8b65e306ba67c5052d5a49f5dd3994677
     dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination]
-    scenarios: 19
+    scenarios: 21
     acceptedBy: Adrian Webb (architect)
     acceptedAt: 2026-11-07
     history:
