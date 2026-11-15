@@ -1,7 +1,2 @@
 id: readable-typescript
-purpose: Keep maintained TypeScript understandable and verifiable
-applicability: Maintained application, tooling and test code
 document: docs/foundation/typescript-standard.md
-examples: []
-operationIds:
-  - component-lint

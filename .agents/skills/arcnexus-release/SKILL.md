@@ -42,8 +42,8 @@ Squash-merge to staging only with authority, verified acceptance, applicable loc
 checks, green current CI and satisfied review requirements. Inspect the actual
 repository rules and check runs. Keep integration pending when review requirements
 are unknown or required evidence is unavailable. Agents never approve PRs or
-merge to main. For the managed lifecycle, publish from the captured engineering
-baseline and use the accepted assembly and its retained checks.
+merge to main. Follow the [delivery interface](../../../packages/delivery/contract.md)
+for candidate identity and captured checks.
 
 After merging, confirm the resulting commit on fetched origin/staging. Verify
 the task branch has no later work, other open PR, worktree use or retention

@@ -1,0 +1,9 @@
+id: coordination
+kind: plugin
+purpose: Persist task position and evidence through one project writer.
+objectives:
+- measure: Reopening the project store yields the last committed position.
+constraints:
+- failure: Concurrent writers or competing stored versions of a fact are observed.
+owns:
+- packages/coordination

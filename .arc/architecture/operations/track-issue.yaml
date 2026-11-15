@@ -1,8 +1,0 @@
-id: track-issue
-purpose: Create actionable run or assignment tracking
-kind: upstream
-category: collaboration
-action: issue.create
-cwd: .
-generatedDirectories: []
-artifacts: []

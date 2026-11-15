@@ -1,0 +1,10 @@
+id: direction
+kind: plugin
+purpose: Turn goals and supplier requests into a sequence of accountable milestones.
+objectives:
+- measure: A supplier request preserves the owner and acceptance and places required
+    work first.
+constraints:
+- failure: A milestone acquires two owners or the director grants itself write authority.
+owns:
+- packages/direction

@@ -1,15 +1,12 @@
 ---
 name: arcnexus-guidance
 description: Use when maintaining or verifying ArcNexus project instructions, bundled skills, or their declared resources.
-references:
-  - docs/library/agent-guidance/guidance-maintenance.md
 ---
 
 # Maintain ArcNexus guidance
 
 Apply [AGENTS.md](../../../AGENTS.md), the shared
-[skill-writing procedure](../writing-skills/SKILL.md) and the
-[guidance maintenance guide](../../../docs/library/agent-guidance/guidance-maintenance.md).
+[skill-writing procedure](../writing-skills/SKILL.md).
 
 Keep inherited skills byte-for-byte aligned with the recorded Scaffold revision.
 Put ArcNexus procedures in project-owned skills and route readers to the canonical

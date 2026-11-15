@@ -1,0 +1,23 @@
+id: project
+kind: project
+purpose: Maintain project direction, repository delivery policy and recorded architect
+  decisions.
+objectives:
+- measure: The current project catalog and contract registry agree.
+constraints:
+- failure: A candidate changes the authority captured for its own task.
+owns:
+- .agents
+- .arc
+- .github
+- .gitignore
+- AGENTS.md
+- CHANGELOG.md
+- LICENSE
+- README.md
+- docs/charter.md
+- docs/dev.md
+- docs/interface
+- docs/plans
+- docs/release
+- apps/cli

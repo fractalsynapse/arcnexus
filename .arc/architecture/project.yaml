@@ -1,0 +1,58 @@
+id: arcnexus
+remote: https://github.com/fractalsynapse/arcnexus.git
+knowledgeRoot: .arc
+contractRegistry: docs/interface/registry.yaml
+planTemplate: .arc/architecture/plan-template.md
+application: apps/cli
+bindings: .git/arcnexus/bindings.yaml
+delivery:
+  baseBranch: staging
+  protectedBranch: main
+  workBranch: <issue>-<description>
+  provider: collaboration
+  owner: delivery
+  requiredGates:
+  - CI
+  - configured review
+director:
+  component: direction
+  profile: gpt-astra
+verifier:
+  component: verification
+  profile: gpt-astra
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+  testing:
+    role: designer
+    profile: gpt-sol
+    standards:
+    - readable-typescript
+    operations:
+    - owner-tests
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    standards:
+    - readable-typescript
+    operations:
+    - owner-tests
+  review:
+    role: reviewer
+    profile: gpt-sol
+    standards:
+    - readable-typescript
+  release:
+    role: release-engineer
+    executor: host
+checks:
+  acceptance:
+  - repository-build
+  - repository-types
+  - repository-format
+  - repository-lint
+  - repository-tests

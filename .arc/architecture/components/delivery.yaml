@@ -1,0 +1,10 @@
+id: delivery
+kind: plugin
+purpose: Integrate the accepted candidate through one staging PR.
+objectives:
+- measure: The recorded staging merge corresponds to the one verified task candidate.
+constraints:
+- failure: Delivery changes an accepted candidate, bypasses a gate or replays an uncertain
+    effect.
+owns:
+- packages/delivery

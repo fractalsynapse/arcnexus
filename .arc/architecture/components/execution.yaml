@@ -1,0 +1,10 @@
+id: execution
+kind: plugin
+purpose: Activate stewards in one task worktree with scoped edits and supervised host
+  operations.
+objectives:
+- measure: Cancellation leaves one recorded outcome and no live managed descendants.
+constraints:
+- failure: An edit crosses ownership, changes a lock or overwrites stale content.
+owns:
+- packages/execution

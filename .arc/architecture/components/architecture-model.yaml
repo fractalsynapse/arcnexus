@@ -1,0 +1,9 @@
+id: architecture-model
+kind: plugin
+purpose: Resolve and capture project authority and assemble model context.
+objectives:
+- measure: A clean catalog validates and repeated captures of a revision agree.
+constraints:
+- failure: A candidate changes captured authority or a private import crosses ownership.
+owns:
+- packages/architecture-model

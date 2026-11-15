@@ -1,0 +1,9 @@
+id: collaboration
+kind: plugin
+purpose: Expose the provider interface and GitHub operations to trusted host services.
+objectives:
+- measure: A provider-observed merge identifies the verified head and resulting commit.
+constraints:
+- failure: A steward obtains upstream credentials or a changed head can be merged.
+owns:
+- packages/collaboration

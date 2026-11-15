@@ -1,0 +1,11 @@
+id: verification
+kind: plugin
+purpose: Assess one assembled task candidate against the captured acceptance.
+objectives:
+- measure: One independent verdict cites evidence for the engineering criteria and
+    the original goal.
+constraints:
+- failure: A missing required check counts as passed or a changed digest reuses a
+    verdict.
+owns:
+- packages/verification

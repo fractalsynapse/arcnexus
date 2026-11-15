@@ -1,113 +1,41 @@
 # Plan template
 
-This is the contract for planning work in ArcNexus. The director is handed these categories
-as its **generation** instructions, stewards receive them as their **working** instructions,
-and the independent reviewer uses them as its **checking** instructions. It is architecture,
-so the architect owns it; plans generated from it are agent work and live in `.arc/plans/`.
+The director authors one plan per goal. The host validates it against captured
+authority. The store persists accepted content and renders the reviewable plan
+under `.arc/plans/`.
 
-A plan is one file per goal. It always has a Focus block and an ordered list of milestones,
-each milestone carrying the five Steps.
+## Focus
 
-## Provenance of the Focus block
+- Purpose names the observable outcome.
+- Objectives name success measures and the evidence that proves them.
+- Constraints reference the captured owner and contract clauses and their failure
+  measures. Exclusions name the boundary.
+- Milestones form one ordered sequence. Each has a kind, one accountable owner,
+  stable acceptance IDs and the five Steps below. A proposed component names the
+  missing responsibility and waits at an architectural gate.
 
-| Field                               | Source                                       | Rule                                                                                                                    |
-| ----------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Purpose                             | The goal the human supplied                  | One sentence naming the outcome the user will observe, never the implementation                                         |
-| Objectives and measures of success  | The director, from the goal                  | Written as evidence that must exist, not as effort                                                                      |
-| Constraints and measures of failure | **Copied from the component's architecture** | The director may not invent, weaken or drop a constraint; each carries the observation that means this milestone failed |
-| Exclusions                          | The director                                 | What this goal will not touch, and why                                                                                  |
+## Steps
 
-## Categories, prompts and checks
+| Step | Activity | Required evidence when applicable |
+| --- | --- | --- |
+| Documentation | `documentation` | Changed intent recorded before behavior changes |
+| Design and contract tests | `testing` | Public regression observed failing before the fix, or characterization for a behavior-preserving change |
+| Implementation | `implementation` | Smallest authorized change, owner checks, diff and attribution |
+| Review | `review` | Engineering self-review and a reference to the independent verdict for the assembled task |
+| Integration | `release` | A reference to the host's observed staging merge and applicable gates |
 
-| Category                          | The director must produce                                                                                                                                 | This drives the steward to                                                                                                                   | The reviewer checks                                                                                              |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Purpose                           | One observable outcome sentence                                                                                                                           | Work toward the outcome, not a described approach                                                                                            | Is it observable from outside the code?                                                                          |
-| Objectives + measures of success  | For each objective, the artefact that proves it                                                                                                           | Produce that artefact                                                                                                                        | Does every measure have a real artefact?                                                                         |
-| Constraints + measures of failure | Each architectural constraint with the observation that means failure                                                                                     | Stop and report instead of crossing a named line                                                                                             | Was any failure recorded as success?                                                                             |
-| Exclusions                        | The boundary this goal will not cross                                                                                                                     | Stay inside it                                                                                                                               | Did the diff stray?                                                                                              |
-| Milestone owner                   | Exactly one existing owner, or a `component` proposal awaiting the architect                                                                              | Discover which owned files need changing; request, never edit, outside them                                                                  | One accountable owner, no shared write set?                                                                      |
-| Documentation step                | Instruction: record the changed intent in owned documentation before behaviour changes                                                                    | Write the intent first                                                                                                                       | Does the document describe intent rather than the diff?                                                          |
-| Design and contract step          | Instruction: state the acceptance as a failing test against the component's public contract and record the observed red                                   | Write the red test before implementing, keep it as evidence                                                                                  | Was red actually observed against the pre-change base?                                                           |
-| Implementation step               | Instruction: the smallest change that turns the recorded red green, plus the checks that keep it owned and scoped                                         | Implement, run owner-scoped checks                                                                                                           | Net new concepts versus removed ones                                                                             |
-| Review step                       | Instruction: one independent verdict against the acceptance ids, from bounded evidence                                                                    | Self-review inside the engineering turn; do not open a duplicate review assignment                                                           | Does the verdict cite criteria and evidence, not prose?                                                          |
-| Integration step                  | Instruction: staging PR, CI, required review, merge identity; name human gates instead of routing around them                                             | Deliver through the one route                                                                                                                | Is the merge identity recorded?                                                                                  |
-| Checklist items                   | `{id, activity, criteria:[acceptance ids], result, expectedEvidence, dependencies, status, evidence}` referencing acceptance by stable id, never by index | Mark status with the evidence that supports it                                                                                               | Does every acceptance criterion have at least one item?                                                          |
-| Contracts                         | The contract files and clauses that govern the paths and interfaces this milestone changes, with their stage                                              | Validate the request against those clauses **before** editing, and counter a conflicting instruction to the architect instead of crossing it | Did the milestone cite its governing contracts, and did any contract change go through recorded human authority? |
-| Simplification ledger             | Instruction: name what was removed, what was unified, what was retained and the demonstrated requirement for retaining it, plus the one-hour answer       | Delete before adding                                                                                                                         | Positive net concept delta with no cited requirement is a failed measure                                         |
+Research can support any Step. Resolve roles, profiles and available operations
+from the captured component and project defaults. Review and Integration reference
+the single task-level gates. They do not allocate extra owner executions.
+A Step may be inapplicable with a reason visible in the plan. A checklist item names
+its stable ID, activity, acceptance IDs, expected result, evidence and status.
+Activity order governs execution. Checklist completion alone establishes coverage.
 
-## The five Steps
+## Changes and evidence
 
-Every milestone carries all five. A Step may be declared `not-applicable: <reason>` **by the
-plan**, never silently skipped by a steward.
-
-1. **Documentation** — activity `documentation`: intended behaviour recorded before behaviour
-   changes.
-2. **Design and contract tests** — activity `testing`: the acceptance expressed as an interface
-   or contract test, observed failing. Behaviour-preserving work may characterise existing
-   behaviour instead; documentation-only work uses document validation.
-3. **Implementation** — activity `implementation`: the change plus owner-scoped checks.
-4. **Review** — activity `review`: one independent read-only verdict against acceptance and the
-   Focus measures.
-5. **Integration** — activity `release`: delivery through staging, with CI and required review as
-   observed gates.
-
-`research` is a Step-shaped activity available to every milestone, so the vocabulary is the six
-activities the role definition declares: research, documentation, testing, implementation, review,
-release. Each Step runs as its own activity, and the activity selects the execution profile, so a
-milestone can be documented and designed with one model, implemented with another, and reviewed by
-a third without any scheduling machinery.
-
-## Checklist item shape
-
-```text
-id          stable string, unique in the plan; never reused, never an index
-activity      one of: research | documentation | testing | implementation | review | release
-criteria      acceptance ids this item proves
-result        what must be true, written as an observation
-expectedEvidence  the artefacts that would prove it
-dependencies  item ids that must close first
-evidence      artefact ids, or the reason none exists yet
-status        pending | in_progress | completed | skipped | blocked
-```
-
-Progress claims are the steward's assertion until the host verifies them. A criterion index
-is not an identifier: when acceptance is edited, indices shift and old evidence silently
-points at the wrong thing.
-
-## Sequence rules
-
-- The plan declares the **whole activity sequence** its role supports, in the order above, and
-  buckets every checklist item under one of them. An activity with no items is still declared and
-  still runs: documentation and review are performed when listed even when nothing on the
-  checklist forces them, and the plan records the reason there was nothing to check.
-- Buckets run in that order. A later activity cannot open work while an earlier one holds items
-  that are not terminal; the refusal names the open items. Reordering the same plan into
-  canonical buckets is not a violation and runs unchanged.
-- Closing every bucket is not completing the work. Acceptance is the independent verdict against
-  the goal, so an activation with every bucket closed and a criterion unmet has failed.
-
-- A milestone that would change a `locked` contract is not planned as engineering work. It is
-  a change request: the director names the clause, presents the conflict, and stops until the
-  architect decides whether the contract or the request changes.
-
-- Milestones are strictly sequential and each has one owner. Work that needs another owner
-  becomes the preceding milestone, not a parallel dependency.
-- Only the director changes sequence or scope. A steward may propose a change; the proposal
-  is recorded and the rewritten plan is the record of the decision.
-- A run stops honestly at `blocked: awaiting <named gate>` when a checklist item can only be
-  satisfied by a human. That single outcome replaces a pause, retry, promotion and recovery
-  state family.
-- The plan is updated at every Step close and every milestone close: status, evidence
-  references, measures (time, attempts, added and removed lines) and any learning record.
-- Failing-test-first is the default for behaviour change. It is not manufactured for
-  documentation-only work or coverage alone, and a Step may declare it not-applicable with a
-  reason that the reviewer sees.
-
-## Milestone kinds
-
-`plan`, `feature`, `refactor`, `guidance`, `skill`, `component`, `scaffold`, `release` and
-`verify-release` are the same lifecycle with different owners of the outcome. `component`
-proposes a new owner and waits for the architect. `scaffold` adopts the shared guidance
-package into a target project and stops at that setup boundary. `verify-release` reads the
-release identity, runs the delivery policy's live checks against what is actually deployed,
-and writes the learning record that feeds the next cycle's `guidance` and `skill` milestones.
+A steward proposes dependencies or a revised approach. The director controls
+sequence and scope. Link accepted supplier work or place a supplier milestone
+before the dependent work. A genuine human gate names the question or external
+action. Record position, check outcomes and evidence through the host. Keep a
+brief simplification ledger naming removals, reuse and any added responsibility
+with its demonstrated need. Retain failed observations and measure each milestone.
