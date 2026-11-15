@@ -204,7 +204,7 @@ class AssembledChangelogScenario {
       type: 'library',
       parentId: 'package',
       purpose: 'Own the assembled changelog fixture',
-      owns: ['source.asset', 'docs', 'tests', 'CHANGELOG.md', '.arc/architecture/operations'],
+      owns: ['source.asset', 'docs', 'tests', 'CHANGELOG.md'],
       operations: { 'fixture-proof': ['verify'] },
       activities: changelogActivities(),
     });

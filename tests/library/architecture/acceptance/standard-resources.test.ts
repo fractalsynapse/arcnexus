@@ -15,7 +15,7 @@ class StandardResourceScenarios {
     f.git('remote', 'add', 'origin', 'https://example.invalid/sample.git');
     const path = '.arc/architecture/components/maintenance.json';
     const owner = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
-    f.put(path, { ...owner, owns: [...owner.owns, '.arc/architecture/standards'] });
+    f.put(path, { ...owner, owns: [...owner.owns] });
     for (const id of ['alpha', 'beta'])
       f.put(`.arc/architecture/standards/${id}.json`, {
         schemaVersion: 1,
@@ -92,7 +92,7 @@ class StandardResourceScenarios {
     const { f, target } = this.fixture(t);
     const path = '.arc/architecture/components/maintenance.json';
     const owner = JSON.parse(readFileSync(join(f.root, path), 'utf8'));
-    f.put(path, { ...owner, owns: [...owner.owns, '.arc/architecture/components/other.json'] });
+    f.put(path, { ...owner, owns: [...owner.owns] });
     f.put('.arc/architecture/components/other.json', f.component('other', 'platform'));
     f.commit();
     const service = await this.service();

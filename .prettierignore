@@ -10,3 +10,8 @@ docs/*qualification.json
 qualification/tree-artifact-expected.json
 
 .fixture-build/
+
+# Locked interface contracts are digest-pinned architecture. The repository's maintained-file
+# scope already skips this directory; it is ignored here too so an ad-hoc `prettier --write docs`
+# cannot rewrite a contract and break its recorded digest, which happened three times this session.
+docs/interface/

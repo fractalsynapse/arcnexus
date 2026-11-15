@@ -8,6 +8,8 @@ export interface ContractRecord {
   file: string;
   owner: string;
   stage: string;
+  /** The scenario count the registry records, when it records one. */
+  scenarios?: number;
   digest?: string;
   acceptedBy?: string;
   acceptedAt?: string;
@@ -29,6 +31,19 @@ export interface ContractLock {
 
 const stages = new Set(['draft', 'proposed', 'locked']);
 
+/**
+ * Reads a registry count, which may be written as a number or as a quoted number.
+ *
+ * `registry.yaml` quotes some field values, so `scenarios: "3"` arrives as a string and a numeric check
+ * alone would discard it - silently disabling the scenario-count guard. Absence stays absence: an
+ * unrecorded count is skipped by the checks, never guessed at.
+ */
+function count(value: unknown): number | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 const registryPath = 'docs/interface/registry.yaml';
 
 const digest = (text: string) => createHash('sha256').update(text).digest('hex');
@@ -49,12 +64,105 @@ function digestFinding(record: ContractRecord, text: string): ContractFinding | 
   };
 }
 
-/** Reports the integrity defects for one contract record against the bytes at its revision. */
-function recordFindings(
+/**
+ * Reports metadata defects: a registry entry that disagrees with the contract file it describes.
+ *
+ * The digest check proves the bytes match what was recorded; it says nothing about whether the registry's
+ * stage and scenario count agree with the file. Three contracts recorded a scenario count below the
+ * scenarios they carry, so a reader walking a contract by its registry entry stopped short of obligations
+ * that exist — including the two that police checklist integrity. Absent metadata is not a defect: an
+ * unrecorded count is skipped rather than guessed at. Revision numbers are no longer compared anywhere;
+ * see `historyFindings` for why the convention was retired.
+ */
+function metadataFindings(record: ContractRecord, text: string): ContractFinding[] {
+  const findings: ContractFinding[] = [];
+  const header = text.split('\n').slice(0, 6).join('\n');
+  const stage = /Stage: \*\*(\w+)\*\*/.exec(header)?.[1];
+  if (stage && stage !== record.stage)
+    findings.push({
+      code: 'contract-metadata-mismatch',
+      path: record.file,
+      detail: `${record.id} records stage '${record.stage}' while the contract states '${stage}'.`,
+    });
+  // Contract revision numbers are no longer enforced or compared. The architect retired the convention on
+  // 2026-11-14: the only consumer of a contract revision was this check, which compared one record of a
+  // number against a second record of the same number, while lock resolution, evidence and every gate use
+  // the content digest. Nothing outside this file reads `revision`, so agreement between two copies of an
+  // ordinal protected nothing. History is being rekeyed on digests, which cannot be reconstructed for
+  // states whose content was never captured; that reconciliation is tracked separately rather than guessed
+  // at here.
+  if (record.scenarios !== undefined) {
+    const ids = new Set(
+      (text.match(/^\|\s*[A-Z]+-\d+[a-z]?\s*\|/gm) ?? []).map((row) => row.trim()),
+    );
+    if (ids.size && ids.size !== record.scenarios)
+      findings.push({
+        code: 'contract-scenario-count-mismatch',
+        path: record.file,
+        detail: `${record.id} records ${record.scenarios} acceptance scenarios while the contract carries ${ids.size}.`,
+      });
+  }
+  return findings;
+}
+
+/** Reports records and history entries that identify themselves by anything other than content. */
+function identityFindings(record: RecordShape): ContractFinding[] {
+  const findings: ContractFinding[] = [];
+  if (record.revision !== undefined)
+    findings.push({
+      code: 'contract-ordinal-restored',
+      path: record.file,
+      detail: `${record.id} carries a revision number; contract history is identified by content digest.`,
+    });
+  for (const entry of record.history ?? []) findings.push(...historyFindings(entry, record));
+  return findings;
+}
+
+/**
+ * Reports defects in how a record identifies its own history.
+ *
+ * Contract revisions were retired on 2026-11-14: a content digest already identifies an accepted state
+ * exactly, while an ordinal only obliges two documents to agree about a count. So an ordinal reappearing
+ * anywhere is a defect, and a history entry must state how it is identified — a digest, or an explicit
+ * `identity: unrecorded` for the one pre-digest state whose bytes were never captured. Silence is what
+ * allowed `arcnexus/collaboration-provider` to carry a history entry that looked identified and was not.
+ */
+function historyFindings(
+  entry: Record<string, unknown>,
   record: ContractRecord,
-  read: (path: string) => string | undefined,
 ): ContractFinding[] {
   const findings: ContractFinding[] = [];
+  const context = `${record.id} history`;
+  if (entry.revision !== undefined)
+    findings.push({
+      code: 'contract-ordinal-restored',
+      path: record.file,
+      detail: `${context} carries a revision number; contract history is identified by content digest.`,
+    });
+  if (!entry.digest && entry.identity !== 'unrecorded')
+    findings.push({
+      code: 'contract-history-unidentified',
+      path: record.file,
+      detail: `${context} records neither a digest nor identity: unrecorded.`,
+    });
+  if (entry.digest && entry.identity !== undefined)
+    findings.push({
+      code: 'contract-history-unidentified',
+      path: record.file,
+      detail: `${context} gives both a digest and identity: unrecorded.`,
+    });
+  return findings;
+}
+
+/** The registry view of one contract, including the history this file no longer numbers. */
+type RecordShape = ContractRecord & { revision?: unknown; history?: Record<string, unknown>[] };
+
+/** Reports the integrity defects for one contract record and the states it says it accepted. */
+function recordFindings(
+  record: RecordShape,
+  read: (path: string) => string | undefined,
+): ContractFinding[] {
+  const findings: ContractFinding[] = identityFindings(record);
   if (!stages.has(record.stage))
     findings.push({
       code: 'contract-stage-invalid',
@@ -70,6 +178,7 @@ function recordFindings(
     });
   const mismatch = digestFinding(record, text);
   if (mismatch) findings.push(mismatch);
+  findings.push(...metadataFindings(record, text));
   if (record.stage === 'locked' && (!record.acceptedBy || !record.acceptedAt))
     findings.push({
       code: 'contract-acceptance-missing',
@@ -88,7 +197,7 @@ function recordFindings(
  */
 export class ContractRegistry {
   /** Holds the parsed records; every instance comes from one registry source. */
-  private constructor(readonly records: ContractRecord[]) {}
+  private constructor(readonly records: RecordShape[]) {}
 
   /** A registry that declares nothing; enforcement and findings both stay inert. */
   static empty(): ContractRegistry {
@@ -113,6 +222,13 @@ export class ContractRegistry {
           file: String(entry.file),
           owner: String(entry.owner ?? ''),
           stage: String(entry.stage ?? ''),
+          scenarios: count(entry.scenarios),
+          // Passed through so the identity guard can reject a restored convention; dropping retired keys
+          // at parse time would leave that guard unable to fire.
+          revision: entry.revision,
+          history: Array.isArray(entry.history)
+            ? (entry.history as Record<string, unknown>[])
+            : undefined,
           digest: typeof entry.digest === 'string' ? entry.digest : undefined,
           acceptedBy: typeof entry.acceptedBy === 'string' ? entry.acceptedBy : undefined,
           acceptedAt: typeof entry.acceptedAt === 'string' ? entry.acceptedAt : undefined,

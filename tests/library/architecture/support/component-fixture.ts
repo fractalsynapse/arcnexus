@@ -112,14 +112,7 @@ export class ComponentFixture {
       '.arc/architecture/components/maintenance.json',
       this.component('maintenance', 'foundation', {
         parentId: 'maintenance-package',
-        owns: [
-          '.arc/architecture/environment.json',
-          '.arc/architecture/roles',
-          '.arc/architecture/execution-profiles',
-          '.arc/architecture/components/platform.json',
-          '.arc/architecture/components/package.json',
-          '.arc/architecture/components/maintenance-package.json',
-        ],
+        owns: ['.arc/architecture'],
       }),
     );
     this.put(

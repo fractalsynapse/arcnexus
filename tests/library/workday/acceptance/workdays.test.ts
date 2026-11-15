@@ -1,25 +1,21 @@
 import { nativeHostTest } from '../../testing/support/general-fixture.js';
 import { registerSuite } from '../../../../dist/library/testing/suite.js';
+import { resolveWorkday } from '../../../../dist/library/workday/workday-config.js';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
 import { test } from 'node:test';
-import {
-  cli,
-  workflowFixture,
-  minimalWorkflowFixture,
-} from '../../testing/support/workflow-fixture.js';
+import { workflowFixture, minimalWorkflowFixture } from '../../testing/support/workflow-fixture.js';
 
 /** Exercises workdays behavior through observable scenarios. */
 class WorkdaysTests {
-  /** Verifies that built workday inspect captures two disjoint owners without state or inference. */
-  builtWorkdayInspectCapturesTwoDisjointOwnersWithoutStateOrInference(t: TestContext) {
-    const f = fixture(t),
-      r = f.workday('inspect', f.path, '--project', f.repo, '--json');
-    assert.equal(r.status, 0, r.stderr);
-    const x = JSON.parse(r.stdout);
+  /** Verifies that a manifest resolves two disjoint owners offline, creating no state and no calls. */
+  manifestResolvesTwoDisjointOwnersWithoutStateOrInference(t: TestContext) {
+    const f = fixture(t);
+    // The `workday inspect` verb is withheld (#451); the resolution it printed is the public
+    // `resolveWorkday()` entry point of this component, so the guarantee is asserted there.
+    const x = resolveWorkday(f.path, f.repo);
     assert.equal(x.requester.resolved.componentId, 'sample');
     assert.equal(x.recipient.resolved.componentId, 'dependency');
     assert.ok(x.digest);
@@ -28,27 +24,57 @@ class WorkdaysTests {
     assert.equal(existsSync(f.calls), false);
   }
 
-  /** Verifies that workday inspection rejects overlap invalid edges and unsupported versions. */
+  /**
+   * Refuses an incoherent edge, overlapping write scopes and an unsupported manifest version, one rule each.
+   *
+   * Each case names the guard it expects, because the three used to share one assertion on the CLI exit
+   * status and a stale authored document made all three refuse for the same unrelated reason. Withholding
+   * the `workday inspect` verb (#451) surfaced that by exposing the diagnostics themselves.
+   */
   workdayInspectionRejectsOverlapInvalidEdgesAndUnsupportedVersions(t: TestContext) {
     const f = fixture(t);
-    for (const change of [
-      () => {
-        f.manifest.dependency.to = 'sample';
-      },
-      () => {
-        f.manifest.dependency.to = 'dependency';
-        f.manifest.recipient.component = 'sample';
-      },
-      () => {
-        f.manifest.recipient.component = 'dependency';
-        f.manifest.schemaVersion = 99;
-      },
-    ]) {
+    for (const [change, refusal] of this.refusalCases(f)) {
       change();
-      f.save();
-      assert.equal(f.workday('inspect', f.path, '--project', f.repo).status, 2);
+      assert.throws(() => resolveWorkday(f.path, f.repo), refusal);
+      f.reset();
     }
     assert.equal(existsSync(f.state), false);
+  }
+
+  /**
+   * The three manifest defects, each paired with the diagnostic that must name it.
+   *
+   * The overlap case refuses in the catalog rather than in the workday resolver: two owners cannot both
+   * claim `source.txt`, so ownership rejects it before `resolveWorkday` reaches its own scope check at
+   * `workday-config.ts:199`, which authored overlap therefore cannot exercise.
+   */
+  private refusalCases(f: any): [() => void, RegExp][] {
+    return [
+      [
+        () => {
+          f.manifest.dependency.to = 'sample';
+          f.save();
+        },
+        /Invalid two-owner dependency edge/,
+      ],
+      [
+        () =>
+          f.authorDependency([
+            'dependency.txt',
+            'dependency-docs',
+            'dependency-tests',
+            'source.txt',
+          ]),
+        /Overlapping ownership: dependency \/ sample: source\.txt/,
+      ],
+      [
+        () => {
+          f.manifest.schemaVersion = 99;
+          f.save();
+        },
+        /Invalid workday: .*schemaVersion/,
+      ],
+    ];
   }
 
   /** Verifies that standalone execution retains host checked checkpoint evidence. */
@@ -71,10 +97,9 @@ class WorkdaysTests {
 
 const suite = new WorkdaysTests();
 
-function fixture(t: any): any {
-  const f = workflowFixture(t);
-  defineParticipants(f);
-  const manifest = {
+/** The two-owner manifest every case starts from, before it is mutated to prove a refusal. */
+function validManifest(): any {
+  return {
     schemaVersion: 1,
     requester: { component: 'sample', assignment: 'requester.json', refresh: [] },
     recipient: { component: 'dependency', assignment: 'recipient.json', refresh: [] },
@@ -86,32 +111,44 @@ function fixture(t: any): any {
     },
     acceptance: [],
   };
-  const path = join(f.root, 'workday.json');
-  const save = () => writeFileSync(path, JSON.stringify(manifest));
-  save();
-  const run = (...args: any) =>
-    spawnSync(process.execPath, [cli, 'workday', ...args], {
-      encoding: 'utf8',
-      env: f.env,
-      timeout: 30 * 60 * 1000,
-    });
-  return { ...f, manifest, path, save, workday: run };
+}
+
+const dependencyOwns = ['dependency.txt', 'dependency-docs', 'dependency-tests'];
+
+/**
+ * Authors the dependency leaf, write scope included.
+ *
+ * Only authored fields belong in this document. `path`, `access` and `allowedWritePaths` are loader
+ * derivations and the closed component schema refuses them, so the version of this fixture that carried
+ * the derived projection made every refusal case fail with the same `Invalid component` error before any
+ * manifest rule was reached — a green scenario that proved nothing.
+ */
+function dependencyDocument(f: any, owns: string[]): any {
+  return {
+    ...f.component,
+    id: 'dependency',
+    parentId: 'package',
+    purpose: 'Own dependency behavior',
+    owns,
+  };
+}
+
+/**
+ * Commits the dependency leaf so the catalog authority matches the case under test.
+ *
+ * The commit is skipped when the document already carries these paths: `git commit` exits 1 on an empty
+ * change, which is a fixture bookkeeping failure rather than the manifest rule the case is proving.
+ */
+function authorDependency(f: any, owns: string[]): void {
+  const path = join(f.repo, '.arc/architecture/components/dependency.json');
+  const document = JSON.stringify(dependencyDocument(f, owns));
+  if (existsSync(path) && readFileSync(path, 'utf8') === document) return;
+  writeFileSync(path, document);
+  f.commit();
 }
 
 function defineParticipants(f: any): void {
-  const dependency = {
-    ...f.component,
-    id: 'dependency',
-    path: 'dependency.txt',
-    allowedWritePaths: ['dependency.txt', 'dependency-docs', 'dependency-tests'],
-    documentation: ['dependency-docs'],
-    tests: ['dependency-tests'],
-  };
-  writeFileSync(
-    join(f.repo, '.arc/architecture/components/dependency.json'),
-    JSON.stringify(dependency),
-  );
-  f.commit();
+  authorDependency(f, dependencyOwns);
   const assignment = {
     schemaVersion: 2,
     kind: 'change',
@@ -124,8 +161,30 @@ function defineParticipants(f: any): void {
     writeFileSync(join(f.root, name + '.json'), JSON.stringify(assignment));
 }
 
-test('built workday inspect captures two disjoint owners without state or inference', (t: any) =>
-  suite.builtWorkdayInspectCapturesTwoDisjointOwnersWithoutStateOrInference(t));
+/** Committed fixture carrying a manifest, its file path, and the restorers each refusal case needs. */
+function fixture(t: any): any {
+  const f = workflowFixture(t);
+  defineParticipants(f);
+  const manifest = validManifest();
+  const path = join(f.root, 'workday.json');
+  const save = () => writeFileSync(path, JSON.stringify(manifest));
+  save();
+  return {
+    ...f,
+    manifest,
+    path,
+    save,
+    authorDependency: (owns: string[]) => authorDependency(f, owns),
+    reset: () => {
+      Object.assign(manifest, validManifest());
+      authorDependency(f, dependencyOwns);
+      save();
+    },
+  };
+}
+
+test('a manifest resolves two disjoint owners offline without state or inference', (t: any) =>
+  suite.manifestResolvesTwoDisjointOwnersWithoutStateOrInference(t));
 
 test('workday inspection rejects overlap invalid edges and unsupported versions', (t: any) =>
   suite.workdayInspectionRejectsOverlapInvalidEdgesAndUnsupportedVersions(t));

@@ -1,6 +1,6 @@
 # Library contract — Execution
 
-Type contract: `library`. Stage: **locked** (revision 3). Owner: `execution` (absorbs
+Type contract: `library`. Stage: **locked**. Owner: `execution` (absorbs
 `execution-runtime`, `workspace`, `steward`, `operations` and `change-inspection`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-architecture-model.md`](arcnexus-architecture-model.md), [`arcnexus-coordination.md`](arcnexus-coordination.md).
 Depended on by: `direction`, `verification`, `delivery`, the gateway, and every agent turn.
@@ -134,18 +134,25 @@ any execution path that exists only to preserve a historical run.
 ```yaml
 id: arcnexus/execution
 stage: locked
-revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
-changes:
-  - revision 3: checked edits are scoped by ownership and capture only, dropping the step gate the settled design rejects; activation states the four context layers, the live journal and the typed outcomes including escalation; and plan steps bucket by activity with a canonical order that can never substitute for the verdict.
-  - revision 3: migration table gains a Status column recording implementation progress by pull
-    request — the promotion modules are deleted (#367) and the simulated twins with the provider
-    receipt store are gone (#368, #372), while the one-process, one-lane and workspace-disposal
-    rows remain not started in batches 2 and 5. Verified against the files that exist, not against
-    intent. No invariant or scenario changed.
-  - revision 2: locked with the architect's answers — bubblewrap required and the container kept as
-    an opt-in deployment seam with concurrency preclusion forbidden, the lane in execution with
-    ordering in direction, and harness state per activation. Added invariant I14 and scenario EX-19
-  - revision 1: proposed in #352 with three open questions, all since answered
+history:
+  - >-
+    checked edits are scoped by ownership and capture only, dropping the step gate the
+    settled design rejects; activation states the four context layers, the live journal and
+    the typed outcomes including escalation; and plan steps bucket by activity with a
+    canonical order that can never substitute for the verdict.
+  - >-
+    migration table gains a Status column recording implementation progress by pull request
+    — the promotion modules are deleted (#367) and the simulated twins with the provider
+    receipt store are gone (#368, #372), while the one-process, one-lane and workspace-
+    disposal rows remain not started in batches 2 and 5. Verified against the files that
+    exist, not against intent. No invariant or scenario changed.
+  - >-
+    locked with the architect's answers — bubblewrap required and the container kept as an
+    opt-in deployment seam with concurrency preclusion forbidden, the lane in execution with
+    ordering in direction, and harness state per activation. Added invariant I14 and
+    scenario EX-19
+  - >-
+    proposed in #352 with three open questions, all since answered
 ```

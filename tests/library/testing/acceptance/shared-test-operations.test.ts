@@ -111,9 +111,22 @@ class SharedTestScenarios {
     );
   }
 
-  /** Profile references cannot bypass the captured operation category or activity policy. */
+  /**
+   * Refuses a test operation the captured policy does not authorize, naming the rule that fired.
+   *
+   * Three different guards are in force, so each case declares the exact diagnostic instead of
+   * matching an alternation that would pass whichever rule happened to fire first. The activity case
+   * binds an operation with `agent` usage to the component while naming it in none of the activities
+   * the component declares: a role no longer carries activities, so the earlier authoring was refused
+   * by the role schema before the activity rule under test could be reached.
+   */
   restricted(t: TestContext, restriction: string): void {
     const f = new SharedTestFixture(t);
+    const expected: Record<string, RegExp> = {
+      category: /Operation category not permitted/,
+      activity: /Agent operation belongs to no declared activity: suites/,
+      repository: /Test operation repository mismatch: compile/,
+    };
     if (restriction === 'category')
       f.extend(
         '.arc/architecture/execution-profiles/luna.yaml',
@@ -121,8 +134,8 @@ class SharedTestScenarios {
       );
     else if (restriction === 'activity')
       f.extend(
-        '.arc/architecture/roles/engineer.yaml',
-        (value) => (value.activities = ['research']),
+        '.arc/architecture/components/sample.yaml',
+        (value) => (value.operations = { suites: ['agent'] }),
       );
     else
       f.extend(
@@ -132,7 +145,7 @@ class SharedTestScenarios {
     f.commit();
     const result = f.run('inspect', 'sample');
     assert.equal(result.status, 2, result.stderr);
-    assert.match(result.stderr, /category|activity|repository/i);
+    assert.match(result.stderr, expected[restriction]!);
   }
 
   /** Rejects a test profile that references an operation unavailable to its owner. */

@@ -19,7 +19,10 @@ const readoutLines = (text: string | undefined): any[] =>
 test('empty run lists never create state or require a repository', (t) => {
   const f = new RunQueryFixture(t);
   assert.deepEqual(f.value('task', 'list').items, []);
-  assert.deepEqual(f.value('workday', 'list').items, []);
+  // `workday list` is retired (cli-gateway SS4), so the withheld surface must refuse without touching state.
+  const withheld = f.command('workday', 'list');
+  assert.equal(withheld.status, 2, withheld.stderr);
+  assert.match(withheld.stderr, /workday list is retired; use task status/i);
   assert.equal(existsSync(f.state), false);
 });
 
@@ -33,7 +36,7 @@ test('retained task and workday queries read authoritative state without recover
   assert.equal(result.run.id, task.id);
   assert.ok(result.revision);
   assert.ok(result.events.every((event: any) => event.data.id === task.id));
-  assert.equal(f.value('workday', 'get', workday.id).run.status, 'idle');
+  assert.equal(f.command('workday', 'get', workday.id).status, 2, 'workday get is retired');
   assert.equal(f.command('task', 'get', workday.id).status, 2);
   assert.deepEqual(readFileSync(path), before);
   assert.ok(

@@ -9,12 +9,7 @@ owns:
   - cli
   - README.md
   - package.json
-  - .arc/architecture/environment.yaml
-  - .arc/architecture/roles
-  - .arc/architecture/execution-profiles
-  - .arc/architecture/operations
-  - .arc/architecture/components/platform.yaml
-  - .arc/architecture/components/greetings.yaml
+  - .arc/architecture
 api:
   - module: cli/index.mjs
 activities:

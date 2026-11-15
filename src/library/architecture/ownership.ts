@@ -8,6 +8,8 @@ import type { ConfigurationSource } from './configuration.js';
 
 interface Owner {
   component: string;
+  /** The repository these paths live in; overlap is judged per repository, not across a catalog. */
+  repository: string;
   paths: string[];
   publicModules: string[];
   directoryExceptions: string[];
@@ -79,33 +81,39 @@ export class OwnershipValidator {
         paths: c.ownership!.paths,
         publicModules: c.ownership!.publicModules,
         directoryExceptions: c.ownership!.directoryExceptions.map((e) => e.path),
+        repository: c.repository,
       }));
-    for (const component of Object.values(catalog.components))
-      if (
-        component.repository !== catalog.primaryRepository &&
-        component.definition &&
-        component.definition.repository === catalog.primaryRepository
-      )
-        owners.push({
-          component: component.id,
-          paths: [component.definition.path],
-          publicModules: [],
-          directoryExceptions: [],
-        });
+    // A bound component's definition is deliberately not claimed here. The profile is the record the
+    // repository's steward keeps about a component, so granting it to the subject would let a bound owner
+    // write its own authority and would collide with that steward's claim on `.arc/architecture`.
     return owners;
   }
 
-  /** Rejects ownership roots whose intersection would create competing leaf owners. */
+  /**
+   * Rejects ownership roots whose intersection would create competing leaf owners.
+   *
+   * Comparison is per repository. One catalog describes several repositories, each with its own
+   * `.arc/architecture` steward, so a bound repository maintaining its model root is not a competitor for
+   * the primary's — file resolution already treats owners as repository-scoped, and this check has to agree
+   * with it or legitimate multi-repository architectures are refused.
+   */
   private overlaps(owners: Owner[]): void {
-    for (const owner of owners)
-      for (const other of owners) {
-        if (owner === other) continue;
-        for (const path of owner.paths)
-          if (other.paths.some((p) => covers(path, p) || covers(p, path)))
-            throw new Error(
-              `Overlapping ownership: ${owner.component} / ${other.component}: ${path}`,
-            );
-      }
+    const byRepository = new Map<string, Owner[]>();
+    for (const owner of owners) {
+      const group = byRepository.get(owner.repository);
+      if (group) group.push(owner);
+      else byRepository.set(owner.repository, [owner]);
+    }
+    for (const group of byRepository.values())
+      for (const owner of group)
+        for (const other of group) {
+          if (owner === other) continue;
+          for (const path of owner.paths)
+            if (other.paths.some((p) => covers(path, p) || covers(p, path)))
+              throw new Error(
+                `Overlapping ownership: ${owner.component} / ${other.component}: ${path}`,
+              );
+        }
   }
 
   /** Resolves the unique leaf responsible for a covered repository path. */

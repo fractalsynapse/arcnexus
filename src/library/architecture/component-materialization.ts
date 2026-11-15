@@ -54,7 +54,7 @@ export class ComponentMaterializer {
   /** Adds implicit definition ownership and resolves intentional public entry points. */
   private owner(c: Component): void {
     const paths = (c.owns ?? []).map((p) => this.policy.path(c, p));
-    this.definition(c, paths);
+    this.definition(c);
     c.api = (c.api ?? []).map((entry) => ({
       ...entry,
       ...(entry.module ? { module: this.policy.path(c, entry.module) } : {}),
@@ -75,8 +75,8 @@ export class ComponentMaterializer {
     this.inventory(c);
   }
 
-  /** Anchors implicit definition ownership to the catalog repository without widening local writes. */
-  private definition(c: Component, paths: string[]): void {
+  /** Captures the definition source for digests and inspection, granting no write authority.ocal writes. */
+  private definition(c: Component): void {
     const source = this.catalog.configurationSources.find(
       (s) =>
         (s.value as Component).id === c.id && s.path.startsWith('.arc/architecture/components/'),
@@ -87,10 +87,10 @@ export class ComponentMaterializer {
       path: source.path,
       sourceHash: source.sourceHash,
     };
-    if (c.repository !== c.definition.repository) return;
-    if (covered(source.path, paths))
-      throw new InputError(`Definition ownership is implicit; remove duplicate owns path: ${c.id}`);
-    paths.push(source.path);
+    // A component's own definition is *not* part of its ownership. The architecture profile is the
+    // steward's record of what a component may do, and letting the subject write it would let a steward
+    // widen its own authority; the path stays captured on `definition` for digests and inspection.
+    void covered;
   }
 
   /** Captures exact owned file hashes, leaving unknown artifacts visible and owned. */

@@ -59,16 +59,7 @@ export class MinimalWorkflowPolicy {
       'components/maintenance.json',
       this.definition('maintenance', 'foundation', {
         parentId: 'package',
-        owns: [
-          '.gitignore',
-          'verify.cjs',
-          '.arc/architecture/environment.yaml',
-          '.arc/architecture/roles',
-          '.arc/architecture/execution-profiles',
-          '.arc/architecture/operations',
-          '.arc/architecture/components/platform.json',
-          '.arc/architecture/components/package.json',
-        ],
+        owns: ['.gitignore', 'verify.cjs', '.arc/architecture'],
       }),
     );
   }

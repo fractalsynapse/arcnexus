@@ -26,12 +26,50 @@ function registry(overrides: Record<string, string | undefined>): string {
   return `contracts:\n  -\n${fields}\n`;
 }
 
+/** A contract file whose header and scenario rows carry explicit metadata. */
+function contractBytes(stage = 'locked', scenarios = 3): string {
+  const rows = Array.from({ length: scenarios }, (_, i) => `| EX-${i + 1} | obligation ${i + 1} |`);
+  return [
+    '# Example contract',
+    '',
+    `Type contract: \`example\`. Stage: **${stage}**. Owner: \`example\`.`,
+    '',
+    '| Scenario | Obligation |',
+    '| --- | --- |',
+    ...rows,
+    '',
+  ].join('\n');
+}
+
+/** A registry that reintroduces revision numbering and leaves one history entry unidentified. */
+function ordinalsRegistry(digestValue: string, honest = false): string {
+  const marker = honest ? '        identity: unrecorded\n' : '';
+  return [
+    'contracts:',
+    '  - id: arcnexus/example',
+    '    file: ' + contractPath,
+    '    stage: locked',
+    '    revision: 4',
+    '    digest: "' + digestValue + '"',
+    '    acceptedBy: architect',
+    '    acceptedAt: 2026-11-07',
+    '    history:',
+    '      - stage: locked',
+    '        revision: 4',
+    '        digest: 1111111111111111111111111111111111111111111111111111111111111111',
+    '        note: numbered again',
+    '      - stage: proposed',
+    marker + '        note: neither digest nor an explicit unrecorded marker',
+    '',
+  ].join('\n');
+}
+
 /** Reads contract bytes from an in-memory revision so findings need no repository. */
 const reader = (files: Record<string, string>) => (path: string) => files[path];
 
 /** Exercises the locked-contract integrity findings required by the architecture-model contract. */
 class ContractIntegrityScenarios {
-  /** Accepts a registry whose recorded digest matches the file at the validated revision. */
+  /** Accepts a registry whose recorded digest matches the file at the validated state. */
   matching(): void {
     const bytes = '# contract\n';
     const registry_ = ContractRegistry.fromText(registry({ digest: digest(bytes) }));
@@ -50,6 +88,61 @@ class ContractIntegrityScenarios {
       ['contract-digest-mismatch'],
     );
     assert.match(findings[0]!.detail, /recorded human authority/);
+  }
+
+  /** Reports a record or history entry that identifies itself by an ordinal, or by nothing at all. */
+  identity(): void {
+    const findings = ContractRegistry.fromText(ordinalsRegistry(digest(contractBytes())))
+      .integrityFindings(reader({ [contractPath]: contractBytes() }))
+      .map((finding) => finding.code);
+    assert.deepEqual(
+      findings,
+      ['contract-ordinal-restored', 'contract-ordinal-restored', 'contract-history-unidentified'],
+      'an ordinal on the record, an ordinal on an identified entry, and an entry that identifies nothing',
+    );
+    const honest = ContractRegistry.fromText(
+      ordinalsRegistry(digest(contractBytes()), true),
+    ).integrityFindings(reader({ [contractPath]: contractBytes() }));
+    assert.equal(
+      honest.map((finding) => finding.code).includes('contract-history-unidentified'),
+      false,
+      'identity: unrecorded is an accepted, honest marker',
+    );
+  }
+
+  /** Reports a registry whose stage or scenario count disagrees with the contract file. */
+  metadata(): void {
+    const bytes = contractBytes('proposed', 4);
+    const registry_ = ContractRegistry.fromText(
+      registry({ digest: digest(bytes), scenarios: '3' }),
+    );
+    const findings = registry_.integrityFindings(reader({ [contractPath]: bytes }));
+    assert.deepEqual(
+      findings.map((finding) => finding.code),
+      ['contract-metadata-mismatch', 'contract-scenario-count-mismatch'],
+      'stage disagreement and scenario under-count are each reported',
+    );
+    assert.match(
+      findings[0]!.detail,
+      /records stage 'locked' while the contract states 'proposed'/,
+    );
+    assert.match(
+      findings[1]!.detail,
+      /records 3 acceptance scenarios while the contract carries 4/,
+    );
+  }
+
+  /** Accepts metadata that agrees, and skips what the registry does not record. */
+  metadataAgreement(): void {
+    const bytes = contractBytes('locked', 3);
+    const agreed = ContractRegistry.fromText(registry({ digest: digest(bytes), scenarios: '3' }));
+    assert.deepEqual(agreed.integrityFindings(reader({ [contractPath]: bytes })), []);
+    const unrecorded = ContractRegistry.fromText(registry({ digest: digest('x') }));
+    assert.equal(
+      unrecorded.integrityFindings(reader({ [contractPath]: 'edited\n' })).length,
+      1,
+      'only the digest defect is reported when no counts are recorded',
+    );
   }
 
   /** Reports a locked record that carries no recorded acceptance. */
@@ -113,6 +206,14 @@ test('a locked contract matching its recorded digest reports no findings', () =>
 
 test('a locked contract edited without a new registry entry is reported', () =>
   scenarios.mismatch());
+
+test('a contract record identified by an ordinal or by nothing is reported', () =>
+  scenarios.identity());
+
+test('a registry disagreeing with its contract metadata is reported', () => scenarios.metadata());
+
+test('agreeing or unrecorded contract metadata produces no finding', () =>
+  scenarios.metadataAgreement());
 
 test('a locked contract without recorded acceptance is reported', () => scenarios.unaccepted());
 

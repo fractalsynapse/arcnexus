@@ -9,338 +9,321 @@ project: arcnexus
 authority:
   lockOwner: Adrian Webb (architect)
   agentMayChangeLocked: false
-  adherence: >
-    Before any action that modifies the codebase, validate the request against the relevant
-    contracts. On conflict, counter the request and wait for the architect to choose between
-    changing the request and changing the contract.
+  adherence: 'Before any action that modifies the codebase, validate the request against the relevant
+    contracts. On conflict, counter the request and wait for the architect to choose between changing
+    the request and changing the contract.
 
+    '
 contracts:
-  - id: arcnexus/project
-    type: project
-    file: docs/interface/arcnexus-project.md
-    owner: architecture-maintenance
-    stage: locked
-    revision: 3
-    digest: 97c205feb30066cafe484be38b1848230f9c17063fbdcfcbfeb3dd3734de2801
-    dependsOn: []
-    scenarios: 12
-    acceptedBy: Adrian Webb (architect)
-    acceptedAt: 2026-11-07
-    history:
-      - revision: 1
-        stage: proposed
-        digest: 133f9cf2ab5f1a317969b7fc46a5cafdb4c982e0d36d3e48d5e4b1ba1298e114
-        note: proposed in #346
-
-  - id: arcnexus/foundation
-    type: foundation
-    file: docs/interface/arcnexus-foundation.md
-    owner: foundation
-    stage: locked
-    revision: 1
-    digest: e5912fa3e523c9b17b976085168932a8862735eca52b2d7f589af9adb92b9b53
-    dependsOn: [arcnexus/project]
-    scenarios: 10
-    acceptedBy: Adrian Webb (architect)
-    acceptedAt: 2026-11-07
-    history:
-      - revision: 1
-        stage: proposed
-        digest: 0e9c1c88579d824bbfb95a51500776ad571042e6392ab3179a88d7d162bd8afb
-        note: proposed and locked unchanged in #346; the two command-surface reductions land in cleanup
-
-  - id: arcnexus/cli-gateway
-    type: gateway
-    file: docs/interface/arcnexus-cli-gateway.md
-    owner: cli
-    stage: locked
-    revision: 6
+- id: arcnexus/project
+  type: project
+  file: docs/interface/arcnexus-project.md
+  owner: architecture-maintenance
+  stage: locked
+  digest: 3a4df0b30cd347a507e8fd4fca2c5a40496f5ff20475822b6c5c4532873dd9eb
+  dependsOn: []
+  scenarios: 12
+  acceptedBy: Adrian Webb (architect)
+  acceptedAt: 2026-11-07
+  history:
+  - stage: proposed
+    digest: 133f9cf2ab5f1a317969b7fc46a5cafdb4c982e0d36d3e48d5e4b1ba1298e114
+    note: proposed in
+- id: arcnexus/foundation
+  type: foundation
+  file: docs/interface/arcnexus-foundation.md
+  owner: foundation
+  stage: locked
+  digest: 79593f5ac87e140825077f64fa4f5ca7e9a9cb9afe8e0fc370542725c6f075dd
+  dependsOn:
+  - arcnexus/project
+  scenarios: 10
+  acceptedBy: Adrian Webb (architect)
+  acceptedAt: 2026-11-07
+  history:
+  - stage: proposed
+    digest: 0e9c1c88579d824bbfb95a51500776ad571042e6392ab3179a88d7d162bd8afb
+    note: proposed and locked unchanged in
+- id: arcnexus/cli-gateway
+  type: gateway
+  file: docs/interface/arcnexus-cli-gateway.md
+  owner: cli
+  stage: locked
+  digest: 22ccd93fa6f6197c8828c13c833c49bc1605177485df2fbd22c70109eeb84eb3
+  dependsOn:
+  - arcnexus/project
+  - arcnexus/foundation
+  scenarios: 21
+  acceptedBy: Adrian Webb (architect)
+  acceptedAt: 2026-11-07
+  history:
+  - stage: locked
     digest: 9ddb274115402b0b3655dd8414cd6d810167afcf80e264e74736f0b2fc2267cd
-    dependsOn: [arcnexus/project, arcnexus/foundation]
-    scenarios: 20
-    acceptedBy: Adrian Webb (architect)
-    acceptedAt: 2026-11-07
-    history:
-      - revision: 6
-        stage: locked
-        digest: 9ddb274115402b0b3655dd8414cd6d810167afcf80e264e74736f0b2fc2267cd
-        note: >
-          architect rulings: `task run` gains the sealed `--plan` stance and the in-place
-          `--component <id> [--activity <a>]` stance, `inspect` names the position in the
-          component slot with reserved `director`/`verifier` identifiers, and `config migrate`
-          is retired because configurations carry no version to upgrade
-      - revision: 5
-        stage: locked
-        digest: a80d721cdf1c37bbdd5b834e224894d39c88b12221369add54aab8fefecd656c
-        note: >
-          --simulate restored as a delivered option by the architect: simulation keeps its mode, so
-          the flag selects the evidence-package collaboration provider rather than a mock; the
-          rejected-option list and the retired-command table no longer cover it
-      - revision: 5
-        stage: proposed
-        digest: a80d721cdf1c37bbdd5b834e224894d39c88b12221369add54aab8fefecd656c
-        note: >
-          proposed in #346 with three open questions; all answered by the architect — add
-          `inspect` as the activity-context preview, keep per-command options with their
-          commands, fold `plan show` into `task status`, and let foreground `task run`
-          prompt at gates while `--async` never does
+    note: 'architect rulings: `task run` gains the sealed `--plan` stance and the in-place `--component
+      <id> [--activity <a>]` stance, `inspect` names the position in the component slot with reserved
+      `director`/`verifier` identifiers, and `config migrate` is retired because configurations carry
+      no version to upgrade
 
-  - id: arcnexus/architecture-model
-    type: library
-    file: docs/interface/arcnexus-architecture-model.md
-    owner: architecture-model
-    stage: locked
-    revision: 8
+      '
+  - stage: locked
+    digest: a80d721cdf1c37bbdd5b834e224894d39c88b12221369add54aab8fefecd656c
+    note: '--simulate restored as a delivered option by the architect: simulation keeps its mode, so the
+      flag selects the evidence-package collaboration provider rather than a mock; the rejected-option
+      list and the retired-command table no longer cover it
+
+      '
+- id: arcnexus/architecture-model
+  type: library
+  file: docs/interface/arcnexus-architecture-model.md
+  owner: architecture-model
+  stage: locked
+  digest: f30e7b54592395c2cae952ed75355dcdb8b4b962d331e679dfd7e19b045915cd
+  dependsOn:
+  - arcnexus/project
+  - arcnexus/foundation
+  scenarios: 16
+  acceptedBy: Adrian Webb (architect)
+  acceptedAt: 2026-11-07
+  history:
+  - stage: locked
     digest: 4656ae78ea48caf562784202e1c53a38bb69d07862cd8be33f3e73606f3ab0e1
-    dependsOn: [arcnexus/project, arcnexus/foundation]
-    scenarios: 16
-    acceptedBy: Adrian Webb (architect)
-    acceptedAt: 2026-11-07
-    history:
-      - revision: 8
-        stage: locked
-        digest: 4656ae78ea48caf562784202e1c53a38bb69d07862cd8be33f3e73606f3ab0e1
-        note: >
-          Migration table records the version-suffixed schema files renamed to their kind
-          (component, operation, environment) and the version-keyed selection removed, under the
-          architect's 2026-11-12 ruling that the installed release is the pin.
-      - revision: 7
-        stage: locked
-        digest: e3d6abee203a17b7d16c8b3ce9031e5595467135e2eb405ddd9b01a64499491b
-        note: >
-          Module inventory updated under the architect's 2026-11-12 instruction that component
-          ownership is the sole source of truth for writes: `directory-grants.ts` and
-          `permissions.ts` are deleted with the grant projection they implemented. Invariant I2
-          ("ownership comes from declared paths only, no per-milestone file grants") is now the
-          only statement of write authority; `access` retains derived reads alone.
-      - revision: 1
-        stage: proposed
-        digest: 5defa8613fe034530ece7f34401d9822bd674215f642e9878a94e3c6b9f726c1
-        note: >
-          proposed in #350 with three open questions; all answered by the architect — keep the
-          integrity split between architecture-model and execution, keep .arc/architecture
-          editing a human act applied from a proposal, and let each contract be owned by the
-          component it describes
+    note: 'Migration table records the version-suffixed schema files renamed to their kind (component,
+      operation, environment) and the version-keyed selection removed, under the architect''s 2026-11-12
+      ruling that the installed release is the pin.
 
-  - id: arcnexus/coordination
-    type: library
-    file: docs/interface/arcnexus-coordination.md
-    owner: coordination
-    stage: locked
-    revision: 3
-    digest: 1751d853de6f8804733fa2f605608d571dcee9b495cbbc5f282adf575c340aa3
-    dependsOn: [arcnexus/project, arcnexus/architecture-model]
-    scenarios: 19
-    acceptedBy: Adrian Webb (architect)
-    acceptedAt: 2026-11-07
-    history:
-      - revision: 1
-        stage: proposed
-        digest: 1bb41eddc2db0a881584f26ec3b9b3c1b8cb7fce50e018164e5182410fb38470
-        note: >
-          proposed in #351 with three open questions; answered by the architect with one
-          amendment — goal identity is the digest of the goal text, the store is authoritative
-          with the committed plan as a deterministic render, per-goal retention that removes
-          only regenerable caches, and entities plus events
+      '
+  - stage: locked
+    digest: e3d6abee203a17b7d16c8b3ce9031e5595467135e2eb405ddd9b01a64499491b
+    note: 'Module inventory updated under the architect''s 2026-11-12 instruction that component ownership
+      is the sole source of truth for writes: `directory-grants.ts` and `permissions.ts` are deleted with
+      the grant projection they implemented. Invariant I2 ("ownership comes from declared paths only,
+      no per-milestone file grants") is now the only statement of write authority; `access` retains derived
+      reads alone.
 
-  - id: arcnexus/execution
-    type: library
-    file: docs/interface/arcnexus-execution.md
-    owner: execution
-    stage: locked
-    revision: 3
-    digest: a8a60e1781087e11e3dba60bf68995e8b65e306ba67c5052d5a49f5dd3994677
-    dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination]
-    scenarios: 19
-    acceptedBy: Adrian Webb (architect)
-    acceptedAt: 2026-11-07
-    history:
-      - revision: 3
-        stage: locked
-        note: migration status column added by revision 3; progress recorded by pull request and verified against existing files
-      - revision: 1
-        stage: proposed
-        digest: a101a329f5d8a0027b5b60a17fa5587bde771693878ac0a2d8d60ec5376f2836
-        note: >
-          proposed in #352 with three open questions; answered by the architect — bubblewrap
-          required with the container kept as an opt-in deployment seam and concurrency
-          preclusion forbidden, the lane in execution with ordering in direction, and harness
-          state per activation
+      '
+  - stage: proposed
+    digest: 5defa8613fe034530ece7f34401d9822bd674215f642e9878a94e3c6b9f726c1
+    note: 'proposed in #350 with three open questions; all answered by the architect — keep the integrity
+      split between architecture-model and execution, keep .arc/architecture editing a human act applied
+      from a proposal, and let each contract be owned by the component it describes
 
-  - id: arcnexus/direction
-    type: library
-    file: docs/interface/arcnexus-direction.md
-    owner: direction
-    stage: locked
-    revision: 5
-    digest: 03ee4cceaa0055dc3bf2e43ca9495df26e68658295fb3d5c610bff3f9add08d1
-    dependsOn: [arcnexus/project, arcnexus/architecture-model, arcnexus/coordination]
-    scenarios: 19
-    acceptedBy: Adrian Webb (architect)
-    acceptedAt: 2026-11-07
-    history:
-      - revision: 1
-        stage: proposed
-        digest: ed9fe67276c33e9534acb123c2d13751a60e05f8802c58c344075fa7c254c1c5
-        note: >
-          proposed in #356 with three open questions; answered by the architect — staging
-          integration is automatic and only production release awaits a human gate, a
-          locked-contract conflict inserts a change-request gate into the sequence, and the
-          stewardship directive is reserved rather than deferred silently
+      '
+- id: arcnexus/coordination
+  type: library
+  file: docs/interface/arcnexus-coordination.md
+  owner: coordination
+  stage: locked
+  digest: d0f7e1ad95e0b2fc384c4326008c3f4edd1ea466c16e5f85c9f2cd359cb2436b
+  dependsOn:
+  - arcnexus/project
+  - arcnexus/architecture-model
+  scenarios: 20
+  acceptedBy: Adrian Webb (architect)
+  acceptedAt: 2026-11-07
+  history:
+  - stage: proposed
+    digest: 1bb41eddc2db0a881584f26ec3b9b3c1b8cb7fce50e018164e5182410fb38470
+    note: 'proposed in #351 with three open questions; answered by the architect with one amendment —
+      goal identity is the digest of the goal text, the store is authoritative with the committed plan
+      as a deterministic render, per-goal retention that removes only regenerable caches, and entities
+      plus events
 
-  - id: arcnexus/verification
-    type: library
-    file: docs/interface/arcnexus-verification.md
-    owner: verification
-    stage: locked
-    revision: 3
-    digest: 14d87b6affa387ca5a35e28f372c9a8b76019a7429b7c090f38242c910c933b6
-    dependsOn:
-      [
-        arcnexus/project,
-        arcnexus/architecture-model,
-        arcnexus/coordination,
-        arcnexus/execution,
-        arcnexus/direction,
-      ]
-    scenarios: 17
-    acceptedBy: Adrian Webb (architect)
-    acceptedAt: 2026-11-07
-    history:
-      - revision: 1
-        stage: proposed
-        digest: 07cbaf2fa2f53364a7104613aad53e6ddbdbacf3012062ae42a35d5e0697f5ac
-        note: >
-          proposed in #356 with three open questions; the architect rejected the reviewer input cap
-          outright for the first system, so revision 2 replaces bounds with full assembly by
-          reference plus recorded measures, and confirms re-run authority and the single reviewer
+      '
+- id: arcnexus/execution
+  type: library
+  file: docs/interface/arcnexus-execution.md
+  owner: execution
+  stage: locked
+  digest: 80ac2d555a610ea2aae3ad38bfeeab2261c47b146f9181ff80ee330d333710e7
+  dependsOn:
+  - arcnexus/project
+  - arcnexus/architecture-model
+  - arcnexus/coordination
+  scenarios: 21
+  acceptedBy: Adrian Webb (architect)
+  acceptedAt: 2026-11-07
+  history:
+  - stage: locked
+    identity: unrecorded
+    note: migration status column added by revision 3; progress recorded by pull request and verified
+      against existing files
+  - stage: proposed
+    digest: a101a329f5d8a0027b5b60a17fa5587bde771693878ac0a2d8d60ec5376f2836
+    note: 'proposed in #352 with three open questions; answered by the architect — bubblewrap required
+      with the container kept as an opt-in deployment seam and concurrency preclusion forbidden, the lane
+      in execution with ordering in direction, and harness state per activation
 
-  - id: arcnexus/delivery
-    type: library
-    file: docs/interface/arcnexus-delivery.md
-    owner: delivery
-    stage: locked
-    revision: 3
-    digest: 82b2e0d291587ffac9a3408cce296efe0526665caffcab60020c48f947591242
-    dependsOn: [arcnexus/project, arcnexus/coordination, arcnexus/verification, arcnexus/direction]
-    scenarios: 17
-    acceptedBy: Adrian Webb (architect)
-    acceptedAt: 2026-11-07
-    history:
-      - revision: 3
-        stage: locked
-        note: migration status column added by revision 3 at the architect's direction; no invariant or scenario changed
-      - revision: 1
-        stage: proposed
-        digest: 8b007305e44bd039b02d5b1e67f22584e4727c554fcbc508925c8698fa81da86
-        note: >
-          proposed in #359 with three open questions; answered by the architect — provider performs
-          the merge and returns its identity, the only human gates are a production release and a
-          blocking question needing an answer or external action, and publication scope today is the
-          CLI plus an npm package with container, runner and installer targets reserved
+      '
+- id: arcnexus/direction
+  type: library
+  file: docs/interface/arcnexus-direction.md
+  owner: direction
+  stage: locked
+  digest: f8f38abd8c8048155b56f04f337cacf726f4726bc21250ed3d021d7602586b94
+  dependsOn:
+  - arcnexus/project
+  - arcnexus/architecture-model
+  - arcnexus/coordination
+  scenarios: 19
+  acceptedBy: Adrian Webb (architect)
+  acceptedAt: 2026-11-07
+  history:
+  - stage: proposed
+    digest: ed9fe67276c33e9534acb123c2d13751a60e05f8802c58c344075fa7c254c1c5
+    note: 'proposed in #356 with three open questions; answered by the architect — staging integration
+      is automatic and only production release awaits a human gate, a locked-contract conflict inserts
+      a change-request gate into the sequence, and the stewardship directive is reserved rather than deferred
+      silently
 
-  - id: arcnexus/release
-    type: release
-    file: docs/interface/arcnexus-release.md
-    owner: release
-    stage: locked
-    revision: 2
-    digest: 82a8daafa36e3e257859e2e5bc8c42bf7465dbfc240d7191b6accb4ffff69cb1
-    dependsOn: [arcnexus/project, arcnexus/delivery, arcnexus/verification]
-    scenarios: 19
-    acceptedBy: Adrian Webb (architect)
-    acceptedAt: 2026-11-07
-    history:
-      - revision: 1
-        stage: proposed
-        digest: e31bfd5d3513210dae65bf62ecd02f3e81975c8b4a51559a7705aeade557ba9c
-        note: >
-          proposed in #359 with three open questions; answered by the architect — unscoped arcnexus
-          name, version tags with no v prefix, verification required after release, published by npm
-          trusted publishing on GitHub-hosted runners. The interpretation of "verify the release
-          after it is made" as a clean-prefix install from the registry is flagged in the contract
-          for correction
+      '
+- id: arcnexus/verification
+  type: library
+  file: docs/interface/arcnexus-verification.md
+  owner: verification
+  stage: locked
+  digest: ee401e8019f7f6373e687125a3769e02183fc70fa021124011d75ece9756b821
+  dependsOn:
+  - arcnexus/project
+  - arcnexus/architecture-model
+  - arcnexus/coordination
+  - arcnexus/execution
+  - arcnexus/direction
+  scenarios: 17
+  acceptedBy: Adrian Webb (architect)
+  acceptedAt: 2026-11-07
+  history:
+  - stage: proposed
+    digest: 07cbaf2fa2f53364a7104613aad53e6ddbdbacf3012062ae42a35d5e0697f5ac
+    note: 'proposed in #356 with three open questions; the architect rejected the reviewer input cap outright
+      for the first system, so revision 2 replaces bounds with full assembly by reference plus recorded
+      measures, and confirms re-run authority and the single reviewer
 
-  - id: arcnexus/collaboration-provider
-    type: library
-    file: docs/interface/arcnexus-collaboration-provider.md
-    owner: delivery
-    stage: locked
-    revision: 3
-    digest: 793adda146a145b7c6ef3d6a67959055856ec1f5ed984bd40e7b2a4b68d96f4a
-    dependsOn: [arcnexus/project, arcnexus/delivery, arcnexus/coordination]
-    scenarios: 7
-    acceptedBy: Adrian Webb (architect)
-    acceptedAt: 2026-11-08
-    history:
-      - revision: 2
-        stage: locked
-        note: migration status column added by revision 2; the fake GitHub, provider database and second engine recorded as deleted
+      '
+- id: arcnexus/delivery
+  type: library
+  file: docs/interface/arcnexus-delivery.md
+  owner: delivery
+  stage: locked
+  digest: 155d488cd6f33444fad2f3f87c17645d7ab8c39e25dbd26d95d82c1bd6010816
+  dependsOn:
+  - arcnexus/project
+  - arcnexus/coordination
+  - arcnexus/verification
+  - arcnexus/direction
+  scenarios: 17
+  acceptedBy: Adrian Webb (architect)
+  acceptedAt: 2026-11-07
+  history:
+  - stage: locked
+    identity: unrecorded
+    note: migration status column added by revision 3 at the architect's direction; no invariant or scenario
+      changed
+  - stage: proposed
+    digest: 8b007305e44bd039b02d5b1e67f22584e4727c554fcbc508925c8698fa81da86
+    note: 'proposed in #359 with three open questions; answered by the architect — provider performs the
+      merge and returns its identity, the only human gates are a production release and a blocking question
+      needing an answer or external action, and publication scope today is the CLI plus an npm package
+      with container, runner and installer targets reserved
 
+      '
+- id: arcnexus/release
+  type: release
+  file: docs/interface/arcnexus-release.md
+  owner: release
+  stage: locked
+  digest: 2eed0be265648cbe74897133a0ec1ce38afbe8fce4b84dba7cba24494874aca0
+  dependsOn:
+  - arcnexus/project
+  - arcnexus/delivery
+  - arcnexus/verification
+  scenarios: 19
+  acceptedBy: Adrian Webb (architect)
+  acceptedAt: 2026-11-07
+  history:
+  - stage: proposed
+    digest: e31bfd5d3513210dae65bf62ecd02f3e81975c8b4a51559a7705aeade557ba9c
+    note: 'proposed in #359 with three open questions; answered by the architect — unscoped arcnexus name,
+      version tags with no v prefix, verification required after release, published by npm trusted publishing
+      on GitHub-hosted runners. The interpretation of "verify the release after it is made" as a clean-prefix
+      install from the registry is flagged in the contract for correction
+
+      '
+- id: arcnexus/collaboration-provider
+  type: library
+  file: docs/interface/arcnexus-collaboration-provider.md
+  owner: delivery
+  stage: locked
+  digest: e90c0b5fb589a8d8d1531eedecdbea61dbcd56950d362ace85c4dce3334f9b07
+  dependsOn:
+  - arcnexus/project
+  - arcnexus/delivery
+  - arcnexus/coordination
+  scenarios: 7
+  acceptedBy: Adrian Webb (architect)
+  acceptedAt: 2026-11-08
+  history:
+  - stage: locked
+    identity: unrecorded
+    note: migration status column added by revision 2; the fake GitHub, provider database and second engine
+      recorded as deleted
 protocol:
   id: arcnexus/contract-protocol
   file: docs/interface/README.md
   owner: architecture-maintenance
   stage: locked
-  revision: 4
-  digest: d46b8accae572f253b973b9491fc3b0ff3a36289d21da8f6444947ce78a0b10c
+  digest: 2f21fd5bd0071f3600c7eb12f6aa5cca7358463ffce4a7aad1948c7d975acf02
   acceptedBy: Adrian Webb (architect)
   acceptedAt: 2026-11-07
   history:
-    - revision: 1
-      stage: proposed
-      digest: 236739f7e342b1ffebd4b9c63cdab3da4f899409eafa67e5b88b24daffb6c3dd
-      note: added the contract-adherence rule requiring pre-edit validation and countering
-    - revision: 2
-      stage: locked
-      digest: 89de6795dfea788f706360bef5341f54fb72a7c374457470761b6dd1fb535a68
-      note: locked with the protocol and the stage-one contracts
-    - revision: 3
-      stage: locked
-      digest: 98013cc58b446810523ce04a3bb2bb8ef4b766a9ece8e24f799aac78c6e6a7fb
-      note: >
-        added the ownership rule the architect directed — each contract file belongs to the
-        component it describes, held by architecture-maintenance until that component exists
-    - revision: 4
-      stage: locked
-      digest: d46b8accae572f253b973b9491fc3b0ff3a36289d21da8f6444947ce78a0b10c
-      note: >
-        enforcement recorded as delivered: validate recomputes locked-contract digests with stable
-        finding codes, and the checked-edit path refuses a locked contract or the registry using
-        locks captured at the run's base revision (#353)
+  - stage: proposed
+    digest: 236739f7e342b1ffebd4b9c63cdab3da4f899409eafa67e5b88b24daffb6c3dd
+    note: added the contract-adherence rule requiring pre-edit validation and countering
+  - stage: locked
+    digest: 89de6795dfea788f706360bef5341f54fb72a7c374457470761b6dd1fb535a68
+    note: locked with the protocol and the stage-one contracts
+  - stage: locked
+    digest: 98013cc58b446810523ce04a3bb2bb8ef4b766a9ece8e24f799aac78c6e6a7fb
+    note: 'added the ownership rule the architect directed — each contract file belongs to the component
+      it describes, held by architecture-maintenance until that component exists
 
+      '
+  - stage: locked
+    digest: d46b8accae572f253b973b9491fc3b0ff3a36289d21da8f6444947ce78a0b10c
+    note: 'enforcement recorded as delivered: validate recomputes locked-contract digests with stable
+      finding codes, and the checked-edit path refuses a locked contract or the registry using locks captured
+      at the run''s base revision (#353)
+
+      '
 supporting:
-  - id: arcnexus/plan-template
-    file: .arc/architecture/plan-template.md
-    owner: architecture-maintenance
-    stage: proposed
-    digest: 0d9e080b6d791496f1fea3ac6a4c178bf54e13a1d8a0ff5a664127bd4010bad6
-    note: >
-      Planning contract, not an interface contract. Gained a Contracts category and the rule
-      that a milestone touching a locked interface becomes a change request, not engineering.
-      Amended under the architect's direction that the activities a role declares are the one
-      activity vocabulary: checklist items key on `activity` (six canonical names, canonical
-      order), the plan must declare every supported activity even when it carries no items, and
-      buckets run in that order without ever substituting for the verdict.
+- id: arcnexus/plan-template
+  file: .arc/architecture/plan-template.md
+  owner: architecture-maintenance
+  stage: proposed
+  digest: 0d9e080b6d791496f1fea3ac6a4c178bf54e13a1d8a0ff5a664127bd4010bad6
+  note: 'Planning contract, not an interface contract. Gained a Contracts category and the rule that a
+    milestone touching a locked interface becomes a change request, not engineering. Amended under the
+    architect''s direction that the activities a role declares are the one activity vocabulary: checklist
+    items key on `activity` (six canonical names, canonical order), the plan must declare every supported
+    activity even when it carries no items, and buckets run in that order without ever substituting for
+    the verdict.
 
-# Walk order. A contract is added here when its stage begins; it leaves the queue only by
-# being proposed and then locked by the architect.
+    '
 queue:
   stage: libraries
   inReview: []
   locked:
-    - arcnexus/project
-    - arcnexus/foundation
-    - arcnexus/cli-gateway
-    - arcnexus/architecture-model
-    - arcnexus/coordination
-    - arcnexus/execution
-    - arcnexus/direction
-    - arcnexus/verification
-    - arcnexus/delivery
-    - arcnexus/release
-    - arcnexus/collaboration-provider
+  - arcnexus/project
+  - arcnexus/foundation
+  - arcnexus/cli-gateway
+  - arcnexus/architecture-model
+  - arcnexus/coordination
+  - arcnexus/execution
+  - arcnexus/direction
+  - arcnexus/verification
+  - arcnexus/delivery
+  - arcnexus/release
+  - arcnexus/collaboration-provider
   waiting:
-    - arcnexus/report
-    - arcnexus/guidance
-    - arcnexus/testing
+  - arcnexus/report
+  - arcnexus/guidance
+  - arcnexus/testing

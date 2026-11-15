@@ -187,16 +187,7 @@ export class WorkflowFixture {
       id: 'maintainer',
       purpose: 'Own shared fixture configuration',
       parentId: 'package',
-      owns: [
-        '.gitignore',
-        'verify.cjs',
-        '.arc/architecture/operations',
-        '.arc/architecture/environment.yaml',
-        '.arc/architecture/execution-profiles',
-        '.arc/architecture/roles',
-        '.arc/architecture/components/platform.json',
-        '.arc/architecture/components/package.json',
-      ],
+      owns: ['.gitignore', 'verify.cjs', '.arc/architecture'],
     });
   }
 

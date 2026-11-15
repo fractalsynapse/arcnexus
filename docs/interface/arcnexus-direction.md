@@ -1,6 +1,6 @@
 # Library contract — Direction
 
-Type contract: `library`. Stage: **locked** (revision 5). Owner: `direction` (absorbs `task-intake`,
+Type contract: `library`. Stage: **locked**. Owner: `direction` (absorbs `task-intake`,
 the planning half of `assignment`, `workday`, and the dispatch/admission parts of
 `execution-runtime` and `coordination-store`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-architecture-model.md`](arcnexus-architecture-model.md), [`arcnexus-coordination.md`](arcnexus-coordination.md).
@@ -127,25 +127,30 @@ resume an abandoned run.
 ```yaml
 id: arcnexus/direction
 stage: locked
-revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
-changes:
-  - revision 2: locked with the architect's answers. Staging integration is automatic and only
-    production release awaits a human gate (new I13, DI-17, DI-18); a locked-contract conflict
-    inserts a change-request gate into the sequence; the stewardship directive is reserved rather
-    than deferred silently (new I14, DI-19)
-  - revision 3: self-directed component planning is one `director` role with a narrower scope, so
-    the role set stays director, steward and verifier rather than adding a fourth name that reads like
-    a duplicate of steward; the plan-authorship split is corrected so direction keeps goals, sequence,
-    owners and acceptance criteria while the owning agent authors its own bucketed plan; `activate`
-    and planning both state the activity spine and its canonical ordering, and an escalation is
-    returned, captured and replayable rather than treated as failure
-  - revision 5: "role" in I14 and DI-19 becomes "mode", because a role is now an
-    activity-scoped position reusable across components (architecture-model I11);
-    what this clause unifies is the director/steward/verifier mode set, not roles
-  - revision 4: the director's model selection is stated as an execution profile, not an
-    `direction` activity, because the six activities a role declares are the only activity
-    vocabulary and `direction` is a component, not an activity
-  - revision 1: proposed in #356 with three open questions, all since answered
+history:
+  - >-
+    locked with the architect's answers. Staging integration is automatic and only
+    production release awaits a human gate (new I13, DI-17, DI-18); a locked-contract
+    conflict inserts a change-request gate into the sequence; the stewardship directive is
+    reserved rather than deferred silently (new I14, DI-19)
+  - >-
+    self-directed component planning is one `director` role with a narrower scope, so the
+    role set stays director, steward and verifier rather than adding a fourth name that
+    reads like a duplicate of steward; the plan-authorship split is corrected so direction
+    keeps goals, sequence, owners and acceptance criteria while the owning agent authors its
+    own bucketed plan; `activate` and planning both state the activity spine and its
+    canonical ordering, and an escalation is returned, captured and replayable rather than
+    treated as failure
+  - >-
+    "role" in I14 and DI-19 becomes "mode", because a role is now an activity-scoped
+    position reusable across components (architecture-model I11); what this clause unifies
+    is the director/steward/verifier mode set, not roles
+  - >-
+    the director's model selection is stated as an execution profile, not an `direction`
+    activity, because the six activities a role declares are the only activity vocabulary
+    and `direction` is a component, not an activity
+  - >-
+    proposed in #356 with three open questions, all since answered
 ```

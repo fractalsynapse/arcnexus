@@ -15,12 +15,7 @@ owns:
   - package.json
   - package-lock.json
   - README.md
-  - .arc/architecture/environment.yaml
-  - .arc/architecture/roles
-  - .arc/architecture/execution-profiles
-  - .arc/architecture/operations
-  - .arc/architecture/components/platform.yaml
-  - .arc/architecture/components/package.yaml
+  - .arc/architecture
 api:
   - module: src/identity.mjs
 activities:

@@ -1,6 +1,6 @@
 # Library contract — Coordination
 
-Type contract: `library`. Stage: **locked** (revision 3). Owner: `coordination` (absorbs
+Type contract: `library`. Stage: **locked**. Owner: `coordination` (absorbs
 `coordination-store` and `report`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-architecture-model.md`](arcnexus-architecture-model.md).
 Depended on by: `direction`, `execution`, `verification`, `delivery`, `report` consumers, the
@@ -158,14 +158,19 @@ is reading historical configuration versions.
 ```yaml
 id: arcnexus/coordination
 stage: locked
-revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
-changes:
-  - revision 3: plan authorship is separated from store writing; `escalation` becomes a stored entity so a blocked owner waiting on a peer or the director is state a human can see, replayable as input; the live per-activation harness journal is named as evidence streamed into events rather than a projection to delete.
-  - revision 2: locked with the architect's answers — goal identity is the digest of the goal
-    text, the store is authoritative with the committed plan as a deterministic render,
-    per-goal retention that removes only regenerable caches, and entities plus events. Added
+history:
+  - >-
+    plan authorship is separated from store writing; `escalation` becomes a stored entity so
+    a blocked owner waiting on a peer or the director is state a human can see, replayable
+    as input; the live per-activation harness journal is named as evidence streamed into
+    events rather than a projection to delete.
+  - >-
+    locked with the architect's answers — goal identity is the digest of the goal text, the
+    store is authoritative with the committed plan as a deterministic render, per-goal
+    retention that removes only regenerable caches, and entities plus events. Added
     invariants I12–I14 and scenarios CO-17…CO-19
-  - revision 1: proposed in #351 with three open questions, all since answered
+  - >-
+    proposed in #351 with three open questions, all since answered
 ```

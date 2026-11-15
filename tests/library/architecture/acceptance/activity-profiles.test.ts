@@ -176,7 +176,7 @@ class ActivityProfileScenarios {
       '.arc/architecture/components/operations.json',
       f.component('operations', 'library', {
         parentId: 'maintenance-package',
-        owns: ['.arc/architecture/operations'],
+        owns: [],
       }),
     );
     this.operation(f);

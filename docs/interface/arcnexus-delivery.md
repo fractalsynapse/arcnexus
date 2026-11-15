@@ -1,6 +1,6 @@
 # Library contract — Delivery
 
-Type contract: `library`. Stage: **locked** (revision 3). Owner: `delivery` (absorbs the publication
+Type contract: `library`. Stage: **locked**. Owner: `delivery` (absorbs the publication
 half of `publisher`, the upstream transports in `operations`, and the delivery-record consumers in
 `coordination-store`).
 Depends on: [`arcnexus-project.md`](arcnexus-project.md), [`arcnexus-coordination.md`](arcnexus-coordination.md), [`arcnexus-verification.md`](arcnexus-verification.md), [`arcnexus-direction.md`](arcnexus-direction.md).
@@ -115,27 +115,33 @@ production merge under any configuration, and any recovery path for a historical
 ```yaml
 id: arcnexus/delivery
 stage: locked
-revision: 3
 acceptedBy: Adrian Webb (architect)
 acceptedAt: 2026-11-07
-changes:
-  - revision 3: in-loop escalation between agent and director is stated not to be a human gate, so escalation cannot quietly become an approval queue.
-  - revision 4: migration status updated for step 4e (#374) — publication reads the one recorded
-    verdict, so no second goal assessment remains; the delivery-checks and delivery-verification
-    move into `verification` is still open. Targets and invariants unchanged.
-  - revision 3: migration table gains a Status column recording what implementation has actually
-    delivered against this contract, dated by pull request and verified by file existence rather
-    than by assumption — one publication route with live and evidence providers (#370), promotion
-    deleted (#367), the simulated twins and the provider receipt store retired with the change
-    record derived from effects (#368, #372), and the delivery-store status columns collapsed into
-    one recorded merge identity (#371). Rows still marked not started remain the plan; the
-    `delivery approve` row records why it cannot retire yet. No invariant, scenario or target was
-    altered — operational status only, at the architect's direction.
-  - revision 2: locked with the architect's answers — the provider performs the merge and returns its
-    identity; the only human gates are a production release and a blocking question needing an
-    answer or external action, so an uncertain upstream outcome is reconciled by observation before
-    it can become a gate (new I4, I5, I6, DE-4, DE-5, DE-5b); publication scope today is the CLI,
-    with container, runner, registry and installer targets reserved as declared direction in the
-    release contract
-  - revision 1: proposed in #359 with three open questions, all since answered
+history:
+  - >-
+    in-loop escalation between agent and director is stated not to be a human gate, so
+    escalation cannot quietly become an approval queue.
+  - >-
+    migration status updated for step 4e (#374) — publication reads the one recorded
+    verdict, so no second goal assessment remains; the delivery-checks and delivery-
+    verification move into `verification` is still open. Targets and invariants unchanged.
+  - >-
+    migration table gains a Status column recording what implementation has actually
+    delivered against this contract, dated by pull request and verified by file existence
+    rather than by assumption — one publication route with live and evidence providers
+    (#370), promotion deleted (#367), the simulated twins and the provider receipt store
+    retired with the change record derived from effects (#368, #372), and the delivery-store
+    status columns collapsed into one recorded merge identity (#371). Rows still marked not
+    started remain the plan; the `delivery approve` row records why it cannot retire yet. No
+    invariant, scenario or target was altered — operational status only, at the architect's
+    direction.
+  - >-
+    locked with the architect's answers — the provider performs the merge and returns its
+    identity; the only human gates are a production release and a blocking question needing
+    an answer or external action, so an uncertain upstream outcome is reconciled by
+    observation before it can become a gate (new I4, I5, I6, DE-4, DE-5, DE-5b); publication
+    scope today is the CLI, with container, runner, registry and installer targets reserved
+    as declared direction in the release contract
+  - >-
+    proposed in #359 with three open questions, all since answered
 ```
