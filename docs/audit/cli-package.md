@@ -1,7 +1,7 @@
 # Audit: `cli-package` (package)
 
 Phase 3, component 2, on branch `445-audit-reports` (routing decided by the architect: one audit branch,
-PR updated each turn). Specification authority is the **locked contracts** — `arcnexus/project` rev 3 and
+PR updated each turn). Specification authority is the **locked contracts** — `arcnexus/project` and
 `arcnexus/architecture-model` — not the current documentation. Evidence read at `7c3a9aa`.
 
 ## What it declares
@@ -90,7 +90,7 @@ arcnexus`, but no rule requires a package to declare it, and the platform declar
    `component.schemaVersion >= 5` to choose a path layout. Ruling (D) removed configuration versioning and the
    schema pins one version, so this predicate is dead-but-executed code on a path every test harness uses.
    Same class as the platform gates recorded in `docs/audit/arcnexus.md` gap 1.
-5. **`project` supersedes the type outright.** Locked `arcnexus/project` rev 3 retires `platform`+`package`
+5. **`project` supersedes the type outright.** Locked `arcnexus/project` retires `platform`+`package`
    in favour of a single `project` with `repositories` (one entry for the MVP) and folds
    `architecture/environment.yaml` in. `cli-package` is therefore an implementation of a concept the contract
    says should not exist, and its `repository` field is exactly the shape the contract wants moved to

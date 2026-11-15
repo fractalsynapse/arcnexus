@@ -1,6 +1,6 @@
 # Audit: `arcnexus` (platform)
 
-Phase 3, component 1. Audited against the **locked contracts** (`arcnexus/project` rev 3,
+Phase 3, component 1. Audited against the **locked contracts** (the locked `arcnexus/project`, identified by digest,
 `arcnexus/architecture-model`, `arcnexus/foundation`), per the architect's direction that the contracts
 govern and documentation does not. Evidence read at the merged staging head `2593354`; every claim names
 the file it came from.
@@ -115,7 +115,7 @@ The single-platform rule is enforced twice, deliberately: `PlatformExecution.def
    gates — `session-state.ts` and `initializer.ts` refuse documents whose `schemaVersion !== 6` with
    "migrate configuration" wording — which is why the counts in this audit cite those files: they are the
    same residue in three places.
-2. **The type itself is superseded.** Locked `arcnexus/project` (revision 3) states it supersedes "the
+2. **The type itself is superseded.** Locked `arcnexus/project` states it supersedes "the
    `platform` and `package` component types", introducing one `project` type with a `repositories` list.
    Nothing in `src/library/architecture` implements `project`; the schema validates exactly `platform`,
    `package`, `foundation|gateway|library|release`. So this component is audited against a contract that
