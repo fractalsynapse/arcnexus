@@ -5,6 +5,10 @@ responsibilities, interfaces and observable acceptance. Its first major success
 is using the product to improve itself under the same authority model it applies
 to other projects.
 
+Agent is the central runtime model. A director, steward or reviewer receives a
+scoped Agent with observations, instructions and capabilities resolved for its work.
+[Agent contract proposal](../packages/agent/contract.md)
+
 The architect owns purpose, boundaries, and accepted interfaces. A director turns
 a goal into a sequence of accountable milestones. Component stewards produce the
 changes. The host captures and enforces authority, records evidence, and carries

@@ -13,6 +13,10 @@ real content, and keep one shared build and test entry. Resolve stewardship agai
 the [project catalog](../.arc/architecture/project.yaml). A package contract's
 location comes from the [registry](interface/registry.yaml).
 
+The [Agent contract proposal](../packages/agent/contract.md) is the first stop for
+understanding how the plugins work together. It gives `inspect` one view of an
+actor and gives `task run` one activation interface for every actor.
+
 The local Cordis and DeepSeek Harness examples informed the layout. ArcNexus uses
 a single trusted CLI composition for the first build. That composition is captured
 for each task. Production hot reload, external plugin installation, alternate

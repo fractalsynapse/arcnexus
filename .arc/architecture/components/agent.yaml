@@ -1,0 +1,9 @@
+id: agent
+kind: plugin
+purpose: Expose one scoped Agent for inspection and activation of directors, stewards and reviewers.
+objectives:
+- measure: All three actor roles use the same Agent interface and inspection matches the Codex request for the same inputs.
+constraints:
+- failure: An actor can observe data or perform an operation outside captured authority, or bypass the single execution lane.
+owns:
+- packages/agent

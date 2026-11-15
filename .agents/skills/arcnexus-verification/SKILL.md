@@ -11,6 +11,12 @@ Apply [AGENTS.md](../../../AGENTS.md) and
 [locked verification contract](../../../packages/verification/contract.md)
 and [current MVP](../../../docs/plans/self-development-mvp.md).
 
+For changes to the shared Agent interface, walk through director, steward and
+reviewer scope. Check inspect-to-harness parity, refused observations or operations,
+and the independent reviewer boundary. Use the
+[Agent proposal](../../../packages/agent/contract.md) for the acceptance scenarios
+under review.
+
 During engineering, use declared owner-scoped checks to resolve concrete uncertainty.
 For assembled executable changes, inspect format, lint, strict TypeScript, ownership
 and guidance validation, plus the built program and real production wiring. Exercise

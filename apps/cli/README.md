@@ -5,6 +5,9 @@ progress, cancellation and exit codes. The [command plugin contract](../../packa
 defines the operator surface. The application owns CLI composition tests and any
 scripts specific to its executable.
 
+The [Agent proposal](../../packages/agent/contract.md) defines the common inspection
+and activation interface for this application.
+
 The first executable proof exercises the same composition an operator runs.
 Inspection renders the request builder's output. A real task uses that builder
 for Codex, makes a checked change in its private worktree, and reports the

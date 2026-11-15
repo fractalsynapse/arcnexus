@@ -327,3 +327,13 @@ contracts:
     identity: unrecorded
     note: migration status column added by revision 2; the fake GitHub, provider database and second
       engine recorded as deleted
+- id: arcnexus/agent
+  type: library
+  file: packages/agent/contract.md
+  owner: agent
+  stage: proposed
+  digest: 8ff7692aec022ab513cca5c6d6afff36a57e01cd5fda368cb9f34964e93731a7
+  dependsOn:
+  - arcnexus/architecture-model
+  - arcnexus/execution
+  scenarios: 6

@@ -14,12 +14,15 @@ charter, policy and contracts. Review guidance changes against captured ownershi
 and authority. Integrated guidance applies to future assignments. The current
 assignment keeps its captured permissions, operations and acceptance.
 
-Use the declared guidance-validation operation on the tracked candidate. Check
-metadata and declared references, then review Markdown links and walk through
+Use the [Agent contract proposal](../../../packages/agent/contract.md) for the
+central actor model. Route activity, capability and context guidance through that
+boundary and the captured catalog.
+
+Check metadata and declared references on the tracked candidate, then review Markdown links and walk through
 the decisions affected by the change. Verify that a new instruction cannot expand
 captured authority, a repeat supplier request keeps the existing accountable
 assignment, and pending required CI leaves the candidate awaiting integration.
 
-The agent-guidance owner maintains this package. Route validator changes to the
-guidance-validation owner and changes to experiment cases to the experiments
-owner. Report observed results and unresolved requests to the caller for delivery.
+The project owner maintains this guidance. Route validator changes to the
+Architecture Model plugin owner. Report observed results and unresolved requests
+to the caller for delivery.

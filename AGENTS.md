@@ -34,6 +34,14 @@ and keeps ArcNexus-specific release rules in this repository.
   the checks relevant to the current contribution, then verify assembled delivery
   against captured acceptance.
 
+## Agent
+
+Agent is the central conceptual model of ArcNexus. Use one scoped Agent interface
+for the director, component stewards and independent reviewer. Applications and
+plugins inspect, activate or manage those agents through their public boundary.
+Read the [Agent contract proposal](packages/agent/contract.md) for the shared view
+of purpose, instructions, observations, standards and allowed operations.
+
 ## Direction and evidence
 
 The director generates the sequence from the [plan template](.arc/architecture/plan-template.md).

@@ -6,7 +6,8 @@ carry a real change. Label earlier integration evidence by the slice it proves.
 
 1. Exercise `inspect` from the built CLI. Show the model-facing request produced by
    the same builder then used at the Codex boundary. Check parity for the same inputs
-   and identify runtime-only placeholders.
+   and identify runtime-only placeholders. The [Agent proposal](../../packages/agent/contract.md)
+   adds a shared inspection and activation boundary for each actor.
 2. Deliver one fresh goal with one steward through staging. Supply an objective,
    inspect the actual checked edit and diff, follow progress, and observe the host
    checks, independent verdict, PR and provider merge identity.

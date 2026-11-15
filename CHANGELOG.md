@@ -7,7 +7,8 @@
 - Define the Cordis restart architecture and initial operator CLI (#454). Move plugin
   contracts beside their owners, record the approved lock changes, and replace the old
   catalog and lifecycle guidance with one sequential host task path. Keep historical
-  guides and evidence in Git.
+  guides and evidence in Git. Propose a shared Agent interface for inspection and
+  scoped director, steward and reviewer activations.
 
 - **A strategy map now states what is authoritative for the clean implementation** (#452):
   `docs/plans/strategy-map.md` gives the reading order — the model in `.arc/architecture`, then the locked
