@@ -71,7 +71,7 @@ grant it write scope.
   steward, which is how AGENTS.md's rule that candidate edits cannot grant new authority is enforced rather
   than merely stated.
 - Verified consequence: every tracked file resolves to exactly one owner. Measured against the committed
-  tree: 930 tracked files, 21 owners, **0 unowned, 0 multi-owned**, one `.arc/architecture` steward, and
+  tree: 929 tracked files, 21 owners, **0 unowned, 0 multi-owned**, one `.arc/architecture` steward, and
   `validate` exit 0 with zero contract findings.
 - The sequence's holder phase now lists **every** component holding `.arc/` content — `architecture-maintenance`
   (`.arc/architecture`, `.arc/README.md`), `report` (`.arc/learning`), `task-intake` (`.arc/plans`) — ordered
@@ -102,12 +102,13 @@ also the order failures surface in:
 
 1. **platform** — the single authoritative root; two documents are refused, not resolved;
 2. **package** — containers, parent before child;
-3. **model-maintainer** — the component holding the most paths under `.arc/architecture/`. The phase exists
-   because the model root is loaded before the regular components: ownership, roles, operations and every
-   profile directory are authored inside it, so a leaf is provisional until its declarations have been
-   examined. In this catalog that is `architecture-maintenance`, which owns **all three profile directories**
-   — `composition-profiles`, `execution-profiles` and `test-profiles` — by the architect's direction of
-   2026-11-14; the rank is computed from what a component owns, never from its name;
+3. **model-maintainer** — **every** component holding knowledge-root content under `.arc/`, not the largest
+   holder. The phase exists because the model root is loaded before the regular components: ownership, roles,
+   operations and every profile directory are authored inside it, so a leaf is provisional until its
+   declarations have been examined. A component's own definition is excluded, because holding content *for
+   others* is the signal. In this catalog the phase is `architecture-maintenance`, `report` and
+   `task-intake`, ranked by the type layer, then by content held, then by identifier; the rank is computed
+   from what a component owns, never from its name;
 4. **component** — every remaining component, by the type layer below, then identifier.
 
 **Type layer:** `foundation` → `gateway` → `library` → `release`, exported as `componentTypeOrder` with

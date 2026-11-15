@@ -4,6 +4,36 @@
 
 ### Changed
 
+- **Catalog components now have one derived order, and it is a property of the architecture** (#394):
+  `src/library/architecture/component-sequence.ts` emits every component exactly once — the single
+  platform, then packages parent-before-child, then **every** component holding knowledge-root
+  content, then the rest by the type layer `foundation → gateway → library → release`, ties broken by
+  identifier. Each entry reports its phase and what it already waits on, so a placement can be
+  challenged instead of the whole list; a second platform document and a dropped member are refused.
+  The ranking exists because a prioritized walk of the catalog was previously the judgement of
+  whoever was reading it. Nothing in the product consumes it yet except its own suite and the audit
+  walk, and no `arcnexus audit sequence` surface is exposed: the ordering authority is the derivation,
+  not a command.
+- **The model root has one steward and a component no longer owns its own definition** (#447):
+  `.arc/architecture` is claimed in one claim by `architecture-maintenance`, which now holds every
+  profile directory, and implicit definition ownership is gone. Changing a profile is therefore an act
+  of that steward, which is how the rule that candidate edits cannot grant new authority gets enforced
+  rather than merely stated. Ownership overlap is judged per repository, so bound secondary
+  repositories no longer collide with the primary tree.
+- **Contract identity is content, not an ordinal** (#449 E1, E2, E4): revision ordinals are retired
+  from the registry, contract headers and the checks that compared them; history entries identify
+  themselves by digest. `docs/interface/` is now excluded from formatting because a formatter run had
+  rewritten locked contracts three times, each of which silently changed their identity. Registry
+  metadata is validated against the contracts it describes, so a recorded stage or scenario count that
+  disagrees with the file is a finding rather than a silent mismatch.
+- **The reserved workday surface refuses instead of pretending** (#449 C2, gateway GW-11):
+  `workday start|stop|status` now exits 2 reporting that the self-directed loop is reserved for a
+  future surface on the same plan machinery, and `pause|resume` report that one lane per project
+  refuses while busy. The suites that had used those verbs as their way of *looking at* state observe
+  the delivered surfaces instead, or assert the refusal; `platform-execution.test.ts`'s startup probe
+  no longer treats a reserved command as an entry point that can reach catalog loading, which is why it
+  could not see the architecture refusal it was claiming to check.
+
 - **The human-owned model now lives in the `.arc` knowledge root** (#394): the component, role,
   standard, operation, environment and profile definitions moved from top-level `architecture/` to
   `.arc/architecture/`, which is where `AGENTS.md`, `docs/charter.md` and the locked
