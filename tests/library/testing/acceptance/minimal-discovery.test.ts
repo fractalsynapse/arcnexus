@@ -6,12 +6,25 @@ import { MinimalTestFixture } from '../support/minimal-test-fixture.js';
 
 /** Exercises derived test selection through the built CLI without executing candidate modules. */
 class MinimalDiscoveryScenarios {
-  /** Keeps inspection available during migration while refusing the legacy unconfined execution path. */
+  /**
+   * Refuses a test document that carries an inline execution recipe instead of naming operations.
+   *
+   * The retired expectation here was a migration message for the old unconfined path, and no such
+   * message or path exists any more: the delivered guarantee is that both shapes are closed documents,
+   * so an inline recipe is refused where it is authored rather than migrated or run. The two fixtures
+   * differ in the catalog generation that would have carried the recipe, which is why both are used.
+   */
   rejectsLegacyExecution(t: TestContext, minimal = true): void {
     const f = minimal ? new MinimalTestFixture(t) : new ComponentTestFixture(t);
+    f.profile({ command: 'node', args: ['--test', '.test-build'] });
+    f.commit();
     const result = f.run('run', 'sample');
-    assert.equal(result.status, 2);
-    assert.match(result.stderr, /Migrate test profile to schemaVersion 2/);
+    assert.equal(result.status, 2, result.stderr + result.stdout);
+    assert.match(
+      result.stderr,
+      /Invalid test-profile: .*additional properties \(command\)/i,
+      result.stderr,
+    );
   }
 
   /** Includes new owned suites and excludes classified documentation without per-leaf discovery. */
