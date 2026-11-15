@@ -3,6 +3,7 @@
 /context/
 .dsh-*
 .codegraph/
+.audit-work/
 
 # Environment / secrets
 .env
