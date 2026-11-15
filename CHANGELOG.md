@@ -4,6 +4,24 @@
 
 ### Changed
 
+- **A strategy map now states what is authoritative for the clean implementation** (#452):
+  `docs/plans/strategy-map.md` gives the reading order — the model in `.arc/architecture`, then the locked
+  contracts in `docs/interface`, then the two documents headed "Status: architecture, authoritative", then
+  the accepted MVP direction, guidance, and the prescriptive foundation and release documents — and labels
+  `docs/library` and `docs/acceptance` as ledger and evidence so a run record cannot be read as a
+  requirement. It also records where the documentation contradicts the architecture rather than letting
+  each session rediscover it: the delivery policy several contracts read but nothing defines, `measures`
+  required with no field to author it in, the container types the project contract supersedes while the
+  model still declares them, the preserved-history constraints the architecture-model contract orders
+  deleted, the `release` activity most owners do not declare even though the plan template makes it the
+  Integration Step, an execution profile nothing selects, ownership claims pointing at content the rebuild
+  replaces, and two contradictions inside the authoritative documents themselves — a harness role the model
+  does not declare, and the README's pointer to a CLI guide that conflicts with the gateway contract. The
+  model's internal references are recorded as clean: the accurate reading is a coherent model aimed at the
+  system being replaced, not a decaying one. Locked-versus-locked conflicts are quarantined as
+  architect-only. This document states no counts, because quantities in a guide are read as authority and
+  go stale on the next model edit; the rule is written into the document so it survives.
+
 - **Catalog components now have one derived order, and it is a property of the architecture** (#394):
   `src/library/architecture/component-sequence.ts` emits every component exactly once — the single
   platform, then packages parent-before-child, then **every** component holding knowledge-root
