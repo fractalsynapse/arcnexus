@@ -1,9 +1,6 @@
-schemaVersion: 4
 id: component-lint
 purpose: Read-only lint feedback for the active owner
 kind: command
-repository: arcnexus
-cwd: .
 category: lint
 command: node
 args:
@@ -11,6 +8,7 @@ args:
   - --no-error-on-unmatched-pattern
   - --no-warn-ignored
   - context: ownedPaths
+cwd: .
 generatedDirectories: []
 artifacts: []
 prerequisites:

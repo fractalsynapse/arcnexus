@@ -1,6 +1,12 @@
-repository: arcnexus
-cwd: .
+id: check-setsid-prerequisite
+purpose: Project prerequisites
+kind: command
 category: cli-check
+command: setsid
+args:
+  - --version
+cwd: .
+network: true
 generatedDirectories:
   - .fixture-build
   - .test-build
@@ -8,12 +14,4 @@ generatedDirectories:
   - dist
   - node_modules
 artifacts: []
-network: true
-schemaVersion: 4
-id: check-setsid-prerequisite
-purpose: Project prerequisites
-kind: command
 prerequisites: []
-command: setsid
-args:
-  - --version

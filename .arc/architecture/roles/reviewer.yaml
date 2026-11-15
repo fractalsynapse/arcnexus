@@ -1,4 +1,3 @@
-schemaVersion: 4
 id: reviewer
 purpose: Render one independent verdict against acceptance and evidence
 responsibilities:

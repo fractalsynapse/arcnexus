@@ -1,12 +1,10 @@
-schemaVersion: 4
 id: publish-delivery
 purpose: Advance independently verified deliveries through the captured staging workflow
 kind: upstream
+category: collaboration
 action: delivery.publish
-repository: arcnexus
+cwd: .
 targetBranch: staging
 automaticMerge: true
-cwd: .
-category: collaboration
 generatedDirectories: []
 artifacts: []

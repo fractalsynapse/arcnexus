@@ -1,4 +1,3 @@
-schemaVersion: 6
 id: report
 type: library
 parentId: cli-package
@@ -58,8 +57,6 @@ activities:
         run, assignment and verification evidence without changing authority; refuse on unmet behaviour rather than
         style.',
       ]
-operations:
-  report-format: [agent]
 owns: [.arc/learning, src/library/report, tests/library/report, docs/library/report]
 api:
   - { module: src/library/report/resource-query.ts }

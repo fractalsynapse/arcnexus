@@ -1,6 +1,0 @@
-schemaVersion: 2
-id: node
-adapter: node
-outputRoot: .test-build
-preparation: []
-run: component-tests

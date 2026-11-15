@@ -1,6 +1,15 @@
-repository: arcnexus
-cwd: .
+id: validate-architecture-and-guidance
+purpose: Validate architecture and guidance
+kind: command
 category: cli-check
+command: node
+args:
+  - dist/cli.js
+  - validate
+  - --project
+  - .
+cwd: .
+network: true
 generatedDirectories:
   - .fixture-build
   - .test-build
@@ -8,16 +17,5 @@ generatedDirectories:
   - dist
   - node_modules
 artifacts: []
-network: true
-schemaVersion: 4
-id: validate-architecture-and-guidance
-purpose: Validate architecture and guidance
-kind: command
 prerequisites:
   - verify-guidance-validation
-command: node
-args:
-  - dist/cli.js
-  - validate
-  - --project
-  - .

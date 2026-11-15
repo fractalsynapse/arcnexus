@@ -1,9 +1,6 @@
-schemaVersion: 4
 id: report-format
 purpose: Read-only formatting feedback before evaluating report method sizes
 kind: command
-repository: arcnexus
-cwd: .
 category: lint
 command: node
 args:
@@ -11,6 +8,7 @@ args:
   - --check
   - src/library/report
   - tests/library/report
+cwd: .
 generatedDirectories: []
 artifacts: []
 prerequisites: []

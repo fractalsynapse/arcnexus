@@ -1,6 +1,13 @@
-repository: arcnexus
-cwd: .
+id: check-node-prerequisite
+purpose: Project prerequisites
+kind: command
 category: cli-check
+command: node
+args:
+  - -e
+  - if(process.versions.node.split('.')[0]!=='22')process.exit(1)
+cwd: .
+network: true
 generatedDirectories:
   - .fixture-build
   - .test-build
@@ -8,13 +15,4 @@ generatedDirectories:
   - dist
   - node_modules
 artifacts: []
-network: true
-schemaVersion: 4
-id: check-node-prerequisite
-purpose: Project prerequisites
-kind: command
 prerequisites: []
-command: node
-args:
-  - -e
-  - if(process.versions.node.split('.')[0]!=='22')process.exit(1)

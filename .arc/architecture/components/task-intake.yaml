@@ -1,4 +1,3 @@
-schemaVersion: 6
 id: task-intake
 type: library
 parentId: cli-package
@@ -62,14 +61,11 @@ activities:
         Judge the candidate against the stated acceptance and the standards in force for Direct prompt
         tasks and independently assess goals and deliveries; refuse on unmet behaviour rather than style.,
       ]
-operations:
-  track-issue: [agent]
 owns:
   [
     .arc/plans,
     src/library/task-intake,
     tests/library/task-intake,
-    scripts/direction-corpus.json,
     docs/library/task-intake,
   ]
 api:

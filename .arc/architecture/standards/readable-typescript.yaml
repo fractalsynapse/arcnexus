@@ -1,6 +1,4 @@
-schemaVersion: 1
 id: readable-typescript
-owner: foundation
 purpose: Keep maintained TypeScript understandable and verifiable
 applicability: Maintained application, tooling and test code
 document: docs/foundation/typescript-standard.md

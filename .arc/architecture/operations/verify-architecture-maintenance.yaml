@@ -1,6 +1,13 @@
-repository: arcnexus
-cwd: .
+id: verify-architecture-maintenance
+purpose: Verify architecture-maintenance
+kind: command
 category: cli-check
+command: npm
+args:
+  - run
+  - check
+cwd: .
+network: true
 generatedDirectories:
   - .fixture-build
   - .test-build
@@ -8,13 +15,4 @@ generatedDirectories:
   - dist
   - node_modules
 artifacts: []
-network: true
-schemaVersion: 4
-id: verify-architecture-maintenance
-purpose: Verify architecture-maintenance
-kind: command
 prerequisites: []
-command: npm
-args:
-  - run
-  - check

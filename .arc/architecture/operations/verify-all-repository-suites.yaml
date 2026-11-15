@@ -1,6 +1,13 @@
-repository: arcnexus
-cwd: .
+id: verify-all-repository-suites
+purpose: Verify all repository suites
+kind: command
 category: cli-check
+command: node
+args:
+  - --test
+  - .test-build/**/*.test.js
+cwd: .
+network: true
 generatedDirectories:
   - .fixture-build
   - .test-build
@@ -8,15 +15,6 @@ generatedDirectories:
   - dist
   - node_modules
 artifacts: []
-network: true
-schemaVersion: 4
-id: verify-all-repository-suites
-purpose: Verify all repository suites
-kind: command
 prerequisites:
   - verify-guidance-validation
   - prepare-tests
-command: node
-args:
-  - --test
-  - .test-build/**/*.test.js

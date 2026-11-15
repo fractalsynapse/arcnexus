@@ -1,4 +1,3 @@
-schemaVersion: 4
 id: designer
 purpose: Express acceptance as a test before anything is built
 responsibilities:

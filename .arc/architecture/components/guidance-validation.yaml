@@ -1,4 +1,3 @@
-schemaVersion: 6
 id: guidance-validation
 type: library
 parentId: cli-package
@@ -52,9 +51,6 @@ activities:
         Judge the candidate against the stated acceptance and the standards in force for Validate guidance
         metadata and inventory instructions without semantic approval; refuse on unmet behaviour rather than style.,
       ]
-operations:
-  guidance-build: [agent]
-  verify-guidance-validation: [verify]
 owns:
   [
     src/library/guidance-validation,

@@ -1,4 +1,3 @@
-schemaVersion: 6
 id: cli-package
 type: package
 parentId: arcnexus
@@ -8,8 +7,3 @@ objectives:
 constraints:
   - The host validates dynamically selected existing package owners against
     captured authority; upstream effects require declared host operations.
-repository: arcnexus
-classification:
-  - path: docs/acceptance
-    kind: documentation
-activities: {}

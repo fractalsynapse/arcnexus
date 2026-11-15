@@ -1,9 +1,6 @@
-schemaVersion: 4
 id: guidance-validation
 purpose: Check tracked skill metadata and instruction readability
 kind: command
-repository: arcnexus
-cwd: .
 category: cli-check
 command: node
 args:
@@ -11,6 +8,7 @@ args:
   - validate
   - --project
   - .
+cwd: .
 generatedDirectories: []
 artifacts: []
 prerequisites:

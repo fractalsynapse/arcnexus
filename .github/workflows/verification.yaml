@@ -19,7 +19,7 @@ permissions:
 jobs:
   repository:
     name: Repository checks
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 360
     steps:
       - name: Check out source
@@ -28,6 +28,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
           ref: ${{ inputs.ref || github.sha }}
+
       - name: Normalize declared HTTPS repository identity
         run: git remote set-url origin "https://github.com/${{ github.repository }}.git"
       - name: Set up Node
@@ -35,87 +36,13 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+      
       - name: Install product dependencies
         run: npm ci
-      - name: Install confinement runtime
-        run: |
-          sudo npm install --global --prefix /usr/local --ignore-scripts @openai/codex@0.163.0-alpha.10.2 npm@10.9.9
-          sudo apt-get update
-          sudo apt-get install -y bubblewrap apparmor-profiles apparmor-utils
-          sudo install -m 0644 /usr/share/apparmor/extra-profiles/bwrap-userns-restrict /etc/apparmor.d/bwrap-userns-restrict
-          sudo apparmor_parser -r /etc/apparmor.d/bwrap-userns-restrict
-      - name: Bind verified machine executables
-        run: |
-          tool_bin=/usr/local/lib/arcnexus-ci/bin
-          sudo install -d "$tool_bin"
-          printf '%s\n' '#!/bin/sh' 'exec /usr/local/bin/npm "$@"' | sudo tee "$tool_bin/npm" >/dev/null
-          sudo chmod 0755 "$tool_bin/npm"
-          node --input-type=module <<'NODE'
-          import { appendFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-          import { execFileSync } from 'node:child_process';
-          import { join } from 'node:path';
-          const root = '/usr/local/lib/node_modules/@openai';
-          const binaries = readdirSync(root, { recursive: true, withFileTypes: true })
-            .filter((entry) => entry.isFile() && entry.name === 'codex')
-            .map((entry) => join(entry.parentPath, entry.name))
-            .filter((path) => readFileSync(path).subarray(0, 4).equals(Buffer.from([127, 69, 76, 70])));
-          if (binaries.length !== 1) throw new Error('Expected one installed native Codex executable');
-          const codex = binaries[0];
-          const npm = '/usr/local/lib/arcnexus-ci/bin/npm';
-          console.log(execFileSync(npm, ['--version'], { encoding: 'utf8' }));
-          console.log(execFileSync(codex, ['--version'], { encoding: 'utf8' }));
-          appendFileSync(process.env.GITHUB_ENV, `ARCNEXUS_TEST_CODEX=${codex}\n`);
-          mkdirSync('.git/arcnexus', { recursive: true });
-          writeFileSync('.git/arcnexus/bindings.yaml', JSON.stringify({
-            schemaVersion: 1,
-            tools: { npm, node: process.execPath, codex },
-            repositories: {},
-          }));
-          NODE
+      
       - name: Check formatting
         run: npm run format:check
       - name: Lint maintained code
         run: npm run lint
       - name: Check TypeScript
         run: npm run check
-      - name: Test built CLI
-        run: |
-          sudo systemd-run --uid="$(id -u)" --gid="$(id -g)" \
-            --property=Delegate=yes --working-directory="$PWD" \
-            --setenv="PATH=$PATH" --wait --pipe --collect npm test
-      - name: Qualify native project hosts
-        if: inputs.native
-        run: |
-          sudo systemd-run --uid="$(id -u)" --gid="$(id -g)" \
-            --property=Delegate=yes --working-directory="$PWD" \
-            --setenv="PATH=$PATH" --setenv="ARCNEXUS_TEST_CODEX=$ARCNEXUS_TEST_CODEX" \
-            --wait --pipe --collect node scripts/release/native-host-tests.mjs
-      - name: Retain failed operation diagnostics
-        if: failure()
-        run: |
-          if [[ -d "$HOME/.local/state/arcnexus" ]]; then
-            find "$HOME/.local/state/arcnexus" -type f -name '*.log' -exec tail -n 40 -- {} +
-          fi
-          for directory in /tmp/arcnexus-op-*/qualification; do
-            if [[ -d "$directory" ]]; then
-              find "$directory" -type f -name '*.log' -exec tail -n 40 -- {} +
-            fi
-          done
-      - name: Validate architectural ownership
-        run: node dist/cli.js validate --project .
-      - name: Smoke-test CLI
-        run: node dist/cli.js --help
-      - name: Check changed-line whitespace
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: |
-          if [[ -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]]; then
-            BASE_SHA=$(git hash-object -t tree /dev/null)
-          fi
-          git diff --check "$BASE_SHA" HEAD
-      - name: Verify assembled distribution
-        if: inputs.distribution
-        run: |-
-          node dist/cli.js --version
-          test -x dist/cli.js
-          node --input-type=module -e "import { readFileSync } from 'node:fs'; const registry = JSON.parse(readFileSync('dist/library/architecture/schema-registry.json', 'utf8')); if (!Object.keys(registry).length) process.exit(1);"

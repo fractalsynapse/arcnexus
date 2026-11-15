@@ -1,6 +1,0 @@
-schemaVersion: 4
-workspace:
-  primary:
-    id: identity
-    repository: https://example.invalid/identity.git
-  dependencies: []
