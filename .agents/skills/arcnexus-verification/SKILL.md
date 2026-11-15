@@ -12,8 +12,9 @@ Apply [AGENTS.md](../../../AGENTS.md) and
 and [current MVP](../../../docs/plans/self-development-mvp.md).
 
 For changes to the shared Agent interface, walk through director, steward and
-reviewer scope. Check inspect-to-harness parity, refused observations or operations,
-and the independent reviewer boundary. Use the
+reviewer scope. Check inspect-to-harness parity and verify that a capability
+admitted for one activity is refused in another when outside scope. Check the
+host-only integration and independent reviewer boundaries. Use the
 [Agent proposal](../../../packages/agent/contract.md) for the acceptance scenarios
 under review.
 

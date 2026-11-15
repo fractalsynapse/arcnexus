@@ -332,8 +332,8 @@ contracts:
   file: packages/agent/contract.md
   owner: agent
   stage: proposed
-  digest: 8ff7692aec022ab513cca5c6d6afff36a57e01cd5fda368cb9f34964e93731a7
+  digest: c7505c67a76f1a3957b8ec8b3c4d71a81d407e10cd83d11d0312005ed474711d
   dependsOn:
   - arcnexus/architecture-model
   - arcnexus/execution
-  scenarios: 6
+  scenarios: 8

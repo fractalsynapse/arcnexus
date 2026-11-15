@@ -40,7 +40,9 @@ Agent is the central conceptual model of ArcNexus. Use one scoped Agent interfac
 for the director, component stewards and independent reviewer. Applications and
 plugins inspect, activate or manage those agents through their public boundary.
 Read the [Agent contract proposal](packages/agent/contract.md) for the shared view
-of purpose, instructions, observations, standards and allowed operations.
+of purpose, instructions, observations, standards and allowed operations. Resolve
+the current activity from the captured catalog and plan position. Activities select
+the Agent's role, profile and capabilities for the work at hand.
 
 ## Direction and evidence
 
