@@ -33,7 +33,23 @@ class WorkdaysTests {
    */
   workdayInspectionRejectsOverlapInvalidEdgesAndUnsupportedVersions(t: TestContext) {
     const f = fixture(t);
-    for (const [change, refusal] of [
+    for (const [change, refusal] of this.refusalCases(f)) {
+      change();
+      assert.throws(() => resolveWorkday(f.path, f.repo), refusal);
+      f.reset();
+    }
+    assert.equal(existsSync(f.state), false);
+  }
+
+  /**
+   * The three manifest defects, each paired with the diagnostic that must name it.
+   *
+   * The overlap case refuses in the catalog rather than in the workday resolver: two owners cannot both
+   * claim `source.txt`, so ownership rejects it before `resolveWorkday` reaches its own scope check at
+   * `workday-config.ts:199`, which authored overlap therefore cannot exercise.
+   */
+  private refusalCases(f: any): [() => void, RegExp][] {
+    return [
       [
         () => {
           f.manifest.dependency.to = 'sample';
@@ -42,12 +58,13 @@ class WorkdaysTests {
         /Invalid two-owner dependency edge/,
       ],
       [
-        () => {
-          f.authorDependency(['dependency.txt', 'dependency-docs', 'dependency-tests', 'source.txt']);
-        },
-        // Overlapping write scope is refused one layer earlier than the workday rule: two owners cannot
-        // both claim `source.txt`, so the catalog rejects it before `resolveWorkday` reaches its own
-        // scope check (`workday-config.ts:199`), which authored overlap therefore cannot exercise.
+        () =>
+          f.authorDependency([
+            'dependency.txt',
+            'dependency-docs',
+            'dependency-tests',
+            'source.txt',
+          ]),
         /Overlapping ownership: dependency \/ sample: source\.txt/,
       ],
       [
@@ -57,12 +74,7 @@ class WorkdaysTests {
         },
         /Invalid workday: .*schemaVersion/,
       ],
-    ] as [() => void, RegExp][]) {
-      change();
-      assert.throws(() => resolveWorkday(f.path, f.repo), refusal);
-      f.reset();
-    }
-    assert.equal(existsSync(f.state), false);
+    ];
   }
 
   /** Verifies that standalone execution retains host checked checkpoint evidence. */
