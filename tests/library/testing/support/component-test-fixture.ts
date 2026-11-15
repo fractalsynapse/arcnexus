@@ -99,6 +99,12 @@ export class ComponentTestFixture {
       executionProfile: 'luna',
       reads: ['.'],
       defaultPackage: 'package',
+      // Execution authority is explicit: `PlatformExecution.director()` refuses a platform that names
+      // neither a director nor a reviewer, so every catalog that reaches execution — including any
+      // assignment resolved through this fixture — has to state both. `sample` is the leaf that
+      // declares a research activity, which is what makes it eligible.
+      director: { component: 'sample', profile: 'luna' },
+      reviewerProfile: 'luna',
       verificationInputs: [],
     });
     this.put('.arc/architecture/components/package.yaml', {
