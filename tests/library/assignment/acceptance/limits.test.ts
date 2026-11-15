@@ -44,10 +44,19 @@ class ExecutionLimitTests {
     assert.match(result.stderr, /luna\.yaml|execution-profile/i, result.stderr);
   }
 
-  /** Removes the optional limits from the authored profile, optionally restating its version. */
+  /**
+   * Removes the optional limits from the authored profile, optionally restating its version.
+   *
+   * The commit is conditional: no authored profile shape carries budgets any more, because
+   * `execution-context.ts:208` refuses a document that declares them, so deleting keys a fixture
+   * document already omits changes no bytes and `git commit` would fail on an empty change instead of
+   * on the subject under test. What the scenario proves is unaffected — resolution must invent nothing,
+   * whether or not the document once carried a budget — and the version-restating case still commits.
+   */
   private stripLimits(fixture: ReturnType<typeof workflowFixture>, schemaVersion?: number): void {
     const path = join(fixture.repo, '.arc/architecture/execution-profiles/luna.yaml');
-    const profile = JSON.parse(readFileSync(path, 'utf8'));
+    const before = readFileSync(path, 'utf8');
+    const profile = JSON.parse(before);
     if (schemaVersion !== undefined) profile.schemaVersion = schemaVersion;
     for (const key of [
       'timeoutSeconds',
@@ -57,7 +66,9 @@ class ExecutionLimitTests {
       'maxOperationCalls',
     ])
       delete profile[key];
-    writeFileSync(path, JSON.stringify(profile));
+    const after = JSON.stringify(profile);
+    if (after === before) return;
+    writeFileSync(path, after);
     fixture.commit();
   }
 
