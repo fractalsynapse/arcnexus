@@ -10,7 +10,7 @@ import { registerSuite } from '../../../../dist/library/testing/suite.js';
 
 /** Exercises the platform as the only authored source of new execution defaults. */
 class PlatformExecutionScenarios {
-  /** Rejects mixed executable families before either public mode can create a host. */
+  /** Rejects mixed executable families before the delivered public mode can create a host. */
   legacyEnvironment(t: TestContext): void {
     const fixture = this.fixture(t);
     const path = '.arc/architecture/environment.json';
@@ -34,21 +34,34 @@ class PlatformExecutionScenarios {
     assert.equal(fixture.run('validate').status, 2, fixture.run('validate').stderr);
   }
 
-  /** Checks both option-free entry points without allowing a stalled host to hang qualification. */
+  /**
+   * Checks the option-free entry points that can reach catalog loading, without a stalled host hanging qualification.
+   *
+   * `task run` is the delivered public mode, so it must carry the architecture refusal. `workday start` is a
+   * reserved command (GW-11) whose refusal happens before the catalog is read, so it can never observe this
+   * diagnostic; it is asserted here only to keep the probe list honest about which surface exists. The
+   * reservation itself belongs to `tests/gateway/cli/acceptance/execution-migration.test.ts`.
+   */
   private assertStartupRejected(root: string, diagnostic: RegExp): void {
-    for (const args of [
-      ['task', 'run', 'Inspect purpose'],
-      ['workday', 'start'],
-    ]) {
-      const result = spawnSync(process.execPath, [resolve('dist/cli.js'), ...args], {
-        cwd: root,
-        encoding: 'utf8',
-        env: { ...process.env, ARCNEXUS_STATE_DIR: root + '-state' },
-        timeout: 15_000,
-      });
-      assert.equal(result.status, 2, result.stderr);
-      assert.match(result.stderr, diagnostic);
-    }
+    const startup = this.spawn(root, ['task', 'run', 'Inspect purpose']);
+    assert.equal(startup.status, 2, startup.stderr);
+    assert.match(startup.stderr, diagnostic);
+
+    const reserved = this.spawn(root, ['workday', 'start']);
+    assert.equal(reserved.status, 2, reserved.stderr);
+    assert.match(reserved.stderr, /not available in this build/i);
+    assert.doesNotMatch(reserved.stderr, diagnostic);
+  }
+
+  /** Runs one option-free CLI entry point inside the fixture checkout and captures its exit status and stderr. */
+  private spawn(root: string, args: string[]): { status: number | null; stderr: string } {
+    const result = spawnSync(process.execPath, [resolve('dist/cli.js'), ...args], {
+      cwd: root,
+      encoding: 'utf8',
+      env: { ...process.env, ARCNEXUS_STATE_DIR: root + '-state' },
+      timeout: 15_000,
+    });
+    return { status: result.status, stderr: String(result.stderr ?? '') };
   }
 
   /** Resolves prompt/workday defaults and director identity without a second execution file. */
