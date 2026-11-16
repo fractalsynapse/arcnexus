@@ -1,0 +1,59 @@
+id: reviewer
+kind: plugin
+purpose: Supply the final independent Agent assessment and derive lessons from task evidence.
+objectives:
+- measure: The verdict and any lessons cite observed checks, decisions or outcomes.
+constraints:
+- failure: Assessment writes candidate files, changes acceptance or invents an observation.
+owns:
+- packages/reviewer
+- .arc/learning
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+    - Trace a finding or lesson to the actual task evidence.
+    operations: []
+    standards: []
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+    - Document the distinction between verdicts, lessons and approved standards.
+    operations: []
+    standards: []
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+    - Exercise independent review, rejected criteria and evidence-linked lessons.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    instructions:
+    - Return the projected verdict and lesson records through the shared Agent interface.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Check the plugin change without issuing the task’s independent verdict.
+    operations: []
+    standards:
+    - readable-typescript
+  assessment:
+    role: reviewer
+    profile: gpt-astra
+    instructions:
+    - Bind the verdict to the assembled-candidate digest.
+    - Return any transferable lesson with the execution evidence that supports it.
+    operations: []
+    standards: []

@@ -4,6 +4,18 @@
 
 ### Changed
 
+- Define the Cordis restart architecture and initial operator CLI (#454). Move plugin
+  contracts beside their owners, record the approved lock changes, and replace the old
+  catalog and lifecycle guidance with one sequential host task path. Keep historical
+  guides and evidence in Git. Propose a shared Agent interface for inspection and
+  scoped director, steward and reviewer activations. Declare per-component
+  activities and separate the CLI application from the shared Commands SDK.
+  Propose Team for eligible steward and resource ownership views. Give Manager,
+  Release, Architecture and Direction distinct stewardship. Make final
+  Reviewer feedback return to Direction through the shared Agent loop and record
+  the accepted Reviewer and learning contract. Verify the specification in CI
+  and require the executable tooling checks once product source or tests exist.
+
 - **A strategy map now states what is authoritative for the clean implementation** (#452):
   `docs/plans/strategy-map.md` gives the reading order — the model in `.arc/architecture`, then the locked
   contracts in `docs/interface`, then the two documents headed "Status: architecture, authoritative", then
@@ -244,7 +256,7 @@ our confinement passes explicitly. Evidence retained outside source at
   no widened filesystem access, no elevated approval, caller environment and exit status forwarded,
   and a no-op when delegation is already present so nothing nests. With this, the operations
   preparation suites ran locally for the first time. See
-  [scope-wrapped engineering commands](docs/foundation/scope-execution.md). (#389)
+  [scope-wrapped engineering commands](https://github.com/fractalsynapse/arcnexus/blob/d15188e84ff9d12dbe262d4395d0ca4bf2b94ae9/docs/foundation/scope-execution.md). (#389)
 
 - **A failed dependency preparation no longer costs the whole toolchain.** Setup operations declare
   disposable outputs (`node_modules`, `.test-build`, `dist`) which were deleted _before_ the

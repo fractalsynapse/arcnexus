@@ -1,0 +1,50 @@
+id: execution
+kind: plugin
+purpose: Activate stewards in one task worktree with scoped edits and supervised host operations.
+objectives:
+- measure: Cancellation leaves one recorded outcome and no live managed descendants.
+constraints:
+- failure: An edit crosses ownership, changes a lock or overwrites stale content.
+owns:
+- packages/execution
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+    - Identify which host boundary governs the workspace, activation or operation.
+    operations: []
+    standards: []
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+    - Specify the observed execution, refusal and cancellation behavior.
+    operations: []
+    standards: []
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+    - Exercise checked edits, stale hashes, host confinement and descendant cancellation.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    instructions:
+    - Use one task worktree and supervise only captured operations and harness capabilities.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Check that inspection, activation and refusal use the same captured identity and scope.
+    operations: []
+    standards:
+    - readable-typescript

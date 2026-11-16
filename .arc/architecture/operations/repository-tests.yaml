@@ -1,0 +1,8 @@
+id: repository-tests
+kind: command
+category: integration-test
+command: npm
+args:
+- test
+cwd: .
+network: false

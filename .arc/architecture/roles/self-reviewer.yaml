@@ -1,0 +1,7 @@
+id: self-reviewer
+purpose: Review the steward's own work before handing it to independent verification
+responsibilities:
+  - Inspect the actual diff and owner check evidence against the milestone
+  - Report gaps and observations for the assembled task review
+instructions:
+  - Record observations without issuing the independent acceptance verdict

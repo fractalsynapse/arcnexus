@@ -1,0 +1,49 @@
+id: project
+kind: project
+purpose: Maintain the charter, project-wide intent and the common development plan.
+objectives:
+- measure: The charter and development direction explain the accepted project outcome and link to its
+    owners.
+constraints:
+- failure: Project guidance contradicts a locked contract or grants authority outside the catalog.
+owns:
+- LICENSE
+- docs/charter.md
+- docs/dev.md
+- docs/plans
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+    - Identify the project objective and relevant locked clauses.
+    operations: []
+    standards: []
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+    - Describe the accepted project direction and link to accountable owners.
+    operations: []
+    standards: []
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+    - Walk through the stated project outcome and the evidence required to establish it.
+    operations: []
+    standards: []
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    instructions:
+    - Keep the charter and cross-project delivery plan aligned with the accepted direction.
+    operations: []
+    standards: []
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Check that project documentation preserves owner boundaries and release authority.
+    operations: []
+    standards: []

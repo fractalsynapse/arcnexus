@@ -1,0 +1,9 @@
+id: repository-lint
+kind: command
+category: lint
+command: npm
+args:
+- run
+- lint
+cwd: .
+network: false

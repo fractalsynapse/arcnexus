@@ -1,8 +1,0 @@
-id: comment-issue
-purpose: Record meaningful progress on the retained tracking issue
-kind: upstream
-category: collaboration
-action: issue.comment
-cwd: .
-generatedDirectories: []
-artifacts: []

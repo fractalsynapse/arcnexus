@@ -3,10 +3,9 @@ model: gpt-6-luna
 reasoning: medium
 webSearch: live
 operationCategories:
-  - build
-  - unit-test
-  - integration-test
-  - cli-check
-  - http-check
-  - lint
-  - collaboration
+- build
+- unit-test
+- integration-test
+- cli-check
+- http-check
+- lint

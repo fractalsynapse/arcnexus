@@ -22,14 +22,14 @@ effects or failure behavior. Types already express parameter shapes; do not add
 repetitive `@param` annotations or comments that merely repeat a name.
 
 ```ts
-/** Retains immutable assignment input for later authority checks. */
-class AssignmentSnapshot {
+/** Retains immutable task input for later authority checks. */
+class TaskSnapshot {
   /** Retains the immutable input used by subsequent revision checks. */
   constructor(private readonly source: Readonly<Assignment>) {}
 
   /** Rejects execution when the caller-supplied revision differs from capture. */
   assertRevision(revision: string): void {
-    if (revision !== this.source.revision) throw new Error('Stale assignment');
+    if (revision !== this.source.revision) throw new Error('Stale task');
   }
 }
 ```
@@ -39,6 +39,4 @@ then leave a blank line before declarations. Logical paragraphs inside methods a
 a review concern: group validation, transformation and side effects where useful.
 Do not extract trivial wrappers or compress statements to satisfy length checks.
 
-`arcnexus/documentation` and `arcnexus/spacing` provide syntax checks through the
-normal lint operation and CI. Inline suppression is disabled. Header presence does
-not prove explanatory quality; review names, comments and control flow together.
+Lint checks header presence and spacing. Review names, comments and control flow for explanatory quality.

@@ -1,64 +1,56 @@
 id: release
-type: release
-parentId: cli-package
-purpose: Verify delivery candidates and own future container packaging
-objectives: [
-    'Verify development, integrated staging, and production candidates',
-    Maintain delivery workflows and
-    future container packaging without automatic publication,
-  ]
-constraints: [
-    Do not weaken independent acceptance to make candidate work pass,
-    Keep generated output separate from
-    maintained source,
-  ]
+kind: plugin
+purpose: Maintain repository release infrastructure and preserve the human production gate.
+objectives:
+- measure: Release checks and delivery metadata describe the candidate and actual observed repository
+    gates.
+constraints:
+- failure: A workflow bypasses required verification, weakens staging gates or exercises human production
+    authority.
+owns:
+- packages/release
+- .github
+- .gitignore
+- CHANGELOG.md
+- docs/release
 activities:
   research:
     role: researcher
-    profile: luna
+    profile: gpt-astra
+    instructions:
+    - Trace workflow triggers, ignored outputs and release observations to the governing policy.
     operations: []
-    instructions: [
-        "Establish what Verify delivery candidates and own future container packaging means in practice
-        from this component's own sources and retained evidence before proposing any change to .github, docker.",
-      ]
+    standards: []
   documentation:
     role: technical-writer
-    profile: luna
+    profile: gpt-sol
+    instructions:
+    - Keep release guidance and developer-visible changelog entries consistent with verified behavior.
     operations: []
-    instructions: [
-        'Keep the documentation under docs/release describing Verify delivery candidates and own future
-        container packaging as delivered behaviour, never as intent.',
-      ]
+    standards: []
   testing:
     role: designer
-    profile: luna
-    operations: []
-    instructions: [
-        Express acceptance for Verify delivery candidates and own future container packaging as checks
-        over its declared public contract in tests/release; observe the failure before changing behaviour.,
-      ]
+    profile: gpt-sol
+    instructions:
+    - Exercise applicable repository workflow checks and the protected release boundary.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
   implementation:
     role: systems-engineer
-    profile: luna
-    operations: []
-    instructions: [
-        'Change only what this goal requires inside .github, docker, preserving the public contract and
-        the ownership boundaries that declare it.',
-      ]
+    profile: gpt-luna
+    instructions:
+    - Maintain GitHub workflows and release housekeeping under the configured repository policy.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
   review:
-    role: reviewer
-    profile: luna
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Check that workflow changes preserve staging gates and human authority over production.
     operations: []
-    instructions: [
-        Judge the candidate against the stated acceptance and the standards in force for Verify delivery
-        candidates and own future container packaging; refuse on unmet behaviour rather than style.,
-      ]
-  release:
-    role: release-engineer
-    profile: luna
-    operations: []
-    instructions: [
-        'Publish only what the assembled verification accepted, and record exactly what shipped for Verify
-        delivery candidates and own future container packaging.',
-      ]
-owns: [.github, docker, tests/release, docs/release, scripts/release]
+    standards:
+    - readable-typescript

@@ -1,0 +1,9 @@
+id: repository-format
+kind: command
+category: lint
+command: npm
+args:
+- run
+- format:check
+cwd: .
+network: false

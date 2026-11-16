@@ -1,0 +1,9 @@
+id: repository-types
+kind: command
+category: build
+command: npm
+args:
+- run
+- check
+cwd: .
+network: false

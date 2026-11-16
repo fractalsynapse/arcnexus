@@ -1,0 +1,50 @@
+id: commands
+kind: plugin
+purpose: Expose shared inspection and task operations to application adapters.
+objectives:
+- measure: The CLI and an in-process consumer use the same structured operations.
+constraints:
+- failure: An SDK consumer must supply terminal arguments or use a second task lifecycle.
+owns:
+- packages/commands
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+    - Identify the structured input and outcome required by the current app adapter.
+    operations: []
+    standards: []
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+    - Specify the shared operations and structured results in the SDK contract.
+    operations: []
+    standards: []
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+    - Exercise inspection, task outcomes and cancellation through the in-process SDK.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    instructions:
+    - Delegate to the canonical Agent and task services through transport-neutral operations.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Check that adapters can use the SDK without terminal input, argv or exit-code semantics.
+    operations: []
+    standards:
+    - readable-typescript

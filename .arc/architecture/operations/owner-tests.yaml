@@ -1,0 +1,9 @@
+id: owner-tests
+kind: command
+category: integration-test
+command: npm
+args:
+- test
+- context: owner
+cwd: .
+network: false
