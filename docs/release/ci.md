@@ -21,5 +21,6 @@ separately from native host and live-agent qualification.
 ## Native confinement checks
 
 Run `ARCNEXUS_NATIVE_TESTS=1 npm test` to enable native confinement tests.
+When working only on Execution, `ARCNEXUS_NATIVE_TESTS=1 npm test -- execution` selects that owner's built suites.
 The Bubblewrap test is skipped by default in CI unless native tests are enabled
 with `ARCNEXUS_NATIVE_TESTS=1`.
