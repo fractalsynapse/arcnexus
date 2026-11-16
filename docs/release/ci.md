@@ -10,6 +10,8 @@ requests targeting `staging`, and the
 [Staging workflow](../../.github/workflows/staging.yaml) verifies pushes to
 `staging`. Both invoke the shared verification workflow.
 
+Follow [repository delivery verification](verification.md) to trace the pull request checks and the post-merge Staging workflow to the exact staging merge commit.
+
 Run `npm run check:specification` to check tracked source extensions, catalog
 references, ownership, contract digests and scenarios, documentation links, and
 skill metadata. The shared verification workflow always runs specification
