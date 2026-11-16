@@ -27,7 +27,9 @@ and keeps ArcNexus-specific release rules in this repository.
 - Use the least code that satisfies the accepted outcome. Define each responsibility,
   service shape and command once. Reuse its definition directly. Omit boilerplate,
   duplicate implementations and compatibility machinery for the previous runtime.
-- Apply the [TypeScript standard](docs/foundation/typescript-standard.md).
+- Author all maintained code in strict TypeScript, including tests, fixtures and
+  build and CI tooling. Follow the class and helper rules in the
+  [TypeScript standard](docs/foundation/typescript-standard.md).
   Add a seam for a real consumer or independently replaceable responsibility.
 - For behavioral changes, record intent first and observe a failing public regression
   before implementing. For refactors, preserve the behavioral evidence. Use only

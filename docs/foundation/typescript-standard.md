@@ -1,7 +1,14 @@
 # Readable TypeScript standard
 
-Use cohesive classes for lifecycle state and injected collaborators, and small pure
-functions for transformations. Keep purpose visible in names and group related
+Author all maintained source, tests, fixtures, configuration code and tooling in
+strict TypeScript (`.ts`). This applies to build and CI helpers as well as app and
+plugin code. Keep executable JavaScript out of manifests and workflows. The
+specification check rejects tracked JavaScript files. The compiler emits generated
+JavaScript into `dist/`.
+
+Use cohesive typed classes for lifecycle state, I/O and injected collaborators.
+Use small pure functions for transformations and keep entry points thin.
+Keep purpose visible in names and group related
 statements with whitespace. Explain invariants and failure behavior where they are
 not apparent from the signature. Do not extract meaningless wrappers to meet size
 limits or compress statements to hide complexity.
