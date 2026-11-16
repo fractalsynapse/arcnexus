@@ -44,6 +44,7 @@ export type Feedback =
   | {
       kind: 'supplier';
       milestone: string;
+      requester: string;
       owner: string;
       reason: string;
       evidence: readonly string[];
@@ -150,6 +151,34 @@ export function validateRevision(
     if (!unchanged(milestone.steps.slice(0, position), current.steps.slice(0, position)))
       throw new Error(`A revised plan must preserve completed Steps for ${milestone.id}`);
   }
+}
+
+/** Confirm a linked contribution is complete or runnable work is ahead of the paused milestone. */
+export function supplierIsScheduled(
+  before: Plan,
+  after: Plan,
+  feedback: Extract<Feedback, { kind: 'supplier' }>,
+  completed: number,
+  positions: ReadonlyMap<string, number>,
+): boolean {
+  const linked = before.milestones.findIndex(
+    ({ id }) => id === feedback.milestone && id !== feedback.requester,
+  );
+  if (linked >= 0 && before.milestones[linked]?.owner !== feedback.owner) return false;
+  if (linked >= 0 && linked < completed) return true;
+
+  const requester = after.milestones.findIndex(({ id }) => id === feedback.requester);
+  if (requester < completed) return false;
+  return after.milestones
+    .slice(completed, requester)
+    .some(
+      ({ id, owner, steps }) =>
+        owner === feedback.owner &&
+        (linked < 0 || id === feedback.milestone) &&
+        steps
+          .slice(positions.get(id) ?? 0)
+          .some(({ activity, inapplicable }) => activity !== 'release' && !inapplicable),
+    );
 }
 
 export { direct } from './native.js';

@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Run steward-requested corrections before resuming the activity that needs
+  them. Report a blocked revision when Direction leaves the required work
+  behind the requester (#495).
+
 ## [0.1.2]
 
 ### Changed

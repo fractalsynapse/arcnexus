@@ -49,7 +49,7 @@ export interface TaskSession {
 
 export type ActivityOutcome =
   | { kind: 'completed'; evidence: readonly string[] }
-  | Extract<Feedback, { kind: 'supplier' }>
+  | Omit<Extract<Feedback, { kind: 'supplier' }>, 'requester'>
   | Extract<DirectionResult, { kind: 'question' }>
   | { kind: 'blocked'; reason: string; evidence: readonly string[] };
 

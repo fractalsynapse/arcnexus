@@ -1,5 +1,6 @@
 import type { Context } from 'cordis';
 import {
+  supplierIsScheduled,
   validateCorrection,
   validatePlan,
   validateRevision,
@@ -132,6 +133,16 @@ class TaskRun {
     this.signal.throwIfAborted();
     validatePlan(this.session.capture, result.plan);
     if (this.plan) validateRevision(this.plan, result.plan, this.completed, this.activityPositions);
+    if (
+      this.plan &&
+      reason?.kind === 'supplier' &&
+      !supplierIsScheduled(this.plan, result.plan, reason, this.completed, this.activityPositions)
+    )
+      return stopped(
+        'blocked',
+        `The Director must schedule runnable supplier work for ${reason.owner} before ${reason.requester}`,
+        reason.evidence,
+      );
     if (reason?.kind === 'rejection')
       validateCorrection(result.plan, this.completed, reason.findings);
     this.plan = result.plan;
@@ -163,7 +174,7 @@ class TaskRun {
         const feedback = await this.answer(outcome);
         return 'reason' in feedback ? feedback : this.revise(feedback);
       }
-      if (outcome.kind === 'supplier') return this.revise(outcome);
+      if (outcome.kind === 'supplier') return this.revise({ ...outcome, requester: milestone.id });
       this.report({
         phase: 'activity',
         message: `Completed ${step.activity}`,

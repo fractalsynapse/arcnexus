@@ -40,14 +40,11 @@ export async function direct(
   feedback?: Feedback,
 ): Promise<DirectionResult> {
   const task = hostTask(session);
-  const revision = feedback
-    ? 'Preserve the exact Focus and completed milestones in their given order. For a rejection, append correction milestones with the original owner, criterion ID and description.'
-    : 'Plan the smallest sufficient changes for the goal. Keep the scope, owner and acceptance explicit.';
   const result = (await task.activate(
     agent,
     task.capture.project.director,
     {
-      assignment: { revision, ...shape, feedback },
+      assignment: { revision: revisionInstructions(feedback), ...shape, feedback },
       milestone: plan ?? 'Initial planning',
       acceptance: [],
       evidence: task.evidence.slice(),
@@ -59,4 +56,15 @@ export async function direct(
   if (result.kind === 'question' && (!result.question?.trim() || !Array.isArray(result.evidence)))
     throw new Error('The Director returned an invalid human question');
   return result;
+}
+
+/** Tell the Director which portions of the sequence the current feedback can change. */
+function revisionInstructions(feedback?: Feedback) {
+  if (!feedback)
+    return 'Plan the smallest sufficient changes for the goal. Keep the scope, owner and acceptance explicit.';
+  const preserve = 'Preserve the exact Focus, completed milestones in order, and completed Steps.';
+  if (feedback.kind === 'supplier') {
+    return `${preserve} Put runnable work for feedback.owner before feedback.requester so that work can finish before the paused activity resumes. Move the existing supplier if feedback.milestone links one, or reuse it if complete. Give distinct correction work its own milestone, even when the requester and supplier have the same owner.`;
+  }
+  return `${preserve} For a rejection, append correction milestones with the original owner, criterion ID and description.`;
 }

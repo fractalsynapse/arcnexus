@@ -64,7 +64,7 @@ function responseShape(milestone: string) {
     },
     supplier: {
       kind: 'supplier',
-      milestone,
+      milestone: `Existing supplier milestone ID when linking prior work, otherwise ${milestone}`,
       owner: 'supplier component ID',
       reason: 'required contribution',
       evidence: [],
