@@ -88,6 +88,10 @@ class TaskRun {
 
   /** Execute accepted milestones, re-plan on feedback and publish only an accepted candidate. */
   async execute(): Promise<TaskOutcome> {
+    const resumed = await this.services.delivery.resume?.(this.session, this.signal, (event) =>
+      this.report(event),
+    );
+    if (resumed) return resumed;
     this.report({ phase: 'planning', message: 'Director is planning the goal' });
     const initial = await this.services.direction.plan(this.session, this.signal);
     const blocked = await this.acceptPlan(initial);

@@ -87,6 +87,11 @@ export interface WorkflowServices {
     ): Promise<Verdict>;
   };
   delivery: {
+    resume?(
+      session: TaskSession,
+      signal: AbortSignal,
+      progress: TaskObserver['progress'],
+    ): Promise<TaskOutcome | undefined>;
     integrate(
       session: TaskSession,
       candidate: Candidate,

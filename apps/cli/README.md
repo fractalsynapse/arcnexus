@@ -67,3 +67,8 @@ source checkout under `${XDG_STATE_HOME:-$HOME/.local/state}/arcnexus`. Codex
 reads the worktree and returns structured edit proposals. The host applies
 checked edits and runs captured checks in a disposable networkless overlay.
 In JSON mode, progress uses stderr and the outcome is one JSON object on stdout.
+
+If publication is interrupted, invoke `task run` with the identical goal.
+ArcNexus resumes from the verified candidate and observes GitHub before taking
+another publication action. A matching remote branch, pull request or merge is
+reused.
