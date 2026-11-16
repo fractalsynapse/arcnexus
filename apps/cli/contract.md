@@ -6,13 +6,24 @@ Stage: **locked**. See the [registry](../../docs/interface/registry.yaml) for au
 
 The CLI app owns terminal input, output and exit codes. Its Cordis adapter
 delegates structured inspection and task operations to the shared
-[Commands SDK](../../packages/commands/contract.md). The CLI exposes `arcnexus inspect [component] [activity]` and
-`arcnexus task run "<goal>"` for the project resolved from the working directory.
+[Commands SDK](../../packages/commands/contract.md). The CLI exposes
+`arcnexus inspect <component> <activity>` and `arcnexus task run "<goal>"` for
+the project resolved from the working directory.
 
-Inspection renders the Agent view and request supplied by Commands from the
-production request builder. Resolve the same captured inputs as activation, identify runtime-only
-placeholders, and refuse unknown owners or activities. Inspection reads without
-model calls, writes, worktree creation or upstream effects.
+Inspection requires both positional arguments. Missing or extra arguments,
+an unknown component, and an activity absent from the component's explicit
+activity map are input errors with exit 2 and no effects. Use
+`arcnexus inspect director planning` for the captured Director binding and
+`arcnexus inspect reviewer assessment` for the captured Reviewer binding.
+Declared component IDs remain valid, including `arcnexus inspect direction planning`.
+Actor selectors still require an explicit activity.
+
+Inspection prints the complete context and request ArcNexus would pass to the
+Codex harness, including resolved instructions, scope, evidence descriptors,
+operations and applicable standards in production assembly order. Use the same
+request builder as activation. Show `<goal>` when no task goal is supplied and
+name other task-only values unavailable before admission. Inspection is local and
+read-only, with no model call, write, worktree, task admission or upstream effect.
 
 The foreground task streams progress and evidence references, asks genuine human
 questions, and honors SIGINT. Exit 0 represents the verified staging merge.
@@ -38,6 +49,9 @@ verbs, option modes and launch surfaces are reserved for later qualification.
 | GW-19 | The foreground task prompts for a genuine human gate and records the answer as evidence. |
 | GW-20 | `inspect` with an unknown component or an activity outside the declared set is exit 2 naming the valid values. |
 | GW-22 | Both commands delegate through the same structured SDK available to in-process callers. The CLI alone translates terminal arguments, progress and results into its transport. |
+| GW-23 | Bare `inspect`, an invocation with only one positional argument, and an invocation with extra arguments each exit 2 without effects. |
+| GW-24 | `inspect director planning` and `inspect reviewer assessment` resolve the captured special actor bindings. `inspect direction planning` remains a valid component and activity selection. |
+| GW-25 | Inspection prints the full ordered context and request from the activation builder. With matching inputs the payload matches the Codex adapter's input. Before admission it prints `<goal>` and names unavailable task-only values. |
 
 ## Deferred
 

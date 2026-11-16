@@ -76,14 +76,24 @@ contracts:
   file: apps/cli/contract.md
   owner: cli-app
   stage: locked
-  digest: 09f5d7c58bfda701f7321672e7ec965cb3ee18c4667659c8ca76a4da48a84656
+  digest: b8f6cfe1f12bec0d84b8075803c0bb9cecb73b2b54e95d90c0eb31120ee7722e
   dependsOn:
   - arcnexus/project
   - arcnexus/commands
-  scenarios: 14
+  scenarios: 17
   acceptedBy: Adrian Webb (architect)
   acceptedAt: '2026-11-15'
   history:
+  - stage: locked
+    digest: 09f5d7c58bfda701f7321672e7ec965cb3ee18c4667659c8ca76a4da48a84656
+    file: apps/cli/contract.md
+    owner: cli-app
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: '2026-11-15'
+    approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
+      Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
+    revision: f234dd2deb25ac66db535e70dc2b52afd07a9eee
+    note: 'Superseded by the approved inspect amendment in #456.'
   - stage: locked
     digest: 41ebb85f9fcf7e254064c048487b945ea2286edf45e8f743dfac951b5ebd40bc
     file: packages/cli/contract.md
@@ -113,8 +123,8 @@ contracts:
       list and the retired-command table no longer cover it
 
       '
-  approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
-    Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
+  approvalRecord: 'Architect approved the locked inspect amendment in Codex chat on 2026-11-15. Base:
+    f234dd2deb25ac66db535e70dc2b52afd07a9eee. Issue #456.'
 - id: arcnexus/architecture-model
   type: library
   file: packages/architecture/contract.md
