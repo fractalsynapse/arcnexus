@@ -89,6 +89,18 @@ test('DE-5: reuse a push or an open PR after a lost provider response', async ()
   ]);
 });
 
+test('DE-5: a closed retained PR is rejected after observation without mutation', async () => {
+  const actions = fixture({
+    url,
+    head: accepted.head,
+    target: accepted.target,
+    state: 'closed',
+    commit: null,
+  });
+  await assert.rejects(publish(accepted, actions), /Retained pull request cannot be resumed/);
+  assert.deepEqual(actions.calls, ['observe PR']);
+});
+
 test('DE-6: confirm an already merged candidate without any mutation', async () => {
   const actions = fixture({
     url,
