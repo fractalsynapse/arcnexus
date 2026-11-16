@@ -4,6 +4,10 @@
 
 ### Changed
 
+- Restore the app and plugin toolchain and run built suites in CI (#456). Pin Cordis
+  and verify app composition through a compiled integration suite. Describe the proposed
+  Workflow boundary between project planning, task execution and evidence.
+
 - Define the Cordis restart architecture and initial operator CLI (#454). Move plugin
   contracts beside their owners, record the approved lock changes, and replace the old
   catalog and lifecycle guidance with one sequential host task path. Keep historical

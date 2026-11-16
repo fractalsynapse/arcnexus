@@ -6,32 +6,6 @@
   "engines": {
     "node": ">=22.13 <23"
   },
-  "bin": {
-    "arcnexus": "dist/cli.js"
-  },
-  "scripts": {
-    "build": "tsc -p tsconfig.build.json && node .tool-build/build.js",
-    "check": "tsc --emitDeclarationOnly && tsc --noEmit && tsc -p tsconfig.tests.json --noEmit && tsc -p tsconfig.fixtures.json --noEmit && tsc -p tsconfig.tooling.json && tsc -p tsconfig.build.json --noEmit",
-    "scope": "node scripts/foundation/with-scope.mjs",
-    "test": "npm run build && node dist/library/testing/npm-tests.js",
-    "build:tests": "tsc -p tsconfig.build.json && node .tool-build/build.js --tests",
-    "lint": "eslint src tests scripts fixtures experiments/checks qualification eslint.config.ts",
-    "lint:fix": "npm run lint -- --fix",
-    "format:check": "node scripts/foundation/format-check.mjs --check",
-    "format": "node scripts/foundation/format-check.mjs --write",
-    "test:architecture": "npm run build && node dist/library/testing/npm-tests.js architecture",
-    "test:assignment": "npm run build && node dist/library/testing/npm-tests.js assignment",
-    "test:coordination-store": "npm run build && node dist/library/testing/npm-tests.js coordination-store",
-    "test:development-tooling": "npm run build && node dist/library/testing/npm-tests.js foundation",
-    "test:experiments": "npm run build && node dist/library/testing/npm-tests.js experiments",
-    "test:guidance-validation": "npm run build && node dist/library/testing/npm-tests.js guidance-validation",
-    "test:operations": "npm run build && node dist/library/testing/npm-tests.js operations",
-    "test:report": "npm run build && node dist/library/testing/npm-tests.js report",
-    "test:steward": "npm run build && node dist/library/testing/npm-tests.js steward",
-    "test:workday": "npm run build && node dist/library/testing/npm-tests.js workday",
-    "test:workspace": "npm run build && node dist/library/testing/npm-tests.js workspace",
-    "test:task-intake": "npm run build && node dist/library/testing/npm-tests.js task-intake"
-  },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@types/node": "22.20.5",
@@ -42,10 +16,17 @@
     "typescript-eslint": "8.72.1"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.32.2",
-    "@openai/codex-sdk": "0.166.0",
-    "ajv": "8.20.0",
+    "cordis": "4.0.0-rc.13",
     "typescript": "5.9.3",
     "yaml": "2.9.1"
+  },
+  "scripts": {
+    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc",
+    "check": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint --fix --max-warnings 0 --pass-on-no-patterns",
+    "format:check": "prettier --check --no-error-on-unmatched-pattern \"*.{ts,json}\" \"{apps,packages,scripts,fixtures}/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,json,yaml,yml}\"",
+    "format": "prettier --write",
+    "test": "npm run build && node dist/packages/foundation/scripts/test.js"
   }
 }

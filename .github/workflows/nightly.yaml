@@ -17,5 +17,4 @@ jobs:
   verify:
     uses: ./.github/workflows/verification.yaml
     with:
-      native: true
       ref: ${{ inputs.ref || 'staging' }}

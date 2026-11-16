@@ -29,6 +29,20 @@ follows the accepted sequence and does not create a second scheduler or store.
 workflow. An accepted staging result closes the task. Cancellation and blocking
 gates preserve the observed position and evidence.
 
+## Project and task loops
+
+Idea refinement, scaffolding, project instructions and specialized skills shape
+the authority for future tasks. The outer MVP plan names purpose, objectives and
+success measures, and constraints and failure measures. A task uses those captured
+inputs to produce its Focus, ordered milestones and checklists with acceptance
+references through the [plan template](../../.arc/architecture/plan-template.md).
+
+Each milestone updates the recorded plan and evidence. Review findings can send
+work back to Direction within the same task. Verified staging integration closes
+the task. The architect can use the observations to refine the next goal and
+guidance. Production release and verification of a published MVP belong to the
+separate [release boundary](../release/contract.md).
+
 ## Acceptance scenarios
 
 | ID | Observation |

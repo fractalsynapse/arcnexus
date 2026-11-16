@@ -457,5 +457,5 @@ contracts:
   - arcnexus/coordination
   - arcnexus/verification
   - arcnexus/delivery
-  digest: c9cbb31c03a7089930e935e4f675865bb6063219bb2be7a274b4aac1feaa81f5
+  digest: ece03f0ac8bb01254cc0fc99d98234a5812a4b4dc09884966999c35af8ec61ca
   scenarios: 4
