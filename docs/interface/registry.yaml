@@ -76,14 +76,33 @@ contracts:
   file: apps/cli/contract.md
   owner: cli-app
   stage: locked
-  digest: b8f6cfe1f12bec0d84b8075803c0bb9cecb73b2b54e95d90c0eb31120ee7722e
+  digest: c3588d4326bf7ce3493306ff7b8c114c23d008ae31ab95a9ea7bc3a85aba3055
   dependsOn:
   - arcnexus/project
   - arcnexus/commands
-  scenarios: 17
+  scenarios: 18
   acceptedBy: Adrian Webb (architect)
   acceptedAt: '2026-11-15'
   history:
+  - stage: locked
+    digest: 1ce7299c8a85074729088fcf15b6be3fa7af69d99cf646a284e6a7e64f2e096e
+    file: apps/cli/contract.md
+    owner: cli-app
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: '2026-11-15'
+    revision: 8c063c0fe248e41ebc6d057b6127b50050938f2f
+    approvalRecord: 'Architect approved the selected-activity request and native Codex guidance discovery
+      in Codex chat on 2026-11-15. Base: 651ff53c7cef014434ad389be0a76e640f1c1662. Issue #458, PR #459.'
+    note: Superseded by the approved general JSON output option in PR #459.
+  - stage: locked
+    digest: b8f6cfe1f12bec0d84b8075803c0bb9cecb73b2b54e95d90c0eb31120ee7722e
+    file: apps/cli/contract.md
+    owner: cli-app
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: '2026-11-15'
+    revision: 651ff53c7cef014434ad389be0a76e640f1c1662
+    approvalRecord: 'Architect approved the locked inspect amendment in Codex chat on 2026-11-15. Base: f234dd2deb25ac66db535e70dc2b52afd07a9eee. Issue #456.'
+    note: Superseded by the approved selected-activity request in PR #459.
   - stage: locked
     digest: 09f5d7c58bfda701f7321672e7ec965cb3ee18c4667659c8ca76a4da48a84656
     file: apps/cli/contract.md
@@ -123,14 +142,14 @@ contracts:
       list and the retired-command table no longer cover it
 
       '
-  approvalRecord: 'Architect approved the locked inspect amendment in Codex chat on 2026-11-15. Base:
-    f234dd2deb25ac66db535e70dc2b52afd07a9eee. Issue #456.'
+  approvalRecord: 'Architect approved the general --json option with rendered inspection by default
+    in Codex chat on 2026-11-15. Base: 8c063c0fe248e41ebc6d057b6127b50050938f2f. Issue #458, PR #459.'
 - id: arcnexus/architecture-model
   type: library
   file: packages/architecture/contract.md
   owner: architecture
   stage: locked
-  digest: 9cda2da6d79582be008fbfc5bff4fea0730758bad0ccc5f28bf025d9e3696ddc
+  digest: e2a3e234262bd23005f45083fa290ac0621cd9e05f60dca22dad1400e439907e
   dependsOn:
   - arcnexus/project
   - arcnexus/foundation
@@ -138,6 +157,15 @@ contracts:
   acceptedBy: Adrian Webb (architect)
   acceptedAt: '2026-11-15'
   history:
+  - stage: locked
+    digest: 9cda2da6d79582be008fbfc5bff4fea0730758bad0ccc5f28bf025d9e3696ddc
+    file: packages/architecture/contract.md
+    owner: architecture
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: '2026-11-15'
+    revision: 651ff53c7cef014434ad389be0a76e640f1c1662
+    approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
+    note: Superseded by the approved selected-activity request in PR #459.
   - stage: locked
     digest: 9cda2da6d79582be008fbfc5bff4fea0730758bad0ccc5f28bf025d9e3696ddc
     file: packages/architecture-model/contract.md
@@ -183,8 +211,8 @@ contracts:
     note: "proposed in #350 with three open questions; all answered by the architect \u2014 keep the integrity\
       \ split between architecture-model and execution, keep .arc/architecture editing a human act applied\
       \ from a proposal, and let each contract be owned by the component it describes\n"
-  approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
-    Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
+  approvalRecord: 'Architect approved the selected-activity request and native Codex guidance discovery
+    in Codex chat on 2026-11-15. Base: 651ff53c7cef014434ad389be0a76e640f1c1662. Issue #458, PR #459.'
   stewardshipRecord: 'Architect approved steward ownership, release relocation and the architecture component
     name in Codex chat on 2026-11-15. Base: ff08a26ce1f7b6fb8de0087e72c12884e1ad5c87. Issue #454.'
 - id: arcnexus/coordination
