@@ -6,6 +6,10 @@ identity, and keep staged integration distinct from production release. The
 [Delivery contract](../../packages/delivery/contract.md) defines the product flow and
 the [production release boundary](../../packages/release/contract.md) preserves human authority.
 
+After merging to staging, include the exact staging merge commit and a reference
+ to the Staging workflow run for that commit in the delivery record alongside the
+pull request checks, so both observations can be traced.
+
 Use the [issue template](../../.github/ISSUE_TEMPLATE/work-item.md) and
 [PR template](../../.github/pull_request_template.md). Report completed checks and
 remaining evidence explicitly.
