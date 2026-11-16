@@ -43,3 +43,24 @@ Add the general `--json` option for a structured result with the same prompt in
 arcnexus --json inspect director planning
 arcnexus inspect reviewer assessment --json
 ```
+
+## Run a task
+
+`arcnexus task run "<goal>"` submits one goal for the project resolved from the
+working directory. The [Commands SDK](../../packages/commands/contract.md)
+passes structured input, progress and cancellation between the caller and
+[Workflow](../../packages/workflow/contract.md). Direction owns planning and
+corrections, and Verification obtains the independent Reviewer verdict.
+The task succeeds when Delivery reports an observed staging merge.
+
+Run from a clean checkout at the captured staging head. Install the project
+dependencies there. The host uses Git, authenticated GitHub CLI, Bubblewrap and
+the executable in the project's local `tools.codex` binding. For the ArcNexus
+catalog that binding is `.git/arcnexus/bindings.yaml`. Set `schemaVersion: 1`
+and an absolute `tools.codex` path to an authenticated Codex installation.
+
+The host retains task metadata, output, and the issue worktree outside the
+source checkout under `${XDG_STATE_HOME:-$HOME/.local/state}/arcnexus`. Codex
+reads the worktree and returns structured edit proposals. The host applies
+checked edits and runs captured checks in a disposable networkless overlay.
+In JSON mode, progress uses stderr and the outcome is one JSON object on stdout.

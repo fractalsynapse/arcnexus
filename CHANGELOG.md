@@ -4,6 +4,10 @@
 
 ### Changed
 
+- Run `task run` through the sequential Workflow, with live Codex activations,
+  confined edits and checks, Reviewer corrections, and verified GitHub staging
+  delivery (#460).
+
 - Implement the read-only Cordis CLI inspection path (#458). Require a component
   and activity, resolve Director and Reviewer bindings, and print the complete
   shared model request with named task placeholders and source-labeled prompt sections.
