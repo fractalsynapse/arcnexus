@@ -19,3 +19,8 @@ Put suites in the owning app or plugin under `tests/unit`, `tests/integration`
 or `tests/acceptance`. The test runner derives the level and owner from that path
 and the catalog. Run `npm test` for all suites or `npm test -- <owner>` for one
 owner. Formatting and lint fixes take explicit owner paths.
+
+## ESLint rule regressions
+
+For rejected input, assert both the rule ID and message ID. For valid input,
+assert zero diagnostics.
