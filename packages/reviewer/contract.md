@@ -1,6 +1,6 @@
 # Reviewer plugin contract
 
-Stage: **proposed**. The [registry](../../docs/interface/registry.yaml) records its status.
+Stage: **locked**. The [registry](../../docs/interface/registry.yaml) records its status.
 
 Reviewer supplies the final read-only Agent through the project's explicit
 `reviewer/assessment` binding. [Verification](../verification/contract.md) owns the

@@ -446,9 +446,18 @@ contracts:
   type: library
   file: packages/reviewer/contract.md
   owner: reviewer
-  stage: proposed
+  stage: locked
   dependsOn:
   - arcnexus/agent
   - arcnexus/coordination
-  digest: 2bc811fc46e9aad20858e9a8635b6760cd8988d89bd2ab5e7f13024cd4bc30d6
+  digest: b0f2703dd3badf379d47c9f6647fe09d196b80790b477f37d82eea35b9f40495
   scenarios: 4
+  history:
+  - stage: proposed
+    digest: 2bc811fc46e9aad20858e9a8635b6760cd8988d89bd2ab5e7f13024cd4bc30d6
+    file: packages/reviewer/contract.md
+    revision: 036bf1932a98cb434179ff1f3be82e1c212e4990
+  acceptedBy: Adrian Webb (architect)
+  acceptedAt: '2026-11-15'
+  approvalRecord: 'Architect approved the Reviewer proposal in Codex chat on 2026-11-15. Base: 036bf1932a98cb434179ff1f3be82e1c212e4990.
+    Issue #454.'
