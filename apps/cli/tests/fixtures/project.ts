@@ -59,8 +59,15 @@ function definitions() {
     'AGENTS.md': 'Fixture root directive\n# Fixture heading\n',
     'work/AGENTS.md': 'Fixture owner directive\n',
     'other/AGENTS.md': 'Unrelated directive\n',
+    '.agents/skills/fixture/SKILL.md':
+      '---\nname: fixture\ndescription: Fixture skill description\n---\nFixture skill body\n',
     'standard.md': 'Fixture standard body\n',
-    'contracts.yaml': { contracts: [] },
+    'work/contract.md': 'Fixture contract body\n',
+    'contracts.yaml': {
+      contracts: [
+        { id: 'fixture/work', owner: 'work', stage: 'proposed', file: 'work/contract.md' },
+      ],
+    },
   };
 }
 
@@ -91,7 +98,15 @@ function component(
   phase: string,
   binding: ReturnType<typeof activity>,
 ) {
-  return { id, purpose, owns: [path], activities: { [phase]: binding } };
+  return {
+    id,
+    purpose,
+    owns: [path],
+    activities: {
+      [phase]: binding,
+      research: { ...binding, instructions: ['Inactive activity instructions'] },
+    },
+  };
 }
 
 /** Give the fixture activity a profile, an operation, and an applicable standard. */

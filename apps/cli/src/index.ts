@@ -3,7 +3,6 @@ import { Context } from 'cordis';
 import { agentPlugin } from '../../../packages/agent/src/index.js';
 import { architecturePlugin } from '../../../packages/architecture/src/index.js';
 import { commandsPlugin } from '../../../packages/commands/src/index.js';
-import { managerPlugin } from '../../../packages/manager/src/index.js';
 
 /** Validate the CLI arguments and print the prepared input with its invocation header. */
 async function main(args: string[]) {
@@ -20,7 +19,7 @@ async function main(args: string[]) {
     throw new Error('Usage: arcnexus inspect <component> <activity>');
   }
   const context = new Context();
-  for (const plugin of [managerPlugin, architecturePlugin, agentPlugin, commandsPlugin]) {
+  for (const plugin of [architecturePlugin, agentPlugin, commandsPlugin]) {
     await context.use(plugin);
   }
   const result = context.commands.inspect({ component, activity, directory: process.cwd() });

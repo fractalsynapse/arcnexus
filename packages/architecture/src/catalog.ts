@@ -38,8 +38,15 @@ interface Definition {
 
 export interface Component extends Definition {
   purpose: string;
+  constraints?: unknown[];
   owns: string[];
   activities: Record<string, Activity>;
+}
+
+interface Role extends Definition {
+  purpose?: string;
+  responsibilities?: string[];
+  instructions?: string[];
 }
 
 interface Profile extends Definition {
@@ -71,7 +78,7 @@ export interface Capture {
   readonly source: ProjectSource;
   readonly project: Readonly<Project>;
   readonly components: Readonly<Record<string, Component>>;
-  readonly roles: Readonly<Record<string, Definition>>;
+  readonly roles: Readonly<Record<string, Role>>;
   readonly profiles: Readonly<Record<string, Profile>>;
   readonly operations: Readonly<Record<string, Operation>>;
   readonly standards: Readonly<Record<string, Standard>>;
@@ -92,7 +99,7 @@ export function captureProject(directory: string): Capture {
     project,
     contracts: freeze(contracts),
     components: load<Component>(source, 'components'),
-    roles: load<Definition>(source, 'roles'),
+    roles: load<Role>(source, 'roles'),
     profiles: load<Profile>(source, 'execution-profiles'),
     operations: load<Operation>(source, 'operations'),
     standards: load<Standard>(source, 'standards'),

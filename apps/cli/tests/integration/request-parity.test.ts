@@ -6,7 +6,6 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { Agent } from '../../../../packages/agent/src/index.js';
 import { Architecture } from '../../../../packages/architecture/src/index.js';
-import { Manager } from '../../../../packages/manager/src/index.js';
 import { projectFixture } from '../fixtures/project.js';
 
 const cli = fileURLToPath(new URL('../../src/index.js', import.meta.url));
@@ -14,7 +13,7 @@ const cli = fileURLToPath(new URL('../../src/index.js', import.meta.url));
 test('GW-16 and GW-25: the CLI prints the exact prepared model envelope', (t) => {
   const root = projectFixture();
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  const architecture = new Architecture(new Manager());
+  const architecture = new Architecture();
   const agent = new Agent(architecture);
   const capture = architecture.capture(root);
   const selection = { component: 'director', activity: 'planning' };
@@ -30,7 +29,6 @@ test('GW-16 and GW-25: the CLI prints the exact prepared model envelope', (t) =>
     acceptance: ['test'],
     evidence: ['e1'],
     worktree: root,
-    skills: [],
   });
   assert.deepEqual(submitted.placeholders, []);
   assert.equal(submitted.request.options.workingDirectory, root);
@@ -50,15 +48,12 @@ function assertHumanOutput(stdout: string, preview: ReturnType<Agent['prepareReq
   assert.equal(stdout.slice(start + marker.length), preview.request.input + '\n');
   assert.match(stdout.slice(0, start), /^Invocation options:/m);
   assert.match(preview.request.input, /^Goal: <goal>$/m);
-  assert.match(
-    preview.request.input,
-    /Source: AGENTS\.md\n--- BEGIN AGENTS\.md ---\nFixture root directive\n# Fixture heading\n--- END AGENTS\.md ---/,
-  );
   assert.match(preview.request.input, /^Source: \.arc\/architecture\/roles\/director\.yaml$/m);
+  assert.match(preview.request.input, /^Source: \.arc\/architecture\/plan-template\.md$/m);
   assert(preview.placeholders.includes('<goal>'));
 }
 
-test('inspection ignores uncommitted guidance and creates no task state or worktree', (t) => {
+test('inspection leaves guidance to Codex and creates no task state or worktree', (t) => {
   const root = projectFixture();
   t.after(() => rmSync(root, { recursive: true, force: true }));
   appendFileSync(join(root, 'AGENTS.md'), '\nUncommitted instruction\n');
@@ -69,7 +64,7 @@ test('inspection ignores uncommitted guidance and creates no task state or workt
     cwd: root,
     encoding: 'utf8',
   });
-  assert.doesNotMatch(output, /Uncommitted instruction|Unrelated directive/);
+  assert.doesNotMatch(output, /Uncommitted instruction|directive|Fixture skill/);
   assert.equal(git('status', '--porcelain'), status);
   assert.equal(git('worktree', 'list', '--porcelain'), worktrees);
   assert(!existsSync(join(root, '.arc/plans')));

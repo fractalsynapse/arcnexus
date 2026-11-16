@@ -1,5 +1,4 @@
 import type { Context } from 'cordis';
-import type { Manager } from '../../manager/src/index.js';
 import { captureProject, type Capture } from './catalog.js';
 import type { ActivitySelection } from './activity.js';
 import { buildCodexRequest, type TaskContext } from './request.js';
@@ -15,9 +14,6 @@ declare module 'cordis' {
 
 /** Read the captured model and prepare its Codex request. */
 export class Architecture {
-  /** Use the guidance service mounted in the trusted application. */
-  constructor(private readonly manager: Manager) {}
-
   /** Capture the committed project resolved from a working directory. */
   capture(directory: string): Capture {
     return captureProject(directory);
@@ -25,14 +21,13 @@ export class Architecture {
 
   /** Prepare the request used by inspection and available to activation. */
   request(capture: Capture, selection: ActivitySelection, task?: TaskContext): AgentInspection {
-    return buildCodexRequest(this.manager, capture, selection, task);
+    return buildCodexRequest(capture, selection, task);
   }
 }
 
 export const architecturePlugin = {
-  inject: ['manager'],
-  /** Register the architecture service with its guidance dependency. */
+  /** Register the captured catalog and request service. */
   apply(context: Context) {
-    context.provide('architecture', new Architecture(context.manager));
+    context.provide('architecture', new Architecture());
   },
 };
