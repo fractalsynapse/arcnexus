@@ -24,6 +24,7 @@ test('GW-16 and GW-25: the CLI prints the exact prepared model envelope', (t) =>
   const preview = agent.prepareRequest(capture, selection);
   assertHumanOutput(stdout, preview);
   const submitted = agent.prepareRequest(capture, selection, {
+    assignment: 'Fixture assignment',
     goal: 'Implement a fixture change\nUse the checked edit operation.',
     milestone: { id: 'm1' },
     acceptance: ['test'],

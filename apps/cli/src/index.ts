@@ -24,7 +24,7 @@ async function main(args: string[]) {
   if (command === 'task') {
     if (component !== 'run' || !activity?.trim() || extra.length)
       throw new Error('Usage: arcnexus task run "<goal>"');
-    return runTask(await mountCommands(), activity, json);
+    return runTask(await mountCommands(true), activity, json);
   }
   if (command !== 'inspect')
     throw new Error(`Command unavailable in this build: ${command ?? '<missing>'}`);
@@ -43,11 +43,14 @@ async function main(args: string[]) {
 }
 
 /** Compose the trusted CLI services for either command. */
-async function mountCommands() {
+async function mountCommands(task = false) {
   const context = new Context();
-  for (const plugin of [architecturePlugin, agentPlugin, workflowPlugin(), commandsPlugin]) {
+  for (const plugin of [architecturePlugin, agentPlugin]) {
     await context.use(plugin);
   }
+  if (task) await (await import('./host.js')).mountTaskHost(context);
+  else await context.use(workflowPlugin());
+  await context.use(commandsPlugin);
   return context.commands;
 }
 

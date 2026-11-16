@@ -19,7 +19,9 @@ import type {
 } from './services.js';
 
 export type {
+  ActivityOutcome,
   Observation,
+  TaskEvent,
   TaskInput,
   TaskObserver,
   TaskOutcome,

@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import type { GuidanceSource } from '../../manager/src/index.js';
 
 export interface ProjectSource extends GuidanceSource {
+  readonly root: string;
   readonly revision: string;
   readonly remote: string;
 }
@@ -16,6 +17,7 @@ export function openProject(directory: string): ProjectSource {
   );
   const byPath = new Set(paths);
   return Object.freeze({
+    root,
     revision,
     remote,
     paths,

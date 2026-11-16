@@ -19,6 +19,9 @@ export interface Project {
   remote: string;
   contractRegistry: string;
   planTemplate: string;
+  bindings?: string;
+  delivery?: { baseBranch: string; protectedBranch: string; requiredGates: string[] };
+  checks?: { acceptance: string[] };
   director: Binding;
   verifier: Binding;
 }
@@ -58,6 +61,10 @@ interface Profile extends Definition {
 
 interface Operation extends Definition {
   category: string;
+  command?: string;
+  args?: Array<string | { context: 'owner' }>;
+  cwd?: string;
+  network?: boolean;
 }
 
 interface Standard extends Definition {

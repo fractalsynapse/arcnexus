@@ -151,3 +151,5 @@ export function validateRevision(
       throw new Error(`A revised plan must preserve completed Steps for ${milestone.id}`);
   }
 }
+
+export { direct } from './native.js';

@@ -42,3 +42,5 @@ export function validateVerdict(plan: Plan, candidate: Candidate, verdict: Verdi
   )
     throw new Error('Reviewer rejection must name known criteria, owners and evidence');
 }
+
+export { verify } from './native.js';

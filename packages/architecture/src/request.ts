@@ -3,6 +3,7 @@ import { resolveActivity, type ActivitySelection } from './activity.js';
 import { catalogRoot, definitionPath, type Capture } from './catalog.js';
 
 export interface TaskContext {
+  assignment?: unknown;
   goal?: string;
   milestone?: unknown;
   acceptance?: readonly unknown[];
@@ -146,6 +147,7 @@ function reference<T>(values: Readonly<Record<string, T>>, id: string | undefine
 function resolveTask(task: TaskContext) {
   const placeholders: string[] = [];
   const context = {
+    assignment: task.assignment ?? '<assignment>',
     goal: task.goal ?? '<goal>',
     milestone: task.milestone ?? '<milestone>',
     acceptance: task.acceptance ?? '<acceptance>',

@@ -176,6 +176,7 @@ class FixtureServices implements WorkflowServices {
     respond: () => T,
   ): Promise<T> {
     const task = {
+      assignment: 'Fixture assignment',
       goal: session.goal,
       milestone: this.last,
       acceptance: [criterion],
