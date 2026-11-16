@@ -13,3 +13,10 @@ pull request checks, so both observations can be traced.
 Use the [issue template](../../.github/ISSUE_TEMPLATE/work-item.md) and
 [PR template](../../.github/pull_request_template.md). Report completed checks and
 remaining evidence explicitly.
+
+## Publication recovery evidence
+
+If publication is interrupted, rerun `task run` with the identical goal. In the
+retained task evidence, compare the reused pull request, the reviewed tree and
+the observed staging commit. The [Delivery contract](../../packages/delivery/contract.md)
+scenarios DE-5 and DE-6 govern observation before retry and reuse of a recorded merge.

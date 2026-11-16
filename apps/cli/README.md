@@ -71,4 +71,5 @@ In JSON mode, progress uses stderr and the outcome is one JSON object on stdout.
 If publication is interrupted, invoke `task run` with the identical goal.
 ArcNexus resumes from the verified candidate and observes GitHub before taking
 another publication action. A matching remote branch, pull request or merge is
-reused.
+reused. See [Publication recovery evidence](../../docs/release/verification.md#publication-recovery-evidence)
+for what to compare in the retained task evidence.
