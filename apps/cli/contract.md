@@ -21,7 +21,9 @@ Actor selectors still require an explicit activity.
 Inspection prints the complete context and request ArcNexus would pass to the
 Codex harness, including resolved instructions, scope, evidence descriptors,
 operations and applicable standards in production assembly order. Use the same
-request builder as activation. Show `<goal>` when no task goal is supplied and
+request builder as activation. The output includes the prompt and invocation
+options. Codex discovers project directives and skills in its activation
+environment. Show `<goal>` when no task goal is supplied and
 name other task-only values unavailable before admission. Inspection is local and
 read-only, with no model call, write, worktree, task admission or upstream effect.
 
@@ -42,7 +44,7 @@ verbs, option modes and launch surfaces are reserved for later qualification.
 | GW-6 | An unanswered human-only question results in exit 1 with a question and evidence reference. |
 | GW-7 | `SIGINT` during execution exits 130 with retained evidence and no orphaned process. |
 | GW-11 | A reserved command (`workday start`, `release verify`) is exit 2 reporting it is not available in this build. |
-| GW-15 | `inspect <component> implementation` renders the component context, resolved guidance, profile, role, standards, authorized scope and operations in production assembly order. It names task-only inputs that are unavailable. |
+| GW-15 | `inspect <component> implementation` renders the selected activity context, role, standards, authorized scope and operations in production assembly order. It displays model settings as invocation options and names task-only inputs that are unavailable. Codex discovers project directives and skills at activation. |
 | GW-16 | `inspect` output equals a live activation's context for the same revision, component, activity and milestone, differing only in the declared placeholders. |
 | GW-17 | `inspect` writes no state, starts no host, calls no model and creates no workspace; repeated runs on an unchanged revision are byte-identical. |
 | GW-18 | A runtime-only value appears as a named placeholder and is never filled with invented content; the header lists what was substituted. |

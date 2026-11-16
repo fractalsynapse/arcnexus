@@ -6,11 +6,18 @@ Stage: **locked**. See the [registry](../../docs/interface/registry.yaml) for au
 
 Resolve and validate the project, owners, profiles, operations, standards, role
 bindings, host bindings, delivery policy and contract registry. Expose one immutable
-capture and one model-facing context builder to all callers. Supply the acting
-component's complete definition and a compact catalog index. Name withheld inputs
-and return requested definitions whole. Activity standards are shared references
-and filtered to the activity. The reviewer receives the complete evidence bundle
-under the verification contract.
+capture and one model-facing context builder to all callers. Keep complete
+definitions in the capture. The request includes the acting component's relevant
+fields, the selected activity's resolved instructions and capabilities, and a
+compact catalog index. Model settings belong in invocation options. Name withheld
+inputs, reference applicable contracts by identity and path, and return requested
+definitions whole from the capture. Activity standards are shared references and
+filtered to the activity. The reviewer receives the complete evidence bundle under
+the verification contract.
+
+Codex discovers project directives and skills from its activation environment.
+The request builder leaves their discovery and selection to Codex. The host
+ensures the harness sees approved project guidance for the captured revision.
 
 A component may inherit a missing non-activity property from the project where
 that property permits inheritance. Authority and owned roots stay explicit. Every
@@ -44,7 +51,7 @@ Architectural proposals are applied outside the active task on a review branch.
 | ARC-6 | An import cycle among maintained modules is reported with the cycle path. |
 | ARC-7 | Two `capture` calls on the same revision produce identical digests; a catalog edit between them does not change the first snapshot. |
 | ARC-8 | A candidate edit to `.arc/architecture/` during a run leaves that run's captured catalog and findings unchanged. |
-| ARC-9 | The context includes the acting owner’s definition plus an index for other owners, stays within the bounded view, and names withheld inputs. |
+| ARC-9 | The request includes the acting owner's relevant fields, selected activity, and a compact catalog index. It names withheld inputs, references contracts, and leaves other activity definitions and Codex-discovered guidance out of the prompt. |
 | ARC-10 | Requesting a full definition returns it complete; standards for the activity are filtered and capped, and exceeding the cap is a finding against the standard, not a silent truncation. |
 | ARC-11 | Validation flags a changed locked digest, missing accepted file or missing record of architectural authority. |
 | ARC-12 | A product checked edit of a locked file or its registry is refused. A candidate-side registry modification cannot unlock an existing capture. |

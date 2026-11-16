@@ -30,7 +30,8 @@ After `npm run build`, run the built entry directly with
 Inspection reads the committed project revision, resolves the selected activity,
 and displays the complete multiline prompt from the Architecture builder. The
 header lists invocation options and unavailable task fields, including `<goal>`.
-Each placeholder also appears where its value belongs in the prompt. Section
-labels identify the source files or task inputs, and document boundaries mark
-the start and end of each included file. The [gateway contract](contract.md)
-defines the observable behavior.
+Each placeholder appears where its value belongs in the prompt or invocation
+options. The prompt shows the selected activity's instructions and scope and
+references contracts by ID, path and stage. Section labels identify their source
+files or task inputs. Codex discovers project `AGENTS.md` files and skills at
+activation. The [gateway contract](contract.md) defines the observable behavior.
