@@ -18,3 +18,9 @@ tracked app or plugin source or tests, the shared workflow runs format, lint,
 type-check and `npm test`. The test command builds before running the compiled
 suites. CI records this deterministic evidence separately from native host and
 live-agent qualification.
+
+## Native confinement checks
+
+Run `ARCNEXUS_NATIVE_TESTS=1 npm test` to enable native confinement tests.
+The Bubblewrap test is skipped by default in CI unless native tests are enabled
+with `ARCNEXUS_NATIVE_TESTS=1`.

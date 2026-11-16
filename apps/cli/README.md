@@ -59,6 +59,9 @@ the executable in the project's local `tools.codex` binding. For the ArcNexus
 catalog that binding is `.git/arcnexus/bindings.yaml`. Set `schemaVersion: 1`
 and an absolute `tools.codex` path to an authenticated Codex installation.
 
+See [Native confinement checks](../../docs/release/ci.md#native-confinement-checks)
+for the test command and default CI skip behavior for the Bubblewrap test.
+
 The host retains task metadata, output, and the issue worktree outside the
 source checkout under `${XDG_STATE_HOME:-$HOME/.local/state}/arcnexus`. Codex
 reads the worktree and returns structured edit proposals. The host applies
