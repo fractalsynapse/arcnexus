@@ -5,6 +5,11 @@ same build and verification entry points as local work. The
 [Foundation contract](../../packages/foundation/contract.md) defines their
 obligations. Keep deterministic, host enforcement and live model evidence separate.
 
+The [Development workflow](../../.github/workflows/development.yaml) verifies pull
+requests targeting `staging`, and the
+[Staging workflow](../../.github/workflows/staging.yaml) verifies pushes to
+`staging`. Both invoke the shared verification workflow.
+
 Run `node packages/foundation/scripts/check-specification.mjs` to check the
 tracked catalog, ownership, contract digests and scenarios, documentation links,
 and skill metadata. CI runs the same check. The specification-only revision has
