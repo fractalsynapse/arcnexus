@@ -25,7 +25,10 @@ arcnexus inspect director planning
 arcnexus inspect reviewer assessment
 ```
 
+After `npm run build`, run the built entry directly with
+`node dist/apps/cli/src/index.js inspect <component> <activity>`.
 Inspection reads the committed project revision, resolves the selected activity,
-and prints the complete request from the Architecture builder. The output names
+and prints the complete request as JSON from the Architecture builder. The
+multiline Codex prompt is in `request.input`. The output names
 unavailable task fields, including `<goal>`. The [gateway contract](contract.md)
 defines the observable behavior.

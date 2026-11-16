@@ -28,5 +28,8 @@
     "format:check": "prettier --check --no-error-on-unmatched-pattern \"*.{ts,json}\" \"{apps,packages,scripts,fixtures}/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,json,yaml,yml}\"",
     "format": "prettier --write",
     "test": "npm run build && node dist/packages/foundation/scripts/test.js"
+  },
+  "bin": {
+    "arcnexus": "dist/apps/cli/src/index.js"
   }
 }
