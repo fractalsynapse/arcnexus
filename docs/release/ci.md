@@ -10,9 +10,9 @@ requests targeting `staging`, and the
 [Staging workflow](../../.github/workflows/staging.yaml) verifies pushes to
 `staging`. Both invoke the shared verification workflow.
 
-Run `node packages/foundation/scripts/check-specification.mjs` to check the
-tracked catalog, ownership, contract digests and scenarios, documentation links,
-and skill metadata. The shared verification workflow always runs specification
+Run `npm run check:specification` to check tracked source extensions, catalog
+references, ownership, contract digests and scenarios, documentation links, and
+skill metadata. The shared verification workflow always runs specification
 checks. When tracked product source or tests exist, it also runs format, lint,
 type checking and compiled tests through `npm test`. The test command builds
 before running the compiled suites. CI records this deterministic evidence
