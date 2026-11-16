@@ -8,5 +8,6 @@ which previews the context ArcNexus supplies to Codex, and `task run`, which car
 a goal through verified staging integration.
 
 Start with the [charter](docs/charter.md) and [development direction](docs/dev.md).
-The [contract registry](docs/interface/registry.yaml) identifies the accepted
+[Architecture](packages/architecture/contract.md) stewards the project catalog and
+contract records. The [contract registry](docs/interface/registry.yaml) identifies the accepted
 interfaces and their owner locations.

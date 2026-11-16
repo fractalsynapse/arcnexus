@@ -11,7 +11,7 @@ contracts:
 - id: arcnexus/project
   type: project
   file: docs/interface/arcnexus-project.md
-  owner: project
+  owner: architecture
   stage: locked
   digest: 6f44b639d23211a4913c3b0a4ce20fa49d77efe9c98b58f5cce2976db8751349
   dependsOn: []
@@ -19,6 +19,16 @@ contracts:
   acceptedBy: Adrian Webb (architect)
   acceptedAt: '2026-11-15'
   history:
+  - stage: locked
+    digest: 6f44b639d23211a4913c3b0a4ce20fa49d77efe9c98b58f5cce2976db8751349
+    file: docs/interface/arcnexus-project.md
+    owner: project
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: '2026-11-15'
+    revision: ff08a26ce1f7b6fb8de0087e72c12884e1ad5c87
+    note: Transferred stewardship to Architecture. Accepted text remains identical.
+    approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
+      Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
   - stage: locked
     digest: 4c10b1c8e2bee908361af3726d75904808606d27f0e32936d379a73fe47a2702
     file: docs/interface/arcnexus-project.md
@@ -38,6 +48,8 @@ contracts:
     note: proposed in
   approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
     Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
+  stewardshipRecord: 'Architect approved steward ownership, release relocation and the architecture component
+    name in Codex chat on 2026-11-15. Base: ff08a26ce1f7b6fb8de0087e72c12884e1ad5c87. Issue #454.'
 - id: arcnexus/foundation
   type: foundation
   file: packages/foundation/contract.md
@@ -105,8 +117,8 @@ contracts:
     Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
 - id: arcnexus/architecture-model
   type: library
-  file: packages/architecture-model/contract.md
-  owner: architecture-model
+  file: packages/architecture/contract.md
+  owner: architecture
   stage: locked
   digest: 9cda2da6d79582be008fbfc5bff4fea0730758bad0ccc5f28bf025d9e3696ddc
   dependsOn:
@@ -116,6 +128,16 @@ contracts:
   acceptedBy: Adrian Webb (architect)
   acceptedAt: '2026-11-15'
   history:
+  - stage: locked
+    digest: 9cda2da6d79582be008fbfc5bff4fea0730758bad0ccc5f28bf025d9e3696ddc
+    file: packages/architecture-model/contract.md
+    owner: architecture-model
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: '2026-11-15'
+    revision: ff08a26ce1f7b6fb8de0087e72c12884e1ad5c87
+    note: Renamed component and moved package. Stable contract ID and accepted text remain identical.
+    approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
+      Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
   - stage: locked
     digest: 51784a838b868773bddd94a79a72170cdf76b45c0681e1af68ccd6a9089e9fc9
     file: packages/architecture-model/contract.md
@@ -155,6 +177,8 @@ contracts:
       '
   approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
     Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
+  stewardshipRecord: 'Architect approved steward ownership, release relocation and the architecture component
+    name in Codex chat on 2026-11-15. Base: ff08a26ce1f7b6fb8de0087e72c12884e1ad5c87. Issue #454.'
 - id: arcnexus/coordination
   type: library
   file: packages/coordination/contract.md
@@ -316,10 +340,10 @@ contracts:
       '
 - id: arcnexus/release
   type: release
-  file: docs/interface/arcnexus-release.md
-  owner: project
+  file: packages/release/contract.md
+  owner: release
   stage: locked
-  digest: d51753c91937d4ee27a527d992909b94344f7d899f66cc0eb2743b0e8cef045d
+  digest: 238477627d5630519b99e92eaa1e47873b8b7e6226e5d3fb8356af0047cf0f48
   dependsOn:
   - arcnexus/project
   - arcnexus/delivery
@@ -328,6 +352,14 @@ contracts:
   acceptedBy: Adrian Webb (architect)
   acceptedAt: '2026-11-15'
   history:
+  - stage: locked
+    digest: d51753c91937d4ee27a527d992909b94344f7d899f66cc0eb2743b0e8cef045d
+    file: docs/interface/arcnexus-release.md
+    owner: project
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: '2026-11-15'
+    revision: ff08a26ce1f7b6fb8de0087e72c12884e1ad5c87
+    note: Transferred stewardship and moved the Release contract. The registry link is the only text change.
   - stage: locked
     digest: 2eed0be265648cbe74897133a0ec1ce38afbe8fce4b84dba7cba24494874aca0
     file: docs/interface/arcnexus-release.md
@@ -342,6 +374,8 @@ contracts:
       install from the registry is flagged in the contract for correction
 
       '
+  stewardshipRecord: 'Architect approved steward ownership, release relocation and the architecture component
+    name in Codex chat on 2026-11-15. Base: ff08a26ce1f7b6fb8de0087e72c12884e1ad5c87. Issue #454.'
 - id: arcnexus/collaboration-provider
   type: library
   file: packages/collaboration/contract.md
@@ -369,11 +403,11 @@ contracts:
   file: packages/agent/contract.md
   owner: agent
   stage: proposed
-  digest: 8e2ed39d5e25fe0cc2d045a24f17848eb2da29ee8218df105f9df474c9094a43
+  digest: 32dfd84aad8809aace336eaa725c6f42f732bf948819f77e75f60aae44292810
   dependsOn:
   - arcnexus/architecture-model
   - arcnexus/execution
-  scenarios: 8
+  scenarios: 9
 - id: arcnexus/team
   type: library
   file: packages/team/contract.md
@@ -383,7 +417,7 @@ contracts:
   - arcnexus/agent
   - arcnexus/architecture-model
   - arcnexus/coordination
-  digest: 81ad803a628f6b2dcb5aaa7b46dccf233e0182219fd3d111455462e9b901cff8
+  digest: 1e1ee36732315f114dcd44bf6c9d3a440900271a230abfcac05128a67cb5a9cb
   scenarios: 6
 - id: arcnexus/commands
   type: library
@@ -398,4 +432,13 @@ contracts:
   - arcnexus/verification
   - arcnexus/delivery
   digest: 607f2f91cc9801386c27f73d3be85c6c0e13f024f95fa3c08dcbc92676cf69d0
+  scenarios: 3
+- id: arcnexus/manager
+  type: library
+  file: packages/manager/contract.md
+  owner: manager
+  stage: proposed
+  digest: 0172f228a3fcb4997eaf4fa8713ea61b04c4c479e01cab94a268a1104af10b02
+  dependsOn:
+  - arcnexus/project
   scenarios: 3

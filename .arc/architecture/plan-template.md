@@ -1,8 +1,8 @@
 # Plan template
 
 The director authors one plan per goal. The host validates it against captured
-authority. The store persists accepted content and renders the reviewable plan
-under `.arc/plans/`.
+authority. Coordination stores accepted content. The host renders the reviewable
+plan under Direction’s `.arc/plans/`.
 
 ## Focus
 

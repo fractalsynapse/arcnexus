@@ -10,7 +10,9 @@
   guides and evidence in Git. Propose a shared Agent interface for inspection and
   scoped director, steward and reviewer activations. Declare per-component
   activities and separate the CLI application from the shared Commands SDK.
-  Propose Team for eligible steward and resource ownership views.
+  Propose Team for eligible steward and resource ownership views. Give Manager,
+  Release, Architecture and Direction distinct stewardship. Make final
+  Reviewer feedback return to Direction through the shared Agent loop.
 
 - **A strategy map now states what is authoritative for the clean implementation** (#452):
   `docs/plans/strategy-map.md` gives the reading order — the model in `.arc/architecture`, then the locked

@@ -7,6 +7,7 @@ constraints:
 - failure: A milestone acquires two owners or the director grants itself write authority.
 owns:
 - packages/direction
+- .arc/plans
 activities:
   research:
     role: researcher
@@ -19,7 +20,8 @@ activities:
     role: technical-writer
     profile: gpt-sol
     instructions:
-    - Describe plan changes, reuse and escalation as observable outcomes.
+    - Describe planning, reuse and escalation as observable outcomes and keep the plan file a reviewable
+      render.
     operations: []
     standards: []
   testing:
@@ -35,7 +37,7 @@ activities:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-    - Implement the planner and sequencing behavior within the Direction plugin.
+    - Author and sequence plans in Direction. Use Coordination’s persisted state and deterministic render.
     operations:
     - owner-tests
     standards:

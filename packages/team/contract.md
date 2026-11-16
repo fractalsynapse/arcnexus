@@ -9,13 +9,13 @@ task. Its steward roster comes from the captured component catalog. A member
 identifies its component, the steward that can represent it, its declared
 activities and its eligibility at the recorded task position. An eligible
 steward need not be active. Team uses Coordination for task observations and
-Architecture Model for catalog and ownership facts.
+Architecture for catalog and ownership facts.
 
 | Operation | Contract |
 | --- | --- |
 | `list(scope, query)` | Return the eligible stewards in the captured scope. Filter by component, required activity or recorded task position. Apply the caller's stated ordering or priority and use stable component identity to break ties. Matching inputs produce the same answer. |
 | `ownerFor(scope, resource)` | Resolve the resource against the captured ownership map and identify its steward when eligible. Distinguish an unavailable steward, unowned resource and collision. A filtered roster cannot erase a collision or change the resource's owner. |
-| `validateCoverage(scope, inventory)` | Report maintained resources with zero or multiple owners and identify the relevant resources and component IDs. Use the same Architecture Model ownership validation used at admission. It may examine a proposed catalog and inventory before admission. |
+| `validateCoverage(scope, inventory)` | Report maintained resources with zero or multiple owners and identify the relevant resources and component IDs. Use the same Architecture ownership validation used at admission. It may examine a proposed catalog and inventory before admission. |
 
 The director uses these views to assemble a working team and order the plan.
 A steward can identify a supplier and return a request through Agent. Direction

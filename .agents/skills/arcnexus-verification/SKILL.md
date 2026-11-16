@@ -14,7 +14,9 @@ and [current MVP](../../../docs/plans/self-development-mvp.md).
 For changes to the shared Agent interface, walk through director, steward and
 reviewer scope. Check inspect-to-harness parity and verify that a capability
 admitted for one activity is refused in another when outside scope. Check the
-host-only integration and independent reviewer boundaries. Use the
+host-only integration and independent reviewer boundaries. Walk a rejected final
+verdict back to Direction and verify that the corrected candidate uses the same
+review gate. Use the
 [Agent proposal](../../../packages/agent/contract.md) for the acceptance scenarios
 under review. Check that component activities fully declare their bindings and
 tests exercise missing activities and unresolved references. For Team, inspect

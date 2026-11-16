@@ -48,6 +48,8 @@ activity in its component specification. Missing activities are unavailable.
 Team gives Direction an ordered roster of eligible stewards and resolves resource
 ownership from the captured catalog. Direction sequences requests and work.
 Use the [Team proposal](packages/team/contract.md) for those boundaries.
+The Director starts the Agent loop and the final Reviewer assesses the assembled
+candidate. Route rejected criteria and evidence back to Direction for correction.
 The CLI app owns terminal behavior and delegates through the
 [shared Commands SDK](packages/commands/contract.md).
 

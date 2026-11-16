@@ -1,57 +1,50 @@
 id: project
 kind: project
-purpose: Maintain project direction, repository delivery policy and recorded architect decisions.
+purpose: Maintain the charter, project-wide intent and the common development plan.
 objectives:
-- measure: The current project catalog and contract registry agree.
+- measure: The charter and development direction explain the accepted project outcome and link to its
+    owners.
 constraints:
-- failure: A candidate changes the authority captured for its own task.
+- failure: Project guidance contradicts a locked contract or grants authority outside the catalog.
 owns:
-- .agents
-- .arc
-- .github
-- .gitignore
-- AGENTS.md
-- CHANGELOG.md
+- .arc/learning
 - LICENSE
-- README.md
 - docs/charter.md
 - docs/dev.md
-- docs/interface
 - docs/plans
-- docs/release
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
-    - Find the governing architectural decision and identify any conflict requiring architect approval.
+    - Identify the project objective and relevant locked clauses.
     operations: []
     standards: []
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
-    - Record the architect’s intent and link the canonical contract or catalog entry.
+    - Describe the accepted project direction and link to accountable owners.
     operations: []
     standards: []
   testing:
     role: designer
     profile: gpt-sol
     instructions:
-    - Walk through changes to authority, ownership and required gates against the captured baseline.
+    - Walk through the stated project outcome and the evidence required to establish it.
     operations: []
     standards: []
   implementation:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-    - Keep root guidance, project policy and recorded approvals consistent.
+    - Keep the charter and cross-project delivery plan aligned with the accepted direction.
     operations: []
     standards: []
   review:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-    - Check that the proposed guidance leaves captured authority and independent acceptance intact.
+    - Check that project documentation preserves owner boundaries and release authority.
     operations: []
     standards: []

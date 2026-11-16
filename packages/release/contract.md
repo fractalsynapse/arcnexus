@@ -1,6 +1,6 @@
 # Production release boundary
 
-Stage: **locked**. See the [registry](registry.yaml) for authority and history.
+Stage: **locked**. See the [registry](../../docs/interface/registry.yaml) for authority and history.
 
 ## Obligations
 

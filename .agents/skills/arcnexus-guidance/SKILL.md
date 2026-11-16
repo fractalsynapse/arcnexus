@@ -25,6 +25,7 @@ the decisions affected by the change. Verify that a new instruction cannot expan
 captured authority, a repeat supplier request keeps the existing accountable
 assignment, and pending required CI leaves the candidate awaiting integration.
 
-The project owner maintains this guidance. Route validator changes to the
-Architecture Model plugin owner. Report observed results and unresolved requests
-to the caller for delivery.
+[Manager](../../../packages/manager/contract.md) owns directives and skills.
+Route guidance input changes there, and route capture or catalog validation changes
+to Architecture. Report observed results and unresolved requests to the
+caller for delivery.

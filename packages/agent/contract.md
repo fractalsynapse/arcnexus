@@ -45,14 +45,21 @@ Input identifies the captured project, actor, owner where applicable, activity
 and available task position. Activation requires an admitted task and resolved
 inputs. Inspection can run before task admission. An activation carries the actor’s identity,
 its captured authority and its goal throughout the call. Both use the single request
-builder owned by [Architecture Model](../architecture-model/contract.md).
+builder owned by [Architecture](../architecture/contract.md).
 
-The [Commands SDK](../commands/contract.md) uses Agent inspection for `inspect`. During
-`task run`, [Direction](../direction/contract.md) uses a director Agent to produce or
-revise the plan. The task lane invokes steward Agents in milestone order.
-[Verification](../verification/contract.md) uses a separate read-only Agent for the
-independent verdict. A steward can consult [Team](../team/contract.md) to identify
-a supplier. Its request returns to Direction for sequencing.
+The [Commands SDK](../commands/contract.md) uses Agent inspection for `inspect`.
+The task lane handles Director and final Reviewer as special actor types through
+the same Agent interface used by stewards:
+
+1. The Director runs first under `direction/planning` and returns the initial plan.
+   [Direction](../direction/contract.md) owns the sequence and later revisions.
+2. Steward Agents execute the milestones in order. A steward can consult
+   [Team](../team/contract.md) for a supplier and return a request to Direction.
+3. After the assembled checks, [Verification](../verification/contract.md)
+   invokes the final read-only Reviewer under `verification/assessment`.
+   An accepting verdict allows staging delivery for that candidate. A rejected
+   verdict returns criteria and evidence to Direction for a correction milestone.
+   Review the corrected candidate through the same gate.
 
 Agent delegates harness execution and enforcement to [Execution](../execution/contract.md).
 It resolves a scope from the authority captured for that actor and activity. A tool
@@ -78,3 +85,4 @@ separate durable memory, peer scheduler or publication capability.
 | AGT-6 | Cancelling an activation stops managed work through Execution and retains the outcome and observations under the task's evidence identity. |
 | AGT-7 | For the Agent component steward, inspection and activation in `testing` expose the captured `owner-tests` operation. In `documentation`, where that operation is absent, the host refuses it even if the Agent could call it in the earlier activity. |
 | AGT-8 | An Agent attempt to activate the host-only `release` activity is refused. The task lane records integration from the host's delivery result. |
+| AGT-9 | A task starts with the Director, runs its stewards in order and reaches the final Reviewer through the same Agent interface. A rejection returns evidence to Direction for a correction and blocks delivery of the rejected candidate. The corrected candidate uses the same independent review gate. |

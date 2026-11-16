@@ -1,7 +1,7 @@
 # Interface contracts
 
 The [registry](registry.yaml) indexes proposed and locked interfaces and their
-owners. The architect accepts a proposed contract before it becomes locked. [Project](arcnexus-project.md) and [production authority](arcnexus-release.md)
+owners. The architect accepts a proposed contract before it becomes locked. [Project](arcnexus-project.md) and [production authority](../../packages/release/contract.md)
 apply across packages. Each plugin contract lives beside its public entry,
 implementation, documentation and tests. The registry locates it.
 

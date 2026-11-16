@@ -1,12 +1,16 @@
-id: architecture-model
+id: architecture
 kind: plugin
-purpose: Resolve and capture project authority and assemble model context.
+purpose: Maintain the project architecture and resolve its captured authority and model context.
 objectives:
 - measure: A clean catalog validates and repeated captures of a revision agree.
 constraints:
 - failure: A candidate changes captured authority or a private import crosses ownership.
 owns:
-- packages/architecture-model
+- packages/architecture
+- .arc/architecture
+- .arc/README.md
+- README.md
+- docs/interface
 activities:
   research:
     role: researcher
@@ -19,7 +23,7 @@ activities:
     role: technical-writer
     profile: gpt-sol
     instructions:
-    - Specify catalog validation and the context observable through the public entry.
+    - Maintain the architecture guide and explain validated catalog and context behavior.
     operations: []
     standards: []
   testing:
@@ -35,7 +39,7 @@ activities:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-    - Resolve catalog facts, ownership and model-facing context from their authored definitions.
+    - Maintain the architect-approved catalog and resolve ownership and context from its authored definitions.
     operations:
     - owner-tests
     standards:
@@ -44,7 +48,7 @@ activities:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-    - Check deterministic validation, complete actor scope and unchanged capture semantics.
+    - Check architect authority, deterministic validation and frozen capture semantics.
     operations: []
     standards:
     - readable-typescript

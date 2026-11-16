@@ -20,7 +20,16 @@ The [Agent contract proposal](../packages/agent/contract.md) is the first stop f
 understanding how the plugins work together. It gives `inspect` one view of an
 actor and gives `task run` one activation interface for every actor.
 The [Team proposal](../packages/team/contract.md) defines the steward roster,
-eligibility and resource ownership views used by Direction.
+eligibility and resource ownership views used by Direction. The Director starts
+the task and the final Reviewer can send rejected work back to Direction through
+the [Agent loop](../packages/agent/contract.md).
+
+[Manager](../packages/manager/contract.md) maintains agent directives.
+[Release](../packages/release/contract.md) maintains repository workflows, ignores
+and the changelog. [Architecture](../packages/architecture/contract.md) stewards the
+architecture catalog, root README and contract records. Direction owns the generated plans in
+`.arc/plans/`. Use the [catalog](../.arc/architecture/project.yaml) to resolve
+the accountable owner.
 
 The local Cordis and DeepSeek Harness examples informed the layout. ArcNexus uses
 a single trusted CLI composition for the first build. That composition is captured

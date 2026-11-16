@@ -11,6 +11,9 @@ Apply [AGENTS.md](../../../AGENTS.md) and the shared
 [PR template](../../../.github/pull_request_template.md). The
 [release contract](../../../docs/release/verification.md) describes the checks.
 
+The Release component owns GitHub workflows, repository ignores, the changelog
+and release documentation.
+
 ## Prepare one delivery
 
 Create or adopt an issue with observable acceptance before editing. Validate the request
