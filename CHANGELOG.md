@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.2]
+
 ### Changed
 
 - Move shared build and verification tools to strict TypeScript and reject
