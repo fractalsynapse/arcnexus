@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [0.1.1]
+
+### Changed
+
+- Run the shared GitHub verification actions on Node.js 24 while testing
+  ArcNexus on Node.js 22 (#486).
+
+## Earlier changelog entries
+
 ### Changed
 
 - Reconcile retained GitHub publications before retrying `task run`. Reuse the
