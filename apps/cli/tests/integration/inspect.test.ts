@@ -64,3 +64,23 @@ test('GW-20, GW-23, GW-24: inspect requires both positions and resolves special 
     assert(result.stdout.includes(message));
   }
 });
+
+test('GW-26: JSON placement errors leave stdout empty and input errors keep their diagnostics', (t) => {
+  const root = projectFixture();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  for (const args of [
+    ['work', '--json', 'testing'],
+    ['work', 'testing', '--json', '--json'],
+    ['work', '--json'],
+    ['missing', 'testing', '--json'],
+  ]) {
+    const result = inspect(root, ...args);
+    assert.equal(result.status, 2, result.stderr);
+    assert.equal(result.stdout, '');
+    assert.notEqual(result.stderr, '');
+  }
+  assert.equal(
+    inspect(root, 'missing', 'testing', '--json').stderr,
+    inspect(root, 'missing', 'testing').stderr,
+  );
+});

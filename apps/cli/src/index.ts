@@ -4,9 +4,21 @@ import { agentPlugin } from '../../../packages/agent/src/index.js';
 import { architecturePlugin } from '../../../packages/architecture/src/index.js';
 import { commandsPlugin } from '../../../packages/commands/src/index.js';
 
-/** Validate the CLI arguments and print the prepared input with its invocation header. */
+/** Read the global output flag before dispatching. Reject ambiguous flag placement. */
+function parseOutputOption(args: string[]) {
+  const flag = '--json';
+  const index = args.indexOf(flag);
+  if (index === -1) return { positionals: args, json: false };
+  if (args.lastIndexOf(flag) !== index || (index !== 0 && index !== args.length - 1)) {
+    throw new Error('Use --json once, before the command or after its arguments');
+  }
+  return { positionals: index === 0 ? args.slice(1) : args.slice(0, -1), json: true };
+}
+
+/** Validate the command and print its result using the requested output format. */
 async function main(args: string[]) {
-  const [command, component, activity, ...extra] = args;
+  const { positionals, json } = parseOutputOption(args);
+  const [command, component, activity, ...extra] = positionals;
   if (command !== 'inspect')
     throw new Error(`Command unavailable in this build: ${command ?? '<missing>'}`);
   if (
@@ -23,15 +35,18 @@ async function main(args: string[]) {
     await context.use(plugin);
   }
   const result = context.commands.inspect({ component, activity, directory: process.cwd() });
-  console.log(
-    [
-      `Placeholders: ${result.placeholders.join(', ')}`,
-      'Invocation options:',
-      JSON.stringify(result.request.options, null, 2),
-      '--- Codex input ---',
-      result.request.input,
-    ].join('\n'),
-  );
+  console.log(json ? JSON.stringify(result, null, 2) : renderInspection(result));
+}
+
+/** Show the invocation header followed by the complete prompt from the SDK. */
+function renderInspection(result: ReturnType<Context['commands']['inspect']>) {
+  return [
+    `Placeholders: ${result.placeholders.join(', ')}`,
+    'Invocation options:',
+    JSON.stringify(result.request.options, null, 2),
+    '--- Codex input ---',
+    result.request.input,
+  ].join('\n');
 }
 
 try {

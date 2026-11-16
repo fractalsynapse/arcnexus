@@ -69,3 +69,21 @@ test('inspection leaves guidance to Codex and creates no task state or worktree'
   assert.equal(git('worktree', 'list', '--porcelain'), worktrees);
   assert(!existsSync(join(root, '.arc/plans')));
 });
+
+test('GW-26: both global JSON placements return the exact prepared request', (t) => {
+  const root = projectFixture();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const command = ['inspect', 'director', 'planning'];
+  const run = (...args: string[]) =>
+    execFileSync(process.execPath, [cli, ...args], { cwd: root, encoding: 'utf8' });
+  const leading = run('--json', ...command);
+  assert.equal(leading, run(...command, '--json'));
+
+  const result = JSON.parse(leading);
+  const agent = new Agent(new Architecture());
+  assert.deepEqual(
+    result,
+    agent.inspect({ directory: root, component: 'director', activity: 'planning' }),
+  );
+  assertHumanOutput(run(...command), result);
+});
