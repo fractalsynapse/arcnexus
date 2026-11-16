@@ -4,6 +4,10 @@
 
 ### Changed
 
+- Add the `task run` command boundary and implement the sequential Workflow
+  loop with corrections after Reviewer rejection (#460). The default CLI
+  reports tasks as unavailable until its production host services are wired.
+
 - Implement the read-only Cordis CLI inspection path (#458). Require a component
   and activity, resolve Director and Reviewer bindings, and print the complete
   shared model request with named task placeholders and source-labeled prompt sections.

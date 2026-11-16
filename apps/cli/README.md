@@ -52,3 +52,8 @@ passes structured input, progress and cancellation between the caller and
 [Workflow](../../packages/workflow/contract.md). Direction owns planning and
 corrections, and Verification obtains the independent Reviewer verdict.
 The task succeeds when Delivery reports an observed staging merge.
+
+This build exercises the loop with isolated host adapters. The default CLI
+reports task execution as unavailable until the production execution,
+verification, and delivery services are composed. In JSON mode, progress uses
+stderr and the task outcome is written as one JSON object to stdout.

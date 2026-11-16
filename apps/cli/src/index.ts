@@ -3,6 +3,8 @@ import { Context } from 'cordis';
 import { agentPlugin } from '../../../packages/agent/src/index.js';
 import { architecturePlugin } from '../../../packages/architecture/src/index.js';
 import { commandsPlugin } from '../../../packages/commands/src/index.js';
+import { workflowPlugin } from '../../../packages/workflow/src/index.js';
+import { runTask } from './task.js';
 
 /** Read the global output flag before dispatching. Reject ambiguous flag placement. */
 function parseOutputOption(args: string[]) {
@@ -19,6 +21,11 @@ function parseOutputOption(args: string[]) {
 async function main(args: string[]) {
   const { positionals, json } = parseOutputOption(args);
   const [command, component, activity, ...extra] = positionals;
+  if (command === 'task') {
+    if (component !== 'run' || !activity?.trim() || extra.length)
+      throw new Error('Usage: arcnexus task run "<goal>"');
+    return runTask(await mountCommands(), activity, json);
+  }
   if (command !== 'inspect')
     throw new Error(`Command unavailable in this build: ${command ?? '<missing>'}`);
   if (
@@ -30,12 +37,18 @@ async function main(args: string[]) {
   ) {
     throw new Error('Usage: arcnexus inspect <component> <activity>');
   }
+  const commands = await mountCommands();
+  const result = commands.inspect({ component, activity, directory: process.cwd() });
+  console.log(json ? JSON.stringify(result, null, 2) : renderInspection(result));
+}
+
+/** Compose the trusted CLI services for either command. */
+async function mountCommands() {
   const context = new Context();
-  for (const plugin of [architecturePlugin, agentPlugin, commandsPlugin]) {
+  for (const plugin of [architecturePlugin, agentPlugin, workflowPlugin(), commandsPlugin]) {
     await context.use(plugin);
   }
-  const result = context.commands.inspect({ component, activity, directory: process.cwd() });
-  console.log(json ? JSON.stringify(result, null, 2) : renderInspection(result));
+  return context.commands;
 }
 
 /** Show the invocation header followed by the complete prompt from the SDK. */

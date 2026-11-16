@@ -11,6 +11,12 @@ export interface InspectionInput extends ActivitySelection {
   directory: string;
 }
 
+export interface ActivationInput {
+  capture: Capture;
+  selection: ActivitySelection;
+  task: TaskContext;
+}
+
 declare module 'cordis' {
   interface Context {
     agent: Agent;
@@ -34,6 +40,19 @@ export class Agent {
     task?: TaskContext,
   ): AgentInspection {
     return this.architecture.request(capture, selection, task);
+  }
+
+  /** Pass the exact prepared request to the admitted execution capability. */
+  activate<T>(
+    { capture, selection, task }: ActivationInput,
+    execute: (view: AgentInspection, signal: AbortSignal) => Promise<T>,
+    signal: AbortSignal,
+  ): Promise<T> {
+    signal.throwIfAborted();
+    const view = this.prepareRequest(capture, selection, task);
+    if (view.placeholders.length)
+      throw new Error(`Missing activation inputs: ${view.placeholders.join(', ')}`);
+    return execute(view, signal);
   }
 }
 
