@@ -35,3 +35,11 @@ options. The prompt shows the selected activity's instructions and scope and
 references contracts by ID, path and stage. Section labels identify their source
 files or task inputs. Codex discovers project `AGENTS.md` files and skills at
 activation. The [gateway contract](contract.md) defines the observable behavior.
+
+Add the general `--json` option for a structured result with the same prompt in
+`request.input`. Place it before the command or after the activity.
+
+```sh
+arcnexus --json inspect director planning
+arcnexus inspect reviewer assessment --json
+```
