@@ -4,6 +4,10 @@
 
 ### Changed
 
+- Reconcile retained GitHub publications before retrying `task run`. Reuse the
+  accepted candidate, issue branch, and pull request after an interruption
+  (#473).
+
 - Run `task run` through the sequential Workflow, with live Codex activations,
   confined edits and checks, Reviewer corrections, and verified GitHub staging
   delivery (#460).

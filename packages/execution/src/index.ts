@@ -50,7 +50,9 @@ export class Execution {
       if (signal.aborted) throw signal.reason;
       return invalid(error instanceof Error ? error.message : String(error));
     }
-    const journal = this.coordination.admit(config.capture.source.remote, input.goal);
+    const journal = this.coordination.admit(config.capture.source.remote, input.goal, config.fresh);
+    if (!journal)
+      return invalid(`Task admission requires the current verified ${config.base} head`);
     if ('activeGoal' in journal)
       return invalid(`Active goal: ${journal.activeGoal} (run ${journal.run})`);
     return new HostTask(config, input.goal, journal);
@@ -83,6 +85,7 @@ interface HostConfig {
   common: string;
   executable: string;
   base: string;
+  fresh: boolean;
   storage: string;
 }
 
@@ -102,6 +105,23 @@ export class HostTask implements TaskSession {
     private readonly journal: Journal,
   ) {
     this.capture = config.capture;
+  }
+
+  /** Read the prior attempt and its immutable worktree location. */
+  retainedPublication() {
+    const retained = this.journal.retained;
+    return retained && { ...retained, worktree: join(this.location(retained.run), 'worktree') };
+  }
+
+  /** Record a delivery intent or provider observation through the task journal. */
+  note(event: Record<string, unknown>) {
+    this.journal.record(event);
+  }
+
+  /** Resolve a legacy publication's parent from the retained Git object. */
+  publicationParent(head: string) {
+    if (!/^[a-f0-9]{40}$/.test(head)) throw new Error('Invalid retained publication commit');
+    return git(this.capture.source.root, 'rev-parse', `${head}^`);
   }
 
   /** Record Workflow observations through Coordination. */
@@ -148,6 +168,23 @@ export class HostTask implements TaskSession {
   /** Select the captured GitHub provider for this task. */
   provider(signal: AbortSignal) {
     return new GitHub(this.capture.source.remote, signal);
+  }
+
+  /** Verify the local commit and retained worktree before any new push. */
+  validatePublication(
+    worktree: string,
+    branch: string,
+    head: string,
+    parent: string,
+    candidate: string,
+  ) {
+    if (
+      git(worktree, 'branch', '--show-current') !== branch ||
+      git(worktree, 'rev-parse', 'HEAD') !== head ||
+      git(worktree, 'rev-parse', 'HEAD^') !== parent ||
+      git(worktree, 'rev-parse', 'HEAD^{tree}') !== candidate
+    )
+      throw new Error('The retained publication branch, parent or tree changed');
   }
 
   /** Commit exactly the reviewed tree on the task branch and report its identity. */
@@ -232,10 +269,15 @@ export class HostTask implements TaskSession {
 
   /** Use a run-local directory under trusted application storage. */
   private directory() {
-    const project = createHash('sha256').update(this.capture.source.remote).digest('hex');
-    const path = join(this.config.storage, project, 'runs', String(this.journal.run));
+    const path = this.location(this.journal.run);
     mkdirSync(path, { recursive: true, mode: 0o700 });
     return path;
+  }
+
+  /** Derive artifact locations from the verified project and journal identities. */
+  private location(run: number) {
+    const project = createHash('sha256').update(this.capture.source.remote).digest('hex');
+    return join(this.config.storage, project, 'runs', String(run));
   }
 }
 
@@ -268,16 +310,15 @@ function preflight(capture: Capture, storage: string): HostConfig {
   );
   if (git(source.root, 'status', '--porcelain', '--untracked-files=normal'))
     throw new Error('Task admission requires a clean working tree');
-  if (
-    git(source.root, 'rev-parse', 'HEAD') !== source.revision ||
-    git(source.root, 'ls-remote', '--exit-code', 'origin', `refs/heads/${base}`).split('\t')[0] !==
-      source.revision
-  )
-    throw new Error(`Task admission requires the current verified ${base} head`);
+  if (git(source.root, 'rev-parse', 'HEAD') !== source.revision)
+    throw new Error('The source revision changed during admission');
+  const fresh =
+    git(source.root, 'ls-remote', '--exit-code', 'origin', `refs/heads/${base}`).split('\t')[0] ===
+    source.revision;
   if (!project.checks?.acceptance?.length) throw new Error('Missing captured acceptance checks');
   new GitHub(source.remote, new AbortController().signal);
   verifyNativeGuidance(capture, source.root);
-  return { capture, common, executable: binding(project.bindings, common), base, storage };
+  return { capture, common, executable: binding(project.bindings, common), base, fresh, storage };
 }
 
 /** Resolve only the configured local executable, with no PATH fallback. */

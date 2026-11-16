@@ -1,7 +1,7 @@
 import type { Context } from 'cordis';
 import { coordinationPlugin } from '../../../packages/coordination/src/index.js';
 import { direct } from '../../../packages/direction/src/index.js';
-import { integrate } from '../../../packages/delivery/src/index.js';
+import { integrate, resume } from '../../../packages/delivery/src/index.js';
 import {
   applicationStorage,
   executionPlugin,
@@ -34,6 +34,6 @@ function services(context: Context): WorkflowServices {
       assess: (session, plan, candidate, signal) =>
         verify(context.agent, session, plan, candidate, signal),
     },
-    delivery: { integrate },
+    delivery: { integrate, resume },
   };
 }
