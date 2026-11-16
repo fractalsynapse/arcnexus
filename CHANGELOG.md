@@ -4,6 +4,9 @@
 
 ### Changed
 
+- Run the shared GitHub verification actions on Node.js 24 while testing
+  ArcNexus on Node.js 22 (#486).
+
 - Reconcile retained GitHub publications before retrying `task run`. Reuse the
   accepted candidate, issue branch, and pull request after an interruption
   (#473).
