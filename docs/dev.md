@@ -23,7 +23,9 @@ The [Team proposal](../packages/team/contract.md) defines the steward roster,
 eligibility and resource ownership views used by Direction. The Director starts
 the task and the final Reviewer can send rejected work back to Direction through
 the [Agent loop](../packages/agent/contract.md). [Reviewer](../packages/reviewer/contract.md)
-derives lessons from that loop and owns `.arc/learning/`.
+derives lessons from that loop and owns `.arc/learning/`. The
+[Workflow proposal](../packages/workflow/contract.md) maps the agent activity
+diagram to the existing task, verification and delivery boundaries.
 
 [Manager](../packages/manager/contract.md) maintains agent directives.
 [Release](../packages/release/contract.md) maintains repository workflows, ignores

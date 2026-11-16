@@ -5,12 +5,12 @@ Stage: **proposed**. The [registry](../../docs/interface/registry.yaml) records 
 Commands exposes the shared application SDK for the operations used by the
 [CLI app](../../apps/cli/contract.md). The SDK accepts structured input and uses
 [Agent](../agent/contract.md) and [Team](../team/contract.md) through the existing
-task services. It does not create a second task lifecycle.
+task services. [Workflow](../workflow/contract.md) executes the task loop.
 
 | Operation | Contract |
 | --- | --- |
 | `inspect(input)` | Resolve the supplied project context, component and activity. Return the scoped Agent view, exact model request and named placeholders. It has the same read-only behavior as Agent inspection. |
-| `runTask(input, observer, signal)` | Submit a goal to the existing task lane. Report structured progress, evidence references and human questions through the observer. Return the task outcome and honor cancellation. A supplied human answer is recorded through the task services. |
+| `runTask(input, observer, signal)` | Submit a goal to Workflow. Report structured progress, evidence references and human questions through the observer. Return the task outcome and honor cancellation. A supplied human answer is recorded through the task services. |
 
 The application adapter supplies inputs, renders outputs, collects answers and
 maps outcomes to its transport. Terminal arguments and exit codes belong to

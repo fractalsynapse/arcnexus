@@ -1,0 +1,51 @@
+id: workflow
+kind: plugin
+purpose: Execute the accepted Agent activity sequence for a task.
+objectives:
+- measure: Each task executes the recorded plan and closes with observed delivery or a recorded terminal
+    outcome.
+constraints:
+- failure: Workflow chooses a new plan, bypasses a gate, or creates a second lane or store.
+owns:
+- packages/workflow
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+    - Trace the handoff to the component that owns the decision.
+    operations: []
+    standards: []
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+    - Record task handoffs, feedback and terminal behavior in the Workflow contract.
+    operations: []
+    standards: []
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+    - Exercise ordered activity execution, correction and interruption through the public task boundary.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    instructions:
+    - Advance the recorded sequence through the existing Agent, Execution and Coordination services.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Check that Workflow respects captured authority and delegates sequence decisions and acceptance.
+    operations: []
+    standards:
+    - readable-typescript

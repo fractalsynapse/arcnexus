@@ -10,5 +10,6 @@ Run applicable assembled checks on the built artifact and production composition
 before delivery. Declare generated roots once. Read-only checks leave maintained
 source untouched, and fixes remain in the caller's writable scope.
 
-The current checkout retains the former toolchain files. Re-establish the executable
-commands against the new layout when the first build adds source.
+The first Foundation delivery compiles the app and plugin layout and exercises
+Cordis composition through the built test path. Build output belongs in `dist/`.
+Use one configuration for source, app and plugin tests, and shared tooling.
