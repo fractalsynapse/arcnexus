@@ -34,7 +34,7 @@ jobs:
 
       - name: Check project specification
         id: specification
-        run: node packages/foundation/scripts/check-specification.mjs
+        run: npm run check:specification
 
       - name: Check formatting
         if: steps.specification.outputs.executable == 'true'
