@@ -4,13 +4,25 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "strict": true,
+    "rewriteRelativeImportExtensions": true,
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": ".",
     "skipLibCheck": true,
     "noUncheckedIndexedAccess": true,
-    "declaration": true
+    "declaration": true,
+    "noEmitOnError": true,
+    "allowJs": true,
+    "checkJs": true
   },
   "include": [
-    "src/**/*.ts"
+    "apps/**/*.ts",
+    "apps/**/*.mjs",
+    "packages/**/*.ts",
+    "packages/**/*.mjs",
+    "scripts/**/*.ts",
+    "scripts/**/*.mjs",
+    "fixtures/**/*.ts",
+    "fixtures/**/*.mjs",
+    "eslint.config.ts"
   ]
 }

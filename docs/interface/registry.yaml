@@ -76,14 +76,24 @@ contracts:
   file: apps/cli/contract.md
   owner: cli-app
   stage: locked
-  digest: 09f5d7c58bfda701f7321672e7ec965cb3ee18c4667659c8ca76a4da48a84656
+  digest: b8f6cfe1f12bec0d84b8075803c0bb9cecb73b2b54e95d90c0eb31120ee7722e
   dependsOn:
   - arcnexus/project
   - arcnexus/commands
-  scenarios: 14
+  scenarios: 17
   acceptedBy: Adrian Webb (architect)
   acceptedAt: '2026-11-15'
   history:
+  - stage: locked
+    digest: 09f5d7c58bfda701f7321672e7ec965cb3ee18c4667659c8ca76a4da48a84656
+    file: apps/cli/contract.md
+    owner: cli-app
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: '2026-11-15'
+    approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
+      Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
+    revision: f234dd2deb25ac66db535e70dc2b52afd07a9eee
+    note: 'Superseded by the approved inspect amendment in #456.'
   - stage: locked
     digest: 41ebb85f9fcf7e254064c048487b945ea2286edf45e8f743dfac951b5ebd40bc
     file: packages/cli/contract.md
@@ -113,8 +123,8 @@ contracts:
       list and the retired-command table no longer cover it
 
       '
-  approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
-    Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
+  approvalRecord: 'Architect approved the locked inspect amendment in Codex chat on 2026-11-15. Base:
+    f234dd2deb25ac66db535e70dc2b52afd07a9eee. Issue #456.'
 - id: arcnexus/architecture-model
   type: library
   file: packages/architecture/contract.md
@@ -170,11 +180,9 @@ contracts:
       '
   - stage: proposed
     digest: 5defa8613fe034530ece7f34401d9822bd674215f642e9878a94e3c6b9f726c1
-    note: 'proposed in #350 with three open questions; all answered by the architect — keep the integrity
-      split between architecture-model and execution, keep .arc/architecture editing a human act applied
-      from a proposal, and let each contract be owned by the component it describes
-
-      '
+    note: "proposed in #350 with three open questions; all answered by the architect \u2014 keep the integrity\
+      \ split between architecture-model and execution, keep .arc/architecture editing a human act applied\
+      \ from a proposal, and let each contract be owned by the component it describes\n"
   approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
     Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
   stewardshipRecord: 'Architect approved steward ownership, release relocation and the architecture component
@@ -200,12 +208,10 @@ contracts:
     note: 'Pre-restart contract. Superseded by the approved Cordis restart in #454.'
   - stage: proposed
     digest: 1bb41eddc2db0a881584f26ec3b9b3c1b8cb7fce50e018164e5182410fb38470
-    note: 'proposed in #351 with three open questions; answered by the architect with one amendment —
-      goal identity is the digest of the goal text, the store is authoritative with the committed plan
-      as a deterministic render, per-goal retention that removes only regenerable caches, and entities
-      plus events
-
-      '
+    note: "proposed in #351 with three open questions; answered by the architect with one amendment \u2014\
+      \ goal identity is the digest of the goal text, the store is authoritative with the committed plan\
+      \ as a deterministic render, per-goal retention that removes only regenerable caches, and entities\
+      \ plus events\n"
 - id: arcnexus/execution
   type: library
   file: packages/execution/contract.md
@@ -232,11 +238,9 @@ contracts:
       against existing files
   - stage: proposed
     digest: a101a329f5d8a0027b5b60a17fa5587bde771693878ac0a2d8d60ec5376f2836
-    note: 'proposed in #352 with three open questions; answered by the architect — bubblewrap required
-      with the container kept as an opt-in deployment seam and concurrency preclusion forbidden, the lane
-      in execution with ordering in direction, and harness state per activation
-
-      '
+    note: "proposed in #352 with three open questions; answered by the architect \u2014 bubblewrap required\
+      \ with the container kept as an opt-in deployment seam and concurrency preclusion forbidden, the\
+      \ lane in execution with ordering in direction, and harness state per activation\n"
 - id: arcnexus/direction
   type: library
   file: packages/direction/contract.md
@@ -268,12 +272,10 @@ contracts:
     note: 'Pre-restart contract. Superseded by the approved Cordis restart in #454.'
   - stage: proposed
     digest: ed9fe67276c33e9534acb123c2d13751a60e05f8802c58c344075fa7c254c1c5
-    note: 'proposed in #356 with three open questions; answered by the architect — staging integration
-      is automatic and only production release awaits a human gate, a locked-contract conflict inserts
-      a change-request gate into the sequence, and the stewardship directive is reserved rather than deferred
-      silently
-
-      '
+    note: "proposed in #356 with three open questions; answered by the architect \u2014 staging integration\
+      \ is automatic and only production release awaits a human gate, a locked-contract conflict inserts\
+      \ a change-request gate into the sequence, and the stewardship directive is reserved rather than\
+      \ deferred silently\n"
   approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
     Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
 - id: arcnexus/verification
@@ -332,12 +334,10 @@ contracts:
       changed
   - stage: proposed
     digest: 8b007305e44bd039b02d5b1e67f22584e4727c554fcbc508925c8698fa81da86
-    note: 'proposed in #359 with three open questions; answered by the architect — provider performs the
-      merge and returns its identity, the only human gates are a production release and a blocking question
-      needing an answer or external action, and publication scope today is the CLI plus an npm package
-      with container, runner and installer targets reserved
-
-      '
+    note: "proposed in #359 with three open questions; answered by the architect \u2014 provider performs\
+      \ the merge and returns its identity, the only human gates are a production release and a blocking\
+      \ question needing an answer or external action, and publication scope today is the CLI plus an\
+      \ npm package with container, runner and installer targets reserved\n"
 - id: arcnexus/release
   type: release
   file: packages/release/contract.md
@@ -368,12 +368,10 @@ contracts:
     note: 'Pre-restart contract. Superseded by the approved Cordis restart in #454.'
   - stage: proposed
     digest: e31bfd5d3513210dae65bf62ecd02f3e81975c8b4a51559a7705aeade557ba9c
-    note: 'proposed in #359 with three open questions; answered by the architect — unscoped arcnexus name,
-      version tags with no v prefix, verification required after release, published by npm trusted publishing
-      on GitHub-hosted runners. The interpretation of "verify the release after it is made" as a clean-prefix
-      install from the registry is flagged in the contract for correction
-
-      '
+    note: "proposed in #359 with three open questions; answered by the architect \u2014 unscoped arcnexus\
+      \ name, version tags with no v prefix, verification required after release, published by npm trusted\
+      \ publishing on GitHub-hosted runners. The interpretation of \"verify the release after it is made\"\
+      \ as a clean-prefix install from the registry is flagged in the contract for correction\n"
   stewardshipRecord: 'Architect approved steward ownership, release relocation and the architecture component
     name in Codex chat on 2026-11-15. Base: ff08a26ce1f7b6fb8de0087e72c12884e1ad5c87. Issue #454.'
 - id: arcnexus/collaboration-provider
@@ -426,12 +424,8 @@ contracts:
   stage: proposed
   dependsOn:
   - arcnexus/agent
-  - arcnexus/team
-  - arcnexus/direction
-  - arcnexus/execution
-  - arcnexus/verification
-  - arcnexus/delivery
-  digest: 607f2f91cc9801386c27f73d3be85c6c0e13f024f95fa3c08dcbc92676cf69d0
+  - arcnexus/workflow
+  digest: e9f47188b301af6b1e49e0daf6be95ff3b7107ca3d04f32cfe3c8fa36508baa5
   scenarios: 3
 - id: arcnexus/manager
   type: library
@@ -461,3 +455,17 @@ contracts:
   acceptedAt: '2026-11-15'
   approvalRecord: 'Architect approved the Reviewer proposal in Codex chat on 2026-11-15. Base: 036bf1932a98cb434179ff1f3be82e1c212e4990.
     Issue #454.'
+- id: arcnexus/workflow
+  type: library
+  file: packages/workflow/contract.md
+  owner: workflow
+  stage: proposed
+  dependsOn:
+  - arcnexus/agent
+  - arcnexus/direction
+  - arcnexus/execution
+  - arcnexus/coordination
+  - arcnexus/verification
+  - arcnexus/delivery
+  digest: ece03f0ac8bb01254cc0fc99d98234a5812a4b4dc09884966999c35af8ec61ca
+  scenarios: 4

@@ -1,10 +1,20 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
-import { documentation, spacing } from './scripts/foundation/readability-rules.ts';
+import { documentation, spacing } from './packages/foundation/scripts/readability-rules.ts';
 
 export default tseslint.config(
-  { ignores: ['dist/**', '.test-build/**', '.fixture-build/**', 'node_modules/**', 'context/**'] },
+  {
+    ignores: [
+      'dist/**',
+      '.test-build/**',
+      '.fixture-build/**',
+      'node_modules/**',
+      'context/**',
+      'examples/**',
+      '.audit-work/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

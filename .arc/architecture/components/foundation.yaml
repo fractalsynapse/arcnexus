@@ -15,10 +15,6 @@ owns:
 - .prettierrc.yaml
 - eslint.config.ts
 - tsconfig.json
-- tsconfig.build.json
-- tsconfig.fixtures.json
-- tsconfig.tests.json
-- tsconfig.tooling.json
 activities:
   research:
     role: researcher

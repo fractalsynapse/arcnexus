@@ -2,14 +2,6 @@ name: Verification
 on:
   workflow_call:
     inputs:
-      distribution:
-        type: boolean
-        default: false
-        required: false
-      native:
-        type: boolean
-        default: true
-        required: false
       ref:
         type: string
         default: ''
@@ -36,10 +28,10 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      
+
       - name: Install product dependencies
         run: npm ci
-      
+
       - name: Check project specification
         id: specification
         run: node packages/foundation/scripts/check-specification.mjs
@@ -53,3 +45,6 @@ jobs:
       - name: Check TypeScript
         if: steps.specification.outputs.executable == 'true'
         run: npm run check
+      - name: Build and test app and plugin suites
+        if: steps.specification.outputs.executable == 'true'
+        run: npm test
