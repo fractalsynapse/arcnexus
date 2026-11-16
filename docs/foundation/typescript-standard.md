@@ -20,6 +20,7 @@ lint checks without silently rewriting another owner's files.
 
 Use observable acceptance through the built CLI for executable behavior. Preserve
 independent checks and captured authority when editing tests or instructions.
+See [ESLint rule regressions](quality.md#eslint-rule-regressions).
 
 ## Headers and spacing
 
