@@ -13,7 +13,8 @@
   Propose Team for eligible steward and resource ownership views. Give Manager,
   Release, Architecture and Direction distinct stewardship. Make final
   Reviewer feedback return to Direction through the shared Agent loop and record
-  the accepted Reviewer and learning contract.
+  the accepted Reviewer and learning contract. Verify the specification in CI
+  and require the executable tooling checks once product source or tests exist.
 
 - **A strategy map now states what is authoritative for the clean implementation** (#452):
   `docs/plans/strategy-map.md` gives the reading order — the model in `.arc/architecture`, then the locked
