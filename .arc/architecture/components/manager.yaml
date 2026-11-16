@@ -1,0 +1,52 @@
+id: manager
+kind: plugin
+purpose: Maintain project agent directives and supply guidance inputs for authority capture.
+objectives:
+- measure: Each scope resolves and validates its directives and skill references from the admitted revision.
+constraints:
+- failure: A guidance edit changes active instructions or grants authority outside the captured scope.
+owns:
+- packages/manager
+- AGENTS.md
+- .agents
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+    - Identify the applicable directive or skill and trace its authority to the catalog.
+    operations: []
+    standards: []
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+    - Explain guidance behavior and link shared project policies from local skills.
+    operations: []
+    standards: []
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+    - Exercise scoped guidance selection, bad metadata and changes after admission.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    instructions:
+    - Keep directives and skill references coherent and expose the resolved guidance inputs.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Check that the same revision resolves the same guidance and preserves captured scope.
+    operations: []
+    standards:
+    - readable-typescript

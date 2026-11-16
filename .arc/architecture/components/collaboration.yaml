@@ -1,0 +1,50 @@
+id: collaboration
+kind: plugin
+purpose: Expose the provider interface and GitHub operations to trusted host services.
+objectives:
+- measure: A provider-observed merge identifies the verified head and resulting commit.
+constraints:
+- failure: A steward obtains upstream credentials or a changed head can be merged.
+owns:
+- packages/collaboration
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+    - Establish the provider observation needed to confirm the intended upstream effect.
+    operations: []
+    standards: []
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+    - Describe the provider operation, its authorized input and the returned observation.
+    operations: []
+    standards: []
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+    - Use an isolated provider fixture to exercise changed heads, checks and unavailable results.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    instructions:
+    - Perform only the host-authorized GitHub operation and report the observed identity.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Check that provider calls stay outside agent authority and cannot merge a changed head.
+    operations: []
+    standards:
+    - readable-typescript

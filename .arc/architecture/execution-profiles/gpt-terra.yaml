@@ -1,0 +1,11 @@
+id: gpt-terra
+model: gpt-6.1-terra
+reasoning: medium
+webSearch: live
+operationCategories:
+- build
+- unit-test
+- integration-test
+- cli-check
+- http-check
+- lint

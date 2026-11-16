@@ -3,6 +3,7 @@
 /context/
 .dsh-*
 .codegraph/
+.audit-work/
 
 # Environment / secrets
 .env
@@ -38,3 +39,11 @@ Thumbs.db
 
 # Documentation 
 /docs/.astro/
+
+# Compiled TypeScript acceptance tests
+.test-build/
+
+.fixture-build/
+
+.tool-build/
+.prepared-stale/

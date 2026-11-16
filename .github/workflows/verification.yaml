@@ -1,0 +1,50 @@
+name: Verification
+on:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        default: ''
+        required: false
+permissions:
+  contents: read
+jobs:
+  repository:
+    name: Repository checks
+    runs-on: ubuntu-26.04
+    timeout-minutes: 360
+    steps:
+      - name: Check out source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: Normalize declared HTTPS repository identity
+        run: git remote set-url origin "https://github.com/${{ github.repository }}.git"
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install product dependencies
+        run: npm ci
+
+      - name: Check project specification
+        id: specification
+        run: node packages/foundation/scripts/check-specification.mjs
+
+      - name: Check formatting
+        if: steps.specification.outputs.executable == 'true'
+        run: npm run format:check
+      - name: Lint maintained code
+        if: steps.specification.outputs.executable == 'true'
+        run: npm run lint
+      - name: Check TypeScript
+        if: steps.specification.outputs.executable == 'true'
+        run: npm run check
+      - name: Build and test app and plugin suites
+        if: steps.specification.outputs.executable == 'true'
+        run: npm test

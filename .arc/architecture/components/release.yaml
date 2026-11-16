@@ -1,0 +1,56 @@
+id: release
+kind: plugin
+purpose: Maintain repository release infrastructure and preserve the human production gate.
+objectives:
+- measure: Release checks and delivery metadata describe the candidate and actual observed repository
+    gates.
+constraints:
+- failure: A workflow bypasses required verification, weakens staging gates or exercises human production
+    authority.
+owns:
+- packages/release
+- .github
+- .gitignore
+- CHANGELOG.md
+- docs/release
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+    - Trace workflow triggers, ignored outputs and release observations to the governing policy.
+    operations: []
+    standards: []
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+    - Keep release guidance and developer-visible changelog entries consistent with verified behavior.
+    operations: []
+    standards: []
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+    - Exercise applicable repository workflow checks and the protected release boundary.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    instructions:
+    - Maintain GitHub workflows and release housekeeping under the configured repository policy.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Check that workflow changes preserve staging gates and human authority over production.
+    operations: []
+    standards:
+    - readable-typescript

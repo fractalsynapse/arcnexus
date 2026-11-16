@@ -1,0 +1,29 @@
+id: arcnexus
+remote: https://github.com/fractalsynapse/arcnexus.git
+knowledgeRoot: .arc
+contractRegistry: docs/interface/registry.yaml
+planTemplate: .arc/architecture/plan-template.md
+application: cli-app
+bindings: .git/arcnexus/bindings.yaml
+delivery:
+  baseBranch: staging
+  protectedBranch: main
+  workBranch: <issue>-<description>
+  provider: collaboration
+  owner: delivery
+  requiredGates:
+  - CI
+  - configured review
+director:
+  component: direction
+  activity: planning
+verifier:
+  component: reviewer
+  activity: assessment
+checks:
+  acceptance:
+  - repository-build
+  - repository-types
+  - repository-format
+  - repository-lint
+  - repository-tests

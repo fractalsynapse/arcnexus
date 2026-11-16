@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.test-build/
+context/
+examples/
+package-lock.json
+fixtures/**/package-lock.json
+docs/acceptance/
+docs/plans/
+docs/*qualification.json
+qualification/tree-artifact-expected.json
+
+.fixture-build/
+
+# Locked interface contracts are digest-pinned architecture. The repository's maintained-file
+# scope already skips this directory; it is ignored here too so an ad-hoc `prettier --write docs`
+# cannot rewrite a contract and break its recorded digest, which happened three times this session.
+docs/interface/
+apps/*/contract.md
+packages/*/contract.md

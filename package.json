@@ -1,0 +1,35 @@
+{
+  "name": "arcnexus",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13 <23"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.5",
+    "eslint": "10.14.0",
+    "globals": "17.13.0",
+    "jiti": "2.7.0",
+    "prettier": "3.9.10",
+    "typescript-eslint": "8.72.1"
+  },
+  "dependencies": {
+    "cordis": "4.0.0-rc.13",
+    "typescript": "5.9.3",
+    "yaml": "2.9.1"
+  },
+  "scripts": {
+    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc",
+    "check": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint --fix --max-warnings 0 --pass-on-no-patterns",
+    "format:check": "prettier --check --no-error-on-unmatched-pattern \"*.{ts,json}\" \"{apps,packages,scripts,fixtures}/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,json,yaml,yml}\"",
+    "format": "prettier --write",
+    "test": "npm run build && node dist/packages/foundation/scripts/test.js"
+  },
+  "bin": {
+    "arcnexus": "dist/apps/cli/src/index.js"
+  }
+}

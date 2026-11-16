@@ -1,0 +1,50 @@
+id: verification
+kind: plugin
+purpose: Assess one assembled task candidate against the captured acceptance.
+objectives:
+- measure: One independent verdict cites evidence for the engineering criteria and the original goal.
+constraints:
+- failure: A missing required check counts as passed or a changed digest reuses a verdict.
+owns:
+- packages/verification
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+    - Trace an acceptance criterion to its captured check and evidence input.
+    operations: []
+    standards: []
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+    - Specify verdict identity, evidence completeness and unavailable outcomes.
+    operations: []
+    standards: []
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+    - Exercise stale verdicts, missing evidence and recorded expected-red checks.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    instructions:
+    - Implement one acceptance and verdict path for the assembled candidate.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Check the verifier implementation against its contract without authorizing candidate delivery.
+    operations: []
+    standards:
+    - readable-typescript
