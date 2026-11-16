@@ -12,12 +12,11 @@ requests targeting `staging`, and the
 
 Run `node packages/foundation/scripts/check-specification.mjs` to check the
 tracked catalog, ownership, contract digests and scenarios, documentation links,
-and skill metadata. CI runs the same check. The specification-only revision has
-no tracked product source or tests, so executable checks are inapplicable. With
-tracked app or plugin source or tests, the shared workflow runs format, lint,
-type-check and `npm test`. The test command builds before running the compiled
-suites. CI records this deterministic evidence separately from native host and
-live-agent qualification.
+and skill metadata. The shared verification workflow always runs specification
+checks. When tracked product source or tests exist, it also runs format, lint,
+type checking and compiled tests through `npm test`. The test command builds
+before running the compiled suites. CI records this deterministic evidence
+separately from native host and live-agent qualification.
 
 ## Native confinement checks
 
