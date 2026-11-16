@@ -20,3 +20,4 @@ If publication is interrupted, rerun `task run` with the identical goal. In the
 retained task evidence, compare the reused pull request, the reviewed tree and
 the observed staging commit. The [Delivery contract](../../packages/delivery/contract.md)
 scenarios DE-5 and DE-6 govern observation before retry and reuse of a recorded merge.
+If the staging base moves before an unmerged publication, ArcNexus refuses to reuse the previous acceptance because it covers the earlier tree.
