@@ -5,7 +5,10 @@ Stage: **locked**. See the [registry](../../docs/interface/registry.yaml) for au
 ## Obligations
 
 Turn a goal and captured catalog into an ordered plan with the Focus and five Steps
-from the [plan template](../../.arc/architecture/plan-template.md). Choose one
+from the [plan template](../../.arc/architecture/plan-template.md). Use [Team](../team/contract.md)
+to query eligible stewards and resolve supplier ownership from the captured
+project and task position. Direction remains responsible for plan order, reuse of
+accepted work and escalation. Choose one
 accountable owner per milestone. A request links existing accepted work or causes
 the director to place a supplier milestone before dependent work. Execute the
 sequence in one lane. Stewards can propose corrections and escalations. The
@@ -39,6 +42,7 @@ production directives are deferred. One independent verdict covers the assembled
 | DI-16 | Two goals in the same project cannot both be planned: the lane is busy, and the second is refused rather than queued. |
 | DI-17 | A verified staging goal closes after the configured checks and review are observed and the provider reports its merge identity. The host can integrate once gates are satisfied. |
 | DI-19 | The first build refuses a component-scoped workday directive with a stated reason. |
+| DI-20 | The director selects a supplier from a Team view. An unowned resource or ownership collision is reported with affected resources and owners instead of guessing a recipient. A supplier request grants no write authority. |
 
 ## Deferred
 

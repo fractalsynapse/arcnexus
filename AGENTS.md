@@ -34,7 +34,7 @@ and keeps ArcNexus-specific release rules in this repository.
   the checks relevant to the current contribution, then verify assembled delivery
   against captured acceptance.
 
-## Agent
+## Agent and Team
 
 Agent is the central conceptual model of ArcNexus. Use one scoped Agent interface
 for the director, component stewards and independent reviewer. Applications and
@@ -42,7 +42,14 @@ plugins inspect, activate or manage those agents through their public boundary.
 Read the [Agent contract proposal](packages/agent/contract.md) for the shared view
 of purpose, instructions, observations, standards and allowed operations. Resolve
 the current activity from the captured catalog and plan position. Activities select
-the Agent's role, profile and capabilities for the work at hand.
+the Agent's role, profile and capabilities for the work at hand. Author each
+activity in its component specification. Missing activities are unavailable.
+
+Team gives Direction an ordered roster of eligible stewards and resolves resource
+ownership from the captured catalog. Direction sequences requests and work.
+Use the [Team proposal](packages/team/contract.md) for those boundaries.
+The CLI app owns terminal behavior and delegates through the
+[shared Commands SDK](packages/commands/contract.md).
 
 ## Direction and evidence
 

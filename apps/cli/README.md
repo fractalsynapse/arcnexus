@@ -1,9 +1,10 @@
 # ArcNexus CLI application
 
 This application will mount trusted Cordis plugins and adapt terminal arguments,
-progress, cancellation and exit codes. The [command plugin contract](../../packages/cli/contract.md)
+progress, cancellation and exit codes. The [CLI gateway contract](contract.md)
 defines the operator surface. The application owns CLI composition tests and any
-scripts specific to its executable.
+scripts specific to its executable. The adapter uses the transport-neutral
+[Commands SDK](../../packages/commands/contract.md).
 
 The [Agent proposal](../../packages/agent/contract.md) defines the common inspection
 and activation interface for this application.

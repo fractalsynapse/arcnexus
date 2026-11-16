@@ -3,7 +3,7 @@ remote: https://github.com/fractalsynapse/arcnexus.git
 knowledgeRoot: .arc
 contractRegistry: docs/interface/registry.yaml
 planTemplate: .arc/architecture/plan-template.md
-application: apps/cli
+application: cli-app
 bindings: .git/arcnexus/bindings.yaml
 delivery:
   baseBranch: staging
@@ -16,39 +16,10 @@ delivery:
   - configured review
 director:
   component: direction
-  profile: gpt-astra
+  activity: planning
 verifier:
   component: verification
-  profile: gpt-astra
-activities:
-  research:
-    role: researcher
-    profile: gpt-astra
-  documentation:
-    role: technical-writer
-    profile: gpt-sol
-  testing:
-    role: designer
-    profile: gpt-sol
-    standards:
-    - readable-typescript
-    operations:
-    - owner-tests
-  implementation:
-    role: systems-engineer
-    profile: gpt-luna
-    standards:
-    - readable-typescript
-    operations:
-    - owner-tests
-  review:
-    role: reviewer
-    profile: gpt-sol
-    standards:
-    - readable-typescript
-  release:
-    role: release-engineer
-    executor: host
+  activity: assessment
 checks:
   acceptance:
   - repository-build

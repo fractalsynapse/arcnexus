@@ -1,0 +1,50 @@
+id: team
+kind: plugin
+purpose: Expose roster, eligibility and resource ownership views for groups of Agents.
+objectives:
+- measure: A captured task resolves an ordered roster and reports unmanaged resources or collisions.
+constraints:
+- failure: Team creates a competing ownership map, grants scope or schedules agents.
+owns:
+- packages/team
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+    - Trace membership and resource ownership back to the captured catalog and task position.
+    operations: []
+    standards: []
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+    - Document roster filters, stable ordering and distinct ownership findings in the Team contract.
+    operations: []
+    standards: []
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+    - Exercise the same roster under filters, tied priority, absent owners and collisions.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    instructions:
+    - Derive roster and ownership answers from the captured model and recorded position.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Verify that views and supplier requests preserve ownership and leave scheduling to Direction.
+    operations: []
+    standards:
+    - readable-typescript

@@ -2,8 +2,51 @@ id: agent
 kind: plugin
 purpose: Expose one scoped Agent for inspection and activation of directors, stewards and reviewers.
 objectives:
-- measure: All three actor roles use the same Agent interface and inspection matches the Codex request for the same inputs.
+- measure: All three actor roles use the same Agent interface and inspection matches the Codex request
+    for the same inputs.
 constraints:
-- failure: An actor can observe data or perform an operation outside captured authority, or bypass the single execution lane.
+- failure: An actor can observe data or perform an operation outside captured authority, or bypass the
+    single execution lane.
 owns:
 - packages/agent
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+    - Identify which observation or operation the current actor needs from its captured scope.
+    operations: []
+    standards: []
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+    - Describe the shared Agent view and activity boundary before changing activation behavior.
+    operations: []
+    standards: []
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+    - Exercise inspect-to-harness parity, activity changes and refused capabilities.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    instructions:
+    - Expose the resolved actor and delegate one bounded activation to Execution.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Check equivalent inspection and activation, including director and reviewer read-only scope.
+    operations: []
+    standards:
+    - readable-typescript

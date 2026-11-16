@@ -1,9 +1,0 @@
-id: cli
-kind: plugin
-purpose: Expose context inspection and foreground task execution to an operator.
-objectives:
-- measure: Inspection matches the request passed to the harness for matching inputs.
-constraints:
-- failure: Inspection runs a model, mutates state or claims invented context.
-owns:
-- packages/cli

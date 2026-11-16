@@ -2,9 +2,56 @@ id: direction
 kind: plugin
 purpose: Turn goals and supplier requests into a sequence of accountable milestones.
 objectives:
-- measure: A supplier request preserves the owner and acceptance and places required
-    work first.
+- measure: A supplier request preserves the owner and acceptance and places required work first.
 constraints:
 - failure: A milestone acquires two owners or the director grants itself write authority.
 owns:
 - packages/direction
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+    - Trace goal interpretation and supplier ordering to the plan and Team eligibility.
+    operations: []
+    standards: []
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+    - Describe plan changes, reuse and escalation as observable outcomes.
+    operations: []
+    standards: []
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+    - Exercise a two-owner task, unavailable supplier and preserved acceptance.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    instructions:
+    - Implement the planner and sequencing behavior within the Direction plugin.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Check that plan changes preserve the goal, one owner per milestone and the one task lane.
+    operations: []
+    standards:
+    - readable-typescript
+  planning:
+    role: director
+    profile: gpt-astra
+    instructions:
+    - Use the captured Team component IDs in the plan so supplier links resolve to the same owners.
+    operations: []
+    standards: []

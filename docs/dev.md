@@ -4,7 +4,10 @@ Start with the [charter](charter.md), the [first delivery and qualification](pla
 and the [interface registry](interface/registry.yaml). The runtime is being rebuilt.
 The contracts state the target behavior and the tests that establish it.
 
-The CLI composition belongs in [apps/cli](../apps/cli/README.md).
+The catalog distinguishes project, app and plugin ownership. The CLI app owns
+its composition and terminal adapter in [apps/cli](../apps/cli/README.md).
+The [Commands SDK](../packages/commands/contract.md) provides shared structured
+inspect and task operations for the CLI and future MCP and OpenAPI adapters.
 Reusable Cordis plugins belong in `packages/<plugin>/`. A plugin owns its public
 entry and contract beside its source and tests. Keep plugin documentation and
 scripts there when the plugin alone uses them. Keep root `docs/` and `scripts/`
@@ -16,6 +19,8 @@ location comes from the [registry](interface/registry.yaml).
 The [Agent contract proposal](../packages/agent/contract.md) is the first stop for
 understanding how the plugins work together. It gives `inspect` one view of an
 actor and gives `task run` one activation interface for every actor.
+The [Team proposal](../packages/team/contract.md) defines the steward roster,
+eligibility and resource ownership views used by Direction.
 
 The local Cordis and DeepSeek Harness examples informed the layout. ArcNexus uses
 a single trusted CLI composition for the first build. That composition is captured

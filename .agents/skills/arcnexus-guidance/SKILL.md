@@ -16,7 +16,9 @@ assignment keeps its captured permissions, operations and acceptance.
 
 Use the [Agent contract proposal](../../../packages/agent/contract.md) for the
 central actor model. Route activity, capability and context guidance through that
-boundary and the captured catalog.
+boundary and the component's explicit activity mappings. Use the
+[Team proposal](../../../packages/team/contract.md) when routing steward discovery
+and ownership. Keep the application's transport behavior at its adapter boundary.
 
 Check metadata and declared references on the tracked candidate, then review Markdown links and walk through
 the decisions affected by the change. Verify that a new instruction cannot expand

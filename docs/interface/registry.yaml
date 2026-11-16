@@ -13,12 +13,20 @@ contracts:
   file: docs/interface/arcnexus-project.md
   owner: project
   stage: locked
-  digest: 4c10b1c8e2bee908361af3726d75904808606d27f0e32936d379a73fe47a2702
+  digest: 6f44b639d23211a4913c3b0a4ce20fa49d77efe9c98b58f5cce2976db8751349
   dependsOn: []
-  scenarios: 14
+  scenarios: 15
   acceptedBy: Adrian Webb (architect)
   acceptedAt: '2026-11-15'
   history:
+  - stage: locked
+    digest: 4c10b1c8e2bee908361af3726d75904808606d27f0e32936d379a73fe47a2702
+    file: docs/interface/arcnexus-project.md
+    owner: project
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: '2026-11-15'
+    revision: 5b081f8ab10248daac6a966e88c4525324f5e15b
+    note: 'Replaced by the approved component, Team and Commands contract update in #454.'
   - stage: locked
     digest: 3a4df0b30cd347a507e8fd4fca2c5a40496f5ff20475822b6c5c4532873dd9eb
     file: docs/interface/arcnexus-project.md
@@ -28,6 +36,8 @@ contracts:
   - stage: proposed
     digest: 133f9cf2ab5f1a317969b7fc46a5cafdb4c982e0d36d3e48d5e4b1ba1298e114
     note: proposed in
+  approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
+    Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
 - id: arcnexus/foundation
   type: foundation
   file: packages/foundation/contract.md
@@ -51,21 +61,25 @@ contracts:
     note: proposed and locked unchanged in
 - id: arcnexus/cli-gateway
   type: gateway
-  file: packages/cli/contract.md
-  owner: cli
+  file: apps/cli/contract.md
+  owner: cli-app
   stage: locked
-  digest: 41ebb85f9fcf7e254064c048487b945ea2286edf45e8f743dfac951b5ebd40bc
+  digest: 09f5d7c58bfda701f7321672e7ec965cb3ee18c4667659c8ca76a4da48a84656
   dependsOn:
   - arcnexus/project
-  - arcnexus/architecture-model
-  - arcnexus/coordination
-  - arcnexus/direction
-  - arcnexus/execution
-  - arcnexus/delivery
-  scenarios: 13
+  - arcnexus/commands
+  scenarios: 14
   acceptedBy: Adrian Webb (architect)
   acceptedAt: '2026-11-15'
   history:
+  - stage: locked
+    digest: 41ebb85f9fcf7e254064c048487b945ea2286edf45e8f743dfac951b5ebd40bc
+    file: packages/cli/contract.md
+    owner: cli
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: '2026-11-15'
+    revision: 5b081f8ab10248daac6a966e88c4525324f5e15b
+    note: 'Replaced by the approved component, Team and Commands contract update in #454.'
   - stage: locked
     digest: 22ccd93fa6f6197c8828c13c833c49bc1605177485df2fbd22c70109eeb84eb3
     file: docs/interface/arcnexus-cli-gateway.md
@@ -82,24 +96,34 @@ contracts:
       '
   - stage: locked
     digest: a80d721cdf1c37bbdd5b834e224894d39c88b12221369add54aab8fefecd656c
-    note: '--simulate restored as a delivered option by the architect: simulation keeps its mode,
-      so the flag selects the evidence-package collaboration provider rather than a mock; the rejected-option
+    note: '--simulate restored as a delivered option by the architect: simulation keeps its mode, so the
+      flag selects the evidence-package collaboration provider rather than a mock; the rejected-option
       list and the retired-command table no longer cover it
 
       '
+  approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
+    Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
 - id: arcnexus/architecture-model
   type: library
   file: packages/architecture-model/contract.md
   owner: architecture-model
   stage: locked
-  digest: 51784a838b868773bddd94a79a72170cdf76b45c0681e1af68ccd6a9089e9fc9
+  digest: 9cda2da6d79582be008fbfc5bff4fea0730758bad0ccc5f28bf025d9e3696ddc
   dependsOn:
   - arcnexus/project
   - arcnexus/foundation
-  scenarios: 17
+  scenarios: 19
   acceptedBy: Adrian Webb (architect)
   acceptedAt: '2026-11-15'
   history:
+  - stage: locked
+    digest: 51784a838b868773bddd94a79a72170cdf76b45c0681e1af68ccd6a9089e9fc9
+    file: packages/architecture-model/contract.md
+    owner: architecture-model
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: '2026-11-15'
+    revision: 5b081f8ab10248daac6a966e88c4525324f5e15b
+    note: 'Replaced by the approved component, Team and Commands contract update in #454.'
   - stage: locked
     digest: f30e7b54592395c2cae952ed75355dcdb8b4b962d331e679dfd7e19b045915cd
     file: docs/interface/arcnexus-architecture-model.md
@@ -116,10 +140,10 @@ contracts:
   - stage: locked
     digest: e3d6abee203a17b7d16c8b3ce9031e5595467135e2eb405ddd9b01a64499491b
     note: 'Module inventory updated under the architect''s 2026-11-12 instruction that component ownership
-      is the sole source of truth for writes: `directory-grants.ts` and `permissions.ts` are deleted
-      with the grant projection they implemented. Invariant I2 ("ownership comes from declared paths
-      only, no per-milestone file grants") is now the only statement of write authority; `access`
-      retains derived reads alone.
+      is the sole source of truth for writes: `directory-grants.ts` and `permissions.ts` are deleted with
+      the grant projection they implemented. Invariant I2 ("ownership comes from declared paths only,
+      no per-milestone file grants") is now the only statement of write authority; `access` retains derived
+      reads alone.
 
       '
   - stage: proposed
@@ -129,6 +153,8 @@ contracts:
       from a proposal, and let each contract be owned by the component it describes
 
       '
+  approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
+    Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
 - id: arcnexus/coordination
   type: library
   file: packages/coordination/contract.md
@@ -150,10 +176,10 @@ contracts:
     note: 'Pre-restart contract. Superseded by the approved Cordis restart in #454.'
   - stage: proposed
     digest: 1bb41eddc2db0a881584f26ec3b9b3c1b8cb7fce50e018164e5182410fb38470
-    note: 'proposed in #351 with three open questions; answered by the architect with one amendment
-      — goal identity is the digest of the goal text, the store is authoritative with the committed
-      plan as a deterministic render, per-goal retention that removes only regenerable caches, and
-      entities plus events
+    note: 'proposed in #351 with three open questions; answered by the architect with one amendment —
+      goal identity is the digest of the goal text, the store is authoritative with the committed plan
+      as a deterministic render, per-goal retention that removes only regenerable caches, and entities
+      plus events
 
       '
 - id: arcnexus/execution
@@ -183,8 +209,8 @@ contracts:
   - stage: proposed
     digest: a101a329f5d8a0027b5b60a17fa5587bde771693878ac0a2d8d60ec5376f2836
     note: 'proposed in #352 with three open questions; answered by the architect — bubblewrap required
-      with the container kept as an opt-in deployment seam and concurrency preclusion forbidden, the
-      lane in execution with ordering in direction, and harness state per activation
+      with the container kept as an opt-in deployment seam and concurrency preclusion forbidden, the lane
+      in execution with ordering in direction, and harness state per activation
 
       '
 - id: arcnexus/direction
@@ -192,15 +218,24 @@ contracts:
   file: packages/direction/contract.md
   owner: direction
   stage: locked
-  digest: 36f72ae4e4984c5d93d1c6d1c5f2c5e30539646f344e2743d52aab985e0ecde9
+  digest: 2b540b7ccc52d1b18a996d6c73b42b6054e37a0de882fd5bd9741b4be4a5835f
   dependsOn:
   - arcnexus/project
   - arcnexus/architecture-model
   - arcnexus/coordination
-  scenarios: 17
+  - arcnexus/team
+  scenarios: 18
   acceptedBy: Adrian Webb (architect)
   acceptedAt: '2026-11-15'
   history:
+  - stage: locked
+    digest: 36f72ae4e4984c5d93d1c6d1c5f2c5e30539646f344e2743d52aab985e0ecde9
+    file: packages/direction/contract.md
+    owner: direction
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: '2026-11-15'
+    revision: 5b081f8ab10248daac6a966e88c4525324f5e15b
+    note: 'Replaced by the approved component, Team and Commands contract update in #454.'
   - stage: locked
     digest: f8f38abd8c8048155b56f04f337cacf726f4726bc21250ed3d021d7602586b94
     file: docs/interface/arcnexus-direction.md
@@ -211,10 +246,12 @@ contracts:
     digest: ed9fe67276c33e9534acb123c2d13751a60e05f8802c58c344075fa7c254c1c5
     note: 'proposed in #356 with three open questions; answered by the architect — staging integration
       is automatic and only production release awaits a human gate, a locked-contract conflict inserts
-      a change-request gate into the sequence, and the stewardship directive is reserved rather than
-      deferred silently
+      a change-request gate into the sequence, and the stewardship directive is reserved rather than deferred
+      silently
 
       '
+  approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
+    Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
 - id: arcnexus/verification
   type: library
   file: packages/verification/contract.md
@@ -239,9 +276,9 @@ contracts:
     note: 'Pre-restart contract. Superseded by the approved Cordis restart in #454.'
   - stage: proposed
     digest: 07cbaf2fa2f53364a7104613aad53e6ddbdbacf3012062ae42a35d5e0697f5ac
-    note: 'proposed in #356 with three open questions; the architect rejected the reviewer input cap
-      outright for the first system, so revision 2 replaces bounds with full assembly by reference
-      plus recorded measures, and confirms re-run authority and the single reviewer
+    note: 'proposed in #356 with three open questions; the architect rejected the reviewer input cap outright
+      for the first system, so revision 2 replaces bounds with full assembly by reference plus recorded
+      measures, and confirms re-run authority and the single reviewer
 
       '
 - id: arcnexus/delivery
@@ -267,14 +304,14 @@ contracts:
     note: 'Pre-restart contract. Superseded by the approved Cordis restart in #454.'
   - stage: locked
     identity: unrecorded
-    note: migration status column added by revision 3 at the architect's direction; no invariant or
-      scenario changed
+    note: migration status column added by revision 3 at the architect's direction; no invariant or scenario
+      changed
   - stage: proposed
     digest: 8b007305e44bd039b02d5b1e67f22584e4727c554fcbc508925c8698fa81da86
-    note: 'proposed in #359 with three open questions; answered by the architect — provider performs
-      the merge and returns its identity, the only human gates are a production release and a blocking
-      question needing an answer or external action, and publication scope today is the CLI plus an
-      npm package with container, runner and installer targets reserved
+    note: 'proposed in #359 with three open questions; answered by the architect — provider performs the
+      merge and returns its identity, the only human gates are a production release and a blocking question
+      needing an answer or external action, and publication scope today is the CLI plus an npm package
+      with container, runner and installer targets reserved
 
       '
 - id: arcnexus/release
@@ -299,10 +336,10 @@ contracts:
     note: 'Pre-restart contract. Superseded by the approved Cordis restart in #454.'
   - stage: proposed
     digest: e31bfd5d3513210dae65bf62ecd02f3e81975c8b4a51559a7705aeade557ba9c
-    note: 'proposed in #359 with three open questions; answered by the architect — unscoped arcnexus
-      name, version tags with no v prefix, verification required after release, published by npm trusted
-      publishing on GitHub-hosted runners. The interpretation of "verify the release after it is made"
-      as a clean-prefix install from the registry is flagged in the contract for correction
+    note: 'proposed in #359 with three open questions; answered by the architect — unscoped arcnexus name,
+      version tags with no v prefix, verification required after release, published by npm trusted publishing
+      on GitHub-hosted runners. The interpretation of "verify the release after it is made" as a clean-prefix
+      install from the registry is flagged in the contract for correction
 
       '
 - id: arcnexus/collaboration-provider
@@ -325,15 +362,40 @@ contracts:
     note: 'Pre-restart contract. Superseded by the approved Cordis restart in #454.'
   - stage: locked
     identity: unrecorded
-    note: migration status column added by revision 2; the fake GitHub, provider database and second
-      engine recorded as deleted
+    note: migration status column added by revision 2; the fake GitHub, provider database and second engine
+      recorded as deleted
 - id: arcnexus/agent
   type: library
   file: packages/agent/contract.md
   owner: agent
   stage: proposed
-  digest: c7505c67a76f1a3957b8ec8b3c4d71a81d407e10cd83d11d0312005ed474711d
+  digest: 8e2ed39d5e25fe0cc2d045a24f17848eb2da29ee8218df105f9df474c9094a43
   dependsOn:
   - arcnexus/architecture-model
   - arcnexus/execution
   scenarios: 8
+- id: arcnexus/team
+  type: library
+  file: packages/team/contract.md
+  owner: team
+  stage: proposed
+  dependsOn:
+  - arcnexus/agent
+  - arcnexus/architecture-model
+  - arcnexus/coordination
+  digest: 81ad803a628f6b2dcb5aaa7b46dccf233e0182219fd3d111455462e9b901cff8
+  scenarios: 6
+- id: arcnexus/commands
+  type: library
+  file: packages/commands/contract.md
+  owner: commands
+  stage: proposed
+  dependsOn:
+  - arcnexus/agent
+  - arcnexus/team
+  - arcnexus/direction
+  - arcnexus/execution
+  - arcnexus/verification
+  - arcnexus/delivery
+  digest: 607f2f91cc9801386c27f73d3be85c6c0e13f024f95fa3c08dcbc92676cf69d0
+  scenarios: 3

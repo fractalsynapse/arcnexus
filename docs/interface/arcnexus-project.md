@@ -7,12 +7,15 @@ Stage: **locked**. See the [registry](registry.yaml) for authority and history.
 A project is one Git repository, one knowledge root, one component and check catalog,
 one sequential lane, and one store. Resolve the project from a working directory and
 verify the canonical Git remote. The project definition supplies its identity,
-bindings, activity defaults and delivery policy. Credentials remain outside source.
-Each component declares its purpose, measurable objectives and constraints, and
-owned roots. Resolve its public plugin entry from the owning package.
+bindings, shared references and delivery policy. Credentials remain outside source.
+The component types are project, app and plugin. Each declares its purpose,
+measurable objectives and constraints, owned roots, and its activity map. An app
+owns its composition, operator entry point and app-local tests. A plugin owns
+its public entry and implements a reusable service or capability.
 
 Every public application or service interface is implemented through a Cordis plugin.
-The CLI application composes the trusted plugins in `apps/cli/`. Each plugin has one owner
+The CLI app owns its transport contract in `apps/cli/` and composes trusted
+plugins, including the shared Commands SDK. Each plugin has one owner
 and keeps its public entry, interface, source, documentation, tests and owner-specific
 scripts together in `packages/<plugin>/`. Root documentation and scripts serve the
 whole project. A package exposes only its public entry. Private helpers remain local.
@@ -48,3 +51,4 @@ Keep one configuration version. Main integration, tags and release remain human-
 | PRJ-12 | A run that dies leaves its branch, workspace and evidence; a new run reads the recorded position rather than replaying an uncertain operation. |
 | PRJ-13 | Moving an owner-local contract, test or script outside its owner root fails ownership validation. The CLI can substitute a trusted plugin at composition without changing a consuming plugin. |
 | PRJ-14 | A target repository plugin declaration cannot execute privileged host code or replace the application composition. |
+| PRJ-15 | The CLI app owns `apps/cli`, the Commands plugin owns `packages/commands`, and the project owner owns neither path. Both the app and plugin expose their own complete component specifications. |

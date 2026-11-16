@@ -7,3 +7,44 @@ constraints:
 - failure: Concurrent writers or competing stored versions of a fact are observed.
 owns:
 - packages/coordination
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+    - Identify the durable fact and its existing writer before proposing a storage change.
+    operations: []
+    standards: []
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+    - Describe the state, evidence identity and derived views in the coordination contract.
+    operations: []
+    standards: []
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+    - Exercise stale writes, abrupt exit and retained position using the real record shape.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    instructions:
+    - Persist facts through one authoritative writer and derive other views from them.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Check idempotency, terminal outcomes and preservation of observed failure evidence.
+    operations: []
+    standards:
+    - readable-typescript

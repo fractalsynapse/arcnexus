@@ -24,8 +24,10 @@ under `.arc/plans/`.
 | Review | `review` | Engineering self-review and a reference to the independent verdict for the assembled task |
 | Integration | `release` | A reference to the host's observed staging merge and applicable gates |
 
-Research can support any Step. Resolve roles, profiles and available operations
-from the captured component and project defaults. Review and Integration reference
+Research can support any Step. Resolve each activity's role, profile, instructions,
+operations and standards from the captured component's explicit mapping.
+The director's planning activity and verifier's independent assessment are task
+activities selected by the project. They do not add milestone Steps. Review and Integration reference
 the single task-level gates. They do not allocate extra owner executions.
 A Step may be inapplicable with a reason visible in the plan. A checklist item names
 its stable ID, activity, acceptance IDs, expected result, evidence and status.

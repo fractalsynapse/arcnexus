@@ -16,7 +16,10 @@ reviewer scope. Check inspect-to-harness parity and verify that a capability
 admitted for one activity is refused in another when outside scope. Check the
 host-only integration and independent reviewer boundaries. Use the
 [Agent proposal](../../../packages/agent/contract.md) for the acceptance scenarios
-under review.
+under review. Check that component activities fully declare their bindings and
+tests exercise missing activities and unresolved references. For Team, inspect
+deterministic ordering and unowned or multiply owned resources. Exercise the
+shared SDK and the CLI adapter against the same task outcomes.
 
 During engineering, use declared owner-scoped checks to resolve concrete uncertainty.
 For assembled executable changes, inspect format, lint, strict TypeScript, ownership

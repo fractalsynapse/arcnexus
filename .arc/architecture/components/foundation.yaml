@@ -19,3 +19,44 @@ owns:
 - tsconfig.fixtures.json
 - tsconfig.tests.json
 - tsconfig.tooling.json
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+    - Locate the shared owner selection or build decision before changing tooling.
+    operations: []
+    standards: []
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+    - Describe observable command behavior and generated output boundaries.
+    operations: []
+    standards: []
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+    - Exercise owner selection, missing checks and reproducible toolchain inputs.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    instructions:
+    - Keep a shared command path with owner-scoped tests and declared generated outputs.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Check parity between human, steward and CI invocations.
+    operations: []
+    standards:
+    - readable-typescript

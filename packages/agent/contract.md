@@ -21,9 +21,8 @@ definitions and the current task position. Keep each rule at its authored source
 ## Activities
 
 An Agent activates for one named activity. The task position selects the current
-activity using the [plan template](../../.arc/architecture/plan-template.md). The
-[project catalog](../../.arc/architecture/project.yaml) defines activity defaults.
-A component can specialize them for its own work. Resolve the activity's role,
+activity using the [plan template](../../.arc/architecture/plan-template.md). The acting component supplies its complete activity mapping from the captured
+[catalog](../../.arc/architecture/project.yaml). Resolve the activity's role,
 execution profile, instructions, applicable standards and declared operations
 against the actor's captured authority. Actor identity distinguishes director,
 steward and reviewer. The activity determines what that actor is doing and which
@@ -48,11 +47,12 @@ inputs. Inspection can run before task admission. An activation carries the acto
 its captured authority and its goal throughout the call. Both use the single request
 builder owned by [Architecture Model](../architecture-model/contract.md).
 
-The [CLI plugin](../cli/contract.md) uses Agent inspection for `inspect`. During
+The [Commands SDK](../commands/contract.md) uses Agent inspection for `inspect`. During
 `task run`, [Direction](../direction/contract.md) uses a director Agent to produce or
 revise the plan. The task lane invokes steward Agents in milestone order.
 [Verification](../verification/contract.md) uses a separate read-only Agent for the
-independent verdict. A steward's request returns to Direction for sequencing.
+independent verdict. A steward can consult [Team](../team/contract.md) to identify
+a supplier. Its request returns to Direction for sequencing.
 
 Agent delegates harness execution and enforcement to [Execution](../execution/contract.md).
 It resolves a scope from the authority captured for that actor and activity. A tool
@@ -76,5 +76,5 @@ separate durable memory, peer scheduler or publication capability.
 | AGT-4 | In a two-owner task, the first Agent returns a supplier request. Direction sequences the supplier and both run through the same Agent interface, one activation at a time. |
 | AGT-5 | The independent reviewer receives the captured acceptance and complete authorized evidence by reference. The result cites criteria and evidence and gives the reviewer no authoring or delivery authority. |
 | AGT-6 | Cancelling an activation stops managed work through Execution and retains the outcome and observations under the task's evidence identity. |
-| AGT-7 | For the same steward, inspection and activation in `testing` expose the captured `owner-tests` operation. In `documentation`, where that operation is absent, the host refuses it even if the Agent could call it in the earlier activity. |
+| AGT-7 | For the Agent component steward, inspection and activation in `testing` expose the captured `owner-tests` operation. In `documentation`, where that operation is absent, the host refuses it even if the Agent could call it in the earlier activity. |
 | AGT-8 | An Agent attempt to activate the host-only `release` activity is refused. The task lane records integration from the host's delivery result. |

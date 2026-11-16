@@ -7,3 +7,44 @@ constraints:
 - failure: A candidate changes captured authority or a private import crosses ownership.
 owns:
 - packages/architecture-model
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+    - Locate the authoritative declaration or capture that controls the behavior.
+    operations: []
+    standards: []
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+    - Specify catalog validation and the context observable through the public entry.
+    operations: []
+    standards: []
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+    - Exercise missing activity fields, invalid references and immutable captured authority.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    instructions:
+    - Resolve catalog facts, ownership and model-facing context from their authored definitions.
+    operations:
+    - owner-tests
+    standards:
+    - readable-typescript
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Check deterministic validation, complete actor scope and unchanged capture semantics.
+    operations: []
+    standards:
+    - readable-typescript

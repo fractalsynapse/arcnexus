@@ -12,8 +12,14 @@ and return requested definitions whole. Activity standards are shared references
 and filtered to the activity. The reviewer receives the complete evidence bundle
 under the verification contract.
 
-Components inherit project activity defaults and can select more specific roles,
-profiles and operations in the catalog.
+A component may inherit a missing non-activity property from the project where
+that property permits inheritance. Authority and owned roots stay explicit. Every
+component authors its own activity map. Each activity declares role, profile,
+instructions, operations and standards. An empty list explicitly contributes
+nothing. A host activity declares the host as executor and carries no model profile.
+An absent activity is unavailable. A partial mapping or unresolved reference is a
+validation finding. Neither activities nor their fields inherit project defaults.
+The project selects director and verifier by their component and explicit activity.
 A role supplies standing instructions and owns no files or commands. Operation
 declarations describe the act and its parameters, prerequisites and confinement.
 The activity grants the declared operation. Invocation parameters cannot rewrite
@@ -47,3 +53,5 @@ Architectural proposals are applied outside the active task on a review branch.
 | ARC-15 | `proposeChange` writes a proposal record and leaves `.arc/architecture/` byte-identical. |
 | ARC-16 | Validation on an unchanged tree produces byte-identical finding output. |
 | ARC-17 | A capture identifies each composed plugin. A changed target catalog or candidate plugin cannot replace one in the active capture. |
+| ARC-18 | An explicitly empty list stays empty. A missing activity remains unavailable. Omitting a required field or referencing an unknown role, profile, operation or standard produces a finding. |
+| ARC-19 | The director and independent verifier resolve their role and profile from their own explicitly selected component activity. |

@@ -32,4 +32,4 @@ host enforcement, hosted CI and live acceptance separately.
 
 The first build defers the broader CLI surface, workdays, the simulation provider,
 production release, external plugin management, and service gateways. The
-[CLI plugin](../../packages/cli/contract.md) defines the first operator commands.
+[CLI app contract](../../apps/cli/contract.md) defines the first operator commands.

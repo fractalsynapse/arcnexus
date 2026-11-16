@@ -1,15 +1,16 @@
-# CLI commands plugin contract
+# CLI gateway contract
 
 Stage: **locked**. See the [registry](../../docs/interface/registry.yaml) for authority and history.
 
 ## Obligations
 
-The CLI application composes the plugin and adapts arguments and exit codes.
-The plugin exposes `arcnexus inspect [component] [activity]` and
+The CLI app owns terminal input, output and exit codes. Its Cordis adapter
+delegates structured inspection and task operations to the shared
+[Commands SDK](../../packages/commands/contract.md). The CLI exposes `arcnexus inspect [component] [activity]` and
 `arcnexus task run "<goal>"` for the project resolved from the working directory.
 
-Inspection renders what ArcNexus passes to Codex from the production request
-builder. Resolve the same captured inputs as activation, identify runtime-only
+Inspection renders the Agent view and request supplied by Commands from the
+production request builder. Resolve the same captured inputs as activation, identify runtime-only
 placeholders, and refuse unknown owners or activities. Inspection reads without
 model calls, writes, worktree creation or upstream effects.
 
@@ -36,6 +37,7 @@ verbs, option modes and launch surfaces are reserved for later qualification.
 | GW-18 | A runtime-only value appears as a named placeholder and is never filled with invented content; the header lists what was substituted. |
 | GW-19 | The foreground task prompts for a genuine human gate and records the answer as evidence. |
 | GW-20 | `inspect` with an unknown component or an activity outside the declared set is exit 2 naming the valid values. |
+| GW-22 | Both commands delegate through the same structured SDK available to in-process callers. The CLI alone translates terminal arguments, progress and results into its transport. |
 
 ## Deferred
 
