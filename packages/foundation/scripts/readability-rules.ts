@@ -17,7 +17,12 @@ export const documentation: Rule.RuleModule = {
       }
     }
 
-    return { ClassDeclaration: check, ClassExpression: check, MethodDefinition: check };
+    return {
+      ClassDeclaration: check,
+      ClassExpression: check,
+      MethodDefinition: check,
+      TSAbstractMethodDefinition: check,
+    };
   },
 };
 
