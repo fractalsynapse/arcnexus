@@ -43,3 +43,12 @@ Add the general `--json` option for a structured result with the same prompt in
 arcnexus --json inspect director planning
 arcnexus inspect reviewer assessment --json
 ```
+
+## Run a task
+
+`arcnexus task run "<goal>"` submits one goal for the project resolved from the
+working directory. The [Commands SDK](../../packages/commands/contract.md)
+passes structured input, progress and cancellation between the caller and
+[Workflow](../../packages/workflow/contract.md). Direction owns planning and
+corrections, and Verification obtains the independent Reviewer verdict.
+The task succeeds when Delivery reports an observed staging merge.
