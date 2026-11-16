@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import {
   existsSync,
+  linkSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -63,6 +64,23 @@ test('EX-1–EX-5: checked edits enforce ownership, byte identity, locks and ali
   const [observed] = applyEdits(workspace, authority, 'one', [edit]);
   assert.equal(observed?.before, expected);
   assert.equal(readFileSync(path, 'utf8'), 'after');
+});
+
+test('EX-5: checked edits refuse hard links and preserve both names', (t) => {
+  const { workspace, path } = fixture(t);
+  const authority = capture(workspace);
+  const original = readFileSync(path);
+  const expected = createHash('sha256').update(original).digest('hex');
+  const linkedPath = join(workspace, 'owned/hard-link.txt');
+  linkSync(path, linkedPath);
+
+  const edit = { path: 'owned/hard-link.txt', expected, content: 'after' };
+  assert.throws(
+    () => applyEdits(workspace, authority, 'one', [edit]),
+    /Unsafe checked edit alias: owned\/hard-link\.txt/,
+  );
+  assert.deepEqual(readFileSync(path), original);
+  assert.deepEqual(readFileSync(linkedPath), original);
 });
 
 /** Declare a fixture operation that probes its disposable write and read bounds. */
