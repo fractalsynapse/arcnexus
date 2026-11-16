@@ -403,7 +403,7 @@ contracts:
   file: packages/agent/contract.md
   owner: agent
   stage: proposed
-  digest: 32dfd84aad8809aace336eaa725c6f42f732bf948819f77e75f60aae44292810
+  digest: f52eb30d665f485eef8daf64148d7ad974afe8c8281f7f09f0edce80a0480016
   dependsOn:
   - arcnexus/architecture-model
   - arcnexus/execution
@@ -442,3 +442,13 @@ contracts:
   dependsOn:
   - arcnexus/project
   scenarios: 3
+- id: arcnexus/reviewer
+  type: library
+  file: packages/reviewer/contract.md
+  owner: reviewer
+  stage: proposed
+  dependsOn:
+  - arcnexus/agent
+  - arcnexus/coordination
+  digest: 2bc811fc46e9aad20858e9a8635b6760cd8988d89bd2ab5e7f13024cd4bc30d6
+  scenarios: 4

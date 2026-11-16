@@ -9,9 +9,10 @@ record accepted interface bytes.
 plan content using the [template](architecture/plan-template.md).
 [Coordination](../packages/coordination/contract.md) persists task position. The host
 renders the reviewable file from recorded state.
-`.arc/learning/` records observations and proposals. The host persists those records
-without giving agents a new file-write scope. The architect can promote a lesson into
-a shared standard for future runs. Plans and learning grant no authority.
+[Reviewer](../packages/reviewer/contract.md) owns `.arc/learning/` and derives
+lessons from recorded task evidence. The host retains learning in task evidence
+through Coordination. Tracked notes go through checked changes. The architect can
+promote a lesson into a shared standard for future runs. Plans and learning grant no authority.
 
 Run databases, transcripts, logs and bulk artifacts live in external application
 storage. Reference them by stable evidence identity.

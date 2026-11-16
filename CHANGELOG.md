@@ -12,7 +12,8 @@
   activities and separate the CLI application from the shared Commands SDK.
   Propose Team for eligible steward and resource ownership views. Give Manager,
   Release, Architecture and Direction distinct stewardship. Make final
-  Reviewer feedback return to Direction through the shared Agent loop.
+  Reviewer feedback return to Direction through the shared Agent loop. Propose
+  Reviewer as the owner of evidence-linked learning.
 
 - **A strategy map now states what is authoritative for the clean implementation** (#452):
   `docs/plans/strategy-map.md` gives the reading order — the model in `.arc/architecture`, then the locked

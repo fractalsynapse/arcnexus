@@ -56,8 +56,9 @@ the same Agent interface used by stewards:
 2. Steward Agents execute the milestones in order. A steward can consult
    [Team](../team/contract.md) for a supplier and return a request to Direction.
 3. After the assembled checks, [Verification](../verification/contract.md)
-   invokes the final read-only Reviewer under `verification/assessment`.
-   An accepting verdict allows staging delivery for that candidate. A rejected
+   invokes the final read-only [Reviewer](../reviewer/contract.md) under
+   `reviewer/assessment`. The Reviewer can return evidence-linked lessons in the
+   same activation. An accepting verdict allows staging delivery for that candidate. A rejected
    verdict returns criteria and evidence to Direction for a correction milestone.
    Review the corrected candidate through the same gate.
 

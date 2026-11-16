@@ -18,7 +18,7 @@ director:
   component: direction
   activity: planning
 verifier:
-  component: verification
+  component: reviewer
   activity: assessment
 checks:
   acceptance:

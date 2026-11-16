@@ -16,7 +16,9 @@ reviewer scope. Check inspect-to-harness parity and verify that a capability
 admitted for one activity is refused in another when outside scope. Check the
 host-only integration and independent reviewer boundaries. Walk a rejected final
 verdict back to Direction and verify that the corrected candidate uses the same
-review gate. Use the
+review gate. Check that [Reviewer](../../../packages/reviewer/contract.md) cites
+actual execution evidence in lessons and that recording a lesson preserves the
+candidate identity. Use the
 [Agent proposal](../../../packages/agent/contract.md) for the acceptance scenarios
 under review. Check that component activities fully declare their bindings and
 tests exercise missing activities and unresolved references. For Team, inspect

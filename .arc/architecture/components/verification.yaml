@@ -48,10 +48,3 @@ activities:
     operations: []
     standards:
     - readable-typescript
-  assessment:
-    role: reviewer
-    profile: gpt-astra
-    instructions:
-    - Use the assembled-candidate digest as the subject of the independent verdict.
-    operations: []
-    standards: []

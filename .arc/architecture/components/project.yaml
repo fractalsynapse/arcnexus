@@ -7,7 +7,6 @@ objectives:
 constraints:
 - failure: Project guidance contradicts a locked contract or grants authority outside the catalog.
 owns:
-- .arc/learning
 - LICENSE
 - docs/charter.md
 - docs/dev.md

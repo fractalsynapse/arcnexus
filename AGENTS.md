@@ -49,7 +49,9 @@ Team gives Direction an ordered roster of eligible stewards and resolves resourc
 ownership from the captured catalog. Direction sequences requests and work.
 Use the [Team proposal](packages/team/contract.md) for those boundaries.
 The Director starts the Agent loop and the final Reviewer assesses the assembled
-candidate. Route rejected criteria and evidence back to Direction for correction.
+candidate through Verification. Route rejected criteria and evidence back to
+Direction for correction. [Reviewer](packages/reviewer/contract.md) owns
+`.arc/learning/` and returns evidence-linked lessons.
 The CLI app owns terminal behavior and delegates through the
 [shared Commands SDK](packages/commands/contract.md).
 
