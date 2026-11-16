@@ -2,7 +2,12 @@ import { createHash } from 'node:crypto';
 import { parse } from 'yaml';
 import { openProject, type ProjectSource } from './source.js';
 
-const catalogRoot = '.arc/architecture';
+export const catalogRoot = '.arc/architecture';
+
+/** Locate a definition by its catalog family and declared identity. */
+export function definitionPath(family: string, id: string) {
+  return `${catalogRoot}/${family}/${id}.yaml`;
+}
 
 interface Binding {
   component: string;
@@ -121,7 +126,7 @@ function load<T extends Definition>(source: ProjectSource, family: string) {
     Object.fromEntries(
       paths.map((path) => {
         const definition = read<T>(source, path);
-        if (path !== prefix + definition.id + '.yaml')
+        if (path !== definitionPath(family, definition.id))
           throw new Error(`Catalog identity mismatch: ${path}`);
         return [definition.id, definition];
       }),

@@ -23,10 +23,9 @@ test('GW-16 and GW-25: the CLI prints the exact prepared model envelope', (t) =>
     encoding: 'utf8',
   });
   const preview = agent.prepareRequest(capture, selection);
-  assert.deepEqual(JSON.parse(stdout), preview);
-  assert(preview.placeholders.includes('<goal>'));
+  assertHumanOutput(stdout, preview);
   const submitted = agent.prepareRequest(capture, selection, {
-    goal: 'Implement a fixture change',
+    goal: 'Implement a fixture change\nUse the checked edit operation.',
     milestone: { id: 'm1' },
     acceptance: ['test'],
     evidence: ['e1'],
@@ -35,10 +34,29 @@ test('GW-16 and GW-25: the CLI prints the exact prepared model envelope', (t) =>
   });
   assert.deepEqual(submitted.placeholders, []);
   assert.equal(submitted.request.options.workingDirectory, root);
-  assert.match(submitted.request.input, /Implement a fixture change/);
+  assert.match(
+    submitted.request.input,
+    /Goal: Implement a fixture change\nUse the checked edit operation\./,
+  );
   assert.match(submitted.request.input, /Fixture plan template/);
   assert.doesNotMatch(submitted.request.input, /<goal>/);
 });
+
+/** Verify that the readable header leads into exactly the prepared prompt. */
+function assertHumanOutput(stdout: string, preview: ReturnType<Agent['prepareRequest']>) {
+  const marker = '--- Codex input ---\n';
+  const start = stdout.indexOf(marker);
+  assert(start >= 0, 'default output marks the start of the prompt');
+  assert.equal(stdout.slice(start + marker.length), preview.request.input + '\n');
+  assert.match(stdout.slice(0, start), /^Invocation options:/m);
+  assert.match(preview.request.input, /^Goal: <goal>$/m);
+  assert.match(
+    preview.request.input,
+    /Source: AGENTS\.md\n--- BEGIN AGENTS\.md ---\nFixture root directive\n# Fixture heading\n--- END AGENTS\.md ---/,
+  );
+  assert.match(preview.request.input, /^Source: \.arc\/architecture\/roles\/director\.yaml$/m);
+  assert(preview.placeholders.includes('<goal>'));
+}
 
 test('inspection ignores uncommitted guidance and creates no task state or worktree', (t) => {
   const root = projectFixture();

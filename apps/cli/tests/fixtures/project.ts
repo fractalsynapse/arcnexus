@@ -56,7 +56,7 @@ function definitions() {
     ...actors(),
     ...resources(),
     [`${architecture}/plan-template.md`]: 'Fixture plan template\n',
-    'AGENTS.md': 'Fixture root directive\n',
+    'AGENTS.md': 'Fixture root directive\n# Fixture heading\n',
     'work/AGENTS.md': 'Fixture owner directive\n',
     'other/AGENTS.md': 'Unrelated directive\n',
     'standard.md': 'Fixture standard body\n',

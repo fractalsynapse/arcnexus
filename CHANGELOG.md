@@ -6,7 +6,7 @@
 
 - Implement the read-only Cordis CLI inspection path (#458). Require a component
   and activity, resolve Director and Reviewer bindings, and print the complete
-  shared model request with named task placeholders.
+  shared model request with named task placeholders and source-labeled prompt sections.
 
 - Restore the app and plugin toolchain and run built suites in CI (#456). Pin Cordis
   and verify app composition through a compiled integration suite. Describe the proposed

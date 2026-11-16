@@ -5,7 +5,7 @@ import { architecturePlugin } from '../../../packages/architecture/src/index.js'
 import { commandsPlugin } from '../../../packages/commands/src/index.js';
 import { managerPlugin } from '../../../packages/manager/src/index.js';
 
-/** Validate the CLI arguments and print the complete shared SDK result. */
+/** Validate the CLI arguments and print the prepared input with its invocation header. */
 async function main(args: string[]) {
   const [command, component, activity, ...extra] = args;
   if (command !== 'inspect')
@@ -24,7 +24,15 @@ async function main(args: string[]) {
     await context.use(plugin);
   }
   const result = context.commands.inspect({ component, activity, directory: process.cwd() });
-  console.log(JSON.stringify(result, null, 2));
+  console.log(
+    [
+      `Placeholders: ${result.placeholders.join(', ')}`,
+      'Invocation options:',
+      JSON.stringify(result.request.options, null, 2),
+      '--- Codex input ---',
+      result.request.input,
+    ].join('\n'),
+  );
 }
 
 try {
