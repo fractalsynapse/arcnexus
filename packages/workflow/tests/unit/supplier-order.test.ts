@@ -50,15 +50,20 @@ const capture: Capture = {
 type Scenario = 'late' | 'correction' | 'linked' | 'already-complete' | 'release-only';
 
 /** Supply a milestone with the common five-step shape and selected executable work. */
-function milestone(id: string, owner: string, ...steps: PlanActivity[]): Milestone {
+function milestone(
+  id: string,
+  owner: string,
+  steps: readonly PlanActivity[],
+  criterion = id,
+): Milestone {
   return {
     id,
     owner,
-    criteria: [{ id, description: `Complete ${id}` }],
+    criteria: [{ id: criterion, description: `Complete ${criterion}` }],
     steps: activities.map((step) => ({
       activity: step,
       ...(steps.includes(step)
-        ? { checklist: [{ id: step, criteria: [id], expected: `Run ${step}` }] }
+        ? { checklist: [{ id: step, criteria: [criterion], expected: `Run ${step}` }] }
         : { checklist: [], inapplicable: 'Outside this scenario' }),
     })),
   };
@@ -67,8 +72,8 @@ function milestone(id: string, owner: string, ...steps: PlanActivity[]): Milesto
 /** Exercise real Workflow cursor and validation with deterministic responses at its boundaries. */
 class SupplierTask implements WorkflowServices {
   readonly calls: string[] = [];
-  private readonly accepted = milestone('accepted', 'owner', 'implementation');
-  private readonly requester = milestone('requester', 'owner', 'implementation', 'review');
+  private readonly accepted = milestone('accepted', 'owner', ['implementation']);
+  private readonly requester = milestone('requester', 'owner', ['implementation', 'review']);
   private readonly supplier: Milestone;
   private readonly initial: Plan;
 
@@ -78,7 +83,8 @@ class SupplierTask implements WorkflowServices {
     this.supplier = milestone(
       'required',
       linked ? 'supplier' : 'owner',
-      scenario === 'release-only' ? 'release' : 'implementation',
+      scenario === 'release-only' ? ['release'] : ['implementation'],
+      scenario === 'release-only' ? this.requester.id : 'required',
     );
     this.initial = {
       focus: {

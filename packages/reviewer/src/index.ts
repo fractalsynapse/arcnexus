@@ -35,7 +35,7 @@ export async function assess(
 function responseShape(candidate: Candidate, checks: unknown) {
   return {
     instructions:
-      'Read the candidate diff and trusted check evidence before assessing the original goal. Return one JSON object, with no code fences. Cite paths from the evidence list.',
+      'Read the candidate diff and trusted check evidence to assess the engineering criteria and engineering goal. The host observes GitHub checks, configured PR review, and the staging merge after independent acceptance. Treat those Release items as future delivery observations. Return one JSON object without code fences. Cite paths from the evidence list.',
     candidate: candidate.digest,
     checks,
     accepted: {

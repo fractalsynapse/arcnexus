@@ -78,6 +78,26 @@ export function validatePlan(capture: Capture, plan: Plan) {
       acceptance.set(id, { owner: milestone.owner, description });
     }
   }
+  validateEngineeringCoverage(plan, acceptance.keys());
+}
+
+/** Require every acceptance ID to be covered before the host-owned Release step. */
+function validateEngineeringCoverage(plan: Plan, criteria: Iterable<string>) {
+  const covered = new Set<string>();
+  for (const { steps } of plan.milestones) {
+    for (const { activity, checklist, inapplicable } of steps) {
+      if (activity === 'release' || inapplicable) continue;
+      for (const { criteria } of checklist) {
+        for (const id of criteria) covered.add(id);
+      }
+    }
+  }
+  for (const id of criteria) {
+    if (!covered.has(id))
+      throw new Error(
+        `Acceptance criterion ${id} needs an applicable steward Step before delivery`,
+      );
+  }
 }
 
 /** Require fresh work for each rejected criterion under its original accountable owner. */

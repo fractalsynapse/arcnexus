@@ -13,7 +13,12 @@ const shape = {
         {
           id: 'stable id',
           owner: 'component id',
-          criteria: [{ id: 'stable id', description: 'observable acceptance' }],
+          criteria: [
+            {
+              id: 'stable id',
+              description: 'engineering evidence available before independent review and delivery',
+            },
+          ],
           steps: [
             {
               activity: 'documentation, testing, implementation, review, release (in order)',
@@ -27,7 +32,9 @@ const shape = {
     },
   },
   inapplicable:
-    'Include all five steps. Omit inapplicable entirely for active steps. For an inactive step use an empty checklist and inapplicable with its reason. Release is performed by the host.',
+    'Include all five steps. Omit inapplicable entirely for active steps. For an inactive step use an empty checklist and inapplicable with its reason.',
+  delivery:
+    'Put hosted CI, required PR review, and the observed staging merge in the Release checklist as future host observations. Reference engineering IDs there. Keep delivery observations and the independent verdict out of milestone criteria and steward work.',
   question: { kind: 'question', question: 'genuine human decision required', evidence: [] },
 };
 

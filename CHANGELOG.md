@@ -4,6 +4,9 @@
 
 ### Fixed
 
+- Keep post-review GitHub checks and staging merge evidence in host delivery,
+  separate from steward acceptance (#503).
+
 - Run steward-requested corrections before resuming the activity that needs
   them. Report a blocked revision when Direction leaves the required work
   behind the requester (#495).
