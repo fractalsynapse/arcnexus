@@ -1,6 +1,6 @@
 {
   "name": "arcnexus",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "type": "module",
   "engines": {
@@ -21,8 +21,9 @@
     "yaml": "2.9.1"
   },
   "scripts": {
-    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc",
+    "build": "JITI_FS_CACHE=0 jiti packages/foundation/scripts/clean-build.ts && tsc",
     "check": "tsc --noEmit",
+    "check:specification": "JITI_FS_CACHE=0 jiti packages/foundation/scripts/check-specification.ts",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint --fix --max-warnings 0 --pass-on-no-patterns",
     "format:check": "prettier --check --no-error-on-unmatched-pattern \"*.{ts,json}\" \"{apps,packages,scripts,fixtures}/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,json,yaml,yml}\"",

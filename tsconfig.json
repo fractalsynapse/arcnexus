@@ -10,19 +10,8 @@
     "skipLibCheck": true,
     "noUncheckedIndexedAccess": true,
     "declaration": true,
-    "noEmitOnError": true,
-    "allowJs": true,
-    "checkJs": true
+    "noEmitOnError": true
   },
-  "include": [
-    "apps/**/*.ts",
-    "apps/**/*.mjs",
-    "packages/**/*.ts",
-    "packages/**/*.mjs",
-    "scripts/**/*.ts",
-    "scripts/**/*.mjs",
-    "fixtures/**/*.ts",
-    "fixtures/**/*.mjs",
-    "eslint.config.ts"
-  ]
+  "include": ["**/*.ts"],
+  "exclude": ["dist", "node_modules", "context", "examples"]
 }

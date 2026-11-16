@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.1.2]
+
+### Changed
+
+- Move shared build and verification tools to strict TypeScript and reject
+  tracked JavaScript in the specification check (#490).
+
 ## [0.1.1]
 
 ### Changed
