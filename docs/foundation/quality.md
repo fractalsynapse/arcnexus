@@ -3,6 +3,7 @@
 The [Foundation contract](../../packages/foundation/contract.md) defines shared
 entry points and acceptance. Apply the [readable TypeScript standard](typescript-standard.md)
 to maintained code, tests and tooling.
+Require documentation headers on TypeScript abstract methods under FND-4.
 
 Keep each plugin's tests with its code. Select suites from the owner boundary and
 declared test metadata. Work with the checks that resolve the current uncertainty.
