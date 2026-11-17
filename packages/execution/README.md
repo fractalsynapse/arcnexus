@@ -4,6 +4,22 @@ Execution activates scoped stewards, applies checked edits and supervises declar
 operations in one task worktree. Its public obligations are in the
 [locked contract](contract.md).
 
+## Research inbox recovery
+
+After interruption, retained completed research reports are replayed to the
+requester when its original activity resumes, without launching research again
+for the resolved request. Optional research runs in the same sequential lane and
+returns to the requesting activity, as required by the
+[Execution contract](contract.md#obligations).
+
+[ResearchInbox](src/research.ts) reloads journaled requests and completed results;
+[actor activation](src/activation.ts) uses the same invoker for research and the
+requester. The [research inbox integration tests](tests/integration/research-inbox.test.ts)
+cover optional research returning to the original scope, replay after interruption
+without another research activation, and completion without requesting research.
+These local implementation and test references support this documentation; no
+new test execution is claimed.
+
 ## Resumable steward checks
 
 The following records intended behavior for `durable-steward-check-recovery` before
