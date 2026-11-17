@@ -64,20 +64,38 @@ for the test command and default CI skip behavior for the Bubblewrap test.
 
 The host keeps task metadata, output, and the active worktree outside the
 source checkout under `${XDG_STATE_HOME:-$HOME/.local/state}/arcnexus`. Codex
-reads the worktree and returns structured edit proposals. The host applies
-checked edits and runs captured checks in a disposable networkless overlay.
+uses the current activity's mapped local MCP tools for project reads, checked
+edits and declared owner checks. Each `checked-edit` call touches exactly one
+owned file and checks its current complete-file digest. Execution retains the
+checkpoint and durable receipt before acknowledging success; the receipt
+identifies the file and its before and after digests. An identical request
+returns the retained receipt without repeating the write. The host runs
+captured checks in a disposable networkless overlay. See the
+[local MCP operations guide](../../packages/execution/docs/mcp-operations.md)
+for Execution EX-1, EX-14, EX-16 and EX-17.
 In JSON mode, progress uses stderr and the outcome is one JSON object on stdout.
+
+For a terminal clarification (CLI gateway GW-19), enter the complete answer
+across as many lines as needed, preserving blank lines. Finish with a line
+containing only a period. The host records the full answer as evidence and
+resumes the requesting activity with it; independent review receives a protected
+reference to the original question and answer.
 
 If a Director proposal fails validation, ArcNexus records the diagnostic and
 asks the Director for one correction within the same task. The host validates
 the corrected proposal before advancing and preserves any accepted work.
 
-A malformed steward reply or a stale edit digest gets one repair in the same activity. The host
-returns the exact diagnostic and retained transcript before applying any edits
-or running proposed checks. When the installed project formatter is available,
-a steward can request exact text substitutions and formatter output in a
-checked edit. Execution computes the bytes inside confinement and checks the
-original file hash before applying them.
+A malformed steward reply gets one repair in the same activity, with the exact
+diagnostic and retained transcript. A refused checked edit returns its diagnostic
+in the same run and preserves earlier successful edits, checkpoints, receipts
+and refusal evidence. Correct only the refused request within existing authority:
+reread a stale file digest, correct an erroneous owned path, or use
+`request-supplier` through Direction for another owner's contribution. A refusal
+grants no additional authority; confirmed edits need no resubmission.
+When the installed project formatter is available, a steward can request exact
+text substitutions and formatter output in a checked edit. Execution computes
+the bytes inside confinement and checks the original file hash before applying
+them.
 
 When a steward check exits unexpectedly, Direction schedules a correction for
 the same owner. The correcting steward receives the exit status and retained
@@ -98,6 +116,22 @@ another publication action. A matching remote branch, pull request or merge is
 reused. A known transient GitHub read error gets a bounded retry in the active
 task, including the observation after a merge. See [Publication recovery evidence](../../docs/release/verification.md#publication-recovery-evidence)
 for what to compare in the retained task evidence.
+
+## Optional research
+
+During a task, the Director, Reviewer and stewards can use the Research inbox
+when external evidence could change a decision. The task resumes the same
+activity with a source-linked report or an unavailable observation.
+See [Research inbox recovery](../../packages/execution/README.md#research-inbox-recovery)
+for report replay after interruption and the shared sequential lane.
+`arcnexus inspect <component> research` previews the research activity.
+Before running a task, use `arcnexus inspect <component> documentation` to see the
+optional research inbox and archived report index in the ordinary activity's context.
+
+Reusable reports stay available to that component's editing stewards. An
+editing steward can choose a report to archive through checked edits. The
+[component research index](../../.arc/README.md#research-reports) comes from
+the committed reports.
 
 ## Run a round of standing goals
 

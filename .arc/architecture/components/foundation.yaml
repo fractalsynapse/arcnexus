@@ -15,20 +15,30 @@ owns:
 - .prettierrc.yaml
 - eslint.config.ts
 - tsconfig.json
+- .arc/research/foundation
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
     - Locate the shared owner selection or build decision before changing tooling.
-    operations: []
+    operations:
+    - read-file
+    - list-files
     standards: []
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
     - Describe observable command behavior and generated output boundaries.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   testing:
     role: designer
@@ -36,6 +46,13 @@ activities:
     instructions:
     - Exercise owner selection, missing checks and reproducible toolchain inputs.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -45,6 +62,13 @@ activities:
     instructions:
     - Keep a shared command path with owner-scoped tests and declared generated outputs.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -53,6 +77,11 @@ activities:
     profile: gpt-sol
     instructions:
     - Check parity between human, steward and CI invocations.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
     standards:
     - readable-typescript

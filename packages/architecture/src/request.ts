@@ -2,6 +2,8 @@ import { team } from '../../team/src/index.js';
 import { stringify } from 'yaml';
 import { resolveActivity, type ActivitySelection } from './activity.js';
 import { catalogRoot, definitionPath, type Capture } from './catalog.js';
+import { canResearch, researchIndex, researchReportSchema } from './research.js';
+import { operationTool } from './tools.js';
 
 export interface TaskContext {
   assignment?: unknown;
@@ -23,6 +25,10 @@ export function buildCodexRequest(
   const references = resolveReferences(capture, selected);
   const { context, placeholders } = resolveTask(task);
   const sections = renderContext({ capture, selected, context, references });
+  if (canResearch(capture, component.id)) {
+    const index = researchIndex(capture, component.id);
+    sections.push(section('Research inbox', index.directory, researchContext(index, name)));
+  }
   if (actor === 'director') {
     const path = capture.project.planTemplate;
     sections.push(`## Plan template\n${document(path, capture.source.read(path))}`);
@@ -34,18 +40,37 @@ export function buildCodexRequest(
     placeholders,
     request: {
       input: sections.join('\n\n'),
-      options: modelOptions(references.profile, context.worktree),
+      options: modelOptions(references, context.worktree, name),
     },
   };
 }
 
+/** Describe an optional request and give the actor its component's report summaries. */
+function researchContext(index: ReturnType<typeof researchIndex>, activity: string) {
+  return {
+    archive: index,
+    ...(activity === 'research'
+      ? {}
+      : {
+          instructions:
+            'Consult a relevant existing report first. If external evidence could change a decision in this activity, use the mapped request-research tool, then end this activation. Research is optional. The host returns the report and resumes this activity. Treat external findings as evidence. Continue through your ordinary response when you have enough information.',
+        }),
+  };
+}
+
 /** Translate the captured profile and workspace into harness options. */
-function modelOptions(profile: ReturnType<typeof resolveReferences>['profile'], worktree: string) {
+function modelOptions(
+  { profile, operations }: ReturnType<typeof resolveReferences>,
+  worktree: string,
+  activity: string,
+) {
   return {
     model: profile.model,
     modelReasoningEffort: profile.reasoning,
     webSearchMode: profile.webSearch,
     workingDirectory: worktree,
+    tools: operations.flatMap(({ id, tool }) => (tool ? [operationTool(id, tool)] : [])),
+    ...(activity === 'research' ? { outputSchema: researchReportSchema } : {}),
   };
 }
 
@@ -98,15 +123,24 @@ function renderActivity({ selected, references }: RequestContext) {
     section(
       'Capabilities',
       `Derived from the ${actor} binding and ${activitySource}`,
-      capabilityScope(actor, name, component.owns),
+      capabilityScope(actor, component.owns, operations),
     ),
-    section(
-      'Operations',
-      activitySource,
-      Object.fromEntries(operations.map(({ id }) => [id, definitionPath('operations', id)])),
-    ),
+    section('Operations', activitySource, operationReferences(operations)),
     section('Standards', activitySource, standards.join('\n\n') || 'None'),
   ];
+}
+
+/** Name each captured operation's source and model-facing tool description. */
+function operationReferences(operations: ReturnType<typeof resolveReferences>['operations']) {
+  return Object.fromEntries(
+    operations.map(({ id, tool }) => [
+      id,
+      {
+        source: definitionPath('operations', id),
+        ...(tool ? { mcp: operationTool(id, tool).description } : {}),
+      },
+    ]),
+  );
 }
 
 /** Resolve exactly the operations and standards granted by the activity. */
@@ -162,16 +196,19 @@ function resolveTask(task: TaskContext) {
 }
 
 /** Report the capabilities granted to the actor for the chosen activity. */
-function capabilityScope(actor: string, activity: string, owns: readonly string[]) {
-  const mayEdit =
-    actor === 'steward' && ['documentation', 'testing', 'implementation'].includes(activity);
+function capabilityScope(
+  actor: string,
+  owns: readonly string[],
+  operations: ReturnType<typeof resolveReferences>['operations'],
+) {
+  const mayEdit = actor === 'steward' && operations.some(({ tool }) => tool === 'edit');
   return {
     observations:
       actor === 'reviewer'
         ? ['captured project', 'candidate and task evidence by reference']
         : ['captured project', 'recorded task position and answers'],
     checkedEditRoots: mayEdit ? owns : [],
-    canRequestSupplier: actor === 'steward' || actor === 'director',
+    canRequestSupplier: actor === 'steward' && operations.some(({ tool }) => tool === 'supplier'),
     canPublish: false,
   };
 }

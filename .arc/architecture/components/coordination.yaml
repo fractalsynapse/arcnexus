@@ -7,20 +7,30 @@ constraints:
 - failure: Concurrent writers or competing stored versions of a fact are observed.
 owns:
 - packages/coordination
+- .arc/research/coordination
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
     - Identify the durable fact and its existing writer before proposing a storage change.
-    operations: []
+    operations:
+    - read-file
+    - list-files
     standards: []
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
     - Describe the state, evidence identity and derived views in the coordination contract.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   testing:
     role: designer
@@ -28,6 +38,13 @@ activities:
     instructions:
     - Exercise stale writes, abrupt exit and retained position using the real record shape.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -37,6 +54,13 @@ activities:
     instructions:
     - Persist facts through one authoritative writer and derive other views from them.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -45,6 +69,11 @@ activities:
     profile: gpt-sol
     instructions:
     - Check idempotency, terminal outcomes and preservation of observed failure evidence.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
     standards:
     - readable-typescript

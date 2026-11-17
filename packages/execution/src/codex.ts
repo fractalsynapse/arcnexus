@@ -6,16 +6,39 @@ import { execute } from './process.js';
 /** Distinguish an unreadable actor answer from a failed harness process. */
 export class InvalidCodexResponse extends Error {}
 
+interface NativeTools {
+  schema?: string;
+  url: string;
+}
+
+const unusedFeatures = [
+  'apps',
+  'browser_use',
+  'browser_use_external',
+  'hooks',
+  'image_generation',
+  'in_app_browser',
+  'multi_agent',
+  'plugins',
+  'shell_snapshot',
+  'shell_tool',
+  'skill_mcp_dependency_install',
+  'skill_search',
+  'unified_exec',
+  'view_image',
+];
+
 /** Activate the installed Codex binding with the exact prepared prompt and isolated tools. */
 export async function codex(
   executable: string,
   view: AgentInspection,
   log: string,
   signal: AbortSignal,
+  tools: NativeTools,
 ): Promise<unknown> {
   const { input, options } = view.request;
   const cwd = options.workingDirectory;
-  const params = invocation(executable, cwd, log, options);
+  const params = invocation(executable, cwd, log, options, tools);
   const result = await execute(executable, params, {
     cwd,
     signal,
@@ -39,6 +62,7 @@ function invocation(
   cwd: string,
   log: string,
   options: AgentInspection['request']['options'],
+  tools: NativeTools,
 ) {
   return [
     'exec',
@@ -52,27 +76,27 @@ function invocation(
     cwd,
     '--model',
     options.model,
-    ...settings(executable, cwd, log, options),
+    ...settings(executable, cwd, log, options, tools.url),
+    ...(tools.schema ? ['--output-schema', tools.schema] : []),
     '-',
   ];
 }
 
-/** Restrict Codex shell access to project reads and disable out-of-bound integrations. */
+/** Disable executable tools while retaining native guidance and provider-level web policy. */
 function settings(
   executable: string,
   cwd: string,
   log: string,
   options: AgentInspection['request']['options'],
+  url: string,
 ) {
   const config = [
     'approval_policy="never"',
     'default_permissions="arcnexus"',
     `permissions.arcnexus.filesystem={":minimal"="read","/sys/fs/cgroup"="read",${JSON.stringify(executable)}="read",${JSON.stringify(cwd)}="read",${JSON.stringify(log.slice(0, log.lastIndexOf('/')))}="read"}`,
     'permissions.arcnexus.network.enabled=false',
-    'features.plugins=false',
-    'features.apps=false',
-    'features.hooks=false',
-    'features.multi_agent=false',
+    ...unusedFeatures.map((feature) => `features.${feature}=false`),
+    `mcp_servers={arcnexus={url=${JSON.stringify(url)},required=true,default_tools_approval_mode="approve"}}`,
     `model_reasoning_effort=${JSON.stringify(options.modelReasoningEffort)}`,
     `web_search=${JSON.stringify(options.webSearchMode)}`,
   ];

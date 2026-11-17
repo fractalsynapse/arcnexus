@@ -8,13 +8,16 @@ constraints:
 owns:
 - packages/direction
 - .arc/plans
+- .arc/research/direction
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
-    - Trace goal interpretation and supplier ordering to the plan and Team eligibility.
-    operations: []
+    - Investigate external facts and alternatives that can change goal interpretation, feasibility or sequencing.
+    operations:
+    - read-file
+    - list-files
     standards: []
   documentation:
     role: technical-writer
@@ -22,7 +25,14 @@ activities:
     instructions:
     - Describe planning, reuse and escalation as observable outcomes and keep the plan file a reviewable
       render.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   testing:
     role: designer
@@ -30,6 +40,13 @@ activities:
     instructions:
     - Exercise a two-owner task, unavailable supplier and preserved acceptance.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -39,6 +56,13 @@ activities:
     instructions:
     - Author and sequence plans in Direction. Use Coordination’s persisted state and deterministic render.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -47,7 +71,12 @@ activities:
     profile: gpt-sol
     instructions:
     - Check that plan changes preserve the goal, one owner per milestone and the one task lane.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
     standards:
     - readable-typescript
   planning:
@@ -55,5 +84,9 @@ activities:
     profile: gpt-sol
     instructions:
     - Use the captured Team component IDs in the plan so supplier links resolve to the same owners.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
     standards: []

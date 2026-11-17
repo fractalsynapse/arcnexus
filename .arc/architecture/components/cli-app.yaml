@@ -7,20 +7,30 @@ constraints:
 - failure: The CLI owns task policy or creates a second execution path.
 owns:
 - apps/cli
+- .arc/research/cli-app
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
     - Trace the operator interaction through the CLI into the shared Commands SDK.
-    operations: []
+    operations:
+    - read-file
+    - list-files
     standards: []
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
     - Describe argument, terminal display and exit behavior in the CLI contract.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   testing:
     role: designer
@@ -28,6 +38,13 @@ activities:
     instructions:
     - Exercise built invocation, terminal questions and exit codes against the shared operation outcomes.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -37,6 +54,13 @@ activities:
     instructions:
     - Compose the trusted plugins and translate terminal input and output at the app boundary.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -45,6 +69,11 @@ activities:
     profile: gpt-sol
     instructions:
     - Check that the adapter preserves SDK outcomes and carries no second task lifecycle.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
     standards:
     - readable-typescript

@@ -9,20 +9,30 @@ owns:
 - packages/manager
 - AGENTS.md
 - .agents
+- .arc/research/manager
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
     - Identify the applicable directive or skill and trace its authority to the catalog.
-    operations: []
+    operations:
+    - read-file
+    - list-files
     standards: []
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
     - Explain guidance behavior and link shared project policies from local skills.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   testing:
     role: designer
@@ -30,6 +40,13 @@ activities:
     instructions:
     - Exercise scoped guidance selection, bad metadata and changes after admission.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -39,6 +56,13 @@ activities:
     instructions:
     - Keep directives and skill references coherent and expose the resolved guidance inputs.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -47,6 +71,11 @@ activities:
     profile: gpt-sol
     instructions:
     - Check that the same revision resolves the same guidance and preserves captured scope.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
     standards:
     - readable-typescript

@@ -12,39 +12,68 @@ owns:
 - docs/dev.md
 - docs/plans
 - .arc/goals
+- .arc/research/project
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
     - Identify the project objective and relevant locked clauses.
-    operations: []
+    operations:
+    - read-file
+    - list-files
     standards: []
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
     - Describe the accepted project direction and link to accountable owners.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   testing:
     role: designer
     profile: gpt-terra
     instructions:
     - Walk through the stated project outcome and the evidence required to establish it.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   implementation:
     role: systems-engineer
     profile: gpt-luna
     instructions:
     - Keep the charter and cross-project delivery plan aligned with the accepted direction.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   review:
     role: self-reviewer
     profile: gpt-sol
     instructions:
     - Check that project documentation preserves owner boundaries and release authority.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
     standards: []

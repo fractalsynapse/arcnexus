@@ -7,20 +7,30 @@ constraints:
 - failure: A steward obtains upstream credentials or a changed head can be merged.
 owns:
 - packages/collaboration
+- .arc/research/collaboration
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
     - Establish the provider observation needed to confirm the intended upstream effect.
-    operations: []
+    operations:
+    - read-file
+    - list-files
     standards: []
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
     - Describe the provider operation, its authorized input and the returned observation.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   testing:
     role: designer
@@ -28,6 +38,13 @@ activities:
     instructions:
     - Use an isolated provider fixture to exercise changed heads, checks and unavailable results.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -37,6 +54,13 @@ activities:
     instructions:
     - Perform only the host-authorized GitHub operation and report the observed identity.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -45,6 +69,11 @@ activities:
     profile: gpt-sol
     instructions:
     - Check that provider calls stay outside agent authority and cannot merge a changed head.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
     standards:
     - readable-typescript

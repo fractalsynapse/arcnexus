@@ -7,20 +7,30 @@ constraints:
 - failure: Team creates a competing ownership map, grants scope or schedules agents.
 owns:
 - packages/team
+- .arc/research/team
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
     - Trace membership and resource ownership back to the captured catalog and task position.
-    operations: []
+    operations:
+    - read-file
+    - list-files
     standards: []
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
     - Document roster filters, stable ordering and distinct ownership findings in the Team contract.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   testing:
     role: designer
@@ -28,6 +38,13 @@ activities:
     instructions:
     - Exercise the same roster under filters, tied priority, absent owners and collisions.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -37,6 +54,13 @@ activities:
     instructions:
     - Derive roster and ownership answers from the captured model and recorded position.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -45,6 +69,11 @@ activities:
     profile: gpt-sol
     instructions:
     - Verify that views and supplier requests preserve ownership and leave scheduling to Direction.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
     standards:
     - readable-typescript

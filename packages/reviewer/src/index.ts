@@ -15,28 +15,32 @@ export async function assess(
   signal: AbortSignal,
 ): Promise<Verdict> {
   const task = hostTask(session);
-  const result = (await task.activate(
-    agent,
-    task.capture.project.verifier,
-    {
-      assignment: { ...responseShape(candidate, checks), ownerChecks: task.ownerReviewChecks() },
-      milestone: plan.milestones,
-      acceptance: plan.milestones.flatMap(({ owner, criteria }) =>
-        criteria.map((criterion) => ({ owner, ...criterion })),
-      ),
-      evidence: [...new Set([...candidate.evidence, ...task.evidence])],
-    },
-    signal,
-  )) as Verdict;
-  return validateCitations(result, task.worktree ?? task.capture.source.root, task.evidence);
+  const selection = task.capture.project.verifier;
+  const data = {
+    assignment: { ...responseShape(candidate, checks), ownerChecks: task.ownerReviewChecks() },
+    milestone: plan.milestones,
+    acceptance: plan.milestones.flatMap(({ owner, criteria }) =>
+      criteria.map((criterion) => ({ owner, ...criterion })),
+    ),
+    evidence: [...new Set([...candidate.evidence, ...task.evidence])],
+  };
+  const result = (await task.activate(agent, selection, data, signal)) as Verdict;
+  const verdict = validateCitations(
+    result,
+    task.worktree ?? task.capture.source.root,
+    task.evidence,
+  );
+  const research = task.researchEvidence(selection, data);
+  return research.length && verdict.kind !== 'blocked' ? { ...verdict, research } : verdict;
 }
 
 /** Describe the candidate-bound verdict and its required evidence. */
 function responseShape(candidate: Candidate, checks: unknown) {
   return {
     instructions:
-      'Read the candidate diff and trusted check evidence to assess the engineering criteria and engineering goal. The ownerChecks field contains exact host operations and statuses. An observation with a candidate tree and captured operation binds to that checkpoint. Compare its tree with the candidate being reviewed. Owner checks run in a networkless overlay. Observations before the last edit remain historical. The host observes GitHub checks, configured PR review, and the staging merge after independent acceptance. Treat those Release items as future delivery observations. Return one JSON object without code fences. Cite paths from the evidence list.',
+      'Read the candidate diff and trusted check evidence to assess the engineering criteria and engineering goal. The ownerChecks field contains exact host operations and statuses. An observation with a candidate tree and captured operation binds to that checkpoint. Compare its tree with the candidate being reviewed. Owner checks run in a networkless overlay. Observations before the last edit remain historical. The host observes GitHub checks, configured PR review, and the staging merge after independent acceptance. Treat those Release items as future delivery observations. Use ask-question if human clarification is required. Once the assessment is complete, return one JSON verdict without code fences. Cite paths from the evidence list.',
     candidate: candidate.digest,
+    ownerEvidenceDigest: candidate.ownerEvidenceDigest,
     checks,
     accepted: {
       kind: 'accepted',

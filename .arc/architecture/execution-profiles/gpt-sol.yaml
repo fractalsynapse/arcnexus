@@ -3,6 +3,7 @@ model: gpt-6.1-sol
 reasoning: medium
 webSearch: live
 operationCategories:
+- project-tool
 - build
 - unit-test
 - integration-test

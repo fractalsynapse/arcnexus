@@ -1,6 +1,6 @@
 {
   "name": "arcnexus",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -16,6 +16,7 @@
     "typescript-eslint": "8.72.1"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
     "cordis": "4.0.0-rc.13",
     "typescript": "5.9.3",
     "yaml": "2.9.1"

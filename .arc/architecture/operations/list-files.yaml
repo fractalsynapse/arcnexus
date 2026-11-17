@@ -1,0 +1,4 @@
+id: list-files
+kind: tool
+category: project-tool
+tool: list

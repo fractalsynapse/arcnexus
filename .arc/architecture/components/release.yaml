@@ -13,20 +13,30 @@ owns:
 - .gitignore
 - CHANGELOG.md
 - docs/release
+- .arc/research/release
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
     - Trace workflow triggers, ignored outputs and release observations to the governing policy.
-    operations: []
+    operations:
+    - read-file
+    - list-files
     standards: []
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
     - Keep release guidance and developer-visible changelog entries consistent with verified behavior.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   testing:
     role: designer
@@ -34,6 +44,13 @@ activities:
     instructions:
     - Exercise applicable repository workflow checks and the protected release boundary.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -43,6 +60,13 @@ activities:
     instructions:
     - Maintain GitHub workflows and release housekeeping under the configured repository policy.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -51,6 +75,11 @@ activities:
     profile: gpt-sol
     instructions:
     - Check that workflow changes preserve staging gates and human authority over production.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
     standards:
     - readable-typescript
