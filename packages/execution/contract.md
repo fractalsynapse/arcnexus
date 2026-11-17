@@ -6,8 +6,10 @@ Stage: **locked**. See the [registry](../../docs/interface/registry.yaml) for au
 
 Run one host process and one activation at a time per project. Prepare one
 issue-linked task branch from its recorded staging base and one private worktree
-for the goal. All milestones contribute in order to that worktree. Record each
-milestone's attribution and boundary. Assemble one candidate by snapshotting the
+per attempt before any steward runs, using the issue selected by Direction. All
+milestones contribute in order to the same branch. Record each activation outcome,
+attribution and evidence. Commit checked changes and push an issue-linked checkpoint
+through Collaboration before advancing. An unchanged activation records an event. Assemble one candidate by snapshotting the
 goal worktree. Refuse a stale edit, mismatched worktree or ownership conflict and
 retain enough evidence to diagnose it.
 
@@ -18,7 +20,9 @@ current-Step and owner authority, reject unsafe aliases and stale hashes, and
 refuse all attempts to modify locked contracts or the registry. Changes to captured project authority require the architecture proposal route. Credentials and
 upstream mutations stay with trusted host services. Checks report actual exits and
 logs. Detect stalls from progress. Cancellation stops descendants, retains the task
-branch, worktree and evidence, and records one result. No application work budget
+branch, checked edits and evidence, and records one result. After preserving
+checked edits, remove the task-owned worktree on termination. On restart reconcile
+the retained branch, checkpoint and any abandoned worktree before activation. No application work budget
 or special recovery process participates in this path.
 
 ## Acceptance scenarios
@@ -35,12 +39,12 @@ or special recovery process participates in this path.
 | EX-8 | Cancellation during a running operation stops the process group, leaves no orphan, and produces one terminal event and one terminal state. |
 | EX-9 | An activation with no observable progress is reported as stalled with its last evidence; no budget ever terminates healthy work. |
 | EX-10 | Every executed operation yields command, cwd, exit, duration and log path in evidence; a skipped check reports as skipped. |
-| EX-11 | The goal uses the same worktree and branch for all milestones. A worktree bound to a different goal or base is refused before activation. |
+| EX-11 | All milestones use one issue branch and one clean worktree per attempt. Retry reconstructs it from the verified checkpoint. A worktree bound to a different task or base is refused before activation. |
 | EX-12 | `snapshot` distinguishes staged, unstaged and untracked changes, and reverting a working file does not hide a staged edit. |
 | EX-13 | Two sequential owners contribute authorized edits to the same worktree and one candidate retains both attributions. |
 | EX-14 | An attempted edit across owner scope or against stale content is refused before it changes the worktree. Prior contributions and refusal evidence survive. |
 | EX-16 | An operation outside the activity's declared categories, or with an unmet prerequisite, is refused before execution with the reason named. |
-| EX-17 | Restart reads the retained position without a separate recovery service or host process. |
+| EX-17 | Restart reads the retained position without a separate recovery service or host process. A completed checkpoint survives worktree cleanup and is not replayed. |
 | EX-18 | A profile substitution made before admission is captured in evidence. It cannot broaden the operation authority or change the profile during a task. |
 | EX-20 | Planning a step under one activity and attempting it after a later bucket has opened is refused, and the refusal names the open earlier items; reordering the same plan into canonical buckets runs unchanged. |
 | EX-21 | An activation whose every bucket is closed while a criterion of the goal is unmet is recorded as failed, and no checklist state can mark it accepted. |

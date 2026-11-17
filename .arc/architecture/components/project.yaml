@@ -11,6 +11,7 @@ owns:
 - docs/charter.md
 - docs/dev.md
 - docs/plans
+- .arc/goals
 activities:
   research:
     role: researcher
