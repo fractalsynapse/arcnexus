@@ -7,10 +7,11 @@ import { citedAssemblyChecks, correctionFinding } from './correction.js';
 import type { CheckResult } from './check.js';
 import { archiveResearch, pendingResearch } from './research-archive.js';
 import { materializeEdits } from './formatter.js';
-import { StaleCheckedEdit } from './edits.js';
+import { CheckedEditOwnershipRefusal, StaleCheckedEdit } from './edits.js';
 import { InvalidCodexResponse } from './codex.js';
 import type { StewardScope } from './steward-check.js';
 import { decodeSteward, StewardResponseError, type StewardResult } from './steward-response.js';
+import { supplierAnswerRequired, supplierContext } from './supplier-context.js';
 
 const correctionInstruction =
   'Read the retained check log, correct the current worktree with checked edits, and preserve prior work. The host reruns the original check with its original expectation.';
@@ -35,7 +36,7 @@ export async function steward(
   const evidence = task.evidence.slice(before);
   return failed
     ? stewardCheckOutcome(milestone, failed, correction, evidence)
-    : { kind: 'completed', evidence };
+    : { kind: 'completed', evidence, ...(result.answer ? { answer: result.answer } : {}) };
 }
 
 /** Route the first failure to Direction and stop if its required recheck still fails. */
@@ -93,7 +94,8 @@ function repairableReply(error: unknown): error is Error {
   return (
     error instanceof StewardResponseError ||
     error instanceof InvalidCodexResponse ||
-    error instanceof StaleCheckedEdit
+    error instanceof StaleCheckedEdit ||
+    error instanceof CheckedEditOwnershipRefusal
   );
 }
 
@@ -142,7 +144,7 @@ function archiveContext(task: ReturnType<typeof hostTask>, scope: StewardScope) 
   return {
     researchArchive: {
       instructions:
-        'To archive a relevant reusable research report, include its ID in the optional archiveResearch array of a completed response. The host copies the retained report through checked edits.',
+        'Use archive-research with the report ID to retain a reusable report through a single checked edit.',
       reports,
     },
   };
@@ -169,6 +171,8 @@ async function stewardAssignment(
   }
   return {
     ...responseShape(milestone.id, scope.activity !== 'review' && Boolean(task.formatPreview)),
+    ...supplierContext(task.history(), milestone.id),
+    answerRequired: supplierAnswerRequired(task.history(), milestone, scope.activity),
     ...(finding ? { finding } : {}),
     ...(failedCheck ? { failedCheck, correction: correctionInstruction } : {}),
     ...(currentChecks.length ? { currentChecks } : {}),
@@ -180,42 +184,8 @@ async function stewardAssignment(
 function responseShape(milestone: string, formatter: boolean) {
   return {
     instructions:
-      'Return exactly one JSON object with kind at the top level. Choose one of the flat response examples. For completed, edits and checks are separate top-level arrays, even when empty. Only request operations declared for this steward activity in checks. The host manages the cited assembled checks in currentChecks directly. When finding is present, address the exact diagnosis and paths that still need correction. The currentChecks field carries the latest host results when available. Use their logs to distinguish remaining failures from older reports. The ownerCheck field reports the latest host operation for this owner. Its candidate and operation fields identify a clean checkpoint and its captured operation definition when available. The recorded checks run in a networkless overlay. Independent review receives the same host observations. Ordinary assembled verification runs after steward review. Complete review when the work meets engineering acceptance and only that later verification remains. Do not redo fixes already confirmed by a current passing check. When responseRepair is present, read the previous reply in the retained transcript and correct the specific error. Copy a reported current sha256 exactly into expected for that file. Use at most one edit per path. To substitute text and format the same file, put both in one transform. For a small change in an existing file, use transform instead of content so the host computes the replacement bytes. The checkout is read-only; the host applies eligible edits and runs declared checks.',
-    transforms: transformShape(formatter),
-    responses: [
-      {
-        kind: 'completed',
-        edits: [
-          {
-            path: 'owned path relative to the project',
-            expected: 'sha256sum of current bytes or null for a new file',
-            content: 'entire replacement text or null for deletion',
-          },
-        ],
-        checks: [{ id: 'declared operation', expected: 'pass or fail for expected-red work' }],
-      },
-      {
-        kind: 'supplier',
-        milestone: `Existing supplier milestone ID when linking prior work, otherwise ${milestone}`,
-        owner: 'supplier component ID',
-        reason: 'required contribution',
-      },
-      { kind: 'question', question: 'genuine human decision required' },
-      { kind: 'blocked', reason: 'reason the activity cannot proceed' },
-    ],
-  };
-}
-
-/** Show the compact edit form that can combine a replacement and confined formatting. */
-function transformShape(formatter: boolean) {
-  return {
-    path: 'owned existing file path',
-    expected: 'sha256sum of current bytes',
-    transform: {
-      replace: { before: 'exact unique text', after: 'replacement or empty string' },
-      ...(formatter ? { format: true } : {}),
-    },
-    instructions: 'Include replace, format, or both. Formatting alone uses {"format":true}.',
+      'Use the mapped local MCP tools for project reads, checked edits and owner checks. A successful edit is already recorded. If another edit is refused, correct that call or use request-supplier. End with one JSON object with kind completed, or kind blocked with a reason. Include answer in a completed response when answering a supplier question. Read retained evidence with read-file. Checks in currentChecks are host-managed. Preserve accepted work when correcting a diagnostic. Only the host performs assembled verification and delivery.',
+    requests: { supplierMilestone: milestone, formatAvailable: formatter },
   };
 }
 
@@ -234,6 +204,10 @@ async function applyStewardReply(
     assignment.failedCheck,
     hostChecks,
   );
+  if (result.kind === 'completed' && assignment.answerRequired && !result.answer)
+    throw new StewardResponseError(
+      'Include the complete response to the supplied question in answer.',
+    );
   if (result.kind !== 'completed' || (!result.edits.length && !result.archiveResearch?.length))
     return result;
   if (scope.activity === 'review') throw new Error('Checked edits are unavailable during review');

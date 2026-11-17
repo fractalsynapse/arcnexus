@@ -14,14 +14,23 @@ activities:
     profile: gpt-astra
     instructions:
     - Identify which host boundary governs the workspace, activation or operation.
-    operations: []
+    operations:
+    - read-file
+    - list-files
     standards: []
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
     - Specify the observed execution, refusal and cancellation behavior.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   testing:
     role: designer
@@ -29,6 +38,13 @@ activities:
     instructions:
     - Exercise checked edits, stale hashes, host confinement and descendant cancellation.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -38,6 +54,13 @@ activities:
     instructions:
     - Use one task worktree and supervise only captured operations and harness capabilities.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -46,6 +69,11 @@ activities:
     profile: gpt-sol
     instructions:
     - Check that inspection, activation and refusal use the same captured identity and scope.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
     standards:
     - readable-typescript

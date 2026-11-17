@@ -16,14 +16,23 @@ activities:
     profile: gpt-astra
     instructions:
     - Identify which observation or operation the current actor needs from its captured scope.
-    operations: []
+    operations:
+    - read-file
+    - list-files
     standards: []
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
     - Describe the shared Agent view and activity boundary before changing activation behavior.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   testing:
     role: designer
@@ -31,6 +40,13 @@ activities:
     instructions:
     - Exercise inspect-to-harness parity, activity changes and refused capabilities.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -40,6 +56,13 @@ activities:
     instructions:
     - Expose the resolved actor and delegate one bounded activation to Execution.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -48,6 +71,11 @@ activities:
     profile: gpt-sol
     instructions:
     - Check equivalent inspection and activation, including director and reviewer read-only scope.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
     standards:
     - readable-typescript

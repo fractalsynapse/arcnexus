@@ -38,7 +38,7 @@ export type TaskOutcome =
 
 export type TaskEvent =
   | Observation
-  | { plan: Plan }
+  | { plan: Plan; supplier?: SupplierLink }
   | { position: { completed: number; activities: Readonly<Record<string, number>> } }
   | { candidate: Candidate; verdict: Verdict }
   | { feedback: Feedback }
@@ -53,13 +53,44 @@ export interface TaskSession {
   close(): void;
   cleanup?(): void;
   history?(): readonly TaskEvent[];
+  ask?: TaskObserver['answer'];
+}
+
+/** Hold the current task position while the requested human answer is unavailable. */
+export class ClarificationRequired extends Error {}
+
+export type Interrupted = Extract<TaskOutcome, { reason: string }>;
+
+/** Record a held gate, failed run or invalid admission with its evidence. */
+export function stopped(
+  kind: Interrupted['kind'],
+  reason: string,
+  evidence: readonly string[] = [],
+): Interrupted {
+  return { kind, reason, evidence };
+}
+
+/** Preserve the exact diagnostic when cancellation, a question, or an error stops execution. */
+export function interruptedRun(error: unknown, signal: AbortSignal, evidence?: readonly string[]) {
+  const reason = error instanceof Error ? error.message : String(error);
+  const kind = signal.aborted
+    ? 'cancelled'
+    : error instanceof ClarificationRequired
+      ? 'blocked'
+      : 'failed';
+  return stopped(kind, reason, evidence);
 }
 
 export type ActivityOutcome =
-  | { kind: 'completed'; evidence: readonly string[] }
+  | { kind: 'completed'; evidence: readonly string[]; answer?: string }
   | Omit<Extract<Feedback, { kind: 'supplier' }>, 'requester'>
   | Extract<DirectionResult, { kind: 'question' }>
   | { kind: 'blocked'; reason: string; evidence: readonly string[] };
+
+export interface SupplierLink {
+  milestone: string;
+  request: Extract<Feedback, { kind: 'supplier' }>;
+}
 
 export interface ActivityCheckpoint {
   milestone: string;

@@ -62,6 +62,7 @@ interface Profile extends Definition {
 
 interface Operation extends Definition {
   category: string;
+  tool?: string;
   command?: string;
   args?: Array<string | { context: 'owner' }>;
   cwd?: string;

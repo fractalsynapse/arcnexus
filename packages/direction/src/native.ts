@@ -36,7 +36,8 @@ const shape = {
     'Include all five steps. Omit inapplicable for active steps. For an inactive step use an empty checklist and put its reason in inapplicable as a plain string.',
   delivery:
     'Put hosted CI, required PR review, and the observed staging merge in the Release checklist as future host observations. Reference engineering IDs there. Keep delivery observations and the independent verdict out of milestone criteria and steward work.',
-  question: { kind: 'question', question: 'genuine human decision required', evidence: [] },
+  question:
+    'When a genuine decision needs human authority, use the mapped ask-question tool and end this activation.',
 };
 
 /** Ask the Director Agent to author the initial plan or the required correction. */

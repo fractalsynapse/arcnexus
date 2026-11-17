@@ -1,5 +1,5 @@
 import type { Context } from 'cordis';
-import { createInterface } from 'node:readline/promises';
+import { createInterface } from 'node:readline';
 import type {
   Observation,
   RoundOutcome,
@@ -48,9 +48,20 @@ function reportProgress(observation: Observation, json: boolean) {
 async function ask(question: string, signal: AbortSignal) {
   if (!process.stdin.isTTY) return undefined;
   const input = createInterface({ input: process.stdin, output: process.stderr });
+  const abort = () => input.close();
+  signal.addEventListener('abort', abort, { once: true });
   try {
-    return await input.question(`${question}\n> `, { signal });
+    signal.throwIfAborted();
+    const lines: string[] = [];
+    process.stderr.write(
+      `${question}\nEnter your answer, then a line containing only a period to submit.\n`,
+    );
+    for await (const line of input) {
+      if (line === '.') return lines.join('\n');
+      lines.push(line);
+    }
   } finally {
+    signal.removeEventListener('abort', abort);
     input.close();
   }
 }

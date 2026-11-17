@@ -14,14 +14,23 @@ activities:
     profile: gpt-astra
     instructions:
     - Identify the structured input and outcome required by the current app adapter.
-    operations: []
+    operations:
+    - read-file
+    - list-files
     standards: []
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
     - Specify the shared operations and structured results in the SDK contract.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   testing:
     role: designer
@@ -29,6 +38,13 @@ activities:
     instructions:
     - Exercise inspection, task outcomes and cancellation through the in-process SDK.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -38,6 +54,13 @@ activities:
     instructions:
     - Delegate to the canonical Agent and task services through transport-neutral operations.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -46,6 +69,11 @@ activities:
     profile: gpt-sol
     instructions:
     - Check that adapters can use the SDK without terminal input, argv or exit-code semantics.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
     standards:
     - readable-typescript

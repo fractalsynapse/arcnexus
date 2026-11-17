@@ -2,7 +2,7 @@ import type { Context } from 'cordis';
 import {
   decodeDirectorResponse,
   DirectorResponseError,
-  supplierIsScheduled,
+  scheduledSupplier,
   validateCorrection,
   validatePlan,
   validateRevision,
@@ -14,6 +14,7 @@ import {
   type StandingGoalEvidence,
 } from '../../direction/src/index.js';
 import { validateVerdict, type Candidate } from '../../verification/src/index.js';
+import { interruptedRun, stopped, type Interrupted } from './services.js';
 import type {
   ActivityCheckpoint,
   Observation,
@@ -39,14 +40,13 @@ export type {
   TaskSession,
   WorkflowServices,
 } from './services.js';
+export { ClarificationRequired } from './services.js';
 
 declare module 'cordis' {
   interface Context {
     workflow: Workflow;
   }
 }
-
-type Interrupted = Extract<TaskOutcome, { reason: string }>;
 
 /** Advance one admitted workflow and record observations through the task services. */
 export class Workflow {
@@ -69,8 +69,7 @@ export class Workflow {
       run = new TaskRun(this.services, session, observer, signal, input.measureOwner);
       outcome = await run.execute();
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      outcome = stopped(signal.aborted ? 'cancelled' : 'failed', message, run?.evidence);
+      outcome = interruptedRun(error, signal, run?.evidence);
     }
     try {
       outcome = this.finalize(session, outcome);
@@ -145,6 +144,7 @@ class TaskRun {
 
   /** Execute accepted milestones, re-plan on feedback and publish only an accepted candidate. */
   async execute(): Promise<TaskOutcome> {
+    this.session.ask = (question) => this.prompt(question);
     const resumed = await this.services.delivery.resume?.(this.session, this.signal, (event) =>
       this.report(event),
     );
@@ -163,6 +163,12 @@ class TaskRun {
       const result = await this.review(plan);
       if (result) return result;
     }
+  }
+
+  /** Expose a native clarification gate through the same transport-neutral observer. */
+  private prompt(question: string) {
+    this.report({ phase: 'question', message: question });
+    return this.observer.answer?.(question, this.signal) ?? Promise.resolve(undefined);
   }
 
   /** Restore an accepted plan or evaluate and plan fresh work before preparing the issue branch. */
@@ -324,18 +330,25 @@ class TaskRun {
 
   /** Admit a validated plan only when its supplier sequence can advance. */
   private commitPlan(plan: Plan, reason?: RevisionFeedback): Interrupted | undefined {
-    if (
-      this.plan &&
-      reason?.kind === 'supplier' &&
-      !supplierIsScheduled(this.plan, plan, reason, this.completed, this.activityPositions)
-    )
-      return stopped(
-        'blocked',
-        `The Director must schedule runnable supplier work for ${reason.owner} before ${reason.requester}`,
-        reason.evidence,
+    let supplier;
+    if (this.plan && reason?.kind === 'supplier') {
+      const milestone = scheduledSupplier(
+        this.plan,
+        plan,
+        reason,
+        this.completed,
+        this.activityPositions,
       );
+      if (!milestone)
+        return stopped(
+          'blocked',
+          `The Director must schedule runnable supplier work for ${reason.owner} before ${reason.requester}`,
+          reason.evidence,
+        );
+      supplier = { milestone, request: reason };
+    }
     this.plan = plan;
-    this.session.record({ plan });
+    this.session.record(supplier ? { plan, supplier } : { plan });
   }
 
   /** Translate an unanswered genuine gate into a retained blocked outcome. */
@@ -472,15 +485,6 @@ class TaskRun {
 /** Keep rejections scoped to the exact tree and material evidence reviewed. */
 function reviewKey(candidate: Candidate) {
   return `${candidate.digest}:${candidate.ownerEvidenceDigest ?? ''}`;
-}
-
-/** Make an explicit outcome for a held gate, failed run or invalid admission. */
-function stopped(
-  kind: Interrupted['kind'],
-  reason: string,
-  evidence: readonly string[] = [],
-): Interrupted {
-  return { kind, reason, evidence };
 }
 
 /** Mount the same Workflow service for the CLI and other adapters. */

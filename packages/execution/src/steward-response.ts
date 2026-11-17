@@ -5,7 +5,13 @@ import type { ProposedEdit } from './formatter.js';
 type CheckRequest = Pick<StewardCheckFailure, 'id' | 'expected'>;
 
 export type StewardResult =
-  | { kind: 'completed'; edits: ProposedEdit[]; checks: CheckRequest[]; archiveResearch?: string[] }
+  | {
+      kind: 'completed';
+      edits: ProposedEdit[];
+      checks: CheckRequest[];
+      archiveResearch?: string[];
+      answer?: string;
+    }
   | Exclude<ActivityOutcome, { kind: 'completed' }>;
 
 /** Distinguish invalid proposals from failures after the host starts executing them. */
@@ -26,6 +32,9 @@ export function decodeSteward(
         edits: edits(value.edits),
         checks: checks(value.checks, allowed, correction, hostChecks),
         ...archiveSelection(value.archiveResearch),
+        ...(typeof value.answer === 'string' && value.answer.trim()
+          ? { answer: value.answer }
+          : {}),
       };
     case 'supplier':
       return supplier(value);
@@ -60,6 +69,9 @@ function supplier(value: Record<string, unknown>): StewardResult {
     owner: required(value.owner, 'owner'),
     milestone: required(value.milestone, 'milestone'),
     reason: required(value.reason, 'reason'),
+    ...(typeof value.question === 'string' && value.question.trim()
+      ? { question: value.question }
+      : {}),
     evidence: [],
   };
 }
@@ -71,29 +83,35 @@ function edits(value: unknown): ProposedEdit[] {
   const paths = new Set<string>();
   return value.map((entry, index) => {
     const at = `edits[${index}]`;
-    const edit = object(entry, at);
-    if ('id' in edit && !('path' in edit))
-      throw new StewardResponseError(
-        `response.${at}: operation requests belong in the top-level checks array`,
-      );
-    const path = required(edit.path, `${at}.path`);
-    if (paths.has(path))
-      throw new StewardResponseError(`response.${at}.path: duplicate edit for ${path}`);
-    paths.add(path);
-    const { expected, content } = edit;
-    if (expected !== null && (typeof expected !== 'string' || !/^[a-f0-9]{64}$/.test(expected)))
-      throw new StewardResponseError(`response.${at}.expected: expected a SHA-256 or null`);
-    if ('transform' in edit) {
-      if ('content' in edit || expected === null)
-        throw new StewardResponseError(
-          `response.${at}: a transform requires an existing file hash and no content field`,
-        );
-      return { path, expected, transform: transform(edit.transform, at) };
-    }
-    if (content !== null && typeof content !== 'string')
-      throw new StewardResponseError(`response.${at}.content: expected replacement text or null`);
-    return { path, expected, content };
+    const edit = decodeEdit(entry, at);
+    if (paths.has(edit.path))
+      throw new StewardResponseError(`response.${at}.path: duplicate edit for ${edit.path}`);
+    paths.add(edit.path);
+    return edit;
   });
+}
+
+/** Decode one source mutation for either a tool call or a steward result fixture. */
+export function decodeEdit(entry: unknown, at = 'checked edit'): ProposedEdit {
+  const edit = object(entry, at);
+  if ('id' in edit && !('path' in edit))
+    throw new StewardResponseError(
+      `response.${at}: operation requests belong in the top-level checks array`,
+    );
+  const path = required(edit.path, `${at}.path`);
+  const { expected, content } = edit;
+  if (expected !== null && (typeof expected !== 'string' || !/^[a-f0-9]{64}$/.test(expected)))
+    throw new StewardResponseError(`response.${at}.expected: expected a SHA-256 or null`);
+  if ('transform' in edit) {
+    if ('content' in edit || expected === null)
+      throw new StewardResponseError(
+        `response.${at}: a transform requires an existing file hash and no content field`,
+      );
+    return { path, expected, transform: transform(edit.transform, at) };
+  }
+  if (content !== null && typeof content !== 'string')
+    throw new StewardResponseError(`response.${at}.content: expected replacement text or null`);
+  return { path, expected, content };
 }
 
 /** Require a formatter or a nonempty exact text substitution. */

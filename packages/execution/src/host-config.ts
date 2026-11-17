@@ -1,4 +1,4 @@
-import { accessSync, constants, lstatSync, readFileSync, realpathSync } from 'node:fs';
+import { accessSync, constants, existsSync, lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 import { parse } from 'yaml';
 import type { Capture } from '../../architecture/src/index.js';
@@ -70,7 +70,10 @@ export function verifyNativeGuidance(capture: Capture, worktree: string) {
     '--exclude-standard',
     '-z',
   ).split('\0');
-  if (listed.some((path) => /(?:^|\/)\.codex\/config\.toml$/.test(path)))
+  if (
+    existsSync(join(worktree, '.codex', 'config.toml')) ||
+    listed.some((path) => /(?:^|\/)\.codex\/config\.toml$/.test(path))
+  )
     throw new Error('Target Codex configuration is outside the captured harness binding');
   const approved = new Set(capture.source.paths.filter(isGuidance));
   for (const path of new Set([...listed.filter(isGuidance), ...approved])) {

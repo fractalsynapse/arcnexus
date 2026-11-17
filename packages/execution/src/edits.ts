@@ -16,6 +16,17 @@ export interface ObservedEdit {
   after: string | null;
 }
 
+/** An edit outside a uniquely captured owner's scope has no source effects. */
+export class CheckedEditOwnershipRefusal extends Error {
+  /** Keep the refused path and captured owners available to the requesting actor. */
+  constructor(
+    readonly path: string,
+    readonly owners: readonly string[],
+  ) {
+    super(`Checked edit refused for ${path}; captured owners: ${owners.join(', ') || 'none'}`);
+  }
+}
+
 /** Report a changed edit input only after its path passes captured ownership checks. */
 export class StaleCheckedEdit extends Error {
   /** Provide the observed digest so a steward can repair the rejected request. */
@@ -78,8 +89,9 @@ function authorize(root: string, capture: Capture, owner: string, path: string) 
   const found = team.ownerFor(Object.values(capture.components), path);
   if (found.kind !== 'owned' || found.owner.id !== owner) {
     const owners = found.kind === 'collision' ? found.owners : found.owner ? [found.owner] : [];
-    throw new Error(
-      `Checked edit refused for ${path}; captured owners: ${owners.map(({ id }) => id).join(', ') || 'none'}`,
+    throw new CheckedEditOwnershipRefusal(
+      path,
+      owners.map(({ id }) => id),
     );
   }
   let current = root;

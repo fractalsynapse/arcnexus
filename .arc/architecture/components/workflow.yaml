@@ -15,14 +15,23 @@ activities:
     profile: gpt-astra
     instructions:
     - Trace the handoff to the component that owns the decision.
-    operations: []
+    operations:
+    - read-file
+    - list-files
     standards: []
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
     - Record task handoffs, feedback and terminal behavior in the Workflow contract.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   testing:
     role: designer
@@ -30,6 +39,13 @@ activities:
     instructions:
     - Exercise ordered activity execution, correction and interruption through the public task boundary.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -39,6 +55,13 @@ activities:
     instructions:
     - Advance the recorded sequence through the existing Agent, Execution and Coordination services.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -47,6 +70,11 @@ activities:
     profile: gpt-sol
     instructions:
     - Check that Workflow respects captured authority and delegates sequence decisions and acceptance.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
     standards:
     - readable-typescript

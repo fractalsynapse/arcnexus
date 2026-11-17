@@ -161,14 +161,21 @@ contracts:
   file: packages/architecture/contract.md
   owner: architecture
   stage: locked
-  digest: e2a3e234262bd23005f45083fa290ac0621cd9e05f60dca22dad1400e439907e
+  digest: 59ee8b756a850e0e1fa2640c348a1b08a4a366487671b496833ac8d3b40abf5c
   dependsOn:
   - arcnexus/project
   - arcnexus/foundation
   scenarios: 19
   acceptedBy: Adrian Webb (architect)
-  acceptedAt: '2026-11-15'
+  acceptedAt: '2026-11-17'
   history:
+  - stage: locked
+    digest: e2a3e234262bd23005f45083fa290ac0621cd9e05f60dca22dad1400e439907e
+    file: packages/architecture/contract.md
+    revision: 0b782b8918523ea4540981e389e8663d2b65fd55
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: '2026-11-15'
+    note: Superseded by the approved activity-scoped operations and answer recovery amendment in issue #562.
   - stage: locked
     digest: 9cda2da6d79582be008fbfc5bff4fea0730758bad0ccc5f28bf025d9e3696ddc
     file: packages/architecture/contract.md
@@ -227,6 +234,7 @@ contracts:
     in Codex chat on 2026-11-15. Base: 651ff53c7cef014434ad389be0a76e640f1c1662. Issue #458, PR #459.'
   stewardshipRecord: 'Architect approved steward ownership, release relocation and the architecture component
     name in Codex chat on 2026-11-15. Base: ff08a26ce1f7b6fb8de0087e72c12884e1ad5c87. Issue #454.'
+  amendmentRecord: 'Architect approved answer recovery and activity-scoped MCP in Codex chat with built-in web access controlled by the execution provider. Base: 0b782b8918523ea4540981e389e8663d2b65fd55. Issue #562.'
 - id: arcnexus/coordination
   type: library
   file: packages/coordination/contract.md
@@ -263,7 +271,7 @@ contracts:
   file: packages/execution/contract.md
   owner: execution
   stage: locked
-  digest: 6dbbf5478c56fb29cdb7d37f44b59ef6924b26aff9622349eada75cb141affc4
+  digest: 94ece72d7a1f476462719db75feaa873c8d369dd27f9b1878f15ea611b9bce2f
   dependsOn:
   - arcnexus/project
   - arcnexus/architecture-model
@@ -272,6 +280,14 @@ contracts:
   acceptedBy: Adrian Webb (architect)
   acceptedAt: '2026-11-17'
   history:
+  - stage: locked
+    digest: 6dbbf5478c56fb29cdb7d37f44b59ef6924b26aff9622349eada75cb141affc4
+    file: packages/execution/contract.md
+    revision: 0b782b8918523ea4540981e389e8663d2b65fd55
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: '2026-11-17'
+    approvalRecord: 'Architect approved the optional research inbox amendments in Codex chat. Base: f06f6a5db4a26a84c08e5fdebaf98288824e3b87. Issue #554.'
+    note: Superseded by the approved activity-scoped operations and answer recovery amendment in issue #562.
   - stage: locked
     digest: 3cf22b9cc9aa6c1185940ee5462f68983c9ca9681e3d69c15d0d2572ba822345
     file: packages/execution/contract.md
@@ -297,13 +313,13 @@ contracts:
     note: "proposed in #352 with three open questions; answered by the architect \u2014 bubblewrap required\
       \ with the container kept as an opt-in deployment seam and concurrency preclusion forbidden, the\
       \ lane in execution with ordering in direction, and harness state per activation\n"
-  amendmentRecord: 'Architect approved the optional research inbox amendments in Codex chat. Base: f06f6a5db4a26a84c08e5fdebaf98288824e3b87. Issue #554.'
+  amendmentRecord: 'Architect approved answer recovery and activity-scoped MCP in Codex chat with built-in web access controlled by the execution provider. Base: 0b782b8918523ea4540981e389e8663d2b65fd55. Issue #562.'
 - id: arcnexus/direction
   type: library
   file: packages/direction/contract.md
   owner: direction
   stage: locked
-  digest: 02867a4a244f62768a3b05a8a3e171fcedbd28718c9cad7932dd1465cb0018db
+  digest: c3c2928a32eeee663ba78c6ad80a7c7edcd0aab9563374466b18943bf8dac877
   dependsOn:
   - arcnexus/project
   - arcnexus/architecture-model
@@ -313,6 +329,14 @@ contracts:
   acceptedBy: Adrian Webb (architect)
   acceptedAt: '2026-11-17'
   history:
+  - stage: locked
+    digest: 02867a4a244f62768a3b05a8a3e171fcedbd28718c9cad7932dd1465cb0018db
+    file: packages/direction/contract.md
+    revision: 0b782b8918523ea4540981e389e8663d2b65fd55
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: '2026-11-17'
+    approvalRecord: 'Architect approved the optional research inbox amendments in Codex chat. Base: f06f6a5db4a26a84c08e5fdebaf98288824e3b87. Issue #554.'
+    note: Superseded by the approved activity-scoped operations and answer recovery amendment in issue #562.
   - stage: locked
     digest: aa2b166f6259850596b498412cfefd72a572360f70a5a75ec6215ae1492c817d
     file: packages/direction/contract.md
@@ -345,7 +369,7 @@ contracts:
       \ deferred silently\n"
   approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
     Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
-  amendmentRecord: 'Architect approved the optional research inbox amendments in Codex chat. Base: f06f6a5db4a26a84c08e5fdebaf98288824e3b87. Issue #554.'
+  amendmentRecord: 'Architect approved answer recovery and activity-scoped MCP in Codex chat with built-in web access controlled by the execution provider. Base: 0b782b8918523ea4540981e389e8663d2b65fd55. Issue #562.'
 - id: arcnexus/verification
   type: library
   file: packages/verification/contract.md
@@ -518,9 +542,17 @@ contracts:
   dependsOn:
   - arcnexus/agent
   - arcnexus/coordination
-  digest: 0df6e58eb6508e067dd226760c33e39c7112d543db761bb705c9c5d4546c7034
+  digest: 5be62c588fd6b722a62f16d93480d55741eb610724cf5fff4e7ed0215628556b
   scenarios: 4
   history:
+  - stage: locked
+    digest: 0df6e58eb6508e067dd226760c33e39c7112d543db761bb705c9c5d4546c7034
+    file: packages/reviewer/contract.md
+    revision: 0b782b8918523ea4540981e389e8663d2b65fd55
+    acceptedBy: Adrian Webb (architect)
+    acceptedAt: '2026-11-17'
+    approvalRecord: 'Architect approved the optional research inbox amendments in Codex chat. Base: f06f6a5db4a26a84c08e5fdebaf98288824e3b87. Issue #554.'
+    note: Superseded by the approved activity-scoped operations and answer recovery amendment in issue #562.
   - stage: locked
     digest: b0f2703dd3badf379d47c9f6647fe09d196b80790b477f37d82eea35b9f40495
     file: packages/reviewer/contract.md
@@ -534,7 +566,7 @@ contracts:
   acceptedAt: '2026-11-17'
   approvalRecord: 'Architect approved the Reviewer proposal in Codex chat on 2026-11-15. Base: 036bf1932a98cb434179ff1f3be82e1c212e4990.
     Issue #454.'
-  amendmentRecord: 'Architect approved the optional research inbox amendments in Codex chat. Base: f06f6a5db4a26a84c08e5fdebaf98288824e3b87. Issue #554.'
+  amendmentRecord: 'Architect approved answer recovery and activity-scoped MCP in Codex chat with built-in web access controlled by the execution provider. Base: 0b782b8918523ea4540981e389e8663d2b65fd55. Issue #562.'
 - id: arcnexus/workflow
   type: library
   file: packages/workflow/contract.md

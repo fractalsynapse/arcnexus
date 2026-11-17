@@ -161,7 +161,11 @@ export function usedResearch(task: InboxTask, selection: ActivitySelection, data
 }
 
 /** Pin existing verification inputs before a Reviewer research handoff can be interrupted. */
-function verificationContext(task: InboxTask, selection: ActivitySelection, data: Assignment) {
+export function verificationContext(
+  task: InboxTask,
+  selection: ActivitySelection,
+  data: Assignment,
+) {
   const verifier = task.capture.project.verifier;
   const assignment = object(data.assignment);
   if (
@@ -183,7 +187,7 @@ function verificationContext(task: InboxTask, selection: ActivitySelection, data
 }
 
 /** Preserve a request's identity for the same captured activation after retry. */
-function inboxIdentity(task: InboxTask, selection: ActivitySelection, data: Assignment) {
+export function inboxIdentity(task: InboxTask, selection: ActivitySelection, data: Assignment) {
   return identity([
     task.taskID,
     task.capture.source.revision,

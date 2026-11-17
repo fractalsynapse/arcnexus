@@ -29,8 +29,11 @@ validation finding. Neither activities nor their fields inherit project defaults
 The project selects director and verifier by their component and explicit activity.
 A role supplies standing instructions and owns no files or commands. Operation
 declarations describe the act and its parameters, prerequisites and confinement.
-The activity grants the declared operation. Invocation parameters cannot rewrite
-the command or expand authority.
+The activity grants the declared operation. Model-invoked operations bind a local
+MCP handler and its exact argument schema. Inspection and activation use the
+same captured bindings. An explicitly empty list exposes no project tools.
+Invocation parameters cannot rewrite the command or expand authority. The
+execution provider independently controls built-in web access.
 
 Validate deterministically and offline. Check ownership, public import boundaries,
 cycles, profiles, operations, guidance metadata and contract digests through the shared validation service. Capture freezes
@@ -55,7 +58,7 @@ Architectural proposals are applied outside the active task on a review branch.
 | ARC-10 | Requesting a full definition returns it complete; standards for the activity are filtered and capped, and exceeding the cap is a finding against the standard, not a silent truncation. |
 | ARC-11 | Validation flags a changed locked digest, missing accepted file or missing record of architectural authority. |
 | ARC-12 | A product checked edit of a locked file or its registry is refused. A candidate-side registry modification cannot unlock an existing capture. |
-| ARC-13 | `operationsFor` returns only operations whose activity matches, each with its digest and prerequisites resolved. |
+| ARC-13 | `operationsFor` returns only operations whose activity matches, with captured definitions, prerequisites and tool schemas. Activation exposes the same bindings as inspection. |
 | ARC-14 | A missing binding key fails naming the key; setting `PATH` does not satisfy it. |
 | ARC-15 | `proposeChange` writes a proposal record and leaves `.arc/architecture/` byte-identical. |
 | ARC-16 | Validation on an unchanged tree produces byte-identical finding output. |

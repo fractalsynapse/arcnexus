@@ -14,14 +14,23 @@ activities:
     profile: gpt-astra
     instructions:
     - Trace an acceptance criterion to its captured check and evidence input.
-    operations: []
+    operations:
+    - read-file
+    - list-files
     standards: []
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
     - Specify verdict identity, evidence completeness and unavailable outcomes.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   testing:
     role: designer
@@ -29,6 +38,13 @@ activities:
     instructions:
     - Exercise stale verdicts, missing evidence and recorded expected-red checks.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -38,6 +54,13 @@ activities:
     instructions:
     - Implement one acceptance and verdict path for the assembled candidate.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -46,6 +69,11 @@ activities:
     profile: gpt-sol
     instructions:
     - Check the verifier implementation against its contract without authorizing candidate delivery.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
     standards:
     - readable-typescript

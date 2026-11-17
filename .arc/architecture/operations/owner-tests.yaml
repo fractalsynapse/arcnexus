@@ -1,5 +1,6 @@
 id: owner-tests
 kind: command
+tool: check
 category: integration-test
 command: npm
 args:
