@@ -1,10 +1,13 @@
-import { activities, type DirectionResult } from './index.js';
+import { activities, type DirectionResult, type StandingGoalEvidence } from './index.js';
 
 /** Carry a rejected Director proposal's diagnostic across the planning boundary. */
 export class DirectorResponseError extends Error {}
 
 /** Decode arbitrary model output before plan rules inspect its fields. */
-export function decodeDirectorResponse(response: unknown): DirectionResult {
+export function decodeDirectorResponse(
+  response: unknown,
+  standing?: StandingGoalEvidence,
+): DirectionResult {
   const value = mapping(response, 'response');
   if (value.kind === 'question') {
     string(value.question, 'question');
@@ -18,10 +21,30 @@ export function decodeDirectorResponse(response: unknown): DirectionResult {
     list(focus.objectives, 'plan.focus.objectives', string);
     list(focus.constraints, 'plan.focus.constraints', string);
     list(plan.milestones, 'plan.milestones', milestone);
+  } else if (standing && value.kind === 'satisfied') {
+    validateAssessment(value, standing);
   } else {
-    throw new DirectorResponseError('response.kind: expected "plan" or "question"');
+    const expected = standing ? '"plan", "question", or "satisfied"' : '"plan" or "question"';
+    throw new DirectorResponseError(`response.kind: expected ${expected}`);
   }
   return response as DirectionResult;
+}
+
+/** Admit inaction only with an explicit rationale and the passing check observed for this goal. */
+function validateAssessment(value: Record<string, unknown>, standing: StandingGoalEvidence) {
+  if (standing.status !== 0)
+    throw new DirectorResponseError(
+      `Cannot satisfy a standing goal with owner check status ${standing.status}`,
+    );
+  string(value.summary, 'summary');
+  if (!value.summary.trim())
+    throw new DirectorResponseError('summary: explain why no engineering work is warranted');
+  if (
+    !Array.isArray(value.evidence) ||
+    value.evidence.length !== 1 ||
+    value.evidence[0] !== standing.log
+  )
+    throw new DirectorResponseError(`evidence: cite the current owner check log ${standing.log}`);
 }
 
 /** Check the fields consumed by milestone admission and scope validation. */

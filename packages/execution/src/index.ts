@@ -75,8 +75,8 @@ export class Execution {
   }
 
   /** Run a goal's declared owner measure on an isolated staging snapshot. */
-  evaluate(session: TaskSession, owner: string, signal: AbortSignal) {
-    return hostTask(session).evaluate(owner, signal);
+  measureGoal(session: TaskSession, owner: string, signal: AbortSignal) {
+    return hostTask(session).measureGoal(owner, signal);
   }
 
   /** Materialize the task branch at its recovered checkpoint before any steward activation. */
@@ -186,28 +186,24 @@ export class HostTask implements TaskSession {
     return [...(this.journal.retained?.events ?? []), ...this.journal.events()] as T[];
   }
 
-  /** Evaluate the owner suite against staging and retain the observed result. */
-  async evaluate(owner: string, signal: AbortSignal): Promise<TaskOutcome | undefined> {
-    const previous = this.observations<{ outcome?: TaskOutcome }>().findLast(
-      ({ outcome }) => outcome?.kind === 'satisfied',
-    )?.outcome;
-    if (previous) return previous;
+  /** Measure the owner suite and let Direction decide whether the observed goal needs work. */
+  async measureGoal(owner: string, signal: AbortSignal) {
     const { source } = this.capture;
     this.recoverMeasureWorkspace();
     const path = join(this.directory(), 'measure-worktree');
     this.note({ measureWorkspace: this.journal.run });
     git(source.root, 'worktree', 'add', '--detach', path, source.revision);
     this.worktree = path;
-    const result = await this.check('owner-tests', signal, { owner, activity: 'testing' });
-    if (result.status === 0)
-      return { kind: 'satisfied', commit: source.revision, evidence: [result.log] };
-    if (typeof result.status !== 'number')
-      return {
-        kind: 'blocked',
-        reason: `Goal measure unavailable for ${owner}`,
-        evidence: [result.log],
-      };
-    return undefined;
+    const { status, log } = await this.check('owner-tests', signal, { owner, activity: 'testing' });
+    const recentChanges = git(
+      source.root,
+      'log',
+      '--first-parent',
+      '--max-count=10',
+      '--format=%h %s',
+      source.revision,
+    ).split('\n');
+    return { owner, status, log, recentChanges, revision: source.revision };
   }
 
   /** Remove a detached measurement workspace left by an interrupted attempt. */

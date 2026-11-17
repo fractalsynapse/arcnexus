@@ -59,7 +59,10 @@ async function ask(question: string, signal: AbortSignal) {
 function finishRound(round: RoundOutcome, json: boolean, signal: AbortSignal) {
   if (json) console.log(JSON.stringify(round));
   else {
-    for (const { id, outcome } of round.goals) console.log(`${id}: ${outcome.kind}`);
+    for (const { id, outcome } of round.goals) {
+      const summary = outcome.kind === 'satisfied' ? ` · ${outcome.summary}` : '';
+      console.log(`${id}: ${outcome.kind}${summary}`);
+    }
     console.log(`Round ${round.round} ${round.completed ? 'completed' : 'stopped'}`);
   }
   if (round.completed) return;
