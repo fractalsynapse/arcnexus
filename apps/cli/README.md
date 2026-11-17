@@ -93,7 +93,8 @@ repeated tree and evidence combination stops the correction.
 If publication is interrupted, invoke `task run` with the identical goal.
 ArcNexus resumes from the verified candidate and observes GitHub before taking
 another publication action. A matching remote branch, pull request or merge is
-reused. See [Publication recovery evidence](../../docs/release/verification.md#publication-recovery-evidence)
+reused. A known transient GitHub read error gets a bounded retry in the active
+task, including the observation after a merge. See [Publication recovery evidence](../../docs/release/verification.md#publication-recovery-evidence)
 for what to compare in the retained task evidence.
 
 ## Run a round of standing goals
