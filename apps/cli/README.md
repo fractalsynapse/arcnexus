@@ -88,7 +88,8 @@ Run `arcnexus task run` without a goal to evaluate the project's captured
 [goal inventory](../../.arc/goals/). Markdown frontmatter supplies the numeric
 priority and the component whose declared owner suite measures the goal.
 Requirements and success measures remain in the Markdown body. Lower priorities
-run first, with stable file IDs breaking ties. Each goal reads current staging.
+run first, with stable file IDs breaking ties. Each goal verifies the current
+staging head and reuses the local Git object when available.
 A passing measure records evidence. A failing measure enters the normal task
 loop and stops the round if the task cannot complete.
 
