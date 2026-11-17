@@ -102,6 +102,81 @@ function nativeCapture(workspace: string, privatePath: string) {
   };
 }
 
+/** Give the owner check an observable command and the captured suite prerequisite. */
+function ownerCheckCapture(workspace: string, required = false) {
+  const authority = capture(workspace);
+  return {
+    ...authority,
+    project: { ...authority.project, checks: { acceptance: required ? ['owner-tests'] : [] } },
+    components: {
+      ...authority.components,
+      one: { ...authority.components.one!, owns: ['owned', 'packages/one'] },
+      two: { ...authority.components.two!, owns: ['other', 'packages/two'] },
+    },
+    operations: {
+      'owner-tests': {
+        id: 'owner-tests',
+        category: 'integration-test',
+        command: 'printf',
+        args: ['owner check executed'],
+        network: false,
+        applicability: 'owner-test-suites' as const,
+      },
+    },
+  };
+}
+
+test('an optional owner check without a suite records inapplicability before execution', async (t) => {
+  const { root, workspace } = fixture(t);
+  const common = join(root, 'common');
+  mkdirSync(common);
+  const otherSuite = join(workspace, 'packages/two/tests/unit');
+  mkdirSync(otherSuite, { recursive: true });
+  writeFileSync(join(otherSuite, 'other.test.ts'), '');
+  const result = await check(
+    ownerCheckCapture(workspace),
+    workspace,
+    common,
+    'owner-tests',
+    'one',
+    join(root, 'check.log'),
+    AbortSignal.timeout(5_000),
+  );
+  assert.equal(result.status, 'not-applicable');
+  assert.equal(
+    readFileSync(result.log, 'utf8'),
+    'Not applicable: No test suites for one in the current worktree\n',
+  );
+});
+
+test(
+  'an added source suite and a required check both reach the confined command',
+  { skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1' },
+  async (t) => {
+    const { root, workspace } = fixture(t);
+    const common = join(root, 'common');
+    mkdirSync(common);
+    for (const required of [true, false]) {
+      const suite = join(workspace, 'packages/one/tests/unit');
+      if (!required) {
+        mkdirSync(suite, { recursive: true });
+        writeFileSync(join(suite, 'new.test.ts'), '');
+      }
+      const result = await check(
+        ownerCheckCapture(workspace, required),
+        workspace,
+        common,
+        'owner-tests',
+        'one',
+        join(root, `check-${required}.log`),
+        AbortSignal.timeout(5_000),
+      );
+      assert.equal(result.status, 0);
+      assert.match(readFileSync(result.log, 'utf8'), /owner check executed/);
+    }
+  },
+);
+
 test(
   'EX-10: native check writes stay in the disposable overlay',
   { skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1' },

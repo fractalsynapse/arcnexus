@@ -65,6 +65,7 @@ interface Operation extends Definition {
   args?: Array<string | { context: 'owner' }>;
   cwd?: string;
   network?: boolean;
+  applicability?: 'owner-test-suites';
 }
 
 interface Standard extends Definition {

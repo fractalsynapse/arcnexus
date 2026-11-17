@@ -18,7 +18,7 @@ export async function verify(
   const checks = [];
   for (const id of ids) {
     const result = await task.check(id, signal);
-    if (result.status === null)
+    if (result.status === null || result.status === 'not-applicable')
       return {
         kind: 'blocked',
         reason: `Required check ${id} is unavailable`,

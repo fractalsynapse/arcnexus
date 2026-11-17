@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { registerSuite, testInventory } from '../../scripts/test-inventory.js';
+import { registerSuite, testInventory } from '../../src/index.js';
 
 test('test selection uses catalog ownership across the built app and package trees', () => {
   const all = testInventory();

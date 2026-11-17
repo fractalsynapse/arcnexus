@@ -4,6 +4,9 @@
 
 ### Fixed
 
+- Record optional owner tests as inapplicable when the current worktree has no
+  suite for that owner. Required assembled checks still run (#514).
+
 - Return invalid Director proposals with the exact diagnostic for one in-task
   repair before continuing from the accepted plan (#510).
 
