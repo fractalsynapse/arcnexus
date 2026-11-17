@@ -7,6 +7,7 @@ constraints:
 - failure: A steward obtains upstream credentials or a changed head can be merged.
 owns:
 - packages/collaboration
+- .arc/research/collaboration
 activities:
   research:
     role: researcher

@@ -9,6 +9,7 @@ owns:
 - packages/manager
 - AGENTS.md
 - .agents
+- .arc/research/manager
 activities:
   research:
     role: researcher

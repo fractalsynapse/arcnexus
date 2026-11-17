@@ -15,6 +15,7 @@ owns:
 - .prettierrc.yaml
 - eslint.config.ts
 - tsconfig.json
+- .arc/research/foundation
 activities:
   research:
     role: researcher

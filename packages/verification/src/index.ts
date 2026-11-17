@@ -11,9 +11,15 @@ export type Verdict =
       kind: 'accepted';
       candidate: string;
       criteria: readonly string[];
+      research?: readonly string[];
       evidence: readonly string[];
     }
-  | { kind: 'rejected'; candidate: string; findings: readonly Rejection[] }
+  | {
+      kind: 'rejected';
+      candidate: string;
+      findings: readonly Rejection[];
+      research?: readonly string[];
+    }
   | { kind: 'blocked'; reason: string; evidence: readonly string[] };
 
 /** Reject a verdict that does not bind to the assembled candidate and its acceptance. */

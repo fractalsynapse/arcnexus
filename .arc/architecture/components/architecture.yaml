@@ -11,6 +11,7 @@ owns:
 - .arc/README.md
 - README.md
 - docs/interface
+- .arc/research/architecture
 activities:
   research:
     role: researcher

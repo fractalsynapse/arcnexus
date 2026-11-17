@@ -8,12 +8,13 @@ constraints:
 owns:
 - packages/reviewer
 - .arc/learning
+- .arc/research/reviewer
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
-    - Trace a finding or lesson to the actual task evidence.
+    - Investigate external claims relevant to the captured candidate and criteria. Separate external authority from observed task evidence.
     operations: []
     standards: []
   documentation:

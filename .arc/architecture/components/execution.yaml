@@ -7,6 +7,7 @@ constraints:
 - failure: An edit crosses ownership, changes a lock or overwrites stale content.
 owns:
 - packages/execution
+- .arc/research/execution
 activities:
   research:
     role: researcher

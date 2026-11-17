@@ -8,12 +8,13 @@ constraints:
 owns:
 - packages/direction
 - .arc/plans
+- .arc/research/direction
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
-    - Trace goal interpretation and supplier ordering to the plan and Team eligibility.
+    - Investigate external facts and alternatives that can change goal interpretation, feasibility or sequencing.
     operations: []
     standards: []
   documentation:
