@@ -14,7 +14,9 @@ import {
 } from '../../direction/src/index.js';
 import { validateVerdict } from '../../verification/src/index.js';
 import type {
+  ActivityCheckpoint,
   Observation,
+  RoundOutcome,
   TaskInput,
   TaskObserver,
   TaskOutcome,
@@ -23,7 +25,11 @@ import type {
 } from './services.js';
 
 export type {
+  ActivityCheckpoint,
   ActivityOutcome,
+  GoalRound,
+  RoundOutcome,
+  StandingGoal,
   Observation,
   TaskEvent,
   TaskInput,
@@ -59,17 +65,61 @@ export class Workflow {
       const admitted = await this.services.execution.admit(input, signal);
       if ('kind' in admitted) return admitted;
       session = admitted;
-      run = new TaskRun(this.services, session, observer, signal);
+      run = new TaskRun(this.services, session, observer, signal, input.measureOwner);
       outcome = await run.execute();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       outcome = stopped(signal.aborted ? 'cancelled' : 'failed', message, run?.evidence);
     }
     try {
+      outcome = this.finalize(session, outcome);
       session?.finish(outcome);
       return outcome;
     } finally {
       session?.close();
+    }
+  }
+
+  /** Run one admitted task per goal, preserving the round identity when a goal stops. */
+  async round(
+    directory: string,
+    observer: TaskObserver,
+    signal: AbortSignal,
+  ): Promise<RoundOutcome> {
+    const round = this.services?.execution.round?.(directory);
+    if (!round) throw new Error('Standing goal rounds are unavailable');
+    const goals: RoundOutcome['goals'][number][] = [];
+    for (const goal of round.goals) {
+      if (signal.aborted) break;
+      observer.progress({ phase: 'planning', message: `Round ${round.id} · ${goal.id}` });
+      const outcome = await this.run(
+        {
+          directory,
+          goal: goal.body,
+          scope: `round:${round.id}:${goal.id}`,
+          measureOwner: goal.owner,
+        },
+        observer,
+        signal,
+      );
+      goals.push({ id: goal.id, outcome });
+      if (outcome.kind !== 'merged' && outcome.kind !== 'satisfied') break;
+    }
+    const completed =
+      goals.length === round.goals.length &&
+      goals.every(({ outcome }) => outcome.kind === 'merged' || outcome.kind === 'satisfied');
+    if (completed) round.finish();
+    return { kind: 'round', round: round.id, completed, goals };
+  }
+
+  /** Keep the terminal record accurate if the host cannot safely remove its worktree. */
+  private finalize(session: TaskSession | undefined, outcome: TaskOutcome): TaskOutcome {
+    try {
+      session?.cleanup?.();
+      return outcome;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return stopped('failed', `Task workspace cleanup failed: ${message}`, outcome.evidence);
     }
   }
 }
@@ -88,6 +138,7 @@ class TaskRun {
     private readonly session: TaskSession,
     private readonly observer: TaskObserver,
     private readonly signal: AbortSignal,
+    private readonly measureOwner?: string,
   ) {}
 
   /** Execute accepted milestones, re-plan on feedback and publish only an accepted candidate. */
@@ -96,11 +147,8 @@ class TaskRun {
       this.report(event),
     );
     if (resumed) return resumed;
-    this.report({ phase: 'planning', message: 'Director is planning the goal' });
-    const blocked = await this.acceptPlan(() =>
-      this.services.direction.plan(this.session, this.signal),
-    );
-    if (blocked) return blocked;
+    const setup = await this.prepare();
+    if (setup) return setup;
     while (true) {
       this.signal.throwIfAborted();
       const plan = this.plan!;
@@ -112,6 +160,52 @@ class TaskRun {
       }
       const result = await this.review(plan);
       if (result) return result;
+    }
+  }
+
+  /** Restore an accepted plan or evaluate and plan fresh work before preparing the issue branch. */
+  private async prepare(): Promise<TaskOutcome | undefined> {
+    const saved = this.session.history?.() ?? [];
+    this.plan = saved.findLast((event) => 'plan' in event)?.plan;
+    if (!this.plan) {
+      const measured =
+        this.measureOwner &&
+        (await this.services.execution.evaluate?.(this.session, this.measureOwner, this.signal));
+      if (measured) return measured;
+      this.report({ phase: 'planning', message: 'Director is planning the goal' });
+      const blocked = await this.acceptPlan(() =>
+        this.services.direction.plan(this.session, this.signal),
+      );
+      if (blocked) return blocked;
+    }
+    if (this.services.direction.track && this.services.execution.prepare) {
+      const issue = await this.services.direction.track(this.session, this.signal);
+      await this.services.execution.prepare(this.session, issue, this.signal);
+    }
+    return this.restore();
+  }
+
+  /** Read the durable cursor and handle an outcome observed just before interruption. */
+  private async restore(): Promise<Interrupted | undefined> {
+    const events = this.session.history?.() ?? [];
+    const committed = events.findLastIndex((event) => 'position' in event);
+    const position = events[committed];
+    if (position && 'position' in position) {
+      this.completed = position.position.completed;
+      for (const [id, index] of Object.entries(position.position.activities))
+        this.activityPositions.set(id, index);
+    }
+    const plan = events.findLastIndex((event) => 'plan' in event);
+    const last = events.slice(Math.max(plan, committed) + 1);
+    for (const event of events)
+      if ('verdict' in event && event.verdict.kind === 'rejected')
+        this.rejectedCandidates.add(event.candidate.digest);
+    for (const event of last) {
+      if ('verdict' in event && event.verdict.kind === 'rejected')
+        return this.correct(event.candidate.digest, event.verdict.findings);
+      if (!('activation' in event) || event.activation.outcome.kind === 'blocked') continue;
+      const interrupted = await this.applyActivity(event.activation);
+      if (interrupted) return interrupted;
     }
   }
 
@@ -225,22 +319,32 @@ class TaskRun {
       if (index < start || step.inapplicable || step.activity === 'release') continue;
       this.signal.throwIfAborted();
       const outcome = await this.activate(milestone, step.activity);
+      const record = {
+        milestone: milestone.id,
+        owner: milestone.owner,
+        index,
+        step: step.activity,
+        outcome,
+      };
+      await this.services.execution.checkpoint?.(this.session, record, this.signal);
       this.signal.throwIfAborted();
-      if (outcome.kind === 'blocked') return stopped('blocked', outcome.reason, outcome.evidence);
-      if (outcome.kind === 'question') {
-        const feedback = await this.answer(outcome);
-        return 'reason' in feedback ? feedback : this.revise(feedback);
-      }
-      if (outcome.kind === 'supplier') return this.revise({ ...outcome, requester: milestone.id });
-      this.report({
-        phase: 'activity',
-        message: `Completed ${step.activity}`,
-        evidence: outcome.evidence,
-      });
-      this.activityPositions.set(milestone.id, index + 1);
-      this.recordPosition();
+      const interrupted = await this.applyActivity(record);
+      if (interrupted || outcome.kind !== 'completed') return interrupted;
     }
     this.completed++;
+    this.recordPosition();
+  }
+
+  /** Advance a durable completion or route a retained non-terminal outcome through Direction. */
+  private async applyActivity({ milestone, index, step, outcome }: ActivityCheckpoint) {
+    if (outcome.kind === 'blocked') return stopped('blocked', outcome.reason, outcome.evidence);
+    if (outcome.kind === 'question') {
+      const feedback = await this.answer(outcome);
+      return 'reason' in feedback ? feedback : this.revise(feedback);
+    }
+    if (outcome.kind === 'supplier') return this.revise({ ...outcome, requester: milestone });
+    this.report({ phase: 'activity', message: `Completed ${step}`, evidence: outcome.evidence });
+    this.activityPositions.set(milestone, index + 1);
     this.recordPosition();
   }
 

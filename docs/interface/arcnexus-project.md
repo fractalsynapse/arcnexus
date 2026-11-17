@@ -31,7 +31,10 @@ Admission freezes the catalog, authority, checks, revision, bindings identity an
 trusted plugin composition. Commit and upstream authority belong to the host.
 Target source cannot supply executable host plugins or change active composition.
 `.arc/plans/` and `.arc/learning/` are generated records. They cannot grant authority.
-Keep one configuration version. Main integration, tags and release remain human-controlled.
+Authored goals under the project knowledge root persist across rounds. Each goal
+declares priority, requirements and observable measures. A round evaluates the
+pinned inventory serially; an observation can establish that a measure already
+holds on current staging. Keep one configuration version. Main integration, tags and release remain human-controlled.
 
 ## Acceptance scenarios
 
@@ -48,7 +51,7 @@ Keep one configuration version. Main integration, tags and release remain human-
 | PRJ-9 | A plan or learning file that grants a permission, widens a scope or weakens a check is rejected as authority. |
 | PRJ-10 | Two projects on one machine get separate stores and lanes; neither observes the other's state. |
 | PRJ-11 | Identity is verified from the remote URL: a renamed local clone still resolves to the same project. |
-| PRJ-12 | A run that dies leaves its branch, workspace and evidence; a new run reads the recorded position rather than replaying an uncertain operation. |
+| PRJ-12 | A run that dies retains its branch, checkpoints and evidence. A new attempt reconciles the interrupted workspace and remote effects, removes the old task-owned worktree after preservation, and resumes at the first unfinished activity. |
 | PRJ-13 | Moving an owner-local contract, test or script outside its owner root fails ownership validation. The CLI can substitute a trusted plugin at composition without changing a consuming plugin. |
 | PRJ-14 | A target repository plugin declaration cannot execute privileged host code or replace the application composition. |
 | PRJ-15 | The CLI app owns `apps/cli`, the Commands plugin owns `packages/commands`, and the project owner owns neither path. Both the app and plugin expose their own complete component specifications. |

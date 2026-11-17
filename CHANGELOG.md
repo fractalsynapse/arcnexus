@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- Run a priority-ordered round of standing goals with bare `arcnexus task run`.
+  Share one Team view and resume tasks from per-activity checkpoints (#522).
+
 ### Fixed
 
 - Return an unexpected steward check exit and its log to the accountable owner

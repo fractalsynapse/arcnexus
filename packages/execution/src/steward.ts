@@ -1,3 +1,4 @@
+import { team } from '../../team/src/index.js';
 import type { Agent } from '../../agent/src/index.js';
 import type { Milestone, StewardCheckFailure } from '../../direction/src/index.js';
 import type { ActivityOutcome, TaskSession } from '../../workflow/src/index.js';
@@ -23,7 +24,7 @@ export async function steward(
   signal: AbortSignal,
 ): Promise<ActivityOutcome> {
   const task = hostTask(session);
-  await task.workspace(signal);
+  if (!task.worktree) throw new Error('Steward activation requires a prepared worktree');
   const before = task.evidence.length;
   const scope = { owner: milestone.owner, activity };
   const correction = task.pendingCheck(scope);
@@ -136,7 +137,8 @@ async function perform(
   signal: AbortSignal,
 ): Promise<StewardCheckFailure | undefined> {
   const allowed =
-    task.capture.components[scope.owner]?.activities[scope.activity]?.operations ?? [];
+    team.list(task.capture.components, { component: scope.owner, activity: scope.activity })[0]
+      ?.activities[scope.activity]?.operations ?? [];
   const checks = checkedOperations(result, allowed, correction);
   if (result.edits.length) task.edits(scope.owner, scope.activity, result.edits);
   for (const { id, expected } of checks) {

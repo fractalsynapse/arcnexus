@@ -5,6 +5,10 @@ and captured at admission. The capture pins the approved ownership, policies,
 checks and trusted plugin composition. [Contract locks](../docs/interface/registry.yaml)
 record accepted interface bytes.
 
+The project owns [standing goals](goals/). A goal file supplies a priority,
+accountable owner, requirements and observable measures. Bare `arcnexus task run`
+evaluates one round in priority order.
+
 [Direction](../packages/direction/contract.md) owns `.arc/plans/` and creates
 plan content using the [template](architecture/plan-template.md).
 [Coordination](../packages/coordination/contract.md) persists task position. The host

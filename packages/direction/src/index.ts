@@ -1,3 +1,4 @@
+import { team } from '../../team/src/index.js';
 import type { Capture } from '../../architecture/src/index.js';
 
 export const activities = [
@@ -133,8 +134,7 @@ export function validateCorrection(plan: Plan, completed: number, findings: read
 
 /** Validate checklist references and forbid work the component cannot perform. */
 function validateMilestone(capture: Capture, milestone: Milestone) {
-  const owner =
-    Object.hasOwn(capture.components, milestone.owner) && capture.components[milestone.owner];
+  const owner = team.list(capture.components, { component: milestone.owner })[0];
   if (!owner) throw new Error(`Unknown milestone owner: ${milestone.owner}`);
   const criteria = new Set(milestone.criteria.map(({ id }) => id));
   if (!criteria.size || criteria.size !== milestone.criteria.length)
@@ -212,5 +212,5 @@ export function supplierIsScheduled(
   });
 }
 
-export { direct } from './native.js';
+export { direct, track } from './native.js';
 export { decodeDirectorResponse, DirectorResponseError } from './response.js';

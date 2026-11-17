@@ -3,6 +3,7 @@ import { Context } from 'cordis';
 import { agentPlugin } from '../../../packages/agent/src/index.js';
 import { architecturePlugin } from '../../../packages/architecture/src/index.js';
 import { commandsPlugin } from '../../../packages/commands/src/index.js';
+import { teamPlugin } from '../../../packages/team/src/index.js';
 import { workflowPlugin } from '../../../packages/workflow/src/index.js';
 import { runTask } from './task.js';
 
@@ -22,8 +23,8 @@ async function main(args: string[]) {
   const { positionals, json } = parseOutputOption(args);
   const [command, component, activity, ...extra] = positionals;
   if (command === 'task') {
-    if (component !== 'run' || !activity?.trim() || extra.length)
-      throw new Error('Usage: arcnexus task run "<goal>"');
+    if (component !== 'run' || (activity !== undefined && !activity.trim()) || extra.length)
+      throw new Error('Usage: arcnexus task run ["<goal>"]');
     return runTask(await mountCommands(true), activity, json);
   }
   if (command !== 'inspect')
@@ -45,7 +46,7 @@ async function main(args: string[]) {
 /** Compose the trusted CLI services for either command. */
 async function mountCommands(task = false) {
   const context = new Context();
-  for (const plugin of [architecturePlugin, agentPlugin]) {
+  for (const plugin of [teamPlugin, architecturePlugin, agentPlugin]) {
     await context.use(plugin);
   }
   if (task) await (await import('./host.js')).mountTaskHost(context);

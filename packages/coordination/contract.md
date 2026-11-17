@@ -7,6 +7,9 @@ Stage: **locked**. See the [registry](../../docs/interface/registry.yaml) for au
 Own one SQLite store per verified repository, one active goal and one writer.
 Persist the plan, position, gate answers, requests, escalation, attribution,
 outcomes and evidence references. A goal id is the digest of its full text.
+A round and inventory entry identify a fresh logical task; attempts share that
+task identity. Retain issue and checkpoint identities and the last committed
+activity position in the same journal.
 Transactional writes reject stale versions and are idempotent for identical content.
 Events are append-only observations. Git owns revisions, and reports are derived
 from retained records.
@@ -36,7 +39,7 @@ before attempting it again.
 | CO-11 | Evidence reads honor offset and length and never inline an unbounded artifact. |
 | CO-12 | Measures are recorded per milestone; a milestone closed without measures is a validation finding, not a silent zero. |
 | CO-13 | `planRender` is deterministic: the same store state produces byte-identical plan output, so plan changes review as diffs. |
-| CO-15 | Reopening the store after an abrupt process exit yields the last committed state with no repair step, no reconciliation pass and no operator action. |
+| CO-15 | Reopening the store after an abrupt process exit yields the last committed position. Resume reconciles uncertain provider effects before replaying an activity, without operator repair. |
 | CO-16 | A normal observation of retained task position is sufficient to diagnose an interruption. No alternate recovery workflow is required. |
 | CO-17 | The same goal text always resolves to the same goal id, and a single-character change produces a different id; a 4,000-character goal still resolves to one digest and one plan file. |
 | CO-18 | A hand-edited committed plan is reproduced away by the next render, and a render that disagrees with store state is reported rather than trusted. |

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { globSync, readFileSync } from 'node:fs';
 import { parse } from 'yaml';
+import { team } from '../../team/src/index.js';
 
 interface Component {
   id: string;
@@ -18,9 +19,7 @@ const suitePattern = '{apps,packages}/*/tests/**/*.test';
 /** Derive suite registration from the source owner and level directory. */
 export function registerSuite(file: string, components: readonly Component[]): Suite {
   const source = file.replace(/^dist\//, '').replace(/\.js$/, '.ts');
-  const owners = components.filter(({ owns }) =>
-    owns.some((root) => source === root || source.startsWith(root + '/')),
-  );
+  const owners = team.owners(components, source);
   const [owner] = owners;
   assert(owners.length === 1 && owner, `Expected one test owner for ${source}`);
   const level = source.match(/\/tests\/([^/]+)\//)?.[1];

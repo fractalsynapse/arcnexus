@@ -24,7 +24,13 @@ export class Journal {
     readonly run: number,
     readonly goal: string,
     readonly retained?: RetainedRun,
+    readonly taskID = digest(goal),
   ) {}
+
+  /** Expose the content identity independently of the logical task identity. */
+  get goalID() {
+    return digest(this.goal);
+  }
 
   /** Append an observation in order without changing an earlier entry. */
   record(event: unknown) {
@@ -72,17 +78,14 @@ export class Coordination {
   admit(remote: string, goal: string): Admission;
 
   /** When given a stale checkout, admit only a goal with retained publication evidence. */
-  admit(remote: string, goal: string, fresh: boolean): Admission | undefined;
+  admit(remote: string, goal: string, fresh: boolean, scope?: string): Admission | undefined;
 
   /** Claim the lane and recover a departed writer only for its retained publication. */
-  admit(remote: string, goal: string, fresh = true): Admission | undefined {
-    const folder = join(this.storage, digest(remote));
-    mkdirSync(folder, { recursive: true, mode: 0o700 });
-    const database = new DatabaseSync(join(folder, 'tasks.sqlite'));
+  admit(remote: string, goal: string, fresh = true, scope?: string): Admission | undefined {
+    const database = this.open(remote);
     try {
-      this.initialize(database);
       database.exec('BEGIN IMMEDIATE');
-      const claim = this.claim(database, goal, fresh);
+      const claim = this.claim(database, goal, fresh, scope);
       database.exec('COMMIT');
       if (!(claim instanceof Journal)) database.close();
       return claim;
@@ -92,31 +95,77 @@ export class Coordination {
     }
   }
 
+  /** Create or reuse the unfinished round for this exact ordered inventory. */
+  round(remote: string, inventory: string): number {
+    const database = this.open(remote);
+    try {
+      database.exec('BEGIN IMMEDIATE');
+      const previous = database
+        .prepare('SELECT id FROM rounds WHERE inventory = ? AND finished = 0')
+        .get(inventory);
+      const id =
+        previous?.id ??
+        database.prepare('INSERT INTO rounds(inventory) VALUES (?)').run(inventory).lastInsertRowid;
+      database.exec('COMMIT');
+      return Number(id);
+    } finally {
+      database.close();
+    }
+  }
+
+  /** Close a round only after each goal has a completed outcome. */
+  completeRound(remote: string, id: number) {
+    const database = this.open(remote);
+    try {
+      database.prepare('UPDATE rounds SET finished = 1 WHERE id = ?').run(id);
+    } finally {
+      database.close();
+    }
+  }
+
+  /** Open the one repository store and apply additive migrations before use. */
+  private open(remote: string) {
+    const folder = join(this.storage, digest(remote));
+    mkdirSync(folder, { recursive: true, mode: 0o700 });
+    const database = new DatabaseSync(join(folder, 'tasks.sqlite'));
+    try {
+      this.initialize(database);
+      return database;
+    } catch (error) {
+      database.close();
+      throw error;
+    }
+  }
+
   /** Inspect prior evidence and the current writer in the same admission transaction. */
-  private claim(database: DatabaseSync, goal: string, fresh: boolean): Admission | undefined {
+  private claim(database: DatabaseSync, goal: string, fresh: boolean, scope?: string) {
     const goalID = digest(goal);
-    const prior = retained(database, goalID);
+    const task = scope === undefined ? goalID : digest(JSON.stringify([scope, goalID]));
+    const prior = retained(database, task);
     const active = database
-      .prepare('SELECT id, goal_id, goal, lease FROM runs WHERE active = 1')
+      .prepare('SELECT id, task_id, goal, lease FROM runs WHERE active = 1')
       .get();
-    if (active && !reclaimable(database, active, goalID, prior))
+    if (active && (active.task_id !== task || !departed(active.lease)))
       return { activeGoal: String(active.goal), run: Number(active.id) };
     if (!fresh && !prior) return undefined;
-    if (active) {
-      database.prepare('UPDATE runs SET active = 0 WHERE id = ?').run(active.id!);
-      const outcome = { kind: 'cancelled', reason: 'Publication writer exited', evidence: [] };
-      database
-        .prepare('INSERT INTO events (run, content) VALUES (?, ?)')
-        .run(active.id!, JSON.stringify({ outcome }));
-    }
+    if (active) this.retire(database, Number(active.id));
     const lease = identity(process.pid);
     if (!lease) throw new Error('Cannot identify the project lane writer');
     const { lastInsertRowid } = database
-      .prepare('INSERT INTO runs (goal_id, goal, active, lease) VALUES (?, ?, 1, ?)')
-      .run(goalID, goal, lease);
-    const journal = new Journal(database, Number(lastInsertRowid), goal, prior);
+      .prepare('INSERT INTO runs (goal_id, task_id, goal, active, lease) VALUES (?, ?, ?, 1, ?)')
+      .run(goalID, task, goal, lease);
+    const journal = new Journal(database, Number(lastInsertRowid), goal, prior, task);
     if (prior) journal.record({ recovering: prior.run });
     return journal;
+  }
+
+  /** Retain the departed writer's actual outcome before admitting its replacement. */
+  private retire(database: DatabaseSync, run: number) {
+    database.prepare('UPDATE runs SET active = 0 WHERE id = ?').run(run);
+    const outcome = { kind: 'cancelled', reason: 'Task writer exited', evidence: [] };
+    database
+      .prepare('INSERT INTO events (run, content) VALUES (?, ?)')
+      .run(run, JSON.stringify({ outcome }));
   }
 
   /** Create storage constraints before the first admission. */
@@ -126,66 +175,52 @@ export class Coordination {
       PRAGMA foreign_keys = ON;
       BEGIN IMMEDIATE;
       CREATE TABLE IF NOT EXISTS runs (
-        id INTEGER PRIMARY KEY, goal_id TEXT NOT NULL, goal TEXT NOT NULL,
+        id INTEGER PRIMARY KEY, goal_id TEXT NOT NULL, task_id TEXT, goal TEXT NOT NULL,
         active INTEGER NOT NULL CHECK (active IN (0, 1)), lease TEXT
       ) STRICT;
       CREATE UNIQUE INDEX IF NOT EXISTS one_active_goal ON runs (active) WHERE active = 1;
+      CREATE TABLE IF NOT EXISTS rounds (
+        id INTEGER PRIMARY KEY, inventory TEXT NOT NULL, finished INTEGER NOT NULL DEFAULT 0
+      ) STRICT;
       CREATE TABLE IF NOT EXISTS events (
         id INTEGER PRIMARY KEY, run INTEGER NOT NULL REFERENCES runs(id), content TEXT NOT NULL
       ) STRICT;
     `);
-    if (
-      !database
-        .prepare('PRAGMA table_info(runs)')
-        .all()
-        .some(({ name }) => name === 'lease')
-    )
-      database.exec('ALTER TABLE runs ADD COLUMN lease TEXT');
+    const fields = database
+      .prepare('PRAGMA table_info(runs)')
+      .all()
+      .map(({ name }) => name);
+    if (!fields.includes('lease')) database.exec('ALTER TABLE runs ADD COLUMN lease TEXT');
+    if (!fields.includes('task_id')) database.exec('ALTER TABLE runs ADD COLUMN task_id TEXT');
+    database.exec('UPDATE runs SET task_id = goal_id WHERE task_id IS NULL');
     database.exec('COMMIT');
   }
 }
 
 type Admission = Journal | { activeGoal: string; run: number };
 
-/** Confirm both writer death and the link to the exact retained publication. */
-function reclaimable(
-  database: DatabaseSync,
-  active: Record<string, unknown>,
-  goal: string,
-  prior?: RetainedRun,
-) {
-  if (active.goal_id !== goal || !prior || !departed(active.lease)) return false;
-  if (prior.run === active.id) return true;
-  return Boolean(
-    database
-      .prepare(
-        "SELECT 1 FROM events WHERE run = ? AND json_extract(content, '$.recovering') = ? LIMIT 1",
-      )
-      .get(Number(active.id), prior.run),
-  );
-}
-
-/** Find the publication source for this exact goal, preserving the accepting verdict. */
-function retained(database: DatabaseSync, goal: string): RetainedRun | undefined {
-  const row = database
+/** Restore ordered events from all attempts at the same logical task. */
+function retained(database: DatabaseSync, task: string): RetainedRun | undefined {
+  const attempt = database
     .prepare(
       `
-    SELECT runs.id FROM runs JOIN events ON events.run = runs.id
-    WHERE runs.goal_id = ? AND (
-      json_type(events.content, '$.publication') = 'object' OR
-      json_extract(events.content, '$.verdict.kind') = 'accepted'
-    )
-    ORDER BY runs.id DESC LIMIT 1
+    SELECT runs.id FROM runs
+    WHERE task_id = ?
+    ORDER BY EXISTS (
+      SELECT 1 FROM events WHERE events.run = runs.id AND
+        (json_type(content, '$.publication') = 'object' OR json_extract(content, '$.verdict.kind') = 'accepted')
+    ) DESC, runs.id DESC LIMIT 1
   `,
     )
-    .get(goal);
-  if (!row) return undefined;
-  const run = Number(row.id);
+    .get(task);
+  if (!attempt) return undefined;
   const events = database
-    .prepare('SELECT content FROM events WHERE run = ? ORDER BY id')
-    .all(run)
+    .prepare(
+      'SELECT content FROM events JOIN runs ON runs.id = events.run WHERE task_id = ? ORDER BY events.id',
+    )
+    .all(task)
     .map(({ content }) => JSON.parse(String(content)));
-  return { run, events };
+  return { run: Number(attempt.id), events };
 }
 
 /** Compute the stable identity of a verified project or full goal text. */

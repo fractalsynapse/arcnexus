@@ -1,19 +1,37 @@
 import type { Context } from 'cordis';
 import { createInterface } from 'node:readline/promises';
-import type { Observation, TaskOutcome } from '../../../packages/workflow/src/index.js';
+import type {
+  Observation,
+  RoundOutcome,
+  TaskOutcome,
+  TaskObserver,
+} from '../../../packages/workflow/src/index.js';
 
 /** Start a foreground task and forward Ctrl-C through its structured cancellation signal. */
-export async function runTask(commands: Context['commands'], goal: string, json: boolean) {
+export async function runTask(
+  commands: Context['commands'],
+  goal: string | undefined,
+  json: boolean,
+) {
   const controller = new AbortController();
   const abort = () => controller.abort(new Error('Task cancelled by SIGINT'));
   process.on('SIGINT', abort);
   try {
-    const outcome = await commands.runTask(
-      { directory: process.cwd(), goal },
-      { progress: (observation) => reportProgress(observation, json), answer: ask },
-      controller.signal,
-    );
-    finish(outcome, json);
+    const observer: TaskObserver = {
+      progress: (observation) => reportProgress(observation, json),
+      answer: ask,
+    };
+    if (goal === undefined)
+      finishRound(
+        await commands.runRound(process.cwd(), observer, controller.signal),
+        json,
+        controller.signal,
+      );
+    else
+      finish(
+        await commands.runTask({ directory: process.cwd(), goal }, observer, controller.signal),
+        json,
+      );
   } finally {
     process.off('SIGINT', abort);
   }
@@ -37,10 +55,27 @@ async function ask(question: string, signal: AbortSignal) {
   }
 }
 
+/** Render one aggregate round while keeping the failing goal's diagnostic visible. */
+function finishRound(round: RoundOutcome, json: boolean, signal: AbortSignal) {
+  if (json) console.log(JSON.stringify(round));
+  else {
+    for (const { id, outcome } of round.goals) console.log(`${id}: ${outcome.kind}`);
+    console.log(`Round ${round.round} ${round.completed ? 'completed' : 'stopped'}`);
+  }
+  if (round.completed) return;
+  const last = round.goals.at(-1)?.outcome;
+  if (last && 'reason' in last) finish(last, false);
+  else process.exitCode = signal.aborted ? 130 : 1;
+}
+
 /** Translate a structured outcome into the gateway exit status and terminal output. */
 function finish(outcome: TaskOutcome, json: boolean) {
-  if (outcome.kind === 'merged') {
-    console.log(json ? JSON.stringify(outcome) : `Merged to staging: ${outcome.commit}`);
+  if (outcome.kind === 'merged' || outcome.kind === 'satisfied') {
+    console.log(
+      json
+        ? JSON.stringify(outcome)
+        : `${outcome.kind === 'merged' ? 'Merged to staging' : 'Measure satisfied'}: ${outcome.commit}`,
+    );
     return;
   }
   if (json && outcome.kind !== 'invalid') console.log(JSON.stringify(outcome));

@@ -11,6 +11,8 @@ import type { Candidate, Verdict } from '../../verification/src/index.js';
 export interface TaskInput {
   directory: string;
   goal: string;
+  scope?: string;
+  measureOwner?: string;
 }
 
 export interface Observation {
@@ -26,6 +28,7 @@ export interface TaskObserver {
 
 export type TaskOutcome =
   | { kind: 'merged'; commit: string; evidence: readonly string[] }
+  | { kind: 'satisfied'; commit: string; evidence: readonly string[] }
   | {
       kind: 'invalid' | 'blocked' | 'failed' | 'cancelled';
       reason: string;
@@ -37,7 +40,8 @@ export type TaskEvent =
   | { plan: Plan }
   | { position: { completed: number; activities: Readonly<Record<string, number>> } }
   | { candidate: Candidate; verdict: Verdict }
-  | { feedback: Feedback };
+  | { feedback: Feedback }
+  | { activation: ActivityCheckpoint };
 
 export interface TaskSession {
   readonly capture: Capture;
@@ -45,6 +49,8 @@ export interface TaskSession {
   record(event: TaskEvent): void;
   finish(outcome: TaskOutcome): void;
   close(): void;
+  cleanup?(): void;
+  history?(): readonly TaskEvent[];
 }
 
 export type ActivityOutcome =
@@ -53,8 +59,48 @@ export type ActivityOutcome =
   | Extract<DirectionResult, { kind: 'question' }>
   | { kind: 'blocked'; reason: string; evidence: readonly string[] };
 
+export interface ActivityCheckpoint {
+  milestone: string;
+  owner: string;
+  index: number;
+  step: Exclude<PlanActivity, 'release'>;
+  outcome: ActivityOutcome;
+}
+
+export interface StandingGoal {
+  id: string;
+  priority: number;
+  owner: string;
+  body: string;
+}
+
+export interface GoalRound {
+  id: number;
+  goals: readonly StandingGoal[];
+  finish(): void;
+}
+
+export interface RoundOutcome {
+  kind: 'round';
+  round: number;
+  completed: boolean;
+  goals: readonly { id: string; outcome: TaskOutcome }[];
+}
+
 export interface WorkflowServices {
   execution: {
+    round?(directory: string): GoalRound;
+    evaluate?(
+      session: TaskSession,
+      owner: string,
+      signal: AbortSignal,
+    ): Promise<TaskOutcome | undefined>;
+    prepare?(session: TaskSession, issue: string, signal: AbortSignal): Promise<void>;
+    checkpoint?(
+      session: TaskSession,
+      activity: ActivityCheckpoint,
+      signal: AbortSignal,
+    ): Promise<void>;
     admit(
       input: TaskInput,
       signal: AbortSignal,
@@ -62,6 +108,7 @@ export interface WorkflowServices {
     assemble(session: TaskSession, signal: AbortSignal): Promise<Candidate>;
   };
   direction: {
+    track?(session: TaskSession, signal: AbortSignal): Promise<string>;
     plan(session: TaskSession, signal: AbortSignal): Promise<unknown>;
     revise(
       session: TaskSession,

@@ -62,7 +62,7 @@ and an absolute `tools.codex` path to an authenticated Codex installation.
 See [Native confinement checks](../../docs/release/ci.md#native-confinement-checks)
 for the test command and default CI skip behavior for the Bubblewrap test.
 
-The host retains task metadata, output, and the issue worktree outside the
+The host keeps task metadata, output, and the active worktree outside the
 source checkout under `${XDG_STATE_HOME:-$HOME/.local/state}/arcnexus`. Codex
 reads the worktree and returns structured edit proposals. The host applies
 checked edits and runs captured checks in a disposable networkless overlay.
@@ -81,3 +81,20 @@ ArcNexus resumes from the verified candidate and observes GitHub before taking
 another publication action. A matching remote branch, pull request or merge is
 reused. See [Publication recovery evidence](../../docs/release/verification.md#publication-recovery-evidence)
 for what to compare in the retained task evidence.
+
+## Run a round of standing goals
+
+Run `arcnexus task run` without a goal to evaluate the project's captured
+[goal inventory](../../.arc/goals/). Markdown frontmatter supplies the numeric
+priority and the component whose declared owner suite measures the goal.
+Requirements and success measures remain in the Markdown body. Lower priorities
+run first, with stable file IDs breaking ties. Each goal reads current staging.
+A passing measure records evidence. A failing measure enters the normal task
+loop and stops the round if the task cannot complete.
+
+Direction opens or reuses the issue after the plan is accepted. Execution
+prepares the issue branch and private worktree before the first steward and
+checkpoints checked edits on the issue branch after activations. Retry an
+interrupted engineering task with the same goal, or invoke bare `task run` again
+to continue the unfinished round. The task's locally recorded evidence and
+verified checkpoint survive worktree removal.
