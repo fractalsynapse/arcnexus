@@ -2,12 +2,19 @@
 
 ## [Unreleased]
 
+## [0.3.0]
+
 ### Added
 
 - Let the Director, Reviewer and stewards request optional research in the
   active task and reuse component research reports (#554).
 - Resume requesting agents with recorded answers and enforce activity-scoped
   local MCP tools for checked edits and other project operations (#562).
+
+### Fixed
+
+- Make exact terminal clarification answers available to the requesting activity
+  and independent review as protected task evidence (#565).
 
 ## [0.2.0]
 
