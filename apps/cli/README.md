@@ -84,6 +84,8 @@ the same owner. The correcting steward receives the exit status and retained
 log. Correction assignments also carry the exact supplier or independent review
 finding that caused Direction to add the milestone. The host refreshes any
 assembled checks explicitly requested by that finding against the current checkpoint.
+If a steward repeats one of those host-selected checks with a passing expectation,
+Execution keeps it in the host check path.
 It reruns the original steward check before the paused activity resumes. The
 independent Reviewer receives the owner check records and can tell which ones
 were observed after the candidate's most recent edit. A rejected tree can
@@ -107,7 +109,8 @@ run first, with stable file IDs breaking ties. Each goal verifies the current
 staging head and reuses the local Git object when available.
 The Director assesses the full authored goal against current staging, recent
 changes and the owner-test evidence. The Director can plan work even with a
-passing suite. If the suite passes and the Director records that no work is
+passing suite. The host attaches its actual owner check log to the Director's
+explicit assessment. If the suite passes and the Director records that no work is
 warranted, the round records the assessment and continues. Engineering work
 uses the normal task loop and stops the round if it cannot complete.
 
