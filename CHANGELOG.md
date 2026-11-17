@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.0]
+
 ### Added
 
 - Run a priority-ordered round of standing goals with bare `arcnexus task run`.
@@ -11,9 +13,14 @@
 
 - Use GPT Sol for Director planning and independent Reviewer assessment, and
   GPT Terra for steward testing across all components (#549).
+- Require documentation headers on TypeScript abstract methods (#499).
+- Expand regression coverage for Team ownership and for publishing the
+  independently reviewed tree against its staging base (#544, #542).
 
 ### Fixed
 
+- Recover the recorded steward check and its expected result if execution is
+  interrupted before correction feedback is written (#533).
 - Carry each correction finding directly into the assigned steward activity
   and keep Director correction plans scoped to the needed steps. Refresh cited
   assembly failures against the current checkpoint before correction (#537).
