@@ -40,7 +40,10 @@ const rosterCases: {
 for (const { name, query, ids } of rosterCases) {
   test(`TM-1/TM-2: deterministic roster with ${name}`, () => {
     for (let call = 0; call < 3; call++) {
-      assert.deepEqual(team.list(members, query).map(({ id }) => id), ids);
+      assert.deepEqual(
+        team.list(members, query).map(({ id }) => id),
+        ids,
+      );
     }
     assert.deepEqual(Object.keys(members), ['c', 'b', 'a']);
   });
