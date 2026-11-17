@@ -3,6 +3,9 @@ import { join } from 'node:path';
 import type { AgentInspection } from '../../architecture/src/index.js';
 import { execute } from './process.js';
 
+/** Distinguish an unreadable actor answer from a failed harness process. */
+export class InvalidCodexResponse extends Error {}
+
 /** Activate the installed Codex binding with the exact prepared prompt and isolated tools. */
 export async function codex(
   executable: string,
@@ -84,10 +87,14 @@ function answer(stdout: string, log: string): unknown {
     if (event.type === 'item.completed' && event.item?.type === 'agent_message')
       message = event.item.text;
   }
-  if (!message) throw new Error(`Codex returned no final response; evidence: ${log}`);
+  if (!message)
+    throw new InvalidCodexResponse(`Codex returned no final response; evidence: ${log}`);
   try {
     return JSON.parse(message);
-  } catch {
-    throw new Error(`Codex returned an invalid task response; evidence: ${log}`);
+  } catch (error) {
+    const diagnostic = error instanceof Error ? error.message : String(error);
+    throw new InvalidCodexResponse(
+      `Codex returned an invalid task response: ${diagnostic}; evidence: ${log}`,
+    );
   }
 }

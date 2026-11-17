@@ -24,6 +24,7 @@ import { git } from './git.js';
 import { check } from './check.js';
 
 export type { CheckedEdit } from './edits.js';
+export { InvalidCodexResponse } from './codex.js';
 
 declare module 'cordis' {
   interface Context {
