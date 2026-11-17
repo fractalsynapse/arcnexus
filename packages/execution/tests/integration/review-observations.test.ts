@@ -17,9 +17,11 @@ class ReviewObservationsScenario {
       { check: current, scope },
       { check: this.check('repository-tests', 0, 'assembly.log') },
     ];
-    assert.deepEqual(ownerReviewObservations(history), [
+    const candidate = { tree: 'current-tree', base: 'base-revision' };
+    const operation = { id: 'owner-tests', name: 'Owner tests', category: 'test', network: false };
+    assert.deepEqual(ownerReviewObservations(history, candidate, { 'owner-tests': operation }), [
       { scope, check: old, afterLastEdit: false },
-      { scope, check: current, afterLastEdit: true },
+      { scope, check: current, afterLastEdit: true, candidate, operation },
     ]);
   }
 

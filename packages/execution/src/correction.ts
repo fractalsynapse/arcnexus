@@ -63,8 +63,3 @@ export function citedAssemblyChecks(
   }
   return [...ids];
 }
-
-/** Report the last owner-scoped check with its real host status alongside the transcript. */
-export function latestOwnerCheck(observations: readonly CheckObservation[], owner: string) {
-  return observations.findLast(({ check, scope }) => check && scope?.owner === owner)?.check;
-}

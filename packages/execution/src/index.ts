@@ -395,9 +395,17 @@ export class HostTask implements TaskSession {
     return pendingStewardCheck(this.observations(), scope);
   }
 
-  /** Recover the exact owner observations and identify those following candidate edits. */
+  /** Bind exact owner observations to the clean checkpoint when the edit history permits it. */
   ownerReviewChecks(): OwnerObservation[] {
-    return ownerReviewObservations(this.observations());
+    const events = this.observations<Parameters<typeof ownerReviewObservations>[0][number]>();
+    const { worktree, capture } = this;
+    if (!worktree || !this.branch || git(worktree, 'status', '--porcelain'))
+      return ownerReviewObservations(events);
+    const candidate = {
+      tree: git(worktree, 'rev-parse', 'HEAD^{tree}'),
+      base: capture.source.revision,
+    };
+    return ownerReviewObservations(events, candidate, capture.operations);
   }
 
   /** Run a declared check and record its real exit, duration and transcript. */
