@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -18,7 +18,7 @@ import type {
 import { GitHub } from '../../collaboration/src/index.js';
 import { codex } from './codex.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
-import { git } from './git.js';
+import { candidateDiff, git } from './git.js';
 import { preflight, verifyNativeGuidance, type HostConfig } from './host-config.js';
 import { goalRound, stagingCapture } from './goals.js';
 import { check } from './check.js';
@@ -98,16 +98,10 @@ export class Execution {
     const digest = git(task.worktree, 'write-tree');
     if (digest === git(task.worktree, 'rev-parse', `${task.capture.source.revision}^{tree}`))
       throw new Error('The plan produced no candidate changes');
-    const diff = git(
-      task.worktree,
-      'diff',
-      '--cached',
-      '--no-ext-diff',
-      '--no-textconv',
-      '--binary',
-      task.capture.source.revision,
+    const log = task.store(
+      'candidate.diff',
+      candidateDiff(task.worktree, task.capture.source.revision),
     );
-    const log = task.store('candidate.diff', diff);
     return { digest, evidence: [log] };
   }
 }
@@ -128,11 +122,13 @@ export class HostTask implements TaskSession {
     private readonly journal: Journal,
   ) {
     this.capture = config.capture;
-    const prefix = join(this.location(journal.run), '..') + '/';
+    const prefix = this.evidenceDirectory() + '/';
     const closeEvidence = this.observations<{ outcome?: TaskOutcome; artifact?: string }>().flatMap(
       ({ artifact, outcome }) => [...(outcome?.evidence ?? []), ...(artifact ? [artifact] : [])],
     );
-    this.evidence.push(...new Set(closeEvidence.filter((path) => path.startsWith(prefix))));
+    this.evidence.push(
+      ...new Set(closeEvidence.filter((path) => path.startsWith(prefix) && existsSync(path))),
+    );
   }
 
   /** Read the prior attempt and its immutable worktree location. */
@@ -368,9 +364,14 @@ export class HostTask implements TaskSession {
   ) {
     const worktree = this.worktree ?? this.capture.source.root;
     verifyNativeGuidance(this.capture, worktree);
+    const reviewDiff =
+      this.branch && selection.activity === 'review'
+        ? this.store('activity.diff', candidateDiff(worktree, this.capture.source.revision))
+        : undefined;
+    const evidence = reviewDiff ? [...(data.evidence ?? []), reviewDiff] : data.evidence;
     const log = this.artifact('codex.jsonl');
     return agent.activate(
-      { capture: this.capture, selection, task: { ...data, goal: this.goal, worktree } },
+      { capture: this.capture, selection, task: { ...data, evidence, goal: this.goal, worktree } },
       (view, cancellation) => codex(this.config.executable, view, log, cancellation),
       signal,
     );
@@ -417,13 +418,19 @@ export class HostTask implements TaskSession {
 
   /** Allocate a recorded evidence name before starting a native operation. */
   private artifact(name: string) {
-    const path = join(
-      this.directory(),
-      `${++this.sequence}-${name.replaceAll(/[^a-zA-Z0-9_.-]/g, '-')}`,
-    );
+    const directory = this.evidenceDirectory();
+    mkdirSync(directory, { recursive: true, mode: 0o700 });
+    if (realpathSync(directory) !== directory) throw new Error('Evidence directory is an alias');
+    const file = name.replaceAll(/[^a-zA-Z0-9_.-]/g, '-');
+    const path = join(directory, `${this.journal.run}-${++this.sequence}-${file}`);
     this.evidence.push(path);
     this.note({ artifact: path });
     return path;
+  }
+
+  /** Keep evidence mounts stable across attempts and isolated from the worktrees. */
+  private evidenceDirectory() {
+    return join(this.location(this.journal.run), '..', '..', 'evidence', this.taskID);
   }
 
   /** Use a run-local directory under trusted application storage. */

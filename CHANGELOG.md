@@ -9,6 +9,9 @@
 
 ### Fixed
 
+- Make prior check logs readable after task restart and provide stewards a
+  host-generated diff for self-review (#525).
+
 - Return an unexpected steward check exit and its log to the accountable owner
   through a correction milestone, and recheck before resuming (#518).
 

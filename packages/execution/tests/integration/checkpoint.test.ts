@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { Architecture, type Capture } from '../../../architecture/src/index.js';
 import { GitHub } from '../../../collaboration/src/index.js';
@@ -89,6 +89,7 @@ class CheckpointRemote extends GitHub {
 /** Exercise Workflow, SQLite, checkout, checked edits and checkpoint commits over two attempts. */
 class RecoveryScenario {
   readonly activations: string[] = [];
+  readonly artifacts: string[] = [];
   readonly remote = new CheckpointRemote();
   readonly root: string;
   readonly storage: string;
@@ -193,6 +194,8 @@ class RecoveryScenario {
   /** Apply owned edits through the production path and observe the recovered first contribution. */
   private edit(task: HostTask, id: string, step: string) {
     this.activations.push(id);
+    if (id === 'second') assert(task.evidence.includes(this.artifacts[0]!));
+    this.artifacts.push(task.store(`${id}.log`, id));
     assert(task.worktree);
     if (id === 'second')
       assert.equal(readFileSync(join(task.worktree, 'first.txt'), 'utf8'), 'first');
@@ -245,5 +248,7 @@ test('retry confirms a lost checkpoint push, reconstructs the worktree and resum
   assert.equal(retry.kind, 'merged', JSON.stringify(retry));
   assert.deepEqual(scenario.activations, ['first', 'second']);
   assert.equal(scenario.remote.pushes.length, 2);
+  assert.equal(dirname(scenario.artifacts[0]!), dirname(scenario.artifacts[1]!));
+  assert.notEqual(scenario.artifacts[0], scenario.artifacts[1]);
   scenario.checkCleanup();
 });

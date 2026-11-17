@@ -13,3 +13,8 @@ export function git(root: string, ...args: string[]) {
     },
   ).trimEnd();
 }
+
+/** Compare the current prepared tree to the captured staging base without external diff tools. */
+export function candidateDiff(worktree: string, base: string) {
+  return git(worktree, 'diff', '--cached', '--no-ext-diff', '--no-textconv', '--binary', base);
+}
