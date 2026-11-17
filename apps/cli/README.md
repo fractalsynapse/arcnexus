@@ -84,7 +84,9 @@ the same owner. The correcting steward receives the exit status and retained
 log. Correction assignments also carry the exact supplier or independent review
 finding that caused Direction to add the milestone. The host refreshes any
 assembled checks explicitly requested by that finding against the current checkpoint.
-It reruns the original steward check before the paused activity resumes.
+It reruns the original steward check before the paused activity resumes. The
+independent Reviewer receives the owner check records and can tell which ones
+were observed after the candidate's most recent edit.
 
 If publication is interrupted, invoke `task run` with the identical goal.
 ArcNexus resumes from the verified candidate and observes GitHub before taking
