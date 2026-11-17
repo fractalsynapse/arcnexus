@@ -13,8 +13,13 @@ interface CheckEvent {
   scope?: StewardScope;
 }
 
+interface ObservedRecovery {
+  qualifying: boolean;
+  pending?: StewardCheckFailure;
+}
+
 /** Finds the latest recorded check and keeps it pending until its expectation passes. */
-function recoverObservedCheck(recorded: readonly CheckEvent[], scope: StewardScope) {
+function recoverObservedCheck(recorded: readonly CheckEvent[], scope: StewardScope): ObservedRecovery {
   const event = recorded.findLast(
     ({ check, scope: observed }) =>
       observed?.owner === scope.owner &&
@@ -23,14 +28,17 @@ function recoverObservedCheck(recorded: readonly CheckEvent[], scope: StewardSco
       check?.id &&
       typeof check.status === 'number',
   );
-  if (!event?.check || !event.scope?.expected) return;
-  if ((event.check.status === 0) === (event.scope.expected === 'pass')) return;
+  if (!event?.check || !event.scope?.expected) return { qualifying: false };
+  if ((event.check.status === 0) === (event.scope.expected === 'pass')) return { qualifying: true };
   return {
-    activity: scope.activity,
-    id: event.check.id,
-    expected: event.scope.expected,
-    status: event.check.status as number,
-    log: event.check.log,
+    qualifying: true,
+    pending: {
+      activity: scope.activity,
+      id: event.check.id,
+      expected: event.scope.expected,
+      status: event.check.status as number,
+      log: event.check.log,
+    },
   };
 }
 
@@ -61,5 +69,5 @@ function recoverFeedbackCheck(recorded: readonly CheckEvent[], scope: StewardSco
 export function pendingStewardCheck(events: readonly unknown[], scope: StewardScope) {
   const recorded = events as readonly CheckEvent[];
   const observed = recoverObservedCheck(recorded, scope);
-  return observed ?? recoverFeedbackCheck(recorded, scope);
+  return observed.qualifying ? observed.pending : recoverFeedbackCheck(recorded, scope);
 }
