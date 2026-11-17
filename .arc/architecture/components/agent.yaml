@@ -9,6 +9,7 @@ constraints:
     single execution lane.
 owns:
 - packages/agent
+- .arc/research/agent
 activities:
   research:
     role: researcher

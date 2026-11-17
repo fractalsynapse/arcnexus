@@ -63,6 +63,23 @@ export class Journal {
       .map(({ content }) => JSON.parse(String(content)));
   }
 
+  /** Retrieve reusable research by owner from the existing append-only journal. */
+  researchReports(component: string, id?: string): unknown[] {
+    return this.database
+      .prepare(
+        `
+      SELECT json_extract(content, '$.researchResult') AS report
+      FROM events
+      WHERE json_extract(content, '$.researchResult.component') = ?
+        AND json_type(content, '$.researchResult.archive') = 'text'
+        AND (? IS NULL OR json_extract(content, '$.researchResult.request.id') = ?)
+      ORDER BY events.id DESC LIMIT 8
+    `,
+      )
+      .all(component, id ?? null, id ?? null)
+      .map(({ report }) => JSON.parse(String(report)));
+  }
+
   /** Close the connection. An unfinished task keeps its recorded position and lane. */
   close() {
     this.database.close();

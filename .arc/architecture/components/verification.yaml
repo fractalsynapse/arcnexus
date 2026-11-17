@@ -7,6 +7,7 @@ constraints:
 - failure: A missing required check counts as passed or a changed digest reuses a verdict.
 owns:
 - packages/verification
+- .arc/research/verification
 activities:
   research:
     role: researcher

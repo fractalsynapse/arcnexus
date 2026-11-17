@@ -13,6 +13,7 @@ owns:
 - .gitignore
 - CHANGELOG.md
 - docs/release
+- .arc/research/release
 activities:
   research:
     role: researcher

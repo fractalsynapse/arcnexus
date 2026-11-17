@@ -16,11 +16,12 @@ import type {
   TaskSession,
 } from '../../workflow/src/index.js';
 import { GitHub } from '../../collaboration/src/index.js';
-import { codex } from './codex.js';
+import { activateActor } from './activation.js';
+import { usedResearch } from './research.js';
 import { formatterPreview } from './formatter.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
 import { candidateDiff, git } from './git.js';
-import { preflight, verifyNativeGuidance, type HostConfig } from './host-config.js';
+import { preflight, type HostConfig } from './host-config.js';
 import { goalRound, stagingCapture } from './goals.js';
 import { check } from './check.js';
 import { pendingStewardCheck, type StewardScope } from './steward-check.js';
@@ -374,19 +375,15 @@ export class HostTask implements TaskSession {
     data: Omit<TaskContext, 'goal' | 'worktree'>,
     signal: AbortSignal,
   ) {
-    const worktree = this.worktree ?? this.capture.source.root;
-    verifyNativeGuidance(this.capture, worktree);
-    const reviewDiff =
-      this.branch && selection.activity === 'review'
-        ? this.store('activity.diff', candidateDiff(worktree, this.capture.source.revision))
-        : undefined;
-    const evidence = reviewDiff ? [...(data.evidence ?? []), reviewDiff] : data.evidence;
-    const log = this.artifact('codex.jsonl');
-    return agent.activate(
-      { capture: this.capture, selection, task: { ...data, evidence, goal: this.goal, worktree } },
-      (view, cancellation) => codex(this.config.executable, view, log, cancellation),
-      signal,
-    );
+    return activateActor(this, agent, selection, data, signal);
+  }
+
+  /** Return the research evidence used by this captured actor activation. */
+  researchEvidence(
+    selection: ActivationInput['selection'],
+    data: Omit<TaskContext, 'goal' | 'worktree'>,
+  ) {
+    return usedResearch(this, selection, data);
   }
 
   /** Apply structured edits only in the admitted steward's editable activities. */
@@ -408,6 +405,11 @@ export class HostTask implements TaskSession {
   ownerReviewChecks(): OwnerObservation[] {
     const events = this.observations<Parameters<typeof ownerReviewObservations>[0][number]>();
     return ownerReviewObservations(events, cleanCandidate(this), this.capture.operations);
+  }
+
+  /** Read reusable research observations from the same project journal. */
+  researchReports(owner: string, id?: string) {
+    return this.journal.researchReports(owner, id);
   }
 
   /** Run a declared check and record its real exit, duration and transcript. */

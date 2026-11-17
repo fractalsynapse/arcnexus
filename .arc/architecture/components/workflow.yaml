@@ -8,6 +8,7 @@ constraints:
 - failure: Workflow chooses a new plan, bypasses a gate, or creates a second lane or store.
 owns:
 - packages/workflow
+- .arc/research/workflow
 activities:
   research:
     role: researcher

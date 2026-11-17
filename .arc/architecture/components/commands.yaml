@@ -7,6 +7,7 @@ constraints:
 - failure: An SDK consumer must supply terminal arguments or use a second task lifecycle.
 owns:
 - packages/commands
+- .arc/research/commands
 activities:
   research:
     role: researcher

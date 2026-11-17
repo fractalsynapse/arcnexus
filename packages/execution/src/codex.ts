@@ -12,10 +12,11 @@ export async function codex(
   view: AgentInspection,
   log: string,
   signal: AbortSignal,
+  schema?: string,
 ): Promise<unknown> {
   const { input, options } = view.request;
   const cwd = options.workingDirectory;
-  const params = invocation(executable, cwd, log, options);
+  const params = invocation(executable, cwd, log, options, schema);
   const result = await execute(executable, params, {
     cwd,
     signal,
@@ -39,6 +40,7 @@ function invocation(
   cwd: string,
   log: string,
   options: AgentInspection['request']['options'],
+  schema?: string,
 ) {
   return [
     'exec',
@@ -53,6 +55,7 @@ function invocation(
     '--model',
     options.model,
     ...settings(executable, cwd, log, options),
+    ...(schema ? ['--output-schema', schema] : []),
     '-',
   ];
 }

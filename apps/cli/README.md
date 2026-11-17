@@ -99,6 +99,18 @@ reused. A known transient GitHub read error gets a bounded retry in the active
 task, including the observation after a merge. See [Publication recovery evidence](../../docs/release/verification.md#publication-recovery-evidence)
 for what to compare in the retained task evidence.
 
+## Optional research
+
+During a task, the Director, Reviewer and stewards can use the Research inbox
+when external evidence could change a decision. The task resumes the same
+activity with a source-linked report or an unavailable observation.
+`arcnexus inspect <component> research` previews the research activity.
+
+Reusable reports stay available to that component's editing stewards. An
+editing steward can choose a report to archive through checked edits. The
+[component research index](../../.arc/README.md#research-reports) comes from
+the committed reports.
+
 ## Run a round of standing goals
 
 Run `arcnexus task run` without a goal to evaluate the project's captured

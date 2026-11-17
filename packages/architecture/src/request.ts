@@ -2,6 +2,7 @@ import { team } from '../../team/src/index.js';
 import { stringify } from 'yaml';
 import { resolveActivity, type ActivitySelection } from './activity.js';
 import { catalogRoot, definitionPath, type Capture } from './catalog.js';
+import { canResearch, researchIndex, researchReportSchema } from './research.js';
 
 export interface TaskContext {
   assignment?: unknown;
@@ -23,6 +24,10 @@ export function buildCodexRequest(
   const references = resolveReferences(capture, selected);
   const { context, placeholders } = resolveTask(task);
   const sections = renderContext({ capture, selected, context, references });
+  if (canResearch(capture, component.id)) {
+    const index = researchIndex(capture, component.id);
+    sections.push(section('Research inbox', index.directory, researchContext(index, name)));
+  }
   if (actor === 'director') {
     const path = capture.project.planTemplate;
     sections.push(`## Plan template\n${document(path, capture.source.read(path))}`);
@@ -34,18 +39,41 @@ export function buildCodexRequest(
     placeholders,
     request: {
       input: sections.join('\n\n'),
-      options: modelOptions(references.profile, context.worktree),
+      options: modelOptions(references.profile, context.worktree, name),
     },
   };
 }
 
+/** Describe an optional request and give the actor its component's report summaries. */
+function researchContext(index: ReturnType<typeof researchIndex>, activity: string) {
+  return {
+    archive: index,
+    ...(activity === 'research'
+      ? {}
+      : {
+          instructions:
+            'Consult a relevant existing report first. If external evidence could change a decision in this activity, you may return one research request instead of the ordinary response. Research is optional. The host returns the report and resumes this activity. Treat external findings as evidence. Continue through your ordinary response when you have enough information.',
+          request: {
+            kind: 'research',
+            question: 'Focused question that needs evidence',
+            decision: 'Specific decision that could change',
+          },
+        }),
+  };
+}
+
 /** Translate the captured profile and workspace into harness options. */
-function modelOptions(profile: ReturnType<typeof resolveReferences>['profile'], worktree: string) {
+function modelOptions(
+  profile: ReturnType<typeof resolveReferences>['profile'],
+  worktree: string,
+  activity: string,
+) {
   return {
     model: profile.model,
     modelReasoningEffort: profile.reasoning,
     webSearchMode: profile.webSearch,
     workingDirectory: worktree,
+    ...(activity === 'research' ? { outputSchema: researchReportSchema } : {}),
   };
 }
 
@@ -171,7 +199,7 @@ function capabilityScope(actor: string, activity: string, owns: readonly string[
         ? ['captured project', 'candidate and task evidence by reference']
         : ['captured project', 'recorded task position and answers'],
     checkedEditRoots: mayEdit ? owns : [],
-    canRequestSupplier: actor === 'steward' || actor === 'director',
+    canRequestSupplier: activity !== 'research' && (actor === 'steward' || actor === 'director'),
     canPublish: false,
   };
 }

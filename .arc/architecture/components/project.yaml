@@ -12,6 +12,7 @@ owns:
 - docs/dev.md
 - docs/plans
 - .arc/goals
+- .arc/research/project
 activities:
   research:
     role: researcher

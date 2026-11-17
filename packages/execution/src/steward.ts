@@ -5,6 +5,7 @@ import type { ActivityOutcome, TaskSession } from '../../workflow/src/index.js';
 import { hostTask } from './index.js';
 import { citedAssemblyChecks, correctionFinding } from './correction.js';
 import type { CheckResult } from './check.js';
+import { archiveResearch, pendingResearch } from './research-archive.js';
 import { materializeEdits } from './formatter.js';
 import { StaleCheckedEdit } from './edits.js';
 import { InvalidCodexResponse } from './codex.js';
@@ -118,7 +119,11 @@ async function askSteward(
     agent,
     { component: scope.owner, activity: scope.activity },
     {
-      assignment: { ...assignment, ...(responseRepair ? { responseRepair } : {}) },
+      assignment: {
+        ...assignment,
+        ...archiveContext(task, scope),
+        ...(responseRepair ? { responseRepair } : {}),
+      },
       milestone: {
         id: milestone.id,
         step: milestone.steps.find((step) => step.activity === scope.activity),
@@ -128,6 +133,19 @@ async function askSteward(
     },
     signal,
   );
+}
+
+/** Offer the editable steward a checked path for archiving reusable reports. */
+function archiveContext(task: ReturnType<typeof hostTask>, scope: StewardScope) {
+  if (scope.activity === 'review') return {};
+  const reports = pendingResearch(task, scope.owner);
+  return {
+    researchArchive: {
+      instructions:
+        'To archive a relevant reusable research report, include its ID in the optional archiveResearch array of a completed response. The host copies the retained report through checked edits.',
+      reports,
+    },
+  };
 }
 
 /** Attach the recorded reason a correction was scheduled, alongside any required recheck. */
@@ -216,10 +234,12 @@ async function applyStewardReply(
     assignment.failedCheck,
     hostChecks,
   );
-  if (result.kind !== 'completed' || !result.edits.length) return result;
+  if (result.kind !== 'completed' || (!result.edits.length && !result.archiveResearch?.length))
+    return result;
   if (scope.activity === 'review') throw new Error('Checked edits are unavailable during review');
   const edits = await materializeEdits(task, scope.owner, result.edits, signal);
-  task.edits(scope.owner, scope.activity, edits);
+  edits.push(...archiveResearch(task, scope.owner, result.archiveResearch ?? []));
+  if (edits.length) task.edits(scope.owner, scope.activity, edits);
   return result;
 }
 

@@ -5,7 +5,7 @@ import type { ProposedEdit } from './formatter.js';
 type CheckRequest = Pick<StewardCheckFailure, 'id' | 'expected'>;
 
 export type StewardResult =
-  | { kind: 'completed'; edits: ProposedEdit[]; checks: CheckRequest[] }
+  | { kind: 'completed'; edits: ProposedEdit[]; checks: CheckRequest[]; archiveResearch?: string[] }
   | Exclude<ActivityOutcome, { kind: 'completed' }>;
 
 /** Distinguish invalid proposals from failures after the host starts executing them. */
@@ -25,6 +25,7 @@ export function decodeSteward(
         kind: 'completed',
         edits: edits(value.edits),
         checks: checks(value.checks, allowed, correction, hostChecks),
+        ...archiveSelection(value.archiveResearch),
       };
     case 'supplier':
       return supplier(value);
@@ -37,6 +38,19 @@ export function decodeSteward(
         'response.kind: expected a top-level completed, supplier, question, or blocked outcome',
       );
   }
+}
+
+/** Accept only distinct report identities for copying checked evidence into the archive. */
+function archiveSelection(value: unknown) {
+  if (value === undefined) return {};
+  if (
+    !Array.isArray(value) ||
+    value.some((id) => typeof id !== 'string' || !/^[a-f0-9]{64}$/.test(id))
+  )
+    throw new StewardResponseError(
+      'response.archiveResearch: expected an array of research report IDs',
+    );
+  return { archiveResearch: [...new Set(value as string[])] };
 }
 
 /** Keep the provider-owned outcome shape free of model-supplied check failures and evidence. */

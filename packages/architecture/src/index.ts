@@ -4,6 +4,7 @@ import type { ActivitySelection } from './activity.js';
 import { buildCodexRequest, type TaskContext } from './request.js';
 
 export type { ActivitySelection, Capture, TaskContext };
+export { canResearch, researchDirectory } from './research.js';
 export type AgentInspection = ReturnType<typeof buildCodexRequest>;
 
 declare module 'cordis' {

@@ -7,6 +7,7 @@ constraints:
 - failure: Delivery changes an accepted candidate, bypasses a gate or replays an uncertain effect.
 owns:
 - packages/delivery
+- .arc/research/delivery
 activities:
   research:
     role: researcher
