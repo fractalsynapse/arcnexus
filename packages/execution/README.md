@@ -4,6 +4,15 @@ Execution activates scoped stewards, applies checked edits and supervises declar
 operations in one task worktree. Its public obligations are in the
 [locked contract](contract.md).
 
+## Activity-scoped operation recovery
+
+The [operation and recovery proposal](https://github.com/fractalsynapse/arcnexus/issues/562)
+routes project operations through the current activity's local MCP tools. The
+execution provider independently controls its built-in web access. A refused
+checked edit tells the requesting steward which path was refused and who owns
+it. A refusal grants no authority. The steward can correct its request or
+request a contribution through the existing Direction path.
+
 ## Research inbox recovery
 
 After interruption, retained completed research reports are replayed to the

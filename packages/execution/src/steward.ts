@@ -7,7 +7,7 @@ import { citedAssemblyChecks, correctionFinding } from './correction.js';
 import type { CheckResult } from './check.js';
 import { archiveResearch, pendingResearch } from './research-archive.js';
 import { materializeEdits } from './formatter.js';
-import { StaleCheckedEdit } from './edits.js';
+import { CheckedEditOwnershipRefusal, StaleCheckedEdit } from './edits.js';
 import { InvalidCodexResponse } from './codex.js';
 import type { StewardScope } from './steward-check.js';
 import { decodeSteward, StewardResponseError, type StewardResult } from './steward-response.js';
@@ -93,7 +93,8 @@ function repairableReply(error: unknown): error is Error {
   return (
     error instanceof StewardResponseError ||
     error instanceof InvalidCodexResponse ||
-    error instanceof StaleCheckedEdit
+    error instanceof StaleCheckedEdit ||
+    error instanceof CheckedEditOwnershipRefusal
   );
 }
 

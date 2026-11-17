@@ -48,6 +48,7 @@ function nativeTask(t: TestContext, root: string): HostTask {
           implementation: { profile: 'profile', operations: ['owner-tests'] },
         },
       },
+      other: { id: 'other', owns: ['other.txt'], activities: {} },
     },
   } as unknown as Capture;
   const goal = 'Exercise failed steward check correction';
@@ -239,6 +240,36 @@ test('a second malformed reply blocks the step and keeps both transcripts', asyn
   assert.equal(replies.mock.callCount(), 2);
   assert.equal(outcome.evidence.length, 2);
   task.close();
+});
+
+test('a refused ownership request returns the captured owner to the same steward', async (t) => {
+  const task = nativeTask(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-ownership-')));
+  const file = join(task.worktree!, 'other.txt');
+  const edit = { path: 'other.txt', expected: null, content: 'forbidden' };
+  const replies = t.mock.method(
+    task,
+    'activate',
+    async (_agent: Agent, _selection: unknown, context: TaskContext) => {
+      const diagnostic = (context.assignment as { responseRepair?: string }).responseRepair;
+      assert.equal(existsSync(file), false);
+      if (diagnostic) {
+        assert.match(diagnostic, /other\.txt; captured owners: other/);
+        return { kind: 'supplier', owner: 'other', milestone: 'repair', reason: 'Owns the file' };
+      }
+      return { kind: 'completed', edits: [edit], checks: [] };
+    },
+  );
+  t.after(() => task.close());
+  const outcome = await steward(
+    agent,
+    task,
+    milestone('repair'),
+    'implementation',
+    AbortSignal.timeout(5000),
+  );
+  assert.equal(outcome.kind, 'supplier');
+  assert.equal(outcome.owner, 'other');
+  assert.equal(replies.mock.callCount(), 2);
 });
 
 test('the steward can substitute exact text without copying the rest of the file', async (t) => {
