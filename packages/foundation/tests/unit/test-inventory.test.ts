@@ -13,6 +13,12 @@ test('test selection uses catalog ownership across the built app and package tre
   assert.throws(() => testInventory('missing'), /Unknown test owner/);
 });
 
+test('suite registration preserves the built test path for the test runner', () => {
+  const file = 'dist/packages/foundation/tests/unit/probe.test.js';
+  const owner = { id: 'foundation', owns: ['packages/foundation'] };
+  assert.equal(registerSuite(file, [owner]).file, file);
+});
+
 test('unowned suites, conflicting owners and unknown suite levels are refused', () => {
   const file = 'dist/apps/cli/tests/integration/feature.test.js';
   const cli = { id: 'cli-app', owns: ['apps/cli'] };
