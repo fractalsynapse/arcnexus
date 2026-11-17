@@ -142,3 +142,58 @@ disposable-overlay writes. Its simulated provider, harness, command and review
 boundaries do not establish native confinement, hosted CI, live inference or actual
 staging integration. No operation is declared for this documentation activity, and
 this intent record does not claim that the refactor or its verification is complete.
+
+## Satisfied-observation precedence correction
+
+The distinct `steward-check-observation-precedence-correction` milestone addresses
+feedback from the paused `steward-check-recovery-function-correction` review and
+its `recovery-function-standard` criterion. Self-review found that the refactor
+violates the observation precedence specified above: at
+`packages/execution/src/steward-check.ts:64` in the captured checkout,
+`observed ?? recoverFeedbackCheck(recorded, scope)` conflates an absent qualifying
+observation with a qualifying observation whose expectation is satisfied. Both
+produce `undefined` from observation recovery, so the fallback can resurrect older
+supplier feedback. The refactor is therefore not yet established as behavior
+preserving.
+
+Acceptance `satisfied-observation-precedence` requires these distinct outcomes:
+
+- Supplier feedback for failed check A followed by a satisfied observation for
+  check B under the same owner and activity returns `undefined`. The qualifying
+  observation takes precedence even though its check ID differs from A.
+- With no qualifying observation, feedback recovery remains available through
+  the existing matching-feedback and subsequent-result rules.
+- A qualifying unresolved observation returns its original expectation, exact
+  numeric status and evidence reference. It remains pending until correction
+  satisfies that expectation; expected-red semantics remain unchanged.
+
+Acceptance `precedence-function-standard` keeps the correction within
+`packages/execution` and the existing journal, checkpoint and recovery path.
+Preserve captured authority and meaningful separation of observation recovery and
+feedback recovery. Each function must retain an explanatory header and remain
+within the TypeScript standard's 30-physical-line limit. The correction grants no
+new operation, acceptance, verification or staging authority.
+
+Retain `89-3-activity.diff` and `89-4-codex.jsonl` as the refactor and self-review
+feedback evidence in the task's external evidence record. Retain
+`89-2-owner-tests.log` as the baseline reporting 11 passed, zero failed and two
+skipped tests. That passing suite does not establish the satisfied-observation
+precedence case. Preserve earlier failed observations, including
+`85-5-owner-tests.log`, alongside subsequent correction evidence.
+
+Acceptance `precedence-correction-evidence` requires a regression that fails on
+the A-then-B case before correction and passes afterward. An authorized
+`owner-tests` observation (`npm test -- execution`) must then pass, retaining its
+exact exit status and readable evidence. Preserve coverage for interrupted
+recovery, both expectations, exact statuses, retained edits and logs, mandatory
+retries, repeated failure, correction, successor resumption and checkpoint
+invariants. Report failures and skips explicitly. The baseline's two skips and
+simulated boundaries leave native confinement, hosted CI, live inference and actual
+staging integration unproven.
+
+Keep the linked recovery-function review paused until this correction passes,
+then resume that review before continuing the original recovery review. The later
+task-level independent verdict and staging gates remain required. This activity
+records intent and retained evidence only; it declares no operations and does not
+claim that the precedence regression, correction or behavioral acceptance has
+passed.
