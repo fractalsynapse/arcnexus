@@ -33,3 +33,7 @@ test('Team filters and orders eligible stewards while preserving ownership colli
     ['collision', 'unowned'],
   );
 });
+
+test('Team respects directory boundaries when resolving ownership', () => {
+  assert.equal(team.ownerFor(Object.values(members), 'src-next/file').kind, 'unowned');
+});
