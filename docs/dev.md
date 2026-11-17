@@ -39,6 +39,14 @@ a single trusted CLI composition for the first build. That composition is captur
 for each task. Production hot reload, external plugin installation, alternate
 launch modes and clustered hosting are deferred.
 
+Maintainers can audit an activity's mapped local MCP project operations with `inspect`,
+which exposes the selected activity's captured operation IDs and tool descriptions.
+Under [Architecture's operation-authority obligations](../packages/architecture/contract.md#obligations),
+inspection and activation use the same captured bindings; an explicitly empty
+operations list exposes no project tools. This captured project tool list grants
+no additional authority and is separate from built-in web access, which the
+execution provider independently controls.
+
 ## Previous attempts
 
 The first design accumulated concurrency, hierarchy and workday behavior before
