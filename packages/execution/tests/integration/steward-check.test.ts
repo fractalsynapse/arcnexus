@@ -43,7 +43,7 @@ function nativeTask(t: TestContext, root: string): HostTask {
     components: {
       owner: {
         id: 'owner',
-        owns: ['fixture.txt'],
+        owns: ['fixture.txt', 'earlier.txt'],
         activities: {
           implementation: { profile: 'profile', operations: ['owner-tests'] },
         },
@@ -265,5 +265,53 @@ test('the steward can substitute exact text without copying the rest of the file
   const outcome = await steward(agent, task, activation.step, 'implementation', activation.signal);
   assert.equal(outcome.kind, 'completed');
   assert.equal(readFileSync(file, 'utf8'), 'prefix fixed suffix');
+  task.close();
+});
+
+/** Exercise repeated activations before the checked edit batch can change the source. */
+class StaleEditScenario {
+  /** Return a misspelled digest once, then use the actual digest in the diagnostic. */
+  static async reply(root: string, assignment: TaskContext['assignment']) {
+    assert.equal(readFileSync(join(root, 'fixture.txt'), 'utf8'), 'initial');
+    assert(!existsSync(join(root, 'earlier.txt')));
+    const hash = createHash('sha256').update('initial').digest('hex');
+    const { responseRepair } = assignment as { responseRepair?: string };
+    if (responseRepair) assert(responseRepair.includes(hash));
+    return {
+      kind: 'completed',
+      edits: [
+        { path: 'earlier.txt', expected: null, content: 'admitted' },
+        {
+          path: 'fixture.txt',
+          expected: responseRepair ? hash : 'e'.repeat(64),
+          content: 'repaired',
+        },
+      ],
+      checks: [],
+    };
+  }
+}
+
+test('a stale digest is corrected without applying earlier edits in the rejected reply', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'arcnexus-steward-stale-digest-'));
+  const task = nativeTask(t, root);
+  const file = join(root, 'fixture.txt');
+  writeFileSync(file, 'initial');
+  const replies = t.mock.method(
+    task,
+    'activate',
+    (_agent: Agent, _pick: unknown, context: TaskContext) =>
+      StaleEditScenario.reply(root, context.assignment),
+  );
+  const outcome = await steward(
+    agent,
+    task,
+    milestone('stale-edit'),
+    'implementation',
+    AbortSignal.timeout(2000),
+  );
+  assert.equal(outcome.kind, 'completed');
+  assert.equal(replies.mock.callCount(), 2);
+  assert.equal(readFileSync(file, 'utf8'), 'repaired');
   task.close();
 });

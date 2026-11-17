@@ -3,8 +3,10 @@ import type { Agent } from '../../agent/src/index.js';
 import type { Milestone, StewardCheckFailure } from '../../direction/src/index.js';
 import type { ActivityOutcome, TaskSession } from '../../workflow/src/index.js';
 import { hostTask } from './index.js';
-import { correctionFinding } from './correction.js';
+import { citedFailedChecks, correctionFinding } from './correction.js';
+import type { CheckResult } from './check.js';
 import { materializeEdits } from './formatter.js';
+import { StaleCheckedEdit } from './edits.js';
 import { InvalidCodexResponse } from './codex.js';
 import type { StewardScope } from './steward-check.js';
 import { decodeSteward, StewardResponseError, type StewardResult } from './steward-response.js';
@@ -25,7 +27,8 @@ export async function steward(
   const before = task.evidence.length;
   const scope = { owner: milestone.owner, activity };
   const correction = task.pendingCheck(scope);
-  const result = await requestSteward(task, agent, milestone, scope, correction, signal);
+  const assignment = await stewardAssignment(task, milestone, scope, correction, signal);
+  const result = await requestSteward(task, agent, milestone, scope, signal, assignment);
   if (result.kind !== 'completed') return { ...result, evidence: task.evidence.slice(before) };
   const failed = await perform(task, scope, result, correction, signal);
   const evidence = task.evidence.slice(before);
@@ -60,19 +63,19 @@ async function requestSteward(
   agent: Agent,
   milestone: Milestone,
   scope: StewardScope,
-  failed: StewardCheckFailure | undefined,
   signal: AbortSignal,
+  assignment: Awaited<ReturnType<typeof stewardAssignment>>,
 ): Promise<StewardResult> {
-  const allowed = stewardOperations(task, scope);
   let diagnostic: string | undefined;
   while (true) {
     try {
-      const reply = await askSteward(task, agent, milestone, scope, failed, signal, diagnostic);
+      const reply = await askSteward(task, agent, milestone, scope, assignment, signal, diagnostic);
       signal.throwIfAborted();
-      return decodeSteward(reply, allowed, failed);
+      const result = decodeSteward(reply, stewardOperations(task, scope), assignment.failedCheck);
+      if (result.kind === 'completed') await applyStewardEdits(task, scope, result, signal);
+      return result;
     } catch (error) {
-      if (!(error instanceof StewardResponseError || error instanceof InvalidCodexResponse))
-        throw error;
+      if (!repairableReply(error)) throw error;
       signal.throwIfAborted();
       if (diagnostic)
         return {
@@ -84,6 +87,15 @@ async function requestSteward(
       task.note({ stewardRepair: { scope, diagnostic, evidence: task.evidence.at(-1) } });
     }
   }
+}
+
+/** Restrict retries to rejected replies with no checked edits applied. */
+function repairableReply(error: unknown): error is Error {
+  return (
+    error instanceof StewardResponseError ||
+    error instanceof InvalidCodexResponse ||
+    error instanceof StaleCheckedEdit
+  );
 }
 
 /** Resolve operation authority from the captured team member and current activity. */
@@ -100,7 +112,7 @@ async function askSteward(
   agent: Agent,
   milestone: Milestone,
   scope: StewardScope,
-  failedCheck: StewardCheckFailure | undefined,
+  assignment: Awaited<ReturnType<typeof stewardAssignment>>,
   signal: AbortSignal,
   responseRepair?: string,
 ): Promise<unknown> {
@@ -108,7 +120,7 @@ async function askSteward(
     agent,
     { component: scope.owner, activity: scope.activity },
     {
-      assignment: stewardAssignment(task, milestone, scope, failedCheck, responseRepair),
+      assignment: { ...assignment, ...(responseRepair ? { responseRepair } : {}) },
       milestone: {
         id: milestone.id,
         step: milestone.steps.find((step) => step.activity === scope.activity),
@@ -121,19 +133,25 @@ async function askSteward(
 }
 
 /** Attach the recorded reason a correction was scheduled, alongside any required recheck. */
-function stewardAssignment(
+async function stewardAssignment(
   task: ReturnType<typeof hostTask>,
   milestone: Milestone,
   scope: StewardScope,
-  failedCheck?: StewardCheckFailure,
-  responseRepair?: string,
+  failedCheck: StewardCheckFailure | undefined,
+  signal: AbortSignal,
 ) {
   const finding = correctionFinding(task.history(), milestone);
+  const currentChecks: CheckResult[] = [];
+  if (finding && ['implementation', 'review'].includes(scope.activity)) {
+    const acceptance = task.capture.project.checks?.acceptance ?? [];
+    for (const id of citedFailedChecks(task.observations(), finding, acceptance))
+      currentChecks.push(await task.check(id, signal));
+  }
   return {
     ...responseShape(milestone.id, scope.activity !== 'review' && Boolean(task.formatPreview)),
     ...(finding ? { finding } : {}),
     ...(failedCheck ? { failedCheck, correction: correctionInstruction } : {}),
-    ...(responseRepair ? { responseRepair } : {}),
+    ...(currentChecks.length ? { currentChecks } : {}),
   };
 }
 
@@ -141,7 +159,7 @@ function stewardAssignment(
 function responseShape(milestone: string, formatter: boolean) {
   return {
     instructions:
-      'Return exactly one JSON object with kind at the top level. Choose one of the flat response examples. For completed, edits and checks are separate top-level arrays, even when empty. An operation belongs only in checks. When finding is present, address that exact diagnosis and named paths before completing the step. When responseRepair is present, read the previous reply in the retained transcript and correct its response shape. For a small change in an existing file, use transform instead of content so the host computes the replacement bytes. The checkout is read-only; the host applies eligible edits and runs declared checks.',
+      'Return exactly one JSON object with kind at the top level. Choose one of the flat response examples. For completed, edits and checks are separate top-level arrays, even when empty. An operation belongs only in checks. When finding is present, address the exact diagnosis and paths that still need correction. The currentChecks field carries the latest host results when available. Use their logs to distinguish remaining failures from older reports. Do not redo fixes already confirmed by a current passing check. When responseRepair is present, read the previous reply in the retained transcript and correct the specific error. Copy a reported current sha256 exactly into expected for that file. Use at most one edit per path. To substitute text and format the same file, put both in one transform. For a small change in an existing file, use transform instead of content so the host computes the replacement bytes. The checkout is read-only; the host applies eligible edits and runs declared checks.',
     transforms: transformShape(formatter),
     responses: [
       {
@@ -180,7 +198,20 @@ function transformShape(formatter: boolean) {
   };
 }
 
-/** Apply checked edits and stop at the first unexpected operation result. */
+/** Materialize and validate the complete edit batch before its first write. */
+async function applyStewardEdits(
+  task: ReturnType<typeof hostTask>,
+  scope: StewardScope,
+  result: Extract<StewardResult, { kind: 'completed' }>,
+  signal: AbortSignal,
+) {
+  if (!result.edits.length) return;
+  if (scope.activity === 'review') throw new Error('Checked edits are unavailable during review');
+  const edits = await materializeEdits(task, scope.owner, result.edits, signal);
+  task.edits(scope.owner, scope.activity, edits);
+}
+
+/** Run the requested checks and stop at the first unexpected result. */
 async function perform(
   task: ReturnType<typeof hostTask>,
   scope: StewardScope,
@@ -188,11 +219,6 @@ async function perform(
   correction: StewardCheckFailure | undefined,
   signal: AbortSignal,
 ): Promise<StewardCheckFailure | undefined> {
-  if (result.edits.length) {
-    if (scope.activity === 'review') throw new Error('Checked edits are unavailable during review');
-    const edits = await materializeEdits(task, scope.owner, result.edits, signal);
-    task.edits(scope.owner, scope.activity, edits);
-  }
   for (const { id, expected } of result.checks) {
     const check = await task.check(id, signal, scope);
     signal.throwIfAborted();

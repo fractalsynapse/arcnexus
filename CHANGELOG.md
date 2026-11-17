@@ -10,7 +10,10 @@
 ### Fixed
 
 - Carry each correction finding directly into the assigned steward activity
-  and keep Director correction plans scoped to the needed steps (#537).
+  and keep Director correction plans scoped to the needed steps. Refresh cited
+  assembly failures against the current checkpoint before correction (#537).
+- Let a steward repair a stale checked-edit hash or a repeated edit path before
+  any proposed edit is applied (#534).
 
 - Let stewards preview formatting with the installed formatter in their
   read-only sandbox (#536).

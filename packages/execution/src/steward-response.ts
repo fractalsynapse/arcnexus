@@ -53,6 +53,7 @@ function supplier(value: Record<string, unknown>): StewardResult {
 function edits(value: unknown): ProposedEdit[] {
   if (!Array.isArray(value))
     throw new StewardResponseError('response.edits: expected an array, even when empty');
+  const paths = new Set<string>();
   return value.map((entry, index) => {
     const at = `edits[${index}]`;
     const edit = object(entry, at);
@@ -61,6 +62,9 @@ function edits(value: unknown): ProposedEdit[] {
         `response.${at}: operation requests belong in the top-level checks array`,
       );
     const path = required(edit.path, `${at}.path`);
+    if (paths.has(path))
+      throw new StewardResponseError(`response.${at}.path: duplicate edit for ${path}`);
+    paths.add(path);
     const { expected, content } = edit;
     if (expected !== null && (typeof expected !== 'string' || !/^[a-f0-9]{64}$/.test(expected)))
       throw new StewardResponseError(`response.${at}.expected: expected a SHA-256 or null`);

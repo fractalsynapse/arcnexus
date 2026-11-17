@@ -1,5 +1,7 @@
+import { basename } from 'node:path';
 import type { Feedback, Milestone, RevisionFeedback } from '../../direction/src/index.js';
 import type { TaskEvent } from '../../workflow/src/index.js';
+import type { CheckResult } from './check.js';
 
 type Correction = Extract<RevisionFeedback, { kind: 'supplier' | 'rejection' }>;
 
@@ -32,4 +34,31 @@ function feedbackForOwner(feedback: Correction, milestone: Milestone) {
     ({ owner, criterion }) => owner === milestone.owner && ids.has(criterion),
   );
   return findings.length ? { kind: feedback.kind, findings } : undefined;
+}
+
+interface CheckObservation {
+  check?: Pick<CheckResult, 'id' | 'status' | 'log'>;
+  scope?: unknown;
+}
+
+/** Identify captured assembly failures named by the finding through their retained logs. */
+export function citedFailedChecks(
+  observations: readonly CheckObservation[],
+  finding: Correction,
+  acceptance: readonly string[],
+) {
+  const findings = finding.kind === 'rejection' ? finding.findings : [finding];
+  const citations = new Set(
+    findings.flatMap(({ reason, evidence }) => [
+      ...reason.split(/[^a-z0-9_.-]+/i).map((term) => term.replace(/\.+$/, '')),
+      ...evidence,
+    ]),
+  );
+  const ids = new Set<string>();
+  for (const { check, scope } of observations) {
+    if (!check || scope || check.status === 0 || !acceptance.includes(check.id)) continue;
+    if (citations.has(check.log) || citations.has(basename(check.log)) || citations.has(check.id))
+      ids.add(check.id);
+  }
+  return [...ids];
 }
