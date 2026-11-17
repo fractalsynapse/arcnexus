@@ -105,6 +105,8 @@ During a task, the Director, Reviewer and stewards can use the Research inbox
 when external evidence could change a decision. The task resumes the same
 activity with a source-linked report or an unavailable observation.
 `arcnexus inspect <component> research` previews the research activity.
+Before running a task, use `arcnexus inspect <component> documentation` to see the
+optional research inbox and archived report index in the ordinary activity's context.
 
 Reusable reports stay available to that component's editing stewards. An
 editing steward can choose a report to archive through checked edits. The
