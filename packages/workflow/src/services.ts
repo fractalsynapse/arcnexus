@@ -62,13 +62,13 @@ export interface WorkflowServices {
     assemble(session: TaskSession, signal: AbortSignal): Promise<Candidate>;
   };
   direction: {
-    plan(session: TaskSession, signal: AbortSignal): Promise<DirectionResult>;
+    plan(session: TaskSession, signal: AbortSignal): Promise<unknown>;
     revise(
       session: TaskSession,
       plan: Plan | undefined,
       feedback: Feedback,
       signal: AbortSignal,
-    ): Promise<DirectionResult>;
+    ): Promise<unknown>;
   };
   agent: {
     execute(

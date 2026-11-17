@@ -1,5 +1,7 @@
 import type { Context } from 'cordis';
 import {
+  decodeDirectorResponse,
+  DirectorResponseError,
   supplierIsScheduled,
   validateCorrection,
   validatePlan,
@@ -8,6 +10,7 @@ import {
   type Feedback,
   type Milestone,
   type Plan,
+  type RevisionFeedback,
 } from '../../direction/src/index.js';
 import { validateVerdict } from '../../verification/src/index.js';
 import type {
@@ -94,8 +97,9 @@ class TaskRun {
     );
     if (resumed) return resumed;
     this.report({ phase: 'planning', message: 'Director is planning the goal' });
-    const initial = await this.services.direction.plan(this.session, this.signal);
-    const blocked = await this.acceptPlan(initial);
+    const blocked = await this.acceptPlan(() =>
+      this.services.direction.plan(this.session, this.signal),
+    );
     if (blocked) return blocked;
     while (true) {
       this.signal.throwIfAborted();
@@ -121,32 +125,85 @@ class TaskRun {
 
   /** Keep the prior cursor when Direction needs a human answer or a validated plan revision. */
   private async acceptPlan(
-    result: DirectionResult,
-    reason?: Feedback,
+    propose: () => Promise<unknown>,
+    reason?: RevisionFeedback,
   ): Promise<Interrupted | undefined> {
+    let result = await this.planResponse(propose, reason);
     while (result.kind === 'question') {
       const feedback = await this.answer(result);
       if ('reason' in feedback) return feedback;
       this.session.record({ feedback });
-      result = await this.services.direction.revise(this.session, this.plan, feedback, this.signal);
+      result = await this.planResponse(
+        () => this.services.direction.revise(this.session, this.plan, feedback, this.signal),
+        reason,
+        feedback,
+      );
     }
+    return this.commitPlan(result.plan, reason);
+  }
+
+  /** Give an invalid Director response one repair in the same task and planning context. */
+  private async planResponse(
+    propose: () => Promise<unknown>,
+    reason?: RevisionFeedback,
+    context = reason,
+  ): Promise<DirectionResult> {
+    try {
+      return this.validateProposal(await propose(), reason);
+    } catch (error) {
+      if (!(error instanceof DirectorResponseError)) throw error;
+      const feedback: Feedback = {
+        kind: 'plan-repair',
+        diagnostic: error.message,
+        ...(context ? { original: context } : {}),
+      };
+      this.session.record({ feedback });
+      this.report({
+        phase: 'planning',
+        message: `Director proposal requires repair: ${error.message}`,
+      });
+      const repaired = await this.services.direction.revise(
+        this.session,
+        this.plan,
+        feedback,
+        this.signal,
+      );
+      return this.validateProposal(repaired, reason);
+    }
+  }
+
+  /** Check proposal shape, plan rules and preservation of any already accepted work. */
+  private validateProposal(response: unknown, reason?: RevisionFeedback): DirectionResult {
     this.signal.throwIfAborted();
-    validatePlan(this.session.capture, result.plan);
-    if (this.plan) validateRevision(this.plan, result.plan, this.completed, this.activityPositions);
+    const result = decodeDirectorResponse(response);
+    if (result.kind === 'question') return result;
+    try {
+      validatePlan(this.session.capture, result.plan);
+      if (this.plan)
+        validateRevision(this.plan, result.plan, this.completed, this.activityPositions);
+      if (reason?.kind === 'rejection')
+        validateCorrection(result.plan, this.completed, reason.findings);
+    } catch (error) {
+      if (!(error instanceof Error)) throw error;
+      throw new DirectorResponseError(error.message, { cause: error });
+    }
+    return result;
+  }
+
+  /** Admit a validated plan only when its supplier sequence can advance. */
+  private commitPlan(plan: Plan, reason?: RevisionFeedback): Interrupted | undefined {
     if (
       this.plan &&
       reason?.kind === 'supplier' &&
-      !supplierIsScheduled(this.plan, result.plan, reason, this.completed, this.activityPositions)
+      !supplierIsScheduled(this.plan, plan, reason, this.completed, this.activityPositions)
     )
       return stopped(
         'blocked',
         `The Director must schedule runnable supplier work for ${reason.owner} before ${reason.requester}`,
         reason.evidence,
       );
-    if (reason?.kind === 'rejection')
-      validateCorrection(result.plan, this.completed, reason.findings);
-    this.plan = result.plan;
-    this.session.record({ plan: result.plan });
+    this.plan = plan;
+    this.session.record({ plan });
   }
 
   /** Translate an unanswered genuine gate into a retained blocked outcome. */
@@ -197,19 +254,16 @@ class TaskRun {
   }
 
   /** Persist Director feedback and accept its new sequence before any further activation. */
-  private async revise(feedback: Feedback) {
+  private async revise(feedback: RevisionFeedback) {
     this.session.record({ feedback });
     this.report({
       phase: 'planning',
       message: `Director is considering ${feedback.kind} feedback`,
     });
-    const revised = await this.services.direction.revise(
-      this.session,
-      this.plan,
+    return this.acceptPlan(
+      () => this.services.direction.revise(this.session, this.plan, feedback, this.signal),
       feedback,
-      this.signal,
     );
-    return this.acceptPlan(revised, feedback);
   }
 
   /** Evaluate one assembled candidate and keep a rejected candidate out of delivery. */

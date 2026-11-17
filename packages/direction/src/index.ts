@@ -39,7 +39,7 @@ export interface Rejection {
   reason: string;
 }
 
-export type Feedback =
+export type RevisionFeedback =
   | { kind: 'rejection'; findings: readonly Rejection[] }
   | {
       kind: 'supplier';
@@ -50,6 +50,9 @@ export type Feedback =
       evidence: readonly string[];
     }
   | { kind: 'answer'; question: string; answer: string; evidence: readonly string[] };
+
+export type Feedback =
+  RevisionFeedback | { kind: 'plan-repair'; diagnostic: string; original?: RevisionFeedback };
 
 export type DirectionResult =
   | { kind: 'plan'; plan: Plan }
@@ -202,3 +205,4 @@ export function supplierIsScheduled(
 }
 
 export { direct } from './native.js';
+export { decodeDirectorResponse, DirectorResponseError } from './response.js';

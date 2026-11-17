@@ -35,6 +35,7 @@ const focus = {
   objectives: ['Demonstrate success'],
   constraints: ['Use checked edits'],
 };
+const planDiagnostic = 'plan.milestones[0].steps[0].inapplicable: expected string, received object';
 const findings = [
   {
     criterion: criterion.id,
@@ -60,7 +61,11 @@ function milestone(id: string): Milestone {
 }
 
 /** Compose the real SDK and Workflow with isolated, observable task services. */
-async function mountedWorkflow(t: TestContext, rejectRevision = false) {
+async function mountedWorkflow(
+  t: TestContext,
+  rejectRevision = false,
+  malformed?: 'once' | 'always',
+) {
   const root = projectFixture();
   const storage = mkdtempSync(join(tmpdir(), 'arcnexus-tasks-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
@@ -69,7 +74,7 @@ async function mountedWorkflow(t: TestContext, rejectRevision = false) {
   await context.use(architecturePlugin);
   await context.use(agentPlugin);
   await context.use(coordinationPlugin(storage));
-  const fixture = new FixtureServices(context, root, rejectRevision);
+  const fixture = new FixtureServices(context, root, rejectRevision, malformed);
   await context.use(workflowPlugin(fixture));
   await context.use(commandsPlugin);
   return { calls: fixture.calls, events: fixture.events, context, root };
@@ -87,6 +92,7 @@ class FixtureServices implements WorkflowServices {
     private readonly context: Context,
     private readonly root: string,
     private readonly rejectRevision: boolean,
+    private readonly malformed?: 'once' | 'always',
   ) {}
 
   readonly execution: WorkflowServices['execution'] = {
@@ -119,19 +125,43 @@ class FixtureServices implements WorkflowServices {
     plan: (session, signal) =>
       this.activate(session, 'director', 'director', 'planning', signal, () => {
         this.calls.push('director');
-        return { kind: 'plan', plan: this.initial };
+        return { kind: 'plan', plan: this.proposal(Boolean(this.malformed)) };
       }),
     revise: (session, original, feedback, signal) =>
       this.activate(session, 'director', 'director', 'planning', signal, () => {
+        if (!original) {
+          this.calls.push('director:repair');
+          assert.deepEqual(feedback, { kind: 'plan-repair', diagnostic: planDiagnostic });
+          return { kind: 'plan', plan: this.proposal(this.malformed === 'always') };
+        }
         this.calls.push('director:revise');
         assert.deepEqual(original, this.initial);
-        assert.deepEqual(feedback, { kind: 'rejection', findings });
+        const rejection = { kind: 'rejection', findings };
+        if (feedback.kind === 'plan-repair') {
+          assert.deepEqual(feedback, {
+            kind: 'plan-repair',
+            diagnostic: 'The Director did not schedule a correction for covers-goal',
+            original: rejection,
+          });
+        } else {
+          assert.deepEqual(feedback, rejection);
+        }
         const plan = this.rejectRevision
           ? this.initial
           : { focus, milestones: [...this.initial.milestones, milestone('correction')] };
         return { kind: 'plan', plan };
       }),
   };
+
+  /** Reproduce a JSON response that violates the inactive Step field type. */
+  private proposal(malformed: boolean) {
+    if (!malformed) return this.initial;
+    const initial = milestone('initial');
+    const steps = initial.steps.map((step, index) =>
+      index === 0 ? { ...step, inapplicable: { reason: 'Fixture inactive step' } } : step,
+    );
+    return { focus, milestones: [{ ...initial, steps }] };
+  }
 
   readonly agent: WorkflowServices['agent'] = {
     execute: (session, selected, activity, signal) =>
@@ -221,6 +251,38 @@ test('CMD-1, WFL-1 and WFL-2: rejected work returns to Direction before staging 
     commit: 'staging-merge',
     evidence: ['delivery:merge'],
   });
+});
+
+test('an invalid Director plan is repaired in one task before any steward or delivery', async (t) => {
+  const { context, root, calls, events } = await mountedWorkflow(t, false, 'once');
+  const result = await context.commands.runTask(
+    { directory: root, goal: 'Fix the fixture' },
+    { progress() {} },
+    AbortSignal.timeout(5_000),
+  );
+  assert.equal(result.kind, 'merged');
+  assert.deepEqual(calls.slice(0, 3), ['director', 'director:repair', 'steward:initial/testing']);
+  assert.equal(calls.filter((call) => call === 'delivery').length, 1);
+  assert(
+    events.some(
+      (event) =>
+        JSON.stringify(event) ===
+        JSON.stringify({ feedback: { kind: 'plan-repair', diagnostic: planDiagnostic } }),
+    ),
+  );
+  assert.deepEqual(events.at(-1), { outcome: result });
+});
+
+test('a second invalid Director plan fails with its diagnostic before activating a steward', async (t) => {
+  const { context, root, calls } = await mountedWorkflow(t, false, 'always');
+  const result = await context.commands.runTask(
+    { directory: root, goal: 'Fix the fixture' },
+    { progress() {} },
+    AbortSignal.timeout(5_000),
+  );
+  assert.equal(result.kind, 'failed');
+  assert.equal(result.reason, planDiagnostic);
+  assert.deepEqual(calls, ['director', 'director:repair', 'close']);
 });
 
 test('WFL-2: a revision must schedule work against every rejected criterion', async (t) => {
