@@ -98,3 +98,6 @@ checkpoints checked edits on the issue branch after activations. Retry an
 interrupted engineering task with the same goal, or invoke bare `task run` again
 to continue the unfinished round. The task's locally recorded evidence and
 verified checkpoint survive worktree removal.
+
+Resumed activities can read earlier evidence for the same task. The host
+provides self-review a diff against the captured staging base.
