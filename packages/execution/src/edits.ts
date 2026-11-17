@@ -16,6 +16,14 @@ export interface ObservedEdit {
   after: string | null;
 }
 
+/** Report a changed edit input only after its path passes captured ownership checks. */
+export class StaleCheckedEdit extends Error {
+  /** Provide the observed digest so a steward can repair the rejected request. */
+  constructor(path: string, actual: string | null) {
+    super(`Stale checked edit: ${path}; current sha256 is ${actual ?? 'null (file absent)'}`);
+  }
+}
+
 /** Authorize every proposed edit against captured ownership and its observed bytes before writing. */
 export function applyEdits(
   root: string,
@@ -31,7 +39,7 @@ export function applyEdits(
     paths.add(path);
     const previous = safeRead(path);
     const before = previous === undefined ? null : digest(previous);
-    if (before !== edit.expected) throw new Error(`Stale checked edit: ${edit.path}`);
+    if (before !== edit.expected) throw new StaleCheckedEdit(edit.path, before);
     if (typeof edit.content !== 'string' && edit.content !== null)
       throw new Error(`Invalid replacement content: ${edit.path}`);
     return { path, edit, before };
@@ -44,6 +52,19 @@ export function applyEdits(
   beforeWrite?.(observed);
   for (const { path, edit } of validated) replace(path, edit.content);
   return observed;
+}
+
+/** Read an existing owned file only after verifying the checked edit's original digest. */
+export function checkedInput(
+  root: string,
+  capture: Capture,
+  owner: string,
+  edit: Pick<CheckedEdit, 'path' | 'expected'>,
+) {
+  const bytes = safeRead(authorize(root, capture, owner, edit.path));
+  const current = bytes === undefined ? null : digest(bytes);
+  if (!bytes || current !== edit.expected) throw new StaleCheckedEdit(edit.path, current);
+  return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
 }
 
 /** Enforce unique ownership and reject lock changes and file aliases. */

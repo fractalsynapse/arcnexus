@@ -204,3 +204,77 @@ for (const scenario of ['late', 'release-only'] as const) {
     assert.deepEqual(task.calls, beforeCorrection);
   });
 }
+
+/** Keep the tree fixed and vary only the host's verified evidence presented to review. */
+class EvidenceReviewTask extends SupplierTask {
+  private readonly original = milestone('original', 'owner', ['implementation'], 'readiness');
+  private readonly correction = milestone('evidence', 'owner', ['implementation'], 'readiness');
+  readonly plan: Plan = {
+    focus: {
+      purpose: 'Verify the fixture',
+      objectives: ['Fix evidence'],
+      constraints: ['Preserve source'],
+    },
+    milestones: [this.original],
+  };
+  reviewed = 0;
+
+  /** Select whether the correction can actually supply different evidence. */
+  constructor(private readonly changed: boolean) {
+    super('correction');
+  }
+
+  override readonly execution: WorkflowServices['execution'] = {
+    admit: async () => ({ capture, goal: 'Fix evidence', record() {}, finish() {}, close() {} }),
+    assemble: async () => ({
+      digest: 'unchanged-tree',
+      evidence: [],
+      ownerEvidenceDigest: this.changed && this.reviewed ? 'complete' : 'incomplete',
+    }),
+  };
+
+  override readonly direction: WorkflowServices['direction'] = {
+    plan: async () => ({ kind: 'plan', plan: this.plan }),
+    revise: async () => ({
+      kind: 'plan',
+      plan: { ...this.plan, milestones: [this.original, this.correction] },
+    }),
+  };
+
+  override readonly verification: WorkflowServices['verification'] = {
+    assess: async (_session, _plan, candidate) => {
+      this.reviewed++;
+      if (this.reviewed === 1)
+        return {
+          kind: 'rejected',
+          candidate: candidate.digest,
+          findings: [
+            {
+              owner: 'owner',
+              criterion: 'readiness',
+              evidence: ['record'],
+              reason: 'Missing owner exit record',
+            },
+          ],
+        };
+      return {
+        kind: 'accepted',
+        candidate: candidate.digest,
+        criteria: ['readiness'],
+        evidence: ['record'],
+      };
+    },
+  };
+}
+
+test('WFL-2: a rejected tree is reviewed again with genuinely changed host evidence', async () => {
+  const task = new EvidenceReviewTask(true);
+  assert.equal((await task.run()).kind, 'merged');
+  assert.equal(task.reviewed, 2);
+});
+
+test('WFL-2: unchanged host evidence does not reopen a rejected tree', async () => {
+  const task = new EvidenceReviewTask(false);
+  assert.equal((await task.run()).kind, 'failed');
+  assert.equal(task.reviewed, 1);
+});

@@ -72,14 +72,29 @@ If a Director proposal fails validation, ArcNexus records the diagnostic and
 asks the Director for one correction within the same task. The host validates
 the corrected proposal before advancing and preserves any accepted work.
 
+A malformed steward reply or a stale edit digest gets one repair in the same activity. The host
+returns the exact diagnostic and retained transcript before applying any edits
+or running proposed checks. When the installed project formatter is available,
+a steward can request exact text substitutions and formatter output in a
+checked edit. Execution computes the bytes inside confinement and checks the
+original file hash before applying them.
+
 When a steward check exits unexpectedly, Direction schedules a correction for
 the same owner. The correcting steward receives the exit status and retained
-log. The host reruns the original check before the paused activity resumes.
+log. Correction assignments also carry the exact supplier or independent review
+finding that caused Direction to add the milestone. The host refreshes any
+assembled checks explicitly requested by that finding against the current checkpoint.
+It reruns the original steward check before the paused activity resumes. The
+independent Reviewer receives the owner check records and can tell which ones
+were observed after the candidate's most recent edit. A rejected tree can
+return to independent review when its verified owner evidence changes. A
+repeated tree and evidence combination stops the correction.
 
 If publication is interrupted, invoke `task run` with the identical goal.
 ArcNexus resumes from the verified candidate and observes GitHub before taking
 another publication action. A matching remote branch, pull request or merge is
-reused. See [Publication recovery evidence](../../docs/release/verification.md#publication-recovery-evidence)
+reused. A known transient GitHub read error gets a bounded retry in the active
+task, including the observation after a merge. See [Publication recovery evidence](../../docs/release/verification.md#publication-recovery-evidence)
 for what to compare in the retained task evidence.
 
 ## Run a round of standing goals

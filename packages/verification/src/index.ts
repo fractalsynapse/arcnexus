@@ -2,6 +2,7 @@ import type { Plan, Rejection } from '../../direction/src/index.js';
 
 export interface Candidate {
   digest: string;
+  ownerEvidenceDigest?: string;
   evidence: readonly string[];
 }
 

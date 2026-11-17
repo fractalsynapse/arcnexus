@@ -9,6 +9,24 @@
 
 ### Fixed
 
+- Carry each correction finding directly into the assigned steward activity
+  and keep Director correction plans scoped to the needed steps. Refresh cited
+  assembly failures against the current checkpoint before correction (#537).
+- Retry transient GitHub reads in the same task, including post-merge
+  confirmation (#541).
+- Reassess an unchanged candidate when verified owner evidence changes and
+  stop repeated reviews with equivalent inputs (#539).
+- Include the host's retained owner-check exit records in independent review
+  and identify observations made after the candidate's last edit (#538).
+- Let a steward repair a stale checked-edit hash or a repeated edit path before
+  any proposed edit is applied (#534).
+
+- Let stewards preview formatting with the installed formatter in their
+  read-only sandbox (#536).
+
+- Repair malformed steward replies in the current activity before performing
+  proposed edits or checks (#534).
+
 - Have the Director assess each standing goal using current staging and check
   evidence before deciding whether to plan work (#531).
 

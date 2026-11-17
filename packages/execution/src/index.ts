@@ -17,12 +17,19 @@ import type {
 } from '../../workflow/src/index.js';
 import { GitHub } from '../../collaboration/src/index.js';
 import { codex } from './codex.js';
+import { formatterPreview } from './formatter.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
 import { candidateDiff, git } from './git.js';
 import { preflight, verifyNativeGuidance, type HostConfig } from './host-config.js';
 import { goalRound, stagingCapture } from './goals.js';
 import { check } from './check.js';
 import { pendingStewardCheck, type StewardScope } from './steward-check.js';
+import {
+  cleanCandidate,
+  ownerEvidenceDigest,
+  ownerReviewObservations,
+  type OwnerObservation,
+} from './review-observations.js';
 
 export type { CheckedEdit } from './edits.js';
 export { InvalidCodexResponse } from './codex.js';
@@ -102,7 +109,11 @@ export class Execution {
       'candidate.diff',
       candidateDiff(task.worktree, task.capture.source.revision),
     );
-    return { digest, evidence: [log] };
+    return {
+      digest,
+      evidence: [log],
+      ownerEvidenceDigest: ownerEvidenceDigest(task.ownerReviewChecks(), digest),
+    };
   }
 }
 
@@ -351,6 +362,11 @@ export class HostTask implements TaskSession {
     };
   }
 
+  /** Expose a verified formatter path only while a steward worktree is active. */
+  get formatPreview() {
+    return this.branch ? formatterPreview(this.capture.source.root) : undefined;
+  }
+
   /** Run an actor through the same prepared envelope used by inspection. */
   activate(
     agent: Agent,
@@ -388,6 +404,12 @@ export class HostTask implements TaskSession {
     return pendingStewardCheck(this.observations(), scope);
   }
 
+  /** Bind exact owner observations to the clean checkpoint when the edit history permits it. */
+  ownerReviewChecks(): OwnerObservation[] {
+    const events = this.observations<Parameters<typeof ownerReviewObservations>[0][number]>();
+    return ownerReviewObservations(events, cleanCandidate(this), this.capture.operations);
+  }
+
   /** Run a declared check and record its real exit, duration and transcript. */
   async check(id: string, signal: AbortSignal, scope?: StewardScope) {
     if (!this.worktree) throw new Error('No task worktree is available for checks');
@@ -413,7 +435,7 @@ export class HostTask implements TaskSession {
   }
 
   /** Allocate a recorded evidence name before starting a native operation. */
-  private artifact(name: string) {
+  artifact(name: string) {
     const directory = this.evidenceDirectory();
     mkdirSync(directory, { recursive: true, mode: 0o700 });
     if (realpathSync(directory) !== directory) throw new Error('Evidence directory is an alias');
