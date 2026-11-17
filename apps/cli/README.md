@@ -104,6 +104,8 @@ for what to compare in the retained task evidence.
 During a task, the Director, Reviewer and stewards can use the Research inbox
 when external evidence could change a decision. The task resumes the same
 activity with a source-linked report or an unavailable observation.
+See [Research inbox recovery](../../packages/execution/README.md#research-inbox-recovery)
+for report replay after interruption and the shared sequential lane.
 `arcnexus inspect <component> research` previews the research activity.
 Before running a task, use `arcnexus inspect <component> documentation` to see the
 optional research inbox and archived report index in the ordinary activity's context.
