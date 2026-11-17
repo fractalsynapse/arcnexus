@@ -72,7 +72,7 @@ If a Director proposal fails validation, ArcNexus records the diagnostic and
 asks the Director for one correction within the same task. The host validates
 the corrected proposal before advancing and preserves any accepted work.
 
-A malformed steward reply gets one repair in the same activity. The host
+A malformed steward reply or a stale edit digest gets one repair in the same activity. The host
 returns the exact diagnostic and retained transcript before applying any edits
 or running proposed checks. When the installed project formatter is available,
 a steward can request exact text substitutions and formatter output in a
