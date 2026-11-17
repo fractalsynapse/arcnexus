@@ -313,8 +313,14 @@ for (const merged of [false, true]) {
 
 test('DE-GATES: pending verification prevents merge until the gate resolves', async () => {
   const actions = scenario(resumedPull, accepted.head);
-  const { promise, resolve } = Promise.withResolvers<void>();
-  const { promise: started, resolve: signalStarted } = Promise.withResolvers<void>();
+  let resolve!: () => void;
+  const promise = new Promise<void>((resume) => {
+    resolve = resume;
+  });
+  let signalStarted!: () => void;
+  const started = new Promise<void>((resume) => {
+    signalStarted = resume;
+  });
   const verify = actions.provider.verify;
   actions.provider.verify = async (...args) => {
     await verify(...args);
