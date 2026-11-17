@@ -149,6 +149,27 @@ class ResearchScenario {
   }
 }
 
+/** Verify answered gates expose one durable artifact with the unmodified input. */
+function verifyClarificationEvidence(
+  activations: ActivationInput[],
+  component: string,
+  activity: string,
+  question: string,
+  answer: string,
+) {
+  const evidence = activations.map(({ task }) =>
+    task.evidence?.filter((path) => String(path).endsWith('clarification.json')),
+  );
+  assert.equal(evidence[0]?.length, 1);
+  assert.deepEqual(evidence[1], evidence[0]);
+  assert.deepEqual(JSON.parse(readFileSync(String(evidence[0]?.[0]), 'utf8')), {
+    component,
+    activity,
+    question,
+    answer,
+  });
+}
+
 for (const [owner, activity] of [
   ['direction', 'planning'],
   ['team', 'testing'],
@@ -166,6 +187,13 @@ for (const [owner, activity] of [
     );
     await fixture.activate(owner, activity, [{ kind: 'completed' }]);
     assert.equal(prompt.mock.callCount(), 1);
+    verifyClarificationEvidence(
+      fixture.activations.slice(1),
+      owner,
+      activity,
+      question.question,
+      answer,
+    );
     for (const activation of fixture.activations.slice(1)) {
       assert.deepEqual(activation.selection, { component: owner, activity });
       assert.deepEqual((activation.task.assignment as Record<string, unknown>).clarifications, [

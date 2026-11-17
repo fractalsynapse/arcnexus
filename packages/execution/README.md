@@ -16,7 +16,10 @@ request a contribution through the existing Direction path.
 The task journal retains each clarification with its requesting actor and
 position. The same activation resumes with the exact answer. Reopening the task
 reads the retained answer before calling the actor and preserves the candidate
-and its check evidence while a Reviewer question is open.
+and its check evidence while a Reviewer question is open. The host also gives
+independent review a protected reference to the original answer, together with
+its requesting component, activity and question. The evidence stays in task
+storage and is reused across attempts.
 
 Inspect exposes the captured operation IDs and tool descriptions for the selected
 activity. Each `checked-edit` call handles one file and returns its before and
