@@ -25,7 +25,7 @@ activities:
     standards: []
   testing:
     role: designer
-    profile: gpt-sol
+    profile: gpt-terra
     instructions:
     - Exercise ordered activity execution, correction and interruption through the public task boundary.
     operations:

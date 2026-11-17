@@ -25,7 +25,7 @@ activities:
     standards: []
   testing:
     role: designer
-    profile: gpt-sol
+    profile: gpt-terra
     instructions:
     - Exercise independent review, rejected criteria and evidence-linked lessons.
     operations:
@@ -51,7 +51,7 @@ activities:
     - readable-typescript
   assessment:
     role: reviewer
-    profile: gpt-astra
+    profile: gpt-sol
     instructions:
     - Bind the verdict to the assembled-candidate digest.
     - Return any transferable lesson with the execution evidence that supports it.

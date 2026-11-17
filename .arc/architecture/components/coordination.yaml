@@ -24,7 +24,7 @@ activities:
     standards: []
   testing:
     role: designer
-    profile: gpt-sol
+    profile: gpt-terra
     instructions:
     - Exercise stale writes, abrupt exit and retained position using the real record shape.
     operations:
