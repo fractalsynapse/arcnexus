@@ -32,6 +32,10 @@ Rerun the exact original goal from the same staging revision so the host can fin
 
 Keep the existing application storage so the journal can restore the answer and file receipt.
 
+An abrupt process exit can leave the task worktree on disk. Leave it in place and rerun the exact goal.
+
+ArcNexus checks the retained issue branch, removes the abandoned worktree, and creates a fresh worktree for the retry.
+
 ## Correct a refusal
 
 If a later path is refused, correct only that request or ask its owner for help.
