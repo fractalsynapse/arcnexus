@@ -22,7 +22,7 @@ export function decodeDirectorResponse(
     list(focus.constraints, 'plan.focus.constraints', string);
     list(plan.milestones, 'plan.milestones', milestone);
   } else if (standing && value.kind === 'satisfied') {
-    validateAssessment(value, standing);
+    return assessment(value, standing);
   } else {
     const expected = standing ? '"plan", "question", or "satisfied"' : '"plan" or "question"';
     throw new DirectorResponseError(`response.kind: expected ${expected}`);
@@ -31,7 +31,10 @@ export function decodeDirectorResponse(
 }
 
 /** Admit inaction only with an explicit rationale and the passing check observed for this goal. */
-function validateAssessment(value: Record<string, unknown>, standing: StandingGoalEvidence) {
+function assessment(
+  value: Record<string, unknown>,
+  standing: StandingGoalEvidence,
+): DirectionResult {
   if (standing.status !== 0)
     throw new DirectorResponseError(
       `Cannot satisfy a standing goal with owner check status ${standing.status}`,
@@ -39,12 +42,7 @@ function validateAssessment(value: Record<string, unknown>, standing: StandingGo
   string(value.summary, 'summary');
   if (!value.summary.trim())
     throw new DirectorResponseError('summary: explain why no engineering work is warranted');
-  if (
-    !Array.isArray(value.evidence) ||
-    value.evidence.length !== 1 ||
-    value.evidence[0] !== standing.log
-  )
-    throw new DirectorResponseError(`evidence: cite the current owner check log ${standing.log}`);
+  return { kind: 'satisfied', summary: value.summary, evidence: [standing.log] };
 }
 
 /** Check the fields consumed by milestone admission and scope validation. */
