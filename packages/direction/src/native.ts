@@ -75,6 +75,8 @@ function revisionInstructions(feedback?: Feedback): string {
     return 'Plan the smallest sufficient changes for the goal. Keep the scope, owner and acceptance explicit.';
   const preserve = 'Preserve the exact Focus, completed milestones in order, and completed Steps.';
   if (feedback.kind === 'supplier') {
+    if (feedback.failedCheck)
+      return `${preserve} Add a fresh correction milestone owned by feedback.owner before feedback.requester. Activate feedback.failedCheck.activity so the steward can diagnose the retained exit and log and correct the work. Reference the original engineering criteria. The host reruns the original check before the paused activity resumes.`;
     return `${preserve} Put runnable work for feedback.owner before feedback.requester so that work can finish before the paused activity resumes. Move the existing supplier if feedback.milestone links one, or reuse it if complete. Give distinct correction work its own milestone, even when the requester and supplier have the same owner.`;
   }
   return `${preserve} For a rejection, append correction milestones with the original owner, criterion ID and description.`;

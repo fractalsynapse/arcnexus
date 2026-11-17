@@ -22,6 +22,7 @@ import { codex } from './codex.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
 import { git } from './git.js';
 import { check } from './check.js';
+import { pendingStewardCheck, type StewardScope } from './steward-check.js';
 
 export type { CheckedEdit } from './edits.js';
 export { InvalidCodexResponse } from './codex.js';
@@ -234,8 +235,13 @@ export class HostTask implements TaskSession {
     this.journal.record({ owner, activity, edits: observed });
   }
 
+  /** Resolve an unresolved check from the task's retained steward observations. */
+  pendingCheck(scope: StewardScope) {
+    return pendingStewardCheck(this.journal.events(), scope);
+  }
+
   /** Run a declared check and record its real exit, duration and transcript. */
-  async check(id: string, signal: AbortSignal, owner?: string) {
+  async check(id: string, signal: AbortSignal, scope?: StewardScope) {
     if (!this.worktree) throw new Error('No task worktree is available for checks');
     const log = this.artifact(`${id}.log`);
     const result = await check(
@@ -243,11 +249,11 @@ export class HostTask implements TaskSession {
       this.worktree,
       this.config.common,
       id,
-      owner,
+      scope?.owner,
       log,
       signal,
     );
-    this.journal.record({ check: result });
+    this.journal.record({ check: result, scope });
     return result;
   }
 

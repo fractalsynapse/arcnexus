@@ -4,6 +4,9 @@
 
 ### Fixed
 
+- Return an unexpected steward check exit and its log to the accountable owner
+  through a correction milestone, and recheck before resuming (#518).
+
 - Record optional owner tests as inapplicable when the current worktree has no
   suite for that owner. Required assembled checks still run (#514).
 
