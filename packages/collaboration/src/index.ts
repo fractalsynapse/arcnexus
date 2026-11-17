@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import { setTimeout } from 'node:timers/promises';
 import { promisify } from 'node:util';
+import { retryRead } from './read.js';
 
 const run = promisify(execFile);
 
@@ -41,7 +42,7 @@ ${marker}`,
   async findIssue(taskID: string, goalID: string): Promise<string | undefined> {
     if (![taskID, goalID].every((id) => /^[a-f0-9]{64}$/.test(id)))
       throw new Error('Invalid goal or task identity');
-    const raw = await this.command([
+    const raw = await this.query([
       'issue',
       'list',
       '--state',
@@ -63,7 +64,7 @@ ${marker}`,
   async verifyIssue(issue: string) {
     if (!/^\d+$/.test(issue)) throw new Error('Invalid recorded GitHub issue');
     const observed = JSON.parse(
-      await this.command(['api', `repos/${this.repository}/issues/${issue}`]),
+      await this.query(['api', `repos/${this.repository}/issues/${issue}`]),
     );
     if (String(observed.number) !== issue || observed.pull_request)
       throw new Error(`GitHub issue #${issue} could not be verified`);
@@ -90,7 +91,7 @@ ${marker}`,
     const owner = this.repository.split('/')[0];
     const head = encodeURIComponent(`${owner}:${branch}`);
     const matches: ProviderPull[] = JSON.parse(
-      await this.command([
+      await this.query([
         'api',
         `repos/${this.repository}/pulls?head=${head}&state=all&per_page=100`,
       ]),
@@ -141,10 +142,10 @@ ${marker}`,
   async confirm(commit: string, tree: string, target: string) {
     if (!/^[a-f0-9]{40}$/.test(commit)) throw new Error('Invalid GitHub merge identity');
     const entry = JSON.parse(
-      await this.command(['api', `repos/${this.repository}/commits/${commit}`]),
+      await this.query(['api', `repos/${this.repository}/commits/${commit}`]),
     );
     const comparison = JSON.parse(
-      await this.command([
+      await this.query([
         'api',
         `repos/${this.repository}/compare/${commit}...${encodeURIComponent(target)}`,
       ]),
@@ -229,7 +230,7 @@ ${marker}`,
   /** Read provider facts rather than trusting local push or merge command completion. */
   private async observe(pr: string): Promise<Pull> {
     return JSON.parse(
-      await this.command([
+      await this.query([
         'pr',
         'view',
         pr,
@@ -237,6 +238,11 @@ ${marker}`,
         'state,headRefOid,baseRefName,reviewDecision,mergeCommit,statusCheckRollup',
       ]),
     );
+  }
+
+  /** Retry transport failures only at explicit read-only provider call sites. */
+  private query(args: string[]) {
+    return retryRead(() => this.command(args), this.signal);
   }
 
   /** Run a scoped provider action without interpolating model content into a shell. */

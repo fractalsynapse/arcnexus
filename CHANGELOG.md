@@ -12,6 +12,8 @@
 - Carry each correction finding directly into the assigned steward activity
   and keep Director correction plans scoped to the needed steps. Refresh cited
   assembly failures against the current checkpoint before correction (#537).
+- Retry transient GitHub reads in the same task, including post-merge
+  confirmation (#541).
 - Reassess an unchanged candidate when verified owner evidence changes and
   stop repeated reviews with equivalent inputs (#539).
 - Include the host's retained owner-check exit records in independent review
