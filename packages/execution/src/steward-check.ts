@@ -19,7 +19,10 @@ interface ObservedRecovery {
 }
 
 /** Finds the latest recorded check and keeps it pending until its expectation passes. */
-function recoverObservedCheck(recorded: readonly CheckEvent[], scope: StewardScope): ObservedRecovery {
+function recoverObservedCheck(
+  recorded: readonly CheckEvent[],
+  scope: StewardScope,
+): ObservedRecovery {
   const event = recorded.findLast(
     ({ check, scope: observed }) =>
       observed?.owner === scope.owner &&
@@ -54,14 +57,16 @@ function recoverFeedbackCheck(recorded: readonly CheckEvent[], scope: StewardSco
   if (feedback?.kind !== 'supplier' || !feedback.failedCheck) return;
 
   const failed = feedback.failedCheck;
-  const passed = recorded.slice(index + 1).some(
-    ({ check, scope: observed }) =>
-      observed?.owner === scope.owner &&
-      observed.activity === scope.activity &&
-      check?.id === failed.id &&
-      typeof check.status === 'number' &&
-      (check.status === 0) === (failed.expected === 'pass'),
-  );
+  const passed = recorded
+    .slice(index + 1)
+    .some(
+      ({ check, scope: observed }) =>
+        observed?.owner === scope.owner &&
+        observed.activity === scope.activity &&
+        check?.id === failed.id &&
+        typeof check.status === 'number' &&
+        (check.status === 0) === (failed.expected === 'pass'),
+    );
   return passed ? undefined : failed;
 }
 

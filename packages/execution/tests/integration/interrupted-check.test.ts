@@ -16,7 +16,7 @@ import {
   type StewardCheckFailure,
 } from '../../../direction/src/index.js';
 import { Workflow, type TaskEvent, type WorkflowServices } from '../../../workflow/src/index.js';
-import { Execution, HostTask, hostTask, steward } from '../../src/index.js';
+import { Execution, HostTask, steward } from '../../src/index.js';
 
 const remote = 'https://github.com/fixture/interrupted-check.git';
 const criterion = { id: 'fixed', description: 'The checked contribution survives restart' };
@@ -35,7 +35,11 @@ const plan: Plan = {
       steps: activities.map((activity) => ({
         activity,
         ...(['implementation', 'review'].includes(activity)
-          ? { checklist: [{ id: activity, criteria: [criterion.id], expected: 'Retain the repair' }] }
+          ? {
+              checklist: [
+                { id: activity, criteria: [criterion.id], expected: 'Retain the repair' },
+              ],
+            }
           : { checklist: [], inapplicable: 'Outside this fixture' }),
       })),
     },
@@ -239,8 +243,14 @@ class InterruptedCheck {
     assert(task.worktree);
     const corrected = readFileSync(join(task.worktree, 'fixture.txt'), 'utf8') === 'corrected';
     const status = corrected
-      ? this.expected === 'pass' ? 0 : 37
-      : this.expected === 'fail' ? 0 : this.phase === 'interrupt' ? 37 : 43;
+      ? this.expected === 'pass'
+        ? 0
+        : 37
+      : this.expected === 'fail'
+        ? 0
+        : this.phase === 'interrupt'
+          ? 37
+          : 43;
     const log = task.store('owner-tests.log', `fixture diagnostic: exit ${status}\n`);
     const check = {
       id,
@@ -284,15 +294,21 @@ class InterruptedCheck {
       const assignment = data.assignment as { failedCheck?: StewardCheckFailure };
       assert.deepEqual(assignment.failedCheck, pending);
       assert(data.evidence?.includes(pending.log));
-      assert.equal(readFileSync(pending.log, 'utf8'), `fixture diagnostic: exit ${pending.status}\n`);
+      assert.equal(
+        readFileSync(pending.log, 'utf8'),
+        `fixture diagnostic: exit ${pending.status}\n`,
+      );
     }
-    const edits = this.phase === 'correct'
-      ? [{
-          path: 'fixture.txt',
-          expected: createHash('sha256').update('checked').digest('hex'),
-          content: 'corrected',
-        }]
-      : [];
+    const edits =
+      this.phase === 'correct'
+        ? [
+            {
+              path: 'fixture.txt',
+              expected: createHash('sha256').update('checked').digest('hex'),
+              content: 'corrected',
+            },
+          ]
+        : [];
     return { kind: 'completed', edits, checks: [] };
   }
 
@@ -349,7 +365,10 @@ for (const expected of ['pass', 'fail'] as const) {
     const scenario = new InterruptedCheck(t, expected);
     await interrupt(scenario);
     await scenario.run('repeat');
-    assert.equal(scenario.beforeRetry.some((event) => 'feedback' in event), false);
+    assert.equal(
+      scenario.beforeRetry.some((event) => 'feedback' in event),
+      false,
+    );
     const first = scenario.checks[0]!;
     assert.deepEqual(scenario.recovered[0], {
       id: 'owner-tests',
@@ -368,7 +387,10 @@ for (const expected of ['pass', 'fail'] as const) {
     assert.equal(repeated.kind, 'blocked', JSON.stringify(repeated));
     const repeatedStatus = expected === 'pass' ? 43 : 0;
     assert.match(repeated.reason, new RegExp(`owner-tests.*${repeatedStatus}`));
-    assert.deepEqual(scenario.checks.map(({ status }) => status), [expected === 'pass' ? 37 : 0, repeatedStatus]);
+    assert.deepEqual(
+      scenario.checks.map(({ status }) => status),
+      [expected === 'pass' ? 37 : 0, repeatedStatus],
+    );
     assert(repeated.evidence.includes(scenario.checks[0]!.log));
     assert(repeated.evidence.includes(scenario.checks[1]!.log));
     assert.deepEqual(scenario.gates, []);
