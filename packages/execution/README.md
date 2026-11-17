@@ -198,6 +198,54 @@ records intent and retained evidence only; it declares no operations and does no
 claim that the precedence regression, correction or behavioral acceptance has
 passed.
 
+## Post-format function correction
+
+The distinct Execution-owned `steward-check-post-format-function-correction`
+milestone records the correction required by the
+[retained activity diff][post-format-diff] and [self-review feedback][post-format-review].
+The feedback milestone and requester both identify the existing
+`steward-check-assembled-quality-correction` milestone. Preserve that milestone
+and its completed Steps, and insert this runnable supplier correction before its
+paused review. Preserve the existing Focus, completed milestones in order,
+completed Steps and recorded successor. The director performs no edits and grants
+itself no write authority.
+
+The reviewed correction left
+`tests/integration/check-observation-precedence.test.ts` unchanged despite its
+recorded formatting rejection and formatted `tests/integration/checkpoint.test.ts`
+instead. After formatting, functions in
+`tests/integration/interrupted-check.test.ts`, including `observeCheck` and
+`retryProposal`, exceed the TypeScript standard's 30-physical-line limit.
+
+Acceptance `post-format-function-compliance` requires correcting the remaining
+formatting failure and meaningfully separating the oversized functions into
+behavior-preserving responsibilities with explanatory headers. Inspect physical
+lengths after formatting, including comments and blank lines. Preserve every
+recovery assertion, captured authority and existing check definition. All changes
+remain within `packages/execution`; the locked contracts remain unchanged.
+
+Acceptance `post-format-correction-evidence` requires fresh authorized Execution
+owner-suite evidence and fresh host observations of all required assembled checks,
+including repository format and lint, for the corrected candidate. Retain exact
+exit statuses and readable logs alongside earlier failed observations. The retained
+`91-6-owner-tests.log` reports 17 passes, zero failures and two native-confinement
+skips; it does not establish passing assembled format or lint checks. Preserve the
+prior format and lint failures, both exit 1, and all recovery and checkpoint
+characterization. Report skips and evidence limitations, including simulated
+boundaries that do not establish native confinement, hosted CI, live inference or
+actual staging integration.
+
+An unresolved required failure leaves the correction pending with checked edits,
+its exact exit status and readable evidence preserved. Resume the existing
+assembled-quality milestone at its paused review only after this correction
+passes, without replaying completed Steps or replacing the recorded successor.
+The checkpoint and workspace invariants above continue to apply. Independent
+verification, required CI and review, and staging gates remain required. This
+documentation activity declares no operations and establishes intent only.
+
+[post-format-diff]: /home/adrian/.local/state/arcnexus/8b40ccad5a575a6294e2358bad463bbffd81c5c2af4eac5f7c63f83a41af3f4c/evidence/420da43f22b23e9b563b916913ddc63897341bc719a2713bf569b593233f288f/91-7-activity.diff
+[post-format-review]: /home/adrian/.local/state/arcnexus/8b40ccad5a575a6294e2358bad463bbffd81c5c2af4eac5f7c63f83a41af3f4c/evidence/420da43f22b23e9b563b916913ddc63897341bc719a2713bf569b593233f288f/91-8-codex.jsonl
+
 ## Assembled quality rejection
 
 The appended Execution-owned `steward-check-assembled-quality-correction`
