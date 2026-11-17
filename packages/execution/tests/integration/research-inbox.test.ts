@@ -30,6 +30,7 @@ const signal = new AbortController().signal;
 /** Exercise the native task inbox with a scripted Agent and the real journal. */
 class ResearchScenario {
   readonly activations: ActivationInput[] = [];
+  clarify?: () => Promise<string | undefined>;
   private readonly base = mkdtempSync(join(tmpdir(), 'arcnexus-research-'));
   private readonly root = join(this.base, 'repo');
   private readonly storage = join(this.base, 'state');
@@ -123,6 +124,7 @@ class ResearchScenario {
       journal,
     );
     try {
+      Object.assign(task, { ask: this.clarify });
       return await use(task);
     } finally {
       task.finish({ kind: 'blocked', reason: 'Retain fixture observations', evidence: [] });
@@ -145,6 +147,32 @@ class ResearchScenario {
     if (reply instanceof Error) throw reply;
     return reply;
   }
+}
+
+for (const [owner, activity] of [
+  ['direction', 'planning'],
+  ['team', 'testing'],
+  ['reviewer', 'assessment'],
+] as const) {
+  test(`${owner} receives the exact recorded clarification after interruption`, async (t) => {
+    const fixture = new ResearchScenario(t);
+    const question = { kind: 'question', question: 'Which architecture applies?' };
+    const answer = '  Use the current contract.\n\n  Apply only its second clause.  ';
+    const prompt = t.mock.fn(async () => answer);
+    fixture.clarify = prompt;
+    await assert.rejects(
+      fixture.activate(owner, activity, [question, new Error('Interrupted')]),
+      /Interrupted/,
+    );
+    await fixture.activate(owner, activity, [{ kind: 'completed' }]);
+    assert.equal(prompt.mock.callCount(), 1);
+    for (const activation of fixture.activations.slice(1)) {
+      assert.deepEqual(activation.selection, { component: owner, activity });
+      assert.deepEqual((activation.task.assignment as Record<string, unknown>).clarifications, [
+        { question: question.question, answer },
+      ]);
+    }
+  });
 }
 
 for (const [owner, activity] of [

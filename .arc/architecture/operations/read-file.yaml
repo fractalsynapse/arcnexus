@@ -1,0 +1,4 @@
+id: read-file
+kind: tool
+category: project-tool
+tool: read

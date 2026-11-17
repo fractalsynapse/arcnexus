@@ -15,14 +15,23 @@ activities:
     profile: gpt-astra
     instructions:
     - Investigate external claims relevant to the captured candidate and criteria. Separate external authority from observed task evidence.
-    operations: []
+    operations:
+    - read-file
+    - list-files
     standards: []
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
     - Document the distinction between verdicts, lessons and approved standards.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   testing:
     role: designer
@@ -30,6 +39,13 @@ activities:
     instructions:
     - Exercise independent review, rejected criteria and evidence-linked lessons.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -39,6 +55,13 @@ activities:
     instructions:
     - Return the projected verdict and lesson records through the shared Agent interface.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -47,7 +70,12 @@ activities:
     profile: gpt-sol
     instructions:
     - Check the plugin change without issuing the task’s independent verdict.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
     standards:
     - readable-typescript
   assessment:
@@ -56,5 +84,9 @@ activities:
     instructions:
     - Bind the verdict to the assembled-candidate digest.
     - Return any transferable lesson with the execution evidence that supports it.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
     standards: []

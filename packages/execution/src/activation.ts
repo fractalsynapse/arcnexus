@@ -9,6 +9,9 @@ import { candidateDiff } from './git.js';
 import { verifyNativeGuidance } from './host-config.js';
 import type { HostTask } from './index.js';
 import { ResearchInbox } from './research.js';
+import { Clarifications } from './clarifications.js';
+import { ActivationTools } from './activation-tools.js';
+import { LocalMcp } from './mcp.js';
 
 /** Activate and resume an actor with the captured workspace and native request builder. */
 export function activateActor(
@@ -31,19 +34,54 @@ export function activateActor(
     (selected, input) =>
       agent.activate(
         { capture, selection: selected, task: { ...input, goal, worktree } },
-        (view, cancellation) => invokeCodex(task, view, cancellation),
+        (view, cancellation) => invokeCodex(task, view, input, cancellation),
         signal,
       ),
     signal,
   );
-  return inbox.run(selection, { ...data, evidence });
+  return new Clarifications(task, selection, signal).run({ ...data, evidence }, (input) =>
+    inbox.run(selection, input),
+  );
 }
 
 /** Store a host-generated response schema next to the protected transcript. */
-function invokeCodex(task: HostTask, view: AgentInspection, signal: AbortSignal) {
+async function invokeCodex(
+  task: HostTask,
+  view: AgentInspection,
+  input: TaskContext,
+  signal: AbortSignal,
+) {
   const { outputSchema } = view.request.options;
   const schema = outputSchema
     ? task.store('codex-output-schema.json', JSON.stringify(outputSchema))
     : undefined;
-  return codex(task.config.executable, view, task.artifact('codex.jsonl'), signal, schema);
+  const actions = new ActivationTools(task, view, input, signal);
+  if (actions.requestedHandoff) return actions.finish(undefined);
+  const server = localTools(task, view, actions);
+  const url = await server.start();
+  try {
+    const reply = await codex(task.config.executable, view, task.artifact('codex.jsonl'), signal, {
+      schema,
+      url,
+    });
+    return actions.finish(reply);
+  } catch (error) {
+    if (!signal.aborted && actions.requestedHandoff) return actions.finish(undefined);
+    throw error;
+  } finally {
+    await server.close();
+  }
+}
+
+/** Stamp each tool observation with the native activation identity. */
+function localTools(task: HostTask, view: AgentInspection, actions: ActivationTools) {
+  const { tools } = view.request.options;
+  return new LocalMcp(
+    tools,
+    (tool, args) => actions.invoke(tool, args),
+    (name, refusal) =>
+      task.note({
+        operation: { component: view.component, activity: view.activity, name, refusal },
+      }),
+  );
 }

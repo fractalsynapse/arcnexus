@@ -56,6 +56,7 @@ export type RevisionFeedback =
       requester: string;
       owner: string;
       reason: string;
+      question?: string;
       evidence: readonly string[];
       failedCheck?: StewardCheckFailure;
     }
@@ -201,22 +202,22 @@ export function validateRevision(
 }
 
 /** Confirm a linked contribution is complete or runnable work is ahead of the paused milestone. */
-export function supplierIsScheduled(
+export function scheduledSupplier(
   before: Plan,
   after: Plan,
   feedback: Extract<Feedback, { kind: 'supplier' }>,
   completed: number,
   positions: ReadonlyMap<string, number>,
-): boolean {
+) {
   const linked = before.milestones.findIndex(
     ({ id }) => id === feedback.milestone && id !== feedback.requester,
   );
-  if (linked >= 0 && before.milestones[linked]?.owner !== feedback.owner) return false;
-  if (linked >= 0 && linked < completed) return true;
+  if (linked >= 0 && before.milestones[linked]?.owner !== feedback.owner) return;
+  if (linked >= 0 && linked < completed) return before.milestones[linked]?.id;
 
   const requester = after.milestones.findIndex(({ id }) => id === feedback.requester);
-  if (requester < completed) return false;
-  return after.milestones.slice(completed, requester).some(({ id, owner, steps }) => {
+  if (requester < completed) return;
+  return after.milestones.slice(completed, requester).find(({ id, owner, steps }) => {
     if (owner !== feedback.owner || (linked >= 0 && id !== feedback.milestone)) return false;
     if (feedback.failedCheck && before.milestones.some((milestone) => milestone.id === id))
       return false;
@@ -224,7 +225,7 @@ export function supplierIsScheduled(
       if (activity === 'release' || inapplicable) return false;
       return !feedback.failedCheck || activity === feedback.failedCheck.activity;
     });
-  });
+  })?.id;
 }
 
 export { direct, track } from './native.js';

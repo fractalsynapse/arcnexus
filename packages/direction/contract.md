@@ -12,7 +12,9 @@ accepted work and escalation. After plan acceptance, Direction uses Collaboratio
 to find or create the hosted issue for the task identity, then passes the issue to
 Execution for workspace preparation. The Director model remains read-only. Choose one
 accountable owner per milestone. A request links existing accepted work or causes
-the director to place a supplier milestone before dependent work. Execute the
+the director to place a supplier milestone before dependent work. A request for an
+answer links the complete recorded supplier reply to the original requesting
+milestone before it resumes. Execute the
 sequence in one lane. Stewards can propose corrections and escalations. The
 director decides sequencing and preserves the original acceptance and authority.
 
@@ -39,7 +41,7 @@ production directives are deferred. One independent verdict covers the assembled
 | DI-9 | Direction cannot write the registry or any locked contract file; the checked-edit refusal is observed, not merely asserted in the prompt. |
 | DI-11 | Director input uses the bounded context from Architecture Model and names what was withheld. |
 | DI-12 | Removing a prohibition paragraph that the host enforces leaves every scenario passing; removing an enforced check fails one. |
-| DI-13 | A human clarification mid-milestone is recorded with its answer and continues from the recorded position. |
+| DI-13 | A human clarification records its requesting actor and position. The original activity receives the complete recorded answer on continuation, including after restart without a duplicate prompt. |
 | DI-14 | The plan render after `revise` differs from the previous render only in the fields the observation changed, so plan evolution is reviewable as a diff. |
 | DI-15 | The same planner handles the initial sequence and a supplier request without a separate admission or retirement process. |
 | DI-16 | Two goals in the same project cannot both be planned: the lane is busy, and the second is refused rather than queued. |

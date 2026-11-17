@@ -38,7 +38,7 @@ export async function assess(
 function responseShape(candidate: Candidate, checks: unknown) {
   return {
     instructions:
-      'Read the candidate diff and trusted check evidence to assess the engineering criteria and engineering goal. The ownerChecks field contains exact host operations and statuses. An observation with a candidate tree and captured operation binds to that checkpoint. Compare its tree with the candidate being reviewed. Owner checks run in a networkless overlay. Observations before the last edit remain historical. The host observes GitHub checks, configured PR review, and the staging merge after independent acceptance. Treat those Release items as future delivery observations. Return one JSON object without code fences. Cite paths from the evidence list.',
+      'Read the candidate diff and trusted check evidence to assess the engineering criteria and engineering goal. The ownerChecks field contains exact host operations and statuses. An observation with a candidate tree and captured operation binds to that checkpoint. Compare its tree with the candidate being reviewed. Owner checks run in a networkless overlay. Observations before the last edit remain historical. The host observes GitHub checks, configured PR review, and the staging merge after independent acceptance. Treat those Release items as future delivery observations. Use ask-question if human clarification is required. Once the assessment is complete, return one JSON verdict without code fences. Cite paths from the evidence list.',
     candidate: candidate.digest,
     ownerEvidenceDigest: candidate.ownerEvidenceDigest,
     checks,

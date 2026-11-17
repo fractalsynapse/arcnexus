@@ -14,14 +14,23 @@ activities:
     profile: gpt-astra
     instructions:
     - Resolve the verified candidate identity and the provider observation needed to deliver it.
-    operations: []
+    operations:
+    - read-file
+    - list-files
     standards: []
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
     - State the staging gates and failure behavior at the delivery boundary.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     standards: []
   testing:
     role: designer
@@ -29,6 +38,13 @@ activities:
     instructions:
     - Exercise a wrong candidate, changed upstream state, pending checks and recorded merge.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -38,6 +54,13 @@ activities:
     instructions:
     - Carry the verified candidate through the configured staging route and retain its attribution.
     operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
     - owner-tests
     standards:
     - readable-typescript
@@ -46,7 +69,12 @@ activities:
     profile: gpt-sol
     instructions:
     - Check exact candidate identity, observed gates, and refusal to perform protected actions.
-    operations: []
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
     standards:
     - readable-typescript
   release:

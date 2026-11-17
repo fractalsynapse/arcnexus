@@ -120,6 +120,7 @@ export class Execution {
 
 /** Carry the admitted authority and one worktree through the workflow. */
 export class HostTask implements TaskSession {
+  ask?: TaskSession['ask'];
   readonly capture: Capture;
   readonly evidence: string[] = [];
   worktree?: string;
@@ -394,6 +395,7 @@ export class HostTask implements TaskSession {
       this.note({ owner, activity, editIntent }),
     );
     this.journal.record({ owner, activity, edits: observed });
+    return observed;
   }
 
   /** Resolve an unresolved check from the task's retained steward observations. */

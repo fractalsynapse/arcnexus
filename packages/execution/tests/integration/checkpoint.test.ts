@@ -10,6 +10,12 @@ import { Coordination } from '../../../coordination/src/index.js';
 import { activities, track, type Milestone, type Plan } from '../../../direction/src/index.js';
 import { Workflow, type WorkflowServices } from '../../../workflow/src/index.js';
 import { Execution, HostTask, hostTask } from '../../src/index.js';
+import { ActivationTools } from '../../src/activation-tools.js';
+
+const editTool = {
+  name: 'checked-edit',
+  handler: 'edit',
+} as const;
 
 const remote = 'https://github.com/fixture/repo.git';
 const signal = new AbortController().signal;
@@ -99,7 +105,10 @@ class RecoveryScenario {
   private plans = 0;
 
   /** Build one real local Git base and isolated application storage. */
-  constructor(t: TestContext) {
+  constructor(
+    t: TestContext,
+    private readonly useTools = false,
+  ) {
     const directory = mkdtempSync(join(tmpdir(), 'arcnexus-checkpoint-'));
     this.root = join(directory, 'project');
     this.storage = join(directory, 'state');
@@ -192,15 +201,38 @@ class RecoveryScenario {
   }
 
   /** Apply owned edits through the production path and observe the recovered first contribution. */
-  private edit(task: HostTask, id: string, step: string) {
+  private async edit(task: HostTask, id: string, step: string) {
     this.activations.push(id);
     if (id === 'second') assert(task.evidence.includes(this.artifacts[0]!));
     this.artifacts.push(task.store(`${id}.log`, id));
     assert(task.worktree);
     if (id === 'second')
       assert.equal(readFileSync(join(task.worktree, 'first.txt'), 'utf8'), 'first');
-    task.edits('owner', step, [{ path: `${id}.txt`, expected: null, content: id }]);
+    if (this.useTools) await this.editFiles(task, id, step);
+    else task.edits('owner', step, [{ path: `${id}.txt`, expected: null, content: id }]);
     return { kind: 'completed' as const, evidence: [] };
+  }
+
+  /** Exercise a retained file receipt, a refused file, and a second independent write. */
+  private async editFiles(task: HostTask, id: string, step: string) {
+    const actions = new ActivationTools(
+      task,
+      { component: 'owner', activity: step },
+      { milestone: id },
+      signal,
+    );
+    const first = { path: `${id}.txt`, expected: null, content: id };
+    const receipt = await actions.invoke(editTool, first);
+    assert.deepEqual(await actions.invoke(editTool, first), receipt);
+    if (id !== 'first') return;
+    await assert.rejects(
+      actions.invoke(editTool, { ...first, path: 'base.txt' }),
+      /captured owners: other/,
+    );
+    assert.equal(readFileSync(join(task.worktree!, first.path), 'utf8'), id);
+    assert.equal(readFileSync(join(task.worktree!, 'base.txt'), 'utf8'), 'base');
+    await actions.invoke(editTool, { ...first, path: 'extra.txt' });
+    assert.throws(() => actions.finish({ kind: 'completed', edits: [first] }), /mapped MCP tools/);
   }
 
   /** Initialize an exact base and two paths owned by one fixture steward. */
@@ -219,9 +251,10 @@ class RecoveryScenario {
       components: {
         owner: {
           id: 'owner',
-          owns: ['first.txt', 'second.txt'],
+          owns: ['first.txt', 'second.txt', 'extra.txt'],
           activities: { implementation: { profile: 'fixture' } },
         },
+        other: { id: 'other', owns: ['base.txt'], activities: {} },
       },
     } as unknown as Capture;
   }
@@ -250,5 +283,16 @@ test('retry confirms a lost checkpoint push, reconstructs the worktree and resum
   assert.equal(scenario.remote.pushes.length, 2);
   assert.equal(dirname(scenario.artifacts[0]!), dirname(scenario.artifacts[1]!));
   assert.notEqual(scenario.artifacts[0], scenario.artifacts[1]);
+  scenario.checkCleanup();
+});
+
+test('single-file tool checkpoints survive a refused write and interrupted push', async (t) => {
+  const scenario = new RecoveryScenario(t, true);
+  const interrupted = await scenario.run();
+  assert.equal(interrupted.kind, 'failed');
+  assert.match(interrupted.reason, /Checkpoint push reply lost/);
+  assert.equal((await scenario.run()).kind, 'merged');
+  assert.deepEqual(scenario.activations, ['first', 'first', 'second']);
+  assert.equal(scenario.remote.pushes.length, 3);
   scenario.checkCleanup();
 });

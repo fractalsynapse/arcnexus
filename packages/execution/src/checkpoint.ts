@@ -25,11 +25,18 @@ export async function checkpoint(
 ) {
   const save = saveCheckpoint(task, activity);
   if (save) await reconcileCheckpoint(task, signal);
-  else task.note({ activation: activity });
+  else {
+    if (task.branch && pendingCheckpoints(task).length) await reconcileCheckpoint(task, signal);
+    task.note({ activation: activity });
+  }
 }
 
 /** Protect checked edits before a workspace is removed, including failure during an operation. */
-export function saveCheckpoint(task: HostTask, activity?: ActivityCheckpoint) {
+export function saveCheckpoint(
+  task: HostTask,
+  activity?: ActivityCheckpoint,
+  receipt?: Record<string, unknown>,
+) {
   const { worktree, branch, issue } = task;
   if (!worktree || !branch || !issue || !git(worktree, 'status', '--porcelain')) return undefined;
   validateCheckedChanges(task, worktree);
@@ -50,7 +57,7 @@ export function saveCheckpoint(task: HostTask, activity?: ActivityCheckpoint) {
     task.observations<CheckpointEvent>().findLast(({ checkpoint }) => checkpoint)?.checkpoint
       ?.head ?? '';
   const saved = { head, parent, previous, activity };
-  task.note({ checkpoint: saved });
+  task.note({ checkpoint: saved, ...receipt });
   git(worktree, 'update-ref', `refs/heads/${branch}`, head, parent);
   return saved;
 }
@@ -60,14 +67,12 @@ export async function reconcileCheckpoint(task: HostTask, signal: AbortSignal) {
   const { branch } = task;
   if (!branch) throw new Error('Checkpoint requires an issue branch');
   const events = task.observations<CheckpointEvent>();
-  const index = events.findLastIndex(({ confirmed }) => confirmed);
-  const last = events[index]?.confirmed;
-  const pending = events
-    .slice(index + 1)
-    .flatMap(({ checkpoint }) => (checkpoint ? [checkpoint] : []));
+  const last = events.findLast(({ confirmed }) => confirmed)?.confirmed;
+  const pending = pendingCheckpoints(task);
   if (pending.length) {
+    const latest = pending.at(-1)!;
     for (const saved of pending) {
-      await observeCheckpoint(task, branch, saved, signal);
+      await observeCheckpoint(task, branch, saved, signal, latest.head);
       task.note({
         confirmed: saved.head,
         ...(saved.activity ? { activation: saved.activity } : {}),
@@ -81,19 +86,28 @@ export async function reconcileCheckpoint(task: HostTask, signal: AbortSignal) {
     throw new Error(`Untracked issue branch already exists: ${branch}`);
 }
 
+/** Find unpublished checkpoints, including single-file saves within an activity. */
+function pendingCheckpoints(task: HostTask) {
+  const events = task.observations<CheckpointEvent>();
+  return events
+    .slice(events.findLastIndex(({ confirmed }) => confirmed) + 1)
+    .flatMap(({ checkpoint }) => (checkpoint ? [checkpoint] : []));
+}
+
 /** Observe the exact ref, then use its observed head as the lease for an authorized push. */
 async function observeCheckpoint(
   task: HostTask,
   branch: string,
   saved: CommitCheckpoint,
   signal: AbortSignal,
+  latest = saved.head,
 ) {
   const provider = task.provider(signal);
   const observed = await provider.remoteHead(branch);
   if (observed && observed !== saved.head && observed !== saved.previous)
     throw new Error(`Remote checkpoint changed for ${branch}`);
   if (observed === saved.head) ensureObject(task, branch, saved.head);
-  ensureLocal(task, branch, saved);
+  ensureLocal(task, branch, saved, latest);
   if (observed === saved.head) return;
   await provider.push(task.capture.source.root, branch, saved.head, observed);
   if ((await provider.remoteHead(branch)) !== saved.head)
@@ -113,11 +127,13 @@ function ensureObject(task: HostTask, branch: string, commit: string) {
 }
 
 /** Reattach a saved commit only when the local reference is absent, unchanged, or its recorded parent. */
-function ensureLocal(task: HostTask, branch: string, checkpoint: CommitCheckpoint) {
+function ensureLocal(task: HostTask, branch: string, checkpoint: CommitCheckpoint, latest: string) {
   const root = task.capture.source.root;
   const ref = `refs/heads/${branch}`;
   const current = git(root, 'for-each-ref', '--format=%(objectname)', ref);
   if (current === checkpoint.head) return;
+  if (current === latest && git(root, 'merge-base', current, checkpoint.head) === checkpoint.head)
+    return;
   if (current && current !== checkpoint.parent)
     throw new Error(`Local checkpoint branch changed for ${branch}`);
   git(root, 'update-ref', ref, checkpoint.head, current || '0'.repeat(40));

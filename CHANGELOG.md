@@ -6,6 +6,8 @@
 
 - Let the Director, Reviewer and stewards request optional research in the
   active task and reuse component research reports (#554).
+- Resume requesting agents with recorded answers and enforce activity-scoped
+  local MCP tools for checked edits and other project operations (#562).
 
 ## [0.2.0]
 
