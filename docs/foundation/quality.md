@@ -21,6 +21,10 @@ or `tests/acceptance`. The test runner derives the level and owner from that pat
 and the catalog. Run `npm test` for all suites or `npm test -- <owner>` for one
 owner. Formatting and lint fixes take explicit owner paths.
 
+Before running the optional `owner-tests` operation, ArcNexus checks for
+suites in the steward's current worktree. An owner with no suites gets an
+inapplicability record. Assembled verification still runs its required checks.
+
 ## ESLint rule regressions
 
 For rejected input, assert both the rule ID and message ID. For valid input,
