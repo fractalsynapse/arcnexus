@@ -374,8 +374,7 @@ export class HostTask implements TaskSession {
     const log = this.artifact('codex.jsonl');
     return agent.activate(
       { capture: this.capture, selection, task: { ...data, evidence, goal: this.goal, worktree } },
-      (view, cancellation) =>
-        codex(this.config.executable, view, log, cancellation, this.formatPreview?.root),
+      (view, cancellation) => codex(this.config.executable, view, log, cancellation),
       signal,
     );
   }
@@ -420,7 +419,7 @@ export class HostTask implements TaskSession {
   }
 
   /** Allocate a recorded evidence name before starting a native operation. */
-  private artifact(name: string) {
+  artifact(name: string) {
     const directory = this.evidenceDirectory();
     mkdirSync(directory, { recursive: true, mode: 0o700 });
     if (realpathSync(directory) !== directory) throw new Error('Evidence directory is an alias');

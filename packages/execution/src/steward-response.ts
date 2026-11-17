@@ -1,11 +1,11 @@
 import type { ActivityOutcome } from '../../workflow/src/index.js';
 import type { StewardCheckFailure } from '../../direction/src/index.js';
-import type { CheckedEdit } from './edits.js';
+import type { ProposedEdit } from './formatter.js';
 
 type CheckRequest = Pick<StewardCheckFailure, 'id' | 'expected'>;
 
 export type StewardResult =
-  | { kind: 'completed'; edits: CheckedEdit[]; checks: CheckRequest[] }
+  | { kind: 'completed'; edits: ProposedEdit[]; checks: CheckRequest[] }
   | Exclude<ActivityOutcome, { kind: 'completed' }>;
 
 /** Distinguish invalid proposals from failures after the host starts executing them. */
@@ -50,7 +50,7 @@ function supplier(value: Record<string, unknown>): StewardResult {
 }
 
 /** Identify misplaced check records and validate checked-edit fields before the host writes. */
-function edits(value: unknown): CheckedEdit[] {
+function edits(value: unknown): ProposedEdit[] {
   if (!Array.isArray(value))
     throw new StewardResponseError('response.edits: expected an array, even when empty');
   return value.map((entry, index) => {
@@ -64,10 +64,35 @@ function edits(value: unknown): CheckedEdit[] {
     const { expected, content } = edit;
     if (expected !== null && (typeof expected !== 'string' || !/^[a-f0-9]{64}$/.test(expected)))
       throw new StewardResponseError(`response.${at}.expected: expected a SHA-256 or null`);
+    if ('transform' in edit) {
+      if ('content' in edit || expected === null)
+        throw new StewardResponseError(
+          `response.${at}: a transform requires an existing file hash and no content field`,
+        );
+      return { path, expected, transform: transform(edit.transform, at) };
+    }
     if (content !== null && typeof content !== 'string')
       throw new StewardResponseError(`response.${at}.content: expected replacement text or null`);
     return { path, expected, content };
   });
+}
+
+/** Require a formatter or a nonempty exact text substitution. */
+function transform(value: unknown, path: string) {
+  const field = `${path}.transform`;
+  const operation = object(value, field);
+  const replace =
+    operation.replace === undefined ? undefined : object(operation.replace, `${field}.replace`);
+  const format = operation.format === true;
+  if (!format && !replace)
+    throw new StewardResponseError(`response.${field}: expected format true or a replacement`);
+  if (!replace) return { format };
+  const before = required(replace.before, `${field}.replace.before`);
+  if (typeof replace.after !== 'string')
+    throw new StewardResponseError(
+      `response.${field}.replace.after: expected a string, possibly empty`,
+    );
+  return { format, replace: { before, after: replace.after } };
 }
 
 /** Validate declared operations and keep an unresolved check first with its original expectation. */

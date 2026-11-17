@@ -58,6 +58,30 @@ function ownerTestInapplicability(
     return `No test suites for ${owner} in the current worktree`;
 }
 
+/** Produce formatter stdout in the same disposable, networkless overlay as host checks. */
+export async function formatContents(
+  root: string,
+  directory: string,
+  common: string,
+  path: string,
+  input: string,
+  log: string,
+  signal: AbortSignal,
+) {
+  const args = [
+    ...mounts(root, directory, common),
+    '--chdir',
+    directory,
+    '--',
+    '/usr/bin/node',
+    './node_modules/prettier/bin/prettier.cjs',
+    `--stdin-filepath=${path}`,
+  ];
+  const result = await execute('/usr/bin/bwrap', args, { cwd: directory, input, log, signal });
+  if (result.status !== 0) throw new Error(`Formatter exited ${result.status}; evidence: ${log}`);
+  return result.stdout;
+}
+
 /** Resolve a captured operation and owner-dependent arguments in the sealed workspace. */
 function command(capture: Capture, worktree: string, id: string, owner: string | undefined) {
   const operation = Object.hasOwn(capture.operations, id) && capture.operations[id];

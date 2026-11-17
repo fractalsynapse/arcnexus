@@ -3,6 +3,7 @@ import type { Agent } from '../../agent/src/index.js';
 import type { Milestone, StewardCheckFailure } from '../../direction/src/index.js';
 import type { ActivityOutcome, TaskSession } from '../../workflow/src/index.js';
 import { hostTask } from './index.js';
+import { materializeEdits } from './formatter.js';
 import { InvalidCodexResponse } from './codex.js';
 import type { StewardScope } from './steward-check.js';
 import { decodeSteward, StewardResponseError, type StewardResult } from './steward-response.js';
@@ -108,7 +109,7 @@ async function askSteward(
     { component: scope.owner, activity: scope.activity },
     {
       assignment: {
-        ...responseShape(milestone.id, task.formatPreview?.entry),
+        ...responseShape(milestone.id, scope.activity !== 'review' && Boolean(task.formatPreview)),
         ...diagnosis,
         ...(responseRepair ? { responseRepair } : {}),
       },
@@ -124,11 +125,11 @@ async function askSteward(
 }
 
 /** Describe the bounded steward responses carried by the task prompt. */
-function responseShape(milestone: string, formatter?: string) {
+function responseShape(milestone: string, formatter: boolean) {
   return {
     instructions:
-      'Return exactly one JSON object with kind at the top level. Choose one of the flat response examples. For completed, edits and checks are separate top-level arrays, even when empty. An operation belongs only in checks. When responseRepair is present, read the previous reply in the retained transcript and correct its response shape. When formatPreview is provided, replace its path placeholder and run it without --write to produce formatted contents on stdout. The checkout is read-only; the host applies eligible edits and runs declared checks.',
-    ...(formatter ? { formatPreview: ['node', formatter, '<owned path>'] } : {}),
+      'Return exactly one JSON object with kind at the top level. Choose one of the flat response examples. For completed, edits and checks are separate top-level arrays, even when empty. An operation belongs only in checks. When responseRepair is present, read the previous reply in the retained transcript and correct its response shape. For a small change in an existing file, use transform instead of content so the host computes the replacement bytes. The checkout is read-only; the host applies eligible edits and runs declared checks.',
+    transforms: transformShape(formatter),
     responses: [
       {
         kind: 'completed',
@@ -153,6 +154,19 @@ function responseShape(milestone: string, formatter?: string) {
   };
 }
 
+/** Show the compact edit form that can combine a replacement and confined formatting. */
+function transformShape(formatter: boolean) {
+  return {
+    path: 'owned existing file path',
+    expected: 'sha256sum of current bytes',
+    transform: {
+      replace: { before: 'exact unique text', after: 'replacement or empty string' },
+      ...(formatter ? { format: true } : {}),
+    },
+    instructions: 'Include replace, format, or both. Formatting alone uses {"format":true}.',
+  };
+}
+
 /** Apply checked edits and stop at the first unexpected operation result. */
 async function perform(
   task: ReturnType<typeof hostTask>,
@@ -161,7 +175,11 @@ async function perform(
   correction: StewardCheckFailure | undefined,
   signal: AbortSignal,
 ): Promise<StewardCheckFailure | undefined> {
-  if (result.edits.length) task.edits(scope.owner, scope.activity, result.edits);
+  if (result.edits.length) {
+    if (scope.activity === 'review') throw new Error('Checked edits are unavailable during review');
+    const edits = await materializeEdits(task, scope.owner, result.edits, signal);
+    task.edits(scope.owner, scope.activity, edits);
+  }
   for (const { id, expected } of result.checks) {
     const check = await task.check(id, signal, scope);
     signal.throwIfAborted();

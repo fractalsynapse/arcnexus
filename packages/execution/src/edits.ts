@@ -46,6 +46,19 @@ export function applyEdits(
   return observed;
 }
 
+/** Read an existing owned file only after verifying the checked edit's original digest. */
+export function checkedInput(
+  root: string,
+  capture: Capture,
+  owner: string,
+  edit: Pick<CheckedEdit, 'path' | 'expected'>,
+) {
+  const bytes = safeRead(authorize(root, capture, owner, edit.path));
+  if (!bytes || digest(bytes) !== edit.expected)
+    throw new Error(`Stale checked edit: ${edit.path}`);
+  return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+}
+
 /** Enforce unique ownership and reject lock changes and file aliases. */
 function authorize(root: string, capture: Capture, owner: string, path: string) {
   const segments = pathSegments(path);

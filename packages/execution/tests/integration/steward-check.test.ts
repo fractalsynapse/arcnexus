@@ -240,3 +240,30 @@ test('a second malformed reply blocks the step and keeps both transcripts', asyn
   assert.equal(outcome.evidence.length, 2);
   task.close();
 });
+
+test('the steward can substitute exact text without copying the rest of the file', async (t) => {
+  const task = nativeTask(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-transform-')));
+  const file = join(task.worktree!, 'fixture.txt');
+  const original = 'prefix buggy suffix';
+  writeFileSync(file, original);
+  const expected = createHash('sha256').update(original).digest('hex');
+  t.mock.method(task, 'activate', async () => ({
+    kind: 'completed',
+    edits: [
+      {
+        path: 'fixture.txt',
+        expected,
+        transform: { replace: { before: 'buggy', after: 'fixed' } },
+      },
+    ],
+    checks: [],
+  }));
+  const activation = {
+    step: milestone('exact-substitution'),
+    signal: new AbortController().signal,
+  };
+  const outcome = await steward(agent, task, activation.step, 'implementation', activation.signal);
+  assert.equal(outcome.kind, 'completed');
+  assert.equal(readFileSync(file, 'utf8'), 'prefix fixed suffix');
+  task.close();
+});
