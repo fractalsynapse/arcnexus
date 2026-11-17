@@ -7,6 +7,11 @@
 - Run a priority-ordered round of standing goals with bare `arcnexus task run`.
   Share one Team view and resume tasks from per-activity checkpoints (#522).
 
+### Changed
+
+- Use GPT Sol for Director planning and independent Reviewer assessment, and
+  GPT Terra for steward testing across all components (#549).
+
 ### Fixed
 
 - Carry each correction finding directly into the assigned steward activity
