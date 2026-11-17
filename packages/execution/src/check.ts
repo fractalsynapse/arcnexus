@@ -1,11 +1,14 @@
-import { existsSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, resolve, sep } from 'node:path';
+import { team } from '../../team/src/index.js';
 import type { Capture } from '../../architecture/src/index.js';
+import { hasOwnerTestSuites } from '../../foundation/src/index.js';
 import { execute } from './process.js';
 
 export interface CheckResult {
   id: string;
-  status: number | null;
+  status: number | null | 'not-applicable';
+  reason?: string;
   command: string;
   args: string[];
   cwd: string;
@@ -13,7 +16,7 @@ export interface CheckResult {
   log: string;
 }
 
-/** Run a captured operation in a networkless disposable overlay of the worktree. */
+/** Record inapplicability or run the captured operation in a networkless overlay. */
 export async function check(
   capture: Capture,
   worktree: string,
@@ -23,13 +26,60 @@ export async function check(
   log: string,
   signal: AbortSignal,
 ): Promise<CheckResult> {
+  signal.throwIfAborted();
   const { executable, args, cwd } = command(capture, worktree, id, owner);
   const parameters = { id, command: executable, args, cwd, log };
+  const reason = ownerTestInapplicability(capture, worktree, id, owner);
+  if (reason) {
+    writeFileSync(log, `Not applicable: ${reason}\n`, { mode: 0o600, flag: 'wx' });
+    return { ...parameters, status: 'not-applicable', reason, durationMs: 0 };
+  }
   const start = performance.now();
   const sandbox = mounts(capture.source.root, worktree, common);
   const invocation = [...sandbox, '--chdir', cwd, '--', executable, ...args];
   const { status } = await execute('/usr/bin/bwrap', invocation, { cwd: worktree, log, signal });
   return { ...parameters, status, durationMs: Math.round(performance.now() - start) };
+}
+
+/** Check the captured prerequisite only for optional, owner-scoped operations. */
+function ownerTestInapplicability(
+  capture: Capture,
+  worktree: string,
+  id: string,
+  owner?: string,
+): string | undefined {
+  if (
+    !owner ||
+    capture.operations[id]?.applicability !== 'owner-test-suites' ||
+    capture.project.checks?.acceptance.includes(id)
+  )
+    return;
+  if (!hasOwnerTestSuites(worktree, owner, team.list(capture.components)))
+    return `No test suites for ${owner} in the current worktree`;
+}
+
+/** Produce formatter stdout in the same disposable, networkless overlay as host checks. */
+export async function formatContents(
+  root: string,
+  directory: string,
+  common: string,
+  path: string,
+  input: string,
+  log: string,
+  signal: AbortSignal,
+) {
+  const args = [
+    ...mounts(root, directory, common),
+    '--chdir',
+    directory,
+    '--',
+    '/usr/bin/node',
+    './node_modules/prettier/bin/prettier.cjs',
+    `--stdin-filepath=${path}`,
+  ];
+  const result = await execute('/usr/bin/bwrap', args, { cwd: directory, input, log, signal });
+  if (result.status !== 0) throw new Error(`Formatter exited ${result.status}; evidence: ${log}`);
+  return result.stdout;
 }
 
 /** Resolve a captured operation and owner-dependent arguments in the sealed workspace. */

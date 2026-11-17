@@ -6,8 +6,9 @@ Stage: **locked**. See the [registry](../../docs/interface/registry.yaml) for au
 
 Consume one assembled candidate, its retained engineering base and the accepting
 verification verdict. Match candidate digest and scope before performing an effect.
-The host commits on the task branch, pushes and opens one staging pull request
-through collaboration. Observe CI and configured review. The provider merges the
+Execution may commit and push checked intermediate checkpoints to the issue branch
+through Collaboration. Delivery opens one staging pull request for the independently
+accepted final tree. Checkpoint availability confers no integration authority. Observe CI and configured review. The provider merges the
 verified head when authorized and returns the merge identity. Store that result once.
 Use milestone attribution from the single worktree instead of steward branches.
 

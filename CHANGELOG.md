@@ -2,6 +2,72 @@
 
 ## [Unreleased]
 
+## [0.2.0]
+
+### Added
+
+- Run a priority-ordered round of standing goals with bare `arcnexus task run`.
+  Share one Team view and resume tasks from per-activity checkpoints (#522).
+
+### Changed
+
+- Use GPT Sol for Director planning and independent Reviewer assessment, and
+  GPT Terra for steward testing across all components (#549).
+- Require documentation headers on TypeScript abstract methods (#499).
+- Expand regression coverage for Team ownership and for publishing the
+  independently reviewed tree against its staging base (#544, #542).
+
+### Fixed
+
+- Recover the recorded steward check and its expected result if execution is
+  interrupted before correction feedback is written (#533).
+- Carry each correction finding directly into the assigned steward activity
+  and keep Director correction plans scoped to the needed steps. Refresh cited
+  assembly failures against the current checkpoint before correction (#537).
+- Attach the measured owner check to a satisfied Director assessment in the
+  host without requiring the model to reproduce its path (#548).
+- Keep redundant passing expectations for already scheduled host checks
+  out of the steward operation list (#545).
+- Retry transient GitHub reads in the same task, including post-merge
+  confirmation (#541).
+- Reassess an unchanged candidate when verified owner evidence changes and
+  stop repeated reviews with equivalent inputs (#539).
+- Include the host's retained owner-check exit records in independent review
+  and identify observations made after the candidate's last edit (#538).
+- Let a steward repair a stale checked-edit hash or a repeated edit path before
+  any proposed edit is applied (#534).
+
+- Let stewards preview formatting with the installed formatter in their
+  read-only sandbox (#536).
+
+- Repair malformed steward replies in the current activity before performing
+  proposed edits or checks (#534).
+
+- Have the Director assess each standing goal using current staging and check
+  evidence before deciding whether to plan work (#531).
+
+- Reuse known staging commits during goal rounds and bound retries of remote
+  staging reads (#529).
+
+- Make prior check logs readable after task restart and provide stewards a
+  host-generated diff for self-review (#525).
+
+- Return an unexpected steward check exit and its log to the accountable owner
+  through a correction milestone, and recheck before resuming (#518).
+
+- Record optional owner tests as inapplicable when the current worktree has no
+  suite for that owner. Required assembled checks still run (#514).
+
+- Return invalid Director proposals with the exact diagnostic for one in-task
+  repair before continuing from the accepted plan (#510).
+
+- Keep post-review GitHub checks and staging merge evidence in host delivery,
+  separate from steward acceptance (#503).
+
+- Run steward-requested corrections before resuming the activity that needs
+  them. Report a blocked revision when Direction leaves the required work
+  behind the requester (#495).
+
 ## [0.1.2]
 
 ### Changed

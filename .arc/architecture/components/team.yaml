@@ -24,7 +24,7 @@ activities:
     standards: []
   testing:
     role: designer
-    profile: gpt-sol
+    profile: gpt-terra
     instructions:
     - Exercise the same roster under filters, tied priority, absent owners and collisions.
     operations:

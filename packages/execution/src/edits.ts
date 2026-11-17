@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { lstatSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { team } from '../../team/src/index.js';
 import type { Capture } from '../../architecture/src/index.js';
 
 export interface CheckedEdit {
@@ -9,12 +10,27 @@ export interface CheckedEdit {
   content: string | null;
 }
 
+export interface ObservedEdit {
+  path: string;
+  before: string | null;
+  after: string | null;
+}
+
+/** Report a changed edit input only after its path passes captured ownership checks. */
+export class StaleCheckedEdit extends Error {
+  /** Provide the observed digest so a steward can repair the rejected request. */
+  constructor(path: string, actual: string | null) {
+    super(`Stale checked edit: ${path}; current sha256 is ${actual ?? 'null (file absent)'}`);
+  }
+}
+
 /** Authorize every proposed edit against captured ownership and its observed bytes before writing. */
 export function applyEdits(
   root: string,
   capture: Capture,
   owner: string,
   edits: readonly CheckedEdit[],
+  beforeWrite?: (edits: readonly ObservedEdit[]) => void,
 ) {
   const paths = new Set<string>();
   const validated = edits.map((edit) => {
@@ -23,15 +39,32 @@ export function applyEdits(
     paths.add(path);
     const previous = safeRead(path);
     const before = previous === undefined ? null : digest(previous);
-    if (before !== edit.expected) throw new Error(`Stale checked edit: ${edit.path}`);
+    if (before !== edit.expected) throw new StaleCheckedEdit(edit.path, before);
     if (typeof edit.content !== 'string' && edit.content !== null)
       throw new Error(`Invalid replacement content: ${edit.path}`);
-    return { path, edit, before, previous };
+    return { path, edit, before };
   });
-  return validated.map(({ path, edit, before }) => {
-    replace(path, edit.content);
-    return { path: edit.path, before, after: edit.content === null ? null : digest(edit.content) };
-  });
+  const observed = validated.map(({ edit, before }) => ({
+    path: edit.path,
+    before,
+    after: edit.content === null ? null : digest(edit.content),
+  }));
+  beforeWrite?.(observed);
+  for (const { path, edit } of validated) replace(path, edit.content);
+  return observed;
+}
+
+/** Read an existing owned file only after verifying the checked edit's original digest. */
+export function checkedInput(
+  root: string,
+  capture: Capture,
+  owner: string,
+  edit: Pick<CheckedEdit, 'path' | 'expected'>,
+) {
+  const bytes = safeRead(authorize(root, capture, owner, edit.path));
+  const current = bytes === undefined ? null : digest(bytes);
+  if (!bytes || current !== edit.expected) throw new StaleCheckedEdit(edit.path, current);
+  return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
 }
 
 /** Enforce unique ownership and reject lock changes and file aliases. */
@@ -42,13 +75,13 @@ function authorize(root: string, capture: Capture, owner: string, path: string) 
     capture.contracts.some((entry) => entry.stage === 'locked' && entry.file === path)
   )
     throw new Error(`Locked contract or registry: ${path}`);
-  const owners = Object.values(capture.components).filter((entry) =>
-    entry.owns.some((owned) => path === owned || path.startsWith(owned + '/')),
-  );
-  if (owners.length !== 1 || owners[0]?.id !== owner)
+  const found = team.ownerFor(Object.values(capture.components), path);
+  if (found.kind !== 'owned' || found.owner.id !== owner) {
+    const owners = found.kind === 'collision' ? found.owners : found.owner ? [found.owner] : [];
     throw new Error(
       `Checked edit refused for ${path}; captured owners: ${owners.map(({ id }) => id).join(', ') || 'none'}`,
     );
+  }
   let current = root;
   for (const segment of segments) {
     current = join(current, segment);
@@ -93,6 +126,12 @@ function safeRead(path: string) {
   if (!info.isFile() || info.nlink !== 1)
     throw new Error(`Not a regular checked edit file: ${path}`);
   return readFileSync(path);
+}
+
+/** Identify the actual contents of a checked path before retaining it in a checkpoint. */
+export function editFingerprint(root: string, capture: Capture, owner: string, path: string) {
+  const bytes = safeRead(authorize(root, capture, owner, path));
+  return bytes === undefined ? null : digest(bytes);
 }
 
 /** Replace one file atomically beside its previous version. */

@@ -15,8 +15,8 @@ declare module 'cordis' {
 /** Read the captured model and prepare its Codex request. */
 export class Architecture {
   /** Capture the committed project resolved from a working directory. */
-  capture(directory: string): Capture {
-    return captureProject(directory);
+  capture(directory: string, revision?: string): Capture {
+    return captureProject(directory, revision);
   }
 
   /** Prepare the request used by inspection and available to activation. */

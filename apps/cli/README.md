@@ -62,14 +62,64 @@ and an absolute `tools.codex` path to an authenticated Codex installation.
 See [Native confinement checks](../../docs/release/ci.md#native-confinement-checks)
 for the test command and default CI skip behavior for the Bubblewrap test.
 
-The host retains task metadata, output, and the issue worktree outside the
+The host keeps task metadata, output, and the active worktree outside the
 source checkout under `${XDG_STATE_HOME:-$HOME/.local/state}/arcnexus`. Codex
 reads the worktree and returns structured edit proposals. The host applies
 checked edits and runs captured checks in a disposable networkless overlay.
 In JSON mode, progress uses stderr and the outcome is one JSON object on stdout.
 
+If a Director proposal fails validation, ArcNexus records the diagnostic and
+asks the Director for one correction within the same task. The host validates
+the corrected proposal before advancing and preserves any accepted work.
+
+A malformed steward reply or a stale edit digest gets one repair in the same activity. The host
+returns the exact diagnostic and retained transcript before applying any edits
+or running proposed checks. When the installed project formatter is available,
+a steward can request exact text substitutions and formatter output in a
+checked edit. Execution computes the bytes inside confinement and checks the
+original file hash before applying them.
+
+When a steward check exits unexpectedly, Direction schedules a correction for
+the same owner. The correcting steward receives the exit status and retained
+log. Correction assignments also carry the exact supplier or independent review
+finding that caused Direction to add the milestone. The host refreshes any
+assembled checks explicitly requested by that finding against the current checkpoint.
+If a steward repeats one of those host-selected checks with a passing expectation,
+Execution keeps it in the host check path.
+It reruns the original steward check before the paused activity resumes. The
+independent Reviewer receives the owner check records and can tell which ones
+were observed after the candidate's most recent edit. A rejected tree can
+return to independent review when its verified owner evidence changes. A
+repeated tree and evidence combination stops the correction.
+
 If publication is interrupted, invoke `task run` with the identical goal.
 ArcNexus resumes from the verified candidate and observes GitHub before taking
 another publication action. A matching remote branch, pull request or merge is
-reused. See [Publication recovery evidence](../../docs/release/verification.md#publication-recovery-evidence)
+reused. A known transient GitHub read error gets a bounded retry in the active
+task, including the observation after a merge. See [Publication recovery evidence](../../docs/release/verification.md#publication-recovery-evidence)
 for what to compare in the retained task evidence.
+
+## Run a round of standing goals
+
+Run `arcnexus task run` without a goal to evaluate the project's captured
+[goal inventory](../../.arc/goals/). Markdown frontmatter supplies the numeric
+priority and the component whose declared owner suite measures the goal.
+Requirements and success measures remain in the Markdown body. Lower priorities
+run first, with stable file IDs breaking ties. Each goal verifies the current
+staging head and reuses the local Git object when available.
+The Director assesses the full authored goal against current staging, recent
+changes and the owner-test evidence. The Director can plan work even with a
+passing suite. The host attaches its actual owner check log to the Director's
+explicit assessment. If the suite passes and the Director records that no work is
+warranted, the round records the assessment and continues. Engineering work
+uses the normal task loop and stops the round if it cannot complete.
+
+Direction opens or reuses the issue after the plan is accepted. Execution
+prepares the issue branch and private worktree before the first steward and
+checkpoints checked edits on the issue branch after activations. Retry an
+interrupted engineering task with the same goal, or invoke bare `task run` again
+to continue the unfinished round. The task's locally recorded evidence and
+verified checkpoint survive worktree removal.
+
+Resumed activities can read earlier evidence for the same task. The host
+provides self-review a diff against the captured staging base.

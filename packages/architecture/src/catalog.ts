@@ -15,6 +15,7 @@ interface Binding {
 }
 
 export interface Project {
+  knowledgeRoot?: string;
   id: string;
   remote: string;
   contractRegistry: string;
@@ -65,6 +66,7 @@ interface Operation extends Definition {
   args?: Array<string | { context: 'owner' }>;
   cwd?: string;
   network?: boolean;
+  applicability?: 'owner-test-suites';
 }
 
 interface Standard extends Definition {
@@ -93,8 +95,8 @@ export interface Capture {
 }
 
 /** Read project authority and verify accepted contract bytes at the same revision. */
-export function captureProject(directory: string): Capture {
-  const source = openProject(directory);
+export function captureProject(directory: string, revision?: string): Capture {
+  const source = openProject(directory, revision);
   const project = read<Project>(source, `${catalogRoot}/project.yaml`);
   if (!project.id || !sameRemote(project.remote, source.remote)) {
     throw new Error('Git origin does not match the captured project remote');

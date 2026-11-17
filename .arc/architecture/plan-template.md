@@ -33,6 +33,14 @@ A Step may be inapplicable with a reason visible in the plan. A checklist item n
 its stable ID, activity, acceptance IDs, expected result, evidence and status.
 Activity order governs execution. Checklist completion alone establishes coverage.
 
+Each acceptance criterion describes engineering work or evidence that the
+independent Reviewer can evaluate before delivery. An applicable steward Step
+must cover each criterion. The Review Step can reference the later independent
+verdict. The Release Step references host observations after that verdict,
+including configured GitHub checks, required PR review and the staging merge.
+Reference existing engineering IDs in the Release checklist to retain
+attribution. Keep those delivery observations out of the criteria themselves.
+
 ## Changes and evidence
 
 A steward proposes dependencies or a revised approach. The director controls

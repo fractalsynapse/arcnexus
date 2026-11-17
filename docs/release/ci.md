@@ -10,6 +10,8 @@ requests targeting `staging`, and the
 [Staging workflow](../../.github/workflows/staging.yaml) verifies pushes to
 `staging`. Both invoke the shared verification workflow.
 
+Follow [repository delivery verification](verification.md) to trace the pull request checks and the post-merge Staging workflow to the exact staging merge commit.
+
 Run `npm run check:specification` to check tracked source extensions, catalog
 references, ownership, contract digests and scenarios, documentation links, and
 skill metadata. The shared verification workflow always runs specification
@@ -22,5 +24,6 @@ separately from native host and live-agent qualification.
 
 Run `ARCNEXUS_NATIVE_TESTS=1 npm test` to enable native confinement tests.
 When working only on Execution, `ARCNEXUS_NATIVE_TESTS=1 npm test -- execution` selects that owner's built suites.
+See [Build and quality](../foundation/quality.md) for owner suite selection and applicability.
 The Bubblewrap test is skipped by default in CI unless native tests are enabled
 with `ARCNEXUS_NATIVE_TESTS=1`.

@@ -1,0 +1,98 @@
+import { activities, type DirectionResult, type StandingGoalEvidence } from './index.js';
+
+/** Carry a rejected Director proposal's diagnostic across the planning boundary. */
+export class DirectorResponseError extends Error {}
+
+/** Decode arbitrary model output before plan rules inspect its fields. */
+export function decodeDirectorResponse(
+  response: unknown,
+  standing?: StandingGoalEvidence,
+): DirectionResult {
+  const value = mapping(response, 'response');
+  if (value.kind === 'question') {
+    string(value.question, 'question');
+    if (!value.question.trim())
+      throw new DirectorResponseError('question: expected a nonempty human question');
+    list(value.evidence, 'evidence', string);
+  } else if (value.kind === 'plan') {
+    const plan = mapping(value.plan, 'plan');
+    const focus = mapping(plan.focus, 'plan.focus');
+    string(focus.purpose, 'plan.focus.purpose');
+    list(focus.objectives, 'plan.focus.objectives', string);
+    list(focus.constraints, 'plan.focus.constraints', string);
+    list(plan.milestones, 'plan.milestones', milestone);
+  } else if (standing && value.kind === 'satisfied') {
+    return assessment(value, standing);
+  } else {
+    const expected = standing ? '"plan", "question", or "satisfied"' : '"plan" or "question"';
+    throw new DirectorResponseError(`response.kind: expected ${expected}`);
+  }
+  return response as DirectionResult;
+}
+
+/** Admit inaction only with an explicit rationale and the passing check observed for this goal. */
+function assessment(
+  value: Record<string, unknown>,
+  standing: StandingGoalEvidence,
+): DirectionResult {
+  if (standing.status !== 0)
+    throw new DirectorResponseError(
+      `Cannot satisfy a standing goal with owner check status ${standing.status}`,
+    );
+  string(value.summary, 'summary');
+  if (!value.summary.trim())
+    throw new DirectorResponseError('summary: explain why no engineering work is warranted');
+  return { kind: 'satisfied', summary: value.summary, evidence: [standing.log] };
+}
+
+/** Check the fields consumed by milestone admission and scope validation. */
+function milestone(value: unknown, path: string): void {
+  const entry = mapping(value, path);
+  string(entry.id, `${path}.id`);
+  string(entry.owner, `${path}.owner`);
+  list(entry.criteria, `${path}.criteria`, (value, path) => {
+    const criterion = mapping(value, path);
+    string(criterion.id, `${path}.id`);
+    string(criterion.description, `${path}.description`);
+  });
+  list(entry.steps, `${path}.steps`, step);
+}
+
+/** Check activity data and include the full field path for repair feedback. */
+function step(value: unknown, path: string): void {
+  const entry = mapping(value, path);
+  string(entry.activity, `${path}.activity`);
+  if (!activities.some((activity) => activity === entry.activity))
+    throw new DirectorResponseError(`${path}.activity: expected one of ${activities.join(', ')}`);
+  if (entry.inapplicable !== undefined) string(entry.inapplicable, `${path}.inapplicable`);
+  list(entry.checklist, `${path}.checklist`, (value, path) => {
+    const item = mapping(value, path);
+    string(item.id, `${path}.id`);
+    list(item.criteria, `${path}.criteria`, string);
+    string(item.expected, `${path}.expected`);
+  });
+}
+
+/** Require an object before reading its named fields. */
+function mapping(value: unknown, path: string): Record<string, unknown> {
+  if (value === null || typeof value !== 'object' || Array.isArray(value))
+    return invalid(path, 'object', value);
+  return value as Record<string, unknown>;
+}
+
+/** Require a string rather than coercing model data into text. */
+function string(value: unknown, path: string): asserts value is string {
+  if (typeof value !== 'string') invalid(path, 'string', value);
+}
+
+/** Check every item with its indexed field path. */
+function list(value: unknown, path: string, check: (value: unknown, path: string) => void): void {
+  if (!Array.isArray(value)) invalid(path, 'array', value);
+  value.forEach((entry, index) => check(entry, `${path}[${index}]`));
+}
+
+/** Describe both shapes without copying raw proposal data into a diagnostic. */
+function invalid(path: string, expected: string, value: unknown): never {
+  const received = value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value;
+  throw new DirectorResponseError(`${path}: expected ${expected}, received ${received}`);
+}

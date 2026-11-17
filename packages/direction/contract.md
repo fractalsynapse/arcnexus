@@ -8,7 +8,9 @@ Turn a goal and captured catalog into an ordered plan with the Focus and five St
 from the [plan template](../../.arc/architecture/plan-template.md). Use [Team](../team/contract.md)
 to query eligible stewards and resolve supplier ownership from the captured
 project and task position. Direction remains responsible for plan order, reuse of
-accepted work and escalation. Choose one
+accepted work and escalation. After plan acceptance, Direction uses Collaboration
+to find or create the hosted issue for the task identity, then passes the issue to
+Execution for workspace preparation. The Director model remains read-only. Choose one
 accountable owner per milestone. A request links existing accepted work or causes
 the director to place a supplier milestone before dependent work. Execute the
 sequence in one lane. Stewards can propose corrections and escalations. The
@@ -18,7 +20,8 @@ A missing component or a conflict with a locked clause becomes a proposal and a
 named architectural gate. Clarifications requiring external authority become
 foreground human questions. Corrections use the same milestone sequence.
 The director cannot edit source, grant authority, accept its own plan or integrate
-a candidate. A goal closes after verified staging integration. The workday and
+a candidate. An engineering task closes after verified staging integration. A standing goal
+can be evaluated again in a later round. The workday and
 production directives are deferred. One independent verdict covers the assembled goal.
 
 ## Acceptance scenarios

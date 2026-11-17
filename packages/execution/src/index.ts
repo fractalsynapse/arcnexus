@@ -1,29 +1,38 @@
-import {
-  constants,
-  accessSync,
-  lstatSync,
-  mkdirSync,
-  readFileSync,
-  realpathSync,
-  writeFileSync,
-} from 'node:fs';
-import { isAbsolute, join, resolve } from 'node:path';
+import { existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
-import { parse } from 'yaml';
 import type { Context } from 'cordis';
 import type { Agent, ActivationInput } from '../../agent/src/index.js';
 import type { Capture, Architecture, TaskContext } from '../../architecture/src/index.js';
 import type { Coordination, Journal } from '../../coordination/src/index.js';
+import { checkpoint, reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
 import type { Candidate } from '../../verification/src/index.js';
-import type { TaskEvent, TaskInput, TaskOutcome, TaskSession } from '../../workflow/src/index.js';
+import type {
+  ActivityCheckpoint,
+  TaskEvent,
+  TaskInput,
+  TaskOutcome,
+  TaskSession,
+} from '../../workflow/src/index.js';
 import { GitHub } from '../../collaboration/src/index.js';
 import { codex } from './codex.js';
+import { formatterPreview } from './formatter.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
-import { git } from './git.js';
+import { candidateDiff, git } from './git.js';
+import { preflight, verifyNativeGuidance, type HostConfig } from './host-config.js';
+import { goalRound, stagingCapture } from './goals.js';
 import { check } from './check.js';
+import { pendingStewardCheck, type StewardScope } from './steward-check.js';
+import {
+  cleanCandidate,
+  ownerEvidenceDigest,
+  ownerReviewObservations,
+  type OwnerObservation,
+} from './review-observations.js';
 
 export type { CheckedEdit } from './edits.js';
+export { InvalidCodexResponse } from './codex.js';
 
 declare module 'cordis' {
   interface Context {
@@ -45,17 +54,46 @@ export class Execution {
     let config: ReturnType<typeof preflight>;
     try {
       signal.throwIfAborted();
-      config = preflight(this.architecture.capture(input.directory), this.storage);
+      const capture = this.architecture.capture(input.directory);
+      const selected = input.measureOwner ? stagingCapture(this.architecture, capture) : capture;
+      config = preflight(selected, this.storage, Boolean(input.measureOwner));
     } catch (error) {
       if (signal.aborted) throw signal.reason;
       return invalid(error instanceof Error ? error.message : String(error));
     }
-    const journal = this.coordination.admit(config.capture.source.remote, input.goal, config.fresh);
+    const journal = this.coordination.admit(
+      config.capture.source.remote,
+      input.goal,
+      config.fresh,
+      input.scope,
+    );
     if (!journal)
       return invalid(`Task admission requires the current verified ${config.base} head`);
     if ('activeGoal' in journal)
       return invalid(`Active goal: ${journal.activeGoal} (run ${journal.run})`);
+    if (config.fresh && !journal.retained)
+      journal.record({ baseRevision: config.capture.source.revision });
     return new HostTask(config, input.goal, journal);
+  }
+
+  /** Read the standing goal inventory and recover an interrupted round or start a new one. */
+  round(directory: string) {
+    return goalRound(this.architecture, this.coordination, directory);
+  }
+
+  /** Run a goal's declared owner measure on an isolated staging snapshot. */
+  measureGoal(session: TaskSession, owner: string, signal: AbortSignal) {
+    return hostTask(session).measureGoal(owner, signal);
+  }
+
+  /** Materialize the task branch at its recovered checkpoint before any steward activation. */
+  prepare(session: TaskSession, issue: string, signal: AbortSignal) {
+    return hostTask(session).setupWorkspace(issue, signal);
+  }
+
+  /** Publish checked bytes and record the cursor for the just-completed activation. */
+  checkpoint(session: TaskSession, activity: ActivityCheckpoint, signal: AbortSignal) {
+    return checkpoint(hostTask(session), activity, signal);
   }
 
   /** Index the approved working changes and bind the candidate to its Git tree. */
@@ -65,28 +103,18 @@ export class Execution {
     if (!task.worktree) throw new Error('The plan produced no candidate worktree');
     git(task.worktree, 'add', '-A', '--', '.');
     const digest = git(task.worktree, 'write-tree');
-    if (digest === git(task.worktree, 'rev-parse', 'HEAD^{tree}'))
+    if (digest === git(task.worktree, 'rev-parse', `${task.capture.source.revision}^{tree}`))
       throw new Error('The plan produced no candidate changes');
-    const diff = git(
-      task.worktree,
-      'diff',
-      '--cached',
-      '--no-ext-diff',
-      '--no-textconv',
-      '--binary',
+    const log = task.store(
+      'candidate.diff',
+      candidateDiff(task.worktree, task.capture.source.revision),
     );
-    const log = task.store('candidate.diff', diff);
-    return { digest, evidence: [log] };
+    return {
+      digest,
+      evidence: [log],
+      ownerEvidenceDigest: ownerEvidenceDigest(task.ownerReviewChecks(), digest),
+    };
   }
-}
-
-interface HostConfig {
-  capture: Capture;
-  common: string;
-  executable: string;
-  base: string;
-  fresh: boolean;
-  storage: string;
 }
 
 /** Carry the admitted authority and one worktree through the workflow. */
@@ -105,6 +133,13 @@ export class HostTask implements TaskSession {
     private readonly journal: Journal,
   ) {
     this.capture = config.capture;
+    const prefix = this.evidenceDirectory() + '/';
+    const closeEvidence = this.observations<{ outcome?: TaskOutcome; artifact?: string }>().flatMap(
+      ({ artifact, outcome }) => [...(outcome?.evidence ?? []), ...(artifact ? [artifact] : [])],
+    );
+    this.evidence.push(
+      ...new Set(closeEvidence.filter((path) => path.startsWith(prefix) && existsSync(path))),
+    );
   }
 
   /** Read the prior attempt and its immutable worktree location. */
@@ -129,6 +164,11 @@ export class HostTask implements TaskSession {
     this.journal.record(event);
   }
 
+  /** Read journaled Workflow checkpoints, including previously published activities. */
+  history(): readonly TaskEvent[] {
+    return this.observations();
+  }
+
   /** Retain the terminal outcome and verified native evidence. */
   finish(outcome: TaskOutcome) {
     this.journal.finish({
@@ -142,27 +182,150 @@ export class HostTask implements TaskSession {
     this.journal.close();
   }
 
-  /** Start the one private issue-linked worktree after Direction has planned. */
-  async workspace(signal: AbortSignal) {
-    if (this.worktree) return this.worktree;
-    const provider = this.provider(signal);
-    const issue = await provider.issue(this.goal);
-    const branch = `${issue}-task`;
-    this.journal.record({ issue, branch });
-    const worktree = join(this.directory(), 'worktree');
-    git(
-      this.capture.source.root,
-      'worktree',
-      'add',
-      '-b',
-      branch,
-      worktree,
-      this.capture.source.revision,
-    );
+  /** Read the public task identity used for recoverable hosted issue creation. */
+  get taskID() {
+    return this.journal.taskID;
+  }
+
+  /** Identify the exact goal text for hosted issue history queries. */
+  get goalID() {
+    return this.journal.goalID;
+  }
+
+  /** Read one activity stream across previous attempts and the current writer. */
+  observations<T>(): T[] {
+    return [...(this.journal.retained?.events ?? []), ...this.journal.events()] as T[];
+  }
+
+  /** Measure the owner suite and let Direction decide whether the observed goal needs work. */
+  async measureGoal(owner: string, signal: AbortSignal) {
+    const { source } = this.capture;
+    this.recoverMeasureWorkspace();
+    const path = join(this.directory(), 'measure-worktree');
+    this.note({ measureWorkspace: this.journal.run });
+    git(source.root, 'worktree', 'add', '--detach', path, source.revision);
+    this.worktree = path;
+    const { status, log } = await this.check('owner-tests', signal, { owner, activity: 'testing' });
+    const recentChanges = git(
+      source.root,
+      'log',
+      '--first-parent',
+      '--max-count=10',
+      '--format=%h %s',
+      source.revision,
+    ).split('\n');
+    return { owner, status, log, recentChanges, revision: source.revision };
+  }
+
+  /** Remove a detached measurement workspace left by an interrupted attempt. */
+  private recoverMeasureWorkspace() {
+    const prior = this.observations<{ measureWorkspace?: number }>().findLast(
+      ({ measureWorkspace }) => measureWorkspace !== undefined,
+    )?.measureWorkspace;
+    if (!prior) return;
+    const path = join(this.location(prior), 'measure-worktree');
+    if (existsSync(path)) {
+      if (git(path, 'branch', '--show-current')) throw new Error('Goal measure workspace changed');
+      this.worktree = path;
+      this.removeWorktree();
+    }
+  }
+
+  /** Recover the approved base and branch, then create the clean worktree for this attempt. */
+  async setupWorkspace(issue: string, signal: AbortSignal) {
+    if (this.branch && this.worktree) return;
+    if (!/^\d+$/.test(issue)) throw new Error('Invalid workspace issue');
+    const base = this.capture.source.revision;
+    this.ensureCurrentBase();
+    this.recoverMeasureWorkspace();
+    this.branch = `${issue}-task`;
     this.issue = issue;
-    this.branch = branch;
+    if (await this.provider(signal).publication(this.branch))
+      throw new Error('An existing pull request must match a retained accepting publication');
+    const ref = `refs/heads/${this.branch}`;
+    await reconcileCheckpoint(this, signal);
+    if (this.recoverWorkspace(base)) await reconcileCheckpoint(this, signal);
+    const { root } = this.capture.source;
+    if (!git(root, 'for-each-ref', '--format=%(objectname)', ref))
+      git(root, 'update-ref', ref, base, '0'.repeat(40));
+    this.validateWorkspaceHead(base);
+    this.note({ branch: this.branch, issue, workspace: this.journal.run, baseRevision: base });
+    this.removeWorktree();
+    const worktree = join(this.directory(), 'worktree');
+    git(root, 'worktree', 'add', worktree, this.branch);
     this.worktree = worktree;
-    return worktree;
+  }
+
+  /** Refuse to execute a retained engineering plan when staging moved to a different base. */
+  private ensureCurrentBase() {
+    const previous = this.observations<{ baseRevision?: string }>().find(
+      ({ baseRevision }) => baseRevision,
+    )?.baseRevision;
+    if (!this.config.fresh || (previous && previous !== this.capture.source.revision))
+      throw new Error('The retained engineering base differs from current staging');
+  }
+
+  /** Preserve and remove an abandoned task-owned workspace before reconstructing it. */
+  private recoverWorkspace(base: string) {
+    const previous = this.observations<{ workspace?: number; baseRevision?: string }>().findLast(
+      ({ workspace }) => workspace !== undefined,
+    );
+    if (!previous?.workspace) return;
+    if (previous.baseRevision !== base) throw new Error('The retained workspace base changed');
+    const path = join(this.location(previous.workspace), 'worktree');
+    if (!existsSync(path)) return;
+    if (git(path, 'branch', '--show-current') !== this.branch)
+      throw new Error('The abandoned worktree belongs to a different branch');
+    this.worktree = path;
+    const saved = saveCheckpoint(this);
+    this.removeWorktree();
+    return saved;
+  }
+
+  /** Check the current branch tip against the last observed durable checkpoint. */
+  private validateWorkspaceHead(base: string) {
+    const expected = this.observations<{ confirmed?: string }>().findLast(
+      ({ confirmed }) => confirmed,
+    )?.confirmed;
+    const local = git(this.capture.source.root, 'rev-parse', `refs/heads/${this.branch}`);
+    if (local !== (expected ?? base))
+      throw new Error('The task branch diverged from its recorded checkpoint');
+  }
+
+  /** Protect uncommitted authorized edits, then remove only this attempt's worktree. */
+  cleanup() {
+    if (!this.worktree) this.removeRetainedPublicationWorkspace();
+    saveCheckpoint(this);
+    this.removeWorktree();
+  }
+
+  /** Clean the original task workspace after resuming its already committed publication. */
+  private removeRetainedPublicationWorkspace() {
+    const events = this.observations<{
+      workspace?: number;
+      branch?: string;
+      publication?: { branch: string; head: string };
+    }>();
+    const publication = events.findLast(({ publication }) => publication)?.publication;
+    const previous = events.findLast(({ workspace }) => workspace !== undefined);
+    if (!publication || !previous?.workspace || previous.branch !== publication.branch) return;
+    const path = join(this.location(previous.workspace), 'worktree');
+    if (!existsSync(path)) return;
+    if (
+      git(path, 'branch', '--show-current') !== publication.branch ||
+      git(path, 'rev-parse', 'HEAD') !== publication.head
+    )
+      throw new Error('Retained publication worktree changed');
+    this.worktree = path;
+  }
+
+  /** Remove a clean workspace only after checking that it belongs to application storage. */
+  private removeWorktree() {
+    if (!this.worktree) return;
+    if (!this.worktree.startsWith(this.config.storage + '/'))
+      throw new Error('Task worktree lies outside application storage');
+    git(this.capture.source.root, 'worktree', 'remove', this.worktree);
+    this.worktree = undefined;
   }
 
   /** Select the captured GitHub provider for this task. */
@@ -171,41 +334,37 @@ export class HostTask implements TaskSession {
   }
 
   /** Verify the local commit and retained worktree before any new push. */
-  validatePublication(
-    worktree: string,
-    branch: string,
-    head: string,
-    parent: string,
-    candidate: string,
-  ) {
+  validatePublication(branch: string, head: string, parent: string, candidate: string) {
+    const { root } = this.capture.source;
     if (
-      git(worktree, 'branch', '--show-current') !== branch ||
-      git(worktree, 'rev-parse', 'HEAD') !== head ||
-      git(worktree, 'rev-parse', 'HEAD^') !== parent ||
-      git(worktree, 'rev-parse', 'HEAD^{tree}') !== candidate
+      git(root, 'rev-parse', `refs/heads/${branch}`) !== head ||
+      git(root, 'merge-base', head, parent) !== parent ||
+      git(root, 'rev-parse', `${head}^{tree}`) !== candidate
     )
       throw new Error('The retained publication branch, parent or tree changed');
   }
 
-  /** Commit exactly the reviewed tree on the task branch and report its identity. */
+  /** Resolve the already-checkpointed head that exactly matches the accepted tree. */
   commit(candidate: Candidate) {
     const worktree = this.worktree;
     if (!worktree || !this.branch || !this.issue) throw new Error('No publication worktree');
     if (
       git(worktree, 'branch', '--show-current') !== this.branch ||
-      git(worktree, 'rev-parse', 'HEAD') !== this.capture.source.revision ||
-      git(worktree, 'write-tree') !== candidate.digest
+      git(worktree, 'rev-parse', 'HEAD^{tree}') !== candidate.digest ||
+      git(worktree, 'status', '--porcelain')
     )
-      throw new Error('The candidate or its publication base changed');
-    git(worktree, 'diff', '--quiet', '--');
-    const message = `chore: ${this.goal.trim().split('\n')[0]!.slice(0, 90)} (#${this.issue})`;
-    git(worktree, 'commit', '-m', message);
+      throw new Error('The candidate or its publication branch changed');
     return {
       worktree,
       branch: this.branch,
       issue: this.issue,
       head: git(worktree, 'rev-parse', 'HEAD'),
     };
+  }
+
+  /** Expose a verified formatter path only while a steward worktree is active. */
+  get formatPreview() {
+    return this.branch ? formatterPreview(this.capture.source.root) : undefined;
   }
 
   /** Run an actor through the same prepared envelope used by inspection. */
@@ -217,9 +376,14 @@ export class HostTask implements TaskSession {
   ) {
     const worktree = this.worktree ?? this.capture.source.root;
     verifyNativeGuidance(this.capture, worktree);
+    const reviewDiff =
+      this.branch && selection.activity === 'review'
+        ? this.store('activity.diff', candidateDiff(worktree, this.capture.source.revision))
+        : undefined;
+    const evidence = reviewDiff ? [...(data.evidence ?? []), reviewDiff] : data.evidence;
     const log = this.artifact('codex.jsonl');
     return agent.activate(
-      { capture: this.capture, selection, task: { ...data, goal: this.goal, worktree } },
+      { capture: this.capture, selection, task: { ...data, evidence, goal: this.goal, worktree } },
       (view, cancellation) => codex(this.config.executable, view, log, cancellation),
       signal,
     );
@@ -229,12 +393,25 @@ export class HostTask implements TaskSession {
   edits(owner: string, activity: string, edits: readonly CheckedEdit[]) {
     if (!this.worktree || !['documentation', 'testing', 'implementation'].includes(activity))
       throw new Error(`Checked edits are unavailable in ${owner}/${activity}`);
-    const observed = applyEdits(this.worktree, this.capture, owner, edits);
+    const observed = applyEdits(this.worktree, this.capture, owner, edits, (editIntent) =>
+      this.note({ owner, activity, editIntent }),
+    );
     this.journal.record({ owner, activity, edits: observed });
   }
 
+  /** Resolve an unresolved check from the task's retained steward observations. */
+  pendingCheck(scope: StewardScope) {
+    return pendingStewardCheck(this.observations(), scope);
+  }
+
+  /** Bind exact owner observations to the clean checkpoint when the edit history permits it. */
+  ownerReviewChecks(): OwnerObservation[] {
+    const events = this.observations<Parameters<typeof ownerReviewObservations>[0][number]>();
+    return ownerReviewObservations(events, cleanCandidate(this), this.capture.operations);
+  }
+
   /** Run a declared check and record its real exit, duration and transcript. */
-  async check(id: string, signal: AbortSignal, owner?: string) {
+  async check(id: string, signal: AbortSignal, scope?: StewardScope) {
     if (!this.worktree) throw new Error('No task worktree is available for checks');
     const log = this.artifact(`${id}.log`);
     const result = await check(
@@ -242,11 +419,11 @@ export class HostTask implements TaskSession {
       this.worktree,
       this.config.common,
       id,
-      owner,
+      scope?.owner,
       log,
       signal,
     );
-    this.journal.record({ check: result });
+    this.journal.record({ check: result, scope });
     return result;
   }
 
@@ -258,13 +435,20 @@ export class HostTask implements TaskSession {
   }
 
   /** Allocate a recorded evidence name before starting a native operation. */
-  private artifact(name: string) {
-    const path = join(
-      this.directory(),
-      `${++this.sequence}-${name.replaceAll(/[^a-zA-Z0-9_.-]/g, '-')}`,
-    );
+  artifact(name: string) {
+    const directory = this.evidenceDirectory();
+    mkdirSync(directory, { recursive: true, mode: 0o700 });
+    if (realpathSync(directory) !== directory) throw new Error('Evidence directory is an alias');
+    const file = name.replaceAll(/[^a-zA-Z0-9_.-]/g, '-');
+    const path = join(directory, `${this.journal.run}-${++this.sequence}-${file}`);
     this.evidence.push(path);
+    this.note({ artifact: path });
     return path;
+  }
+
+  /** Keep evidence mounts stable across attempts and isolated from the worktrees. */
+  private evidenceDirectory() {
+    return join(this.location(this.journal.run), '..', '..', 'evidence', this.taskID);
   }
 
   /** Use a run-local directory under trusted application storage. */
@@ -290,75 +474,6 @@ export function hostTask(session: TaskSession): HostTask {
 /** Choose the default external application state directory. */
 export function applicationStorage() {
   return resolve(process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state'), 'arcnexus');
-}
-
-/** Refuse dirty or unverified source and executable settings before writing a lane row. */
-function preflight(capture: Capture, storage: string): HostConfig {
-  const { project, source } = capture;
-  const base = project.delivery?.baseBranch;
-  if (
-    !base ||
-    !/^[\w/-]+$/.test(base) ||
-    base === project.delivery?.protectedBranch ||
-    base === 'main'
-  )
-    throw new Error('Missing or unsafe captured staging branch');
-  if (storage === source.root || storage.startsWith(source.root + '/'))
-    throw new Error('Application storage must be outside the project');
-  const common = realpathSync(
-    git(source.root, 'rev-parse', '--path-format=absolute', '--git-common-dir'),
-  );
-  if (git(source.root, 'status', '--porcelain', '--untracked-files=normal'))
-    throw new Error('Task admission requires a clean working tree');
-  if (git(source.root, 'rev-parse', 'HEAD') !== source.revision)
-    throw new Error('The source revision changed during admission');
-  const fresh =
-    git(source.root, 'ls-remote', '--exit-code', 'origin', `refs/heads/${base}`).split('\t')[0] ===
-    source.revision;
-  if (!project.checks?.acceptance?.length) throw new Error('Missing captured acceptance checks');
-  new GitHub(source.remote, new AbortController().signal);
-  verifyNativeGuidance(capture, source.root);
-  return { capture, common, executable: binding(project.bindings, common), base, fresh, storage };
-}
-
-/** Resolve only the configured local executable, with no PATH fallback. */
-function binding(file: string | undefined, common: string) {
-  if (!file || !/^\.git\/(?:[\w.-]+\/)*[\w.-]+$/.test(file) || file.split('/').includes('..'))
-    throw new Error('Missing or unsafe project bindings path');
-  const path = join(common, file.slice('.git/'.length));
-  if (realpathSync(path) !== path) throw new Error('Project bindings must not use an alias');
-  const data = parse(readFileSync(path, 'utf8'));
-  const executable = data?.tools?.codex;
-  if (data?.schemaVersion !== 1 || typeof executable !== 'string' || !isAbsolute(executable))
-    throw new Error('Missing supported executable binding: tools.codex');
-  accessSync(executable, constants.X_OK);
-  return executable;
-}
-
-/** Keep native Codex discovery pinned to the approved input files during activation. */
-function verifyNativeGuidance(capture: Capture, worktree: string) {
-  const isGuidance = (path: string) =>
-    /(?:^|\/)(?:AGENTS(?:\.override)?\.md|\.agents\/skills\/)/.test(path);
-  const listed = git(
-    worktree,
-    'ls-files',
-    '--cached',
-    '--others',
-    '--exclude-standard',
-    '-z',
-  ).split('\0');
-  if (listed.some((path) => /(?:^|\/)\.codex\/config\.toml$/.test(path)))
-    throw new Error('Target Codex configuration is outside the captured harness binding');
-  const approved = new Set(capture.source.paths.filter(isGuidance));
-  for (const path of new Set([...listed.filter(isGuidance), ...approved])) {
-    const absolute = join(worktree, path);
-    if (
-      !approved.has(path) ||
-      !lstatSync(absolute).isFile() ||
-      readFileSync(absolute, 'utf8') !== capture.source.read(path)
-    )
-      throw new Error(`Captured project guidance differs from the native discovery view: ${path}`);
-  }
 }
 
 /** Map unavailable project input to an SDK error without admitting a run. */

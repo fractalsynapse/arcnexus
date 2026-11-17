@@ -8,7 +8,9 @@ The CLI app owns terminal input, output and exit codes. Its Cordis adapter
 delegates structured inspection and task operations to the shared
 [Commands SDK](../../packages/commands/contract.md). The CLI exposes
 `arcnexus inspect <component> <activity>` and `arcnexus task run "<goal>"` for
-the project resolved from the working directory.
+the project resolved from the working directory. Bare `arcnexus task run`
+loads one round from the project goal inventory and evaluates each goal in priority
+order through the same task service.
 
 `--json` is a general CLI output option, accepted once before the command or
 after its positional arguments. It selects structured JSON on stdout. Commands
@@ -38,7 +40,8 @@ place. With `--json`, it prints one result object with `actor`, `component`,
 prompt in the rendered output byte for byte.
 
 The foreground task streams progress and evidence references, asks genuine human
-questions, and honors SIGINT. Exit 0 represents the verified staging merge.
+questions, and honors SIGINT. Exit 0 represents the verified staging merge for a single goal, or a completed
+round in which each goal has fresh passing measure evidence or a verified merge.
 Exit 1 represents a failed or blocked run, exit 2 invalid or unavailable input,
 and exit 130 cancellation. Refuse a second active task in the same project. Other
 verbs, option modes and launch surfaces are reserved for later qualification.
@@ -48,9 +51,9 @@ verbs, option modes and launch surfaces are reserved for later qualification.
 | ID | Observation |
 | --- | --- |
 | GW-1 | A task launched from a nested directory resolves the project, shows progress and exits 0 only after verified staging integration. |
-| GW-2 | `task run` with no goal, or with a second positional, is exit 2 and writes no state. |
+| GW-2 | Bare `task run` evaluates the goal inventory sequentially, reporting each result. A missing or invalid inventory, empty explicit goal, or second positional is exit 2 without admitting a task. |
 | GW-3 | `task run` while another goal holds the lane is exit 2 naming the active goal; no queue row is created. |
-| GW-5 | Stopping through foreground SIGINT retains branch, worktree and evidence. A later invocation observes any uncertain effect before acting. |
+| GW-5 | Stopping through foreground SIGINT retains checked edits, the branch and evidence. Execution removes its worktree after preservation. A later invocation observes any uncertain effect before acting. |
 | GW-6 | An unanswered human-only question results in exit 1 with a question and evidence reference. |
 | GW-7 | `SIGINT` during execution exits 130 with retained evidence and no orphaned process. |
 | GW-11 | A reserved command (`workday start`, `release verify`) is exit 2 reporting it is not available in this build. |

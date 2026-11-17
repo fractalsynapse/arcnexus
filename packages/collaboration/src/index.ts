@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import { setTimeout } from 'node:timers/promises';
 import { promisify } from 'node:util';
+import { retryRead } from './read.js';
 
 const run = promisify(execFile);
 
@@ -19,11 +20,54 @@ export class GitHub {
   }
 
   /** Create the issue that identifies this admitted task. */
-  async issue(goal: string) {
-    const url = await this.command(['issue', 'create', '--title', title(goal), '--body', goal]);
+  async issue(goal: string, taskID: string, goalID: string) {
+    const marker = `<!-- arcnexus-goal:${goalID} -->
+<!-- arcnexus-task:${taskID} -->`;
+    const url = await this.command([
+      'issue',
+      'create',
+      '--title',
+      title(goal),
+      '--body',
+      `${goal}
+
+${marker}`,
+    ]);
     const issue = /\/issues\/(\d+)$/.exec(url)?.[1];
     if (!issue) throw new Error('GitHub did not return an issue number');
     return issue;
+  }
+
+  /** Correlate an uncertain issue creation through the exact hosted task marker. */
+  async findIssue(taskID: string, goalID: string): Promise<string | undefined> {
+    if (![taskID, goalID].every((id) => /^[a-f0-9]{64}$/.test(id)))
+      throw new Error('Invalid goal or task identity');
+    const raw = await this.query([
+      'issue',
+      'list',
+      '--state',
+      'all',
+      '--search',
+      `${goalID} in:body`,
+      '--limit',
+      '100',
+      '--json',
+      'number,body',
+    ]);
+    const issues = JSON.parse(raw) as { number: number; body: string }[];
+    const actual = issues.filter(({ body }) => body.endsWith(`<!-- arcnexus-task:${taskID} -->`));
+    if (actual.length > 1) throw new Error(`Ambiguous GitHub issues for task ${taskID}`);
+    return actual[0] && String(actual[0].number);
+  }
+
+  /** Confirm the exact recorded issue is still present in the captured repository. */
+  async verifyIssue(issue: string) {
+    if (!/^\d+$/.test(issue)) throw new Error('Invalid recorded GitHub issue');
+    const observed = JSON.parse(
+      await this.query(['api', `repos/${this.repository}/issues/${issue}`]),
+    );
+    if (String(observed.number) !== issue || observed.pull_request)
+      throw new Error(`GitHub issue #${issue} could not be verified`);
   }
 
   /** Create one staging PR after the checked candidate has been pushed. */
@@ -47,7 +91,7 @@ export class GitHub {
     const owner = this.repository.split('/')[0];
     const head = encodeURIComponent(`${owner}:${branch}`);
     const matches: ProviderPull[] = JSON.parse(
-      await this.command([
+      await this.query([
         'api',
         `repos/${this.repository}/pulls?head=${head}&state=all&per_page=100`,
       ]),
@@ -98,10 +142,10 @@ export class GitHub {
   async confirm(commit: string, tree: string, target: string) {
     if (!/^[a-f0-9]{40}$/.test(commit)) throw new Error('Invalid GitHub merge identity');
     const entry = JSON.parse(
-      await this.command(['api', `repos/${this.repository}/commits/${commit}`]),
+      await this.query(['api', `repos/${this.repository}/commits/${commit}`]),
     );
     const comparison = JSON.parse(
-      await this.command([
+      await this.query([
         'api',
         `repos/${this.repository}/compare/${commit}...${encodeURIComponent(target)}`,
       ]),
@@ -115,8 +159,12 @@ export class GitHub {
   }
 
   /** Push only the verified task commit to its captured issue branch. */
-  async push(worktree: string, branch: string, head: string) {
-    if (!/^\d+-[\w-]+$/.test(branch) || !/^[a-f0-9]{40}$/.test(head))
+  async push(worktree: string, branch: string, head: string, previous = '') {
+    if (
+      !/^\d+-[\w-]+$/.test(branch) ||
+      !/^[a-f0-9]{40}$/.test(head) ||
+      (previous && !/^[a-f0-9]{40}$/.test(previous))
+    )
       throw new Error('Invalid verified publication identity');
     await run(
       '/usr/bin/git',
@@ -128,7 +176,7 @@ export class GitHub {
         '-c',
         'credential.helper=!/usr/bin/gh auth git-credential',
         'push',
-        `--force-with-lease=refs/heads/${branch}:`,
+        `--force-with-lease=refs/heads/${branch}:${previous}`,
         `https://github.com/${this.repository}.git`,
         `${head}:refs/heads/${branch}`,
       ],
@@ -182,7 +230,7 @@ export class GitHub {
   /** Read provider facts rather than trusting local push or merge command completion. */
   private async observe(pr: string): Promise<Pull> {
     return JSON.parse(
-      await this.command([
+      await this.query([
         'pr',
         'view',
         pr,
@@ -190,6 +238,11 @@ export class GitHub {
         'state,headRefOid,baseRefName,reviewDecision,mergeCommit,statusCheckRollup',
       ]),
     );
+  }
+
+  /** Retry transport failures only at explicit read-only provider call sites. */
+  private query(args: string[]) {
+    return retryRead(() => this.command(args), this.signal);
   }
 
   /** Run a scoped provider action without interpolating model content into a shell. */

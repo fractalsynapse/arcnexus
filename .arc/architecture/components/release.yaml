@@ -30,7 +30,7 @@ activities:
     standards: []
   testing:
     role: designer
-    profile: gpt-sol
+    profile: gpt-terra
     instructions:
     - Exercise applicable repository workflow checks and the protected release boundary.
     operations:

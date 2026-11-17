@@ -24,7 +24,7 @@ activities:
     standards: []
   testing:
     role: designer
-    profile: gpt-sol
+    profile: gpt-terra
     instructions:
     - Use an isolated provider fixture to exercise changed heads, checks and unavailable results.
     operations:

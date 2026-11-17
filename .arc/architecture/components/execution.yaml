@@ -24,7 +24,7 @@ activities:
     standards: []
   testing:
     role: designer
-    profile: gpt-sol
+    profile: gpt-terra
     instructions:
     - Exercise checked edits, stale hashes, host confinement and descendant cancellation.
     operations:

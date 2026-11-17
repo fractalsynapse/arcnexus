@@ -24,7 +24,7 @@ activities:
     standards: []
   testing:
     role: designer
-    profile: gpt-sol
+    profile: gpt-terra
     instructions:
     - Exercise built invocation, terminal questions and exit codes against the shared operation outcomes.
     operations:

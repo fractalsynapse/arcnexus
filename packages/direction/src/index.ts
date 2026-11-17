@@ -1,3 +1,4 @@
+import { team } from '../../team/src/index.js';
 import type { Capture } from '../../architecture/src/index.js';
 
 export const activities = [
@@ -39,19 +40,47 @@ export interface Rejection {
   reason: string;
 }
 
-export type Feedback =
+export interface StewardCheckFailure {
+  activity: Exclude<PlanActivity, 'release'>;
+  id: string;
+  expected: 'pass' | 'fail';
+  status: number;
+  log: string;
+}
+
+export type RevisionFeedback =
   | { kind: 'rejection'; findings: readonly Rejection[] }
   | {
       kind: 'supplier';
       milestone: string;
+      requester: string;
       owner: string;
       reason: string;
       evidence: readonly string[];
+      failedCheck?: StewardCheckFailure;
     }
   | { kind: 'answer'; question: string; answer: string; evidence: readonly string[] };
 
+export type Feedback =
+  RevisionFeedback | { kind: 'plan-repair'; diagnostic: string; original?: RevisionFeedback };
+
+export interface StandingGoalEvidence {
+  readonly owner: string;
+  readonly revision: string;
+  readonly status: number | null | 'not-applicable';
+  readonly log: string;
+  readonly recentChanges: readonly string[];
+}
+
+export interface GoalAssessment {
+  readonly kind: 'satisfied';
+  readonly summary: string;
+  readonly evidence: readonly string[];
+}
+
 export type DirectionResult =
   | { kind: 'plan'; plan: Plan }
+  | GoalAssessment
   | { kind: 'question'; question: string; evidence: readonly string[] };
 
 /** Check the Director's proposed work against captured ownership and the plan template. */
@@ -77,6 +106,26 @@ export function validatePlan(capture: Capture, plan: Plan) {
       acceptance.set(id, { owner: milestone.owner, description });
     }
   }
+  validateEngineeringCoverage(plan, acceptance.keys());
+}
+
+/** Require every acceptance ID to be covered before the host-owned Release step. */
+function validateEngineeringCoverage(plan: Plan, criteria: Iterable<string>) {
+  const covered = new Set<string>();
+  for (const { steps } of plan.milestones) {
+    for (const { activity, checklist, inapplicable } of steps) {
+      if (activity === 'release' || inapplicable) continue;
+      for (const { criteria } of checklist) {
+        for (const id of criteria) covered.add(id);
+      }
+    }
+  }
+  for (const id of criteria) {
+    if (!covered.has(id))
+      throw new Error(
+        `Acceptance criterion ${id} needs an applicable steward Step before delivery`,
+      );
+  }
 }
 
 /** Require fresh work for each rejected criterion under its original accountable owner. */
@@ -100,8 +149,7 @@ export function validateCorrection(plan: Plan, completed: number, findings: read
 
 /** Validate checklist references and forbid work the component cannot perform. */
 function validateMilestone(capture: Capture, milestone: Milestone) {
-  const owner =
-    Object.hasOwn(capture.components, milestone.owner) && capture.components[milestone.owner];
+  const owner = team.list(capture.components, { component: milestone.owner })[0];
   if (!owner) throw new Error(`Unknown milestone owner: ${milestone.owner}`);
   const criteria = new Set(milestone.criteria.map(({ id }) => id));
   if (!criteria.size || criteria.size !== milestone.criteria.length)
@@ -152,4 +200,32 @@ export function validateRevision(
   }
 }
 
-export { direct } from './native.js';
+/** Confirm a linked contribution is complete or runnable work is ahead of the paused milestone. */
+export function supplierIsScheduled(
+  before: Plan,
+  after: Plan,
+  feedback: Extract<Feedback, { kind: 'supplier' }>,
+  completed: number,
+  positions: ReadonlyMap<string, number>,
+): boolean {
+  const linked = before.milestones.findIndex(
+    ({ id }) => id === feedback.milestone && id !== feedback.requester,
+  );
+  if (linked >= 0 && before.milestones[linked]?.owner !== feedback.owner) return false;
+  if (linked >= 0 && linked < completed) return true;
+
+  const requester = after.milestones.findIndex(({ id }) => id === feedback.requester);
+  if (requester < completed) return false;
+  return after.milestones.slice(completed, requester).some(({ id, owner, steps }) => {
+    if (owner !== feedback.owner || (linked >= 0 && id !== feedback.milestone)) return false;
+    if (feedback.failedCheck && before.milestones.some((milestone) => milestone.id === id))
+      return false;
+    return steps.slice(positions.get(id) ?? 0).some(({ activity, inapplicable }) => {
+      if (activity === 'release' || inapplicable) return false;
+      return !feedback.failedCheck || activity === feedback.failedCheck.activity;
+    });
+  });
+}
+
+export { direct, track } from './native.js';
+export { decodeDirectorResponse, DirectorResponseError } from './response.js';

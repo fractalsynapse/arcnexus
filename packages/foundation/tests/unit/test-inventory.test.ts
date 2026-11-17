@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { registerSuite, testInventory } from '../../scripts/test-inventory.js';
+import { registerSuite, testInventory } from '../../src/index.js';
 
 test('test selection uses catalog ownership across the built app and package trees', () => {
   const all = testInventory();
@@ -11,6 +11,12 @@ test('test selection uses catalog ownership across the built app and package tre
     all.filter(({ owner }) => owner === 'cli-app'),
   );
   assert.throws(() => testInventory('missing'), /Unknown test owner/);
+});
+
+test('suite registration preserves the built test path for the test runner', () => {
+  const file = 'dist/packages/foundation/tests/unit/probe.test.js';
+  const owner = { id: 'foundation', owns: ['packages/foundation'] };
+  assert.equal(registerSuite(file, [owner]).file, file);
 });
 
 test('unowned suites, conflicting owners and unknown suite levels are refused', () => {
