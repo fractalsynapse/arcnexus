@@ -28,6 +28,10 @@ independent owned edit instead of rewriting or resubmitting confirmed work
 an identical checked-edit request returns its retained receipt without repeating
 the write (EX-17).
 
+Rerun the exact original goal from the same staging revision so the host can find the retained task.
+
+Keep the existing application storage so the journal can restore the answer and file receipt.
+
 ## Correct a refusal
 
 If a later path is refused, correct only that request or ask its owner for help.
