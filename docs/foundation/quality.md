@@ -10,6 +10,7 @@ declared test metadata. Work with the checks that resolve the current uncertaint
 Run applicable assembled checks on the built artifact and production composition
 before delivery. Declare generated roots once. Read-only checks leave maintained
 source untouched, and fixes remain in the caller's writable scope.
+See [Continuous integration](../release/ci.md) for hosted checks and the opt-in local native confinement suite.
 
 The first Foundation delivery compiles the app and plugin layout and exercises
 Cordis composition through the built test path. Build output belongs in `dist/`.
