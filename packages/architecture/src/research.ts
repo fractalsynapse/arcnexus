@@ -53,3 +53,29 @@ function reportSummary(markdown: string) {
     return undefined;
   }
 }
+
+export const researchReportSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['kind', 'summary', 'findings', 'sources', 'applicability', 'unresolved', 'reusable'],
+  properties: {
+    kind: { type: 'string', enum: ['research-report'] },
+    summary: { type: 'string', description: 'Short answer to the question' },
+    findings: { type: 'string', description: 'Synthesis grounded in consulted sources' },
+    sources: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['url', 'note'],
+        properties: {
+          url: { type: 'string', description: 'Public HTTP or HTTPS source URL' },
+          note: { type: 'string', description: 'What this source establishes' },
+        },
+      },
+    },
+    applicability: { type: 'string', description: 'Versions or conditions for these findings' },
+    unresolved: { type: 'array', items: { type: 'string' } },
+    reusable: { type: 'boolean', description: 'Whether the report is worth archiving' },
+  },
+} as const;

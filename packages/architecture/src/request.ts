@@ -2,7 +2,7 @@ import { team } from '../../team/src/index.js';
 import { stringify } from 'yaml';
 import { resolveActivity, type ActivitySelection } from './activity.js';
 import { catalogRoot, definitionPath, type Capture } from './catalog.js';
-import { canResearch, researchIndex } from './research.js';
+import { canResearch, researchIndex, researchReportSchema } from './research.js';
 
 export interface TaskContext {
   assignment?: unknown;
@@ -39,7 +39,7 @@ export function buildCodexRequest(
     placeholders,
     request: {
       input: sections.join('\n\n'),
-      options: modelOptions(references.profile, context.worktree),
+      options: modelOptions(references.profile, context.worktree, name),
     },
   };
 }
@@ -63,12 +63,17 @@ function researchContext(index: ReturnType<typeof researchIndex>, activity: stri
 }
 
 /** Translate the captured profile and workspace into harness options. */
-function modelOptions(profile: ReturnType<typeof resolveReferences>['profile'], worktree: string) {
+function modelOptions(
+  profile: ReturnType<typeof resolveReferences>['profile'],
+  worktree: string,
+  activity: string,
+) {
   return {
     model: profile.model,
     modelReasoningEffort: profile.reasoning,
     webSearchMode: profile.webSearch,
     workingDirectory: worktree,
+    ...(activity === 'research' ? { outputSchema: researchReportSchema } : {}),
   };
 }
 

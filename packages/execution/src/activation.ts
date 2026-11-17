@@ -1,5 +1,9 @@
 import type { Agent } from '../../agent/src/index.js';
-import type { ActivitySelection, TaskContext } from '../../architecture/src/index.js';
+import type {
+  ActivitySelection,
+  AgentInspection,
+  TaskContext,
+} from '../../architecture/src/index.js';
 import { codex } from './codex.js';
 import { candidateDiff } from './git.js';
 import { verifyNativeGuidance } from './host-config.js';
@@ -27,11 +31,19 @@ export function activateActor(
     (selected, input) =>
       agent.activate(
         { capture, selection: selected, task: { ...input, goal, worktree } },
-        (view, cancellation) =>
-          codex(task.config.executable, view, task.artifact('codex.jsonl'), cancellation),
+        (view, cancellation) => invokeCodex(task, view, cancellation),
         signal,
       ),
     signal,
   );
   return inbox.run(selection, { ...data, evidence });
+}
+
+/** Store a host-generated response schema next to the protected transcript. */
+function invokeCodex(task: HostTask, view: AgentInspection, signal: AbortSignal) {
+  const { outputSchema } = view.request.options;
+  const schema = outputSchema
+    ? task.store('codex-output-schema.json', JSON.stringify(outputSchema))
+    : undefined;
+  return codex(task.config.executable, view, task.artifact('codex.jsonl'), signal, schema);
 }

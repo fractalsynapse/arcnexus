@@ -99,7 +99,8 @@ export class ResearchInbox {
             decision: request.decision,
             requestedBy: request.requestedBy,
             candidate: object(data.assignment)?.candidate,
-            response: reportShape,
+            instructions:
+              'Return exactly one JSON object matching the research report schema. Start with { and end with }. Use no Markdown headings, code fences, or explanation outside the object. Cite sources you actually consulted.',
           },
         },
       );
@@ -195,18 +196,6 @@ function inboxIdentity(task: InboxTask, selection: ActivitySelection, data: Assi
   ]);
 }
 
-const reportShape = {
-  kind: 'research-report',
-  summary: 'Short answer to the question',
-  findings: 'Synthesis grounded in the cited external sources',
-  sources: [
-    { url: 'https://primary-source.example/reference', note: 'What this source establishes' },
-  ],
-  applicability: 'Versions or conditions under which the findings apply',
-  unresolved: ['Remaining uncertainty, if any'],
-  reusable: 'Boolean indicating whether the report is worth archiving',
-};
-
 /** Interpret only the explicit request outcome and derive its stable journal identity. */
 function researchRequest(
   value: unknown,
@@ -227,6 +216,8 @@ function withResults(data: Assignment, results: readonly ResearchResult[]): Assi
     ...data,
     assignment: {
       ...(object(data.assignment) ?? { original: data.assignment }),
+      researchContinuation:
+        'The host has resolved these requests. Read the reports and continue the original activity. An unavailable result is final for that question. Only request research again for a different question that can change a decision.',
       researchResults: results.map(({ request, evidence, archive, unavailable }) => ({
         id: request.id,
         question: request.question,
