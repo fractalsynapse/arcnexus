@@ -197,3 +197,52 @@ task-level independent verdict and staging gates remain required. This activity
 records intent and retained evidence only; it declares no operations and does not
 claim that the precedence regression, correction or behavioral acceptance has
 passed.
+
+## Assembled quality rejection
+
+The appended Execution-owned `steward-check-assembled-quality-correction`
+milestone records an assembled-quality rejection against
+`precedence-function-standard` before correction. The rejected assembled contents
+are retained in [89-17-candidate.diff][quality-candidate]. Preserve both failed
+check observations and their readable evidence:
+
+- [89-20-repository-format.log][quality-format]: `repository-format` exited with
+  exact status 1. Formatting failed in `packages/execution/src/steward-check.ts`,
+  `packages/execution/tests/integration/check-observation-precedence.test.ts` and
+  `packages/execution/tests/integration/interrupted-check.test.ts`.
+- [89-21-repository-lint.log][quality-lint]: `repository-lint` exited with exact
+  status 1. The unused `hostTask` import at
+  `packages/execution/tests/integration/interrupted-check.test.ts:19:31` violates
+  `@typescript-eslint/no-unused-vars`.
+
+These observations establish the failures for a behavior-preserving formatting
+and unused-import correction; no new behavioral regression is required. Preserve
+all existing assertions and failed and passing regression evidence for observation
+precedence, absent-observation fallback, unresolved recovery, both expectations,
+exact statuses, retained edits and logs, mandatory retries and checkpoint behavior.
+
+Correction remains within `packages/execution`: format the three rejected files
+and remove the unused import. Under `precedence-function-standard`, retain
+meaningful separated recovery functions and explanatory headers, and inspect each
+function after formatting against the TypeScript standard's 30-physical-line limit.
+Preserve captured authority, operation definitions, acceptance and existing
+recovery responsibilities.
+
+Preserve the existing Focus, milestone order, completed Steps and recorded activity
+position. This appended correction must pass before renewed assembled acceptance
+and delivery. Retain a subsequent authorized Execution owner-suite result and host
+reruns of required assembled checks, including format and lint, with exact exits
+and readable evidence. An unresolved required check leaves the correction pending
+with edits and failed observations secured. Reuse the existing issue, branch and
+single active task worktree, securing its contents before task-owned cleanup.
+Resume from the recorded successor only after completion is durably recorded.
+
+This documentation activity declares no operations and claims no corrected check
+or acceptance result. The later independent reassessment, required hosted CI,
+required PR review and observed staging integration remain separate gates. Preserve
+reported skips and evidence limitations; earlier simulated evidence does not
+establish native confinement, live inference or actual staging delivery.
+
+[quality-candidate]: /home/adrian/.local/state/arcnexus/8b40ccad5a575a6294e2358bad463bbffd81c5c2af4eac5f7c63f83a41af3f4c/evidence/420da43f22b23e9b563b916913ddc63897341bc719a2713bf569b593233f288f/89-17-candidate.diff
+[quality-format]: /home/adrian/.local/state/arcnexus/8b40ccad5a575a6294e2358bad463bbffd81c5c2af4eac5f7c63f83a41af3f4c/evidence/420da43f22b23e9b563b916913ddc63897341bc719a2713bf569b593233f288f/89-20-repository-format.log
+[quality-lint]: /home/adrian/.local/state/arcnexus/8b40ccad5a575a6294e2358bad463bbffd81c5c2af4eac5f7c63f83a41af3f4c/evidence/420da43f22b23e9b563b916913ddc63897341bc719a2713bf569b593233f288f/89-21-repository-lint.log
