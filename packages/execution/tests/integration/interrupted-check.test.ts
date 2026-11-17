@@ -241,16 +241,7 @@ class InterruptedCheck {
   private observeCheck(task: HostTask, id: string, scope: unknown) {
     assert.equal(id, 'owner-tests');
     assert(task.worktree);
-    const corrected = readFileSync(join(task.worktree, 'fixture.txt'), 'utf8') === 'corrected';
-    const status = corrected
-      ? this.expected === 'pass'
-        ? 0
-        : 37
-      : this.expected === 'fail'
-        ? 0
-        : this.phase === 'interrupt'
-          ? 37
-          : 43;
+    const status = this.checkStatus(task);
     const log = task.store('owner-tests.log', `fixture diagnostic: exit ${status}\n`);
     const check = {
       id,
@@ -263,12 +254,24 @@ class InterruptedCheck {
     };
     task.note({ check, scope });
     this.checks.push({ status, log });
-    if (this.phase === 'interrupt')
-      this.controller.abort(new Error('Interrupted after check record, before feedback'));
+    if (this.phase === 'interrupt') this.interruptAfterObservation();
     return check;
   }
 
-  /** Omit checks on every retry and offer correction only when the scenario requests it. */
+  /** Derive the fixture's exact exit from its bytes and retry phase. */
+  private checkStatus(task: HostTask): number {
+    const corrected = readFileSync(join(task.worktree!, 'fixture.txt'), 'utf8') === 'corrected';
+    if (corrected) return this.expected === 'pass' ? 0 : 37;
+    if (this.expected === 'fail') return 0;
+    return this.phase === 'interrupt' ? 37 : 43;
+  }
+
+  /** Cancel only after the native task journal has retained the check observation. */
+  private interruptAfterObservation(): void {
+    this.controller.abort(new Error('Interrupted after check record, before feedback'));
+  }
+
+  /** Route review separately and retain the original checked contribution on interruption. */
   private proposal(task: HostTask, data: TaskContext) {
     assert(task.worktree);
     assert.equal(task.branch, '7-task');
@@ -290,26 +293,28 @@ class InterruptedCheck {
     assert.equal(readFileSync(join(task.worktree, 'fixture.txt'), 'utf8'), 'checked');
     const pending = task.pendingCheck({ owner: 'owner', activity: 'implementation' });
     this.recovered.push(pending);
-    if (pending) {
-      const assignment = data.assignment as { failedCheck?: StewardCheckFailure };
-      assert.deepEqual(assignment.failedCheck, pending);
-      assert(data.evidence?.includes(pending.log));
-      assert.equal(
-        readFileSync(pending.log, 'utf8'),
-        `fixture diagnostic: exit ${pending.status}\n`,
-      );
-    }
-    const edits =
-      this.phase === 'correct'
-        ? [
-            {
-              path: 'fixture.txt',
-              expected: createHash('sha256').update('checked').digest('hex'),
-              content: 'corrected',
-            },
-          ]
-        : [];
-    return { kind: 'completed', edits, checks: [] };
+    if (pending) this.assertRecoveredFailure(data, pending);
+    return { kind: 'completed', edits: this.correctionEdits(), checks: [] };
+  }
+
+  /** Confirm recovery retains the failed check's authority, exact exit and readable log. */
+  private assertRecoveredFailure(data: TaskContext, pending: StewardCheckFailure): void {
+    const assignment = data.assignment as { failedCheck?: StewardCheckFailure };
+    assert.deepEqual(assignment.failedCheck, pending);
+    assert(data.evidence?.includes(pending.log));
+    assert.equal(readFileSync(pending.log, 'utf8'), `fixture diagnostic: exit ${pending.status}\n`);
+  }
+
+  /** Correct the retained bytes only in the correction phase using their observed digest. */
+  private correctionEdits() {
+    if (this.phase !== 'correct') return [];
+    return [
+      {
+        path: 'fixture.txt',
+        expected: createHash('sha256').update('checked').digest('hex'),
+        content: 'corrected',
+      },
+    ];
   }
 
   /** Initialize a real Git base and the captured authority for the fixture's single owned path. */

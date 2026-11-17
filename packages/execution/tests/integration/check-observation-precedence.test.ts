@@ -46,8 +46,13 @@ class RecoveryFixture {
     };
     this.task.note({
       feedback: {
-        kind: 'supplier', milestone: 'correction', requester: scope.owner,
-        owner: scope.owner, reason: 'Check A failed', evidence: [log], failedCheck,
+        kind: 'supplier',
+        milestone: 'correction',
+        requester: scope.owner,
+        owner: scope.owner,
+        reason: 'Check A failed',
+        evidence: [log],
+        failedCheck,
       },
     });
     return failedCheck;
@@ -58,8 +63,13 @@ class RecoveryFixture {
     const log = this.task.store(`${id}.log`, `${id} diagnostic: exit ${status}\n`);
     this.task.note({
       check: {
-        id, status, log, command: 'fixture-check', args: [],
-        cwd: this.task.capture.source.root, durationMs: 1,
+        id,
+        status,
+        log,
+        command: 'fixture-check',
+        args: [],
+        cwd: this.task.capture.source.root,
+        durationMs: 1,
       },
       scope: observed,
     });
