@@ -9,6 +9,9 @@
 
 ### Fixed
 
+- Reuse known staging commits during goal rounds and bound retries of remote
+  staging reads (#529).
+
 - Make prior check logs readable after task restart and provide stewards a
   host-generated diff for self-review (#525).
 
