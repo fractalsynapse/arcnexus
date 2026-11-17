@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
@@ -188,4 +188,55 @@ test('a correction that still fails its required check blocks before resumption'
   assert.equal(result.kind, 'blocked');
   assert.match(result.reason, /owner-tests.*1/);
   assert.deepEqual(task.calls, ['original', 'check:1', 'direction', 'correction', 'check:1']);
+});
+
+test('a malformed steward reply is repaired in the same step before checked effects', async (t) => {
+  const task = nativeTask(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-repair-')));
+  const file = join(task.worktree!, 'fixture.txt');
+  const replacement = { path: 'fixture.txt', expected: null, content: 'corrected' };
+  const transcript = task.store('invalid-codex.jsonl', 'retained malformed reply');
+  const replies = t.mock.method(
+    task,
+    'activate',
+    async (_agent: Agent, _selection: unknown, context: TaskContext) => {
+      assert.equal(existsSync(file), false);
+      const repair = (context.assignment as { responseRepair?: string }).responseRepair;
+      if (!repair) return { completed: { kind: 'completed', edits: [replacement], checks: [] } };
+      assert.match(repair, /response\.kind/);
+      assert(context.evidence?.includes(transcript));
+      return { kind: 'completed', edits: [replacement], checks: [] };
+    },
+  );
+
+  const outcome = await steward(
+    agent,
+    task,
+    milestone('repair-format'),
+    'implementation',
+    new AbortController().signal,
+  );
+  assert.equal(outcome.kind, 'completed');
+  assert.equal(replies.mock.callCount(), 2);
+  assert.equal(readFileSync(file, 'utf8'), 'corrected');
+  task.close();
+});
+
+test('a second malformed reply blocks the step and keeps both transcripts', async (t) => {
+  const task = nativeTask(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-repair-')));
+  const replies = t.mock.method(task, 'activate', async () => {
+    task.store('codex.jsonl', 'retained malformed reply');
+    return { kind: 'completed', edits: [], checks: [{ id: 'forbidden', expected: 'pass' }] };
+  });
+  const outcome = await steward(
+    agent,
+    task,
+    milestone('repair-exhausted'),
+    'implementation',
+    new AbortController().signal,
+  );
+  assert.equal(outcome.kind, 'blocked');
+  assert.match(outcome.reason, /response\.checks\[0\]\.id: forbidden is unavailable/);
+  assert.equal(replies.mock.callCount(), 2);
+  assert.equal(outcome.evidence.length, 2);
+  task.close();
 });
