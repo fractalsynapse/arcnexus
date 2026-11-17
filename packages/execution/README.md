@@ -6,6 +6,9 @@ operations in one task worktree. Its public obligations are in the
 
 ## Activity-scoped operation recovery
 
+Use the [verified local MCP operations guide](docs/mcp-operations.md) to check one
+file at a time, retain successful receipts and correct refusals.
+
 The [operation and recovery proposal](https://github.com/fractalsynapse/arcnexus/issues/562)
 routes project operations through the current activity's local MCP tools. The
 execution provider independently controls its built-in web access. A refused
