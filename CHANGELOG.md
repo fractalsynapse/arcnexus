@@ -4,6 +4,9 @@
 
 ### Fixed
 
+- Return invalid Director proposals with the exact diagnostic for one in-task
+  repair before continuing from the accepted plan (#510).
+
 - Keep post-review GitHub checks and staging merge evidence in host delivery,
   separate from steward acceptance (#503).
 

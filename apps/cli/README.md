@@ -68,6 +68,10 @@ reads the worktree and returns structured edit proposals. The host applies
 checked edits and runs captured checks in a disposable networkless overlay.
 In JSON mode, progress uses stderr and the outcome is one JSON object on stdout.
 
+If a Director proposal fails validation, ArcNexus records the diagnostic and
+asks the Director for one correction within the same task. The host validates
+the corrected proposal before advancing and preserves any accepted work.
+
 If publication is interrupted, invoke `task run` with the identical goal.
 ArcNexus resumes from the verified candidate and observes GitHub before taking
 another publication action. A matching remote branch, pull request or merge is
