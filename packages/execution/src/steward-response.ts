@@ -16,6 +16,7 @@ export function decodeSteward(
   reply: unknown,
   allowed: readonly string[],
   correction?: StewardCheckFailure,
+  hostChecks: readonly string[] = [],
 ): StewardResult {
   const value = object(reply, 'response');
   switch (value.kind) {
@@ -23,7 +24,7 @@ export function decodeSteward(
       return {
         kind: 'completed',
         edits: edits(value.edits),
-        checks: checks(value.checks, allowed, correction),
+        checks: checks(value.checks, allowed, correction, hostChecks),
       };
     case 'supplier':
       return supplier(value);
@@ -103,13 +104,16 @@ function transform(value: unknown, path: string) {
 function checks(
   value: unknown,
   allowed: readonly string[],
-  correction?: StewardCheckFailure,
+  correction: StewardCheckFailure | undefined,
+  hostChecks: readonly string[],
 ): CheckRequest[] {
   if (!Array.isArray(value))
     throw new StewardResponseError(
       'response.checks: expected a separate top-level array, even when empty',
     );
-  const requested = value.map((entry, index) => checkRequest(entry, index, allowed));
+  const requested = value
+    .map((entry, index) => checkRequest(entry, index, allowed, hostChecks))
+    .filter((operation) => operation !== undefined);
   if (!correction) return requested;
   if (
     !allowed.includes(correction.id) ||
@@ -121,16 +125,22 @@ function checks(
   return [correction, ...requested.filter(({ id }) => id !== correction.id)];
 }
 
-/** Resolve one requested operation from the captured activity. */
-function checkRequest(value: unknown, index: number, allowed: readonly string[]): CheckRequest {
+/** Permit declared operations and discard passing declarations for scheduled host checks. */
+function checkRequest(
+  value: unknown,
+  index: number,
+  allowed: readonly string[],
+  hostChecks: readonly string[],
+): CheckRequest | undefined {
   const at = `checks[${index}]`;
   const check = object(value, at);
   const id = required(check.id, `${at}.id`);
+  const { expected } = check;
+  if (!allowed.includes(id) && hostChecks.includes(id) && expected === 'pass') return;
   if (!allowed.includes(id))
     throw new StewardResponseError(
       `response.${at}.id: ${id} is unavailable; declared operations: ${allowed.join(', ') || 'none'}`,
     );
-  const { expected } = check;
   if (expected !== 'pass' && expected !== 'fail')
     throw new StewardResponseError(`response.${at}.expected: expected pass or fail`);
   return { id, expected };

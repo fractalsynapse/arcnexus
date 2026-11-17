@@ -12,6 +12,8 @@
 - Carry each correction finding directly into the assigned steward activity
   and keep Director correction plans scoped to the needed steps. Refresh cited
   assembly failures against the current checkpoint before correction (#537).
+- Keep redundant passing expectations for already scheduled host checks
+  out of the steward operation list (#545).
 - Retry transient GitHub reads in the same task, including post-merge
   confirmation (#541).
 - Reassess an unchanged candidate when verified owner evidence changes and

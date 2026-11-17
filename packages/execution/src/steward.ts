@@ -71,9 +71,7 @@ async function requestSteward(
     try {
       const reply = await askSteward(task, agent, milestone, scope, assignment, signal, diagnostic);
       signal.throwIfAborted();
-      const result = decodeSteward(reply, stewardOperations(task, scope), assignment.failedCheck);
-      if (result.kind === 'completed') await applyStewardEdits(task, scope, result, signal);
-      return result;
+      return await applyStewardReply(task, scope, reply, assignment, signal);
     } catch (error) {
       if (!repairableReply(error)) throw error;
       signal.throwIfAborted();
@@ -164,7 +162,7 @@ async function stewardAssignment(
 function responseShape(milestone: string, formatter: boolean) {
   return {
     instructions:
-      'Return exactly one JSON object with kind at the top level. Choose one of the flat response examples. For completed, edits and checks are separate top-level arrays, even when empty. An operation belongs only in checks. When finding is present, address the exact diagnosis and paths that still need correction. The currentChecks field carries the latest host results when available. Use their logs to distinguish remaining failures from older reports. The ownerCheck field reports the latest host operation for this owner. Its candidate and operation fields identify a clean checkpoint and its captured operation definition when available. The recorded checks run in a networkless overlay. Independent review receives the same host observations. Ordinary assembled verification runs after steward review. Complete review when the work meets engineering acceptance and only that later verification remains. Do not redo fixes already confirmed by a current passing check. When responseRepair is present, read the previous reply in the retained transcript and correct the specific error. Copy a reported current sha256 exactly into expected for that file. Use at most one edit per path. To substitute text and format the same file, put both in one transform. For a small change in an existing file, use transform instead of content so the host computes the replacement bytes. The checkout is read-only; the host applies eligible edits and runs declared checks.',
+      'Return exactly one JSON object with kind at the top level. Choose one of the flat response examples. For completed, edits and checks are separate top-level arrays, even when empty. Only request operations declared for this steward activity in checks. The host manages the cited assembled checks in currentChecks directly. When finding is present, address the exact diagnosis and paths that still need correction. The currentChecks field carries the latest host results when available. Use their logs to distinguish remaining failures from older reports. The ownerCheck field reports the latest host operation for this owner. Its candidate and operation fields identify a clean checkpoint and its captured operation definition when available. The recorded checks run in a networkless overlay. Independent review receives the same host observations. Ordinary assembled verification runs after steward review. Complete review when the work meets engineering acceptance and only that later verification remains. Do not redo fixes already confirmed by a current passing check. When responseRepair is present, read the previous reply in the retained transcript and correct the specific error. Copy a reported current sha256 exactly into expected for that file. Use at most one edit per path. To substitute text and format the same file, put both in one transform. For a small change in an existing file, use transform instead of content so the host computes the replacement bytes. The checkout is read-only; the host applies eligible edits and runs declared checks.',
     transforms: transformShape(formatter),
     responses: [
       {
@@ -203,17 +201,26 @@ function transformShape(formatter: boolean) {
   };
 }
 
-/** Materialize and validate the complete edit batch before its first write. */
-async function applyStewardEdits(
+/** Validate the reply and its complete edit batch before applying any writes. */
+async function applyStewardReply(
   task: ReturnType<typeof hostTask>,
   scope: StewardScope,
-  result: Extract<StewardResult, { kind: 'completed' }>,
+  reply: unknown,
+  assignment: Awaited<ReturnType<typeof stewardAssignment>>,
   signal: AbortSignal,
 ) {
-  if (!result.edits.length) return;
+  const hostChecks = assignment.currentChecks?.map(({ id }) => id);
+  const result = decodeSteward(
+    reply,
+    stewardOperations(task, scope),
+    assignment.failedCheck,
+    hostChecks,
+  );
+  if (result.kind !== 'completed' || !result.edits.length) return result;
   if (scope.activity === 'review') throw new Error('Checked edits are unavailable during review');
   const edits = await materializeEdits(task, scope.owner, result.edits, signal);
   task.edits(scope.owner, scope.activity, edits);
+  return result;
 }
 
 /** Run the requested checks and stop at the first unexpected result. */
