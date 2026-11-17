@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { testInventory } from './test-inventory.js';
+import { testInventory } from '../src/index.js';
 
 const [owner, ...extra] = process.argv.slice(2);
 assert.equal(extra.length, 0, 'Usage: npm test [owner]');

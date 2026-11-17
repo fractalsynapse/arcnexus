@@ -7,3 +7,4 @@ args:
 - context: owner
 cwd: .
 network: false
+applicability: owner-test-suites

@@ -94,9 +94,10 @@ async function perform(
   if (result.edits.length) task.edits(owner, activity, result.edits);
   for (const { id, expected } of result.checks) {
     const check = await task.check(id, signal, owner);
-    if (check.status === null || (check.status === 0) !== (expected === 'pass'))
+    if (check.status === 'not-applicable' && expected === 'pass') continue;
+    if (typeof check.status !== 'number' || (check.status === 0) !== (expected === 'pass'))
       throw new Error(
-        `Operation ${id} exited ${check.status}; expected ${expected}; evidence: ${check.log}`,
+        `Operation ${id} reported ${check.status}; expected ${expected}; evidence: ${check.log}`,
       );
   }
 }

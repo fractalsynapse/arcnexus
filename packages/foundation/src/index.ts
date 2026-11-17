@@ -13,6 +13,8 @@ interface Suite {
   level: string;
 }
 
+const suitePattern = '{apps,packages}/*/tests/**/*.test';
+
 /** Derive suite registration from the source owner and level directory. */
 export function registerSuite(file: string, components: readonly Component[]): Suite {
   const source = file.replace(/^dist\//, '').replace(/\.js$/, '.ts');
@@ -35,10 +37,31 @@ export function testInventory(owner?: string): Suite[] {
     parse(readFileSync(path, 'utf8')),
   );
   assert(!owner || components.some(({ id }) => id === owner), `Unknown test owner: ${owner}`);
-  const files = globSync('dist/{apps,packages}/*/tests/**/*.test.js').sort();
-  const selected = files
-    .map((file) => registerSuite(file, components))
-    .filter((suite) => !owner || suite.owner === owner);
+  const selected = discoverSuites('.', `dist/${suitePattern}.js`, components).filter(
+    (suite) => !owner || suite.owner === owner,
+  );
   assert(selected.length > 0, `No built test suites for ${owner ?? 'this repository'}`);
   return selected;
+}
+
+/** Resolve suites from the current source tree using the captured component owners. */
+export function hasOwnerTestSuites(
+  directory: string,
+  owner: string,
+  components: readonly Component[],
+): boolean {
+  assert(
+    components.some(({ id }) => id === owner),
+    `Unknown test owner: ${owner}`,
+  );
+  return discoverSuites(directory, `${suitePattern}.ts`, components).some(
+    (suite) => suite.owner === owner,
+  );
+}
+
+/** Use the same registration rules for source discovery and built test selection. */
+function discoverSuites(directory: string, pattern: string, components: readonly Component[]) {
+  return globSync(pattern, { cwd: directory })
+    .sort()
+    .map((file) => registerSuite(file, components));
 }
