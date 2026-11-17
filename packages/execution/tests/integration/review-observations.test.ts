@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { CheckResult } from '../../src/check.js';
-import { ownerReviewObservations } from '../../src/review-observations.js';
+import { ownerEvidenceDigest, ownerReviewObservations } from '../../src/review-observations.js';
 import type { StewardScope } from '../../src/steward-check.js';
 
 /** Model recorded native observations around the last candidate edit. */
@@ -19,10 +19,18 @@ class ReviewObservationsScenario {
     ];
     const candidate = { tree: 'current-tree', base: 'base-revision' };
     const operation = { id: 'owner-tests', name: 'Owner tests', category: 'test', network: false };
-    assert.deepEqual(ownerReviewObservations(history, candidate, { 'owner-tests': operation }), [
+    const observations = ownerReviewObservations(history, candidate, { 'owner-tests': operation });
+    assert.deepEqual(observations, [
       { scope, check: old, afterLastEdit: false },
       { scope, check: current, afterLastEdit: true, candidate, operation },
     ]);
+    const record = observations[1]!;
+    const digest = ownerEvidenceDigest(observations, candidate.tree);
+    assert(digest);
+    const repeat = { ...record, check: { ...current, durationMs: 4, log: 'another-run.log' } };
+    assert.equal(ownerEvidenceDigest([repeat], candidate.tree), digest);
+    const changed = { ...record, check: { ...current, status: 1 } };
+    assert.notEqual(ownerEvidenceDigest([changed], candidate.tree), digest);
   }
 
   /** Supply both the exit observation and its separately retained log. */

@@ -1,6 +1,9 @@
+import { createHash } from 'node:crypto';
 import type { Capture } from '../../architecture/src/index.js';
 import type { CheckResult } from './check.js';
 import type { StewardScope } from './steward-check.js';
+import { git } from './git.js';
+import type { HostTask } from './index.js';
 
 interface Event {
   editIntent?: unknown;
@@ -35,4 +38,28 @@ export function ownerReviewObservations(
     unique.set(key, { scope, check, afterLastEdit, ...source });
   }
   return [...unique.values()];
+}
+
+/** Hash review-relevant owner facts without log filenames, durations or workspace paths. */
+export function ownerEvidenceDigest(observations: readonly OwnerObservation[], tree: string) {
+  const facts = observations
+    .filter(({ candidate }) => candidate?.tree === tree)
+    .map(({ scope, check, candidate, operation }) =>
+      JSON.stringify([
+        scope,
+        check.id,
+        check.command,
+        check.args,
+        check.status,
+        candidate,
+        operation,
+      ]),
+    );
+  if (facts.length) return createHash('sha256').update(JSON.stringify(facts.sort())).digest('hex');
+}
+
+/** Identify a checkpoint only while the native worktree still matches it. */
+export function cleanCandidate({ worktree, branch, capture }: HostTask) {
+  if (worktree && branch && !git(worktree, 'status', '--porcelain'))
+    return { tree: git(worktree, 'rev-parse', 'HEAD^{tree}'), base: capture.source.revision };
 }

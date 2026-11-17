@@ -13,7 +13,7 @@ import {
   type RevisionFeedback,
   type StandingGoalEvidence,
 } from '../../direction/src/index.js';
-import { validateVerdict } from '../../verification/src/index.js';
+import { validateVerdict, type Candidate } from '../../verification/src/index.js';
 import type {
   ActivityCheckpoint,
   Observation,
@@ -132,7 +132,7 @@ class TaskRun {
   private standing?: StandingGoalEvidence;
   private completed = 0;
   private readonly activityPositions = new Map<string, number>();
-  private readonly rejectedCandidates = new Set<string>();
+  private readonly rejectedReviews = new Set<string>();
 
   /** Bind this invocation to one admitted session and cancellation signal. */
   constructor(
@@ -219,10 +219,10 @@ class TaskRun {
     const last = events.slice(Math.max(plan, committed) + 1);
     for (const event of events)
       if ('verdict' in event && event.verdict.kind === 'rejected')
-        this.rejectedCandidates.add(event.candidate.digest);
+        this.rejectedReviews.add(reviewKey(event.candidate));
     for (const event of last) {
       if ('verdict' in event && event.verdict.kind === 'rejected')
-        return this.correct(event.candidate.digest, event.verdict.findings);
+        return this.correct(event.candidate, event.verdict.findings);
       if (!('activation' in event) || event.activation.outcome.kind === 'blocked') continue;
       const interrupted = await this.applyActivity(event.activation);
       if (interrupted) return interrupted;
@@ -423,8 +423,8 @@ class TaskRun {
     });
     const candidate = await this.services.execution.assemble(this.session, this.signal);
     this.signal.throwIfAborted();
-    if (this.rejectedCandidates.has(candidate.digest))
-      throw new Error('Correction produced an already rejected candidate');
+    if (this.rejectedReviews.has(reviewKey(candidate)))
+      throw new Error('Correction repeated a rejected candidate and its review evidence');
     const verdict = await this.services.verification.assess(
       this.session,
       plan,
@@ -435,7 +435,7 @@ class TaskRun {
     validateVerdict(plan, candidate, verdict);
     this.session.record({ candidate, verdict });
     if (verdict.kind === 'blocked') return stopped('blocked', verdict.reason, verdict.evidence);
-    if (verdict.kind === 'rejected') return this.correct(candidate.digest, verdict.findings);
+    if (verdict.kind === 'rejected') return this.correct(candidate, verdict.findings);
     this.report({
       phase: 'delivery',
       message: 'Reviewer accepted the candidate',
@@ -446,10 +446,10 @@ class TaskRun {
 
   /** Hold delivery and route criterion-linked rejection evidence to Direction. */
   private async correct(
-    digest: string,
+    candidate: Candidate,
     findings: Extract<Feedback, { kind: 'rejection' }>['findings'],
   ) {
-    this.rejectedCandidates.add(digest);
+    this.rejectedReviews.add(reviewKey(candidate));
     this.report({
       phase: 'verification',
       message: 'Reviewer rejected criteria',
@@ -467,6 +467,11 @@ class TaskRun {
       },
     });
   }
+}
+
+/** Keep rejections scoped to the exact tree and material evidence reviewed. */
+function reviewKey(candidate: Candidate) {
+  return `${candidate.digest}:${candidate.ownerEvidenceDigest ?? ''}`;
 }
 
 /** Make an explicit outcome for a held gate, failed run or invalid admission. */

@@ -24,7 +24,12 @@ import { preflight, verifyNativeGuidance, type HostConfig } from './host-config.
 import { goalRound, stagingCapture } from './goals.js';
 import { check } from './check.js';
 import { pendingStewardCheck, type StewardScope } from './steward-check.js';
-import { ownerReviewObservations, type OwnerObservation } from './review-observations.js';
+import {
+  cleanCandidate,
+  ownerEvidenceDigest,
+  ownerReviewObservations,
+  type OwnerObservation,
+} from './review-observations.js';
 
 export type { CheckedEdit } from './edits.js';
 export { InvalidCodexResponse } from './codex.js';
@@ -104,7 +109,11 @@ export class Execution {
       'candidate.diff',
       candidateDiff(task.worktree, task.capture.source.revision),
     );
-    return { digest, evidence: [log] };
+    return {
+      digest,
+      evidence: [log],
+      ownerEvidenceDigest: ownerEvidenceDigest(task.ownerReviewChecks(), digest),
+    };
   }
 }
 
@@ -398,14 +407,7 @@ export class HostTask implements TaskSession {
   /** Bind exact owner observations to the clean checkpoint when the edit history permits it. */
   ownerReviewChecks(): OwnerObservation[] {
     const events = this.observations<Parameters<typeof ownerReviewObservations>[0][number]>();
-    const { worktree, capture } = this;
-    if (!worktree || !this.branch || git(worktree, 'status', '--porcelain'))
-      return ownerReviewObservations(events);
-    const candidate = {
-      tree: git(worktree, 'rev-parse', 'HEAD^{tree}'),
-      base: capture.source.revision,
-    };
-    return ownerReviewObservations(events, candidate, capture.operations);
+    return ownerReviewObservations(events, cleanCandidate(this), this.capture.operations);
   }
 
   /** Run a declared check and record its real exit, duration and transcript. */

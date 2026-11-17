@@ -12,6 +12,8 @@
 - Carry each correction finding directly into the assigned steward activity
   and keep Director correction plans scoped to the needed steps. Refresh cited
   assembly failures against the current checkpoint before correction (#537).
+- Reassess an unchanged candidate when verified owner evidence changes and
+  stop repeated reviews with equivalent inputs (#539).
 - Include the host's retained owner-check exit records in independent review
   and identify observations made after the candidate's last edit (#538).
 - Let a steward repair a stale checked-edit hash or a repeated edit path before
