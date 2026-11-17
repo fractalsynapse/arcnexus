@@ -225,7 +225,7 @@ async function perform(
   signal: AbortSignal,
 ): Promise<StewardCheckFailure | undefined> {
   for (const { id, expected } of result.checks) {
-    const check = await task.check(id, signal, scope);
+    const check = await task.check(id, signal, { ...scope, expected });
     signal.throwIfAborted();
     if (check.status === 'not-applicable' && expected === 'pass' && id !== correction?.id) continue;
     if (typeof check.status !== 'number')
