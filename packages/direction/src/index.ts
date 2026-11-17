@@ -39,6 +39,14 @@ export interface Rejection {
   reason: string;
 }
 
+export interface StewardCheckFailure {
+  activity: Exclude<PlanActivity, 'release'>;
+  id: string;
+  expected: 'pass' | 'fail';
+  status: number;
+  log: string;
+}
+
 export type RevisionFeedback =
   | { kind: 'rejection'; findings: readonly Rejection[] }
   | {
@@ -48,6 +56,7 @@ export type RevisionFeedback =
       owner: string;
       reason: string;
       evidence: readonly string[];
+      failedCheck?: StewardCheckFailure;
     }
   | { kind: 'answer'; question: string; answer: string; evidence: readonly string[] };
 
@@ -192,16 +201,15 @@ export function supplierIsScheduled(
 
   const requester = after.milestones.findIndex(({ id }) => id === feedback.requester);
   if (requester < completed) return false;
-  return after.milestones
-    .slice(completed, requester)
-    .some(
-      ({ id, owner, steps }) =>
-        owner === feedback.owner &&
-        (linked < 0 || id === feedback.milestone) &&
-        steps
-          .slice(positions.get(id) ?? 0)
-          .some(({ activity, inapplicable }) => activity !== 'release' && !inapplicable),
-    );
+  return after.milestones.slice(completed, requester).some(({ id, owner, steps }) => {
+    if (owner !== feedback.owner || (linked >= 0 && id !== feedback.milestone)) return false;
+    if (feedback.failedCheck && before.milestones.some((milestone) => milestone.id === id))
+      return false;
+    return steps.slice(positions.get(id) ?? 0).some(({ activity, inapplicable }) => {
+      if (activity === 'release' || inapplicable) return false;
+      return !feedback.failedCheck || activity === feedback.failedCheck.activity;
+    });
+  });
 }
 
 export { direct } from './native.js';
