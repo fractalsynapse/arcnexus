@@ -26,7 +26,7 @@ activities:
     standards: []
   testing:
     role: designer
-    profile: gpt-sol
+    profile: gpt-terra
     instructions:
     - Exercise a two-owner task, unavailable supplier and preserved acceptance.
     operations:
@@ -52,7 +52,7 @@ activities:
     - readable-typescript
   planning:
     role: director
-    profile: gpt-astra
+    profile: gpt-sol
     instructions:
     - Use the captured Team component IDs in the plan so supplier links resolve to the same owners.
     operations: []

@@ -24,7 +24,7 @@ activities:
     standards: []
   testing:
     role: designer
-    profile: gpt-sol
+    profile: gpt-terra
     instructions:
     - Exercise inspection, task outcomes and cancellation through the in-process SDK.
     operations:

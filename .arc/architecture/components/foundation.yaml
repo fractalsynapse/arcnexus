@@ -32,7 +32,7 @@ activities:
     standards: []
   testing:
     role: designer
-    profile: gpt-sol
+    profile: gpt-terra
     instructions:
     - Exercise owner selection, missing checks and reproducible toolchain inputs.
     operations:

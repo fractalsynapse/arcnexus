@@ -29,7 +29,7 @@ activities:
     standards: []
   testing:
     role: designer
-    profile: gpt-sol
+    profile: gpt-terra
     instructions:
     - Walk through the stated project outcome and the evidence required to establish it.
     operations: []
