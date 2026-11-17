@@ -90,8 +90,11 @@ priority and the component whose declared owner suite measures the goal.
 Requirements and success measures remain in the Markdown body. Lower priorities
 run first, with stable file IDs breaking ties. Each goal verifies the current
 staging head and reuses the local Git object when available.
-A passing measure records evidence. A failing measure enters the normal task
-loop and stops the round if the task cannot complete.
+The Director assesses the full authored goal against current staging, recent
+changes and the owner-test evidence. The Director can plan work even with a
+passing suite. If the suite passes and the Director records that no work is
+warranted, the round records the assessment and continues. Engineering work
+uses the normal task loop and stops the round if it cannot complete.
 
 Direction opens or reuses the issue after the plan is accepted. Execution
 prepares the issue branch and private worktree before the first steward and
