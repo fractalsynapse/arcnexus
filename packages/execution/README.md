@@ -85,10 +85,10 @@ The supplied owner-suite baseline (`85-1-owner-tests.log`) reports seven passing
 and two skipped tests, with no failures. Its checkpoint regression covers a lost
 push response, cleanup and successor resumption. Its steward-check regressions
 cover correction after feedback and a repeated failure; they do not interrupt
-between result recording and feedback or reopen that failed task. In this checkout,
-`pendingStewardCheck` recovers obligations from later supplier feedback, while
-`HostTask.check` records the check result without its original expectation. This
-leaves the specified interruption window unproven and motivates the change.
+between result recording and feedback or reopen that failed task. At that baseline,
+`pendingStewardCheck` recovered obligations from later supplier feedback, while
+`HostTask.check` recorded the check result without its original expectation. This
+left the specified interruption window unproven and motivated the change.
 
 The skipped tests cover confined command execution and disposable-overlay writes;
 the baseline does not establish those observations in this environment. Its fake
@@ -96,3 +96,49 @@ provider and command boundaries also do not establish hosted CI, live inference 
 staging integration. Later owner-suite evidence must report applicable skips and
 these limits. This documentation records intent only; the documentation activity
 declares no operations and does not establish behavioral acceptance.
+
+## Recovery function correction
+
+The `steward-check-recovery-function-correction` milestone addresses the
+`durable-steward-check-recovery` self-review finding: `pendingStewardCheck` in
+`src/steward-check.ts`, lines 17–58 in the captured checkout, exceeds the
+[TypeScript standard](../../docs/foundation/typescript-standard.md)'s 30-physical-line
+function limit. Acceptance `recovery-function-standard` requires meaningful,
+separate functions for observation-based recovery and feedback-based recovery,
+with explanatory headers and each within that limit. This is a behavior-preserving
+refactor under Execution ownership; the captured acceptance, authority and locked
+contracts remain unchanged.
+
+Preserve observation precedence: the latest numeric check observation for the
+owner and activity with a recorded expectation determines whether recovery is
+pending. A result matching that expectation ends recovery without falling back to
+older feedback. Only when no qualifying observation exists does recovery use the
+latest matching supplier feedback and look for a subsequent matching numeric
+result for that check. Preserve the original expectation, exact status and log
+reference when returning an unresolved obligation.
+
+Retain the supplied evidence by basename within the task's external evidence
+record. `85-5-owner-tests.log` is the expected-red regression baseline: seven tests
+passed, four failed and two were skipped. The failures expose missing recovery
+before feedback for both expectations and advancement despite omitted rechecks.
+The pass-expectation interruption retained exit 37; the fail-expectation
+interruption retained exit zero, which does not satisfy an expected-red check.
+These failed observations must remain available after correction.
+
+`88-3-owner-tests.log` is the passing owner-suite baseline before this refactor:
+11 tests passed, none failed and two were skipped. The interrupted-check scenarios
+exercise both original expectations, readable retained logs and checked edits,
+mandatory rechecks despite `checks: []`, repeated unexpected results, successful
+correction and successor resumption. The pass-expectation scenarios distinguish
+initial exit 37 from repeated exit 43; successful expected-red correction exits 37.
+The suite also retains the checkpoint regression for observing a lost push response
+before retry and preserving committed edits through worktree removal.
+
+Acceptance `recovery-correction-evidence` requires a subsequent authorized
+`owner-tests` observation (`npm test -- execution`) after the refactor. Retain both
+baselines and the new result; report any failures and skips without weakening the
+criteria. The passing baseline still skips confined command execution and
+disposable-overlay writes. Its simulated provider, harness, command and review
+boundaries do not establish native confinement, hosted CI, live inference or actual
+staging integration. No operation is declared for this documentation activity, and
+this intent record does not claim that the refactor or its verification is complete.
