@@ -13,10 +13,9 @@ interface CheckEvent {
   scope?: StewardScope;
 }
 
-/** Recover the still-unmet check from existing observations for this steward activity. */
-export function pendingStewardCheck(events: readonly unknown[], scope: StewardScope) {
-  const recorded = events as readonly CheckEvent[];
-  const check = recorded.findLast(
+/** Finds the latest recorded check and keeps it pending until its expectation passes. */
+function recoverObservedCheck(recorded: readonly CheckEvent[], scope: StewardScope) {
+  const event = recorded.findLast(
     ({ check, scope: observed }) =>
       observed?.owner === scope.owner &&
       observed.activity === scope.activity &&
@@ -24,17 +23,19 @@ export function pendingStewardCheck(events: readonly unknown[], scope: StewardSc
       check?.id &&
       typeof check.status === 'number',
   );
-  if (check?.check && check.scope?.expected) {
-    if ((check.check.status === 0) === (check.scope.expected === 'pass')) return;
-    return {
-      activity: scope.activity,
-      id: check.check.id,
-      expected: check.scope.expected,
-      status: check.check.status as number,
-      log: check.check.log,
-    };
-  }
+  if (!event?.check || !event.scope?.expected) return;
+  if ((event.check.status === 0) === (event.scope.expected === 'pass')) return;
+  return {
+    activity: scope.activity,
+    id: event.check.id,
+    expected: event.scope.expected,
+    status: event.check.status as number,
+    log: event.check.log,
+  };
+}
 
+/** Recovers supplier feedback unless a later matching check satisfies its expectation. */
+function recoverFeedbackCheck(recorded: readonly CheckEvent[], scope: StewardScope) {
   const index = recorded.findLastIndex(
     ({ feedback }) =>
       feedback?.kind === 'supplier' &&
@@ -43,16 +44,22 @@ export function pendingStewardCheck(events: readonly unknown[], scope: StewardSc
   );
   const feedback = recorded[index]?.feedback;
   if (feedback?.kind !== 'supplier' || !feedback.failedCheck) return;
+
   const failed = feedback.failedCheck;
-  const passed = recorded
-    .slice(index + 1)
-    .some(
-      ({ check, scope: observed }) =>
-        observed?.owner === scope.owner &&
-        observed.activity === scope.activity &&
-        check?.id === failed.id &&
-        typeof check.status === 'number' &&
-        (check.status === 0) === (failed.expected === 'pass'),
-    );
+  const passed = recorded.slice(index + 1).some(
+    ({ check, scope: observed }) =>
+      observed?.owner === scope.owner &&
+      observed.activity === scope.activity &&
+      check?.id === failed.id &&
+      typeof check.status === 'number' &&
+      (check.status === 0) === (failed.expected === 'pass'),
+  );
   return passed ? undefined : failed;
+}
+
+/** Resolves pending check recovery from observations before consulting feedback. */
+export function pendingStewardCheck(events: readonly unknown[], scope: StewardScope) {
+  const recorded = events as readonly CheckEvent[];
+  const observed = recoverObservedCheck(recorded, scope);
+  return observed ?? recoverFeedbackCheck(recorded, scope);
 }
