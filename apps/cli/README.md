@@ -75,8 +75,9 @@ the corrected proposal before advancing and preserves any accepted work.
 A malformed steward reply gets one repair in the same activity. The host
 returns the exact diagnostic and retained transcript before applying any edits
 or running proposed checks. When the installed project formatter is available,
-a steward can preview formatting on stdout and put the formatted bytes in a
-checked edit.
+a steward can request exact text substitutions and formatter output in a
+checked edit. Execution computes the bytes inside confinement and checks the
+original file hash before applying them.
 
 When a steward check exits unexpectedly, Direction schedules a correction for
 the same owner. The correcting steward receives the exit status and retained
