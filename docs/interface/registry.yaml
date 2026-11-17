@@ -489,7 +489,7 @@ contracts:
   dependsOn:
   - arcnexus/agent
   - arcnexus/workflow
-  digest: e9f47188b301af6b1e49e0daf6be95ff3b7107ca3d04f32cfe3c8fa36508baa5
+  digest: 458e1a979f7d0f6fef92f1fc8e2baa789a9b1258192dddfd5ef576c5b954d5b3
   scenarios: 3
 - id: arcnexus/manager
   type: library

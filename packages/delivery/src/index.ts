@@ -18,7 +18,7 @@ export async function integrate(
   if (candidate.digest !== verdict.candidate)
     throw new Error('Delivery requires an accepting verdict for this candidate');
   const task = hostTask(session);
-  const { worktree, branch, issue, head } = task.commit(candidate);
+  const { branch, issue, head } = task.commit(candidate);
   const publication = {
     target: task.config.base,
     branch,
@@ -28,7 +28,7 @@ export async function integrate(
     parent: task.capture.source.revision,
   };
   task.note({ publication });
-  return deliver(task, publication, worktree, signal);
+  return deliver(task, publication, signal);
 }
 
 /** Retry the retained publication through normal admission without reactivating stewards. */
@@ -49,18 +49,19 @@ export async function resume(
     return undefined;
   }
   const publication = recover(task, retained);
+  if (!publication) return undefined;
   progress({
     phase: 'delivery',
     message: `Reconciling retained GitHub publication ${publication.branch}`,
   });
-  return deliver(task, publication, retained.worktree, signal);
+  return deliver(task, publication, signal);
 }
 
 /** Validate the original acceptance and adapt the publication artifact used before journaling. */
 function recover(
   task: HostTask,
   retained: NonNullable<ReturnType<HostTask['retainedPublication']>>,
-): Publication {
+): Publication | undefined {
   const events = retained.events as {
     publication?: Publication;
     candidate?: Candidate;
@@ -68,9 +69,9 @@ function recover(
   }[];
   const saved = events.findLast((event) => event.publication)?.publication;
   const publication = saved ?? legacy(task, dirname(retained.worktree));
+  if (!publication) return undefined;
   const accepted = events.findLast((event) => event.verdict?.kind === 'accepted');
   if (
-    !publication ||
     accepted?.candidate?.digest !== publication.candidate ||
     accepted?.verdict?.kind !== 'accepted' ||
     accepted.verdict.candidate !== publication.candidate ||
@@ -98,15 +99,14 @@ function legacy(task: HostTask, directory: string): Publication | undefined {
 async function deliver(
   task: HostTask,
   publication: Publication,
-  worktree: string,
   signal: AbortSignal,
 ): Promise<TaskOutcome> {
   const { branch, head, parent, candidate, target } = publication;
   const { pr, commit } = await publish(publication, {
     provider: task.provider(signal),
-    worktree,
+    worktree: task.capture.source.root,
     goal: task.goal,
-    validateLocal: () => task.validatePublication(worktree, branch, head, parent, candidate),
+    validateLocal: () => task.validatePublication(branch, head, parent, candidate),
     record: (event) => task.note(event),
   });
   task.store('staging-merge.json', JSON.stringify({ pr, head, commit, target }));

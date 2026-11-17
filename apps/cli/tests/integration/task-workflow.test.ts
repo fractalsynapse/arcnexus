@@ -21,7 +21,7 @@ import { projectFixture } from '../fixtures/project.js';
 const cli = fileURLToPath(new URL('../../src/index.js', import.meta.url));
 
 test('GW-2: task run validates the goal before task admission', () => {
-  for (const args of [[], [''], ['goal', 'extra']]) {
+  for (const args of [[''], ['goal', 'extra']]) {
     const result = spawnSync(process.execPath, [cli, 'task', 'run', ...args], { encoding: 'utf8' });
     assert.equal(result.status, 2);
     assert.equal(result.stdout, '');

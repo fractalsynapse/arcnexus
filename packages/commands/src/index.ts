@@ -7,6 +7,7 @@ declare module 'cordis' {
     commands: {
       inspect: Context['agent']['inspect'];
       runTask: Context['workflow']['run'];
+      runRound: Context['workflow']['round'];
     };
   }
 }
@@ -19,6 +20,8 @@ export const commandsPlugin = {
       inspect: (input: InspectionInput) => context.agent.inspect(input),
       runTask: (input: TaskInput, observer: TaskObserver, signal: AbortSignal) =>
         context.workflow.run(input, observer, signal),
+      runRound: (directory, observer, signal) =>
+        context.workflow.round(directory, observer, signal),
     });
   },
 };

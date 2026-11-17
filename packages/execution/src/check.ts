@@ -1,5 +1,6 @@
 import { existsSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, resolve, sep } from 'node:path';
+import { team } from '../../team/src/index.js';
 import type { Capture } from '../../architecture/src/index.js';
 import { hasOwnerTestSuites } from '../../foundation/src/index.js';
 import { execute } from './process.js';
@@ -53,7 +54,7 @@ function ownerTestInapplicability(
     capture.project.checks?.acceptance.includes(id)
   )
     return;
-  if (!hasOwnerTestSuites(worktree, owner, Object.values(capture.components)))
+  if (!hasOwnerTestSuites(worktree, owner, team.list(capture.components)))
     return `No test suites for ${owner} in the current worktree`;
 }
 

@@ -81,3 +81,27 @@ function revisionInstructions(feedback?: Feedback): string {
   }
   return `${preserve} For a rejection, append correction milestones with the original owner, criterion ID and description.`;
 }
+
+/** Observe the task's hosted issue before creating or reusing its tracking identity. */
+export async function track(session: TaskSession, signal: AbortSignal): Promise<string> {
+  const task = hostTask(session);
+  const recorded = task.observations<{ issue?: string; issueIntent?: string }>();
+  const provider = task.provider(signal);
+  const prior = recorded.findLast(({ issue }) => issue)?.issue;
+  if (prior) {
+    await provider.verifyIssue(prior);
+    return prior;
+  }
+  const taskID = task.taskID;
+  const issue = await provider.findIssue(taskID, task.goalID);
+  if (issue) {
+    task.note({ issue });
+    return issue;
+  }
+  if (recorded.some(({ issueIntent }) => issueIntent === taskID))
+    throw new Error(`Cannot yet confirm the GitHub issue for task ${taskID}`);
+  task.note({ issueIntent: taskID });
+  const created = await provider.issue(task.goal, taskID, task.goalID);
+  task.note({ issue: created });
+  return created;
+}

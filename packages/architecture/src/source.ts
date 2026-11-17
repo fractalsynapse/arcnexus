@@ -8,9 +8,15 @@ export interface ProjectSource extends GuidanceSource {
 }
 
 /** Open a fixed Git tree without consulting the worktree or contacting the remote. */
-export function openProject(directory: string): ProjectSource {
+export function openProject(directory: string, requested = 'HEAD'): ProjectSource {
   const root = git(directory, 'rev-parse', '--show-toplevel').trim();
-  const revision = git(root, 'rev-parse', '--verify', 'HEAD^{commit}').trim();
+  const revision = git(
+    root,
+    'rev-parse',
+    '--verify',
+    '--end-of-options',
+    `${requested}^{commit}`,
+  ).trim();
   const remote = git(root, 'config', '--get', 'remote.origin.url').trim();
   const paths = Object.freeze(
     git(root, 'ls-tree', '-rz', '--name-only', revision).split('\0').filter(Boolean),

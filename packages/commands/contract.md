@@ -11,6 +11,7 @@ task services. [Workflow](../workflow/contract.md) executes the task loop.
 | --- | --- |
 | `inspect(input)` | Resolve the supplied project context, component and activity. Return the scoped Agent view, exact model request and named placeholders. It has the same read-only behavior as Agent inspection. |
 | `runTask(input, observer, signal)` | Submit a goal to Workflow. Report structured progress, evidence references and human questions through the observer. Return the task outcome and honor cancellation. A supplied human answer is recorded through the task services. |
+| `runRound(directory, observer, signal)` | Evaluate the captured standing goals sequentially through the same task path and return per-goal evidence and the round result. |
 
 The application adapter supplies inputs, renders outputs, collects answers and
 maps outcomes to its transport. Terminal arguments and exit codes belong to

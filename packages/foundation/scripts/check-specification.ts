@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { appendFileSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path/posix';
 import { parse } from 'yaml';
+import { team } from '../../team/src/index.js';
 import type { Capture } from '../../architecture/src/index.js';
 
 const catalogRoot = '.arc/architecture';
@@ -61,9 +62,7 @@ class SpecificationCheck {
 
   /** Resolve all owners of a tracked path so callers can detect collisions and gaps. */
   private ownersFor(path: string, components: ReadonlyMap<string, Component>): string[] {
-    return [...components.values()]
-      .filter(({ owns }) => owns.some((root) => path === root || path.startsWith(root + '/')))
-      .map(({ id }) => id);
+    return team.owners(components.values(), path).map(({ id }) => id);
   }
 
   /** Validate activities against the same tracked catalog used for ownership. */

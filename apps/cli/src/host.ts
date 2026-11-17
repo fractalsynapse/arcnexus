@@ -1,6 +1,6 @@
 import type { Context } from 'cordis';
 import { coordinationPlugin } from '../../../packages/coordination/src/index.js';
-import { direct } from '../../../packages/direction/src/index.js';
+import { direct, track } from '../../../packages/direction/src/index.js';
 import { integrate, resume } from '../../../packages/delivery/src/index.js';
 import {
   applicationStorage,
@@ -22,6 +22,7 @@ function services(context: Context): WorkflowServices {
   return {
     execution: context.execution,
     direction: {
+      track,
       plan: (session, signal) => direct(context.agent, session, signal),
       revise: (session, plan, feedback, signal) =>
         direct(context.agent, session, signal, plan, feedback),

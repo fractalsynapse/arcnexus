@@ -59,6 +59,7 @@ function nativeTask(t: TestContext, root: string): HostTask {
     journal,
   );
   task.worktree = root;
+  t.mock.method(task, 'cleanup', () => {});
   t.after(() => rmSync(root, { recursive: true, force: true }));
   return task;
 }

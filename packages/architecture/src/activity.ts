@@ -1,3 +1,4 @@
+import { team } from '../../team/src/index.js';
 import type { Capture } from './catalog.js';
 
 export interface ActivitySelection {
@@ -8,7 +9,7 @@ export interface ActivitySelection {
 /** Resolve the special actor bindings and ordinary declared activities. */
 export function resolveActivity(capture: Capture, selection: ActivitySelection) {
   const id = componentID(capture, selection);
-  const component = Object.hasOwn(capture.components, id) ? capture.components[id] : undefined;
+  const component = team.list(capture.components, { component: id })[0];
   if (!component) {
     throw new Error(
       `Unknown component: ${id}; valid components: ${Object.keys(capture.components).join(', ')}`,

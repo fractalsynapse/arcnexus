@@ -1,3 +1,4 @@
+import { team } from '../../team/src/index.js';
 import { stringify } from 'yaml';
 import { resolveActivity, type ActivitySelection } from './activity.js';
 import { catalogRoot, definitionPath, type Capture } from './catalog.js';
@@ -186,7 +187,8 @@ function contractReferences(capture: Capture) {
 /** Keep other owners discoverable without including their full activity definitions. */
 function componentIndex(capture: Capture, current: string) {
   return Object.fromEntries(
-    Object.values(capture.components)
+    team
+      .list(capture.components)
       .filter(({ id }) => id !== current)
       .map(({ id, purpose }) => [id, purpose]),
   );

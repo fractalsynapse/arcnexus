@@ -84,3 +84,15 @@ test('GW-26: JSON placement errors leave stdout empty and input errors keep thei
     inspect(root, 'missing', 'testing').stderr,
   );
 });
+
+test('bare task run validates the goal inventory before admitting a task', (t) => {
+  const root = projectFixture();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const result = spawnSync(process.execPath, [cli, '--json', 'task', 'run'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 2);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /No standing goals/);
+});

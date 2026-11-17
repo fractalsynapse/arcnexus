@@ -26,7 +26,7 @@ test('retry retains the exact accepted publication for the identical goal', (t) 
   });
 });
 
-test('only the same pending publication can reclaim a departed writer', (t) => {
+test('only the same logical task can reclaim a departed publication writer', (t) => {
   const directory = mkdtempSync(join(tmpdir(), 'arcnexus-departed-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const remote = 'https://example.invalid/org/repo.git';
@@ -47,4 +47,33 @@ test('only the same pending publication can reclaim a departed writer', (t) => {
   assert.equal(retry.retained?.run, 1);
   assert.equal(retry.events().length, 1);
   assert.deepEqual(store.admit(remote, goal), { activeGoal: goal, run: retry.run });
+});
+
+test('round identities distinguish fresh evaluation from retrying identical goal text', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'arcnexus-round-id-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const store = new Coordination(directory);
+  const remote = 'https://example.invalid/org/repo.git';
+  const inventory = 'one stable inventory';
+  const first = store.round(remote, inventory);
+  const run = store.admit(remote, 'Identical goal text', true, `round:${first}:goal`);
+  assert(run && 'record' in run);
+  run.record({ issue: '10', position: { completed: 1, activities: {} } });
+  run.finish({ kind: 'cancelled' });
+  run.close();
+  assert.equal(store.round(remote, inventory), first);
+  const resumed = store.admit(remote, 'Identical goal text', true, `round:${first}:goal`);
+  assert(resumed && 'record' in resumed);
+  assert.equal(resumed.taskID, run.taskID);
+  assert(resumed.retained?.events.some((event) => JSON.stringify(event).includes('"issue":"10"')));
+  resumed.finish({ kind: 'merged' });
+  resumed.close();
+  store.completeRound(remote, first);
+  const second = store.round(remote, inventory);
+  const next = store.admit(remote, 'Identical goal text', true, `round:${second}:goal`);
+  assert(next && 'record' in next);
+  assert.equal(next.goalID, run.goalID);
+  assert.notEqual(next.taskID, run.taskID);
+  assert.equal(next.retained, undefined);
+  next.close();
 });
