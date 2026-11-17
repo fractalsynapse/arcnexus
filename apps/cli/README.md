@@ -72,6 +72,10 @@ If a Director proposal fails validation, ArcNexus records the diagnostic and
 asks the Director for one correction within the same task. The host validates
 the corrected proposal before advancing and preserves any accepted work.
 
+When a steward check exits unexpectedly, Direction schedules a correction for
+the same owner. The correcting steward receives the exit status and retained
+log. The host reruns the original check before the paused activity resumes.
+
 If publication is interrupted, invoke `task run` with the identical goal.
 ArcNexus resumes from the verified candidate and observes GitHub before taking
 another publication action. A matching remote branch, pull request or merge is
