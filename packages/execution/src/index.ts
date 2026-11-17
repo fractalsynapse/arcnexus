@@ -24,6 +24,7 @@ import { preflight, verifyNativeGuidance, type HostConfig } from './host-config.
 import { goalRound, stagingCapture } from './goals.js';
 import { check } from './check.js';
 import { pendingStewardCheck, type StewardScope } from './steward-check.js';
+import { ownerReviewObservations, type OwnerObservation } from './review-observations.js';
 
 export type { CheckedEdit } from './edits.js';
 export { InvalidCodexResponse } from './codex.js';
@@ -392,6 +393,11 @@ export class HostTask implements TaskSession {
   /** Resolve an unresolved check from the task's retained steward observations. */
   pendingCheck(scope: StewardScope) {
     return pendingStewardCheck(this.observations(), scope);
+  }
+
+  /** Recover the exact owner observations and identify those following candidate edits. */
+  ownerReviewChecks(): OwnerObservation[] {
+    return ownerReviewObservations(this.observations());
   }
 
   /** Run a declared check and record its real exit, duration and transcript. */
