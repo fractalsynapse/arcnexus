@@ -263,15 +263,20 @@ contracts:
   file: packages/execution/contract.md
   owner: execution
   stage: locked
-  digest: 3cf22b9cc9aa6c1185940ee5462f68983c9ca9681e3d69c15d0d2572ba822345
+  digest: 6dbbf5478c56fb29cdb7d37f44b59ef6924b26aff9622349eada75cb141affc4
   dependsOn:
   - arcnexus/project
   - arcnexus/architecture-model
   - arcnexus/coordination
   scenarios: 20
   acceptedBy: Adrian Webb (architect)
-  acceptedAt: '2026-11-15'
+  acceptedAt: '2026-11-17'
   history:
+  - stage: locked
+    digest: 3cf22b9cc9aa6c1185940ee5462f68983c9ca9681e3d69c15d0d2572ba822345
+    file: packages/execution/contract.md
+    revision: f06f6a5db4a26a84c08e5fdebaf98288824e3b87
+    note: Superseded by the approved optional research inbox amendment in issue #554.
   - stage: locked
     digest: 7343b3c060768149127a816608fcca0f3c4d99787bb5e21a2ce8bfe14166dc04
     file: packages/execution/contract.md
@@ -292,13 +297,13 @@ contracts:
     note: "proposed in #352 with three open questions; answered by the architect \u2014 bubblewrap required\
       \ with the container kept as an opt-in deployment seam and concurrency preclusion forbidden, the\
       \ lane in execution with ordering in direction, and harness state per activation\n"
-  amendmentRecord: 'Architect approved the Team, checkpoint and goal-round proposal in Codex chat. Base: e73aedb283eecbe2f80b482923b2ae6eced1a6bf. Issue #522.'
+  amendmentRecord: 'Architect approved the optional research inbox amendments in Codex chat. Base: f06f6a5db4a26a84c08e5fdebaf98288824e3b87. Issue #554.'
 - id: arcnexus/direction
   type: library
   file: packages/direction/contract.md
   owner: direction
   stage: locked
-  digest: aa2b166f6259850596b498412cfefd72a572360f70a5a75ec6215ae1492c817d
+  digest: 02867a4a244f62768a3b05a8a3e171fcedbd28718c9cad7932dd1465cb0018db
   dependsOn:
   - arcnexus/project
   - arcnexus/architecture-model
@@ -306,8 +311,13 @@ contracts:
   - arcnexus/team
   scenarios: 18
   acceptedBy: Adrian Webb (architect)
-  acceptedAt: '2026-11-15'
+  acceptedAt: '2026-11-17'
   history:
+  - stage: locked
+    digest: aa2b166f6259850596b498412cfefd72a572360f70a5a75ec6215ae1492c817d
+    file: packages/direction/contract.md
+    revision: f06f6a5db4a26a84c08e5fdebaf98288824e3b87
+    note: Superseded by the approved optional research inbox amendment in issue #554.
   - stage: locked
     digest: 2b540b7ccc52d1b18a996d6c73b42b6054e37a0de882fd5bd9741b4be4a5835f
     file: packages/direction/contract.md
@@ -335,7 +345,7 @@ contracts:
       \ deferred silently\n"
   approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
     Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
-  amendmentRecord: 'Architect approved the Team, checkpoint and goal-round proposal in Codex chat. Base: e73aedb283eecbe2f80b482923b2ae6eced1a6bf. Issue #522.'
+  amendmentRecord: 'Architect approved the optional research inbox amendments in Codex chat. Base: f06f6a5db4a26a84c08e5fdebaf98288824e3b87. Issue #554.'
 - id: arcnexus/verification
   type: library
   file: packages/verification/contract.md
@@ -508,17 +518,23 @@ contracts:
   dependsOn:
   - arcnexus/agent
   - arcnexus/coordination
-  digest: b0f2703dd3badf379d47c9f6647fe09d196b80790b477f37d82eea35b9f40495
+  digest: 0df6e58eb6508e067dd226760c33e39c7112d543db761bb705c9c5d4546c7034
   scenarios: 4
   history:
+  - stage: locked
+    digest: b0f2703dd3badf379d47c9f6647fe09d196b80790b477f37d82eea35b9f40495
+    file: packages/reviewer/contract.md
+    revision: f06f6a5db4a26a84c08e5fdebaf98288824e3b87
+    note: Superseded by the approved optional research inbox amendment in issue #554.
   - stage: proposed
     digest: 2bc811fc46e9aad20858e9a8635b6760cd8988d89bd2ab5e7f13024cd4bc30d6
     file: packages/reviewer/contract.md
     revision: 036bf1932a98cb434179ff1f3be82e1c212e4990
   acceptedBy: Adrian Webb (architect)
-  acceptedAt: '2026-11-15'
+  acceptedAt: '2026-11-17'
   approvalRecord: 'Architect approved the Reviewer proposal in Codex chat on 2026-11-15. Base: 036bf1932a98cb434179ff1f3be82e1c212e4990.
     Issue #454.'
+  amendmentRecord: 'Architect approved the optional research inbox amendments in Codex chat. Base: f06f6a5db4a26a84c08e5fdebaf98288824e3b87. Issue #554.'
 - id: arcnexus/workflow
   type: library
   file: packages/workflow/contract.md

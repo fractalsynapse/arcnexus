@@ -29,7 +29,7 @@ production directives are deferred. One independent verdict covers the assembled
 | ID | Observation |
 | --- | --- |
 | DI-1 | A goal produces a plan with a Focus block, at least one milestone, one owner each, and all five Steps per milestone with checklist items referencing acceptance by stable id. |
-| DI-2 | Planning writes no source change, starts no workspace, and calls no model beyond its own activation. |
+| DI-2 | Planning writes no source change and starts no issue branch or task worktree. An explicit Director inbox request can run read-only research using its mapped component and resume planning with the report. A plan without a request runs no research activation. |
 | DI-3 | A goal naming work for an owner that does not exist emits a `component` proposal milestone and a gate awaiting the architect, not a milestone assigned to a guessed owner. |
 | DI-4 | A milestone whose work spans two owners is refused at validation with both owners named. |
 | DI-5 | A request linking to existing accepted work reuses that milestone's owner and acceptance; a second implementation of the same contract is never planned. |

@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- Let the Director, Reviewer and stewards request optional research in the
+  active task and reuse component research reports (#554).
+
 ## [0.2.0]
 
 ### Added

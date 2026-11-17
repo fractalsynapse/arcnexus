@@ -6,8 +6,10 @@ Stage: **locked**. See the [registry](../../docs/interface/registry.yaml) for au
 
 Run one host process and one activation at a time per project. Prepare one
 issue-linked task branch from its recorded staging base and one private worktree
-per attempt before any steward runs, using the issue selected by Direction. All
-milestones contribute in order to the same branch. Record each activation outcome,
+per attempt before any steward milestone runs, using the issue selected by
+Direction. Director-requested research before plan acceptance uses the same
+read-only source as planning. Research uses the existing sequential lane and
+has no checked edits, host operations or delivery capability. All milestones contribute in order to the same branch. Record each activation outcome,
 attribution and evidence. Commit checked changes and push an issue-linked checkpoint
 through Collaboration before advancing. An unchanged activation records an event. Assemble one candidate by snapshotting the
 goal worktree. Refuse a stale edit, mismatched worktree or ownership conflict and

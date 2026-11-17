@@ -24,7 +24,9 @@ plan under Direction’s `.arc/plans/`.
 | Review | `review` | Engineering self-review and a reference to the independent verdict for the assembled task |
 | Integration | `release` | A reference to the host's observed staging merge and applicable gates |
 
-Research can support any Step. Resolve each activity's role, profile, instructions,
+An actor can ask for research to support any Step or task-level decision. The
+request uses the actor's component inbox and does not add a Step. Resolve each
+activity's role, profile, instructions,
 operations and standards from the captured component's explicit mapping.
 The director's planning activity and verifier's independent assessment are task
 activities selected by the project. They do not add milestone Steps. Review and Integration reference

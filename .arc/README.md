@@ -18,5 +18,17 @@ lessons from recorded task evidence. The host retains learning in task evidence
 through Coordination. Tracked notes go through checked changes. The architect can
 promote a lesson into a shared standard for future runs. Plans and learning grant no authority.
 
+## Research reports
+
+The Director, Reviewer and component stewards can request their own component's
+research activity when a question affects their current decision. The host
+records the request and report as task evidence and resumes the requesting
+activity. A task can complete without making a research request.
+
+Owners can archive reusable reports through checked edits under
+`.arc/research/<component>/`. The report's frontmatter supplies its question,
+summary and consultation date. The request builder derives a component index
+from those reports. Research supplies evidence and grants no authority.
+
 Run databases, transcripts, logs and bulk artifacts live in external application
 storage. Reference them by stable evidence identity.

@@ -7,8 +7,12 @@ Reviewer supplies the final read-only Agent through the project's explicit
 acceptance gate and supplies the candidate, original goal, captured criteria,
 trusted check results and authorized task evidence by reference.
 
-`assess(input, signal)` uses [Agent](../agent/contract.md) for one activation. It
-returns an independent verdict tied to the candidate and criteria. A rejection
+`assess(input, signal)` uses [Agent](../agent/contract.md) for the independent
+verdict on the candidate and criteria. The Reviewer can choose to request
+read-only research using its mapped component through the shared inbox. The
+assessment resumes with the recorded report and binds the verdict to the
+evidence it used. A research request preserves the candidate, criteria and
+acceptance checklist. A rejection
 names the deficient criteria, evidence and accountable owners so
 [Direction](../direction/contract.md) can sequence corrections.
 
@@ -27,7 +31,7 @@ observations when they belong to its captured evidence scope.
 
 | ID | Observation |
 | --- | --- |
-| RVR-1 | Verification obtains the final read-only verdict from the Reviewer Agent. A rejection routes criterion-linked findings to Direction. |
+| RVR-1 | Verification obtains one final read-only verdict from the Reviewer Agent. Optional research completes and returns evidence before the verdict. A rejection routes criterion-linked findings to Direction. |
 | RVR-2 | A lesson cites actual execution evidence and carries no authority to weaken acceptance or change active instructions. |
 | RVR-3 | Recording a lesson through Coordination leaves the accepted candidate digest and its delivery eligibility unchanged. |
 | RVR-4 | An interruption before review preserves observed evidence with no fabricated verdict or lesson. |
