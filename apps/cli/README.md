@@ -86,7 +86,9 @@ finding that caused Direction to add the milestone. The host refreshes any
 assembled checks explicitly requested by that finding against the current checkpoint.
 It reruns the original steward check before the paused activity resumes. The
 independent Reviewer receives the owner check records and can tell which ones
-were observed after the candidate's most recent edit.
+were observed after the candidate's most recent edit. A rejected tree can
+return to independent review when its verified owner evidence changes. A
+repeated tree and evidence combination stops the correction.
 
 If publication is interrupted, invoke `task run` with the identical goal.
 ArcNexus resumes from the verified candidate and observes GitHub before taking
