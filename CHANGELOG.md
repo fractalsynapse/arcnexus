@@ -9,6 +9,9 @@
 
 ### Fixed
 
+- Repair malformed steward replies in the current activity before performing
+  proposed edits or checks (#534).
+
 - Have the Director assess each standing goal using current staging and check
   evidence before deciding whether to plan work (#531).
 
