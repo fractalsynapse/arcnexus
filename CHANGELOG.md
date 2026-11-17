@@ -9,6 +9,9 @@
 
 ### Fixed
 
+- Let stewards preview formatting with the installed formatter in their
+  read-only sandbox (#536).
+
 - Repair malformed steward replies in the current activity before performing
   proposed edits or checks (#534).
 

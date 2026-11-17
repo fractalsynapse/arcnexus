@@ -17,6 +17,7 @@ import type {
 } from '../../workflow/src/index.js';
 import { GitHub } from '../../collaboration/src/index.js';
 import { codex } from './codex.js';
+import { formatterPreview } from './formatter.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
 import { candidateDiff, git } from './git.js';
 import { preflight, verifyNativeGuidance, type HostConfig } from './host-config.js';
@@ -351,6 +352,11 @@ export class HostTask implements TaskSession {
     };
   }
 
+  /** Expose a verified formatter path only while a steward worktree is active. */
+  get formatPreview() {
+    return this.branch ? formatterPreview(this.capture.source.root) : undefined;
+  }
+
   /** Run an actor through the same prepared envelope used by inspection. */
   activate(
     agent: Agent,
@@ -368,7 +374,8 @@ export class HostTask implements TaskSession {
     const log = this.artifact('codex.jsonl');
     return agent.activate(
       { capture: this.capture, selection, task: { ...data, evidence, goal: this.goal, worktree } },
-      (view, cancellation) => codex(this.config.executable, view, log, cancellation),
+      (view, cancellation) =>
+        codex(this.config.executable, view, log, cancellation, this.formatPreview?.root),
       signal,
     );
   }

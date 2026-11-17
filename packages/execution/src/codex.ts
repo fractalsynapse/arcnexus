@@ -12,10 +12,11 @@ export async function codex(
   view: AgentInspection,
   log: string,
   signal: AbortSignal,
+  formatterRoot?: string,
 ): Promise<unknown> {
   const { input, options } = view.request;
   const cwd = options.workingDirectory;
-  const params = invocation(executable, cwd, log, options);
+  const params = invocation(executable, cwd, log, options, formatterRoot);
   const result = await execute(executable, params, {
     cwd,
     signal,
@@ -39,6 +40,7 @@ function invocation(
   cwd: string,
   log: string,
   options: AgentInspection['request']['options'],
+  formatterRoot?: string,
 ) {
   return [
     'exec',
@@ -52,7 +54,7 @@ function invocation(
     cwd,
     '--model',
     options.model,
-    ...settings(executable, cwd, log, options),
+    ...settings(executable, cwd, log, options, formatterRoot),
     '-',
   ];
 }
@@ -63,11 +65,15 @@ function settings(
   cwd: string,
   log: string,
   options: AgentInspection['request']['options'],
+  formatterRoot?: string,
 ) {
+  const paths = [executable, cwd, log.slice(0, log.lastIndexOf('/'))];
+  if (formatterRoot) paths.push(formatterRoot);
+  const readable = paths.map((path) => `${JSON.stringify(path)}="read"`).join(',');
   const config = [
     'approval_policy="never"',
     'default_permissions="arcnexus"',
-    `permissions.arcnexus.filesystem={":minimal"="read","/sys/fs/cgroup"="read",${JSON.stringify(executable)}="read",${JSON.stringify(cwd)}="read",${JSON.stringify(log.slice(0, log.lastIndexOf('/')))}="read"}`,
+    `permissions.arcnexus.filesystem={":minimal"="read","/sys/fs/cgroup"="read",${readable}}`,
     'permissions.arcnexus.network.enabled=false',
     'features.plugins=false',
     'features.apps=false',

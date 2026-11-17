@@ -108,7 +108,7 @@ async function askSteward(
     { component: scope.owner, activity: scope.activity },
     {
       assignment: {
-        ...responseShape(milestone.id),
+        ...responseShape(milestone.id, task.formatPreview?.entry),
         ...diagnosis,
         ...(responseRepair ? { responseRepair } : {}),
       },
@@ -124,10 +124,11 @@ async function askSteward(
 }
 
 /** Describe the bounded steward responses carried by the task prompt. */
-function responseShape(milestone: string) {
+function responseShape(milestone: string, formatter?: string) {
   return {
     instructions:
-      'Return exactly one JSON object with kind at the top level. Choose one of the flat response examples. For completed, edits and checks are separate top-level arrays, even when empty. An operation belongs only in checks. When responseRepair is present, read the previous reply in the retained transcript and correct its response shape. The checkout is read-only; the host applies eligible edits and runs declared checks.',
+      'Return exactly one JSON object with kind at the top level. Choose one of the flat response examples. For completed, edits and checks are separate top-level arrays, even when empty. An operation belongs only in checks. When responseRepair is present, read the previous reply in the retained transcript and correct its response shape. When formatPreview is provided, replace its path placeholder and run it without --write to produce formatted contents on stdout. The checkout is read-only; the host applies eligible edits and runs declared checks.',
+    ...(formatter ? { formatPreview: ['node', formatter, '<owned path>'] } : {}),
     responses: [
       {
         kind: 'completed',
