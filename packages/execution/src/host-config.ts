@@ -35,8 +35,9 @@ export function preflight(capture: Capture, storage: string, freshCapture = fals
   if (!freshCapture && git(source.root, 'rev-parse', 'HEAD') !== source.revision)
     throw new Error('The source revision changed during admission');
   const fresh =
+    freshCapture ||
     git(source.root, 'ls-remote', '--exit-code', 'origin', `refs/heads/${base}`).split('\t')[0] ===
-    source.revision;
+      source.revision;
   if (!project.checks?.acceptance?.length) throw new Error('Missing captured acceptance checks');
   new GitHub(source.remote, new AbortController().signal);
   if (!freshCapture) verifyNativeGuidance(capture, source.root);

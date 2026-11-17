@@ -3,7 +3,7 @@ import type { Architecture, Capture } from '../../architecture/src/index.js';
 import type { Coordination } from '../../coordination/src/index.js';
 import { team } from '../../team/src/index.js';
 import type { GoalRound, StandingGoal } from '../../workflow/src/index.js';
-import { git } from './git.js';
+import { git, remoteRead } from './git.js';
 
 /** Read goals from one reviewed staging revision and give this evaluation round a durable identity. */
 export function goalRound(
@@ -19,8 +19,12 @@ export function goalRound(
   return { id, goals, finish: () => coordination.completeRound(remote, id) };
 }
 
-/** Fetch the current staging commit without changing the caller's checkout. */
-export function stagingCapture(architecture: Architecture, capture: Capture): Capture {
+/** Observe staging and materialize its exact commit only when it is absent locally. */
+export function stagingCapture(
+  architecture: Architecture,
+  capture: Capture,
+  readRemote = remoteRead,
+): Capture {
   const { source, project } = capture;
   const branch = project.delivery?.baseBranch;
   if (!branch) {
@@ -33,9 +37,33 @@ export function stagingCapture(architecture: Architecture, capture: Capture): Ca
     branch === project.delivery?.protectedBranch
   )
     throw new Error('Invalid staging delivery branch');
-  git(source.root, 'fetch', '--no-tags', 'origin', `refs/heads/${branch}`);
-  const revision = git(source.root, 'rev-parse', 'FETCH_HEAD^{commit}');
-  return architecture.capture(source.root, revision);
+  const ref = `refs/heads/${branch}`;
+  const revision = readRemote(source.root, 'ls-remote', '--exit-code', 'origin', ref).split(
+    '\t',
+  )[0]!;
+  if (!/^[a-f0-9]{40}$/.test(revision)) throw new Error('Invalid observed staging head');
+  if (revision === source.revision) return capture;
+  ensureStagingCommit(source.root, ref, revision, readRemote);
+  const latest = architecture.capture(source.root, revision);
+  if (latest.project.delivery?.baseBranch !== branch)
+    throw new Error('The observed staging revision changed the configured target');
+  return latest;
+}
+
+/** Fetch a new staging object and fail if the branch moved after observation. */
+function ensureStagingCommit(
+  root: string,
+  ref: string,
+  revision: string,
+  readRemote: typeof remoteRead,
+) {
+  try {
+    git(root, 'cat-file', '-e', `${revision}^{commit}`);
+    return;
+  } catch {}
+  readRemote(root, 'fetch', '--no-tags', 'origin', ref);
+  if (git(root, 'rev-parse', 'FETCH_HEAD^{commit}') !== revision)
+    throw new Error('The staging head changed while fetching it');
 }
 
 /** Read Markdown goals once and order equal priorities by their stable file IDs. */
