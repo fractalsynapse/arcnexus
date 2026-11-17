@@ -9,6 +9,9 @@
 
 ### Fixed
 
+- Carry each correction finding directly into the assigned steward activity
+  and keep Director correction plans scoped to the needed steps (#537).
+
 - Let stewards preview formatting with the installed formatter in their
   read-only sandbox (#536).
 

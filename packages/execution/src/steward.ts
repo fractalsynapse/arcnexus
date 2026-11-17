@@ -3,6 +3,7 @@ import type { Agent } from '../../agent/src/index.js';
 import type { Milestone, StewardCheckFailure } from '../../direction/src/index.js';
 import type { ActivityOutcome, TaskSession } from '../../workflow/src/index.js';
 import { hostTask } from './index.js';
+import { correctionFinding } from './correction.js';
 import { materializeEdits } from './formatter.js';
 import { InvalidCodexResponse } from './codex.js';
 import type { StewardScope } from './steward-check.js';
@@ -103,16 +104,11 @@ async function askSteward(
   signal: AbortSignal,
   responseRepair?: string,
 ): Promise<unknown> {
-  const diagnosis = failedCheck ? { failedCheck, correction: correctionInstruction } : {};
   return task.activate(
     agent,
     { component: scope.owner, activity: scope.activity },
     {
-      assignment: {
-        ...responseShape(milestone.id, scope.activity !== 'review' && Boolean(task.formatPreview)),
-        ...diagnosis,
-        ...(responseRepair ? { responseRepair } : {}),
-      },
+      assignment: stewardAssignment(task, milestone, scope, failedCheck, responseRepair),
       milestone: {
         id: milestone.id,
         step: milestone.steps.find((step) => step.activity === scope.activity),
@@ -124,11 +120,28 @@ async function askSteward(
   );
 }
 
+/** Attach the recorded reason a correction was scheduled, alongside any required recheck. */
+function stewardAssignment(
+  task: ReturnType<typeof hostTask>,
+  milestone: Milestone,
+  scope: StewardScope,
+  failedCheck?: StewardCheckFailure,
+  responseRepair?: string,
+) {
+  const finding = correctionFinding(task.history(), milestone);
+  return {
+    ...responseShape(milestone.id, scope.activity !== 'review' && Boolean(task.formatPreview)),
+    ...(finding ? { finding } : {}),
+    ...(failedCheck ? { failedCheck, correction: correctionInstruction } : {}),
+    ...(responseRepair ? { responseRepair } : {}),
+  };
+}
+
 /** Describe the bounded steward responses carried by the task prompt. */
 function responseShape(milestone: string, formatter: boolean) {
   return {
     instructions:
-      'Return exactly one JSON object with kind at the top level. Choose one of the flat response examples. For completed, edits and checks are separate top-level arrays, even when empty. An operation belongs only in checks. When responseRepair is present, read the previous reply in the retained transcript and correct its response shape. For a small change in an existing file, use transform instead of content so the host computes the replacement bytes. The checkout is read-only; the host applies eligible edits and runs declared checks.',
+      'Return exactly one JSON object with kind at the top level. Choose one of the flat response examples. For completed, edits and checks are separate top-level arrays, even when empty. An operation belongs only in checks. When finding is present, address that exact diagnosis and named paths before completing the step. When responseRepair is present, read the previous reply in the retained transcript and correct its response shape. For a small change in an existing file, use transform instead of content so the host computes the replacement bytes. The checkout is read-only; the host applies eligible edits and runs declared checks.',
     transforms: transformShape(formatter),
     responses: [
       {
