@@ -82,7 +82,9 @@ original file hash before applying them.
 When a steward check exits unexpectedly, Direction schedules a correction for
 the same owner. The correcting steward receives the exit status and retained
 log. Correction assignments also carry the exact supplier or independent review
-finding that caused Direction to add the milestone. The host reruns the original check before the paused activity resumes.
+finding that caused Direction to add the milestone. The host refreshes any
+failed assembled checks cited by that finding against the current checkpoint.
+It reruns the original steward check before the paused activity resumes.
 
 If publication is interrupted, invoke `task run` with the identical goal.
 ArcNexus resumes from the verified candidate and observes GitHub before taking
