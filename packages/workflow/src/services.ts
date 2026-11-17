@@ -5,6 +5,7 @@ import type {
   Milestone,
   Plan,
   PlanActivity,
+  StandingGoalEvidence,
 } from '../../direction/src/index.js';
 import type { Candidate, Verdict } from '../../verification/src/index.js';
 
@@ -28,7 +29,7 @@ export interface TaskObserver {
 
 export type TaskOutcome =
   | { kind: 'merged'; commit: string; evidence: readonly string[] }
-  | { kind: 'satisfied'; commit: string; evidence: readonly string[] }
+  | { kind: 'satisfied'; commit: string; summary: string; evidence: readonly string[] }
   | {
       kind: 'invalid' | 'blocked' | 'failed' | 'cancelled';
       reason: string;
@@ -41,7 +42,8 @@ export type TaskEvent =
   | { position: { completed: number; activities: Readonly<Record<string, number>> } }
   | { candidate: Candidate; verdict: Verdict }
   | { feedback: Feedback }
-  | { activation: ActivityCheckpoint };
+  | { activation: ActivityCheckpoint }
+  | { assessment: Extract<TaskOutcome, { kind: 'satisfied' }> };
 
 export interface TaskSession {
   readonly capture: Capture;
@@ -90,11 +92,11 @@ export interface RoundOutcome {
 export interface WorkflowServices {
   execution: {
     round?(directory: string): GoalRound;
-    evaluate?(
+    measureGoal?(
       session: TaskSession,
       owner: string,
       signal: AbortSignal,
-    ): Promise<TaskOutcome | undefined>;
+    ): Promise<StandingGoalEvidence>;
     prepare?(session: TaskSession, issue: string, signal: AbortSignal): Promise<void>;
     checkpoint?(
       session: TaskSession,
@@ -109,12 +111,17 @@ export interface WorkflowServices {
   };
   direction: {
     track?(session: TaskSession, signal: AbortSignal): Promise<string>;
-    plan(session: TaskSession, signal: AbortSignal): Promise<unknown>;
+    plan(
+      session: TaskSession,
+      signal: AbortSignal,
+      standing?: StandingGoalEvidence,
+    ): Promise<unknown>;
     revise(
       session: TaskSession,
       plan: Plan | undefined,
       feedback: Feedback,
       signal: AbortSignal,
+      standing?: StandingGoalEvidence,
     ): Promise<unknown>;
   };
   agent: {

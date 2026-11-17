@@ -1,7 +1,7 @@
 import type { Agent } from '../../agent/src/index.js';
 import { hostTask, InvalidCodexResponse } from '../../execution/src/index.js';
 import type { TaskSession } from '../../workflow/src/index.js';
-import type { Feedback, Plan } from './index.js';
+import type { Feedback, Plan, StandingGoalEvidence } from './index.js';
 import { DirectorResponseError } from './response.js';
 
 const shape = {
@@ -44,8 +44,11 @@ export function direct(
   agent: Agent,
   session: TaskSession,
   signal: AbortSignal,
-  plan?: Plan,
-  feedback?: Feedback,
+  {
+    plan,
+    feedback,
+    standing,
+  }: { plan?: Plan; feedback?: Feedback; standing?: StandingGoalEvidence } = {},
 ): Promise<unknown> {
   const task = hostTask(session);
   return task
@@ -53,18 +56,40 @@ export function direct(
       agent,
       task.capture.project.director,
       {
-        assignment: { revision: revisionInstructions(feedback), ...shape, feedback },
-        milestone: plan ?? 'Initial planning',
+        assignment: directorAssignment(feedback, standing),
+        milestone: plan ?? (standing ? 'Standing goal assessment' : 'Initial planning'),
         acceptance: [],
         evidence: task.evidence.slice(),
       },
       signal,
     )
-    .catch((error: unknown) => {
-      if (error instanceof InvalidCodexResponse)
-        throw new DirectorResponseError(error.message, { cause: error });
-      throw error;
-    });
+    .catch(directorFailure);
+}
+
+/** Preserve harness failures and give unreadable responses the normal Director repair path. */
+function directorFailure(error: unknown): never {
+  if (error instanceof InvalidCodexResponse)
+    throw new DirectorResponseError(error.message, { cause: error });
+  throw error;
+}
+
+/** Give the Director the current observation and a decision that can open engineering work. */
+function directorAssignment(feedback?: Feedback, standing?: StandingGoalEvidence) {
+  const assignment = { revision: revisionInstructions(feedback), ...shape, feedback };
+  if (!standing) return assignment;
+  return {
+    ...assignment,
+    standingGoal: {
+      ...standing,
+      instructions:
+        'Assess the full authored goal and its success measures on the captured staging revision. Read the retained check log and inspect the relevant implementation, tests, and recent changes. A passing suite is evidence. Look for uncovered requirements, incorrect tests, regressions introduced by other goals, and changes in the goal itself. If you find an actionable gap, return a bounded plan and name the observation that justifies it. When the measure passes and you find no concrete work, return satisfied with a concise rationale and the exact log path. Ask a question when a genuine human decision is needed.',
+    },
+    satisfied: {
+      kind: 'satisfied',
+      summary: 'Why the requirements and measures warrant no work on this revision',
+      evidence: [standing.log],
+    },
+  };
 }
 
 /** Tell the Director which portions of the sequence the current feedback can change. */

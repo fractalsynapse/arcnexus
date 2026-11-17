@@ -11,6 +11,7 @@ import {
   type Milestone,
   type Plan,
   type RevisionFeedback,
+  type StandingGoalEvidence,
 } from '../../direction/src/index.js';
 import { validateVerdict } from '../../verification/src/index.js';
 import type {
@@ -128,6 +129,7 @@ export class Workflow {
 class TaskRun {
   readonly evidence: string[] = [];
   private plan?: Plan;
+  private standing?: StandingGoalEvidence;
   private completed = 0;
   private readonly activityPositions = new Map<string, number>();
   private readonly rejectedCandidates = new Set<string>();
@@ -168,15 +170,8 @@ class TaskRun {
     const saved = this.session.history?.() ?? [];
     this.plan = saved.findLast((event) => 'plan' in event)?.plan;
     if (!this.plan) {
-      const measured =
-        this.measureOwner &&
-        (await this.services.execution.evaluate?.(this.session, this.measureOwner, this.signal));
-      if (measured) return measured;
-      this.report({ phase: 'planning', message: 'Director is planning the goal' });
-      const blocked = await this.acceptPlan(() =>
-        this.services.direction.plan(this.session, this.signal),
-      );
-      if (blocked) return blocked;
+      const planning = await this.startPlanning(saved);
+      if (planning) return planning;
     }
     if (this.services.direction.track && this.services.execution.prepare) {
       const issue = await this.services.direction.track(this.session, this.signal);
@@ -185,8 +180,33 @@ class TaskRun {
     return this.restore();
   }
 
+  /** Give Direction the authored standing goal and measured staging context before admitting work. */
+  private async startPlanning(saved: ReturnType<NonNullable<TaskSession['history']>>) {
+    if (this.measureOwner) {
+      const recorded = saved.findLast((event) => 'assessment' in event)?.assessment;
+      if (recorded) return recorded;
+      if (!this.services.execution.measureGoal)
+        throw new Error('Standing goal measurement is unavailable in this build');
+      this.standing = await this.services.execution.measureGoal(
+        this.session,
+        this.measureOwner,
+        this.signal,
+      );
+    }
+    this.report({
+      phase: 'planning',
+      message: this.standing
+        ? 'Director is assessing the standing goal'
+        : 'Director is planning the goal',
+      evidence: this.standing ? [this.standing.log] : undefined,
+    });
+    return this.acceptPlan(() =>
+      this.services.direction.plan(this.session, this.signal, this.standing),
+    );
+  }
+
   /** Read the durable cursor and handle an outcome observed just before interruption. */
-  private async restore(): Promise<Interrupted | undefined> {
+  private async restore(): Promise<TaskOutcome | undefined> {
     const events = this.session.history?.() ?? [];
     const committed = events.findLastIndex((event) => 'position' in event);
     const position = events[committed];
@@ -221,17 +241,29 @@ class TaskRun {
   private async acceptPlan(
     propose: () => Promise<unknown>,
     reason?: RevisionFeedback,
-  ): Promise<Interrupted | undefined> {
+  ): Promise<TaskOutcome | undefined> {
     let result = await this.planResponse(propose, reason);
     while (result.kind === 'question') {
       const feedback = await this.answer(result);
       if ('reason' in feedback) return feedback;
       this.session.record({ feedback });
       result = await this.planResponse(
-        () => this.services.direction.revise(this.session, this.plan, feedback, this.signal),
+        () =>
+          this.services.direction.revise(
+            this.session,
+            this.plan,
+            feedback,
+            this.signal,
+            this.assessmentInput(),
+          ),
         reason,
         feedback,
       );
+    }
+    if (result.kind === 'satisfied') {
+      const assessment = { ...result, commit: this.standing!.revision };
+      this.session.record({ assessment });
+      return assessment;
     }
     return this.commitPlan(result.plan, reason);
   }
@@ -261,6 +293,7 @@ class TaskRun {
         this.plan,
         feedback,
         this.signal,
+        this.assessmentInput(),
       );
       return this.validateProposal(repaired, reason);
     }
@@ -269,8 +302,8 @@ class TaskRun {
   /** Check proposal shape, plan rules and preservation of any already accepted work. */
   private validateProposal(response: unknown, reason?: RevisionFeedback): DirectionResult {
     this.signal.throwIfAborted();
-    const result = decodeDirectorResponse(response);
-    if (result.kind === 'question') return result;
+    const result = decodeDirectorResponse(response, this.assessmentInput());
+    if (result.kind !== 'plan') return result;
     try {
       validatePlan(this.session.capture, result.plan);
       if (this.plan)
@@ -282,6 +315,11 @@ class TaskRun {
       throw new DirectorResponseError(error.message, { cause: error });
     }
     return result;
+  }
+
+  /** Limit the no-work outcome to the initial standing-goal assessment. */
+  private assessmentInput() {
+    return this.plan ? undefined : this.standing;
   }
 
   /** Admit a validated plan only when its supplier sequence can advance. */
@@ -313,7 +351,7 @@ class TaskRun {
   }
 
   /** Preserve progress recorded before a supplier request or other interruption. */
-  private async executeMilestone(milestone: Milestone): Promise<Interrupted | undefined> {
+  private async executeMilestone(milestone: Milestone): Promise<TaskOutcome | undefined> {
     const start = this.activityPositions.get(milestone.id) ?? 0;
     for (const [index, step] of milestone.steps.entries()) {
       if (index < start || step.inapplicable || step.activity === 'release') continue;
@@ -365,7 +403,14 @@ class TaskRun {
       message: `Director is considering ${feedback.kind} feedback`,
     });
     return this.acceptPlan(
-      () => this.services.direction.revise(this.session, this.plan, feedback, this.signal),
+      () =>
+        this.services.direction.revise(
+          this.session,
+          this.plan,
+          feedback,
+          this.signal,
+          this.assessmentInput(),
+        ),
       feedback,
     );
   }

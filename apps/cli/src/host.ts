@@ -23,9 +23,9 @@ function services(context: Context): WorkflowServices {
     execution: context.execution,
     direction: {
       track,
-      plan: (session, signal) => direct(context.agent, session, signal),
-      revise: (session, plan, feedback, signal) =>
-        direct(context.agent, session, signal, plan, feedback),
+      plan: (session, signal, standing) => direct(context.agent, session, signal, { standing }),
+      revise: (session, plan, feedback, signal, standing) =>
+        direct(context.agent, session, signal, { plan, feedback, standing }),
     },
     agent: {
       execute: (session, milestone, activity, signal) =>

@@ -64,8 +64,23 @@ export type RevisionFeedback =
 export type Feedback =
   RevisionFeedback | { kind: 'plan-repair'; diagnostic: string; original?: RevisionFeedback };
 
+export interface StandingGoalEvidence {
+  readonly owner: string;
+  readonly revision: string;
+  readonly status: number | null | 'not-applicable';
+  readonly log: string;
+  readonly recentChanges: readonly string[];
+}
+
+export interface GoalAssessment {
+  readonly kind: 'satisfied';
+  readonly summary: string;
+  readonly evidence: readonly string[];
+}
+
 export type DirectionResult =
   | { kind: 'plan'; plan: Plan }
+  | GoalAssessment
   | { kind: 'question'; question: string; evidence: readonly string[] };
 
 /** Check the Director's proposed work against captured ownership and the plan template. */
