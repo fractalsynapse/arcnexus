@@ -38,11 +38,11 @@ function feedbackForOwner(feedback: Correction, milestone: Milestone) {
 
 interface CheckObservation {
   check?: Pick<CheckResult, 'id' | 'status' | 'log'>;
-  scope?: unknown;
+  scope?: { owner?: string };
 }
 
-/** Identify captured assembly failures named by the finding through their retained logs. */
-export function citedFailedChecks(
+/** Select captured assembly checks named explicitly or cited through a failing log. */
+export function citedAssemblyChecks(
   observations: readonly CheckObservation[],
   finding: Correction,
   acceptance: readonly string[],
@@ -56,9 +56,15 @@ export function citedFailedChecks(
   );
   const ids = new Set<string>();
   for (const { check, scope } of observations) {
-    if (!check || scope || check.status === 0 || !acceptance.includes(check.id)) continue;
-    if (citations.has(check.log) || citations.has(basename(check.log)) || citations.has(check.id))
-      ids.add(check.id);
+    if (!check || scope || !acceptance.includes(check.id)) continue;
+    const failureCited =
+      check.status !== 0 && (citations.has(check.log) || citations.has(basename(check.log)));
+    if (citations.has(check.id) || failureCited) ids.add(check.id);
   }
   return [...ids];
+}
+
+/** Report the last owner-scoped check with its real host status alongside the transcript. */
+export function latestOwnerCheck(observations: readonly CheckObservation[], owner: string) {
+  return observations.findLast(({ check, scope }) => check && scope?.owner === owner)?.check;
 }

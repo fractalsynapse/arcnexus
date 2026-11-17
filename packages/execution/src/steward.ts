@@ -3,7 +3,7 @@ import type { Agent } from '../../agent/src/index.js';
 import type { Milestone, StewardCheckFailure } from '../../direction/src/index.js';
 import type { ActivityOutcome, TaskSession } from '../../workflow/src/index.js';
 import { hostTask } from './index.js';
-import { citedFailedChecks, correctionFinding } from './correction.js';
+import { citedAssemblyChecks, correctionFinding, latestOwnerCheck } from './correction.js';
 import type { CheckResult } from './check.js';
 import { materializeEdits } from './formatter.js';
 import { StaleCheckedEdit } from './edits.js';
@@ -142,9 +142,11 @@ async function stewardAssignment(
 ) {
   const finding = correctionFinding(task.history(), milestone);
   const currentChecks: CheckResult[] = [];
+  const ownerCheck =
+    scope.activity === 'review' ? latestOwnerCheck(task.observations(), scope.owner) : undefined;
   if (finding && ['implementation', 'review'].includes(scope.activity)) {
     const acceptance = task.capture.project.checks?.acceptance ?? [];
-    for (const id of citedFailedChecks(task.observations(), finding, acceptance))
+    for (const id of citedAssemblyChecks(task.observations(), finding, acceptance))
       currentChecks.push(await task.check(id, signal));
   }
   return {
@@ -152,6 +154,7 @@ async function stewardAssignment(
     ...(finding ? { finding } : {}),
     ...(failedCheck ? { failedCheck, correction: correctionInstruction } : {}),
     ...(currentChecks.length ? { currentChecks } : {}),
+    ...(ownerCheck ? { ownerCheck } : {}),
   };
 }
 
@@ -159,7 +162,7 @@ async function stewardAssignment(
 function responseShape(milestone: string, formatter: boolean) {
   return {
     instructions:
-      'Return exactly one JSON object with kind at the top level. Choose one of the flat response examples. For completed, edits and checks are separate top-level arrays, even when empty. An operation belongs only in checks. When finding is present, address the exact diagnosis and paths that still need correction. The currentChecks field carries the latest host results when available. Use their logs to distinguish remaining failures from older reports. Do not redo fixes already confirmed by a current passing check. When responseRepair is present, read the previous reply in the retained transcript and correct the specific error. Copy a reported current sha256 exactly into expected for that file. Use at most one edit per path. To substitute text and format the same file, put both in one transform. For a small change in an existing file, use transform instead of content so the host computes the replacement bytes. The checkout is read-only; the host applies eligible edits and runs declared checks.',
+      'Return exactly one JSON object with kind at the top level. Choose one of the flat response examples. For completed, edits and checks are separate top-level arrays, even when empty. An operation belongs only in checks. When finding is present, address the exact diagnosis and paths that still need correction. The currentChecks field carries the latest host results when available. Use their logs to distinguish remaining failures from older reports. Review can use ownerCheck for the most recent owner operation recorded by the host. Ordinary assembled verification runs after steward review. Complete review when the work meets engineering acceptance and only that later verification remains. Do not redo fixes already confirmed by a current passing check. When responseRepair is present, read the previous reply in the retained transcript and correct the specific error. Copy a reported current sha256 exactly into expected for that file. Use at most one edit per path. To substitute text and format the same file, put both in one transform. For a small change in an existing file, use transform instead of content so the host computes the replacement bytes. The checkout is read-only; the host applies eligible edits and runs declared checks.',
     transforms: transformShape(formatter),
     responses: [
       {

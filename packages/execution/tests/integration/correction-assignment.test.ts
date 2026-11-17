@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { Milestone, Plan, RevisionFeedback } from '../../../direction/src/index.js';
 import type { TaskEvent } from '../../../workflow/src/index.js';
-import { citedFailedChecks, correctionFinding } from '../../src/correction.js';
+import { citedAssemblyChecks, correctionFinding } from '../../src/correction.js';
 
 const original: Milestone = { id: 'original', owner: 'execution', criteria: [], steps: [] };
 const correction = { ...original, id: 'correction' };
@@ -49,7 +49,7 @@ class CorrectionCheckScenario {
       milestone: original.id,
       requester: original.id,
       reason:
-        'Read 9-format.log and 9-tests.log. Resolve the type-check failure and arbitrary-check.',
+        'Read 9-format.log and 9-tests.log. Resolve type-check and previous-test on the corrected checkpoint. Also run arbitrary-check.',
       evidence: ['/evidence/9-lint.log', '/evidence/9-success.log'],
     };
     const history = [
@@ -57,12 +57,18 @@ class CorrectionCheckScenario {
       { check: { id: 'lint', status: 1, log: '/evidence/9-lint.log' } },
       { check: { id: 'format', status: 1, log: '/evidence/9-format.log' } },
       { check: { id: 'success', status: 0, log: '/evidence/9-success.log' } },
+      { check: { id: 'previous-test', status: 0, log: '/evidence/9-previous-test.log' } },
       { check: { id: 'build', status: 1, log: '/evidence/9-build.log' } },
       { check: { id: 'type-check', status: 1, log: '/evidence/9-type-check.log' } },
       { check: { id: 'tests', status: 1, log: '/evidence/9-tests.log' }, scope: {} },
     ];
-    const checks = ['format', 'lint', 'build', 'tests', 'success', 'arbitrary-check', 'type-check'];
-    assert.deepEqual(citedFailedChecks(history, finding, checks), ['format', 'lint', 'type-check']);
+    const checks = history.map(({ check }) => check.id).concat('arbitrary-check');
+    assert.deepEqual(citedAssemblyChecks(history, finding, checks), [
+      'format',
+      'lint',
+      'previous-test',
+      'type-check',
+    ]);
   }
 }
 
