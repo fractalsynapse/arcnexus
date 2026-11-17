@@ -10,6 +10,7 @@ interface Clarification {
   scope: string;
   question: string;
   answer?: string;
+  evidence?: string;
 }
 
 /** Resume the requesting actor with human answers from the task journal. */
@@ -25,15 +26,10 @@ export class Clarifications {
   async run(data: Assignment, invoke: (data: Assignment) => Promise<unknown>) {
     const scope = inboxIdentity(this.task, this.selection, data);
     const answers = this.retained(scope);
-    const assignment = data.assignment;
     while (true) {
-      for (const [question, answer] of answers)
-        if (answer === undefined) answers.set(question, await this.ask(scope, question));
-      const clarifications = Array.from(answers, ([question, answer]) => ({ question, answer }));
-      const current = clarifications.length
-        ? { ...data, assignment: { ...assignmentFields(assignment), clarifications } }
-        : data;
-      const reply = await invoke(current);
+      for (const [question, gate] of answers)
+        if (gate.answer === undefined) answers.set(question, await this.ask(scope, question));
+      const reply = await invoke(withClarifications(data, [...answers.values()]));
       this.signal.throwIfAborted();
       const question = requestedQuestion(reply);
       if (question === undefined) return reply;
@@ -41,15 +37,15 @@ export class Clarifications {
         throw new InvalidCodexResponse(`Clarification already answered: ${question}`);
       const clarification = { scope, question };
       this.task.note({ clarification, ...verificationContext(this.task, this.selection, data) });
-      answers.set(question, undefined);
+      answers.set(question, clarification);
     }
   }
 
   /** Rebuild the open and answered questions for this exact scope. */
   private retained(scope: string) {
-    const answers = new Map<string, string | undefined>();
+    const answers = new Map<string, Clarification>();
     for (const { clarification } of this.task.observations<{ clarification?: Clarification }>())
-      if (clarification?.scope === scope) answers.set(clarification.question, clarification.answer);
+      if (clarification?.scope === scope) answers.set(clarification.question, clarification);
     return answers;
   }
 
@@ -59,9 +55,26 @@ export class Clarifications {
     const answer = await this.task.ask?.(question, this.signal);
     this.signal.throwIfAborted();
     if (!answer?.trim()) throw new ClarificationRequired(question);
-    this.task.note({ clarification: { scope, question, answer } });
-    return answer;
+    const evidence = this.task.store(
+      'clarification.json',
+      JSON.stringify({ ...this.selection, question, answer }, null, 2),
+    );
+    const clarification = { scope, question, answer, evidence };
+    this.task.note({ clarification });
+    return clarification;
   }
+}
+
+/** Give the resumed actor both the answer and the reviewable host reference. */
+function withClarifications(data: Assignment, gates: readonly Clarification[]): Assignment {
+  if (!gates.length) return data;
+  const clarifications = gates.map(({ question, answer }) => ({ question, answer }));
+  const refs = gates.flatMap(({ evidence }) => (evidence ? [evidence] : []));
+  return {
+    ...data,
+    assignment: { ...assignmentFields(data.assignment), clarifications },
+    evidence: [...new Set([...(data.evidence ?? []), ...refs])],
+  };
 }
 
 /** Preserve an unstructured original assignment as a single value. */
