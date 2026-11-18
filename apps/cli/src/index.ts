@@ -61,17 +61,6 @@ async function mountCommands(task = false) {
   return context.commands;
 }
 
-/** Show the invocation header followed by the complete prompt from the SDK. */
-function renderInspection(result: ReturnType<Context['commands']['inspect']>) {
-  return [
-    `Placeholders: ${result.placeholders.join(', ')}`,
-    'Invocation options:',
-    JSON.stringify(result.request.options, null, 2),
-    '--- Codex input ---',
-    result.request.input,
-  ].join('\n');
-}
-
 try {
   await main(process.argv.slice(2));
 } catch (error) {
