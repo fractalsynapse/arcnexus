@@ -114,6 +114,28 @@ test('Reviewer assessment activation forwards the shared request and mapped tool
   assert.equal(assignment.ownerEvidenceDigest, candidate.ownerEvidenceDigest);
   assert.deepEqual(assignment.checks, checks);
   assert.deepEqual(assignment.ownerChecks, []);
+  assert.deepEqual(assignment.accepted, {
+    kind: 'accepted',
+    candidate: candidate.digest,
+    criteria: ['all accepted criterion IDs'],
+    evidence: ['evidence paths'],
+  });
+  assert.deepEqual(assignment.rejected, {
+    kind: 'rejected',
+    candidate: candidate.digest,
+    findings: [
+      {
+        criterion: 'criterion ID',
+        owner: 'component ID',
+        reason: 'observed deficiency',
+        evidence: ['evidence paths'],
+      },
+    ],
+  });
+  assert.match(
+    String(assignment.instructions),
+    /Read the candidate diff and trusted check evidence/,
+  );
   const expected = new Agent(new Architecture()).prepareRequest(
     capture,
     delivered.selection,
