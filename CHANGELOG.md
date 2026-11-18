@@ -10,6 +10,7 @@
 ### Fixed
 
 - Clarify the checked-edit path when an editing steward is correcting a rejected candidate (#594).
+- Reuse an independently reviewed check-only result when a standing round resumes (#594).
 
 - Retry a temporary GitHub server error while observing a publication or its checks (#594).
 - Recover when a steward mistakenly waits for an owner check that it already queued (#594).
