@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { blockedCorrection } from '../../src/blocked-correction.js';
 import type { Capture } from '../../../architecture/src/index.js';
 import {
   activities,
@@ -10,6 +11,7 @@ import {
 import {
   Workflow,
   type ActivityOutcome,
+  type ActivityCheckpoint,
   type TaskEvent,
   type WorkflowServices,
 } from '../../src/index.js';
@@ -356,3 +358,77 @@ test('a repeated stall holds the original diagnostic after its smaller contribut
   assert.equal(result.reason, 'Fixture needs a smaller case');
   assert.deepEqual(task.calls, ['original', 'stalled', 'smaller', 'stalled']);
 });
+
+/** Exercise fresh diagnostics and repeated host failures after earlier review correction. */
+class ReviewDiagnosticScenario {
+  private readonly correction = milestone('correction', 'owner', ['implementation'], 'readiness');
+  private readonly held: ActivityCheckpoint = {
+    milestone: this.correction.id,
+    owner: 'owner',
+    index: 2,
+    step: 'implementation',
+    outcome: { kind: 'blocked', reason: 'A distinct assertion fails', evidence: ['new.log'] },
+  };
+
+  private readonly rejection: TaskEvent = {
+    candidate: { digest: 'candidate', evidence: [] },
+    verdict: {
+      kind: 'rejected',
+      candidate: 'candidate',
+      findings: [
+        { owner: 'owner', criterion: 'readiness', reason: 'Parity missing', evidence: [] },
+      ],
+    },
+  };
+
+  /** Keep a rejected criterion and one previously attempted supplier in the journal. */
+  private history(): TaskEvent[] {
+    const request = {
+      kind: 'supplier' as const,
+      milestone: this.correction.id,
+      requester: this.correction.id,
+      owner: 'owner',
+      reason: 'Compiler error',
+      evidence: ['old.log'],
+    };
+    const previous = { ...this.held, outcome: { ...request, kind: 'blocked' as const } };
+    return [
+      this.rejection,
+      { activation: previous },
+      {
+        plan: {
+          focus: { purpose: 'Repair', objectives: [], constraints: [] },
+          milestones: [this.correction],
+        },
+        supplier: { milestone: 'smaller', request },
+      },
+      { activation: this.held },
+    ];
+  }
+
+  /** Return a fresh review failure to Direction and keep a repeated host check held. */
+  run() {
+    const next = blockedCorrection(this.history(), this.correction, this.held);
+    assert(next);
+    assert.match(next.reason, /A distinct assertion fails/);
+    assert.deepEqual(next.evidence, ['new.log']);
+    assert(this.held.outcome.kind === 'blocked');
+    const repeated = {
+      ...this.held,
+      outcome: {
+        ...this.held.outcome,
+        failedCheck: {
+          id: 'owner-tests',
+          activity: 'implementation' as const,
+          expected: 'pass' as const,
+          status: 1,
+          log: 'new.log',
+        },
+      },
+    };
+    assert.equal(blockedCorrection(this.history(), this.correction, repeated), undefined);
+  }
+}
+
+test('a new review diagnostic is recoverable and a repeated host check remains held', () =>
+  new ReviewDiagnosticScenario().run());

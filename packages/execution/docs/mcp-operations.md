@@ -57,3 +57,17 @@ preservation alone does not establish acceptance. Assembled verification and
 independent review remain host operations.
 
 If staging advanced after the task branch was secured, see [prepared checkpoint recovery](prepared-checkpoint-recovery.md).
+
+## Failed checks during correction
+
+The host returns a fresh failing diagnostic, exit status and complete log reference
+to Direction even when the same operation failed earlier. Direction gives the new
+failure distinct correction work before the paused activity resumes. The steward
+reads the latest failed-check log first and retains earlier findings as history.
+
+A diagnostic already sent for correction holds on repetition. TAP numbering,
+source positions and temporary worktree paths do not establish a new failure.
+For other command formats the retained output supplies the comparison. The full
+original log remains available as evidence. Workflow does not reopen a host-held
+repeated check as another review supplier request. See the
+[Workflow recovery scenarios](../../workflow/contract.md#acceptance-scenarios).

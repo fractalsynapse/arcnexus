@@ -9,6 +9,7 @@ import { Architecture, type Capture, type TaskContext } from '../../../architect
 import { Coordination } from '../../../coordination/src/index.js';
 import { activities, type Milestone, type Plan } from '../../../direction/src/index.js';
 import { Workflow, type WorkflowServices } from '../../../workflow/src/index.js';
+import { checkFailureSignature } from '../../src/steward-check.js';
 import { HostTask, steward } from '../../src/index.js';
 
 const agent = new Agent(new Architecture());
@@ -77,27 +78,13 @@ class CheckTask {
   /** Make the check fail on the original bytes and pass only after the checked edit. */
   constructor(
     t: TestContext,
-    private readonly correct: boolean,
+    private readonly correct: boolean | 'progress',
   ) {
     this.task = nativeTask(t, this.root);
     writeFileSync(this.file, 'wrong');
-    t.mock.method(this.task, 'check', async (id: string, _signal: AbortSignal, scope: unknown) => {
-      const status = readFileSync(this.file, 'utf8') === 'corrected' ? 0 : 1;
-      const log = this.task.store('fixture-check.log', `exit ${status}\n`);
-      if (!this.failureLog) this.failureLog = log;
-      this.calls.push(`check:${status}`);
-      const check = {
-        id,
-        status,
-        command: 'fixture',
-        args: [],
-        cwd: this.root,
-        durationMs: 0,
-        log,
-      };
-      this.task.note({ check, scope });
-      return check;
-    });
+    t.mock.method(this.task, 'check', async (id: string, _signal: AbortSignal, scope: unknown) =>
+      this.check(id, scope),
+    );
     t.mock.method(
       this.task,
       'activate',
@@ -105,19 +92,44 @@ class CheckTask {
     );
   }
 
+  /** Retain the actual failing stage and the exact command observation. */
+  private async check(id: string, scope: unknown) {
+    const status = readFileSync(this.file, 'utf8') === 'corrected' ? 0 : 1;
+    const stage = readFileSync(this.file, 'utf8');
+    const diagnostic =
+      stage === 'compiled' ? 'not ok 3 - Reviewer assertion' : 'error TS1005: Expected token';
+    const log = this.task.store('fixture-check.log', status ? diagnostic : 'passed');
+    if (!this.failureLog) this.failureLog = log;
+    this.calls.push(`check:${status}`);
+    const check = {
+      id,
+      status,
+      command: 'fixture',
+      args: [],
+      cwd: this.root,
+      durationMs: 0,
+      log,
+    };
+    this.task.note({ check, scope });
+    return check;
+  }
+
   /** Return a valid scoped edit on the correcting activation. */
   private proposal(data: TaskContext) {
-    const correction = JSON.stringify(data.milestone).includes('"id":"correction"');
-    this.calls.push(correction ? 'correction' : 'original');
+    const id = (data.milestone as { id: string }).id;
+    const correction = id.startsWith('correction');
+    this.calls.push(correction ? id : 'original');
     if (correction) {
       assert.match(
         JSON.stringify(data.assignment),
         /read-only filesystem.*mapped checked-edit MCP tool/,
       );
       assert.match(JSON.stringify(data.assignment), /"status":1/);
-      assert(JSON.stringify(data.assignment).includes(this.failureLog));
-      const expected = createHash('sha256').update('wrong').digest('hex');
-      const edits = this.correct ? [{ path: 'fixture.txt', expected, content: 'corrected' }] : [];
+      assert(data.evidence?.includes(this.failureLog));
+      const current = readFileSync(this.file, 'utf8');
+      const expected = createHash('sha256').update(current).digest('hex');
+      const content = this.correct === 'progress' && current === 'wrong' ? 'compiled' : 'corrected';
+      const edits = this.correct ? [{ path: 'fixture.txt', expected, content }] : [];
       return { kind: 'completed', edits, checks: [] };
     }
     const checks = this.calls.includes('check:0') ? [] : [{ id: 'owner-tests', expected: 'pass' }];
@@ -133,13 +145,21 @@ class CheckTask {
       plan: async () => ({ kind: 'plan', plan: this.goalPlan }),
       revise: async (_session, previous, feedback) => {
         this.calls.push('direction');
-        assert.deepEqual(previous, this.goalPlan);
+        assert(previous);
         assert.equal(feedback.kind, 'supplier');
         assert.equal(feedback.owner, 'owner');
-        assert(feedback.evidence.includes(this.failureLog));
+        assert(feedback.failedCheck);
+        if (this.calls.filter((call) => call === 'direction').length === 2)
+          assert.match(readFileSync(feedback.failedCheck.log, 'utf8'), /Reviewer assertion/);
         return {
           kind: 'plan',
-          plan: { focus, milestones: [milestone('correction'), ...this.goalPlan.milestones] },
+          plan: {
+            focus,
+            milestones: [
+              milestone(previous.milestones.length === 1 ? 'correction' : 'correction-reviewer'),
+              ...previous.milestones,
+            ],
+          },
         };
       },
     },
@@ -407,4 +427,38 @@ test('a stale digest is corrected without applying earlier edits in the rejected
   assert.equal(replies.mock.callCount(), 2);
   assert.equal(readFileSync(file, 'utf8'), 'repaired');
   task.close();
+});
+
+test('a corrected compiler error routes the fresh assertion failure to Direction in the same run', async (t) => {
+  const task = new CheckTask(t, 'progress');
+  const result = await task.run();
+  assert.equal(result.kind, 'merged', JSON.stringify(result));
+  assert.deepEqual(task.calls, [
+    'original',
+    'check:1',
+    'direction',
+    'correction',
+    'check:1',
+    'direction',
+    'correction-reviewer',
+    'check:0',
+    'correction',
+    'original',
+    'delivery',
+  ]);
+});
+
+test('failure identity ignores process paths and TAP numbering while retaining the actual diagnostic', (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'arcnexus-check-diagnostic-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const first = join(root, 'first.log');
+  const repeat = join(root, 'repeat.log');
+  const fresh = join(root, 'fresh.log');
+  writeFileSync(first, 'not ok 3 - Reviewer parity\n  duration_ms: 12\n  error: assertion failed');
+  writeFileSync(repeat, 'not ok 8 - Reviewer parity\n  duration_ms: 35\n  error: assertion failed');
+  writeFileSync(fresh, '/state/runs/5/worktree/source.ts(12,3): error TS1005: Expected token');
+  assert.equal(checkFailureSignature(first), checkFailureSignature(repeat));
+  assert.notEqual(checkFailureSignature(first), checkFailureSignature(fresh));
+  writeFileSync(repeat, '/state/runs/9/worktree/source.ts(21,3): error TS1005: Expected token');
+  assert.equal(checkFailureSignature(fresh), checkFailureSignature(repeat));
 });
