@@ -76,7 +76,7 @@ function assertInvocation(
   expected: ReturnType<Agent['prepareRequest']>,
 ) {
   const options = expected.request.options;
-  assert.equal(actual.input, expected.request.input);
+  assert.deepEqual(Buffer.from(actual.input, 'utf8'), Buffer.from(expected.request.input, 'utf8'));
   assert.equal(actual.cwd, options.workingDirectory);
   assert.equal(actual.args[actual.args.indexOf('--cd') + 1], options.workingDirectory);
   assert.equal(actual.args[actual.args.indexOf('--model') + 1], options.model);
