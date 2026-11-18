@@ -86,6 +86,13 @@ exec "${process.execPath}" "${fixture}" "$@"
   assert(actual.input.includes(goal));
   assert(actual.input.includes('Initial planning'));
   assert(actual.input.includes('Plan the smallest sufficient changes for the goal.'));
+  assert(actual.args.includes('--ignore-user-config'));
+  assert(!actual.args.includes('--no-project-doc'));
+  assert(
+    !actual.args.some((arg) =>
+      /^(?:project_doc_max_bytes|project_doc_fallback_filenames|features\.skills)=/.test(arg),
+    ),
+  );
   assert.equal(actual.cwd, options.workingDirectory);
   assert.equal(actual.args[actual.args.indexOf('--cd') + 1], options.workingDirectory);
   assert.equal(actual.args[actual.args.indexOf('--model') + 1], options.model);
