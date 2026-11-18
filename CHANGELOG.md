@@ -9,6 +9,8 @@
 
 ### Fixed
 
+- Feed revision-bound run observations back into goal planning, and preserve objective refinement and Planner recovery across repeated turns (#594).
+
 - Include the retained question evidence when an activity pauses for a human answer (#587).
 
 - Repair an invalid Reviewer evidence citation in the same assessment,
