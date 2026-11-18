@@ -18,6 +18,7 @@ import { GitHub } from '../../collaboration/src/index.js';
 import { activateActor } from './activation.js';
 import { usedResearch } from './research.js';
 import { formatterPreview } from './formatter.js';
+import { recoverPrepared } from './prepared-recovery.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
 import { candidateDiff, git } from './git.js';
 import { applicationStorage, preflight, type HostConfig } from './host-config.js';
@@ -241,13 +242,13 @@ export class HostTask implements TaskSession {
     if (this.branch && this.worktree) return;
     if (!/^\d+$/.test(issue)) throw new Error('Invalid workspace issue');
     const base = this.capture.source.revision;
-    this.ensureCurrentBase();
     this.recoverMeasureWorkspace();
     this.branch = `${issue}-task`;
     this.issue = issue;
     if (await this.provider(signal).publication(this.branch))
       throw new Error('An existing pull request must match a retained accepting publication');
     const ref = `refs/heads/${this.branch}`;
+    await recoverPrepared(this, signal);
     await reconcileCheckpoint(this, signal);
     if (this.recoverWorkspace(base)) await reconcileCheckpoint(this, signal);
     const { root } = this.capture.source;
@@ -261,24 +262,15 @@ export class HostTask implements TaskSession {
     this.worktree = worktree;
   }
 
-  /** Refuse to execute a retained engineering plan when staging moved to a different base. */
-  private ensureCurrentBase() {
-    const previous = this.observations<{ baseRevision?: string }>().findLast(
-      ({ baseRevision }) => baseRevision,
-    )?.baseRevision;
-    if (!this.config.fresh || (previous && previous !== this.capture.source.revision))
-      throw new Error('The retained engineering base differs from current staging');
-  }
-
   /** Preserve and remove an abandoned task-owned workspace before reconstructing it. */
   private recoverWorkspace(base: string) {
     const previous = this.observations<{ workspace?: number; baseRevision?: string }>().findLast(
       ({ workspace }) => workspace !== undefined,
     );
     if (!previous?.workspace) return;
-    if (previous.baseRevision !== base) throw new Error('The retained workspace base changed');
     const path = join(this.location(previous.workspace), 'worktree');
     if (!existsSync(path)) return;
+    if (previous.baseRevision !== base) throw new Error('The retained workspace base changed');
     if (git(path, 'branch', '--show-current') !== this.branch)
       throw new Error('The abandoned worktree belongs to a different branch');
     this.worktree = path;
