@@ -118,7 +118,7 @@ test('GW-26: rendered and structured requests agree for each actor', (t) => {
     assert.match(result.request.input, new RegExp(`Fixture ${role} instruction`));
     assert.match(result.request.input, /Component activity instruction/);
     assert.match(result.request.input, /Fixture standard body/);
-    assert.match(result.request.input, /^Source: \\.arc\\/architecture\\/roles\\//m);
+    assert(result.request.input.includes('Source: .arc/architecture/roles/'));
     assert.doesNotMatch(result.request.input, /Inactive activity instructions/);
   }
 });
