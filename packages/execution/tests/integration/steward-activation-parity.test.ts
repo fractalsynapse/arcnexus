@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test, { type TestContext } from 'node:test';
+import { parse } from 'yaml';
 import { Agent } from '../../../agent/src/index.js';
 import {
   Architecture,
