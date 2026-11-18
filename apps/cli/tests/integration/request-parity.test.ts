@@ -89,6 +89,15 @@ test('GW-26: both global JSON placements return the exact prepared request', (t)
   assertHumanOutput(run(...command), result);
 });
 
+/** Check that the selected activity and its sources appear in the request. */
+function assertSelectedContext(input: string, role: string) {
+  assert.match(input, new RegExp(`Fixture ${role} instruction`));
+  assert.match(input, /Component activity instruction/);
+  assert.match(input, /Fixture standard body/);
+  assert(input.includes('Source: .arc/architecture/roles/'));
+  assert.doesNotMatch(input, /Inactive activity instructions/);
+}
+
 test('GW-26: rendered and structured requests agree for each actor', (t) => {
   const root = projectFixture();
   t.after(() => rmSync(root, { recursive: true, force: true }));
