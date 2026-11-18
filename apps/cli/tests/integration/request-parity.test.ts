@@ -88,3 +88,37 @@ test('GW-26: both global JSON placements return the exact prepared request', (t)
   );
   assertHumanOutput(run(...command), result);
 });
+
+
+test('GW-26: rendered and structured requests agree for each actor', (t) => {
+  const root = projectFixture();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const agent = new Agent(new Architecture());
+  for (const [component, activity, role] of [
+    ['director', 'planning', 'director'],
+    ['work', 'testing', 'engineer'],
+    ['reviewer', 'assessment', 'reviewer'],
+  ] as const) {
+    const args = ['inspect', component, activity];
+    const run = (...flags: string[]) =>
+      execFileSync(process.execPath, [cli, ...flags], { cwd: root, encoding: 'utf8' });
+    const rendered = run(...args);
+    const json = run('--json', ...args);
+    assert.equal(json, run(...args, '--json'));
+    const result = JSON.parse(json);
+    assert.deepEqual(result, agent.inspect({ directory: root, component, activity }));
+    const marker = '--- Codex input ---\n';
+    const start = rendered.indexOf(marker);
+    assert(start >= 0);
+    assert.equal(rendered.slice(start + marker.length), result.request.input + '\n');
+    assert(rendered.slice(0, start).includes(JSON.stringify(result.request.options, null, 2)));
+    for (const value of result.placeholders as string[]) assert(rendered.includes(value));
+    assert(result.placeholders.includes('<goal>'));
+    assert(result.placeholders.includes('<worktree>'));
+    assert.match(result.request.input, new RegExp(`Fixture ${role} instruction`));
+    assert.match(result.request.input, /Component activity instruction/);
+    assert.match(result.request.input, /Fixture standard body/);
+    assert.match(result.request.input, /^Source: \\.arc\\/architecture\\/roles\\//m);
+    assert.doesNotMatch(result.request.input, /Inactive activity instructions/);
+  }
+});
