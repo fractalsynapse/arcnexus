@@ -39,7 +39,13 @@ printf '%s\n' '{"type":"item.completed","item":{"type":"agent_message","text":"{
   assert.equal(argv[argv.indexOf('--cd') + 1], root);
   assert(argv.includes('model_reasoning_effort="high"'));
   assert(argv.includes('web_search="disabled"'));
+  assert(
+    argv.includes(
+      'mcp_servers={arcnexus={url="http://127.0.0.1:1234/mcp",required=true,default_tools_approval_mode="approve"}}',
+    ),
+  );
   assert(argv.includes('--ignore-user-config'));
+  assert(!argv.includes('--no-project-doc'));
   assert(
     !argv.some((arg) =>
       /^(?:project_doc_max_bytes|project_doc_fallback_filenames|features\.skills)=/.test(arg),
