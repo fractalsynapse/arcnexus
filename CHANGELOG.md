@@ -9,6 +9,8 @@
 
 ### Fixed
 
+- Retain the original review criterion when a supplier contribution has its own local measures (#611).
+
 - Route a new check failure after correction back to Direction while holding repeated unchanged failures (#611).
 
 - Resume the interrupted goal in a standing round using the earlier goals’ recorded results (#609).
