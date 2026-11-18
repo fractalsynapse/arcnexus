@@ -583,8 +583,9 @@ contracts:
   - arcnexus/coordination
   - arcnexus/verification
   - arcnexus/delivery
-  digest: 3478fa4b40bc04fe51262aa5332534099823fef185fca152f74471808117a740
-  scenarios: 4
+  digest: 97a36f40bc739717bb5e73bdcd005ea19908332ca053d1b8c2f791a7ab3e309c
+  scenarios: 6
+  amendmentRecord: 'Architect approved progressing correction recovery in Codex chat on 2026-11-18. Preserve proposed stage. Base: 95d8931cb279e81bf583fae83baa154c0be17cc6. Issue #611.'
 - id: arcnexus/planner
   type: library
   file: packages/planner/contract.md

@@ -1,20 +1,24 @@
 import { team } from '../../team/src/index.js';
 import type { Agent } from '../../agent/src/index.js';
-import type { Milestone, StewardCheckFailure } from '../../direction/src/index.js';
+import type { Feedback, Milestone, StewardCheckFailure } from '../../direction/src/index.js';
 import type { ActivityOutcome, TaskSession } from '../../workflow/src/index.js';
-import { hostTask } from './index.js';
+import { hostTask, type HostTask } from './index.js';
 import { citedAssemblyChecks, correctionFinding } from './correction.js';
 import type { CheckResult } from './check.js';
 import { archiveResearch, pendingResearch } from './research-archive.js';
 import { materializeEdits } from './formatter.js';
 import { CheckedEditOwnershipRefusal, StaleCheckedEdit } from './edits.js';
 import { InvalidCodexResponse } from './codex.js';
-import type { StewardScope } from './steward-check.js';
+import {
+  checkFailureSignature,
+  correctionMadeProgress,
+  type StewardScope,
+} from './steward-check.js';
 import { decodeSteward, StewardResponseError, type StewardResult } from './steward-response.js';
 import { supplierAnswerRequired, supplierContext } from './supplier-context.js';
 
 const correctionInstruction =
-  'Read the retained check log, correct the current worktree with checked edits, and preserve prior work. The host reruns the original check with its original expectation.';
+  'Read failedCheck.log first. It is the latest observed failure. Preserve the earlier finding as history. Correct the current failure within the accepted milestone, or request a distinct contribution through Direction when new work is needed. The host reruns the original check with its original expectation.';
 
 /** Run one Steward Agent activity and perform only the checked actions it requested. */
 export async function steward(
@@ -35,20 +39,26 @@ export async function steward(
   const failed = await perform(task, scope, result, correction, signal);
   const evidence = task.evidence.slice(before);
   return failed
-    ? stewardCheckOutcome(milestone, failed, correction, evidence)
+    ? stewardCheckOutcome(task, milestone, failed, correction, evidence)
     : { kind: 'completed', evidence, ...(result.answer ? { answer: result.answer } : {}) };
 }
 
-/** Route the first failure to Direction and stop if its required recheck still fails. */
+/** Route a fresh failure to Direction and hold a diagnostic that its correction already addressed. */
 function stewardCheckOutcome(
+  task: HostTask,
   milestone: Milestone,
   failed: StewardCheckFailure,
   correction: StewardCheckFailure | undefined,
   evidence: readonly string[],
 ): ActivityOutcome {
   const reason = `Operation ${failed.id} exited ${failed.status}; expected ${failed.expected}; evidence: ${failed.log}`;
-  if (correction?.id === failed.id)
-    return { kind: 'blocked', reason, evidence: [correction.log, ...evidence] };
+  if (correction?.id === failed.id && repeatedCorrection(task, milestone.owner, failed, correction))
+    return {
+      kind: 'blocked',
+      reason,
+      failedCheck: failed,
+      evidence: [correction.log, ...evidence],
+    };
   return {
     kind: 'supplier',
     owner: milestone.owner,
@@ -57,6 +67,26 @@ function stewardCheckOutcome(
     failedCheck: failed,
     evidence,
   };
+}
+
+/** Use the diagnostics actually sent to Direction, preserving new failures across restarts. */
+function repeatedCorrection(
+  task: HostTask,
+  owner: string,
+  failed: StewardCheckFailure,
+  correction: StewardCheckFailure,
+) {
+  if (!correctionMadeProgress(task.observations(), owner, correction.log)) return true;
+  const signature = checkFailureSignature(failed.log);
+  return task
+    .observations<{ feedback?: Feedback }>()
+    .some(
+      ({ feedback }) =>
+        feedback?.kind === 'supplier' &&
+        feedback.owner === owner &&
+        feedback.failedCheck?.id === failed.id &&
+        checkFailureSignature(feedback.failedCheck.log) === signature,
+    );
 }
 
 /** Repair one invalid reply with the same steward before any requested effects are applied. */

@@ -24,10 +24,13 @@ to Execution, and durable state to Coordination. A supplier request, escalation
 or review rejection returns to Direction for validation and sequencing. Feedback
 may cause earlier activity work through an explicit revised plan. Workflow
 follows the accepted sequence and does not create a second scheduler or store.
-A blocked steward step addressing an independent rejection can use the same
-supplier sequence for smaller same-owner work. If that review has already
-received supplier work for the owner, a further hold retains its diagnostic
-and the current position.
+An unresolved repairable check or review hold returns its latest diagnostic,
+check exit and log, prior correction and checked-edit evidence to Direction.
+Direction can sequence distinct corrective contributions under the original
+criterion while the observations show progress. A repeated unchanged diagnostic
+without progress retains the hold and current position. Human decisions and
+external prerequisites remain explicit gates. Preserve the original owner,
+acceptance, issue and secured checkpoint throughout correction.
 
 `inspect` uses the Agent and Architecture request builder without admitting a
 workflow. An accepted staging result closes the task. Cancellation and blocking
@@ -63,3 +66,6 @@ separate [release boundary](../release/contract.md).
 | WFL-2 | A supplier request or rejected verdict goes to Direction. The recorded revised plan controls what Workflow executes next. |
 | WFL-3 | A second goal cannot enter the same project lane. Cancellation retains progress and evidence through the existing Execution and Coordination services. |
 | WFL-4 | Inspecting an actor and activity creates no admitted task, workflow state or activation. |
+
+| WFL-5 | A correction that resolves a compiler error and exposes a different assertion failure in the same check returns the fresh diagnostic to Direction. Distinct corrective work runs before the paused step resumes, under the original acceptance and ownership. |
+| WFL-6 | A repeated unchanged check or review diagnostic without progress holds the task before another automatic correction. Actual human decisions and external prerequisites remain explicit gates. |
