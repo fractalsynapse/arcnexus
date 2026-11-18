@@ -89,7 +89,6 @@ test('GW-26: both global JSON placements return the exact prepared request', (t)
   assertHumanOutput(run(...command), result);
 });
 
-
 test('GW-26: rendered and structured requests agree for each actor', (t) => {
   const root = projectFixture();
   t.after(() => rmSync(root, { recursive: true, force: true }));
