@@ -98,6 +98,18 @@ function assertSelectedContext(input: string, role: string) {
   assert.doesNotMatch(input, /Inactive activity instructions/);
 }
 
+/** Compare the rendered prompt, invocation options and named placeholders. */
+function assertRenderedParity(rendered: string, result: ReturnType<Agent['inspect']>) {
+  const marker = '--- Codex input ---\n';
+  const start = rendered.indexOf(marker);
+  assert(start >= 0);
+  assert.equal(rendered.slice(start + marker.length), result.request.input + '\n');
+  assert(rendered.slice(0, start).includes(JSON.stringify(result.request.options, null, 2)));
+  for (const value of result.placeholders) assert(rendered.includes(value));
+  assert(result.placeholders.includes('<goal>'));
+  assert(result.placeholders.includes('<worktree>'));
+}
+
 test('GW-26: rendered and structured requests agree for each actor', (t) => {
   const root = projectFixture();
   t.after(() => rmSync(root, { recursive: true, force: true }));
