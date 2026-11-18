@@ -45,3 +45,16 @@ test('a known transport timeout is retried with no hosted access', async () => {
   await ReadRetryScenario.recovers(retryRead);
   await ReadRetryScenario.stops(retryRead);
 });
+
+test('a temporarily unavailable GitHub comparison is retried as a read', async () => {
+  let attempts = 0;
+  const result = await retryRead(async () => {
+    if (++attempts === 1)
+      throw new Error(
+        'gh: Server Error: Sorry, this diff is temporarily unavailable due to heavy server load. (HTTP 500)',
+      );
+    return 'identical';
+  }, new AbortController().signal);
+  assert.equal(result, 'identical');
+  assert.equal(attempts, 2);
+});

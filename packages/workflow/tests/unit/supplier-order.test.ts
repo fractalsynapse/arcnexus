@@ -7,7 +7,12 @@ import {
   type Plan,
   type PlanActivity,
 } from '../../../direction/src/index.js';
-import { Workflow, type ActivityOutcome, type WorkflowServices } from '../../src/index.js';
+import {
+  Workflow,
+  type ActivityOutcome,
+  type TaskEvent,
+  type WorkflowServices,
+} from '../../src/index.js';
 
 const activity = {
   role: 'steward',
@@ -277,4 +282,77 @@ test('WFL-2: unchanged host evidence does not reopen a rejected tree', async () 
   const task = new EvidenceReviewTask(false);
   assert.equal((await task.run()).kind, 'failed');
   assert.equal(task.reviewed, 1);
+});
+
+/** Use the real review and supplier seams for one stalled correction. */
+class BlockedCorrectionTask extends EvidenceReviewTask {
+  private readonly stalled = milestone('stalled', 'owner', ['implementation'], 'readiness');
+  private readonly smaller = milestone('smaller', 'owner', ['implementation'], 'readiness');
+  private readonly events: TaskEvent[] = [];
+  private narrowed = false;
+
+  /** Keep a repeated stall observable without opening another supplier sequence. */
+  constructor(private readonly repeated: boolean) {
+    super(true);
+  }
+
+  override readonly execution: WorkflowServices['execution'] = {
+    admit: async () => ({
+      capture,
+      goal: 'Fix evidence',
+      history: () => this.events,
+      record: (event) => this.events.push(event),
+      finish() {},
+      close() {},
+    }),
+    assemble: async () => ({ digest: this.narrowed ? 'fixed' : 'rejected', evidence: [] }),
+    checkpoint: async (_session, activation) => {
+      this.events.push({ activation });
+    },
+  };
+
+  override readonly direction: WorkflowServices['direction'] = {
+    plan: async () => ({ kind: 'plan', plan: this.plan }),
+    revise: async (_session, _plan, feedback) => {
+      const initial = this.plan.milestones;
+      if (feedback.kind === 'rejection')
+        return { kind: 'plan', plan: { ...this.plan, milestones: [...initial, this.stalled] } };
+      assert.equal(feedback.kind, 'supplier');
+      assert.equal(feedback.owner, 'owner');
+      assert.match(feedback.reason, /Fixture needs a smaller case/);
+      assert.deepEqual(feedback.evidence, ['blocked.log']);
+      return {
+        kind: 'plan',
+        plan: { ...this.plan, milestones: [...initial, this.smaller, this.stalled] },
+      };
+    },
+  };
+
+  override readonly agent: WorkflowServices['agent'] = {
+    execute: async (_session, { id }) => {
+      this.calls.push(id);
+      if (id === this.smaller.id) this.narrowed = true;
+      if (id === this.stalled.id && (!this.narrowed || this.repeated))
+        return {
+          kind: 'blocked',
+          reason: 'Fixture needs a smaller case',
+          evidence: ['blocked.log'],
+        };
+      return { kind: 'completed', evidence: [] };
+    },
+  };
+}
+
+test('a blocked reviewer correction runs a smaller same-owner contribution before resuming', async () => {
+  const task = new BlockedCorrectionTask(false);
+  assert.equal((await task.run()).kind, 'merged');
+  assert.deepEqual(task.calls, ['original', 'stalled', 'smaller', 'stalled']);
+});
+
+test('a repeated stall holds the original diagnostic after its smaller contribution', async () => {
+  const task = new BlockedCorrectionTask(true);
+  const result = await task.run();
+  assert.equal(result.kind, 'blocked');
+  assert.equal(result.reason, 'Fixture needs a smaller case');
+  assert.deepEqual(task.calls, ['original', 'stalled', 'smaller', 'stalled']);
 });

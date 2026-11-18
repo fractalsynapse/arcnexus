@@ -9,6 +9,14 @@
 
 ### Fixed
 
+- Send a blocked review correction back through Direction while preserving checked work and acceptance (#594).
+
+- Clarify the checked-edit path when an editing steward is correcting a rejected candidate (#594).
+- Reuse an independently reviewed check-only result when a standing round resumes (#594).
+
+- Retry a temporary GitHub server error while observing a publication or its checks (#594).
+- Recover when a steward mistakenly waits for an owner check that it already queued (#594).
+
 - Feed revision-bound run observations back into goal planning, and preserve objective refinement and Planner recovery across repeated turns (#594).
 
 - Include the retained question evidence when an activity pauses for a human answer (#587).

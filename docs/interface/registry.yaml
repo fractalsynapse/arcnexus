@@ -583,7 +583,7 @@ contracts:
   - arcnexus/coordination
   - arcnexus/verification
   - arcnexus/delivery
-  digest: eb758dc322a5e0b95b38a6b80427f00c6ae79b70f34625b939faed5a552db869
+  digest: 3478fa4b40bc04fe51262aa5332534099823fef185fca152f74471808117a740
   scenarios: 4
 - id: arcnexus/planner
   type: library
