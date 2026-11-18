@@ -30,10 +30,12 @@ const milestone: Milestone = {
   id: 'steward-parity',
   owner: 'execution',
   criteria: [{ id: 'parity', description: 'Observe the supplied task data' }],
-  steps: [{
-    activity: 'testing',
-    checklist: [{ id: 'observe', criteria: ['parity'], expected: 'Observe subprocess input' }],
-  }],
+  steps: [
+    {
+      activity: 'testing',
+      checklist: [{ id: 'observe', criteria: ['parity'], expected: 'Observe subprocess input' }],
+    },
+  ],
 };
 
 /** Prepare the real host activation with a deterministic Codex subprocess. */
@@ -43,11 +45,14 @@ function scenario(t: TestContext) {
   const observation = join(root, 'observation.json');
   const executable = join(root, 'codex');
   const fixture = fileURLToPath(new URL('./director-parity-fixture.js', import.meta.url));
-  writeFileSync(executable, `#!/bin/sh
+  writeFileSync(
+    executable,
+    `#!/bin/sh
 export PARITY_OBSERVATION="${observation}"
 export PARITY_RESPONSE='{"kind":"completed","edits":[],"checks":[]}'
 exec "${process.execPath}" "${fixture}" "$@"
-`);
+`,
+  );
   chmodSync(executable, 0o700);
   const architecture = new RecordingArchitecture();
   const capture = architecture.capture(process.cwd());
@@ -65,16 +70,23 @@ exec "${process.execPath}" "${fixture}" "$@"
 }
 
 /** Compare the effective process invocation with the shared request. */
-function assertInvocation(actual: { args: string[]; input: string; cwd: string; tools: unknown[] },
-  expected: ReturnType<Agent['prepareRequest']>) {
+function assertInvocation(
+  actual: { args: string[]; input: string; cwd: string; tools: unknown[] },
+  expected: ReturnType<Agent['prepareRequest']>,
+) {
   const options = expected.request.options;
   assert.equal(actual.input, expected.request.input);
   assert.equal(actual.cwd, options.workingDirectory);
   assert.equal(actual.args[actual.args.indexOf('--cd') + 1], options.workingDirectory);
   assert.equal(actual.args[actual.args.indexOf('--model') + 1], options.model);
-  assert(actual.args.includes(`model_reasoning_effort=${JSON.stringify(options.modelReasoningEffort)}`));
+  assert(
+    actual.args.includes(`model_reasoning_effort=${JSON.stringify(options.modelReasoningEffort)}`),
+  );
   assert(actual.args.includes(`web_search=${JSON.stringify(options.webSearchMode)}`));
-  assert.deepEqual(actual.tools, options.tools.map(({ handler: _handler, ...tool }) => tool));
+  assert.deepEqual(
+    actual.tools,
+    options.tools.map(({ handler: _handler, ...tool }) => tool),
+  );
 }
 
 /** Check captured activity authority and supplied task context are present in actual stdin. */
@@ -93,12 +105,19 @@ function assertContext(input: string, goal: string) {
     'steward-parity',
     'Observe subprocess input',
     'Observe the supplied task data',
-  ]) assert(input.includes(value), value);
+  ])
+    assert(input.includes(value), value);
 }
 
 test('Steward production activation forwards the shared request and mapped tools', async (t) => {
   const { architecture, capture, goal, observation, task } = scenario(t);
-  const outcome = await steward(new Agent(architecture), task, milestone, 'testing', AbortSignal.timeout(10_000));
+  const outcome = await steward(
+    new Agent(architecture),
+    task,
+    milestone,
+    'testing',
+    AbortSignal.timeout(10_000),
+  );
   assert.equal(outcome.kind, 'completed');
   const delivered = architecture.delivered;
   assert(delivered?.task);
@@ -108,9 +127,16 @@ test('Steward production activation forwards the shared request and mapped tools
   assert.equal(delivered.task.worktree, task.worktree);
   assert.deepEqual(delivered.task.milestone, { id: milestone.id, step: milestone.steps[0] });
   assert.deepEqual(delivered.task.acceptance, milestone.criteria);
-  const expected = new Agent(new Architecture()).prepareRequest(capture, delivered.selection, delivered.task);
+  const expected = new Agent(new Architecture()).prepareRequest(
+    capture,
+    delivered.selection,
+    delivered.task,
+  );
   const actual = JSON.parse(readFileSync(observation, 'utf8')) as {
-    args: string[]; input: string; cwd: string; tools: unknown[];
+    args: string[];
+    input: string;
+    cwd: string;
+    tools: unknown[];
   };
   assertInvocation(actual, expected);
   assertContext(actual.input, goal);
