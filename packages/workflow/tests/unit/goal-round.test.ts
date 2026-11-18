@@ -214,3 +214,15 @@ test('an interrupted round reuses a recorded Director assessment for its complet
   assert.deepEqual(await fixture.replay([{ assessment }]), assessment);
   assert.deepEqual(fixture.assessments, []);
 });
+
+test('an interrupted round reuses its completed check-only plan and assessment', async () => {
+  const fixture = new RoundScenario();
+  const assessment = {
+    kind: 'satisfied' as const,
+    commit: 'current-staging',
+    summary: 'Independent review accepted checks on the unchanged staging tree.',
+    evidence: ['checkpoint-tests.log'],
+  };
+  assert.deepEqual(await fixture.replay([{ plan: gapPlan }, { assessment }]), assessment);
+  assert.deepEqual(fixture.activations, []);
+});

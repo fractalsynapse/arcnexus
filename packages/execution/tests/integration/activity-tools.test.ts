@@ -3,6 +3,8 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import test from 'node:test';
 import type { AgentInspection } from '../../../architecture/src/index.js';
+import { ActivationTools } from '../../src/activation-tools.js';
+import type { HostTask } from '../../src/index.js';
 import { LocalMcp } from '../../src/mcp.js';
 
 type Binding = AgentInspection['request']['options']['tools'][number];
@@ -68,3 +70,22 @@ class ToolBoundary {
 
 test('local MCP exposes only the captured operation and refuses alternate actions', () =>
   new ToolBoundary().run());
+
+test('a steward who queued checks gets a repair diagnostic before blocking on their results', async () => {
+  const task = {
+    taskID: 'fixture',
+    capture: { source: { revision: 'staging' }, project: {} },
+    observations: () => [],
+  } as unknown as HostTask;
+  const activation = new ActivationTools(
+    task,
+    { component: 'fixture', activity: 'testing' },
+    { goal: 'Verify a checkpoint', assignment: {}, milestone: {}, acceptance: [], worktree: '.' },
+    new AbortController().signal,
+  );
+  await activation.invoke({ name: 'owner-tests', handler: 'check' }, { expected: 'pass' });
+  assert.throws(
+    () => activation.finish({ kind: 'blocked', reason: 'Still waiting for exit code' }),
+    /queued.*owner-tests.*completed/i,
+  );
+});

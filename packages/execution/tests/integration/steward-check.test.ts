@@ -110,6 +110,10 @@ class CheckTask {
     const correction = JSON.stringify(data.milestone).includes('"id":"correction"');
     this.calls.push(correction ? 'correction' : 'original');
     if (correction) {
+      assert.match(
+        JSON.stringify(data.assignment),
+        /read-only filesystem.*mapped checked-edit MCP tool/,
+      );
       assert.match(JSON.stringify(data.assignment), /"status":1/);
       assert(JSON.stringify(data.assignment).includes(this.failureLog));
       const expected = createHash('sha256').update('wrong').digest('hex');

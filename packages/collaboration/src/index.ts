@@ -240,7 +240,7 @@ ${marker}`,
     );
   }
 
-  /** Retry transport failures only at explicit read-only provider call sites. */
+  /** Retry transient failures only at explicit read-only provider call sites. */
   private query(args: string[]) {
     return retryRead(() => this.command(args), this.signal);
   }
