@@ -9,6 +9,8 @@
 
 ### Fixed
 
+- Send a blocked review correction back through Direction while preserving checked work and acceptance (#594).
+
 - Clarify the checked-edit path when an editing steward is correcting a rejected candidate (#594).
 - Reuse an independently reviewed check-only result when a standing round resumes (#594).
 
