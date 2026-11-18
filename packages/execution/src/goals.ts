@@ -1,8 +1,10 @@
 import type { HostTask } from './index.js';
 import type { Architecture, Capture } from '../../architecture/src/index.js';
-import type { Coordination } from '../../coordination/src/index.js';
+import type { HostConfig } from './host-config.js';
+import type { Coordination, Journal } from '../../coordination/src/index.js';
 import { goalInventory } from '../../planner/src/inventory.js';
-import type { GoalRound } from '../../workflow/src/index.js';
+import type { GoalRound, TaskInput } from '../../workflow/src/index.js';
+import { verifiedGoalRun } from './goal-evidence.js';
 import { git, remoteRead } from './git.js';
 
 /** Read goals from one reviewed staging revision and give this evaluation round a durable identity. */
@@ -83,5 +85,40 @@ export function observeGoal(task: HostTask, signal: AbortSignal) {
     '--format=%h %s',
     source.revision,
   ).split('\n');
-  return { revision: source.revision, recentChanges, source };
+  const measures = task.goal
+    .split(/(?:\*\*Success measures\.\*\*|^#{1,6} Success measures)/im)
+    .at(-1);
+  const requiresRun = /\b(?:pass(?:es|ing)?|runs?|real delivery|live|exit status)\b/i.test(
+    measures ?? '',
+  );
+  return {
+    revision: source.revision,
+    recentChanges,
+    source,
+    run: verifiedGoalRun(task),
+    requiresRun,
+  };
+}
+
+/** Refresh a pending planning admission before any issue branch has been prepared. */
+export function recordAdmission(
+  journal: Journal,
+  config: HostConfig,
+  planning?: TaskInput['planning'],
+) {
+  if (!config.fresh) return;
+  const revision = config.capture.source.revision;
+  if (!journal.retained) {
+    journal.record({ baseRevision: revision });
+    return;
+  }
+  if (!planning) return;
+  const events = journal.retained.events as {
+    baseRevision?: string;
+    workspace?: number;
+    publication?: unknown;
+  }[];
+  const previous = events.findLast((event) => event.baseRevision)?.baseRevision;
+  if (previous === revision || events.some((event) => event.workspace || event.publication)) return;
+  journal.record({ baseRevision: revision, plannerRefresh: revision });
 }

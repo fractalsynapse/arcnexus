@@ -12,7 +12,7 @@ import {
   type RevisionFeedback,
   type StandingGoalEvidence,
 } from '../../direction/src/index.js';
-import { validateVerdict, type Candidate } from '../../verification/src/index.js';
+import { validateVerdict, type Candidate, type Verdict } from '../../verification/src/index.js';
 import { stopped, type Interrupted } from './services.js';
 import type {
   ActivityCheckpoint,
@@ -89,7 +89,7 @@ export class TaskRun {
   /** Give Direction the authored standing goal and measured staging context before admitting work. */
   private async startPlanning(saved: ReturnType<NonNullable<TaskSession['history']>>) {
     const recorded = saved.findLast((event) => 'assessment' in event)?.assessment;
-    if (recorded) return recorded;
+    if (recorded && this.input.planning !== 'exploration') return recorded;
     if (this.input.planning) return this.startPlanner(this.input.planning);
     if (this.input.standing) {
       if (!this.services.execution.observeGoal)
@@ -350,7 +350,11 @@ export class TaskRun {
       phase: 'verification',
       message: 'Assembling the candidate for independent review',
     });
-    const candidate = await this.services.execution.assemble(this.session, this.signal);
+    const candidate = await this.services.execution.assemble(
+      this.session,
+      this.signal,
+      this.input.standing,
+    );
     this.signal.throwIfAborted();
     if (this.rejectedReviews.has(reviewKey(candidate)))
       throw new Error('Correction repeated a rejected candidate and its review evidence');
@@ -365,6 +369,21 @@ export class TaskRun {
     this.session.record({ candidate, verdict });
     if (verdict.kind === 'blocked') return stopped('blocked', verdict.reason, verdict.evidence);
     if (verdict.kind === 'rejected') return this.correct(candidate, verdict.findings);
+    return this.acceptCandidate(candidate, verdict);
+  }
+
+  /** Record a verified check-only assessment or deliver a changed candidate. */
+  private acceptCandidate(candidate: Candidate, verdict: Extract<Verdict, { kind: 'accepted' }>) {
+    if (candidate.unchanged) {
+      const assessment = {
+        kind: 'satisfied' as const,
+        commit: this.session.capture.source.revision,
+        summary: 'Independent review accepted the checks on the unchanged staging tree',
+        evidence: verdict.evidence,
+      };
+      this.session.record({ assessment });
+      return assessment;
+    }
     this.report({
       phase: 'delivery',
       message: 'Reviewer accepted the candidate',
@@ -384,9 +403,30 @@ export class TaskRun {
       message: 'Reviewer rejected criteria',
       evidence: findings.flatMap((finding) => finding.evidence),
     });
-    if (this.input.planning)
-      return stopped('blocked', 'Reviewer rejected the approved Planner candidate', this.evidence);
+    if (this.input.planning) return this.correctPlanner(findings);
     return this.revise({ kind: 'rejection', findings });
+  }
+
+  /** Get a corrected proposal and retain earlier checkpoints before reviewing it again. */
+  private async correctPlanner(findings: Extract<Feedback, { kind: 'rejection' }>['findings']) {
+    const prior = this.plan!;
+    const decision = await this.services.planner!.propose(
+      this.session,
+      this.input.planning!,
+      (event) => this.report(event),
+      this.signal,
+      findings,
+    );
+    if ('kind' in decision)
+      return stopped('blocked', 'Planner correction needs an approved goal change', this.evidence);
+    const correction = {
+      ...decision.milestones[0]!,
+      id: `planner-correction-${prior.milestones.length}`,
+      criteria: prior.milestones[0]!.criteria,
+    };
+    const revised = { ...prior, milestones: [...prior.milestones, correction] };
+    validatePlan(this.session.capture, revised);
+    return this.commitPlan(revised);
   }
 
   /** Preserve the plan and live cursor for later observations. */

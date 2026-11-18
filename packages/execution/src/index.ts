@@ -1,6 +1,5 @@
 import { existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import type { Context } from 'cordis';
 import type { Agent, ActivationInput } from '../../agent/src/index.js';
@@ -21,8 +20,8 @@ import { usedResearch } from './research.js';
 import { formatterPreview } from './formatter.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
 import { candidateDiff, git } from './git.js';
-import { preflight, type HostConfig } from './host-config.js';
-import { goalRound, observeGoal, stagingCapture } from './goals.js';
+import { applicationStorage, preflight, type HostConfig } from './host-config.js';
+import { goalRound, observeGoal, recordAdmission, stagingCapture } from './goals.js';
 import { check } from './check.js';
 import { pendingStewardCheck, type StewardScope } from './steward-check.js';
 import {
@@ -35,6 +34,8 @@ import {
 export { type CheckedEdit, editFingerprint } from './edits.js';
 export { Clarifications } from './clarifications.js';
 export { reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
+export { citesVerifiedRun, verifiedGoalRun, type VerifiedGoalRun } from './goal-evidence.js';
+export { applicationStorage } from './host-config.js';
 export { InvalidCodexResponse } from './codex.js';
 
 declare module 'cordis' {
@@ -77,8 +78,7 @@ export class Execution {
       return invalid(`Task admission requires the current verified ${config.base} head`);
     if ('activeGoal' in journal)
       return invalid(`Active goal: ${journal.activeGoal} (run ${journal.run})`);
-    if (config.fresh && !journal.retained)
-      journal.record({ baseRevision: config.capture.source.revision });
+    recordAdmission(journal, config, input.planning);
     return new HostTask(config, input.goal, journal);
   }
 
@@ -103,20 +103,26 @@ export class Execution {
   }
 
   /** Index the approved working changes and bind the candidate to its Git tree. */
-  async assemble(session: TaskSession, signal: AbortSignal): Promise<Candidate> {
+  async assemble(
+    session: TaskSession,
+    signal: AbortSignal,
+    allowUnchanged = false,
+  ): Promise<Candidate> {
     signal.throwIfAborted();
     const task = hostTask(session);
     if (!task.worktree) throw new Error('The plan produced no candidate worktree');
     git(task.worktree, 'add', '-A', '--', '.');
     const digest = git(task.worktree, 'write-tree');
-    if (digest === git(task.worktree, 'rev-parse', `${task.capture.source.revision}^{tree}`))
-      throw new Error('The plan produced no candidate changes');
+    const unchanged =
+      digest === git(task.worktree, 'rev-parse', `${task.capture.source.revision}^{tree}`);
+    if (unchanged && !allowUnchanged) throw new Error('The plan produced no candidate changes');
     const log = task.store(
       'candidate.diff',
       candidateDiff(task.worktree, task.capture.source.revision),
     );
     return {
       digest,
+      ...(unchanged ? { unchanged } : {}),
       evidence: [log],
       ownerEvidenceDigest: ownerEvidenceDigest(task.ownerReviewChecks(), digest),
     };
@@ -137,7 +143,7 @@ export class HostTask implements TaskSession {
   constructor(
     readonly config: HostConfig,
     readonly goal: string,
-    private readonly journal: Journal,
+    readonly journal: Journal,
   ) {
     this.capture = config.capture;
     const prefix = this.evidenceDirectory() + '/';
@@ -173,7 +179,8 @@ export class HostTask implements TaskSession {
 
   /** Read journaled Workflow checkpoints, including previously published activities. */
   history(): readonly TaskEvent[] {
-    return this.observations();
+    const events = this.observations<TaskEvent & { plannerRefresh?: string }>();
+    return events.slice(events.findLastIndex((event) => event.plannerRefresh) + 1);
   }
 
   /** Retain the terminal outcome and verified native evidence. */
@@ -256,7 +263,7 @@ export class HostTask implements TaskSession {
 
   /** Refuse to execute a retained engineering plan when staging moved to a different base. */
   private ensureCurrentBase() {
-    const previous = this.observations<{ baseRevision?: string }>().find(
+    const previous = this.observations<{ baseRevision?: string }>().findLast(
       ({ baseRevision }) => baseRevision,
     )?.baseRevision;
     if (!this.config.fresh || (previous && previous !== this.capture.source.revision))
@@ -469,11 +476,6 @@ export class HostTask implements TaskSession {
 export function hostTask(session: TaskSession): HostTask {
   if (!(session instanceof HostTask)) throw new Error('Task is not admitted by native execution');
   return session;
-}
-
-/** Choose the default external application state directory. */
-export function applicationStorage() {
-  return resolve(process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state'), 'arcnexus');
 }
 
 /** Map unavailable project input to an SDK error without admitting a run. */

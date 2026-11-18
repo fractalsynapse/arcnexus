@@ -188,9 +188,13 @@ export function verificationContext(
 
 /** Preserve a request's identity for the same captured activation after retry. */
 export function inboxIdentity(task: InboxTask, selection: ActivitySelection, data: Assignment) {
+  const intent =
+    selection.component === 'planner' &&
+    selection.activity === 'planning' &&
+    object(data.assignment)?.mode === 'human objective';
   return identity([
     task.taskID,
-    task.capture.source.revision,
+    intent ? 'human objective' : task.capture.source.revision,
     selection.component,
     selection.activity,
     data.milestone,

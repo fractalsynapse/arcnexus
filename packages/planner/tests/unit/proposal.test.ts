@@ -103,3 +103,51 @@ test('objective records preserve exact intake and replies separately from the ma
     showPatch([{ path: `.arc/goals/${id}.md`, before: goal, content: goal + '\n' }]),
   );
 });
+
+test('unresolved objectives can be recorded before any goal link exists', () => {
+  const { capture, reply } = new ProposalScenario();
+  const pending = {
+    ...reply,
+    links: [],
+    changes: [],
+    summary: 'The priority conflict is unresolved.',
+  };
+  assert.deepEqual(decodeProposal(pending, capture, [id], true).links, []);
+});
+
+test('source coverage alone cannot give a demonstrated runtime rating', () => {
+  const { capture, reply } = new ProposalScenario();
+  const ratings = [{ ...reply.ratings[0], evidence: 'demonstrated', observations: [source] }];
+  assert.throws(() => decodeProposal({ ...reply, ratings }, capture, [id], false), /verified run/);
+});
+
+test('verified ratings name an observed operation at the evaluated revision', () => {
+  const { capture, reply } = new ProposalScenario();
+  const run = {
+    id: 'run:8',
+    revision: capture.source.revision,
+    tree: 'current-tree',
+    goalID: 'current-goal',
+    checks: [{ operation: 'repository-tests', status: 0 as const }],
+    criteria: ['tree-matches'],
+  };
+  const proposed = {
+    ...reply,
+    ratings: [
+      {
+        ...reply.ratings[0],
+        evidence: 'demonstrated',
+        run: { run: run.id, operation: 'repository-tests' },
+      },
+    ],
+  };
+  assert.equal(decodeProposal(proposed, capture, [id], false, run).ratings[0]?.run, run);
+  assert.throws(
+    () => decodeProposal(proposed, capture, [id], false, { ...run, revision: 'stale' }),
+    /stale verified run/,
+  );
+  assert.throws(
+    () => decodeProposal(proposed, capture, [id], false, { ...run, checks: [] }),
+    /stale verified run/,
+  );
+});

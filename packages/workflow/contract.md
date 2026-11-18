@@ -33,8 +33,9 @@ gates preserve the observed position and evidence.
 boundaries. [Planner](../planner/contract.md) evaluates project sources or the
 human objective. A read-only mapping completes at the captured revision.
 When the run has records to persist, Workflow sends the exact journaled changes
-through Execution and independent review. A rejected Planner candidate stays
-held for scrutiny of the approved bytes.
+through Execution and independent review. A rejected Planner candidate returns its findings to Planner for a correction and
+approval of new goal bytes. A standing goal can use an independently reviewed
+check-only candidate when the staging tree remains byte-identical.
 
 ## Project and task loops
 

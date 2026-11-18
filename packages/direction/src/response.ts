@@ -1,3 +1,4 @@
+import { citesVerifiedRun } from '../../execution/src/index.js';
 import { revisionCitation } from '../../architecture/src/index.js';
 import { activities, type DirectionResult, type StandingGoalEvidence } from './index.js';
 
@@ -42,7 +43,15 @@ function assessment(
   if (!Array.isArray(value.evidence) || !value.evidence.length)
     throw new DirectorResponseError('A standing goal assessment needs captured evidence');
   try {
+    const run = standing.run;
+    const hasRun = value.evidence.some((entry) => citesVerifiedRun(entry, run, standing.revision));
+    if (standing.requiresRun && !hasRun)
+      throw new Error(
+        'A measure that requires an observed run needs an applicable verified run citation',
+      );
     const evidence = value.evidence.map((entry) => {
+      if (run && citesVerifiedRun(entry, run, standing.revision))
+        return `${run.id} · ${run.revision} · ${run.pull ?? 'unchanged tree review'}`;
       const { path, quote } = revisionCitation(entry, standing.source);
       if (path.startsWith('.arc/goals/'))
         throw new Error('The authored goal alone is not satisfaction evidence');

@@ -6,6 +6,7 @@ import type {
   Milestone,
   Plan,
   PlanActivity,
+  Rejection,
   StandingGoalEvidence,
 } from '../../direction/src/index.js';
 import type { Candidate, Verdict } from '../../verification/src/index.js';
@@ -142,7 +143,11 @@ export interface WorkflowServices {
       input: TaskInput,
       signal: AbortSignal,
     ): Promise<TaskSession | Extract<TaskOutcome, { reason: string }>>;
-    assemble(session: TaskSession, signal: AbortSignal): Promise<Candidate>;
+    assemble(
+      session: TaskSession,
+      signal: AbortSignal,
+      allowUnchanged?: boolean,
+    ): Promise<Candidate>;
   };
   planner?: {
     propose(
@@ -150,6 +155,7 @@ export interface WorkflowServices {
       mode: NonNullable<TaskInput['planning']>,
       progress: TaskObserver['progress'],
       signal: AbortSignal,
+      findings?: readonly Rejection[],
     ): Promise<Plan | Extract<TaskOutcome, { kind: 'planned' }>>;
     apply(session: TaskSession, signal: AbortSignal): Promise<ActivityOutcome>;
   };

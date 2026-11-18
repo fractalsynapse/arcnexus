@@ -1,3 +1,4 @@
+import type { VerifiedGoalRun } from '../../execution/src/index.js';
 import { team } from '../../team/src/index.js';
 import type { Capture } from '../../architecture/src/index.js';
 
@@ -69,6 +70,8 @@ export interface StandingGoalEvidence {
   readonly revision: string;
   readonly source: Capture['source'];
   readonly recentChanges: readonly string[];
+  readonly run?: VerifiedGoalRun;
+  readonly requiresRun?: boolean;
 }
 
 export interface GoalAssessment {

@@ -23,12 +23,16 @@ export class Clarifications {
   ) {}
 
   /** Resolve any retained gate before invoking the actor again. */
-  async run(data: Assignment, invoke: (data: Assignment) => Promise<unknown>) {
+  async run(
+    data: Assignment,
+    invoke: (data: Assignment) => Promise<unknown>,
+    accepts?: (answer: string) => boolean,
+  ) {
     const scope = inboxIdentity(this.task, this.selection, data);
     const answers = this.retained(scope);
     while (true) {
       for (const [question, gate] of answers)
-        if (gate.answer === undefined) answers.set(question, await this.ask(gate));
+        if (gate.answer === undefined) answers.set(question, await this.ask(gate, accepts));
       const reply = await invoke(withClarifications(data, [...answers.values()]));
       this.signal.throwIfAborted();
       const question = requestedQuestion(reply);
@@ -49,9 +53,11 @@ export class Clarifications {
   }
 
   /** Use the ordinary durable conversation for a host-owned approval question. */
-  async decide(data: Assignment, question: string) {
-    await this.run(data, () =>
-      Promise.resolve(this.answers(data).length ? undefined : { kind: 'question', question }),
+  async decide(data: Assignment, question: string, accepts?: (answer: string) => boolean) {
+    await this.run(
+      data,
+      () => Promise.resolve(this.answers(data).length ? undefined : { kind: 'question', question }),
+      accepts,
     );
     return this.answers(data)[0]!.answer;
   }
@@ -74,10 +80,10 @@ export class Clarifications {
   }
 
   /** Persist a verbatim answer before the activation can continue. */
-  private async ask(gate: Clarification) {
+  private async ask(gate: Clarification, accepts?: (answer: string) => boolean) {
     const { scope, question } = gate;
     this.signal.throwIfAborted();
-    const answer = await this.task.ask?.(question, this.signal);
+    const answer = await this.requestAnswer(question, accepts);
     this.signal.throwIfAborted();
     if (!answer?.trim()) {
       const retained = gate.evidence ? gate : this.openQuestion(scope, question);
@@ -91,6 +97,17 @@ export class Clarifications {
     const clarification = { scope, question, answer, evidence };
     this.task.note({ clarification });
     return clarification;
+  }
+
+  /** Ask again on invalid input without recording it as a decision. */
+  private async requestAnswer(question: string, accepts?: (answer: string) => boolean) {
+    let prompt = question;
+    while (true) {
+      const answer = await this.task.ask?.(prompt, this.signal);
+      this.signal.throwIfAborted();
+      if (!answer?.trim() || !accepts || accepts(answer)) return answer;
+      prompt = `Unrecognized approval response. Enter approve or skip.\n\n${question}`;
+    }
   }
 }
 

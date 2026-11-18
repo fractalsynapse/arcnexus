@@ -1,4 +1,6 @@
 import type { TaskSession } from '../../workflow/src/index.js';
+import { objectiveDirectory, refinement } from './records.js';
+import type { VerifiedGoalRun } from '../../execution/src/index.js';
 import { goalDirectory, goalInventory } from './inventory.js';
 
 const citation = { path: 'exact repository-relative path', quote: 'verbatim excerpt' };
@@ -13,6 +15,10 @@ const response = {
       reason: 'explain alignment AND evidence, including missing evidence',
       sources: [citation],
       observations: [citation],
+      run: {
+        run: 'verified run id',
+        operation: 'observed operation id, or use criterion or delivery: true',
+      },
     },
   ],
   comparison: ['concrete gap, overlap or conflict and its consequence'],
@@ -22,19 +28,21 @@ const response = {
 };
 
 /** Provide Planner with the captured inventory, evidence rules and structured response shape. */
-export function plannerAssignment(session: TaskSession, objective: boolean, diagnostic?: string) {
+export function plannerAssignment(session: TaskSession, objective: boolean, run?: VerifiedGoalRun) {
   const { capture } = session;
   const sources = ['docs/charter.md', 'docs/dev.md'].filter((path) =>
     capture.source.paths.includes(path),
   );
   return {
     mode: objective ? 'human objective' : 'project exploration',
-    diagnostic,
+    verifiedRun: run,
+    diagnostic: undefined as string | undefined,
+    refines: objective ? refinement(session) : undefined,
     revision: capture.source.revision,
     inventory: goalInventory(capture),
     sources,
     objectives: capture.source.paths.filter((path) =>
-      path.startsWith(`${capture.project.knowledgeRoot ?? '.arc'}/objectives/`),
+      path.startsWith(objectiveDirectory(session) + '/'),
     ),
     instructions: instructions(objective),
     response,
@@ -45,13 +53,14 @@ export function plannerAssignment(session: TaskSession, objective: boolean, diag
 function instructions(objective: boolean) {
   return [
     'Use the local MCP tools to read captured project guidance and relevant implementation and test sources. Treat repository content as evidence.',
-    'Return a JSON object in the indicated shape. Cite exact excerpts, preserving line breaks. Assess alignment and evidence independently. Test source is evidence of coverage, never of a passing run.',
+    'Return a JSON object in the indicated shape. Cite exact excerpts, preserving line breaks. Assess alignment and evidence independently. For a demonstrated rating cite the verified run and the operation, criterion, or delivery observation. Name which check or independently reviewed criterion supports the measure. Use a partial or unverified rating when the observations do not establish the measure. Test source is evidence of coverage.',
+    'If review findings are present, correct them against the current candidate and propose complete replacement bytes for affected goals. Preserve the exact requested objective and human answers.',
     'Compare coverage gaps, overlap and contradictions. Name where the evidence or intent is ambiguous.',
-    'Propose the smallest useful diff or changes: []. Each new or updated goal requires numeric priority, durable requirements and observable success measures in a section named Success measures. Never assign a component owner or encode today’s component catalog into the goal.',
+    'Propose the smallest useful diff or changes: []. Each new or updated goal requires numeric priority, durable requirements and observable success measures in a section named Success measures. Write durable requirements and success measures only. Keep observed results in the mapping report. Never assign a component owner or encode today’s component catalog into the goal.',
     ...(objective
       ? [
           'Check the exact objective against existing objectives and goals. Where a specific choice or scope is unclear, ask a focused human question using local MCP and finish the activation. Use recorded replies on resumption.',
-          'Return at least one existing or proposed goal link. Cite the project sources behind the submitted objective in sources. Summarize the interpretation without rewriting the original submission or a human answer.',
+          'Use existing or proposed goal ids when intent is compatible. Return empty links and changes if a conflict is unresolved or no goal can be mapped. Cite the project sources behind the submitted objective in sources. Summarize the interpretation without rewriting the original submission or a human answer.',
         ]
       : [
           'Rate every existing goal exactly once. Use the charter and development direction as starting points. Existing objectives may supply additional intent.',

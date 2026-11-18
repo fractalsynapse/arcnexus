@@ -11,6 +11,21 @@ declare module 'cordis' {
   }
 }
 
+const verifiedTerminal = `
+  SELECT events.id, events.run, runs.task_id, runs.goal_id
+  FROM events JOIN runs ON runs.id = events.run
+  WHERE json_extract(content, '$.outcome.commit') = ?
+    AND (
+      json_extract(content, '$.outcome.kind') = 'merged'
+      OR (json_extract(content, '$.outcome.kind') = 'satisfied' AND EXISTS (
+        SELECT 1 FROM events reviewed WHERE reviewed.run = events.run
+          AND json_extract(reviewed.content, '$.candidate.unchanged') = 1
+          AND json_extract(reviewed.content, '$.verdict.kind') = 'accepted'
+      ))
+    )
+  ORDER BY events.id DESC LIMIT 1
+`;
+
 export interface RetainedRun {
   run: number;
   events: readonly unknown[];
@@ -78,6 +93,22 @@ export class Journal {
       )
       .all(component, id ?? null, id ?? null)
       .map(({ report }) => JSON.parse(String(report)));
+  }
+
+  /** Read the observed verification and delivery events for this revision. */
+  verifiedRun(revision: string) {
+    const terminal = this.database.prepare(verifiedTerminal).get(revision);
+    if (!terminal) return;
+    const events = this.database
+      .prepare(
+        `
+      SELECT content FROM events JOIN runs ON runs.id = events.run
+      WHERE task_id = ? AND events.id <= ? ORDER BY events.id
+    `,
+      )
+      .all(terminal.task_id!, terminal.id!)
+      .map(({ content }) => JSON.parse(String(content)) as unknown);
+    return { id: `run:${terminal.run}`, goalID: String(terminal.goal_id), events };
   }
 
   /** Close the connection. An unfinished task keeps its recorded position and lane. */
