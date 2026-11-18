@@ -40,26 +40,6 @@ const plan: Plan = {
   ],
 };
 
-/** Compare the observed process configuration and bytes with the shared request. */
-function assertInvocation(
-  actual: { args: string[]; input: string; cwd: string; tools: unknown[] },
-  expected: ReturnType<Agent['prepareRequest']>,
-) {
-  const options = expected.request.options;
-  assert.deepEqual(Buffer.from(actual.input), Buffer.from(expected.request.input));
-  assert.equal(actual.cwd, options.workingDirectory);
-  assert.equal(actual.args[actual.args.indexOf('--cd') + 1], options.workingDirectory);
-  assert.equal(actual.args[actual.args.indexOf('--model') + 1], options.model);
-  assert(
-    actual.args.includes(`model_reasoning_effort=${JSON.stringify(options.modelReasoningEffort)}`),
-  );
-  assert(actual.args.includes(`web_search=${JSON.stringify(options.webSearchMode)}`));
-  assert.deepEqual(
-    actual.tools,
-    options.tools.map(({ handler: _handler, ...tool }) => tool),
-  );
-}
-
 type Observation = { args: string[]; input: string; cwd: string; tools: unknown[] };
 
 /** Prepare a candidate and the production Reviewer activation inputs. */
