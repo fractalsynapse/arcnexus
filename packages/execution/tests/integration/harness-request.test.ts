@@ -40,5 +40,9 @@ printf '%s\\n' '{"type":"item.completed","item":{"type":"agent_message","text":"
   assert(argv.includes('model_reasoning_effort="high"'));
   assert(argv.includes('web_search="disabled"'));
   assert(argv.includes('--ignore-user-config'));
-  assert(!argv.some((arg) => /^(?:project_doc_max_bytes|project_doc_fallback_filenames|features\.skills)=/.test(arg)));
+  assert(
+    !argv.some((arg) =>
+      /^(?:project_doc_max_bytes|project_doc_fallback_filenames|features\.skills)=/.test(arg),
+    ),
+  );
 });
