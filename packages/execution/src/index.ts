@@ -22,7 +22,7 @@ import { formatterPreview } from './formatter.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
 import { candidateDiff, git } from './git.js';
 import { preflight, type HostConfig } from './host-config.js';
-import { goalRound, stagingCapture } from './goals.js';
+import { goalRound, observeGoal, stagingCapture } from './goals.js';
 import { check } from './check.js';
 import { pendingStewardCheck, type StewardScope } from './steward-check.js';
 import {
@@ -32,7 +32,9 @@ import {
   type OwnerObservation,
 } from './review-observations.js';
 
-export type { CheckedEdit } from './edits.js';
+export { type CheckedEdit, editFingerprint } from './edits.js';
+export { Clarifications } from './clarifications.js';
+export { reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
 export { InvalidCodexResponse } from './codex.js';
 
 declare module 'cordis' {
@@ -56,8 +58,9 @@ export class Execution {
     try {
       signal.throwIfAborted();
       const capture = this.architecture.capture(input.directory);
-      const selected = input.measureOwner ? stagingCapture(this.architecture, capture) : capture;
-      config = preflight(selected, this.storage, Boolean(input.measureOwner));
+      const fresh = Boolean(input.standing || input.planning);
+      const selected = fresh ? stagingCapture(this.architecture, capture) : capture;
+      config = preflight(selected, this.storage, fresh);
     } catch (error) {
       if (signal.aborted) throw signal.reason;
       return invalid(error instanceof Error ? error.message : String(error));
@@ -66,7 +69,9 @@ export class Execution {
       config.capture.source.remote,
       input.goal,
       config.fresh,
-      input.scope,
+      input.planning === 'exploration'
+        ? `plan:exploration:${config.capture.source.revision}`
+        : input.scope,
     );
     if (!journal)
       return invalid(`Task admission requires the current verified ${config.base} head`);
@@ -82,9 +87,9 @@ export class Execution {
     return goalRound(this.architecture, this.coordination, directory);
   }
 
-  /** Run a goal's declared owner measure on an isolated staging snapshot. */
-  measureGoal(session: TaskSession, owner: string, signal: AbortSignal) {
-    return hostTask(session).measureGoal(owner, signal);
+  /** Prepare the exact read-only snapshot that the Director will assess. */
+  observeGoal(session: TaskSession, signal: AbortSignal) {
+    return observeGoal(hostTask(session), signal);
   }
 
   /** Materialize the task branch at its recovered checkpoint before any steward activation. */
@@ -199,24 +204,15 @@ export class HostTask implements TaskSession {
     return [...(this.journal.retained?.events ?? []), ...this.journal.events()] as T[];
   }
 
-  /** Measure the owner suite and let Direction decide whether the observed goal needs work. */
-  async measureGoal(owner: string, signal: AbortSignal) {
+  /** Materialize a read-only planning snapshot at the captured revision. */
+  planningWorkspace(signal: AbortSignal) {
+    signal.throwIfAborted();
     const { source } = this.capture;
     this.recoverMeasureWorkspace();
     const path = join(this.directory(), 'measure-worktree');
     this.note({ measureWorkspace: this.journal.run });
     git(source.root, 'worktree', 'add', '--detach', path, source.revision);
     this.worktree = path;
-    const { status, log } = await this.check('owner-tests', signal, { owner, activity: 'testing' });
-    const recentChanges = git(
-      source.root,
-      'log',
-      '--first-parent',
-      '--max-count=10',
-      '--format=%h %s',
-      source.revision,
-    ).split('\n');
-    return { owner, status, log, recentChanges, revision: source.revision };
   }
 
   /** Remove a detached measurement workspace left by an interrupted attempt. */

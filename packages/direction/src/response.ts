@@ -1,3 +1,4 @@
+import { revisionCitation } from '../../architecture/src/index.js';
 import { activities, type DirectionResult, type StandingGoalEvidence } from './index.js';
 
 /** Carry a rejected Director proposal's diagnostic across the planning boundary. */
@@ -30,19 +31,27 @@ export function decodeDirectorResponse(
   return response as DirectionResult;
 }
 
-/** Admit inaction only with an explicit rationale and the passing check observed for this goal. */
+/** Admit inaction only with an explicit rationale and revision-applicable source evidence. */
 function assessment(
   value: Record<string, unknown>,
   standing: StandingGoalEvidence,
 ): DirectionResult {
-  if (standing.status !== 0)
-    throw new DirectorResponseError(
-      `Cannot satisfy a standing goal with owner check status ${standing.status}`,
-    );
   string(value.summary, 'summary');
   if (!value.summary.trim())
     throw new DirectorResponseError('summary: explain why no engineering work is warranted');
-  return { kind: 'satisfied', summary: value.summary, evidence: [standing.log] };
+  if (!Array.isArray(value.evidence) || !value.evidence.length)
+    throw new DirectorResponseError('A standing goal assessment needs captured evidence');
+  try {
+    const evidence = value.evidence.map((entry) => {
+      const { path, quote } = revisionCitation(entry, standing.source);
+      if (path.startsWith('.arc/goals/'))
+        throw new Error('The authored goal alone is not satisfaction evidence');
+      return `${standing.revision}:${path} · ${quote}`;
+    });
+    return { kind: 'satisfied', summary: value.summary, evidence };
+  } catch (error) {
+    throw new DirectorResponseError((error as Error).message, { cause: error });
+  }
 }
 
 /** Check the fields consumed by milestone admission and scope validation. */

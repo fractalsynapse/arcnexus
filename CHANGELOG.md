@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- Map standing goals and preserve human objectives with `arcnexus task plan`.
+- Assess owner-free goals using evidence from the captured staging revision (#587).
+
 ### Fixed
 
 - Repair an invalid Reviewer evidence citation in the same assessment,

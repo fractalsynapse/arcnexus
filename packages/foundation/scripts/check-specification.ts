@@ -154,7 +154,9 @@ class SpecificationCheck {
       assert.equal(metadata.name, dirname(path).split('/').at(-1), `Skill name: ${path}`);
       assert(metadata.description, `Skill description: ${path}`);
     }
-    for (const [, target] of contents.matchAll(/(?<!!)\[[^\]\n]+\]\(([^)\s#]+)(?:#[^)]*)?\)/g)) {
+    // Fenced records may preserve verbatim input or excerpts from other directories.
+    const prose = contents.replace(/^(`{3,}|~{3,})[^\n]*\n[\s\S]*?^\1[ \t]*$/gm, '');
+    for (const [, target] of prose.matchAll(/(?<!!)\[[^\]\n]+\]\(([^)\s#]+)(?:#[^)]*)?\)/g)) {
       if (!target || /^[\w+.-]+:/.test(target)) continue;
       assert(existsSync(join(dirname(path), target)), `Missing link target: ${path} → ${target}`);
     }

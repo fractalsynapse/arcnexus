@@ -15,7 +15,6 @@ const ids = ['checkpoint', 'ownership', 'inspect', 'tests', 'delivery'];
 const goals: StandingGoal[] = ids.map((id, index) => ({
   id,
   priority: index + 1,
-  owner: id,
   body: `# ${id}\nMeasure the current staging revision.\n`,
 }));
 const signal = new AbortController().signal;
@@ -63,7 +62,7 @@ class RoundScenario {
 
   /** Supply a host check result and choose whether green evidence hides a gap. */
   constructor(
-    private readonly status: StandingGoalEvidence['status'] = 0,
+    private readonly hasEvidence = true,
     private readonly greenGap = false,
   ) {}
 
@@ -71,11 +70,9 @@ class RoundScenario {
     execution: {
       round: () => ({ id: this.round, goals, finish: () => this.complete() }),
       admit: async (input) => this.admit(input),
-      measureGoal: async (_session, owner) => ({
-        owner,
+      observeGoal: (session) => ({
         revision: 'current-staging',
-        status: this.status,
-        log: `${owner}-tests.log`,
+        source: session.capture.source,
         recentChanges: ['a previous goal merged on staging'],
       }),
       assemble: async () => ({ digest: 'verified-candidate', evidence: [] }),
@@ -109,7 +106,7 @@ class RoundScenario {
 
   /** Retry the logical task with the durable assessment from its original attempt. */
   replay(history: readonly TaskEvent[]) {
-    const input = { directory: '.', goal: goals[0]!.body, measureOwner: 'checkpoint' };
+    const input = { directory: '.', goal: goals[0]!.body, standing: true };
     const services: WorkflowServices = {
       ...this.services,
       execution: {
@@ -128,12 +125,12 @@ class RoundScenario {
   /** Open engineering work on a green measure only when a concrete gap was observed. */
   private assess(session: TaskSession, measured?: StandingGoalEvidence) {
     assert(measured);
-    assert.equal(measured.status, this.status);
     assert.equal(measured.revision, 'current-staging');
     assert.deepEqual(measured.recentChanges, ['a previous goal merged on staging']);
-    assert.equal(session.goal, goals.find((goal) => goal.owner === measured.owner)?.body);
-    this.assessments.push(measured.owner);
-    if (this.greenGap && measured.owner === 'checkpoint') return { kind: 'plan', plan: gapPlan };
+    const goal = goals.find(({ body }) => body === session.goal);
+    assert(goal);
+    this.assessments.push(goal.id);
+    if (this.greenGap && goal.id === 'checkpoint') return { kind: 'plan', plan: gapPlan };
     return this.noWork(measured);
   }
 
@@ -143,7 +140,9 @@ class RoundScenario {
     return {
       kind: 'satisfied',
       summary: 'The requirements and measure hold',
-      evidence: [measured.log],
+      evidence: this.hasEvidence
+        ? [{ path: 'fixture.ts', quote: 'Observable requirement covered' }]
+        : [],
     };
   }
 
@@ -156,6 +155,7 @@ class RoundScenario {
   private admit(input: TaskInput): TaskSession {
     this.admissions.push(input);
     const capture = {
+      source: { paths: ['fixture.ts'], read: () => 'Observable requirement covered' },
       components: {
         checkpoint: { id: 'checkpoint', owns: [], activities: { testing: { profile: 'profile' } } },
       },
@@ -185,7 +185,7 @@ test('the Director assesses all five goals afresh in priority order on each of t
 });
 
 test('a green suite can lead to engineering work when the Director sees a coverage gap', async () => {
-  const fixture = new RoundScenario(0, true);
+  const fixture = new RoundScenario(true, true);
   const round = await fixture.run();
   assert(round.completed);
   assert.equal(round.goals[0]?.outcome.kind, 'merged');
@@ -193,18 +193,14 @@ test('a green suite can lead to engineering work when the Director sees a covera
   assert.deepEqual(fixture.assessments, ids);
 });
 
-test('failed and unavailable measures go to Direction but cannot be declared satisfied', async () => {
-  for (const status of [1, 'not-applicable', null] as const) {
-    const fixture = new RoundScenario(status);
-    const round = await fixture.run();
-    assert(!round.completed);
-    assert.equal(round.goals[0]?.outcome.kind, 'failed');
-    assert.deepEqual(fixture.assessments, ['checkpoint']);
-    assert.deepEqual(fixture.repairs, [
-      `Cannot satisfy a standing goal with owner check status ${status}`,
-    ]);
-    assert.deepEqual(fixture.activations, []);
-  }
+test('missing evidence triggers repair and cannot satisfy a standing goal', async () => {
+  const fixture = new RoundScenario(false);
+  const round = await fixture.run();
+  assert(!round.completed);
+  assert.equal(round.goals[0]?.outcome.kind, 'failed');
+  assert.deepEqual(fixture.assessments, ['checkpoint']);
+  assert.deepEqual(fixture.repairs, ['A standing goal assessment needs captured evidence']);
+  assert.deepEqual(fixture.activations, []);
 });
 
 test('an interrupted round reuses a recorded Director assessment for its completed goal', async () => {

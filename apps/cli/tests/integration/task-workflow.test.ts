@@ -20,6 +20,13 @@ import { projectFixture } from '../fixtures/project.js';
 
 const cli = fileURLToPath(new URL('../../src/index.js', import.meta.url));
 
+test('task plan validates explicit input before admission and does not fall back to task run', () => {
+  const cli = fileURLToPath(new URL('../../src/index.js', import.meta.url));
+  const result = spawnSync(process.execPath, [cli, 'task', 'plan', ' '], { encoding: 'utf8' });
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /Usage: arcnexus task plan/);
+});
+
 test('GW-2: task run validates the goal before task admission', () => {
   for (const args of [[''], ['goal', 'extra']]) {
     const result = spawnSync(process.execPath, [cli, 'task', 'run', ...args], { encoding: 'utf8' });

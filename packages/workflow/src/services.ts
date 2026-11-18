@@ -1,3 +1,4 @@
+import type { StandingGoal } from '../../planner/src/inventory.js';
 import type { Capture } from '../../architecture/src/index.js';
 import type {
   DirectionResult,
@@ -13,7 +14,8 @@ export interface TaskInput {
   directory: string;
   goal: string;
   scope?: string;
-  measureOwner?: string;
+  standing?: boolean;
+  planning?: 'exploration' | 'objective';
 }
 
 export interface Observation {
@@ -29,6 +31,7 @@ export interface TaskObserver {
 
 export type TaskOutcome =
   | { kind: 'merged'; commit: string; evidence: readonly string[] }
+  | { kind: 'planned'; commit: string; summary: string; evidence: readonly string[] }
   | { kind: 'satisfied'; commit: string; summary: string; evidence: readonly string[] }
   | {
       kind: 'invalid' | 'blocked' | 'failed' | 'cancelled';
@@ -43,7 +46,7 @@ export type TaskEvent =
   | { candidate: Candidate; verdict: Verdict }
   | { feedback: Feedback }
   | { activation: ActivityCheckpoint }
-  | { assessment: Extract<TaskOutcome, { kind: 'satisfied' }> };
+  | { assessment: Extract<TaskOutcome, { kind: 'satisfied' | 'planned' }> };
 
 export interface TaskSession {
   readonly capture: Capture;
@@ -100,13 +103,6 @@ export interface ActivityCheckpoint {
   outcome: ActivityOutcome;
 }
 
-export interface StandingGoal {
-  id: string;
-  priority: number;
-  owner: string;
-  body: string;
-}
-
 export interface GoalRound {
   id: number;
   goals: readonly StandingGoal[];
@@ -123,11 +119,7 @@ export interface RoundOutcome {
 export interface WorkflowServices {
   execution: {
     round?(directory: string): GoalRound;
-    measureGoal?(
-      session: TaskSession,
-      owner: string,
-      signal: AbortSignal,
-    ): Promise<StandingGoalEvidence>;
+    observeGoal?(session: TaskSession, signal: AbortSignal): StandingGoalEvidence;
     prepare?(session: TaskSession, issue: string, signal: AbortSignal): Promise<void>;
     checkpoint?(
       session: TaskSession,
@@ -139,6 +131,15 @@ export interface WorkflowServices {
       signal: AbortSignal,
     ): Promise<TaskSession | Extract<TaskOutcome, { reason: string }>>;
     assemble(session: TaskSession, signal: AbortSignal): Promise<Candidate>;
+  };
+  planner?: {
+    propose(
+      session: TaskSession,
+      mode: NonNullable<TaskInput['planning']>,
+      progress: TaskObserver['progress'],
+      signal: AbortSignal,
+    ): Promise<Plan | Extract<TaskOutcome, { kind: 'planned' }>>;
+    apply(session: TaskSession, signal: AbortSignal): Promise<ActivityOutcome>;
   };
   direction: {
     track?(session: TaskSession, signal: AbortSignal): Promise<string>;

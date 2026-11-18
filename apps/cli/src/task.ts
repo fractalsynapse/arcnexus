@@ -12,29 +12,33 @@ export async function runTask(
   commands: Context['commands'],
   goal: string | undefined,
   json: boolean,
+  verb: 'run' | 'plan',
 ) {
   const controller = new AbortController();
   const abort = () => controller.abort(new Error('Task cancelled by SIGINT'));
   process.on('SIGINT', abort);
   try {
-    const observer: TaskObserver = {
-      progress: (observation) => reportProgress(observation, json),
-      answer: ask,
-    };
-    if (goal === undefined)
-      finishRound(
-        await commands.runRound(process.cwd(), observer, controller.signal),
-        json,
-        controller.signal,
-      );
-    else
-      finish(
-        await commands.runTask({ directory: process.cwd(), goal }, observer, controller.signal),
-        json,
-      );
+    await dispatchTask(commands, goal, json, verb, controller.signal);
   } finally {
     process.off('SIGINT', abort);
   }
+}
+
+/** Translate this foreground invocation into the corresponding structured SDK operation. */
+async function dispatchTask(
+  commands: Context['commands'],
+  goal: string | undefined,
+  json: boolean,
+  verb: 'run' | 'plan',
+  signal: AbortSignal,
+) {
+  const observer: TaskObserver = { progress: (entry) => reportProgress(entry, json), answer: ask };
+  const directory = process.cwd();
+  if (verb === 'plan')
+    return finish(await commands.planTask(directory, goal, observer, signal), json);
+  if (goal === undefined)
+    finishRound(await commands.runRound(directory, observer, signal), json, signal);
+  else finish(await commands.runTask({ directory, goal }, observer, signal), json);
 }
 
 /** Stream task progress in the chosen output representation. */
@@ -84,6 +88,10 @@ function finishRound(round: RoundOutcome, json: boolean, signal: AbortSignal) {
 
 /** Translate a structured outcome into the gateway exit status and terminal output. */
 function finish(outcome: TaskOutcome, json: boolean) {
+  if (outcome.kind === 'planned') {
+    console.log(json ? JSON.stringify(outcome) : outcome.summary);
+    return;
+  }
   if (outcome.kind === 'merged' || outcome.kind === 'satisfied') {
     console.log(
       json
@@ -92,7 +100,12 @@ function finish(outcome: TaskOutcome, json: boolean) {
     );
     return;
   }
-  if (json && outcome.kind !== 'invalid') console.log(JSON.stringify(outcome));
+  if (json && outcome.kind === 'invalid') {
+    console.error(outcome.reason);
+    process.exitCode = 2;
+    return;
+  }
+  if (json) console.log(JSON.stringify(outcome));
   console.error([outcome.reason, ...outcome.evidence].join('\n'));
   process.exitCode = outcome.kind === 'invalid' ? 2 : outcome.kind === 'cancelled' ? 130 : 1;
 }
