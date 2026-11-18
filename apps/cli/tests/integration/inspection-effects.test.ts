@@ -32,6 +32,8 @@ test('inspection preserves all project files and directories across selections a
     ['inspect', 'work', 'testing', '--json'],
     ['inspect', 'direction', 'planning'],
     ['inspect', 'missing', 'testing'],
+    ['inspect', 'work', 'missing'],
+    ['inspect'],
     ['inspect', 'work'],
     ['inspect', 'work', 'testing', 'extra'],
   ]) {
