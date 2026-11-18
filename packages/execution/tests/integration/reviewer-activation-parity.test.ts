@@ -60,9 +60,11 @@ function assertInvocation(
   );
 }
 
-test('Reviewer assessment activation forwards the shared request and mapped tools', async (t) => {
+type Observation = { args: string[]; input: string; cwd: string; tools: unknown[] };
+
+/** Prepare a candidate and the production Reviewer activation inputs. */
+function scenario() {
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-reviewer-parity-'));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
   const observation = join(root, 'observation.json');
   const executable = join(root, 'codex');
   const fixture = fileURLToPath(new URL('./director-parity-fixture.js', import.meta.url));
@@ -71,84 +73,52 @@ test('Reviewer assessment activation forwards the shared request and mapped tool
   const goal = 'Reviewer parity fixture goal';
   const journal = new Coordination(root).admit(capture.source.remote, goal);
   assert(journal instanceof Journal);
-  t.after(() => journal.close());
   const task = new HostTask(
     { capture, common: root, executable, base: 'staging', fresh: true, storage: root },
-    goal,
-    journal,
+    goal, journal,
   );
   task.worktree = capture.source.root;
-  const evidence = task.store('candidate.diff', 'Fixture candidate diff\n');
-  const candidate = {
-    digest: 'fixture-tree',
-    ownerEvidenceDigest: 'fixture-owner',
-    evidence: [evidence],
-  };
+  const evidence = task.store('candidate.diff', 'Fixture candidate diff\\n');
+  const candidate = { digest: 'fixture-tree', ownerEvidenceDigest: 'fixture-owner', evidence: [evidence] };
   const checks = [{ id: 'fixture-check', status: 0, log: evidence }];
-  const response = {
-    kind: 'accepted',
-    candidate: candidate.digest,
-    criteria: ['parity'],
-    evidence: [evidence],
-  };
-  writeFileSync(
-    executable,
-    `#!/bin/sh\nexport PARITY_OBSERVATION="${observation}"\nexport PARITY_RESPONSE='${JSON.stringify(response)}'\nexec "${process.execPath}" "${fixture}" "$@"\n`,
-  );
+  const response = { kind: 'accepted', candidate: candidate.digest, criteria: ['parity'], evidence: [evidence] };
+  writeFileSync(executable, `#!/bin/sh
+export PARITY_OBSERVATION="${observation}"
+export PARITY_RESPONSE='${JSON.stringify(response)}'
+exec "${process.execPath}" "${fixture}" "$@"
+`);
   chmodSync(executable, 0o700);
-  await assess(new Agent(architecture), task, plan, candidate, checks, AbortSignal.timeout(10_000));
-  const delivered = architecture.delivered;
-  assert(delivered?.task);
-  assert.equal(delivered.capture, capture);
-  assert.deepEqual(delivered.selection, capture.project.verifier);
-  assert.deepEqual(delivered.selection, { component: 'reviewer', activity: 'assessment' });
-  assert.equal(delivered.task.goal, goal);
-  assert.equal(delivered.task.worktree, task.worktree);
-  assert.deepEqual(delivered.task.milestone, plan.milestones);
-  assert.deepEqual(delivered.task.acceptance, [
-    { owner: 'execution', ...plan.milestones[0]!.criteria[0] },
-  ]);
-  assert.deepEqual(delivered.task.evidence, [evidence]);
-  const assignment = delivered.task.assignment as Record<string, unknown>;
-  assert.equal(assignment.candidate, candidate.digest);
-  assert.equal(assignment.ownerEvidenceDigest, candidate.ownerEvidenceDigest);
-  assert.deepEqual(assignment.checks, checks);
+  return { root, journal, observation, architecture, capture, goal, task, evidence, candidate, checks };
+}
+
+/** Release the temporary task journal and fixture directory. */
+function cleanup(t: import('node:test').TestContext, state: ReturnType<typeof scenario>) {
+  t.after(() => state.journal.close());
+  t.after(() => rmSync(state.root, { recursive: true, force: true }));
+}
+
+/** Retain every task assignment field requested from the Reviewer. */
+function assertAssignment(task: TaskContext, state: ReturnType<typeof scenario>) {
+  const assignment = task.assignment as Record<string, unknown>;
+  assert.equal(assignment.candidate, state.candidate.digest);
+  assert.equal(assignment.ownerEvidenceDigest, state.candidate.ownerEvidenceDigest);
+  assert.deepEqual(assignment.checks, state.checks);
   assert.deepEqual(assignment.ownerChecks, []);
   assert.deepEqual(assignment.accepted, {
-    kind: 'accepted',
-    candidate: candidate.digest,
-    criteria: ['all accepted criterion IDs'],
-    evidence: ['evidence paths'],
+    kind: 'accepted', candidate: state.candidate.digest,
+    criteria: ['all accepted criterion IDs'], evidence: ['evidence paths'],
   });
   assert.deepEqual(assignment.rejected, {
-    kind: 'rejected',
-    candidate: candidate.digest,
-    findings: [
-      {
-        criterion: 'criterion ID',
-        owner: 'component ID',
-        reason: 'observed deficiency',
-        evidence: ['evidence paths'],
-      },
-    ],
+    kind: 'rejected', candidate: state.candidate.digest,
+    findings: [{ criterion: 'criterion ID', owner: 'component ID',
+      reason: 'observed deficiency', evidence: ['evidence paths'] }],
   });
-  assert.match(
-    String(assignment.instructions),
-    /Read the candidate diff and trusted check evidence/,
-  );
-  const expected = new Agent(new Architecture()).prepareRequest(
-    capture,
-    delivered.selection,
-    delivered.task,
-  );
-  const actual = JSON.parse(readFileSync(observation, 'utf8')) as {
-    args: string[];
-    input: string;
-    cwd: string;
-    tools: unknown[];
-  };
-  assertInvocation(actual, expected);
-  const activity = actual.input.match(/## Activity\nSource: [^\n]+\n\n([\s\S]*?)\n\n## Role/);
+  assert.match(String(assignment.instructions), /Read the candidate diff and trusted check evidence/);
+}
+
+/** Confirm the selected activity and supplied task values appear in actual stdin. */
+function assertContext(input: string, goal: string, candidate: string, evidence: string) {
+  const activity = input.match(/## Activity\\nSource: [^\\n]+\\n\\n([\\s\\S]*?)\\n\\n## Role/);
   assert(activity?.[1]);
   assert.deepEqual((parse(activity[1]) as { instructions: string[] }).instructions, [
     'Bind the verdict to the assembled-candidate digest.',
@@ -160,13 +130,55 @@ test('Reviewer assessment activation forwards the shared request and mapped tool
     'Source: Task inputs supplied at activation',
     'Bind the verdict to the assembled-candidate digest.',
     'Return any transferable lesson with the execution evidence that supports it.',
-    goal,
-    'review-parity',
-    'Observe Reviewer subprocess input',
-    candidate.digest,
-    evidence,
-    'fixture-check',
-    'fixture-owner',
-  ])
-    assert(actual.input.includes(value), value);
+    goal, 'review-parity', 'Observe Reviewer subprocess input', candidate,
+    evidence, 'fixture-check', 'fixture-owner',
+  ]) assert(input.includes(value), value);
+}
+
+/** Compare effective invocation options, schemas and actual subprocess bytes. */
+function assertInvocation(actual: Observation, expected: ReturnType<Agent['prepareRequest']>) {
+  const options = expected.request.options;
+  assert.deepEqual(Buffer.from(actual.input), Buffer.from(expected.request.input));
+  assert.equal(actual.cwd, options.workingDirectory);
+  assert.equal(actual.args[actual.args.indexOf('--cd') + 1], options.workingDirectory);
+  assert.equal(actual.args[actual.args.indexOf('--model') + 1], options.model);
+  assert(actual.args.includes(`model_reasoning_effort=${JSON.stringify(options.modelReasoningEffort)}`));
+  assert(actual.args.includes(`web_search=${JSON.stringify(options.webSearchMode)}`));
+  assert.deepEqual(actual.tools, options.tools.map(({ handler: _handler, ...tool }) => tool));
+}
+
+/** Run assessment and verify the recorded shared request and selected context. */
+async function exercise(t: import('node:test').TestContext) {
+  const state = scenario();
+  cleanup(t, state);
+  await assess(new Agent(state.architecture), state.task, plan, state.candidate, state.checks,
+    AbortSignal.timeout(10_000));
+  const delivered = state.architecture.delivered;
+  assert(delivered?.task);
+  assert.equal(delivered.capture, state.capture);
+  assert.deepEqual(delivered.selection, state.capture.project.verifier);
+  assert.deepEqual(delivered.selection, { component: 'reviewer', activity: 'assessment' });
+  assertTask(delivered.task, state);
+  assertAssignment(delivered.task, state);
+  const expected = new Agent(new Architecture()).prepareRequest(
+    state.capture, delivered.selection, delivered.task,
+  );
+  const actual = JSON.parse(readFileSync(state.observation, 'utf8')) as Observation;
+  assertInvocation(actual, expected);
+  assertContext(actual.input, state.goal, state.candidate.digest, state.evidence);
+}
+
+/** Compare milestone, acceptance and evidence fields passed to Reviewer activation. */
+function assertTask(task: TaskContext, state: ReturnType<typeof scenario>) {
+  assert.equal(task.goal, state.goal);
+  assert.equal(task.worktree, state.task.worktree);
+  assert.deepEqual(task.milestone, plan.milestones);
+  assert.deepEqual(task.acceptance, [
+    { owner: 'execution', ...plan.milestones[0]!.criteria[0] },
+  ]);
+  assert.deepEqual(task.evidence, [state.evidence]);
+}
+
+test('Reviewer assessment activation forwards the shared request and mapped tools', async (t) => {
+  await exercise(t);
 });
