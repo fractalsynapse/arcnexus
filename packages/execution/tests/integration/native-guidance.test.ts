@@ -31,6 +31,21 @@ test('native guidance validation admits captured directives and skills and refus
   assert.throws(() => verifyNativeGuidance(capture, root), /Captured project guidance differs/);
 });
 
+test('native guidance validation refuses an altered captured directive', (t) => {
+  const { root, capture } = guidanceFixture();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  writeFileSync(join(root, 'AGENTS.md'), 'Changed directive\n');
+  assert.throws(() => verifyNativeGuidance(capture, root), /Captured project guidance differs.*AGENTS\.md/);
+});
+
+test('native guidance validation refuses an uncaptured skill', (t) => {
+  const { root, capture } = guidanceFixture();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, '.agents/skills/uncaptured'), { recursive: true });
+  writeFileSync(join(root, '.agents/skills/uncaptured/SKILL.md'), 'Uncaptured skill\n');
+  assert.throws(() => verifyNativeGuidance(capture, root), /Captured project guidance differs.*uncaptured/);
+});
+
 test('native guidance validation refuses unapproved directives and target configuration', (t) => {
   const { root, capture } = guidanceFixture();
   t.after(() => rmSync(root, { recursive: true, force: true }));
