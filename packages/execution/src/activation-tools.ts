@@ -8,7 +8,7 @@ import {
 import { archiveResearch } from './research-archive.js';
 import { saveCheckpoint } from './checkpoint.js';
 import { InvalidCodexResponse } from './codex.js';
-import type { ActivityCheckpoint } from '../../workflow/src/index.js';
+import { selfLinkedSupplier, type ActivityCheckpoint } from '../../workflow/src/index.js';
 import { materializeEdits } from './formatter.js';
 import type { HostTask } from './index.js';
 import { inboxIdentity } from './research.js';
@@ -32,6 +32,7 @@ type RequestEvidence = {
 export class ActivationTools {
   private readonly checks = new Map<string, string>();
   private readonly scope: string;
+  private readonly milestone?: string;
   private handoff?: Request;
 
   /** Return whether a valid operation already requested a sequential handoff. */
@@ -47,17 +48,18 @@ export class ActivationTools {
     private readonly signal: AbortSignal,
   ) {
     this.scope = inboxIdentity(task, selection, input);
-    this.handoff = this.pendingRequest(input.milestone);
+    this.milestone = (input.milestone as { id?: string } | undefined)?.id;
+    this.handoff = this.pendingRequest();
   }
 
   /** Continue an acknowledged request if interruption occurred before its workflow recorded it. */
-  private pendingRequest(milestone: unknown) {
+  private pendingRequest() {
     const events = this.task.observations<RequestEvidence>();
     const index = events.findLastIndex(
       ({ projectRequest }) => projectRequest?.scope === this.scope,
     );
     const request = events[index]?.projectRequest;
-    if (!request) return;
+    if (!request || selfLinkedSupplier(request, this.milestone)) return;
     const handled = events
       .slice(index + 1)
       .some(({ clarification, researchRequest, activation }) => {
@@ -69,10 +71,9 @@ export class ActivationTools {
             researchRequest.question === request.question &&
             researchRequest.decision === request.decision
           );
-        const position = milestone as { id?: string } | undefined;
         return (
           !!activation &&
-          activation.milestone === position?.id &&
+          activation.milestone === this.milestone &&
           activation.step === this.selection.activity &&
           activation.outcome.kind === 'supplier'
         );
@@ -162,7 +163,12 @@ export class ActivationTools {
     for (const value of Object.values(args))
       if (typeof value !== 'string' || !value.trim())
         throw new Error(`Empty ${kind} request field`);
-    this.handoff = { ...args, kind };
+    const request = { ...args, kind };
+    if (selfLinkedSupplier(request, this.milestone))
+      throw new Error(
+        `Supplier milestone ${this.milestone} is your current milestone. Continue this activity or link a distinct contribution.`,
+      );
+    this.handoff = request;
     this.task.note({ projectRequest: { scope: this.scope, ...this.handoff } });
     return {
       recorded: kind,

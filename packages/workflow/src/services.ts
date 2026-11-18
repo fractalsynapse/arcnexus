@@ -103,6 +103,19 @@ export type ActivityOutcome =
   | Extract<DirectionResult, { kind: 'question' }>
   | { kind: 'blocked'; reason: string; evidence: readonly string[] };
 
+/** Identify an explicit link to the requester while preserving host-generated check corrections. */
+export function selfLinkedSupplier(
+  request: { kind: string; milestone?: unknown; failedCheck?: unknown },
+  requester?: string,
+) {
+  return (
+    request.kind === 'supplier' &&
+    !request.failedCheck &&
+    requester === request.milestone &&
+    requester !== undefined
+  );
+}
+
 export interface SupplierLink {
   milestone: string;
   request: Extract<Feedback, { kind: 'supplier' }>;

@@ -24,7 +24,7 @@ export type {
   WorkflowServices,
 } from './services.js';
 export type { StandingGoal } from '../../planner/src/inventory.js';
-export { ClarificationRequired } from './services.js';
+export { ClarificationRequired, selfLinkedSupplier } from './services.js';
 
 declare module 'cordis' {
   interface Context {
