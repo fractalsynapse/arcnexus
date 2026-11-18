@@ -36,6 +36,9 @@ test('inspection preserves all project files and directories across selections a
     ['inspect'],
     ['inspect', 'work'],
     ['inspect', 'work', 'testing', 'extra'],
+    ['inspect', 'work', '--json', 'testing'],
+    ['inspect', 'work', 'testing', '--json', '--json'],
+    ['--json', 'inspect', 'work', 'testing', '--json'],
   ]) {
     const first = spawnSync(process.execPath, [cli, ...args], { cwd: root, encoding: 'utf8' });
     const second = spawnSync(process.execPath, [cli, ...args], { cwd: root, encoding: 'utf8' });
