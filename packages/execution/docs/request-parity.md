@@ -106,6 +106,18 @@ hosted CI and staging integration are separate evidence categories. Any unavaila
 skipped or unobserved native or live requirement remains explicitly outstanding;
 fixture passes cannot discharge it.
 
+The operator-provided native observation in `32-3-clarification.json` is external
+evidence for commit `398d3651c8680a5914745c855003bc183dcc6a46`, tree
+`eb8d7da2dc7a14e270a02ce10ea743b2742f82a1` and capture
+`8544905fb43f7742f672931e8e5df75e310ea75d`. It reports installed
+`codex-cli 0.166.0-alpha.6` identity, production `HostTask.activate`, successful
+directive and skill catalog discovery, and nonzero live inference. Its probe
+assignment is separate from the exact-input parity fixture. Retain this observation
+without attributing it to another candidate or capture; matching guidance hashes
+alone do not establish identity. Native evidence for the accepted candidate remains
+open unless a retained matching observation or explicit host identity confirmation
+connects these records.
+
 For every observed check retain candidate identity, relevant inputs/environment,
 exact exit status and readable evidence outside maintained source. Preserve failed
 observations alongside later results. This documentation activity claims intent
