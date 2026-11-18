@@ -76,6 +76,7 @@ function actors() {
   const components = [
     component('work', 'Fixture steward', 'work', 'testing', activity('engineer', ['test'])),
     component('plan', 'Fixture director', '.arc', 'planning', activity('director')),
+    component('direction', 'Fixture direction', 'direction', 'planning', activity('director')),
     component('review', 'Fixture reviewer', 'review', 'assessment', activity('reviewer')),
   ];
   return {
