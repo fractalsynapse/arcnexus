@@ -36,6 +36,7 @@ printf '%s\n' '{"type":"item.completed","item":{"type":"agent_message","text":"{
     url: 'http://127.0.0.1:1234/mcp',
   });
   assert.equal(readFileSync(input, 'utf8'), prompt);
+  assert.equal(readFileSync(cwd, 'utf8'), `${root}\n`);
   const argv = readFileSync(args, 'utf8').trimEnd().split('\n');
   assert.equal(argv[argv.indexOf('--model') + 1], options.model);
   assert.equal(argv[argv.indexOf('--cd') + 1], root);
