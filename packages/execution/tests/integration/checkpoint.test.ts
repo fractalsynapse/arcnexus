@@ -50,6 +50,7 @@ class CheckpointRemote extends GitHub {
   head?: string;
   pushes: string[] = [];
   issues = 0;
+  loseFirstPush = true;
 
   /** Bind the fixed fake repository without performing external operations. */
   constructor() {
@@ -88,7 +89,7 @@ class CheckpointRemote extends GitHub {
     assert.equal(previous, this.head);
     this.pushes.push(head);
     this.head = head;
-    if (this.pushes.length === 1) throw new Error('Checkpoint push reply lost');
+    if (this.loseFirstPush && this.pushes.length === 1) throw new Error('Checkpoint push reply lost');
   }
 }
 
@@ -100,7 +101,10 @@ class RecoveryScenario {
   readonly root: string;
   readonly storage: string;
   readonly services: WorkflowServices;
-  private readonly capture: Capture;
+  private capture: Capture;
+  private interrupted = false;
+  readonly worktrees: string[] = [];
+  readonly identities: string[] = [];
   private task?: HostTask;
   private plans = 0;
 
@@ -108,12 +112,14 @@ class RecoveryScenario {
   constructor(
     t: TestContext,
     private readonly useTools = false,
+    private readonly movedStaging = false,
   ) {
     const directory = mkdtempSync(join(tmpdir(), 'arcnexus-checkpoint-'));
     this.root = join(directory, 'project');
     this.storage = join(directory, 'state');
     t.after(() => rmSync(directory, { recursive: true, force: true }));
     this.capture = this.createSource();
+    this.remote.loseFirstPush = !movedStaging;
     this.services = this.compose(t);
   }
 
@@ -135,6 +141,24 @@ class RecoveryScenario {
     assert.equal(this.remote.issues, 1);
   }
 
+  /** Advance the real staging tree and admit the next attempt at the observed revision. */
+  advance(path: string, contents: string) {
+    const oldBase = this.capture.source.revision;
+    const checkpoint = this.git('rev-parse', 'refs/heads/7-task');
+    mkdirSync(dirname(join(this.root, path)), { recursive: true });
+    writeFileSync(join(this.root, path), contents);
+    this.git('add', path);
+    this.git('commit', '-m', 'Advance staging');
+    const staging = this.git('rev-parse', 'HEAD');
+    this.capture = { ...this.capture, source: { ...this.capture.source, revision: staging } };
+    return { oldBase, checkpoint, staging };
+  }
+
+  /** Read actual fixture Git objects for recovery assertions. */
+  observe(...args: string[]) {
+    return this.git(...args);
+  }
+
   /** Supply the real execution ports with fake model and Collaboration boundaries. */
   private compose(t: TestContext): WorkflowServices {
     const coordination = new Coordination(this.storage);
@@ -144,7 +168,13 @@ class RecoveryScenario {
         admit: async ({ goal }) => this.admit(coordination, goal, t),
         assemble: (session, abort) => execution.assemble(session, abort),
         prepare: (session, issue, abort) => execution.prepare(session, issue, abort),
-        checkpoint: (session, activity, abort) => execution.checkpoint(session, activity, abort),
+        checkpoint: async (session, activity, abort) => {
+          await execution.checkpoint(session, activity, abort);
+          if (this.movedStaging && !this.interrupted) {
+            this.interrupted = true;
+            throw new Error('Interrupted after secured checkpoint');
+          }
+        },
       },
       direction: {
         track,
@@ -197,6 +227,7 @@ class RecoveryScenario {
     );
     t.mock.method(task, 'provider', () => this.remote);
     this.task = task;
+    this.identities.push(task.taskID);
     return task;
   }
 
@@ -206,6 +237,7 @@ class RecoveryScenario {
     if (id === 'second') assert(task.evidence.includes(this.artifacts[0]!));
     this.artifacts.push(task.store(`${id}.log`, id));
     assert(task.worktree);
+    this.worktrees.push(task.worktree);
     if (id === 'second')
       assert.equal(readFileSync(join(task.worktree, 'first.txt'), 'utf8'), 'first');
     if (this.useTools) await this.editFiles(task, id, step);
@@ -295,4 +327,25 @@ test('single-file tool checkpoints survive a refused write and interrupted push'
   assert.deepEqual(scenario.activations, ['first', 'first', 'second']);
   assert.equal(scenario.remote.pushes.length, 3);
   scenario.checkCleanup();
+});
+
+test('a secured checkpoint resumes on a disjoint staging advance', async (t) => {
+  const scenario = new RecoveryScenario(t, false, true);
+  const stopped = await scenario.run();
+  assert.equal(stopped.kind, 'failed');
+  assert.match(stopped.reason, /Interrupted after secured checkpoint/);
+  const { oldBase, checkpoint, staging } = scenario.advance('staging-only.txt', 'staging contribution');
+  const checkedBlob = scenario.observe('rev-parse', `${checkpoint}:first.txt`);
+  const resumed = await scenario.run();
+  assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
+  assert.deepEqual(scenario.activations, ['first', 'second']);
+  assert.equal(scenario.identities[0], scenario.identities[1]);
+  assert.notEqual(scenario.worktrees[0], scenario.worktrees[1]);
+  const recovered = scenario.observe('rev-parse', 'refs/heads/7-task');
+  assert.equal(scenario.observe('merge-base', recovered, checkpoint), checkpoint);
+  assert.equal(scenario.observe('merge-base', recovered, staging), staging);
+  assert.equal(scenario.observe('rev-parse', `${recovered}:first.txt`), checkedBlob);
+  assert.equal(scenario.observe('show', `${recovered}:staging-only.txt`), 'staging contribution');
+  assert.notEqual(oldBase, staging);
+  assert.ok(scenario.observe('rev-parse', `${recovered}^{tree}`));
 });
