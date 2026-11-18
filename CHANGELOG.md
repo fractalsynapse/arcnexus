@@ -9,6 +9,8 @@
 
 ### Fixed
 
+- Recover a secured, unpublished task checkpoint over disjoint staging changes under the same captured authority (#604).
+
 - Send a blocked review correction back through Direction while preserving checked work and acceptance (#594).
 
 - Clarify the checked-edit path when an editing steward is correcting a rejected candidate (#594).
