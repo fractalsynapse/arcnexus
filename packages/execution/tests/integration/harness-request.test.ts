@@ -62,7 +62,7 @@ class ActivationParity {
     t.after(() => rmSync(this.root, { recursive: true, force: true }));
     this.writeGuidance();
     const module = new URL('../fixtures/harness-probe.js', import.meta.url);
-    const launcher = `#!/usr/bin/node\nimport { HarnessProbe } from ${JSON.stringify(module.href)};\nawait HarnessProbe.run(process.argv.slice(2));\n`;
+    const launcher = `#!${process.execPath}\nimport { HarnessProbe } from ${JSON.stringify(module.href)};\nawait HarnessProbe.run(process.argv.slice(2));\n`;
     writeFileSync(this.execution, launcher, { mode: 0o700 });
     const journal = new Coordination(this.storage).admit(this.capture.source.remote, this.goal);
     assert('record' in journal);
