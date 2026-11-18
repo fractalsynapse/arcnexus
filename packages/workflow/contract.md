@@ -24,6 +24,10 @@ to Execution, and durable state to Coordination. A supplier request, escalation
 or review rejection returns to Direction for validation and sequencing. Feedback
 may cause earlier activity work through an explicit revised plan. Workflow
 follows the accepted sequence and does not create a second scheduler or store.
+A blocked steward step addressing an independent rejection can use the same
+supplier sequence for smaller same-owner work. If that review has already
+received supplier work for the owner, a further hold retains its diagnostic
+and the current position.
 
 `inspect` uses the Agent and Architecture request builder without admitting a
 workflow. An accepted staging result closes the task. Cancellation and blocking

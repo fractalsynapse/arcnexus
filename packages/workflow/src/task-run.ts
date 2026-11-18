@@ -13,10 +13,12 @@ import {
   type StandingGoalEvidence,
 } from '../../direction/src/index.js';
 import { validateVerdict, type Candidate, type Verdict } from '../../verification/src/index.js';
+import { blockedCorrection } from './blocked-correction.js';
 import { stopped, type Interrupted } from './services.js';
 import type {
   ActivityCheckpoint,
   Observation,
+  TaskEvent,
   TaskInput,
   TaskObserver,
   TaskOutcome,
@@ -141,10 +143,21 @@ export class TaskRun {
     for (const event of events)
       if ('verdict' in event && event.verdict.kind === 'rejected')
         this.rejectedReviews.add(reviewKey(event.candidate));
-    for (const event of last) {
+    return this.replayOutcomes(last);
+  }
+
+  /** Recover the latest blocked step once and keep ordinary user retries available. */
+  private async replayOutcomes(events: readonly TaskEvent[]) {
+    const latest = events.findLast((event) => 'activation' in event);
+    for (const event of events) {
       if ('verdict' in event && event.verdict.kind === 'rejected')
         return this.correct(event.candidate, event.verdict.findings);
-      if (!('activation' in event) || event.activation.outcome.kind === 'blocked') continue;
+      if (!('activation' in event)) continue;
+      if (event.activation.outcome.kind === 'blocked') {
+        const recovery = event === latest && this.blockedRecovery(event.activation);
+        if (recovery) return this.revise(recovery);
+        continue;
+      }
       const interrupted = await this.applyActivity(event.activation);
       if (interrupted) return interrupted;
     }
@@ -302,8 +315,14 @@ export class TaskRun {
   }
 
   /** Advance a durable completion or route a retained non-terminal outcome through Direction. */
-  private async applyActivity({ milestone, index, step, outcome }: ActivityCheckpoint) {
-    if (outcome.kind === 'blocked') return stopped('blocked', outcome.reason, outcome.evidence);
+  private async applyActivity(activation: ActivityCheckpoint) {
+    const { milestone, index, step, outcome } = activation;
+    if (outcome.kind === 'blocked') {
+      const recovery = this.blockedRecovery(activation);
+      return recovery
+        ? this.revise(recovery)
+        : stopped('blocked', outcome.reason, outcome.evidence);
+    }
     if (outcome.kind === 'question') {
       const feedback = await this.answer(outcome);
       return 'reason' in feedback ? feedback : this.revise(feedback);
@@ -312,6 +331,15 @@ export class TaskRun {
     this.report({ phase: 'activity', message: `Completed ${step}`, evidence: outcome.evidence });
     this.activityPositions.set(milestone, index + 1);
     this.recordPosition();
+  }
+
+  /** Select the existing correction route only for the currently paused milestone. */
+  private blockedRecovery(activation: ActivityCheckpoint) {
+    return blockedCorrection(
+      this.session.history?.() ?? [],
+      this.plan?.milestones[this.completed],
+      activation,
+    );
   }
 
   /** Report the selected activity before starting the next scoped Agent activation. */
