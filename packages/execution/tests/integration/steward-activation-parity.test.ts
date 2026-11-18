@@ -114,35 +114,36 @@ function assertContext(input: string, goal: string) {
     assert(input.includes(value), value);
 }
 
-test('Steward production activation forwards the shared request and mapped tools', async (t) => {
+/** Run production steward activation and compare its exact captured task. */
+async function exercise(t: TestContext) {
   const { architecture, capture, goal, observation, task } = scenario(t);
   const outcome = await steward(
-    new Agent(architecture),
-    task,
-    milestone,
-    'testing',
-    AbortSignal.timeout(10_000),
+    new Agent(architecture), task, milestone, 'testing', AbortSignal.timeout(10_000),
   );
   assert.equal(outcome.kind, 'completed');
   const delivered = architecture.delivered;
   assert(delivered?.task);
   assert.equal(delivered.capture, capture);
   assert.deepEqual(delivered.selection, { component: 'execution', activity: 'testing' });
-  assert.equal(delivered.task.goal, goal);
-  assert.equal(delivered.task.worktree, task.worktree);
-  assert.deepEqual(delivered.task.milestone, { id: milestone.id, step: milestone.steps[0] });
-  assert.deepEqual(delivered.task.acceptance, milestone.criteria);
+  assertTask(delivered.task, task, goal);
   const expected = new Agent(new Architecture()).prepareRequest(
-    capture,
-    delivered.selection,
-    delivered.task,
+    capture, delivered.selection, delivered.task,
   );
   const actual = JSON.parse(readFileSync(observation, 'utf8')) as {
-    args: string[];
-    input: string;
-    cwd: string;
-    tools: unknown[];
+    args: string[]; input: string; cwd: string; tools: unknown[];
   };
   assertInvocation(actual, expected);
   assertContext(actual.input, goal);
+}
+
+/** Preserve all milestone and task fields supplied to activation. */
+function assertTask(delivered: TaskContext, task: HostTask, goal: string) {
+  assert.equal(delivered.goal, goal);
+  assert.equal(delivered.worktree, task.worktree);
+  assert.deepEqual(delivered.milestone, { id: milestone.id, step: milestone.steps[0] });
+  assert.deepEqual(delivered.acceptance, milestone.criteria);
+}
+
+test('Steward production activation forwards the shared request and mapped tools', async (t) => {
+  await exercise(t);
 });
