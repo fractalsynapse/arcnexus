@@ -29,12 +29,14 @@ class RecordingArchitecture extends Architecture {
 
 const plan: Plan = {
   focus: { purpose: 'Review the fixture', objectives: [], constraints: [] },
-  milestones: [{
-    id: 'review-parity',
-    owner: 'execution',
-    criteria: [{ id: 'parity', description: 'Observe Reviewer subprocess input' }],
-    steps: [],
-  }],
+  milestones: [
+    {
+      id: 'review-parity',
+      owner: 'execution',
+      criteria: [{ id: 'parity', description: 'Observe Reviewer subprocess input' }],
+      steps: [],
+    },
+  ],
 };
 
 /** Compare the observed process configuration and bytes with the shared request. */
@@ -47,9 +49,14 @@ function assertInvocation(
   assert.equal(actual.cwd, options.workingDirectory);
   assert.equal(actual.args[actual.args.indexOf('--cd') + 1], options.workingDirectory);
   assert.equal(actual.args[actual.args.indexOf('--model') + 1], options.model);
-  assert(actual.args.includes(`model_reasoning_effort=${JSON.stringify(options.modelReasoningEffort)}`));
+  assert(
+    actual.args.includes(`model_reasoning_effort=${JSON.stringify(options.modelReasoningEffort)}`),
+  );
   assert(actual.args.includes(`web_search=${JSON.stringify(options.webSearchMode)}`));
-  assert.deepEqual(actual.tools, options.tools.map(({ handler: _handler, ...tool }) => tool));
+  assert.deepEqual(
+    actual.tools,
+    options.tools.map(({ handler: _handler, ...tool }) => tool),
+  );
 }
 
 test('Reviewer assessment activation forwards the shared request and mapped tools', async (t) => {
@@ -71,9 +78,18 @@ test('Reviewer assessment activation forwards the shared request and mapped tool
   );
   task.worktree = capture.source.root;
   const evidence = task.store('candidate.diff', 'Fixture candidate diff\n');
-  const candidate = { digest: 'fixture-tree', ownerEvidenceDigest: 'fixture-owner', evidence: [evidence] };
+  const candidate = {
+    digest: 'fixture-tree',
+    ownerEvidenceDigest: 'fixture-owner',
+    evidence: [evidence],
+  };
   const checks = [{ id: 'fixture-check', status: 0, log: evidence }];
-  const response = { kind: 'accepted', candidate: candidate.digest, criteria: ['parity'], evidence: [evidence] };
+  const response = {
+    kind: 'accepted',
+    candidate: candidate.digest,
+    criteria: ['parity'],
+    evidence: [evidence],
+  };
   writeFileSync(
     executable,
     `#!/bin/sh\nexport PARITY_OBSERVATION="${observation}"\nexport PARITY_RESPONSE='${JSON.stringify(response)}'\nexec "${process.execPath}" "${fixture}" "$@"\n`,
@@ -88,16 +104,25 @@ test('Reviewer assessment activation forwards the shared request and mapped tool
   assert.equal(delivered.task.goal, goal);
   assert.equal(delivered.task.worktree, task.worktree);
   assert.deepEqual(delivered.task.milestone, plan.milestones);
-  assert.deepEqual(delivered.task.acceptance, [{ owner: 'execution', ...plan.milestones[0]!.criteria[0] }]);
+  assert.deepEqual(delivered.task.acceptance, [
+    { owner: 'execution', ...plan.milestones[0]!.criteria[0] },
+  ]);
   assert.deepEqual(delivered.task.evidence, [evidence]);
   const assignment = delivered.task.assignment as Record<string, unknown>;
   assert.equal(assignment.candidate, candidate.digest);
   assert.equal(assignment.ownerEvidenceDigest, candidate.ownerEvidenceDigest);
   assert.deepEqual(assignment.checks, checks);
   assert.deepEqual(assignment.ownerChecks, []);
-  const expected = new Agent(new Architecture()).prepareRequest(capture, delivered.selection, delivered.task);
+  const expected = new Agent(new Architecture()).prepareRequest(
+    capture,
+    delivered.selection,
+    delivered.task,
+  );
   const actual = JSON.parse(readFileSync(observation, 'utf8')) as {
-    args: string[]; input: string; cwd: string; tools: unknown[];
+    args: string[];
+    input: string;
+    cwd: string;
+    tools: unknown[];
   };
   assertInvocation(actual, expected);
   for (const value of [
@@ -106,7 +131,13 @@ test('Reviewer assessment activation forwards the shared request and mapped tool
     'Source: Task inputs supplied at activation',
     'Bind the verdict to the assembled-candidate digest.',
     'Return any transferable lesson with the execution evidence that supports it.',
-    goal, 'review-parity', 'Observe Reviewer subprocess input', candidate.digest, evidence,
-    'fixture-check', 'fixture-owner',
-  ]) assert(actual.input.includes(value), value);
+    goal,
+    'review-parity',
+    'Observe Reviewer subprocess input',
+    candidate.digest,
+    evidence,
+    'fixture-check',
+    'fixture-owner',
+  ])
+    assert(actual.input.includes(value), value);
 });
