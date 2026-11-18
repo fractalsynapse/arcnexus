@@ -33,12 +33,14 @@ class RecordingArchitecture extends Architecture {
 
 const plan: Plan = {
   focus: { purpose: 'Review the fixture', objectives: [], constraints: [] },
-  milestones: [{
-    id: 'review-parity',
-    owner: 'execution',
-    criteria: [{ id: 'parity', description: 'Observe Reviewer subprocess input' }],
-    steps: [],
-  }],
+  milestones: [
+    {
+      id: 'review-parity',
+      owner: 'execution',
+      criteria: [{ id: 'parity', description: 'Observe Reviewer subprocess input' }],
+      steps: [],
+    },
+  ],
 };
 
 /** Prepare a real assessment with an observing Codex subprocess. */
@@ -61,9 +63,18 @@ function scenario(t: TestContext) {
   );
   task.worktree = capture.source.root;
   const evidence = task.store('candidate.diff', 'Fixture candidate diff\n');
-  const candidate = { digest: 'fixture-tree', ownerEvidenceDigest: 'fixture-owner', evidence: [evidence] };
+  const candidate = {
+    digest: 'fixture-tree',
+    ownerEvidenceDigest: 'fixture-owner',
+    evidence: [evidence],
+  };
   const checks = [{ id: 'fixture-check', status: 0, log: evidence }];
-  const response = { kind: 'accepted', candidate: candidate.digest, criteria: ['parity'], evidence: [evidence] };
+  const response = {
+    kind: 'accepted',
+    candidate: candidate.digest,
+    criteria: ['parity'],
+    evidence: [evidence],
+  };
   writeFileSync(
     executable,
     `#!/bin/sh
@@ -83,9 +94,14 @@ function assertInvocation(actual: Observation, view: ReturnType<Agent['prepareRe
   assert.equal(actual.cwd, options.workingDirectory);
   assert.equal(actual.args[actual.args.indexOf('--cd') + 1], options.workingDirectory);
   assert.equal(actual.args[actual.args.indexOf('--model') + 1], options.model);
-  assert(actual.args.includes(`model_reasoning_effort=${JSON.stringify(options.modelReasoningEffort)}`));
+  assert(
+    actual.args.includes(`model_reasoning_effort=${JSON.stringify(options.modelReasoningEffort)}`),
+  );
   assert(actual.args.includes(`web_search=${JSON.stringify(options.webSearchMode)}`));
-  assert.deepEqual(actual.tools, options.tools.map(({ handler: _handler, ...tool }) => tool));
+  assert.deepEqual(
+    actual.tools,
+    options.tools.map(({ handler: _handler, ...tool }) => tool),
+  );
 }
 
 /** Preserve selected activity, sources and task values in observed stdin. */
@@ -100,9 +116,15 @@ function assertContext(input: string, state: ReturnType<typeof scenario>) {
     'Source: .arc/architecture/components/reviewer.yaml (activities.assessment)',
     'Source: .arc/architecture/roles/reviewer.yaml',
     'Source: Task inputs supplied at activation',
-    state.goal, 'review-parity', 'Observe Reviewer subprocess input',
-    state.candidate.digest, state.evidence, 'fixture-check', 'fixture-owner',
-  ]) assert(input.includes(value), value);
+    state.goal,
+    'review-parity',
+    'Observe Reviewer subprocess input',
+    state.candidate.digest,
+    state.evidence,
+    'fixture-check',
+    'fixture-owner',
+  ])
+    assert(input.includes(value), value);
 }
 
 /** Check the renderer preserves the complete prompt and invocation options. */
@@ -129,21 +151,39 @@ function assertTask(task: TaskContext, state: ReturnType<typeof scenario>) {
   assert.deepEqual(assignment.checks, state.checks);
   assert.deepEqual(assignment.ownerChecks, []);
   assert.deepEqual(assignment.accepted, {
-    kind: 'accepted', candidate: state.candidate.digest,
-    criteria: ['all accepted criterion IDs'], evidence: ['evidence paths'],
+    kind: 'accepted',
+    candidate: state.candidate.digest,
+    criteria: ['all accepted criterion IDs'],
+    evidence: ['evidence paths'],
   });
   assert.deepEqual(assignment.rejected, {
-    kind: 'rejected', candidate: state.candidate.digest,
-    findings: [{ criterion: 'criterion ID', owner: 'component ID',
-      reason: 'observed deficiency', evidence: ['evidence paths'] }],
+    kind: 'rejected',
+    candidate: state.candidate.digest,
+    findings: [
+      {
+        criterion: 'criterion ID',
+        owner: 'component ID',
+        reason: 'observed deficiency',
+        evidence: ['evidence paths'],
+      },
+    ],
   });
-  assert.match(String(assignment.instructions), /Read the candidate diff and trusted check evidence/);
+  assert.match(
+    String(assignment.instructions),
+    /Read the candidate diff and trusted check evidence/,
+  );
 }
 
 test('Reviewer complete inspection matches production activation and CLI rendering', async (t) => {
   const state = scenario(t);
-  await assess(new Agent(state.architecture), state.task, plan, state.candidate, state.checks,
-    AbortSignal.timeout(10_000));
+  await assess(
+    new Agent(state.architecture),
+    state.task,
+    plan,
+    state.candidate,
+    state.checks,
+    AbortSignal.timeout(10_000),
+  );
   const delivered = state.architecture.delivered;
   assert(delivered?.task);
   assert.equal(delivered.capture, state.capture);
@@ -151,7 +191,9 @@ test('Reviewer complete inspection matches production activation and CLI renderi
   assert.deepEqual(delivered.selection, { component: 'reviewer', activity: 'assessment' });
   assertTask(delivered.task, state);
   const view = new Agent(new Architecture()).prepareRequest(
-    state.capture, delivered.selection, delivered.task,
+    state.capture,
+    delivered.selection,
+    delivered.task,
   );
   const actual = JSON.parse(readFileSync(state.observation, 'utf8')) as Observation;
   assertInvocation(actual, view);
