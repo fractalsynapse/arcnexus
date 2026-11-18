@@ -37,7 +37,7 @@ async function observe(state: Fixture, prompt: string, options: Record<string, u
 function assertObservation(state: Fixture, prompt: string, model: string): void {
   assert.equal(readFileSync(state.input, 'utf8'), prompt);
   assert.equal(readFileSync(state.cwd, 'utf8'), `${state.root}\n`);
-  const argv = readFileSync(state.args, 'utf8').trimEnd().split('\\n');
+  const argv = readFileSync(state.args, 'utf8').trimEnd().split('\n');
   assert.equal(argv[argv.indexOf('--model') + 1], model);
   assert.equal(argv[argv.indexOf('--cd') + 1], state.root);
   assert(argv.includes('model_reasoning_effort="high"'));
