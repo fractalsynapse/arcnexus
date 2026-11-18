@@ -104,6 +104,7 @@ test('GW-26: rendered and structured requests agree for each actor', (t) => {
   const agent = new Agent(new Architecture());
   for (const [component, activity, role] of [
     ['director', 'planning', 'director'],
+    ['direction', 'planning', 'director'],
     ['work', 'testing', 'engineer'],
     ['reviewer', 'assessment', 'reviewer'],
   ] as const) {
