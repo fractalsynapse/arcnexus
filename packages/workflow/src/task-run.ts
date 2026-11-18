@@ -14,7 +14,7 @@ import {
 } from '../../direction/src/index.js';
 import { validateVerdict, type Candidate, type Verdict } from '../../verification/src/index.js';
 import { blockedCorrection } from './blocked-correction.js';
-import { stopped, type Interrupted } from './services.js';
+import { selfLinkedSupplier, stopped, type Interrupted } from './services.js';
 import type {
   ActivityCheckpoint,
   Observation,
@@ -153,6 +153,7 @@ export class TaskRun {
       if ('verdict' in event && event.verdict.kind === 'rejected')
         return this.correct(event.candidate, event.verdict.findings);
       if (!('activation' in event)) continue;
+      if (selfLinkedSupplier(event.activation.outcome, event.activation.milestone)) continue;
       if (event.activation.outcome.kind === 'blocked') {
         const recovery = event === latest && this.blockedRecovery(event.activation);
         if (recovery) return this.revise(recovery);

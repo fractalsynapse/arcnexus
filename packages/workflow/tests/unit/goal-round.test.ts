@@ -226,3 +226,28 @@ test('an interrupted round reuses its completed check-only plan and assessment',
   assert.deepEqual(await fixture.replay([{ plan: gapPlan }, { assessment }]), assessment);
   assert.deepEqual(fixture.activations, []);
 });
+
+test('a retained self-linked supplier resumes the same steward without replanning', async () => {
+  const fixture = new RoundScenario();
+  const id = gapPlan.milestones[0]!.id;
+  const outcome = await fixture.replay([
+    { plan: gapPlan },
+    {
+      activation: {
+        milestone: id,
+        owner: 'checkpoint',
+        index: 1,
+        step: 'testing',
+        outcome: {
+          kind: 'supplier',
+          owner: 'checkpoint',
+          milestone: id,
+          reason: 'The earlier runtime acknowledged a self-link',
+          evidence: ['retained-refusal'],
+        },
+      },
+    },
+  ]);
+  assert.equal(outcome.kind, 'merged');
+  assert.deepEqual(fixture.activations, [id]);
+});
