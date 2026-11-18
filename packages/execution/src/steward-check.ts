@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import type { Feedback, StewardCheckFailure } from '../../direction/src/index.js';
 import type { CheckResult } from './check.js';
 
@@ -11,6 +12,8 @@ interface CheckEvent {
   feedback?: Feedback;
   check?: CheckResult;
   scope?: StewardScope;
+  owner?: string;
+  edits?: readonly { before: string | null; after: string | null }[];
 }
 
 interface ObservedRecovery {
@@ -75,4 +78,36 @@ export function pendingStewardCheck(events: readonly unknown[], scope: StewardSc
   const recorded = events as readonly CheckEvent[];
   const observed = recoverObservedCheck(recorded, scope);
   return observed.qualifying ? observed.pending : recoverFeedbackCheck(recorded, scope);
+}
+
+/** Compare actual failure diagnostics while ignoring TAP numbering and transient process paths. */
+export function checkFailureSignature(log: string) {
+  const text = readFileSync(log, 'utf8');
+  const lines = text
+    .split('\n')
+    .filter((line) => /(?:^not ok \d+ - |error TS\d+:|^\s*(?:error:|Error:|FAIL\b))/.test(line));
+  const details = text.match(/^ {2}error:[^\n]*(?:\n(?: {4}.*|[ \t]*))*/gm) ?? [];
+  return (lines.length ? [...lines, ...details].join('\n') : text)
+    .replace(/not ok \d+ - /g, 'not ok - ')
+    .replace(/\([^\n]*?\d+,\d+\)/g, '')
+    .replace(/\/[^\s]*?\/(?:worktree|measure-worktree)\//g, '')
+    .replace(/\/tmp\/[\w.-]+/g, '/tmp/<temporary>')
+    .replace(/:\d+:\d+/g, '')
+    .trim();
+}
+
+/** Require a completed checked edit since the diagnosis being corrected. */
+export function correctionMadeProgress(events: readonly unknown[], owner: string, log: string) {
+  const recorded = events as readonly CheckEvent[];
+  const directed = recorded.findLastIndex(
+    ({ feedback }) =>
+      feedback?.kind === 'supplier' && feedback.owner === owner && feedback.failedCheck,
+  );
+  const observed = recorded.findLastIndex(({ check }) => check?.log === log);
+  return recorded
+    .slice((directed >= 0 ? directed : observed) + 1)
+    .some(
+      ({ owner: editedOwner, edits }) =>
+        editedOwner === owner && edits?.some(({ before, after }) => before !== after),
+    );
 }

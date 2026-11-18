@@ -8,6 +8,7 @@ import type {
   PlanActivity,
   Rejection,
   StandingGoalEvidence,
+  StewardCheckFailure,
 } from '../../direction/src/index.js';
 import type { Candidate, Verdict } from '../../verification/src/index.js';
 
@@ -101,7 +102,12 @@ export type ActivityOutcome =
   | { kind: 'completed'; evidence: readonly string[]; answer?: string }
   | Omit<Extract<Feedback, { kind: 'supplier' }>, 'requester'>
   | Extract<DirectionResult, { kind: 'question' }>
-  | { kind: 'blocked'; reason: string; evidence: readonly string[] };
+  | {
+      kind: 'blocked';
+      reason: string;
+      evidence: readonly string[];
+      failedCheck?: StewardCheckFailure;
+    };
 
 /** Identify an explicit link to the requester while preserving host-generated check corrections. */
 export function selfLinkedSupplier(
