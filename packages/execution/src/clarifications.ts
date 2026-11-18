@@ -28,14 +28,14 @@ export class Clarifications {
     const answers = this.retained(scope);
     while (true) {
       for (const [question, gate] of answers)
-        if (gate.answer === undefined) answers.set(question, await this.ask(scope, question));
+        if (gate.answer === undefined) answers.set(question, await this.ask(gate));
       const reply = await invoke(withClarifications(data, [...answers.values()]));
       this.signal.throwIfAborted();
       const question = requestedQuestion(reply);
       if (question === undefined) return reply;
       if (answers.has(question))
         throw new InvalidCodexResponse(`Clarification already answered: ${question}`);
-      const clarification = { scope, question };
+      const clarification = this.openQuestion(scope, question);
       this.task.note({ clarification, ...verificationContext(this.task, this.selection, data) });
       answers.set(question, clarification);
     }
@@ -64,12 +64,26 @@ export class Clarifications {
     return answers;
   }
 
+  /** Keep the exact open question available even before there is an answer. */
+  private openQuestion(scope: string, question: string) {
+    const evidence = this.task.store(
+      'clarification-question.json',
+      JSON.stringify({ ...this.selection, question }, null, 2),
+    );
+    return { scope, question, evidence };
+  }
+
   /** Persist a verbatim answer before the activation can continue. */
-  private async ask(scope: string, question: string) {
+  private async ask(gate: Clarification) {
+    const { scope, question } = gate;
     this.signal.throwIfAborted();
     const answer = await this.task.ask?.(question, this.signal);
     this.signal.throwIfAborted();
-    if (!answer?.trim()) throw new ClarificationRequired(question);
+    if (!answer?.trim()) {
+      const retained = gate.evidence ? gate : this.openQuestion(scope, question);
+      if (retained !== gate) this.task.note({ clarification: retained });
+      throw new ClarificationRequired(question, [retained.evidence!]);
+    }
     const evidence = this.task.store(
       'clarification.json',
       JSON.stringify({ ...this.selection, question, answer }, null, 2),
