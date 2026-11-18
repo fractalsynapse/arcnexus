@@ -45,7 +45,7 @@ function assertObservation(state: Fixture, prompt: string, model: string): void 
   assert(argv.includes('mcp_servers={arcnexus={url="http://127.0.0.1:1234/mcp",required=true,default_tools_approval_mode="approve"}}'));
   assert(argv.includes('--ignore-user-config'));
   assert(!argv.includes('--no-project-doc'));
-  assert(!argv.some((arg) => /^(?:project_doc_max_bytes|project_doc_fallback_filenames|features\\.skills)=/.test(arg)));
+  assert(!argv.some((arg) => /^(?:project_doc_max_bytes|project_doc_fallback_filenames|features\.skills)=/.test(arg)));
 }
 
 /** Build the explicit fabricated request used for transport assertions. */
