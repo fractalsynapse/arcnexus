@@ -98,7 +98,7 @@ function assertAssignment(task: TaskContext, state: ReturnType<typeof scenario>)
 
 /** Confirm the selected activity and supplied task values appear in actual stdin. */
 function assertContext(input: string, goal: string, candidate: string, evidence: string) {
-  const activity = input.match(/## Activity\\nSource: [^\\n]+\\n\\n([\\s\\S]*?)\\n\\n## Role/);
+  const activity = input.match(/## Activity\nSource: [^\n]+\n\n([\s\S]*?)\n\n## Role/);
   assert(activity?.[1]);
   assert.deepEqual((parse(activity[1]) as { instructions: string[] }).instructions, [
     'Bind the verdict to the assembled-candidate digest.',
