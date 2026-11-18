@@ -71,7 +71,7 @@ function assertPrompt(actual: Observation, expected: ReturnType<Agent['prepareRe
     assert(body.length > 0, path);
     assert(!actual.input.includes(body), `Native guidance body leaked into request: ${path}`);
   }
-  assert(actual.input.includes('Source: .arc/architecture/components/direction.yaml (activities.planning)'));
+  assert.match(actual.input, /Source: .arc\/architecture\/components\/direction.yaml \(activities.planning\)/);
   assert.match(actual.input, /Source: Task inputs supplied at activation/);
   assert(actual.input.includes(goal));
   assert(actual.input.includes('Initial planning'));
