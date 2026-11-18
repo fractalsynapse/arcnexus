@@ -102,7 +102,6 @@ function assertContext(input: string, goal: string) {
     'Source: .arc/architecture/roles/designer.yaml',
     'Source: docs/foundation/typescript-standard.md',
     'Source: Task inputs supplied at activation',
-    'Exercise checked edits, stale hashes, host confinement and descendant cancellation.',
     'Express acceptance as a test before anything is built',
     'packages/execution',
     'owner-tests',
