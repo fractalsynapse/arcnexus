@@ -12,6 +12,7 @@ test('Codex harness forwards request bytes and retains native guidance discovery
   const executable = join(root, 'codex-fixture');
   const input = join(root, 'stdin');
   const args = join(root, 'args');
+  const cwd = join(root, 'cwd');
   writeFileSync(
     executable,
     `#!/bin/sh
