@@ -13,8 +13,13 @@ async function main() {
   await client.close();
   let input = '';
   for await (const chunk of process.stdin) input += chunk;
-  writeFileSync(process.env.PARITY_OBSERVATION!, JSON.stringify({ args, input, cwd: process.cwd(), tools }));
-  process.stdout.write(JSON.stringify({ type: 'item.completed', item: { type: 'agent_message', text: '{}' } }) + '\n');
+  writeFileSync(
+    process.env.PARITY_OBSERVATION!,
+    JSON.stringify({ args, input, cwd: process.cwd(), tools }),
+  );
+  process.stdout.write(
+    JSON.stringify({ type: 'item.completed', item: { type: 'agent_message', text: '{}' } }) + '\n',
+  );
 }
 
 await main();
