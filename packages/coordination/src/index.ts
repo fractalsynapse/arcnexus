@@ -172,6 +172,27 @@ export class Coordination {
     }
   }
 
+  /** Read a completed logical task outcome without taking the project writer lane. */
+  completedTask(remote: string, goal: string, scope: string) {
+    const database = this.open(remote);
+    try {
+      const row = database
+        .prepare(
+          `
+        SELECT json_extract(events.content, '$.outcome') AS outcome
+        FROM events JOIN runs ON events.run = runs.id
+        WHERE runs.task_id = ? AND runs.active = 0
+          AND json_extract(events.content, '$.outcome.kind') IN ('merged', 'satisfied')
+        ORDER BY events.id DESC LIMIT 1
+      `,
+        )
+        .get(taskIdentity(digest(goal), scope));
+      return typeof row?.outcome === 'string' ? row.outcome : undefined;
+    } finally {
+      database.close();
+    }
+  }
+
   /** Open the one repository store and apply additive migrations before use. */
   private open(remote: string) {
     const folder = join(this.storage, digest(remote));
@@ -189,7 +210,7 @@ export class Coordination {
   /** Inspect prior evidence and the current writer in the same admission transaction. */
   private claim(database: DatabaseSync, goal: string, fresh: boolean, scope?: string) {
     const goalID = digest(goal);
-    const task = scope === undefined ? goalID : digest(JSON.stringify([scope, goalID]));
+    const task = taskIdentity(goalID, scope);
     const prior = retained(database, task);
     const active = database
       .prepare('SELECT id, task_id, goal, lease FROM runs WHERE active = 1')
@@ -275,6 +296,11 @@ function retained(database: DatabaseSync, task: string): RetainedRun | undefined
 /** Compute the stable identity of a verified project or full goal text. */
 function digest(text: string) {
   return createHash('sha256').update(text).digest('hex');
+}
+
+/** Bind attempts to the same full goal and optional inventory scope. */
+function taskIdentity(goalID: string, scope?: string) {
+  return scope === undefined ? goalID : digest(JSON.stringify([scope, goalID]));
 }
 
 /** Mount the single store service using the trusted storage directory. */
