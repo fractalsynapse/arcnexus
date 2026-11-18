@@ -116,14 +116,7 @@ test('GW-26: rendered and structured requests agree for each actor', (t) => {
     assert.equal(json, run(...args, '--json'));
     const result = JSON.parse(json);
     assert.deepEqual(result, agent.inspect({ directory: root, component, activity }));
-    const marker = '--- Codex input ---\n';
-    const start = rendered.indexOf(marker);
-    assert(start >= 0);
-    assert.equal(rendered.slice(start + marker.length), result.request.input + '\n');
-    assert(rendered.slice(0, start).includes(JSON.stringify(result.request.options, null, 2)));
-    for (const value of result.placeholders as string[]) assert(rendered.includes(value));
-    assert(result.placeholders.includes('<goal>'));
-    assert(result.placeholders.includes('<worktree>'));
+    assertRenderedParity(rendered, result);
     assertSelectedContext(result.request.input, role);
   }
 });
