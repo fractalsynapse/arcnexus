@@ -55,3 +55,5 @@ Cancellation stops managed descendants and records one terminal result (EX-8).
 The host preserves checked edits and evidence before removing the task worktree;
 preservation alone does not establish acceptance. Assembled verification and
 independent review remain host operations.
+
+If staging advanced after the task branch was secured, see [prepared checkpoint recovery](prepared-checkpoint-recovery.md).

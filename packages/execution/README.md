@@ -80,14 +80,6 @@ observed result discharges the obligation. Successful correction permits complet
 and checkpointing of the activity; once completion is durably recorded, restart
 resumes at its successor rather than replaying the completed activity.
 
-## Prepared checkpoint recovery
-
-The [prepared checkpoint recovery intent](docs/prepared-checkpoint-recovery.md)
-records the first moved-staging scenario for #594 before implementation: compatible
-capture comparison, preserved checkpoint ancestry and checked bytes, refusal before
-publication, and fresh candidate checks and independent review. Open-PR recovery
-and changed authority are outside this increment.
-
 ## Checkpoint and workspace invariants
 
 Under EX-11 and EX-17, retry reuses the existing issue and issue branch and

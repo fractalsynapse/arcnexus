@@ -59,10 +59,18 @@ function binding(file: string | undefined, common: string) {
   return executable;
 }
 
+/** Match guidance files that native harness discovery can consume. */
+export function isNativeGuidance(path: string) {
+  return /(?:^|\/)(?:AGENTS(?:\.override)?\.md|\.agents\/skills\/)/.test(path);
+}
+
+/** Match target configuration that cannot override the trusted harness binding. */
+export function isTargetCodexConfig(path: string) {
+  return /(?:^|\/)\.codex\/config\.toml$/.test(path);
+}
+
 /** Keep native Codex discovery pinned to the approved input files during activation. */
 export function verifyNativeGuidance(capture: Capture, worktree: string) {
-  const isGuidance = (path: string) =>
-    /(?:^|\/)(?:AGENTS(?:\.override)?\.md|\.agents\/skills\/)/.test(path);
   const listed = git(
     worktree,
     'ls-files',
@@ -71,13 +79,10 @@ export function verifyNativeGuidance(capture: Capture, worktree: string) {
     '--exclude-standard',
     '-z',
   ).split('\0');
-  if (
-    existsSync(join(worktree, '.codex', 'config.toml')) ||
-    listed.some((path) => /(?:^|\/)\.codex\/config\.toml$/.test(path))
-  )
+  if (existsSync(join(worktree, '.codex', 'config.toml')) || listed.some(isTargetCodexConfig))
     throw new Error('Target Codex configuration is outside the captured harness binding');
-  const approved = new Set(capture.source.paths.filter(isGuidance));
-  for (const path of new Set([...listed.filter(isGuidance), ...approved])) {
+  const approved = new Set(capture.source.paths.filter(isNativeGuidance));
+  for (const path of new Set([...listed.filter(isNativeGuidance), ...approved])) {
     const absolute = join(worktree, path);
     if (
       !approved.has(path) ||

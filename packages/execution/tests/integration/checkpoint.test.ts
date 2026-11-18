@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { Architecture, type Capture } from '../../../architecture/src/index.js';
-import { GitHub } from '../../../collaboration/src/index.js';
+import { GitHub, type PublishedPull } from '../../../collaboration/src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
 import { activities, track, type Milestone, type Plan } from '../../../direction/src/index.js';
 import { Workflow, type WorkflowServices } from '../../../workflow/src/index.js';
@@ -48,6 +48,9 @@ function milestone(id: string): Milestone {
 /** Observe and mutate a fixture remote without reaching GitHub. */
 class CheckpointRemote extends GitHub {
   head?: string;
+  staging?: string;
+  published?: PublishedPull;
+  loseRecoveryPush = false;
   pushes: string[] = [];
   issues = 0;
   loseFirstPush = true;
@@ -75,12 +78,12 @@ class CheckpointRemote extends GitHub {
 
   /** Model a branch that has not reached the publication phase. */
   override async publication() {
-    return undefined;
+    return this.published;
   }
 
   /** Observe the current branch head even after a lost push response. */
-  override async remoteHead() {
-    return this.head;
+  override async remoteHead(branch: string) {
+    return branch === 'staging' ? this.staging : this.head;
   }
 
   /** Simulate GitHub accepting the first push before its response was lost. */
@@ -89,7 +92,11 @@ class CheckpointRemote extends GitHub {
     assert.equal(previous, this.head);
     this.pushes.push(head);
     this.head = head;
-    if (this.loseFirstPush && this.pushes.length === 1) throw new Error('Checkpoint push reply lost');
+    if (
+      (this.loseFirstPush && this.pushes.length === 1) ||
+      (this.loseRecoveryPush && this.pushes.length === 2)
+    )
+      throw new Error('Checkpoint push reply lost');
   }
 }
 
@@ -150,6 +157,7 @@ class RecoveryScenario {
     this.git('add', path);
     this.git('commit', '-m', 'Advance staging');
     const staging = this.git('rev-parse', 'HEAD');
+    this.remote.staging = staging;
     this.capture = { ...this.capture, source: { ...this.capture.source, revision: staging } };
     return { oldBase, checkpoint, staging };
   }
@@ -274,12 +282,14 @@ class RecoveryScenario {
     this.git('config', 'user.name', 'ArcNexus Fixture');
     this.git('config', 'user.email', 'arcnexus@example.invalid');
     writeFileSync(join(this.root, 'base.txt'), 'base');
+    writeFileSync(join(this.root, 'contracts.yaml'), 'contracts: []\n');
     this.git('add', '.');
     this.git('commit', '-m', 'base');
     return {
       source: { root: this.root, remote, revision: this.git('rev-parse', 'HEAD') },
       project: { contractRegistry: 'contracts.yaml' },
       contracts: [],
+      standards: {},
       components: {
         owner: {
           id: 'owner',
@@ -334,7 +344,10 @@ test('a secured checkpoint resumes on a disjoint staging advance', async (t) => 
   const stopped = await scenario.run();
   assert.equal(stopped.kind, 'failed');
   assert.match(stopped.reason, /Interrupted after secured checkpoint/);
-  const { oldBase, checkpoint, staging } = scenario.advance('staging-only.txt', 'staging contribution');
+  const { oldBase, checkpoint, staging } = scenario.advance(
+    'staging-only.txt',
+    'staging contribution',
+  );
   const checkedBlob = scenario.observe('rev-parse', `${checkpoint}:first.txt`);
   const resumed = await scenario.run();
   assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
@@ -348,4 +361,83 @@ test('a secured checkpoint resumes on a disjoint staging advance', async (t) => 
   assert.equal(scenario.observe('show', `${recovered}:staging-only.txt`), 'staging contribution');
   assert.notEqual(oldBase, staging);
   assert.ok(scenario.observe('rev-parse', `${recovered}^{tree}`));
+});
+
+for (const [path, reason] of [
+  ['first.txt', /overlaps a checked path/],
+  ['.arc/architecture/operations/owner-tests.yaml', /changed captured authority/],
+] as const) {
+  test(`moved staging refuses ${path} without moving the secured branch`, async (t) => {
+    const scenario = new RecoveryScenario(t, false, true);
+    assert.equal((await scenario.run()).kind, 'failed');
+    const { checkpoint } = scenario.advance(path, 'conflicting staging contribution');
+    const resumed = await scenario.run();
+    assert.equal(resumed.kind, 'failed');
+    assert.match(resumed.reason, reason);
+    assert.deepEqual(scenario.activations, ['first']);
+    assert.equal(scenario.observe('rev-parse', 'refs/heads/7-task'), checkpoint);
+    assert.equal(scenario.remote.head, checkpoint);
+    assert(!existsSync(scenario.worktrees[0]!));
+  });
+}
+
+test('a lost recovery push response reuses the retained merge checkpoint', async (t) => {
+  const scenario = new RecoveryScenario(t, false, true);
+  assert.equal((await scenario.run()).kind, 'failed');
+  const { checkpoint, staging } = scenario.advance('staging-only.txt', 'staging contribution');
+  scenario.remote.loseRecoveryPush = true;
+  const missed = await scenario.run();
+  assert.equal(missed.kind, 'failed');
+  assert.match(missed.reason, /Checkpoint push reply lost/);
+  const recovered = scenario.remote.head!;
+  assert.equal(scenario.observe('merge-base', recovered, checkpoint), checkpoint);
+  assert.equal(scenario.observe('merge-base', recovered, staging), staging);
+  assert.equal((await scenario.run()).kind, 'merged');
+  assert.equal(scenario.remote.pushes.length, 3);
+  assert.deepEqual(scenario.activations, ['first', 'second']);
+});
+
+test('moved staging does not reconcile a branch with an existing pull request', async (t) => {
+  const scenario = new RecoveryScenario(t, false, true);
+  assert.equal((await scenario.run()).kind, 'failed');
+  const { checkpoint } = scenario.advance('staging-only.txt', 'staging contribution');
+  scenario.remote.published = {
+    url: 'https://github.com/fixture/repo/pull/1',
+    head: checkpoint,
+    target: 'staging',
+    state: 'open',
+    commit: null,
+  };
+  const held = await scenario.run();
+  assert.equal(held.kind, 'failed');
+  assert.match(held.reason, /existing pull request/);
+  assert.equal(scenario.remote.head, checkpoint);
+  assert.equal(scenario.observe('rev-parse', 'refs/heads/7-task'), checkpoint);
+  assert.deepEqual(scenario.activations, ['first']);
+});
+
+test('proposed registry entries can advance without changing locked authority', async (t) => {
+  const scenario = new RecoveryScenario(t, false, true);
+  assert.equal((await scenario.run()).kind, 'failed');
+  const { checkpoint, staging } = scenario.advance(
+    'contracts.yaml',
+    'contracts:\n- id: fixture/proposed\n  stage: proposed\n',
+  );
+  assert.equal((await scenario.run()).kind, 'merged');
+  const recovered = scenario.observe('rev-parse', 'refs/heads/7-task');
+  assert.equal(scenario.observe('merge-base', recovered, checkpoint), checkpoint);
+  assert.equal(scenario.observe('merge-base', recovered, staging), staging);
+});
+
+test('moved staging holds when the observed issue branch diverges', async (t) => {
+  const scenario = new RecoveryScenario(t, false, true);
+  assert.equal((await scenario.run()).kind, 'failed');
+  const { checkpoint, staging } = scenario.advance('staging-only.txt', 'staging contribution');
+  scenario.remote.head = staging;
+  const held = await scenario.run();
+  assert.equal(held.kind, 'failed');
+  assert.match(held.reason, /observed issue branch differs/);
+  assert.equal(scenario.observe('rev-parse', 'refs/heads/7-task'), checkpoint);
+  assert.equal(scenario.remote.head, staging);
+  assert.equal(scenario.remote.pushes.length, 1);
 });
