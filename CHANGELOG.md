@@ -10,6 +10,7 @@
 ### Fixed
 
 - Retry a temporary GitHub server error while observing a publication or its checks (#594).
+- Recover when a steward mistakenly waits for an owner check that it already queued (#594).
 
 - Feed revision-bound run observations back into goal planning, and preserve objective refinement and Planner recovery across repeated turns (#594).
 
