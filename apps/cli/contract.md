@@ -10,7 +10,11 @@ delegates structured inspection and task operations to the shared
 `arcnexus inspect <component> <activity>` and `arcnexus task run "<goal>"` for
 the project resolved from the working directory. Bare `arcnexus task run`
 loads one round from the project goal inventory and evaluates each goal in priority
-order through the same task service.
+order through the same task service. `arcnexus task plan [<objective>]` uses
+that task lane, progress, cancellation and output contract. The explicit form
+records the original human objective and offers resumable clarification. The bare
+form maps the captured project and may report no inventory change. Changes to
+active goals require approval of the exact diff and verified staging delivery.
 
 `--json` is a general CLI output option, accepted once before the command or
 after its positional arguments. It selects structured JSON on stdout. Commands
@@ -41,7 +45,11 @@ prompt in the rendered output byte for byte.
 
 The foreground task streams progress and evidence references, asks genuine human
 questions, and honors SIGINT. Exit 0 represents the verified staging merge for a single goal, or a completed
-round in which each goal has fresh passing measure evidence or a verified merge.
+round in which every goal has a Director assessment supported by evidence for the
+evaluated revision or a verified merge. The Director can plan applicable checks
+through the existing activity mappings. Assembled-candidate checks remain required
+for changes. A completed mapping or an already recorded objective may exit 0
+without a new staging merge.
 Exit 1 represents a failed or blocked run, exit 2 invalid or unavailable input,
 and exit 130 cancellation. Refuse a second active task in the same project. Other
 verbs, option modes and launch surfaces are reserved for later qualification.
@@ -51,7 +59,7 @@ verbs, option modes and launch surfaces are reserved for later qualification.
 | ID | Observation |
 | --- | --- |
 | GW-1 | A task launched from a nested directory resolves the project, shows progress and exits 0 only after verified staging integration. |
-| GW-2 | Bare `task run` evaluates the goal inventory sequentially, reporting each result. A missing or invalid inventory, empty explicit goal, or second positional is exit 2 without admitting a task. |
+| GW-2 | Bare `task run` evaluates the goal inventory sequentially, reporting each result. Owner-free goals may complete with revision-applicable Director evidence or a verified merge, without a preplanning owner test. A missing or invalid inventory, empty explicit goal, or second positional is exit 2 without admitting a task. |
 | GW-3 | `task run` while another goal holds the lane is exit 2 naming the active goal; no queue row is created. |
 | GW-5 | Stopping through foreground SIGINT retains checked edits, the branch and evidence. Execution removes its worktree after preservation. A later invocation observes any uncertain effect before acting. |
 | GW-6 | An unanswered human-only question results in exit 1 with a question and evidence reference. |
@@ -63,11 +71,12 @@ verbs, option modes and launch surfaces are reserved for later qualification.
 | GW-18 | A runtime-only value appears as a named placeholder and is never filled with invented content. The rendered header and the JSON result both list the placeholders used. |
 | GW-19 | The foreground task prompts for a genuine human gate and records the answer as evidence. |
 | GW-20 | `inspect` with an unknown component or an activity outside the declared set is exit 2 naming the valid values. |
-| GW-22 | Both commands delegate through the same structured SDK available to in-process callers. The CLI alone translates terminal arguments, progress and results into its transport. |
+| GW-22 | Inspection, task execution and goal planning delegate through the same structured SDK available to in-process callers. The CLI alone translates terminal arguments, progress and results into its transport. |
 | GW-23 | Bare `inspect`, an invocation with only one positional argument, and an invocation with extra arguments each exit 2 without effects. |
 | GW-24 | `inspect director planning` and `inspect reviewer assessment` resolve the captured special actor bindings. `inspect direction planning` remains a valid component and activity selection. |
 | GW-25 | Inspection prints the full ordered context and request from the activation builder. With matching inputs the payload matches the Codex adapter's input. Before admission it prints `<goal>` and names unavailable task-only values. |
 | GW-26 | Both permitted placements of `--json` return the same structured inspection result. Its `request.input` equals the default rendered prompt. Duplicate or misplaced flags exit 2 with stderr diagnostics and empty stdout. |
+| GW-27 | Bare `task plan` maps the captured project. Explicit `task plan "<objective>"` records the exact submission and can resume a clarification. Inventory edits require approval of the exact diff before reviewed staging delivery. |
 
 ## Deferred
 

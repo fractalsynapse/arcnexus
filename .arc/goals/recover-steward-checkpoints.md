@@ -1,6 +1,5 @@
 ---
 priority: 10
-owner: execution
 ---
 
 # Preserve resumable steward checkpoints

@@ -1,6 +1,5 @@
 ---
 priority: 20
-owner: team
 ---
 
 # Maintain complete and unique component ownership

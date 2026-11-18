@@ -1,6 +1,5 @@
 ---
 priority: 50
-owner: delivery
 ---
 
 # Verify staging delivers the independently reviewed tree

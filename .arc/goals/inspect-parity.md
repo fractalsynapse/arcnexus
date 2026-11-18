@@ -1,6 +1,5 @@
 ---
 priority: 30
-owner: cli-app
 ---
 
 # Keep inspection and live Agent requests in parity

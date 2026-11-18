@@ -1,6 +1,5 @@
 ---
 priority: 40
-owner: foundation
 ---
 
 # Keep owner-test selection aligned with ownership
