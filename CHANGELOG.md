@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Repair an invalid Reviewer evidence citation in the same assessment,
+  preserving the candidate, criteria and captured check results (#579).
+
 ## [0.3.0]
 
 ### Added
