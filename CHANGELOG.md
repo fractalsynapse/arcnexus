@@ -9,6 +9,8 @@
 
 ### Fixed
 
+- Include the retained question evidence when an activity pauses for a human answer (#587).
+
 - Repair an invalid Reviewer evidence citation in the same assessment,
   preserving the candidate, criteria and captured check results (#579).
 

@@ -60,7 +60,15 @@ export interface TaskSession {
 }
 
 /** Hold the current task position while the requested human answer is unavailable. */
-export class ClarificationRequired extends Error {}
+export class ClarificationRequired extends Error {
+  /** Carry the immutable question artifact into the blocked task outcome. */
+  constructor(
+    message: string,
+    readonly evidence: readonly string[],
+  ) {
+    super(message);
+  }
+}
 
 export type Interrupted = Extract<TaskOutcome, { reason: string }>;
 
@@ -81,7 +89,11 @@ export function interruptedRun(error: unknown, signal: AbortSignal, evidence?: r
     : error instanceof ClarificationRequired
       ? 'blocked'
       : 'failed';
-  return stopped(kind, reason, evidence);
+  const refs =
+    error instanceof ClarificationRequired
+      ? [...new Set([...(evidence ?? []), ...error.evidence])]
+      : evidence;
+  return stopped(kind, reason, refs);
 }
 
 export type ActivityOutcome =
