@@ -82,7 +82,7 @@ function assertPrompt(actual: Observation, expected: ReturnType<Agent['prepareRe
 function assertNativeDiscovery(actual: Observation) {
   assert(actual.args.includes('--ignore-user-config'));
   assert(!actual.args.includes('--no-project-doc'));
-  assert(!actual.args.some((arg) => /^(?:project_doc_max_bytes|project_doc_fallback_filenames|features\\.skills)=/.test(arg)));
+  assert(!actual.args.some((arg) => /^(?:project_doc_max_bytes|project_doc_fallback_filenames|features\.skills)=/.test(arg)));
 }
 
 /** Compare effective process settings and MCP schemas to the shared builder. */
