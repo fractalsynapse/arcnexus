@@ -9,6 +9,6 @@ view of captured architecture. Keep ordering deterministic. Report uncovered
 paths and overlapping ownership explicitly, even when a roster filter excludes
 one of the involved owners. A supplier request grants no edit capability.
 
-**Success measures.** Team's owner suite exercises unique, uncovered and
+**Success measures.** Ownership scenarios exercise unique, uncovered and
 colliding paths, plus deterministic filtering and ordering. Ownership under an
 unchanged capture remains stable across calls.

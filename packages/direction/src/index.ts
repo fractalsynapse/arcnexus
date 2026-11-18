@@ -66,10 +66,8 @@ export type Feedback =
   RevisionFeedback | { kind: 'plan-repair'; diagnostic: string; original?: RevisionFeedback };
 
 export interface StandingGoalEvidence {
-  readonly owner: string;
   readonly revision: string;
-  readonly status: number | null | 'not-applicable';
-  readonly log: string;
+  readonly source: Capture['source'];
   readonly recentChanges: readonly string[];
 }
 

@@ -55,13 +55,14 @@ test('round identities distinguish fresh evaluation from retrying identical goal
   const store = new Coordination(directory);
   const remote = 'https://example.invalid/org/repo.git';
   const inventory = 'one stable inventory';
-  const first = store.round(remote, inventory);
+  const first = store.round(remote, () => inventory).id;
   const run = store.admit(remote, 'Identical goal text', true, `round:${first}:goal`);
   assert(run && 'record' in run);
   run.record({ issue: '10', position: { completed: 1, activities: {} } });
   run.finish({ kind: 'cancelled' });
   run.close();
-  assert.equal(store.round(remote, inventory), first);
+  const changed = () => 'changed inventory';
+  assert.deepEqual(store.round(remote, changed), { id: first, inventory });
   const resumed = store.admit(remote, 'Identical goal text', true, `round:${first}:goal`);
   assert(resumed && 'record' in resumed);
   assert.equal(resumed.taskID, run.taskID);
@@ -69,8 +70,9 @@ test('round identities distinguish fresh evaluation from retrying identical goal
   resumed.finish({ kind: 'merged' });
   resumed.close();
   store.completeRound(remote, first);
-  const second = store.round(remote, inventory);
-  const next = store.admit(remote, 'Identical goal text', true, `round:${second}:goal`);
+  const fresh = store.round(remote, changed);
+  assert.equal(fresh.inventory, 'changed inventory');
+  const next = store.admit(remote, 'Identical goal text', true, `round:${fresh.id}:goal`);
   assert(next && 'record' in next);
   assert.equal(next.goalID, run.goalID);
   assert.notEqual(next.taskID, run.taskID);

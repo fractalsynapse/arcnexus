@@ -6,6 +6,12 @@ declare module 'cordis' {
   interface Context {
     commands: {
       inspect: Context['agent']['inspect'];
+      planTask(
+        directory: string,
+        objective: string | undefined,
+        observer: TaskObserver,
+        signal: AbortSignal,
+      ): ReturnType<Context['workflow']['run']>;
       runTask: Context['workflow']['run'];
       runRound: Context['workflow']['round'];
     };
@@ -18,6 +24,17 @@ export const commandsPlugin = {
   apply(context: Context) {
     context.provide('commands', {
       inspect: (input: InspectionInput) => context.agent.inspect(input),
+      planTask: (directory, objective, observer, signal) =>
+        context.workflow.run(
+          {
+            directory,
+            goal: objective ?? 'Map the project’s standing goals',
+            planning: objective === undefined ? 'exploration' : 'objective',
+            scope: 'plan:objective',
+          },
+          observer,
+          signal,
+        ),
       runTask: (input: TaskInput, observer: TaskObserver, signal: AbortSignal) =>
         context.workflow.run(input, observer, signal),
       runRound: (directory, observer, signal) =>

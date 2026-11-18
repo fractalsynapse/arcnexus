@@ -137,16 +137,11 @@ the committed reports.
 
 Run `arcnexus task run` without a goal to evaluate the project's captured
 [goal inventory](../../.arc/goals/). Markdown frontmatter supplies the numeric
-priority and the component whose declared owner suite measures the goal.
-Requirements and success measures remain in the Markdown body. Lower priorities
-run first, with stable file IDs breaking ties. Each goal verifies the current
-staging head and reuses the local Git object when available.
-The Director assesses the full authored goal against current staging, recent
-changes and the owner-test evidence. The Director can plan work even with a
-passing suite. The host attaches its actual owner check log to the Director's
-explicit assessment. If the suite passes and the Director records that no work is
-warranted, the round records the assessment and continues. Engineering work
-uses the normal task loop and stops the round if it cannot complete.
+priority. Requirements and observed measures are in the Markdown body. Lower
+priorities run first, with stable file IDs breaking ties. An interrupted round
+keeps its original goal inventory. The Director evaluates each goal on the
+current staging revision, citing captured evidence or planning the steward work
+and checks needed to establish the outcome.
 
 Direction opens or reuses the issue after the plan is accepted. Execution
 prepares the issue branch and private worktree before the first steward and
@@ -157,3 +152,18 @@ verified checkpoint survive worktree removal.
 
 Resumed activities can read earlier evidence for the same task. The host
 provides self-review a diff against the captured staging base.
+
+## Map goals and record objectives
+
+Use `arcnexus task plan` to rate all standing goals for project alignment and
+evidence. The report links findings to the captured revision. Use
+`arcnexus task plan "<objective>"` to submit and preserve the exact text. If the
+Planner needs clarification, answer at the terminal or rerun the exact
+submission to continue.
+
+The gateway displays the exact proposed goal changes for approval. Reply
+`approve` to authorize the shown bytes, or `skip` to keep the current inventory.
+The submitted objective can be recorded in either case. Approved Markdown
+changes pass through checked edits, candidate checks, independent review and
+verified staging integration. Use `--json` for the structured result and artifact
+locations.

@@ -23,9 +23,14 @@ async function main(args: string[]) {
   const { positionals, json } = parseOutputOption(args);
   const [command, component, activity, ...extra] = positionals;
   if (command === 'task') {
-    if (component !== 'run' || (activity !== undefined && !activity.trim()) || extra.length)
-      throw new Error('Usage: arcnexus task run ["<goal>"]');
-    return runTask(await mountCommands(true), activity, json);
+    const usage = component === 'plan' ? 'plan ["<objective>"]' : 'run ["<goal>"]';
+    if (
+      (component !== 'run' && component !== 'plan') ||
+      (activity !== undefined && !activity.trim()) ||
+      extra.length
+    )
+      throw new Error(`Usage: arcnexus task ${usage}`);
+    return runTask(await mountCommands(true), activity, json, component);
   }
   if (command !== 'inspect')
     throw new Error(`Command unavailable in this build: ${command ?? '<missing>'}`);

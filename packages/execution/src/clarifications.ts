@@ -41,6 +41,21 @@ export class Clarifications {
     }
   }
 
+  /** Read answered questions for the original activation without including other gates. */
+  answers(data: Assignment) {
+    return [...this.retained(inboxIdentity(this.task, this.selection, data)).values()].flatMap(
+      ({ question, answer }) => (answer === undefined ? [] : [{ question, answer }]),
+    );
+  }
+
+  /** Use the ordinary durable conversation for a host-owned approval question. */
+  async decide(data: Assignment, question: string) {
+    await this.run(data, () =>
+      Promise.resolve(this.answers(data).length ? undefined : { kind: 'question', question }),
+    );
+    return this.answers(data)[0]!.answer;
+  }
+
   /** Rebuild the open and answered questions for this exact scope. */
   private retained(scope: string) {
     const answers = new Map<string, Clarification>();

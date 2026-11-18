@@ -527,7 +527,7 @@ contracts:
   dependsOn:
   - arcnexus/agent
   - arcnexus/workflow
-  digest: 458e1a979f7d0f6fef92f1fc8e2baa789a9b1258192dddfd5ef576c5b954d5b3
+  digest: ca9ae2188a36be71339092ae8d9cf04fab7ca393a374f8959f6082a11a6a12f2
   scenarios: 3
 - id: arcnexus/manager
   type: library
@@ -583,7 +583,7 @@ contracts:
   - arcnexus/coordination
   - arcnexus/verification
   - arcnexus/delivery
-  digest: ece03f0ac8bb01254cc0fc99d98234a5812a4b4dc09884966999c35af8ec61ca
+  digest: f97bdd534ce7d7f53dbfb9b95bf0e02d8471f7f2507efcb1c03c6278131bc91c
   scenarios: 4
 - id: arcnexus/planner
   type: library
@@ -593,4 +593,5 @@ contracts:
   dependsOn:
   - arcnexus/agent
   - arcnexus/workflow
+  digest: 1ba897e77261944c417e0230173e93d686d8de768a01f2c95352b2a39be5f22e
   scenarios: 4

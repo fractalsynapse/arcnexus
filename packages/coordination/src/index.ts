@@ -112,19 +112,20 @@ export class Coordination {
     }
   }
 
-  /** Create or reuse the unfinished round for this exact ordered inventory. */
-  round(remote: string, inventory: string): number {
+  /** Reuse the oldest unfinished round or capture the inventory for a new one. */
+  round(remote: string, captureInventory: () => string) {
     const database = this.open(remote);
     try {
       database.exec('BEGIN IMMEDIATE');
       const previous = database
-        .prepare('SELECT id FROM rounds WHERE inventory = ? AND finished = 0')
-        .get(inventory);
+        .prepare('SELECT id, inventory FROM rounds WHERE finished = 0 ORDER BY id LIMIT 1')
+        .get();
+      const inventory = previous ? String(previous.inventory) : captureInventory();
       const id =
         previous?.id ??
         database.prepare('INSERT INTO rounds(inventory) VALUES (?)').run(inventory).lastInsertRowid;
       database.exec('COMMIT');
-      return Number(id);
+      return { id: Number(id), inventory };
     } finally {
       database.close();
     }

@@ -81,13 +81,15 @@ function directorAssignment(feedback?: Feedback, standing?: StandingGoalEvidence
   return {
     ...assignment,
     standingGoal: {
-      ...standing,
+      revision: standing.revision,
+      recentChanges: standing.recentChanges,
       instructions:
-        'Assess the full authored goal and its success measures on the captured staging revision. Read the retained check log and inspect the relevant implementation, tests, and recent changes. A passing suite is evidence. Look for uncovered requirements, incorrect tests, regressions introduced by other goals, and changes in the goal itself. If you find an actionable gap, return a bounded plan and name the observation that justifies it. When the measure passes and you find no concrete work, return satisfied with a concise rationale. The host attaches the measured owner check log. Ask a question when a genuine human decision is needed.',
+        'Assess all measures on this staging revision using local MCP. Look for uncovered requirements, stale tests, and regressions from other goals. Distinguish test source from a verified execution result. If current evidence cannot establish a measure, plan the applicable checks through existing steward activities. Return satisfied only with a rationale and evidence for each measure. Quote exact excerpts from tracked files that actually establish the outcome. Ask a human question when a genuine decision is needed.',
     },
     satisfied: {
       kind: 'satisfied',
-      summary: 'Why the requirements and measures warrant no work on this revision',
+      summary: 'Why each requirement and measure warrants no work on this revision',
+      evidence: [{ path: 'tracked file path', quote: 'exact meaningful excerpt from the file' }],
     },
   };
 }

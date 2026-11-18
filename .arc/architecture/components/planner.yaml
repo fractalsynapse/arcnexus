@@ -74,7 +74,7 @@ activities:
     - request-supplier
     standards: []
   planning:
-    role: director
+    role: planner
     profile: gpt-sol
     instructions:
     - Map standing outcomes to captured project sources. Rate alignment and evidence independently.

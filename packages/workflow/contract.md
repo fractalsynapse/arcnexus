@@ -29,6 +29,13 @@ follows the accepted sequence and does not create a second scheduler or store.
 workflow. An accepted staging result closes the task. Cancellation and blocking
 gates preserve the observed position and evidence.
 
+`task plan` uses the same admission, cancellation, clarification and delivery
+boundaries. [Planner](../planner/contract.md) evaluates project sources or the
+human objective. A read-only mapping completes at the captured revision.
+When the run has records to persist, Workflow sends the exact journaled changes
+through Execution and independent review. A rejected Planner candidate stays
+held for scrutiny of the approved bytes.
+
 ## Project and task loops
 
 Idea refinement, scaffolding, project instructions and specialized skills shape

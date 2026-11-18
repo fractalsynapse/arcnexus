@@ -5,9 +5,15 @@ and captured at admission. The capture pins the approved ownership, policies,
 checks and trusted plugin composition. [Contract locks](../docs/interface/registry.yaml)
 record accepted interface bytes.
 
-The project owns [standing goals](goals/). A goal file supplies a priority,
-accountable owner, requirements and observable measures. Bare `arcnexus task run`
-evaluates one round in priority order.
+[Planner](../packages/planner/contract.md) owns [standing goals](goals/) and
+`objectives/`. Goal files declare a priority, durable requirements and observable
+measures. Bare `arcnexus task run` evaluates a round in priority order. The
+Director chooses stewards from the current catalog when work is needed.
+
+Bare `arcnexus task plan` compares goals against project sources and evidence.
+Pass an objective to preserve its verbatim submission and any clarification
+answers under a stable ID. Objective files link to existing or proposed goals.
+Their filenames and frontmatter form the objective index.
 
 [Direction](../packages/direction/contract.md) owns `.arc/plans/` and creates
 plan content using the [template](architecture/plan-template.md).
