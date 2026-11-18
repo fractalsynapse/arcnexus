@@ -170,7 +170,7 @@ async function stewardAssignment(
       currentChecks.push(await task.check(id, signal));
   }
   return {
-    ...responseShape(milestone.id, scope.activity !== 'review' && Boolean(task.formatPreview)),
+    ...responseShape(scope.activity !== 'review' && Boolean(task.formatPreview)),
     ...supplierContext(task.history(), milestone.id),
     answerRequired: supplierAnswerRequired(task.history(), milestone, scope.activity),
     ...(finding ? { finding } : {}),
@@ -181,11 +181,11 @@ async function stewardAssignment(
 }
 
 /** Describe the bounded steward responses carried by the task prompt. */
-function responseShape(milestone: string, formatter: boolean) {
+function responseShape(formatter: boolean) {
   return {
     instructions:
-      'Use the mapped local MCP tools for project reads, checked edits and owner checks. The read-only filesystem is deliberate. Make authorized changes through the mapped checked-edit MCP tool even when direct writes are unavailable. Attempt that operation for an owned path before reporting that edits are blocked, and report any exact refusal. A successful edit is already recorded. Queued checks run after your completed response. A queued check is a request, and the host records its result or routes its failure. Put any narration in summary and omit checks from your reply. If another edit is refused, correct that call or use request-supplier. End with one JSON object with kind completed, or kind blocked with a reason. Include answer in a completed response when answering a supplier question. Read retained evidence with read-file. Checks in currentChecks are host-managed. Preserve accepted work when correcting a diagnostic. Only the host performs assembled verification and delivery.',
-    requests: { supplierMilestone: milestone, formatAvailable: formatter },
+      'Use the mapped local MCP tools for project reads, checked edits and owner checks. The read-only filesystem is deliberate. Make authorized changes through the mapped checked-edit MCP tool even when direct writes are unavailable. Attempt that operation for an owned path before reporting that edits are blocked, and report any exact refusal. A successful edit is already recorded. Queued checks run after your completed response. A queued check is a request, and the host records its result or routes its failure. Put any narration in summary and omit checks from your reply. If another edit is refused, correct the call or request a distinct supplier contribution. Link its accepted milestone when known, or give the new contribution its own ID. End with one JSON object with kind completed, or kind blocked with a reason. Include answer in a completed response when answering a supplier question. Read retained evidence with read-file. Checks in currentChecks are host-managed. Preserve accepted work when correcting a diagnostic. Only the host performs assembled verification and delivery.',
+    requests: { formatAvailable: formatter },
   };
 }
 
