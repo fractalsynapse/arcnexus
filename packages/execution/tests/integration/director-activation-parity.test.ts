@@ -73,6 +73,11 @@ exec "${process.execPath}" "${fixture}" "$@"
   };
   const options = expected.request.options;
   assert.equal(actual.input, expected.request.input);
+  for (const path of ['AGENTS.md', '.agents/skills/arcnexus-release/SKILL.md']) {
+    const body = capture.source.read(path);
+    assert(body.length > 0, path);
+    assert(!actual.input.includes(body), `Native guidance body leaked into request: ${path}`);
+  }
   assert.match(
     actual.input,
     /Source: .arc\/architecture\/components\/direction.yaml \(activities.planning\)/,
