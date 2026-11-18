@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
+import { parse } from 'yaml';
 import { Agent } from '../../../agent/src/index.js';
 import {
   Architecture,
@@ -125,6 +126,12 @@ test('Reviewer assessment activation forwards the shared request and mapped tool
     tools: unknown[];
   };
   assertInvocation(actual, expected);
+  const activity = actual.input.match(/## Activity\nSource: [^\n]+\n\n([\s\S]*?)\n\n## Role/);
+  assert(activity?.[1]);
+  assert.deepEqual((parse(activity[1]) as { instructions: string[] }).instructions, [
+    'Bind the verdict to the assembled-candidate digest.',
+    'Return any transferable lesson with the execution evidence that supports it.',
+  ]);
   for (const value of [
     'Source: .arc/architecture/components/reviewer.yaml (activities.assessment)',
     'Source: .arc/architecture/roles/reviewer.yaml',
