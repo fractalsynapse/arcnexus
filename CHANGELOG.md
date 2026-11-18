@@ -9,6 +9,8 @@
 
 ### Fixed
 
+- Resume the interrupted goal in a standing round using the earlier goals’ recorded results (#609).
+
 - Keep a steward active when its supplier request points to its own milestone (#607).
 
 - Preserve an authorized queued check when a steward mentions it in its response (#594).

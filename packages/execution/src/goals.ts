@@ -3,7 +3,7 @@ import type { Architecture, Capture } from '../../architecture/src/index.js';
 import type { HostConfig } from './host-config.js';
 import type { Coordination, Journal } from '../../coordination/src/index.js';
 import { goalInventory } from '../../planner/src/inventory.js';
-import type { GoalRound, TaskInput } from '../../workflow/src/index.js';
+import type { CompletedGoalOutcome, GoalRound, TaskInput } from '../../workflow/src/index.js';
 import { verifiedGoalRun } from './goal-evidence.js';
 import { git, remoteRead } from './git.js';
 
@@ -24,7 +24,15 @@ export function goalRound(
     return JSON.stringify(goals);
   });
   const goals = JSON.parse(inventory) as GoalRound['goals'];
-  return { id, goals, finish: () => coordination.completeRound(remote, id) };
+  return {
+    id,
+    goals,
+    completed: ({ body }, scope) => {
+      const result = coordination.completedTask(remote, body, scope);
+      if (result !== undefined) return JSON.parse(result) as CompletedGoalOutcome;
+    },
+    finish: () => coordination.completeRound(remote, id),
+  };
 }
 
 /** Observe staging and materialize its exact commit only when it is absent locally. */

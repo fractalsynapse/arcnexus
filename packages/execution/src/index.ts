@@ -248,9 +248,10 @@ export class HostTask implements TaskSession {
     if (await this.provider(signal).publication(this.branch))
       throw new Error('An existing pull request must match a retained accepting publication');
     const ref = `refs/heads/${this.branch}`;
+    await reconcileCheckpoint(this, signal);
+    if (this.recoverWorkspace()) await reconcileCheckpoint(this, signal);
     await recoverPrepared(this, signal);
     await reconcileCheckpoint(this, signal);
-    if (this.recoverWorkspace(base)) await reconcileCheckpoint(this, signal);
     const { root } = this.capture.source;
     if (!git(root, 'for-each-ref', '--format=%(objectname)', ref))
       git(root, 'update-ref', ref, base, '0'.repeat(40));
@@ -263,14 +264,18 @@ export class HostTask implements TaskSession {
   }
 
   /** Preserve and remove an abandoned task-owned workspace before reconstructing it. */
-  private recoverWorkspace(base: string) {
+  private recoverWorkspace() {
     const previous = this.observations<{ workspace?: number; baseRevision?: string }>().findLast(
       ({ workspace }) => workspace !== undefined,
     );
     if (!previous?.workspace) return;
     const path = join(this.location(previous.workspace), 'worktree');
     if (!existsSync(path)) return;
-    if (previous.baseRevision !== base) throw new Error('The retained workspace base changed');
+    if (
+      !previous.baseRevision ||
+      git(path, 'merge-base', 'HEAD', previous.baseRevision) !== previous.baseRevision
+    )
+      throw new Error('The retained workspace base changed');
     if (git(path, 'branch', '--show-current') !== this.branch)
       throw new Error('The abandoned worktree belongs to a different branch');
     this.worktree = path;

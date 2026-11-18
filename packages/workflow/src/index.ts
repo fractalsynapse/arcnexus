@@ -13,6 +13,7 @@ import { TaskRun } from './task-run.js';
 export type {
   ActivityCheckpoint,
   ActivityOutcome,
+  CompletedGoalOutcome,
   GoalRound,
   RoundOutcome,
   Observation,
@@ -76,16 +77,10 @@ export class Workflow {
     for (const goal of round.goals) {
       if (signal.aborted) break;
       observer.progress({ phase: 'planning', message: `Round ${round.id} · ${goal.id}` });
-      const outcome = await this.run(
-        {
-          directory,
-          goal: goal.body,
-          scope: `round:${round.id}:${goal.id}`,
-          standing: true,
-        },
-        observer,
-        signal,
-      );
+      const scope = `round:${round.id}:${goal.id}`;
+      const outcome =
+        round.completed?.(goal, scope) ??
+        (await this.run({ directory, goal: goal.body, scope, standing: true }, observer, signal));
       goals.push({ id: goal.id, outcome });
       if (outcome.kind !== 'merged' && outcome.kind !== 'satisfied') break;
     }
