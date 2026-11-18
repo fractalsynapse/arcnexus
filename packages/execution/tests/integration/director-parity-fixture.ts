@@ -19,7 +19,7 @@ async function main() {
     JSON.stringify({ args, input, cwd: process.cwd(), tools }),
   );
   process.stdout.write(
-    JSON.stringify({ type: 'item.completed', item: { type: 'agent_message', text: '{}' } }) + '\n',
+    JSON.stringify({ type: 'item.completed', item: { type: 'agent_message', text: process.env.PARITY_RESPONSE ?? '{}'  } }) + '\n',
   );
 }
 
