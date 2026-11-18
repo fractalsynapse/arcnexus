@@ -1,5 +1,6 @@
 import { accessSync, constants, existsSync, lstatSync, readFileSync, realpathSync } from 'node:fs';
-import { isAbsolute, join } from 'node:path';
+import { homedir } from 'node:os';
+import { isAbsolute, join, resolve } from 'node:path';
 import { parse } from 'yaml';
 import type { Capture } from '../../architecture/src/index.js';
 import { GitHub } from '../../collaboration/src/index.js';
@@ -85,4 +86,9 @@ export function verifyNativeGuidance(capture: Capture, worktree: string) {
     )
       throw new Error(`Captured project guidance differs from the native discovery view: ${path}`);
   }
+}
+
+/** Choose the default external application state directory. */
+export function applicationStorage() {
+  return resolve(process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state'), 'arcnexus');
 }

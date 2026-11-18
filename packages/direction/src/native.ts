@@ -83,13 +83,21 @@ function directorAssignment(feedback?: Feedback, standing?: StandingGoalEvidence
     standingGoal: {
       revision: standing.revision,
       recentChanges: standing.recentChanges,
+      verifiedRun: standing.run,
+      requiresRun: standing.requiresRun,
       instructions:
-        'Assess all measures on this staging revision using local MCP. Look for uncovered requirements, stale tests, and regressions from other goals. Distinguish test source from a verified execution result. If current evidence cannot establish a measure, plan the applicable checks through existing steward activities. Return satisfied only with a rationale and evidence for each measure. Quote exact excerpts from tracked files that actually establish the outcome. Ask a human question when a genuine decision is needed.',
+        'Assess all measures on this staging revision using local MCP. Look for uncovered requirements, stale tests, and regressions from other goals. Distinguish test source from a verified execution result. If current evidence cannot establish a measure, plan the applicable checks through existing steward activities. Return satisfied only with a rationale and evidence for each measure. Quote exact excerpts from tracked files that actually establish the outcome. For observed runs, cite the matching verified run by id and explain which check or independently reviewed criterion supports a specific measure. If requiresRun is true, a valid verified run citation is required. A passing repository suite does not prove an unexercised live behavior. Ask a human question when a genuine decision is needed.',
     },
     satisfied: {
       kind: 'satisfied',
       summary: 'Why each requirement and measure warrants no work on this revision',
-      evidence: [{ path: 'tracked file path', quote: 'exact meaningful excerpt from the file' }],
+      evidence: [
+        { path: 'tracked file path', quote: 'exact meaningful excerpt from the file' },
+        {
+          run: 'verified run id',
+          operation: 'observed operation id, or use criterion or delivery: true',
+        },
+      ],
     },
   };
 }

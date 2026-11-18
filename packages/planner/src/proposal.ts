@@ -3,6 +3,7 @@ import {
   type Capture,
   type RevisionCitation,
 } from '../../architecture/src/index.js';
+import { citesVerifiedRun, type VerifiedGoalRun } from '../../execution/src/index.js';
 import { readGoal, recordID } from './inventory.js';
 
 const alignments = ['strong', 'partial', 'unmapped'] as const;
@@ -15,6 +16,7 @@ export interface Rating {
   reason: string;
   sources: RevisionCitation[];
   observations: RevisionCitation[];
+  run?: VerifiedGoalRun;
 }
 
 export interface GoalChange {
@@ -37,16 +39,16 @@ export function decodeProposal(
   capture: Capture,
   ids: readonly string[],
   objective: boolean,
+  run?: VerifiedGoalRun,
 ): Proposal {
   const value = mapping(reply);
-  const ratings = list(value.ratings, 'ratings').map((entry) => rating(entry, capture));
+  const ratings = list(value.ratings, 'ratings').map((entry) => rating(entry, capture, run));
   checkRatings(ratings, ids, objective);
   const changes = goalChanges(value.changes, ids);
   const available = new Set([...ids, ...changes.map(({ id }) => id)]);
   const links = list(value.links, 'links').map((entry) => word(entry, 'goal link'));
   if (new Set(links).size !== links.length || links.some((id) => !available.has(id)))
     throw new Error('Objective links must name distinct existing or proposed goals');
-  if (objective && !links.length) throw new Error('An objective needs a goal link');
   const comparison = list(value.comparison, 'comparison').map((entry) => word(entry, 'comparison'));
   if (!comparison.length) throw new Error('Compare goal gaps, overlap and conflicts explicitly');
   const sources = citations(value.sources, capture, 'sources');
@@ -72,7 +74,7 @@ function checkRatings(ratings: readonly Rating[], ids: readonly string[], object
 }
 
 /** Require traceable reasons for a rating and keep project alignment distinct from evidence. */
-function rating(entry: unknown, capture: Capture): Rating {
+function rating(entry: unknown, capture: Capture, run?: VerifiedGoalRun): Rating {
   const value = mapping(entry);
   const alignment = alignments.find((option) => option === value.alignment);
   const evidence = evidenceLevels.find((option) => option === value.evidence);
@@ -81,7 +83,11 @@ function rating(entry: unknown, capture: Capture): Rating {
   const observations = citations(value.observations, capture, 'observations');
   if (alignment !== 'unmapped' && !sources.length)
     throw new Error('A mapped goal needs a captured source citation');
-  if (evidence !== 'unverified' && !observations.length)
+  const citedRun = citesVerifiedRun(value.run, run, capture.source.revision) ? run : undefined;
+  if (value.run && !citedRun) throw new Error('Unknown or stale verified run citation');
+  if (evidence === 'demonstrated' && !citedRun)
+    throw new Error('Demonstrated evidence requires an applicable verified run');
+  if (evidence !== 'unverified' && !observations.length && !citedRun)
     throw new Error('An evidence rating needs a captured observation');
   return {
     id: word(value.id, 'rating ID'),
@@ -90,6 +96,7 @@ function rating(entry: unknown, capture: Capture): Rating {
     reason: word(value.reason, 'rating reason'),
     sources,
     observations,
+    run: citedRun,
   };
 }
 
