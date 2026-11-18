@@ -93,7 +93,7 @@ function assertInvocation(
 /** Check captured activity authority and supplied task context are present in actual stdin. */
 function assertContext(input: string, goal: string) {
   const activity = input.match(/## Activity\nSource: [^\n]+\n\n([\s\S]*?)\n\n## Role/);
-  assert(activity);
+  assert(activity?.[1]);
   assert.deepEqual((parse(activity[1]) as { instructions: string[] }).instructions, [
     'Exercise checked edits, stale hashes, host confinement and descendant cancellation.',
   ]);
