@@ -48,18 +48,31 @@ function assertObservation(state: Fixture, prompt: string, model: string): void 
   assert(!argv.some((arg) => /^(?:project_doc_max_bytes|project_doc_fallback_filenames|features\\.skills)=/.test(arg)));
 }
 
+/** Build the explicit fabricated request used for transport assertions. */
+function request(state: Fixture): { prompt: string; model: string; options: Record<string, unknown> } {
+  const model = 'fixture-model';
+  return {
+    prompt: 'Source: activity.yaml\\nSelected activity and supplied task\\n',
+    model,
+    options: {
+      model,
+      modelReasoningEffort: 'high',
+      webSearchMode: 'disabled',
+      workingDirectory: state.root,
+      tools: [],
+    },
+  };
+}
+
+/** Clean the temporary fixture after the test completes. */
+function cleanup(t: import('node:test').TestContext, state: Fixture): void {
+  t.after(() => rmSync(state.root, { recursive: true, force: true }));
+}
+
 test('Codex harness forwards fabricated request bytes and retains native discovery settings', async (t) => {
   const state = fixture();
-  t.after(() => rmSync(state.root, { recursive: true, force: true }));
-  const prompt = 'Source: activity.yaml\\nSelected activity and supplied task\\n';
-  const model = 'fixture-model';
-  const options = {
-    model,
-    modelReasoningEffort: 'high',
-    webSearchMode: 'disabled',
-    workingDirectory: state.root,
-    tools: [],
-  };
-  await observe(state, prompt, options);
-  assertObservation(state, prompt, model);
+  cleanup(t, state);
+  const supplied = request(state);
+  await observe(state, supplied.prompt, supplied.options);
+  assertObservation(state, supplied.prompt, supplied.model);
 });
