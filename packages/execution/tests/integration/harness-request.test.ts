@@ -16,6 +16,7 @@ test('Codex harness forwards request bytes and retains native guidance discovery
   writeFileSync(
     executable,
     `#!/bin/sh
+pwd > "${cwd}"
 printf '%s\n' "$@" > "${args}"
 cat > "${input}"
 printf '%s\n' '{"type":"item.completed","item":{"type":"agent_message","text":"{}"}}'
