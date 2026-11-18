@@ -36,6 +36,10 @@ An abrupt process exit can leave the task worktree on disk. Leave it in place an
 
 ArcNexus checks the retained issue branch, removes the abandoned worktree, and creates a fresh worktree for the retry.
 
+The Reviewer reuses the same candidate and captured check results during citation repair.
+
+Cite evidence paths exactly as the host supplied them, including their full directory names.
+
 ## Correct a refusal
 
 If a later path is refused, correct only that request or ask its owner for help.
