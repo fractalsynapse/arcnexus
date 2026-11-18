@@ -59,23 +59,43 @@ named external action does.
 
 ## Evidence and remaining coverage
 
-The retained `104-1-owner-tests.log` reports five passing delivery unit tests.
-The [owner suite](tests/unit/publication.test.ts) covers initial publication,
-resumption after lost push or PR responses, refusal of a closed PR, reuse of an
-observed merge, conflicting initial remote heads and unavailable PR reads.
-Its staging fixture always returns the reviewed parent, and its provider call
-log records operation names without arguments.
+The retained `40-1-owner-tests.log` reports 24 passing delivery tests with no
+failures, cancellations or skips from `npm test -- delivery`, including its build.
+The [owner suite](tests/unit/publication.test.ts) now covers:
 
-Required additional evidence is controllable staging movement, conflicting
-observed PR heads and targets, conflicting resumed branch state, exact arguments
-for verification, merge and confirmation, verification and confirmation failures,
-and returned identities for both new and reused merges. Refusal assertions must
-show that the prohibited subsequent effects did not occur. Preserve the existing
-reconciliation and reused-merge coverage under DE-REGRESSION. Observe a failing
-public regression before correcting any discovered behavioral defect.
+- DE-5 and DE-REGRESSION: initial publication after observing remote absence,
+  resumed publication after lost push or PR responses, refusal of closed PRs,
+  conflicting initial remote heads and unavailable PR reads.
+- DE-6: reuse of an observed matching merge without push, PR creation or merge.
+- DE-BASE: staging movement before initial publication with either an absent or
+  matching issue branch, before merging a resumed PR, and after initial or during
+  resumed verification. These cases refuse publication or merge at the
+  corresponding boundary.
+- DE-IDENTITY: conflicting heads or targets on open and merged PRs, and missing
+  or conflicting remote issue branches when resuming an open PR.
+- DE-GATES: exact verification, merge and confirmation arguments, confirmed return
+  identities for new and reused merges, and use of the observed PR URL throughout
+  resumed publication. Verification failures stop subsequent effects; failed tree
+  confirmation rejects success for both open and already merged PRs. A controlled
+  pending verification prevents merge until the gate resolves.
 
-This documentation step declares no executable checks. Later owner checks must
-retain their candidate and test scope. Simulated provider calls establish owner
-behavior only. A real delivery additionally needs independent acceptance,
-configured hosted CI and review, and retained provider evidence linking the single
-staging PR and observed merge commit to the accepted tree on staging.
+The scenario fixture controls staging observations and asserts provider arguments:
+verification receives the chosen PR URL, accepted `head` and retained `target`,
+plus explicit `MERGED` state for a reused merge; merge receives that PR URL,
+`head` and `issue`; confirmation receives the returned or observed merge commit,
+`candidate` and `target`. Result assertions retain the PR URL and confirmed merge
+identity, including a resumed PR URL distinct from the initial fixture URL and a
+reused merge commit distinct from the accepted head. Call-sequence assertions
+show that refused paths do not perform prohibited subsequent effects.
+
+This documentation correction reuses the retained owner result and inspection of
+the current suite; it changes no executable behavior. These deterministic tests
+use simulated providers without live GitHub access. They establish owner behavior,
+not a real delivery or hosted gate outcomes.
+
+Separate real-delivery evidence remains required under DE-4, DE-6 and DE-14:
+independent acceptance of the exact candidate tree, configured hosted CI and review,
+and retained provider observations linking that tree on staging to its single
+staging PR and confirmed provider merge identity. The host performs assembled
+verification and delivery; the passing owner suite does not establish those
+observations.
