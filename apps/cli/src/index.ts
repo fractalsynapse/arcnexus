@@ -6,6 +6,7 @@ import { commandsPlugin } from '../../../packages/commands/src/index.js';
 import { teamPlugin } from '../../../packages/team/src/index.js';
 import { workflowPlugin } from '../../../packages/workflow/src/index.js';
 import { runTask } from './task.js';
+import { renderInspection } from './inspection.js';
 
 /** Read the global output flag before dispatching. Reject ambiguous flag placement. */
 function parseOutputOption(args: string[]) {
