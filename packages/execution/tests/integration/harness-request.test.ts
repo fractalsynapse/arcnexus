@@ -6,6 +6,7 @@ import test from 'node:test';
 import type { AgentInspection } from '../../../architecture/src/index.js';
 import { codex } from '../../src/codex.js';
 
+// This adapter fixture uses a fabricated request; production activation parity needs a separate fixture.
 test('Codex harness forwards request bytes and retains native guidance discovery settings', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-harness-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
