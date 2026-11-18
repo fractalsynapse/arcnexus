@@ -32,11 +32,12 @@ function recoverableReview(
   const reviewIndex = events.findLastIndex((event) => 'verdict' in event);
   const review = events[reviewIndex];
   if (!review || !('verdict' in review) || review.verdict.kind !== 'rejected') return false;
-  const criteria = new Set(
-    milestone.steps
+  const criteria = new Set([
+    ...(milestone.steps
       .find(({ activity }) => activity === step)
-      ?.checklist.flatMap((item) => item.criteria),
-  );
+      ?.checklist.flatMap((item) => item.criteria) ?? []),
+    ...supplierCriteria(events, milestone),
+  ]);
   if (
     !review.verdict.findings.some(
       (finding) => finding.owner === owner && criteria.has(finding.criterion),
@@ -46,6 +47,25 @@ function recoverableReview(
   return !previousHolds(events.slice(reviewIndex + 1), owner, step).some(
     (activation) => activation.outcome.kind === 'blocked' && activation.outcome.reason === reason,
   );
+}
+
+/** Follow accepted earlier supplier admissions to the original requester's criteria. */
+function supplierCriteria(events: readonly TaskEvent[], milestone: Milestone): string[] {
+  const index = events.findIndex(
+    (event) => 'plan' in event && event.plan.milestones.some(({ id }) => id === milestone.id),
+  );
+  const admission = events[index];
+  if (!admission || !('plan' in admission) || !admission.supplier) return [];
+  const { plan, supplier } = admission;
+  if (supplier.request.owner !== milestone.owner) return [];
+  const parentIndex = plan.milestones.findIndex(({ id }) => id === supplier.request.requester);
+  const childIndex = plan.milestones.findIndex(({ id }) => id === milestone.id);
+  const parent = plan.milestones[parentIndex];
+  if (!parent || parent.owner !== milestone.owner || childIndex >= parentIndex) return [];
+  return [
+    ...parent.criteria.map(({ id }) => id),
+    ...supplierCriteria(events.slice(0, index), parent),
+  ];
 }
 
 /** Read the prior same-owner holds, excluding the just-recorded current activation. */

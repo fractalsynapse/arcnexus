@@ -406,6 +406,24 @@ class ReviewDiagnosticScenario {
     ];
   }
 
+  /** Link a locally measured contribution to the original paused criterion. */
+  linkedContribution() {
+    const child = milestone('child', 'owner', ['implementation'], 'local-measure');
+    const history = this.history();
+    const admission = history[2];
+    assert(admission && 'plan' in admission && admission.supplier);
+    const before = { plan: admission.plan };
+    admission.plan = { ...admission.plan, milestones: [child, this.correction] };
+    const held = { ...this.held, milestone: child.id };
+    history[3] = { activation: held };
+    history.splice(1, 0, before);
+    assert(blockedCorrection(history, child, held));
+    admission.supplier.request.owner = 'supplier';
+    assert.equal(blockedCorrection(history, child, held), undefined);
+    delete admission.supplier;
+    assert.equal(blockedCorrection(history, child, held), undefined);
+  }
+
   /** Return a fresh review failure to Direction and keep a repeated host check held. */
   run() {
     const next = blockedCorrection(this.history(), this.correction, this.held);
@@ -432,3 +450,6 @@ class ReviewDiagnosticScenario {
 
 test('a new review diagnostic is recoverable and a repeated host check remains held', () =>
   new ReviewDiagnosticScenario().run());
+
+test('a supplier local measure retains its original rejected criterion through the accepted link', () =>
+  new ReviewDiagnosticScenario().linkedContribution());
