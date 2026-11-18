@@ -86,10 +86,12 @@ export function checkFailureSignature(log: string) {
   const lines = text
     .split('\n')
     .filter((line) => /(?:^not ok \d+ - |error TS\d+:|^\s*(?:error:|Error:|FAIL\b))/.test(line));
-  return (lines.length ? lines.join('\n') : text)
+  const details = text.match(/^ {2}error:[^\n]*(?:\n(?: {4}.*|[ \t]*))*/gm) ?? [];
+  return (lines.length ? [...lines, ...details].join('\n') : text)
     .replace(/not ok \d+ - /g, 'not ok - ')
     .replace(/\([^\n]*?\d+,\d+\)/g, '')
     .replace(/\/[^\s]*?\/(?:worktree|measure-worktree)\//g, '')
+    .replace(/\/tmp\/[\w.-]+/g, '/tmp/<temporary>')
     .replace(/:\d+:\d+/g, '')
     .trim();
 }
@@ -104,5 +106,8 @@ export function correctionMadeProgress(events: readonly unknown[], owner: string
   const observed = recorded.findLastIndex(({ check }) => check?.log === log);
   return recorded
     .slice((directed >= 0 ? directed : observed) + 1)
-    .some(({ edits }) => edits?.some(({ before, after }) => before !== after));
+    .some(
+      ({ owner: editedOwner, edits }) =>
+        editedOwner === owner && edits?.some(({ before, after }) => before !== after),
+    );
 }

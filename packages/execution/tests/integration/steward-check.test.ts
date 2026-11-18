@@ -461,4 +461,13 @@ test('failure identity ignores process paths and TAP numbering while retaining t
   assert.notEqual(checkFailureSignature(first), checkFailureSignature(fresh));
   writeFileSync(repeat, '/state/runs/9/worktree/source.ts(21,3): error TS1005: Expected token');
   assert.equal(checkFailureSignature(fresh), checkFailureSignature(repeat));
+  writeFileSync(
+    first,
+    'not ok 3 - Reviewer parity\n  error: |-\n    assert(activity?.[1])\n  code: ERR_ASSERTION',
+  );
+  writeFileSync(
+    repeat,
+    'not ok 8 - Reviewer parity\n  error: |-\n    assert(actual.cwd)\n  code: ERR_ASSERTION',
+  );
+  assert.notEqual(checkFailureSignature(first), checkFailureSignature(repeat));
 });
