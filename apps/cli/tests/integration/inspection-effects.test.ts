@@ -39,7 +39,7 @@ test('inspection preserves all project files and directories across selections a
   ]) {
     const first = spawnSync(process.execPath, [cli, ...args], { cwd: root, encoding: 'utf8' });
     const second = spawnSync(process.execPath, [cli, ...args], { cwd: root, encoding: 'utf8' });
-    const expected = args.includes('missing') || args.includes('extra') || args.length === 2 ? 2 : 0;
+    const expected = args.includes('missing') || args.includes('extra') || args.length < 3 ? 2 : 0;
     assert.equal(first.status, expected, first.stderr);
     assert.equal(second.status, expected, second.stderr);
     assert.equal(second.stdout, first.stdout);
