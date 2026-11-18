@@ -79,6 +79,8 @@ exec "${process.execPath}" "${fixture}" "$@"
   );
   assert.match(actual.input, /Source: Task inputs supplied at activation/);
   assert(actual.input.includes(goal));
+  assert(actual.input.includes('Initial planning'));
+  assert(actual.input.includes('Plan the smallest sufficient changes for the goal.'));
   assert.equal(actual.cwd, options.workingDirectory);
   assert.equal(actual.args[actual.args.indexOf('--cd') + 1], options.workingDirectory);
   assert.equal(actual.args[actual.args.indexOf('--model') + 1], options.model);
