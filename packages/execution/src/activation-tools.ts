@@ -96,7 +96,12 @@ export class ActivationTools {
         return this.archive(String(args.id));
       case 'check':
         this.checks.set(tool.name, String(args.expected));
-        return { queued: tool.name, expected: args.expected };
+        return {
+          queued: tool.name,
+          expected: args.expected,
+          instructions:
+            'The host runs queued checks after a completed response. Return completed when your requested work is ready for those checks.',
+        };
       default:
         return this.request(tool.handler, args);
     }
@@ -171,6 +176,12 @@ export class ActivationTools {
     if (!reply || typeof reply !== 'object' || !('kind' in reply)) return reply;
     if (['research', 'question', 'supplier'].includes(String(reply.kind)))
       throw new InvalidCodexResponse(`Use the mapped MCP tool for ${String(reply.kind)} requests`);
+    if (reply.kind === 'blocked' && this.checks.size) {
+      const operations = [...this.checks].map(([id, expected]) => `${id} (expected ${expected})`);
+      throw new InvalidCodexResponse(
+        `Queued checks ${operations.join(', ')} run after a completed response. Requeue the same checks via MCP; return completed if the only blocker was waiting for a check. Return blocked without queueing checks if a different prerequisite prevents progress.`,
+      );
+    }
     if (reply.kind !== 'completed') return reply;
     if (
       ['edits', 'checks', 'archiveResearch'].some((key) => {
