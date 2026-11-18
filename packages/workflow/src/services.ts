@@ -132,8 +132,11 @@ export interface ActivityCheckpoint {
 export interface GoalRound {
   id: number;
   goals: readonly StandingGoal[];
+  completed?(goal: StandingGoal, scope: string): CompletedGoalOutcome | undefined;
   finish(): void;
 }
+
+export type CompletedGoalOutcome = Extract<TaskOutcome, { kind: 'merged' | 'satisfied' }>;
 
 export interface RoundOutcome {
   kind: 'round';

@@ -79,3 +79,29 @@ test('round identities distinguish fresh evaluation from retrying identical goal
   assert.equal(next.retained, undefined);
   next.close();
 });
+
+test('a completed round outcome is scoped to exact goal text and remains readable with an active writer', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'arcnexus-round-outcome-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const store = new Coordination(directory);
+  const remote = 'https://example.invalid/org/repo.git';
+  const goal = 'The first goal';
+  const scope = 'round:1:first';
+  const completed = { kind: 'satisfied', commit: 'staging', evidence: ['retained.log'] };
+  const first = store.admit(remote, goal, true, scope);
+  assert(first && 'record' in first);
+  first.finish(completed);
+  first.close();
+  const later = store.admit(remote, 'The later goal', true, 'round:1:later');
+  assert(later && 'record' in later);
+  t.after(() => later.close());
+
+  assert.equal(store.completedTask(remote, goal, scope), JSON.stringify(completed));
+  assert.equal(store.completedTask(remote, goal, 'round:2:first'), undefined);
+  assert.equal(store.completedTask(remote, goal + ' changed', scope), undefined);
+  assert.equal(store.completedTask(remote, 'The later goal', 'round:1:later'), undefined);
+  assert.deepEqual(store.admit(remote, goal, true, scope), {
+    activeGoal: 'The later goal',
+    run: later.run,
+  });
+});

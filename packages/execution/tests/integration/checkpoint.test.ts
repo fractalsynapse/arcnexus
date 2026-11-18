@@ -162,6 +162,14 @@ class RecoveryScenario {
     return { oldBase, checkpoint, staging };
   }
 
+  /** Recreate the exact clean retained workspace that an abrupt exit leaves behind. */
+  abandonWorkspace() {
+    const path = this.worktrees.at(-1)!;
+    mkdirSync(dirname(path), { recursive: true });
+    this.git('worktree', 'add', path, '7-task');
+    return path;
+  }
+
   /** Read actual fixture Git objects for recovery assertions. */
   observe(...args: string[]) {
     return this.git(...args);
@@ -436,8 +444,21 @@ test('moved staging holds when the observed issue branch diverges', async (t) =>
   scenario.remote.head = staging;
   const held = await scenario.run();
   assert.equal(held.kind, 'failed');
-  assert.match(held.reason, /observed issue branch differs/);
+  assert.match(held.reason, /Remote checkpoint changed/);
   assert.equal(scenario.observe('rev-parse', 'refs/heads/7-task'), checkpoint);
   assert.equal(scenario.remote.head, staging);
   assert.equal(scenario.remote.pushes.length, 1);
+});
+
+test('moved staging recovers an abandoned clean checkpoint workspace before merging the base', async (t) => {
+  const scenario = new RecoveryScenario(t, false, true);
+  assert.equal((await scenario.run()).kind, 'failed');
+  const path = scenario.abandonWorkspace();
+  const { checkpoint } = scenario.advance('staging-only.txt', 'staging contribution');
+  const blob = scenario.observe('rev-parse', `${checkpoint}:first.txt`);
+  const resumed = await scenario.run();
+  assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
+  assert(!existsSync(path));
+  assert.deepEqual(scenario.activations, ['first', 'second']);
+  assert.equal(scenario.observe('rev-parse', 'refs/heads/7-task:first.txt'), blob);
 });

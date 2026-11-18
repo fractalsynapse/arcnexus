@@ -122,6 +122,35 @@ class RoundScenario {
     return new Workflow(this.services).round('.', { progress() {} }, signal);
   }
 
+  /** Expose earlier terminal results while a later goal still holds the project lane. */
+  resumeWithHeldLane() {
+    const stored = {
+      kind: 'satisfied' as const,
+      commit: 'earlier-staging',
+      summary: 'Available from the same round.',
+      evidence: ['retained-goal.log'],
+    };
+    const services: WorkflowServices = {
+      ...this.services,
+      execution: {
+        ...this.services.execution,
+        round: () => ({
+          id: 1,
+          goals,
+          completed: (_goal: StandingGoal, scope: string) =>
+            ['round:1:checkpoint', 'round:1:ownership'].includes(scope) ? stored : undefined,
+          finish: () => this.complete(),
+        }),
+        admit: async (input) => {
+          if (['round:1:checkpoint', 'round:1:ownership'].includes(input.scope ?? ''))
+            return { kind: 'invalid', reason: 'Active goal: inspect', evidence: [] };
+          return this.admit(input);
+        },
+      },
+    };
+    return new Workflow(services).round('.', { progress() {} }, signal);
+  }
+
   /** Open engineering work on a green measure only when a concrete gap was observed. */
   private assess(session: TaskSession, measured?: StandingGoalEvidence) {
     assert(measured);
@@ -250,4 +279,17 @@ test('a retained self-linked supplier resumes the same steward without replannin
   ]);
   assert.equal(outcome.kind, 'merged');
   assert.deepEqual(fixture.activations, [id]);
+});
+
+test('a standing round resumes the held later goal without admitting completed earlier goals', async () => {
+  const fixture = new RoundScenario();
+  const round = await fixture.resumeWithHeldLane();
+  assert(round.completed);
+  assert.equal(round.goals.length, 5);
+  assert.deepEqual(round.goals[0]?.outcome.evidence, ['retained-goal.log']);
+  assert.deepEqual(fixture.assessments, ['inspect', 'tests', 'delivery']);
+  assert.deepEqual(
+    fixture.admissions.map(({ scope }) => scope),
+    ['round:1:inspect', 'round:1:tests', 'round:1:delivery'],
+  );
 });
