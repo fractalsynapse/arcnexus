@@ -30,6 +30,10 @@ The complete request from `35-5-codex.jsonl` asked to preserve the entire operat
 
 No unresolved native-guidance applicability prerequisite remains: the later host confirmation explicitly covers the accepted tree/base and says the exact-input equality measure is covered independently by the deterministic fixtures. This handoff makes no subsequent production edits, so it does not itself invalidate those observations. Any later candidate or relevant input/environment change requires the host to reassess affected evidence; guidance hashes alone do not establish broader identity.
 
+## Current activation comparison
+
+The later host confirmation above applies to commit `12e747f445be285b6cbd2320423af18366fa775e`, tree `d74925e7476f8fab5358462db314ad3c2e121076`, and base `4a16a2286e1c6b863cb1b6aac20500d5fd4ef5b5`. The current activation's owner-check record identifies a different candidate tree, `8fa53eeabd25333399c3a371f7706130b7fe4a10`, against base `a9a5f1c3c1cfd00911c5f535499efb7c31ad6b52`. The current `AGENTS.md` and `.agents/skills/arcnexus-verification/SKILL.md` hashes still match the native observation (`4fd3df8f…` and `f98473b3…`), but those matching files do not establish that the broader candidate, capture, inputs and environment match the host-confirmed observation. Therefore the native observation remains usable as externally confirmed evidence for its stated candidate only; applicability to this current candidate/capture is unresolved pending a matching host observation or explicit host confirmation. The deterministic parity fixture records remain separately attributed; `44-5-owner-tests.log` reports 64 passes, zero failures and three skips, without by itself resolving native applicability.
+
 
 ## Verbatim retained host answers
 
