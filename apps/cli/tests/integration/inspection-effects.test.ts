@@ -47,6 +47,13 @@ test('inspection preserves all project files and directories across selections a
       args.includes('missing') || args.includes('extra') || args.length < 3 || invalidFlag ? 2 : 0;
     assert.equal(first.status, expected, first.stderr);
     assert.equal(second.status, expected, second.stderr);
+    if (expected === 0) {
+      assert.notEqual(first.stdout, '');
+      assert.equal(first.stderr, '');
+    } else {
+      assert.equal(first.stdout, '');
+      assert.notEqual(first.stderr, '');
+    }
     assert.equal(second.stdout, first.stdout);
     assert.equal(second.stderr, first.stderr);
     assert.deepEqual(snapshot(root), before);
