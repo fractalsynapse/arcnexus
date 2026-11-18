@@ -9,6 +9,8 @@
 
 ### Fixed
 
+- Preserve an authorized queued check when a steward mentions it in its response (#594).
+
 - Recover a secured, unpublished task checkpoint over disjoint staging changes under the same captured authority (#604).
 
 - Send a blocked review correction back through Direction while preserving checked work and acceptance (#594).

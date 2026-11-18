@@ -71,21 +71,46 @@ class ToolBoundary {
 test('local MCP exposes only the captured operation and refuses alternate actions', () =>
   new ToolBoundary().run());
 
-test('a steward who queued checks gets a repair diagnostic before blocking on their results', async () => {
+/** Open one native testing activation without invoking external services. */
+function testingActivation() {
   const task = {
     taskID: 'fixture',
     capture: { source: { revision: 'staging' }, project: {} },
     observations: () => [],
   } as unknown as HostTask;
-  const activation = new ActivationTools(
+  return new ActivationTools(
     task,
     { component: 'fixture', activity: 'testing' },
     { goal: 'Verify a checkpoint', assignment: {}, milestone: {}, acceptance: [], worktree: '.' },
     new AbortController().signal,
   );
+}
+
+test('a steward who queued checks gets a repair diagnostic before blocking on their results', async () => {
+  const activation = testingActivation();
   await activation.invoke({ name: 'owner-tests', handler: 'check' }, { expected: 'pass' });
   assert.throws(
     () => activation.finish({ kind: 'blocked', reason: 'Still waiting for exit code' }),
     /queued.*owner-tests.*completed/i,
+  );
+});
+
+test('describing an already queued check keeps only the mapped request', async () => {
+  const activation = testingActivation();
+  await activation.invoke({ name: 'owner-tests', handler: 'check' }, { expected: 'pass' });
+  assert.deepEqual(
+    activation.finish({
+      kind: 'completed',
+      checks: 'Queued owner-tests. The host will observe its result.',
+    }),
+    { kind: 'completed', edits: [], checks: [{ id: 'owner-tests', expected: 'pass' }] },
+  );
+  assert.throws(
+    () => activation.finish({ kind: 'completed', checks: [{ id: 'unmapped', expected: 'pass' }] }),
+    /Use mapped MCP tools/,
+  );
+  assert.throws(
+    () => testingActivation().finish({ kind: 'completed', checks: 'Run owner-tests.' }),
+    /Use mapped MCP tools/,
   );
 });
