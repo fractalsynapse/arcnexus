@@ -74,9 +74,11 @@ export class TaskRun {
   /** Restore an accepted plan or evaluate and plan fresh work before preparing the issue branch. */
   private async prepare(): Promise<TaskOutcome | undefined> {
     const saved = this.session.history?.() ?? [];
+    const recorded = saved.findLast((event) => 'assessment' in event)?.assessment;
+    if (recorded && this.input.planning !== 'exploration') return recorded;
     this.plan = saved.findLast((event) => 'plan' in event)?.plan;
     if (!this.plan) {
-      const planning = await this.startPlanning(saved);
+      const planning = await this.startPlanning();
       if (planning) return planning;
     }
     if (this.services.direction.track && this.services.execution.prepare) {
@@ -87,9 +89,7 @@ export class TaskRun {
   }
 
   /** Give Direction the authored standing goal and measured staging context before admitting work. */
-  private async startPlanning(saved: ReturnType<NonNullable<TaskSession['history']>>) {
-    const recorded = saved.findLast((event) => 'assessment' in event)?.assessment;
-    if (recorded && this.input.planning !== 'exploration') return recorded;
+  private async startPlanning() {
     if (this.input.planning) return this.startPlanner(this.input.planning);
     if (this.input.standing) {
       if (!this.services.execution.observeGoal)
