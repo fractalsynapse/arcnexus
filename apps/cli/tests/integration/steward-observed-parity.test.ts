@@ -34,10 +34,12 @@ const milestone: Milestone = {
   id: 'steward-parity',
   owner: 'execution',
   criteria: [{ id: 'parity', description: 'Observe the supplied task data' }],
-  steps: [{
-    activity: 'testing',
-    checklist: [{ id: 'observe', criteria: ['parity'], expected: 'Observe subprocess input' }],
-  }],
+  steps: [
+    {
+      activity: 'testing',
+      checklist: [{ id: 'observe', criteria: ['parity'], expected: 'Observe subprocess input' }],
+    },
+  ],
 };
 
 /** Set up a production host with the CLI's observing Codex subprocess. */
@@ -47,11 +49,14 @@ function scenario(t: TestContext) {
   const observation = join(root, 'observation.json');
   const executable = join(root, 'codex');
   const fixture = fileURLToPath(new URL('../fixtures/director-observation.js', import.meta.url));
-  writeFileSync(executable, `#!/bin/sh
+  writeFileSync(
+    executable,
+    `#!/bin/sh
 export PARITY_OBSERVATION="${observation}"
 export PARITY_RESPONSE='{"kind":"completed","edits":[],"checks":[]}'
 exec "${process.execPath}" "${fixture}" "$@"
-`);
+`,
+  );
   chmodSync(executable, 0o700);
   const architecture = new RecordingArchitecture();
   const capture = architecture.capture(process.cwd());
@@ -61,7 +66,8 @@ exec "${process.execPath}" "${fixture}" "$@"
   t.after(() => journal.close());
   const task = new HostTask(
     { capture, common: root, executable, base: 'staging', fresh: true, storage: root },
-    goal, journal,
+    goal,
+    journal,
   );
   task.worktree = capture.source.root;
   return { architecture, capture, goal, observation, task };
@@ -74,9 +80,14 @@ function assertInvocation(actual: Observation, view: ReturnType<Agent['prepareRe
   assert.equal(actual.cwd, options.workingDirectory);
   assert.equal(actual.args[actual.args.indexOf('--cd') + 1], options.workingDirectory);
   assert.equal(actual.args[actual.args.indexOf('--model') + 1], options.model);
-  assert(actual.args.includes(`model_reasoning_effort=${JSON.stringify(options.modelReasoningEffort)}`));
+  assert(
+    actual.args.includes(`model_reasoning_effort=${JSON.stringify(options.modelReasoningEffort)}`),
+  );
   assert(actual.args.includes(`web_search=${JSON.stringify(options.webSearchMode)}`));
-  assert.deepEqual(actual.tools, options.tools.map(({ handler: _handler, ...tool }) => tool));
+  assert.deepEqual(
+    actual.tools,
+    options.tools.map(({ handler: _handler, ...tool }) => tool),
+  );
 }
 
 /** Preserve captured authority and task assertions in the observed input. */
@@ -92,9 +103,15 @@ function assertContext(input: string, goal: string) {
     'Source: docs/foundation/typescript-standard.md',
     'Source: Task inputs supplied at activation',
     'Express acceptance as a test before anything is built',
-    'packages/execution', 'owner-tests', 'checked-edit', goal,
-    'steward-parity', 'Observe subprocess input', 'Observe the supplied task data',
-  ]) assert(input.includes(value), value);
+    'packages/execution',
+    'owner-tests',
+    'checked-edit',
+    goal,
+    'steward-parity',
+    'Observe subprocess input',
+    'Observe the supplied task data',
+  ])
+    assert(input.includes(value), value);
 }
 
 /** Check the renderer preserves the complete prompt and invocation options. */
@@ -111,7 +128,11 @@ function assertRendered(view: ReturnType<Agent['prepareRequest']>) {
 test('Steward complete inspection matches production activation and CLI rendering', async (t) => {
   const state = scenario(t);
   const outcome = await steward(
-    new Agent(state.architecture), state.task, milestone, 'testing', AbortSignal.timeout(10_000),
+    new Agent(state.architecture),
+    state.task,
+    milestone,
+    'testing',
+    AbortSignal.timeout(10_000),
   );
   assert.equal(outcome.kind, 'completed');
   const delivered = state.architecture.delivered;
@@ -123,7 +144,9 @@ test('Steward complete inspection matches production activation and CLI renderin
   assert.deepEqual(delivered.task.milestone, { id: milestone.id, step: milestone.steps[0] });
   assert.deepEqual(delivered.task.acceptance, milestone.criteria);
   const view = new Agent(new Architecture()).prepareRequest(
-    state.capture, delivered.selection, delivered.task,
+    state.capture,
+    delivered.selection,
+    delivered.task,
   );
   const actual = JSON.parse(readFileSync(state.observation, 'utf8')) as Observation;
   assertInvocation(actual, view);
