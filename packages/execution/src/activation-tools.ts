@@ -183,12 +183,7 @@ export class ActivationTools {
       );
     }
     if (reply.kind !== 'completed') return reply;
-    if (
-      ['edits', 'checks', 'archiveResearch'].some((key) => {
-        const value = (reply as Record<string, unknown>)[key];
-        return value !== undefined && (!Array.isArray(value) || value.length > 0);
-      })
-    )
+    if (this.hasDirectOperations(reply as Record<string, unknown>))
       throw new InvalidCodexResponse(
         'Use mapped MCP tools for edits, checks and research archival',
       );
@@ -197,5 +192,14 @@ export class ActivationTools {
       edits: [],
       checks: [...this.checks].map(([id, expected]) => ({ id, expected })),
     };
+  }
+
+  /** Treat prose about an observed queued check as narration and reject raw operations. */
+  private hasDirectOperations(reply: Record<string, unknown>) {
+    return ['edits', 'checks', 'archiveResearch'].some((key) => {
+      const value = reply[key];
+      if (key === 'checks' && typeof value === 'string' && this.checks.size) return false;
+      return value !== undefined && (!Array.isArray(value) || value.length > 0);
+    });
   }
 }
