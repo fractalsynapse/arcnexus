@@ -96,8 +96,8 @@ function testingTask(events: unknown[]) {
 }
 
 /** Open one native testing activation without invoking external services. */
-function testingActivation(retainedSelfLink = false) {
-  const selection = { component: 'fixture', activity: 'testing' };
+function testingActivation(retainedSelfLink = false, activity = 'testing') {
+  const selection = { component: 'fixture', activity };
   const input = {
     goal: 'Verify a checkpoint',
     assignment: {},
