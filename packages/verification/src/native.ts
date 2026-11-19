@@ -61,7 +61,7 @@ function ownerEvidenceFailure(task: HostTask, plan: Plan, candidate: Candidate) 
     if (!task.evidence.includes(observation.check.log))
       return `Required owner operation ${owner}/${activity}/${id} has unavailable evidence`;
     const retainedExpectedRed =
-      observation.scope.expected === 'fail' && activity === 'testing' && observation.check.status !== 0;
+      observation.scope.expected === 'fail' && activity === 'testing' && id === 'owner-tests' && observation.check.status !== 0;
     if (!observation.afterLastEdit && !retainedExpectedRed)
       return `Required owner operation ${owner}/${activity}/${id} is stale`;
     if (observation.check.status === 'not-applicable') {
