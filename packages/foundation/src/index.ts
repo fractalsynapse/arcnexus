@@ -199,16 +199,19 @@ function isIgnored(path: string): boolean {
 }
 
 /** Match ordered gitignore rules against paths relative to one ignore file. */
-function matchesIgnoreRules(path: string, rules: readonly string[]): boolean {
-  let ignored = false;
+function matchesIgnoreRules(path: string, rules: readonly string[]): boolean | undefined {
+  let ignored: boolean | undefined;
   for (const raw of rules) {
     const rule = raw.trim();
     if (!rule || rule.startsWith('#')) continue;
     const negated = rule.startsWith('!');
     const source = negated ? rule.slice(1) : rule;
     const anchored = source.startsWith('/');
+    const directoryOnly = source.endsWith('/');
     const pattern = source.replace(/^\//, '').replace(/\/$/, '');
-    if (ignoreMatcher(pattern, anchored).test(path)) ignored = !negated;
+    const matcher = ignoreMatcher(pattern, anchored);
+    const matches = directoryOnly ? new RegExp(`${matcher.source.slice(0, -2)}/.+$`).test(path) : matcher.test(path);
+    if (matches) ignored = !negated;
   }
   return ignored;
 }
