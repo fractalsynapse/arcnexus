@@ -24,7 +24,7 @@ class OwnerQuality {
     const identity = createHash('sha256');
     for (const path of files) identity.update(path).update(readFileSync(path));
     console.log(
-      `${this.operation} scope=${this.owner ?? 'repository'} inputs=${files.length} sha256=${identity.digest('hex')}`,
+      `${this.operation} scope=${this.owner ?? 'repository'} inputs=${files.length} content-sha256=${identity.digest('hex')}`,
     );
     if (!files.length) {
       console.log(`${this.operation} is empty: no applicable maintained files.`);
