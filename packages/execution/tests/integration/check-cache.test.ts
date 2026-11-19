@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 import { reusableCheck } from '../../src/check-cache.js';
@@ -262,6 +262,13 @@ for (const [operation, applicability, path, content] of [
       'commit', '-qm', 'Uncertain configuration');
     assert.equal(await fixture.input(), undefined);
     assert.equal(reusableCheck(fixture.task.observations(), await fixture.input()), undefined);
-    assert.ok(observed.log);
+    const priorLog = readFileSync(observed.log, 'utf8');
+    const fresh = await fixture.task.check('fixture-check', new AbortController().signal, fixture.scope);
+    assert.notEqual(fresh.log, observed.log);
+    assert.equal(readFileSync(observed.log, 'utf8'), priorLog);
+    assert.ok(readFileSync(fresh.log, 'utf8').length);
+    const observations = fixture.task.observations() as { check?: { log: string }; reusedFrom?: string }[];
+    assert.ok(observations.some(({ check }) => check?.log === observed.log));
+    assert.ok(observations.some(({ check, reusedFrom }) => check?.log === fresh.log && !reusedFrom));
   });
 }
