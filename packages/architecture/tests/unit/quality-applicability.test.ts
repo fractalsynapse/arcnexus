@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Architecture, type Capture } from '../../src/index.js';
+import { Agent } from '../../../agent/src/index.js';
 
 /** Create an isolated captured activity without changing the real catalog. */
 function fixture(operation: Record<string, unknown>): Capture {
