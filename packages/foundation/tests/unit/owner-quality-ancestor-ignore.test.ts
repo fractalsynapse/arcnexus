@@ -9,18 +9,9 @@ for (const operation of ['format:check', 'lint'] as const) {
       try {
         tree.owner('alpha', 'packages/alpha');
         tree.write('.gitignore', 'packages/alpha/generated/\n');
-        tree.write(
-          'packages/alpha/generated/.gitignore',
-          '!child/\n',
-        );
-        tree.write(
-          'packages/alpha/generated/child/.gitignore',
-          '!probe.ts\n',
-        );
-        tree.write(
-          'packages/alpha/generated/child/probe.ts',
-          'const unused=1\n',
-        );
+        tree.write('packages/alpha/generated/.gitignore', '!child/\n');
+        tree.write('packages/alpha/generated/child/.gitignore', '!probe.ts\n');
+        tree.write('packages/alpha/generated/child/probe.ts', 'const unused=1\n');
 
         const result = tree.run(operation, owner);
         assert.equal(result.status, 0, result.output);
