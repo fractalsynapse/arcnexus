@@ -328,7 +328,7 @@ function discoverMaintainedFiles(): string[] {
     const scopes = [...inherited];
     if (existsSync(ignorePath)) {
       const matcher = createIgnore();
-      matcher.add(normalizeIgnorePatterns(readIgnoreFile(ignorePath)));
+      matcher.add(readIgnoreFile(ignorePath));
       scopes.push({ directory, matcher });
     }
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
