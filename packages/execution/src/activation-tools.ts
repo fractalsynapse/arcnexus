@@ -106,6 +106,11 @@ export class ActivationTools {
 
   /** Preserve unresolved expectations before executing another request for the same operation. */
   private check(id: string, expected: 'pass' | 'fail') {
+    if (
+      expected === 'fail' &&
+      !(this.selection.activity === 'testing' && id === 'owner-tests')
+    )
+      throw new Error(`Operation ${id} must pass during ${this.selection.activity}`);
     const scope: StewardScope = {
       owner: this.selection.component,
       activity: this.selection.activity as StewardScope['activity'],
