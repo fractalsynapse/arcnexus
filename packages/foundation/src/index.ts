@@ -68,13 +68,7 @@ export async function selectQualityInputs(
     root,
     ignoreContents,
   );
-  const reuseEligibility = qualityReuseEligibility(
-    operation,
-    files,
-    root,
-    configurationInputs(operation, root),
-    prettierConfigurationInputs(operation, files, root),
-  );
+  const reuseEligibility = operationReuseEligibility(operation, files, root);
   return { operation, owner, files, identity, reuseEligibility };
 }
 
