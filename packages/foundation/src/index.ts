@@ -205,6 +205,25 @@ function isIgnored(path: string): boolean {
   return ignored;
 }
 
+/** Check whether earlier ignore files exclude a directory before reading its rules. */
+function isIgnoredDirectory(directory: string, ignoreFiles: readonly string[]): boolean {
+  let ignored = false;
+  for (const ignoreFile of ignoreFiles) {
+    const base = ignoreFile.slice(0, -'.gitignore'.length).replace(/\/$/, '');
+    if (base && !directory.startsWith(`${base}/`)) continue;
+    const relative = base ? directory.slice(base.length + 1) : directory;
+    const rules = readOptionalFile(ignoreFile).split(String.fromCharCode(10));
+    let inherited = false;
+    for (const segment of relative.split('/')) {
+      const result = matchesIgnoreRules(segment, rules, true);
+      if (result !== undefined) inherited = result;
+    }
+    if (inherited) ignored = true;
+    else if (matchesIgnoreRules(relative, rules, true) === false) ignored = false;
+  }
+  return ignored;
+}
+
 /** Match ordered gitignore rules against paths relative to one ignore file. */
 function matchesIgnoreRules(
   path: string,
