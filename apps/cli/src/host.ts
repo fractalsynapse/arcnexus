@@ -1,6 +1,6 @@
 import type { Context } from 'cordis';
-import { coordinationPlugin } from '../../../packages/coordination/src/index.js';
-import { direct, track } from '../../../packages/direction/src/index.js';
+import { coordinationPlugin, revisionSnapshot } from '../../../packages/coordination/src/index.js';
+import { direct, track, type RevisionRequest } from '../../../packages/direction/src/index.js';
 import { integrate, resume } from '../../../packages/delivery/src/index.js';
 import {
   applicationStorage,
