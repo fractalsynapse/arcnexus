@@ -1,5 +1,5 @@
 import type { Architecture } from '../../architecture/src/index.js';
-import type { Coordination } from '../../coordination/src/index.js';
+import type { Coordination, Journal } from '../../coordination/src/index.js';
 import type { Candidate } from '../../verification/src/index.js';
 import type {
   ActivityCheckpoint,
@@ -14,7 +14,7 @@ import { preflight } from './host-config.js';
 import { ownerEvidenceDigest } from './review-observations.js';
 import { HostTask, hostTask } from './index.js';
 
-/** Admit a clean project at its verified staging head before creating state. */
+/** Admit ordinary tasks through either the project lane or a retained phase writer. */
 export class Execution {
   /** Use only trusted architecture, coordination and application storage. */
   constructor(
@@ -44,6 +44,33 @@ export class Execution {
         ? `plan:exploration:${config.capture.source.revision}`
         : input.scope,
     );
+    if (!journal)
+      return invalid(`Task admission requires the current verified ${config.base} head`);
+    if ('activeGoal' in journal)
+      return invalid(`Active goal: ${journal.activeGoal} (run ${journal.run})`);
+    recordAdmission(journal, config, input.planning);
+    return new HostTask(config, input.goal, journal);
+  }
+
+  /** Admit one sequential ordinary task while the phase Journal keeps the project lane. */
+  async admitChild(
+    input: TaskInput,
+    parent: Journal,
+    scope: string,
+    signal: AbortSignal,
+  ) {
+    let config: ReturnType<typeof preflight>;
+    try {
+      signal.throwIfAborted();
+      const capture = this.architecture.capture(input.directory);
+      const fresh = Boolean(input.standing || input.planning);
+      const selected = fresh ? stagingCapture(this.architecture, capture) : capture;
+      config = preflight(selected, this.storage, fresh);
+    } catch (error) {
+      if (signal.aborted) throw signal.reason;
+      return invalid(error instanceof Error ? error.message : String(error));
+    }
+    const journal = parent.child(input.goal, scope, config.fresh);
     if (!journal)
       return invalid(`Task admission requires the current verified ${config.base} head`);
     if ('activeGoal' in journal)
