@@ -31,12 +31,10 @@ class OwnerQuality {
       return;
     }
 
-    const executable = this.operation === 'lint' ? 'eslint' : 'prettier';
-    const args =
-      this.operation === 'lint'
-        ? ['--max-warnings', '0', '--', ...files]
-        : ['--check', '--no-error-on-unmatched-pattern', '--', ...files];
-    const result = spawnSync(executable, args, { stdio: 'inherit' });
+    const runtime = qualityRuntime(this.operation);
+    const result = spawnSync(runtime.executable, [...runtime.args, '--', ...files], {
+      stdio: 'inherit',
+    });
     if (result.error) throw result.error;
     process.exitCode = result.status ?? 1;
   }
