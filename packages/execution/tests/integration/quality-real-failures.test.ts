@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { cpSync, globSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import test from 'node:test';
+import test, { type TestContext } from 'node:test';
 import { parse } from 'yaml';
 import { hasOwnerTestSuites, selectQualityInputs } from '../../../foundation/src/index.js';
 import { ActivationTools } from '../../src/activation-tools.js';
@@ -12,27 +12,7 @@ test(
   'real lint and type failures reach the same caller for an owner without suites',
   { skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1' },
   async (t) => {
-    const source = process.cwd();
-    const root = mkdtempSync(join(tmpdir(), 'arcnexus-quality-real-'));
-    const workspace = join(root, 'workspace');
-    cpSync(source, workspace, {
-      recursive: true,
-      filter: (path) => !['.git', 'node_modules', 'dist'].includes(relative(source, path).split('/')[0]!),
-    });
-    const task = new StewardFixture(t, root).task;
-    task.worktree = workspace;
-    const { owner, file, components } = await discoverOwner(source);
-    injectFailures(workspace, file);
-    Object.assign(task.capture, {
-      source: { ...task.capture.source, root: source },
-      components,
-      project: { ...task.capture.project, checks: { acceptance: [] } },
-      operations: qualityOperations,
-    });
-    t.after(() => task.close());
-    const activation = new ActivationTools(task, { component: owner, activity: 'implementation' }, {
-      goal: 'quality', assignment: {}, milestone: { id: 'quality' }, acceptance: [], worktree: workspace,
-    }, AbortSignal.timeout(120_000));
+    const activation = await nativeActivation(t);
     const invoke = (name: string) => activation.invoke({ name, handler: 'check' }, { expected: 'pass' });
     const suites = await invoke('owner-tests') as { status: unknown };
     assert.equal(suites.status, 'not-applicable');
@@ -44,6 +24,32 @@ test(
     assert.match(readFileSync(types.log, 'utf8'), /TS2322/);
   },
 );
+
+/** Prepare the native host task with captured quality operations. */
+async function nativeActivation(t: TestContext) {
+  const source = process.cwd();
+  const root = mkdtempSync(join(tmpdir(), 'arcnexus-quality-real-'));
+  const workspace = join(root, 'workspace');
+  cpSync(source, workspace, {
+    recursive: true,
+    filter: (path) => !['.git', 'node_modules', 'dist'].includes(relative(source, path).split('/')[0]!),
+  });
+  const task = new StewardFixture(t, root).task;
+  task.worktree = workspace;
+  const { owner, file, components } = await discoverOwner(source);
+  injectFailures(workspace, file);
+  Object.assign(task.capture, {
+    source: { ...task.capture.source, root: source },
+    components,
+    project: { ...task.capture.project, checks: { acceptance: [] } },
+    operations: qualityOperations,
+  });
+  t.after(() => task.close());
+  const activation = new ActivationTools(task, { component: owner, activity: 'implementation' }, {
+    goal: 'quality', assignment: {}, milestone: { id: 'quality' }, acceptance: [], worktree: workspace,
+  }, AbortSignal.timeout(120_000));
+  return activation;
+}
 
 /** Select a lintable owner that has no test suites. */
 async function discoverOwner(source: string) {
