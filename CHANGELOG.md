@@ -9,7 +9,7 @@
 
 ### Fixed
 
-- Return mapped check results directly to their caller and reconcile newly observed failures before steward completion (#625).
+- Return mapped check results directly to their caller, preserve unresolved expectations, reuse proven unchanged observations, and distinguish completed rewind targets before steward progression (#625).
 
 - Keep completed work out of native Director revision prompts and responses while retaining the accepted plan and validation in the host (#617).
 

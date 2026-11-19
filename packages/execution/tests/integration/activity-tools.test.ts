@@ -171,6 +171,15 @@ test('native replies cannot request raw checks after an observed MCP operation',
   }
 });
 
+test('a caller cannot change the expectation of its unresolved operation', async () => {
+  const activation = testingActivation();
+  await activation.invoke(checkBinding, { expected: 'pass' });
+  await assert.rejects(
+    activation.invoke(checkBinding, { expected: 'fail' }),
+    /Cannot change the required recheck for owner-tests: expected pass/,
+  );
+});
+
 test('a self-linked supplier request leaves the steward active for a different contribution', async () => {
   const activation = testingActivation();
   const tool = { name: 'request-supplier', handler: 'supplier' } as const;

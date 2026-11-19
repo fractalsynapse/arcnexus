@@ -14,7 +14,7 @@ import type { HostTask } from './index.js';
 import { inboxIdentity } from './research.js';
 import { decodeEdit } from './steward-response.js';
 import { listToolDirectory, readToolFile } from './tool-files.js';
-import type { StewardScope } from './steward-check.js';
+import { pendingStewardCheck, type StewardScope } from './steward-check.js';
 
 type Tool = Pick<AgentInspection['request']['options']['tools'][number], 'name' | 'handler'>;
 type Evidence = {
@@ -96,14 +96,23 @@ export class ActivationTools {
       case 'archive':
         return this.archive(String(args.id));
       case 'check':
-        return this.task.check(tool.name, this.signal, {
-          owner: this.selection.component,
-          activity: this.selection.activity as StewardScope['activity'],
-          expected: args.expected as StewardScope['expected'],
-        });
+        return this.check(tool.name, args.expected as 'pass' | 'fail');
       default:
         return this.request(tool.handler, args);
     }
+  }
+
+  /** Preserve unresolved expectations before executing another request for the same operation. */
+  private check(id: string, expected: 'pass' | 'fail') {
+    const scope: StewardScope = {
+      owner: this.selection.component,
+      activity: this.selection.activity as StewardScope['activity'],
+      expected,
+    };
+    const pending = pendingStewardCheck(this.task.observations(), scope, id);
+    if (pending && pending.expected !== expected)
+      throw new Error(`Cannot change the required recheck for ${id}: expected ${pending.expected}`);
+    return this.task.check(id, this.signal, scope);
   }
 
   /** Keep special actors and research read-only even if a capture is misconfigured. */

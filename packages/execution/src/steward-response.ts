@@ -163,7 +163,7 @@ function transform(value: unknown, path: string) {
   return { format, replace: { before, after: replace.after } };
 }
 
-/** Validate declared operations and keep an unresolved check first with its original expectation. */
+/** Validate declared requests without scheduling an operation already observed through MCP. */
 function checks(
   value: unknown,
   allowed: readonly string[],
@@ -185,7 +185,7 @@ function checks(
     throw new StewardResponseError(
       `Cannot change the required recheck for ${correction.id}: expected ${correction.expected}`,
     );
-  return [correction, ...requested.filter(({ id }) => id !== correction.id)];
+  return requested;
 }
 
 /** Permit declared operations and discard passing declarations for scheduled host checks. */

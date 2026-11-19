@@ -3,35 +3,31 @@ import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import type { Context } from 'cordis';
 import type { Agent, ActivationInput } from '../../agent/src/index.js';
-import type { Capture, Architecture, TaskContext } from '../../architecture/src/index.js';
-import type { Coordination, Journal } from '../../coordination/src/index.js';
-import { checkpoint, reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
+import type { Capture, TaskContext } from '../../architecture/src/index.js';
+import type { Journal } from '../../coordination/src/index.js';
 import type { Candidate } from '../../verification/src/index.js';
-import type {
-  ActivityCheckpoint,
-  TaskEvent,
-  TaskInput,
-  TaskOutcome,
-  TaskSession,
-} from '../../workflow/src/index.js';
+import { reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
+import type { TaskEvent, TaskOutcome, TaskSession } from '../../workflow/src/index.js';
 import { GitHub } from '../../collaboration/src/index.js';
 import { activateActor } from './activation.js';
 import { usedResearch } from './research.js';
 import { formatterPreview } from './formatter.js';
 import { recoverPrepared } from './prepared-recovery.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
-import { candidateDiff, git } from './git.js';
-import { applicationStorage, preflight, type HostConfig } from './host-config.js';
-import { goalRound, observeGoal, recordAdmission, stagingCapture } from './goals.js';
+import { git } from './git.js';
+import { applicationStorage, type HostConfig } from './host-config.js';
 import { check } from './check.js';
+import { checkInput, reusableCheck } from './check-cache.js';
 import { pendingStewardCheck, type StewardScope } from './steward-check.js';
 import {
   cleanCandidate,
-  ownerEvidenceDigest,
   ownerReviewObservations,
   type OwnerObservation,
 } from './review-observations.js';
 
+import { Execution } from './execution.js';
+
+export { Execution };
 export { type CheckedEdit, editFingerprint } from './edits.js';
 export { Clarifications } from './clarifications.js';
 export { reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
@@ -42,91 +38,6 @@ export { InvalidCodexResponse } from './codex.js';
 declare module 'cordis' {
   interface Context {
     execution: Execution;
-  }
-}
-
-/** Admit a clean project at its verified staging head before creating state. */
-export class Execution {
-  /** Use only trusted architecture, coordination and application storage. */
-  constructor(
-    private readonly architecture: Architecture,
-    private readonly coordination: Coordination,
-    private readonly storage: string,
-  ) {}
-
-  /** Resolve the binding and capture the repository before claiming the project lane. */
-  async admit(input: TaskInput, signal: AbortSignal) {
-    let config: ReturnType<typeof preflight>;
-    try {
-      signal.throwIfAborted();
-      const capture = this.architecture.capture(input.directory);
-      const fresh = Boolean(input.standing || input.planning);
-      const selected = fresh ? stagingCapture(this.architecture, capture) : capture;
-      config = preflight(selected, this.storage, fresh);
-    } catch (error) {
-      if (signal.aborted) throw signal.reason;
-      return invalid(error instanceof Error ? error.message : String(error));
-    }
-    const journal = this.coordination.admit(
-      config.capture.source.remote,
-      input.goal,
-      config.fresh,
-      input.planning === 'exploration'
-        ? `plan:exploration:${config.capture.source.revision}`
-        : input.scope,
-    );
-    if (!journal)
-      return invalid(`Task admission requires the current verified ${config.base} head`);
-    if ('activeGoal' in journal)
-      return invalid(`Active goal: ${journal.activeGoal} (run ${journal.run})`);
-    recordAdmission(journal, config, input.planning);
-    return new HostTask(config, input.goal, journal);
-  }
-
-  /** Read the standing goal inventory and recover an interrupted round or start a new one. */
-  round(directory: string) {
-    return goalRound(this.architecture, this.coordination, directory);
-  }
-
-  /** Prepare the exact read-only snapshot that the Director will assess. */
-  observeGoal(session: TaskSession, signal: AbortSignal) {
-    return observeGoal(hostTask(session), signal);
-  }
-
-  /** Materialize the task branch at its recovered checkpoint before any steward activation. */
-  prepare(session: TaskSession, issue: string, signal: AbortSignal) {
-    return hostTask(session).setupWorkspace(issue, signal);
-  }
-
-  /** Publish checked bytes and record the cursor for the just-completed activation. */
-  checkpoint(session: TaskSession, activity: ActivityCheckpoint, signal: AbortSignal) {
-    return checkpoint(hostTask(session), activity, signal);
-  }
-
-  /** Index the approved working changes and bind the candidate to its Git tree. */
-  async assemble(
-    session: TaskSession,
-    signal: AbortSignal,
-    allowUnchanged = false,
-  ): Promise<Candidate> {
-    signal.throwIfAborted();
-    const task = hostTask(session);
-    if (!task.worktree) throw new Error('The plan produced no candidate worktree');
-    git(task.worktree, 'add', '-A', '--', '.');
-    const digest = git(task.worktree, 'write-tree');
-    const unchanged =
-      digest === git(task.worktree, 'rev-parse', `${task.capture.source.revision}^{tree}`);
-    if (unchanged && !allowUnchanged) throw new Error('The plan produced no candidate changes');
-    const log = task.store(
-      'candidate.diff',
-      candidateDiff(task.worktree, task.capture.source.revision),
-    );
-    return {
-      digest,
-      ...(unchanged ? { unchanged } : {}),
-      evidence: [log],
-      ownerEvidenceDigest: ownerEvidenceDigest(task.ownerReviewChecks(), digest),
-    };
   }
 }
 
@@ -416,7 +327,14 @@ export class HostTask implements TaskSession {
 
   /** Run a declared check and record its real exit, duration and transcript. */
   async check(id: string, signal: AbortSignal, scope?: StewardScope) {
+    signal.throwIfAborted();
     if (!this.worktree) throw new Error('No task worktree is available for checks');
+    const input = checkInput(this, id, scope);
+    const reused = reusableCheck(this.observations(), input, scope?.expected);
+    if (reused) {
+      this.note({ check: reused, scope, checkInput: input, reusedFrom: reused.log });
+      return reused;
+    }
     const log = this.artifact(`${id}.log`);
     const result = await check(
       this.capture,
@@ -427,7 +345,7 @@ export class HostTask implements TaskSession {
       log,
       signal,
     );
-    this.journal.record({ check: result, scope });
+    this.journal.record({ check: result, scope, checkInput: input });
     return result;
   }
 
@@ -473,11 +391,6 @@ export class HostTask implements TaskSession {
 export function hostTask(session: TaskSession): HostTask {
   if (!(session instanceof HostTask)) throw new Error('Task is not admitted by native execution');
   return session;
-}
-
-/** Map unavailable project input to an SDK error without admitting a run. */
-function invalid(reason: string): Extract<TaskOutcome, { reason: string }> {
-  return { kind: 'invalid', reason, evidence: [] };
 }
 
 /** Mount the native host execution boundary with trusted storage. */

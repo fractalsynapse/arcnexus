@@ -17,6 +17,7 @@ import {
 } from './steward-check.js';
 import { decodeSteward, StewardResponseError, type StewardResult } from './steward-response.js';
 import { supplierAnswerRequired, supplierContext } from './supplier-context.js';
+import { stewardProgress } from './steward-progress.js';
 
 const correctionInstruction =
   'Read failedCheck.log first. It is the latest observed failure. Preserve the earlier finding as history. Correct the current failure within the accepted milestone, or request a distinct contribution through Direction when new work is needed. The host reruns the original check with its original expectation.';
@@ -43,7 +44,8 @@ export async function steward(
       ...(result.kind === 'repair' ? { input: stewardInput(task.observations()) } : {}),
     };
   const failed =
-    (await perform(task, scope, result, correction, signal)) ?? task.pendingCheck(scope);
+    (await perform(task, scope, result, correction, signal)) ??
+    (await reconcileCheck(task, scope, correction, signal));
   const evidence = task.evidence.slice(before);
   return failed
     ? stewardCheckOutcome(task, failed, correction, evidence)
@@ -183,13 +185,10 @@ async function stewardAssignment(
   signal: AbortSignal,
 ) {
   const finding = correctionFinding(task.history(), milestone);
-  const localRepair = task
-    .history()
-    .findLast((event) => 'position' in event && event.repair?.milestone === milestone.id);
   return {
     ...responseShape(scope.activity !== 'review' && Boolean(task.formatPreview)),
     ...supplierContext(task.history(), milestone.id),
-    ...(localRepair && 'position' in localRepair ? { localRepair: localRepair.repair } : {}),
+    ...stewardProgress(task.history(), milestone),
     answerRequired: supplierAnswerRequired(task.history(), milestone, scope.activity),
     ...(finding ? { finding } : {}),
     ...(failedCheck ? { failedCheck, correction: correctionInstruction } : {}),
@@ -224,7 +223,7 @@ async function correctionChecks(
 function responseShape(formatter: boolean) {
   return {
     repair:
-      'Repair tool and check failures within this milestone. For a self-review finding return kind repair, activity documentation, testing or implementation, and the exact reason; choose the earliest affected applicable activity. If localRepair is present, read its named diagnostic and correct that finding; its absence is normal for an initial activity. Request a supplier only for distinct work requiring another responsibility. Return blocked only for an unavailable prerequisite, not for an ordinary repairable defect.',
+      'Repair tool and check failures within this milestone. For a self-review finding return kind repair, activity documentation, testing or implementation, and the exact reason; choose the earliest affected applicable activity. If localRepair is present, read its diagnostic. When targetCompleted is true, that target already finished; continue the current activity using its results. Completed Testing with a satisfied expected-fail check is valid red evidence for Implementation to fix, not a reason to rewind merely because that regression fails. completedActivities comes from the host cursor. Absence of localRepair is normal initially. Request a supplier only for distinct work requiring another responsibility. Return blocked only for an unavailable prerequisite, not for an ordinary repairable defect.',
     instructions:
       'Use the mapped local MCP tools for project reads, checked edits and owner checks. The read-only filesystem is deliberate. Make authorized changes through the mapped checked-edit MCP tool even when direct writes are unavailable. Attempt that operation for an owned path before reporting that edits are blocked, and report any exact refusal. A successful edit is already recorded. Mapped checks execute during the MCP call and return their actual status and log. Read that result, correct an ordinary defect locally and recheck with the original expectation. These tools govern this activation; authored product code may use declared public APIs. Put any narration in summary and omit checks from your reply. If another edit is refused, correct the call or request a distinct supplier contribution. Link its accepted milestone when known, or give the new contribution its own ID. End with one JSON object with kind completed, or kind blocked with a reason. Include answer in a completed response when answering a supplier question. Read retained evidence with read-file. Checks in currentChecks are host-managed. Preserve accepted work when correcting a diagnostic. Only the host performs assembled verification and delivery.',
     requests: { formatAvailable: formatter },
@@ -278,4 +277,28 @@ async function perform(
     if ((check.status === 0) !== (expected === 'pass'))
       return { id, expected, status: check.status, log: check.log, activity: scope.activity };
   }
+}
+
+/** Recheck retained obligations or changed inputs, preserving a fresh unchanged caller diagnostic. */
+async function reconcileCheck(
+  task: HostTask,
+  scope: StewardScope,
+  correction: StewardCheckFailure | undefined,
+  signal: AbortSignal,
+) {
+  const pending = task.pendingCheck(scope);
+  if (
+    pending &&
+    (pending.log === correction?.log || correctionMadeProgress(task.observations(), pending.log))
+  ) {
+    const result = await perform(
+      task,
+      scope,
+      { kind: 'completed', edits: [], checks: [pending] },
+      pending,
+      signal,
+    );
+    if (result) return result;
+  }
+  return task.pendingCheck(scope);
 }
