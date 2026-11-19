@@ -13,17 +13,24 @@ const milestone: Milestone = {
   id: 'quality',
   owner: 'owner',
   criteria: [{ id: 'quality', description: 'Each applicable operation is satisfied' }],
-  steps: [{
-    activity: 'implementation',
-    checklist: [{ id: 'quality', criteria: ['quality'], expected: 'Checks pass independently' }],
-  }],
+  steps: [
+    {
+      activity: 'implementation',
+      checklist: [{ id: 'quality', criteria: ['quality'], expected: 'Checks pass independently' }],
+    },
+  ],
 };
 
 const testing: Milestone = {
   ...milestone,
-  steps: [{ activity: 'testing', checklist: [
-    { id: 'quality', criteria: ['quality'], expected: 'Red tests and passing formatting' },
-  ] }],
+  steps: [
+    {
+      activity: 'testing',
+      checklist: [
+        { id: 'quality', criteria: ['quality'], expected: 'Red tests and passing formatting' },
+      ],
+    },
+  ],
 };
 
 test('a satisfied expected-red owner test cannot satisfy omitted formatting in Testing', async (t) => {
@@ -31,10 +38,21 @@ test('a satisfied expected-red owner test cannot satisfy omitted formatting in T
   const task = new StewardFixture(t, root).task;
   t.after(() => task.close());
   const ids = ['owner-tests', 'owner-format'];
-  const operations = Object.fromEntries(ids.map((id) => [id, {
-    id, kind: 'command', tool: 'check', category: 'build',
-    command: '/usr/bin/false', args: [], cwd: '.', network: false,
-  }]));
+  const operations = Object.fromEntries(
+    ids.map((id) => [
+      id,
+      {
+        id,
+        kind: 'command',
+        tool: 'check',
+        category: 'build',
+        command: '/usr/bin/false',
+        args: [],
+        cwd: '.',
+        network: false,
+      },
+    ]),
+  );
   Object.assign(task.capture, { operations });
   Object.assign(task.capture.components.owner!.activities, {
     testing: { profile: 'profile', operations: ids },
@@ -42,13 +60,25 @@ test('a satisfied expected-red owner test cannot satisfy omitted formatting in T
   t.mock.method(task, 'activate', async () => {
     const log = task.store('red.log', 'controlled expected test failure');
     task.note({
-      check: { id: 'owner-tests', status: 1, log, command: 'fixture', args: [], cwd: root, durationMs: 0 },
+      check: {
+        id: 'owner-tests',
+        status: 1,
+        log,
+        command: 'fixture',
+        args: [],
+        cwd: root,
+        durationMs: 0,
+      },
       scope: { owner: 'owner', activity: 'testing', expected: 'fail' },
     });
     return { kind: 'completed', edits: [], checks: [] };
   });
   const result = await steward(
-    new Agent(new Architecture()), task, testing, 'testing', AbortSignal.timeout(5000),
+    new Agent(new Architecture()),
+    task,
+    testing,
+    'testing',
+    AbortSignal.timeout(5000),
   );
   assert.notEqual(result.kind, 'completed', 'owner-format lacks current evidence');
 });
@@ -58,22 +88,47 @@ test('inapplicability of owner tests cannot satisfy omitted lint', async (t) => 
   const task = new StewardFixture(t, root).task;
   t.after(() => task.close());
   const ids = ['owner-tests', 'owner-lint'];
-  Object.assign(task.capture, { operations: Object.fromEntries(ids.map((id) => [id, {
-    id, kind: 'command', tool: 'check', category: 'build',
-    command: '/usr/bin/false', args: [], cwd: '.', network: false,
-  }])) });
+  Object.assign(task.capture, {
+    operations: Object.fromEntries(
+      ids.map((id) => [
+        id,
+        {
+          id,
+          kind: 'command',
+          tool: 'check',
+          category: 'build',
+          command: '/usr/bin/false',
+          args: [],
+          cwd: '.',
+          network: false,
+        },
+      ]),
+    ),
+  });
   Object.assign(task.capture.components.owner!.activities.implementation!, { operations: ids });
   t.mock.method(task, 'activate', async () => {
     const log = task.store('inapplicable.log', 'No owner test suites');
     task.note({
-      check: { id: 'owner-tests', status: 'not-applicable', reason: 'No owner test suites',
-        log, command: 'fixture', args: [], cwd: root, durationMs: 0 },
+      check: {
+        id: 'owner-tests',
+        status: 'not-applicable',
+        reason: 'No owner test suites',
+        log,
+        command: 'fixture',
+        args: [],
+        cwd: root,
+        durationMs: 0,
+      },
       scope: { owner: 'owner', activity: 'implementation', expected: 'pass' },
     });
     return { kind: 'completed', edits: [], checks: [] };
   });
   const result = await steward(
-    new Agent(new Architecture()), task, milestone, 'implementation', AbortSignal.timeout(5000),
+    new Agent(new Architecture()),
+    task,
+    milestone,
+    'implementation',
+    AbortSignal.timeout(5000),
   );
   assert.notEqual(result.kind, 'completed', 'owner-lint lacks current evidence');
 });
@@ -82,39 +137,77 @@ test('a later checked edit invalidates earlier passing operation evidence', asyn
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-quality-stale-'));
   const task = new StewardFixture(t, root).task;
   t.after(() => task.close());
-  Object.assign(task.capture, { operations: {
-    'owner-lint': {
-      id: 'owner-lint', kind: 'command', tool: 'check', category: 'build',
-      command: '/usr/bin/true', args: [], cwd: '.', network: false,
+  Object.assign(task.capture, {
+    operations: {
+      'owner-lint': {
+        id: 'owner-lint',
+        kind: 'command',
+        tool: 'check',
+        category: 'build',
+        command: '/usr/bin/true',
+        args: [],
+        cwd: '.',
+        network: false,
+      },
     },
-  } });
-  Object.assign(task.capture.components.owner!.activities.implementation!, { operations: ['owner-lint'] });
+  });
+  Object.assign(task.capture.components.owner!.activities.implementation!, {
+    operations: ['owner-lint'],
+  });
   t.mock.method(task, 'activate', async () => {
     const log = task.store('passing.log', 'passing before edit');
     task.note({
-      check: { id: 'owner-lint', status: 0, log, command: 'fixture', args: [], cwd: root, durationMs: 0 },
+      check: {
+        id: 'owner-lint',
+        status: 0,
+        log,
+        command: 'fixture',
+        args: [],
+        cwd: root,
+        durationMs: 0,
+      },
       scope: { owner: 'owner', activity: 'implementation', expected: 'pass' },
     });
     task.note({ owner: 'owner', edits: [{ path: 'source.ts', before: 'old', after: 'new' }] });
     return { kind: 'completed', edits: [], checks: [] };
   });
   const result = await steward(
-    new Agent(new Architecture()), task, milestone, 'implementation', AbortSignal.timeout(5000),
+    new Agent(new Architecture()),
+    task,
+    milestone,
+    'implementation',
+    AbortSignal.timeout(5000),
   );
   assert.notEqual(result.kind, 'completed', 'owner-lint evidence predates the edit');
 });
 
 for (const activity of ['testing', 'implementation'] as const) {
-  for (const id of ['owner-format', 'owner-lint', 'repository-types', 'repository-build', 'owner-tests']) {
+  for (const id of [
+    'owner-format',
+    'owner-lint',
+    'repository-types',
+    'repository-build',
+    'owner-tests',
+  ]) {
     if (activity === 'testing' && id === 'owner-tests') continue;
     test(`recorded expected-fail ${id} cannot complete ${activity}`, async (t) => {
       const root = mkdtempSync(join(tmpdir(), 'arcnexus-quality-fail-'));
       const task = new StewardFixture(t, root).task;
       t.after(() => task.close());
-      Object.assign(task.capture, { operations: { [id]: {
-        id, kind: 'command', tool: 'check', category: 'build',
-        command: '/usr/bin/false', args: [], cwd: '.', network: false,
-      } } });
+      Object.assign(task.capture, {
+        operations: {
+          [id]: {
+            id,
+            kind: 'command',
+            tool: 'check',
+            category: 'build',
+            command: '/usr/bin/false',
+            args: [],
+            cwd: '.',
+            network: false,
+          },
+        },
+      });
       Object.assign(task.capture.components.owner!.activities, {
         [activity]: { profile: 'profile', operations: [id] },
       });
@@ -128,12 +221,21 @@ for (const activity of ['testing', 'implementation'] as const) {
       });
       const selected: Milestone = {
         ...milestone,
-        steps: [{ activity, checklist: [
-          { id: 'quality', criteria: ['quality'], expected: 'Applicable checks pass' },
-        ] }],
+        steps: [
+          {
+            activity,
+            checklist: [
+              { id: 'quality', criteria: ['quality'], expected: 'Applicable checks pass' },
+            ],
+          },
+        ],
       };
       const result = await steward(
-        new Agent(new Architecture()), task, selected, activity, AbortSignal.timeout(5000),
+        new Agent(new Architecture()),
+        task,
+        selected,
+        activity,
+        AbortSignal.timeout(5000),
       );
       assert.notEqual(result.kind, 'completed');
     });
@@ -146,23 +248,46 @@ for (const missing of ['owner-format', 'owner-lint', 'repository-types']) {
     const task = new StewardFixture(t, root).task;
     t.after(() => task.close());
     const ids = ['owner-format', 'owner-lint', 'repository-types'];
-    const operations = Object.fromEntries(ids.map((id) => [id, {
-      id, kind: 'command', tool: 'check', category: 'build',
-      command: '/usr/bin/false', args: [], cwd: '.', network: false,
-    }]));
+    const operations = Object.fromEntries(
+      ids.map((id) => [
+        id,
+        {
+          id,
+          kind: 'command',
+          tool: 'check',
+          category: 'build',
+          command: '/usr/bin/false',
+          args: [],
+          cwd: '.',
+          network: false,
+        },
+      ]),
+    );
     Object.assign(task.capture, { operations });
     Object.assign(task.capture.components.owner!.activities.implementation!, { operations: ids });
     const unrelated = ids.find((id) => id !== missing)!;
     t.mock.method(task, 'activate', async () => {
       const log = task.store('unrelated.log', 'controlled passing observation');
       task.note({
-        check: { id: unrelated, status: 0, log, command: 'fixture', args: [], cwd: root, durationMs: 0 },
+        check: {
+          id: unrelated,
+          status: 0,
+          log,
+          command: 'fixture',
+          args: [],
+          cwd: root,
+          durationMs: 0,
+        },
         scope: { owner: 'owner', activity: 'implementation', expected: 'pass' },
       });
       return { kind: 'completed', edits: [], checks: [] };
     });
     const result = await steward(
-      new Agent(new Architecture()), task, milestone, 'implementation', AbortSignal.timeout(5000),
+      new Agent(new Architecture()),
+      task,
+      milestone,
+      'implementation',
+      AbortSignal.timeout(5000),
     );
     assert.notEqual(result.kind, 'completed', `${missing} lacks current evidence`);
   });
@@ -176,25 +301,52 @@ for (const [activity, id] of [
     const root = mkdtempSync(join(tmpdir(), 'arcnexus-raw-fail-'));
     const task = new StewardFixture(t, root).task;
     t.after(() => task.close());
-    Object.assign(task.capture, { operations: { [id]: {
-      id, kind: 'command', tool: 'check', category: 'build',
-      command: '/usr/bin/false', args: [], cwd: '.', network: false,
-    } } });
+    Object.assign(task.capture, {
+      operations: {
+        [id]: {
+          id,
+          kind: 'command',
+          tool: 'check',
+          category: 'build',
+          command: '/usr/bin/false',
+          args: [],
+          cwd: '.',
+          network: false,
+        },
+      },
+    });
     Object.assign(task.capture.components.owner!.activities, {
       [activity]: { profile: 'profile', operations: [id] },
     });
     t.mock.method(task, 'activate', async () => ({
-      kind: 'completed', edits: [], checks: [{ id, expected: 'fail' }],
+      kind: 'completed',
+      edits: [],
+      checks: [{ id, expected: 'fail' }],
     }));
     t.mock.method(task, 'check', async () => ({
-      id, status: 1, log: task.store('raw-failure.log', 'actual failure'),
-      command: 'fixture', args: [], cwd: root, durationMs: 0,
+      id,
+      status: 1,
+      log: task.store('raw-failure.log', 'actual failure'),
+      command: 'fixture',
+      args: [],
+      cwd: root,
+      durationMs: 0,
     }));
-    const selected: Milestone = { ...milestone, steps: [{
-      activity, checklist: [{ id: 'quality', criteria: ['quality'], expected: 'Checks pass' }],
-    }] };
+    const selected: Milestone = {
+      ...milestone,
+      steps: [
+        {
+          activity,
+          checklist: [{ id: 'quality', criteria: ['quality'], expected: 'Checks pass' }],
+        },
+      ],
+    };
     const result = await steward(
-      new Agent(new Architecture()), task, selected, activity, AbortSignal.timeout(5000),
+      new Agent(new Architecture()),
+      task,
+      selected,
+      activity,
+      AbortSignal.timeout(5000),
     );
     assert.notEqual(result.kind, 'completed');
   });
@@ -204,12 +356,22 @@ test('mixed captured operations progress after the command check passes', async 
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-mixed-operations-'));
   const task = new StewardFixture(t, root).task;
   t.after(() => task.close());
-  Object.assign(task.capture, { operations: {
-    'read-file': { id: 'read-file', kind: 'tool', tool: 'read', category: 'project-tool' },
-    'checked-edit': { id: 'checked-edit', kind: 'tool', tool: 'edit', category: 'project-tool' },
-    'owner-tests': { id: 'owner-tests', kind: 'command', tool: 'check', category: 'integration-test',
-      command: '/usr/bin/true', args: [], cwd: '.', network: false },
-  } });
+  Object.assign(task.capture, {
+    operations: {
+      'read-file': { id: 'read-file', kind: 'tool', tool: 'read', category: 'project-tool' },
+      'checked-edit': { id: 'checked-edit', kind: 'tool', tool: 'edit', category: 'project-tool' },
+      'owner-tests': {
+        id: 'owner-tests',
+        kind: 'command',
+        tool: 'check',
+        category: 'integration-test',
+        command: '/usr/bin/true',
+        args: [],
+        cwd: '.',
+        network: false,
+      },
+    },
+  });
   Object.assign(task.capture.components.owner!.activities.implementation!, {
     operations: ['read-file', 'checked-edit', 'owner-tests'],
   });
@@ -218,11 +380,22 @@ test('mixed captured operations progress after the command check passes', async 
   t.mock.method(task, 'check', async (id: string) => {
     called.push(id);
     assert.equal(id, 'owner-tests');
-    return { id, status: 0, log: task.store('pass.log', 'pass'),
-      command: 'fixture', args: [], cwd: root, durationMs: 0 };
+    return {
+      id,
+      status: 0,
+      log: task.store('pass.log', 'pass'),
+      command: 'fixture',
+      args: [],
+      cwd: root,
+      durationMs: 0,
+    };
   });
   const result = await steward(
-    new Agent(new Architecture()), task, milestone, 'implementation', AbortSignal.timeout(5000),
+    new Agent(new Architecture()),
+    task,
+    milestone,
+    'implementation',
+    AbortSignal.timeout(5000),
   );
   assert.equal(result.kind, 'completed');
   assert.deepEqual(called, ['owner-tests']);
