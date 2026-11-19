@@ -26,6 +26,7 @@ const emptyHeaders = {
   empty: '/** */',
   whitespace: '/**   \n    \t */',
   decorative: '/**\n   *\n   ***\n   */',
+  separatedStars: '/** * * */',
 };
 
 for (const [kind, declaration] of Object.entries(declarations)) {
