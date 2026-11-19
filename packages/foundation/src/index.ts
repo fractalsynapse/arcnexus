@@ -115,3 +115,8 @@ function discoverSuites(directory: string, pattern: string, components: readonly
     .sort()
     .map((file) => registerSuite(file, components));
 }
+
+/** Preserve repository formatter coverage while allowing package and fixture files. */
+function isFormatCovered(path: string): boolean {
+  return /^(?:[^/]+\\.(?:ts|json)|(?:apps|packages|scripts|fixtures)\\/.+\\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json))$/.test(path);
+}
