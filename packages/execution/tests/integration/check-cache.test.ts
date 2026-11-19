@@ -48,6 +48,30 @@ test('owner lint evidence survives an unrelated committed documentation edit', a
   assert.deepEqual(reusableCheck(fixture.task.observations(), fixture.input()), observed);
 });
 
+test('an imported lint configuration change invalidates owner lint evidence', async (t) => {
+  const { git } = await import('../../src/git.js');
+  const fixture = new CheckCacheFixture(t);
+  fixture.restart({
+    ...fixtureOperation, command: 'npm',
+    args: ['run', 'lint', '--', { context: 'owner' }],
+    applicability: 'owner-lint-files',
+  } as typeof fixtureOperation);
+  const worktree = fixture.task.worktree!;
+  writeFileSync(join(worktree, 'eslint.config.ts'), "import './lint-rules.ts';\n");
+  writeFileSync(join(worktree, 'lint-rules.ts'), 'export default {};\n');
+  git(worktree, 'add', 'eslint.config.ts', 'lint-rules.ts');
+  git(worktree, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com',
+    'commit', '-qm', 'Add lint configuration');
+  const before = fixture.input();
+  fixture.observe();
+  writeFileSync(join(worktree, 'lint-rules.ts'), 'export default { changed: true };\n');
+  git(worktree, 'add', 'lint-rules.ts');
+  git(worktree, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com',
+    'commit', '-qm', 'Change imported lint configuration');
+  assert.notEqual(fixture.input(), before);
+  assert.equal(reusableCheck(fixture.task.observations(), fixture.input()), undefined);
+});
+
 test('changed operation authority invalidates a retained successful observation', (t) => {
   const fixture = new CheckCacheFixture(t);
   const before = fixture.input();
