@@ -405,8 +405,8 @@ for (const expected of ['pass', 'fail'] as const) {
       scenario.checks.map(({ status }) => status),
       expected === 'pass' ? [37, 43] : [0, 37, 37, 37],
     );
-    assert(repeated.evidence.includes(scenario.checks[0]!.log));
-    assert(repeated.evidence.includes(scenario.checks[1]!.log));
+    assert(JSON.stringify(scenario.beforeRetry).includes(scenario.checks[0]!.log));
+    assert(repeated.evidence.includes(scenario.checks.at(-1)!.log));
     assert.deepEqual(scenario.gates, []);
     scenario.secured('checked');
     const corrected = await scenario.run('correct');
