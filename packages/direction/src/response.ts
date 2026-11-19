@@ -1,6 +1,6 @@
 import { citesVerifiedRun } from '../../execution/src/index.js';
 import { revisionCitation } from '../../architecture/src/index.js';
-import { activities, type DirectionResult, type StandingGoalEvidence } from './index.js';
+import { activities, validateCorrection, validatePlan, validateRevision, type DirectionResult, type Milestone, type Plan, type RevisionFeedback, type StandingGoalEvidence } from './index.js';
 
 /** Carry a rejected Director proposal's diagnostic across the planning boundary. */
 export class DirectorResponseError extends Error {}
