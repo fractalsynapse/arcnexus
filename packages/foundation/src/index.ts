@@ -65,7 +65,14 @@ function qualityIdentity(
   componentFiles: readonly string[],
 ): string {
   const identity = createHash('sha256');
-  identity.update(JSON.stringify({ operation, owner, files, owners: files.map((path) => [path, team.ownerFor(components, path)]) }));
+  identity.update(
+    JSON.stringify({
+      operation,
+      owner,
+      files,
+      owners: files.map((path) => [path, team.ownerFor(components, path)]),
+    }),
+  );
   for (const path of [
     ...componentFiles,
     ...globSync('**/*.{ts,mts,cts}'),
@@ -170,7 +177,10 @@ function isIgnored(path: string): boolean {
     const directory = ignoreFile.slice(0, -'.gitignore'.length).replace(/\/$/, '');
     if (directory && !path.startsWith(`${directory}/`)) return false;
     const relative = directory ? path.slice(directory.length + 1) : path;
-    return matchesIgnoreRules(relative, readOptionalFile(ignoreFile).split(String.fromCharCode(10)));
+    return matchesIgnoreRules(
+      relative,
+      readOptionalFile(ignoreFile).split(String.fromCharCode(10)),
+    );
   });
 }
 
