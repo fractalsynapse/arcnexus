@@ -5,6 +5,7 @@ import { integrate, resume } from '../../../packages/delivery/src/index.js';
 import {
   applicationStorage,
   executionPlugin,
+  hostTask,
   steward,
 } from '../../../packages/execution/src/index.js';
 import { plannerPlugin } from '../../../packages/planner/src/index.js';
