@@ -41,7 +41,7 @@ function services(context: Context): WorkflowServices {
             JSON.stringify(snapshot.observations),
           ),
           position: snapshot.position,
-          finding: feedback.kind === 'plan-repair' ? feedback.original! : feedback,
+          finding: feedback,
         };
         return direct(context.agent, session, signal, { revision, feedback, standing });
       },
