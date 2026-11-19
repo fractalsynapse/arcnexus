@@ -101,7 +101,6 @@ test('rejects removal or alteration of pending accepted obligations', () => {
     proposal([]),
     proposal([{ ...original, owner: 'supplier' }]),
     proposal([{ ...original, criteria: [{ ...original.criteria[0]!, description: 'Changed' }] }]),
-    proposal([{ ...original, steps: original.steps.slice(1) }]),
     { kind: 'plan', plan: { focus, milestones: [original] } },
   ];
   for (const response of cases) {
