@@ -386,13 +386,9 @@ function readOptionalFile(path: string, root: string = process.cwd()): string {
   }
 }
 
-/** Read each reachable ignore file once for discovery and its matching identity. */
+/** Read ignore contents from the root supplied by the active selection. */
 function readIgnoreFile(path: string, root: string = process.cwd()): string {
-  const cached = ignoreFileContents.get(path);
-  if (cached !== undefined) return cached;
-  const content = readFileSync(root === process.cwd() ? path : resolve(root, path), 'utf8');
-  ignoreFileContents.set(path, content);
-  return content;
+  return readFileSync(resolve(root, path), 'utf8');
 }
 
 interface IgnoreMatcher {
