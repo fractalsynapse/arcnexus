@@ -35,9 +35,9 @@ export async function checkInput(task: HostTask, id: string, scope?: StewardScop
     scope?.owner &&
     isOwnerQuality &&
     !qualityOperationAvailable({
-      tool: operation.tool ?? '',
-      command: operation.command ?? '',
-      args: operation.args ?? [],
+      tool: operation?.tool ?? '',
+      command: operation?.command ?? '',
+      args: operation?.args ?? [],
       applicability,
       source: task.capture.source,
     })
