@@ -8,7 +8,7 @@ import {
   checkEnvironment,
   type CheckResult,
 } from './check.js';
-import { selectQualityInputs } from '../../foundation/src/index.js';
+import { qualityRuntime, selectQualityInputs } from '../../foundation/src/index.js';
 import type { HostTask } from './index.js';
 import type { StewardScope } from './steward-check.js';
 import { git } from './git.js';
