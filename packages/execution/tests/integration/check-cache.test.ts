@@ -124,3 +124,31 @@ test('a cancelled request cannot reuse an otherwise valid observation', async (t
     name: 'AbortError',
   });
 });
+
+for (const path of [
+  '.prettierrc',
+  'nested/.prettierignore',
+  'nested/.editorconfig',
+  'config/lint-rules.ts',
+]) {
+  test(`committed quality configuration ${path} invalidates cached evidence`, async (t) => {
+    const { git } = await import('../../src/git.js');
+    const fixture = new CheckCacheFixture(t);
+    fixture.restart({
+      ...fixtureOperation, command: 'npm',
+      args: ['run', 'format:check', '--', { context: 'owner' }],
+      applicability: 'owner-format-files',
+    } as typeof fixtureOperation);
+    const before = fixture.input();
+    fixture.observe();
+    const worktree = fixture.task.worktree!;
+    const { dirname } = await import('node:path');
+    mkdirSync(dirname(join(worktree, path)), { recursive: true });
+    writeFileSync(join(worktree, path), 'changed configuration');
+    git(worktree, 'add', path);
+    git(worktree, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com',
+      'commit', '-qm', 'Change configuration');
+    assert.notEqual(fixture.input(), before);
+    assert.equal(reusableCheck(fixture.task.observations(), fixture.input()), undefined);
+  });
+}
