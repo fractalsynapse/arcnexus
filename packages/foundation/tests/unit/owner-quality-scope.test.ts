@@ -275,3 +275,92 @@ test('a Prettier-ignored TypeScript file leaves format empty but remains lint ap
     tree.close();
   }
 });
+
+/** Read public applicability in the isolated worktree. */
+async function selection(tree: QualityFixture, operation: Operation) {
+  const previous = process.cwd();
+  try {
+    process.chdir(tree.root);
+    return await foundation.selectQualityInputs(operation, 'alpha');
+  } finally {
+    process.chdir(previous);
+  }
+}
+
+for (const extension of ['yaml', 'yml']) {
+  test(`format selects maintained ${extension} files`, async () => {
+    const tree = new QualityFixture();
+    try {
+      tree.owner('alpha', 'packages/alpha');
+      const path = `packages/alpha/probe.${extension}`;
+      tree.write(path, 'value: 1\n');
+      assert((await selection(tree, 'format:check')).files.includes(path));
+    } finally {
+      tree.close();
+    }
+  });
+}
+
+test('public quality identity changes when selected source contents change', async () => {
+  const tree = fixture();
+  try {
+    const before = await selection(tree, 'format:check');
+    tree.write('packages/alpha/probe.ts', 'export const alpha = 2;\n');
+    const after = await selection(tree, 'format:check');
+    assert.deepEqual(after.files, before.files);
+    assert.notEqual(after.identity, before.identity);
+  } finally {
+    tree.close();
+  }
+});
+
+test('public lint identity changes when an imported configuration changes', async () => {
+  const tree = fixture();
+  try {
+    tree.write('eslint.config.ts', "import rules from './readability-rules.ts';\nexport default [rules];\n");
+    tree.write('readability-rules.ts', 'export default {};\n');
+    const before = await selection(tree, 'lint');
+    tree.write('readability-rules.ts', 'export default { rules: {} };\n');
+    const after = await selection(tree, 'lint');
+    assert.deepEqual(after.files, before.files);
+    assert.notEqual(after.identity, before.identity);
+  } finally {
+    tree.close();
+  }
+});
+
+for (const [label, ignorePath, pattern, ignoredPath] of [
+  ['nested ignore', 'packages/alpha/.gitignore', 'hidden.ts\n', 'packages/alpha/deep/hidden.ts'],
+  ['slashless directory', '.gitignore', 'generated/\n', 'packages/alpha/deep/generated/probe.ts'],
+  ['double wildcard', '.gitignore', 'packages/**/generated/*.ts\n', 'packages/alpha/deep/generated/probe.ts'],
+] as const) {
+  test(`discovery honors ${label} patterns`, async () => {
+    const tree = new QualityFixture();
+    try {
+      tree.owner('alpha', 'packages/alpha');
+      tree.write(ignorePath, pattern);
+      tree.write(ignoredPath, 'export const ignored = 1;\n');
+      tree.write('packages/alpha/visible.ts', 'export const visible = 1;\n');
+      const result = await selection(tree, 'format:check');
+      assert(result.files.includes('packages/alpha/visible.ts'));
+      assert(!result.files.includes(ignoredPath));
+    } finally {
+      tree.close();
+    }
+  });
+}
+
+for (const extension of ['jsx', 'tsx']) {
+  test(`lint discovers configuration-enabled ${extension} files`, async () => {
+    const tree = new QualityFixture();
+    try {
+      tree.owner('alpha', 'packages/alpha');
+      tree.write('eslint.config.ts', `export default [{ files: ['**/*.${extension}'] }];\n`);
+      const path = `packages/alpha/probe.${extension}`;
+      tree.write(path, 'export const probe = 1;\n');
+      assert((await selection(tree, 'lint')).files.includes(path));
+    } finally {
+      tree.close();
+    }
+  });
+}
