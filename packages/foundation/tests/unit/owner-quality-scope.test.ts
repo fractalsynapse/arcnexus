@@ -148,8 +148,13 @@ test('a Prettier-ignored TypeScript file leaves format empty but remains lint ap
     tree.owner('ignored-owner', 'packages/ignored-owner');
     tree.write('.prettierignore', 'packages/ignored-owner/probe.ts\n');
     tree.write('packages/ignored-owner/probe.ts', 'const unused = 1;\n');
-    assert.equal(tree.run('format:check', 'ignored-owner').status, 0);
-    assert.notEqual(tree.run('lint', 'ignored-owner').status, 0);
+    const format = tree.run('format:check', 'ignored-owner');
+    assert.equal(format.status, 0, format.output);
+    assert.match(format.output, /format.*(empty|no applicable|inapplicable)|(empty|no applicable|inapplicable).*format/i);
+    const lint = tree.run('lint', 'ignored-owner');
+    assert.notEqual(lint.status, 0, lint.output);
+    assert.match(lint.output, /packages\/ignored-owner\/probe\.ts/);
+    assert.match(lint.output, /no-unused-vars/);
   } finally {
     tree.close();
   }
