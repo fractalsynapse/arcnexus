@@ -65,8 +65,8 @@ test('worktree selection and receipt use the candidate with a nested command cwd
   const components = join(worktree, '.arc/architecture/components');
   mkdirSync(components, { recursive: true });
   mkdirSync(join(worktree, 'nested'));
-  writeFileSync(join(components, 'execution.yaml'),
-    'id: execution\nowns:\n  - packages/execution\n');
+  const declaration = 'id: execution\nowns:\n  - packages/execution\n';
+  writeFileSync(join(components, 'execution.yaml'), declaration);
   const capture = {
     source: { root: host, paths: ['.arc/architecture/components/execution.yaml'] },
     project: { checks: { acceptance: [] } },
