@@ -141,7 +141,9 @@ function requiredChecks(
   scope: StewardScope,
   requested: readonly { id: string; expected: 'pass' | 'fail' }[],
 ) {
-  const checks = new Map(requested.map((check) => [check.id, requestedExpectation(check, scope)]));
+  const checks = new Map<string, { id: string; expected: 'pass' | 'fail' }>();
+  for (const check of requested)
+    checks.set(check.id, requestedExpectation(check, scope));
   const events = task.observations<{
     check?: CheckResult;
     scope?: StewardScope;
