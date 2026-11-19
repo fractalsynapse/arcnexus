@@ -2,7 +2,11 @@ import { existsSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, resolve, sep } from 'node:path';
 import { team } from '../../team/src/index.js';
 import type { Capture } from '../../architecture/src/index.js';
-import { hasOwnerTestSuites } from '../../foundation/src/index.js';
+import {
+  hasOwnerTestSuites,
+  qualityOperationAvailable,
+  selectQualityInputs,
+} from '../../foundation/src/index.js';
 import { execute } from './process.js';
 
 export interface CheckResult {
