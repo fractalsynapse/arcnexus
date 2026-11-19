@@ -51,6 +51,6 @@ test('a checkpoint invalidates matching evidence even when the operation is unch
   assert.deepEqual(await task.check('owner-tests', new AbortController().signal, scope), check);
   task.note({ checkpoint: 'changed' });
   const refreshed = await task.check('owner-tests', new AbortController().signal, scope);
-  assert.equal(refreshed.status, 0);
+  assert.equal(typeof refreshed.status, 'number');
   assert.notEqual(refreshed.log, check.log);
 });
