@@ -45,21 +45,31 @@ export async function check(
   return { ...parameters, status, durationMs: Math.round(performance.now() - start) };
 }
 
-/** Check the captured prerequisite only for optional, owner-scoped operations. */
-function ownerTestInapplicability(
+/** Check captured owner applicability before running its operation in the overlay. */
+async function ownerOperationInapplicability(
   capture: Capture,
   worktree: string,
   id: string,
   owner?: string,
-): string | undefined {
-  if (
-    !owner ||
-    capture.operations[id]?.applicability !== 'owner-test-suites' ||
-    capture.project.checks?.acceptance.includes(id)
-  )
+): Promise<string | undefined> {
+  const operation = capture.operations[id];
+  const required = capture.project.checks?.acceptance.includes(id);
+  if (!owner || required) return;
+  if (operation?.applicability === 'owner-test-suites') {
+    if (!hasOwnerTestSuites(worktree, owner, team.list(capture.components)))
+      return `No test suites for ${owner} in the current worktree`;
     return;
-  if (!hasOwnerTestSuites(worktree, owner, team.list(capture.components)))
-    return `No test suites for ${owner} in the current worktree`;
+  }
+  if (!['owner-lint-files', 'owner-format-files'].includes(operation?.applicability ?? ''))
+    return;
+  if (!qualityOperationAvailable({ ...operation, source: undefined }))
+    throw new Error(`Unavailable owner quality operation: ${id}`);
+  const selected = await selectQualityInputs(
+    operation.applicability === 'owner-lint-files' ? 'lint' : 'format:check',
+    owner,
+  );
+  if (!selected.files.length)
+    return `No ${selected.operation} files for ${owner} in the current worktree`;
 }
 
 /** Produce formatter stdout in the same disposable, networkless overlay as host checks. */
