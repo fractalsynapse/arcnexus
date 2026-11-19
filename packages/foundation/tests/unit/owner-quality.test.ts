@@ -7,11 +7,12 @@ test('format checks a selected root filename beginning with a hyphen', async () 
   const tree = new QualityFixture();
   try {
     tree.owner('alpha', '-probe.ts');
-    tree.write('-probe.ts', 'export const probe = 1;\n');
+    tree.write('-probe.ts', 'export const probe=1\n');
     const selected = await selection(tree, 'format:check');
     assert.deepEqual(selected.files, ['-probe.ts']);
     const result = tree.run('format:check', 'alpha');
-    assert.equal(result.status, 0, result.output);
+    assert.notEqual(result.status, 0, result.output);
+    assert.match(result.output, /-probe\.ts/);
   } finally {
     tree.close();
   }
