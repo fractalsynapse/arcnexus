@@ -60,7 +60,11 @@ async function ownerOperationInapplicability(
       return `No test suites for ${owner} in the current worktree`;
     return;
   }
-  if (!operation || !['owner-lint-files', 'owner-format-files'].includes(operation.applicability ?? ''))
+  const applicability = operation?.applicability;
+  if (
+    !operation ||
+    (applicability !== 'owner-lint-files' && applicability !== 'owner-format-files')
+  )
     return;
   if (!operation.tool || !operation.command)
     throw new Error(`Unavailable owner quality operation: ${id}`);
