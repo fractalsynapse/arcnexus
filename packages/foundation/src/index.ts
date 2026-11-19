@@ -113,38 +113,34 @@ function prettierConfigurationInputs(
   files: readonly string[],
 ): string[] {
   if (operation !== 'format:check') return [];
-  const names = [
-    '.prettierrc',
-    '.prettierrc.yaml',
-    '.prettierrc.yml',
-    '.prettierrc.json',
-    '.prettierrc.json5',
-    '.prettierrc.js',
-    '.prettierrc.cjs',
-    '.prettierrc.mjs',
-    '.prettierrc.ts',
-    'prettier.config.js',
-    'prettier.config.cjs',
-    'prettier.config.mjs',
-    'prettier.config.ts',
-  ];
   const paths = new Set<string>();
+  collectPrettierConfigurationPaths(paths, files);
+  includeNestedPrettierConfigurations(paths, files);
+  return [...paths].sort();
+}
+
+/** Collect existing conventional formatter configs along selected file paths. */
+function collectPrettierConfigurationPaths(paths: Set<string>, files: readonly string[]): void {
+  const names = ['.prettierrc', '.prettierrc.yaml', '.prettierrc.yml', '.prettierrc.json', '.prettierrc.json5', '.prettierrc.js', '.prettierrc.cjs', '.prettierrc.mjs', '.prettierrc.ts', 'prettier.config.js', 'prettier.config.cjs', 'prettier.config.mjs', 'prettier.config.ts'];
   for (const file of files) {
-    const directories = ['.'];
-    let directory = dirname(file);
-    while (directory !== '.') {
-      directories.push(directory);
-      directory = dirname(directory);
-    }
-    for (const base of directories) {
+    for (const base of ['.', ...parentDirectories(file)]) {
       for (const name of names) {
         const path = base === '.' ? name : `${base}/${name}`;
         if (readOptionalFile(path) !== '') paths.add(path);
       }
     }
   }
-  includeNestedPrettierConfigurations(paths, files);
-  return [...paths].sort();
+}
+
+/** Return each containing directory from nearest to repository root. */
+function parentDirectories(file: string): string[] {
+  const directories: string[] = [];
+  let directory = dirname(file);
+  while (directory !== '.') {
+    directories.push(directory);
+    directory = dirname(directory);
+  }
+  return directories;
 }
 
 /** Include nested formatter configs when selected inputs live beneath them. */
