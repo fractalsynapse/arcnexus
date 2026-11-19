@@ -167,6 +167,15 @@ async function selectOwnedQualityFiles(
   return files;
 }
 
+/** Treat unreadable executable formatter configuration as selected rather than ignored. */
+async function safePrettierFileInfo(path: string, root: string) {
+  try {
+    return await getFileInfo(path, { ignorePath: resolve(root, '.prettierignore') });
+  } catch {
+    return { ignored: false };
+  }
+}
+
 /** Hash selected ownership and every configuration input that affects scope. */
 function selectionIdentity(
   operation: QualitySelection['operation'],
