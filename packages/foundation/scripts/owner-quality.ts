@@ -15,8 +15,8 @@ class OwnerQuality {
   ) {}
 
   /** Resolve shared discovery, then run the matching read-only quality command. */
-  run(): void {
-    const selection = selectQualityInputs(this.operation, this.owner);
+  async run(): Promise<void> {
+    const selection = await selectQualityInputs(this.operation, this.owner);
     console.log(
       `${this.operation} scope=${this.owner ?? 'repository'} sha256=${selection.identity}`,
     );
@@ -45,4 +45,4 @@ class OwnerQuality {
 const [operation, owner, ...extra] = process.argv.slice(2);
 assert(['format:check', 'lint'].includes(operation ?? ''), 'Expected format:check or lint');
 assert.equal(extra.length, 0, 'Usage: owner-quality.ts <format:check|lint> [owner]');
-new OwnerQuality(operation as Operation, owner).run();
+await new OwnerQuality(operation as Operation, owner).run();
