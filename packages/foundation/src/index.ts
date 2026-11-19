@@ -75,7 +75,8 @@ export function qualityOperationAvailable(binding: QualityOperationBinding): boo
   if (
     run !== 'run' ||
     typeof operation !== 'string' ||
-    (hasCapturedSeparator && context === undefined) ||
+    !hasCapturedSeparator ||
+    context === undefined ||
     JSON.stringify(ownerContext) !== JSON.stringify({ context: 'owner' }) ||
     extra.length > 0 ||
     !Object.hasOwn(qualityRuntimeDefinitions, operation) ||
