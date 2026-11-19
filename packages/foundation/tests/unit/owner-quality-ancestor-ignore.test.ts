@@ -8,14 +8,26 @@ for (const operation of ['format:check', 'lint'] as const) {
       const tree = new QualityFixture();
       try {
         tree.owner('alpha', 'packages/alpha');
-        tree.write('.gitignore', `packages/alpha/generated/
-`);
-        tree.write('packages/alpha/generated/.gitignore', `!child/
-`);
-        tree.write('packages/alpha/generated/child/.gitignore', `!probe.ts
-`);
-        tree.write('packages/alpha/generated/child/probe.ts', `const unused=1
-`);
+        tree.write(
+          '.gitignore',
+          `packages/alpha/generated/
+`,
+        );
+        tree.write(
+          'packages/alpha/generated/.gitignore',
+          `!child/
+`,
+        );
+        tree.write(
+          'packages/alpha/generated/child/.gitignore',
+          `!probe.ts
+`,
+        );
+        tree.write(
+          'packages/alpha/generated/child/probe.ts',
+          `const unused=1
+`,
+        );
 
         const result = tree.run(operation, owner);
         assert.equal(result.status, 0, result.output);
