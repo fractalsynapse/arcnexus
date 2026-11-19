@@ -52,10 +52,9 @@ second plan store or new authority source is introduced.
 
 ## Public revision boundary (BPR-1–3)
 
-Status: intended Direction API for the distinct
-`bounded-director-pending-reconstruction` contribution. The existing public
-`direct(..., { plan, feedback })` and complete-plan decoder do not yet provide
-this boundary. Prompt wording alone does not establish BPR-1 or BPR-2.
+Status: implemented Direction API for `bounded-director-pending-reconstruction`.
+The native `direct(..., { revision, feedback, standing })` and
+`decodeRevisionResponse(...)` provide the bounded revision boundary.
 
 Workflow uses a `RevisionRequest` containing `acceptedPlan: string` and
 `retainedEvidence: string` (readable immutable artifact paths),
