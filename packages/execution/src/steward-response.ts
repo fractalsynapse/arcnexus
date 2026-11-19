@@ -15,7 +15,15 @@ export type StewardResult =
   | Exclude<ActivityOutcome, { kind: 'completed' }>;
 
 /** Distinguish invalid proposals from failures after the host starts executing them. */
-export class StewardResponseError extends Error {}
+export class StewardResponseError extends Error {
+  /** Identify the rejected reply class independently of a model's changing wording. */
+  constructor(
+    message: string,
+    readonly identity = message,
+  ) {
+    super(message);
+  }
+}
 
 /** Decode one top-level outcome without executing any proposed edit or check. */
 export function decodeSteward(
@@ -33,7 +41,10 @@ export function decodeSteward(
     case 'question':
       return { kind: 'question', question: required(value.question, 'question'), evidence: [] };
     case 'blocked':
-      return { kind: 'blocked', reason: required(value.reason, 'reason'), evidence: [] };
+      throw new StewardResponseError(
+        `Unsupported activity block: ${required(value.reason, 'reason')}. A model assertion does not establish an unavailable host prerequisite. Investigate the available public interfaces with mapped tools, request optional research when needed, or explicitly request the owning supplier. Continue this activity; the host retains actual external failures.`,
+        'unsupported-activity-block',
+      );
     case 'repair':
       return localRepair(value);
     default:
