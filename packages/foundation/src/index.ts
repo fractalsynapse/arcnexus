@@ -319,6 +319,13 @@ interface IgnoreScope {
 
 const createIgnore = createRequire(import.meta.url)('ignore') as () => IgnoreMatcher;
 
+/** Convert the two gitignore forms unsupported by ignore 5.3.2 before matching. */
+function normalizeGitignorePatterns(contents: string): string {
+  return contents
+    .replace(/\\\\\?/g, '[?]')
+    .replace(/\[!/g, '[^');
+}
+
 /** Walk maintained paths once, loading reachable ignore rules as each directory is entered. */
 function discoverMaintainedFiles(): string[] {
   const files: string[] = [];
