@@ -323,7 +323,7 @@ export function revisionSnapshot(observations: readonly unknown[]): RevisionSnap
 }
 
 /** Identify the object-shaped journal observations used by revision snapshots. */
-function isRecord(value: unknown): value is Record<string, any> {
+function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
