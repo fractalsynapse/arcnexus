@@ -139,7 +139,7 @@ test('commented lint imports retain helper identity coverage', async () => {
     tree.write('helper.js', 'export default {};\n');
     const before = await selectQualityInputs('lint', 'alpha', tree.root);
     assert(before.identity);
-    tree.write('helper.js', 'export default { changed: true };\\n');
+    tree.write('helper.js', 'export default { changed: true };\n');
     const changed = await selectQualityInputs('lint', 'alpha', tree.root);
     assert.notEqual(changed.identity, before.identity);
     assert.equal(eligibility(changed)?.eligible, true);
