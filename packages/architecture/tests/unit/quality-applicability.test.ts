@@ -3,8 +3,8 @@ import test from 'node:test';
 import { Architecture, type Capture } from '../../src/index.js';
 import { Agent } from '../../../agent/src/index.js';
 
-/** Capture only the runtime files needed by the quality binding. */
-function fixtureSource(operation: Record<string, unknown>, missing?: 'manifest' | 'script' | 'runner') {
+/** Build the runtime files used to resolve one quality binding. */
+function qualitySourceFiles(operation: Record<string, unknown>, missing?: 'manifest' | 'script' | 'runner') {
   const runner = 'packages/foundation/scripts/owner-quality.ts';
   const command = operation.applicability === 'owner-lint-files' ? 'lint' : 'format:check';
   const scripts: Record<string, string> = {
@@ -12,17 +12,27 @@ function fixtureSource(operation: Record<string, unknown>, missing?: 'manifest' 
     lint: `jiti ${runner} lint`,
   };
   if (missing === 'script') delete scripts[command];
-  const contents: Record<string, string> = { 'package.json': JSON.stringify({ scripts }), [runner]: '' };
-  const paths = [
-    ...(missing === 'manifest' ? [] : ['package.json']),
-    ...(missing === 'runner' ? [] : [runner]),
-  ];
+
+  return {
+    runner,
+    paths: [
+      ...(missing === 'manifest' ? [] : ['package.json']),
+      ...(missing === 'runner' ? [] : [runner]),
+    ],
+    contents: { 'package.json': JSON.stringify({ scripts }), [runner]: '' },
+  };
+}
+
+/** Capture only the runtime files needed by the quality binding. */
+function fixtureSource(operation: Record<string, unknown>, missing?: 'manifest' | 'script' | 'runner') {
+  const files = qualitySourceFiles(operation, missing);
+
   return {
     revision: 'base',
-    paths,
+    paths: files.paths,
     read: (path: string) => {
-      if (!paths.includes(path)) throw new Error(`Missing from captured project: ${path}`);
-      return contents[path]!;
+      if (!files.paths.includes(path)) throw new Error(`Missing from captured project: ${path}`);
+      return files.contents[path]!;
     },
   };
 }
