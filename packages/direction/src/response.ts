@@ -117,6 +117,7 @@ export function decodeRevisionResponse(
     throw new DirectorResponseError('position.completed: outside accepted milestone sequence');
 
   const prefix = accepted.milestones.slice(0, completed);
+  validatePositions(positions, accepted, completed);
   const proposed = proposedPlan.milestones as Milestone[];
   const proposedIDs = new Set<string>();
   const reconstructed: Milestone[] = [...prefix];
