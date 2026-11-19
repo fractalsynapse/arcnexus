@@ -41,8 +41,14 @@ test('a revision response can contain pending milestones without reproducing com
 test('revision validation preserves acceptance from a large completed prefix', () => {
   const completed = Array.from({ length: 200 }, (_, index) => milestone(`done-${index}`));
   const before: Plan = { focus, milestones: [...completed, milestone('pending')] };
-  const after = structuredClone(before);
-  after.milestones[0]!.criteria[0]!.description = 'Changed accepted outcome';
+  const first = before.milestones[0]!;
+  const after: Plan = {
+    ...before,
+    milestones: [
+      { ...first, criteria: [{ ...first.criteria[0]!, description: 'Changed accepted outcome' }] },
+      ...before.milestones.slice(1),
+    ],
+  };
   assert.throws(() => validateRevision(before, after, completed.length, new Map()), /completed|acceptance/);
   assert.equal(before.milestones[0]!.criteria[0]!.description, 'Accepted outcome done-0');
 });
