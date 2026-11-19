@@ -33,6 +33,7 @@ test('an empty completed reply cannot bypass a captured owner check', async (t) 
       },
     },
   });
+  Object.assign(task.capture.components.owner!.activities.implementation!, { operations: ['owner-tests'] });
   t.mock.method(task, 'activate', async () => ({ kind: 'completed', edits: [], checks: [] }));
   const result = await steward(
     new Agent(new Architecture()),
