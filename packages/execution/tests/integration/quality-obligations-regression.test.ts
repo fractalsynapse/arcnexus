@@ -185,7 +185,7 @@ for (const [activity, id] of [
     t.mock.method(task, 'activate', async () => ({
       kind: 'completed', edits: [], checks: [{ id, expected: 'fail' }],
     }));
-    t.mock.method(task, 'check', async (_id, _signal, scope) => ({
+    t.mock.method(task, 'check', async () => ({
       id, status: 1, log: task.store('raw-failure.log', 'actual failure'),
       command: 'fixture', args: [], cwd: root, durationMs: 0,
     }));
@@ -214,7 +214,7 @@ test('mixed captured operations progress after the command check passes', async 
   });
   t.mock.method(task, 'activate', async () => ({ kind: 'completed', edits: [], checks: [] }));
   const called: string[] = [];
-  t.mock.method(task, 'check', async (id) => {
+  t.mock.method(task, 'check', async (id: string) => {
     called.push(id);
     assert.equal(id, 'owner-tests');
     return { id, status: 0, log: task.store('pass.log', 'pass'),
