@@ -6,7 +6,7 @@ operations in one task worktree. Its public obligations are in the
 
 ## Activity-scoped operation recovery
 
-Use the [verified local MCP operations guide](docs/mcp-operations.md) to check one
+Use the [local MCP operations guide](docs/mcp-operations.md) to check one
 file at a time, retain successful receipts and correct refusals.
 
 The [operation and recovery proposal](https://github.com/fractalsynapse/arcnexus/issues/562)
@@ -47,25 +47,43 @@ new test execution is claimed.
 
 ## Local activity repair
 
-An unexpected check result returns its operation ID, original expectation, exact
-exit status and immutable log to the same accountable activity. The original
-milestone and engineering criteria stay unchanged. The host reruns the unresolved
-check even when the next response requests no checks. A distinct failure can
-continue local correction; repeating the same diagnostic without changed inputs
-holds before another identical automatic attempt.
-Checked supplier contributions also change the task's check inputs. After that
-contribution, a remaining failure returns to the original caller for local repair;
-the supplier's ownership never grants the caller permission to edit its files.
+The intended caller-level recovery behavior implements EX-22 and EX-23; its
+delivery still requires public regression evidence and independent verification.
+A mapped local MCP check executes the captured confined command and returns its
+actual exit status, exact diagnostic and immutable log before the caller
+continues. The current activity owns its assigned work and can apply a single-file
+checked correction and recheck within that activation. Captured mappings constrain
+host operations, not ordinary public APIs used by authored code. Native shell,
+unmapped operations and raw response operations remain refused.
+
+Every unresolved check retains its original expectation. A completed response,
+an omitted check, another passing check or a changed requested expectation cannot
+erase that observation. Expected-failure tests keep their original expectations.
+Matching completed evidence is reused without executing the same command again;
+affected edits, including supplier contributions, invalidate reuse. Supplier
+ownership never grants the caller permission to edit its files. The milestone,
+captured authority and engineering criteria stay unchanged. A distinct failure or
+changed inputs can continue correction; an unchanged diagnostic without progress
+retains an actionable hold before another identical automatic attempt.
 
 A steward self-review returns `kind: repair`, the earliest affected applicable
 `activity` (`documentation`, `testing` or `implementation`), and its `reason`.
 Workflow validates that rewind against the milestone and captured activity map,
 then persists the target and finding with the position in one journal event.
-The restarted activity receives `localRepair` and its evidence. Only affected
+`localRepair` is optional rewind context; when supplied, read its evidence before
+correcting the finding. Its absence does not remove the current activity's
+responsibility. Only affected
 downstream work replays. Completed single-file receipts and complete answers stay
 available. Explicit cross-owner work uses Direction; final independent rejection
 also returns to Direction. Ordinary local repair does not create a milestone or
 invoke the Director.
+
+Clarification, research and supplier inbox requests are optional. A request after
+an observed check preserves its diagnostic and original unresolved expectation
+alongside receipts and complete answers through handoff, interruption and restart.
+A check completed before interruption is retained; an interrupted command without
+a completed result cannot establish success. No deferred native check queue or
+queued-response workaround participates in recovery.
 
 A model's assertion that a capability is unavailable does not establish a host
 prerequisite. Return that unsupported `blocked` response and its exact reason to
@@ -80,6 +98,16 @@ refusals and complete supplier answers. The
 [Workflow rewind scenarios](../workflow/tests/unit/activity-repair.test.ts)
 exercise each editable target and cancellation after the durable rewind.
 Deterministic scenarios are distinct from live qualification.
+
+## Native invocation evidence
+
+The intended common native provider boundary records the actual submitted request
+input byte count, acting component/activity and captured selected model/profile in
+the existing journal before invocation (EX-24). This includes Director and local
+repair calls, counts multibyte input as bytes and retains attribution on provider
+failure or interruption. Request and result evidence stay in existing task
+storage; no separate metrics store is needed. See the
+[operation guide](docs/mcp-operations.md#native-invocation-attribution).
 
 ## Checkpoints and evidence
 
