@@ -230,4 +230,5 @@ export function scheduledSupplier(
 }
 
 export { direct, track } from './native.js';
-export { decodeDirectorResponse, DirectorResponseError } from './response.js';
+export { decodeDirectorResponse, decodeRevisionResponse, DirectorResponseError } from './response.js';
+export type { RevisionRequest } from './response.js';
