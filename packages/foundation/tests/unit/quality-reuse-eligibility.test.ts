@@ -168,8 +168,8 @@ test('extensionless lint imports decline reuse when runtime resolution is ambigu
     tree.owner('helper-ts', 'helper.ts');
     tree.owner('helper-js', 'helper.js');
     tree.write('eslint.config.ts', "import rules from './helper'; export default [rules];\n");
-    tree.write('helper.ts', 'export default {};\\n');
-    tree.write('helper.js', 'export default { runtime: true };\\n');
+    tree.write('helper.ts', 'export default {};\n');
+    tree.write('helper.js', 'export default { runtime: true };\n');
     const result = await selectQualityInputs('lint', 'alpha', tree.root);
     assert.equal(eligibility(result)?.eligible, false);
     assert.match(eligibility(result)?.reason ?? '', /extensionless.*helper/i);
