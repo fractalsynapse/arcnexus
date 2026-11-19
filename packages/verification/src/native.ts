@@ -36,6 +36,38 @@ export async function verify(
   return verdict;
 }
 
+/** Require current evidence for every captured owner operation before review. */
+function ownerEvidenceFailure(task: HostTask, candidate: Candidate) {
+  const required = Object.entries(task.capture.components).flatMap(([owner, component]) =>
+    Object.entries(component.activities).flatMap(([activity, definition]) =>
+      definition.operations.map((id) => ({ owner, activity, id, operation: task.capture.operations[id] })),
+    ),
+  );
+  const observations = task.ownerReviewChecks();
+  for (const { owner, activity, id, operation } of required) {
+    const observation = observations.find(
+      ({ scope, check }) => scope.owner === owner && scope.activity === activity && check.id === id,
+    );
+    if (!observation) return `Required owner operation ${owner}/${activity}/${id} has no current evidence`;
+    if (!task.evidence.includes(observation.check.log))
+      return `Required owner operation ${owner}/${activity}/${id} has unavailable evidence`;
+    if (!observation.afterLastEdit)
+      return `Required owner operation ${owner}/${activity}/${id} is stale`;
+    if (observation.check.status === 'not-applicable') {
+      if (operation?.applicability) continue;
+      return `Required owner operation ${owner}/${activity}/${id} is unexpectedly inapplicable`;
+    }
+    if (observation.check.status === null)
+      return `Required owner operation ${owner}/${activity}/${id} is unavailable`;
+    const expectedRed =
+      observation.scope.expected === 'fail' && observation.check.status !== 0;
+    if (observation.check.status !== 0 && !expectedRed)
+      return `Required owner operation ${owner}/${activity}/${id} failed`;
+    if (observation.candidate && observation.candidate.tree !== candidate.digest)
+      return `Required owner operation ${owner}/${activity}/${id} belongs to another candidate`;
+  }
+}
+
 type VerifiedCheck = Awaited<ReturnType<HostTask['check']>>;
 
 /** Run the captured checklist once, retaining the exact failure or unavailable result. */
