@@ -19,7 +19,12 @@ function binding(name: string, handler: string, properties: Record<string, objec
     name,
     handler,
     description: name,
-    inputSchema: { type: 'object', properties, required: Object.keys(properties), additionalProperties: false },
+    inputSchema: {
+      type: 'object',
+      properties,
+      required: Object.keys(properties),
+      additionalProperties: false,
+    },
   } as Binding;
 }
 
@@ -37,37 +42,75 @@ test('MCP check, checked correction, recheck and supplier handoff retain observa
   t.after(() => task.close());
   writeFileSync(join(root, 'fixture.txt'), 'broken');
   const checks: string[] = [];
-  t.mock.method(task, 'check', async (id: string, _signal: AbortSignal, scope?: Parameters<typeof task.check>[2]) => {
-    const status = readFileSync(join(root, 'fixture.txt'), 'utf8') === 'fixed' ? 0 : 37;
-    const log = task.store('fixture-check.log', `exit ${status}\n`);
-    const check = { id, status, log, command: 'fixture', args: [], cwd: root, durationMs: 1 };
-    task.note({ check, scope });
-    checks.push(log);
-    return check;
-  });
-  const activation = new ActivationTools(task, { component: 'owner', activity: 'implementation' },
-    { goal: 'repair', assignment: {}, milestone: { id: 'current' }, acceptance: [], worktree: root },
-    new AbortController().signal);
-  const host = new LocalMcp([
-    binding('owner-tests', 'check', { expected: { type: 'string' } }),
-    binding('checked-edit', 'edit', { path: { type: 'string' }, expected: { type: 'string' }, content: { type: 'string' } }),
-    binding('request-supplier', 'supplier', { owner: { type: 'string' }, milestone: { type: 'string' }, reason: { type: 'string' } }),
-  ], (tool, args) => activation.invoke(tool, args), () => {});
+  t.mock.method(
+    task,
+    'check',
+    async (id: string, _signal: AbortSignal, scope?: Parameters<typeof task.check>[2]) => {
+      const status = readFileSync(join(root, 'fixture.txt'), 'utf8') === 'fixed' ? 0 : 37;
+      const log = task.store('fixture-check.log', `exit ${status}\n`);
+      const check = { id, status, log, command: 'fixture', args: [], cwd: root, durationMs: 1 };
+      task.note({ check, scope });
+      checks.push(log);
+      return check;
+    },
+  );
+  const activation = new ActivationTools(
+    task,
+    { component: 'owner', activity: 'implementation' },
+    {
+      goal: 'repair',
+      assignment: {},
+      milestone: { id: 'current' },
+      acceptance: [],
+      worktree: root,
+    },
+    new AbortController().signal,
+  );
+  const host = new LocalMcp(
+    [
+      binding('owner-tests', 'check', { expected: { type: 'string' } }),
+      binding('checked-edit', 'edit', {
+        path: { type: 'string' },
+        expected: { type: 'string' },
+        content: { type: 'string' },
+      }),
+      binding('request-supplier', 'supplier', {
+        owner: { type: 'string' },
+        milestone: { type: 'string' },
+        reason: { type: 'string' },
+      }),
+    ],
+    (tool, args) => activation.invoke(tool, args),
+    () => {},
+  );
   const client = new Client({ name: 'fixture', version: '1' });
   try {
     await client.connect(new StreamableHTTPClientTransport(new URL(await host.start())));
     const first = await call(client, 'owner-tests', { expected: 'pass' });
     assert.equal(first.status, 37);
     const expected = createHash('sha256').update('broken').digest('hex');
-    const receipt = await call(client, 'checked-edit', { path: 'fixture.txt', expected, content: 'fixed' });
+    const receipt = await call(client, 'checked-edit', {
+      path: 'fixture.txt',
+      expected,
+      content: 'fixed',
+    });
     assert.equal(receipt.path, 'fixture.txt');
     const second = await call(client, 'owner-tests', { expected: 'pass' });
     assert.equal(second.status, 0);
     assert.notEqual(first.log, second.log);
     assert.equal(readFileSync(first.log, 'utf8'), 'exit 37\n');
     assert.equal(readFileSync(second.log, 'utf8'), 'exit 0\n');
-    await call(client, 'request-supplier', { owner: 'other', milestone: 'supplier', reason: 'Distinct work' });
-    assert.deepEqual(activation.finish({ kind: 'completed' }), { kind: 'supplier', owner: 'other', milestone: 'supplier', reason: 'Distinct work' });
+    await call(client, 'request-supplier', {
+      owner: 'other',
+      milestone: 'supplier',
+      reason: 'Distinct work',
+    });
+    assert.deepEqual(activation.finish({ kind: 'completed' }), {
+      kind: 'supplier',
+      owner: 'other',
+      milestone: 'supplier',
+      reason: 'Distinct work',
+    });
     assert.equal(checks.length, 2);
   } finally {
     await client.close();
