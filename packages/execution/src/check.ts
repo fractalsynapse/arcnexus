@@ -38,7 +38,8 @@ export async function check(
     throw new Error(`Unknown captured owner: ${owner}`);
   if (
     owner &&
-    (existsSync(join(capture.source.root, '.arc/architecture/components')) ||
+    (capture.source.paths.some((path) => path.startsWith('.arc/architecture/components/')) ||
+      existsSync(join(capture.source.root, '.arc/architecture/components')) ||
       existsSync(join(worktree, '.arc/architecture/components')))
   ) assertCapturedOwnership(capture, worktree);
   const reason = await ownerOperationInapplicability(capture, worktree, id, owner);
