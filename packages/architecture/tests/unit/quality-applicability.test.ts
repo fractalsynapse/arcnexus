@@ -71,7 +71,7 @@ test('public request rejects a check without an implementation', () => {
 
 test('activation refuses an unavailable owner-scoped check implementation before invoking the agent', () => {
   const capture = fixture({
-    ...check,
+    ...check('format:check'),
     command: '/arcnexus-unavailable-quality-implementation',
     applicability: 'owner-format-files',
   });
