@@ -9,27 +9,33 @@ import type { Capture } from '../../../architecture/src/index.js';
 import { selectQualityInputs } from '../../../foundation/src/index.js';
 import { check } from '../../src/check.js';
 
+/** Find an owner with no selected inputs for the requested operation. */
+async function emptySelectionOwner(operation: 'format:check' | 'lint') {
+  const components = Object.fromEntries(
+    globSync('.arc/architecture/components/*.yaml').map((path) => {
+      const component = parse(readFileSync(path, 'utf8')) as { id: string; owns: string[] };
+      return [component.id, component];
+    }),
+  );
+  let owner = '';
+  for (const candidate of Object.keys(components)) {
+    const selection = await selectQualityInputs(operation, candidate);
+    if (selection.files.length === 0) {
+      owner = candidate;
+      break;
+    }
+  }
+  assert.ok(owner, 'fixture requires an owner with no selected inputs');
+  return { owner, components };
+}
+
 for (const [operation, applicability] of [
   ['format:check', 'owner-format-files'],
   ['lint', 'owner-lint-files'],
 ] as const) {
   test(`host applicability agrees with Foundation ${operation} selection`, async (t) => {
     const root = process.cwd();
-    const components = Object.fromEntries(
-      globSync('.arc/architecture/components/*.yaml').map((path) => {
-        const component = parse(readFileSync(path, 'utf8')) as { id: string; owns: string[] };
-        return [component.id, component];
-      }),
-    );
-    let owner = '';
-    for (const candidate of Object.keys(components)) {
-      const selection = await selectQualityInputs(operation, candidate);
-      if (selection.files.length === 0) {
-        owner = candidate;
-        break;
-      }
-    }
-    assert.ok(owner, 'fixture requires an owner with no selected inputs');
+    const { owner, components } = await emptySelectionOwner(operation);
     const selection = await selectQualityInputs(operation, owner);
     const temporary = mkdtempSync(join(tmpdir(), 'arcnexus-quality-parity-'));
     t.after(() => rmSync(temporary, { recursive: true, force: true }));
@@ -78,7 +84,28 @@ test('worktree selection and receipt use the candidate with a nested command cwd
   mkdirSync(join(worktree, 'nested'));
   const declaration = 'id: execution\nowns:\n  - packages/execution\n';
   writeFileSync(join(components, 'execution.yaml'), declaration);
-  const capture = {
+  const capture = emptyWorktreeCapture(host, declaration);
+  const log = join(root, 'selection.log');
+  const result = await check(
+    capture,
+    worktree,
+    root,
+    'quality',
+    'execution',
+    log,
+    AbortSignal.timeout(30_000),
+  );
+  assert.equal(result.status, 'not-applicable');
+  assert.equal(result.cwd, join(worktree, 'nested'));
+  assert.equal(result.command, 'npm');
+  assert.deepEqual(result.args, ['run', 'format:check', '--', 'execution']);
+  assert.equal(result.reason, 'No format:check files for execution in the current worktree');
+  assert.equal(readFileSync(log, 'utf8'), `Not applicable: ${result.reason}\n`);
+});
+
+/** Capture the declared owner and nested formatter for an empty candidate. */
+function emptyWorktreeCapture(host: string, declaration: string): Capture {
+  return {
     source: {
       root: host,
       paths: ['.arc/architecture/components/execution.yaml', 'package.json', 'packages/foundation/scripts/owner-quality.ts'],
@@ -99,23 +126,7 @@ test('worktree selection and receipt use the candidate with a nested command cwd
       },
     },
   } as unknown as Capture;
-  const log = join(root, 'selection.log');
-  const result = await check(
-    capture,
-    worktree,
-    root,
-    'quality',
-    'execution',
-    log,
-    AbortSignal.timeout(30_000),
-  );
-  assert.equal(result.status, 'not-applicable');
-  assert.equal(result.cwd, join(worktree, 'nested'));
-  assert.equal(result.command, 'npm');
-  assert.deepEqual(result.args, ['run', 'format:check', '--', 'execution']);
-  assert.equal(result.reason, 'No format:check files for execution in the current worktree');
-  assert.equal(readFileSync(log, 'utf8'), `Not applicable: ${result.reason}\n`);
-});
+}
 
 test('nonempty selection executes the captured command from its nested cwd', async (t) => {
   const host = process.cwd();
@@ -228,7 +239,24 @@ function assertConfinedCommand(result: Awaited<ReturnType<typeof check>>, log: s
 test('deleting every candidate component file is ownership drift', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-deleted-ownership-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  const capture = {
+  const capture = deletedOwnershipCapture(root);
+  await assert.rejects(
+    check(
+      capture,
+      root,
+      root,
+      'quality',
+      'owner',
+      join(root, 'quality.log'),
+      AbortSignal.timeout(30_000),
+    ),
+    /ownership drift/i,
+  );
+});
+
+/** Capture ownership before all candidate declarations are removed. */
+function deletedOwnershipCapture(root: string): Capture {
+  return {
     source: { root, paths: ['.arc/architecture/components/owner.yaml'] },
     project: { checks: { acceptance: [] } },
     components: { owner: { id: 'owner', owns: ['fixture.ts'] } },
@@ -244,16 +272,4 @@ test('deleting every candidate component file is ownership drift', async (t) => 
       },
     },
   } as unknown as Capture;
-  await assert.rejects(
-    check(
-      capture,
-      root,
-      root,
-      'quality',
-      'owner',
-      join(root, 'quality.log'),
-      AbortSignal.timeout(30_000),
-    ),
-    /ownership drift/i,
-  );
-});
+}
