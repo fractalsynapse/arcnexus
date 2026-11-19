@@ -149,6 +149,11 @@ export function decodeRevisionResponse(
     validateRevision(accepted, plan, completed, new Map(Object.entries(positions)));
     if (request.finding.kind === 'rejection')
       validateCorrection(plan, completed, request.finding.findings);
+    if (
+      request.finding.kind === 'supplier' &&
+      !scheduledSupplier(accepted, plan, request.finding, completed, new Map(Object.entries(positions)))
+    )
+      throw new Error(`The Director did not schedule supplier work for ${request.finding.requester}`);
   } catch (error) {
     throw new DirectorResponseError((error as Error).message, { cause: error });
   }
