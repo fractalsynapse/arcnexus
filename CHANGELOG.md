@@ -9,6 +9,8 @@
 
 ### Fixed
 
+- Reject empty, whitespace-only and decorative-star-only TypeScript documentation headers on classes, constructors, concrete methods and abstract methods; explanatory prose quality remains an independent review concern (#620).
+
 - Return mapped check results directly to their caller, preserve unresolved expectations, reuse proven unchanged observations, and distinguish completed rewind targets before steward progression (#625).
 
 - Keep completed work out of native Director revision prompts and responses while retaining the accepted plan and validation in the host (#617).
