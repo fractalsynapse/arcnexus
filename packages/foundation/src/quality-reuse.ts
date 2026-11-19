@@ -148,6 +148,8 @@ function staticLintModuleReason(source: string, path: string): string | undefine
       statement.importClause?.name &&
       !statement.importClause.isTypeOnly
     ) {
+      if (!/\.[cm]?[jt]sx?$/.test(statement.moduleSpecifier.text))
+        return `ESLint dependency ${path} has uncertain extensionless import resolution: ${statement.moduleSpecifier.text}`;
       imported.add(statement.importClause.name.text);
       continue;
     }
