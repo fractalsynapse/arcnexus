@@ -204,9 +204,9 @@ test('mixed captured operations progress after the command check passes', async 
   const task = new StewardFixture(t, root).task;
   t.after(() => task.close());
   Object.assign(task.capture, { operations: {
-    'read-file': { id: 'read-file', kind: 'tool', tool: 'read-file', category: 'read' },
-    'checked-edit': { id: 'checked-edit', kind: 'tool', tool: 'checked-edit', category: 'write' },
-    'owner-tests': { id: 'owner-tests', kind: 'command', tool: 'check', category: 'build',
+    'read-file': { id: 'read-file', kind: 'tool', tool: 'read', category: 'project-tool' },
+    'checked-edit': { id: 'checked-edit', kind: 'tool', tool: 'edit', category: 'project-tool' },
+    'owner-tests': { id: 'owner-tests', kind: 'command', tool: 'check', category: 'integration-test',
       command: '/usr/bin/true', args: [], cwd: '.', network: false },
   } });
   Object.assign(task.capture.components.owner!.activities.implementation!, {
