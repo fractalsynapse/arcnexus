@@ -82,7 +82,7 @@ test('declarative formatter plugin configuration declines reuse', async () => {
 });
 
 for (const [form, source, reason] of [
-  ['filesystem import', "import { readFileSync } from 'node:fs'; export default [readFileSync('./rules.json')];\\n", /filesystem/i],
+  ['filesystem import', "import { readFileSync } from 'node:fs'; export default [readFileSync('./rules.json')];\n", /filesystem/i],
   ['bare package import', "import plugin from 'eslint-plugin-example'; export default [plugin];\\n", /bare package/i],
   ['export star', "export * from './helper.js';\\n", /export.star/i],
 ] as const) {
