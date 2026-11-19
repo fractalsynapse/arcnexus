@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { parse } from 'yaml';
+import ts from 'typescript';
 
 export interface QualityReuseEligibility {
   eligible: boolean;
