@@ -417,6 +417,29 @@ export class HostTask implements TaskSession {
   /** Run a declared check and record its real exit, duration and transcript. */
   async check(id: string, signal: AbortSignal, scope?: StewardScope) {
     if (!this.worktree) throw new Error('No task worktree is available for checks');
+    const events = this.observations<{
+      check?: CheckResult;
+      scope?: StewardScope;
+      edits?: readonly { before: string | null; after: string | null }[];
+    }>();
+    const priorIndex = events.findLastIndex(
+      ({ check, scope: observed }) =>
+        check?.id === id &&
+        observed?.owner === scope?.owner &&
+        observed?.activity === scope?.activity &&
+        observed?.expected === scope?.expected,
+    );
+    const prior = events[priorIndex]?.check;
+    const changed = events
+      .slice(priorIndex + 1)
+      .some(({ edits }) => edits?.some(({ before, after }) => before !== after));
+    if (
+      prior &&
+      !changed &&
+      existsSync(prior.log) &&
+      (typeof prior.status === 'number' || prior.status === 'not-applicable')
+    )
+      return prior;
     const log = this.artifact(`${id}.log`);
     const result = await check(
       this.capture,
