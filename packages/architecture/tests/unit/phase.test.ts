@@ -77,10 +77,13 @@ test('no-change assessment retains its justification and source citations', asyn
 
 test('a pending proposal and complete answers survive interruption', async () => {
   const f = fixture();
-  f.seed({ question: 'complete answer' });
+  f.seed({ question: 'complete answer', research: { id: 'report-1', summary: 'retained finding' } });
   const resumed = await f.phase().resume(f.proposal.id);
   assert.deepEqual(resumed.proposal, f.proposal);
-  assert.deepEqual(resumed.answers, { question: 'complete answer' });
+  assert.deepEqual(resumed.answers, {
+    question: 'complete answer',
+    research: { id: 'report-1', summary: 'retained finding' },
+  });
   assert.equal(resumed.status, 'pending');
 });
 
