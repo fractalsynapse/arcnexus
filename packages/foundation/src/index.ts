@@ -198,8 +198,9 @@ function discoverSuites(directory: string, pattern: string, components: readonly
 function readOptionalFile(path: string): string {
   try {
     return readFileSync(path, 'utf8');
-  } catch {
-    return '';
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return '';
+    throw error;
   }
 }
 
