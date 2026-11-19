@@ -1,5 +1,10 @@
 # Development direction
 
+The current [efficiency foundation checklist](plans/efficiency-foundation.md)
+tracks the proposed architecture reload, activity prompt/operation rewrite and
+complete live timeline, including continuous time, token and profile-cost analysis.
+Its exact contract amendment awaits review; these capabilities are not yet delivered.
+
 Start with the [charter](charter.md), the [first delivery and qualification](plans/self-development-mvp.md),
 and the [interface registry](interface/registry.yaml). The contracts distinguish accepted target behavior from implementation and
 record the tests that establish it.

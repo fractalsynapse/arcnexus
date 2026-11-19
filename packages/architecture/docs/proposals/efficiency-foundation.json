@@ -1,0 +1,67 @@
+{
+  "status": "proposed; not applied; no approval asserted",
+  "baseline": "2522d2ec46a6759e007b8be389829143be0fafcf",
+  "patchSha256": "cb6a431032a97bdfb0f9d48134b85a5f35ed759095df364aee15eb1b7559acab",
+  "changes": [
+    {
+      "path": "packages/architecture/contract.md",
+      "before": "bc3617a7dd8499fa1150d8a533b7667ed7904d0014817eb42afb4c1fb49acac3",
+      "after": "84ff34f2b86e30aa35c2638b6a3538e96d69ccc97245e85344b0bea98f2f2fd7"
+    },
+    {
+      "path": "packages/execution/contract.md",
+      "before": "6a4d048c3c165da0ea9f15b8e93667ec8bf55a5c2be9c7ba95b67927e2f53f2a",
+      "after": "67ad4308c467011f1c20ed4365d2e3958901dbbc5c773e7ff56bf3b5a9dd8e67"
+    },
+    {
+      "path": "packages/coordination/contract.md",
+      "before": "d7f8f7f0f543629e676344996410148ecefb1d4900bf7bc04a9a50b198e7b7e0",
+      "after": "b13439aba47d9f91bb2ec11cf9e1a70719546ecc0c5cf4a6b769b9fd8f3dda8a"
+    },
+    {
+      "path": "packages/direction/contract.md",
+      "before": "b065e5f7fb4c5701eb8a68ca5a41a5a2cd091373f0b8581a021f465a4418531e",
+      "after": "40939c10a70abe3a451fc79a1ec0bb878573fb753e69c3b20ea177b827a7ee82"
+    },
+    {
+      "path": "packages/verification/contract.md",
+      "before": "26d487a102dc9b7b1b31f23ed89b77275b54ec8469051103c11517bd759073ee",
+      "after": "f2a990ef15ebb58254fc463e767ebc8e5cd8aa8a507674c9a43c6d589ed6c025"
+    },
+    {
+      "path": "apps/cli/contract.md",
+      "before": "d91b96a7422e556d7db5ef737dba086f4a4c01c18e448cd5acf58a29af20f2a8",
+      "after": "902fd8b23ed11f556b62e4d4f89232a043774d90153a60cf22f09f2d802bcb02"
+    },
+    {
+      "path": "packages/agent/contract.md",
+      "before": "f52eb30d665f485eef8daf64148d7ad974afe8c8281f7f09f0edce80a0480016",
+      "after": "0a0632263ce40592672621c4437a09f43d464039a3650587ae92e1cca20c8279"
+    },
+    {
+      "path": "packages/workflow/contract.md",
+      "before": "38b6fa5ba062a23e019d8d59e4b91a186a149f61653646376bfd2de0d0b9b62e",
+      "after": "3ae53f8999cb46aa36f9a7913851e4151c70054887d170e9a96bc98692cbcee8"
+    },
+    {
+      "path": "packages/commands/contract.md",
+      "before": "0dfa918ae22379adb7423b42e776d110293c77b345f89bed86b6bacf1ff694ec",
+      "after": "07646324af4077c7151920c98741a8ab77488d1d44f9e823da8a56f48b87e491"
+    },
+    {
+      "path": "docs/interface/arcnexus-project.md",
+      "before": "c0ce39bfc5f818057c93c0bb3f0e78a6ab6a228ae4116e4f99510e0d20d11373",
+      "after": "04bee43d94eb79fa7b344808a320a4c5862262c3209138ed4408f6fad702d3e3"
+    },
+    {
+      "path": "packages/manager/contract.md",
+      "before": "0172f228a3fcb4997eaf4fa8713ea61b04c4c479e01cab94a268a1104af10b02",
+      "after": "483c3b219f9921ef4dba1d6feba977464ebe9c5ad4c322f08f4afb08430339d7"
+    },
+    {
+      "path": "docs/interface/registry.yaml",
+      "before": "96edc1873d3b0dc464ed3f2acb13f8dfe06feafc532c406df937efba2b59faca",
+      "after": "cba7052d3cbc2c45619e887b35087603f25921062dc7444155de470a355e90a2"
+    }
+  ]
+}

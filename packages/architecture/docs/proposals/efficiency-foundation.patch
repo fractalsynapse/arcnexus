@@ -1,0 +1,723 @@
+--- a/packages/architecture/contract.md
++++ b/packages/architecture/contract.md
+@@ -5,11 +5,14 @@
+ ## Obligations
+
+ Resolve and validate the project, owners, profiles, operations, standards, role
+-bindings, host bindings, delivery policy and contract registry. Expose one immutable
+-capture and one model-facing context builder to all callers. Keep complete
++bindings, host bindings, delivery policy and contract registry. Expose one resolved
++model and one model-facing context builder to all callers. Each activation names
++the approved model version it uses. Keep complete
+ definitions in the capture. The request includes the acting component's relevant
+ fields, the selected activity's resolved instructions and capabilities, and a
+-compact catalog index. Model settings belong in invocation options. Name withheld
++compact catalog index of identities, short summaries and source references rather
++than every full component purpose. Include the acting purpose and selected activity
++in full, with source provenance. Model settings belong in invocation options. Name withheld
+ inputs, reference applicable contracts by identity and path, and return requested
+ definitions whole from the capture. Activity standards are shared references and
+ filtered to the activity. The reviewer receives the complete evidence bundle under
+@@ -34,12 +37,23 @@
+ The activity grants the declared operation. Model-invoked operations bind a local
+ MCP handler and its exact argument schema. Inspection and activation use the
+ same captured bindings. An explicitly empty list exposes no project tools.
+-Invocation parameters cannot rewrite the command or expand authority. The
+-execution provider independently controls built-in web access.
++Operation parameters have declared types and defaults. Resolve permitted component
++overrides and then activity-binding overrides through this same model. The resolved
++activity declares required completion verification by referencing its operation
++bindings, without copying commands or parameter values. Missing or invalid values
++produce a diagnostic naming the binding and field. Interpolate values as executable
++arguments, not shell code. Invocation values cannot rewrite the executable or expand
++ownership, confinement or network authority outside the approved declaration.
++Host-supplied identity values cannot be replaced by model arguments. The execution
++provider independently controls built-in web access.
+
+ Validate deterministically and offline. Check ownership, public import boundaries,
+-cycles, profiles, operations, guidance metadata and contract digests through the shared validation service. Capture freezes
+-trusted plugin identities and their composition. Proposal records go through the
++cycles, profiles, operations, guidance metadata and contract digests through the shared validation service. The resolved model records
++trusted plugin identities and their composition. Load it at run admission and
++reload it after every applied approved architecture update. Merge permitted object
++properties recursively; explicitly supplied scalars and arrays replace defaults,
++including empty arrays. Activities do not inherit implicitly, and ownership and
++authority stay explicit. Record provenance and reject unresolved references. Proposal records go through the
+ coordination writer and remain separate from accepted authority. Model checked-edit
+ tools refuse locked files and the registry. An explicit architect delegation may
+ name an editor or the trusted host to apply an exact reviewed proposal on the
+@@ -59,9 +73,18 @@
+ that work and the approved architecture together through its normal Director,
+ steward, independent verification and staging boundaries inside the Architect
+ phase. Validation refuses activation of an unavailable operation or handler.
+-No change modifies active captured authority. Run begins with a fresh capture of
+-the accepted delivery. A changed baseline requires reconciliation and a newly
+-reviewable proposal rather than silently rebasing protected edits.
++After exact approved host application and validation of the required implementation,
++Workflow can adopt the resolved model at an activity boundary within the same run,
++including while finishing Architect prerequisites. An in-flight activation finishes
++or is cancelled first. Revalidate pending work, original acceptance, ownership,
++operations and affected evidence together before the next activation. Record the
++approval, previous and new model identities and any validated runtime adoption;
++never infer permission from candidate edits. Historical activations retain their
++original model identity. Unavailable handlers prevent adoption. The combined
++candidate still requires independent verification and staging delivery. Run begins
++with the model of that accepted delivery. A changed proposal baseline requires
++reconciliation and a newly reviewable proposal rather than silently rebasing
++protected edits.
+
+ ## Acceptance scenarios
+
+@@ -74,7 +97,7 @@
+ | ARC-5 | A private-module import across owners fails `importsAllowed`; the same import through a declared public module passes. |
+ | ARC-6 | An import cycle among maintained modules is reported with the cycle path. |
+ | ARC-7 | Two `capture` calls on the same revision produce identical digests; a catalog edit between them does not change the first snapshot. |
+-| ARC-8 | A candidate edit to `.arc/architecture/` during a run leaves that run's captured catalog and findings unchanged. |
++| ARC-8 | An unapproved candidate edit cannot change the resolved authority. After exact approved host application and validated adoption, the same run uses the new model for its next activity and retains the previous model for historical observations. |
+ | ARC-9 | The request includes the acting owner's relevant fields, selected activity, and a compact catalog index. It names withheld inputs, references contracts, and leaves other activity definitions and Codex-discovered guidance out of the prompt. |
+ | ARC-10 | Requesting a full definition returns it complete; standards are selected for the activity and returned completely, without application-imposed size caps or truncation. |
+ | ARC-11 | Validation flags a changed locked digest, missing accepted file or missing record of architectural authority. |
+@@ -83,9 +106,12 @@
+ | ARC-14 | A missing binding key fails naming the key; setting `PATH` does not satisfy it. |
+ | ARC-15 | Proposing an architecture change records the exact proposal and leaves source byte-identical. Only a recorded human delegation to apply that exact proposal can enable the trusted host application path; model checked edits remain refused. |
+ | ARC-16 | Validation on an unchanged tree produces byte-identical finding output. |
+-| ARC-17 | A capture identifies each composed plugin. A changed target catalog or candidate plugin cannot replace one in the active capture. |
++| ARC-17 | The resolved model identifies each composed plugin. A candidate cannot replace trusted composition. A recorded approved model transition and validated runtime adoption can update subsequent activations without changing an in-flight invocation or historical evidence. |
+ | ARC-18 | An explicitly empty list stays empty. A missing activity remains unavailable. Omitting a required field or referencing an unknown role, profile, operation or standard produces a finding. |
+ | ARC-19 | The director and independent verifier resolve their role and profile from their own explicitly selected component activity. |
+ | ARC-20 | The Architecture Agent uses its explicitly mapped activity, can request optional research, and returns a source-linked no-change assessment or one purpose, consequences and exact diff batch. |
+ | ARC-21 | Host application refuses missing, declined, forged or stale approval, changed expected content, and bytes outside the approved batch. The journal retains the approval and original failed observations. |
+-| ARC-22 | Required implementation and approved architecture pass ordinary independent verification and staging delivery within Architect. Run captures the accepted revision; neither prerequisite work nor approval changes an active capture. Unavailable handlers block activation. |
++| ARC-22 | Architect delivers required implementation and approved architecture together through independent verification and staging. Once exact approved application and implementation validation permit adoption, its next prerequisite activity can use the new model in the same run. Unavailable handlers block adoption; Run uses the accepted delivery. |
++| ARC-23 | The same resolver applies permitted defaults and overrides deterministically, preserves explicit empty arrays and provenance, and refuses an implicit activity or ambiguous ownership. |
++| ARC-24 | Different components and activities reuse one operation with typed parameter overrides. Inspection and activation expose identical resolved arguments; unknown parameters, invalid types and authority-expanding invocation values are refused. |
++| ARC-25 | Each activity names completion verification through its operation bindings. The resolved model rejects a missing binding or unavailable handler rather than activating a declaration alone. |
+--- a/packages/execution/contract.md
++++ b/packages/execution/contract.md
+@@ -35,24 +35,40 @@
+ does not revoke earlier edits or grant foreign scope. A repair preserves the issue,
+ branch, checkpoint and complete clarification or research answer. Workflow may
+ rewind within the same milestone; Execution enforces the selected activity's
+-original captured operations and ownership.
++approved model version, resolved operations, parameters and ownership. Only the
++recorded host adoption boundary can advance that version during a run.
+
+ Applicable component checks are selected from declared operations by category and
+ applicability, including formatting, lint, types/build and relevant tests. The
+ absence of a test suite does not skip other applicable checks. Read-only checks
+ never reformat source, and all automatic fixers stay within captured write scope.
+-Host-required assembled checks remain independent acceptance requirements.
++Host-required assembled checks remain independent acceptance requirements. Required
++applicable activity verification runs before progression, using its resolved
++operation parameters. Expected-red evidence identifies the intended failed assertion
++and does not excuse unrelated operation failures. Changed relevant parameters,
++inputs or environment invalidate the affected evidence.
+
+ Native/provider observations are declared Execution-owned operations using the
+ configured real provider and existing request builder and confinement lifecycle.
+ Retain the request, actual result, versions, configuration, command and logs as
+-immutable evidence. A model claim alone is not an observed native result.
++immutable evidence. A model claim alone is not an observed native result. Retain
++the exact activation request and configuration and all exposed harness events,
++messages, tool calls/results, errors, usage and process diagnostics as they arrive.
++Correlate them with local MCP effects in the existing journal/evidence path and
++forward ordered observations during execution. Preserve raw unknown events and
++explicitly identify unavailable provider fields. Record timing and reported tokens
++overall and per execution profile, including its actual model/settings. Missing
++usage is unknown, not zero; subset usage and nested durations are not added twice.
++Cost estimates name their verified pricing source and effective basis. Retain
++complete artifacts and expose authorized read-only access to acting agents.
++Measurement never introduces a work budget, content cap or automatic profile change.
+
+ The only protected-source write exception is Architecture's trusted host
+ application of an exact human-approved proposal. It is separate from model
+-checked edits and cannot change active authority. At a subsequent admission,
+-retained work may be revalidated against explicitly approved new authority while
+-preserving its original goal acceptance and failed observations.
++checked edits. At admission or an approved in-run adoption boundary, validate
++available handlers and any updated runtime, then revalidate retained work against
++the approved model before its next activation. Preserve original goal acceptance,
++checkpoints and failed observations; a candidate cannot authorize that transition.
+
+ ## Acceptance scenarios
+
+@@ -74,14 +90,17 @@
+ | EX-14 | An attempted edit across owner scope or against stale content is refused before it changes the worktree. Prior successful files and refusal evidence survive, and the steward can correct the refused request without rewriting those files. |
+ | EX-16 | The local MCP boundary refuses an unmapped operation, invalid arguments or an unmet prerequisite before execution and records the reason. Native shell is unavailable. Built-in web access follows the execution provider policy. |
+ | EX-17 | Restart reads the retained position without a separate recovery service or host process. A completed checkpoint survives worktree cleanup. An identical checked edit request returns its retained receipt without repeating the write. |
+-| EX-18 | A profile substitution made before admission is captured in evidence. It cannot broaden the operation authority or change the profile during a task. |
++| EX-18 | Each activation records its resolved profile/model/settings. A profile change during a task requires an approved model adoption boundary and cannot be inferred from usage measurements or a model request. Historical activations retain their actual profile. |
+ | EX-20 | Planning a step under one activity and attempting it after a later bucket has opened is refused, and the refusal names the open earlier items; reordering the same plan into canonical buckets runs unchanged. |
+ | EX-21 | An activation whose every bucket is closed while a criterion of the goal is unmet is recorded as failed, and no checklist state can mark it accepted. |
+ | EX-19 | Two lanes for two different projects can exist in one process without interference: the lane is obtained per project, holds no process-global mutable state, and neither activation observes the other's workspace, store or evidence. |
+ | EX-22 | A failed operation resumes its caller with exact diagnostics and retained receipts. A successful checkpointed file and a complete answered question are reused after restart without another write or prompt. |
+ | EX-23 | A component with no suite runs its other applicable declared quality checks. A real lint or type failure reaches its accountable activity before progression; assembled checks remain required. |
+ | EX-24 | A declared native observation uses the configured real provider through production assembly and records its actual request, versions, result and failure logs. It cannot silently substitute simulation or another profile. |
+-| EX-25 | A retained checkpoint survives an approved architecture delivery. A fresh admission revalidates ownership, operations, original acceptance and applicable evidence before resuming; candidate-side authority edits cannot enable this path. |
++| EX-25 | A retained checkpoint survives an approved architecture update. At admission or an approved activity-boundary transition in the same run, revalidate ownership, resolved operations, original acceptance and affected evidence before resuming. Unavailable handlers and candidate-side authority edits cannot enable adoption. |
++| EX-26 | A real activation exposes messages, tool calls/results, progress, timing and available usage before completion, with complete raw evidence. Interrupted output and unknown provider events remain readable and attributable. |
++| EX-27 | Required applicable activity checks use the resolved parameters and run before completion. A failed check returns its exact result to the accountable caller; missing suites do not skip other checks and disabled native tests cannot establish a native pass. |
++| EX-28 | Run and profile totals reconcile to underlying observations, distinguish missing usage and estimated cost, and avoid double-counting nested timing or token subsets. Agents can read authorized complete run evidence without gaining write or approval authority. |
+
+ ## Deferred
+
+--- a/packages/coordination/contract.md
++++ b/packages/coordination/contract.md
+@@ -17,7 +17,15 @@
+ activity position in the same journal.
+ Transactional writes reject stale versions and are idempotent for identical content.
+ Events are append-only observations. Git owns revisions, and reports are derived
+-from retained records.
++from retained records. The existing journal and external artifacts supply the
++canonical live timeline: ordered identities, timestamps, correlations and complete
++host/provider observations. Read-only subscribers can follow persisted events
++without another store or writer. Record approved model transitions and the version
++used by each activation; a restart reconciles an interrupted transition before work.
++Derive live and final elapsed-time, reported-token and attributable-cost summaries
++from these records overall and by profile, component, activity and phase. Preserve
++unknown measurements and pricing provenance instead of inventing zero or billed cost.
++Planner and Architect consume the measured findings in subsequent assessments.
+
+ The runtime persists structured agent-authored plan content. The committed plan is
+ a deterministic render. The store and external application artifacts remain the
+@@ -62,6 +70,8 @@
+ | CO-21 | Refinement, phase and task sessions use one SQLite store and one project writer. A second invocation is refused throughout phase transitions and approval pauses, and a finished child cannot release the live outer writer. |
+ | CO-22 | Restart during a phase, approval pause or goal restores its exact logical identity, proposal and first unfinished position. Completed phases and goals are not repeated, and the next fresh round captures the new inventory. |
+ | CO-23 | Approval names the exact baseline and content. Missing, unknown or mismatched approval cannot advance the cursor. A safe runtime change records its identity and reconciles uncertain effects before continuation. |
++| CO-24 | A subscriber receives persisted observations in order while work is running. Restart preserves the observed prefix, model transition, correlations and complete artifact references without a competing log store. |
++| CO-25 | Live and final time/token/profile summaries reconcile to retained records. Missing provider usage remains unknown, cost estimates retain their pricing basis, and later assessments receive the measured findings. |
+
+ ## Deferred
+
+--- a/packages/direction/contract.md
++++ b/packages/direction/contract.md
+@@ -34,7 +34,9 @@
+ host retains the canonical accepted plan and completed outcomes. At a revision
+ boundary the Director receives the previous plan, completed position, current
+ finding and relevant evidence references. Its response changes pending work; the
+-host preserves completed outcomes, original acceptance identities and authority.
++host preserves completed outcomes and original acceptance identities. The host alone
++can adopt a human-approved architecture update at a recorded activity boundary;
++Direction cannot change authority through a plan revision.
+ Malformed revision output returns to the same Director call with the exact
+ validation finding, without discarding the existing accepted plan.
+
+@@ -51,7 +53,7 @@
+ | DI-7 | A failed ordinary tool, check or self-review returns to the accountable activity or an earlier applicable activity in the same milestone. No Director call or correction milestone is added. An explicit escalation or final independent rejection invokes Direction. |
+ | DI-8 | A goal that conflicts with a locked contract yields a change-request gate naming the contract id and clause, and no milestone touching that path is admitted. |
+ | DI-9 | Direction cannot write the registry or any locked contract file; the checked-edit refusal is observed, not merely asserted in the prompt. |
+-| DI-11 | Director input uses the bounded context from Architecture Model and names what was withheld. |
++| DI-11 | Director input uses the selected activity context from Architecture, names referenced inputs, and makes complete definitions and relevant run evidence readable without application-imposed size caps. |
+ | DI-12 | Removing a prohibition paragraph that the host enforces leaves every scenario passing; removing an enforced check fails one. |
+ | DI-13 | A human clarification records its requesting actor and position. The original activity receives the complete recorded answer on continuation, including after restart without a duplicate prompt. |
+ | DI-14 | The plan render after `revise` differs from the previous render only in the fields the observation changed, so plan evolution is reviewable as a diff. |
+@@ -60,7 +62,7 @@
+ | DI-17 | A verified staging goal closes after the configured checks and review are observed and the provider reports its merge identity. The host can integrate once gates are satisfied. |
+ | DI-19 | The first build refuses a component-scoped workday directive with a stated reason. |
+ | DI-20 | The director selects a supplier from a Team view. An unowned resource or ownership collision is reported with affected resources and owners instead of guessing a recipient. A supplier request grants no write authority. |
+-| DI-21 | A revision consumes the retained plan and relevant finding and proposes changes to pending work. The host rejects changes that remove completed outcomes, alter original acceptance or expand captured authority. |
++| DI-21 | A revision consumes the retained plan and complete relevant finding and proposes changes to pending work. The host rejects changes that remove completed outcomes, alter original acceptance or grant authority. A recorded human-approved model adoption can update subsequent activity capabilities in the same run. |
+
+ ## Deferred
+
+--- a/packages/verification/contract.md
++++ b/packages/verification/contract.md
+@@ -21,7 +21,10 @@
+ candidate files or uses the delivery capability.
+
+ Bind each check or observation to its actual relevant inputs and environment;
+-bind the independent verdict to the full candidate. A scoped observation may be
++bind the independent verdict to the full candidate and the approved model used
++for verification. Resolved operation parameters participate in relevant inputs.
++An approved in-run model transition revalidates affected observations before the
++next activity; it never rewrites a historical result or weakens original acceptance. A scoped observation may be
+ reused after unrelated edits only when its declared inputs and environment match.
+ A changed candidate always requires an applicable independent verdict. Return
+ malformed or invalid review citations to the Reviewer for repair with the exact
+@@ -49,6 +52,7 @@
+ | VI-16 | Verification never merges, publishes or answers a human gate on anyone's behalf. |
+ | VI-17 | An ordinary failed component check returns to its accountable activity without Direction. Final independent rejection invokes Direction. Reviewer response repair retains the exact candidate and applicable check evidence. |
+ | VI-18 | Reuse depends on a check's declared relevant inputs and environment. An unrelated edit does not alone invalidate a scoped observation; a changed relevant input reruns it, and a changed candidate invalidates its prior verdict. |
++| VI-19 | An approved model transition preserves unaffected observations and original acceptance, refreshes checks whose relevant authority or parameters changed, and obtains an applicable independent verdict for the final candidate and model. |
+
+ ## Deferred
+
+--- a/apps/cli/contract.md
++++ b/apps/cli/contract.md
+@@ -19,8 +19,14 @@
+ refinement is a proposal, not a replacement for that submission.
+
+ `--json` is a general CLI output option, accepted once before the command or
+-after its positional arguments. It selects structured JSON on stdout. Commands
+-use the same positional arguments, exit codes and stderr diagnostics in both modes.
++after its positional arguments. Inspection prints one structured JSON result on
++stdout. Long-running task, planning, architecture and refinement commands stream
++ordered JSONL observations on stdout followed by a typed terminal result record.
++Human mode renders those same observations live, including acting component,
++activity, operations and outcomes. Complete messages and evidence remain available
++as emitted or by their authorized file references. Commands use the same positional
++arguments, exit codes and stderr diagnostics in both modes. No plaintext progress
++is mixed into JSONL stdout; invalid input before admission retains empty stdout.
+
+ Inspection requires both positional arguments. Missing or extra arguments,
+ an unknown component, and an activity absent from the component's explicit
+@@ -45,7 +51,10 @@
+ `activity`, `placeholders` and `request`. Its `request.input` matches the
+ prompt in the rendered output byte for byte.
+
+-The foreground task streams progress and evidence references and honors SIGINT.
++The foreground task streams harness and host events, messages, tool calls/results,
++progress, evidence references and available timing/usage metrics as execution
++proceeds, and honors SIGINT. Overall and execution-profile summaries identify
++unknown usage and the pricing basis of estimated costs. They do not impose budgets.
+ Human decisions concern objectives, goals and architecture. Ordinary tool repair,
+ implementation, checks, plan sequencing and authorized staging delivery do not
+ require human approval. Unavailable external prerequisites remain observable holds;
+@@ -104,6 +113,8 @@
+ | GW-28 | Both architecture update forms assess through the same SDK and return a no-change result or an exact proposed diff. Approval and required prerequisite delivery complete before the following Run phase. |
+ | GW-29 | refine defaults to one round and accepts a positive integer --rounds value. Invalid, duplicate or unsupported arguments exit 2 before admission. Every completed round runs Plan, Architect and all captured goals in priority order. |
+ | GW-30 | Interrupting a refinement phase or awaiting approval retains its identity and cursor. The same invocation resumes without replaying completed phases, losing answers, repeating edits or creating a duplicate PR. Changed round totals are refused while it is unfinished. |
++| GW-31 | Human and JSONL task modes display observations before completion from the same structured observer. JSONL stdout contains only typed event/result records in order; inspect --json remains one result and exit semantics remain unchanged. |
++| GW-32 | A running task exposes actor/activity, operations, elapsed time and available profile-level usage/cost with evidence links. Cancellation and restart preserve the recorded timeline and unknown measurements are not reported as zero. |
+
+ ## Deferred
+
+--- a/packages/agent/contract.md
++++ b/packages/agent/contract.md
+@@ -42,7 +42,12 @@
+ | `activate(input, signal)` | Run one scoped activation using the same resolved Agent and request builder. Surface progress and observations. Return a typed result or an explicit supplier request, escalation, unavailable, failed or cancelled outcome, with evidence references. Observe cancellation through Execution. |
+
+ Input identifies the captured project, actor, owner where applicable, activity
+-and available task position. Activation requires an admitted task and resolved
++and available task position. Each activation uses the latest host-adopted approved
++model at its start, with full acting purpose, selected activity instructions and
++resolved operation/verification bindings. It can read authorized complete run
++observations and measured profile usage through mapped operations. The run may
++adopt approved architecture between activations; the actor cannot approve or
++perform that transition itself. Activation requires an admitted task and resolved
+ inputs. Inspection can run before task admission. An activation carries the actor’s identity,
+ its captured authority and its goal throughout the call. Both use the single request
+ builder owned by [Architecture](../architecture/contract.md).
+@@ -87,3 +92,4 @@
+ | AGT-7 | For the Agent component steward, inspection and activation in `testing` expose the captured `owner-tests` operation. In `documentation`, where that operation is absent, the host refuses it even if the Agent could call it in the earlier activity. |
+ | AGT-8 | An Agent attempt to activate the host-only `release` activity is refused. The task lane records integration from the host's delivery result. |
+ | AGT-9 | A task starts with the Director, runs its stewards in order and reaches the final Reviewer through the same Agent interface. A rejection returns evidence to Direction for a correction and blocks delivery of the rejected candidate. The corrected candidate uses the same independent review gate. |
++| AGT-10 | After approved in-run model adoption, the next actor inspection/activation uses matching updated instructions and operation parameters. Prior activations keep their original identity and all actors can read their authorized complete run timeline without acquiring write authority. |
+--- a/packages/workflow/contract.md
++++ b/packages/workflow/contract.md
+@@ -61,7 +61,12 @@
+ one exact proposal and await human approval. Use the normal task workflow inside
+ Architect for prerequisite implementation and approved host application. Verify
+ and deliver the combined candidate before the following Run phase. Candidate
+-edits never change active authority; capture the accepted architecture afresh.
++edits never authorize a change. After exact approved host application and
++validation of the prerequisite implementation, adopt the new model at an activity
++boundary in the same run, including during Architect prerequisite work. Reload
++context, Team, operation bindings and completion requirements together. Revalidate
++pending work and affected evidence while retaining acceptance, answers and
++checkpoints. Deliver the combined candidate before the following Run phase.
+
+ `refine(directory, rounds, observer, signal)` drives Plan, Architect and Run in
+ order for each requested round. The default count is one. Run captures the
+@@ -72,7 +77,11 @@
+ phase and task sessions. A pending approval preserves the exact phase and proposal.
+ Restart resumes the same invocation and first unfinished position without duplicate
+ issues, edits or PRs. Runtime updates may be adopted only at a recorded validated
+-safe boundary, with uncertain effects reconciled before continuing.
++safe boundary, with uncertain effects reconciled before continuing. The same
++lifecycle streams complete host/provider observations through Commands and records
++timing and reported usage overall and per profile. Later Plan and Architect
++assessments consume these measurements to optimize useful outcomes, reliability
++and attributable cost without adding quantitative work limits.
+
+ ## Project and task loops
+
+@@ -102,3 +111,5 @@
+ | WFL-8 | Architect delivers required implementation and approved architecture through the canonical task lifecycle before Run captures it. A candidate cannot approve or activate its own authority. |
+ | WFL-9 | Each refinement round assesses Plan and Architect and invokes Direction for every priority-ordered approved goal. A restarted phase or approval pause resumes the same invocation without repeating completed outcomes. |
+ | WFL-10 | Three consecutive live rounds assess every captured goal and show approved guide improvement, a useful staged implementation and later consumption of prior findings. Justified no change is valid. Operator state repair, bypassed checks or uncontrolled aborts break the streak; execution-path changes restart qualification. |
++| WFL-11 | An approved architecture update can advance the next activity in the same run after implementation availability and retained-work validation. No parallel lifecycle, candidate-side approval or historical evidence rewrite participates. |
++| WFL-12 | Required activity verification completes before progression, and events/metrics stream throughout the canonical lifecycle. Later refinement assessments consume time, token and profile-cost findings without a separate scheduler or budget mechanism. |
+--- a/packages/commands/contract.md
++++ b/packages/commands/contract.md
+@@ -17,7 +17,11 @@
+ | `refine(directory, rounds, observer, signal)` | Run or resume Plan, Architect and the priority-ordered goals for the requested positive round count. Return structured phase, approval, repair, per-goal and completion observations with cancellation support. |
+
+ The application adapter supplies inputs, renders outputs, collects answers and
+-maps outcomes to its transport. Terminal arguments and exit codes belong to
++maps outcomes to its transport. The shared observer streams ordered persisted
++host/provider events, complete message/tool observations, evidence references and
++available time/token/profile-cost measurements while work runs. Nonterminal
++callers can follow that same stream without a terminal policy or a second task
++lifecycle. Terminal arguments and exit codes belong to
+ the CLI app. MCP and OpenAPI adapters can use the same structured interface
+ when those apps are in scope.
+
+@@ -29,3 +33,4 @@
+ | CMD-2 | CLI inspection and task execution delegate to those same operations and preserve the CLI contract. |
+ | CMD-3 | A human gate, unavailable result or cancellation has the same task meaning regardless of adapter. |
+ | CMD-4 | A nonterminal caller updates architecture or refines through the same application lifecycle as the CLI, including pending approval, phase recovery and per-goal results. No terminal argument or exit-code policy enters the SDK. |
++| CMD-5 | Terminal and nonterminal callers observe the same live event ordering, evidence identities, available usage and terminal outcome. CLI JSONL rendering does not change the application lifecycle or require a second event store. |
+--- a/docs/interface/arcnexus-project.md
++++ b/docs/interface/arcnexus-project.md
+@@ -27,9 +27,15 @@
+ accepted contract. Add a service seam for an actual consumer or a responsibility that
+ must be independently replaceable.
+
+-Admission freezes the catalog, authority, checks, revision, bindings identity and
+-trusted plugin composition. Commit and upstream authority belong to the host.
+-Target source cannot supply executable host plugins or change active composition.
++Admission resolves the approved catalog, authority, checks, revision, bindings
++identity and trusted plugin composition. Reload that integrated model after every
++applied human-approved architecture update at a recorded activity boundary, once
++required implementation and handlers are validated. Revalidate retained work before
++the next activation in the same run, preserving original acceptance and historical
++evidence. An in-flight activation keeps its recorded model identity. Commit and
++upstream authority belong to the host. Candidate source cannot authorize executable
++host plugins or composition changes; adopting an updated runtime requires the
++trusted host's recorded validation under the approved architectural authority.
+ `.arc/plans/` and `.arc/learning/` are generated records. They cannot grant authority.
+ Authored goals under the project knowledge root persist across rounds. Each goal
+ declares priority, requirements and observable measures. A round evaluates the
+@@ -43,7 +49,7 @@
+ | PRJ-1 | Resolve from a nested directory returns the project and the deepest applicable component; an unrelated directory returns an input error naming what was missing. |
+ | PRJ-2 | Two equally applicable components for one path is an input error, not a tie-break. |
+ | PRJ-3 | A tracked maintained path with zero owners or two owners fails validation, naming the path. |
+-| PRJ-4 | Editing architecture, guidance or plugin selection after admission leaves the active capture unchanged. A later run reads the new approved inputs. |
++| PRJ-4 | Unapproved architecture, guidance or plugin edits cannot change authority. An exact human-approved update, validated implementation and recorded host adoption can update the next activity in the same run. Historical observations retain their original model identity and original acceptance is preserved. |
+ | PRJ-5 | A dirty working tree or a HEAD that differs from the captured base is refused before any store row is written. |
+ | PRJ-6 | A second staging publication grant is a finding naming its owner and source. |
+ | PRJ-7 | A missing executable binding fails with the binding name; setting `PATH` does not satisfy it. |
+--- a/packages/manager/contract.md
++++ b/packages/manager/contract.md
+@@ -13,7 +13,9 @@
+
+ Architecture owns the capture and model-facing request. Manager supplies
+ guidance through that capture. Later directive edits become inputs to a future
+-capture and cannot change an active agent's instructions, operations or acceptance.
++capture. Approved guidance can reach the next activation through Architecture's
++recorded in-run model adoption boundary; it cannot rewrite an in-flight agent's
++instructions, grant candidate-side authority or weaken original acceptance.
+ The Manager service does not schedule, activate or review agents.
+
+ ## Acceptance scenarios
+@@ -22,4 +24,4 @@
+ | --- | --- |
+ | MGR-1 | The same revision and scope resolve the same guidance. Different scopes receive their applicable directives and skill references. |
+ | MGR-2 | Invalid metadata or a missing skill reference is reported by the shared validation path. |
+-| MGR-3 | Editing directives after admission leaves the active Agent view unchanged. A later capture can see the newly approved guidance. |
++| MGR-3 | Unapproved directive edits cannot change the Agent view. After approved model adoption, the next activation receives the updated guidance; in-flight activations and historical evidence retain their original identity and original acceptance is preserved. |
+--- a/docs/interface/registry.yaml
++++ b/docs/interface/registry.yaml
+@@ -16,12 +16,17 @@
+     file: docs/interface/arcnexus-project.md
+     owner: architecture
+     stage: locked
+-    digest: c0ce39bfc5f818057c93c0bb3f0e78a6ab6a228ae4116e4f99510e0d20d11373
++    digest: 04bee43d94eb79fa7b344808a320a4c5862262c3209138ed4408f6fad702d3e3
+     dependsOn: []
+     scenarios: 15
+     acceptedBy: Adrian Webb (architect)
+     acceptedAt: '2026-11-15'
+     history:
++      - stage: locked
++        digest: c0ce39bfc5f818057c93c0bb3f0e78a6ab6a228ae4116e4f99510e0d20d11373
++        file: docs/interface/arcnexus-project.md
++        revision: 2522d2ec46a6759e007b8be389829143be0fafcf
++        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+       - stage: locked
+         digest: 6f44b639d23211a4913c3b0a4ce20fa49d77efe9c98b58f5cce2976db8751349
+         file: docs/interface/arcnexus-project.md
+@@ -66,6 +71,9 @@
+     amendmentRecord: 'Architect approved the Team, checkpoint and goal-round
+       proposal in Codex chat. Base: e73aedb283eecbe2f80b482923b2ae6eced1a6bf.
+       Issue #522.'
++    efficiencyAmendmentRecord: >-
++      Conditional on exact human approval in Codex chat for issue 615; approved
++      host/editor delegation must be recorded before this proposal is applied.
+   - id: arcnexus/foundation
+     type: foundation
+     file: packages/foundation/contract.md
+@@ -92,14 +100,19 @@
+     file: apps/cli/contract.md
+     owner: cli-app
+     stage: locked
+-    digest: d91b96a7422e556d7db5ef737dba086f4a4c01c18e448cd5acf58a29af20f2a8
++    digest: 902fd8b23ed11f556b62e4d4f89232a043774d90153a60cf22f09f2d802bcb02
+     dependsOn:
+       - arcnexus/project
+       - arcnexus/commands
+-    scenarios: 22
++    scenarios: 24
+     acceptedBy: Adrian Webb (architect)
+     acceptedAt: '2026-11-18'
+     history:
++      - stage: locked
++        digest: d91b96a7422e556d7db5ef737dba086f4a4c01c18e448cd5acf58a29af20f2a8
++        file: apps/cli/contract.md
++        revision: 2522d2ec46a6759e007b8be389829143be0fafcf
++        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+       - stage: locked
+         digest: 958a68a5c5cdbf11f95f87ee97eee07bdb4b253474e9741993704674f9462374
+         file: apps/cli/contract.md
+@@ -188,19 +201,27 @@
+     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
+       in Codex chat for issue #615. Base:
+       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
++    efficiencyAmendmentRecord: >-
++      Conditional on exact human approval in Codex chat for issue 615; approved
++      host/editor delegation must be recorded before this proposal is applied.
+   - id: arcnexus/architecture-model
+     type: library
+     file: packages/architecture/contract.md
+     owner: architecture
+     stage: locked
+-    digest: bc3617a7dd8499fa1150d8a533b7667ed7904d0014817eb42afb4c1fb49acac3
++    digest: 84ff34f2b86e30aa35c2638b6a3538e96d69ccc97245e85344b0bea98f2f2fd7
+     dependsOn:
+       - arcnexus/project
+       - arcnexus/foundation
+-    scenarios: 22
++    scenarios: 25
+     acceptedBy: Adrian Webb (architect)
+     acceptedAt: '2026-11-19'
+     history:
++      - stage: locked
++        digest: bc3617a7dd8499fa1150d8a533b7667ed7904d0014817eb42afb4c1fb49acac3
++        file: packages/architecture/contract.md
++        revision: 2522d2ec46a6759e007b8be389829143be0fafcf
++        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+       - stage: locked
+         digest: 59ee8b756a850e0e1fa2640c348a1b08a4a366487671b496833ac8d3b40abf5c
+         file: packages/architecture/contract.md
+@@ -309,19 +330,27 @@
+     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
+       in Codex chat for issue #615. Base:
+       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
++    efficiencyAmendmentRecord: >-
++      Conditional on exact human approval in Codex chat for issue 615; approved
++      host/editor delegation must be recorded before this proposal is applied.
+   - id: arcnexus/coordination
+     type: library
+     file: packages/coordination/contract.md
+     owner: coordination
+     stage: locked
+-    digest: d7f8f7f0f543629e676344996410148ecefb1d4900bf7bc04a9a50b198e7b7e0
++    digest: b13439aba47d9f91bb2ec11cf9e1a70719546ecc0c5cf4a6b769b9fd8f3dda8a
+     dependsOn:
+       - arcnexus/project
+       - arcnexus/architecture-model
+-    scenarios: 21
++    scenarios: 23
+     acceptedBy: Adrian Webb (architect)
+     acceptedAt: '2026-11-19'
+     history:
++      - stage: locked
++        digest: d7f8f7f0f543629e676344996410148ecefb1d4900bf7bc04a9a50b198e7b7e0
++        file: packages/coordination/contract.md
++        revision: 2522d2ec46a6759e007b8be389829143be0fafcf
++        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+       - stage: locked
+         digest: 916588d200ecdecf7753e281c117514d56712c16a2fac2e1a4b92bfd998f68d2
+         file: packages/coordination/contract.md
+@@ -370,20 +399,28 @@
+       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
+     approvalRecord: "Exact limit-removal amendment for #659; human approval in Codex
+       chat and delegated application by Codex."
++    efficiencyAmendmentRecord: >-
++      Conditional on exact human approval in Codex chat for issue 615; approved
++      host/editor delegation must be recorded before this proposal is applied.
+   - id: arcnexus/execution
+     type: library
+     file: packages/execution/contract.md
+     owner: execution
+     stage: locked
+-    digest: 6a4d048c3c165da0ea9f15b8e93667ec8bf55a5c2be9c7ba95b67927e2f53f2a
++    digest: 67ad4308c467011f1c20ed4365d2e3958901dbbc5c773e7ff56bf3b5a9dd8e67
+     dependsOn:
+       - arcnexus/project
+       - arcnexus/architecture-model
+       - arcnexus/coordination
+-    scenarios: 24
++    scenarios: 27
+     acceptedBy: Adrian Webb (architect)
+     acceptedAt: '2026-11-17'
+     history:
++      - stage: locked
++        digest: 6a4d048c3c165da0ea9f15b8e93667ec8bf55a5c2be9c7ba95b67927e2f53f2a
++        file: packages/execution/contract.md
++        revision: 2522d2ec46a6759e007b8be389829143be0fafcf
++        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+       - stage: locked
+         digest: 94ece72d7a1f476462719db75feaa873c8d369dd27f9b1878f15ea611b9bce2f
+         file: packages/execution/contract.md
+@@ -431,12 +468,15 @@
+     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
+       in Codex chat for issue #615. Base:
+       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
++    efficiencyAmendmentRecord: >-
++      Conditional on exact human approval in Codex chat for issue 615; approved
++      host/editor delegation must be recorded before this proposal is applied.
+   - id: arcnexus/direction
+     type: library
+     file: packages/direction/contract.md
+     owner: direction
+     stage: locked
+-    digest: b065e5f7fb4c5701eb8a68ca5a41a5a2cd091373f0b8581a021f465a4418531e
++    digest: 40939c10a70abe3a451fc79a1ec0bb878573fb753e69c3b20ea177b827a7ee82
+     dependsOn:
+       - arcnexus/project
+       - arcnexus/architecture-model
+@@ -446,6 +486,11 @@
+     acceptedBy: Adrian Webb (architect)
+     acceptedAt: '2026-11-17'
+     history:
++      - stage: locked
++        digest: b065e5f7fb4c5701eb8a68ca5a41a5a2cd091373f0b8581a021f465a4418531e
++        file: packages/direction/contract.md
++        revision: 2522d2ec46a6759e007b8be389829143be0fafcf
++        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+       - stage: locked
+         digest: c3c2928a32eeee663ba78c6ad80a7c7edcd0aab9563374466b18943bf8dac877
+         file: packages/direction/contract.md
+@@ -502,22 +547,30 @@
+     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
+       in Codex chat for issue #615. Base:
+       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
++    efficiencyAmendmentRecord: >-
++      Conditional on exact human approval in Codex chat for issue 615; approved
++      host/editor delegation must be recorded before this proposal is applied.
+   - id: arcnexus/verification
+     type: library
+     file: packages/verification/contract.md
+     owner: verification
+     stage: locked
+-    digest: 26d487a102dc9b7b1b31f23ed89b77275b54ec8469051103c11517bd759073ee
++    digest: f2a990ef15ebb58254fc463e767ebc8e5cd8aa8a507674c9a43c6d589ed6c025
+     dependsOn:
+       - arcnexus/project
+       - arcnexus/architecture-model
+       - arcnexus/coordination
+       - arcnexus/execution
+       - arcnexus/direction
+-    scenarios: 18
++    scenarios: 19
+     acceptedBy: Adrian Webb (architect)
+     acceptedAt: '2026-11-19'
+     history:
++      - stage: locked
++        digest: 26d487a102dc9b7b1b31f23ed89b77275b54ec8469051103c11517bd759073ee
++        file: packages/verification/contract.md
++        revision: 2522d2ec46a6759e007b8be389829143be0fafcf
++        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+       - stage: locked
+         digest: ffd64281aa0fa9beac3585e527441daa4284b0b97b04e5e7f4574e651d9203b5
+         file: packages/verification/contract.md
+@@ -564,6 +617,9 @@
+       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
+     approvalRecord: "Exact Verification file-read alignment for #659; human approval
+       in Codex chat and delegated application by Codex."
++    efficiencyAmendmentRecord: >-
++      Conditional on exact human approval in Codex chat for issue 615; approved
++      host/editor delegation must be recorded before this proposal is applied.
+   - id: arcnexus/delivery
+     type: library
+     file: packages/delivery/contract.md
+@@ -679,11 +735,20 @@
+     file: packages/agent/contract.md
+     owner: agent
+     stage: proposed
+-    digest: f52eb30d665f485eef8daf64148d7ad974afe8c8281f7f09f0edce80a0480016
++    digest: 0a0632263ce40592672621c4437a09f43d464039a3650587ae92e1cca20c8279
+     dependsOn:
+       - arcnexus/architecture-model
+       - arcnexus/execution
+-    scenarios: 9
++    scenarios: 10
++    history:
++      - stage: proposed
++        digest: f52eb30d665f485eef8daf64148d7ad974afe8c8281f7f09f0edce80a0480016
++        file: packages/agent/contract.md
++        revision: 2522d2ec46a6759e007b8be389829143be0fafcf
++        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
++    efficiencyAmendmentRecord: >-
++      Conditional on exact human approval in Codex chat for issue 615; approved
++      host/editor delegation must be recorded before this proposal is applied.
+   - id: arcnexus/team
+     type: library
+     file: packages/team/contract.md
+@@ -703,9 +768,14 @@
+     dependsOn:
+       - arcnexus/agent
+       - arcnexus/workflow
+-    digest: 0dfa918ae22379adb7423b42e776d110293c77b345f89bed86b6bacf1ff694ec
+-    scenarios: 4
+-    history:
++    digest: 07646324af4077c7151920c98741a8ab77488d1d44f9e823da8a56f48b87e491
++    scenarios: 5
++    history:
++      - stage: proposed
++        digest: 0dfa918ae22379adb7423b42e776d110293c77b345f89bed86b6bacf1ff694ec
++        file: packages/commands/contract.md
++        revision: 2522d2ec46a6759e007b8be389829143be0fafcf
++        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+       - stage: proposed
+         digest: ca9ae2188a36be71339092ae8d9cf04fab7ca393a374f8959f6082a11a6a12f2
+         file: packages/commands/contract.md
+@@ -715,15 +785,27 @@
+     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
+       in Codex chat for issue #615. Base:
+       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
++    efficiencyAmendmentRecord: >-
++      Conditional on exact human approval in Codex chat for issue 615; approved
++      host/editor delegation must be recorded before this proposal is applied.
+   - id: arcnexus/manager
+     type: library
+     file: packages/manager/contract.md
+     owner: manager
+     stage: proposed
+-    digest: 0172f228a3fcb4997eaf4fa8713ea61b04c4c479e01cab94a268a1104af10b02
++    digest: 483c3b219f9921ef4dba1d6feba977464ebe9c5ad4c322f08f4afb08430339d7
+     dependsOn:
+       - arcnexus/project
+     scenarios: 3
++    history:
++      - stage: proposed
++        digest: 0172f228a3fcb4997eaf4fa8713ea61b04c4c479e01cab94a268a1104af10b02
++        file: packages/manager/contract.md
++        revision: 2522d2ec46a6759e007b8be389829143be0fafcf
++        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
++    efficiencyAmendmentRecord: >-
++      Conditional on exact human approval in Codex chat for issue 615; approved
++      host/editor delegation must be recorded before this proposal is applied.
+   - id: arcnexus/reviewer
+     type: library
+     file: packages/reviewer/contract.md
+@@ -774,9 +856,14 @@
+       - arcnexus/coordination
+       - arcnexus/verification
+       - arcnexus/delivery
+-    digest: 38b6fa5ba062a23e019d8d59e4b91a186a149f61653646376bfd2de0d0b9b62e
+-    scenarios: 10
+-    history:
++    digest: 3ae53f8999cb46aa36f9a7913851e4151c70054887d170e9a96bc98692cbcee8
++    scenarios: 12
++    history:
++      - stage: proposed
++        digest: 38b6fa5ba062a23e019d8d59e4b91a186a149f61653646376bfd2de0d0b9b62e
++        file: packages/workflow/contract.md
++        revision: 2522d2ec46a6759e007b8be389829143be0fafcf
++        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+       - stage: proposed
+         digest: 97a36f40bc739717bb5e73bdcd005ea19908332ca053d1b8c2f791a7ab3e309c
+         file: packages/workflow/contract.md
+@@ -786,6 +873,9 @@
+     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
+       in Codex chat for issue #615. Base:
+       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
++    efficiencyAmendmentRecord: >-
++      Conditional on exact human approval in Codex chat for issue 615; approved
++      host/editor delegation must be recorded before this proposal is applied.
+   - id: arcnexus/planner
+     type: library
+     file: packages/planner/contract.md
