@@ -142,13 +142,16 @@ function isIgnored(path: string, patterns: readonly string[]): boolean {
     const rule = raw.trim();
     if (!rule || rule.startsWith('#')) continue;
     const negated = rule.startsWith('!');
-    const pattern = (negated ? rule.slice(1) : rule).replace(/^\\//, '').replace(/\\/$/, '');
-    const expression = pattern
-      .replace(/[.+^${}()|[\\]\\\\]/g, '\\\\$&')
-      .replaceAll('**', '§')
-      .replaceAll('*', '[^/]*')
-      .replaceAll('§', '.*')
-      .replaceAll('?', '[^/]');
+    let pattern = negated ? rule.slice(1) : rule;
+    if (pattern.startsWith('/')) pattern = pattern.slice(1);
+    if (pattern.endsWith('/')) pattern = pattern.slice(0, -1);
+    const expression = [...pattern]
+      .map((character) => {
+        if (character === '*') return '[^/]*';
+        if (character === '?') return '[^/]';
+        return '.^$+{}()|[]\\'.includes(character) ? '\\' + character : character;
+      })
+      .join('');
     const matcher = new RegExp(`^(?:${expression})(?:/.*)?$`);
     if (matcher.test(path)) ignored = !negated;
   }
