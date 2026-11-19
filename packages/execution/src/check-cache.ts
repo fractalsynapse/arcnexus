@@ -29,15 +29,29 @@ export async function checkInput(task: HostTask, id: string, scope?: StewardScop
   const command = checkCommand(task.capture, worktree, id, scope?.owner);
   const operation = task.capture.operations[id];
   const applicability = operation?.applicability;
-  const selection =
+  const isOwnerQuality =
+    applicability === 'owner-lint-files' || applicability === 'owner-format-files';
+  if (
     scope?.owner &&
-    (applicability === 'owner-lint-files' || applicability === 'owner-format-files')
+    isOwnerQuality &&
+    !qualityOperationAvailable({
+      tool: operation.tool ?? '',
+      command: operation.command ?? '',
+      args: operation.args ?? [],
+      applicability,
+      source: task.capture.source,
+    })
+  )
+    throw new Error(`Unavailable owner quality operation: ${id}`);
+  const selection =
+    scope?.owner && isOwnerQuality
       ? await selectQualityInputs(
           applicability === 'owner-lint-files' ? 'lint' : 'format:check',
           scope.owner,
           worktree,
         )
       : undefined;
+  if (selection && !selection.reuseEligibility.eligible) return;
   const inputs = selection?.identity ?? cleanRevision(worktree);
   if (!inputs) return;
   const input = {
