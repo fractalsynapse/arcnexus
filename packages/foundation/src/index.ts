@@ -101,9 +101,9 @@ function qualityReuseEligibility(
   if (operation === 'lint') {
     const config = readOptionalFile('eslint.config.ts', root);
     const unsupported = [
-      [/\\brequire\\s*\\(/, 'CommonJS require dependency'],
-      [/\\bimport\\s*\\(/, 'dynamic import dependency'],
-      [/\\bexport\\s*\\{[^}]*\\}\\s*from\\b/, 're-export dependency'],
+      [/\brequire\s*\(/, 'CommonJS require dependency'],
+      [/\bimport\s*\(/, 'dynamic import dependency'],
+      [/\bexport\s*\{[^}]*\}\s*from\b/, 're-export dependency'],
     ] as const;
     for (const [pattern, description] of unsupported) {
       if (pattern.test(config))
