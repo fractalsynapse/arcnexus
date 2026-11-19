@@ -84,7 +84,7 @@ test('declarative formatter plugin configuration declines reuse', async () => {
 for (const [form, source, reason] of [
   ['filesystem import', "import type { Stats } from 'node:fs'; export default [];\n", /filesystem/i],
   ['bare package import', "import type plugin from 'eslint-plugin-example'; export default [];\n", /bare package/i],
-  ['export star', "export * from './helper.js';\n", /export.star/i],
+  ['export star', "export * from './packages/alpha/helper.js';\n", /export.star/i],
 ] as const) {
   test(`lint ${form} declines reuse with a precise reason`, async () => {
     const tree = fixture();
