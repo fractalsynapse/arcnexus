@@ -31,7 +31,7 @@ export function selectQualityInputs(
     if (operation === 'lint' && !/\\.(?:ts|mts|cts|js|mjs|cjs)$/.test(path)) continue;
     const resolution = team.ownerFor(components, path);
     assert.notEqual(resolution.kind, 'collision', `Ambiguous ownership: ${path}`);
-    assert.notEqual(resolution.kind, 'unowned', `Unowned maintained input: ${path}`);
+    assert.equal(resolution.kind, 'owned', `Unowned maintained input: ${path}`);
     if (owner && resolution.owner.id !== owner) continue;
     files.push(path);
     owners.set(path, resolution.owner.id);
