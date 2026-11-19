@@ -277,11 +277,11 @@ test('a Prettier-ignored TypeScript file leaves format empty but remains lint ap
 });
 
 /** Read public applicability in the isolated worktree. */
-async function selection(tree: QualityFixture, operation: Operation) {
+async function selection(tree: QualityFixture, operation: Operation, owner: string | undefined = 'alpha') {
   const previous = process.cwd();
   try {
     process.chdir(tree.root);
-    return await foundation.selectQualityInputs(operation, 'alpha');
+    return await foundation.selectQualityInputs(operation, owner === 'repository' ? undefined : owner);
   } finally {
     process.chdir(previous);
   }
