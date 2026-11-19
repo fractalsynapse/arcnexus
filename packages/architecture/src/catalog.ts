@@ -68,7 +68,7 @@ interface Operation extends Definition {
   args?: Array<string | { context: 'owner' }>;
   cwd?: string;
   network?: boolean;
-  applicability?: 'owner-test-suites';
+  applicability?: 'owner-test-suites' | 'owner-format-files' | 'owner-lint-files';
 }
 
 interface Standard extends Definition {
