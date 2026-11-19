@@ -17,7 +17,9 @@ class OwnerQuality {
   /** Resolve shared discovery, then run the matching read-only quality command. */
   run(): void {
     const selection = selectQualityInputs(this.operation, this.owner);
-    console.log(`${this.operation} scope=${this.owner ?? 'repository'} sha256=${selection.identity}`);
+    console.log(
+      `${this.operation} scope=${this.owner ?? 'repository'} sha256=${selection.identity}`,
+    );
     const files = selection.files;
     const identity = createHash('sha256');
     for (const path of files) identity.update(path).update(readFileSync(path));
