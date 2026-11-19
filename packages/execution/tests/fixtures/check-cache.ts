@@ -112,7 +112,7 @@ export class CheckCacheFixture {
     const capture = {
       source: {
         root: this.source,
-        paths: [],
+        paths: ['.arc/architecture/components/owner.yaml'],
         remote: 'https://example.com/fixture.git',
         revision: git(this.source, 'rev-parse', 'HEAD'),
         read: (path: string) => git(this.source, 'show', `HEAD:${path}`),
