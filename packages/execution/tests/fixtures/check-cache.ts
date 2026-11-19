@@ -125,7 +125,11 @@ export class CheckCacheFixture {
     const capture = {
       source: {
         root: this.source,
-        paths: ['.arc/architecture/components/owner.yaml'],
+        paths: [
+          '.arc/architecture/components/owner.yaml',
+          'package.json',
+          'packages/foundation/scripts/owner-quality.ts',
+        ],
         remote: 'https://example.com/fixture.git',
         revision: git(this.source, 'rev-parse', 'HEAD'),
         read: (path: string) => readFileSync(join(this.source, path), 'utf8'),
