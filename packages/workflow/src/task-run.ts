@@ -237,6 +237,19 @@ export class TaskRun {
     }
   }
 
+  /** Store the accepted plan and complete observations for one bounded revision. */
+  private revisionRequest(finding: RevisionFeedback): RevisionRequest | undefined {
+    if (!this.plan || !['supplier', 'rejection'].includes(finding.kind)) return;
+    if (!this.session.store) throw new Error('Immutable revision artifacts are unavailable');
+    const snapshot = revisionSnapshot(this.session.observations?.() ?? this.session.history?.() ?? []);
+    return {
+      acceptedPlan: this.session.store('accepted-plan.json', JSON.stringify(snapshot.plan)),
+      retainedEvidence: this.session.store('retained-evidence.json', JSON.stringify(snapshot.observations)),
+      position: snapshot.position,
+      finding,
+    };
+  }
+
   /** Check proposal shape, plan rules and preservation of any already accepted work. */
   private validateProposal(response: unknown, reason?: RevisionFeedback): DirectionResult {
     this.signal.throwIfAborted();
