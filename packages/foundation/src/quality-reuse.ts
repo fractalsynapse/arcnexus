@@ -57,10 +57,13 @@ function formatterReuseEligibility(
     } catch {
       return { eligible: false, reason: `Prettier configuration cannot be inspected safely: ${path}` };
     }
-    const packageFormatter = path === 'package.json' && isRecord(parsed) ? parsed.prettier : parsed;
+    const packageFormatter = /(?:^|\/)package\.json$/.test(path) && isRecord(parsed) ? parsed.prettier : parsed;
+    if (packageFormatter === undefined) continue;
     if (typeof packageFormatter === 'string')
       return { eligible: false, reason: `Prettier configuration references an uncovered shareable config: ${path}` };
-    if (isRecord(packageFormatter) && 'plugins' in packageFormatter)
+    if (!isRecord(packageFormatter))
+      return { eligible: false, reason: `Prettier configuration has an unsupported shape: ${path}` };
+    if (containsPluginOption(packageFormatter))
       return {
         eligible: false,
         reason: `Prettier configuration may load unselected plugin dependencies: ${path}`,
