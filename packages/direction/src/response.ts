@@ -107,6 +107,7 @@ export function decodeRevisionResponse(
   request: RevisionRequest,
 ): { kind: 'plan'; plan: Plan } {
   const value = mapping(response, 'response');
+  if (value.kind === 'question') return revisionQuestion(value);
   if (value.kind !== 'plan') throw new DirectorResponseError('response.kind: expected "plan"');
   const proposedPlan = mapping(value.plan, 'plan');
   if ('focus' in proposedPlan) throw new DirectorResponseError('plan.focus: revisions cannot replace Focus');
