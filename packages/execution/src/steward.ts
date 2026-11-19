@@ -142,8 +142,7 @@ function requiredChecks(
   requested: readonly { id: string; expected: 'pass' | 'fail' }[],
 ) {
   const checks = new Map<string, { id: string; expected: 'pass' | 'fail' }>();
-  for (const check of requested)
-    checks.set(check.id, requestedExpectation(check, scope));
+  for (const check of requested) checks.set(check.id, requestedExpectation(check, scope));
   const events = task.observations<{
     check?: CheckResult;
     scope?: StewardScope;
@@ -177,7 +176,8 @@ function latestActivityEdit(
   scope: StewardScope,
 ) {
   return events.findLastIndex(
-    (event) => event.owner === scope.owner && event.activity === scope.activity && event.edits?.length,
+    (event) =>
+      event.owner === scope.owner && event.activity === scope.activity && event.edits?.length,
   );
 }
 
