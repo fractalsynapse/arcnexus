@@ -1,7 +1,10 @@
 # Efficiency foundation contract amendment
 
-Status: proposed, not applied, not approved. The active contracts and registry are
-unchanged. The [implementation checklist](../../../../docs/plans/efficiency-foundation.md)
+Status: the architect approved exact patch `cb6a431032a9` in Codex chat and
+delegated application and implementation. All resulting contract and registry bytes
+match the approved manifest. The actual human approval receipt is retained in
+application evidence as `615-efficiency-amendment-approval.json`. The
+[implementation checklist](../../../../docs/plans/efficiency-foundation.md)
 records the complete engineering and live acceptance work. The
 [prompt practices](../prompt-practices.md) records the planned authoring method.
 

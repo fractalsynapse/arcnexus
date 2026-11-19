@@ -1,8 +1,9 @@
 # Efficiency foundation for continuous refinement
 
 Status: implementation checklist requested by the architect on 2026-11-19.
-The changes below are authorized direction; conflicting locked interfaces still
-need their exact reviewed amendment before implementation. This document records
+The architect approved exact amendment `cb6a431032a9` and delegated application and
+implementation. Its contract and registry bytes have been applied and verified
+against the manifest. This document records
 engineering work, not a hand-authored Director plan or delivered capability.
 
 Continue the [self-development qualification](self-development-mvp.md). The end
@@ -61,7 +62,7 @@ unresolved authority transition or a result that its current evidence cannot sup
   `5f9710773f76967ef45b9fb2f048cf49deb8536f`. A verified Git bundle and terminal
   outcome receipt are retained in external application storage as
   `638-run96-terminal-checkpoint.bundle` and `638-run96-terminal-retention.json`.
-- [ ] Review the [exact proposed contract/registry amendment](../../packages/architecture/docs/proposals/README.md).
+- [x] Review and apply the [exact contract/registry amendment](../../packages/architecture/docs/proposals/README.md).
   Project PRJ-4, Architecture ARC-7/8/17/22 and Execution EX-18/25 currently freeze authority for the whole
   task. Replace that task-wide freeze with recorded adoption of approved model
   versions within the existing run. Align Workflow, Direction, Coordination,

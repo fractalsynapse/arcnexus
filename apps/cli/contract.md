@@ -19,8 +19,14 @@ The verbatim human submission is retained as authorized input; a model-authored
 refinement is a proposal, not a replacement for that submission.
 
 `--json` is a general CLI output option, accepted once before the command or
-after its positional arguments. It selects structured JSON on stdout. Commands
-use the same positional arguments, exit codes and stderr diagnostics in both modes.
+after its positional arguments. Inspection prints one structured JSON result on
+stdout. Long-running task, planning, architecture and refinement commands stream
+ordered JSONL observations on stdout followed by a typed terminal result record.
+Human mode renders those same observations live, including acting component,
+activity, operations and outcomes. Complete messages and evidence remain available
+as emitted or by their authorized file references. Commands use the same positional
+arguments, exit codes and stderr diagnostics in both modes. No plaintext progress
+is mixed into JSONL stdout; invalid input before admission retains empty stdout.
 
 Inspection requires both positional arguments. Missing or extra arguments,
 an unknown component, and an activity absent from the component's explicit
@@ -45,7 +51,10 @@ place. With `--json`, it prints one result object with `actor`, `component`,
 `activity`, `placeholders` and `request`. Its `request.input` matches the
 prompt in the rendered output byte for byte.
 
-The foreground task streams progress and evidence references and honors SIGINT.
+The foreground task streams harness and host events, messages, tool calls/results,
+progress, evidence references and available timing/usage metrics as execution
+proceeds, and honors SIGINT. Overall and execution-profile summaries identify
+unknown usage and the pricing basis of estimated costs. They do not impose budgets.
 Human decisions concern objectives, goals and architecture. Ordinary tool repair,
 implementation, checks, plan sequencing and authorized staging delivery do not
 require human approval. Unavailable external prerequisites remain observable holds;
@@ -104,6 +113,8 @@ No answer, an unknown response or elapsed time supplies approval.
 | GW-28 | Both architecture update forms assess through the same SDK and return a no-change result or an exact proposed diff. Approval and required prerequisite delivery complete before the following Run phase. |
 | GW-29 | refine defaults to one round and accepts a positive integer --rounds value. Invalid, duplicate or unsupported arguments exit 2 before admission. Every completed round runs Plan, Architect and all captured goals in priority order. |
 | GW-30 | Interrupting a refinement phase or awaiting approval retains its identity and cursor. The same invocation resumes without replaying completed phases, losing answers, repeating edits or creating a duplicate PR. Changed round totals are refused while it is unfinished. |
+| GW-31 | Human and JSONL task modes display observations before completion from the same structured observer. JSONL stdout contains only typed event/result records in order; inspect --json remains one result and exit semantics remain unchanged. |
+| GW-32 | A running task exposes actor/activity, operations, elapsed time and available profile-level usage/cost with evidence links. Cancellation and restart preserve the recorded timeline and unknown measurements are not reported as zero. |
 
 ## Deferred
 

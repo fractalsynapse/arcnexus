@@ -5,11 +5,14 @@ Stage: **locked**. See the [registry](../../docs/interface/registry.yaml) for au
 ## Obligations
 
 Resolve and validate the project, owners, profiles, operations, standards, role
-bindings, host bindings, delivery policy and contract registry. Expose one immutable
-capture and one model-facing context builder to all callers. Keep complete
+bindings, host bindings, delivery policy and contract registry. Expose one resolved
+model and one model-facing context builder to all callers. Each activation names
+the approved model version it uses. Keep complete
 definitions in the capture. The request includes the acting component's relevant
 fields, the selected activity's resolved instructions and capabilities, and a
-compact catalog index. Model settings belong in invocation options. Name withheld
+compact catalog index of identities, short summaries and source references rather
+than every full component purpose. Include the acting purpose and selected activity
+in full, with source provenance. Model settings belong in invocation options. Name withheld
 inputs, reference applicable contracts by identity and path, and return requested
 definitions whole from the capture. Activity standards are shared references and
 filtered to the activity. The reviewer receives the complete evidence bundle under
@@ -34,12 +37,23 @@ declarations describe the act and its parameters, prerequisites and confinement.
 The activity grants the declared operation. Model-invoked operations bind a local
 MCP handler and its exact argument schema. Inspection and activation use the
 same captured bindings. An explicitly empty list exposes no project tools.
-Invocation parameters cannot rewrite the command or expand authority. The
-execution provider independently controls built-in web access.
+Operation parameters have declared types and defaults. Resolve permitted component
+overrides and then activity-binding overrides through this same model. The resolved
+activity declares required completion verification by referencing its operation
+bindings, without copying commands or parameter values. Missing or invalid values
+produce a diagnostic naming the binding and field. Interpolate values as executable
+arguments, not shell code. Invocation values cannot rewrite the executable or expand
+ownership, confinement or network authority outside the approved declaration.
+Host-supplied identity values cannot be replaced by model arguments. The execution
+provider independently controls built-in web access.
 
 Validate deterministically and offline. Check ownership, public import boundaries,
-cycles, profiles, operations, guidance metadata and contract digests through the shared validation service. Capture freezes
-trusted plugin identities and their composition. Proposal records go through the
+cycles, profiles, operations, guidance metadata and contract digests through the shared validation service. The resolved model records
+trusted plugin identities and their composition. Load it at run admission and
+reload it after every applied approved architecture update. Merge permitted object
+properties recursively; explicitly supplied scalars and arrays replace defaults,
+including empty arrays. Activities do not inherit implicitly, and ownership and
+authority stay explicit. Record provenance and reject unresolved references. Proposal records go through the
 coordination writer and remain separate from accepted authority. Model checked-edit
 tools refuse locked files and the registry. An explicit architect delegation may
 name an editor or the trusted host to apply an exact reviewed proposal on the
@@ -59,9 +73,18 @@ When approved architecture needs prerequisite implementation, Workflow delivers
 that work and the approved architecture together through its normal Director,
 steward, independent verification and staging boundaries inside the Architect
 phase. Validation refuses activation of an unavailable operation or handler.
-No change modifies active captured authority. Run begins with a fresh capture of
-the accepted delivery. A changed baseline requires reconciliation and a newly
-reviewable proposal rather than silently rebasing protected edits.
+After exact approved host application and validation of the required implementation,
+Workflow can adopt the resolved model at an activity boundary within the same run,
+including while finishing Architect prerequisites. An in-flight activation finishes
+or is cancelled first. Revalidate pending work, original acceptance, ownership,
+operations and affected evidence together before the next activation. Record the
+approval, previous and new model identities and any validated runtime adoption;
+never infer permission from candidate edits. Historical activations retain their
+original model identity. Unavailable handlers prevent adoption. The combined
+candidate still requires independent verification and staging delivery. Run begins
+with the model of that accepted delivery. A changed proposal baseline requires
+reconciliation and a newly reviewable proposal rather than silently rebasing
+protected edits.
 
 ## Acceptance scenarios
 
@@ -74,7 +97,7 @@ reviewable proposal rather than silently rebasing protected edits.
 | ARC-5 | A private-module import across owners fails `importsAllowed`; the same import through a declared public module passes. |
 | ARC-6 | An import cycle among maintained modules is reported with the cycle path. |
 | ARC-7 | Two `capture` calls on the same revision produce identical digests; a catalog edit between them does not change the first snapshot. |
-| ARC-8 | A candidate edit to `.arc/architecture/` during a run leaves that run's captured catalog and findings unchanged. |
+| ARC-8 | An unapproved candidate edit cannot change the resolved authority. After exact approved host application and validated adoption, the same run uses the new model for its next activity and retains the previous model for historical observations. |
 | ARC-9 | The request includes the acting owner's relevant fields, selected activity, and a compact catalog index. It names withheld inputs, references contracts, and leaves other activity definitions and Codex-discovered guidance out of the prompt. |
 | ARC-10 | Requesting a full definition returns it complete; standards are selected for the activity and returned completely, without application-imposed size caps or truncation. |
 | ARC-11 | Validation flags a changed locked digest, missing accepted file or missing record of architectural authority. |
@@ -83,9 +106,12 @@ reviewable proposal rather than silently rebasing protected edits.
 | ARC-14 | A missing binding key fails naming the key; setting `PATH` does not satisfy it. |
 | ARC-15 | Proposing an architecture change records the exact proposal and leaves source byte-identical. Only a recorded human delegation to apply that exact proposal can enable the trusted host application path; model checked edits remain refused. |
 | ARC-16 | Validation on an unchanged tree produces byte-identical finding output. |
-| ARC-17 | A capture identifies each composed plugin. A changed target catalog or candidate plugin cannot replace one in the active capture. |
+| ARC-17 | The resolved model identifies each composed plugin. A candidate cannot replace trusted composition. A recorded approved model transition and validated runtime adoption can update subsequent activations without changing an in-flight invocation or historical evidence. |
 | ARC-18 | An explicitly empty list stays empty. A missing activity remains unavailable. Omitting a required field or referencing an unknown role, profile, operation or standard produces a finding. |
 | ARC-19 | The director and independent verifier resolve their role and profile from their own explicitly selected component activity. |
 | ARC-20 | The Architecture Agent uses its explicitly mapped activity, can request optional research, and returns a source-linked no-change assessment or one purpose, consequences and exact diff batch. |
 | ARC-21 | Host application refuses missing, declined, forged or stale approval, changed expected content, and bytes outside the approved batch. The journal retains the approval and original failed observations. |
-| ARC-22 | Required implementation and approved architecture pass ordinary independent verification and staging delivery within Architect. Run captures the accepted revision; neither prerequisite work nor approval changes an active capture. Unavailable handlers block activation. |
+| ARC-22 | Architect delivers required implementation and approved architecture together through independent verification and staging. Once exact approved application and implementation validation permit adoption, its next prerequisite activity can use the new model in the same run. Unavailable handlers block adoption; Run uses the accepted delivery. |
+| ARC-23 | The same resolver applies permitted defaults and overrides deterministically, preserves explicit empty arrays and provenance, and refuses an implicit activity or ambiguous ownership. |
+| ARC-24 | Different components and activities reuse one operation with typed parameter overrides. Inspection and activation expose identical resolved arguments; unknown parameters, invalid types and authority-expanding invocation values are refused. |
+| ARC-25 | Each activity names completion verification through its operation bindings. The resolved model rejects a missing binding or unavailable handler rather than activating a declaration alone. |

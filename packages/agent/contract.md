@@ -42,7 +42,12 @@ host-only `release` activity.
 | `activate(input, signal)` | Run one scoped activation using the same resolved Agent and request builder. Surface progress and observations. Return a typed result or an explicit supplier request, escalation, unavailable, failed or cancelled outcome, with evidence references. Observe cancellation through Execution. |
 
 Input identifies the captured project, actor, owner where applicable, activity
-and available task position. Activation requires an admitted task and resolved
+and available task position. Each activation uses the latest host-adopted approved
+model at its start, with full acting purpose, selected activity instructions and
+resolved operation/verification bindings. It can read authorized complete run
+observations and measured profile usage through mapped operations. The run may
+adopt approved architecture between activations; the actor cannot approve or
+perform that transition itself. Activation requires an admitted task and resolved
 inputs. Inspection can run before task admission. An activation carries the actor’s identity,
 its captured authority and its goal throughout the call. Both use the single request
 builder owned by [Architecture](../architecture/contract.md).
@@ -87,3 +92,4 @@ separate durable memory, peer scheduler or publication capability.
 | AGT-7 | For the Agent component steward, inspection and activation in `testing` expose the captured `owner-tests` operation. In `documentation`, where that operation is absent, the host refuses it even if the Agent could call it in the earlier activity. |
 | AGT-8 | An Agent attempt to activate the host-only `release` activity is refused. The task lane records integration from the host's delivery result. |
 | AGT-9 | A task starts with the Director, runs its stewards in order and reaches the final Reviewer through the same Agent interface. A rejection returns evidence to Direction for a correction and blocks delivery of the rejected candidate. The corrected candidate uses the same independent review gate. |
+| AGT-10 | After approved in-run model adoption, the next actor inspection/activation uses matching updated instructions and operation parameters. Prior activations keep their original identity and all actors can read their authorized complete run timeline without acquiring write authority. |
