@@ -45,7 +45,12 @@ async function scenario(t: TestContext, component: string, activity: string, pro
       invoke(view, new AbortController().signal),
   } as unknown as Agent;
   await assert.rejects(
-    task.activate(agent, { component, activity }, { assignment: {} }, new AbortController().signal),
+    task.activate(
+      agent,
+      { component, activity },
+      { assignment: component === 'owner' ? { localRepair: { reason: 'failed check' } } : {} },
+      new AbortController().signal,
+    ),
     /Codex activation failed/,
   );
   return task.observations<{ nativeInvocation?: unknown }>();
