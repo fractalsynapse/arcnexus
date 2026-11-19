@@ -319,9 +319,9 @@ interface IgnoreScope {
 
 const createIgnore = createRequire(import.meta.url)('ignore') as () => IgnoreMatcher;
 
-/** Adapt unsupported gitignore question escapes and negated classes for ignore. */
+/** Preserve gitignore escaping and character classes for the ignore parser. */
 function normalizeIgnorePatterns(patterns: string): string {
-  return patterns.replace(/\\\?/g, '[?]').replace(/\[!([^\]]+)\]/g, '[^$1]');
+  return patterns;
 }
 
 /** Walk maintained paths once, loading reachable ignore rules as each directory is entered. */
