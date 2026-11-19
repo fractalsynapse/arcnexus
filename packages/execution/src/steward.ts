@@ -43,8 +43,10 @@ export async function steward(
       evidence: task.evidence.slice(before),
       ...(result.kind === 'repair' ? { input: stewardInput(task.observations()) } : {}),
     };
+  const obligations = requiredChecks(task, scope, result.checks);
+  const checked = { ...result, checks: obligations };
   const failed =
-    (await perform(task, scope, result, correction, signal)) ??
+    (await perform(task, scope, checked, correction, signal)) ??
     (await reconcileCheck(task, scope, correction, signal));
   const evidence = task.evidence.slice(before);
   return failed
