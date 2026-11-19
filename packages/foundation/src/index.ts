@@ -93,6 +93,26 @@ function qualityIdentity(
   return identity.digest('hex');
 }
 
+/** Collect selected source, owner, tool and ignore inputs for a stable operation identity. */
+function identityInputPaths(
+  operation: QualitySelection['operation'],
+  files: readonly string[],
+  componentFiles: readonly string[],
+): string[] {
+  return [
+    ...new Set([
+      ...files,
+      ...componentFiles,
+      '.eslintignore',
+      '.prettierignore',
+      ...relevantGitignoreFiles(files),
+      ...editorConfigurationInputs(files),
+      ...prettierConfigurationInputs(operation, files),
+      ...configurationInputs(operation),
+    ]),
+  ].sort();
+}
+
 /** Find editor settings that can affect selected files. */
 function editorConfigurationInputs(files: readonly string[]): string[] {
   const directories = new Set(['.']);
