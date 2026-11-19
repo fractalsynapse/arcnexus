@@ -143,6 +143,9 @@ function prettierConfigurationInputs(
       }
     }
   }
+  for (const path of globSync('**/.prettierrc.yaml')) {
+    if (files.some((file) => file.startsWith(`${dirname(path)}/`))) paths.add(path);
+  }
   return [...paths].sort();
 }
 
