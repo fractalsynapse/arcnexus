@@ -35,7 +35,7 @@ for (const [operation, applicability] of [
     const capture = {
       source: {
         root,
-        paths: globSync('.arc/architecture/components/*.yaml').sort(),
+        paths: [...globSync('.arc/architecture/components/*.yaml'), 'package.json', 'packages/foundation/scripts/owner-quality.ts'].sort(),
         read: (path: string) => readFileSync(join(root, path), 'utf8'),
       },
       project: { checks: { acceptance: [] } },
