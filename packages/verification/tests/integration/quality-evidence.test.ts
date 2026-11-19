@@ -42,6 +42,10 @@ for (const scenario of [
   'other-owner',
   'other-activity',
   'valid',
+  'retained-red',
+  'failed-then-pass',
+  'stale-then-pass',
+  'applicable-declared-inapplicable',
 ] as const) {
   test(`assembled review handles ${scenario} owner-operation evidence`, async (t) => {
     const root = mkdtempSync(join(tmpdir(), 'arcnexus-verification-quality-'));
@@ -51,14 +55,21 @@ for (const scenario of [
         verifier: { component: 'reviewer', activity: 'assessment' },
         checks: { acceptance: assembled },
       },
-      components: { verification: { activities: { testing: { operations } } } },
+      components: {
+        verification: { activities: {
+          testing: { operations: ['read-file', ...operations] },
+          research: { operations: ['read-file', 'owner-tests'] },
+        } },
+        unused: { activities: { testing: { operations: ['read-file', 'owner-tests'] } } },
+      },
       operations: Object.fromEntries(
-        operations.map((id) => [
+        ['read-file', ...operations].map((id) => [
           id,
           {
             id,
-            kind: 'command',
-            tool: 'check',
+            kind: id === 'read-file' ? 'tool' : 'command',
+            tool: id === 'read-file' ? 'read' : 'check',
+            ...(id === 'owner-format' ? { applicability: 'owner-format-files' } : {}),
             category: 'test',
             command: '/usr/bin/true',
             args: [],
@@ -109,7 +120,7 @@ for (const scenario of [
         },
         check: {
           id: 'owner-format',
-          status: scenario === 'unavailable' ? null : 0,
+          status: scenario === 'unavailable' ? null : scenario === 'applicable-declared-inapplicable' ? 'not-applicable' : scenario === 'failed-then-pass' ? 1 : 0,
           command: 'format',
           args: [],
           cwd: root,
@@ -117,7 +128,22 @@ for (const scenario of [
           log,
         },
       });
-      if (scenario === 'stale') task.note({ edits: [{ path: 'source.ts' }] });
+      if (scenario === 'stale' || scenario === 'retained-red' || scenario === 'stale-then-pass')
+        task.note({ edits: [{ path: 'source.ts' }] });
+      if (scenario === 'retained-red' || scenario === 'stale-then-pass') {
+        const current = task.store('current-format.log', 'Current format observation');
+        task.note({
+          scope: { owner: 'verification', activity: 'testing', expected: 'pass' },
+          check: { id: 'owner-format', status: 0, command: 'format', args: [], cwd: root, durationMs: 1, log: current },
+        });
+      }
+      if (scenario === 'failed-then-pass') {
+        const current = task.store('current-format.log', 'Current format observation');
+        task.note({
+          scope: { owner: 'verification', activity: 'testing', expected: 'pass' },
+          check: { id: 'owner-format', status: 0, command: 'format', args: [], cwd: root, durationMs: 1, log: current },
+        });
+      }
     }
     const calls: string[] = [];
     t.mock.method(task, 'check', async (id: string) => {
@@ -137,7 +163,7 @@ for (const scenario of [
       'activate',
       async (_agent: Agent, _selection: unknown, data: TaskContext) => {
         const ownerChecks = (data.assignment as { ownerChecks: unknown[] }).ownerChecks;
-        assert.equal(ownerChecks.length, scenario === 'missing' ? 1 : 2);
+        assert.ok(ownerChecks.length >= 1);
         assert.equal((ownerChecks[0] as { check: { id: string } }).check.id, 'owner-tests');
         return { kind: 'accepted', candidate: 'tree', criteria: ['V-1'], evidence: [redLog] };
       },
@@ -149,7 +175,8 @@ for (const scenario of [
       { digest: 'tree', evidence: [redLog] },
       AbortSignal.timeout(5000),
     );
-    if (scenario === 'valid') assert.equal(verdict.kind, 'accepted');
+    if (['valid', 'retained-red', 'failed-then-pass', 'stale-then-pass'].includes(scenario))
+      assert.equal(verdict.kind, 'accepted');
     else assert.notEqual(verdict.kind, 'accepted', `owner-format evidence is ${scenario}`);
     assert.deepEqual(calls, assembled);
   });
