@@ -69,11 +69,14 @@ interface QualityOperationBinding {
 /** Resolve a binding only when its script and shared runtime implementation are present. */
 export function qualityOperationAvailable(binding: QualityOperationBinding): boolean {
   if (binding.tool !== 'check' || binding.command !== 'npm') return false;
-  const [run, operation, context, ...extra] = binding.args;
+  const [run, operation, separatorOrContext, context, ...extra] = binding.args;
+  const hasCapturedSeparator = separatorOrContext === '--';
+  const ownerContext = hasCapturedSeparator ? context : separatorOrContext;
   if (
     run !== 'run' ||
     typeof operation !== 'string' ||
-    JSON.stringify(context) !== JSON.stringify({ context: 'owner' }) ||
+    (hasCapturedSeparator && context === undefined) ||
+    JSON.stringify(ownerContext) !== JSON.stringify({ context: 'owner' }) ||
     extra.length > 0 ||
     !Object.hasOwn(qualityRuntimeDefinitions, operation) ||
     binding.applicability !== `owner-${operation === 'format:check' ? 'format' : operation}-files`
