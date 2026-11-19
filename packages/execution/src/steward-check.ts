@@ -40,7 +40,7 @@ function recoverObservedCheck(
   for (const { event, index } of candidates.reverse()) {
     const check = event.check;
     const expected = event.scope?.expected;
-    if (!check || !expected) continue;
+    if (!check || !expected || typeof check.status !== 'number') continue;
     if ((check.status === 0) === (expected === 'pass')) continue;
     const resolved = recorded.slice(index + 1).some(
       ({ check: later, scope: laterScope }) =>
