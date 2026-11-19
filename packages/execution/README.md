@@ -4,6 +4,56 @@ Execution activates scoped stewards, applies checked edits and supervises declar
 operations in one task worktree. Its public obligations are in the
 [locked contract](contract.md).
 
+## Child task admission inside Architect
+
+The intended admission behavior implements the [Execution obligations](contract.md#obligations)
+and scenarios EX-7, EX-11, EX-17 and EX-25 together with
+[Coordination CO-21–CO-23](../coordination/contract.md#acceptance-scenarios).
+The accepted supplier delivery [#630](https://github.com/fractalsynapse/arcnexus/pull/630)
+provides [Journal.child](../coordination/src/index.ts); reuse that capability
+rather than creating another writer, lock store or scheduler. Execution child
+admission and its Workflow use remain implementation targets for this milestone.
+
+A trusted foreground Architect invocation retains its project writer while
+Execution admits sequential ordinary task sessions through that writer's
+`Journal.child` capability. This capability belongs to the trusted host, not
+to model operation arguments or candidate-authored approval data. Standalone
+admission keeps its existing path. Both paths retain preflight, repository and
+staging validation, captured authority and ordinary task preparation; a child
+does not bypass these requirements because its parent already owns the lane.
+
+Only one child session may be active at a time. A competing standalone invocation
+or sibling admission is refused with the active task identity. Finishing or
+closing a child does not release the parent's writer or shared connection; the
+parent cannot finish while a child remains active. After a child completes,
+the parent can admit the next sequential task without surrendering ownership.
+
+Prerequisite implementation uses the ordinary Director, steward, independent
+Reviewer and staging delivery lifecycle through
+[Workflow](../workflow/contract.md). Supplier requests stay in Direction's
+accepted plan and use the same admitted task lifecycle. Neither prerequisite
+work nor a supplier request starts a competing project admission. Human
+architecture approval grants no new checked-edit capability: locked contracts
+and the registry remain refused under EX-4. An active child retains its original
+captured authority; accepted architecture is captured only at a later admission.
+
+Cancellation stops managed descendants and retains checked work and evidence
+under EX-8 and EX-17. Child cleanup affects its own worktree and journal outcome;
+it does not finish a live parent. Process interruption is recovered through
+Coordination's existing departed-writer path, retaining the phase identity and
+the first unfinished child position. Read completed child outcomes before
+requesting more work, and do not repeat a completed delivery.
+
+Before further execution, reconcile retained work against its original logical
+task, issue, branch, PR and secured checkpoint identities. Preserve completed
+answers, edit receipts, accepted supplier outcomes and failed observations.
+Observe uncertain checkpoint publication or staging delivery through the existing
+host boundaries before replay; an absent response is not evidence that an
+upstream mutation failed. A mismatch is a refusal to continue that work, not
+permission to create replacement identities or discard evidence. A later
+admission may revalidate retained work under explicitly approved new authority
+only as allowed by EX-25, preserving original acceptance and failed observations.
+
 ## Activity-scoped operation recovery
 
 Use the [verified local MCP operations guide](docs/mcp-operations.md) to check one
