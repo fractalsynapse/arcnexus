@@ -57,6 +57,14 @@ and arguments before consulting earlier results. Older observations without that
 identity remain evidence and are rerun. Setup events alone do not invalidate an
 unchanged checkpoint, and a new worktree path does not change its contents.
 
+Reuse includes failed numeric observations. Repeating a mapped check against the
+same validated inputs returns its latest actual failure and original log, rather
+than launching the expensive command again. It remains pending and cannot be
+discharged by an older success. A changed checkpoint, authority, operation,
+expectation, configuration or environment requires fresh evidence; missing input
+provenance or a missing log prevents reuse. Cancellation and confinement are
+validated first. This is the same observation cache, not another retry path (#643).
+
 Repair context distinguishes the active activity from an earlier rewind target.
 Completed Testing with an expected failure is valid red evidence for
 Implementation to correct, rather than a reason to restart Testing.
