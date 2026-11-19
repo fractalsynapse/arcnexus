@@ -19,10 +19,21 @@ import { applyEdits } from '../../src/edits.js';
 
 /** Use a small capture with two owners and one locked contract. */
 function capture(root: string) {
+  const declarations = {
+    'one.yaml': 'id: one\\nowns:\\n  - owned\\n  - packages/one\\n',
+    'two.yaml': 'id: two\\nowns:\\n  - other\\n  - packages/two\\n',
+  };
   return {
-    source: { root },
+    source: {
+      root,
+      paths: Object.keys(declarations).map((name) => `.arc/architecture/components/${name}`),
+      read: (path: string) => declarations[path.split('/').at(-1) as keyof typeof declarations]!,
+    },
     project: { contractRegistry: 'owned/registry.yaml' },
-    components: { one: { id: 'one', owns: ['owned'] }, two: { id: 'two', owns: ['other'] } },
+    components: {
+      one: { id: 'one', owns: ['owned', 'packages/one'] },
+      two: { id: 'two', owns: ['other', 'packages/two'] },
+    },
     contracts: [{ file: 'owned/contract.md', stage: 'locked' }],
     operations: {},
   } as unknown as Capture;
