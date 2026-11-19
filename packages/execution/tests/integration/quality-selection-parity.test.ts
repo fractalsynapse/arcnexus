@@ -42,13 +42,22 @@ for (const [operation, applicability] of [
       components,
       operations: {
         quality: {
-          id: 'quality', category: 'build', command: '/usr/bin/true',
-          args: [], network: false, applicability,
+          id: 'quality',
+          category: 'build',
+          command: '/usr/bin/true',
+          args: [],
+          network: false,
+          applicability,
         },
       },
     } as unknown as Capture;
     const result = await check(
-      capture, root, temporary, 'quality', owner, join(temporary, 'quality.log'),
+      capture,
+      root,
+      temporary,
+      'quality',
+      owner,
+      join(temporary, 'quality.log'),
       AbortSignal.timeout(30_000),
     );
     assert.equal(result.status === 'not-applicable', selection.files.length === 0);
@@ -71,19 +80,33 @@ test('worktree selection and receipt use the candidate with a nested command cwd
     source: {
       root: host,
       paths: ['.arc/architecture/components/execution.yaml'],
-      read: (path: string) => path.endsWith('execution.yaml') ? declaration : '',
+      read: (path: string) => (path.endsWith('execution.yaml') ? declaration : ''),
     },
     project: { checks: { acceptance: [] } },
     components: { execution: { id: 'execution', owns: ['packages/execution'] } },
-    operations: { quality: {
-      id: 'quality', category: 'build', command: 'npm',
-      args: ['run', 'format:check', '--', { context: 'owner' }],
-      cwd: 'nested', network: false, tool: 'check', applicability: 'owner-format-files',
-    } },
+    operations: {
+      quality: {
+        id: 'quality',
+        category: 'build',
+        command: 'npm',
+        args: ['run', 'format:check', '--', { context: 'owner' }],
+        cwd: 'nested',
+        network: false,
+        tool: 'check',
+        applicability: 'owner-format-files',
+      },
+    },
   } as unknown as Capture;
   const log = join(root, 'selection.log');
-  const result = await check(capture, worktree, root, 'quality', 'execution', log,
-    AbortSignal.timeout(30_000));
+  const result = await check(
+    capture,
+    worktree,
+    root,
+    'quality',
+    'execution',
+    log,
+    AbortSignal.timeout(30_000),
+  );
   assert.equal(result.status, 'not-applicable');
   assert.equal(result.cwd, join(worktree, 'nested'));
   assert.equal(result.command, 'npm');
@@ -99,14 +122,28 @@ test('deleting every candidate component file is ownership drift', async (t) => 
     source: { root, paths: ['.arc/architecture/components/owner.yaml'] },
     project: { checks: { acceptance: [] } },
     components: { owner: { id: 'owner', owns: ['fixture.ts'] } },
-    operations: { quality: {
-      id: 'quality', category: 'build', command: '/usr/bin/true',
-      args: [], cwd: '.', network: false, applicability: 'owner-test-suites',
-    } },
+    operations: {
+      quality: {
+        id: 'quality',
+        category: 'build',
+        command: '/usr/bin/true',
+        args: [],
+        cwd: '.',
+        network: false,
+        applicability: 'owner-test-suites',
+      },
+    },
   } as unknown as Capture;
   await assert.rejects(
-    check(capture, root, root, 'quality', 'owner', join(root, 'quality.log'),
-      AbortSignal.timeout(30_000)),
+    check(
+      capture,
+      root,
+      root,
+      'quality',
+      'owner',
+      join(root, 'quality.log'),
+      AbortSignal.timeout(30_000),
+    ),
     /ownership drift/i,
   );
 });
