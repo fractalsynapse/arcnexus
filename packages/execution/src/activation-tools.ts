@@ -187,11 +187,10 @@ export class ActivationTools {
     return { ...reply, edits: [], checks: [] };
   }
 
-  /** Treat prose about an observed queued check as narration and reject raw operations. */
+  /** Reject raw operations while accepting narration in the completed response. */
   private hasDirectOperations(reply: Record<string, unknown>) {
     return ['edits', 'checks', 'archiveResearch'].some((key) => {
       const value = reply[key];
-      if (key === 'checks' && typeof value === 'string' && this.checks.size) return false;
       return value !== undefined && (!Array.isArray(value) || value.length > 0);
     });
   }
