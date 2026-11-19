@@ -466,6 +466,7 @@ for (const operation of ['format:check', 'lint'] as const) {
         const ignored = 'packages/alpha/generated/\n';
         const include = '!packages/alpha/generated/probe.ts\n';
         tree.write('.gitignore', ignored + include);
+        tree.write('packages/alpha/generated/.gitignore', '!probe.ts\n');
         assert(!(await selection(tree, operation, owner)).files.includes(path));
         tree.write('.gitignore', ignored + '!packages/alpha/generated/\n' + include);
         assert((await selection(tree, operation, owner)).files.includes(path));
