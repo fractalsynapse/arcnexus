@@ -319,11 +319,6 @@ interface IgnoreScope {
 
 const createIgnore = createRequire(import.meta.url)('ignore') as () => IgnoreMatcher;
 
-/** Preserve gitignore syntax for the standards-based matcher. */
-function normalizeIgnorePatterns(patterns: string): string {
-  return patterns.replace(/\\([*?])/g, '[$1]');
-}
-
 /** Walk maintained paths once, loading reachable ignore rules as each directory is entered. */
 function discoverMaintainedFiles(): string[] {
   const files: string[] = [];
