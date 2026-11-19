@@ -351,7 +351,9 @@ function ignoreMatcher(
     .replace(/\*/g, '[^/]*')
     .replace(/\?/g, '[^/]')
     .replace(/§\//g, '(?:.*/)?')
-    .replace(/§/g, '.*');
+    .replace(/§/g, '.*')
+    .replace(/\uE000/g, '\\\\*')
+    .replace(/\uE001/g, '\\\\?');
   const prefix = slashless ? '(?:.*/)?' : '';
   const descendants = directoryOnly ? (isDirectory ? '(?:/.*)?' : '/.+') : '(?:/.*)?';
   return new RegExp(`^${prefix}(?:${expression})${descendants}$`);
