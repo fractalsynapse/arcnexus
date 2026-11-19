@@ -312,8 +312,12 @@ export interface RevisionSnapshot {
 /** Capture the latest committed plan and position with all immutable observations. */
 export function revisionSnapshot(observations: readonly unknown[]): RevisionSnapshot {
   const retained = structuredClone(observations);
-  const plan = [...retained].reverse().find((event) => isRecord(event) && isRecord(event.plan));
-  const position = [...retained].reverse().find((event) => isRecord(event) && isRecord(event.position));
+  const plan = [...retained].reverse().find(
+    (event): event is Record<string, unknown> => isRecord(event) && isRecord(event.plan),
+  );
+  const position = [...retained].reverse().find(
+    (event): event is Record<string, unknown> => isRecord(event) && isRecord(event.position),
+  );
   if (!plan || !position) throw new Error('Revision requires an accepted plan and committed position');
   return {
     plan: structuredClone(plan.plan) as RevisionSnapshot['plan'],
