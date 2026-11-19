@@ -303,6 +303,30 @@ function taskIdentity(goalID: string, scope?: string) {
   return scope === undefined ? goalID : digest(JSON.stringify([scope, goalID]));
 }
 
+export interface RevisionSnapshot {
+  plan: { milestones: { id: string; [key: string]: unknown }[]; [key: string]: unknown };
+  position: { completed: number; activities: Record<string, number> };
+  observations: readonly unknown[];
+}
+
+/** Capture the latest committed plan and position with all immutable observations. */
+export function revisionSnapshot(observations: readonly unknown[]): RevisionSnapshot {
+  const retained = structuredClone(observations);
+  const plan = [...retained].reverse().find((event) => isRecord(event) && isRecord(event.plan));
+  const position = [...retained].reverse().find((event) => isRecord(event) && isRecord(event.position));
+  if (!plan || !position) throw new Error('Revision requires an accepted plan and committed position');
+  return {
+    plan: structuredClone(plan.plan) as RevisionSnapshot['plan'],
+    position: structuredClone(position.position) as RevisionSnapshot['position'],
+    observations: retained,
+  };
+}
+
+/** Identify the object-shaped journal observations used by revision snapshots. */
+function isRecord(value: unknown): value is Record<string, any> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 /** Mount the single store service using the trusted storage directory. */
 export function coordinationPlugin(storage: string) {
   return (context: Context) => {
