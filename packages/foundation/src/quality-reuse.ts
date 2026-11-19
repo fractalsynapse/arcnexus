@@ -6,64 +6,70 @@ export interface QualityReuseEligibility {
   reason?: string;
 }
 
+const executableFormatterConfigs = [
+  '.prettierrc.js',
+  '.prettierrc.cjs',
+  '.prettierrc.mjs',
+  '.prettierrc.ts',
+  'prettier.config.js',
+  'prettier.config.cjs',
+  'prettier.config.mjs',
+  'prettier.config.ts',
+];
+
+const unsupportedLintDependencies = [
+  [/\brequire\s*\(/, 'CommonJS require dependency'],
+  [/\bimport\s*\(/, 'dynamic import dependency'],
+  [/\bexport\s*\{[^}]*\}\s*from\b/, 're-export dependency'],
+] as const;
+
 /** Decline reuse when bounded configuration discovery cannot cover executable inputs. */
 export function qualityReuseEligibility(
   operation: 'format:check' | 'lint',
   files: readonly string[],
   root: string,
 ): QualityReuseEligibility {
-  if (operation === 'format:check') {
-    const executableConfig = /^(?:\.prettierrc\.(?:[cm]?js|ts)|prettier\.config\.(?:[cm]?js|ts))$/;
-    for (const file of files) {
-      let directory = dirname(file);
-      while (directory !== '.') {
-        const path = resolve(root, directory);
-        for (const name of [
-          '.prettierrc.js',
-          '.prettierrc.cjs',
-          '.prettierrc.mjs',
-          '.prettierrc.ts',
-          'prettier.config.js',
-          'prettier.config.cjs',
-          'prettier.config.mjs',
-          'prettier.config.ts',
-        ]) {
-          if (executableConfig.test(name) && existsSync(resolve(path, name)))
-            return {
-              eligible: false,
-              reason: `Executable formatter configuration may load unselected dependencies: ${directory}/${name}`,
-            };
-        }
-        directory = dirname(directory);
-      }
-      for (const name of [
-        '.prettierrc.js',
-        '.prettierrc.cjs',
-        '.prettierrc.mjs',
-        '.prettierrc.ts',
-        'prettier.config.js',
-        'prettier.config.cjs',
-        'prettier.config.mjs',
-        'prettier.config.ts',
-      ]) {
-        if (existsSync(resolve(root, name)))
-          return {
-            eligible: false,
-            reason: `Executable formatter configuration may load unselected dependencies: ${name}`,
-          };
-      }
+  if (operation === 'format:check') return formatterReuseEligibility(files, root);
+  if (operation === 'lint') return lintReuseEligibility(root);
+  return { eligible: true };
+}
+
+/** Find executable formatter settings above any selected input. */
+function formatterReuseEligibility(
+  files: readonly string[],
+  root: string,
+): QualityReuseEligibility {
+  for (const file of files) {
+    let directory = dirname(file);
+    while (directory !== '.') {
+      const reason = formatterConfigReason(directory, root);
+      if (reason) return { eligible: false, reason };
+      directory = dirname(directory);
     }
+    const reason = formatterConfigReason('.', root);
+    if (reason) return { eligible: false, reason };
   }
-  if (operation === 'lint') {
-    const config = readFileSync(resolve(root, 'eslint.config.ts'), 'utf8');
-    for (const [pattern, description] of [
-      [/\brequire\s*\(/, 'CommonJS require dependency'],
-      [/\bimport\s*\(/, 'dynamic import dependency'],
-      [/\bexport\s*\{[^}]*\}\s*from\b/, 're-export dependency'],
-    ] as const) {
-      if (pattern.test(config))
-        return { eligible: false, reason: `ESLint configuration uses unsupported ${description}` };
-    }
+  return { eligible: true };
+}
+
+/** Name the first executable formatter configuration that can load dependencies. */
+function formatterConfigReason(directory: string, root: string): string | undefined {
+  for (const name of executableFormatterConfigs) {
+    const path = directory === '.' ? name : `${directory}/${name}`;
+    if (existsSync(resolve(root, path)))
+      return `Executable formatter configuration may load unselected dependencies: ${path}`;
+  }
+  return undefined;
+}
+
+/** Reject reuse for lint dependency forms that bounded static import traversal cannot resolve. */
+function lintReuseEligibility(root: string): QualityReuseEligibility {
+  const path = resolve(root, 'eslint.config.ts');
+  if (!existsSync(path)) return { eligible: true };
+  const config = readFileSync(path, 'utf8');
+  for (const [pattern, description] of unsupportedLintDependencies) {
+    if (pattern.test(config))
+      return { eligible: false, reason: `ESLint configuration uses unsupported ${description}` };
   }
   return { eligible: true };
 }
