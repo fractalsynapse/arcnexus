@@ -33,9 +33,15 @@ export class CheckCacheFixture {
     mkdirSync(join(this.source, '.arc/architecture/components'), { recursive: true });
     git(this.source, 'init', '-q');
     mkdirSync(join(this.source, 'packages/execution/src'), { recursive: true });
-    writeFileSync(join(this.source, 'packages/execution/src/fixture.ts'), 'export const fixture = true;\n');
+    writeFileSync(
+      join(this.source, 'packages/execution/src/fixture.ts'),
+      'export const fixture = true;\n',
+    );
     writeFileSync(join(this.source, 'eslint.config.js'), 'export default [];\n');
-    writeFileSync(join(this.source, '.arc/architecture/components/owner.yaml'), 'id: owner\nowns:\n  - packages/execution/src/fixture.ts\n  - eslint.config.js\n  - lint-rules.ts\n');
+    writeFileSync(
+      join(this.source, '.arc/architecture/components/owner.yaml'),
+      'id: owner\nowns:\n  - packages/execution/src/fixture.ts\n  - eslint.config.js\n  - lint-rules.ts\n',
+    );
     writeFileSync(join(this.source, '.gitignore'), 'node_modules/\n');
     this.commit(this.source);
     this.task = this.open(fixtureOperation, git(this.source, 'rev-parse', 'HEAD'));
@@ -119,7 +125,13 @@ export class CheckCacheFixture {
       },
       project: { contractRegistry: 'registry.yaml' },
       contracts: [],
-      components: { owner: { id: 'owner', owns: ['packages/execution/src/fixture.ts', 'eslint.config.js', 'lint-rules.ts'], activities: {} } },
+      components: {
+        owner: {
+          id: 'owner',
+          owns: ['packages/execution/src/fixture.ts', 'eslint.config.js', 'lint-rules.ts'],
+          activities: {},
+        },
+      },
       operations: { 'fixture-check': operation },
     } as unknown as Capture;
     return capture;
