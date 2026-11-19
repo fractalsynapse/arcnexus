@@ -29,7 +29,7 @@ function services(context: Context): WorkflowServices {
       track,
       plan: (session, signal, standing) => direct(context.agent, session, signal, { standing }),
       revise: (session, _plan, feedback, signal, standing) => {
-        const task = context.execution.hostTask(session);
+        const task = hostTask(session);
         const snapshot = revisionSnapshot(task.observations());
         const revision: RevisionRequest = {
           acceptedPlan: task.store('accepted-plan.json', JSON.stringify(snapshot.plan)),
