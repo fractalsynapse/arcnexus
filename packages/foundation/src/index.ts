@@ -245,7 +245,11 @@ function ignoreMatcher(
     .replace(/§\//g, '(?:.*/)?')
     .replace(/§/g, '.*');
   const prefix = slashless ? '(?:.*/)?' : '';
-  const descendants = directoryOnly ? '/.+' : '(?:/.*)?';
+  const descendants = directoryOnly
+    ? isDirectory
+      ? '(?:/.*)?'
+      : '/.+'
+    : '(?:/.*)?';
   return new RegExp(`^${prefix}(?:${expression})${descendants}$`);
 }
 /** Preserve repository formatter coverage while allowing package and fixture files. */
