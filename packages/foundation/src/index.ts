@@ -333,7 +333,7 @@ function discoverMaintainedFiles(): string[] {
     const ignorePath = directory === '.' ? '.gitignore' : `${directory}/.gitignore`;
     const scopes = [...inherited];
     if (existsSync(ignorePath)) {
-      const matcher = createIgnore();
+      const matcher = createIgnore({ ignorecase: false });
       matcher.add(readIgnoreFile(ignorePath));
       scopes.push({ directory, matcher });
     }
