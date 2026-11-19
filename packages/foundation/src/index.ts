@@ -23,7 +23,7 @@ export function selectQualityInputs(
   assert(!owner || components.some(({ id }) => id === owner), `Unknown owner: ${owner}`);
   const candidates = globSync('**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}')
     .filter((path) => operation !== 'format:check' || isFormatCovered(path))
-    .filter((path) => operation !== 'lint' || /\\.(?:ts|mts|cts|js|mjs|cjs)$/.test(path))
+    .filter((path) => operation !== 'lint' || /\.(?:ts|mts|cts|js|mjs|cjs)$/.test(path))
     .sort();
   const owners = new Map<string, string>();
   const files: string[] = [];
