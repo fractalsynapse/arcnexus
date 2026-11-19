@@ -103,6 +103,42 @@ test('a later checked edit invalidates earlier passing operation evidence', asyn
   assert.notEqual(result.kind, 'completed', 'owner-lint evidence predates the edit');
 });
 
+for (const activity of ['testing', 'implementation'] as const) {
+  for (const id of ['owner-format', 'owner-lint', 'repository-types', 'repository-build', 'owner-tests']) {
+    if (activity === 'testing' && id === 'owner-tests') continue;
+    test(`recorded expected-fail ${id} cannot complete ${activity}`, async (t) => {
+      const root = mkdtempSync(join(tmpdir(), 'arcnexus-quality-fail-'));
+      const task = new StewardFixture(t, root).task;
+      t.after(() => task.close());
+      Object.assign(task.capture, { operations: { [id]: {
+        id, kind: 'command', tool: 'check', category: 'build',
+        command: '/usr/bin/false', args: [], cwd: '.', network: false,
+      } } });
+      Object.assign(task.capture.components.owner!.activities, {
+        [activity]: { profile: 'profile', operations: [id] },
+      });
+      t.mock.method(task, 'activate', async () => {
+        const log = task.store('failed.log', 'controlled failure');
+        task.note({
+          check: { id, status: 1, log, command: 'fixture', args: [], cwd: root, durationMs: 0 },
+          scope: { owner: 'owner', activity, expected: 'fail' },
+        });
+        return { kind: 'completed', edits: [], checks: [] };
+      });
+      const selected: Milestone = {
+        ...milestone,
+        steps: [{ activity, checklist: [
+          { id: 'quality', criteria: ['quality'], expected: 'Applicable checks pass' },
+        ] }],
+      };
+      const result = await steward(
+        new Agent(new Architecture()), task, selected, activity, AbortSignal.timeout(5000),
+      );
+      assert.notEqual(result.kind, 'completed');
+    });
+  }
+}
+
 for (const missing of ['owner-format', 'owner-lint', 'repository-types']) {
   test(`an unrelated successful observation cannot satisfy omitted ${missing}`, async (t) => {
     const root = mkdtempSync(join(tmpdir(), 'arcnexus-quality-obligation-'));
