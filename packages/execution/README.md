@@ -64,6 +64,8 @@ discharged by an older success. A changed checkpoint, authority, operation,
 expectation, configuration or environment requires fresh evidence; missing input
 provenance or a missing log prevents reuse. Cancellation and confinement are
 validated first. This is the same observation cache, not another retry path (#643).
+The process path creates its supplied transcript before execution, so a silent
+command retains an honest empty log rather than a nonexistent evidence path (#644).
 
 Repair context distinguishes the active activity from an earlier rewind target.
 Completed Testing with an expected failure is valid red evidence for
