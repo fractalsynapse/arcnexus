@@ -47,6 +47,24 @@ export async function check(
   return { ...parameters, status, durationMs: Math.round(performance.now() - start) };
 }
 
+/** Refuse a candidate whose component ownership differs from the admitted catalog. */
+function assertCapturedOwnership(capture: Capture, worktree: string) {
+  const files = globSync('.arc/architecture/components/*.yaml', { cwd: worktree }).sort();
+  if (!files.length) return;
+  const candidate = files.map((path) => {
+    const component = parse(readFileSync(join(worktree, path), 'utf8')) as {
+      id: string;
+      owns: string[];
+    };
+    return [component.id, [...component.owns].sort()];
+  }).sort(([left], [right]) => String(left).localeCompare(String(right)));
+  const admitted = Object.values(capture.components)
+    .map(({ id, owns }) => [id, [...owns].sort()])
+    .sort(([left], [right]) => String(left).localeCompare(String(right)));
+  if (JSON.stringify(candidate) !== JSON.stringify(admitted))
+    throw new Error('Candidate ownership drift differs from captured authority');
+}
+
 /** Check captured owner applicability before running its operation in the overlay. */
 async function ownerOperationInapplicability(
   capture: Capture,
