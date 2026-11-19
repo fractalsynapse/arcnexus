@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import type { Feedback, StewardCheckFailure } from '../../direction/src/index.js';
 import type { CheckResult } from './check.js';
 import type { HostTask } from './index.js';
+import { establishedTestingRed } from './testing-red.js';
 
 export interface StewardScope {
   owner: string;
@@ -15,7 +16,13 @@ interface CheckEvent {
   check?: CheckResult;
   scope?: StewardScope;
   owner?: string;
-  checkExpectationRepair?: { scope: StewardScope; id: string; log: string };
+  checkExpectationRepair?: {
+    scope: StewardScope;
+    id: string;
+    log: string;
+    expected?: 'pass' | 'fail';
+    redLog?: string;
+  };
   edits?: readonly { path: string; before: string | null; after: string | null }[];
 }
 
@@ -37,10 +44,13 @@ export function pendingStewardCheck(events: readonly unknown[], scope: StewardSc
       repair?.scope.owner === scope.owner &&
       repair.scope.activity === scope.activity &&
       prior?.log === repair.log &&
-      prior.expected === 'fail' &&
-      prior.status === 0
+      ((prior.expected === 'fail' && prior.status === 0 && !repair.redLog) ||
+        (prior.expected === 'pass' &&
+          prior.status > 0 &&
+          repair.expected === 'fail' &&
+          repair.redLog))
     )
-      pending.set(repair.id, { ...prior, expected: 'pass' });
+      pending.set(repair.id, { ...prior, expected: repair.expected ?? 'pass' });
     observeCheck(pending, event, scope);
   }
   return id ? pending.get(id) : [...pending.values()].at(-1);
@@ -110,11 +120,23 @@ export function stewardInput(events: readonly unknown[]) {
     .digest('hex');
 }
 
-/** Correct an unexpected-pass prediction without relabelling any actual required-pass failure. */
+/** Correct a prediction against actual evidence, retaining every required recheck and original result. */
 export function repairCheckExpectation(task: HostTask, id: string, scope: StewardScope) {
   const pending = pendingStewardCheck(task.observations(), scope, id);
   if (!pending || pending.expected === scope.expected) return;
-  if (scope.expected !== 'pass' || pending.expected !== 'fail' || pending.status !== 0)
+  const redLog =
+    scope.expected === 'fail' ? establishedTestingRed(task, scope, pending) : undefined;
+  const unexpectedPass =
+    scope.expected === 'pass' && pending.expected === 'fail' && pending.status === 0;
+  if (!unexpectedPass && !redLog)
     throw new Error(`Cannot change the required recheck for ${id}: expected ${pending.expected}`);
-  task.note({ checkExpectationRepair: { scope, id, log: pending.log } });
+  task.note({
+    checkExpectationRepair: {
+      scope,
+      id,
+      log: pending.log,
+      expected: scope.expected,
+      ...(redLog ? { redLog } : {}),
+    },
+  });
 }

@@ -20,12 +20,16 @@ import { decodeSteward, StewardResponseError, type StewardResult } from './stewa
 import { supplierAnswerRequired, supplierContext } from './supplier-context.js';
 import { stewardProgress } from './steward-progress.js';
 import { retainedTesting } from './testing-rewind.js';
+import { establishedTestingRed } from './testing-red.js';
 
 const correctionInstruction =
   'Read failedCheck.log first. It is the latest observed failure. Preserve the earlier finding as history. Correct the current failure within the accepted milestone, or request a distinct contribution through Direction when new work is needed. The host reruns the original check with its original expectation.';
 
 /** Distinguish a caller's mistaken prediction from an actual failing required-pass operation. */
-function checkRepairInstruction(failed: StewardCheckFailure) {
+function checkRepairInstruction(task: HostTask, scope: StewardScope, failed: StewardCheckFailure) {
+  const redLog = establishedTestingRed(task, scope, failed);
+  if (redLog)
+    return `Read failedCheck.log and established red ${redLog ?? failed.log}. If your passing prediction was mistaken, call the same check with expected fail. The host requires matching actual negative evidence under the same milestone and a fresh recheck. Finish Testing's checklist; Implementation and assembled checks must still pass. Do not ask for a forward local rewind or weaken acceptance.`;
   if (failed.expected === 'fail' && failed.status === 0)
     return 'Read failedCheck.log: the actual check passed while you predicted failure. If that prediction was mistaken for this activity, call the same check with expected pass. The host retains the original request/result and requires a current passing recheck. Do not break working code or manufacture a failing assertion. If a relevant new negative regression is required by the goal, retain its actual evidence. Captured acceptance is unchanged.';
   if (failed.status === 0)
@@ -225,7 +229,7 @@ async function stewardAssignment(
       supplierAnswerRequired(task.history(), milestone, scope.activity),
     ...(finding ? { finding } : {}),
     failedCheck,
-    correction: failedCheck ? checkRepairInstruction(failedCheck) : undefined,
+    correction: failedCheck ? checkRepairInstruction(task, scope, failedCheck) : undefined,
     ...(await correctionChecks(task, scope, finding, signal)),
   };
 }

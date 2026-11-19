@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync, unlinkSync } from 'node:fs';
+import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import test from 'node:test';
 import { TestingRewindFixture, rewindMilestone } from '../fixtures/testing-rewind.js';
 
@@ -63,7 +63,7 @@ test('Implementation can correct an unexpected-pass prediction after completed T
 });
 
 test('a failed required-pass observation cannot be changed to expected-red after a rewind', async (t) => {
-  const fixture = new TestingRewindFixture(t);
+  const fixture = new TestingRewindFixture(t, false, 0);
   fixture.status = 37;
   await fixture.connect();
   await fixture.call('pass');
@@ -83,7 +83,7 @@ test('unexpected-pass context tells Implementation to correct its prediction wit
 });
 
 test('a correction still requires a passing result when current inputs fail', async (t) => {
-  const fixture = new TestingRewindFixture(t);
+  const fixture = new TestingRewindFixture(t, true, 19);
   await fixture.connect();
   await fixture.call('fail');
   fixture.status = 37;
@@ -132,5 +132,73 @@ for (const invalid of [
     }
     const context = await fixture.context();
     assert.equal(context.retainedTesting, undefined);
+  });
+}
+
+test('Testing can restore an established red expectation after a mistaken passing prediction', async (t) => {
+  const fixture = new TestingRewindFixture(t, false);
+  fixture.status = 37;
+  await fixture.connect();
+  await fixture.call('pass');
+  const failed = fixture.task.pendingCheck(fixture.scope)!;
+  const result = await fixture.call('fail');
+  assert(!result.isError, JSON.stringify(result));
+  assert.equal(fixture.task.pendingCheck(fixture.scope), undefined);
+  assert.equal(readFileSync(failed.log, 'utf8'), 'not ok 1 - original regression');
+  const events = fixture.task.observations<any>();
+  assert(
+    events.some(({ checkExpectationRepair }) => checkExpectationRepair?.redLog === fixture.red),
+  );
+  assert(events.filter(({ check }) => check).every(({ check }) => check.status === 37));
+});
+
+test('interrupted established-red correction retains its actual negative recheck on restart', async (t) => {
+  const fixture = new TestingRewindFixture(t, false);
+  fixture.status = 37;
+  await fixture.connect();
+  await fixture.call('pass');
+  fixture.interrupted = true;
+  assert((await fixture.call('fail')).isError);
+  assert.equal(fixture.task.pendingCheck(fixture.scope)?.expected, 'fail');
+  await fixture.restart();
+  fixture.interrupted = false;
+  const context = await fixture.context();
+  assert.match(context.correction, /established red/);
+  assert.equal(fixture.task.pendingCheck(fixture.scope), undefined);
+});
+
+for (const invalid of [
+  'authority',
+  'acceptance',
+  'milestone',
+  'missing-log',
+  'new-failure',
+  'prerequisite',
+] as const) {
+  test(`Testing cannot reuse established red after ${invalid}`, async (t) => {
+    const fixture = new TestingRewindFixture(t, false);
+    if (invalid === 'authority') fixture.task.note({ baseRevision: 'different' });
+    if (invalid === 'missing-log') unlinkSync(fixture.red);
+    if (invalid === 'new-failure') writeFileSync(fixture.red, 'not ok 1 - different failure');
+    if (invalid === 'acceptance' || invalid === 'milestone') {
+      const milestone = structuredClone(rewindMilestone);
+      if (invalid === 'milestone') milestone.id = 'different';
+      else milestone.criteria[0]!.description = 'Different requirement';
+      fixture.task.record({
+        plan: {
+          focus: { purpose: 'Changed', objectives: [], constraints: [] },
+          milestones: [milestone],
+        },
+      });
+    }
+    fixture.status = 37;
+    await fixture.connect();
+    await fixture.call('pass');
+    if (invalid === 'prerequisite') {
+      const event = fixture.task.observations<any>().findLast(({ check }) => check);
+      fixture.task.note({ ...event, check: { ...event.check, prerequisite: 'dependencies' } });
+    }
+    assert((await fixture.call('fail')).isError);
+    assert.equal(fixture.task.pendingCheck(fixture.scope)?.expected, 'pass');
   });
 }
