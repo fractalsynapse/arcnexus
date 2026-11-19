@@ -85,6 +85,59 @@ If a Director proposal fails validation, ArcNexus records the diagnostic and
 asks the Director for one correction within the same task. The host validates
 the corrected proposal before advancing and preserves any accepted work.
 
+### Bounded Director revision intent
+
+The CLI host composition is to implement [Direction DI-21](../../packages/direction/contract.md#acceptance-scenarios)
+through the existing transport-neutral task lifecycle (CLI gateway GW-22).
+This is intended adapter behavior pending implementation and public composition
+regressions. The retained `51-48-owner-tests.log` reports
+`apps/cli/src/host.ts(31,50): error TS2353`: `'plan' does not exist in type`
+`{ revision?: RevisionRequest; feedback?: Feedback; standing?: StandingGoalEvidence }`.
+The supplier request in retained `51-49-codex.jsonl` assigns this correction to
+`bounded-director-host-adapter`, requested by
+`bounded-director-pending-reconstruction` for #615.
+
+At explicit supplier escalation or final independent rejection, the adapter uses
+[Coordination's public revisionSnapshot](../../packages/coordination/src/index.ts)
+once over `HostTask.observations()`, before storing artifacts. That snapshot
+supplies the canonical accepted plan, committed completed/pending position and
+complete observations across retained attempts. It selects the active plan and
+position after the latest planner refresh without dropping older evidence.
+Reuse [HostTask's existing artifact service](../../packages/execution/src/index.ts):
+store the exact structured accepted plan and full observations as separate
+immutable readable artifacts, preserving access to their referenced logs,
+transcripts, failed observations, edit receipts and complete answers.
+Active history or a list of evidence paths alone is insufficient.
+
+Compose Direction's public `RevisionRequest` with `acceptedPlan` and
+`retainedEvidence` artifact references, the snapshot's `position`, and the current
+`finding`. `position.completed` counts the leading completed milestones;
+`position.activities` identifies each milestone's next Step, with zero as the
+default. A supplier request leaves its requesting activity unfinished; final
+rejection may follow completion of every original milestone. Pass this request
+to `direct(..., { revision, feedback, standing })`, removing the obsolete
+`direct(..., { plan, feedback, standing })` adapter call. Keep the large completed
+prefix in the referenced artifact rather than embedding it in the Director prompt
+or asking the Director to return it again.
+
+Direction owns pending-only decoding, reconstruction and validation; the adapter
+reuses that boundary rather than implementing plan policy. Before Workflow commits
+a revised plan, preserve the accepted Focus, stable owners, original acceptance,
+completed milestones and completed Steps with their outcomes, and validate the
+supplier sequence or rejected-criterion correction under captured authority.
+See [Workflow's bounded revision handoff](../../packages/workflow/contract.md#bounded-director-revision).
+Initial planning keeps its complete-plan response. Invalid output returns its
+exact diagnostic to the same Director activity with the original revision context
+and complete rejected response retained. Clarifications preserve complete answers
+and that context. Ordinary same-activity repair keeps its existing route.
+
+Public CLI host-composition regressions must exercise supplier escalation and
+final independent rejection with a large completed prefix, resolve the immutable
+references to failed observations and complete answers, and cover initial planning
+and same-activity invalid-response repair. This composition uses the shared task
+lifecycle and captured authority; terminal arguments, display and exit behavior
+remain governed by the [CLI gateway contract](contract.md).
+
 A malformed steward reply gets one repair in the same activity, with the exact
 diagnostic and retained transcript. A refused checked edit returns its diagnostic
 in the same run and preserves earlier successful edits, checkpoints, receipts
