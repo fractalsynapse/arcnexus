@@ -134,14 +134,16 @@ test('nonempty selection executes the captured command from its nested cwd', asy
   symlinkSync(join(host, 'node_modules'), join(worktree, 'node_modules'), 'dir');
   const declaration = 'id: execution\nowns:\n  - packages/execution\n';
   writeFileSync(join(components, 'execution.yaml'), declaration);
+  const foundationDeclaration = 'id: foundation\nowns:\n  - package.json\n  - packages/foundation\n';
+  writeFileSync(join(components, 'foundation.yaml'), foundationDeclaration);
   const capture = {
     source: {
       root: host,
-      paths: ['.arc/architecture/components/execution.yaml', 'package.json', 'packages/foundation/scripts/owner-quality.ts'],
-      read: (path: string) => path.endsWith('execution.yaml') ? declaration : readFileSync(join(host, path), 'utf8'),
+      paths: ['.arc/architecture/components/execution.yaml', '.arc/architecture/components/foundation.yaml', 'package.json', 'packages/foundation/scripts/owner-quality.ts'],
+      read: (path: string) => path.endsWith('execution.yaml') ? declaration : path.endsWith('foundation.yaml') ? foundationDeclaration : readFileSync(join(host, path), 'utf8'),
     },
     project: { checks: { acceptance: [] } },
-    components: { execution: { id: 'execution', owns: ['packages/execution'] } },
+    components: { execution: { id: 'execution', owns: ['packages/execution'] }, foundation: { id: 'foundation', owns: ['package.json', 'packages/foundation'] } },
     operations: {
       quality: {
         id: 'quality',
