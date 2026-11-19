@@ -20,6 +20,14 @@ test('an empty completed reply cannot bypass a captured owner check', async (t) 
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-required-check-'));
   const task = new StewardFixture(t, root).task;
   t.after(() => task.close());
+  Object.assign(task.capture, {
+    operations: {
+      'owner-tests': {
+        id: 'owner-tests', kind: 'command', tool: 'check', category: 'build',
+        command: '/usr/bin/false', args: [], cwd: '.', network: false,
+      },
+    },
+  });
   t.mock.method(task, 'activate', async () => ({ kind: 'completed', edits: [], checks: [] }));
   const result = await steward(
     new Agent(new Architecture()),
