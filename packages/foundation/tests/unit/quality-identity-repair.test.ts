@@ -6,7 +6,10 @@ test('lint identity follows imports relative to each configuration helper', asyn
   const tree = fixture();
   try {
     tree.owner('config-owner', 'config');
-    tree.write('eslint.config.ts', "import rules from './config/helper.js';\nexport default [rules];\n");
+    tree.write(
+      'eslint.config.ts',
+      "import rules from './config/helper.js';\nexport default [rules];\n",
+    );
     tree.write('config/helper.js', "import nested from './nested.js'; export default nested;\n");
     tree.write('config/nested.js', 'export default {};\n');
     const before = await selection(tree, 'lint');
@@ -36,9 +39,8 @@ test('format identity includes the applicable nested Prettier configuration', as
 test('identity distinguishes empty optional inputs from literal missing', async () => {
   const tree = fixture();
   try {
-    tree.write('.eslintignore', '');
     const before = await selection(tree, 'format:check');
-    tree.write('.eslintignore', 'missing');
+    tree.write('.eslintignore', '');
     const after = await selection(tree, 'format:check');
     assert.deepEqual(after.files, before.files);
     assert.notEqual(after.identity, before.identity);
