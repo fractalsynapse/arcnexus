@@ -61,6 +61,18 @@ test('assessment selects the explicit architect and receives the approved eviden
   assert.equal(f.source.get('contract.md'), 'old bytes');
 });
 
+test('no-change assessment retains its justification and source citations', async () => {
+  const assessment = {
+    kind: 'no-change',
+    justification: 'The captured architecture satisfies the approved goal.',
+    sources: [{ path: '.arc/goals.md', revision: 'revision-1' }],
+  };
+  const f = fixture(assessment);
+  const result = await f.phase().assess({});
+  assert.deepEqual(result.assessment, assessment);
+  assert.equal(f.source.get('contract.md'), 'old bytes');
+});
+
 test('a pending proposal and complete answers survive interruption', async () => {
   const f = fixture();
   const first = await f.phase().assess({ answers: { question: 'complete answer' } });
