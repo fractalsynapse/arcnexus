@@ -107,6 +107,13 @@ function qualityIdentity(
   return identity.digest('hex');
 }
 
+/** Find ignore files that can affect the selected paths. */
+function relevantGitignoreFiles(files: readonly string[]): string[] {
+  return globSync('**/.gitignore').filter(
+    (path) => path === '.gitignore' || files.some((file) => file.startsWith(`${dirname(path)}/`)),
+  );
+}
+
 /** Resolve Prettier configuration files along selected paths without hashing unrelated configs. */
 function prettierConfigurationInputs(
   operation: QualitySelection['operation'],
