@@ -46,7 +46,7 @@ function fixture(assessment?: unknown) {
       sources,
       journal,
       source,
-      activate: async () => ({ kind: 'proposal', proposal }),
+      activate: async () => assessment ?? { kind: 'proposal', proposal },
     });
   return { phase, proposal, sources, journal, source };
 }
