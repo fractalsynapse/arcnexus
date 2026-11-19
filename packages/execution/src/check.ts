@@ -50,7 +50,6 @@ export async function check(
 /** Refuse a candidate whose component ownership differs from the admitted catalog. */
 function assertCapturedOwnership(capture: Capture, worktree: string) {
   const files = globSync('.arc/architecture/components/*.yaml', { cwd: worktree }).sort();
-  if (!files.length) return;
   const candidate = files.map((path) => {
     const component = parse(readFileSync(join(worktree, path), 'utf8')) as {
       id: string;
