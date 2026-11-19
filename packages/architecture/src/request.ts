@@ -4,6 +4,7 @@ import { resolveActivity, type ActivitySelection } from './activity.js';
 import { catalogRoot, definitionPath, type Capture } from './catalog.js';
 import { canResearch, researchIndex, researchReportSchema } from './research.js';
 import { operationTool } from './tools.js';
+import { qualityOperationAvailable } from '../../foundation/src/index.js';
 
 export interface TaskContext {
   assignment?: unknown;
