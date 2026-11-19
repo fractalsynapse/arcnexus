@@ -43,7 +43,6 @@ function fixture(assessment?: unknown) {
   const phase = () =>
     application.phase({
       binding: { component: 'architecture', activity: 'updating' },
-      capture,
       sources,
       journal,
       source,
