@@ -19,7 +19,7 @@ function qualitySourceFiles(operation: Record<string, unknown>, missing?: 'manif
       ...(missing === 'manifest' ? [] : ['package.json']),
       ...(missing === 'runner' ? [] : [runner]),
     ],
-    contents: { 'package.json': JSON.stringify({ scripts }), [runner]: '' },
+    contents: { 'package.json': JSON.stringify({ scripts }), [runner]: '' } as Record<string, string>,
   };
 }
 
