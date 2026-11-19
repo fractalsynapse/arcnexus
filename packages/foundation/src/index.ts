@@ -130,7 +130,8 @@ async function selectOwnedQualityFiles(
     if (eslint && (await eslint.isPathIgnored(resolve(root, path)))) continue;
     if (
       operation === 'format:check' &&
-      (await getFileInfo(resolve(root, path), { ignorePath: resolve(root, '.prettierignore') })).ignored
+      (await getFileInfo(resolve(root, path), { ignorePath: resolve(root, '.prettierignore') }))
+        .ignored
     )
       continue;
     const resolution = team.ownerFor(components, path);
@@ -172,7 +173,11 @@ function qualityIdentity(
       identity
         .update(path)
         .update('\u0000present\u0000')
-        .update(path.endsWith('.gitignore') ? readIgnoreFile(path, root) : readFileSync(resolve(root, path)));
+        .update(
+          path.endsWith('.gitignore')
+            ? readIgnoreFile(path, root)
+            : readFileSync(resolve(root, path)),
+        );
     else identity.update(path).update('\u0000missing\u0000');
   }
   return identity.digest('hex');
@@ -240,7 +245,11 @@ function prettierConfigurationInputs(
 }
 
 /** Collect existing conventional formatter configs along selected file paths. */
-function collectPrettierConfigurationPaths(paths: Set<string>, files: readonly string[], root: string): void {
+function collectPrettierConfigurationPaths(
+  paths: Set<string>,
+  files: readonly string[],
+  root: string,
+): void {
   const names = [
     '.prettierrc',
     '.prettierrc.yaml',
