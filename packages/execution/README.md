@@ -212,3 +212,11 @@ artifact and states that a restoration requires a new owned checked edit with
 restores source automatically. Unknown paths, uncheckpointed deletions and
 mismatched evidence remain refusals. All ordinary path and write guards remain
 in force (#655).
+
+Every steward activity receives `repairTargets` from Workflow's canonical target
+validator. An earlier applicable activity may be selected by Implementation as
+well as self-review: intent corrections belong in Documentation, incorrect
+assertions or fixture assumptions in Testing, and code corrections in
+Implementation. A local rewind keeps the unresolved check, accepted milestone,
+owner and criteria; it adds no Director call or new milestone. Review and Release
+are not editable rewind targets (#656).

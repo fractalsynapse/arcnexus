@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Expose applicable local repair targets to every steward activity so invalid fixture assumptions can return from Implementation to Testing without replanning or losing required checks (#656).
+
 - Expose verified parent-checkpoint source after an acknowledged deletion through the existing mapped read refusal, enabling owned checked restoration without operator edits (#655).
 
 - Index retained steward evidence instead of replaying every artifact reference; preserve current diagnostics, complete answers and explicit activation parity across handoffs (#650).
