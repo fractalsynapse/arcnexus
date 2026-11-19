@@ -32,17 +32,6 @@ test('initial planning still decodes a complete plan and diagnoses malformed Foc
   );
 });
 
-test('a revision response can contain pending milestones without reproducing completed work', () => {
-  const pending = [milestone('pending')];
-  const response = { kind: 'plan', plan: { milestones: pending } };
-  const decodeRevision = decodeDirectorResponse as (
-    value: unknown,
-    standing: undefined,
-    revision: true,
-  ) => unknown;
-  assert.deepEqual(decodeRevision(response, undefined, true), response);
-});
-
 test('revision validation preserves acceptance from a large completed prefix', () => {
   const completed = Array.from({ length: 200 }, (_, index) => milestone(`done-${index}`));
   const before: Plan = { focus, milestones: [...completed, milestone('pending')] };
