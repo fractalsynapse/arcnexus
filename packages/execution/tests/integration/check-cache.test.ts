@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 import { reusableCheck } from '../../src/check-cache.js';
+import { git } from '../../src/git.js';
 import { CheckCacheFixture, fixtureOperation } from '../fixtures/check-cache.js';
 
 test('a validated observation survives unchanged setup and reconstruction at another worktree path', async (t) => {
