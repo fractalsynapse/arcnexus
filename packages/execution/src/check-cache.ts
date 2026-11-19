@@ -22,7 +22,10 @@ export interface CheckObservation {
 /** Validate captured authority and bind a check to its current candidate inputs. */
 export async function checkInput(task: HostTask, id: string, scope?: StewardScope) {
   const worktree = task.worktree!;
-  if (scope?.owner) assertCapturedOwnership(task.capture, worktree);
+  if (
+    scope?.owner &&
+    (task.capture.source.paths ?? []).some((path) => path.startsWith('.arc/architecture/components/'))
+  ) assertCapturedOwnership(task.capture, worktree);
   const command = checkCommand(task.capture, worktree, id, scope?.owner);
   const operation = task.capture.operations[id];
   const applicability = operation?.applicability;
@@ -35,11 +38,7 @@ export async function checkInput(task: HostTask, id: string, scope?: StewardScop
           worktree,
         )
       : undefined;
-  const inputs = selection
-    ? selection.identity
-    : applicability?.startsWith('owner-')
-      ? cleanRevision(worktree)
-      : cleanRevision(worktree);
+  const inputs = selection?.identity ?? cleanRevision(worktree);
   if (!inputs) return;
   const input = {
     revision: inputs,
