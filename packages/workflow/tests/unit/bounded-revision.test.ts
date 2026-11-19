@@ -28,7 +28,28 @@ class RevisionScenario {
   };
   readonly events: TaskEvent[] = [
     { plan: this.plan },
-    { position: { completed: 120, activities: {} } },
+    { position: { completed: 120, activities: { requester: 2 } } },
+    {
+      feedback: {
+        kind: 'answer',
+        question: 'Prior question',
+        answer: 'Complete retained answer',
+        evidence: ['answer-artifact'],
+      },
+    },
+    {
+      activation: {
+        milestone: 'requester',
+        owner: 'owner',
+        index: 1,
+        step: 'testing',
+        outcome: {
+          kind: 'blocked',
+          reason: 'Retained failed attempt',
+          evidence: ['failed-attempt'],
+        },
+      },
+    },
   ];
   readonly calls: unknown[] = [];
   private rejected = false;
@@ -40,7 +61,9 @@ class RevisionScenario {
     execution: {
       admit: async () => ({
         capture: {
-          components: { owner: { id: 'owner', owns: [], activities: { implementation: { profile: 'p' } } } },
+          components: {
+            owner: { id: 'owner', owns: [], activities: { implementation: { profile: 'p' } } },
+          },
         } as unknown as Capture,
         goal: 'Deliver',
         record: (event) => this.events.push(event),
@@ -60,7 +83,13 @@ class RevisionScenario {
     agent: {
       execute: async () =>
         this.path === 'supplier'
-          ? { kind: 'supplier', owner: 'owner', milestone: 'requester', reason: 'Need help', evidence: ['supplier-finding'] }
+          ? {
+              kind: 'supplier',
+              owner: 'owner',
+              milestone: 'requester',
+              reason: 'Need help',
+              evidence: ['supplier-finding'],
+            }
           : { kind: 'completed', evidence: ['completed-answer'] },
     },
     verification: {
@@ -69,7 +98,14 @@ class RevisionScenario {
         return {
           kind: 'rejected',
           candidate: candidate.digest,
-          findings: [{ owner: 'owner', criterion: 'requester', reason: 'Needs correction', evidence: ['review-finding'] }],
+          findings: [
+            {
+              owner: 'owner',
+              criterion: 'requester',
+              reason: 'Needs correction',
+              evidence: ['review-finding'],
+            },
+          ],
         };
       },
     },
@@ -95,6 +131,9 @@ for (const path of ['supplier', 'rejection'] as const) {
     const call = await scenario.run();
     assert.equal(call.finding.kind, path);
     assert(!JSON.stringify(call.context).includes('completed-119'));
-    assert.deepEqual(scenario.events.find((event) => 'plan' in event), { plan: scenario.plan });
+    assert.deepEqual(
+      scenario.events.find((event) => 'plan' in event),
+      { plan: scenario.plan },
+    );
   });
 }
