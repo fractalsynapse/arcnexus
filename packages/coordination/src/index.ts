@@ -170,7 +170,8 @@ export class Coordination {
       database.exec('BEGIN IMMEDIATE');
       const result = claim(database, goal, fresh, scope);
       database.exec('COMMIT');
-      if (!(result instanceof Journal)) database.close();
+      if (result instanceof Journal) journalOwners.set(result, { coordination: this, remote });
+      else database.close();
       return result;
     } catch (error) {
       database.close();
