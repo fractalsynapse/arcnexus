@@ -32,19 +32,13 @@ export function checkInput(task: HostTask, id: string, scope?: StewardScope) {
   return createHash('sha256').update(JSON.stringify(input)).digest('hex');
 }
 
-/** Reuse only a satisfied observation whose recorded input identity and immutable log match. */
-export function reusableCheck(events: readonly unknown[], input?: string, expected = 'pass') {
+/** Return the latest actual observation for unchanged validated inputs, retaining failures as failures. */
+export function reusableCheck(events: readonly unknown[], input?: string) {
   if (!input) return;
   const latest = (events as readonly CheckObservation[]).findLast(
     ({ checkInput }) => checkInput === input,
   )?.check;
-  if (
-    latest &&
-    typeof latest.status === 'number' &&
-    (latest.status === 0) === (expected === 'pass') &&
-    existsSync(latest.log)
-  )
-    return latest;
+  if (latest && typeof latest.status === 'number' && existsSync(latest.log)) return latest;
 }
 
 /** Ignore setup-event names; identify actual committed inputs and refuse uncertain dirty state. */

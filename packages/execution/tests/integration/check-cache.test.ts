@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 import { reusableCheck } from '../../src/check-cache.js';
@@ -30,7 +30,7 @@ test('a changed actual checkpoint invalidates earlier evidence', (t) => {
   assert.equal(reusableCheck(fixture.task.observations(), after), undefined);
 });
 
-test('a later failure for unchanged inputs supersedes an earlier success', (t) => {
+test('a later failure remains pending and is returned instead of an earlier success or another execution', async (t) => {
   const fixture = new CheckCacheFixture(t);
   const earlier = fixture.observe();
   const check = {
@@ -39,8 +39,44 @@ test('a later failure for unchanged inputs supersedes an earlier success', (t) =
     log: fixture.task.store('later-failure.log', 'controlled later failure'),
   };
   fixture.task.note({ check, scope: fixture.scope, checkInput: fixture.input() });
-  assert.equal(reusableCheck(fixture.task.observations(), fixture.input()), undefined);
+  assert.deepEqual(reusableCheck(fixture.task.observations(), fixture.input()), check);
+  const repeated = await fixture.task.check(
+    'fixture-check',
+    new AbortController().signal,
+    fixture.scope,
+  );
+  assert.deepEqual(repeated, check);
+  assert.equal(fixture.task.pendingCheck(fixture.scope)?.log, check.log);
 });
+
+test(
+  'a real confined failure is reused until the actual checkpoint changes',
+  {
+    skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1',
+  },
+  async (t) => {
+    const fixture = new CheckCacheFixture(t);
+    fixture.restart({
+      ...fixtureOperation,
+      command: '/usr/bin/node',
+      args: [
+        '-e',
+        "const status=require('node:fs').readFileSync('fixture.txt','utf8')==='original'?37:0; console.log('fixture exit '+status); process.exit(status)",
+      ],
+    });
+    const signal = new AbortController().signal;
+    const failed = await fixture.task.check('fixture-check', signal, fixture.scope);
+    assert.equal(failed.status, 37);
+    const repeated = await fixture.task.check('fixture-check', signal, fixture.scope);
+    assert.equal(repeated.status, 37);
+    assert.equal(repeated.log, failed.log);
+    assert.equal(readFileSync(failed.log, 'utf8'), 'fixture exit 37\n');
+    fixture.change();
+    const passed = await fixture.task.check('fixture-check', signal, fixture.scope);
+    assert.equal(passed.status, 0);
+    assert.notEqual(passed.log, failed.log);
+  },
+);
 
 test('changed installed dependencies invalidate matching source evidence', (t) => {
   const fixture = new CheckCacheFixture(t);
@@ -52,6 +88,32 @@ test('changed installed dependencies invalidate matching source evidence', (t) =
     '{"dependencies":"changed"}',
   );
   assert.notEqual(fixture.input(), before);
+});
+
+test(
+  'a silent real confined check retains an empty log and reuses its observation',
+  {
+    skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1',
+  },
+  async (t) => {
+    const fixture = new CheckCacheFixture(t);
+    const signal = new AbortController().signal;
+    const result = await fixture.task.check('fixture-check', signal, fixture.scope);
+    assert.equal(result.status, 0);
+    assert.equal(readFileSync(result.log, 'utf8'), '');
+    const repeated = await fixture.task.check('fixture-check', signal, fixture.scope);
+    assert.equal(repeated.log, result.log);
+  },
+);
+
+test('a missing latest failure log cannot expose an older success', (t) => {
+  const fixture = new CheckCacheFixture(t);
+  const earlier = fixture.observe();
+  const log = fixture.task.store('missing-failure.log', 'controlled failure');
+  const check = { ...earlier, status: 37, log };
+  fixture.task.note({ check, scope: fixture.scope, checkInput: fixture.input() });
+  unlinkSync(log);
+  assert.equal(reusableCheck(fixture.task.observations(), fixture.input()), undefined);
 });
 
 test('dirty inputs and legacy observations without input provenance are never reused', (t) => {

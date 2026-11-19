@@ -13,6 +13,10 @@
 
 ### Fixed
 
+- Retain an empty transcript for silent native operations so their actual observations remain readable and reusable (#644).
+
+- Reuse the latest failed check for unchanged validated inputs instead of launching it again; preserve its failure and rerun after input changes (#643).
+
 - Refresh same-caller reply repair context from the latest check observations instead of directing later corrections at resolved failures (#642).
 
 - Render MCP source reads literally with exact structured fields and explain full-content repair when refusing empty replacement anchors (#641).

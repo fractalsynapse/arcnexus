@@ -15,6 +15,7 @@ export async function execute(
   },
 ): Promise<{ status: number | null; stdout: string; stderr: string }> {
   options.signal.throwIfAborted();
+  if (options.log) appendFileSync(options.log, '', { mode: 0o600 });
   const child = spawn(command, args, {
     cwd: options.cwd,
     detached: true,

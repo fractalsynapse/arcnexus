@@ -387,7 +387,7 @@ export class HostTask implements TaskSession {
     signal.throwIfAborted();
     if (!this.worktree) throw new Error('No task worktree is available for checks');
     const input = checkInput(this, id, scope);
-    const reused = reusableCheck(this.observations(), input, scope?.expected);
+    const reused = reusableCheck(this.observations(), input);
     if (reused) {
       this.note({ check: reused, scope, checkInput: input, reusedFrom: reused.log });
       return reused;
