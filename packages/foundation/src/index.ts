@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { globSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { ESLint } from 'eslint';
 import { getFileInfo } from 'prettier';
 import { parse } from 'yaml';
