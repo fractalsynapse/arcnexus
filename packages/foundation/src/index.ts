@@ -17,6 +17,29 @@ export interface QualitySelection {
   identity: string;
 }
 
+export type QualityOperation = QualitySelection['operation'];
+
+export interface QualityRuntime {
+  executable: 'prettier' | 'eslint';
+  args: string[];
+}
+
+const qualityRuntimeDefinitions: Record<QualityOperation, QualityRuntime> = {
+  'format:check': {
+    executable: 'prettier',
+    args: ['--check', '--no-error-on-unmatched-pattern'],
+  },
+  lint: {
+    executable: 'eslint',
+    args: ['--max-warnings', '0'],
+  },
+};
+
+/** Return the existing executable definition used by the owner quality runner. */
+export function qualityRuntime(operation: QualityOperation): QualityRuntime {
+  return qualityRuntimeDefinitions[operation];
+}
+
 /** Discover applicable operation inputs and bind them to ownership and tool configuration. */
 const ignoreFileContents = new Map<string, string>();
 
@@ -43,7 +66,7 @@ interface QualityOperationBinding {
   args: (string | { context: string })[];
 }
 
-/** Resolve the runtime implementation from the package's existing quality scripts. */
+/** Resolve a binding only when its script and shared runtime implementation are present. */
 export function qualityOperationAvailable(binding: QualityOperationBinding): boolean {
   if (binding.tool !== 'check' || binding.command !== 'npm') return false;
   const [run, operation, context, ...extra] = binding.args;
@@ -52,6 +75,7 @@ export function qualityOperationAvailable(binding: QualityOperationBinding): boo
     typeof operation !== 'string' ||
     JSON.stringify(context) !== JSON.stringify({ context: 'owner' }) ||
     extra.length > 0 ||
+    !Object.hasOwn(qualityRuntimeDefinitions, operation) ||
     binding.applicability !== `owner-${operation === 'format:check' ? 'format' : operation}-files`
   )
     return false;
@@ -59,9 +83,14 @@ export function qualityOperationAvailable(binding: QualityOperationBinding): boo
     string,
     string
   >;
+  const script = scripts[operation];
+  const tokens = script?.trim().split(/\\s+/) ?? [];
   return (
-    ['format:check', 'lint'].includes(operation) &&
-    scripts[operation]?.includes('packages/foundation/scripts/owner-quality.ts') === true
+    tokens.length === 3 &&
+    tokens[0] === 'jiti' &&
+    tokens[1] === 'packages/foundation/scripts/owner-quality.ts' &&
+    tokens[2] === operation &&
+    existsSync(tokens[1])
   );
 }
 
@@ -120,9 +149,9 @@ function qualityIdentity(
     if (existsSync(path))
       identity
         .update(path)
-        .update('\u0000present\u0000')
+        .update('\\u0000present\\u0000')
         .update(path.endsWith('.gitignore') ? readIgnoreFile(path) : readFileSync(path));
-    else identity.update(path).update('\u0000missing\u0000');
+    else identity.update(path).update('\\u0000missing\\u0000');
   }
   return identity.digest('hex');
 }
@@ -233,10 +262,10 @@ function configurationInputs(operation: QualitySelection['operation']): string[]
     if (visited.has(path)) continue;
     visited.add(path);
     const source = readOptionalFile(path);
-    for (const match of source.matchAll(/(?:from\s*|import\s*)['"](\.[^'"]+)['"]/g)) {
+    for (const match of source.matchAll(/(?:from\\s*|import\\s*)['"](\\.[^'"]+)['"]/g)) {
       const specifier = match[1]!;
       const resolved = resolve(dirname(path), specifier);
-      const base = resolved.replace(/\.(?:[cm]?js|tsx?)$/, '');
+      const base = resolved.replace(/\\.(?:[cm]?js|tsx?)$/, '');
       const candidates = [`${base}.ts`, `${base}.js`, `${base}.mjs`, `${base}.mts`, resolved];
       const dependency = candidates.find((candidate) => readOptionalFile(candidate) !== '');
       if (dependency) pending.push(dependency);
@@ -252,7 +281,7 @@ export function textDigest(content: string) {
 
 /** Extract authored acceptance identities for registry amendment and offline validation. */
 export function acceptanceScenarios(content: string) {
-  return [...content.matchAll(/^\| ([A-Z]+-\d+[a-z]?) \|/gm)].map((match) => match[1]!);
+  return [...content.matchAll(/^\\| ([A-Z]+-\\d+[a-z]?) \\|/gm)].map((match) => match[1]!);
 }
 
 interface Component {
@@ -270,11 +299,11 @@ const suitePattern = '{apps,packages}/*/tests/**/*.test';
 
 /** Derive suite registration from the source owner and level directory. */
 export function registerSuite(file: string, components: readonly Component[]): Suite {
-  const source = file.replace(/^dist\//, '').replace(/\.js$/, '.ts');
+  const source = file.replace(/^dist\\//, '').replace(/\\.js$/, '.ts');
   const owners = team.owners(components, source);
   const [owner] = owners;
   assert(owners.length === 1 && owner, `Expected one test owner for ${source}`);
-  const level = source.match(/\/tests\/([^/]+)\//)?.[1];
+  const level = source.match(/\\/tests\\/([^/]+)\\//)?.[1];
   assert(
     level && ['unit', 'integration', 'acceptance'].includes(level),
     `Invalid test level for ${source}; use tests/unit, tests/integration or tests/acceptance`,
@@ -399,7 +428,7 @@ function isIgnoredByScopes(
 
 /** Preserve repository formatter coverage while allowing package and fixture files. */
 function isFormatCovered(path: string): boolean {
-  return /^(?:[^/]+\.(?:ts|json)|(?:apps|packages|scripts|fixtures)\/.+\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json|yaml|yml))$/.test(
+  return /^(?:[^/]+\\.(?:ts|json)|(?:apps|packages|scripts|fixtures)\\/.+\\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json|yaml|yml))$/.test(
     path,
   );
 }
