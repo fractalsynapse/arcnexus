@@ -81,6 +81,24 @@ test('declarative formatter plugin configuration declines reuse', async () => {
   }
 });
 
+for (const [form, source, reason] of [
+  ['filesystem import', "import { readFileSync } from 'node:fs'; export default [readFileSync('./rules.json')];\\n", /filesystem/i],
+  ['bare package import', "import plugin from 'eslint-plugin-example'; export default [plugin];\\n", /bare package/i],
+  ['export star', "export * from './helper.js';\\n", /export.star/i],
+] as const) {
+  test(`lint ${form} declines reuse with a precise reason`, async () => {
+    const tree = fixture();
+    try {
+      tree.write('eslint.config.ts', source);
+      const result = await selectQualityInputs('lint', 'alpha', tree.root);
+      assert.equal(eligibility(result)?.eligible, false);
+      assert.match(eligibility(result)?.reason ?? '', reason);
+    } finally {
+      tree.close();
+    }
+  });
+}
+
 test('known static configuration preserves scoped reuse and identity', async () => {
   const tree = fixture();
   try {
