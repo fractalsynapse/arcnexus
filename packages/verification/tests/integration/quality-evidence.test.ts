@@ -66,7 +66,7 @@ for (const scenario of [
           research: { operations: ['read-file', 'owner-tests'] },
         } },
         unused: { activities: { testing: { operations: ['read-file', 'owner-tests'] } } },
-      } : { verification: { activities: { testing: { operations } } } },
+      } : { verification: { activities: scenario === 'implementation-red' ? { implementation: { operations } } : { testing: { operations } } } },
       operations: Object.fromEntries(
         ['read-file', ...operations].map((id) => [
           id,
@@ -104,7 +104,7 @@ for (const scenario of [
     });
     const redLog = task.store('red.log', 'Expected failing regression');
     task.note({
-      scope: { owner: 'verification', activity: 'testing', expected: 'fail' },
+      scope: { owner: 'verification', activity: scenario === 'implementation-red' ? 'implementation' : 'testing', expected: 'fail' },
       check: {
         id: 'owner-tests',
         status: 1,
@@ -120,7 +120,7 @@ for (const scenario of [
       task.note({
         scope: {
           owner: scenario === 'other-owner' ? 'other' : 'verification',
-          activity: scenario === 'other-activity' ? 'implementation' : 'testing',
+          activity: scenario === 'other-activity' || scenario === 'implementation-red' ? 'implementation' : 'testing',
           expected: scenario === 'format-red' ? 'fail' : 'pass',
         },
         check: {
@@ -174,11 +174,7 @@ for (const scenario of [
         return { kind: 'accepted', candidate: 'tree', criteria: ['V-1'], evidence: [redLog] };
       },
     );
-    const activePlan = scenario === 'implementation-red' ? { ...plan, milestones: plan.milestones.map((milestone) => ({ ...milestone, steps: milestone.steps.map((step) => ({ ...step, activity: 'implementation' })) })) } : plan;
-    if (scenario === 'implementation-red') {
-      (capture.components.verification.activities as Record<string, unknown>).implementation = { operations: ['owner-tests'] };
-      task.note({ scope: { owner: 'verification', activity: 'implementation', expected: 'fail' }, check: { id: 'owner-tests', status: 1, command: 'test', args: [], cwd: root, durationMs: 1, log: redLog } });
-    }
+    const activePlan = scenario === 'implementation-red' ? { ...plan, milestones: plan.milestones.map((milestone) => ({ ...milestone, steps: milestone.steps.map((step) => ({ ...step, activity: 'implementation' as const })) })) } : plan;
     const verdict = await verify(
       {} as Agent,
       task,
