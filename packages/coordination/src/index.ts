@@ -74,6 +74,8 @@ export class Journal {
         this.run,
       );
       this.database.exec('COMMIT');
+      const provenance = journalOwners.get(this);
+      if (result instanceof Journal && provenance) journalOwners.set(result, provenance);
       return result;
     } catch (error) {
       this.database.exec('ROLLBACK');
