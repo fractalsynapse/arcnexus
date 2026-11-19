@@ -12,7 +12,7 @@ function fixtureDecision(input: TaskContext) {
   const assignment = input.assignment as { repairTargets?: string[] };
   if (!assignment.repairTargets?.includes('testing'))
     return { kind: 'blocked', reason: 'Incorrect fixture requires earlier Testing' };
-  assert.deepEqual(assignment.repairTargets, ['testing', 'implementation']);
+  assert.deepEqual(assignment.repairTargets, ['testing']);
   return {
     kind: 'repair',
     activity: 'testing',
