@@ -90,7 +90,7 @@ for (const [form, source, reason] of [
     const tree = fixture();
     try {
       tree.write('eslint.config.ts', source);
-      if (form === 'export star') tree.write('helper.js', 'export const helper = {};\n');
+      if (form === 'export star') tree.write('helper.js', '');
       const result = await selectQualityInputs('lint', 'alpha', tree.root);
       assert.equal(eligibility(result)?.eligible, false);
       assert.match(eligibility(result)?.reason ?? '', reason);
