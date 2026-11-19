@@ -141,18 +141,7 @@ function requiredChecks(
   scope: StewardScope,
   requested: readonly { id: string; expected: 'pass' | 'fail' }[],
 ) {
-  const checks = new Map(
-    requested.map(({ id, expected }) => [
-      id,
-      {
-        id,
-        expected:
-          expected === 'fail' && !(scope.activity === 'testing' && id === 'owner-tests')
-            ? 'pass'
-            : expected,
-      },
-    ]),
-  );
+  const checks = new Map(requested.map((check) => [check.id, check]));
   const events = task.observations<{
     check?: CheckResult;
     scope?: StewardScope;
