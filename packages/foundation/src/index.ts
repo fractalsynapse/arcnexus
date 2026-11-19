@@ -322,7 +322,7 @@ const createIgnore = createRequire(import.meta.url)('ignore') as () => IgnoreMat
 /** Adapt Git ignore character classes and escaped wildcards to the ignore parser. */
 function normalizeIgnorePatterns(patterns: string): string {
   return patterns
-    .replace(/\\([*?])/g, '[$1]')
+    .replace(/\\([*?])/g, '\\$1')
     .replace(/\[!([^\]]+)\]/g, '[^$1]');
 }
 
