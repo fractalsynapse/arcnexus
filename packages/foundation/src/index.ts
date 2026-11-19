@@ -182,24 +182,22 @@ function readOptionalFile(path: string): string {
 /** Apply root and nested gitignore rules in directory order to one repository path. */
 function isIgnored(path: string): boolean {
   let ignored = false;
-  let parentIgnored = false;
   const ignoreFiles = globSync('**/.gitignore').sort(
     (left, right) => left.split('/').length - right.split('/').length,
   );
-  for (const ignoreFile of ignoreFiles) {
+  for (const [index, ignoreFile] of ignoreFiles.entries()) {
     const directory = ignoreFile.slice(0, -'.gitignore'.length).replace(/\/$/, '');
     if (directory && !path.startsWith(`${directory}/`)) continue;
     const relative = directory ? path.slice(directory.length + 1) : path;
     const rules = readOptionalFile(ignoreFile).split(String.fromCharCode(10));
-    if (directory && parentIgnored) continue;
+    if (directory && isIgnoredDirectory(directory, ignoreFiles.slice(0, index))) continue;
     const segments = relative.split('/');
     let inherited = false;
-    for (let index = 0; index < segments.length; index++) {
-      const candidate = segments.slice(0, index + 1).join('/');
-      const result = matchesIgnoreRules(candidate, rules, index < segments.length - 1);
+    for (let segment = 0; segment < segments.length; segment++) {
+      const candidate = segments.slice(0, segment + 1).join('/');
+      const result = matchesIgnoreRules(candidate, rules, segment < segments.length - 1);
       if (result !== undefined) inherited = result;
-      if (index < segments.length - 1) parentIgnored = inherited;
-      if (inherited && index < segments.length - 1) break;
+      if (inherited && segment < segments.length - 1) break;
     }
     if (inherited) ignored = true;
     else if (matchesIgnoreRules(relative, rules) === false) ignored = false;
