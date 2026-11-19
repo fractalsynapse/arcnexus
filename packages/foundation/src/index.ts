@@ -335,10 +335,20 @@ function configurationInputs(operation: QualitySelection['operation'], root: str
       const specifier = statement.moduleSpecifier.text;
       if (!specifier.startsWith('.')) continue;
       const resolved = normalize(join(dirname(path), specifier));
-      const base = resolved.replace(/\.(?:[cm]?js|tsx?)$/, '');
-      const candidates = [`${base}.ts`, `${base}.js`, `${base}.mjs`, `${base}.mts`, resolved];
+      const base = resolved.replace(/\.(?:[cm]?[jt]sx?)$/, '');
+      const candidates = [
+        resolved,
+        `${base}.ts`,
+        `${base}.tsx`,
+        `${base}.mts`,
+        `${base}.cts`,
+        `${base}.js`,
+        `${base}.jsx`,
+        `${base}.mjs`,
+        `${base}.cjs`,
+      ];
       const dependency = candidates.find((candidate) => readOptionalFile(candidate, root) !== '');
-      if (dependency) pending.push(dependency);
+      pending.push(dependency ?? resolved);
     }
   }
   return [...visited].sort();
