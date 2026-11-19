@@ -191,7 +191,7 @@ function isIgnored(path: string): boolean {
     if (directory && !path.startsWith(`${directory}/`)) continue;
     const relative = directory ? path.slice(directory.length + 1) : path;
     const rules = readOptionalFile(ignoreFile).split(String.fromCharCode(10));
-    if (directory && parentIgnored && matchesIgnoreRules(directory, rules, true) !== false) continue;
+    if (directory && parentIgnored) continue;
     const segments = relative.split('/');
     let inherited = false;
     for (let index = 0; index < segments.length; index++) {
