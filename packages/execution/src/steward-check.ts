@@ -54,16 +54,17 @@ function observeCheck(
   if (!expected) return;
   pending.delete(check.id);
   if ((check.status === 0) !== (expected === 'pass'))
-    pending.set(check.id, failedObservation(scope, check, expected));
+    pending.set(check.id, failedObservation(scope, check, check.status, expected));
 }
 
 /** Retain the failed operation's expectation and diagnostic for its caller. */
 function failedObservation(
   scope: StewardScope,
-  check: CheckResult & { status: number },
+  check: CheckResult,
+  status: number,
   expected: NonNullable<StewardScope['expected']>,
 ): StewardCheckFailure {
-  return { activity: scope.activity, id: check.id, expected, status: check.status, log: check.log };
+  return { activity: scope.activity, id: check.id, expected, status, log: check.log };
 }
 
 /** Preserve a corrected pass prediction while retaining prior operation expectations. */
