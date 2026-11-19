@@ -22,7 +22,7 @@ from retained records.
 The runtime persists structured agent-authored plan content. The committed plan is
 a deterministic render. The store and external application artifacts remain the
 durable evidence. Retain authored evidence, including failed or unavailable checks,
-and expose artifacts by identity with bounded range reads. The first build applies
+and expose complete artifacts by identity, with optional caller-selected ranges. The first build applies
 no automatic per-goal cache threshold. Record one terminal outcome and retain the
 last committed position for restart inspection. Observe an uncertain upstream effect
 before attempting it again.
@@ -51,7 +51,7 @@ records the validated runtime identity and preserves original task evidence.
 | CO-8 | No stored record duplicates a Git fact: changing the branch head does not stale any stored revision field, because none exists beyond ids and digests. |
 | CO-9 | A foreground human answer is evidence against the open gate. Continue from the recorded position without replaying an uncertain operation. |
 | CO-10 | A request that names existing accepted work links to it and preserves owner and acceptance; it creates no duplicate milestone. |
-| CO-11 | Evidence reads honor offset and length and never inline an unbounded artifact. |
+| CO-11 | Evidence reads honor caller-selected offsets and ranges. Complete artifacts remain readable without application-imposed file-size or response-chunk caps. |
 | CO-12 | Measures are recorded per milestone; a milestone closed without measures is a validation finding, not a silent zero. |
 | CO-13 | `planRender` is deterministic: the same store state produces byte-identical plan output, so plan changes review as diffs. |
 | CO-15 | Reopening the store after an abrupt process exit yields the last committed position. Resume reconciles uncertain provider effects before replaying an activity, without operator repair. |
