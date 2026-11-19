@@ -109,7 +109,13 @@ for (const alteration of ['baseline', 'intent', 'bytes', 'original', 'final']) {
       delegation: 'trusted-host',
       proposal: structuredClone(f.proposal),
     });
-    const result = await f.phase().apply(f.proposal.id, { alteration });
+    const changed = structuredClone(f.proposal);
+    if (alteration === 'baseline') changed.baseline = 'revision-2';
+    if (alteration === 'intent') changed.purpose = 'Different purpose';
+    if (alteration === 'bytes') changed.files[0]!.bytes = 'different bytes';
+    if (alteration === 'original') changed.files[0]!.original = 'different original';
+    if (alteration === 'final') changed.files[0]!.final = 'different final';
+    const result = await f.phase().apply(f.proposal.id, { proposal: changed });
     assert.notEqual(result.status, 'applied');
     assert.equal(f.source.get('contract.md'), 'old bytes');
   });
