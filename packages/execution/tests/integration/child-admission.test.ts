@@ -35,36 +35,8 @@ class AdmissionScenario {
     const directory = mkdtempSync(join(tmpdir(), 'execution-child-'));
     t.after(() => rmSync(directory, { recursive: true, force: true }));
     this.root = join(directory, 'project');
-    mkdirSync(this.root);
-    this.git('init', '-q');
-    this.git(
-      '-c',
-      'user.name=fixture',
-      '-c',
-      'user.email=fixture@example.com',
-      'commit',
-      '--allow-empty',
-      '-qm',
-      'base',
-    );
-    this.git('branch', 'staging');
-    this.git('remote', 'add', 'origin', this.root);
-    const common = join(this.root, '.git');
-    writeFileSync(join(common, 'bindings.yaml'), 'schemaVersion: 1\ntools:\n  codex: /bin/true\n');
-    this.capture = {
-      source: {
-        root: this.root,
-        remote,
-        revision: this.git('rev-parse', 'HEAD'),
-        paths: [],
-        read: () => '',
-      },
-      project: {
-        delivery: { baseBranch: 'staging', protectedBranch: 'main' },
-        checks: { acceptance: ['fixture'] },
-        bindings: '.git/bindings.yaml',
-      },
-    } as unknown as Capture;
+    this.initialize();
+    this.capture = this.authority();
     const architecture = new Architecture();
     t.mock.method(architecture, 'capture', () => this.capture);
     this.coordination = new Coordination(join(directory, 'state'));
