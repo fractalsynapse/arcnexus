@@ -67,7 +67,50 @@ export async function selectQualityInputs(
     root,
     ignoreContents,
   );
-  return { operation, owner, files, identity };
+  const reuseEligibility = qualityReuseEligibility(operation, files, root);
+  return { operation, owner, files, identity, reuseEligibility };
+}
+
+/** Decline reuse when bounded configuration discovery cannot cover executable inputs. */
+function qualityReuseEligibility(
+  operation: QualityOperation,
+  files: readonly string[],
+  root: string,
+): QualitySelection['reuseEligibility'] {
+  if (operation === 'format:check') {
+    const executableConfigs = [
+      '.prettierrc.js',
+      '.prettierrc.cjs',
+      '.prettierrc.mjs',
+      '.prettierrc.ts',
+      'prettier.config.js',
+      'prettier.config.cjs',
+      'prettier.config.mjs',
+      'prettier.config.ts',
+    ];
+    for (const file of files) {
+      for (const directory of ['.', ...parentDirectories(file)]) {
+        for (const name of executableConfigs) {
+          const path = directory === '.' ? name : `${directory}/${name}`;
+          if (existsSync(resolve(root, path)))
+            return { eligible: false, reason: `Executable formatter configuration may load unselected dependencies: ${path}` };
+        }
+      }
+    }
+  }
+  if (operation === 'lint') {
+    const config = readOptionalFile('eslint.config.ts', root);
+    const unsupported = [
+      [/\\brequire\\s*\\(/, 'CommonJS require dependency'],
+      [/\\bimport\\s*\\(/, 'dynamic import dependency'],
+      [/\\bexport\\s*\\{[^}]*\\}\\s*from\\b/, 're-export dependency'],
+    ] as const;
+    for (const [pattern, description] of unsupported) {
+      if (pattern.test(config))
+        return { eligible: false, reason: `ESLint configuration uses unsupported ${description}` };
+    }
+  }
+  return { eligible: true };
 }
 
 interface QualityOperationBinding {
