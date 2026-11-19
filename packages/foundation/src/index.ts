@@ -89,6 +89,9 @@ function qualityIdentity(
   const relevantIgnoreFiles = relevantGitignoreFiles(files);
   for (const path of [
     ...componentFiles,
+    'packages/foundation/src/index.ts',
+    'packages/foundation/scripts/owner-quality.ts',
+    ...editorConfigurationInputs(files),
     ...configurationInputs(operation),
     ...prettierConfigurationInputs(operation, files),
     ...files,
