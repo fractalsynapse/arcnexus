@@ -135,3 +135,19 @@ remain unchanged for retry lookup, issue/branch/checkpoint reuse and honest hist
 A candidate-side approval claim cannot change the activation goal. Ordinary tasks
 continue to pass their supplied goal unchanged. This handoff is the bootstrap
 correction tracked in #639; a real retained phase must demonstrate it after checks.
+
+## Candidate dependencies
+
+Confined checks must use the candidate's dependency manifest and lockfile, rather
+than the original checkout's installation (#649). The host prepares npm inputs
+in its existing networkless overlay, with lifecycle scripts disabled, and retains
+the exact prerequisite command, status and log. A failed prerequisite returns to
+the caller; the requested check has not run and cannot pass.
+
+Prepared dependencies live in external application storage and are read-only to
+checks. Reuse binds their identity to the candidate's manifest, lockfile, npm
+configuration and runtime. Local dependency inputs conservatively bind to the
+candidate revision. Interrupted preparation is discarded before retry; successful
+source edits, answers and check observations remain in the journal. The existing
+npm cache supplies packages offline; an unavailable package is an observed failure,
+never permission to use ambient dependencies or enable network access.
