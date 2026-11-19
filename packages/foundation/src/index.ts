@@ -175,7 +175,7 @@ function qualityIdentity(
         .update('\u0000present\u0000')
         .update(
           path.endsWith('.gitignore')
-            ? readIgnoreFile(path, root)
+            ? readIgnoreFile(path, root, ignoreContents)
             : readFileSync(resolve(root, path)),
         );
     else identity.update(path).update('\u0000missing\u0000');
