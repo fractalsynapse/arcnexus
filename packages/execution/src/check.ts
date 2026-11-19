@@ -86,7 +86,7 @@ async function executeOwnerCheck(
     id,
     log,
     signal,
-    command.cwd,
+    selection ? worktree : command.cwd,
     executable,
     args,
     selection,
