@@ -60,9 +60,16 @@ async function ownerOperationInapplicability(
       return `No test suites for ${owner} in the current worktree`;
     return;
   }
-  if (!['owner-lint-files', 'owner-format-files'].includes(operation?.applicability ?? ''))
+  if (!operation || !['owner-lint-files', 'owner-format-files'].includes(operation.applicability ?? ''))
     return;
-  if (!qualityOperationAvailable({ ...operation, source: undefined }))
+  if (!operation.tool || !operation.command)
+    throw new Error(`Unavailable owner quality operation: ${id}`);
+  if (!qualityOperationAvailable({
+    tool: operation.tool,
+    command: operation.command,
+    args: operation.args ?? [],
+    applicability: operation.applicability,
+  }))
     throw new Error(`Unavailable owner quality operation: ${id}`);
   const selected = await selectQualityInputs(
     operation.applicability === 'owner-lint-files' ? 'lint' : 'format:check',
