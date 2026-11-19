@@ -206,7 +206,9 @@ function assertComposedCommand(
   const confinedLog = readFileSync(log, 'utf8');
   if (result.status !== 0 && unavailableConfinement(confinedLog)) {
     t.skip(`Native confinement unavailable: ${confinedLog.trim()}`);
+    return false;
   }
+  return true;
 }
 
 /** Identify only nested Bubblewrap setup failures that prevent native confinement. */
