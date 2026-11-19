@@ -28,8 +28,11 @@ function services(context: Context): WorkflowServices {
     direction: {
       track,
       plan: (session, signal, standing) => direct(context.agent, session, signal, { standing }),
-      revise: (session, _plan, feedback, signal, standing) => {
-        if (feedback.kind === 'plan-repair') {
+      revise: (session, plan, feedback, signal, standing) => {
+        if (
+          (feedback.kind === 'plan-repair' && !feedback.original) ||
+          (feedback.kind === 'answer' && !plan)
+        ) {
           return direct(context.agent, session, signal, { feedback, standing });
         }
         const task = hostTask(session);
