@@ -55,7 +55,7 @@ function ownerEvidenceFailure(task: HostTask, plan: Plan, candidate: Candidate) 
     );
     const observation = matching.findLast(({ afterLastEdit }) => afterLastEdit) ?? matching.findLast(
       ({ scope, check }) =>
-        scope.expected === 'fail' && activity === 'testing' && check.status !== 0,
+        scope.expected === 'fail' && activity === 'testing' && id === 'owner-tests' && check.status !== 0,
     );
     if (!observation) return `Required owner operation ${owner}/${activity}/${id} has no current evidence`;
     if (!task.evidence.includes(observation.check.log))
