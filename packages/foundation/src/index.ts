@@ -199,8 +199,10 @@ function matchesIgnoreRules(path: string, rules: readonly string[]): boolean {
     const rule = raw.trim();
     if (!rule || rule.startsWith('#')) continue;
     const negated = rule.startsWith('!');
-    const pattern = (negated ? rule.slice(1) : rule).replace(/^\//, '').replace(/\/$/, '');
-    if (ignoreMatcher(pattern).test(path)) ignored = !negated;
+    const source = negated ? rule.slice(1) : rule;
+    const anchored = source.startsWith('/');
+    const pattern = source.replace(/^\//, '').replace(/\/$/, '');
+    if (ignoreMatcher(pattern, anchored).test(path)) ignored = !negated;
   }
   return ignored;
 }
