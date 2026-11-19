@@ -123,3 +123,26 @@ test('retains all completed work when final rejection adds correction work', () 
   const result = decode(proposal([correction]), capture, accepted, request(1, rejection));
   assert.deepEqual(result.plan, { focus, milestones: [original, correction] });
 });
+
+test('revision preserves a clarification question and its evidence', () => {
+  const accepted: Plan = { focus, milestones: [milestone('requester')] };
+  const question = { kind: 'question', question: 'Which boundary?', evidence: ['/evidence/context'] };
+  assert.deepEqual(decode(question, capture, accepted, request(0, finding)), question);
+});
+
+test('supplier revision must schedule the requested supplier before the requester', () => {
+  const original = milestone('requester');
+  const accepted: Plan = { focus, milestones: [original] };
+  assert.throws(() => decode(proposal([original]), capture, accepted, request(0, finding)));
+});
+
+test('rejects invalid activity positions on completed milestones', () => {
+  const done = milestone('done');
+  const original = milestone('requester');
+  const accepted: Plan = { focus, milestones: [done, original] };
+  const supplier = milestone('supplier', 'supplier');
+  for (const cursor of [-1, done.steps.length + 1, 1.5]) {
+    assert.throws(() => decode(proposal([supplier, original]), capture, accepted,
+      request(1, finding, { done: cursor })));
+  }
+});
