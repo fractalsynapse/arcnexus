@@ -20,6 +20,7 @@ export interface CheckResult {
   cwd: string;
   durationMs: number;
   log: string;
+  selection?: QualitySelection;
 }
 
 /** Record inapplicability or run the captured operation in a networkless overlay. */
