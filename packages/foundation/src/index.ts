@@ -121,7 +121,21 @@ function prettierConfigurationInputs(
 
 /** Collect existing conventional formatter configs along selected file paths. */
 function collectPrettierConfigurationPaths(paths: Set<string>, files: readonly string[]): void {
-  const names = ['.prettierrc', '.prettierrc.yaml', '.prettierrc.yml', '.prettierrc.json', '.prettierrc.json5', '.prettierrc.js', '.prettierrc.cjs', '.prettierrc.mjs', '.prettierrc.ts', 'prettier.config.js', 'prettier.config.cjs', 'prettier.config.mjs', 'prettier.config.ts'];
+  const names = [
+    '.prettierrc',
+    '.prettierrc.yaml',
+    '.prettierrc.yml',
+    '.prettierrc.json',
+    '.prettierrc.json5',
+    '.prettierrc.js',
+    '.prettierrc.cjs',
+    '.prettierrc.mjs',
+    '.prettierrc.ts',
+    'prettier.config.js',
+    'prettier.config.cjs',
+    'prettier.config.mjs',
+    'prettier.config.ts',
+  ];
   for (const file of files) {
     for (const base of ['.', ...parentDirectories(file)]) {
       for (const name of names) {
