@@ -5,6 +5,11 @@ export function git(root: string, ...args: string[]) {
   return invoke(root, args);
 }
 
+/** Read an exact tracked preimage without removing significant trailing source bytes. */
+export function gitSource(root: string, revision: string, path: string) {
+  return invoke(root, ['show', `${revision}:${path}`], false, false);
+}
+
 /** Bound a read-only staging operation and repeat it once if the provider is unreachable. */
 export function remoteRead(root: string, ...args: string[]) {
   try {
@@ -15,16 +20,17 @@ export function remoteRead(root: string, ...args: string[]) {
 }
 
 /** Keep Git execution settings common to local operations and bounded provider reads. */
-function invoke(root: string, args: string[], bounded = false) {
+function invoke(root: string, args: string[], bounded = false, trim = true) {
   const command = '/usr/bin/git';
   const parameters = ['-c', 'core.hooksPath=/dev/null', '-c', 'commit.gpgSign=false', ...args];
   const invocation = bounded ? ['--kill-after=2s', '15s', command, ...parameters] : parameters;
-  return execFileSync(bounded ? '/usr/bin/timeout' : command, invocation, {
+  const output = execFileSync(bounded ? '/usr/bin/timeout' : command, invocation, {
     cwd: root,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
     env: { PATH: '/usr/bin:/bin', HOME: process.env.HOME, GIT_CONFIG_NOSYSTEM: '1' },
-  }).trimEnd();
+  });
+  return trim ? output.trimEnd() : output;
 }
 
 /** Compare the current prepared tree to the captured staging base without external diff tools. */
