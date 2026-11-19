@@ -40,6 +40,7 @@ export function qualityReuseEligibility(
 function formatterReuseEligibility(
   files: readonly string[],
   root: string,
+  formatterInputs: readonly string[],
 ): QualityReuseEligibility {
   for (const file of files) {
     let directory = dirname(file);
