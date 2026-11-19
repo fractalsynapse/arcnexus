@@ -158,7 +158,10 @@ function prepareNestedWorktree(host: string, worktree: string) {
   });
   cpSync(join(host, 'packages/team'), join(worktree, 'packages/team'), { recursive: true });
   cpSync(join(host, 'package.json'), join(worktree, 'package.json'));
-  mkdirSync(join(worktree, 'node_modules'));
+  const dependencies = join(worktree, 'node_modules');
+  mkdirSync(join(dependencies, '.bin'), { recursive: true });
+  symlinkSync(join(host, 'node_modules/.bin/jiti'), join(dependencies, '.bin/jiti'));
+  symlinkSync(join(host, 'node_modules/prettier'), join(dependencies, 'prettier'));
   writeFileSync(
     join(components, 'execution.yaml'),
     'id: execution\nowns:\n  - packages/execution\n',
