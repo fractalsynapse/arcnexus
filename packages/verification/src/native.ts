@@ -38,9 +38,14 @@ export async function verify(
 
 /** Require current evidence for every captured owner operation before review. */
 function ownerEvidenceFailure(task: HostTask, plan: Plan, candidate: Candidate) {
-  const required = Object.entries(task.capture.components).flatMap(([owner, component]) =>
-    Object.entries(component.activities).flatMap(([activity, definition]) =>
-      definition.operations.map((id) => ({ owner, activity, id, operation: task.capture.operations[id] })),
+  const required = plan.milestones.flatMap(({ owner, steps }) =>
+    steps.flatMap(({ activity }) =>
+      (task.capture.components[owner]?.activities[activity]?.operations ?? []).map((id) => ({
+        owner,
+        activity,
+        id,
+        operation: task.capture.operations[id],
+      })),
     ),
   );
   const observations = task.ownerReviewChecks();
