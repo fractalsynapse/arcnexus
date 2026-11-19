@@ -23,9 +23,11 @@ export function selectQualityInputs(
     parse(readFileSync(path, 'utf8')),
   );
   assert(!owner || components.some(({ id }) => id === owner), `Unknown owner: ${owner}`);
-  const candidates = globSync('**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}', {
-    ignore: ['node_modules/**', 'dist/**', '.git/**', '.test-build/**', '.fixture-build/**', 'context/**', 'examples/**', '.audit-work/**'],
-  })
+  const candidates = globSync('**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}')
+    .filter(
+      (path) =>
+        !/(^|\/)(?:node_modules|dist|\.git|\.test-build|\.fixture-build|context|examples|\.audit-work)(\/|$)/.test(path),
+    )
     .filter((path) => operation !== 'format:check' || isFormatCovered(path))
     .sort();
   const owners = new Map<string, string>();
