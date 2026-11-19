@@ -119,11 +119,29 @@ test('worktree selection and receipt use the candidate with a nested command cwd
 
 test('nonempty selection executes the captured command from its nested cwd', async (t) => {
   const host = process.cwd();
-  const hostSelection = await selectQualityInputs('format:check', 'execution');
-  assert.ok(hostSelection.files.length, 'host must have execution format inputs');
+  const selection = await selectQualityInputs('format:check', 'execution');
+  assert.ok(selection.files.length, 'host must have execution format inputs');
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-selection-worktree-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const worktree = join(root, 'worktree');
+  prepareNestedWorktree(host, worktree);
+  const log = join(root, 'selection.log');
+  const result = await check(
+    nestedCapture(host),
+    worktree,
+    root,
+    'quality',
+    'execution',
+    log,
+    AbortSignal.timeout(30_000),
+  );
+  assertNestedCommand(result, worktree);
+  assertComposedCommand(result, log, t);
+  assertConfinedCommand(result, log);
+});
+
+/** Populate the candidate with one selected file and its declared component owners. */
+function prepareNestedWorktree(host: string, worktree: string) {
   const components = join(worktree, '.arc/architecture/components');
   mkdirSync(components, { recursive: true });
   mkdirSync(join(worktree, 'nested'));
@@ -133,11 +151,17 @@ test('nonempty selection executes the captured command from its nested cwd', asy
   cpSync(join(host, 'packages/team'), join(worktree, 'packages/team'), { recursive: true });
   cpSync(join(host, 'package.json'), join(worktree, 'package.json'));
   symlinkSync(join(host, 'node_modules'), join(worktree, 'node_modules'), 'dir');
-  const declaration = 'id: execution\nowns:\n  - packages/execution\n';
-  writeFileSync(join(components, 'execution.yaml'), declaration);
-  const foundationDeclaration = 'id: foundation\nowns:\n  - package.json\n  - packages/foundation\n  - packages/team\n';
+  writeFileSync(join(components, 'execution.yaml'), 'id: execution\nowns:\n  - packages/execution\n');
   writeFileSync(join(components, 'foundation.yaml'), foundationDeclaration);
-  const capture = {
+}
+
+const foundationDeclaration =
+  'id: foundation\nowns:\n  - package.json\n  - packages/foundation\n  - packages/team\n';
+
+/** Capture an owner-scoped formatter operation with a nested command directory. */
+function nestedCapture(host: string) {
+  const declaration = 'id: execution\nowns:\n  - packages/execution\n';
+  return {
     source: {
       root: host,
       paths: ['.arc/architecture/components/execution.yaml', '.arc/architecture/components/foundation.yaml', 'package.json', 'packages/foundation/scripts/owner-quality.ts'],
@@ -158,36 +182,46 @@ test('nonempty selection executes the captured command from its nested cwd', asy
       },
     },
   } as unknown as Capture;
-  const log = join(root, 'selection.log');
-  const result = await check(
-    capture,
-    worktree,
-    root,
-    'quality',
-    'execution',
-    log,
-    AbortSignal.timeout(30_000),
-  );
+}
+
+/** Assert the candidate command uses Foundation's explicit-root selection and receipt. */
+function assertNestedCommand(result: Awaited<ReturnType<typeof check>>, worktree: string) {
   assert.equal(result.cwd, join(worktree, 'nested'));
   assert.equal(result.command, 'npm');
   assert.deepEqual(result.args, ['run', 'format:check', '--', 'execution']);
   assert.deepEqual(result.selection?.files, ['packages/execution/input.ts']);
-  // The outer test sandbox may prohibit nested Bubblewrap. Still exercise the actual
-  // candidate command there, while keeping that observation distinct from confinement.
+}
+
+/** Exercise the actual candidate command when the outer sandbox disallows nested confinement. */
+function assertComposedCommand(
+  result: Awaited<ReturnType<typeof check>>,
+  log: string,
+  t: Parameters<Parameters<typeof test>[1]>[0],
+) {
   const composed = spawnSync('npm', result.args, { cwd: result.cwd, encoding: 'utf8' });
   const output = (composed.stdout ?? '') + (composed.stderr ?? '');
   assert.equal(composed.status, 0, output);
   assert.match(output, new RegExp(`format:check scope=execution sha256=${result.selection!.identity}`));
   assert.match(output, /format:check scope=execution inputs=1 /);
   const confinedLog = readFileSync(log, 'utf8');
-  if (result.status !== 0 && /bwrap:.*(operation not permitted|creating new namespace|no permissions to create a new namespace|permission denied)/i.test(confinedLog)) {
+  if (result.status !== 0 && unavailableConfinement(confinedLog)) {
     t.skip(`Native confinement unavailable: ${confinedLog.trim()}`);
-    return;
   }
+}
+
+/** Identify only nested Bubblewrap setup failures that prevent native confinement. */
+function unavailableConfinement(log: string) {
+  return /bwrap:.*(operation not permitted|creating new namespace|no permissions to create a new namespace|permission denied)/i.test(log);
+}
+
+/** Require the confined receipt when the runtime supports nested confinement. */
+function assertConfinedCommand(result: Awaited<ReturnType<typeof check>>, log: string) {
+  const confinedLog = readFileSync(log, 'utf8');
+  if (result.status !== 0 && unavailableConfinement(confinedLog)) return;
   assert.equal(result.status, 0, confinedLog);
   assert.match(confinedLog, new RegExp(`format:check scope=execution sha256=${result.selection!.identity}`));
   assert.match(confinedLog, /format:check scope=execution inputs=1 /);
-});
+}
 
 test('deleting every candidate component file is ownership drift', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-deleted-ownership-'));
