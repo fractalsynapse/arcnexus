@@ -34,7 +34,7 @@ test('a changed checkpoint cannot reuse an observation for a different captured 
   );
 });
 
-test('a checkpoint invalidates matching evidence even when the operation is unchanged', async (t) => {
+test('an unchanged checkpoint retains matching evidence', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-check-checkpoint-'));
   const task = new StewardFixture(t, root).task;
   Object.assign(task.capture, {
