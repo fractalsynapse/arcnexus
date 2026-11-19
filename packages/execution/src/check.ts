@@ -5,7 +5,6 @@ import type { Capture } from '../../architecture/src/index.js';
 import {
   hasOwnerTestSuites,
   qualityOperationAvailable,
-  qualityRuntime,
   selectQualityInputs,
   type QualitySelection,
 } from '../../foundation/src/index.js';
