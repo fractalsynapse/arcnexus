@@ -6,6 +6,7 @@ import type {
   Milestone,
   Plan,
   PlanActivity,
+  RevisionRequest,
   Rejection,
   StandingGoalEvidence,
   StewardCheckFailure,
