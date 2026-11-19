@@ -184,18 +184,7 @@ async function ownerOperationInapplicability(
       reason: `No ${selection.operation} files for ${owner} in the current worktree`,
       selection,
     };
-  if (!operation.tool || !operation.command)
-    throw new Error(`Unavailable owner quality operation: ${id}`);
-  if (
-    !qualityOperationAvailable({
-      tool: operation.tool,
-      command: operation.command,
-      args: operation.args ?? [],
-      applicability,
-      source: capture.source,
-    })
-  )
-    throw new Error(`Unavailable owner quality operation: ${id}`);
+
   return { selection };
 }
 
