@@ -87,11 +87,16 @@ test('captured binding inspection leaves the binding and manifest unchanged', ()
 });
 
 test('public capability recognizes the available owner-scoped format binding', () => {
-  assert.equal(capability()(format), true);
+  assert.equal(capability()(approvedFormat), true);
 });
 
 test('public capability recognizes the available owner-scoped lint binding', () => {
-  assert.equal(capability()(lint), true);
+  assert.equal(capability()(approvedLint), true);
+});
+
+test('public capability rejects owner bindings without the approved separator', () => {
+  assert.equal(capability()(format), false);
+  assert.equal(capability()({ ...format, args: [...format.args, 'unexpected'] }), false);
 });
 
 test('public capability rejects a valid declaration with an unavailable command', () => {
