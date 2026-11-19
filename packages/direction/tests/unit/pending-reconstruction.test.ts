@@ -84,6 +84,32 @@ test('rejects malformed pending fields with their exact path for same-activity r
     { message: 'plan.milestones[0].owner: expected string, received number' });
 });
 
+test('reuses a completed supplier while retaining a partially completed requester', () => {
+  const supplier = milestone('supplier', 'supplier');
+  const original = milestone('requester');
+  const accepted: Plan = { focus, milestones: [supplier, original] };
+  const pending = { ...original, steps: original.steps.slice(1) };
+  const result = decode(proposal([pending]), capture, accepted, request(1, finding, { requester: 1 }));
+  assert.deepEqual(result.plan, accepted);
+});
+
+test('rejects removal or alteration of pending accepted obligations', () => {
+  const original = milestone('requester');
+  const accepted: Plan = { focus, milestones: [original] };
+  const input = request(0, finding);
+  const cases = [
+    proposal([]),
+    proposal([{ ...original, owner: 'supplier' }]),
+    proposal([{ ...original, criteria: [{ ...original.criteria[0]!, description: 'Changed' }] }]),
+    proposal([{ ...original, steps: original.steps.slice(1) }]),
+    { kind: 'plan', plan: { focus, milestones: [original] } },
+  ];
+  for (const response of cases) {
+    assert.throws(() => decode(response, capture, accepted, input));
+    assert.deepEqual(accepted, { focus, milestones: [original] });
+  }
+});
+
 test('retains all completed work when final rejection adds correction work', () => {
   const original = milestone('original');
   const accepted: Plan = { focus, milestones: [original] };
