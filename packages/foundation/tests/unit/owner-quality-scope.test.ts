@@ -1,0 +1,136 @@
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { test } from 'node:test';
+
+type Operation = 'format:check' | 'lint';
+
+/** Isolate command inputs while using the repository's actual tooling and configuration. */
+class QualityFixture {
+  readonly root: string;
+
+  /** Copy tool inputs into a declared generated root and share installed dependencies. */
+  constructor() {
+    mkdirSync('.test-build', { recursive: true });
+    this.root = mkdtempSync(resolve('.test-build/quality-'));
+    for (const path of [
+      'package.json', '.prettierignore', '.prettierrc.yaml', 'eslint.config.ts',
+      'packages/foundation/scripts', 'packages/foundation/src', 'packages/team/src',
+    ]) {
+      mkdirSync(join(this.root, path, '..'), { recursive: true });
+      cpSync(path, join(this.root, path), { recursive: true });
+    }
+    symlinkSync(resolve('node_modules'), join(this.root, 'node_modules'), 'dir');
+    mkdirSync(join(this.root, '.arc/architecture/components'), { recursive: true });
+  }
+
+  /** Define a synthetic owner without changing the captured repository catalog. */
+  owner(id: string, path: string) {
+    this.write(`.arc/architecture/components/${id}.yaml`, `id: ${id}\nowns:\n- ${path}\n`);
+  }
+
+  /** Create an input in the isolated task tree. */
+  write(path: string, content: string) {
+    const target = join(this.root, path);
+    mkdirSync(join(target, '..'), { recursive: true });
+    writeFileSync(target, content);
+  }
+
+  /** Invoke the public command and retain its exit and diagnostics. */
+  run(operation: Operation, owner?: string) {
+    const args = ['run', operation, ...(owner ? ['--', owner] : [])];
+    const result = spawnSync('npm', args, { cwd: this.root, encoding: 'utf8' });
+    assert.equal(result.error, undefined);
+    return { status: result.status, output: result.stdout + result.stderr };
+  }
+
+  /** Remove generated fixture inputs after the test. */
+  close() {
+    rmSync(this.root, { recursive: true, force: true });
+  }
+}
+
+/** Provide independent owners whose newly created files differ in quality. */
+function fixture() {
+  const tree = new QualityFixture();
+  tree.owner('alpha', 'packages/alpha');
+  tree.owner('beta', 'packages/beta');
+  tree.write('packages/alpha/probe.ts', 'export const alpha = 1;\n');
+  tree.write('packages/beta/probe.ts', 'const unused=1\n');
+  return tree;
+}
+
+for (const operation of ['format:check', 'lint'] as const) {
+  test(`${operation} selects distinct owners and includes new maintained files`, () => {
+    const tree = fixture();
+    try {
+      assert.equal(tree.run(operation, 'alpha').status, 0);
+      const beta = tree.run(operation, 'beta');
+      assert.notEqual(beta.status, 0, beta.output);
+      assert.match(beta.output, /probe\.ts/);
+    } finally {
+      tree.close();
+    }
+  });
+
+  test(`${operation} rejects overlapping ownership`, () => {
+    const tree = fixture();
+    try {
+      tree.owner('overlap', 'packages/alpha');
+      const result = tree.run(operation, 'alpha');
+      assert.notEqual(result.status, 0, result.output);
+      assert.match(result.output, /owner|ownership/i);
+    } finally {
+      tree.close();
+    }
+  });
+
+  test(`${operation} without an owner retains repository-wide coverage`, () => {
+    const tree = fixture();
+    try {
+      const result = tree.run(operation);
+      assert.notEqual(result.status, 0, result.output);
+      assert.match(result.output, /probe\.ts/);
+    } finally {
+      tree.close();
+    }
+  });
+
+  test(`${operation} does not mutate maintained source on failure`, () => {
+    const tree = fixture();
+    try {
+      const path = join(tree.root, 'packages/beta/probe.ts');
+      const before = readFileSync(path);
+      tree.run(operation, 'beta');
+      assert.deepEqual(readFileSync(path), before);
+    } finally {
+      tree.close();
+    }
+  });
+}
+
+test('an owner with only JSON has an empty lint selection but a format selection', () => {
+  const tree = new QualityFixture();
+  try {
+    tree.owner('json-owner', 'packages/json-owner');
+    tree.write('packages/json-owner/probe.json', '{"value":1}\n');
+    assert.notEqual(tree.run('format:check', 'json-owner').status, 0);
+    assert.equal(tree.run('lint', 'json-owner').status, 0);
+  } finally {
+    tree.close();
+  }
+});
+
+test('a Prettier-ignored TypeScript file leaves format empty but remains lint applicable', () => {
+  const tree = new QualityFixture();
+  try {
+    tree.owner('ignored-owner', 'packages/ignored-owner');
+    tree.write('.prettierignore', 'packages/ignored-owner/probe.ts\n');
+    tree.write('packages/ignored-owner/probe.ts', 'const unused = 1;\n');
+    assert.equal(tree.run('format:check', 'ignored-owner').status, 0);
+    assert.notEqual(tree.run('lint', 'ignored-owner').status, 0);
+  } finally {
+    tree.close();
+  }
+});
