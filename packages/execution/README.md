@@ -72,9 +72,8 @@ Workflow validates that rewind against the milestone and captured activity map,
 then persists the target and finding with the position in one journal event.
 `localRepair` is optional rewind context; when supplied, read its evidence before
 correcting the finding. Its absence does not remove the current activity's
-responsibility. Only affected
-downstream work replays. Completed single-file receipts and complete answers stay
-available. Explicit cross-owner work uses Direction; final independent rejection
+responsibility. Only affected downstream work replays. Completed single-file
+receipts and complete answers stay available. Explicit cross-owner work uses Direction; final independent rejection
 also returns to Direction. Ordinary local repair does not create a milestone or
 invoke the Director.
 
