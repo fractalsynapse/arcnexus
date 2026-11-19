@@ -36,7 +36,8 @@ async function fixture(t: TestContext, retained: readonly unknown[] = observatio
   await context.use(architecturePlugin);
   await context.use(agentPlugin);
   await mountTaskHost(context);
-  const direction = (context.workflow as unknown as { services: WorkflowServices }).services.direction;
+  const direction = (context.workflow as unknown as { services: WorkflowServices }).services
+    .direction;
   let activation: Record<string, unknown> | undefined;
   let sequence = 0;
   const session = Object.create(HostTask.prototype) as HostTask;
@@ -81,7 +82,8 @@ const findings: Feedback[] = [
 
 for (const finding of findings) {
   test(`host gives Director a bounded snapshot for ${finding.kind}`, async (t) => {
-    const expectedPosition = finding.kind === 'rejection' ? { completed: 121, activities: {} } : position;
+    const expectedPosition =
+      finding.kind === 'rejection' ? { completed: 121, activities: {} } : position;
     const retained = [...observations.slice(0, -1), { position: expectedPosition }];
     const host = await fixture(t, retained);
     try {
@@ -114,6 +116,41 @@ for (const finding of findings) {
     assert.equal(readFileSync(request.retainedEvidence, 'utf8'), evidenceBytes);
   });
 }
+
+for (const original of findings) {
+  test(`invalid revision response retains ${original.kind} context`, async (t) => {
+    const host = await fixture(t);
+    const feedback = { kind: 'plan-repair' as const, diagnostic: 'Invalid response', original };
+    await host.direction.revise(host.session, plan, feedback, new AbortController().signal);
+    const data = host.activation();
+    const request = data.milestone as {
+      acceptedPlan: string;
+      retainedEvidence: string;
+      position: typeof position;
+      finding: Feedback;
+    };
+    assert.deepEqual(JSON.parse(readFileSync(request.acceptedPlan, 'utf8')), plan);
+    assert.deepEqual(JSON.parse(readFileSync(request.retainedEvidence, 'utf8')), observations);
+    assert.deepEqual(request.position, position);
+    assert.deepEqual(request.finding, original);
+    assert.deepEqual((data.assignment as { feedback: Feedback }).feedback, feedback);
+    assert(!JSON.stringify(data).includes('Accepted outcome 0'));
+  });
+}
+
+test('initial planning answer does not require an accepted plan', async (t) => {
+  const host = await fixture(t, [{ question: 'Clarify' }]);
+  const feedback = {
+    kind: 'answer' as const,
+    question: 'Clarify',
+    answer: 'Complete answer',
+    evidence: [],
+  };
+  await host.direction.revise(host.session, undefined, feedback, new AbortController().signal);
+  const data = host.activation();
+  assert.equal(data.milestone, 'Initial planning');
+  assert.deepEqual((data.assignment as { feedback: Feedback }).feedback, feedback);
+});
 
 test('initial planning and invalid-response repair retain their planning context', async (t) => {
   const host = await fixture(t);
