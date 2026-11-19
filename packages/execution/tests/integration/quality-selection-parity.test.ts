@@ -20,7 +20,15 @@ for (const [operation, applicability] of [
         return [component.id, component];
       }),
     );
-    const owner = Object.keys(components).find(async () => true)!;
+    let owner = '';
+    for (const candidate of Object.keys(components)) {
+      const selection = await selectQualityInputs(operation, candidate);
+      if (selection.files.length === 0) {
+        owner = candidate;
+        break;
+      }
+    }
+    assert.ok(owner, 'fixture requires an owner with no selected inputs');
     const selection = await selectQualityInputs(operation, owner);
     const temporary = mkdtempSync(join(tmpdir(), 'arcnexus-quality-parity-'));
     t.after(() => rmSync(temporary, { recursive: true, force: true }));
