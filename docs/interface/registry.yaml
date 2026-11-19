@@ -7,9 +7,9 @@ authority:
   hostMayApplyLocked: Only the exact human-approved proposal against its recorded baseline.
   editorDelegation: Explicit architect approval for a named change and base,
     applied by a named editor or the trusted host.
-  approvalRecord: 'Exact limit-removal amendment for #659; human approval in Codex
-    chat and delegated application by Codex.'
-  approvedBase: 2d740bc7e038a5d9fcb8fbded9dd5302b6fe54a7
+  approvalRecord: 'Exact Verification file-read alignment for #659; human approval
+    in Codex chat and delegated application by Codex.'
+  approvedBase: a0e6bc7b207dbe1f1f94e5d5cd1b3b78e80b8b93
 contracts:
   - id: arcnexus/project
     type: project
@@ -507,7 +507,7 @@ contracts:
     file: packages/verification/contract.md
     owner: verification
     stage: locked
-    digest: d218cc023f21b469b1767e0fae3e89205261d0975e88aaa1bff422c5827a11e2
+    digest: 26d487a102dc9b7b1b31f23ed89b77275b54ec8469051103c11517bd759073ee
     dependsOn:
       - arcnexus/project
       - arcnexus/architecture-model
@@ -516,7 +516,7 @@ contracts:
       - arcnexus/direction
     scenarios: 18
     acceptedBy: Adrian Webb (architect)
-    acceptedAt: '2026-11-15'
+    acceptedAt: '2026-11-19'
     history:
       - stage: locked
         digest: ffd64281aa0fa9beac3585e527441daa4284b0b97b04e5e7f4574e651d9203b5
@@ -538,9 +538,32 @@ contracts:
           measures, and confirms re-run authority and the single reviewer
 
           '
+      - id: arcnexus/verification
+        type: library
+        file: packages/verification/contract.md
+        owner: verification
+        stage: locked
+        digest: d218cc023f21b469b1767e0fae3e89205261d0975e88aaa1bff422c5827a11e2
+        dependsOn:
+          - arcnexus/project
+          - arcnexus/architecture-model
+          - arcnexus/coordination
+          - arcnexus/execution
+          - arcnexus/direction
+        scenarios: 18
+        acceptedBy: Adrian Webb (architect)
+        acceptedAt: 2026-11-15
+        amendmentRecord: "Architect approved the exact self-healing refinement amendment
+          in Codex chat for issue #615. Base:
+          fc6df1e8755764adfc133fbc2776257a9c6e1bbb."
+        revision: a0e6bc7b207dbe1f1f94e5d5cd1b3b78e80b8b93
+        note: Replaced by human-reviewed proposal intent
+          953a8437d1c30a437a78f64c84ec7511640d9e96c3917699914bf07f4637a318.
     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
       in Codex chat for issue #615. Base:
       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
+    approvalRecord: "Exact Verification file-read alignment for #659; human approval
+      in Codex chat and delegated application by Codex."
   - id: arcnexus/delivery
     type: library
     file: packages/delivery/contract.md

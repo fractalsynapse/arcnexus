@@ -15,7 +15,7 @@ observed verification rather than failed cycles.
 
 Bind the verdict to the candidate, captured acceptance, checks and environment.
 Reuse evidence only when those inputs match. The reviewer receives the complete
-evidence by reference with bounded reads. Measure evidence size and report harness
+evidence by reference with complete file reads. Measure evidence size and report harness
 refusals without suppressing or sampling evidence. A verdict records reviewer
 identity, profile, criteria, evidence and input digest. The reviewer never writes
 candidate files or uses the delivery capability.
