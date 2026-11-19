@@ -327,41 +327,6 @@ function parentDirectories(file: string): string[] {
   return directories;
 }
 
-/** Follow local imports from quality configuration without hashing unrelated source. */
-function configurationInputs(operation: QualitySelection['operation'], root: string): string[] {
-  const pending = operation === 'lint' ? ['eslint.config.ts'] : [];
-  const visited = new Set<string>();
-  while (pending.length) {
-    const path = pending.pop()!;
-    if (visited.has(path)) continue;
-    visited.add(path);
-    const source = readOptionalFile(path, root);
-    const parsed = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-    for (const statement of parsed.statements) {
-      if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier))
-        continue;
-      const specifier = statement.moduleSpecifier.text;
-      if (!specifier.startsWith('.')) continue;
-      const resolved = normalize(join(dirname(path), specifier));
-      const base = resolved.replace(/\.(?:[cm]?[jt]sx?)$/, '');
-      const candidates = [
-        resolved,
-        `${base}.ts`,
-        `${base}.tsx`,
-        `${base}.mts`,
-        `${base}.cts`,
-        `${base}.js`,
-        `${base}.jsx`,
-        `${base}.mjs`,
-        `${base}.cjs`,
-      ];
-      const dependency = candidates.find((candidate) => readOptionalFile(candidate, root) !== '');
-      pending.push(dependency ?? resolved);
-    }
-  }
-  return [...visited].sort();
-}
-
 /** Identify exact UTF-8 content used in reviewed proposals and recorded source observations. */
 export function textDigest(content: string) {
   return createHash('sha256').update(content).digest('hex');
