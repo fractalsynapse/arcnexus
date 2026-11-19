@@ -23,7 +23,7 @@ export async function selectQualityInputs(
   const componentFiles = globSync('.arc/architecture/components/*.yaml');
   const components: Component[] = componentFiles.map((path) => parse(readFileSync(path, 'utf8')));
   assert(!owner || components.some(({ id }) => id === owner), `Unknown owner: ${owner}`);
-  const ignored = readFileSync('.gitignore', 'utf8').split(/\r?\n/);
+  const ignored = readOptionalFile('.gitignore').split(/\r?\n/);
   const candidates = globSync('**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}')
     .filter((path) => !isIgnored(path, ignored))
     .filter((path) => operation !== 'format:check' || isFormatCovered(path))
