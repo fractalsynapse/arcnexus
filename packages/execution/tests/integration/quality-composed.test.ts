@@ -80,6 +80,22 @@ function installDiagnosticBoundary(t: TestContext, task: StewardFixture['task'],
 }
 
 test('real lint and type diagnostics reach one MCP caller and survive checked repair', async (t) => {
+  const { task, owner, file, workspace, original, broken } = await diagnosticFixture(t);
+  installDiagnosticBoundary(t, task, owner, workspace);
+  const activation = new ActivationTools(task, { component: owner, activity: 'implementation' }, {
+    goal: 'quality', assignment: {}, milestone: { id: 'quality' }, acceptance: [], worktree: workspace,
+  }, AbortSignal.timeout(120_000));
+  const { client, host } = await connect(activation);
+  try {
+    await assertRepair(client, file, original, broken);
+  } finally {
+    await client.close();
+    await host.close();
+  }
+});
+
+/** Prepare a captured owner and inject lint and type failures. */
+async function diagnosticFixture(t: TestContext) {
   const source = process.cwd();
   const { owner, file, components } = await discover(source);
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-quality-composed-'));
@@ -94,18 +110,8 @@ test('real lint and type diagnostics reach one MCP caller and survive checked re
   const broken = original + `\nfunction qualityFailure(): number {\n  let value: number = "wrong";\n${lines}\n  return value;\n}\nqualityFailure();\n`;
   writeFileSync(join(workspace, file), broken);
 
-  installDiagnosticBoundary(t, task, owner, workspace);
-  const activation = new ActivationTools(task, { component: owner, activity: 'implementation' }, {
-    goal: 'quality', assignment: {}, milestone: { id: 'quality' }, acceptance: [], worktree: workspace,
-  }, AbortSignal.timeout(120_000));
-  const { client, host } = await connect(activation);
-  try {
-    await assertRepair(client, file, original, broken);
-  } finally {
-    await client.close();
-    await host.close();
-  }
-});
+  return { task, owner, file, workspace, original, broken };
+}
 
 /** Check diagnostics, repair through the same caller, and retain earlier logs. */
 async function assertRepair(client: Client, file: string, original: string, broken: string) {
