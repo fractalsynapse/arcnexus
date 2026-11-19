@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { existsSync, globSync, readFileSync, readdirSync } from 'node:fs';
-import ignore from 'ignore';
+import { default as createIgnore } from 'ignore';
 import { dirname, resolve } from 'node:path';
 import { ESLint } from 'eslint';
 import { getFileInfo } from 'prettier';
@@ -297,7 +297,7 @@ function readOptionalFile(path: string): string {
 
 interface IgnoreScope {
   directory: string;
-  matcher: ReturnType<typeof ignore>;
+  matcher: ReturnType<typeof createIgnore>;
 }
 
 /** Walk maintained paths once, loading reachable ignore rules as each directory is entered. */
@@ -308,7 +308,7 @@ function discoverMaintainedFiles(): string[] {
     const ignorePath = directory === '.' ? '.gitignore' : `${directory}/.gitignore`;
     const scopes = [...inherited];
     if (existsSync(ignorePath)) {
-      const matcher = ignore();
+      const matcher = createIgnore();
       matcher.add(readFileSync(ignorePath, 'utf8'));
       scopes.push({ directory, matcher });
     }
