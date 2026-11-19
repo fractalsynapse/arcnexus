@@ -72,13 +72,8 @@ async function executeOwnerCheck(
     };
   }
   const selection = applicability.selection;
-  const runtime = selection && qualityRuntime(selection.operation);
-  const executable = runtime
-    ? join(worktree, 'node_modules/.bin', runtime.executable)
-    : command.executable;
-  const args = runtime
-    ? [...runtime.args, '--', ...selection!.files.map((path) => resolve(worktree, path))]
-    : command.args;
+  const executable = command.executable;
+  const args = command.args;
   return runConfinedCheck(
     capture,
     worktree,
