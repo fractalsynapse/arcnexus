@@ -34,6 +34,7 @@ export async function check(
   signal.throwIfAborted();
   const { executable, args, cwd } = checkCommand(capture, worktree, id, owner);
   const parameters = { id, command: executable, args, cwd, log };
+  if (owner) assertCapturedOwnership(capture, worktree);
   const reason = await ownerOperationInapplicability(capture, worktree, id, owner);
   if (reason) {
     writeFileSync(log, `Not applicable: ${reason}\n`, { mode: 0o600, flag: 'wx' });
