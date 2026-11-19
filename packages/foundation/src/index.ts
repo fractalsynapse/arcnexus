@@ -98,6 +98,25 @@ function qualityIdentity(
   return identity.digest('hex');
 }
 
+/** Follow local imports from quality configuration without hashing unrelated source. */
+function configurationInputs(operation: QualitySelection['operation']): string[] {
+  const pending = operation === 'lint' ? ['eslint.config.ts'] : [];
+  const visited = new Set<string>();
+  while (pending.length) {
+    const path = pending.pop()!;
+    if (visited.has(path)) continue;
+    visited.add(path);
+    const source = readOptionalFile(path);
+    for (const [, specifier] of source.matchAll(/(?:from\\s*|import\\s*)['\"](\\.[^'\"]+)['\"]/g)) {
+      const base = specifier.replace(/\\.(?:[cm]?js|tsx?)$/, '');
+      const candidates = [`${base}.ts`, `${base}.js`, `${base}.mjs`, `${base}.mts`, base];
+      const dependency = candidates.find((candidate) => readOptionalFile(candidate) !== '');
+      if (dependency) pending.push(dependency);
+    }
+  }
+  return [...visited].sort();
+}
+
 /** Identify exact UTF-8 content used in reviewed proposals and recorded source observations. */
 export function textDigest(content: string) {
   return createHash('sha256').update(content).digest('hex');
