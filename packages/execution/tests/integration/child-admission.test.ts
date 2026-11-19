@@ -55,6 +55,46 @@ class AdmissionScenario {
     return this.execution.admitChild({ directory: this.root, goal }, this.parent, scope, signal);
   }
 
+  /** Initialize the clean repository and executable binding used by preflight. */
+  private initialize() {
+    mkdirSync(this.root);
+    this.git('init', '-q');
+    this.git(
+      '-c',
+      'user.name=fixture',
+      '-c',
+      'user.email=fixture@example.com',
+      'commit',
+      '--allow-empty',
+      '-qm',
+      'base',
+    );
+    this.git('branch', 'staging');
+    this.git('remote', 'add', 'origin', this.root);
+    writeFileSync(
+      join(this.root, '.git', 'bindings.yaml'),
+      'schemaVersion: 1\ntools:\n  codex: /bin/true\n',
+    );
+  }
+
+  /** Capture source and host policy for the same clean fixture. */
+  private authority() {
+    return {
+      source: {
+        root: this.root,
+        remote,
+        revision: this.git('rev-parse', 'HEAD'),
+        paths: [],
+        read: () => '',
+      },
+      project: {
+        delivery: { baseBranch: 'staging', protectedBranch: 'main' },
+        checks: { acceptance: ['fixture'] },
+        bindings: '.git/bindings.yaml',
+      },
+    } as unknown as Capture;
+  }
+
   /** Run Git in the fixture repository. */
   private git(...args: string[]) {
     return execFileSync('git', args, { cwd: this.root, encoding: 'utf8' }).trim();
