@@ -56,8 +56,8 @@ export async function selectQualityInputs(
     owner === undefined || components.some(({ id }) => id === owner),
     `Unknown owner: ${owner}`,
   );
-  const files = await selectOwnedQualityFiles(operation, owner, components, root);
-  const identity = qualityIdentity(operation, owner, files, components, componentFiles, root);
+  const files = await selectOwnedQualityFiles(operation, owner, components, root, ignoreContents);
+  const identity = qualityIdentity(operation, owner, files, components, componentFiles, root, ignoreContents);
   return { operation, owner, files, identity };
 }
 
