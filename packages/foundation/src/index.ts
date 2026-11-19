@@ -89,7 +89,10 @@ function qualityIdentity(
   identity.update(selectionIdentity(operation, owner, files, components));
   for (const path of identityInputPaths(operation, files, componentFiles)) {
     if (existsSync(path))
-      identity.update(path).update('\u0000present\u0000').update(readFileSync(path));
+      identity
+        .update(path)
+        .update('\u0000present\u0000')
+        .update(path.endsWith('.gitignore') ? readIgnoreFile(path) : readFileSync(path));
     else identity.update(path).update('\u0000missing\u0000');
   }
   return identity.digest('hex');
