@@ -116,7 +116,10 @@ function editorConfigurationInputs(files: readonly string[]): string[] {
   for (const file of files) {
     for (const directory of parentDirectories(file)) directories.add(directory);
   }
-  return [...directories].map((directory) => directory === '.' ? '.editorconfig' : `${directory}/.editorconfig`).filter((path) => existsSync(path)).sort();
+  return [...directories]
+    .map((directory) => (directory === '.' ? '.editorconfig' : `${directory}/.editorconfig`))
+    .filter((path) => existsSync(path))
+    .sort();
 }
 
 /** Find ignore files that can affect the selected paths. */
