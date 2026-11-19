@@ -19,7 +19,7 @@ interface Phase {
 }
 
 /** Provide an isolated public application fixture with recorded host observations. */
-function fixture() {
+function fixture(assessment?: unknown) {
   const sources = {
     objectives: 'approved objective',
     goals: 'approved goal',
