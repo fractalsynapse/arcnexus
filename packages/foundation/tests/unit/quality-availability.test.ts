@@ -10,6 +10,7 @@ type Binding = {
   applicability: string;
   command: string;
   args: (string | { context: string })[];
+  source?: { paths: readonly string[]; read(path: string): string };
 };
 
 type Capability = (binding: Binding) => boolean;
