@@ -95,6 +95,8 @@ async function ownerOperationInapplicability(
     if (resolution.kind !== 'owned' || resolution.owner.id !== owner)
       throw new Error(`Captured ownership authority does not assign ${path} to ${owner}`);
   }
+  if (!selected.files.length)
+    return `No ${selected.operation} files for ${owner} in the current worktree`;
   if (!operation.tool || !operation.command)
     throw new Error(`Unavailable owner quality operation: ${id}`);
   if (!qualityOperationAvailable({
@@ -104,8 +106,6 @@ async function ownerOperationInapplicability(
     applicability,
   }))
     throw new Error(`Unavailable owner quality operation: ${id}`);
-  if (!selected.files.length)
-    return `No ${selected.operation} files for ${owner} in the current worktree`;
 }
 
 /** Produce formatter stdout in the same disposable, networkless overlay as host checks. */
