@@ -386,7 +386,7 @@ export class HostTask implements TaskSession {
   async check(id: string, signal: AbortSignal, scope?: StewardScope) {
     signal.throwIfAborted();
     if (!this.worktree) throw new Error('No task worktree is available for checks');
-    const input = checkInput(this, id, scope);
+    const input = await checkInput(this, id, scope);
     const reused = reusableCheck(this.observations(), input, scope?.expected);
     if (reused) {
       this.note({ check: reused, scope, checkInput: input, reusedFrom: reused.log });
