@@ -151,3 +151,14 @@ candidate revision. Interrupted preparation is discarded before retry; successfu
 source edits, answers and check observations remain in the journal. The existing
 npm cache supplies packages offline; an unavailable package is an observed failure,
 never permission to use ambient dependencies or enable network access.
+
+A local rewind does not erase earlier genuine red evidence or completed
+Implementation. The current cursor describes remaining work; prior completion
+and its observed checks remain readable separately (#651). Behavior-preserving
+corrections may characterize the implemented candidate with passing checks, as
+the Designer role permits. A mistaken request for another red is a caller
+expectation diagnostic, not a requirement to manufacture a failing assertion.
+Correction requires host-recorded prior red, completed Implementation and the
+current rewind; it never changes a failed required-pass check into expected red,
+weakens criteria or skips assembled verification. Retain the original request,
+actual result and explicit correction reference in the same journal.
