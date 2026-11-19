@@ -67,7 +67,7 @@ function ownerEvidenceFailure(task: HostTask, plan: Plan, candidate: Candidate) 
     if (observation.check.status === 'not-applicable') {
       const selection = observation.check.selection;
       if (
-        operation?.applicability && selection?.operation &&
+        operation?.applicability && selection?.operation === id &&
         selection.owner === owner && selection.files.length === 0 && selection.identity === 'empty'
       ) continue;
       return `Required owner operation ${owner}/${activity}/${id} is unexpectedly inapplicable`;
