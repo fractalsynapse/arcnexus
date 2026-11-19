@@ -50,7 +50,7 @@ export async function selectQualityInputs(
   root: string = process.cwd(),
 ): Promise<QualitySelection> {
   ignoreFileContents.clear();
-  const componentFiles = globSync('.arc/architecture/components/*.yaml');
+  const componentFiles = globSync('.arc/architecture/components/*.yaml', { cwd: root });
   const components: Component[] = componentFiles.map((path) => parse(readFileSync(path, 'utf8')));
   assert(
     owner === undefined || components.some(({ id }) => id === owner),
