@@ -135,6 +135,15 @@ function discoverSuites(directory: string, pattern: string, components: readonly
     .map((file) => registerSuite(file, components));
 }
 
+/** Read an optional root input when an isolated consumer does not provide one. */
+function readOptionalFile(path: string): string {
+  try {
+    return readFileSync(path, 'utf8');
+  } catch {
+    return '';
+  }
+}
+
 /** Apply current root gitignore patterns to the repository-relative input. */
 function isIgnored(path: string, patterns: readonly string[]): boolean {
   let ignored = false;
