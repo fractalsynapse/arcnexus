@@ -13,8 +13,8 @@ export const documentation: Rule.RuleModule = {
           : node;
       const comment = context.sourceCode.getCommentsBefore(declaration).at(-1);
       const content = comment?.value
-        .replace(/^\\*/, '')
-        .replace(/^\\s*\\* ?/gm, '')
+        .replace(/^\*/, '')
+        .replace(/^\s*\* ?/gm, '')
         .trim();
       if (comment?.type !== 'Block' || !comment.value.startsWith('*') || !content) {
         context.report({ node, messageId: 'missing' });
