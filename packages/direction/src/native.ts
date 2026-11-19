@@ -1,7 +1,8 @@
 import type { Agent } from '../../agent/src/index.js';
 import { hostTask, InvalidCodexResponse } from '../../execution/src/index.js';
 import type { TaskSession } from '../../workflow/src/index.js';
-import type { Feedback, Plan, StandingGoalEvidence } from './index.js';
+import type { Feedback, StandingGoalEvidence } from './index.js';
+import type { RevisionRequest } from './response.js';
 import { DirectorResponseError } from './response.js';
 
 const shape = {
