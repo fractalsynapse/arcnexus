@@ -48,7 +48,8 @@ const check = (operation: 'format:check' | 'lint') => ({
 
 for (const applicability of ['owner-format-files', 'owner-lint-files']) {
   test(`public request accepts ${applicability} for a bound check`, () => {
-    const capture = fixture({ ...check, applicability });
+    const operation = applicability === 'owner-format-files' ? 'format:check' : 'lint';
+    const capture = fixture({ ...check(operation), applicability });
     const before = structuredClone(capture.operations);
     const request = new Architecture().request(capture, selection);
     assert.equal(request.request.options.tools[0]?.name, 'quality');
