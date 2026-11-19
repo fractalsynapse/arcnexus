@@ -2,8 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import * as foundation from '../../src/index.js';
-import { fixture, QualityFixture } from './quality-fixture.js';
+import { fixture } from './quality-fixture.js';
 
 for (const operation of ['format:check', 'lint'] as const) {
   test(`${operation} selects distinct owners and includes new maintained files`, () => {
