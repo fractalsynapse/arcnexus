@@ -178,6 +178,7 @@ function resolveReferences(
 function validateApplicability(
   id: string,
   operation: { applicability?: string; tool?: string; command?: string; args?: unknown[] },
+  capture: Capture,
 ) {
   const supported = ['owner-test-suites', 'owner-format-files', 'owner-lint-files'];
   if (operation.applicability === undefined) return;
