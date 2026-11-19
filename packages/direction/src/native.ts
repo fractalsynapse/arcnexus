@@ -47,10 +47,10 @@ export function direct(
   session: TaskSession,
   signal: AbortSignal,
   {
-    plan,
+    revision,
     feedback,
     standing,
-  }: { plan?: Plan; feedback?: Feedback; standing?: StandingGoalEvidence } = {},
+  }: { revision?: RevisionRequest; feedback?: Feedback; standing?: StandingGoalEvidence } = {},
 ): Promise<unknown> {
   const task = hostTask(session);
   return task
@@ -58,10 +58,10 @@ export function direct(
       agent,
       task.capture.project.director,
       {
-        assignment: directorAssignment(feedback, standing),
-        milestone: plan ?? (standing ? 'Standing goal assessment' : 'Initial planning'),
+        assignment: directorAssignment(feedback, standing, revision),
+        milestone: revision ?? (standing ? 'Standing goal assessment' : 'Initial planning'),
         acceptance: [],
-        evidence: task.evidence.slice(),
+        evidence: revision ? [] : task.evidence.slice(),
       },
       signal,
     )
