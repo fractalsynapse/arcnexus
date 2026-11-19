@@ -57,6 +57,21 @@ async function selectOwnedQualityFiles(
 }
 
 /** Hash selected ownership and every configuration input that affects scope. */
+function selectionIdentity(
+  operation: QualitySelection['operation'],
+  owner: string | undefined,
+  files: readonly string[],
+  components: readonly Component[],
+): string {
+  return JSON.stringify({
+    operation,
+    owner,
+    files,
+    owners: files.map((path) => [path, team.ownerFor(components, path)]),
+  });
+}
+
+/** Hash selected ownership and every configuration input that affects scope. */
 function qualityIdentity(
   operation: QualitySelection['operation'],
   owner: string | undefined,
