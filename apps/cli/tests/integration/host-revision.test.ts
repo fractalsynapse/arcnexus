@@ -29,7 +29,7 @@ const observations = [
 ];
 
 /** Mount the production adapter and capture the native Director activation. */
-async function fixture(t: TestContext) {
+async function fixture(t: TestContext, retained: readonly unknown[] = observations) {
   const storage = mkdtempSync(join(tmpdir(), 'arcnexus-host-revision-'));
   t.after(() => rmSync(storage, { recursive: true, force: true }));
   const context = new Context();
