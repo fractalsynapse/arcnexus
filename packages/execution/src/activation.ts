@@ -60,6 +60,16 @@ async function invokeCodex(
   const server = localTools(task, view, actions);
   const url = await server.start();
   try {
+    const profile = task.capture.components[view.component]?.activities[view.activity]?.profile;
+    task.note({
+      nativeInvocation: {
+        inputBytes: Buffer.byteLength(view.request.input, 'utf8'),
+        component: view.component,
+        activity: view.activity,
+        model: view.request.options.model,
+        profile,
+      },
+    });
     const reply = await codex(task.config.executable, view, task.artifact('codex.jsonl'), signal, {
       schema,
       url,
