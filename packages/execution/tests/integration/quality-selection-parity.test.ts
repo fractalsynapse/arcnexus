@@ -180,7 +180,7 @@ test('nonempty selection executes the captured command from its nested cwd', asy
   assert.match(output, new RegExp(`format:check scope=execution sha256=${result.selection!.identity}`));
   assert.match(output, /format:check scope=execution inputs=1 /);
   const confinedLog = readFileSync(log, 'utf8');
-  if (result.status !== 0 && /bwrap:.*(operation not permitted|creating new namespace|permission denied)/i.test(confinedLog)) {
+  if (result.status !== 0 && /bwrap:.*(operation not permitted|creating new namespace|no permissions to create a new namespace|permission denied)/i.test(confinedLog)) {
     t.skip(`Native confinement unavailable: ${confinedLog.trim()}`);
     return;
   }
