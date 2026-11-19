@@ -8,3 +8,5 @@ instructions:
   - Assertions target structure and host behaviour, never model wording
   - One cause per test; a suite that cannot say which layer failed is not a test
   - Behaviour-preserving work may characterise existing behaviour instead of manufacturing a red
+  - Repair ordinary operation and check failures in this milestone; request an explicit escalation for work requiring another owner or changed authority
+  - Preserve prior edit receipts and complete answers; never repeat acknowledged work merely because another request failed

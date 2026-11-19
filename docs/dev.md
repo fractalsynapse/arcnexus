@@ -1,8 +1,8 @@
 # Development direction
 
 Start with the [charter](charter.md), the [first delivery and qualification](plans/self-development-mvp.md),
-and the [interface registry](interface/registry.yaml). The runtime is being rebuilt.
-The contracts state the target behavior and the tests that establish it.
+and the [interface registry](interface/registry.yaml). The contracts distinguish accepted target behavior from implementation and
+record the tests that establish it.
 
 The catalog distinguishes project, app and plugin ownership. The CLI app owns
 its composition and terminal adapter in [apps/cli](../apps/cli/README.md).
@@ -31,6 +31,13 @@ diagram to the existing task, verification and delivery boundaries.
 objective records. Explore the current mapping with `arcnexus task plan` or
 submit a human objective to guide it. Review proposed goal edits before delivery.
 Bare `arcnexus task run` evaluates the reviewed inventory in priority order.
+`arcnexus architecture update [<feedback>]` assesses architecture and proposes
+exact changes for approval. Required implementation is delivered within Architect
+through the ordinary task lifecycle before Run captures the accepted model.
+`arcnexus refine [--rounds <N>]` runs Plan, Architect and every approved goal,
+defaulting to one round. The existing journal retains approval pauses and phase
+positions; each new round incorporates prior results. These commands are target
+capabilities until their contract scenarios and live qualification are verified.
 
 [Manager](../packages/manager/contract.md) maintains agent directives.
 [Release](../packages/release/contract.md) maintains repository workflows, ignores

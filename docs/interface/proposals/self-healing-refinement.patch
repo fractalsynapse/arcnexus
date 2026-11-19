@@ -1,0 +1,1089 @@
+diff --git a/apps/cli/contract.md b/apps/cli/contract.md
+--- a/apps/cli/contract.md
++++ b/apps/cli/contract.md
+@@ -14,7 +14,9 @@
+ that task lane, progress, cancellation and output contract. The explicit form
+ records the original human objective and offers resumable clarification. The bare
+ form maps the captured project and may report no inventory change. Changes to
+-active goals require approval of the exact diff and verified staging delivery.
++objectives or goals require approval of the exact diff and verified staging delivery.
++The verbatim human submission is retained as authorized input; a model-authored
++refinement is a proposal, not a replacement for that submission.
+
+ `--json` is a general CLI output option, accepted once before the command or
+ after its positional arguments. It selects structured JSON on stdout. Commands
+@@ -43,8 +45,13 @@
+ `activity`, `placeholders` and `request`. Its `request.input` matches the
+ prompt in the rendered output byte for byte.
+
+-The foreground task streams progress and evidence references, asks genuine human
+-questions, and honors SIGINT. Exit 0 represents the verified staging merge for a single goal, or a completed
++The foreground task streams progress and evidence references and honors SIGINT.
++Human decisions concern objectives, goals and architecture. Ordinary tool repair,
++implementation, checks, plan sequencing and authorized staging delivery do not
++require human approval. Unavailable external prerequisites remain observable holds;
++they are never treated as approval to proceed.
++
++Exit 0 represents the verified staging merge for a single goal, or a completed
+ round in which every goal has a Director assessment supported by evidence for the
+ evaluated revision or a verified merge. The Director can plan applicable checks
+ through the existing activity mappings. Assembled-candidate checks remain required
+@@ -53,6 +60,23 @@
+ Exit 1 represents a failed or blocked run, exit 2 invalid or unavailable input,
+ and exit 130 cancellation. Refuse a second active task in the same project. Other
+ verbs, option modes and launch surfaces are reserved for later qualification.
++
++`arcnexus architecture update [<feedback>]` assesses the approved guides, captured
++architecture, implementation and relevant prior observations. Feedback focuses the
++assessment. A no-change assessment can complete without a merge. Proposed changes
++show a purpose, consequences and exact diff for human approval. Required
++implementation is delivered within the Architect phase before Run begins.
++
++`arcnexus refine [--rounds <N>]` runs Plan, Architect and then every approved goal
++in priority order for each round. N defaults to one and must be a positive integer.
++Every round invokes Planner, Architect and the Director for each goal, even when
++existing measures pass. Accepted no-change outcomes are valid. The general
++`--json` option applies to both commands. A complete refinement invocation exits 0;
++pending approval or an external prerequisite exits 1 without losing its cursor.
++Approval pauses retain the exact proposal and resume the same phase and round.
++A later invocation resumes unfinished refinement before starting new rounds;
++changing the requested total while that invocation is unfinished is refused.
++No answer, an unknown response or elapsed time supplies approval.
+
+ ## Acceptance scenarios
+
+@@ -69,14 +93,17 @@
+ | GW-16 | `inspect` output equals a live activation's context for the same revision, component, activity and milestone, differing only in the declared placeholders. |
+ | GW-17 | `inspect` writes no state, starts no host, calls no model and creates no workspace; repeated runs on an unchanged revision are byte-identical. |
+ | GW-18 | A runtime-only value appears as a named placeholder and is never filled with invented content. The rendered header and the JSON result both list the placeholders used. |
+-| GW-19 | The foreground task prompts for a genuine human gate and records the answer as evidence. |
++| GW-19 | Objective, goal and architecture decisions retain the question, exact proposal and human answer. Routine technical repairs create no approval prompt; unavailable external prerequisites remain named holds. |
+ | GW-20 | `inspect` with an unknown component or an activity outside the declared set is exit 2 naming the valid values. |
+-| GW-22 | Inspection, task execution and goal planning delegate through the same structured SDK available to in-process callers. The CLI alone translates terminal arguments, progress and results into its transport. |
++| GW-22 | Inspection, task execution, goal planning, architecture updates and refinement delegate through the same structured SDK available to in-process callers. The CLI alone translates terminal arguments, progress, questions and results into its transport. |
+ | GW-23 | Bare `inspect`, an invocation with only one positional argument, and an invocation with extra arguments each exit 2 without effects. |
+ | GW-24 | `inspect director planning` and `inspect reviewer assessment` resolve the captured special actor bindings. `inspect direction planning` remains a valid component and activity selection. |
+ | GW-25 | Inspection prints the full ordered context and request from the activation builder. With matching inputs the payload matches the Codex adapter's input. Before admission it prints `<goal>` and names unavailable task-only values. |
+ | GW-26 | Both permitted placements of `--json` return the same structured inspection result. Its `request.input` equals the default rendered prompt. Duplicate or misplaced flags exit 2 with stderr diagnostics and empty stdout. |
+ | GW-27 | Bare `task plan` maps the captured project. Explicit `task plan "<objective>"` records the exact submission and can resume a clarification. Inventory edits require approval of the exact diff before reviewed staging delivery. |
++| GW-28 | Both architecture update forms assess through the same SDK and return a no-change result or an exact proposed diff. Approval and required prerequisite delivery complete before the following Run phase. |
++| GW-29 | refine defaults to one round and accepts a positive integer --rounds value. Invalid, duplicate or unsupported arguments exit 2 before admission. Every completed round runs Plan, Architect and all captured goals in priority order. |
++| GW-30 | Interrupting a refinement phase or awaiting approval retains its identity and cursor. The same invocation resumes without replaying completed phases, losing answers, repeating edits or creating a duplicate PR. Changed round totals are refused while it is unfinished. |
+
+ ## Deferred
+
+diff --git a/packages/architecture/contract.md b/packages/architecture/contract.md
+--- a/packages/architecture/contract.md
++++ b/packages/architecture/contract.md
+@@ -27,6 +27,8 @@
+ An absent activity is unavailable. A partial mapping or unresolved reference is a
+ validation finding. Neither activities nor their fields inherit project defaults.
+ The project selects director and verifier by their component and explicit activity.
++Architecture updates select the project's explicit architect component and activity;
++a missing binding makes that capability unavailable without affecting inspection.
+ A role supplies standing instructions and owns no files or commands. Operation
+ declarations describe the act and its parameters, prerequisites and confinement.
+ The activity grants the declared operation. Model-invoked operations bind a local
+@@ -38,9 +40,28 @@
+ Validate deterministically and offline. Check ownership, public import boundaries,
+ cycles, profiles, operations, guidance metadata and contract digests through the shared validation service. Capture freezes
+ trusted plugin identities and their composition. Proposal records go through the
+-coordination writer into learning. Only an explicit architect delegation permits
+-an editor to apply a lock change on a repository review branch. Product runs and their checked-edit tools refuse locked files and the registry.
+-Architectural proposals are applied outside the active task on a review branch.
++coordination writer and remain separate from accepted authority. Model checked-edit
++tools refuse locked files and the registry. An explicit architect delegation may
++name an editor or the trusted host to apply an exact reviewed proposal on the
++issue-linked task branch. The host-only application capability checks the proposal,
++human approval, original content digests and intended resulting bytes together.
++It is never exposed as an agent tool, and a candidate-side approval or registry
++change cannot authorize it.
++
++The Architecture Agent assesses approved objectives and goals, the current model
++and implementation, and relevant journal observations and Reviewer lessons. It
++returns a justified no-change assessment or one exact proposed change batch with
++its purpose and consequences. Research is optional. Unknown or absent approval
++leaves that proposal pending. Changed proposal bytes or architectural intent
++require renewed approval; implementation repair within accepted intent does not.
++
++When approved architecture needs prerequisite implementation, Workflow delivers
++that work and the approved architecture together through its normal Director,
++steward, independent verification and staging boundaries inside the Architect
++phase. Validation refuses activation of an unavailable operation or handler.
++No change modifies active captured authority. Run begins with a fresh capture of
++the accepted delivery. A changed baseline requires reconciliation and a newly
++reviewable proposal rather than silently rebasing protected edits.
+
+ ## Acceptance scenarios
+
+@@ -60,8 +81,11 @@
+ | ARC-12 | A product checked edit of a locked file or its registry is refused. A candidate-side registry modification cannot unlock an existing capture. |
+ | ARC-13 | `operationsFor` returns only operations whose activity matches, with captured definitions, prerequisites and tool schemas. Activation exposes the same bindings as inspection. |
+ | ARC-14 | A missing binding key fails naming the key; setting `PATH` does not satisfy it. |
+-| ARC-15 | `proposeChange` writes a proposal record and leaves `.arc/architecture/` byte-identical. |
++| ARC-15 | Proposing an architecture change records the exact proposal and leaves source byte-identical. Only a recorded human delegation to apply that exact proposal can enable the trusted host application path; model checked edits remain refused. |
+ | ARC-16 | Validation on an unchanged tree produces byte-identical finding output. |
+ | ARC-17 | A capture identifies each composed plugin. A changed target catalog or candidate plugin cannot replace one in the active capture. |
+ | ARC-18 | An explicitly empty list stays empty. A missing activity remains unavailable. Omitting a required field or referencing an unknown role, profile, operation or standard produces a finding. |
+ | ARC-19 | The director and independent verifier resolve their role and profile from their own explicitly selected component activity. |
++| ARC-20 | The Architecture Agent uses its explicitly mapped activity, can request optional research, and returns a source-linked no-change assessment or one purpose, consequences and exact diff batch. |
++| ARC-21 | Host application refuses missing, declined, forged or stale approval, changed expected content, and bytes outside the approved batch. The journal retains the approval and original failed observations. |
++| ARC-22 | Required implementation and approved architecture pass ordinary independent verification and staging delivery within Architect. Run captures the accepted revision; neither prerequisite work nor approval changes an active capture. Unavailable handlers block activation. |
+diff --git a/packages/direction/contract.md b/packages/direction/contract.md
+--- a/packages/direction/contract.md
++++ b/packages/direction/contract.md
+@@ -20,11 +20,23 @@
+
+ A missing component or a conflict with a locked clause becomes a proposal and a
+ named architectural gate. Clarifications requiring external authority become
+-foreground human questions. Corrections use the same milestone sequence.
++foreground objective, goal or architecture questions. Ordinary technical uncertainty
++uses the requesting activity, its research inbox or an owning supplier. Corrections
++within accepted work retain its milestone and acceptance.
+ The director cannot edit source, grant authority, accept its own plan or integrate
+ a candidate. An engineering task closes after verified staging integration. A standing goal
+ can be evaluated again in a later round. The workday and
+ production directives are deferred. One independent verdict covers the assembled goal.
++
++Direction engages for initial planning, an explicit activity escalation requiring
++sequencing or different responsibility, and final independent rejection. Ordinary
++operation failures and same-owner activity repair do not invoke Direction. The
++host retains the canonical accepted plan and completed outcomes. At a revision
++boundary the Director receives the previous plan, completed position, current
++finding and relevant evidence references. Its response changes pending work; the
++host preserves completed outcomes, original acceptance identities and authority.
++Malformed revision output returns to the same Director call with the exact
++validation finding, without discarding the existing accepted plan.
+
+ ## Acceptance scenarios
+
+@@ -36,7 +48,7 @@
+ | DI-4 | A milestone whose work spans two owners is refused at validation with both owners named. |
+ | DI-5 | A request linking to existing accepted work reuses that milestone's owner and acceptance; a second implementation of the same contract is never planned. |
+ | DI-6 | A request from an owner whose supplier milestone is later in the order resequences the supplier ahead of it; no dependency graph, admission check or cycle detection is consulted. |
+-| DI-7 | A failed step produces a correction milestone for the same owner with a stated diagnosis; no new state, retry counter or recovery path appears. |
++| DI-7 | A failed ordinary tool, check or self-review returns to the accountable activity or an earlier applicable activity in the same milestone. No Director call or correction milestone is added. An explicit escalation or final independent rejection invokes Direction. |
+ | DI-8 | A goal that conflicts with a locked contract yields a change-request gate naming the contract id and clause, and no milestone touching that path is admitted. |
+ | DI-9 | Direction cannot write the registry or any locked contract file; the checked-edit refusal is observed, not merely asserted in the prompt. |
+ | DI-11 | Director input uses the bounded context from Architecture Model and names what was withheld. |
+@@ -48,6 +60,7 @@
+ | DI-17 | A verified staging goal closes after the configured checks and review are observed and the provider reports its merge identity. The host can integrate once gates are satisfied. |
+ | DI-19 | The first build refuses a component-scoped workday directive with a stated reason. |
+ | DI-20 | The director selects a supplier from a Team view. An unowned resource or ownership collision is reported with affected resources and owners instead of guessing a recipient. A supplier request grants no write authority. |
++| DI-21 | A revision consumes the retained plan and relevant finding and proposes changes to pending work. The host rejects changes that remove completed outcomes, alter original acceptance or expand captured authority. |
+
+ ## Deferred
+
+diff --git a/packages/execution/contract.md b/packages/execution/contract.md
+--- a/packages/execution/contract.md
++++ b/packages/execution/contract.md
+@@ -30,6 +30,30 @@
+ the retained branch, checkpoint and any abandoned worktree before activation. No application work budget
+ or special recovery process participates in this path.
+
++Tool refusals and operation failures return the exact exit, diagnostic and log to
++the calling activity together with retained successful receipts. Ownership refusal
++does not revoke earlier edits or grant foreign scope. A repair preserves the issue,
++branch, checkpoint and complete clarification or research answer. Workflow may
++rewind within the same milestone; Execution enforces the selected activity's
++original captured operations and ownership.
++
++Applicable component checks are selected from declared operations by category and
++applicability, including formatting, lint, types/build and relevant tests. The
++absence of a test suite does not skip other applicable checks. Read-only checks
++never reformat source, and all automatic fixers stay within captured write scope.
++Host-required assembled checks remain independent acceptance requirements.
++
++Native/provider observations are declared Execution-owned operations using the
++configured real provider and existing request builder and confinement lifecycle.
++Retain the request, actual result, versions, configuration, command and logs as
++immutable evidence. A model claim alone is not an observed native result.
++
++The only protected-source write exception is Architecture's trusted host
++application of an exact human-approved proposal. It is separate from model
++checked edits and cannot change active authority. At a subsequent admission,
++retained work may be revalidated against explicitly approved new authority while
++preserving its original goal acceptance and failed observations.
++
+ ## Acceptance scenarios
+
+ | ID | Observation |
+@@ -54,6 +78,10 @@
+ | EX-20 | Planning a step under one activity and attempting it after a later bucket has opened is refused, and the refusal names the open earlier items; reordering the same plan into canonical buckets runs unchanged. |
+ | EX-21 | An activation whose every bucket is closed while a criterion of the goal is unmet is recorded as failed, and no checklist state can mark it accepted. |
+ | EX-19 | Two lanes for two different projects can exist in one process without interference: the lane is obtained per project, holds no process-global mutable state, and neither activation observes the other's workspace, store or evidence. |
++| EX-22 | A failed operation resumes its caller with exact diagnostics and retained receipts. A successful checkpointed file and a complete answered question are reused after restart without another write or prompt. |
++| EX-23 | A component with no suite runs its other applicable declared quality checks. A real lint or type failure reaches its accountable activity before progression; assembled checks remain required. |
++| EX-24 | A declared native observation uses the configured real provider through production assembly and records its actual request, versions, result and failure logs. It cannot silently substitute simulation or another profile. |
++| EX-25 | A retained checkpoint survives an approved architecture delivery. A fresh admission revalidates ownership, operations, original acceptance and applicable evidence before resuming; candidate-side authority edits cannot enable this path. |
+
+ ## Deferred
+
+diff --git a/packages/coordination/contract.md b/packages/coordination/contract.md
+--- a/packages/coordination/contract.md
++++ b/packages/coordination/contract.md
+@@ -4,7 +4,12 @@
+
+ ## Obligations
+
+-Own one SQLite store per verified repository, one active goal and one writer.
++Own one SQLite store per verified repository, one sequential active task and one
++project writer. Refinement retains that writer across sequential phase and task
++sessions. Completing an inner task does not release a live outer invocation's
++writer. Standalone commands use the same admission and journal lifecycle. A
++second invocation is refused; there is no parallel child admission or second lock
++store. A dead writer is reconciled through the existing restart path.
+ Persist the plan, position, gate answers, requests, escalation, attribution,
+ outcomes and evidence references. A goal id is the digest of its full text.
+ A round and inventory entry identify a fresh logical task; attempts share that
+@@ -21,6 +26,16 @@
+ no automatic per-goal cache threshold. Record one terminal outcome and retain the
+ last committed position for restart inspection. Observe an uncertain upstream effect
+ before attempting it again.
++
++Persist refinement identity, requested round count, phase, approved proposal and
++per-goal cursor in the same store. Phase and goal task identities remain distinct;
++attempts reuse their task identity. Pin the goal inventory when Run begins, retain
++it for that round, and refresh it after the next Plan and Architect phases.
++A restart reads completed outcomes before claiming unfinished work and resumes
++without replaying completed phases. Record human approval against exact content
++and baseline, retain a pending decision without assuming approval, and reconcile
++uncertain external effects before replay. Runtime adoption at a safe boundary
++records the validated runtime identity and preserves original task evidence.
+
+ ## Acceptance scenarios
+
+@@ -44,6 +59,9 @@
+ | CO-17 | The same goal text always resolves to the same goal id, and a single-character change produces a different id; a 4,000-character goal still resolves to one digest and one plan file. |
+ | CO-18 | A hand-edited committed plan is reproduced away by the next render, and a render that disagrees with store state is reported rather than trusted. |
+ | CO-20 | An escalation is stored as an `escalation` entity carrying its reason, goal identity, plan revision, open steps and evidence references; it reads as one owner waiting on another, is replayable as a directive input, and resolving it closes the entity without rewriting the goal or its acceptance. |
++| CO-21 | Refinement, phase and task sessions use one SQLite store and one project writer. A second invocation is refused throughout phase transitions and approval pauses, and a finished child cannot release the live outer writer. |
++| CO-22 | Restart during a phase, approval pause or goal restores its exact logical identity, proposal and first unfinished position. Completed phases and goals are not repeated, and the next fresh round captures the new inventory. |
++| CO-23 | Approval names the exact baseline and content. Missing, unknown or mismatched approval cannot advance the cursor. A safe runtime change records its identity and reconciles uncertain effects before continuation. |
+
+ ## Deferred
+
+diff --git a/packages/verification/contract.md b/packages/verification/contract.md
+--- a/packages/verification/contract.md
++++ b/packages/verification/contract.md
+@@ -6,9 +6,11 @@
+
+ Run one acceptance checklist on the assembled task candidate and obtain one
+ independent read-only verdict for the engineering criteria and the original goal.
+-Owner feedback checks can run before assembly. Required missing or skipped evidence
+-blocks acceptance. Route a rejected criterion and its evidence to the accountable
+-owner through direction. Resolve expected-red and deliberate negative tests as
++Applicable component feedback checks run before progression when needed; a test
++suite is one operation category rather than the definition of verification.
++Required missing or skipped evidence blocks acceptance. Ordinary check failures
++return to the accountable activity through Workflow. A valid final independent
++rejection sends its failed criteria and evidence through Direction. Resolve expected-red and deliberate negative tests as
+ observed verification rather than failed cycles.
+
+ Bind the verdict to the candidate, captured acceptance, checks and environment.
+@@ -17,6 +19,13 @@
+ refusals without suppressing or sampling evidence. A verdict records reviewer
+ identity, profile, criteria, evidence and input digest. The reviewer never writes
+ candidate files or uses the delivery capability.
++
++Bind each check or observation to its actual relevant inputs and environment;
++bind the independent verdict to the full candidate. A scoped observation may be
++reused after unrelated edits only when its declared inputs and environment match.
++A changed candidate always requires an applicable independent verdict. Return
++malformed or invalid review citations to the Reviewer for repair with the exact
++finding while retaining the candidate and unchanged check evidence.
+
+ ## Acceptance scenarios
+
+@@ -32,12 +41,14 @@
+ | VI-7 | Verification cannot edit the candidate: an attempted write is refused by the checked-edit path, and no verification stage grants itself write authority. |
+ | VI-8 | The reviewer runs under the reviewer profile with read-only scope, and is never the steward who authored the change. |
+ | VI-9 | An expected-red regression and a deliberate negative test are recorded as verification that passed, and do not end a clean-cycle sequence. |
+-| VI-10 | A rejected verdict names each failing acceptance id and its accountable owner, and direction turns it into a correction milestone rather than a new state. |
++| VI-10 | A valid rejected verdict names each failing acceptance id and its accountable owner. Direction revises pending corrective work while preserving original acceptance. A malformed verdict returns to the same Reviewer for repair before any plan revision. |
+ | VI-12 | A verification regression consumes the actual assembled record shape and fails when that shape is wrong, even if an alternate fixture would have passed. |
+ | VI-13 | The reviewer reads within its captured read scope. Widening that scope is an authority decision for the architect, never a size decision taken by verification. |
+ | VI-14 | Delivery consumes the accepted verdict and does not run a separate engineering verification pass. |
+ | VI-15 | A verdict is recorded as evidence with its reviewer identity, profile and input digest, so a later run can show what was actually seen. |
+ | VI-16 | Verification never merges, publishes or answers a human gate on anyone's behalf. |
++| VI-17 | An ordinary failed component check returns to its accountable activity without Direction. Final independent rejection invokes Direction. Reviewer response repair retains the exact candidate and applicable check evidence. |
++| VI-18 | Reuse depends on a check's declared relevant inputs and environment. An unrelated edit does not alone invalidate a scoped observation; a changed relevant input reruns it, and a changed candidate invalidates its prior verdict. |
+
+ ## Deferred
+
+diff --git a/packages/delivery/contract.md b/packages/delivery/contract.md
+--- a/packages/delivery/contract.md
++++ b/packages/delivery/contract.md
+@@ -12,11 +12,20 @@
+ verified head when authorized and returns the merge identity. Store that result once.
+ Use milestone attribution from the single worktree instead of steward branches.
+
+-A pending check or review leaves the delivery pending. A genuine external action
+-is a named gate. Inspect provider state after an uncertain effect before another
+-attempt. Preserve the report and candidate if delivery cannot finish. Delivery
++A pending check or review leaves the delivery pending. An unavailable external
++prerequisite is a named hold. It is distinct from approval of objectives, goals or
++architecture and cannot authorize an effect. Inspect provider state after an
++uncertain effect before another attempt. Preserve the report and candidate if delivery cannot finish. Delivery
+ cannot accept work, modify the candidate, bypass review, approve a PR, or merge
+ to main. Release and simulation operations are deferred.
++
++A retryable or uncertain publication remains with Delivery, which observes the
++provider before retrying through the same path. When publication reveals an
++engineering defect, return the actual failure to Workflow for accountable repair.
++Delivery cannot edit the accepted candidate. Changed work requires refreshed
++affected checks and an applicable independent verdict before publishing again.
++Retain the issue and existing PR identity; discover the existing publication
++before creating another. Ordinary staging retries require no new human approval.
+
+ ## Acceptance scenarios
+
+@@ -27,13 +36,14 @@
+ | DE-3 | Publishing from the architectural authority revision or from a verification checkout is refused with the three identities distinguished. |
+ | DE-4 | The host opens one staging PR for the task, observes CI and configured review, requests provider merge of the verified head, and records the resulting identity. |
+ | DE-5 | A push whose outcome is unknown is followed by a provider inspection; the retry is justified by the observed state, and no blind replay occurs. The uncertainty alone does not raise a human gate. |
+-| DE-5b | An observation showing genuinely required external action — a missing credential the run cannot obtain, an irreversible provider state — raises a blocking-question gate naming that action, and nothing else does. |
++| DE-5b | An observation showing an unavailable external prerequisite, including a missing credential or irreversible provider state, retains a named hold with the required action. It is not a request to approve routine implementation and never authorizes bypassing a delivery gate. |
+ | DE-6 | A second delivery attempt for an already merged candidate is a no-op reporting the recorded merge identity, not a duplicate pull request. |
+ | DE-7 | Conflicting contributions are refused before overwriting recorded workspace content. The goal retains prior attribution and conflict evidence. |
+ | DE-13 | Delivery cannot widen the candidate: an edit attempted during publication is refused by the checked-edit path. |
+ | DE-14 | Staging integration uses one delivery path and derives its status from retained observations and provider facts. |
+ | DE-15 | The delivery record holds ids and digests only; no Git object content is duplicated into the store, and the store survives a repository garbage collection unchanged. |
+ | DE-16 | Two sequential owners retain attribution in one candidate and one PR, without allocating branches per steward. |
++| DE-17 | Uncertain publication is reconciled before retry. A publication-discovered engineering defect returns for accountable repair, then refreshed affected checks and independent review. The existing issue and PR are reused without editing a candidate during publication. |
+
+ ## Deferred
+
+diff --git a/packages/commands/contract.md b/packages/commands/contract.md
+--- a/packages/commands/contract.md
++++ b/packages/commands/contract.md
+@@ -13,6 +13,8 @@
+ | `runTask(input, observer, signal)` | Submit a goal to Workflow. Report structured progress, evidence references and human questions through the observer. Return the task outcome and honor cancellation. A supplied human answer is recorded through the task services. |
+ | `planTask(directory, objective, observer, signal)` | Map captured goals or record the provided human objective. Use the task lane, structured progress and human gates. Return the mapping or reviewed delivery outcome. |
+ | `runRound(directory, observer, signal)` | Evaluate the captured standing goals sequentially through the same task path and return per-goal evidence and the round result. |
++| `updateArchitecture(directory, feedback, observer, signal)` | Assess alignment, retain an exact architecture proposal for approval, and deliver approved changes and prerequisites inside Architect through the normal task lifecycle. |
++| `refine(directory, rounds, observer, signal)` | Run or resume Plan, Architect and the priority-ordered goals for the requested positive round count. Return structured phase, approval, repair, per-goal and completion observations with cancellation support. |
+
+ The application adapter supplies inputs, renders outputs, collects answers and
+ maps outcomes to its transport. Terminal arguments and exit codes belong to
+@@ -26,3 +28,4 @@
+ | CMD-1 | A caller without a terminal can inspect and run a task using structured inputs and results. |
+ | CMD-2 | CLI inspection and task execution delegate to those same operations and preserve the CLI contract. |
+ | CMD-3 | A human gate, unavailable result or cancellation has the same task meaning regardless of adapter. |
++| CMD-4 | A nonterminal caller updates architecture or refines through the same application lifecycle as the CLI, including pending approval, phase recovery and per-goal results. No terminal argument or exit-code policy enters the SDK. |
+diff --git a/packages/planner/contract.md b/packages/planner/contract.md
+--- a/packages/planner/contract.md
++++ b/packages/planner/contract.md
+@@ -16,9 +16,17 @@
+ text. Its new record retains the same objective identity and links to the
+ superseded record.
+
+-The goal approval gate shows an exact line diff. Unknown responses repeat the
+-gate. A correction after independent rejection proposes revised bytes and
+-requires approval of its new goal diff.
++Each Plan phase assesses current approved guides and implementation together with
++relevant prior round observations. Preserve goals as outcomes and measures without
++component ownership assignments or execution results. Return an explicit no-change
++assessment when appropriate.
++
++The approval gate presents one summary and exact objective/goal line diff. Preserve
++the verbatim human submission as authorized input. New model-authored objective
++refinements and goal changes require human approval. Unknown responses repeat the
++gate; absent answers preserve the exact pending proposal for restart. A correction
++after independent rejection requires renewed approval only when approved guide
++bytes change. Routine implementation corrections add no approval gate.
+
+ | ID | Observation |
+ | --- | --- |
+@@ -26,5 +34,6 @@
+ | PLN-2 | Objective mode preserves verbatim submission and human answers with stable links to existing or proposed goals. The objective inventory is derived from records. |
+ | PLN-3 | The host shows the exact proposed goal changes for human approval. Only approved goal bytes reach the ordinary checked-edit, independent review and staging delivery path. |
+ | PLN-4 | An interrupted round retains its captured goal inventory. The next fresh round uses the newly reviewed inventory. |
++| PLN-5 | Every refinement Plan phase evaluates approved guides using prior execution observations. It proposes an exact objective/goal diff or justified no change; no goal records component ownership or results. Approval is retained across restart and applies only to the shown guide bytes. |
+
+ See the [CLI gateway](../../apps/cli/contract.md) and [development direction](../../docs/dev.md).
+diff --git a/packages/workflow/contract.md b/packages/workflow/contract.md
+--- a/packages/workflow/contract.md
++++ b/packages/workflow/contract.md
+@@ -12,25 +12,37 @@
+ | --- | --- |
+ | Assignment, Plan and Checklist | The Director Agent establishes a plan through Direction and the [plan template](../../.arc/architecture/plan-template.md). Coordination persists accepted checklist and position. |
+ | Research, Document, Design and Implement | Workflow advances through the applicable component mappings. Design uses `testing`. Research supports the activity that needs it. [Agent](../agent/contract.md) uses Execution to run the selected activity in its captured scope. |
+-| Review | A steward can self-review. [Verification](../verification/contract.md) obtains one independent verdict for the assembled candidate from [Reviewer](../reviewer/contract.md). Direction decides correction work from the evidence. |
++| Review | Steward self-review routes local repair within its milestone. [Verification](../verification/contract.md) obtains the final independent verdict from [Reviewer](../reviewer/contract.md); a valid rejection returns to Direction. |
+ | Release and Updates | [Delivery](../delivery/contract.md) performs the host-owned staging integration and returns its observation. Workflow records the outcome through Coordination. |
+ | Logs and Report | Coordination retains task position, observations and evidence references. Commands forwards progress and results to the caller. |
+ | Agent Registry, Standards and Contracts | [Team](../team/contract.md) resolves eligible stewards. [Architecture](../architecture/contract.md) resolves captured standards and contracts. |
+
+-`run(input, observer, signal)` drives one admitted task. The lane invokes the
+-Director, the applicable steward activities, and the final Reviewer through the
+-same Agent interface. Workflow delegates lane/worktree enforcement and cancellation
+-to Execution, and durable state to Coordination. A supplier request, escalation
+-or review rejection returns to Direction for validation and sequencing. Feedback
+-may cause earlier activity work through an explicit revised plan. Workflow
+-follows the accepted sequence and does not create a second scheduler or store.
+-An unresolved repairable check or review hold returns its latest diagnostic,
+-check exit and log, prior correction and checked-edit evidence to Direction.
+-Direction can sequence distinct corrective contributions under the original
+-criterion while the observations show progress. A repeated unchanged diagnostic
+-without progress retains the hold and current position. Human decisions and
+-external prerequisites remain explicit gates. Preserve the original owner,
+-acceptance, issue and secured checkpoint throughout correction.
++`run(input, observer, signal)` drives the canonical admitted task lifecycle.
++It invokes the Director initially, executes applicable steward activities and
++obtains the independent final verdict before host integration. Execution enforces
++confinement, checkpoints and cancellation; Coordination retains state.
++
++Operation refusals and failures return exact diagnostics and retained successful
++receipts to the caller. A same-owner check or self-review finding rewinds within
++the accepted milestone to the earliest applicable activity that must change:
++documentation for intent, testing for the assertion, or implementation for code.
++Persist the rewind before activation, retain unaffected evidence, and rerun the
++affected downstream activities and checks. The host validates the target against
++the milestone's applicable Steps and the captured activity map. A local repair
++cannot change ownership, acceptance or operations, add a milestone, or invoke
++Direction. An explicit escalation for different responsibility or scope and a
++valid final independent rejection invoke Direction.
++
++Compare a repeated diagnostic with its relevant inputs and checked progress.
++Distinct failures or changed inputs can continue correction. An unchanged failure
++without progress retains an actionable hold or explicit escalation before another
++identical automatic attempt. Research is an optional inbox contribution when
++knowledge is missing; it is never a mandatory repair step. Complete answers and
++edit receipts survive rewinds and restart.
++
++Human approvals concern objectives, goals and architecture. Unavailable external
++prerequisites retain observable holds. Ordinary technical correction, sequencing
++and authorized staging delivery introduce no human approval gate.
+
+ `inspect` uses the Agent and Architecture request builder without admitting a
+ workflow. An accepted staging result closes the task. Cancellation and blocking
+@@ -43,6 +55,24 @@
+ through Execution and independent review. A rejected Planner candidate returns its findings to Planner for a correction and
+ approval of new goal bytes. A standing goal can use an independently reviewed
+ check-only candidate when the staging tree remains byte-identical.
++
++`architecture update` assesses through the explicitly selected Architecture Agent.
++A no-change assessment completes at its captured revision. For a change, retain
++one exact proposal and await human approval. Use the normal task workflow inside
++Architect for prerequisite implementation and approved host application. Verify
++and deliver the combined candidate before the following Run phase. Candidate
++edits never change active authority; capture the accepted architecture afresh.
++
++`refine(directory, rounds, observer, signal)` drives Plan, Architect and Run in
++order for each requested round. The default count is one. Run captures the
++approved priority-ordered inventory after the first two phases and invokes the
++Director for every goal regardless of existing passing measures. Every new round
++reassesses guides and consumes prior results; no-change assessments remain valid.
++Use the existing Coordination store and one project writer across sequential
++phase and task sessions. A pending approval preserves the exact phase and proposal.
++Restart resumes the same invocation and first unfinished position without duplicate
++issues, edits or PRs. Runtime updates may be adopted only at a recorded validated
++safe boundary, with uncertain effects reconciled before continuing.
+
+ ## Project and task loops
+
+@@ -66,6 +96,9 @@
+ | WFL-2 | A supplier request or rejected verdict goes to Direction. The recorded revised plan controls what Workflow executes next. |
+ | WFL-3 | A second goal cannot enter the same project lane. Cancellation retains progress and evidence through the existing Execution and Coordination services. |
+ | WFL-4 | Inspecting an actor and activity creates no admitted task, workflow state or activation. |
+-
+-| WFL-5 | A correction that resolves a compiler error and exposes a different assertion failure in the same check returns the fresh diagnostic to Direction. Distinct corrective work runs before the paused step resumes, under the original acceptance and ownership. |
+-| WFL-6 | A repeated unchanged check or review diagnostic without progress holds the task before another automatic correction. Actual human decisions and external prerequisites remain explicit gates. |
++| WFL-5 | A correction that resolves a compiler error and exposes a different assertion failure returns the exact new finding to the accountable activity. Local rewinds remain within its milestone and preserve original ownership and acceptance without another Director call. |
++| WFL-6 | A repeated unchanged diagnostic with unchanged relevant inputs holds or explicitly escalates before another identical correction. Human approvals concern objectives, goals and architecture; unavailable external prerequisites retain named holds. |
++| WFL-7 | Self-review rewinds to the earliest affected applicable Step; after repair only affected downstream activities and checks replay, with prior receipts and complete answers retained. |
++| WFL-8 | Architect delivers required implementation and approved architecture through the canonical task lifecycle before Run captures it. A candidate cannot approve or activate its own authority. |
++| WFL-9 | Each refinement round assesses Plan and Architect and invokes Direction for every priority-ordered approved goal. A restarted phase or approval pause resumes the same invocation without repeating completed outcomes. |
++| WFL-10 | Three consecutive live rounds assess every captured goal and show approved guide improvement, a useful staged implementation and later consumption of prior findings. Justified no change is valid. Operator state repair, bypassed checks or uncontrolled aborts break the streak; execution-path changes restart qualification. |
+diff --git a/.arc/architecture/plan-template.md b/.arc/architecture/plan-template.md
+--- a/.arc/architecture/plan-template.md
++++ b/.arc/architecture/plan-template.md
+@@ -45,9 +45,18 @@
+
+ ## Changes and evidence
+
+-A steward proposes dependencies or a revised approach. The director controls
+-sequence and scope. Link accepted supplier work or place a supplier milestone
+-before the dependent work. A genuine human gate names the question or external
+-action. Record position, check outcomes and evidence through the host. Keep a
++A steward repairs ordinary operation, check and self-review findings within its
++accepted milestone. Identify the earliest applicable activity that needs change:
++documentation for intent, testing for assertions, or implementation for code.
++The host persists that rewind and reruns affected downstream work; completed
++receipts and unaffected evidence remain available. No correction milestone or
++Director call is needed for same-owner repair.
++
++The director controls initial sequencing and changes after explicit escalation or
++final independent rejection. Link accepted supplier work or place distinct
++supplier work before its dependent. Revisions preserve completed outcomes and
++original acceptance. Human approvals concern objectives, goals and architecture.
++Unresolved external prerequisites retain named holds without granting authority.
++Record position, check outcomes and evidence through the host. Keep a
+ brief simplification ledger naming removals, reuse and any added responsibility
+ with its demonstrated need. Retain failed observations and measure each milestone.
+diff --git a/.arc/architecture/project.yaml b/.arc/architecture/project.yaml
+--- a/.arc/architecture/project.yaml
++++ b/.arc/architecture/project.yaml
+@@ -20,6 +20,9 @@
+ verifier:
+   component: reviewer
+   activity: assessment
++architect:
++  component: architecture
++  activity: updating
+ checks:
+   acceptance:
+   - repository-build
+diff --git a/.arc/architecture/components/architecture.yaml b/.arc/architecture/components/architecture.yaml
+--- a/.arc/architecture/components/architecture.yaml
++++ b/.arc/architecture/components/architecture.yaml
+@@ -13,6 +13,20 @@
+ - docs/interface
+ - .arc/research/architecture
+ activities:
++  updating:
++    role: architect
++    profile: gpt-sol
++    instructions:
++    - Assess approved objectives and goals, current architecture and implementation, and relevant prior execution findings.
++    - Return a justified no-change assessment or one exact proposal with purpose, consequences and required implementation outcomes.
++    - Preserve captured authority. Only the trusted host may apply the exact human-approved protected diff.
++    operations:
++    - read-file
++    - list-files
++    - ask-question
++    - request-research
++    - request-supplier
++    standards: []
+   research:
+     role: researcher
+     profile: gpt-astra
+diff --git a/.arc/architecture/roles/architect.yaml b/.arc/architecture/roles/architect.yaml
+new file mode 100644
+--- /dev/null
++++ b/.arc/architecture/roles/architect.yaml
+@@ -0,0 +1,10 @@
++id: architect
++purpose: Refine the project model against approved guides and observed execution
++responsibilities:
++  - Compare objectives, goals, architecture and implementation with relevant execution findings
++  - Propose the smallest coherent architecture change and any prerequisite implementation outcomes
++  - Preserve ownership, original acceptance and immutable active authority
++instructions:
++  - Return a purpose, consequences and exact proposed diff or a justified no-change assessment
++  - Research only when an external uncertainty affects the decision
++  - Human approval applies to the proposal; ordinary implementation proceeds through the existing task workflow
+diff --git a/.arc/architecture/roles/systems-engineer.yaml b/.arc/architecture/roles/systems-engineer.yaml
+--- a/.arc/architecture/roles/systems-engineer.yaml
++++ b/.arc/architecture/roles/systems-engineer.yaml
+@@ -8,3 +8,5 @@
+ instructions:
+   - Reuse existing code and remove superseded implementation rather than wrapping it
+   - No placeholder implementation and no simulated output presented as delivered behaviour
++  - Repair ordinary operation and check failures in this milestone; request an explicit escalation for work requiring another owner or changed authority
++  - Preserve prior edit receipts and complete answers; never repeat acknowledged work merely because another request failed
+diff --git a/.arc/architecture/roles/designer.yaml b/.arc/architecture/roles/designer.yaml
+--- a/.arc/architecture/roles/designer.yaml
++++ b/.arc/architecture/roles/designer.yaml
+@@ -8,3 +8,5 @@
+   - Assertions target structure and host behaviour, never model wording
+   - One cause per test; a suite that cannot say which layer failed is not a test
+   - Behaviour-preserving work may characterise existing behaviour instead of manufacturing a red
++  - Repair ordinary operation and check failures in this milestone; request an explicit escalation for work requiring another owner or changed authority
++  - Preserve prior edit receipts and complete answers; never repeat acknowledged work merely because another request failed
+diff --git a/.arc/architecture/roles/technical-writer.yaml b/.arc/architecture/roles/technical-writer.yaml
+--- a/.arc/architecture/roles/technical-writer.yaml
++++ b/.arc/architecture/roles/technical-writer.yaml
+@@ -8,3 +8,5 @@
+   - Write for the reader who arrives later without the conversation
+   - Name the clause or standard a statement implements rather than restating policy in prose
+   - Flag contradictions instead of documenting around them
++  - Repair ordinary operation and check failures in this milestone; request an explicit escalation for work requiring another owner or changed authority
++  - Preserve prior edit receipts and complete answers; never repeat acknowledged work merely because another request failed
+diff --git a/.arc/architecture/roles/self-reviewer.yaml b/.arc/architecture/roles/self-reviewer.yaml
+--- a/.arc/architecture/roles/self-reviewer.yaml
++++ b/.arc/architecture/roles/self-reviewer.yaml
+@@ -5,3 +5,5 @@
+   - Report gaps and observations for the assembled task review
+ instructions:
+   - Record observations without issuing the independent acceptance verdict
++  - Return local findings to the earliest affected documentation, testing or implementation activity in the same milestone
++  - Escalate different responsibility or changed scope explicitly; final independent rejection belongs to Direction
+diff --git a/.arc/architecture/roles/director.yaml b/.arc/architecture/roles/director.yaml
+--- a/.arc/architecture/roles/director.yaml
++++ b/.arc/architecture/roles/director.yaml
+@@ -7,3 +7,5 @@
+ instructions:
+   - Return plans, supplier decisions and escalations as structured outcomes
+   - Keep planning and sequencing within captured read authority
++  - Plan initially and revise on explicit escalation or final independent rejection; ordinary same-owner repairs stay with the activity
++  - Use the retained previous plan and relevant finding, preserving completed outcomes and proposing only necessary pending changes
+diff --git a/AGENTS.md b/AGENTS.md
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -9,8 +9,10 @@
+ The architect owns project intent, boundaries and contract changes. Before editing,
+ check the request against the applicable locked clauses. If they conflict, name
+ the clause and consequence, propose a resolution, and wait for the architect.
+-Approval can authorize a named editor to apply the change on a review branch.
+-Product runs refuse writes to locks and their registry.
++Approval can authorize a named editor or the trusted host to apply the exact
++reviewed change on an issue branch. Agent checked-edit tools refuse locks and
++their registry. Host application requires the recorded human approval and matching
++baseline and cannot change active captured authority.
+
+ The [catalog](.arc/architecture/project.yaml) names the sole owner for every path.
+ Change only the accountable owner's scope. Use another plugin through its public
+@@ -60,9 +62,16 @@
+ ## Direction and evidence
+
+ The director generates the sequence from the [plan template](.arc/architecture/plan-template.md).
+-Each milestone has one accountable owner and stable acceptance criteria. Link
++Each milestone has one accountable owner and stable acceptance criteria. Ordinary
++tool, check and self-review failures return to the caller or earliest affected
++activity within that milestone. Persist the rewind and preserve completed edit
++receipts, complete answers and unaffected evidence. Direction engages initially,
++on explicit escalation and after final independent rejection. Link
+ already accepted supplier work, or place required supplier work before the dependent
+-milestone. Escalate a decision that needs different authority. The host validates
++milestone. Escalate a decision that needs different authority. Human approval concerns
++objectives, goals and architecture. Routine repairs, plan sequencing and authorized
++staging delivery add no approval gates. External prerequisites remain named holds.
++The host validates
+ authority and persists plan and learning records. Keep bulk logs and transcripts
+ outside source and preserve failed observations.
+
+@@ -70,7 +79,19 @@
+ changes and the self-development gate. Deterministic tests, actual host confinement,
+ CI and live inference are distinct evidence. Report gaps. Use existing evidence
+ when candidate, criteria and environment still match. During bootstrap, use the
+-repository delivery workflow until the real CLI can carry a change.
++repository delivery workflow for a named missing capability, then demonstrate
++that capability through the platform and use it for subsequent work.
++
++Refinement runs Plan, Architect and all approved priority-ordered goals. Each round
++reassesses the guides and implementation using prior results. Goals contain
++outcomes and success measures without component owners or execution results.
++Architecture proposals require an exact human-approved diff. Deliver prerequisites
++inside Architect through the normal task workflow before Run captures the new
++accepted model. Approval pauses and interruptions retain the same round cursor.
++Qualify with three consecutive live rounds showing useful guide and implementation
++refinement and subsequent use of prior evidence. Justified no change is valid;
++operator repair, bypassed checks and uncontrolled aborts break the streak. Changes
++to the execution path restart qualification. Main and releases remain separate.
+
+ ## Repository delivery
+
+diff --git a/.agents/skills/arcnexus-guidance/SKILL.md b/.agents/skills/arcnexus-guidance/SKILL.md
+--- a/.agents/skills/arcnexus-guidance/SKILL.md
++++ b/.agents/skills/arcnexus-guidance/SKILL.md
+@@ -29,3 +29,10 @@
+ Route guidance input changes there, and route capture or catalog validation changes
+ to Architecture. Report observed results and unresolved requests to the
+ caller for delivery.
++
++For refinement guidance, keep the recovery route canonical in the Workflow
++contract and activity roles. Walk an ordinary failure back to its caller, a
++self-review finding back within its milestone, and only an explicit escalation
++or final independent rejection through Direction. Human approvals govern guides;
++ordinary technical repair adds no gate. An exact approved host application never
++widens an active capture. Keep goals free of component assignments and results.
+diff --git a/.agents/skills/arcnexus-verification/SKILL.md b/.agents/skills/arcnexus-verification/SKILL.md
+--- a/.agents/skills/arcnexus-verification/SKILL.md
++++ b/.agents/skills/arcnexus-verification/SKILL.md
+@@ -53,3 +53,13 @@
+ component stewardship, applicable checks, independent verification and verified
+ staging integration. Use the clean-cycle rules in the qualification plan. Store run evidence
+ outside source. Use focused diagnosis of handoff failures before expanding scope.
++
++For continuous refinement, verify Plan, Architect and every captured goal in each
++round, including Director assessment when measures already pass. Confirm approved
++guide changes, useful staged implementation and later use of earlier findings
++across three consecutive live rounds. Justified no change and handled internal
++repairs are valid. Approval pauses retain the round; operator state repair,
++bypassed checks and uncontrolled aborts break the streak. Execution-path changes
++restart qualification. Record Direction calls, repair routes and request sizes
++alongside the runtime and delivery identities. Historical failures remain evidence
++and never become clean rounds retrospectively.
+diff --git a/.agents/skills/arcnexus-release/SKILL.md b/.agents/skills/arcnexus-release/SKILL.md
+--- a/.agents/skills/arcnexus-release/SKILL.md
++++ b/.agents/skills/arcnexus-release/SKILL.md
+@@ -65,3 +65,10 @@
+ affected verification and review. Ongoing staging work may continue while the
+ release candidate waits. Preserve published tag identities. The maintainer owns
+ main approval and merge, tags, hotfix direction and production publication.
++
++Continuous refinement delivers approved implementation to staging through this
++same path. Routine repair and authorized staging integration add no human
++approval gate. Objectives, goals and architecture retain their exact reviewed
++approval. Main integration, tags and releases remain separate maintainer actions.
++Bootstrap only a named capability preventing platform-led delivery and follow it
++with a real demonstration through the platform.
+diff --git a/docs/interface/README.md b/docs/interface/README.md
+--- a/docs/interface/README.md
++++ b/docs/interface/README.md
+@@ -13,8 +13,10 @@
+ request fits them. On conflict, state the clause and the consequence, propose a
+ change to the request or contract, and wait for the architect's decision. The
+ architect alone accepts, changes or supersedes a lock. A named delegation can
+-authorize an editor to apply the specified change on a review branch. Normal product
+-runs refuse checked edits to locked files and the registry.
++authorize an editor to apply the specified change on a review branch. Agent checked edits refuse locked files and the registry. An exact recorded
++human delegation can name the trusted host as the editor for an Architecture
++proposal inside the automated Architect phase. Host application verifies the
++approved baseline and bytes and leaves active captured authority unchanged.
+
+ On an authorized change, retain the previous digest and path in registry history,
+ record acceptance and the reason, and recompute the digest from the accepted bytes.
+diff --git a/docs/dev.md b/docs/dev.md
+--- a/docs/dev.md
++++ b/docs/dev.md
+@@ -1,8 +1,8 @@
+ # Development direction
+
+ Start with the [charter](charter.md), the [first delivery and qualification](plans/self-development-mvp.md),
+-and the [interface registry](interface/registry.yaml). The runtime is being rebuilt.
+-The contracts state the target behavior and the tests that establish it.
++and the [interface registry](interface/registry.yaml). The contracts distinguish accepted target behavior from implementation and
++record the tests that establish it.
+
+ The catalog distinguishes project, app and plugin ownership. The CLI app owns
+ its composition and terminal adapter in [apps/cli](../apps/cli/README.md).
+@@ -31,6 +31,13 @@
+ objective records. Explore the current mapping with `arcnexus task plan` or
+ submit a human objective to guide it. Review proposed goal edits before delivery.
+ Bare `arcnexus task run` evaluates the reviewed inventory in priority order.
++`arcnexus architecture update [<feedback>]` assesses architecture and proposes
++exact changes for approval. Required implementation is delivered within Architect
++through the ordinary task lifecycle before Run captures the accepted model.
++`arcnexus refine [--rounds <N>]` runs Plan, Architect and every approved goal,
++defaulting to one round. The existing journal retains approval pauses and phase
++positions; each new round incorporates prior results. These commands are target
++capabilities until their contract scenarios and live qualification are verified.
+
+ [Manager](../packages/manager/contract.md) maintains agent directives.
+ [Release](../packages/release/contract.md) maintains repository workflows, ignores
+diff --git a/.arc/README.md b/.arc/README.md
+--- a/.arc/README.md
++++ b/.arc/README.md
+@@ -22,7 +22,11 @@
+ [Reviewer](../packages/reviewer/contract.md) owns `.arc/learning/` and derives
+ lessons from recorded task evidence. The host retains learning in task evidence
+ through Coordination. Tracked notes go through checked changes. The architect can
+-promote a lesson into a shared standard for future runs. Plans and learning grant no authority.
++promote a lesson into a shared standard for future runs. The automated Architect
++phase proposes that promotion for exact human approval and delivers required
++implementation before the following Run captures it. Plans and learning grant
++no authority. `arcnexus refine --rounds N` sequences Plan, Architect and Run with
++durable approval and goal cursors in the existing Coordination store.
+
+ ## Research reports
+
+diff --git a/docs/plans/self-development-mvp.md b/docs/plans/self-development-mvp.md
+--- a/docs/plans/self-development-mvp.md
++++ b/docs/plans/self-development-mvp.md
+@@ -33,3 +33,20 @@
+ The first build defers the broader CLI surface, workdays, the simulation provider,
+ production release, external plugin management, and service gateways. The
+ [CLI app contract](../../apps/cli/contract.md) defines the first operator commands.
++
++## Continuous refinement acceptance
++
++The self-healing batch adds Plan → Architect → Run through the existing workflow.
++Qualify with `arcnexus refine --rounds 3` on the production composition. Every
++round must assess objectives/goals and architecture, then invoke the Director for
++every approved priority-ordered goal. Across the streak demonstrate an actual
++approved guide improvement, a useful staged implementation and later consumption
++of prior findings. No-change assessments are valid and artificial churn is not.
++
++Handled caller-level failures and steward-local rewinds are part of successful
++execution. Objective, goal and architecture approval pauses resume the same round.
++Operator state repair, bypassed checks and uncontrolled aborts break the streak;
++an execution-path correction starts a fresh streak. Verify deliberate interruption
++and negative cases separately before the uninterrupted acceptance streak. Retain
++phase assessments, approvals, repair routes, Direction calls/request sizes, runtime
++identities and staging commits in the existing external evidence store.
+diff --git a/docs/interface/registry.yaml b/docs/interface/registry.yaml
+--- a/docs/interface/registry.yaml
++++ b/docs/interface/registry.yaml
+@@ -3,10 +3,11 @@
+ project: arcnexus
+ authority:
+   lockOwner: Adrian Webb (architect)
+-  productRunMayChangeLocked: false
+-  editorDelegation: Explicit architect approval for a named change and base.
+-  approvalRecord: 'Architect approved Planner, task plan and owner-free rounds in Codex chat for issue #587.'
+-  approvedBase: ca131241b127e06561af94bae0844b786c3cdecd
++  agentCheckedEditMayChangeLocked: false
++  hostMayApplyLocked: Only the exact human-approved proposal against its recorded baseline.
++  editorDelegation: Explicit architect approval for a named change and base, applied by a named editor or the trusted host.
++  approvalRecord: 'Architect approved the exact self-healing refinement amendment in Codex chat for issue #615. Base: fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
++  approvedBase: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
+ contracts:
+ - id: arcnexus/project
+   type: project
+@@ -82,14 +83,19 @@
+   file: apps/cli/contract.md
+   owner: cli-app
+   stage: locked
+-  digest: 958a68a5c5cdbf11f95f87ee97eee07bdb4b253474e9741993704674f9462374
++  digest: d91b96a7422e556d7db5ef737dba086f4a4c01c18e448cd5acf58a29af20f2a8
+   dependsOn:
+   - arcnexus/project
+   - arcnexus/commands
+-  scenarios: 19
++  scenarios: 22
+   acceptedBy: Adrian Webb (architect)
+   acceptedAt: '2026-11-18'
+   history:
++  - stage: locked
++    digest: 958a68a5c5cdbf11f95f87ee97eee07bdb4b253474e9741993704674f9462374
++    file: apps/cli/contract.md
++    revision: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
++    note: Superseded by the exact human-approved self-healing refinement amendment in issue #615.
+   - stage: locked
+     digest: e64c716095be440082475640889c3ee304f59ae01902813ab64005283bb84290
+     file: apps/cli/contract.md
+@@ -159,20 +165,25 @@
+
+       '
+   approvalRecord: 'Architect approved Planner, task plan and owner-free rounds in Codex chat for issue #587. Base: ca131241b127e06561af94bae0844b786c3cdecd.'
+-  amendmentRecord: 'Architect approved the Team, checkpoint and goal-round proposal in Codex chat. Base: e73aedb283eecbe2f80b482923b2ae6eced1a6bf. Issue #522.'
++  amendmentRecord: 'Architect approved the exact self-healing refinement amendment in Codex chat for issue #615. Base: fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
+ - id: arcnexus/architecture-model
+   type: library
+   file: packages/architecture/contract.md
+   owner: architecture
+   stage: locked
+-  digest: 59ee8b756a850e0e1fa2640c348a1b08a4a366487671b496833ac8d3b40abf5c
++  digest: 2cd1c9fb1683459b366f54da2c76412496cd826dff8163ed1335db8c75438f20
+   dependsOn:
+   - arcnexus/project
+   - arcnexus/foundation
+-  scenarios: 19
++  scenarios: 22
+   acceptedBy: Adrian Webb (architect)
+   acceptedAt: '2026-11-17'
+   history:
++  - stage: locked
++    digest: 59ee8b756a850e0e1fa2640c348a1b08a4a366487671b496833ac8d3b40abf5c
++    file: packages/architecture/contract.md
++    revision: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
++    note: Superseded by the exact human-approved self-healing refinement amendment in issue #615.
+   - stage: locked
+     digest: e2a3e234262bd23005f45083fa290ac0621cd9e05f60dca22dad1400e439907e
+     file: packages/architecture/contract.md
+@@ -238,20 +249,25 @@
+     in Codex chat on 2026-11-15. Base: 651ff53c7cef014434ad389be0a76e640f1c1662. Issue #458, PR #459.'
+   stewardshipRecord: 'Architect approved steward ownership, release relocation and the architecture component
+     name in Codex chat on 2026-11-15. Base: ff08a26ce1f7b6fb8de0087e72c12884e1ad5c87. Issue #454.'
+-  amendmentRecord: 'Architect approved answer recovery and activity-scoped MCP in Codex chat with built-in web access controlled by the execution provider. Base: 0b782b8918523ea4540981e389e8663d2b65fd55. Issue #562.'
++  amendmentRecord: 'Architect approved the exact self-healing refinement amendment in Codex chat for issue #615. Base: fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
+ - id: arcnexus/coordination
+   type: library
+   file: packages/coordination/contract.md
+   owner: coordination
+   stage: locked
+-  digest: 916588d200ecdecf7753e281c117514d56712c16a2fac2e1a4b92bfd998f68d2
++  digest: 505ab5c2531f1dc014b0970deb382c9c283f66558aed1862a159f1728a9c8620
+   dependsOn:
+   - arcnexus/project
+   - arcnexus/architecture-model
+-  scenarios: 18
++  scenarios: 21
+   acceptedBy: Adrian Webb (architect)
+   acceptedAt: '2026-11-15'
+   history:
++  - stage: locked
++    digest: 916588d200ecdecf7753e281c117514d56712c16a2fac2e1a4b92bfd998f68d2
++    file: packages/coordination/contract.md
++    revision: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
++    note: Superseded by the exact human-approved self-healing refinement amendment in issue #615.
+   - stage: locked
+     digest: fcce9af793e6eb3f330df370ad0332deab2764b40d81c7f62c33e4aa6df34ad8
+     file: packages/coordination/contract.md
+@@ -269,21 +285,26 @@
+       \ goal identity is the digest of the goal text, the store is authoritative with the committed plan\
+       \ as a deterministic render, per-goal retention that removes only regenerable caches, and entities\
+       \ plus events\n"
+-  amendmentRecord: 'Architect approved the Team, checkpoint and goal-round proposal in Codex chat. Base: e73aedb283eecbe2f80b482923b2ae6eced1a6bf. Issue #522.'
++  amendmentRecord: 'Architect approved the exact self-healing refinement amendment in Codex chat for issue #615. Base: fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
+ - id: arcnexus/execution
+   type: library
+   file: packages/execution/contract.md
+   owner: execution
+   stage: locked
+-  digest: 94ece72d7a1f476462719db75feaa873c8d369dd27f9b1878f15ea611b9bce2f
++  digest: 6a4d048c3c165da0ea9f15b8e93667ec8bf55a5c2be9c7ba95b67927e2f53f2a
+   dependsOn:
+   - arcnexus/project
+   - arcnexus/architecture-model
+   - arcnexus/coordination
+-  scenarios: 20
++  scenarios: 24
+   acceptedBy: Adrian Webb (architect)
+   acceptedAt: '2026-11-17'
+   history:
++  - stage: locked
++    digest: 94ece72d7a1f476462719db75feaa873c8d369dd27f9b1878f15ea611b9bce2f
++    file: packages/execution/contract.md
++    revision: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
++    note: Superseded by the exact human-approved self-healing refinement amendment in issue #615.
+   - stage: locked
+     digest: 6dbbf5478c56fb29cdb7d37f44b59ef6924b26aff9622349eada75cb141affc4
+     file: packages/execution/contract.md
+@@ -317,22 +338,27 @@
+     note: "proposed in #352 with three open questions; answered by the architect \u2014 bubblewrap required\
+       \ with the container kept as an opt-in deployment seam and concurrency preclusion forbidden, the\
+       \ lane in execution with ordering in direction, and harness state per activation\n"
+-  amendmentRecord: 'Architect approved answer recovery and activity-scoped MCP in Codex chat with built-in web access controlled by the execution provider. Base: 0b782b8918523ea4540981e389e8663d2b65fd55. Issue #562.'
++  amendmentRecord: 'Architect approved the exact self-healing refinement amendment in Codex chat for issue #615. Base: fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
+ - id: arcnexus/direction
+   type: library
+   file: packages/direction/contract.md
+   owner: direction
+   stage: locked
+-  digest: c3c2928a32eeee663ba78c6ad80a7c7edcd0aab9563374466b18943bf8dac877
++  digest: b065e5f7fb4c5701eb8a68ca5a41a5a2cd091373f0b8581a021f465a4418531e
+   dependsOn:
+   - arcnexus/project
+   - arcnexus/architecture-model
+   - arcnexus/coordination
+   - arcnexus/team
+-  scenarios: 18
++  scenarios: 19
+   acceptedBy: Adrian Webb (architect)
+   acceptedAt: '2026-11-17'
+   history:
++  - stage: locked
++    digest: c3c2928a32eeee663ba78c6ad80a7c7edcd0aab9563374466b18943bf8dac877
++    file: packages/direction/contract.md
++    revision: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
++    note: Superseded by the exact human-approved self-healing refinement amendment in issue #615.
+   - stage: locked
+     digest: 02867a4a244f62768a3b05a8a3e171fcedbd28718c9cad7932dd1465cb0018db
+     file: packages/direction/contract.md
+@@ -373,23 +399,28 @@
+       \ deferred silently\n"
+   approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership and transport-neutral
+     Commands in Codex chat on 2026-11-15. Base: 5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
+-  amendmentRecord: 'Architect approved answer recovery and activity-scoped MCP in Codex chat with built-in web access controlled by the execution provider. Base: 0b782b8918523ea4540981e389e8663d2b65fd55. Issue #562.'
++  amendmentRecord: 'Architect approved the exact self-healing refinement amendment in Codex chat for issue #615. Base: fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
+ - id: arcnexus/verification
+   type: library
+   file: packages/verification/contract.md
+   owner: verification
+   stage: locked
+-  digest: ffd64281aa0fa9beac3585e527441daa4284b0b97b04e5e7f4574e651d9203b5
++  digest: d218cc023f21b469b1767e0fae3e89205261d0975e88aaa1bff422c5827a11e2
+   dependsOn:
+   - arcnexus/project
+   - arcnexus/architecture-model
+   - arcnexus/coordination
+   - arcnexus/execution
+   - arcnexus/direction
+-  scenarios: 16
++  scenarios: 18
+   acceptedBy: Adrian Webb (architect)
+   acceptedAt: '2026-11-15'
+   history:
++  - stage: locked
++    digest: ffd64281aa0fa9beac3585e527441daa4284b0b97b04e5e7f4574e651d9203b5
++    file: packages/verification/contract.md
++    revision: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
++    note: Superseded by the exact human-approved self-healing refinement amendment in issue #615.
+   - stage: locked
+     digest: ee401e8019f7f6373e687125a3769e02183fc70fa021124011d75ece9756b821
+     file: docs/interface/arcnexus-verification.md
+@@ -403,21 +434,27 @@
+       measures, and confirms re-run authority and the single reviewer
+
+       '
++  amendmentRecord: 'Architect approved the exact self-healing refinement amendment in Codex chat for issue #615. Base: fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
+ - id: arcnexus/delivery
+   type: library
+   file: packages/delivery/contract.md
+   owner: delivery
+   stage: locked
+-  digest: f14980311960c856fdaf169ecb7ce4a43014b3182fae85df743b51b4761d3519
++  digest: 7ebf668802da09518c77b00239ea2f789d7a5aafc0c7c38d0aee2137fb1d342c
+   dependsOn:
+   - arcnexus/project
+   - arcnexus/coordination
+   - arcnexus/verification
+   - arcnexus/collaboration-provider
+-  scenarios: 12
++  scenarios: 13
+   acceptedBy: Adrian Webb (architect)
+   acceptedAt: '2026-11-15'
+   history:
++  - stage: locked
++    digest: f14980311960c856fdaf169ecb7ce4a43014b3182fae85df743b51b4761d3519
++    file: packages/delivery/contract.md
++    revision: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
++    note: Superseded by the exact human-approved self-healing refinement amendment in issue #615.
+   - stage: locked
+     digest: 983076c5e2bc123f8e2854cb7ec2e2e5fe322b105142d5fe193641706ee7cb5a
+     file: packages/delivery/contract.md
+@@ -439,7 +476,7 @@
+       \ the merge and returns its identity, the only human gates are a production release and a blocking\
+       \ question needing an answer or external action, and publication scope today is the CLI plus an\
+       \ npm package with container, runner and installer targets reserved\n"
+-  amendmentRecord: 'Architect approved the Team, checkpoint and goal-round proposal in Codex chat. Base: e73aedb283eecbe2f80b482923b2ae6eced1a6bf. Issue #522.'
++  amendmentRecord: 'Architect approved the exact self-healing refinement amendment in Codex chat for issue #615. Base: fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
+ - id: arcnexus/release
+   type: release
+   file: packages/release/contract.md
+@@ -527,8 +564,15 @@
+   dependsOn:
+   - arcnexus/agent
+   - arcnexus/workflow
+-  digest: ca9ae2188a36be71339092ae8d9cf04fab7ca393a374f8959f6082a11a6a12f2
+-  scenarios: 3
++  digest: 0dfa918ae22379adb7423b42e776d110293c77b345f89bed86b6bacf1ff694ec
++  scenarios: 4
++  history:
++  - stage: proposed
++    digest: ca9ae2188a36be71339092ae8d9cf04fab7ca393a374f8959f6082a11a6a12f2
++    file: packages/commands/contract.md
++    revision: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
++    note: Superseded by the exact human-approved self-healing refinement amendment in issue #615.
++  amendmentRecord: 'Architect approved the exact self-healing refinement amendment in Codex chat for issue #615. Base: fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
+ - id: arcnexus/manager
+   type: library
+   file: packages/manager/contract.md
+@@ -583,9 +627,15 @@
+   - arcnexus/coordination
+   - arcnexus/verification
+   - arcnexus/delivery
+-  digest: 97a36f40bc739717bb5e73bdcd005ea19908332ca053d1b8c2f791a7ab3e309c
+-  scenarios: 6
+-  amendmentRecord: 'Architect approved progressing correction recovery in Codex chat on 2026-11-18. Preserve proposed stage. Base: 95d8931cb279e81bf583fae83baa154c0be17cc6. Issue #611.'
++  digest: 38b6fa5ba062a23e019d8d59e4b91a186a149f61653646376bfd2de0d0b9b62e
++  scenarios: 10
++  history:
++  - stage: proposed
++    digest: 97a36f40bc739717bb5e73bdcd005ea19908332ca053d1b8c2f791a7ab3e309c
++    file: packages/workflow/contract.md
++    revision: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
++    note: Superseded by the exact human-approved self-healing refinement amendment in issue #615.
++  amendmentRecord: 'Architect approved the exact self-healing refinement amendment in Codex chat for issue #615. Base: fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
+ - id: arcnexus/planner
+   type: library
+   file: packages/planner/contract.md
+@@ -594,5 +644,12 @@
+   dependsOn:
+   - arcnexus/agent
+   - arcnexus/workflow
+-  digest: c54ffae731571ffcc09d7e156610ac72091772013fc185141224fae8b5300762
+-  scenarios: 4
++  digest: 5ea97cee45fede63b5946d8ea708e1a5b2d519d4bacc6b40c906b44c82c5c676
++  scenarios: 5
++  history:
++  - stage: proposed
++    digest: c54ffae731571ffcc09d7e156610ac72091772013fc185141224fae8b5300762
++    file: packages/planner/contract.md
++    revision: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
++    note: Superseded by the exact human-approved self-healing refinement amendment in issue #615.
++  amendmentRecord: 'Architect approved the exact self-healing refinement amendment in Codex chat for issue #615. Base: fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'

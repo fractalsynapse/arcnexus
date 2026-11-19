@@ -13,8 +13,10 @@ Before changing the repository, identify the governing clauses and verify that t
 request fits them. On conflict, state the clause and the consequence, propose a
 change to the request or contract, and wait for the architect's decision. The
 architect alone accepts, changes or supersedes a lock. A named delegation can
-authorize an editor to apply the specified change on a review branch. Normal product
-runs refuse checked edits to locked files and the registry.
+authorize an editor to apply the specified change on a review branch. Agent checked edits refuse locked files and the registry. An exact recorded
+human delegation can name the trusted host as the editor for an Architecture
+proposal inside the automated Architect phase. Host application verifies the
+approved baseline and bytes and leaves active captured authority unchanged.
 
 On an authorized change, retain the previous digest and path in registry history,
 record acceptance and the reason, and recompute the digest from the accepted bytes.

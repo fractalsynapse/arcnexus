@@ -9,8 +9,10 @@ architecture-directed self-development through the host CLI.
 The architect owns project intent, boundaries and contract changes. Before editing,
 check the request against the applicable locked clauses. If they conflict, name
 the clause and consequence, propose a resolution, and wait for the architect.
-Approval can authorize a named editor to apply the change on a review branch.
-Product runs refuse writes to locks and their registry.
+Approval can authorize a named editor or the trusted host to apply the exact
+reviewed change on an issue branch. Agent checked-edit tools refuse locks and
+their registry. Host application requires the recorded human approval and matching
+baseline and cannot change active captured authority.
 
 The [catalog](.arc/architecture/project.yaml) names the sole owner for every path.
 Change only the accountable owner's scope. Use another plugin through its public
@@ -60,9 +62,16 @@ The CLI app owns terminal behavior and delegates through the
 ## Direction and evidence
 
 The director generates the sequence from the [plan template](.arc/architecture/plan-template.md).
-Each milestone has one accountable owner and stable acceptance criteria. Link
+Each milestone has one accountable owner and stable acceptance criteria. Ordinary
+tool, check and self-review failures return to the caller or earliest affected
+activity within that milestone. Persist the rewind and preserve completed edit
+receipts, complete answers and unaffected evidence. Direction engages initially,
+on explicit escalation and after final independent rejection. Link
 already accepted supplier work, or place required supplier work before the dependent
-milestone. Escalate a decision that needs different authority. The host validates
+milestone. Escalate a decision that needs different authority. Human approval concerns
+objectives, goals and architecture. Routine repairs, plan sequencing and authorized
+staging delivery add no approval gates. External prerequisites remain named holds.
+The host validates
 authority and persists plan and learning records. Keep bulk logs and transcripts
 outside source and preserve failed observations.
 
@@ -70,7 +79,19 @@ Follow the [qualification plan](docs/plans/self-development-mvp.md) for executab
 changes and the self-development gate. Deterministic tests, actual host confinement,
 CI and live inference are distinct evidence. Report gaps. Use existing evidence
 when candidate, criteria and environment still match. During bootstrap, use the
-repository delivery workflow until the real CLI can carry a change.
+repository delivery workflow for a named missing capability, then demonstrate
+that capability through the platform and use it for subsequent work.
+
+Refinement runs Plan, Architect and all approved priority-ordered goals. Each round
+reassesses the guides and implementation using prior results. Goals contain
+outcomes and success measures without component owners or execution results.
+Architecture proposals require an exact human-approved diff. Deliver prerequisites
+inside Architect through the normal task workflow before Run captures the new
+accepted model. Approval pauses and interruptions retain the same round cursor.
+Qualify with three consecutive live rounds showing useful guide and implementation
+refinement and subsequent use of prior evidence. Justified no change is valid;
+operator repair, bypassed checks and uncontrolled aborts break the streak. Changes
+to the execution path restart qualification. Main and releases remain separate.
 
 ## Repository delivery
 

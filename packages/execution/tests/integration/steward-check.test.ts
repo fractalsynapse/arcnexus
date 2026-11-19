@@ -117,7 +117,7 @@ class CheckTask {
   /** Return a valid scoped edit on the correcting activation. */
   private proposal(data: TaskContext) {
     const id = (data.milestone as { id: string }).id;
-    const correction = id.startsWith('correction');
+    const correction = Boolean((data.assignment as { failedCheck?: unknown }).failedCheck);
     this.calls.push(correction ? id : 'original');
     if (correction) {
       assert.match(
@@ -193,26 +193,18 @@ class CheckTask {
   }
 }
 
-test('a failing steward check reaches its owner and is rerun before the task delivers', async (t) => {
+test('a local steward check repair delivers within the original milestone without Direction', async (t) => {
   const task = new CheckTask(t, true);
   assert.equal((await task.run()).kind, 'merged');
-  assert.deepEqual(task.calls, [
-    'original',
-    'check:1',
-    'direction',
-    'correction',
-    'check:0',
-    'original',
-    'delivery',
-  ]);
+  assert.deepEqual(task.calls, ['original', 'check:1', 'original', 'check:0', 'delivery']);
 });
 
-test('a correction that still fails its required check blocks before resumption', async (t) => {
+test('an unchanged local check failure holds without another Director call', async (t) => {
   const task = new CheckTask(t, false);
   const result = await task.run();
   assert.equal(result.kind, 'blocked');
   assert.match(result.reason, /owner-tests.*1/);
-  assert.deepEqual(task.calls, ['original', 'check:1', 'direction', 'correction', 'check:1']);
+  assert.deepEqual(task.calls, ['original', 'check:1', 'original', 'check:1']);
 });
 
 test('a malformed steward reply is repaired in the same step before checked effects', async (t) => {
@@ -429,21 +421,17 @@ test('a stale digest is corrected without applying earlier edits in the rejected
   task.close();
 });
 
-test('a corrected compiler error routes the fresh assertion failure to Direction in the same run', async (t) => {
+test('distinct local check failures repair in the original milestone without Direction', async (t) => {
   const task = new CheckTask(t, 'progress');
   const result = await task.run();
   assert.equal(result.kind, 'merged', JSON.stringify(result));
   assert.deepEqual(task.calls, [
     'original',
     'check:1',
-    'direction',
-    'correction',
-    'check:1',
-    'direction',
-    'correction-reviewer',
-    'check:0',
-    'correction',
     'original',
+    'check:1',
+    'original',
+    'check:0',
     'delivery',
   ]);
 });

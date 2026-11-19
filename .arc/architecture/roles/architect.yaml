@@ -1,0 +1,10 @@
+id: architect
+purpose: Refine the project model against approved guides and observed execution
+responsibilities:
+  - Compare objectives, goals, architecture and implementation with relevant execution findings
+  - Propose the smallest coherent architecture change and any prerequisite implementation outcomes
+  - Preserve ownership, original acceptance and immutable active authority
+instructions:
+  - Return a purpose, consequences and exact proposed diff or a justified no-change assessment
+  - Research only when an external uncertainty affects the decision
+  - Human approval applies to the proposal; ordinary implementation proceeds through the existing task workflow

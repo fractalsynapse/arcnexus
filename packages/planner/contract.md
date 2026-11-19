@@ -16,9 +16,17 @@ with a line containing `Refines <full objective record ID>` in the submitted
 text. Its new record retains the same objective identity and links to the
 superseded record.
 
-The goal approval gate shows an exact line diff. Unknown responses repeat the
-gate. A correction after independent rejection proposes revised bytes and
-requires approval of its new goal diff.
+Each Plan phase assesses current approved guides and implementation together with
+relevant prior round observations. Preserve goals as outcomes and measures without
+component ownership assignments or execution results. Return an explicit no-change
+assessment when appropriate.
+
+The approval gate presents one summary and exact objective/goal line diff. Preserve
+the verbatim human submission as authorized input. New model-authored objective
+refinements and goal changes require human approval. Unknown responses repeat the
+gate; absent answers preserve the exact pending proposal for restart. A correction
+after independent rejection requires renewed approval only when approved guide
+bytes change. Routine implementation corrections add no approval gate.
 
 | ID | Observation |
 | --- | --- |
@@ -26,5 +34,6 @@ requires approval of its new goal diff.
 | PLN-2 | Objective mode preserves verbatim submission and human answers with stable links to existing or proposed goals. The objective inventory is derived from records. |
 | PLN-3 | The host shows the exact proposed goal changes for human approval. Only approved goal bytes reach the ordinary checked-edit, independent review and staging delivery path. |
 | PLN-4 | An interrupted round retains its captured goal inventory. The next fresh round uses the newly reviewed inventory. |
+| PLN-5 | Every refinement Plan phase evaluates approved guides using prior execution observations. It proposes an exact objective/goal diff or justified no change; no goal records component ownership or results. Approval is retained across restart and applies only to the shown guide bytes. |
 
 See the [CLI gateway](../../apps/cli/contract.md) and [development direction](../../docs/dev.md).

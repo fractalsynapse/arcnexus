@@ -13,10 +13,11 @@ import {
   type StandingGoalEvidence,
 } from '../../direction/src/index.js';
 import { validateVerdict, type Candidate, type Verdict } from '../../verification/src/index.js';
-import { blockedCorrection } from './blocked-correction.js';
+import { activityRepair } from './activity-repair.js';
 import { selfLinkedSupplier, stopped, type Interrupted } from './services.js';
 import type {
   ActivityCheckpoint,
+  ActivityRepair,
   Observation,
   TaskEvent,
   TaskInput,
@@ -148,15 +149,12 @@ export class TaskRun {
 
   /** Recover the latest blocked step once and keep ordinary user retries available. */
   private async replayOutcomes(events: readonly TaskEvent[]) {
-    const latest = events.findLast((event) => 'activation' in event);
     for (const event of events) {
       if ('verdict' in event && event.verdict.kind === 'rejected')
         return this.correct(event.candidate, event.verdict.findings);
       if (!('activation' in event)) continue;
       if (selfLinkedSupplier(event.activation.outcome, event.activation.milestone)) continue;
       if (event.activation.outcome.kind === 'blocked') {
-        const recovery = event === latest && this.blockedRecovery(event.activation);
-        if (recovery) return this.revise(recovery);
         continue;
       }
       const interrupted = await this.applyActivity(event.activation);
@@ -315,18 +313,18 @@ export class TaskRun {
     this.recordPosition();
   }
 
-  /** Advance a durable completion or route a retained non-terminal outcome through Direction. */
+  /** Advance completion, persist local repair, or sequence an explicit escalation. */
   private async applyActivity(activation: ActivityCheckpoint) {
     const { milestone, index, step, outcome } = activation;
+    if (outcome.kind === 'repair') return this.repair(activation);
     if (outcome.kind === 'blocked') {
-      const recovery = this.blockedRecovery(activation);
-      return recovery
-        ? this.revise(recovery)
-        : stopped('blocked', outcome.reason, outcome.evidence);
+      return stopped('blocked', outcome.reason, outcome.evidence);
     }
     if (outcome.kind === 'question') {
       const feedback = await this.answer(outcome);
-      return 'reason' in feedback ? feedback : this.revise(feedback);
+      if ('reason' in feedback) return feedback;
+      this.session.record({ feedback });
+      return;
     }
     if (outcome.kind === 'supplier') return this.revise({ ...outcome, requester: milestone });
     this.report({ phase: 'activity', message: `Completed ${step}`, evidence: outcome.evidence });
@@ -334,13 +332,23 @@ export class TaskRun {
     this.recordPosition();
   }
 
-  /** Select the existing correction route only for the currently paused milestone. */
-  private blockedRecovery(activation: ActivityCheckpoint) {
-    return blockedCorrection(
-      this.session.history?.() ?? [],
-      this.plan?.milestones[this.completed],
+  /** Commit the rewind and its diagnostic together so interruption cannot replay a repair. */
+  private repair(activation: ActivityCheckpoint) {
+    const milestone = this.plan!.milestones[this.completed]!;
+    const result = activityRepair(
+      this.session.capture,
+      milestone,
       activation,
+      this.session.history?.() ?? [],
     );
+    if ('kind' in result) return result;
+    this.activityPositions.set(milestone.id, result.index);
+    this.recordPosition(result.repair);
+    this.report({
+      phase: 'activity',
+      message: `Repair ${milestone.owner}/${result.repair.activity}: ${result.repair.reason}`,
+      evidence: result.repair.evidence,
+    });
   }
 
   /** Report the selected activity before starting the next scoped Agent activation. */
@@ -459,12 +467,13 @@ export class TaskRun {
   }
 
   /** Preserve the plan and live cursor for later observations. */
-  private recordPosition() {
+  private recordPosition(repair?: ActivityRepair) {
     this.session.record({
       position: {
         completed: this.completed,
         activities: Object.fromEntries(this.activityPositions),
       },
+      ...(repair ? { repair } : {}),
     });
   }
 }

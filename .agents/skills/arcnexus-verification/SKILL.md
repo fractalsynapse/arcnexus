@@ -53,3 +53,13 @@ three consecutive clean cycles before expansion. Count only real directed work,
 component stewardship, applicable checks, independent verification and verified
 staging integration. Use the clean-cycle rules in the qualification plan. Store run evidence
 outside source. Use focused diagnosis of handoff failures before expanding scope.
+
+For continuous refinement, verify Plan, Architect and every captured goal in each
+round, including Director assessment when measures already pass. Confirm approved
+guide changes, useful staged implementation and later use of earlier findings
+across three consecutive live rounds. Justified no change and handled internal
+repairs are valid. Approval pauses retain the round; operator state repair,
+bypassed checks and uncontrolled aborts break the streak. Execution-path changes
+restart qualification. Record Direction calls, repair routes and request sizes
+alongside the runtime and delivery identities. Historical failures remain evidence
+and never become clean rounds retrospectively.

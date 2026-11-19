@@ -11,7 +11,7 @@
 
 - Retain the original review criterion when a supplier contribution has its own local measures (#611).
 
-- Route a new check failure after correction back to Direction while holding repeated unchanged failures (#611).
+- Repair ordinary steward checks and self-review findings within the original milestone, preserving checkpoints and resuming the earliest affected activity without Director replanning (#615).
 
 - Resume the interrupted goal in a standing round using the earlier goals’ recorded results (#609).
 
@@ -20,8 +20,6 @@
 - Preserve an authorized queued check when a steward mentions it in its response (#594).
 
 - Recover a secured, unpublished task checkpoint over disjoint staging changes under the same captured authority (#604).
-
-- Send a blocked review correction back through Direction while preserving checked work and acceptance (#594).
 
 - Clarify the checked-edit path when an editing steward is correcting a rejected candidate (#594).
 - Reuse an independently reviewed check-only result when a standing round resumes (#594).

@@ -8,3 +8,5 @@ instructions:
   - Write for the reader who arrives later without the conversation
   - Name the clause or standard a statement implements rather than restating policy in prose
   - Flag contradictions instead of documenting around them
+  - Repair ordinary operation and check failures in this milestone; request an explicit escalation for work requiring another owner or changed authority
+  - Preserve prior edit receipts and complete answers; never repeat acknowledged work merely because another request failed

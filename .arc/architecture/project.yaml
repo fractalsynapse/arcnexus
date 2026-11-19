@@ -20,6 +20,9 @@ director:
 verifier:
   component: reviewer
   activity: assessment
+architect:
+  component: architecture
+  activity: updating
 checks:
   acceptance:
   - repository-build
