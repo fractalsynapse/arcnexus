@@ -8,6 +8,7 @@ import { StewardFixture } from '../fixtures/steward.js';
 test('a changed checkpoint cannot reuse an observation for a different captured operation', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-check-revision-'));
   const task = new StewardFixture(t, root).task;
+  Object.assign(task.capture, { operations: {} });
   t.after(() => task.close());
   const scope = { owner: 'owner', activity: 'implementation', expected: 'pass' } as const;
   const log = task.store('old-check.log', 'old source passed');
