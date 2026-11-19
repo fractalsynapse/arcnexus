@@ -131,8 +131,12 @@ test('an owner with only JSON has an empty lint selection but a format selection
   try {
     tree.owner('json-owner', 'packages/json-owner');
     tree.write('packages/json-owner/probe.json', '{"value":1}\n');
-    assert.notEqual(tree.run('format:check', 'json-owner').status, 0);
-    assert.equal(tree.run('lint', 'json-owner').status, 0);
+    const format = tree.run('format:check', 'json-owner');
+    assert.notEqual(format.status, 0, format.output);
+    assert.match(format.output, /packages\/json-owner\/probe\.json/);
+    const lint = tree.run('lint', 'json-owner');
+    assert.equal(lint.status, 0, lint.output);
+    assert.match(lint.output, /lint.*(empty|no applicable|inapplicable)|(empty|no applicable|inapplicable).*lint/i);
   } finally {
     tree.close();
   }
