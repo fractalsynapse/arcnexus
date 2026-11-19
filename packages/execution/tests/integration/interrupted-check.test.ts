@@ -21,7 +21,7 @@ import { Execution, HostTask, steward } from '../../src/index.js';
 const remote = 'https://github.com/fixture/interrupted-check.git';
 const criterion = { id: 'fixed', description: 'The checked contribution survives restart' };
 const agent = new Agent(new Architecture());
-const plan: Plan = {
+const plan = (expected: 'pass' | 'fail'): Plan => ({
   focus: {
     purpose: 'Recover an interrupted steward check',
     objectives: ['Retain edits, check results and activity position'],
@@ -34,7 +34,7 @@ const plan: Plan = {
       criteria: [criterion],
       steps: activities.map((activity) => ({
         activity,
-        ...(['implementation', 'review'].includes(activity)
+        ...(['implementation', 'review', ...(expected === 'fail' ? ['testing'] : [])].includes(activity)
           ? {
               checklist: [
                 { id: activity, criteria: [criterion.id], expected: 'Retain the repair' },
@@ -44,7 +44,7 @@ const plan: Plan = {
       })),
     },
   ],
-};
+});
 
 /** Model only Collaboration; Git commits, journals and worktrees remain real. */
 class CheckRemote extends GitHub {
@@ -165,7 +165,7 @@ class InterruptedCheck {
         track,
         plan: async () => {
           this.plans++;
-          return { kind: 'plan', plan };
+          return { kind: 'plan', plan: plan(this.expected) };
         },
         revise: async () => assert.fail('A retained recheck must not be lost or replanned'),
       },
@@ -261,7 +261,7 @@ class InterruptedCheck {
   /** Derive the fixture's exact exit from its bytes and retry phase. */
   private checkStatus(task: HostTask): number {
     const corrected = readFileSync(join(task.worktree!, 'fixture.txt'), 'utf8') === 'corrected';
-    if (corrected) return this.expected === 'pass' ? 0 : 37;
+    if (corrected) return this.expected === 'fail' && this.phase === 'correct' ? 37 : 0;
     if (this.expected === 'fail') return 0;
     return this.phase === 'interrupt' ? 37 : 43;
   }
@@ -277,8 +277,11 @@ class InterruptedCheck {
     assert.equal(task.branch, '7-task');
     assert.equal(this.git('worktree', 'list', '--porcelain').split('worktree ').length, 3);
     const review = JSON.stringify(data.milestone).includes('"activity":"review"');
-    this.activations.push(review ? 'review' : 'implementation');
+    const testing = JSON.stringify(data.milestone).includes('"activity":"testing"');
+    this.activations.push(review ? 'review' : testing ? 'testing' : 'implementation');
     if (review) return { kind: 'completed', edits: [], checks: [] };
+    if (this.expected === 'fail' && !testing)
+      return { kind: 'completed', edits: [], checks: [{ id: 'owner-tests', expected: 'pass' }] };
     if (this.phase !== 'interrupt') return this.retryProposal(task, data);
     return {
       kind: 'completed',
@@ -291,7 +294,7 @@ class InterruptedCheck {
   private retryProposal(task: HostTask, data: TaskContext) {
     assert(task.worktree);
     assert.equal(readFileSync(join(task.worktree, 'fixture.txt'), 'utf8'), 'checked');
-    const pending = task.pendingCheck({ owner: 'owner', activity: 'implementation' });
+    const pending = task.pendingCheck({ owner: 'owner', activity: this.expected === 'fail' ? 'testing' : 'implementation' });
     this.recovered.push(pending);
     if (pending) this.assertRecoveredFailure(data, pending);
     return { kind: 'completed', edits: this.correctionEdits(), checks: [] };
@@ -335,6 +338,9 @@ class InterruptedCheck {
           id: 'owner',
           owns: ['fixture.txt'],
           activities: {
+            ...(this.expected === 'fail'
+              ? { testing: { profile: 'fixture', operations: ['owner-tests'] } }
+              : {}),
             implementation: { profile: 'fixture', operations: ['owner-tests'] },
             review: { profile: 'fixture', operations: [] },
           },
@@ -358,7 +364,7 @@ async function interrupt(scenario: InterruptedCheck) {
   const outcome = await scenario.run('interrupt');
   assert.equal(outcome.kind, 'cancelled', JSON.stringify(outcome));
   assert.match(outcome.reason, /Interrupted after check record, before feedback/);
-  assert.deepEqual(scenario.activations, ['implementation']);
+  assert.deepEqual(scenario.activations, [scenario.expected === 'fail' ? 'testing' : 'implementation']);
   assert.deepEqual(scenario.gates, []);
   assert.equal(scenario.checks.length, 1);
   assert.equal(scenario.checks[0]!.status, scenario.expected === 'pass' ? 37 : 0);
@@ -380,7 +386,7 @@ for (const expected of ['pass', 'fail'] as const) {
       expected,
       status: first.status,
       log: first.log,
-      activity: 'implementation',
+      activity: expected === 'fail' ? 'testing' : 'implementation',
     });
     scenario.secured('checked');
   });
@@ -406,8 +412,9 @@ for (const expected of ['pass', 'fail'] as const) {
     scenario.secured('corrected');
     const before = scenario.activations.slice();
     assert.equal((await scenario.run('resume')).kind, 'merged');
-    assert.deepEqual(scenario.activations, [...before, 'review']);
-    assert.equal(scenario.checks.length, 3);
+    assert.deepEqual(scenario.activations, [...before, ...(expected === 'fail' ? ['implementation'] : []), 'review']);
+    assert.equal(scenario.checks.length, expected === 'fail' ? 4 : 3);
+    assert.equal(scenario.checks.at(-1)!.status, 0);
     assert.deepEqual(scenario.gates, ['verification', 'delivery']);
     assert.equal(scenario.provider.verified, 3);
     scenario.secured('corrected');
