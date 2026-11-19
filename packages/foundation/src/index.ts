@@ -306,7 +306,7 @@ function matchesIgnoreRules(
 ): boolean | undefined {
   let ignored: boolean | undefined;
   for (const raw of rules) {
-    const rule = raw;
+    const rule = trimUnescapedTrailingWhitespace(raw);
     if (!rule || (rule.startsWith('#') && !rule.startsWith('\\#'))) continue;
     const negated = rule.startsWith('!');
     const source = (negated ? rule.slice(1) : rule).replace(/^\\([#! ])/g, '$1');
