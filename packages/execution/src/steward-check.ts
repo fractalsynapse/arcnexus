@@ -98,16 +98,13 @@ export function checkFailureSignature(log: string) {
   return createHash('sha256').update(normalized).digest('hex');
 }
 
-/** Require a completed checked edit since the diagnosis being corrected. */
-export function correctionMadeProgress(events: readonly unknown[], owner: string, log: string) {
+/** Recognize checked task-input changes, including supplier contributions, since the diagnosis. */
+export function correctionMadeProgress(events: readonly unknown[], log: string) {
   const recorded = events as readonly CheckEvent[];
   const observed = recorded.findLastIndex(({ check }) => check?.log === log);
   return recorded
     .slice(observed + 1)
-    .some(
-      ({ owner: editedOwner, edits }) =>
-        editedOwner === owner && edits?.some(({ before, after }) => before !== after),
-    );
+    .some(({ edits }) => edits?.some(({ before, after }) => before !== after));
 }
 
 /** Identify the latest secured task edit inputs without copying their contents. */
