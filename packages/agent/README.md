@@ -32,3 +32,8 @@ unavailability. Prior failed reports remain in the original evidence.
 A pending reusable research entry links to its retained readable evidence as well
 as its future archive path. Later activities can read the full report before
 choosing its ordinary checked archival operation.
+
+A resumed steward also refreshes the existing canonical assignment after an
+inbox handoff. Its latest host check and original expectation replace obsolete
+failure fields, while complete research and clarification answers remain attached.
+Resolved checks stay in history and do not reappear as pending instructions.
