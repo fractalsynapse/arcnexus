@@ -42,14 +42,11 @@ export function qualityRuntime(operation: QualityOperation): QualityRuntime {
 }
 
 /** Discover applicable operation inputs and bind them to ownership and tool configuration. */
-const ignoreFileContents = new Map<string, string>();
-
 export async function selectQualityInputs(
   operation: QualitySelection['operation'],
   owner?: string,
   root: string = process.cwd(),
 ): Promise<QualitySelection> {
-  ignoreFileContents.clear();
   const componentFiles = globSync('.arc/architecture/components/*.yaml', { cwd: root });
   const components: Component[] = componentFiles.map((path) =>
     parse(readFileSync(resolve(root, path), 'utf8')),
