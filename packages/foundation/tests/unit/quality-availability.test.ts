@@ -17,7 +17,11 @@ type Capability = (binding: Binding) => boolean;
 /** Access the proposed public capability without preventing the pre-change build. */
 function capability(): Capability {
   const entry = foundation as unknown as Record<string, unknown>;
-  assert.equal(typeof entry.qualityOperationAvailable, 'function', 'Foundation capability is missing');
+  assert.equal(
+    typeof entry.qualityOperationAvailable,
+    'function',
+    'Foundation capability is missing',
+  );
   return entry.qualityOperationAvailable as Capability;
 }
 
@@ -44,11 +48,42 @@ test('public capability recognizes the available owner-scoped lint binding', () 
 });
 
 test('public capability rejects a valid declaration with an unavailable command', () => {
-  assert.equal(capability()({ ...format, command: '/arcnexus-unavailable-quality-implementation' }), false);
+  assert.equal(
+    capability()({ ...format, command: '/arcnexus-unavailable-quality-implementation' }),
+    false,
+  );
 });
 
 test('public capability rejects an operation bound to the other quality command', () => {
   assert.equal(capability()({ ...format, args: lint.args }), false);
+});
+
+test('capability rejects a script invoking the wrong quality operation', () => {
+  const tree = new QualityFixture();
+  const previous = process.cwd();
+  try {
+    const manifest = JSON.parse(readFileSync(join(tree.root, 'package.json'), 'utf8'));
+    manifest.scripts.lint = 'jiti packages/foundation/scripts/owner-quality.ts format:check';
+    tree.write('package.json', JSON.stringify(manifest));
+    process.chdir(tree.root);
+    assert.equal(capability()(lint), false);
+  } finally {
+    process.chdir(previous);
+    tree.close();
+  }
+});
+
+test('capability rejects a binding when its quality runner is missing', () => {
+  const tree = new QualityFixture();
+  const previous = process.cwd();
+  try {
+    rmSync(join(tree.root, 'packages/foundation/scripts/owner-quality.ts'));
+    process.chdir(tree.root);
+    assert.equal(capability()(lint), false);
+  } finally {
+    process.chdir(previous);
+    tree.close();
+  }
 });
 
 test('capability inspection leaves its binding and maintained inputs unchanged', () => {
