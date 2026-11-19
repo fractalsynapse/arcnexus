@@ -399,7 +399,7 @@ for (const expected of ['pass', 'fail'] as const) {
     await interrupt(scenario);
     const repeated = await scenario.run('repeat');
     assert.equal(repeated.kind, 'blocked', JSON.stringify(repeated));
-    const repeatedStatus = expected === 'pass' ? 43 : 0;
+    const repeatedStatus = expected === 'pass' ? 43 : 37;
     assert.match(repeated.reason, new RegExp(`owner-tests.*${repeatedStatus}`));
     assert.deepEqual(
       scenario.checks.map(({ status }) => status),
