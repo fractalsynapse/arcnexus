@@ -19,7 +19,8 @@ export function checkInput(task: HostTask, id: string, scope?: StewardScope) {
   const worktree = task.worktree!;
   if (
     scope?.owner &&
-    (existsSync(join(task.capture.source.root, '.arc/architecture/components')) ||
+    (task.capture.source.paths.some((path) => path.startsWith('.arc/architecture/components/')) ||
+      existsSync(join(task.capture.source.root, '.arc/architecture/components')) ||
       existsSync(join(worktree, '.arc/architecture/components')))
   ) assertCapturedOwnership(task.capture, worktree);
   const command = checkCommand(task.capture, worktree, id, scope?.owner);
