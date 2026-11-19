@@ -153,6 +153,44 @@ test('a repeated child retains its identity and interrupted observations', async
   fixture.parent.close();
 });
 
+test('child admission refuses a writer for another project in the same store', async (t) => {
+  const fixture = new AdmissionScenario(t);
+  const foreign = fixture.coordination.admit('https://github.com/example/other.git', 'Other phase');
+  assert(foreign instanceof Journal);
+  const result = await fixture.execution.admitChild(
+    { directory: fixture.root, goal: 'Prerequisite' },
+    foreign,
+    'prerequisite',
+    signal,
+  );
+  assert(!(result instanceof HostTask));
+  assert.equal(result.kind, 'invalid');
+  const competing = fixture.coordination.admit(remote, 'Standalone');
+  assert('activeGoal' in competing);
+  assert.equal(competing.activeGoal, 'Architect phase');
+  foreign.finish({ kind: 'completed' });
+  foreign.close();
+  fixture.parent.finish({ kind: 'completed' });
+  fixture.parent.close();
+});
+
+test('child admission refuses a writer from another Coordination store', async (t) => {
+  const fixture = new AdmissionScenario(t);
+  const foreign = new AdmissionScenario(t);
+  const result = await fixture.execution.admitChild(
+    { directory: fixture.root, goal: 'Prerequisite' },
+    foreign.parent,
+    'prerequisite',
+    signal,
+  );
+  assert(!(result instanceof HostTask));
+  assert.equal(result.kind, 'invalid');
+  foreign.parent.finish({ kind: 'completed' });
+  foreign.parent.close();
+  fixture.parent.finish({ kind: 'completed' });
+  fixture.parent.close();
+});
+
 test('child admission performs normal preflight before claiming a journal', async (t) => {
   const fixture = new AdmissionScenario(t);
   writeFileSync(join(fixture.root, 'dirty.txt'), 'dirty');
