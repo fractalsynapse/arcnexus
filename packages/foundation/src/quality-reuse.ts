@@ -118,7 +118,8 @@ function lintReuseEligibility(
   configurationInputs: readonly string[],
 ): QualityReuseEligibility {
   for (const path of configurationInputs) {
-    if (!existsSync(resolve(root, path))) continue;
+    if (!existsSync(resolve(root, path)))
+      return { eligible: false, reason: `ESLint dependency coverage is incomplete at ${path}` };
     const source = readFileSync(resolve(root, path), 'utf8');
     for (const [pattern, description] of unsupportedLintDependencies) {
       if (pattern.test(source))
