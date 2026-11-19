@@ -9,6 +9,7 @@ import { parse } from 'yaml';
 import { team } from '../../team/src/index.js';
 import type { GuidanceSource } from '../../manager/src/index.js';
 import { qualityReuseEligibility } from './quality-reuse.js';
+import { configurationInputs } from './quality-inputs.js';
 
 export { unifiedDiff, type ContentPatch } from './diff.js';
 
