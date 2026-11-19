@@ -53,6 +53,7 @@ for (const [form, source, reason] of [
 test('known static configuration preserves scoped reuse and identity', async () => {
   const tree = fixture();
   try {
+    tree.owner('helper-js', 'helper.js');
     tree.write('eslint.config.ts', "import rules from './helper.js'; export default [rules];\n");
     tree.write('helper.js', 'export default {};\n');
     const before = await selectQualityInputs('lint', 'alpha', tree.root);
