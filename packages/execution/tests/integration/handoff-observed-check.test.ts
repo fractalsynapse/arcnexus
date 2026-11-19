@@ -32,7 +32,7 @@ test('a supplier handoff preserves an observed failure when the steward resumes'
     return check;
   });
   let calls = 0;
-  t.mock.method(task, 'activate', async (_agent, selection, input: TaskContext) => {
+  t.mock.method(task, 'activate', async (_agent: Agent, selection: Parameters<typeof task.activate>[1], input: TaskContext) => {
     if (calls++ > 0) return { kind: 'completed', edits: [], checks: [] };
     const tools = new ActivationTools(task, selection, input, signal);
     await tools.invoke({ name: 'owner-tests', handler: 'check' }, { expected: 'pass' });
