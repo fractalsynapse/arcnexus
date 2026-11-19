@@ -65,14 +65,7 @@ function qualityIdentity(
   componentFiles: readonly string[],
 ): string {
   const identity = createHash('sha256');
-  identity.update(
-    JSON.stringify({
-      operation,
-      owner,
-      files,
-      owners: files.map((path) => [path, team.ownerFor(components, path)]),
-    }),
-  );
+  identity.update(JSON.stringify({ operation, owner, files, owners: files.map((path) => [path, team.ownerFor(components, path)]) }));
   for (const path of [
     ...componentFiles,
     ...files.flatMap((file) => [file, readOptionalFile(file)]),
