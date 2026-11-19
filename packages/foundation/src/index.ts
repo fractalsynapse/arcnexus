@@ -47,6 +47,7 @@ const ignoreFileContents = new Map<string, string>();
 export async function selectQualityInputs(
   operation: QualitySelection['operation'],
   owner?: string,
+  root: string = process.cwd(),
 ): Promise<QualitySelection> {
   ignoreFileContents.clear();
   const componentFiles = globSync('.arc/architecture/components/*.yaml');
