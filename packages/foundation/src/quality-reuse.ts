@@ -66,6 +66,27 @@ function formatterReuseEligibility(
   return { eligible: true };
 }
 
+/** Validate one collected formatter configuration without evaluating it. */
+function formatterInputReason(path: string, root: string): string | undefined {
+  let parsed: unknown;
+  try {
+    parsed = parse(readFileSync(resolve(root, path), 'utf8'));
+  } catch {
+    return `Prettier configuration cannot be inspected safely: ${path}`;
+  }
+  const value = /(?:^|\/)package\.json$/.test(path) && isRecord(parsed)
+    ? parsed.prettier
+    : parsed;
+  if (value === undefined) return undefined;
+  if (typeof value === 'string')
+    return `Prettier configuration references an uncovered shareable config: ${path}`;
+  if (!isRecord(value))
+    return `Prettier configuration has an unsupported shape: ${path}`;
+  return containsPluginOption(value)
+    ? `Prettier configuration may load unselected plugin dependencies: ${path}`
+    : undefined;
+}
+
 /** Name the first executable formatter configuration that can load dependencies. */
 function formatterConfigReason(directory: string, root: string): string | undefined {
   for (const name of executableFormatterConfigs) {
