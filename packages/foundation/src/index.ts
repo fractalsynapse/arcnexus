@@ -86,24 +86,7 @@ function qualityIdentity(
 ): string {
   const identity = createHash('sha256');
   identity.update(selectionIdentity(operation, owner, files, components));
-  const relevantIgnoreFiles = relevantGitignoreFiles(files);
-  for (const path of [
-    ...componentFiles,
-    'packages/foundation/src/index.ts',
-    'packages/foundation/scripts/owner-quality.ts',
-    ...editorConfigurationInputs(files),
-    ...configurationInputs(operation),
-    ...prettierConfigurationInputs(operation, files),
-    ...files,
-    ...relevantIgnoreFiles,
-    '.editorconfig',
-    '.eslintignore',
-    '.prettierignore',
-    '.prettierrc.yaml',
-    'eslint.config.ts',
-    'package.json',
-    'package-lock.json',
-  ]) {
+  for (const path of identityInputPaths(operation, files, componentFiles)) {
     identity.update(path).update(existsSync(path) ? '\u0000present\u0000' : '\u0000missing\u0000');
     if (existsSync(path)) identity.update(readFileSync(path));
   }
