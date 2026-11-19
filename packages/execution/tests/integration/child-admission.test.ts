@@ -53,8 +53,7 @@ class AdmissionScenario {
     const architecture = new Architecture();
     t.mock.method(architecture, 'capture', () => this.capture);
     this.coordination = new Coordination(join(directory, 'state'));
-    this.execution = new Execution(architecture, this.coordination, join(directory, 'state'))
-      as unknown as ChildAdmission;
+    this.execution = new Execution(architecture, this.coordination, join(directory, 'state')) as unknown as ChildAdmission;
     const parent = this.coordination.admit(remote, 'Architect phase');
     assert(parent instanceof Journal);
     this.parent = parent;
