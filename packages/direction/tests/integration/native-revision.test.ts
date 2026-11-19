@@ -198,8 +198,20 @@ class NativeRevision {
               evidence: [],
             },
     },
-    delivery: { integrate: async () => ({ kind: 'merged', commit: 'staged', evidence: [] }) },
+    delivery: {
+      integrate: async () => {
+        this.assertAcceptance();
+        return { kind: 'merged', commit: 'staged', evidence: [] };
+      },
+    },
   };
+
+  /** Inspect canonical acceptance before Workflow closes its real journal connection. */
+  private assertAcceptance() {
+    const accepted = this.task.history().findLast((event) => 'plan' in event);
+    assert(accepted && 'plan' in accepted);
+    assert.deepEqual(accepted.plan.milestones.slice(0, 201), this.plan.milestones);
+  }
 
   /** Invoke the unchanged SDK boundary with a canonical host plan and feedback. */
   revise(feedback: Feedback, initial = false) {
@@ -228,9 +240,7 @@ test('the actual native request omits completed work and reconstructs its partia
   fixture.replies.push({
     kind: 'plan',
     plan: {
-      milestones: [
-        { ...fixture.plan.milestones[200], steps: fixture.plan.milestones[200]!.steps.slice(2) },
-      ],
+      milestones: [{ id: 'pending', steps: fixture.plan.milestones[200]!.steps.slice(2) }],
     },
   });
   const result = await fixture.revise({
@@ -273,4 +283,70 @@ test('the unchanged Workflow repairs a native pending response and retains compl
   assert.equal(fixture.inputs.length, 2);
   assert.match(fixture.inputs[1]!.rendered, /owner: expected string, received number/);
   assert(fixture.inputs.every(({ rendered }) => !rendered.includes('completed-199')));
+});
+
+/** Build distinct new correction work with the original engineering acceptance. */
+function correctionFor(plan: Plan) {
+  return {
+    ...milestone('correction'),
+    criteria: plan.milestones[200]!.criteria,
+    steps: plan.milestones[200]!.steps,
+  };
+}
+
+test('successive distinct native revision errors return to Direction before delivery', async (t) => {
+  const fixture = new NativeRevision(t, 201);
+  const correction = correctionFor(fixture.plan);
+  fixture.replies.push(
+    { kind: 'plan', plan: { milestones: [{ ...correction, owner: 42 }] } },
+    { kind: 'plan', plan: { milestones: [{ ...correction, steps: null }] } },
+    { kind: 'plan', plan: { milestones: [correction] } },
+  );
+  const outcome = await new Workflow(fixture.services).run(
+    { directory: fixture.root, goal: fixture.task.goal },
+    { progress() {} },
+    new AbortController().signal,
+  );
+  assert.equal(outcome.kind, 'merged', JSON.stringify(outcome));
+  assert.equal(fixture.inputs.length, 3);
+  assert.match(fixture.inputs[1]!.rendered, /owner: expected string, received number/);
+  assert.match(fixture.inputs[2]!.rendered, /steps: expected array, received null/);
+});
+
+test('a repeated unchanged native validation error holds without another Director call', async (t) => {
+  const fixture = new NativeRevision(t, 201);
+  const delivery = t.mock.method(fixture.services.delivery, 'integrate');
+  const invalid = { ...correctionFor(fixture.plan), owner: 42 };
+  fixture.replies.push(
+    ...Array.from({ length: 2 }, () => ({ kind: 'plan', plan: { milestones: [invalid] } })),
+  );
+  const outcome = await new Workflow(fixture.services).run(
+    { directory: fixture.root, goal: fixture.task.goal },
+    { progress() {} },
+    new AbortController().signal,
+  );
+  assert.equal(outcome.kind, 'blocked', JSON.stringify(outcome));
+  assert.match(
+    'reason' in outcome ? outcome.reason : '',
+    /owner: expected string, received number/,
+  );
+  assert.equal(fixture.inputs.length, 2);
+  assert.equal(delivery.mock.callCount(), 0);
+  fixture.assertBounded();
+});
+
+test('cancellation during a rejected Director reply stops before another repair call', async (t) => {
+  const fixture = new NativeRevision(t, 201);
+  const controller = new AbortController();
+  const invocation = t.mock.method(fixture.task, 'activate', async () => {
+    controller.abort();
+    return undefined;
+  });
+  const outcome = await new Workflow(fixture.services).run(
+    { directory: fixture.root, goal: fixture.task.goal },
+    { progress() {} },
+    controller.signal,
+  );
+  assert.equal(outcome.kind, 'cancelled');
+  assert.equal(invocation.mock.callCount(), 1);
 });

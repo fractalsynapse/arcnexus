@@ -110,6 +110,8 @@ export interface RevisionRequest {
   finding: RevisionFeedback;
 }
 
+type RevisionMilestone = Pick<Milestone, 'id' | 'steps'>;
+
 /** Reconstruct and validate a pending-only proposal without mutating accepted inputs. */
 export function decodeRevisionResponse(
   response: unknown,
@@ -120,7 +122,7 @@ export function decodeRevisionResponse(
   const value = mapping(response, 'response');
   if (value.kind === 'question') return decodeDirectorResponse(response);
   if (value.kind !== 'plan') throw new DirectorResponseError('response.kind: expected "plan"');
-  const proposed = pendingMilestones(value.plan);
+  const proposed = pendingMilestones(value.plan, accepted);
   const { completed, activities: positions } = request.position;
   const plan = reconstructPlan(accepted, proposed, completed, positions);
   validateRevisionPlan(capture, accepted, plan, request, completed, positions);
@@ -128,18 +130,27 @@ export function decodeRevisionResponse(
 }
 
 /** Decode only the pending milestone array and report malformed revision fields. */
-function pendingMilestones(value: unknown): Milestone[] {
+function pendingMilestones(value: unknown, accepted: Plan): RevisionMilestone[] {
   const proposedPlan = mapping(value, 'plan');
   if ('focus' in proposedPlan)
     throw new DirectorResponseError('plan.focus: revisions cannot replace Focus');
-  list(proposedPlan.milestones, 'plan.milestones', milestone);
-  return proposedPlan.milestones as Milestone[];
+  list(proposedPlan.milestones, 'plan.milestones', (value, path) => {
+    const entry = mapping(value, path);
+    string(entry.id, `${path}.id`);
+    if (!accepted.milestones.some(({ id }) => id === entry.id)) return milestone(value, path);
+    if ('owner' in entry || 'criteria' in entry)
+      throw new DirectorResponseError(
+        `${path}: the host retains accepted ownership and acceptance; omit owner and criteria for ${entry.id}`,
+      );
+    list(entry.steps, `${path}.steps`, step);
+  });
+  return proposedPlan.milestones as RevisionMilestone[];
 }
 
 /** Rebuild the trusted plan while preserving completed milestones and Step prefixes. */
 function reconstructPlan(
   accepted: Plan,
-  proposed: readonly Milestone[],
+  proposed: readonly RevisionMilestone[],
   completed: number,
   positions: Readonly<Record<string, number>>,
 ): Plan {
@@ -156,7 +167,9 @@ function reconstructPlan(
       );
     ids.add(candidate.id);
     const original = accepted.milestones.find(({ id }) => id === candidate.id);
-    milestones.push(original ? reconstructMilestone(candidate, original, positions) : candidate);
+    milestones.push(
+      original ? reconstructMilestone(candidate, original, positions) : (candidate as Milestone),
+    );
   }
   for (const original of accepted.milestones.slice(completed))
     if (!ids.has(original.id))
@@ -168,18 +181,10 @@ function reconstructPlan(
 
 /** Restore an existing milestone's accepted identity and completed Step prefix. */
 function reconstructMilestone(
-  candidate: Milestone,
+  candidate: RevisionMilestone,
   original: Milestone,
   positions: Readonly<Record<string, number>>,
 ): Milestone {
-  if (candidate.owner !== original.owner)
-    throw new DirectorResponseError(
-      `plan.milestones[${candidate.id}].owner: changed accepted owner`,
-    );
-  if (JSON.stringify(candidate.criteria) !== JSON.stringify(original.criteria))
-    throw new DirectorResponseError(
-      `plan.milestones[${candidate.id}].criteria: changed accepted acceptance`,
-    );
   const offset = positions[candidate.id] ?? 0;
   return { ...original, steps: [...original.steps.slice(0, offset), ...candidate.steps] };
 }
