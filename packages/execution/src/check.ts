@@ -157,6 +157,18 @@ async function ownerOperationInapplicability(
     (applicability !== 'owner-lint-files' && applicability !== 'owner-format-files')
   )
     return {};
+  if (!operation.tool || !operation.command)
+    throw new Error('Unavailable owner quality operation: ' + id);
+  if (
+    !qualityOperationAvailable({
+      tool: operation.tool,
+      command: operation.command,
+      args: operation.args ?? [],
+      applicability,
+      source: capture.source,
+    })
+  )
+    throw new Error('Unavailable owner quality operation: ' + id);
   const selection = await selectQualityInputs(
     applicability === 'owner-lint-files' ? 'lint' : 'format:check',
     owner,
