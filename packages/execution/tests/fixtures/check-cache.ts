@@ -32,8 +32,9 @@ export class CheckCacheFixture {
   constructor(t: TestContext) {
     mkdirSync(join(this.source, '.arc/architecture/components'), { recursive: true });
     git(this.source, 'init', '-q');
-    writeFileSync(join(this.source, 'fixture.txt'), 'original');
-    writeFileSync(join(this.source, '.arc/architecture/components/owner.yaml'), 'id: owner\nowns:\n  - fixture.txt\n');
+    writeFileSync(join(this.source, 'fixture.ts'), 'export const fixture = true;\\n');
+    writeFileSync(join(this.source, 'eslint.config.js'), 'export default [];\\n');
+    writeFileSync(join(this.source, '.arc/architecture/components/owner.yaml'), 'id: owner\nowns:\n  - fixture.ts\n');
     writeFileSync(join(this.source, '.gitignore'), 'node_modules/\n');
     this.commit(this.source);
     this.task = this.open(fixtureOperation, git(this.source, 'rev-parse', 'HEAD'));
@@ -77,7 +78,7 @@ export class CheckCacheFixture {
 
   /** Change a real checkpoint instead of pretending a journal label changes its inputs. */
   change() {
-    writeFileSync(join(this.task.worktree!, 'fixture.txt'), 'changed');
+    writeFileSync(join(this.task.worktree!, 'fixture.ts'), 'changed');
     this.commit(this.task.worktree!);
   }
 
@@ -116,7 +117,7 @@ export class CheckCacheFixture {
       },
       project: { contractRegistry: 'registry.yaml' },
       contracts: [],
-      components: { owner: { id: 'owner', owns: ['fixture.txt'], activities: {} } },
+      components: { owner: { id: 'owner', owns: ['fixture.ts'], activities: {} } },
       operations: { 'fixture-check': operation },
     } as unknown as Capture;
     return capture;
