@@ -340,7 +340,6 @@ export function textDigest(content: string) {
   return createHash('sha256').update(content).digest('hex');
 }
 
-/** Extract authored acceptance identities for registry amendment and offline validation. */
 export function acceptanceScenarios(content: string) {
   return [...content.matchAll(/^\| ([A-Z]+-\d+[a-z]?) \|/gm)].map((match) => match[1]!);
 }
