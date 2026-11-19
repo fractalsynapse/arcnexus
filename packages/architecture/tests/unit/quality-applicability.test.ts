@@ -64,6 +64,22 @@ test('public request rejects a check without an implementation', () => {
   );
 });
 
+test('activation refuses an unavailable owner-scoped check implementation before invoking the agent', () => {
+  const capture = fixture({
+    ...check,
+    command: '/arcnexus-unavailable-quality-implementation',
+    applicability: 'owner-format-files',
+  });
+  let invoked = false;
+  const agent = new Agent(new Architecture());
+  assert.throws(() => agent.activate(
+    { capture, selection, task: { goal: 'test', assignment: {}, milestone: {}, acceptance: [], evidence: [], worktree: '.' } },
+    async () => { invoked = true; },
+    new AbortController().signal,
+  ));
+  assert.equal(invoked, false);
+});
+
 test('public request rejects an unavailable handler', () => {
   assert.throws(() =>
     new Architecture().request(fixture({ ...check, tool: 'missing' }), selection),
