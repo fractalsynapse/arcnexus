@@ -40,7 +40,8 @@ export async function check(
   if (
     owner &&
     (capture.source.paths ?? []).some((path) => path.startsWith('.arc/architecture/components/'))
-  ) assertCapturedOwnership(capture, worktree);
+  )
+    assertCapturedOwnership(capture, worktree);
   return executeOwnerCheck(capture, worktree, common, id, owner, log, signal, command);
 }
 
@@ -59,9 +60,15 @@ async function executeOwnerCheck(
   if (applicability.reason) {
     writeFileSync(log, `Not applicable: ${applicability.reason}\n`, { mode: 0o600, flag: 'wx' });
     return {
-      id, command: command.executable, args: command.args, cwd: command.cwd, log,
-      selection: applicability.selection, status: 'not-applicable',
-      reason: applicability.reason, durationMs: 0,
+      id,
+      command: command.executable,
+      args: command.args,
+      cwd: command.cwd,
+      log,
+      selection: applicability.selection,
+      status: 'not-applicable',
+      reason: applicability.reason,
+      durationMs: 0,
     };
   }
   const selection = applicability.selection;
@@ -72,7 +79,18 @@ async function executeOwnerCheck(
   const args = runtime
     ? [...runtime.args, '--', ...selection!.files.map((path) => resolve(worktree, path))]
     : command.args;
-  return runConfinedCheck(capture, worktree, common, id, log, signal, command.cwd, executable, args, selection);
+  return runConfinedCheck(
+    capture,
+    worktree,
+    common,
+    id,
+    log,
+    signal,
+    command.cwd,
+    executable,
+    args,
+    selection,
+  );
 }
 
 /** Run one resolved command and retain its exact execution identity. */
@@ -93,16 +111,22 @@ async function runConfinedCheck(
   const invocation = [...sandbox, '--chdir', cwd, '--', executable, ...args];
   const { status } = await execute('/usr/bin/bwrap', invocation, { cwd: worktree, log, signal });
   return {
-    id, command: executable, args, cwd, log, selection, status,
+    id,
+    command: executable,
+    args,
+    cwd,
+    log,
+    selection,
+    status,
     durationMs: Math.round(performance.now() - start),
   };
 }
 
 /** Refuse missing, added or changed ownership declarations against immutable capture. */
 export function assertCapturedOwnership(capture: Capture, worktree: string) {
-  const admittedPaths = (capture.source.paths ?? []).filter((path) =>
-    path.startsWith('.arc/architecture/components/') && path.endsWith('.yaml'),
-  ).sort();
+  const admittedPaths = (capture.source.paths ?? [])
+    .filter((path) => path.startsWith('.arc/architecture/components/') && path.endsWith('.yaml'))
+    .sort();
   const files = globSync('.arc/architecture/components/*.yaml', { cwd: worktree }).sort();
   if (!admittedPaths.length || JSON.stringify(files) !== JSON.stringify(admittedPaths))
     throw new Error('Candidate ownership drift differs from captured authority');
@@ -150,13 +174,15 @@ async function ownerOperationInapplicability(
     };
   if (!operation.tool || !operation.command)
     throw new Error(`Unavailable owner quality operation: ${id}`);
-  if (!qualityOperationAvailable({
-    tool: operation.tool,
-    command: operation.command,
-    args: operation.args ?? [],
-    applicability,
-    source: capture.source,
-  }))
+  if (
+    !qualityOperationAvailable({
+      tool: operation.tool,
+      command: operation.command,
+      args: operation.args ?? [],
+      applicability,
+      source: capture.source,
+    })
+  )
     throw new Error(`Unavailable owner quality operation: ${id}`);
   return { selection };
 }
