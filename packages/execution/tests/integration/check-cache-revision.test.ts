@@ -57,6 +57,7 @@ test('an unchanged checkpoint retains matching evidence', async (t) => {
   task.note({ checkpoint: 'unchanged', baseRevision: 'same' });
   const refreshed = await task.check('owner-tests', new AbortController().signal, scope);
   assert.deepEqual(refreshed, check);
+  assert.equal(readFileSync(refreshed.log, 'utf8'), 'old source passed');
 });
 
 test('an aborted check cannot reuse completed evidence', async (t) => {
