@@ -29,3 +29,10 @@ assignment, and pending required CI leaves the candidate awaiting integration.
 Route guidance input changes there, and route capture or catalog validation changes
 to Architecture. Report observed results and unresolved requests to the
 caller for delivery.
+
+For refinement guidance, keep the recovery route canonical in the Workflow
+contract and activity roles. Walk an ordinary failure back to its caller, a
+self-review finding back within its milestone, and only an explicit escalation
+or final independent rejection through Direction. Human approvals govern guides;
+ordinary technical repair adds no gate. An exact approved host application never
+widens an active capture. Keep goals free of component assignments and results.

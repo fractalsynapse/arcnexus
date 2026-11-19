@@ -1,6 +1,6 @@
 # Self-healing refinement amendment
 
-Status: **proposed; awaiting human architectural approval**. Part of
+Status: **approved and applied; implementation in progress**. Part of
 [#615](https://github.com/fractalsynapse/arcnexus/issues/615).
 
 The implementation plan is approved. This record presents its exact contract,
@@ -16,11 +16,10 @@ Review the [complete proposed patch](self-healing-refinement.patch), based on
 f33fa43a9d98507ece5563063813bfc72779efd98b265d05be521ebcabe0fb63
 ```
 
-The patch is a proposal artifact. None of its changes to contracts, the registry,
-the catalog or guidance have been applied. Its prospective registry approval
-records become true only after the architect approves this exact amendment.
-Approval delegates application to the current implementing agent on the #615
-review branch. The new runtime host capability must itself be implemented,
+The architect approved this exact patch in Codex chat and delegated its application
+to the implementing agent on the #615 review branch. The patch is retained as the
+accepted change record; its contract, registry, catalog and guidance amendments
+have been applied. The new runtime host capability must itself be implemented,
 validated and delivered before later runs can use it.
 
 The architect remains the authority for objectives, goals and architecture.
@@ -121,8 +120,8 @@ Main integration, tags and releases remain separate maintainer actions.
 accepted the proposed patch without applying it. An in-memory check of its future
 contents verified all ten changed contract digests and scenario counts, unique
 scenario IDs, retained prior identities and stages, YAML, ownership, local links
-and the Architect activity binding. The active locked bytes and registry still
-match the base revision.
+and the Architect activity binding. Before application, the active locked bytes
+and registry matched the base revision.
 
 The guidance walkthrough follows an ordinary failed check to local repair,
 cross-owner work to explicit escalation, and final rejection to Direction. The

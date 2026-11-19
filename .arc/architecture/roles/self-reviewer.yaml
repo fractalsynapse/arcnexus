@@ -5,3 +5,5 @@ responsibilities:
   - Report gaps and observations for the assembled task review
 instructions:
   - Record observations without issuing the independent acceptance verdict
+  - Return local findings to the earliest affected documentation, testing or implementation activity in the same milestone
+  - Escalate different responsibility or changed scope explicitly; final independent rejection belongs to Direction

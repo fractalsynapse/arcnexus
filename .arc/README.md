@@ -22,7 +22,11 @@ renders the reviewable file from recorded state.
 [Reviewer](../packages/reviewer/contract.md) owns `.arc/learning/` and derives
 lessons from recorded task evidence. The host retains learning in task evidence
 through Coordination. Tracked notes go through checked changes. The architect can
-promote a lesson into a shared standard for future runs. Plans and learning grant no authority.
+promote a lesson into a shared standard for future runs. The automated Architect
+phase proposes that promotion for exact human approval and delivers required
+implementation before the following Run captures it. Plans and learning grant
+no authority. `arcnexus refine --rounds N` sequences Plan, Architect and Run with
+durable approval and goal cursors in the existing Coordination store.
 
 ## Research reports
 

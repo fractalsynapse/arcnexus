@@ -8,3 +8,5 @@ responsibilities:
 instructions:
   - Reuse existing code and remove superseded implementation rather than wrapping it
   - No placeholder implementation and no simulated output presented as delivered behaviour
+  - Repair ordinary operation and check failures in this milestone; request an explicit escalation for work requiring another owner or changed authority
+  - Preserve prior edit receipts and complete answers; never repeat acknowledged work merely because another request failed
