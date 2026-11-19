@@ -65,6 +65,7 @@ interface QualityOperationBinding {
   applicability: string;
   command: string;
   args: (string | { context: string })[];
+  source?: GuidanceSource;
 }
 
 /** Resolve a binding only when its script and shared runtime implementation are present. */
@@ -84,18 +85,29 @@ export function qualityOperationAvailable(binding: QualityOperationBinding): boo
     binding.applicability !== `owner-${operation === 'format:check' ? 'format' : operation}-files`
   )
     return false;
-  const scripts = JSON.parse(readFileSync('package.json', 'utf8')).scripts as Record<
-    string,
-    string
-  >;
+
+  const runnerPath = 'packages/foundation/scripts/owner-quality.ts';
+  const source = binding.source;
+  const manifest = source
+    ? source.paths.includes('package.json')
+      ? JSON.parse(source.read('package.json'))
+      : undefined
+    : JSON.parse(readFileSync('package.json', 'utf8'));
+  if (!manifest || typeof manifest !== 'object' || !('scripts' in manifest)) return false;
+  const scripts = manifest.scripts;
+  if (!scripts || typeof scripts !== 'object' || Array.isArray(scripts)) return false;
   const script = scripts[operation];
-  const tokens = script?.trim().split(/\s+/) ?? [];
+  if (typeof script !== 'string') return false;
+  const tokens = script.trim().split(/\s+/);
+  const runnerAvailable = source
+    ? source.paths.includes(runnerPath)
+    : existsSync(runnerPath);
   return (
     tokens.length === 3 &&
     tokens[0] === 'jiti' &&
-    tokens[1] === 'packages/foundation/scripts/owner-quality.ts' &&
+    tokens[1] === runnerPath &&
     tokens[2] === operation &&
-    existsSync(tokens[1])
+    runnerAvailable
   );
 }
 
