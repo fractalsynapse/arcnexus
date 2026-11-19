@@ -1,6 +1,17 @@
 import { citesVerifiedRun } from '../../execution/src/index.js';
-import { revisionCitation } from '../../architecture/src/index.js';
-import { activities, type DirectionResult, type StandingGoalEvidence } from './index.js';
+import { revisionCitation, type Capture } from '../../architecture/src/index.js';
+import {
+  activities,
+  scheduledSupplier,
+  validateCorrection,
+  validatePlan,
+  validateRevision,
+  type DirectionResult,
+  type Milestone,
+  type Plan,
+  type RevisionFeedback,
+  type StandingGoalEvidence,
+} from './index.js';
 
 /** Carry a rejected Director proposal's diagnostic across the planning boundary. */
 export class DirectorResponseError extends Error {}
@@ -89,6 +100,131 @@ function step(value: unknown, path: string): void {
     list(item.criteria, `${path}.criteria`, string);
     string(item.expected, `${path}.expected`);
   });
+}
+
+/** Host-owned immutable references and committed cursor for a revision activation. */
+export interface RevisionRequest {
+  acceptedPlan: string;
+  retainedEvidence: string;
+  position: { completed: number; activities: Readonly<Record<string, number>> };
+  finding: RevisionFeedback;
+}
+
+/** Reconstruct and validate a pending-only proposal without mutating accepted inputs. */
+export function decodeRevisionResponse(
+  response: unknown,
+  capture: Capture,
+  accepted: Plan,
+  request: RevisionRequest,
+): DirectionResult {
+  const value = mapping(response, 'response');
+  if (value.kind === 'question') return decodeDirectorResponse(response);
+  if (value.kind !== 'plan') throw new DirectorResponseError('response.kind: expected "plan"');
+  const proposed = pendingMilestones(value.plan);
+  const { completed, activities: positions } = request.position;
+  const plan = reconstructPlan(accepted, proposed, completed, positions);
+  validateRevisionPlan(capture, accepted, plan, request, completed, positions);
+  return { kind: 'plan', plan };
+}
+
+/** Decode only the pending milestone array and report malformed revision fields. */
+function pendingMilestones(value: unknown): Milestone[] {
+  const proposedPlan = mapping(value, 'plan');
+  if ('focus' in proposedPlan)
+    throw new DirectorResponseError('plan.focus: revisions cannot replace Focus');
+  list(proposedPlan.milestones, 'plan.milestones', milestone);
+  return proposedPlan.milestones as Milestone[];
+}
+
+/** Rebuild the trusted plan while preserving completed milestones and Step prefixes. */
+function reconstructPlan(
+  accepted: Plan,
+  proposed: readonly Milestone[],
+  completed: number,
+  positions: Readonly<Record<string, number>>,
+): Plan {
+  if (!Number.isInteger(completed) || completed < 0 || completed > accepted.milestones.length)
+    throw new DirectorResponseError('position.completed: outside accepted milestone sequence');
+  validatePositions(positions, accepted);
+  const prefix = accepted.milestones.slice(0, completed);
+  const ids = new Set<string>();
+  const milestones = [...prefix];
+  for (const candidate of proposed) {
+    if (ids.has(candidate.id) || prefix.some(({ id }) => id === candidate.id))
+      throw new DirectorResponseError(
+        `plan.milestones: duplicate or completed milestone ${candidate.id}`,
+      );
+    ids.add(candidate.id);
+    const original = accepted.milestones.find(({ id }) => id === candidate.id);
+    milestones.push(original ? reconstructMilestone(candidate, original, positions) : candidate);
+  }
+  for (const original of accepted.milestones.slice(completed))
+    if (!ids.has(original.id))
+      throw new DirectorResponseError(
+        `plan.milestones: missing pending accepted milestone ${original.id}`,
+      );
+  return { focus: accepted.focus, milestones };
+}
+
+/** Restore an existing milestone's accepted identity and completed Step prefix. */
+function reconstructMilestone(
+  candidate: Milestone,
+  original: Milestone,
+  positions: Readonly<Record<string, number>>,
+): Milestone {
+  if (candidate.owner !== original.owner)
+    throw new DirectorResponseError(
+      `plan.milestones[${candidate.id}].owner: changed accepted owner`,
+    );
+  if (JSON.stringify(candidate.criteria) !== JSON.stringify(original.criteria))
+    throw new DirectorResponseError(
+      `plan.milestones[${candidate.id}].criteria: changed accepted acceptance`,
+    );
+  const offset = positions[candidate.id] ?? 0;
+  return { ...original, steps: [...original.steps.slice(0, offset), ...candidate.steps] };
+}
+
+/** Apply captured authority and finding-specific rules to the reconstructed candidate. */
+function validateRevisionPlan(
+  capture: Capture,
+  accepted: Plan,
+  plan: Plan,
+  request: RevisionRequest,
+  completed: number,
+  positions: Readonly<Record<string, number>>,
+): void {
+  try {
+    validatePlan(capture, plan);
+    validateRevision(accepted, plan, completed, new Map(Object.entries(positions)));
+    if (request.finding.kind === 'rejection')
+      validateCorrection(plan, completed, request.finding.findings);
+    if (
+      request.finding.kind === 'supplier' &&
+      !scheduledSupplier(
+        accepted,
+        plan,
+        request.finding,
+        completed,
+        new Map(Object.entries(positions)),
+      )
+    )
+      throw new Error(
+        `The Director did not schedule supplier work for ${request.finding.requester}`,
+      );
+  } catch (error) {
+    throw new DirectorResponseError((error as Error).message, { cause: error });
+  }
+}
+
+/** Reject cursor entries that do not refer to an accepted milestone or valid Step. */
+function validatePositions(positions: Readonly<Record<string, number>>, accepted: Plan): void {
+  for (const [id, offset] of Object.entries(positions)) {
+    const milestone = accepted.milestones.find((entry) => entry.id === id);
+    if (!milestone)
+      throw new DirectorResponseError(`position.activities.${id}: not an accepted milestone`);
+    if (!Number.isInteger(offset) || offset < 0 || offset > milestone.steps.length)
+      throw new DirectorResponseError(`position.activities.${id}: outside accepted Steps`);
+  }
 }
 
 /** Require an object before reading its named fields. */

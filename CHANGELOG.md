@@ -9,6 +9,8 @@
 
 ### Fixed
 
+- Keep completed work out of native Director revision prompts and responses while retaining the accepted plan and validation in the host (#617).
+
 - Recognize checked supplier contributions when resuming a caller's failed check, so a remaining defect can be repaired locally without premature holding (#621).
 
 - Return unsupported steward capability blocks to the caller for investigation, preserving checked edits and stopping unchanged rephrased assertions (#618).
