@@ -141,14 +141,7 @@ function requiredChecks(
   scope: StewardScope,
   requested: readonly { id: string; expected: 'pass' | 'fail' }[],
 ) {
-  const checks = new Map<string, { id: string; expected: 'pass' | 'fail' }>();
-  for (const check of requested) {
-    const expected =
-      check.expected === 'fail' && scope.activity === 'testing' && check.id === 'owner-tests'
-        ? 'fail'
-        : 'pass';
-    checks.set(check.id, { id: check.id, expected });
-  }
+  const checks = new Map(requested.map((check) => [check.id, requestedExpectation(check, scope)]));
   const events = task.observations<{
     check?: CheckResult;
     scope?: StewardScope;
@@ -156,28 +149,61 @@ function requiredChecks(
     activity?: string;
     edits?: readonly unknown[];
   }>();
+  const latestEdit = latestActivityEdit(events, scope);
   for (const id of stewardOperations(task, scope)) {
-    const operation = task.capture.operations?.[id];
-    if (!operation || operation.tool !== 'check') continue;
-    const latestEdit = events.findLastIndex(
-      (event) => event.owner === scope.owner && event.activity === scope.activity && event.edits?.length,
-    );
-    const observed = events.findLast(
-      (event, index) =>
-        index > latestEdit &&
-        event.scope?.owner === scope.owner &&
-        event.scope.activity === scope.activity &&
-        event.check?.id === id &&
-        (typeof event.check.status === 'number' || event.check.status === 'not-applicable'),
-    );
-    const declared = observed?.scope?.expected ?? 'pass';
-    const expected =
-      declared === 'fail' && !(scope.activity === 'testing' && id === 'owner-tests')
-        ? 'pass'
-        : declared;
-    if (!checks.has(id)) checks.set(id, { id, expected });
+    if (!isCapturedCheck(task, id) || checks.has(id)) continue;
+    checks.set(id, observedExpectation(events, id, scope, latestEdit));
   }
   return [...checks.values()];
+}
+
+/** Keep expected red limited to Testing owner suites. */
+function requestedExpectation(
+  check: { id: string; expected: 'pass' | 'fail' },
+  scope: StewardScope,
+) {
+  const expected =
+    check.expected === 'fail' && scope.activity === 'testing' && check.id === 'owner-tests'
+      ? 'fail'
+      : 'pass';
+  return { id: check.id, expected };
+}
+
+/** Locate the last edit that makes earlier operation observations stale. */
+function latestActivityEdit(
+  events: readonly { owner?: string; activity?: string; edits?: readonly unknown[] }[],
+  scope: StewardScope,
+) {
+  return events.findLastIndex(
+    (event) => event.owner === scope.owner && event.activity === scope.activity && event.edits?.length,
+  );
+}
+
+/** Identify an operation captured as an executable check. */
+function isCapturedCheck(task: HostTask, id: string) {
+  return task.capture.operations?.[id]?.tool === 'check';
+}
+
+/** Preserve the latest expectation declared by a current operation observation. */
+function observedExpectation(
+  events: readonly {
+    check?: CheckResult;
+    scope?: StewardScope;
+  }[],
+  id: string,
+  scope: StewardScope,
+  latestEdit: number,
+) {
+  const observed = events.findLast(
+    (event, index) =>
+      index > latestEdit &&
+      event.scope?.owner === scope.owner &&
+      event.scope.activity === scope.activity &&
+      event.check?.id === id &&
+      (typeof event.check.status === 'number' || event.check.status === 'not-applicable'),
+  );
+  const expected = observed?.scope?.expected ?? 'pass';
+  return requestedExpectation({ id, expected }, scope);
 }
 
 /** Give the owner its exact failing check and log when activating correction work. */
