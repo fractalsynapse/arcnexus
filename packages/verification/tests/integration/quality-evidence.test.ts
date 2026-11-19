@@ -46,6 +46,7 @@ for (const scenario of [
   'failed-then-pass',
   'stale-then-pass',
   'applicable-declared-inapplicable',
+  'inapplicable',
 ] as const) {
   test(`assembled review handles ${scenario} owner-operation evidence`, async (t) => {
     const root = mkdtempSync(join(tmpdir(), 'arcnexus-verification-quality-'));
@@ -55,13 +56,13 @@ for (const scenario of [
         verifier: { component: 'reviewer', activity: 'assessment' },
         checks: { acceptance: assembled },
       },
-      components: {
+      components: scenario === 'valid' ? {
         verification: { activities: {
           testing: { operations: ['read-file', ...operations] },
           research: { operations: ['read-file', 'owner-tests'] },
         } },
         unused: { activities: { testing: { operations: ['read-file', 'owner-tests'] } } },
-      },
+      } : { verification: { activities: { testing: { operations } } } },
       operations: Object.fromEntries(
         ['read-file', ...operations].map((id) => [
           id,
@@ -120,7 +121,8 @@ for (const scenario of [
         },
         check: {
           id: 'owner-format',
-          status: scenario === 'unavailable' ? null : scenario === 'applicable-declared-inapplicable' ? 'not-applicable' : scenario === 'failed-then-pass' ? 1 : 0,
+          status: scenario === 'unavailable' ? null : scenario === 'applicable-declared-inapplicable' || scenario === 'inapplicable' ? 'not-applicable' : scenario === 'failed-then-pass' ? 1 : 0,
+          ...(scenario === 'inapplicable' ? { reason: 'No format:check files for verification in the current worktree', selection: { operation: 'format:check', owner: 'verification', files: [], identity: 'empty', reuseEligibility: { eligible: true } } } : {}),
           command: 'format',
           args: [],
           cwd: root,
@@ -175,7 +177,7 @@ for (const scenario of [
       { digest: 'tree', evidence: [redLog] },
       AbortSignal.timeout(5000),
     );
-    if (['valid', 'retained-red', 'failed-then-pass', 'stale-then-pass'].includes(scenario))
+    if (['valid', 'retained-red', 'failed-then-pass', 'stale-then-pass', 'inapplicable'].includes(scenario))
       assert.equal(verdict.kind, 'accepted');
     else assert.notEqual(verdict.kind, 'accepted', `owner-format evidence is ${scenario}`);
     assert.deepEqual(calls, assembled);
