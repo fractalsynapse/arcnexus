@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { Coordination, revisionSnapshot } from '../../src/index.js';
+import { HostTask } from '../../../execution/src/index.js';
 
 test('revision snapshot selects the accepted plan and committed position after planner refresh', (t) => {
   const directory = mkdtempSync(join(tmpdir(), 'coordination-revision-'));
