@@ -216,6 +216,7 @@ export interface WorkflowServices {
       feedback: Feedback,
       signal: AbortSignal,
       standing?: StandingGoalEvidence,
+      revision?: RevisionRequest,
     ): Promise<unknown>;
   };
   agent: {
