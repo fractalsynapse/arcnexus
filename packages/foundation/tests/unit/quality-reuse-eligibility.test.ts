@@ -136,7 +136,7 @@ test('commented lint imports retain helper identity coverage', async () => {
       'eslint.config.ts',
       "import rules from /* comment */ './helper.js'; export default [rules];\n",
     );
-    tree.write('helper.js', 'export default {};\\n');
+    tree.write('helper.js', 'export default {};\n');
     const before = await selectQualityInputs('lint', 'alpha', tree.root);
     assert(before.identity);
     tree.write('helper.js', 'export default { changed: true };\\n');
