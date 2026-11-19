@@ -150,6 +150,7 @@ function requiredChecks(
     edits?: readonly unknown[];
   }>();
   for (const id of stewardOperations(task, scope)) {
+    if (!task.capture.operations || !Object.hasOwn(task.capture.operations, id)) continue;
     const latestEdit = events.findLastIndex(
       (event) => event.owner === scope.owner && event.activity === scope.activity && event.edits?.length,
     );
