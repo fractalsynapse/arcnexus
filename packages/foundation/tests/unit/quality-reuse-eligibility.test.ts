@@ -35,6 +35,8 @@ for (const [form, source, reason] of [
   test(`lint ${form} dependency declines reuse with a reason`, async () => {
     const tree = fixture();
     try {
+      tree.owner('helper-js', 'helper.js');
+      tree.owner('helper-cjs', 'helper.cjs');
       tree.write('eslint.config.ts', source);
       tree.write('helper.cjs', 'module.exports = {};\n');
       tree.write('helper.js', 'export default {};\n');
