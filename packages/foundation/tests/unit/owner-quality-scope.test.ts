@@ -38,6 +38,10 @@ class QualityFixture {
     }
     symlinkSync(resolve('node_modules'), join(this.root, 'node_modules'), 'dir');
     mkdirSync(join(this.root, '.arc/architecture/components'), { recursive: true });
+    this.write(
+      '.arc/architecture/components/tooling.yaml',
+      'id: tooling\nowns:\n- package.json\n- .prettierignore\n- .prettierrc.yaml\n- eslint.config.ts\n- packages/foundation\n- packages/team\n',
+    );
   }
 
   /** Define a synthetic owner without changing the captured repository catalog. */
