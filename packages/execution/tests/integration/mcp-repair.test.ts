@@ -52,6 +52,20 @@ function mockCheck(t: TestContext, task: StewardFixture['task'], root: string, c
   );
 }
 
+const repairBindings = [
+      binding('owner-tests', 'check', { expected: { type: 'string' } }),
+      binding('checked-edit', 'edit', {
+        path: { type: 'string' },
+        expected: { type: 'string' },
+        content: { type: 'string' },
+      }),
+      binding('request-supplier', 'supplier', {
+        owner: { type: 'string' },
+        milestone: { type: 'string' },
+        reason: { type: 'string' },
+      }),
+    ];
+
 /** Create the captured MCP bindings for this activation. */
 function repairHost(task: StewardFixture['task'], root: string) {
   const activation = new ActivationTools(
@@ -67,19 +81,7 @@ function repairHost(task: StewardFixture['task'], root: string) {
     new AbortController().signal,
   );
   const host = new LocalMcp(
-    [
-      binding('owner-tests', 'check', { expected: { type: 'string' } }),
-      binding('checked-edit', 'edit', {
-        path: { type: 'string' },
-        expected: { type: 'string' },
-        content: { type: 'string' },
-      }),
-      binding('request-supplier', 'supplier', {
-        owner: { type: 'string' },
-        milestone: { type: 'string' },
-        reason: { type: 'string' },
-      }),
-    ],
+    repairBindings,
     (tool, args) => activation.invoke(tool, args),
     () => {},
   );
