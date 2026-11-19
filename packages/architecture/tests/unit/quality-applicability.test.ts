@@ -4,17 +4,22 @@ import { Architecture, type Capture } from '../../src/index.js';
 import { Agent } from '../../../agent/src/index.js';
 
 /** Create an isolated captured activity without changing the real catalog. */
-function fixture(operation: Record<string, unknown>, missing?: 'manifest' | 'script' | 'runner'): Capture {
+function fixture(
+  operation: Record<string, unknown>,
+  missing?: 'manifest' | 'script' | 'runner',
+): Capture {
   const runner = 'packages/foundation/scripts/owner-quality.ts';
+  const command = operation.applicability === 'owner-lint-files' ? 'lint' : 'format:check';
   const scripts: Record<string, string> = {
     'format:check': `jiti ${runner} format:check`,
     lint: `jiti ${runner} lint`,
   };
-  if (missing === 'script') delete scripts['format:check'];
+  if (missing === 'script') delete scripts[command];
+  const contents: Record<string, string> = { 'package.json': JSON.stringify({ scripts }) };
   const paths = [
     ...(missing === 'manifest' ? [] : ['package.json']),
     ...(missing === 'runner' ? [] : [runner]),
-  ];
+ ];
   return {
     source: { revision: 'base', paths, read: () => JSON.stringify({ scripts }) },
     project: {
