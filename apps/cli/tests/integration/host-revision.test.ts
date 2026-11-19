@@ -117,7 +117,7 @@ for (const finding of findings) {
   });
 }
 
-for (const original of findings) {
+for (const original of findings as RevisionFeedback[]) {
   test(`invalid revision response retains ${original.kind} context`, async (t) => {
     const host = await fixture(t);
     const feedback = { kind: 'plan-repair' as const, diagnostic: 'Invalid response', original };
