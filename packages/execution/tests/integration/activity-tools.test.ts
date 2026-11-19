@@ -102,6 +102,50 @@ function testingActivation(retainedSelfLink = false) {
   return new ActivationTools(task, selection, input, new AbortController().signal);
 }
 
+test('local MCP returns the observed check before the caller continues', async () => {
+  const events: unknown[] = [];
+  const calls: string[] = [];
+  const task = {
+    taskID: 'fixture',
+    capture: { source: { revision: 'staging' }, project: {} },
+    observations: () => events,
+    note: (event: unknown) => events.push(event),
+    check: async (id: string) => {
+      calls.push(id);
+      return { id, status: 37, log: '/evidence/check.log' };
+    },
+  } as unknown as HostTask;
+  const selection = { component: 'fixture', activity: 'testing' };
+  const input = { goal: 'Check', assignment: {}, milestone: { id: 'current' }, acceptance: [], worktree: '.' };
+  const activation = new ActivationTools(task, selection, input, new AbortController().signal);
+  const binding: Binding = {
+    name: 'owner-tests',
+    handler: 'check',
+    description: 'Run captured check',
+    inputSchema: {
+      type: 'object',
+      properties: { expected: { type: 'string', enum: ['pass', 'fail'] } },
+      required: ['expected'],
+      additionalProperties: false,
+    },
+  };
+  const host = new LocalMcp([binding], (tool, args) => activation.invoke(tool, args), () => {});
+  const client = new Client({ name: 'fixture', version: '1' });
+  try {
+    await client.connect(new StreamableHTTPClientTransport(new URL(await host.start())));
+    const result = await client.callTool({ name: 'owner-tests', arguments: { expected: 'pass' } });
+    assert(!result.isError);
+    const content = result.content as { type: string; text: string }[];
+    const observed = JSON.parse(content[0]!.text);
+    assert.equal(observed.status, 37);
+    assert.equal(observed.log, '/evidence/check.log');
+    assert.deepEqual(calls, ['owner-tests']);
+  } finally {
+    await client.close();
+    await host.close();
+  }
+});
+
 test('a steward who queued checks gets a repair diagnostic before blocking on their results', async () => {
   const activation = testingActivation();
   await activation.invoke({ name: 'owner-tests', handler: 'check' }, { expected: 'pass' });
