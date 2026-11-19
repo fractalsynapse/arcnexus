@@ -20,3 +20,10 @@ to subsequent work; the active capture remains immutable.
 
 Implementation of this approved capability is bootstrap work in #631. Deterministic
 checks, hosted CI and real phase acceptance are reported separately.
+
+Optional component research admits a model activity with no operations or only
+mapped read/list tools. The same capability predicate governs the request context,
+inbox and MCP request boundary. Command executors, unknown mappings and effectful
+tools cannot enable research. Inspection and activation refuse an invalid research
+activity before constructing its request. This aligns the runtime with the
+already approved read-only tool declarations (#645); it adds no operation authority.
