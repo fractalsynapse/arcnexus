@@ -23,8 +23,8 @@ export function selectQualityInputs(
   );
   assert(!owner || components.some(({ id }) => id === owner), `Unknown owner: ${owner}`);
   const candidates = globSync('**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}', {
-    exclude: ['node_modules', 'dist', '.git', '.test-build', '.fixture-build', 'context', 'examples', '.audit-work'],
-  }).sort();
+    exclude: (path) => /(^|\\/)(?:node_modules|dist|\\.git|\\.test-build|\\.fixture-build|context|examples|\\.audit-work)(\\/|$)/.test(path),
+  }).filter((path) => operation !== 'format:check' || isFormatCovered(path)).sort();
   const owners = new Map<string, string>();
   const files: string[] = [];
   for (const path of candidates) {
