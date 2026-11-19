@@ -88,6 +88,7 @@ function testingActivation(retainedSelfLink = false) {
     capture: { source: { revision: 'staging' }, project: {} },
     observations: () => events,
     note: (event: unknown) => events.push(event),
+    check: async (id: string) => ({ id, status: 0, log: `/evidence/${id}.log` }),
   } as unknown as HostTask;
   if (retainedSelfLink)
     events.push({
