@@ -22,7 +22,10 @@ export async function selectQualityInputs(
 ): Promise<QualitySelection> {
   const componentFiles = globSync('.arc/architecture/components/*.yaml');
   const components: Component[] = componentFiles.map((path) => parse(readFileSync(path, 'utf8')));
-  assert(owner === undefined || components.some(({ id }) => id === owner), `Unknown owner: ${owner}`);
+  assert(
+    owner === undefined || components.some(({ id }) => id === owner),
+    `Unknown owner: ${owner}`,
+  );
   const files = await selectOwnedQualityFiles(operation, owner, components);
   const identity = qualityIdentity(operation, owner, files, components, componentFiles);
   return { operation, owner, files, identity };
@@ -34,7 +37,9 @@ async function selectOwnedQualityFiles(
   owner: string | undefined,
   components: readonly Component[],
 ): Promise<string[]> {
-  const candidates = globSync(operation === 'lint' ? '**/*' : '**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}')
+  const candidates = globSync(
+    operation === 'lint' ? '**/*' : '**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}',
+  )
     .filter((path) => !isIgnored(path))
     .filter((path) => operation !== 'format:check' || isFormatCovered(path))
     .sort();
