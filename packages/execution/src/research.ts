@@ -13,6 +13,7 @@ import { InvalidCodexResponse } from './codex.js';
 type InboxTask = Pick<HostTask, 'capture' | 'taskID' | 'note' | 'observations' | 'store'>;
 type Assignment = Omit<TaskContext, 'goal' | 'worktree'>;
 type Invoke = (selection: ActivitySelection, assignment: Assignment) => Promise<unknown>;
+const requestFieldLimit = 500;
 
 interface Request {
   id: string;
@@ -241,9 +242,16 @@ function researchRequest(
 ): Request | undefined {
   const reply = object(value);
   if (reply?.kind !== 'research') return;
-  const question = required(reply.question, 'question', 500);
-  const decision = required(reply.decision, 'decision', 500);
+  const { question, decision } = researchFields(reply);
   return { id: identity([inbox, question, decision]), inbox, requestedBy, question, decision };
+}
+
+/** Validate and normalize deferred research before either transport acknowledgement or inbox admission. */
+export function researchFields(value: Record<string, unknown>) {
+  return {
+    question: required(value.question, 'question', requestFieldLimit),
+    decision: required(value.decision, 'decision', requestFieldLimit),
+  };
 }
 
 /** Preserve the requesting assignment and attach the recorded research evidence by reference. */

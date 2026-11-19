@@ -5,7 +5,10 @@ import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { operationTool } from '../../../architecture/src/index.js';
+import { Architecture, operationTool, type TaskContext } from '../../../architecture/src/index.js';
+import { Agent } from '../../../agent/src/index.js';
+import { steward } from '../../src/index.js';
+import { inboxIdentity } from '../../src/research.js';
 import { ActivationTools } from '../../src/activation-tools.js';
 import { LocalMcp } from '../../src/mcp.js';
 import { StewardFixture } from '../fixtures/steward.js';
@@ -14,6 +17,21 @@ const request = {
   question: 'Which upstream behavior applies?',
   decision: 'Choose the correct implementation',
 };
+
+export const suite = {
+  owner: 'execution',
+  level: 'integration',
+  tags: ['research', 'recovery'],
+} as const;
+
+const milestone = {
+  id: 'current',
+  owner: 'owner',
+  criteria: [],
+  steps: [{ activity: 'implementation' as const, checklist: [] }],
+};
+const input = { milestone: { id: 'current', step: milestone.steps[0] }, acceptance: [] };
+const selection = { component: 'owner', activity: 'implementation' };
 
 /** Exercise optional read-only research at the actual MCP request boundary. */
 class ResearchMcpScenario {
@@ -29,8 +47,8 @@ class ResearchMcpScenario {
     this.configure(permitted);
     this.activation = new ActivationTools(
       this.task,
-      { component: 'owner', activity: 'implementation' },
-      { goal: 'Research an implementation choice', milestone: { id: 'current' } },
+      selection,
+      input,
       new AbortController().signal,
     );
     this.host = new LocalMcp(
@@ -75,6 +93,65 @@ class ResearchMcpScenario {
     if (permitted) assert.deepEqual(this.activation.finish({}), { kind: 'research', ...request });
     else assert.equal(this.activation.requestedHandoff, false);
   }
+
+  /** Refuse a malformed wire call without claiming a handoff, then accept corrected fields. */
+  async reject(args: Record<string, unknown>) {
+    await this.client.connect(new StreamableHTTPClientTransport(new URL(await this.host.start())));
+    const result = await this.client.callTool({ name: 'request-research', arguments: args });
+    assert(result.isError, JSON.stringify(result));
+    assert.equal(this.activation.requestedHandoff, false);
+    assert.equal(
+      this.task.observations<{ projectRequest?: unknown }>().some((e) => e.projectRequest),
+      false,
+    );
+    const corrected = await this.client.callTool({
+      name: 'request-research',
+      arguments: { question: ` ${request.question} `, decision: ` ${request.decision} ` },
+    });
+    assert(!corrected.isError, JSON.stringify(corrected));
+    assert.deepEqual(this.activation.finish({}), { kind: 'research', ...request });
+  }
+
+  /** Return a previously acknowledged invalid request to the original public steward without rewriting history. */
+  async resume(t: TestContext) {
+    const acknowledged = {
+      scope: inboxIdentity(this.task, selection, input),
+      kind: 'research',
+      ...request,
+      question: 'q'.repeat(501),
+    };
+    this.task.note({ projectRequest: acknowledged });
+    const calls = t.mock.method(
+      this.task,
+      'activate',
+      async (_agent: Agent, _selection: unknown, data: TaskContext) => this.respond(data),
+    );
+    const result = await steward(
+      new Agent(new Architecture()),
+      this.task,
+      milestone,
+      'implementation',
+      AbortSignal.timeout(5000),
+    );
+    assert.equal(result.kind, 'completed');
+    assert.equal(calls.mock.callCount(), 2);
+    assert.deepEqual(
+      this.task.observations<{ projectRequest?: unknown }>().find((e) => e.projectRequest)
+        ?.projectRequest,
+      acknowledged,
+    );
+  }
+
+  /** Resume the real acknowledged handoff, then verify exact response repair at its original caller. */
+  private respond(data: TaskContext) {
+    const tools = new ActivationTools(this.task, selection, data, new AbortController().signal);
+    if (tools.requestedHandoff) return tools.finish(undefined);
+    assert.match(
+      (data.assignment as { responseRepair: string }).responseRepair,
+      /Invalid research question.*at most 500.*501/,
+    );
+    return { kind: 'completed', edits: [], checks: [] };
+  }
 }
 
 for (const permitted of [true, false]) {
@@ -82,3 +159,18 @@ for (const permitted of [true, false]) {
     await new ResearchMcpScenario(t, permitted).run(permitted);
   });
 }
+
+for (const args of [
+  { ...request, question: 'q'.repeat(501) },
+  { ...request, decision: 'd'.repeat(501) },
+  { ...request, question: '   ' },
+  { question: request.question },
+]) {
+  test(`invalid MCP research fields remain repairable in the same activation: ${JSON.stringify(args).slice(0, 65)}`, async (t) => {
+    await new ResearchMcpScenario(t, true).reject(args);
+  });
+}
+
+test('a retained invalid research acknowledgement returns its exact error to the public caller once', async (t) => {
+  await new ResearchMcpScenario(t, true).resume(t);
+});
