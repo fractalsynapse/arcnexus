@@ -15,6 +15,7 @@ export function stewardProgress(events: readonly TaskEvent[], milestone: Milesto
   );
   return {
     completedActivities,
+    previouslyCompletedActivities: previousCompletion(events, milestone),
     ...(repair && 'position' in repair && repair.repair
       ? {
           localRepair: {
@@ -26,4 +27,20 @@ export function stewardProgress(events: readonly TaskEvent[], milestone: Milesto
         }
       : {}),
   };
+}
+
+/** Keep historical completion distinct from the current post-rewind cursor. */
+function previousCompletion(events: readonly TaskEvent[], milestone: Milestone) {
+  return [
+    ...new Set(
+      events.flatMap((event) =>
+        'activation' in event &&
+        event.activation.milestone === milestone.id &&
+        event.activation.owner === milestone.owner &&
+        event.activation.outcome.kind === 'completed'
+          ? [event.activation.step]
+          : [],
+      ),
+    ),
+  ];
 }

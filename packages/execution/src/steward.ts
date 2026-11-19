@@ -19,6 +19,7 @@ import {
 import { decodeSteward, StewardResponseError, type StewardResult } from './steward-response.js';
 import { supplierAnswerRequired, supplierContext } from './supplier-context.js';
 import { stewardProgress } from './steward-progress.js';
+import { retainedTesting } from './testing-rewind.js';
 
 const correctionInstruction =
   'Read failedCheck.log first. It is the latest observed failure. Preserve the earlier finding as history. Correct the current failure within the accepted milestone, or request a distinct contribution through Direction when new work is needed. The host reruns the original check with its original expectation.';
@@ -208,6 +209,7 @@ async function stewardAssignment(
     ...responseShape(scope.activity !== 'review' && Boolean(task.formatPreview)),
     ...supplierContext(task.history(), milestone.id),
     ...stewardProgress(task.history(), milestone),
+    retainedTesting: retainedTesting(task, scope),
     inbox: task.inbox,
     answerRequired:
       task.inbox?.owner === milestone.owner ||
@@ -246,7 +248,7 @@ async function correctionChecks(
 function responseShape(formatter: boolean) {
   return {
     repair:
-      'Repair tool and check failures within this milestone. For a self-review finding return kind repair, activity documentation, testing or implementation, and the exact reason; choose the earliest affected applicable activity. If localRepair is present, read its diagnostic. When targetCompleted is true, that target already finished; continue the current activity using its results. Completed Testing with a satisfied expected-fail check is valid red evidence for Implementation to fix, not a reason to rewind merely because that regression fails. completedActivities comes from the host cursor. Absence of localRepair is normal initially. Request a supplier only for distinct work requiring another responsibility. Return blocked only for an unavailable prerequisite, not for an ordinary repairable defect.',
+      'Repair tool and check failures within this milestone. For a self-review finding return kind repair, activity documentation, testing or implementation, and the exact reason; choose the earliest affected applicable activity. If localRepair is present, read its diagnostic. When targetCompleted is true, that target already finished; continue the current activity using its results. Completed Testing with a satisfied expected-fail check is valid retained red evidence. A rewind does not require reproducing it against the implemented candidate. For behavior-preserving corrections, characterize with expected pass. If retainedTesting is present and a mistaken repeated-red request passed, correct that request with expected pass; the host requires a fresh actual observation. Add new red only for a relevant new behavioral regression. completedActivities comes from the host cursor. Absence of localRepair is normal initially. Request a supplier only for distinct work requiring another responsibility. Return blocked only for an unavailable prerequisite, not for an ordinary repairable defect.',
     instructions:
       'Use the mapped local MCP tools for project reads, checked edits and owner checks. The read-only filesystem is deliberate. Make authorized changes through the mapped checked-edit MCP tool even when direct writes are unavailable. Attempt that operation for an owned path before reporting that edits are blocked, and report any exact refusal. A successful edit is already recorded. Mapped checks execute during the MCP call and return their actual status and log. Read that result, correct an ordinary defect locally and recheck with the original expectation. These tools govern this activation; authored product code may use declared public APIs. Put any narration in summary and omit checks from your reply. If another edit is refused, correct the call or request a distinct supplier contribution. Link its accepted milestone when known, or give the new contribution its own ID. End with one JSON object with kind completed, or kind blocked with a reason. Include answer in a completed response when answering a supplier question. Read retained evidence with read-file. Checks in currentChecks are host-managed. Preserve accepted work when correcting a diagnostic. Only the host performs assembled verification and delivery.',
     requests: { formatAvailable: formatter },

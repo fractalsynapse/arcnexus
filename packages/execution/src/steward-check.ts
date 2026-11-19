@@ -14,6 +14,7 @@ interface CheckEvent {
   check?: CheckResult;
   scope?: StewardScope;
   owner?: string;
+  checkExpectationRepair?: { scope: StewardScope; id: string; log: string };
   edits?: readonly { path: string; before: string | null; after: string | null }[];
 }
 
@@ -29,6 +30,16 @@ export function pendingStewardCheck(events: readonly unknown[], scope: StewardSc
       !pending.has(feedback.failedCheck.id)
     )
       pending.set(feedback.failedCheck.id, feedback.failedCheck);
+    const repair = event.checkExpectationRepair;
+    const prior = repair && pending.get(repair.id);
+    if (
+      repair?.scope.owner === scope.owner &&
+      repair.scope.activity === scope.activity &&
+      prior?.log === repair.log &&
+      prior.expected === 'fail' &&
+      prior.status === 0
+    )
+      pending.set(repair.id, { ...prior, expected: 'pass' });
     observeCheck(pending, event, scope);
   }
   return id ? pending.get(id) : [...pending.values()].at(-1);

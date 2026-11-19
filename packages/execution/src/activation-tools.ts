@@ -14,7 +14,8 @@ import type { HostTask } from './index.js';
 import { inboxIdentity } from './research.js';
 import { decodeEdit } from './steward-response.js';
 import { listToolDirectory, readToolFile } from './tool-files.js';
-import { pendingStewardCheck, type StewardScope } from './steward-check.js';
+import { type StewardScope } from './steward-check.js';
+import { repairTestingExpectation } from './testing-rewind.js';
 
 type Tool = Pick<AgentInspection['request']['options']['tools'][number], 'name' | 'handler'>;
 type Evidence = {
@@ -111,9 +112,7 @@ export class ActivationTools {
       activity: this.selection.activity as StewardScope['activity'],
       expected,
     };
-    const pending = pendingStewardCheck(this.task.observations(), scope, id);
-    if (pending && pending.expected !== expected)
-      throw new Error(`Cannot change the required recheck for ${id}: expected ${pending.expected}`);
+    repairTestingExpectation(this.task, id, scope);
     return this.task.check(id, this.signal, scope);
   }
 

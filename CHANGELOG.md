@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Preserve completed activity and initial red evidence across local rewinds; repair mistaken repeated-red expectations only against host-verified prior work, retaining a required fresh check (#651).
+
 - Verify candidates with their locked dependency tree in the existing networkless confinement; retain prerequisite failures without counting them as expected failing tests (#649).
 
 - Refresh steward check diagnostics after research and clarification handoffs while preserving complete answers and the original check expectation.
