@@ -389,6 +389,37 @@ for (const operation of ['format:check', 'lint'] as const) {
   });
 }
 
+for (const operation of ['format:check', 'lint'] as const) {
+  for (const owner of ['alpha', 'repository']) {
+    test(`${operation} ${owner} honors nested re-inclusion`, async () => {
+      const tree = new QualityFixture();
+      try {
+        tree.owner('alpha', 'packages/alpha');
+        tree.write('.gitignore', 'packages/alpha/*.ts\n');
+        tree.write('packages/alpha/.gitignore', '!probe.ts\n');
+        const path = 'packages/alpha/probe.ts';
+        tree.write(path, 'export const probe = 1;\n');
+        assert((await selection(tree, operation, owner)).files.includes(path));
+      } finally {
+        tree.close();
+      }
+    });
+
+    test(`${operation} ${owner} keeps files matching a directory-only rule`, async () => {
+      const tree = new QualityFixture();
+      try {
+        tree.owner('alpha', 'packages/alpha');
+        tree.write('.gitignore', '*.ts/\n');
+        const path = 'packages/alpha/probe.ts';
+        tree.write(path, 'export const probe = 1;\n');
+        assert((await selection(tree, operation, owner)).files.includes(path));
+      } finally {
+        tree.close();
+      }
+    });
+  }
+}
+
 for (const extension of ['jsx', 'tsx']) {
   test(`lint discovers configuration-enabled ${extension} files`, async () => {
     const tree = new QualityFixture();
