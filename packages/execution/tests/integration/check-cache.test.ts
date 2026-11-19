@@ -60,6 +60,7 @@ test('an imported lint configuration change invalidates owner lint evidence', as
     config: { id: 'config', owns: ['lint-rules.ts'], activities: {} },
   });
   const worktree = fixture.task.worktree!;
+  writeFileSync(join(worktree, '.arc/architecture/components/config.yaml'), 'id: config\\nowns:\\n  - lint-rules.ts\\n');
   writeFileSync(join(worktree, 'eslint.config.ts'), "import './lint-rules.ts';\n");
   writeFileSync(join(worktree, 'lint-rules.ts'), 'export default {};\n');
   git(worktree, 'add', 'eslint.config.ts', 'lint-rules.ts');
@@ -182,11 +183,7 @@ test('a cancelled request cannot reuse an otherwise valid observation', async (t
   });
 });
 
-for (const path of [
-  '.prettierrc',
-  'nested/.prettierignore',
-  'nested/.editorconfig',
-]) {
+for (const path of ['.prettierrc', '.prettierignore', '.editorconfig']) {
   test(`committed quality configuration ${path} invalidates cached evidence`, async (t) => {
     const { git } = await import('../../src/git.js');
     const fixture = new CheckCacheFixture(t);
