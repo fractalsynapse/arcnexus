@@ -88,7 +88,7 @@ test('deleting every candidate component file is ownership drift', async (t) => 
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-deleted-ownership-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const capture = {
-    source: { root },
+    source: { root, paths: ['.arc/architecture/components/owner.yaml'] },
     project: { checks: { acceptance: [] } },
     components: { owner: { id: 'owner', owns: ['fixture.ts'] } },
     operations: { quality: {
