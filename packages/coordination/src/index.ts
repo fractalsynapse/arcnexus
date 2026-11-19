@@ -11,6 +11,8 @@ declare module 'cordis' {
   }
 }
 
+const journalOwners = new WeakMap<Journal, { coordination: Coordination; remote: string }>();
+
 const verifiedTerminal = `
   SELECT events.id, events.run, runs.task_id, runs.goal_id
   FROM events JOIN runs ON runs.id = events.run
