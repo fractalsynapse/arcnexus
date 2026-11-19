@@ -100,7 +100,7 @@ for (const operation of ['format:check', 'lint'] as const) {
   test(`${operation} treats escaped stars as literals`, async () => {
     const tree = fixture();
     try {
-      tree.write('packages/alpha/.gitignore', 'probe\\\\*.ts\n');
+      tree.write('packages/alpha/.gitignore', 'probe\\*.ts\n');
       tree.write('packages/alpha/probe*.ts', 'export const hidden = 1;\n');
       tree.write('packages/alpha/probe123.ts', 'export const visible = 1;\n');
       const result = await selection(tree, operation);
