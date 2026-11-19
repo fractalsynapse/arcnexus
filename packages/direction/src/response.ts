@@ -91,6 +91,67 @@ function step(value: unknown, path: string): void {
   });
 }
 
+/** Host-owned immutable references and committed cursor for a revision activation. */
+export interface RevisionRequest {
+  acceptedPlan: string;
+  retainedEvidence: string;
+  position: { completed: number; activities: Readonly<Record<string, number>> };
+  finding: RevisionFeedback;
+}
+
+/** Reconstruct and validate a pending-only proposal without mutating accepted inputs. */
+export function decodeRevisionResponse(
+  response: unknown,
+  capture: import('../../architecture/src/index.js').Capture,
+  accepted: Plan,
+  request: RevisionRequest,
+): { kind: 'plan'; plan: Plan } {
+  const value = mapping(response, 'response');
+  if (value.kind !== 'plan') throw new DirectorResponseError('response.kind: expected "plan"');
+  const proposedPlan = mapping(value.plan, 'plan');
+  if ('focus' in proposedPlan) throw new DirectorResponseError('plan.focus: revisions cannot replace Focus');
+  list(proposedPlan.milestones, 'plan.milestones', milestone);
+  const { completed, activities: positions } = request.position;
+  if (!Number.isInteger(completed) || completed < 0 || completed > accepted.milestones.length)
+    throw new DirectorResponseError('position.completed: outside accepted milestone sequence');
+
+  const prefix = accepted.milestones.slice(0, completed);
+  const proposed = proposedPlan.milestones as Milestone[];
+  const proposedIDs = new Set<string>();
+  const reconstructed: Milestone[] = [...prefix];
+  for (const candidate of proposed) {
+    if (proposedIDs.has(candidate.id) || prefix.some(({ id }) => id === candidate.id))
+      throw new DirectorResponseError(`plan.milestones: duplicate or completed milestone ${candidate.id}`);
+    proposedIDs.add(candidate.id);
+    const original = accepted.milestones.find(({ id }) => id === candidate.id);
+    if (!original) {
+      reconstructed.push(candidate);
+      continue;
+    }
+    if (candidate.owner !== original.owner)
+      throw new DirectorResponseError(`plan.milestones[${candidate.id}].owner: changed accepted owner`);
+    if (JSON.stringify(candidate.criteria) !== JSON.stringify(original.criteria))
+      throw new DirectorResponseError(`plan.milestones[${candidate.id}].criteria: changed accepted acceptance`);
+    const offset = positions[candidate.id] ?? 0;
+    if (!Number.isInteger(offset) || offset < 0 || offset > original.steps.length)
+      throw new DirectorResponseError(`position.activities.${candidate.id}: outside accepted Steps`);
+    reconstructed.push({ ...original, steps: [...original.steps.slice(0, offset), ...candidate.steps] });
+  }
+  for (const original of accepted.milestones.slice(completed)) {
+    if (!proposedIDs.has(original.id)) reconstructed.push(original);
+  }
+  const plan: Plan = { focus: accepted.focus, milestones: reconstructed };
+  try {
+    validatePlan(capture, plan);
+    validateRevision(accepted, plan, completed, new Map(Object.entries(positions)));
+    if (request.finding.kind === 'rejection')
+      validateCorrection(plan, completed, request.finding.findings);
+  } catch (error) {
+    throw new DirectorResponseError((error as Error).message, { cause: error });
+  }
+  return { kind: 'plan', plan };
+}
+
 /** Require an object before reading its named fields. */
 function mapping(value: unknown, path: string): Record<string, unknown> {
   if (value === null || typeof value !== 'object' || Array.isArray(value))
