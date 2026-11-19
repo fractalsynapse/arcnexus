@@ -52,6 +52,31 @@ test('a satisfied expected-red owner test cannot satisfy omitted formatting in T
   assert.notEqual(result.kind, 'completed', 'owner-format lacks current evidence');
 });
 
+test('inapplicability of owner tests cannot satisfy omitted lint', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'arcnexus-quality-inapplicable-'));
+  const task = new StewardFixture(t, root).task;
+  t.after(() => task.close());
+  const ids = ['owner-tests', 'owner-lint'];
+  Object.assign(task.capture, { operations: Object.fromEntries(ids.map((id) => [id, {
+    id, kind: 'command', tool: 'check', category: 'build',
+    command: '/usr/bin/false', args: [], cwd: '.', network: false,
+  }])) });
+  Object.assign(task.capture.components.owner!.activities.implementation!, { operations: ids });
+  t.mock.method(task, 'activate', async () => {
+    const log = task.store('inapplicable.log', 'No owner test suites');
+    task.note({
+      check: { id: 'owner-tests', status: 'not-applicable', reason: 'No owner test suites',
+        log, command: 'fixture', args: [], cwd: root, durationMs: 0 },
+      scope: { owner: 'owner', activity: 'implementation', expected: 'pass' },
+    });
+    return { kind: 'completed', edits: [], checks: [] };
+  });
+  const result = await steward(
+    new Agent(new Architecture()), task, milestone, 'implementation', AbortSignal.timeout(5000),
+  );
+  assert.notEqual(result.kind, 'completed', 'owner-lint lacks current evidence');
+});
+
 for (const missing of ['owner-format', 'owner-lint', 'repository-types']) {
   test(`an unrelated successful observation cannot satisfy omitted ${missing}`, async (t) => {
     const root = mkdtempSync(join(tmpdir(), 'arcnexus-quality-obligation-'));
