@@ -283,7 +283,7 @@ class InterruptedCheck {
     const testing = JSON.stringify(data.milestone).includes('"activity":"testing"');
     this.activations.push(review ? 'review' : testing ? 'testing' : 'implementation');
     if (review) return { kind: 'completed', edits: [], checks: [] };
-    if (this.expected === 'fail' && !testing)
+    if (this.expected === 'fail' && !testing && this.phase !== 'correct')
       return { kind: 'completed', edits: [], checks: [{ id: 'owner-tests', expected: 'pass' }] };
     if (this.phase !== 'interrupt') return this.retryProposal(task, data);
     return {
