@@ -370,6 +370,7 @@ export class TaskRun {
   /** Persist Director feedback and accept its new sequence before any further activation. */
   private async revise(feedback: RevisionFeedback) {
     this.session.record({ feedback });
+    this.revision = this.revisionRequest(feedback);
     this.report({
       phase: 'planning',
       message: `Director is considering ${feedback.kind} feedback`,
