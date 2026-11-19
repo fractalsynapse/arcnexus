@@ -21,20 +21,7 @@ async function scenario(t: TestContext, component: string, activity: string, pro
     [component]: { id: component, activities: { [activity]: { profile } } },
   });
   Object.assign(task.config, { executable: '/usr/bin/false' });
-  const view = {
-    component,
-    activity,
-    request: {
-      input,
-      options: {
-        workingDirectory: root,
-        model: 'captured-model',
-        modelReasoningEffort: 'high',
-        webSearchMode: 'disabled',
-        tools: [],
-      },
-    },
-  } as unknown as AgentInspection;
+  const view = inspection(root, component, activity);
   const agent = {
     activate: (_input: unknown, invoke: (view: AgentInspection, signal: AbortSignal) => unknown) =>
       invoke(view, new AbortController().signal),
