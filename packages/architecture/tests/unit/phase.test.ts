@@ -50,7 +50,7 @@ function fixture(assessment?: unknown) {
       source,
       activate: async () => assessment ?? { kind: 'proposal', proposal },
     });
-  return { phase, proposal, sources, journal, source };
+  return { phase, proposal, sources, journal, source, seed };
 }
 
 test('assessment selects the explicit architect and receives the approved evidence', async () => {
