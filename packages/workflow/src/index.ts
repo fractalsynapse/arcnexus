@@ -28,6 +28,7 @@ export type {
 } from './services.js';
 export type { StandingGoal } from '../../planner/src/inventory.js';
 export { ClarificationRequired, selfLinkedSupplier } from './services.js';
+export { localRepairIndex } from './activity-repair.js';
 
 declare module 'cordis' {
   interface Context {

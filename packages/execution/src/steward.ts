@@ -1,7 +1,11 @@
 import { team } from '../../team/src/index.js';
 import { InvalidAgentResponse, type Agent } from '../../agent/src/index.js';
 import type { Milestone, StewardCheckFailure } from '../../direction/src/index.js';
-import type { ActivityOutcome, TaskSession } from '../../workflow/src/index.js';
+import {
+  localRepairIndex,
+  type ActivityOutcome,
+  type TaskSession,
+} from '../../workflow/src/index.js';
 import { hostTask, type HostTask } from './index.js';
 import { citedAssemblyChecks, correctionFinding } from './correction.js';
 import type { CheckResult } from './check.js';
@@ -106,7 +110,7 @@ async function requestSteward(
       const assignment = await stewardAssignment(task, milestone, scope, signal);
       const reply = await askSteward(task, agent, milestone, scope, assignment, signal, diagnostic);
       signal.throwIfAborted();
-      return await applyStewardReply(task, scope, reply, assignment, signal);
+      return await applyStewardReply(task, scope, reply, assignment, signal, milestone);
     } catch (error) {
       if (!repairableReply(error)) throw error;
       signal.throwIfAborted();
@@ -275,6 +279,7 @@ async function applyStewardReply(
   reply: unknown,
   assignment: Awaited<ReturnType<typeof stewardAssignment>>,
   signal: AbortSignal,
+  milestone: Milestone,
 ) {
   const hostChecks = assignment.currentChecks?.map(({ id }) => id);
   const result = decodeSteward(
@@ -283,6 +288,7 @@ async function applyStewardReply(
     assignment.failedCheck,
     hostChecks,
   );
+  validateRepairTarget(task, milestone, scope, result);
   if (result.kind === 'completed' && assignment.answerRequired && !result.answer)
     throw new StewardResponseError(
       'Include the complete response to the supplied question in answer.',
@@ -294,6 +300,26 @@ async function applyStewardReply(
   edits.push(...archiveResearch(task, scope.owner, result.archiveResearch ?? []));
   if (edits.length) task.edits(scope.owner, scope.activity, edits);
   return result;
+}
+
+/** Return an unavailable model target to its caller before Workflow records an activation. */
+function validateRepairTarget(
+  task: HostTask,
+  milestone: Milestone,
+  scope: StewardScope,
+  result: StewardResult,
+) {
+  if (result.kind !== 'repair') return;
+  const from = milestone.steps.findIndex(({ activity }) => activity === scope.activity);
+  if (localRepairIndex(task.capture, milestone, from, result.activity) !== undefined) return;
+  const available = milestone.steps
+    .filter(
+      ({ activity }) => localRepairIndex(task.capture, milestone, from, activity) !== undefined,
+    )
+    .map(({ activity }) => activity);
+  throw new StewardResponseError(
+    `Unavailable local repair: ${scope.owner}/${result.activity}; available rewind targets: ${available.join(', ') || 'none'}. Finish the current activity; do not jump forward or skip an incomplete Step.`,
+  );
 }
 
 /** Run the requested checks and stop at the first unexpected result. */

@@ -16,15 +16,11 @@ export function activityRepair(
 ) {
   const outcome = activation.outcome;
   if (outcome.kind !== 'repair') throw new Error('Expected a local activity repair');
-  const index = milestone.steps.findIndex(({ activity }) => activity === outcome.activity);
-  const step = milestone.steps[index];
+  const index = localRepairIndex(capture, milestone, activation.index, outcome.activity);
   if (
     milestone.id !== activation.milestone ||
     milestone.owner !== activation.owner ||
-    !step ||
-    step.inapplicable ||
-    index > activation.index ||
-    !capture.components[milestone.owner]?.activities[outcome.activity]
+    index === undefined
   )
     return stopped(
       'blocked',
@@ -36,6 +32,25 @@ export function activityRepair(
   return seenRepair(events, repair)
     ? stopped('blocked', outcome.reason, outcome.evidence)
     : { index, repair };
+}
+
+/** Resolve an applicable rewind target without permitting a forward jump or changing captured authority. */
+export function localRepairIndex(
+  capture: Capture,
+  milestone: Milestone,
+  from: number,
+  activity: ActivityRepair['activity'],
+) {
+  const index = milestone.steps.findIndex((step) => step.activity === activity);
+  const step = milestone.steps[index];
+  if (
+    !step ||
+    step.inapplicable ||
+    index > from ||
+    !capture.components[milestone.owner]?.activities[activity]
+  )
+    return;
+  return index;
 }
 
 /** Stop revisiting a finding when the host's recorded component inputs have not changed. */
