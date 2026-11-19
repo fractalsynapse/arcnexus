@@ -110,6 +110,15 @@ function qualityIdentity(
   return identity.digest('hex');
 }
 
+/** Find editor settings that can affect selected files. */
+function editorConfigurationInputs(files: readonly string[]): string[] {
+  const directories = new Set(['.']);
+  for (const file of files) {
+    for (const directory of parentDirectories(file)) directories.add(directory);
+  }
+  return [...directories].map((directory) => directory === '.' ? '.editorconfig' : `${directory}/.editorconfig`).filter((path) => existsSync(path)).sort();
+}
+
 /** Find ignore files that can affect the selected paths. */
 function relevantGitignoreFiles(files: readonly string[]): string[] {
   return globSync('**/.gitignore').filter(
