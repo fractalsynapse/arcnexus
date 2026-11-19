@@ -76,8 +76,25 @@ function directorFailure(error: unknown): never {
 }
 
 /** Give the Director the current observation and a decision that can open engineering work. */
-function directorAssignment(feedback?: Feedback, standing?: StandingGoalEvidence) {
-  const assignment = { revision: revisionInstructions(feedback), ...shape, feedback };
+function directorAssignment(
+  feedback?: Feedback,
+  standing?: StandingGoalEvidence,
+  request?: RevisionRequest,
+) {
+  const revisionShape = request
+    ? { ...shape, plan: { kind: 'plan', plan: { milestones: shape.plan.plan.milestones } } }
+    : shape;
+  const assignment = {
+    revision: revisionInstructions(feedback),
+    ...revisionShape,
+    feedback,
+    revisionContext: request && {
+      acceptedPlan: request.acceptedPlan,
+      retainedEvidence: request.retainedEvidence,
+      position: request.position,
+      finding: request.finding,
+    },
+  };
   if (!standing) return assignment;
   return {
     ...assignment,
