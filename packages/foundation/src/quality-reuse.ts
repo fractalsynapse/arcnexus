@@ -13,8 +13,7 @@ export function qualityReuseEligibility(
   root: string,
 ): QualityReuseEligibility {
   if (operation === 'format:check') {
-    const executableConfig =
-      /^(?:\.prettierrc\.(?:[cm]?js|ts)|prettier\.config\.(?:[cm]?js|ts))$/;
+    const executableConfig = /^(?:\.prettierrc\.(?:[cm]?js|ts)|prettier\.config\.(?:[cm]?js|ts))$/;
     for (const file of files) {
       let directory = dirname(file);
       while (directory !== '.') {
@@ -30,7 +29,10 @@ export function qualityReuseEligibility(
           'prettier.config.ts',
         ]) {
           if (executableConfig.test(name) && existsSync(resolve(path, name)))
-            return { eligible: false, reason: `Executable formatter configuration may load unselected dependencies: ${directory}/${name}` };
+            return {
+              eligible: false,
+              reason: `Executable formatter configuration may load unselected dependencies: ${directory}/${name}`,
+            };
         }
         directory = dirname(directory);
       }
@@ -45,7 +47,10 @@ export function qualityReuseEligibility(
         'prettier.config.ts',
       ]) {
         if (existsSync(resolve(root, name)))
-          return { eligible: false, reason: `Executable formatter configuration may load unselected dependencies: ${name}` };
+          return {
+            eligible: false,
+            reason: `Executable formatter configuration may load unselected dependencies: ${name}`,
+          };
       }
     }
   }
