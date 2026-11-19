@@ -75,10 +75,11 @@ test('child admission retains the parent lane across sequential ordinary session
   const fixture = new AdmissionScenario(t);
   const first = await fixture.admit('First prerequisite');
   assert(first instanceof HostTask);
-  assert.equal(first.capture.source.revision, fixture.parent.events().length
-    ? first.capture.source.revision : '');
+  assert.equal(first.capture.source.root, fixture.root);
   const sibling = await fixture.admit('Second prerequisite');
+  assert(!(sibling instanceof HostTask));
   assert.equal(sibling.kind, 'invalid');
+  assert('reason' in sibling);
   assert.match(sibling.reason, /First prerequisite/);
   const competing = fixture.coordination.admit(remote, 'Standalone');
   assert('activeGoal' in competing);
