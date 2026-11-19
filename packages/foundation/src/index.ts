@@ -55,7 +55,10 @@ export function qualityOperationAvailable(binding: QualityOperationBinding): boo
     binding.applicability !== `owner-${operation === 'format:check' ? 'format' : operation}-files`
   )
     return false;
-  const scripts = JSON.parse(readFileSync('package.json', 'utf8')).scripts as Record<string, string>;
+  const scripts = JSON.parse(readFileSync('package.json', 'utf8')).scripts as Record<
+    string,
+    string
+  >;
   return (
     ['format:check', 'lint'].includes(operation) &&
     scripts[operation]?.includes('packages/foundation/scripts/owner-quality.ts') === true
