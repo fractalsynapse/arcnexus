@@ -95,7 +95,7 @@ function recoverFeedbackCheck(recorded: readonly CheckEvent[], scope: StewardSco
 export function pendingStewardCheck(events: readonly unknown[], scope: StewardScope) {
   const recorded = events as readonly CheckEvent[];
   const observed = recoverObservedCheck(recorded, scope);
-  return observed.qualifying ? observed.pending : recoverFeedbackCheck(recorded, scope);
+  return observed.pending ?? recoverFeedbackCheck(recorded, scope);
 }
 
 /** Compare actual failure diagnostics while ignoring TAP numbering and transient process paths. */
