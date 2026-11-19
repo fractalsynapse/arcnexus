@@ -85,7 +85,7 @@ for (const expected of ['pass', 'fail'] as const) {
     const log = fixture.observe('check-b', status, { ...scope, expected });
     assert.equal(readFileSync(failed.log, 'utf8'), 'check A diagnostic: exit 37\n');
     assert.equal(readFileSync(log, 'utf8'), `check-b diagnostic: exit ${status}\n`);
-    assert.equal(fixture.task.pendingCheck(scope), undefined);
+    assert.deepEqual(fixture.task.pendingCheck(scope), failed);
   });
 
   test(`unresolved ${expected} observation B retains its expectation, exact status and evidence`, (t) => {
