@@ -29,9 +29,13 @@ and keeps ArcNexus-specific release rules in this repository.
 - Use the least code that satisfies the accepted outcome. Define each responsibility,
   service shape and command once. Reuse its definition directly. Omit boilerplate,
   duplicate implementations and compatibility machinery for the previous runtime.
-- Never introduce a limit without the human architect's express permission. Let the
-  harness govern its capacity. Do not impose arbitrary content, collection, context,
-  retry or execution caps, or silently truncate information to fit an invented limit.
+- NEVER EVER create or introduce a quantitative limit without the human architect's
+  express permission. Every implemented limit must have an entry in the
+  [accepted-limits log](.arc/architecture/accepted-limits.md) citing that approval.
+  If approval is absent from the log, the limit MUST NOT be implemented. This also
+  applies to defaults, temporary safeguards, retry ceilings, timeouts, content and
+  collection caps, and truncation. Let the harness govern its capacity. Agents may
+  record the human's actual approval; they cannot approve limits or infer permission.
 - Author all maintained code in strict TypeScript, including tests, fixtures and
   build and CI tooling. Follow the class and helper rules in the
   [TypeScript standard](docs/foundation/typescript-standard.md).
