@@ -339,7 +339,9 @@ function ignoreMatcher(
   directoryOnly = false,
   isDirectory = false,
 ): RegExp {
-  const escaped = pattern.replace(/[|\\{}()^$+.]/g, '\\$&');
+  const escaped = pattern
+    .replace(/\\([*?])/g, (_match, wildcard: string) => (wildcard === '*' ? '\uE000' : '\uE001'))
+    .replace(/[|\\{}()^$+.]/g, '\\$&');
   const slashless = !anchored && !pattern.includes('/');
   const expression = escaped
     .replace(/\[!([^\]]+)\]/g, '[^$1]')
