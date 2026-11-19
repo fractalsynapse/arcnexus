@@ -57,7 +57,7 @@ async function executeOwnerCheck(
 ): Promise<CheckResult> {
   const applicability = await ownerOperationInapplicability(capture, worktree, id, owner);
   if (applicability.reason) {
-    writeFileSync(log, `Not applicable: ${applicability.reason}\\n`, { mode: 0o600, flag: 'wx' });
+    writeFileSync(log, `Not applicable: ${applicability.reason}\n`, { mode: 0o600, flag: 'wx' });
     return {
       id, command: command.executable, args: command.args, cwd: command.cwd, log,
       selection: applicability.selection, status: 'not-applicable',
