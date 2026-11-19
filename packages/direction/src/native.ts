@@ -121,9 +121,13 @@ function directorAssignment(
 }
 
 /** Tell the Director which portions of the sequence the current feedback can change. */
-function revisionInstructions(feedback?: Feedback): string {
-  if (feedback?.kind === 'plan-repair')
-    return `Correct only the pending Director response using the exact diagnostic in feedback.diagnostic. The rejected reply is in the latest Director transcript in Evidence. Use feedback.original for the original finding when present. ${revisionInstructions(feedback.original)}`;
+function revisionInstructions(feedback?: Feedback, bounded = false): string {
+  if (feedback?.kind === 'plan-repair') {
+    const boundary = bounded
+      ? 'Correct only the pending Director response.'
+      : 'Correct the complete initial plan response.';
+    return `${boundary} Use the exact diagnostic in feedback.diagnostic. The rejected reply is in the latest Director transcript in Evidence. Use feedback.original for the original finding when present. ${revisionInstructions(feedback.original, bounded)}`;
+  }
   if (!feedback)
     return 'Plan the smallest sufficient changes for the goal. Keep the scope, owner and acceptance explicit.';
   const preserve =
