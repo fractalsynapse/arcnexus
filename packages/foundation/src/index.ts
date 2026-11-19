@@ -221,6 +221,8 @@ function ignoreMatcher(pattern: string, anchored: boolean, directoryOnly = false
   const escaped = pattern.replace(/[|\\{}()^$+.]/g, '\\$&');
   const slashless = !anchored && !pattern.includes('/');
   const expression = escaped
+    .replace(/\[!([^\]]+)\]/g, '[^$1]')
+    .replace(/\[([^\]]+)\]/g, '[$1]')
     .replace(/\*\*\//g, '§/')
     .replace(/\*\*/g, '§')
     .replace(/\*/g, '[^/]*')
