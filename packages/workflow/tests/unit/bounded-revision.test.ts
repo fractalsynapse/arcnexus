@@ -82,8 +82,8 @@ class RevisionScenario {
     },
     direction: {
       plan: async () => assert.fail('An accepted plan must not be planned again'),
-      revise: async (_session, context, finding) => {
-        this.calls.push({ context, finding });
+      revise: async (_session, _plan, finding, _signal, _standing, revision) => {
+        this.calls.push({ context: revision, finding });
         return { kind: 'question', question: 'Pause after observing revision input', evidence: [] };
       },
     },
