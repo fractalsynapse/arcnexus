@@ -164,27 +164,36 @@ function readOptionalFile(path: string): string {
   }
 }
 
-/** Apply current root gitignore patterns to the repository-relative input. */
-function isIgnored(path: string, patterns: readonly string[]): boolean {
+/** Apply root and nested gitignore rules to a repository-relative input. */
+function isIgnored(path: string): boolean {
+  return globSync('**/.gitignore', { dot: true }).some((ignoreFile) => {
+    const directory = ignoreFile.replace(/\\.gitignore$/, '').replace(/\\/$/, '');
+    if (directory && !path.startsWith(`${directory}/`)) return false;
+    const relative = directory ? path.slice(directory.length + 1) : path;
+    return matchesIgnoreRules(relative, readOptionalFile(ignoreFile).split(/\\r?\\n/));
+  });
+}
+
+/** Match ordered gitignore rules against paths relative to one ignore file. */
+function matchesIgnoreRules(path: string, rules: readonly string[]): boolean {
   let ignored = false;
-  for (const raw of patterns) {
+  for (const raw of rules) {
     const rule = raw.trim();
     if (!rule || rule.startsWith('#')) continue;
     const negated = rule.startsWith('!');
-    let pattern = negated ? rule.slice(1) : rule;
-    if (pattern.startsWith('/')) pattern = pattern.slice(1);
-    if (pattern.endsWith('/')) pattern = pattern.slice(0, -1);
-    const expression = [...pattern]
-      .map((character) => {
-        if (character === '*') return '[^/]*';
-        if (character === '?') return '[^/]';
-        return '.^$+{}()|[]\\'.includes(character) ? '\\' + character : character;
-      })
-      .join('');
-    const matcher = new RegExp(`^(?:${expression})(?:/.*)?$`);
-    if (matcher.test(path)) ignored = !negated;
+    const pattern = (negated ? rule.slice(1) : rule).replace(/^\\//, '').replace(/\\/$/, '');
+    if (ignoreMatcher(pattern).test(path)) ignored = !negated;
   }
   return ignored;
+}
+
+/** Convert gitignore wildcards into path-aware matching. */
+function ignoreMatcher(pattern: string): RegExp {
+  const expression = pattern.replace(/\\*\\*/g, '§').replace(/\\*/g, '[^/]*')
+    .replace(/\\?/g, '[^/]')
+    .replace(/[.+^${}()|[\\]\\\\]/g, '\\\\$&')
+    .replace(/§\\//g, '(?:.*/)?').replace(/§/g, '.*');
+  return new RegExp(`^(?:${expression})(?:/.*)?$`);
 }
 
 /** Preserve repository formatter coverage while allowing package and fixture files. */
