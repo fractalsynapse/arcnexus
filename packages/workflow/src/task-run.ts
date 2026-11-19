@@ -35,6 +35,7 @@ export class TaskRun {
   readonly evidence: string[] = [];
   private plan?: Plan;
   private standing?: StandingGoalEvidence;
+  private revision?: RevisionRequest;
   private completed = 0;
   private readonly activityPositions = new Map<string, number>();
   private readonly rejectedReviews = new Set<string>();
