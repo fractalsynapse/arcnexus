@@ -87,8 +87,8 @@ function qualityIdentity(
   const identity = createHash('sha256');
   identity.update(selectionIdentity(operation, owner, files, components));
   for (const path of identityInputPaths(operation, files, componentFiles)) {
-    identity.update(path).update(existsSync(path) ? '\u0000present\u0000' : '\u0000missing\u0000');
-    if (existsSync(path)) identity.update(readFileSync(path));
+    if (existsSync(path)) identity.update(path).update('\u0000present\u0000').update(readFileSync(path));
+    else identity.update(path).update('\u0000missing\u0000');
   }
   return identity.digest('hex');
 }
