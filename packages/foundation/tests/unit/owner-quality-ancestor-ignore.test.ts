@@ -8,7 +8,7 @@ for (const operation of ['format:check', 'lint'] as const) {
       const tree = new QualityFixture();
       try {
         tree.owner('alpha', 'packages/alpha');
-        tree.write('.gitignore', 'packages/alpha/generated/\\n');
+        tree.write('.gitignore', 'packages/alpha/generated/\n');
         tree.write(
           'packages/alpha/generated/.gitignore',
           '!child/\\n',
