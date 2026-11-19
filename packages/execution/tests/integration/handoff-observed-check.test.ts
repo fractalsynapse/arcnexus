@@ -26,7 +26,7 @@ test('a supplier handoff preserves an observed failure when the steward resumes'
   };
   const signal = new AbortController().signal;
   const log = task.store('failed.log', 'fixture diagnostic');
-  t.mock.method(task, 'check', async (id, _signal, scope) => {
+  t.mock.method(task, 'check', async (id: string, _signal: AbortSignal, scope?: Parameters<typeof task.check>[2]) => {
     const check = { id, status: 7, log, command: 'fixture', args: [], cwd: root, durationMs: 1 };
     task.note({ check, scope });
     return check;
