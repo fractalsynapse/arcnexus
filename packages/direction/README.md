@@ -23,8 +23,7 @@ The internal Workflow service continues to exchange domain plans by reference.
 Only the provider boundary translates to a compact model request and reconstructs
 its response. There is no second plan store, SDK protocol or recovery loop.
 
-Bootstrap work for #617 corrects a generated regression that tested serialization
-at the internal SDK seam. The interrupted platform candidate and observations are
-retained in application storage; operator corrections are excluded from live
-qualification. Verification must inspect the actual Agent request and exercise
-the unchanged Workflow lifecycle.
+The [native request scenarios](tests/integration/native-revision.test.ts) inspect
+the shared Agent request and exercise Workflow rejection and response repair.
+The [reconstruction scenarios](tests/unit/pending-reconstruction.test.ts) cover
+partial milestones, original acceptance, supplier scheduling and cursor validity.
