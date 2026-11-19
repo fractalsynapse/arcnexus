@@ -13,13 +13,14 @@ test(
   { skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1' },
   async (t) => {
     const activation = await nativeActivation(t);
-    const invoke = (name: string) => activation.invoke({ name, handler: 'check' }, { expected: 'pass' });
-    const suites = await invoke('owner-tests') as { status: unknown };
+    const invoke = (name: string) =>
+      activation.invoke({ name, handler: 'check' }, { expected: 'pass' });
+    const suites = (await invoke('owner-tests')) as { status: unknown };
     assert.equal(suites.status, 'not-applicable');
-    const lint = await invoke('owner-lint') as { status: unknown; log: string };
+    const lint = (await invoke('owner-lint')) as { status: unknown; log: string };
     assert.notEqual(lint.status, 0);
     assert.match(readFileSync(lint.log, 'utf8'), /max-lines-per-function|too many lines/i);
-    const types = await invoke('repository-types') as { status: unknown; log: string };
+    const types = (await invoke('repository-types')) as { status: unknown; log: string };
     assert.notEqual(types.status, 0);
     assert.match(readFileSync(types.log, 'utf8'), /TS2322/);
   },
@@ -32,7 +33,8 @@ async function nativeActivation(t: TestContext) {
   const workspace = join(root, 'workspace');
   cpSync(source, workspace, {
     recursive: true,
-    filter: (path) => !['.git', 'node_modules', 'dist'].includes(relative(source, path).split('/')[0]!),
+    filter: (path) =>
+      !['.git', 'node_modules', 'dist'].includes(relative(source, path).split('/')[0]!),
   });
   const task = new StewardFixture(t, root).task;
   task.worktree = workspace;
@@ -45,9 +47,18 @@ async function nativeActivation(t: TestContext) {
     operations: qualityOperations,
   });
   t.after(() => task.close());
-  const activation = new ActivationTools(task, { component: owner, activity: 'implementation' }, {
-    goal: 'quality', assignment: {}, milestone: { id: 'quality' }, acceptance: [], worktree: workspace,
-  }, AbortSignal.timeout(120_000));
+  const activation = new ActivationTools(
+    task,
+    { component: owner, activity: 'implementation' },
+    {
+      goal: 'quality',
+      assignment: {},
+      milestone: { id: 'quality' },
+      acceptance: [],
+      worktree: workspace,
+    },
+    AbortSignal.timeout(120_000),
+  );
   return activation;
 }
 
@@ -76,13 +87,31 @@ async function discoverOwner(source: string) {
 
 /** Captured operations exercised by the native diagnostic. */
 const qualityOperations = {
-        'owner-tests': { id: 'owner-tests', category: 'integration-test', command: 'npm',
-          args: ['test', '--', { context: 'owner' }], cwd: '.', network: false,
-          applicability: 'owner-test-suites' },
-        'owner-lint': { id: 'owner-lint', category: 'build', command: 'npm',
-          args: ['run', 'lint', '--', { context: 'owner' }], cwd: '.', network: false },
-        'repository-types': { id: 'repository-types', category: 'build', command: 'npm',
-          args: ['run', 'check'], cwd: '.', network: false },
+  'owner-tests': {
+    id: 'owner-tests',
+    category: 'integration-test',
+    command: 'npm',
+    args: ['test', '--', { context: 'owner' }],
+    cwd: '.',
+    network: false,
+    applicability: 'owner-test-suites',
+  },
+  'owner-lint': {
+    id: 'owner-lint',
+    category: 'build',
+    command: 'npm',
+    args: ['run', 'lint', '--', { context: 'owner' }],
+    cwd: '.',
+    network: false,
+  },
+  'repository-types': {
+    id: 'repository-types',
+    category: 'build',
+    command: 'npm',
+    args: ['run', 'check'],
+    cwd: '.',
+    network: false,
+  },
 };
 
 /** Introduce both diagnostics into the selected owner file. */
@@ -90,5 +119,9 @@ function injectFailures(workspace: string, file: string): void {
   const path = join(workspace, file);
   const original = readFileSync(path, 'utf8');
   const longFunction = Array.from({ length: 35 }, () => '  value += 1;').join('\n');
-  writeFileSync(path, original + `\nfunction qualityFailure(): number {\n  let value: number = "wrong";\n${longFunction}\n  return value;\n}\nqualityFailure();\n`);
+  writeFileSync(
+    path,
+    original +
+      `\nfunction qualityFailure(): number {\n  let value: number = "wrong";\n${longFunction}\n  return value;\n}\nqualityFailure();\n`,
+  );
 }
