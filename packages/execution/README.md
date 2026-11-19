@@ -64,6 +64,13 @@ available. Explicit cross-owner work uses Direction; final independent rejection
 also returns to Direction. Ordinary local repair does not create a milestone or
 invoke the Director.
 
+A model's assertion that a capability is unavailable does not establish a host
+prerequisite. Return that unsupported `blocked` response and its exact reason to
+the same caller for investigation through mapped tools, optional research or
+explicit supplier escalation. Rephrasing the assertion without checked progress
+must not create an endless retry. Actual host-observed failures and unanswered
+high-level guide questions retain their normal holds.
+
 The [check-repair scenarios](tests/integration/steward-check.test.ts) exercise
 compiler and assertion repairs, unchanged failures, response repair, ownership
 refusals and complete supplier answers. The

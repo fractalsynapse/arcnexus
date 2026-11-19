@@ -97,17 +97,23 @@ async function requestSteward(
     } catch (error) {
       if (!repairableReply(error)) throw error;
       signal.throwIfAborted();
-      if (seen.has(error.message))
+      if (seen.has(replyRepairIdentity(error, task)))
         return {
           kind: 'blocked',
           reason: `Steward reply repair failed: ${error.message}`,
           evidence: [],
         };
       diagnostic = error.message;
-      seen.add(diagnostic);
+      seen.add(replyRepairIdentity(error, task));
       task.note({ stewardRepair: { scope, diagnostic, evidence: task.evidence.at(-1) } });
     }
   }
+}
+
+/** Match a rejected reply class against checked progress rather than repeated prose. */
+function replyRepairIdentity(error: Error, task: HostTask) {
+  const finding = error instanceof StewardResponseError ? error.identity : error.message;
+  return JSON.stringify([finding, stewardInput(task.observations())]);
 }
 
 /** Restrict retries to rejected replies with no checked edits applied. */

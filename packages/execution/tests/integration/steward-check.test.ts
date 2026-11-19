@@ -5,12 +5,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { Agent } from '../../../agent/src/index.js';
-import { Architecture, type Capture, type TaskContext } from '../../../architecture/src/index.js';
-import { Coordination } from '../../../coordination/src/index.js';
+import { Architecture, type TaskContext } from '../../../architecture/src/index.js';
 import { activities, type Milestone, type Plan } from '../../../direction/src/index.js';
 import { Workflow, type WorkflowServices } from '../../../workflow/src/index.js';
 import { checkFailureSignature } from '../../src/steward-check.js';
-import { HostTask, steward } from '../../src/index.js';
+import { type HostTask, steward } from '../../src/index.js';
+import { StewardFixture } from '../fixtures/steward.js';
 
 const agent = new Agent(new Architecture());
 const criterion = { id: 'fixed', description: 'The fixture check passes' };
@@ -35,37 +35,6 @@ function milestone(id: string): Milestone {
   };
 }
 
-/** Bind one private fixture worktree and record all evidence to its real task journal. */
-function nativeTask(t: TestContext, root: string): HostTask {
-  const capture = {
-    source: { root, remote: 'https://example.com/project.git' },
-    project: { contractRegistry: 'registry.yaml' },
-    contracts: [],
-    components: {
-      owner: {
-        id: 'owner',
-        owns: ['fixture.txt', 'earlier.txt'],
-        activities: {
-          implementation: { profile: 'profile', operations: ['owner-tests'] },
-        },
-      },
-      other: { id: 'other', owns: ['other.txt'], activities: {} },
-    },
-  } as unknown as Capture;
-  const goal = 'Exercise failed steward check correction';
-  const journal = new Coordination(root).admit(capture.source.remote, goal);
-  assert('close' in journal);
-  const task = new HostTask(
-    { capture, common: root, executable: '', base: 'staging', fresh: true, storage: root },
-    goal,
-    journal,
-  );
-  task.worktree = root;
-  t.mock.method(task, 'cleanup', () => {});
-  t.after(() => rmSync(root, { recursive: true, force: true }));
-  return task;
-}
-
 /** Exercise the real Workflow and steward with observable model and command boundaries. */
 class CheckTask {
   readonly calls: string[] = [];
@@ -80,7 +49,7 @@ class CheckTask {
     t: TestContext,
     private readonly correct: boolean | 'progress',
   ) {
-    this.task = nativeTask(t, this.root);
+    this.task = new StewardFixture(t, this.root).task;
     writeFileSync(this.file, 'wrong');
     t.mock.method(this.task, 'check', async (id: string, _signal: AbortSignal, scope: unknown) =>
       this.check(id, scope),
@@ -208,7 +177,7 @@ test('an unchanged local check failure holds without another Director call', asy
 });
 
 test('a malformed steward reply is repaired in the same step before checked effects', async (t) => {
-  const task = nativeTask(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-repair-')));
+  const task = new StewardFixture(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-repair-'))).task;
   const file = join(task.worktree!, 'fixture.txt');
   const replacement = { path: 'fixture.txt', expected: null, content: 'corrected' };
   const transcript = task.store('invalid-codex.jsonl', 'retained malformed reply');
@@ -239,7 +208,7 @@ test('a malformed steward reply is repaired in the same step before checked effe
 });
 
 test('a second malformed reply blocks the step and keeps both transcripts', async (t) => {
-  const task = nativeTask(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-repair-')));
+  const task = new StewardFixture(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-repair-'))).task;
   const replies = t.mock.method(task, 'activate', async () => {
     task.store('codex.jsonl', 'retained malformed reply');
     return { kind: 'completed', edits: [], checks: [{ id: 'forbidden', expected: 'pass' }] };
@@ -259,7 +228,8 @@ test('a second malformed reply blocks the step and keeps both transcripts', asyn
 });
 
 test('a refused ownership request returns the captured owner to the same steward', async (t) => {
-  const task = nativeTask(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-ownership-')));
+  const task = new StewardFixture(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-ownership-')))
+    .task;
   const file = join(task.worktree!, 'other.txt');
   const edit = { path: 'other.txt', expected: null, content: 'forbidden' };
   const replies = t.mock.method(
@@ -317,7 +287,7 @@ function recordSupplierAnswer(task: HostTask, answer: string) {
 }
 
 test('the requesting steward gets the complete recorded supplier answer', async (t) => {
-  const task = nativeTask(t, mkdtempSync(join(tmpdir(), 'arcnexus-supplier-answer-')));
+  const task = new StewardFixture(t, mkdtempSync(join(tmpdir(), 'arcnexus-supplier-answer-'))).task;
   t.after(() => task.close());
   const answer = '  Use the approved interface.\n\nKeep the captured revision.  ';
   recordSupplierAnswer(task, answer);
@@ -347,7 +317,8 @@ test('the requesting steward gets the complete recorded supplier answer', async 
 });
 
 test('the steward can substitute exact text without copying the rest of the file', async (t) => {
-  const task = nativeTask(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-transform-')));
+  const task = new StewardFixture(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-transform-')))
+    .task;
   const file = join(task.worktree!, 'fixture.txt');
   const original = 'prefix buggy suffix';
   writeFileSync(file, original);
@@ -399,7 +370,7 @@ class StaleEditScenario {
 
 test('a stale digest is corrected without applying earlier edits in the rejected reply', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-steward-stale-digest-'));
-  const task = nativeTask(t, root);
+  const task = new StewardFixture(t, root).task;
   const file = join(root, 'fixture.txt');
   writeFileSync(file, 'initial');
   const replies = t.mock.method(

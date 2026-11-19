@@ -9,6 +9,8 @@
 
 ### Fixed
 
+- Return unsupported steward capability blocks to the caller for investigation, preserving checked edits and stopping unchanged rephrased assertions (#618).
+
 - Retain the original review criterion when a supplier contribution has its own local measures (#611).
 
 - Repair ordinary steward checks and self-review findings within the original milestone, preserving checkpoints and resuming the earliest affected activity without Director replanning (#615).
