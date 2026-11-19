@@ -88,6 +88,11 @@ function formatterConfigReason(directory: string, root: string): string | undefi
   return undefined;
 }
 
+/** Check whether parsed configuration data is a plain object. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 /** Reject reuse for lint dependency forms that bounded static import traversal cannot resolve. */
 function lintReuseEligibility(
   root: string,
