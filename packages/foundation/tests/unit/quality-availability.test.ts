@@ -110,6 +110,67 @@ test('public capability rejects an operation bound to the other quality command'
   assert.equal(capability()({ ...format, args: lint.args }), false);
 });
 
+const runnerPath = 'packages/foundation/scripts/owner-quality.ts';
+
+function capturedInputs(): Record<string, string> {
+  return {
+    'package.json': readFileSync('package.json', 'utf8'),
+    [runnerPath]: readFileSync(runnerPath, 'utf8'),
+  };
+}
+
+function capturedSource(files: Record<string, string>) {
+  return {
+    paths: Object.keys(files),
+    read(path: string): string {
+      assert.ok(Object.hasOwn(files, path));
+      return files[path]!;
+    },
+  };
+}
+
+test('captured availability uses the supplied manifest and runner for approved bindings', () => {
+  const files = capturedInputs();
+  const source = capturedSource(files);
+  const before = structuredClone(files);
+  const formatBinding = { ...approvedFormat, source };
+  const lintBinding = { ...approvedLint, id: 'quality', source };
+  assert.equal(capability()(formatBinding), true);
+  assert.equal(capability()(lintBinding), true);
+  assert.deepEqual(files, before);
+  assert.deepEqual(source.paths, Object.keys(before));
+  assert.deepEqual(formatBinding.args, approvedFormat.args);
+  assert.deepEqual(lintBinding.args, approvedLint.args);
+});
+
+test('captured availability rejects a missing runner despite the ambient runner', () => {
+  const files = capturedInputs();
+  delete files[runnerPath];
+  assert.equal(capability()({ ...approvedLint, source: capturedSource(files) }), false);
+});
+
+test('captured availability rejects a missing manifest despite the ambient manifest', () => {
+  const files = capturedInputs();
+  delete files['package.json'];
+  assert.equal(capability()({ ...approvedFormat, source: capturedSource(files) }), false);
+});
+
+test('captured availability validates the matching script with approved argv', () => {
+  const files = capturedInputs();
+  const manifest = JSON.parse(files['package.json']!);
+  manifest.scripts.lint = manifest.scripts['format:check'];
+  files['package.json'] = JSON.stringify(manifest);
+  assert.equal(capability()({ ...approvedLint, source: capturedSource(files) }), false);
+});
+
+test('captured availability rejects a missing script with approved argv', () => {
+  const files = capturedInputs();
+  const manifest = JSON.parse(files['package.json']!);
+  delete manifest.scripts.lint;
+  files['package.json'] = JSON.stringify(manifest);
+  assert.equal(capability()({ ...approvedLint, source: capturedSource(files) }), false);
+});
+
 test('capability rejects a script invoking the wrong quality operation', () => {
   const tree = new QualityFixture();
   const previous = process.cwd();
