@@ -196,7 +196,7 @@ function assertNestedCommand(result: Awaited<ReturnType<typeof check>>, worktree
 function assertComposedCommand(
   result: Awaited<ReturnType<typeof check>>,
   log: string,
-  t: Parameters<Parameters<typeof test>[1]>[0],
+  t: TestContext,
 ) {
   const composed = spawnSync('npm', result.args, { cwd: result.cwd, encoding: 'utf8' });
   const output = (composed.stdout ?? '') + (composed.stderr ?? '');
