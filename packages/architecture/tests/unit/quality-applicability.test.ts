@@ -3,11 +3,8 @@ import test from 'node:test';
 import { Architecture, type Capture } from '../../src/index.js';
 import { Agent } from '../../../agent/src/index.js';
 
-/** Create an isolated captured activity without changing the real catalog. */
-function fixture(
-  operation: Record<string, unknown>,
-  missing?: 'manifest' | 'script' | 'runner',
-): Capture {
+/** Capture only the runtime files needed by the quality binding. */
+function fixtureSource(operation: Record<string, unknown>, missing?: 'manifest' | 'script' | 'runner') {
   const runner = 'packages/foundation/scripts/owner-quality.ts';
   const command = operation.applicability === 'owner-lint-files' ? 'lint' : 'format:check';
   const scripts: Record<string, string> = {
@@ -15,43 +12,50 @@ function fixture(
     lint: `jiti ${runner} lint`,
   };
   if (missing === 'script') delete scripts[command];
-  const contents: Record<string, string> = { 'package.json': JSON.stringify({ scripts }) };
+  const contents: Record<string, string> = { 'package.json': JSON.stringify({ scripts }), [runner]: '' };
   const paths = [
     ...(missing === 'manifest' ? [] : ['package.json']),
     ...(missing === 'runner' ? [] : [runner]),
   ];
-  contents[runner] = '';
   return {
-    source: {
-      revision: 'base',
-      paths,
-      read: (path: string) => {
-        if (!paths.includes(path)) throw new Error(`Missing from captured project: ${path}`);
-        return contents[path]!;
+    revision: 'base',
+    paths,
+    read: (path: string) => {
+      if (!paths.includes(path)) throw new Error(`Missing from captured project: ${path}`);
+      return contents[path]!;
+    },
+  };
+}
+
+/** Describe the isolated activity that exposes the quality operation. */
+function fixtureComponent() {
+  return {
+    id: 'sample',
+    purpose: 'Fixture',
+    owns: ['packages/sample'],
+    activities: {
+      testing: {
+        role: 'designer',
+        profile: 'test',
+        instructions: [],
+        standards: [],
+        operations: ['quality'],
       },
     },
+  };
+}
+
+/** Create an isolated captured activity without changing the real catalog. */
+function fixture(operation: Record<string, unknown>, missing?: 'manifest' | 'script' | 'runner'): Capture {
+  return {
+    source: fixtureSource(operation, missing),
     project: {
       id: 'fixture',
       director: { component: 'other', activity: 'planning' },
       verifier: { component: 'other', activity: 'review' },
       contractRegistry: 'registry.yaml',
     },
-    components: {
-      sample: {
-        id: 'sample',
-        purpose: 'Fixture',
-        owns: ['packages/sample'],
-        activities: {
-          testing: {
-            role: 'designer',
-            profile: 'test',
-            instructions: [],
-            standards: [],
-            operations: ['quality'],
-          },
-        },
-      },
-    },
+    components: { sample: fixtureComponent() },
     roles: { designer: { id: 'designer' } },
     profiles: {
       test: { id: 'test', model: 'fixture', reasoning: 'low', webSearch: 'disabled', operationCategories: ['check'] },
