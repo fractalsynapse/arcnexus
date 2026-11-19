@@ -30,6 +30,24 @@ test('a changed actual checkpoint invalidates earlier evidence', (t) => {
   assert.equal(reusableCheck(fixture.task.observations(), after), undefined);
 });
 
+test('owner lint evidence survives an unrelated committed documentation edit', async (t) => {
+  const { git } = await import('../../src/git.js');
+  const fixture = new CheckCacheFixture(t);
+  fixture.restart({
+    ...fixtureOperation,
+    command: 'npm',
+    args: ['run', 'lint', '--', { context: 'owner' }],
+    applicability: 'owner-lint-files',
+  } as typeof fixtureOperation);
+  const observed = fixture.observe();
+  const worktree = fixture.task.worktree!;
+  writeFileSync(join(worktree, 'unrelated.md'), 'unrelated documentation');
+  git(worktree, 'add', 'unrelated.md');
+  git(worktree, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com',
+    'commit', '-qm', 'Unrelated edit');
+  assert.deepEqual(reusableCheck(fixture.task.observations(), fixture.input()), observed);
+});
+
 test('changed operation authority invalidates a retained successful observation', (t) => {
   const fixture = new CheckCacheFixture(t);
   const before = fixture.input();
