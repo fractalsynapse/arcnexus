@@ -311,6 +311,13 @@ interface IgnoreScope {
 
 const createIgnore = createRequire(import.meta.url)('ignore') as () => IgnoreMatcher;
 
+/** Translate gitignore character-class negation and escaped wildcards for the matcher. */
+function normalizeIgnorePatterns(patterns: string): string {
+  return patterns
+    .replace(/\[!([^\]]+)\]/g, '[^$1]')
+    .replace(/\\([*?])/g, '[$1]');
+}
+
 /** Walk maintained paths once, loading reachable ignore rules as each directory is entered. */
 function discoverMaintainedFiles(): string[] {
   const files: string[] = [];
