@@ -144,6 +144,28 @@ test('an unknown owner cannot be reported as having no test suites', async (t) =
   );
 });
 
+test('candidate ownership drift is refused before declaring owner tests inapplicable', async (t) => {
+  const { root, workspace } = fixture(t);
+  const common = join(root, 'common');
+  const components = join(workspace, '.arc/architecture/components');
+  mkdirSync(common);
+  mkdirSync(components, { recursive: true });
+  writeFileSync(join(components, 'one.yaml'), 'id: one\nowns:\n  - other\n');
+  writeFileSync(join(components, 'two.yaml'), 'id: two\nowns:\n  - owned\n');
+  await assert.rejects(
+    check(
+      ownerCheckCapture(workspace),
+      workspace,
+      common,
+      'owner-tests',
+      'one',
+      join(root, 'drift.log'),
+      AbortSignal.timeout(5_000),
+    ),
+    /ownership|drift|authority/i,
+  );
+});
+
 test('an optional owner check without a suite records inapplicability before execution', async (t) => {
   const { root, workspace } = fixture(t);
   const common = join(root, 'common');
