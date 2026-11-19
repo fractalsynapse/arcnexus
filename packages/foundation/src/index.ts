@@ -28,7 +28,7 @@ export function selectQualityInputs(
   const owners = new Map<string, string>();
   const files: string[] = [];
   for (const path of candidates) {
-    if (operation === 'lint' && !/\\.(?:ts|mts|cts|js|mjs|cjs)$/.test(path)) continue;
+    if (operation === 'lint' && !/\.(?:ts|mts|cts|js|mjs|cjs)$/.test(path)) continue;
     const resolution = team.ownerFor(components, path);
     assert.notEqual(resolution.kind, 'collision', `Ambiguous ownership: ${path}`);
     assert.equal(resolution.kind, 'owned', `Unowned maintained input: ${path}`);
