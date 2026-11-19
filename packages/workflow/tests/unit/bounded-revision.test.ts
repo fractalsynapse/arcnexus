@@ -52,6 +52,7 @@ class RevisionScenario {
     },
   ];
   readonly calls: unknown[] = [];
+  readonly artifacts = new Map<string, string>();
   private rejected = false;
 
   /** Choose an explicit supplier request or independent rejection after completed work. */
