@@ -166,3 +166,63 @@ for (const missing of ['owner-format', 'owner-lint', 'repository-types']) {
     assert.notEqual(result.kind, 'completed', `${missing} lacks current evidence`);
   });
 }
+
+for (const [activity, id] of [
+  ['testing', 'owner-lint'],
+  ['implementation', 'owner-tests'],
+] as const) {
+  test(`raw expected-fail ${id} cannot bypass ${activity} passing obligation`, async (t) => {
+    const root = mkdtempSync(join(tmpdir(), 'arcnexus-raw-fail-'));
+    const task = new StewardFixture(t, root).task;
+    t.after(() => task.close());
+    Object.assign(task.capture, { operations: { [id]: {
+      id, kind: 'command', tool: 'check', category: 'build',
+      command: '/usr/bin/false', args: [], cwd: '.', network: false,
+    } } });
+    Object.assign(task.capture.components.owner!.activities, {
+      [activity]: { profile: 'profile', operations: [id] },
+    });
+    t.mock.method(task, 'activate', async () => ({
+      kind: 'completed', edits: [], checks: [{ id, expected: 'fail' }],
+    }));
+    t.mock.method(task, 'check', async (_id, _signal, scope) => ({
+      id, status: 1, log: task.store('raw-failure.log', 'actual failure'),
+      command: 'fixture', args: [], cwd: root, durationMs: 0,
+    }));
+    const selected: Milestone = { ...milestone, steps: [{
+      activity, checklist: [{ id: 'quality', criteria: ['quality'], expected: 'Checks pass' }],
+    }] };
+    const result = await steward(
+      new Agent(new Architecture()), task, selected, activity, AbortSignal.timeout(5000),
+    );
+    assert.notEqual(result.kind, 'completed');
+  });
+}
+
+test('mixed captured operations progress after the command check passes', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'arcnexus-mixed-operations-'));
+  const task = new StewardFixture(t, root).task;
+  t.after(() => task.close());
+  Object.assign(task.capture, { operations: {
+    'read-file': { id: 'read-file', kind: 'tool', tool: 'read-file', category: 'read' },
+    'checked-edit': { id: 'checked-edit', kind: 'tool', tool: 'checked-edit', category: 'write' },
+    'owner-tests': { id: 'owner-tests', kind: 'command', tool: 'check', category: 'build',
+      command: '/usr/bin/true', args: [], cwd: '.', network: false },
+  } });
+  Object.assign(task.capture.components.owner!.activities.implementation!, {
+    operations: ['read-file', 'checked-edit', 'owner-tests'],
+  });
+  t.mock.method(task, 'activate', async () => ({ kind: 'completed', edits: [], checks: [] }));
+  const called: string[] = [];
+  t.mock.method(task, 'check', async (id) => {
+    called.push(id);
+    assert.equal(id, 'owner-tests');
+    return { id, status: 0, log: task.store('pass.log', 'pass'),
+      command: 'fixture', args: [], cwd: root, durationMs: 0 };
+  });
+  const result = await steward(
+    new Agent(new Architecture()), task, milestone, 'implementation', AbortSignal.timeout(5000),
+  );
+  assert.equal(result.kind, 'completed');
+  assert.deepEqual(called, ['owner-tests']);
+});
