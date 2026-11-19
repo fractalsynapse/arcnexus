@@ -117,7 +117,12 @@ export class ActivationTools {
       expected,
     };
     const pending = pendingStewardCheck(this.task.observations(), scope, id);
-    if (pending && pending.expected !== expected)
+    const correctingPrediction =
+      this.selection.activity === 'testing' &&
+      id === 'owner-tests' &&
+      pending?.expected === 'fail' &&
+      expected === 'pass';
+    if (pending && pending.expected !== expected && !correctingPrediction)
       throw new Error(`Cannot change the required recheck for ${id}: expected ${pending.expected}`);
     return this.task.check(id, this.signal, scope);
   }
