@@ -34,34 +34,67 @@ export async function check(
   signal: AbortSignal,
 ): Promise<CheckResult> {
   signal.throwIfAborted();
-  const { executable, args, cwd } = checkCommand(capture, worktree, id, owner);
+  const command = checkCommand(capture, worktree, id, owner);
   if (owner && !Object.hasOwn(capture.components, owner))
     throw new Error(`Unknown captured owner: ${owner}`);
   if (
     owner &&
     (capture.source.paths ?? []).some((path) => path.startsWith('.arc/architecture/components/'))
   ) assertCapturedOwnership(capture, worktree);
+  return executeOwnerCheck(capture, worktree, common, id, owner, log, signal, command);
+}
+
+/** Resolve current applicability, then execute its selected inputs in confinement. */
+async function executeOwnerCheck(
+  capture: Capture,
+  worktree: string,
+  common: string,
+  id: string,
+  owner: string | undefined,
+  log: string,
+  signal: AbortSignal,
+  command: ReturnType<typeof checkCommand>,
+): Promise<CheckResult> {
   const applicability = await ownerOperationInapplicability(capture, worktree, id, owner);
   if (applicability.reason) {
-    writeFileSync(log, `Not applicable: ${applicability.reason}\n`, { mode: 0o600, flag: 'wx' });
+    writeFileSync(log, `Not applicable: ${applicability.reason}\\n`, { mode: 0o600, flag: 'wx' });
     return {
-      id, command: executable, args, cwd, log, selection: applicability.selection,
-      status: 'not-applicable', reason: applicability.reason, durationMs: 0,
+      id, command: command.executable, args: command.args, cwd: command.cwd, log,
+      selection: applicability.selection, status: 'not-applicable',
+      reason: applicability.reason, durationMs: 0,
     };
   }
   const selection = applicability.selection;
   const runtime = selection && qualityRuntime(selection.operation);
-  const actualCommand = runtime ? join(worktree, 'node_modules/.bin', runtime.executable) : executable;
-  const actualArgs = runtime
+  const executable = runtime
+    ? join(worktree, 'node_modules/.bin', runtime.executable)
+    : command.executable;
+  const args = runtime
     ? [...runtime.args, '--', ...selection!.files.map((path) => resolve(worktree, path))]
-    : args;
+    : command.args;
+  return runConfinedCheck(capture, worktree, common, id, log, signal, command.cwd, executable, args, selection);
+}
+
+/** Run one resolved command and retain its exact execution identity. */
+async function runConfinedCheck(
+  capture: Capture,
+  worktree: string,
+  common: string,
+  id: string,
+  log: string,
+  signal: AbortSignal,
+  cwd: string,
+  executable: string,
+  args: string[],
+  selection?: QualitySelection,
+): Promise<CheckResult> {
   const start = performance.now();
   const sandbox = mounts(capture.source.root, worktree, common);
-  const invocation = [...sandbox, '--chdir', cwd, '--', actualCommand, ...actualArgs];
+  const invocation = [...sandbox, '--chdir', cwd, '--', executable, ...args];
   const { status } = await execute('/usr/bin/bwrap', invocation, { cwd: worktree, log, signal });
   return {
-    id, command: actualCommand, args: actualArgs, cwd, log, selection,
-    status, durationMs: Math.round(performance.now() - start),
+    id, command: executable, args, cwd, log, selection, status,
+    durationMs: Math.round(performance.now() - start),
   };
 }
 
