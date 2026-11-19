@@ -37,6 +37,8 @@ function fixture(assessment?: unknown) {
   };
   const journal = new Map<string, unknown>();
   const source = new Map([['contract.md', 'old bytes']]);
+  const seed = (answers: unknown = {}) =>
+    journal.set(proposal.id, { proposal: structuredClone(proposal), answers, status: 'pending' });
   const application = new Architecture() as unknown as {
     phase(input: unknown): Phase;
   };
