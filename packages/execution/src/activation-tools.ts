@@ -179,12 +179,6 @@ export class ActivationTools {
     if (!reply || typeof reply !== 'object' || !('kind' in reply)) return reply;
     if (['research', 'question', 'supplier'].includes(String(reply.kind)))
       throw new InvalidCodexResponse(`Use the mapped MCP tool for ${String(reply.kind)} requests`);
-    if (reply.kind === 'blocked' && this.checks.size) {
-      const operations = [...this.checks].map(([id, expected]) => `${id} (expected ${expected})`);
-      throw new InvalidCodexResponse(
-        `Queued checks ${operations.join(', ')} run after a completed response. Requeue the same checks via MCP; return completed if the only blocker was waiting for a check. Return blocked without queueing checks if a different prerequisite prevents progress.`,
-      );
-    }
     if (reply.kind !== 'completed') return reply;
     if (this.hasDirectOperations(reply as Record<string, unknown>))
       throw new InvalidCodexResponse(
