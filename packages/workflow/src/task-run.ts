@@ -239,7 +239,9 @@ export class TaskRun {
   /** Check proposal shape, plan rules and preservation of any already accepted work. */
   private validateProposal(response: unknown, reason?: RevisionFeedback): DirectionResult {
     this.signal.throwIfAborted();
-    const result = decodeDirectorResponse(response, this.assessmentInput());
+    const result = this.revision
+      ? decodeRevisionResponse(response, this.session.capture, this.plan!, this.revision)
+      : decodeDirectorResponse(response, this.assessmentInput());
     if (result.kind !== 'plan') return result;
     try {
       validatePlan(this.session.capture, result.plan);
