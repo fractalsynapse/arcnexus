@@ -9,7 +9,18 @@ export function researchDirectory(capture: Capture, component: string) {
 /** Research is selectable only when the component declares a read-only model activity. */
 export function canResearch(capture: Capture, component: string) {
   const research = capture.components[component]?.activities.research;
-  return !!research?.profile && !research.executor && research.operations?.length === 0;
+  return (
+    !!research?.profile &&
+    !research.executor &&
+    !!research.operations?.every((id) => {
+      const operation = capture.operations?.[id];
+      return (
+        !!operation &&
+        operation.command === undefined &&
+        ['read', 'list'].includes(operation.tool ?? '')
+      );
+    })
+  );
 }
 
 /** Derive a compact component index from the summaries committed with the reports. */

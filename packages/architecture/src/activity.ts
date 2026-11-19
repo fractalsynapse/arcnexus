@@ -1,5 +1,6 @@
 import { team } from '../../team/src/index.js';
 import type { Capture } from './catalog.js';
+import { canResearch } from './research.js';
 
 export interface ActivitySelection {
   component: string;
@@ -25,6 +26,8 @@ export function resolveActivity(capture: Capture, selection: ActivitySelection) 
       `Unknown activity: ${name}; valid activities for ${id}: ${Object.keys(component.activities ?? {}).join(', ')}`,
     );
   }
+  if (name === 'research' && !canResearch(capture, id))
+    throw new Error(`Research activity ${id}/${name} requires a model and mapped read-only tools`);
   const { director, verifier } = capture.project;
   const actor = matches(director, id, name)
     ? 'director'

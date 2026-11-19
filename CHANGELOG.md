@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Enable optional research with its approved read-only MCP tools while refusing effectful or unresolved research mappings (#645).
+
 - Require JSON Architect replies explicitly and compare actor response findings independently of changing transcript paths, preserving exact diagnostics and checked progress (#637).
 
 - Retain an empty transcript for silent native operations so their actual observations remain readable and reusable (#644).

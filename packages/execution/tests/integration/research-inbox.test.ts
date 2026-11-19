@@ -39,7 +39,7 @@ class ResearchScenario {
   checks = 0;
 
   /** Set up a local Git source without a delivery branch or task worktree. */
-  constructor(t: TestContext) {
+  constructor(t: TestContext, operations = ['read-file', 'list-files']) {
     t.after(() => rmSync(this.base, { force: true, recursive: true }));
     mkdirSync(this.root);
     execFileSync('git', ['init', '-q', this.root]);
@@ -50,16 +50,11 @@ class ResearchScenario {
         checks: { acceptance: ['build'] },
       },
       contracts: [],
-      components: Object.fromEntries(
-        ['direction', 'reviewer', 'team'].map((id) => [
-          id,
-          {
-            id,
-            owns: [`.arc/research/${id}`],
-            activities: { research: { profile: 'fixture', operations: [] } },
-          },
-        ]),
-      ),
+      components: researchComponents(operations),
+      operations: {
+        'read-file': { id: 'read-file', kind: 'tool', category: 'project-tool', tool: 'read' },
+        'list-files': { id: 'list-files', kind: 'tool', category: 'project-tool', tool: 'list' },
+      },
       source: { root: this.root, revision: 'captured', paths: [], remote: 'https://example.com' },
     } as unknown as Capture;
   }
@@ -148,6 +143,29 @@ class ResearchScenario {
     return reply;
   }
 }
+
+/** Give each generic actor the same explicit read-only research capability. */
+function researchComponents(operations: string[]) {
+  return Object.fromEntries(
+    ['direction', 'reviewer', 'team'].map((id) => [
+      id,
+      {
+        id,
+        owns: [`.arc/research/${id}`],
+        activities: { research: { profile: 'fixture', operations } },
+      },
+    ]),
+  );
+}
+
+test('legacy model research without project tools remains available', async (t) => {
+  const fixture = new ResearchScenario(t, []);
+  assert.deepEqual(
+    await fixture.activate('direction', 'planning', [request, report, { kind: 'plan' }]),
+    { kind: 'plan' },
+  );
+  assert.equal(fixture.activations.length, 3);
+});
 
 /** Verify answered gates expose one durable artifact with the unmodified input. */
 function verifyClarificationEvidence(
