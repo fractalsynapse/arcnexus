@@ -18,13 +18,16 @@ export function selectQualityInputs(
   operation: QualitySelection['operation'],
   owner?: string,
 ): QualitySelection {
-  const components: Component[] = globSync('.arc/architecture/components/*.yaml').map((path) =>
+  const componentFiles = globSync('.arc/architecture/components/*.yaml');
+  const components: Component[] = componentFiles.map((path) =>
     parse(readFileSync(path, 'utf8')),
   );
   assert(!owner || components.some(({ id }) => id === owner), `Unknown owner: ${owner}`);
   const candidates = globSync('**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}', {
-    exclude: (path) => /(^|\\/)(?:node_modules|dist|\\.git|\\.test-build|\\.fixture-build|context|examples|\\.audit-work)(\\/|$)/.test(path),
-  }).filter((path) => operation !== 'format:check' || isFormatCovered(path)).sort();
+    ignore: ['node_modules/**', 'dist/**', '.git/**', '.test-build/**', '.fixture-build/**', 'context/**', 'examples/**', '.audit-work/**'],
+  })
+    .filter((path) => operation !== 'format:check' || isFormatCovered(path))
+    .sort();
   const owners = new Map<string, string>();
   const files: string[] = [];
   for (const path of candidates) {
@@ -38,8 +41,12 @@ export function selectQualityInputs(
   }
   const identity = createHash('sha256');
   identity.update(JSON.stringify({ operation, owner, files, owners: [...owners] }));
-  for (const path of [...globSync('.arc/architecture/components/*.yaml'), '.prettierignore', '.prettierrc.yaml', 'eslint.config.ts', 'package.json', 'package-lock.json']) {
-    try { identity.update(path).update(readFileSync(path)); } catch { identity.update(path).update('missing'); }
+  for (const path of [...componentFiles, '.gitignore', '.eslintignore', '.prettierignore', '.prettierrc.yaml', 'eslint.config.ts', 'package.json', 'package-lock.json']) {
+    try {
+      identity.update(path).update(readFileSync(path));
+    } catch {
+      identity.update(path).update('missing');
+    }
   }
   return { operation, owner, files, identity: identity.digest('hex') };
 }
@@ -100,10 +107,7 @@ export function hasOwnerTestSuites(
   owner: string,
   components: readonly Component[],
 ): boolean {
-  assert(
-    components.some(({ id }) => id === owner),
-    `Unknown test owner: ${owner}`,
-  );
+  assert(components.some(({ id }) => id === owner), `Unknown test owner: ${owner}`);
   return discoverSuites(directory, `${suitePattern}.ts`, components).some(
     (suite) => suite.owner === owner,
   );
@@ -118,5 +122,5 @@ function discoverSuites(directory: string, pattern: string, components: readonly
 
 /** Preserve repository formatter coverage while allowing package and fixture files. */
 function isFormatCovered(path: string): boolean {
-  return /^(?:[^/]+\\.(?:ts|json)|(?:apps|packages|scripts|fixtures)\\/.+\\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json))$/.test(path);
+  return /^(?:[^/]+\.(?:ts|json)|(?:apps|packages|scripts|fixtures)\/.+\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json))$/.test(path);
 }
