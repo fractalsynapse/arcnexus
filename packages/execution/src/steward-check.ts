@@ -49,12 +49,8 @@ function observeCheck(
   )
     return;
   const prior = pending.get(check.id);
-  const correctsPrediction =
-    scope.activity === 'testing' &&
-    check.id === 'owner-tests' &&
-    prior?.expected === 'fail' &&
-    observed.expected === 'pass';
-  const expected = correctsPrediction ? observed.expected : prior?.expected ?? observed.expected;
+  const expected = expectedObservation(scope, check.id, prior, observed);
+
   if (!expected) return;
   pending.delete(check.id);
   if ((check.status === 0) !== (expected === 'pass'))
