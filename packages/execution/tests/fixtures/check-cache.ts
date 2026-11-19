@@ -15,6 +15,7 @@ export const fixtureOperation: Operation = {
   id: 'fixture-check',
   category: 'build',
   command: '/usr/bin/true',
+  tool: 'check',
   args: [],
   cwd: '.',
   network: false,
