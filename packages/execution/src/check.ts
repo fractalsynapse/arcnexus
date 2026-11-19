@@ -36,12 +36,7 @@ export async function check(
   const parameters = { id, command: executable, args, cwd, log };
   if (owner && !Object.hasOwn(capture.components, owner))
     throw new Error(`Unknown captured owner: ${owner}`);
-  if (
-    owner &&
-    ((capture.source.paths ?? []).some((path) => path.startsWith('.arc/architecture/components/')) ||
-      existsSync(join(capture.source.root, '.arc/architecture/components')) ||
-      existsSync(join(worktree, '.arc/architecture/components')))
-  ) assertCapturedOwnership(capture, worktree);
+  if (owner) assertCapturedOwnership(capture, worktree);
   const reason = await ownerOperationInapplicability(capture, worktree, id, owner);
   if (reason) {
     writeFileSync(log, `Not applicable: ${reason}\n`, { mode: 0o600, flag: 'wx' });
