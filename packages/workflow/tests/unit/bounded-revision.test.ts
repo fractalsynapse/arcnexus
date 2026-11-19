@@ -137,7 +137,26 @@ for (const path of ['supplier', 'rejection'] as const) {
     const scenario = new RevisionScenario(path);
     const call = await scenario.run();
     assert.equal(call.finding.kind, path);
-    assert(!JSON.stringify(call.context).includes('completed-119'));
+    const inline = JSON.stringify(call.context);
+    assert(!inline.includes('completed-119'));
+    const artifacts = [...scenario.artifacts.entries()];
+    const plan = artifacts.find(([, contents]) => contents === JSON.stringify(scenario.plan));
+    assert(plan, 'The exact accepted plan must be readable through an artifact');
+    const evidence = artifacts.find(
+      ([, contents]) =>
+        contents.includes('Retained failed attempt') &&
+        contents.includes('Complete retained answer'),
+    );
+    assert(evidence, 'The complete retained evidence must be readable through an artifact');
+    assert(inline.includes(plan[0]));
+    assert(inline.includes(evidence[0]));
+    assert(inline.includes('requester'));
+    assert(inline.includes(path === 'supplier' ? '120' : '121'));
+    const captured = evidence[1];
+    scenario.events.push({
+      feedback: { kind: 'answer', question: 'Later', answer: 'Later answer', evidence: [] },
+    });
+    assert.equal(scenario.artifacts.get(evidence[0]), captured);
     assert.deepEqual(
       scenario.events.find((event) => 'plan' in event),
       { plan: scenario.plan },
