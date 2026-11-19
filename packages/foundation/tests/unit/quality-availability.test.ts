@@ -70,7 +70,7 @@ test('public capability rejects unavailable command and runner for captured bind
   }
 });
 
-test('captured binding inspection does not execute its quality command or mutate inputs', () => {
+test('captured binding inspection leaves the binding and manifest unchanged', () => {
   const tree = new QualityFixture();
   const previous = process.cwd();
   try {
