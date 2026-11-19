@@ -185,3 +185,18 @@ the malformed response, skip unfinished Steps, or invoke Direction (#653).
 On restart, a retained malformed repair target resumes the original caller at its
 unchanged cursor. It never executes the invalid transition or rewrites the failed
 observation. Previously valid repair transitions still replay normally (#653).
+
+## Focused retained evidence
+
+Steward requests reference a complete immutable evidence index in existing task
+storage instead of repeating every historical artifact path. Current assignments
+still carry exact pending diagnostics, complete answers, research and acceptance.
+Mapped reads can follow the index to any retained observation; index artifacts do
+not recursively index themselves. Returning callers add newly observed artifacts
+while preserving their explicit inputs and complete inbox answers. Initial explicit
+activation context remains unchanged for inspection/harness parity (#650).
+
+Unfinished assigned work is not an unavailable prerequisite. Continue the current
+activity's mapped operations until its checklist is met, request optional research
+for missing knowledge, or explicitly escalate a distinct ownership contribution.
+A progress report must not end the activity as blocked merely because work remains.

@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Index retained steward evidence instead of replaying every artifact reference; preserve current diagnostics, complete answers and explicit activation parity across handoffs (#650).
+
 - Return unavailable activity repair targets to the caller before Workflow progression, using the shared target validator (#653).
 
 - Preserve established Testing red after a mistaken passing prediction, requiring matching actual diagnostics and unchanged milestone authority (#652).
