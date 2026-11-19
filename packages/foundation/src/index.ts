@@ -6,6 +6,44 @@ import { team } from '../../team/src/index.js';
 
 export { unifiedDiff, type ContentPatch } from './diff.js';
 
+export interface QualitySelection {
+  operation: 'format:check' | 'lint';
+  owner?: string;
+  files: string[];
+  identity: string;
+}
+
+/** Discover operation inputs and bind their identity to ownership and tool configuration. */
+export function selectQualityInputs(
+  operation: QualitySelection['operation'],
+  owner?: string,
+): QualitySelection {
+  const components: Component[] = globSync('.arc/architecture/components/*.yaml').map((path) =>
+    parse(readFileSync(path, 'utf8')),
+  );
+  assert(!owner || components.some(({ id }) => id === owner), `Unknown owner: ${owner}`);
+  const candidates = globSync('**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}', {
+    exclude: ['node_modules', 'dist', '.git', '.test-build', '.fixture-build', 'context', 'examples', '.audit-work'],
+  }).sort();
+  const owners = new Map<string, string>();
+  const files: string[] = [];
+  for (const path of candidates) {
+    if (operation === 'lint' && !/\\.(?:ts|mts|cts|js|mjs|cjs)$/.test(path)) continue;
+    const resolution = team.ownerFor(components, path);
+    assert.notEqual(resolution.kind, 'collision', `Ambiguous ownership: ${path}`);
+    assert.notEqual(resolution.kind, 'unowned', `Unowned maintained input: ${path}`);
+    if (owner && resolution.owner.id !== owner) continue;
+    files.push(path);
+    owners.set(path, resolution.owner.id);
+  }
+  const identity = createHash('sha256');
+  identity.update(JSON.stringify({ operation, owner, files, owners: [...owners] }));
+  for (const path of [...globSync('.arc/architecture/components/*.yaml'), '.prettierignore', '.prettierrc.yaml', 'eslint.config.ts', 'package.json', 'package-lock.json']) {
+    try { identity.update(path).update(readFileSync(path)); } catch { identity.update(path).update('missing'); }
+  }
+  return { operation, owner, files, identity: identity.digest('hex') };
+}
+
 /** Identify exact UTF-8 content used in reviewed proposals and recorded source observations. */
 export function textDigest(content: string) {
   return createHash('sha256').update(content).digest('hex');
