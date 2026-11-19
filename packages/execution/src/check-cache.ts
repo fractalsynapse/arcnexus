@@ -72,8 +72,8 @@ export function reusableCheck(events: readonly unknown[], input?: string, expect
 /** Ignore setup-event names; identify actual committed inputs and refuse uncertain dirty state. */
 function cleanRevision(worktree: string) {
   try {
-    if (gitStatus(worktree)) return;
-    return gitHead(worktree);
+    if (git(worktree, 'status', '--porcelain', '--untracked-files=all', '--ignored')) return;
+    return git(worktree, 'rev-parse', 'HEAD');
   } catch {
     return;
   }
