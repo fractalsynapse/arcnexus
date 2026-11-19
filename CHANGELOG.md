@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Give approved Architect prerequisite agents the implementation and delivery purpose while retaining the original task lookup and checkpoints (#639).
+
 - Keep distinct Director response errors in the same repair loop and restore immutable pending-milestone ownership and acceptance from host state (#632).
 
 - Reject empty, whitespace-only and decorative-star-only TypeScript documentation headers on classes, constructors, concrete methods and abstract methods; explanatory prose quality remains an independent review concern (#620).

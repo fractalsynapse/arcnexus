@@ -35,10 +35,10 @@ export class ArchitectureFixture {
   };
 
   /** Prepare one generic captured authority and an actual admitted parent/child writer pair. */
-  constructor(t: TestContext, recordProposal = true) {
+  constructor(t: TestContext, recordProposal = true, goal = 'Deliver approved architecture') {
     const capture = this.prepare();
     this.parent = this.task(capture);
-    const child = this.parent.journal.child('Deliver approved architecture', 'delivery');
+    const child = this.parent.journal.child(goal, 'delivery');
     assert(child instanceof Journal);
     this.child = new HostTask(this.parent.config, child.goal, child, this.parent);
     Object.assign(this.child, { worktree: this.workspace, branch: '10-task', issue: '10' });

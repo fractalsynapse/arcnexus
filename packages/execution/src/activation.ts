@@ -21,7 +21,7 @@ export function activateActor(
   data: Omit<TaskContext, 'goal' | 'worktree'>,
   signal: AbortSignal,
 ) {
-  const { capture, goal } = task;
+  const { capture } = task;
   const worktree = task.worktree ?? capture.source.root;
   verifyNativeGuidance(capture, worktree);
   const diff =
@@ -33,7 +33,7 @@ export function activateActor(
     task,
     (selected, input) =>
       agent.activate(
-        { capture, selection: selected, task: { ...input, goal, worktree } },
+        { capture, selection: selected, task: { ...input, goal: activationGoal(task), worktree } },
         (view, cancellation) => invokeCodex(task, view, input, cancellation),
         signal,
       ),
@@ -42,6 +42,14 @@ export function activateActor(
   return new Clarifications(task, selection, signal).run({ ...data, evidence }, (input) =>
     inbox.run(selection, input),
   );
+}
+
+/** Use the verified delivery purpose for prerequisite actors while preserving canonical retry identity. */
+function activationGoal(task: HostTask) {
+  const approved = task.guide;
+  return approved
+    ? `Implement and deliver the exact human-approved architecture batch and its prerequisites.\n\n${approved.proposal.purpose}`
+    : task.goal;
 }
 
 /** Store a host-generated response schema next to the protected transcript. */
