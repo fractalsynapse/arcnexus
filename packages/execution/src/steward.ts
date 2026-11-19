@@ -42,7 +42,8 @@ export async function steward(
       evidence: task.evidence.slice(before),
       ...(result.kind === 'repair' ? { input: stewardInput(task.observations()) } : {}),
     };
-  const failed = await perform(task, scope, result, correction, signal);
+  const requestedFailure = await perform(task, scope, result, correction, signal);
+  const failed = task.pendingCheck(scope) ?? requestedFailure;
   const evidence = task.evidence.slice(before);
   return failed
     ? stewardCheckOutcome(task, failed, correction, evidence)
