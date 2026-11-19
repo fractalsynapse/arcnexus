@@ -209,8 +209,8 @@ function matchesIgnoreRules(path: string, rules: readonly string[]): boolean | u
     const anchored = source.startsWith('/');
     const directoryOnly = source.endsWith('/');
     const pattern = source.replace(/^\//, '').replace(/\/$/, '');
-    const matcher = ignoreMatcher(pattern, anchored);
-    const matches = directoryOnly ? new RegExp(`${matcher.source.slice(0, -2)}/.+$`).test(path) : matcher.test(path);
+    const matcher = ignoreMatcher(pattern, anchored, directoryOnly);
+    const matches = matcher.test(path);
     if (matches) ignored = !negated;
   }
   return ignored;
