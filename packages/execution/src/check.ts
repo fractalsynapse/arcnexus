@@ -56,35 +56,35 @@ async function executeOwnerCheck(
   command: ReturnType<typeof checkCommand>,
 ): Promise<CheckResult> {
   const applicability = await ownerOperationInapplicability(capture, worktree, id, owner);
-  if (applicability.reason) {
-    writeFileSync(log, `Not applicable: ${applicability.reason}\n`, { mode: 0o600, flag: 'wx' });
-    return {
-      id,
-      command: command.executable,
-      args: command.args,
-      cwd: command.cwd,
-      log,
-      selection: applicability.selection,
-      status: 'not-applicable',
-      reason: applicability.reason,
-      durationMs: 0,
-    };
-  }
-  const selection = applicability.selection;
-  const executable = command.executable;
-  const args = command.args;
+  if (applicability.reason) return recordInapplicableCheck(id, log, command, applicability);
+
   return runConfinedCheck(
-    capture,
-    worktree,
-    common,
-    id,
-    log,
-    signal,
-    command.cwd,
-    executable,
-    args,
-    selection,
+    capture, worktree, common, id, log, signal, command.cwd,
+    command.executable, command.args, applicability.selection,
   );
+}
+
+/** Retain the precise reason and selection for an operation with no applicable inputs. */
+function recordInapplicableCheck(
+  id: string,
+  log: string,
+  command: ReturnType<typeof checkCommand>,
+  applicability: { reason?: string; selection?: QualitySelection },
+): CheckResult {
+  const reason = applicability.reason;
+  if (!reason) throw new Error('Inapplicability result requires a reason');
+  writeFileSync(log, `Not applicable: ${reason}\n`, { mode: 0o600, flag: 'wx' });
+  return {
+    id,
+    command: command.executable,
+    args: command.args,
+    cwd: command.cwd,
+    log,
+    selection: applicability.selection,
+    status: 'not-applicable',
+    reason,
+    durationMs: 0,
+  };
 }
 
 /** Run one resolved command and retain its exact execution identity. */
