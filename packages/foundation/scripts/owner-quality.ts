@@ -34,8 +34,8 @@ class OwnerQuality {
     const executable = this.operation === 'lint' ? 'eslint' : 'prettier';
     const args =
       this.operation === 'lint'
-        ? [...files, '--max-warnings', '0']
-        : ['--check', '--no-error-on-unmatched-pattern', ...files];
+        ? ['--', ...files, '--max-warnings', '0']
+        : ['--check', '--no-error-on-unmatched-pattern', '--', ...files];
     const result = spawnSync(executable, args, { stdio: 'inherit' });
     if (result.error) throw result.error;
     process.exitCode = result.status ?? 1;
