@@ -109,7 +109,7 @@ function revisionInstructions(feedback?: Feedback): string {
   if (!feedback)
     return 'Plan the smallest sufficient changes for the goal. Keep the scope, owner and acceptance explicit.';
   const preserve =
-    'Preserve the exact Focus, completed milestones in order, and completed Steps. For a fresh correction, activate only activities with distinct work or evidence required by the finding. Mark the other Steps inapplicable with a reason.';
+    'Return only the necessary pending sequence. The host retains the accepted plan and completed outcomes; do not reproduce completed milestones or Steps. For a fresh correction, activate only activities with distinct work or evidence required by the finding. Mark the other Steps inapplicable with a reason.';
   if (feedback.kind === 'supplier') {
     if (feedback.failedCheck)
       return `${preserve} Add a fresh correction milestone owned by feedback.owner before feedback.requester. Activate feedback.failedCheck.activity so the steward can diagnose the retained exit and log and correct the work. Reference the original engineering criteria. The host reruns the original check before the paused activity resumes.`;
