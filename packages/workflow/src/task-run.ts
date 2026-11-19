@@ -193,6 +193,7 @@ export class TaskRun {
         feedback,
       );
     }
+    if ('reason' in result) return result;
     if (result.kind === 'satisfied') {
       const assessment = { ...result, commit: this.standing!.revision };
       this.session.record({ assessment });
@@ -201,35 +202,48 @@ export class TaskRun {
     return this.commitPlan(result.plan, reason);
   }
 
-  /** Give an invalid Director response one repair in the same task and planning context. */
+  /** Repair distinct validation findings with Direction and hold an unchanged repeated finding. */
   private async planResponse(
     propose: () => Promise<unknown>,
     reason?: RevisionFeedback,
     context = reason,
-  ): Promise<DirectionResult> {
-    try {
-      return this.validateProposal(await propose(), reason);
-    } catch (error) {
-      if (!(error instanceof DirectorResponseError)) throw error;
-      const feedback: Feedback = {
-        kind: 'plan-repair',
-        diagnostic: error.message,
-        ...(context ? { original: context } : {}),
-      };
-      this.session.record({ feedback });
-      this.report({
-        phase: 'planning',
-        message: `Director proposal requires repair: ${error.message}`,
-      });
-      const repaired = await this.services.direction.revise(
-        this.session,
-        this.plan,
-        feedback,
-        this.signal,
-        this.assessmentInput(),
-      );
-      return this.validateProposal(repaired, reason);
+  ): Promise<DirectionResult | Interrupted> {
+    const seen = new Set<string>();
+    let request = propose;
+    while (true) {
+      try {
+        return this.validateProposal(await request(), reason);
+      } catch (error) {
+        this.signal.throwIfAborted();
+        if (!(error instanceof DirectorResponseError)) throw error;
+        if (seen.has(error.message))
+          return stopped(
+            'blocked',
+            `Director repeated an unchanged validation finding: ${error.message}`,
+            this.evidence,
+          );
+        seen.add(error.message);
+        request = () => this.repairPlan(error.message, context);
+      }
     }
+  }
+
+  /** Retain the exact diagnostic and original sequencing finding before returning to its caller. */
+  private repairPlan(diagnostic: string, context?: RevisionFeedback) {
+    const feedback: Feedback = {
+      kind: 'plan-repair',
+      diagnostic,
+      ...(context ? { original: context } : {}),
+    };
+    this.session.record({ feedback });
+    this.report({ phase: 'planning', message: `Director proposal requires repair: ${diagnostic}` });
+    return this.services.direction.revise(
+      this.session,
+      this.plan,
+      feedback,
+      this.signal,
+      this.assessmentInput(),
+    );
   }
 
   /** Check proposal shape, plan rules and preservation of any already accepted work. */

@@ -166,7 +166,18 @@ function standingAssignment(
 /** Builds shared Director fields without adding standing-goal context. */
 function directorAssignmentBase(feedback?: Feedback, request?: RevisionRequest) {
   const revisionShape = request
-    ? { ...shape, plan: { kind: 'plan', plan: { milestones: [] } } }
+    ? {
+        ...shape,
+        plan: {
+          kind: 'plan',
+          plan: {
+            milestones: [
+              { id: 'existing accepted milestone id', steps: shape.plan.plan.milestones[0]!.steps },
+              { ...shape.plan.plan.milestones[0], id: 'new distinct milestone id' },
+            ],
+          },
+        },
+      }
     : shape;
   return {
     revision: revisionInstructions(feedback, Boolean(request)),
@@ -194,7 +205,7 @@ function revisionInstructions(feedback?: Feedback, bounded = false): string {
   if (!feedback)
     return 'Plan the smallest sufficient changes for the goal. Keep the scope, owner and acceptance explicit.';
   const preserve = bounded
-    ? 'Return only the necessary pending sequence. The host retains the accepted plan and completed outcomes; do not reproduce completed milestones or Steps. For existing milestones, return only Steps after the committed activity position. For new milestones, return all five Steps. Activate only activities with distinct work or evidence required by the finding; mark other Steps inapplicable with a reason.'
+    ? 'Return the complete pending milestone sequence, omitting completed milestones and Steps. The host retains the accepted plan and completed outcomes. For each existing milestone, return only id and Steps after its committed position; omit owner and criteria because the host restores their immutable accepted values. For each new milestone, include owner, criteria and all five Steps. Activate only activities with distinct work or evidence required by the finding; mark other Steps inapplicable with a reason.'
     : 'Return a complete plan. For each milestone, include all five Steps and mark inactive Steps inapplicable with a reason.';
   if (feedback.kind === 'supplier') {
     if (feedback.failedCheck)

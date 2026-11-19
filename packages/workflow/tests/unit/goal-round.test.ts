@@ -226,7 +226,7 @@ test('missing evidence triggers repair and cannot satisfy a standing goal', asyn
   const fixture = new RoundScenario(false);
   const round = await fixture.run();
   assert(!round.completed);
-  assert.equal(round.goals[0]?.outcome.kind, 'failed');
+  assert.equal(round.goals[0]?.outcome.kind, 'blocked');
   assert.deepEqual(fixture.assessments, ['checkpoint']);
   assert.deepEqual(fixture.repairs, ['A standing goal assessment needs captured evidence']);
   assert.deepEqual(fixture.activations, []);
