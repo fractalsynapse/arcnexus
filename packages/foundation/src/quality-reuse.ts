@@ -28,9 +28,11 @@ export function qualityReuseEligibility(
   operation: 'format:check' | 'lint',
   files: readonly string[],
   root: string,
+  configurationInputs: readonly string[] = [],
+  formatterInputs: readonly string[] = [],
 ): QualityReuseEligibility {
-  if (operation === 'format:check') return formatterReuseEligibility(files, root);
-  if (operation === 'lint') return lintReuseEligibility(root);
+  if (operation === 'format:check') return formatterReuseEligibility(files, root, formatterInputs);
+  if (operation === 'lint') return lintReuseEligibility(root, configurationInputs);
   return { eligible: true };
 }
 
