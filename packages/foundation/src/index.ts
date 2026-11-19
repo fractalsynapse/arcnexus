@@ -57,7 +57,15 @@ export async function selectQualityInputs(
     `Unknown owner: ${owner}`,
   );
   const files = await selectOwnedQualityFiles(operation, owner, components, root, ignoreContents);
-  const identity = qualityIdentity(operation, owner, files, components, componentFiles, root, ignoreContents);
+  const identity = qualityIdentity(
+    operation,
+    owner,
+    files,
+    components,
+    componentFiles,
+    root,
+    ignoreContents,
+  );
   return { operation, owner, files, identity };
 }
 
