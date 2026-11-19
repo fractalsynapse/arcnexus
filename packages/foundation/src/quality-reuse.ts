@@ -74,13 +74,20 @@ function formatterConfigReason(directory: string, root: string): string | undefi
 }
 
 /** Reject reuse for lint dependency forms that bounded static import traversal cannot resolve. */
-function lintReuseEligibility(root: string): QualityReuseEligibility {
-  const path = resolve(root, 'eslint.config.ts');
-  if (!existsSync(path)) return { eligible: true };
-  const config = readFileSync(path, 'utf8');
-  for (const [pattern, description] of unsupportedLintDependencies) {
-    if (pattern.test(config))
-      return { eligible: false, reason: `ESLint configuration uses unsupported ${description}` };
+function lintReuseEligibility(
+  root: string,
+  configurationInputs: readonly string[],
+): QualityReuseEligibility {
+  for (const path of configurationInputs) {
+    if (!existsSync(resolve(root, path))) continue;
+    const source = readFileSync(resolve(root, path), 'utf8');
+    for (const [pattern, description] of unsupportedLintDependencies) {
+      if (pattern.test(source))
+        return {
+          eligible: false,
+          reason: `ESLint dependency ${path} uses unsupported ${description}`,
+        };
+    }
   }
   return { eligible: true };
 }
