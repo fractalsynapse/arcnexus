@@ -31,8 +31,7 @@ records intended behavior for DI-21 and BWR-1 through BWR-3 before behavioral ed
 WFL-11 and WFL-12 require public supplier-escalation and final-rejection evidence;
 this documentation does not establish their implementation.
 
-Reuse the completed Coordination contribution `bounded-director-artifacts`:
-its public `revisionSnapshot(observations)` supplies the accepted plan, committed
+Reuse the completed Coordination contribution: its public `revisionSnapshot(observations)` supplies the accepted plan, committed
 cursor and full observations. The complete supplier answer is retained in
 `51-25-codex.jsonl`. It specifies one capture from `HostTask.observations()`
 before `HostTask.store()` allocates accepted-plan and retained-evidence artifacts.
