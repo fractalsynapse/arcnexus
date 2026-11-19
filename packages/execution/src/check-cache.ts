@@ -3,6 +3,7 @@ import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { release } from 'node:os';
 import { checkCommand, checkEnvironment, type CheckResult } from './check.js';
+import { team } from '../../team/src/index.js';
 import { git } from './git.js';
 import type { HostTask } from './index.js';
 import type { StewardScope } from './steward-check.js';
@@ -45,12 +46,12 @@ function ownerQualityInputs(task: HostTask, id: string, owner?: string) {
   if (applicability !== 'owner-lint-files' && applicability !== 'owner-format-files') return;
   try {
     const entries = git(task.worktree, 'ls-tree', '-r', '--format=%(objectname) %(path)', 'HEAD')
-      .split('\\n')
+      .split('\n')
       .map((entry) => entry.split(' ', 2) as [string, string]);
-    const config = /^(?:\\.arc\\/architecture\\/components\\/.*\\.yaml|package(?:-lock)?\\.json|eslint\\.config\\.ts|\\.eslintignore|\\.prettierignore|\\.gitignore|packages\\/foundation\\/(?:src\\/index\\.ts|scripts\\/owner-quality\\.ts))$/;
+    const config = /^(?:\.arc\/architecture\/components\/.*\.yaml|package(?:-lock)?\.json|eslint\.config\.ts|\.eslintignore|\.prettierignore|\.gitignore|packages\/foundation\/(?:src\/index\.ts|scripts\/owner-quality\.ts))$/;
     const source = applicability === 'owner-lint-files'
-      ? /\\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx)$/
-      : /\\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json|ya?ml)$/;
+      ? /\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx)$/
+      : /\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json|ya?ml)$/;
     const selected = entries.filter(([, path]) => {
       if (config.test(path)) return true;
       if (!source.test(path)) return false;
