@@ -184,11 +184,7 @@ export class ActivationTools {
       throw new InvalidCodexResponse(
         'Use mapped MCP tools for edits, checks and research archival',
       );
-    return {
-      ...reply,
-      edits: [],
-      checks: [...this.checks].map(([id, expected]) => ({ id, expected })),
-    };
+    return { ...reply, edits: [], checks: [] };
   }
 
   /** Treat prose about an observed queued check as narration and reject raw operations. */
