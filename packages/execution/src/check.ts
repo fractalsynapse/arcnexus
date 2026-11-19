@@ -146,11 +146,40 @@ async function ownerOperationInapplicability(
     return {};
   }
   const applicability = operation?.applicability;
-  if (
-    !operation ||
-    (applicability !== 'owner-lint-files' && applicability !== 'owner-format-files')
-  )
-    return {};
+  if (!isOwnerQualityOperation(operation, applicability)) return {};
+  assertOwnerQualityOperationAvailable(capture, id, operation, applicability);
+  const selection = await selectQualityInputs(
+    applicability === 'owner-lint-files' ? 'lint' : 'format:check',
+    owner,
+    worktree,
+  );
+  assertSelectedFilesBelongToOwner(capture, selection, owner);
+  if (!selection.files.length)
+    return {
+      reason: `No ${selection.operation} files for ${owner} in the current worktree`,
+      selection,
+    };
+  return { selection };
+}
+
+/** Narrow applicable operations to owner-scoped lint and formatting checks. */
+function isOwnerQualityOperation(
+  operation: Capture['operations'][string] | undefined,
+  applicability: string | undefined,
+): applicability is 'owner-lint-files' | 'owner-format-files' {
+  return Boolean(
+    operation &&
+      (applicability === 'owner-lint-files' || applicability === 'owner-format-files'),
+  );
+}
+
+/** Fail closed when captured quality tool support is missing or unavailable. */
+function assertOwnerQualityOperationAvailable(
+  capture: Capture,
+  id: string,
+  operation: NonNullable<Capture['operations'][string]>,
+  applicability: 'owner-lint-files' | 'owner-format-files',
+): void {
   if (!operation.tool || !operation.command)
     throw new Error('Unavailable owner quality operation: ' + id);
   if (
@@ -163,23 +192,20 @@ async function ownerOperationInapplicability(
     })
   )
     throw new Error('Unavailable owner quality operation: ' + id);
-  const selection = await selectQualityInputs(
-    applicability === 'owner-lint-files' ? 'lint' : 'format:check',
-    owner,
-    worktree,
-  );
+}
+
+/** Refuse selected inputs whose captured catalog owner differs from the requested owner. */
+function assertSelectedFilesBelongToOwner(
+  capture: Capture,
+  selection: QualitySelection,
+  owner: string,
+): void {
+  const roster = team.list(capture.components);
   for (const path of selection.files) {
-    const resolution = team.ownerFor(team.list(capture.components), path);
+    const resolution = team.ownerFor(roster, path);
     if (resolution.kind !== 'owned' || resolution.owner.id !== owner)
       throw new Error(`Captured ownership authority does not assign ${path} to ${owner}`);
   }
-  if (!selection.files.length)
-    return {
-      reason: `No ${selection.operation} files for ${owner} in the current worktree`,
-      selection,
-    };
-
-  return { selection };
 }
 
 /** Produce formatter stdout in the same disposable, networkless overlay as host checks. */
