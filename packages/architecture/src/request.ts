@@ -187,6 +187,11 @@ function validateApplicability(
     throw new Error(`Applicable operation ${id} requires a check handler, command and arguments`);
   if (!operation.args.some((argument) => typeof argument === 'object' && argument !== null && 'context' in argument && argument.context === 'owner'))
     throw new Error(`Applicable operation ${id} must preserve owner-scoped arguments`);
+  if (
+    operation.applicability !== 'owner-test-suites' &&
+    !qualityOperationAvailable(operation as Parameters<typeof qualityOperationAvailable>[0])
+  )
+    throw new Error(`Unavailable quality implementation for operation ${id}`);
 }
 
 /** Resolve a declared ID without accepting inherited object properties. */
