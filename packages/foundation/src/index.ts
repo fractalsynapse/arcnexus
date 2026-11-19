@@ -83,8 +83,8 @@ function qualityIdentity(
   identity.update(selectionIdentity(operation, owner, files, components));
   for (const path of [
     ...componentFiles,
-    ...globSync('**/*.{ts,mts,cts}'),
-    ...files.flatMap((file) => [file, readOptionalFile(file)]),
+    ...configurationInputs(operation),
+    ...files,
     '.gitignore',
     '.eslintignore',
     '.prettierignore',
