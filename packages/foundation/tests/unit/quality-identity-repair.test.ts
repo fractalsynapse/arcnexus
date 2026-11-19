@@ -64,6 +64,54 @@ test('identity excludes ignore files in ignored generated directories', async ()
   }
 });
 
+test('format identity tracks applicable editor configuration', async () => {
+  const tree = fixture();
+  try {
+    tree.write('packages/alpha/.editorconfig', '[*]\nindent_size = 2\n');
+    const before = await selection(tree, 'format:check');
+    tree.write('packages/alpha/.editorconfig', '[*]\nindent_size = 4\n');
+    const after = await selection(tree, 'format:check');
+    assert.deepEqual(after.files, before.files);
+    assert.notEqual(after.identity, before.identity);
+  } finally {
+    tree.close();
+  }
+});
+
+for (const operation of ['format:check', 'lint'] as const) {
+  for (const path of [
+    'packages/foundation/src/index.ts',
+    'packages/foundation/scripts/owner-quality.ts',
+  ]) {
+    test(`${operation} identity tracks changes to ${path}`, async () => {
+      const tree = fixture();
+      try {
+        const before = await selection(tree, operation);
+        tree.write(path, '// changed implementation\n');
+        const after = await selection(tree, operation);
+        assert.deepEqual(after.files, before.files);
+        assert.notEqual(after.identity, before.identity);
+      } finally {
+        tree.close();
+      }
+    });
+  }
+
+  test(`${operation} treats escaped stars as literals`, async () => {
+    const tree = fixture();
+    try {
+      tree.write('packages/alpha/.gitignore', 'probe\\\\*.ts\n');
+      tree.write('packages/alpha/probe*.ts', 'export const hidden = 1;\n');
+      tree.write('packages/alpha/probe123.ts', 'export const visible = 1;\n');
+      const result = await selection(tree, operation);
+      assert(!result.files.includes('packages/alpha/probe*.ts'));
+      assert(result.files.includes('packages/alpha/probe123.ts'));
+    } finally {
+      tree.close();
+    }
+  });
+}
+
 for (const operation of ['format:check', 'lint'] as const) {
   test(`${operation} ignores unescaped trailing whitespace in ignore rules`, async () => {
     const tree = fixture();
