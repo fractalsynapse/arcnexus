@@ -14,6 +14,7 @@ import type { HostTask } from './index.js';
 import { inboxIdentity } from './research.js';
 import { decodeEdit } from './steward-response.js';
 import { listToolDirectory, readToolFile } from './tool-files.js';
+import { pendingStewardCheck, type StewardScope } from './steward-check.js';
 
 type Tool = Pick<AgentInspection['request']['options']['tools'][number], 'name' | 'handler'>;
 type Evidence = {
@@ -30,7 +31,6 @@ type RequestEvidence = {
 
 /** Dispatch captured project tools and keep final model output free of implicit actions. */
 export class ActivationTools {
-  private readonly checks = new Map<string, string>();
   private readonly scope: string;
   private readonly milestone?: string;
   private handoff?: Request;
@@ -96,16 +96,23 @@ export class ActivationTools {
       case 'archive':
         return this.archive(String(args.id));
       case 'check':
-        this.checks.set(tool.name, String(args.expected));
-        return {
-          queued: tool.name,
-          expected: args.expected,
-          instructions:
-            'The host runs queued checks after a completed response. Return completed when your requested work is ready for those checks.',
-        };
+        return this.check(tool.name, args.expected as 'pass' | 'fail');
       default:
         return this.request(tool.handler, args);
     }
+  }
+
+  /** Preserve unresolved expectations before executing another request for the same operation. */
+  private check(id: string, expected: 'pass' | 'fail') {
+    const scope: StewardScope = {
+      owner: this.selection.component,
+      activity: this.selection.activity as StewardScope['activity'],
+      expected,
+    };
+    const pending = pendingStewardCheck(this.task.observations(), scope, id);
+    if (pending && pending.expected !== expected)
+      throw new Error(`Cannot change the required recheck for ${id}: expected ${pending.expected}`);
+    return this.task.check(id, this.signal, scope);
   }
 
   /** Keep special actors and research read-only even if a capture is misconfigured. */
@@ -182,12 +189,6 @@ export class ActivationTools {
     if (!reply || typeof reply !== 'object' || !('kind' in reply)) return reply;
     if (['research', 'question', 'supplier'].includes(String(reply.kind)))
       throw new InvalidCodexResponse(`Use the mapped MCP tool for ${String(reply.kind)} requests`);
-    if (reply.kind === 'blocked' && this.checks.size) {
-      const operations = [...this.checks].map(([id, expected]) => `${id} (expected ${expected})`);
-      throw new InvalidCodexResponse(
-        `Queued checks ${operations.join(', ')} run after a completed response. Requeue the same checks via MCP; return completed if the only blocker was waiting for a check. Return blocked without queueing checks if a different prerequisite prevents progress.`,
-      );
-    }
     if (reply.kind !== 'completed') return reply;
     if (this.hasDirectOperations(reply as Record<string, unknown>))
       throw new InvalidCodexResponse(
@@ -196,15 +197,14 @@ export class ActivationTools {
     return {
       ...reply,
       edits: [],
-      checks: [...this.checks].map(([id, expected]) => ({ id, expected })),
+      checks: [],
     };
   }
 
-  /** Treat prose about an observed queued check as narration and reject raw operations. */
+  /** Refuse requested effects in model output; successful tool calls are already recorded. */
   private hasDirectOperations(reply: Record<string, unknown>) {
     return ['edits', 'checks', 'archiveResearch'].some((key) => {
       const value = reply[key];
-      if (key === 'checks' && typeof value === 'string' && this.checks.size) return false;
       return value !== undefined && (!Array.isArray(value) || value.length > 0);
     });
   }

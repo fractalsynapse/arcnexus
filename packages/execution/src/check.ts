@@ -27,7 +27,7 @@ export async function check(
   signal: AbortSignal,
 ): Promise<CheckResult> {
   signal.throwIfAborted();
-  const { executable, args, cwd } = command(capture, worktree, id, owner);
+  const { executable, args, cwd } = checkCommand(capture, worktree, id, owner);
   const parameters = { id, command: executable, args, cwd, log };
   const reason = ownerTestInapplicability(capture, worktree, id, owner);
   if (reason) {
@@ -83,13 +83,14 @@ export async function formatContents(
 }
 
 /** Resolve a captured operation and owner-dependent arguments in the sealed workspace. */
-function command(capture: Capture, worktree: string, id: string, owner: string | undefined) {
+export function checkCommand(capture: Capture, worktree: string, id: string, owner?: string) {
   const operation = Object.hasOwn(capture.operations, id) && capture.operations[id];
   if (!operation || !operation.command || operation.network !== false)
     throw new Error(`Unavailable confined operation: ${id}`);
   const args = (operation.args ?? []).map((arg) => {
     if (typeof arg === 'string') return arg;
-    if (!owner || arg.context !== 'owner') throw new Error(`Unresolved operation argument: ${id}`);
+    if (!owner || !arg || arg.context !== 'owner')
+      throw new Error(`Unresolved operation argument: ${id}`);
     return owner;
   });
   const cwd = resolve(worktree, operation.cwd ?? '.');
@@ -118,6 +119,13 @@ function mounts(root: string, worktree: string, common: string) {
   return args;
 }
 
+export const checkEnvironment = Object.freeze({
+  PATH: '/usr/local/bin:/usr/bin:/bin',
+  HOME: '/tmp',
+  GIT_CONFIG_NOSYSTEM: '1',
+  GIT_OPTIONAL_LOCKS: '0',
+});
+
 const environment = [
   '--unshare-all',
   '--die-with-parent',
@@ -140,16 +148,5 @@ const environment = [
   '/dev',
   '--tmpfs',
   '/tmp',
-  '--setenv',
-  'PATH',
-  '/usr/local/bin:/usr/bin:/bin',
-  '--setenv',
-  'HOME',
-  '/tmp',
-  '--setenv',
-  'GIT_CONFIG_NOSYSTEM',
-  '1',
-  '--setenv',
-  'GIT_OPTIONAL_LOCKS',
-  '0',
+  ...Object.entries(checkEnvironment).flatMap(([name, value]) => ['--setenv', name, value]),
 ];

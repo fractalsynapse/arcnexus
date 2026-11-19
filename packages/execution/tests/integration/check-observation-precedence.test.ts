@@ -78,14 +78,14 @@ class RecoveryFixture {
 }
 
 for (const expected of ['pass', 'fail'] as const) {
-  test(`satisfied ${expected} observation B takes precedence over failed supplier check A`, (t) => {
+  test(`satisfied ${expected} observation B does not erase failed supplier check A`, (t) => {
     const fixture = new RecoveryFixture(t);
     const failed = fixture.feedback();
     const status = expected === 'pass' ? 0 : 43;
     const log = fixture.observe('check-b', status, { ...scope, expected });
     assert.equal(readFileSync(failed.log, 'utf8'), 'check A diagnostic: exit 37\n');
     assert.equal(readFileSync(log, 'utf8'), `check-b diagnostic: exit ${status}\n`);
-    assert.equal(fixture.task.pendingCheck(scope), undefined);
+    assert.deepEqual(fixture.task.pendingCheck(scope), failed);
   });
 
   test(`unresolved ${expected} observation B retains its expectation, exact status and evidence`, (t) => {

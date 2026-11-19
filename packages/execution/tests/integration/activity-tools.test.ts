@@ -72,6 +72,29 @@ class ToolBoundary {
 test('local MCP exposes only the captured operation and refuses alternate actions', () =>
   new ToolBoundary().run());
 
+/** Model a completed host operation so transport tests can assert its exact receipt. */
+function testingTask(events: unknown[]) {
+  return {
+    taskID: 'fixture',
+    capture: { source: { revision: 'staging' }, project: {} },
+    observations: () => events,
+    note: (event: unknown) => events.push(event),
+    check: async (id: string, _signal: AbortSignal, scope: unknown) => {
+      const check = {
+        id,
+        status: 37,
+        log: 'fixture.log',
+        command: 'fixture',
+        args: [],
+        cwd: '.',
+        durationMs: 0,
+      };
+      events.push({ check, scope });
+      return check;
+    },
+  } as unknown as HostTask;
+}
+
 /** Open one native testing activation without invoking external services. */
 function testingActivation(retainedSelfLink = false) {
   const selection = { component: 'fixture', activity: 'testing' };
@@ -83,12 +106,7 @@ function testingActivation(retainedSelfLink = false) {
     worktree: '.',
   };
   const events: unknown[] = [];
-  const task = {
-    taskID: 'fixture',
-    capture: { source: { revision: 'staging' }, project: {} },
-    observations: () => events,
-    note: (event: unknown) => events.push(event),
-  } as unknown as HostTask;
+  const task = testingTask(events);
   if (retainedSelfLink)
     events.push({
       projectRequest: {
@@ -102,32 +120,63 @@ function testingActivation(retainedSelfLink = false) {
   return new ActivationTools(task, selection, input, new AbortController().signal);
 }
 
-test('a steward who queued checks gets a repair diagnostic before blocking on their results', async () => {
+const checkBinding: Binding = {
+  name: 'owner-tests',
+  handler: 'check',
+  description: 'Fixture check',
+  inputSchema: {
+    type: 'object',
+    properties: { expected: { type: 'string', enum: ['pass', 'fail'] } },
+    required: ['expected'],
+    additionalProperties: false,
+  },
+};
+
+test('MCP returns the completed host check before the caller continues', async () => {
   const activation = testingActivation();
-  await activation.invoke({ name: 'owner-tests', handler: 'check' }, { expected: 'pass' });
-  assert.throws(
-    () => activation.finish({ kind: 'blocked', reason: 'Still waiting for exit code' }),
-    /queued.*owner-tests.*completed/i,
+  const host = new LocalMcp(
+    [checkBinding],
+    (tool, args) => activation.invoke(tool, args),
+    () => {},
   );
+  const client = new Client({ name: 'fixture', version: '1' });
+  try {
+    await client.connect(new StreamableHTTPClientTransport(new URL(await host.start())));
+    const reply = await client.callTool({ name: 'owner-tests', arguments: { expected: 'pass' } });
+    assert(!reply.isError);
+    assert(Array.isArray(reply.content));
+    const observed = JSON.parse(reply.content[0].text);
+    assert.equal(observed.status, 37);
+    assert.equal(observed.log, 'fixture.log');
+    assert.deepEqual(activation.finish({ kind: 'completed' }), {
+      kind: 'completed',
+      edits: [],
+      checks: [],
+    });
+    assert.deepEqual(activation.finish({ kind: 'blocked', reason: 'Exact caller finding' }), {
+      kind: 'blocked',
+      reason: 'Exact caller finding',
+    });
+  } finally {
+    await client.close();
+    await host.close();
+  }
 });
 
-test('describing an already queued check keeps only the mapped request', async () => {
+test('native replies cannot request raw checks after an observed MCP operation', async () => {
   const activation = testingActivation();
-  await activation.invoke({ name: 'owner-tests', handler: 'check' }, { expected: 'pass' });
-  assert.deepEqual(
-    activation.finish({
-      kind: 'completed',
-      checks: 'Queued owner-tests. The host will observe its result.',
-    }),
-    { kind: 'completed', edits: [], checks: [{ id: 'owner-tests', expected: 'pass' }] },
-  );
-  assert.throws(
-    () => activation.finish({ kind: 'completed', checks: [{ id: 'unmapped', expected: 'pass' }] }),
-    /Use mapped MCP tools/,
-  );
-  assert.throws(
-    () => testingActivation().finish({ kind: 'completed', checks: 'Run owner-tests.' }),
-    /Use mapped MCP tools/,
+  await activation.invoke(checkBinding, { expected: 'pass' });
+  for (const checks of ['Run owner-tests.', [{ id: 'unmapped', expected: 'pass' }]]) {
+    assert.throws(() => activation.finish({ kind: 'completed', checks }), /Use mapped MCP tools/);
+  }
+});
+
+test('a caller cannot change the expectation of its unresolved operation', async () => {
+  const activation = testingActivation();
+  await activation.invoke(checkBinding, { expected: 'pass' });
+  await assert.rejects(
+    activation.invoke(checkBinding, { expected: 'fail' }),
+    /Cannot change the required recheck for owner-tests: expected pass/,
   );
 });
 

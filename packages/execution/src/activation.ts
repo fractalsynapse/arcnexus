@@ -60,6 +60,7 @@ async function invokeCodex(
   const server = localTools(task, view, actions);
   const url = await server.start();
   try {
+    recordInvocation(task, view);
     const reply = await codex(task.config.executable, view, task.artifact('codex.jsonl'), signal, {
       schema,
       url,
@@ -71,6 +72,20 @@ async function invokeCodex(
   } finally {
     await server.close();
   }
+}
+
+/** Record attempted native input size and identity before provider effects, without copying its text. */
+function recordInvocation(task: HostTask, view: AgentInspection) {
+  const profile = task.capture.components[view.component]?.activities[view.activity]?.profile;
+  task.note({
+    nativeInvocation: {
+      inputBytes: Buffer.byteLength(view.request.input, 'utf8'),
+      component: view.component,
+      activity: view.activity,
+      model: view.request.options.model,
+      profile,
+    },
+  });
 }
 
 /** Stamp each tool observation with the native activation identity. */
