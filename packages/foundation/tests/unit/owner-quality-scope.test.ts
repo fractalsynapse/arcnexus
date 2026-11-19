@@ -454,6 +454,28 @@ for (const operation of ['format:check', 'lint'] as const) {
   }
 }
 
+for (const operation of ['format:check', 'lint'] as const) {
+  for (const owner of ['alpha', 'repository']) {
+    test(`${operation} ${owner} requires excluded parent restoration before re-inclusion`, async () => {
+      const tree = new QualityFixture();
+      try {
+        tree.owner('alpha', 'packages/alpha');
+        tree.write('.prettierignore', '');
+        const path = 'packages/alpha/generated/probe.ts';
+        tree.write(path, 'export const probe = 1;\n');
+        const ignored = 'packages/alpha/generated/\n';
+        const include = '!packages/alpha/generated/probe.ts\n';
+        tree.write('.gitignore', ignored + include);
+        assert(!(await selection(tree, operation, owner)).files.includes(path));
+        tree.write('.gitignore', ignored + '!packages/alpha/generated/\n' + include);
+        assert((await selection(tree, operation, owner)).files.includes(path));
+      } finally {
+        tree.close();
+      }
+    });
+  }
+}
+
 for (const extension of ['jsx', 'tsx']) {
   test(`lint discovers configuration-enabled ${extension} files`, async () => {
     const tree = new QualityFixture();
