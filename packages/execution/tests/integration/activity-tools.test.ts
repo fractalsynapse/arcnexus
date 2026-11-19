@@ -116,7 +116,13 @@ test('local MCP returns the observed check before the caller continues', async (
     },
   } as unknown as HostTask;
   const selection = { component: 'fixture', activity: 'testing' };
-  const input = { goal: 'Check', assignment: {}, milestone: { id: 'current' }, acceptance: [], worktree: '.' };
+  const input = {
+    goal: 'Check',
+    assignment: {},
+    milestone: { id: 'current' },
+    acceptance: [],
+    worktree: '.',
+  };
   const activation = new ActivationTools(task, selection, input, new AbortController().signal);
   const binding: Binding = {
     name: 'owner-tests',
@@ -129,7 +135,11 @@ test('local MCP returns the observed check before the caller continues', async (
       additionalProperties: false,
     },
   };
-  const host = new LocalMcp([binding], (tool, args) => activation.invoke(tool, args), () => {});
+  const host = new LocalMcp(
+    [binding],
+    (tool, args) => activation.invoke(tool, args),
+    () => {},
+  );
   const client = new Client({ name: 'fixture', version: '1' });
   try {
     await client.connect(new StreamableHTTPClientTransport(new URL(await host.start())));
