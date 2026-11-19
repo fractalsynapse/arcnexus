@@ -403,7 +403,7 @@ for (const expected of ['pass', 'fail'] as const) {
     assert.match(repeated.reason, new RegExp(`owner-tests.*${repeatedStatus}`));
     assert.deepEqual(
       scenario.checks.map(({ status }) => status),
-      [expected === 'pass' ? 37 : 0, repeatedStatus],
+      expected === 'pass' ? [37, 43] : [0, 37, 37, 37],
     );
     assert(repeated.evidence.includes(scenario.checks[0]!.log));
     assert(repeated.evidence.includes(scenario.checks[1]!.log));
