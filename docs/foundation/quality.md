@@ -25,13 +25,15 @@ Before running the optional `owner-tests` operation, ArcNexus checks for
 suites in the steward's current worktree. An owner with no suites gets an
 inapplicability record. Assembled verification still runs its required checks.
 
-## Owner-scoped quality intent
+## Owner-scoped quality commands
 
-The following behavior is intended for the quality-applicability prerequisite;
-owner-scoped format/lint commands and their shared selection result are not yet
-implemented. New operation mappings become available only after the prerequisite
-implementations and exact approved guide batch are delivered together inside
-Architect and captured for subsequent work.
+The existing format/lint entry points implement optional-owner selection through
+the public `selectQualityInputs` API in
+[Foundation's entry](../../packages/foundation/src/index.ts).
+This tooling does not by itself establish host progression or reusable evidence.
+New operation mappings become available only after all prerequisite implementations
+and the exact approved guide batch are delivered together inside Architect and
+captured for subsequent work.
 
 Under FND-7 and FND-10, `npm run format:check -- <owner>` and
 `npm run lint -- <owner>` select the named component's applicable maintained
@@ -70,33 +72,61 @@ catalog; for steward operations Execution must validate the worktree ownership
 projection against the capture before discovery and confined invocation. Ownership
 drift is a failure, even when the supplied owner argument still exists.
 
-Reuse Foundation's existing discovery and Team integration where sufficient.
-The current source/built suite discovery already shares registration rules;
-`check-specification` also obtains a Git inventory for maintained-path validation.
-Neither is currently a common format/lint selection API: suite discovery omits
-non-test files and built suites cannot identify new source files. A small shared
-maintained-file discovery and selection helper is therefore needed by commands
-and Execution applicability. Factor common discovery where appropriate without
-copying suite registration, changing the owner-test inventory, hardcoding component
-IDs or creating another inventory store.
+The shared `selectQualityInputs(operation, owner?)` path serves the
+[command runner](../../packages/foundation/scripts/owner-quality.ts) and public
+applicability consumers. Suite discovery omits non-test files, and built suites
+cannot identify new source files; `check-specification`'s Git inventory also
+cannot replace current maintained-file discovery. This is the reason for the
+shared quality helper. It reuses Team ownership without copying suite registration,
+changing the owner-test inventory or creating another inventory store.
 
-Expose selection through Foundation's public entry for both command execution
-and applicability consumers. Each result must identify:
+`QualitySelection` returns `operation` (`format:check` or `lint`), optional
+`owner`, sorted repository-relative `files` and `identity`. An empty `files`
+array describes only that operation's selection. The runner prints the operation,
+owner or repository scope, identity, input count and a separately labelled
+`content-sha256`; for an empty selection it reports
+`no applicable maintained files` without invoking the tool.
 
-- The operation and optional owner, and the deterministic repository-relative
-  selected paths or a scope identity that resolves to those exact paths.
-- The maintained discovery inputs and content identities, ownership projection,
-  operation coverage, ignores and tool/configuration inputs needed to determine
-  whether the result still matches the current invocation.
-- Whether that operation has inputs; an empty selection carries its precise
-  operation-specific reason and scope rather than a generic no-tests result.
+The current `identity` is a SHA-256 digest combining selection facts with bounded
+source/configuration hashing. Its selection portion records operation, owner,
+selected paths and their Team resolutions. Its additional inputs are selected
+file bytes, all component YAML files, package and lock files, the selector and
+runner source, root `.eslintignore` and `.prettierignore`, existing
+`.gitignore` and `.editorconfig` files along selected paths, conventional
+Prettier configuration paths for formatting, and `eslint.config.ts` with
+recognised relative imports for lint. Inputs are sorted and deduplicated;
+collected paths distinguish missing from present content.
 
-Commands must execute the same selection used for applicability. The result
-supplies scope and input identity for the host's existing evidence mechanism;
-it is not a second evidence store or a grant of authority. Recompute affected
-selection and evidence after relevant edits, newly created files, ownership,
-configuration or tool changes. Reuse observations only when relevant inputs,
-captured authority, expectations and environment still match.
+This is bounded identity coverage, not complete relevant-input provenance.
+Formatter configuration collection uses a conventional filename list and omits
+empty files from that collection. Lint dependency collection uses a static-import
+regular expression and a short extension list; it does not resolve every dynamic,
+package, re-export or arbitrary filesystem dependency. Ignore/editor collection
+follows selected paths, so the digest alone cannot establish all discovery inputs
+that could make a formerly excluded or empty selection applicable. Hashing all
+component YAML also includes fields unrelated to ownership. Neither this digest
+nor the runner's selected-content digest proves captured authority, expectation or
+environment identity. The
+[architectural identity boundary](../../packages/architecture/quality-identity-boundary.md)
+explains the F-3/E-1/E-4 division and retained regression evidence.
+
+Foundation supplies selection facts to the existing host evidence boundary;
+F-3 does not require a second general dependency analyser or evidence store.
+Execution must validate current component IDs and ownership roots against captured
+ownership before discovery, confined execution and reuse. It must establish
+applicability/command selection parity, including matching cwd and configuration,
+and perform current discovery for new/deleted files and formerly empty selections.
+An owner argument or this digest alone cannot establish those guarantees.
+
+Before progression or reuse, Execution must bind relevant source/discovery,
+coverage, ignore and configuration/dependency inputs, selector/runner and
+toolchain inputs, captured operation authority, arguments/cwd, activity,
+expectation and environment. Changed relevant inputs require another observation.
+Known unchanged relevant inputs must support scoped reuse after unrelated owner
+or generated-output edits. Where relevance is unknown, decline reuse and observe
+again; unknown or unavailable inputs cannot become successful inapplicability.
+The existing revision/clean-state cache does not by itself complete this obligation.
+Preserve receipts, failed observations and unaffected evidence throughout repair.
 
 ## Applicability and evidence
 
