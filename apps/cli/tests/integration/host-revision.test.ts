@@ -81,7 +81,9 @@ const findings: Feedback[] = [
 
 for (const finding of findings) {
   test(`host gives Director a bounded snapshot for ${finding.kind}`, async (t) => {
-    const host = await fixture(t);
+    const expectedPosition = finding.kind === 'rejection' ? { completed: 121, activities: {} } : position;
+    const retained = [...observations.slice(0, -1), { position: expectedPosition }];
+    const host = await fixture(t, retained);
     try {
       await host.direction.revise(host.session, plan, finding, new AbortController().signal);
     } catch {
