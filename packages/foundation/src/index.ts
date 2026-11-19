@@ -179,17 +179,23 @@ function readOptionalFile(path: string): string {
   }
 }
 
-/** Apply root and nested gitignore rules to a repository-relative input. */
+/** Apply root and nested gitignore rules in directory order to one repository path. */
 function isIgnored(path: string): boolean {
-  return globSync('**/.gitignore').some((ignoreFile) => {
+  let ignored = false;
+  const ignoreFiles = globSync('**/.gitignore').sort(
+    (left, right) => left.split('/').length - right.split('/').length,
+  );
+  for (const ignoreFile of ignoreFiles) {
     const directory = ignoreFile.slice(0, -'.gitignore'.length).replace(/\/$/, '');
-    if (directory && !path.startsWith(`${directory}/`)) return false;
+    if (directory && !path.startsWith(`${directory}/`)) continue;
     const relative = directory ? path.slice(directory.length + 1) : path;
-    return matchesIgnoreRules(
+    const result = matchesIgnoreRules(
       relative,
       readOptionalFile(ignoreFile).split(String.fromCharCode(10)),
     );
-  });
+    if (result !== undefined) ignored = result;
+  }
+  return ignored;
 }
 
 /** Match ordered gitignore rules against paths relative to one ignore file. */
