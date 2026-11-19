@@ -115,6 +115,30 @@ test('unresolved objectives can be recorded before any goal link exists', () => 
   assert.deepEqual(decodeProposal(pending, capture, [id], true).links, []);
 });
 
+test('Planner retains complete detailed proposals and all proposed goals and citations', () => {
+  const { capture, reply } = new ProposalScenario();
+  const quote = 'Detailed source evidence. '.repeat(100);
+  const complete = {
+    ...capture,
+    source: { ...capture.source, read: () => `${source.quote}\n${quote}` },
+  };
+  const proposed = {
+    ...reply,
+    summary: 'Detailed mapping. '.repeat(1000),
+    changes: Array.from({ length: 25 }, (_, index) => ({
+      id: `goal-${index}`,
+      content: `${goal}\n${'Detailed requirements. '.repeat(1000)}`,
+    })),
+    sources: Array.from({ length: 25 }, () => ({ ...source, quote })),
+    comparison: Array.from({ length: 600 }, () => 'Evaluate this relationship.'),
+  };
+  const result = decodeProposal(proposed, complete, [id], true);
+  assert.equal(result.summary, proposed.summary);
+  assert.deepEqual(result.changes, proposed.changes);
+  assert.deepEqual(result.sources, proposed.sources);
+  assert.deepEqual(result.comparison, proposed.comparison);
+});
+
 test('source coverage alone cannot give a demonstrated runtime rating', () => {
   const { capture, reply } = new ProposalScenario();
   const ratings = [{ ...reply.ratings[0], evidence: 'demonstrated', observations: [source] }];

@@ -89,7 +89,6 @@ export function observeGoal(task: HostTask, signal: AbortSignal) {
     source.root,
     'log',
     '--first-parent',
-    '--max-count=10',
     '--format=%h %s',
     source.revision,
   ).split('\n');

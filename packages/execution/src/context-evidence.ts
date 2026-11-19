@@ -20,7 +20,7 @@ export function retainedEvidence(
   const index = {
     kind: 'retained-task-evidence',
     instructions:
-      'Complete historical artifact references. Read relevant observations through mapped read-file, paging with nextOffset when needed. Current assignment diagnostics and accepted criteria remain authoritative; historical failures may already be resolved.',
+      'Complete historical artifact references. Read relevant observations through mapped read-file. Current assignment diagnostics and accepted criteria remain authoritative; historical failures may already be resolved.',
     references,
   };
   const path = prior ?? task.store(name, JSON.stringify(index, null, 2));

@@ -40,7 +40,7 @@ const recentFindings = `
           json_extract(incident.content, '$.outcome.reason')
       AND json_type(gate.content, '$.clarification.answer') IS NULL
   )
-  ORDER BY incident.id DESC LIMIT 20
+  ORDER BY incident.id DESC
 `;
 
 export interface RetainedRun {
@@ -169,7 +169,7 @@ export class Journal {
       WHERE json_extract(content, '$.researchResult.component') = ?
         AND json_type(content, '$.researchResult.archive') = 'text'
         AND (? IS NULL OR json_extract(content, '$.researchResult.request.id') = ?)
-      ORDER BY events.id DESC LIMIT 8
+      ORDER BY events.id DESC
     `,
       )
       .all(component, id ?? null, id ?? null)
@@ -308,7 +308,6 @@ export class Coordination {
   /** Create storage constraints before the first admission. */
   private initialize(database: DatabaseSync) {
     database.exec(`
-      PRAGMA busy_timeout = 2000;
       PRAGMA foreign_keys = ON;
       BEGIN IMMEDIATE;
       CREATE TABLE IF NOT EXISTS runs (

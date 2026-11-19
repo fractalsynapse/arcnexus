@@ -2,16 +2,9 @@ import type { TaskContext } from '../../../architecture/src/index.js';
 import type { HostTask } from '../../src/index.js';
 import { readToolFile } from '../../src/tool-files.js';
 
-/** Read every immutable index page through the agent's actual mapped reader. */
+/** Read a complete immutable evidence index through the agent's actual mapped reader. */
 export function indexReferences(task: HostTask, path: string): string[] {
-  let offset: number | null = 0;
-  let text = '';
-  while (offset !== null) {
-    const result = readToolFile(task, path, offset);
-    text += result.text;
-    offset = result.nextOffset;
-  }
-  return (JSON.parse(text) as { references: string[] }).references;
+  return (JSON.parse(readToolFile(task, path, 0).text) as { references: string[] }).references;
 }
 
 /** Resolve direct and indexed input references without pretending their layout is prompt authority. */

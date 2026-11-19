@@ -4,6 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
+import { parse } from 'yaml';
 import {
   InvalidAgentResponse,
   type ActivationInput,
@@ -14,6 +15,12 @@ import { Coordination } from '../../../coordination/src/index.js';
 import { HostTask } from '../../src/index.js';
 import { archiveResearch, pendingResearch } from '../../src/research-archive.js';
 import { verify } from '../../../verification/src/index.js';
+
+export const suite = {
+  owner: 'execution',
+  level: 'integration',
+  tags: ['regression'],
+} as const;
 
 const request = {
   kind: 'research',
@@ -74,6 +81,7 @@ class ResearchScenario {
   archive(owner: string, lookup = owner) {
     return this.withTask('Archive fixture', async (task) => {
       task.worktree = this.root;
+
       const [report] = pendingResearch(task, lookup);
       assert(report?.path);
       assert('evidence' in report, 'A pending report needs its readable source before archival');
@@ -313,29 +321,54 @@ test('Reviewer research resumes the same candidate with one checklist and binds 
   );
 });
 
-test('research repairs native and bounded-report findings before resuming its requester', async (t) => {
+/** Exercise complete prose, source references and open questions beyond the removed arbitrary caps. */
+function detailedReport() {
+  return {
+    ...report,
+    summary: 'Detailed summary. '.repeat(100),
+    findings: 'Complete researched finding. '.repeat(1000),
+    applicability: 'Applicable implementation conditions. '.repeat(100),
+    sources: Array.from({ length: 20 }, (_, index) => ({
+      url: `https://example.com/${index}/${'source/'.repeat(400)}`,
+      note: 'Evidence and its relevance. '.repeat(100),
+    })),
+    unresolved: Array.from({ length: 20 }, () => 'Open research question. '.repeat(100)),
+  };
+}
+
+test('research repairs malformed responses and preserves a complete detailed report', async (t) => {
   const fixture = new ResearchScenario(t);
-  const oversized = { ...report, findings: 'x'.repeat(8001) };
+  const detailed = detailedReport();
   assert.deepEqual(
     await fixture.activate('team', 'testing', [
       request,
       new InvalidAgentResponse('Malformed research JSON'),
-      oversized,
-      report,
+      detailed,
       { kind: 'completed' },
     ]),
     { kind: 'completed' },
   );
   const research = fixture.activations.filter(({ selection }) => selection.activity === 'research');
-  assert.equal(research.length, 3);
+  assert.equal(research.length, 2);
   assert.match(JSON.stringify(research[1]?.task.assignment), /Malformed research JSON/);
-  assert.match(JSON.stringify(research[2]?.task.assignment), /8000.*8001/);
-  assert.match(JSON.stringify(fixture.activations.at(-1)?.task), /research.md/);
+  const evidence = fixture.activations
+    .at(-1)
+    ?.task.evidence?.find((path) => String(path).endsWith('research.md'));
+  const markdown = readFileSync(String(evidence), 'utf8');
+  const metadata = parse(/^---\n([\s\S]*?)\n---/.exec(markdown)![1]!);
+  assert.equal(metadata.summary, detailed.summary);
+  for (const text of [
+    detailed.findings,
+    detailed.applicability,
+    ...detailed.sources.flatMap((source) => [source.url, source.note]),
+    ...detailed.unresolved,
+  ])
+    assert(markdown.includes(text));
 });
 
 test('unchanged research report failure is retained as optional unavailability', async (t) => {
   const fixture = new ResearchScenario(t);
-  const invalid = { ...report, findings: 'x'.repeat(8001) };
+  const invalid = { ...report, findings: null };
   assert.deepEqual(
     await fixture.activate('team', 'testing', [request, invalid, invalid, { kind: 'completed' }]),
     { kind: 'completed' },
@@ -350,6 +383,6 @@ test('unchanged research report failure is retained as optional unavailability',
   assert.equal(assignment.researchResults[0]?.unavailable, true);
   assert.match(
     readFileSync(assignment.researchResults[0]!.evidence, 'utf8'),
-    /unchanged.*8000.*8001/,
+    /unchanged.*findings.*nonempty/,
   );
 });

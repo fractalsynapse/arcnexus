@@ -5,6 +5,8 @@ import test from 'node:test';
 import { reusableCheck } from '../../src/check-cache.js';
 import { CheckCacheFixture, fixtureOperation } from '../fixtures/check-cache.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 test('a validated observation survives unchanged setup and reconstruction at another worktree path', async (t) => {
   const fixture = new CheckCacheFixture(t);
   const result = fixture.observe();

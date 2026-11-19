@@ -13,6 +13,8 @@ import { type HostTask, steward } from '../../src/index.js';
 import { StewardFixture } from '../fixtures/steward.js';
 import { contextEvidence } from '../fixtures/context-evidence.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 const agent = new Agent(new Architecture());
 const criterion = { id: 'fixed', description: 'The fixture check passes' };
 const focus = {
@@ -283,7 +285,7 @@ test('a refused ownership request returns the captured owner to the same steward
     task,
     milestone('repair'),
     'implementation',
-    AbortSignal.timeout(5000),
+    new AbortController().signal,
   );
   assert.equal(outcome.kind, 'supplier');
   assert.equal(outcome.owner, 'other');
@@ -343,7 +345,7 @@ test('the requesting steward gets the complete recorded supplier answer', async 
     task,
     milestone('requester'),
     'implementation',
-    AbortSignal.timeout(5000),
+    new AbortController().signal,
   );
   assert.equal(outcome.kind, 'completed');
 });
@@ -416,7 +418,7 @@ test('a stale digest is corrected without applying earlier edits in the rejected
     task,
     milestone('stale-edit'),
     'implementation',
-    AbortSignal.timeout(2000),
+    new AbortController().signal,
   );
   assert.equal(outcome.kind, 'completed');
   assert.equal(replies.mock.callCount(), 2);

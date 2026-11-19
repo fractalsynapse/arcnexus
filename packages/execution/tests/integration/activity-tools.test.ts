@@ -8,6 +8,8 @@ import type { HostTask } from '../../src/index.js';
 import { LocalMcp } from '../../src/mcp.js';
 import { inboxIdentity } from '../../src/research.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 type Binding = AgentInspection['request']['options']['tools'][number];
 
 /** Test the wire boundary and refusal evidence with one captured, single-path operation. */
@@ -32,7 +34,7 @@ class ToolBoundary {
       [this.binding],
       async (_tool, args) => {
         this.calls.push(String(args.path));
-        return { path: args.path, sha256: 'fixture', text: 'fixture', nextOffset: null };
+        return { path: args.path, sha256: 'fixture', text: 'fixture' };
       },
       (_name, error) => {
         if (error) this.refusals.push(error);

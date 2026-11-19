@@ -79,6 +79,11 @@ export class HostTask implements TaskSession {
     return id ? approvedArchitecture(this, id) : undefined;
   }
 
+  /** Use the Director's accepted purpose for tracking while retaining the complete goal separately. */
+  get trackingTitle() {
+    return this.history().findLast((event) => 'plan' in event)?.plan.focus.purpose ?? this.goal;
+  }
+
   /** Read the prior attempt and its immutable worktree location. */
   retainedPublication() {
     const retained = this.journal.retained;
@@ -90,7 +95,7 @@ export class HostTask implements TaskSession {
     this.journal.record(event);
   }
 
-  /** Read project source or a registered immutable project artifact through the same bounded tool boundary. */
+  /** Read complete project source or a registered immutable artifact from the requested offset. */
   readFile(path: string, offset = 0) {
     return readToolFile(this, path, offset);
   }

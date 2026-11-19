@@ -28,8 +28,7 @@ tools cannot enable research. Inspection and activation refuse an invalid resear
 activity before constructing its request. This aligns the runtime with the
 already approved read-only tool declarations (#645); it adds no operation authority.
 
-Prior-finding assessment starts with a compact index of recent technical outcomes
-and repair routes. Preview lengths are explicit; the full original observations
-remain in a readable retained history artifact and the append-only journal.
+Prior-finding assessment references the complete recorded technical outcomes and
+repairs in one readable artifact derived from the append-only journal.
 Expected human decision pauses are preserved as gates, rather than classified
-as technical failures. The index adds no scheduler or separate knowledge store.
+as technical failures. Referencing the artifact adds no scheduler or separate knowledge store.

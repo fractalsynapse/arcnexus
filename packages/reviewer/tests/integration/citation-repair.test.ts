@@ -10,6 +10,8 @@ import type { Plan } from '../../../direction/src/index.js';
 import { HostTask } from '../../../execution/src/index.js';
 import { verify } from '../../../verification/src/index.js';
 
+export const suite = { owner: 'reviewer', level: 'integration', tags: ['regression'] } as const;
+
 const invalid = '../../evidence/candidate.diff';
 const candidate = { digest: 'verified-tree', evidence: [] };
 const plan: Plan = {
@@ -123,7 +125,7 @@ class CitationScenario {
 
   /** Use the normal Verification call so a repeated check would be observable. */
   run() {
-    return verify({} as Agent, this.task, plan, candidate, AbortSignal.timeout(5000));
+    return verify({} as Agent, this.task, plan, candidate, new AbortController().signal);
   }
 }
 

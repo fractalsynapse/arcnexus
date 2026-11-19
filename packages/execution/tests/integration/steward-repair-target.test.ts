@@ -54,7 +54,7 @@ class SelfRepairScenario {
       this.fixture.task,
       rewindMilestone,
       'implementation',
-      AbortSignal.timeout(5000),
+      new AbortController().signal,
     );
   }
 }

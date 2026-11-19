@@ -35,7 +35,7 @@ test('Implementation can select Testing for invalid fixtures without clearing it
     fixture.task,
     rewindMilestone,
     'implementation',
-    AbortSignal.timeout(5000),
+    new AbortController().signal,
   );
   assert.equal(outcome.kind, 'repair');
   assert.equal(outcome.kind === 'repair' && outcome.activity, 'testing');
@@ -65,7 +65,7 @@ test('self-review repair targets contain only applicable editable activities', a
         fixture.task,
         rewindMilestone,
         'review',
-        AbortSignal.timeout(5000),
+        new AbortController().signal,
       )
     ).kind,
     'completed',

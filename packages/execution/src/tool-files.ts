@@ -4,18 +4,15 @@ import { dirname, isAbsolute, join } from 'node:path';
 import type { HostTask } from './index.js';
 import { deletedSource } from './deleted-source.js';
 
-/** Read a permitted file and return a bounded text range and current byte digest. */
+/** Return complete permitted source from the requested offset and its current byte digest. */
 export function readToolFile(task: HostTask, path: string, offset: number) {
-  const { file, stat } = accessibleFile(task, path);
-  if (stat.size > 16_000_000) throw new Error(`File exceeds the tool's read limit: ${path}`);
+  const file = accessibleFile(task, path);
   const bytes = readFileSync(file);
   const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
-  const limit = Math.min(text.length, offset + 40_000);
   return {
     path,
     sha256: createHash('sha256').update(bytes).digest('hex'),
-    text: text.slice(offset, limit),
-    nextOffset: limit < text.length ? limit : null,
+    text: text.slice(offset),
   };
 }
 
@@ -39,7 +36,7 @@ function accessibleFile(task: HostTask, path: string) {
   }
   if (!stat.isFile() || stat.nlink !== 1 || realpathSync(file) !== file)
     throw new Error(`File is not an accessible regular file: ${path}`);
-  return { file, stat };
+  return file;
 }
 
 /** List a workspace directory without traversing links or exposing Git control data. */

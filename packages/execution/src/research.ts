@@ -13,7 +13,6 @@ import { InvalidCodexResponse } from './codex.js';
 type InboxTask = Pick<HostTask, 'capture' | 'taskID' | 'note' | 'observations' | 'store'>;
 type Assignment = Omit<TaskContext, 'goal' | 'worktree'>;
 type Invoke = (selection: ActivitySelection, assignment: Assignment) => Promise<unknown>;
-const requestFieldLimit = 500;
 
 interface Request {
   id: string;
@@ -164,7 +163,7 @@ ${diagnostic}
   }
 }
 
-/** Expose the existing report limits and the current caller diagnostic in the shared request. */
+/** Preserve the full research direction and return malformed-response diagnostics to its caller. */
 function researchInput(request: Request, data: Assignment, diagnostic?: string): Assignment {
   return {
     ...data,
@@ -175,7 +174,7 @@ function researchInput(request: Request, data: Assignment, diagnostic?: string):
       candidate: object(data.assignment)?.candidate,
       diagnostic,
       instructions:
-        'Return exactly one JSON object matching the research report schema. Start with { and end with }. Use no Markdown headings, code fences, or explanation outside the object. Cite sources you actually consulted. Existing field limits: summary 600 characters; findings 8000; applicability 1000; one to twelve sources with URL 2048 and note 500; up to twelve unresolved strings of 500. reusable is boolean. Repair only the rejected report; retain the original question and decision.',
+        'Return exactly one JSON object matching the research report schema. Start with { and end with }. Use no Markdown headings, code fences, or explanation outside the object. Provide the detail needed to answer the complete research direction and cite sources you actually consulted. Preserve complete findings, applicability, sources and unresolved questions. Repair malformed responses while retaining the original question and decision.',
     },
   };
 }
@@ -246,11 +245,11 @@ function researchRequest(
   return { id: identity([inbox, question, decision]), inbox, requestedBy, question, decision };
 }
 
-/** Validate and normalize deferred research before either transport acknowledgement or inbox admission. */
+/** Validate required research fields without restricting the amount of useful direction. */
 export function researchFields(value: Record<string, unknown>) {
   return {
-    question: required(value.question, 'question', requestFieldLimit),
-    decision: required(value.decision, 'decision', requestFieldLimit),
+    question: required(value.question, 'question'),
+    decision: required(value.decision, 'decision'),
   };
 }
 
@@ -280,17 +279,16 @@ function decodeReport(value: unknown) {
   try {
     const reply = object(value);
     if (reply?.kind !== 'research-report') throw new Error('Expected a research-report response');
-    if (!Array.isArray(reply.sources) || !reply.sources.length || reply.sources.length > 12)
-      throw new Error('Research needs between one and twelve source references');
-    if (!Array.isArray(reply.unresolved) || reply.unresolved.length > 12)
-      throw new Error('Research unresolved points must be a short array');
+    if (!Array.isArray(reply.sources)) throw new Error('Research sources must be an array');
+    if (!Array.isArray(reply.unresolved))
+      throw new Error('Research unresolved points must be an array');
     if (typeof reply.reusable !== 'boolean') throw new Error('Research reusable must be boolean');
     return {
-      summary: required(reply.summary, 'summary', 600),
-      findings: required(reply.findings, 'findings', 8000),
+      summary: required(reply.summary, 'summary'),
+      findings: required(reply.findings, 'findings'),
       sources: reply.sources.map(source),
-      applicability: required(reply.applicability, 'applicability', 1000),
-      unresolved: reply.unresolved.map((item) => required(item, 'unresolved', 500)),
+      applicability: required(reply.applicability, 'applicability'),
+      unresolved: reply.unresolved.map((item) => required(item, 'unresolved')),
       reusable: reply.reusable,
     };
   } catch (error) {
@@ -301,10 +299,10 @@ function decodeReport(value: unknown) {
 /** Preserve public source URLs and their role in the synthesis. */
 function source(value: unknown) {
   const entry = object(value);
-  const url = new URL(required(entry?.url, 'source URL', 2048));
+  const url = new URL(required(entry?.url, 'source URL'));
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password)
     throw new Error('Research source must be a public HTTP or HTTPS URL');
-  return { url: url.href, note: required(entry?.note, 'source note', 500) };
+  return { url: url.href, note: required(entry?.note, 'source note') };
 }
 
 /** Render a readable report whose frontmatter supplies its index entry. */
@@ -340,13 +338,11 @@ function object(value: unknown) {
     return value as Record<string, unknown>;
 }
 
-/** Require a bounded nonempty field in a request or report. */
-function required(value: unknown, field: string, max: number) {
-  if (typeof value !== 'string' || !value.trim() || value.length > max)
-    throw new Error(
-      `Invalid research ${field}: expected nonempty text of at most ${max} characters; received ${typeof value === 'string' ? value.length : typeof value}`,
-    );
-  return value.trim();
+/** Require meaningful text while preserving complete requests and research findings. */
+function required(value: unknown, field: string) {
+  if (typeof value !== 'string' || !value.trim())
+    throw new Error(`Invalid research ${field}: expected nonempty text`);
+  return value;
 }
 
 /** Bind report identity to its task activation and normalized request. */

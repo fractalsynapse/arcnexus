@@ -8,6 +8,8 @@ import type { HostTask } from '../../src/index.js';
 import { Architecture } from '../../../architecture/src/index.js';
 import { decodeCodexAnswer } from '../../src/codex.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 const signal = new AbortController().signal;
 
 /** Exercise the public Architecture assessment with real journals and a deterministic actor response. */

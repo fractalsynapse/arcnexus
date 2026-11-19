@@ -122,7 +122,7 @@ class ReviewRepair {
     if (this.seen.has(error.identity))
       throw new AgentActivityHold(
         `Reviewer repeated an unchanged finding: ${error.message}`,
-        this.task.evidence.slice(-4),
+        this.task.evidence.slice(),
       );
     this.seen.add(error.identity);
     if (this.verdict) {

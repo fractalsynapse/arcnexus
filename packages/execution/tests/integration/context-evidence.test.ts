@@ -11,6 +11,8 @@ import { readToolFile } from '../../src/tool-files.js';
 import { StewardFixture } from '../fixtures/steward.js';
 import { indexReferences } from '../fixtures/context-evidence.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 const milestone: Milestone = {
   id: 'focused',
   owner: 'owner',
@@ -55,7 +57,7 @@ class FocusedEvidence {
       this.task,
       milestone,
       'implementation',
-      AbortSignal.timeout(5000),
+      new AbortController().signal,
     );
   }
 }

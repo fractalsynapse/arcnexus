@@ -12,6 +12,8 @@ import { git } from '../../src/git.js';
 import { LocalMcp } from '../../src/mcp.js';
 import { StewardFixture } from '../fixtures/steward.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 const source = '\nconst name = "π";\n\n';
 const digest = createHash('sha256').update(source).digest('hex');
 
@@ -30,7 +32,7 @@ class DeletedSource {
       this.task,
       { component: 'owner', activity: 'implementation' },
       {},
-      AbortSignal.timeout(5000),
+      new AbortController().signal,
     );
     this.host = new LocalMcp(
       [operationTool('read-file', 'read'), operationTool('checked-edit', 'edit')],

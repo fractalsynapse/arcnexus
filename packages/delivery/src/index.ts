@@ -106,6 +106,7 @@ async function deliver(
     provider: task.provider(signal),
     worktree: task.capture.source.root,
     goal: task.goal,
+    title: task.trackingTitle,
     validateLocal: () => task.validatePublication(branch, head, parent, candidate),
     record: (event) => task.note(event),
   });

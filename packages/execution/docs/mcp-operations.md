@@ -7,12 +7,11 @@ execution provider policy. See the [Execution contract](../contract.md#obligatio
 
 ## Check one file at a time
 
-1. Read the target with `read-file`. Keep its complete-file hash, even when the
-   returned text is a bounded range; read further ranges if needed to understand
-   the change. Confirm the path belongs to the current component and activity.
-   The MCP text contains the source literally beneath its path, hash and range
-   header. Structured output preserves the exact `path`, `sha256`, `text` and
-   `nextOffset` fields for clients. Do not copy JSON escaping into source code.
+1. Read the complete target file with `read-file` and keep its complete-file hash.
+   Confirm the path belongs to the current component and activity. The MCP text
+   contains the source literally beneath its path and hash. Structured output
+   preserves the exact `path`, `sha256` and `text` fields for clients. Do not copy
+   JSON escaping into source code.
 2. Call `checked-edit` for exactly one owned file. Use the current complete-file
    hash as `expected`, or `null` when creating a file. Supply the intended content
    or a literal substitution. Locked contracts and the registry remain protected.

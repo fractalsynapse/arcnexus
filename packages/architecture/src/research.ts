@@ -36,7 +36,7 @@ export function researchIndex(capture: Capture, component: string) {
     (left, right) =>
       right.consulted.localeCompare(left.consulted) || left.path.localeCompare(right.path),
   );
-  return { directory, total: reports.length, recent: reports.slice(0, 8) };
+  return { directory, total: reports.length, recent: reports };
 }
 
 /** Read only the report's index fields and skip files with malformed metadata. */
@@ -56,8 +56,8 @@ function reportSummary(markdown: string) {
       /^\d{4}-\d{2}-\d{2}$/.test(data.consulted)
     )
       return {
-        question: data.question.slice(0, 500),
-        summary: data.summary.slice(0, 600),
+        question: data.question,
+        summary: data.summary,
         consulted: data.consulted,
       };
   } catch {

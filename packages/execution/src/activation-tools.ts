@@ -28,7 +28,6 @@ type RequestEvidence = {
   researchRequest?: { inbox: string; question: string; decision: string };
   activation?: ActivityCheckpoint;
   projectReply?: { scope: string };
-  operation?: { scope?: string; refusal?: string };
 };
 
 /** Dispatch captured project tools and keep final model output free of implicit actions. */
@@ -64,8 +63,7 @@ export class ActivationTools {
     if (!request || selfLinkedSupplier(request, this.milestone)) return;
     const handled = events
       .slice(index + 1)
-      .some(({ clarification, researchRequest, activation, projectReply, operation }) => {
-        if (operation?.scope === this.scope && operation.refusal) return true;
+      .some(({ clarification, researchRequest, activation, projectReply }) => {
         if (projectReply?.scope === this.scope) return true;
         if (request.kind === 'question')
           return clarification?.scope === this.scope && clarification.question === request.question;
@@ -196,7 +194,7 @@ export class ActivationTools {
 
   /** Accept a structured outcome and attach only requests received over MCP. */
   finish(reply: unknown) {
-    if (this.handoff) return this.finishHandoff();
+    if (this.handoff) return this.handoff;
     if (!reply || typeof reply !== 'object' || !('kind' in reply)) return reply;
     if (['research', 'question', 'supplier'].includes(String(reply.kind)))
       throw new InvalidCodexResponse(`Use the mapped MCP tool for ${String(reply.kind)} requests`);
@@ -210,26 +208,6 @@ export class ActivationTools {
       edits: [],
       checks: [],
     };
-  }
-
-  /** Reject a legacy invalid acknowledgement once, preserving it and returning the diagnostic to its caller. */
-  private finishHandoff() {
-    try {
-      const request = this.handoff!;
-      return { ...request, ...(request.kind === 'research' ? researchFields(request) : {}) };
-    } catch (error) {
-      const diagnostic = error instanceof Error ? error.message : String(error);
-      this.task.note({
-        operation: {
-          ...this.selection,
-          name: 'request-research',
-          scope: this.scope,
-          refusal: diagnostic,
-        },
-      });
-      this.handoff = undefined;
-      throw new InvalidCodexResponse(diagnostic, { cause: error });
-    }
   }
 
   /** Refuse requested effects in model output; successful tool calls are already recorded. */

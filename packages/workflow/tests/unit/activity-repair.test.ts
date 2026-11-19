@@ -4,6 +4,8 @@ import type { Capture } from '../../../architecture/src/index.js';
 import { activities, type Plan, type PlanActivity } from '../../../direction/src/index.js';
 import { Workflow, type TaskEvent, type WorkflowServices } from '../../src/index.js';
 
+export const suite = { owner: 'workflow', level: 'unit', tags: ['regression'] } as const;
+
 type Editable = Exclude<PlanActivity, 'review' | 'release'>;
 
 /** Keep the public workflow fixture explicit while isolating inference and upstream effects. */

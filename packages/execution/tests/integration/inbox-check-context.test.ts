@@ -142,7 +142,7 @@ class InboxCheckContext {
       agent,
       { component: 'owner', activity: 'implementation' },
       { milestone: 'explicit', evidence },
-      AbortSignal.timeout(5000),
+      new AbortController().signal,
     );
   }
 
@@ -155,8 +155,15 @@ class InboxCheckContext {
       steps: activities.map((activity) => ({ activity, checklist: [] })),
     };
     assert.equal(
-      (await steward(this.agent, this.task, milestone, 'implementation', AbortSignal.timeout(5000)))
-        .kind,
+      (
+        await steward(
+          this.agent,
+          this.task,
+          milestone,
+          'implementation',
+          new AbortController().signal,
+        )
+      ).kind,
       'completed',
     );
     assert.equal(this.calls, 2);

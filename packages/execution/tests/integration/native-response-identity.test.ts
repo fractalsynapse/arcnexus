@@ -17,6 +17,12 @@ import { decodeCodexAnswer } from '../../src/codex.js';
 import { steward } from '../../src/index.js';
 import { StewardFixture } from '../fixtures/steward.js';
 
+export const suite = {
+  owner: 'execution',
+  level: 'integration',
+  tags: ['regression'],
+} as const;
+
 /** Exercise actual provider decoding through existing caller loops and a real journal. */
 class NativeResponseScenario {
   private readonly task;
@@ -28,6 +34,7 @@ class NativeResponseScenario {
     private readonly progress = false,
   ) {
     const root = mkdtempSync(join(tmpdir(), 'arcnexus-native-finding-'));
+
     this.task = new StewardFixture(t, root).task;
     writeFileSync(join(root, 'fixture.txt'), 'initial');
   }

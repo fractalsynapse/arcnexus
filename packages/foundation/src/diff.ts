@@ -25,6 +25,7 @@ export function unifiedDiff({ path, before, content }: ContentPatch) {
       {
         cwd: root,
         encoding: 'utf8',
+        maxBuffer: Infinity,
         env: { PATH: '/usr/bin:/bin', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' },
       },
     );

@@ -12,12 +12,7 @@ export function revisionCitation(value: unknown, source: ProjectSource): Revisio
   const { path, quote } = value;
   if (typeof path !== 'string' || !source.paths.includes(path))
     throw new Error(`Citation path is absent at ${source.revision}: ${String(path)}`);
-  if (
-    typeof quote !== 'string' ||
-    quote.trim().length < 12 ||
-    quote.length > 800 ||
-    !source.read(path).includes(quote)
-  )
+  if (typeof quote !== 'string' || !quote.trim() || !source.read(path).includes(quote))
     throw new Error(`Citation excerpt does not match ${path} at ${source.revision}`);
   return { path, quote };
 }

@@ -86,7 +86,7 @@ export class ArchitectureAssessment {
         if (seen.has(error.identity))
           throw new AgentActivityHold(
             `Architect repeated an unchanged finding: ${error.message}`,
-            this.task.evidence.slice(-4),
+            this.task.evidence.slice(),
           );
         seen.add(error.identity);
         diagnostic = error.message;

@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Architecture, canResearch, type Capture } from '../../src/index.js';
 
+export const suite = { owner: 'architecture', level: 'unit', tags: ['regression'] } as const;
+
 /** Supply only the explicit declaration fields consumed by research capability resolution. */
 function researchCapture(operations: string[] | undefined, extra: Record<string, unknown> = {}) {
   return {

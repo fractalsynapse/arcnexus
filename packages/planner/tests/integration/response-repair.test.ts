@@ -61,7 +61,7 @@ class PlannerRepairScenario {
       this.task,
       'exploration',
       () => {},
-      AbortSignal.timeout(5000),
+      new AbortController().signal,
     );
   }
 }

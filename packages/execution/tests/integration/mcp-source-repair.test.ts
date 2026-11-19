@@ -11,6 +11,12 @@ import { ActivationTools } from '../../src/activation-tools.js';
 import { LocalMcp } from '../../src/mcp.js';
 import { StewardFixture } from '../fixtures/steward.js';
 
+export const suite = {
+  owner: 'execution',
+  level: 'integration',
+  tags: ['regression'],
+} as const;
+
 const source = 'const path = /(^|\\/)(?:dist|\\.git)(\\/|$)/;\nconst quote = "read me";\n';
 
 /** Exercise readable source and supported repair modes over the actual MCP transport. */
@@ -62,11 +68,42 @@ class SourceRepair {
       path: 'fixture.txt',
       sha256: this.digest(),
       text: source,
-      nextOffset: null,
     });
     const content = reply.content as { text: string }[];
     assert(content[0]!.text.endsWith(`\n\n${source}`));
     assert(content[0]!.text.includes(this.digest()));
+  }
+
+  /** Read an entire large UTF-8 source through MCP without application size or chunk ceilings. */
+  async completeRead(text: string) {
+    writeFileSync(join(this.root, 'fixture.txt'), text);
+    const reply = await this.client.callTool({
+      name: 'read-file',
+      arguments: { path: 'fixture.txt' },
+    });
+    assert(!reply.isError, 'A permitted text file must remain readable');
+    const source = reply.structuredContent as { text: string };
+    assert.equal(source.text.length, text.length);
+    assert.equal(createHash('sha256').update(source.text).digest('hex'), this.digest(text));
+  }
+
+  /** Carry a complete checked edit through HTTP without an inherited application body-size ceiling. */
+  async completeEdit(content: string) {
+    const reply = await this.client.callTool({
+      name: 'checked-edit',
+      arguments: {
+        path: 'fixture.txt',
+        expected: this.digest(),
+        content,
+      },
+    });
+    assert(!reply.isError);
+    assert.equal(
+      createHash('sha256')
+        .update(readFileSync(join(this.root, 'fixture.txt')))
+        .digest('hex'),
+      this.digest(content),
+    );
   }
 
   /** Refuse an empty anchor, retain its diagnostic, then repair through existing full content. */
@@ -107,10 +144,18 @@ class SourceRepair {
   }
 
   /** Hash complete source independently from the tool response. */
-  private digest() {
-    return createHash('sha256').update(source).digest('hex');
+  private digest(text = source) {
+    return createHash('sha256').update(text).digest('hex');
   }
 }
+
+test('MCP reads preserve complete large source files without imposed size or chunk caps', async (t) => {
+  await (await new SourceRepair(t).start()).completeRead('Ω'.repeat(9_000_000));
+});
+
+test('MCP checked edits preserve complete requests beyond the transport default body cap', async (t) => {
+  await (await new SourceRepair(t).start()).completeEdit('Complete source.\n'.repeat(400_000));
+});
 
 test('MCP source reads retain structured bytes and show literal quotes, backslashes and lines', async (t) => {
   await (await new SourceRepair(t).start()).read();

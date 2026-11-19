@@ -14,7 +14,7 @@ const diagnostic = 'Exact technical diagnostic: ' + 'Ω'.repeat(50000);
 const question = 'Approve exact guide bytes: ' + 'x'.repeat(20000);
 const source = { path: 'docs/charter.md', quote: 'Human guidance establishes authority.' };
 
-/** Exercise real retained findings and bounded artifact reads through public Architecture. */
+/** Exercise real retained findings and complete artifact reads through public Architecture. */
 class FindingContextScenario {
   readonly task: HostTask;
   private readonly root = mkdtempSync(join(tmpdir(), 'arcnexus-finding-context-'));
@@ -81,18 +81,6 @@ class FindingContextScenario {
     failed.close();
   }
 
-  /** Read exact retained history through the same bounded source operation as the actor. */
-  read(path: string) {
-    let offset: number | null = 0;
-    let text = '';
-    do {
-      const result = this.task.readFile(path, offset);
-      text += result.text;
-      offset = result.nextOffset;
-    } while (offset !== null);
-    return text;
-  }
-
   /** Capture the artifact reference supplied to the actual Architect capability. */
   async assess(t: TestContext) {
     let indexPath = '';
@@ -108,8 +96,13 @@ class FindingContextScenario {
         };
       },
     );
-    await new Architecture().propose({} as Agent, this.task, undefined, AbortSignal.timeout(5000));
-    return this.read(indexPath);
+    await new Architecture().propose(
+      {} as Agent,
+      this.task,
+      undefined,
+      new AbortController().signal,
+    );
+    return this.task.readFile(indexPath).text;
   }
 }
 
@@ -121,26 +114,10 @@ test('expected human pauses stay durable without becoming technical findings', (
   assert(JSON.stringify(findings).includes(diagnostic));
 });
 
-test('Architect receives explicit previews and a readable complete observation history', async (t) => {
+test('Architect receives complete observations without truncated diagnostic previews', async (t) => {
   const fixture = new FindingContextScenario(t);
   const input = await fixture.assess(t);
-  assert(
-    input.length < 5000,
-    'The initial finding index must not inline large historical observations',
-  );
-  const index = JSON.parse(input) as {
-    history: string;
-    findings: { id: number; preview: string; characters: number }[];
-  };
-  assert.equal(index.findings.length, 2);
-  const repair = index.findings.find(({ characters }) => characters === diagnostic.length);
-  assert(repair);
-  assert(diagnostic.startsWith(repair.preview));
-  assert(repair.preview.length < diagnostic.length);
-  assert(fixture.task.readFile(index.history).nextOffset, 'Full history uses bounded reads');
-  const retained = JSON.parse(fixture.read(index.history)) as {
-    id: number;
-    observation: unknown;
-  }[];
-  assert(JSON.stringify(retained.find(({ id }) => id === repair.id)).includes(diagnostic));
+  const retained = JSON.parse(input);
+  assert.deepEqual(retained, fixture.task.journal.findings());
+  assert(JSON.stringify(retained).includes(diagnostic));
 });

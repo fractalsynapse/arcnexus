@@ -3,6 +3,8 @@ import { setTimeout } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { retryRead } from './read.js';
 
+export { isTransientReadFailure } from './read.js';
+
 const run = promisify(execFile);
 
 /** Use the trusted GitHub CLI for scoped tracking and publication operations. */
@@ -20,14 +22,14 @@ export class GitHub {
   }
 
   /** Create the issue that identifies this admitted task. */
-  async issue(goal: string, taskID: string, goalID: string) {
+  async issue(goal: string, taskID: string, goalID: string, subject = goal) {
     const marker = `<!-- arcnexus-goal:${goalID} -->
 <!-- arcnexus-task:${taskID} -->`;
     const url = await this.command([
       'issue',
       'create',
       '--title',
-      title(goal),
+      title(subject),
       '--body',
       `${goal}
 
@@ -42,19 +44,11 @@ ${marker}`,
   async findIssue(taskID: string, goalID: string): Promise<string | undefined> {
     if (![taskID, goalID].every((id) => /^[a-f0-9]{64}$/.test(id)))
       throw new Error('Invalid goal or task identity');
-    const raw = await this.query([
-      'issue',
-      'list',
-      '--state',
-      'all',
-      '--search',
-      `${goalID} in:body`,
-      '--limit',
-      '100',
-      '--json',
-      'number,body',
-    ]);
-    const issues = JSON.parse(raw) as { number: number; body: string }[];
+    const search = encodeURIComponent(`repo:${this.repository} ${goalID} in:body`);
+    const issues = await this.pages<{ number: number; body: string }>(
+      `search/issues?q=${search}`,
+      '.items[]|{number,body}',
+    );
     const actual = issues.filter(({ body }) => body.endsWith(`<!-- arcnexus-task:${taskID} -->`));
     if (actual.length > 1) throw new Error(`Ambiguous GitHub issues for task ${taskID}`);
     return actual[0] && String(actual[0].number);
@@ -90,11 +84,9 @@ ${marker}`,
   async publication(branch: string): Promise<PublishedPull | undefined> {
     const owner = this.repository.split('/')[0];
     const head = encodeURIComponent(`${owner}:${branch}`);
-    const matches: ProviderPull[] = JSON.parse(
-      await this.query([
-        'api',
-        `repos/${this.repository}/pulls?head=${head}&state=all&per_page=100`,
-      ]),
+    const matches = await this.pages<ProviderPull>(
+      `repos/${this.repository}/pulls?head=${head}&state=all`,
+      '.[]',
     );
     if (matches.length > 1) throw new Error(`Ambiguous GitHub publication for ${branch}`);
     const match = matches[0];
@@ -129,7 +121,11 @@ ${marker}`,
         `https://github.com/${this.repository}.git`,
         ref,
       ],
-      { signal: this.signal, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } },
+      {
+        signal: this.signal,
+        maxBuffer: Infinity,
+        env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+      },
     );
     return stdout
       .trim()
@@ -180,7 +176,12 @@ ${marker}`,
         `https://github.com/${this.repository}.git`,
         `${head}:refs/heads/${branch}`,
       ],
-      { cwd: worktree, signal: this.signal, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } },
+      {
+        cwd: worktree,
+        signal: this.signal,
+        maxBuffer: Infinity,
+        env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+      },
     );
   }
 
@@ -245,11 +246,27 @@ ${marker}`,
     return retryRead(() => this.command(args), this.signal);
   }
 
+  /** Read every provider page, retaining complete JSON values without a local result-count ceiling. */
+  private async pages<T>(endpoint: string, selection: string): Promise<T[]> {
+    const output = await this.query([
+      'api',
+      endpoint,
+      '--paginate',
+      '--jq',
+      `[${selection}]|tojson`,
+    ]);
+    return output
+      .split('\n')
+      .filter(Boolean)
+      .flatMap((page) => JSON.parse(page) as T[]);
+  }
+
   /** Run a scoped provider action without interpolating model content into a shell. */
   private async command(args: string[]) {
     const scoped = args[0] === 'api' ? args : [...args, '--repo', this.repository];
     const { stdout } = await run('/usr/bin/gh', scoped, {
       signal: this.signal,
+      maxBuffer: Infinity,
       env: { ...process.env, GH_PROMPT_DISABLED: '1' },
     });
     return stdout.trim();
@@ -284,5 +301,5 @@ interface Pull {
 
 /** Use only the first line of the goal as the provider title. */
 function title(goal: string) {
-  return goal.trim().split('\n')[0]!.slice(0, 118);
+  return goal.trim().split('\n')[0]!;
 }

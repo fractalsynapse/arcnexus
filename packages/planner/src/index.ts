@@ -178,7 +178,7 @@ export class Planner {
         if (seen.has(error.identity))
           throw new AgentActivityHold(
             `Planner repeated an unchanged finding: ${error.message}`,
-            task.evidence.slice(-4),
+            task.evidence.slice(),
           );
         seen.add(error.identity);
         diagnostic = error.message;

@@ -3,6 +3,8 @@ import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import test from 'node:test';
 import { TestingRewindFixture, rewindMilestone } from '../fixtures/testing-rewind.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 test('rewound Testing sees prior completion and real original red without changing the current cursor', async (t) => {
   const fixture = new TestingRewindFixture(t);
   const context = await fixture.context();

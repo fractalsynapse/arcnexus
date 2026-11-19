@@ -10,6 +10,8 @@ import { steward } from '../../src/index.js';
 import { StewardFixture } from '../fixtures/steward.js';
 import { contextEvidence } from '../fixtures/context-evidence.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 /** Reproduce a newer MCP observation arriving before the same caller repairs an invalid reply. */
 class CallerCheckContext {
   private readonly task;

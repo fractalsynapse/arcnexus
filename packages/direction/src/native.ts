@@ -234,7 +234,7 @@ export async function track(session: TaskSession, signal: AbortSignal): Promise<
   if (recorded.some(({ issueIntent }) => issueIntent === taskID))
     throw new Error(`Cannot yet confirm the GitHub issue for task ${taskID}`);
   task.note({ issueIntent: taskID });
-  const created = await provider.issue(task.goal, taskID, task.goalID);
+  const created = await provider.issue(task.goal, taskID, task.goalID, task.trackingTitle);
   task.note({ issue: created });
   return created;
 }

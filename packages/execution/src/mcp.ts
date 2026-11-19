@@ -81,12 +81,20 @@ export class LocalMcp {
     });
     try {
       await server.connect(transport);
-      await transport.handleRequest(request, response);
+      await transport.handleRequest(request, response, await this.requestBody(request));
     } catch {
       if (!response.headersSent) response.writeHead(500).end();
     } finally {
       await server.close();
     }
+  }
+
+  /** Give the SDK complete parsed input instead of imposing its HTTP body-size default on valid tools. */
+  private async requestBody(request: IncomingMessage) {
+    const chunks: Buffer[] = [];
+    for await (const chunk of request)
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    return chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : undefined;
   }
 
   /** Refuse unmapped tools and invalid input before dispatch and retain their diagnostics. */
@@ -112,7 +120,7 @@ function toolResponse(tool: Binding, result: unknown) {
   if (tool.handler !== 'read')
     return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
   const read = result as ReturnType<typeof readToolFile>;
-  const header = `Path: ${read.path}\nSHA-256: ${read.sha256}\nNext offset: ${read.nextOffset ?? 'end'}`;
+  const header = `Path: ${read.path}\nSHA-256: ${read.sha256}`;
   return {
     structuredContent: read,
     content: [{ type: 'text' as const, text: `${header}\n\n${read.text}` }],

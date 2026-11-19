@@ -18,6 +18,7 @@ Recorded on 2026-11-19 from explicit human instructions in this conversation:
 | MILESTONE-OWNER | An accepted milestone | Exactly one accountable component owner | Human-provided AGENTS.md instructions: “Each milestone has exactly one accountable owner”. See [plan template](plan-template.md). |
 | REFINEMENT-ROUNDS | Requested refinement invocation | Positive integer round count supplied by the caller; default one round | Human-approved implementation plan: “Default to one round; require a positive integer.” This authorizes the requested count, not a separate automatic maximum. |
 | QUALIFICATION | Completion of the self-healing refinement plan | Three consecutive successful live refinement rounds | Human implementation request: “The plan is complete only when that live evidence demonstrates three successful continuous rounds.” This is acceptance, not a runtime retry or work budget. |
+| DEBUG-REASSESS | Engineering diagnosis | After three functionally identical attempts without progress, diagnose and change approach or report the blocker | Human-provided AGENTS.md instruction: “After three functionally identical attempts without progress, diagnose and change approach or report the blocker.” This requires reassessment; it does not authorize an automatic task retry ceiling. |
 
 No research request length, report length, source count, unresolved-question count,
 research-history count, Planner document size, or context truncation cap has an

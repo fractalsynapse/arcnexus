@@ -4,6 +4,8 @@ import { Agent, type ActivationInput } from '../../../agent/src/index.js';
 import { Architecture } from '../../../architecture/src/index.js';
 import { ArchitectureFixture } from '../fixtures/architecture.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 const selection = { component: 'service', activity: 'review' };
 const context = { assignment: 'Perform the accepted milestone', acceptance: [], evidence: [] };
 const signal = new AbortController().signal;

@@ -11,7 +11,7 @@ function tool(description: string, properties: Record<string, object>, required:
 
 const definitions = {
   read: tool(
-    'Read a project file or retained evidence. Returns literal source below a path/hash/range header and exact path, sha256, text and nextOffset structured fields. Use source text as written, without adding JSON escaping.',
+    'Read a complete project file or retained evidence. Returns literal source below its path/hash header and exact path, sha256 and text structured fields. Use source text as written, without adding JSON escaping.',
     {
       path: string,
       offset: { type: 'integer', minimum: 0 },
