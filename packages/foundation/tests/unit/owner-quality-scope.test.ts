@@ -17,6 +17,18 @@ for (const operation of ['format:check', 'lint'] as const) {
     }
   });
 
+  test(`${operation} checks a selected filename containing glob characters`, () => {
+    const tree = fixture();
+    try {
+      tree.write('packages/alpha/[probe].ts', 'const unused=1\n');
+      const result = tree.run(operation, 'alpha');
+      assert.notEqual(result.status, 0, result.output);
+      assert.match(result.output, /\[probe\]\.ts/);
+    } finally {
+      tree.close();
+    }
+  });
+
   test(`${operation} rejects overlapping ownership`, () => {
     const tree = fixture();
     try {
