@@ -415,8 +415,8 @@ for (const expected of ['pass', 'fail'] as const) {
     scenario.secured('corrected');
     const before = scenario.activations.slice();
     assert.equal((await scenario.run('resume')).kind, 'merged');
-    assert.deepEqual(scenario.activations, [...before, ...(expected === 'fail' ? ['implementation'] : []), 'review']);
-    assert.equal(scenario.checks.length, expected === 'fail' ? 4 : 3);
+    assert.deepEqual(scenario.activations, [...before, 'review']);
+    assert.equal(scenario.checks.length, expected === 'fail' ? 5 : 3);
     assert.equal(scenario.checks.at(-1)!.status, 0);
     assert.deepEqual(scenario.gates, ['verification', 'delivery']);
     assert.equal(scenario.provider.verified, 3);
