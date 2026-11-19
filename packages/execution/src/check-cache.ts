@@ -11,6 +11,7 @@ import {
 import { selectQualityInputs } from '../../foundation/src/index.js';
 import type { HostTask } from './index.js';
 import type { StewardScope } from './steward-check.js';
+import { git } from './git.js';
 
 export interface CheckObservation {
   check?: CheckResult;
