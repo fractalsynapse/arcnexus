@@ -27,7 +27,7 @@
     "check:specification": "JITI_FS_CACHE=0 jiti packages/foundation/scripts/check-specification.ts",
     "lint": "jiti packages/foundation/scripts/owner-quality.ts lint",
     "lint:fix": "eslint --fix --max-warnings 0 --pass-on-no-patterns",
-    "format:check": "prettier --check --no-error-on-unmatched-pattern \"*.{ts,json}\" \"{apps,packages,scripts,fixtures}/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,json,yaml,yml}\"",
+    "format:check": "jiti packages/foundation/scripts/owner-quality.ts format:check",
     "format": "prettier --write",
     "test": "npm run build && node dist/packages/foundation/scripts/test.js"
   },
