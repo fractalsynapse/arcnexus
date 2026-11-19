@@ -91,6 +91,7 @@ async function ownerOperationInapplicability(
   const selected = await selectQualityInputs(
     applicability === 'owner-lint-files' ? 'lint' : 'format:check',
     owner,
+    worktree,
   );
   for (const path of selected.files) {
     const resolution = team.ownerFor(team.list(capture.components), path);
