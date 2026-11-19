@@ -7,6 +7,7 @@ import { ESLint } from 'eslint';
 import { getFileInfo } from 'prettier';
 import { parse } from 'yaml';
 import { team } from '../../team/src/index.js';
+import type { GuidanceSource } from '../../manager/src/index.js';
 
 export { unifiedDiff, type ContentPatch } from './diff.js';
 
