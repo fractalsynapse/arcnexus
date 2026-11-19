@@ -43,7 +43,7 @@ export async function check(
   ) assertCapturedOwnership(capture, worktree);
   const applicability = await ownerOperationInapplicability(capture, worktree, id, owner);
   if (applicability.reason) {
-    writeFileSync(log, `Not applicable: ${applicability.reason}\\n`, { mode: '600', flag: 'wx' });
+    writeFileSync(log, `Not applicable: ${applicability.reason}\n`, { mode: 0o600, flag: 'wx' });
     return {
       id, command: executable, args, cwd, log, selection: applicability.selection,
       status: 'not-applicable', reason: applicability.reason, durationMs: 0,
