@@ -21,24 +21,7 @@ test(
     });
     const task = new StewardFixture(t, root).task;
     task.worktree = workspace;
-    const components = Object.fromEntries(
-      globSync('.arc/architecture/components/*.yaml').map((path) => {
-        const component = parse(readFileSync(path, 'utf8')) as { id: string; owns: string[] };
-        return [component.id, component];
-      }),
-    );
-    let owner = '';
-    let file = '';
-    for (const candidate of Object.keys(components)) {
-      const selected = await selectQualityInputs('lint', candidate);
-      const typescript = selected.files.find((path) => path.endsWith('.ts'));
-      if (typescript && !hasOwnerTestSuites(source, candidate, Object.values(components))) {
-        owner = candidate;
-        file = typescript;
-        break;
-      }
-    }
-    assert.ok(owner && file, 'fixture needs a lintable owner without suites');
+    const { owner, file, components } = await discoverOwner(source);
     const path = join(workspace, file);
     const original = readFileSync(path, 'utf8');
     const longFunction = Array.from({ length: 35 }, () => '  value += 1;').join('\n');
@@ -47,15 +30,7 @@ test(
       source: { ...task.capture.source, root: source },
       components,
       project: { ...task.capture.project, checks: { acceptance: [] } },
-      operations: {
-        'owner-tests': { id: 'owner-tests', category: 'integration-test', command: 'npm',
-          args: ['test', '--', { context: 'owner' }], cwd: '.', network: false,
-          applicability: 'owner-test-suites' },
-        'owner-lint': { id: 'owner-lint', category: 'build', command: 'npm',
-          args: ['run', 'lint', '--', { context: 'owner' }], cwd: '.', network: false },
-        'repository-types': { id: 'repository-types', category: 'build', command: 'npm',
-          args: ['run', 'check'], cwd: '.', network: false },
-      },
+      operations: qualityOperations,
     });
     t.after(() => task.close());
     const activation = new ActivationTools(task, { component: owner, activity: 'implementation' }, {
@@ -72,3 +47,37 @@ test(
     assert.match(readFileSync(types.log, 'utf8'), /TS2322/);
   },
 );
+
+/** Select a lintable owner that has no test suites. */
+async function discoverOwner(source: string) {
+  const components = Object.fromEntries(
+    globSync('.arc/architecture/components/*.yaml').map((path) => {
+      const component = parse(readFileSync(path, 'utf8')) as { id: string; owns: string[] };
+      return [component.id, component];
+    }),
+  );
+  let owner = '';
+  let file = '';
+  for (const candidate of Object.keys(components)) {
+    const selected = await selectQualityInputs('lint', candidate);
+    const typescript = selected.files.find((path) => path.endsWith('.ts'));
+    if (typescript && !hasOwnerTestSuites(source, candidate, Object.values(components))) {
+      owner = candidate;
+      file = typescript;
+      break;
+    }
+  }
+  assert.ok(owner && file, 'fixture needs a lintable owner without suites');
+  return { owner, file, components };
+}
+
+/** Captured operations exercised by the native diagnostic. */
+const qualityOperations = {
+        'owner-tests': { id: 'owner-tests', category: 'integration-test', command: 'npm',
+          args: ['test', '--', { context: 'owner' }], cwd: '.', network: false,
+          applicability: 'owner-test-suites' },
+        'owner-lint': { id: 'owner-lint', category: 'build', command: 'npm',
+          args: ['run', 'lint', '--', { context: 'owner' }], cwd: '.', network: false },
+        'repository-types': { id: 'repository-types', category: 'build', command: 'npm',
+          args: ['run', 'check'], cwd: '.', network: false },
+};
