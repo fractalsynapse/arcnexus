@@ -21,7 +21,7 @@ export function selectQualityInputs(
   const componentFiles = globSync('.arc/architecture/components/*.yaml');
   const components: Component[] = componentFiles.map((path) => parse(readFileSync(path, 'utf8')));
   assert(!owner || components.some(({ id }) => id === owner), `Unknown owner: ${owner}`);
-  const candidates = globSync('**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}', { ignore: ['**/node_modules/**', '**/dist/**', '**/.git/**', '**/.test-build/**', '**/.fixture-build/**', '**/context/**', '**/examples/**', '**/.audit-work/**'] })
+  const candidates = globSync('**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}')
     .filter((path) => operation !== 'format:check' || isFormatCovered(path))
     .filter((path) => operation !== 'lint' || /\\.(?:ts|mts|cts|js|mjs|cjs)$/.test(path))
     .filter((path) => !isIgnoredByPrettier(path))
