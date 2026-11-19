@@ -40,6 +40,7 @@ export class Journal {
     readonly goal: string,
     readonly retained?: RetainedRun,
     readonly taskID = digest(goal),
+    readonly parent?: number,
   ) {}
 
   /** Expose the content identity independently of the logical task identity. */
@@ -54,10 +55,40 @@ export class Journal {
       .run(this.run, JSON.stringify(event));
   }
 
+  /** Admit one nested session while retaining this live writer and its shared connection. */
+  child(goal: string, scope: string, fresh = true): Admission | undefined {
+    this.database.exec('BEGIN IMMEDIATE');
+    try {
+      const parent = this.database
+        .prepare('SELECT active, lease FROM runs WHERE id = ?')
+        .get(this.run);
+      if (!parent?.active || parent.lease !== identity(process.pid))
+        throw new Error('Cannot admit a child from an inactive parent or foreign writer');
+      const result = claim(
+        this.database,
+        goal,
+        fresh,
+        JSON.stringify([this.taskID, scope]),
+        this.run,
+      );
+      this.database.exec('COMMIT');
+      return result;
+    } catch (error) {
+      this.database.exec('ROLLBACK');
+      throw error;
+    }
+  }
+
   /** Store the terminal event and release the lane in one transaction. */
   finish(outcome: unknown) {
     this.database.exec('BEGIN IMMEDIATE');
     try {
+      if (
+        this.database
+          .prepare('SELECT id FROM runs WHERE parent_id = ? AND active = 1')
+          .get(this.run)
+      )
+        throw new Error('Cannot finish a session with an active child');
       const updated = this.database
         .prepare('UPDATE runs SET active = 0 WHERE id = ? AND active = 1')
         .run(this.run);
@@ -113,7 +144,7 @@ export class Journal {
 
   /** Close the connection. An unfinished task keeps its recorded position and lane. */
   close() {
-    this.database.close();
+    if (this.parent === undefined) this.database.close();
   }
 }
 
@@ -133,10 +164,10 @@ export class Coordination {
     const database = this.open(remote);
     try {
       database.exec('BEGIN IMMEDIATE');
-      const claim = this.claim(database, goal, fresh, scope);
+      const result = claim(database, goal, fresh, scope);
       database.exec('COMMIT');
-      if (!(claim instanceof Journal)) database.close();
-      return claim;
+      if (!(result instanceof Journal)) database.close();
+      return result;
     } catch (error) {
       database.close();
       throw error;
@@ -207,37 +238,6 @@ export class Coordination {
     }
   }
 
-  /** Inspect prior evidence and the current writer in the same admission transaction. */
-  private claim(database: DatabaseSync, goal: string, fresh: boolean, scope?: string) {
-    const goalID = digest(goal);
-    const task = taskIdentity(goalID, scope);
-    const prior = retained(database, task);
-    const active = database
-      .prepare('SELECT id, task_id, goal, lease FROM runs WHERE active = 1')
-      .get();
-    if (active && (active.task_id !== task || !departed(active.lease)))
-      return { activeGoal: String(active.goal), run: Number(active.id) };
-    if (!fresh && !prior) return undefined;
-    if (active) this.retire(database, Number(active.id));
-    const lease = identity(process.pid);
-    if (!lease) throw new Error('Cannot identify the project lane writer');
-    const { lastInsertRowid } = database
-      .prepare('INSERT INTO runs (goal_id, task_id, goal, active, lease) VALUES (?, ?, ?, 1, ?)')
-      .run(goalID, task, goal, lease);
-    const journal = new Journal(database, Number(lastInsertRowid), goal, prior, task);
-    if (prior) journal.record({ recovering: prior.run });
-    return journal;
-  }
-
-  /** Retain the departed writer's actual outcome before admitting its replacement. */
-  private retire(database: DatabaseSync, run: number) {
-    database.prepare('UPDATE runs SET active = 0 WHERE id = ?').run(run);
-    const outcome = { kind: 'cancelled', reason: 'Task writer exited', evidence: [] };
-    database
-      .prepare('INSERT INTO events (run, content) VALUES (?, ?)')
-      .run(run, JSON.stringify({ outcome }));
-  }
-
   /** Create storage constraints before the first admission. */
   private initialize(database: DatabaseSync) {
     database.exec(`
@@ -246,9 +246,9 @@ export class Coordination {
       BEGIN IMMEDIATE;
       CREATE TABLE IF NOT EXISTS runs (
         id INTEGER PRIMARY KEY, goal_id TEXT NOT NULL, task_id TEXT, goal TEXT NOT NULL,
-        active INTEGER NOT NULL CHECK (active IN (0, 1)), lease TEXT
+        active INTEGER NOT NULL CHECK (active IN (0, 1)), lease TEXT,
+        parent_id INTEGER REFERENCES runs(id)
       ) STRICT;
-      CREATE UNIQUE INDEX IF NOT EXISTS one_active_goal ON runs (active) WHERE active = 1;
       CREATE TABLE IF NOT EXISTS rounds (
         id INTEGER PRIMARY KEY, inventory TEXT NOT NULL, finished INTEGER NOT NULL DEFAULT 0
       ) STRICT;
@@ -256,18 +256,80 @@ export class Coordination {
         id INTEGER PRIMARY KEY, run INTEGER NOT NULL REFERENCES runs(id), content TEXT NOT NULL
       ) STRICT;
     `);
-    const fields = database
-      .prepare('PRAGMA table_info(runs)')
-      .all()
-      .map(({ name }) => name);
-    if (!fields.includes('lease')) database.exec('ALTER TABLE runs ADD COLUMN lease TEXT');
-    if (!fields.includes('task_id')) database.exec('ALTER TABLE runs ADD COLUMN task_id TEXT');
-    database.exec('UPDATE runs SET task_id = goal_id WHERE task_id IS NULL');
+    migrate(database);
     database.exec('COMMIT');
   }
 }
 
 type Admission = Journal | { activeGoal: string; run: number };
+
+/** Upgrade historical task rows and replace the former single-row lane constraint atomically. */
+function migrate(database: DatabaseSync) {
+  const fields = database
+    .prepare('PRAGMA table_info(runs)')
+    .all()
+    .map(({ name }) => name);
+  if (!fields.includes('lease')) database.exec('ALTER TABLE runs ADD COLUMN lease TEXT');
+  if (!fields.includes('task_id')) database.exec('ALTER TABLE runs ADD COLUMN task_id TEXT');
+  if (!fields.includes('parent_id'))
+    database.exec('ALTER TABLE runs ADD COLUMN parent_id INTEGER REFERENCES runs(id)');
+  database.exec('UPDATE runs SET task_id = goal_id WHERE task_id IS NULL');
+  database.exec(`
+    DROP INDEX IF EXISTS one_active_goal;
+    CREATE UNIQUE INDEX IF NOT EXISTS one_active_root ON runs (active) WHERE active = 1 AND parent_id IS NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS one_active_child ON runs (parent_id) WHERE active = 1 AND parent_id IS NOT NULL;
+  `);
+}
+
+/** Inspect prior evidence and the relevant writer in the same admission transaction. */
+function claim(
+  database: DatabaseSync,
+  goal: string,
+  fresh: boolean,
+  scope?: string,
+  parent?: number,
+): Admission | undefined {
+  const goalID = digest(goal);
+  const task = taskIdentity(goalID, scope);
+  const active = database
+    .prepare('SELECT id, task_id, goal, lease FROM runs WHERE active = 1 AND parent_id IS ?')
+    .get(parent ?? null);
+  if (active && (active.task_id !== task || !departed(active.lease)))
+    return { activeGoal: String(active.goal), run: Number(active.id) };
+  if (!fresh && !retained(database, task)) return undefined;
+  if (active) retire(database, Number(active.id));
+  const prior = retained(database, task);
+  const lease = identity(process.pid);
+  if (!lease) throw new Error('Cannot identify the project lane writer');
+  const { lastInsertRowid } = database
+    .prepare(
+      'INSERT INTO runs (goal_id, task_id, goal, active, lease, parent_id) VALUES (?, ?, ?, 1, ?, ?)',
+    )
+    .run(goalID, task, goal, lease, parent ?? null);
+  const journal = new Journal(database, Number(lastInsertRowid), goal, prior, task, parent);
+  if (prior) journal.record({ recovering: prior.run });
+  return journal;
+}
+
+/** Preserve honest terminal observations for a departed writer and its unfinished descendants. */
+function retire(database: DatabaseSync, run: number) {
+  const rows = database
+    .prepare(
+      `
+    WITH RECURSIVE descendants(id) AS (
+      SELECT ? UNION ALL SELECT runs.id FROM runs JOIN descendants ON runs.parent_id = descendants.id
+    ) SELECT runs.id FROM runs JOIN descendants USING(id) WHERE active = 1 ORDER BY runs.id DESC
+  `,
+    )
+    .all(run);
+  for (const { id } of rows) {
+    const outcome = { kind: 'cancelled', reason: 'Task writer exited', evidence: [] };
+    database
+      .prepare('INSERT INTO events (run, content) VALUES (?, ?)')
+      .run(id!, JSON.stringify({ outcome }));
+    database.prepare('UPDATE runs SET active = 0 WHERE id = ?').run(id!);
+  }
+}
 
 /** Restore ordered events from all attempts at the same logical task. */
 function retained(database: DatabaseSync, task: string): RetainedRun | undefined {

@@ -4,6 +4,8 @@
 
 ### Added
 
+- Retain one project writer across nested sequential task sessions and recover their interrupted journals together (#628).
+
 - Map standing goals and preserve human objectives with `arcnexus task plan`.
 - Assess owner-free goals using evidence from the captured staging revision (#587).
 
