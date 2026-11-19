@@ -1,9 +1,11 @@
-# Verified local MCP operations
+# Local MCP operations
 
 Use the operation IDs and descriptions captured for the current activity. Project
 reads and edits go through its mapped local MCP tools; native shell and unmapped
 operations are unavailable (Execution EX-16). Built-in web access follows the
 execution provider policy. See the [Execution contract](../contract.md#obligations).
+These mappings constrain host operations available to the activity. Ordinary public
+APIs used by authored code are not restricted to MCP tool names.
 
 ## Check one file at a time
 
@@ -58,16 +60,62 @@ independent review remain host operations.
 
 If staging advanced after the task branch was secured, see [prepared checkpoint recovery](prepared-checkpoint-recovery.md).
 
-## Failed checks during correction
+## Observe and repair a check
 
-The host returns a fresh failing diagnostic, exit status and complete log reference
-to Direction even when the same operation failed earlier. Direction gives the new
-failure distinct correction work before the paused activity resumes. The steward
-reads the latest failed-check log first and retains earlier findings as history.
+The following is the intended caller-level recovery behavior for EX-22 and EX-23;
+documentation alone does not establish implementation or qualification.
 
-A diagnostic already sent for correction holds on repetition. TAP numbering,
-source positions and temporary worktree paths do not establish a new failure.
-For other command formats the retained output supplies the comparison. The full
-original log remains available as evidence. Workflow does not reopen a host-held
-repeated check as another review supplier request. See the
+Invoke the check through the current activity's captured local MCP mapping. The
+host executes only its captured confined command and returns the actual exit
+status, exact diagnostic and immutable log reference before the caller continues.
+No shell, unmapped command or raw model-response operation is accepted. There is
+no deferred native check queue or queued-check reply exception.
+
+The current activity is responsible for its assigned work, even when no
+`localRepair` field is present. Read an observed failure's log, make any necessary
+single-file checked correction within scope, then invoke the mapped check again
+in the same activation. Refusals preserve previous receipts. A check expected to
+fail succeeds as evidence when its actual result meets that original expectation;
+do not replace an expected-failure assertion with an expectation of success.
+
+Every unresolved observation and its original expectation remain durable.
+Completing a response, omitting a check, passing another check or requesting a
+different expectation cannot resolve it. Reuse completed evidence when the
+captured operation, expectation, relevant inputs and environment still match;
+do not execute the unchanged command again. An affected checked edit, including
+an accepted supplier contribution, invalidates that reuse. Historical diagnostics
+remain immutable when a new observation satisfies the original expectation.
+
+Optional clarification, research and supplier inbox requests remain available
+after an observed check. Their handoff, interruption and restart preserve the
+diagnostic, unresolved expectation, single-file receipts and complete answers.
+A completed check interrupted before the activity finishes remains an observation;
+an interrupted command without a completed result cannot count as passing evidence.
+Cancellation still stops descendants and retains one terminal result (EX-8).
+
+Ordinary operation failures return to their caller without a Director call or a
+new correction milestone (Direction DI-7). A self-review finding may return
+`kind: repair`, the earliest affected applicable `activity` and the exact
+`reason`. Workflow persists that rewind within the same milestone. `localRepair`
+is optional context for this route; read its evidence when supplied. Only explicit
+escalation needing another responsibility or authority, or final independent
+rejection, invokes Direction. Original ownership, captured operations and
+acceptance remain unchanged.
+
+Compare repeated diagnostics with relevant inputs and checked progress. An
+unchanged failure without progress retains an actionable hold before another
+identical automatic attempt. TAP numbering, source positions and temporary paths
+alone do not establish a new failure. Distinct failures or changed inputs can
+continue correction. See the
 [Workflow recovery scenarios](../../workflow/contract.md#acceptance-scenarios).
+
+## Native invocation attribution
+
+Before invoking the provider, the common native boundary records the actual
+request input byte count, acting component and activity, and captured selected
+model and profile in the existing task journal. Count the bytes of the actual
+submitted input, including multibyte text, rather than characters or a prompt
+estimate. Use this same boundary for Director calls and local repair invocations.
+The pre-invocation record survives provider failure or interruption and supports
+cost auditing alongside retained request and result evidence (EX-24). No separate
+metrics store is introduced.
