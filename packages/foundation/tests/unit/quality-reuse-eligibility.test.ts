@@ -116,9 +116,8 @@ test('lint side-effect imports decline reuse even when their path is local', asy
 test('nested package formatter plugins decline reuse', async () => {
   const tree = fixture();
   try {
-    tree.owner('alpha-manifest', 'packages/alpha/package.json');
     tree.write(
-      'packages/alpha/package.json',
+      'package.json',
       '{"prettier":{"overrides":[{"files":["**/*.ts"],"options":{"plugins":["example"]}}]}}',
     );
     const result = await selectQualityInputs('format:check', 'alpha', tree.root);
