@@ -135,6 +135,25 @@ function discoverSuites(directory: string, pattern: string, components: readonly
     .map((file) => registerSuite(file, components));
 }
 
+/** Apply current root gitignore patterns to the repository-relative input. */
+function isIgnored(path: string, patterns: readonly string[]): boolean {
+  let ignored = false;
+  for (const raw of patterns) {
+    const rule = raw.trim();
+    if (!rule || rule.startsWith('#')) continue;
+    const negated = rule.startsWith('!');
+    const pattern = (negated ? rule.slice(1) : rule).replace(/^\\//, '').replace(/\\/$/, '');
+    const expression = pattern
+      .replace(/[.+^${}()|[\\]\\\\]/g, '\\\\$&')
+      .replace(/\\*\\*/g, '.*')
+      .replace(/\\*/g, '[^/]*')
+      .replace(/\\?/g, '[^/]');
+    const matcher = new RegExp(`^(?:${expression})(?:/.*)?$`);
+    if (matcher.test(path)) ignored = !negated;
+  }
+  return ignored;
+}
+
 /** Preserve repository formatter coverage while allowing package and fixture files. */
 function isFormatCovered(path: string): boolean {
   return /^(?:[^/]+\.(?:ts|json)|(?:apps|packages|scripts|fixtures)\/.+\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json))$/.test(
