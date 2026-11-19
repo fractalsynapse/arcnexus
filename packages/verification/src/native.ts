@@ -75,7 +75,7 @@ function ownerEvidenceFailure(task: HostTask, plan: Plan, candidate: Candidate) 
     if (observation.check.status === null)
       return `Required owner operation ${owner}/${activity}/${id} is unavailable`;
     const expectedRed =
-      observation.scope.expected === 'fail' && observation.check.status !== 0;
+      observation.scope.expected === 'fail' && activity === 'testing' && id === 'owner-tests' && observation.check.status !== 0;
     if (observation.check.status !== 0 && !expectedRed)
       return `Required owner operation ${owner}/${activity}/${id} failed`;
     if (observation.candidate && observation.candidate.tree !== candidate.digest)
