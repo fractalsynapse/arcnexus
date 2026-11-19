@@ -1,6 +1,6 @@
 import { team } from '../../team/src/index.js';
 import type { Agent } from '../../agent/src/index.js';
-import type { Feedback, Milestone, StewardCheckFailure } from '../../direction/src/index.js';
+import type { Milestone, StewardCheckFailure } from '../../direction/src/index.js';
 import type { ActivityOutcome, TaskSession } from '../../workflow/src/index.js';
 import { hostTask, type HostTask } from './index.js';
 import { citedAssemblyChecks, correctionFinding } from './correction.js';
@@ -12,6 +12,7 @@ import { InvalidCodexResponse } from './codex.js';
 import {
   checkFailureSignature,
   correctionMadeProgress,
+  stewardInput,
   type StewardScope,
 } from './steward-check.js';
 import { decodeSteward, StewardResponseError, type StewardResult } from './steward-response.js';
@@ -35,7 +36,12 @@ export async function steward(
   const correction = task.pendingCheck(scope);
   const assignment = await stewardAssignment(task, milestone, scope, correction, signal);
   const result = await requestSteward(task, agent, milestone, scope, signal, assignment);
-  if (result.kind !== 'completed') return { ...result, evidence: task.evidence.slice(before) };
+  if (result.kind !== 'completed')
+    return {
+      ...result,
+      evidence: task.evidence.slice(before),
+      ...(result.kind === 'repair' ? { input: stewardInput(task.observations()) } : {}),
+    };
   const failed = await perform(task, scope, result, correction, signal);
   const evidence = task.evidence.slice(before);
   return failed
@@ -43,7 +49,7 @@ export async function steward(
     : { kind: 'completed', evidence, ...(result.answer ? { answer: result.answer } : {}) };
 }
 
-/** Route a fresh failure to Direction and hold a diagnostic that its correction already addressed. */
+/** Return failed checks to their caller and hold unchanged failures without new progress. */
 function stewardCheckOutcome(
   task: HostTask,
   milestone: Milestone,
@@ -51,8 +57,11 @@ function stewardCheckOutcome(
   correction: StewardCheckFailure | undefined,
   evidence: readonly string[],
 ): ActivityOutcome {
-  const reason = `Operation ${failed.id} exited ${failed.status}; expected ${failed.expected}; evidence: ${failed.log}`;
-  if (correction?.id === failed.id && repeatedCorrection(task, milestone.owner, failed, correction))
+  const reason = `Operation ${failed.id} exited ${failed.status}; expected ${failed.expected}`;
+  if (
+    correction?.id === failed.id &&
+    !correctionMadeProgress(task.observations(), milestone.owner, correction.log)
+  )
     return {
       kind: 'blocked',
       reason,
@@ -60,33 +69,13 @@ function stewardCheckOutcome(
       evidence: [correction.log, ...evidence],
     };
   return {
-    kind: 'supplier',
-    owner: milestone.owner,
-    milestone: milestone.id,
+    kind: 'repair',
+    activity: failed.activity === 'review' ? 'implementation' : failed.activity,
+    input: `${stewardInput(task.observations())}:${checkFailureSignature(failed.log)}`,
     reason,
     failedCheck: failed,
     evidence,
   };
-}
-
-/** Use the diagnostics actually sent to Direction, preserving new failures across restarts. */
-function repeatedCorrection(
-  task: HostTask,
-  owner: string,
-  failed: StewardCheckFailure,
-  correction: StewardCheckFailure,
-) {
-  if (!correctionMadeProgress(task.observations(), owner, correction.log)) return true;
-  const signature = checkFailureSignature(failed.log);
-  return task
-    .observations<{ feedback?: Feedback }>()
-    .some(
-      ({ feedback }) =>
-        feedback?.kind === 'supplier' &&
-        feedback.owner === owner &&
-        feedback.failedCheck?.id === failed.id &&
-        checkFailureSignature(feedback.failedCheck.log) === signature,
-    );
 }
 
 /** Repair one invalid reply with the same steward before any requested effects are applied. */
@@ -99,6 +88,7 @@ async function requestSteward(
   assignment: Awaited<ReturnType<typeof stewardAssignment>>,
 ): Promise<StewardResult> {
   let diagnostic: string | undefined;
+  const seen = new Set<string>();
   while (true) {
     try {
       const reply = await askSteward(task, agent, milestone, scope, assignment, signal, diagnostic);
@@ -107,13 +97,14 @@ async function requestSteward(
     } catch (error) {
       if (!repairableReply(error)) throw error;
       signal.throwIfAborted();
-      if (diagnostic)
+      if (seen.has(error.message))
         return {
           kind: 'blocked',
           reason: `Steward reply repair failed: ${error.message}`,
           evidence: [],
         };
       diagnostic = error.message;
+      seen.add(diagnostic);
       task.note({ stewardRepair: { scope, diagnostic, evidence: task.evidence.at(-1) } });
     }
   }
@@ -189,6 +180,27 @@ async function stewardAssignment(
   signal: AbortSignal,
 ) {
   const finding = correctionFinding(task.history(), milestone);
+  const localRepair = task
+    .history()
+    .findLast((event) => 'position' in event && event.repair?.milestone === milestone.id);
+  return {
+    ...responseShape(scope.activity !== 'review' && Boolean(task.formatPreview)),
+    ...supplierContext(task.history(), milestone.id),
+    ...(localRepair && 'position' in localRepair ? { localRepair: localRepair.repair } : {}),
+    answerRequired: supplierAnswerRequired(task.history(), milestone, scope.activity),
+    ...(finding ? { finding } : {}),
+    ...(failedCheck ? { failedCheck, correction: correctionInstruction } : {}),
+    ...(await correctionChecks(task, scope, finding, signal)),
+  };
+}
+
+/** Refresh checks cited by a final rejection and attach the latest applicable owner observation. */
+async function correctionChecks(
+  task: HostTask,
+  scope: StewardScope,
+  finding: ReturnType<typeof correctionFinding>,
+  signal: AbortSignal,
+) {
   const currentChecks: CheckResult[] = [];
   const ownerCheck =
     finding || scope.activity === 'review'
@@ -200,11 +212,6 @@ async function stewardAssignment(
       currentChecks.push(await task.check(id, signal));
   }
   return {
-    ...responseShape(scope.activity !== 'review' && Boolean(task.formatPreview)),
-    ...supplierContext(task.history(), milestone.id),
-    answerRequired: supplierAnswerRequired(task.history(), milestone, scope.activity),
-    ...(finding ? { finding } : {}),
-    ...(failedCheck ? { failedCheck, correction: correctionInstruction } : {}),
     ...(currentChecks.length ? { currentChecks } : {}),
     ...(ownerCheck ? { ownerCheck } : {}),
   };
@@ -213,6 +220,8 @@ async function stewardAssignment(
 /** Describe the bounded steward responses carried by the task prompt. */
 function responseShape(formatter: boolean) {
   return {
+    repair:
+      'Repair tool and check failures within this milestone. For a self-review finding return kind repair, activity documentation, testing or implementation, and the exact reason; choose the earliest affected applicable activity. Read localRepair evidence before correcting its finding. Request a supplier only for distinct work requiring another responsibility. Return blocked only for an unavailable prerequisite, not for an ordinary repairable defect.',
     instructions:
       'Use the mapped local MCP tools for project reads, checked edits and owner checks. The read-only filesystem is deliberate. Make authorized changes through the mapped checked-edit MCP tool even when direct writes are unavailable. Attempt that operation for an owned path before reporting that edits are blocked, and report any exact refusal. A successful edit is already recorded. Queued checks run after your completed response. A queued check is a request, and the host records its result or routes its failure. Put any narration in summary and omit checks from your reply. If another edit is refused, correct the call or request a distinct supplier contribution. Link its accepted milestone when known, or give the new contribution its own ID. End with one JSON object with kind completed, or kind blocked with a reason. Include answer in a completed response when answering a supplier question. Read retained evidence with read-file. Checks in currentChecks are host-managed. Preserve accepted work when correcting a diagnostic. Only the host performs assembled verification and delivery.',
     requests: { formatAvailable: formatter },

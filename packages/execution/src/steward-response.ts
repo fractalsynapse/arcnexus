@@ -27,26 +27,46 @@ export function decodeSteward(
   const value = object(reply, 'response');
   switch (value.kind) {
     case 'completed':
-      return {
-        kind: 'completed',
-        edits: edits(value.edits),
-        checks: checks(value.checks, allowed, correction, hostChecks),
-        ...archiveSelection(value.archiveResearch),
-        ...(typeof value.answer === 'string' && value.answer.trim()
-          ? { answer: value.answer }
-          : {}),
-      };
+      return completedReply(value, allowed, correction, hostChecks);
     case 'supplier':
       return supplier(value);
     case 'question':
       return { kind: 'question', question: required(value.question, 'question'), evidence: [] };
     case 'blocked':
       return { kind: 'blocked', reason: required(value.reason, 'reason'), evidence: [] };
+    case 'repair':
+      return localRepair(value);
     default:
       throw new StewardResponseError(
-        'response.kind: expected a top-level completed, supplier, question, or blocked outcome',
+        'response.kind: expected a top-level completed, repair, supplier, question, or blocked outcome',
       );
   }
+}
+
+/** Decode a completed proposal's authorized effects and optional complete supplier answer. */
+function completedReply(
+  value: Record<string, unknown>,
+  allowed: readonly string[],
+  correction: StewardCheckFailure | undefined,
+  hostChecks: readonly string[],
+): StewardResult {
+  return {
+    kind: 'completed',
+    edits: edits(value.edits),
+    checks: checks(value.checks, allowed, correction, hostChecks),
+    ...archiveSelection(value.archiveResearch),
+    ...(typeof value.answer === 'string' && value.answer.trim() ? { answer: value.answer } : {}),
+  };
+}
+
+/** Accept a steward finding without letting it supply progress evidence or new authority. */
+function localRepair(value: Record<string, unknown>): StewardResult {
+  const activity = value.activity;
+  if (activity !== 'documentation' && activity !== 'testing' && activity !== 'implementation')
+    throw new StewardResponseError(
+      'response.activity: expected documentation, testing or implementation',
+    );
+  return { kind: 'repair', activity, reason: required(value.reason, 'reason'), evidence: [] };
 }
 
 /** Accept only distinct report identities for copying checked evidence into the archive. */

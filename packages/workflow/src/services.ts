@@ -44,7 +44,10 @@ export type TaskOutcome =
 export type TaskEvent =
   | Observation
   | { plan: Plan; supplier?: SupplierLink }
-  | { position: { completed: number; activities: Readonly<Record<string, number>> } }
+  | {
+      position: { completed: number; activities: Readonly<Record<string, number>> };
+      repair?: ActivityRepair;
+    }
   | { candidate: Candidate; verdict: Verdict }
   | { feedback: Feedback }
   | { activation: ActivityCheckpoint }
@@ -100,6 +103,14 @@ export function interruptedRun(error: unknown, signal: AbortSignal, evidence?: r
 
 export type ActivityOutcome =
   | { kind: 'completed'; evidence: readonly string[]; answer?: string }
+  | {
+      kind: 'repair';
+      activity: Exclude<PlanActivity, 'release' | 'review'>;
+      reason: string;
+      evidence: readonly string[];
+      input?: string;
+      failedCheck?: StewardCheckFailure;
+    }
   | Omit<Extract<Feedback, { kind: 'supplier' }>, 'requester'>
   | Extract<DirectionResult, { kind: 'question' }>
   | {
@@ -133,6 +144,14 @@ export interface ActivityCheckpoint {
   index: number;
   step: Exclude<PlanActivity, 'release'>;
   outcome: ActivityOutcome;
+}
+
+export interface ActivityRepair {
+  milestone: string;
+  activity: string;
+  reason: string;
+  input?: string;
+  evidence: readonly string[];
 }
 
 export interface GoalRound {

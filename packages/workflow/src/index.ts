@@ -13,6 +13,7 @@ import { TaskRun } from './task-run.js';
 export type {
   ActivityCheckpoint,
   ActivityOutcome,
+  ActivityRepair,
   CompletedGoalOutcome,
   GoalRound,
   RoundOutcome,
