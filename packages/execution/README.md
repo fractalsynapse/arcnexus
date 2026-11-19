@@ -47,6 +47,10 @@ new test execution is claimed.
 
 ## Local activity repair
 
+Mapped MCP checks return their observed result before the caller continues.
+A completed response cannot hide a failed check recorded during that activation;
+the host reconciles unresolved observations before advancing the milestone.
+
 An unexpected check result returns its operation ID, original expectation, exact
 exit status and immutable log to the same accountable activity. The original
 milestone and engineering criteria stay unchanged. The host reruns the unresolved
