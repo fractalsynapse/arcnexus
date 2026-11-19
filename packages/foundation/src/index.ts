@@ -102,7 +102,9 @@ function identityInputPaths(
     ...new Set([
       ...files,
       ...componentFiles,
-      'packages/foundation/src/index.ts',
+      'package.json',
+      'package-lock.json',
+'      packages/foundation/src/index.ts',
       'packages/foundation/scripts/owner-quality.ts',
       '.eslintignore',
       '.prettierignore',
