@@ -363,6 +363,7 @@ for (const operation of ['format:check', 'lint'] as const) {
     const tree = new QualityFixture();
     try {
       tree.owner('alpha', 'packages/alpha');
+      tree.write('.prettierignore', '');
       tree.write('.gitignore', '/examples/\n');
       const path = 'packages/alpha/examples/probe.ts';
       tree.write(path, 'export const probe = 1;\n');
