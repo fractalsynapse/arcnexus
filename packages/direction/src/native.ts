@@ -85,7 +85,7 @@ function directorAssignment(
     ? { ...shape, plan: { kind: 'plan', plan: { milestones: shape.plan.plan.milestones } } }
     : shape;
   const assignment = {
-    revision: revisionInstructions(feedback),
+    revision: revisionInstructions(feedback, Boolean(request)),
     ...revisionShape,
     feedback,
     revisionContext: request && {
