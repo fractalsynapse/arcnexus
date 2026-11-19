@@ -92,6 +92,7 @@ function qualityIdentity(
   for (const path of [
     ...componentFiles,
     ...configurationInputs(operation),
+    ...prettierConfigurationInputs(operation, files),
     ...files,
     ...relevantIgnoreFiles,
     '.eslintignore',
