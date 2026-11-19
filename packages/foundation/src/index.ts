@@ -293,115 +293,54 @@ function readOptionalFile(path: string): string {
   }
 }
 
-/** Apply root and nested gitignore rules in directory order to one repository path. */
-function isIgnored(path: string): boolean {
-  let ignored = false;
-  const ignoreFiles = globSync('**/.gitignore').sort(
-    (left, right) => left.split('/').length - right.split('/').length,
-  );
-  for (const [index, ignoreFile] of ignoreFiles.entries()) {
-    const directory = ignoreFile.slice(0, -'.gitignore'.length).replace(/\/$/, '');
-    if (directory && !path.startsWith(`${directory}/`)) continue;
-    const relative = directory ? path.slice(directory.length + 1) : path;
-    const rules = readOptionalFile(ignoreFile).split(String.fromCharCode(10));
-    if (directory && isIgnoredDirectory(directory, ignoreFiles.slice(0, index))) continue;
-    const segments = relative.split('/');
-    let inherited = false;
-    for (let segment = 0; segment < segments.length; segment++) {
-      const candidate = segments.slice(0, segment + 1).join('/');
-      const result = matchesIgnoreRules(candidate, rules, segment < segments.length - 1);
-      if (result !== undefined) inherited = result;
-      if (inherited && segment < segments.length - 1) break;
+interface IgnoreScope {
+  directory: string;
+  matcher: ReturnType<typeof ignore>;
+}
+
+/** Walk maintained paths once, loading reachable ignore rules as each directory is entered. */
+function discoverMaintainedFiles(): string[] {
+  const files: string[] = [];
+  const ignoredRoots = new Set(['.git', 'node_modules', 'dist', '.test-build']);
+  const visit = (directory: string, inherited: readonly IgnoreScope[]): void => {
+    const ignorePath = directory === '.' ? '.gitignore' : `${directory}/.gitignore`;
+    const scopes = [...inherited];
+    if (existsSync(ignorePath)) {
+      const matcher = ignore();
+      matcher.add(readFileSync(ignorePath, 'utf8'));
+      scopes.push({ directory, matcher });
     }
-    if (inherited) ignored = true;
-    else if (matchesIgnoreRules(relative, rules) === false) ignored = false;
-  }
-  return ignored;
-}
-
-/** Check whether earlier ignore files exclude a directory before reading its rules. */
-function isIgnoredDirectory(directory: string, ignoreFiles: readonly string[]): boolean {
-  let ignored = false;
-  for (const ignoreFile of ignoreFiles) {
-    const base = ignoreFile.slice(0, -'.gitignore'.length).replace(/\/$/, '');
-    if (base && !directory.startsWith(`${base}/`)) continue;
-    if (base && base !== directory && isIgnoredDirectory(base, ignoreFiles)) continue;
-    const relative = base ? directory.slice(base.length + 1) : directory;
-    const rules = readOptionalFile(ignoreFile).split(String.fromCharCode(10));
-    let inherited = false;
-    const segments = relative.split('/');
-    for (let segment = 0; segment < segments.length; segment++) {
-      const candidate = segments.slice(0, segment + 1).join('/');
-      const result = matchesIgnoreRules(candidate, rules, true);
-      if (result !== undefined) inherited = result;
-      if (inherited && segment < segments.length - 1) break;
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const path = directory === '.' ? entry.name : `${directory}/${entry.name}`;
+      if (entry.isSymbolicLink()) continue;
+      if (entry.isDirectory()) {
+        if (ignoredRoots.has(path) || isIgnoredByScopes(path, scopes, true)) continue;
+        visit(path, scopes);
+      } else if (entry.isFile() && !isIgnoredByScopes(path, scopes, false)) {
+        files.push(path);
+      }
     }
-    if (inherited) ignored = true;
-    else if (matchesIgnoreRules(relative, rules, true) === false) ignored = false;
-  }
-  return ignored;
+  };
+  visit('.', []);
+  return files;
 }
 
-/** Remove only unescaped spaces and tabs at the end of a gitignore rule. */
-function trimUnescapedTrailingWhitespace(value: string): string {
-  let end = value.length;
-  while (end > 0 && (value[end - 1] === ' ' || value[end - 1] === '\t')) {
-    let slashes = 0;
-    for (let index = end - 2; index >= 0 && value[index] === '\\'; index--) slashes++;
-    if (slashes % 2 === 1) break;
-    end--;
-  }
-  return value.slice(0, end);
-}
-
-/** Match ordered gitignore rules against paths relative to one ignore file. */
-function matchesIgnoreRules(
+/** Apply each reachable ignore file in parent-first order, retaining later negations. */
+function isIgnoredByScopes(
   path: string,
-  rules: readonly string[],
-  isDirectory = false,
-): boolean | undefined {
-  let ignored: boolean | undefined;
-  for (const raw of rules) {
-    const rule = trimUnescapedTrailingWhitespace(raw);
-    if (!rule || (rule.startsWith('#') && !rule.startsWith('\\#'))) continue;
-    const negated = rule.startsWith('!');
-    const source = (negated ? rule.slice(1) : rule).replace(/^\\([#! ])/g, '$1');
-    const anchored = source.startsWith('/');
-    const directoryOnly = source.endsWith('/');
-    const pattern = source.replace(/^\//, '').replace(/\/$/, '');
-    const matcher = ignoreMatcher(pattern, anchored, directoryOnly, isDirectory);
-    const matches = matcher.test(path);
-    if (matches) ignored = !negated;
+  scopes: readonly IgnoreScope[],
+  directory: boolean,
+): boolean {
+  let ignored = false;
+  for (const { directory: base, matcher } of scopes) {
+    const relative = base === '.' ? path : path.slice(base.length + 1);
+    const result = matcher.test(directory ? `${relative}/` : relative);
+    if (result.ignored) ignored = true;
+    if (result.unignored) ignored = false;
   }
   return ignored;
 }
 
-/** Convert gitignore wildcards into path-aware matching. */
-function ignoreMatcher(
-  pattern: string,
-  anchored: boolean,
-  directoryOnly = false,
-  isDirectory = false,
-): RegExp {
-  const escaped = pattern
-    .replace(/\\([*?])/g, (_match, wildcard: string) => (wildcard === '*' ? '\uE000' : '\uE001'))
-    .replace(/[|\\{}()^$+.]/g, '\\$&');
-  const slashless = !anchored && !pattern.includes('/');
-  const expression = escaped
-    .replace(/\[!([^\]]+)\]/g, '[^$1]')
-    .replace(/\[([^\]]+)\]/g, '[$1]')
-    .replace(/\*\*\//g, '§/')
-    .replace(/\*\*/g, '§')
-    .replace(/\*/g, '[^/]*')
-    .replace(/\?/g, '[^/]')
-    .replace(/§\//g, '(?:.*/)?')
-    .replace(/§/g, '.*')
-    .replace(/\uE000/g, '\\*')
-    .replace(/\uE001/g, '\\?');
-  const prefix = slashless ? '(?:.*/)?' : '';
-  const descendants = directoryOnly ? (isDirectory ? '(?:/.*)?' : '/.+') : '(?:/.*)?';
-  return new RegExp(`^${prefix}(?:${expression})${descendants}$`);
-}
 /** Preserve repository formatter coverage while allowing package and fixture files. */
 function isFormatCovered(path: string): boolean {
   return /^(?:[^/]+\.(?:ts|json)|(?:apps|packages|scripts|fixtures)\/.+\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json|yaml|yml))$/.test(
