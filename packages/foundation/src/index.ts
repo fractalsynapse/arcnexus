@@ -72,12 +72,11 @@ interface QualityOperationBinding {
 export function qualityOperationAvailable(binding: QualityOperationBinding): boolean {
   if (binding.tool !== 'check' || binding.command !== 'npm') return false;
   const [run, operation, separatorOrContext, context, ...extra] = binding.args;
-  const hasCapturedSeparator = separatorOrContext === '--';
-  const ownerContext = hasCapturedSeparator ? context : separatorOrContext;
+  const ownerContext = separatorOrContext === '--' ? context : separatorOrContext;
   if (
     run !== 'run' ||
     typeof operation !== 'string' ||
-    !hasCapturedSeparator ||
+    separatorOrContext !== '--' ||
     context === undefined ||
     JSON.stringify(ownerContext) !== JSON.stringify({ context: 'owner' }) ||
     extra.length > 0 ||
@@ -85,9 +84,12 @@ export function qualityOperationAvailable(binding: QualityOperationBinding): boo
     binding.applicability !== `owner-${operation === 'format:check' ? 'format' : operation}-files`
   )
     return false;
+  return hasAvailableQualityScript(operation, binding.source);
+}
 
+/** Check the declared script and runner using the captured source when available. */
+function hasAvailableQualityScript(operation: string, source?: GuidanceSource): boolean {
   const runnerPath = 'packages/foundation/scripts/owner-quality.ts';
-  const source = binding.source;
   const manifest = source
     ? source.paths.includes('package.json')
       ? JSON.parse(source.read('package.json'))
@@ -99,9 +101,7 @@ export function qualityOperationAvailable(binding: QualityOperationBinding): boo
   const script = scripts[operation];
   if (typeof script !== 'string') return false;
   const tokens = script.trim().split(/\s+/);
-  const runnerAvailable = source
-    ? source.paths.includes(runnerPath)
-    : existsSync(runnerPath);
+  const runnerAvailable = source ? source.paths.includes(runnerPath) : existsSync(runnerPath);
   return (
     tokens.length === 3 &&
     tokens[0] === 'jiti' &&
