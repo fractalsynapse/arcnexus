@@ -277,6 +277,7 @@ function collectPrettierConfigurationPaths(
   root: string,
 ): void {
   const names = [
+    'package.json',
     '.prettierrc',
     '.prettierrc.yaml',
     '.prettierrc.yml',
