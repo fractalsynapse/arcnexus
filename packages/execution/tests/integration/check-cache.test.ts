@@ -31,6 +31,19 @@ test('a changed actual checkpoint invalidates earlier evidence', (t) => {
   assert.equal(reusableCheck(fixture.task.observations(), after), undefined);
 });
 
+test('an unrelated committed edit preserves scoped operation evidence', (t) => {
+  const fixture = new CheckCacheFixture(t);
+  const before = fixture.input();
+  const observed = fixture.observe();
+  const worktree = fixture.task.worktree!;
+  writeFileSync(join(worktree, 'unrelated.txt'), 'another owner');
+  git(worktree, 'add', 'unrelated.txt');
+  git(worktree, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com',
+    'commit', '-qm', 'Unrelated change');
+  assert.equal(fixture.input(), before);
+  assert.deepEqual(reusableCheck(fixture.task.observations(), fixture.input()), observed);
+});
+
 test('changed operation authority invalidates a retained successful observation', (t) => {
   const fixture = new CheckCacheFixture(t);
   const before = fixture.input();
