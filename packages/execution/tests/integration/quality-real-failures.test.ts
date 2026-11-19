@@ -22,10 +22,7 @@ test(
     const task = new StewardFixture(t, root).task;
     task.worktree = workspace;
     const { owner, file, components } = await discoverOwner(source);
-    const path = join(workspace, file);
-    const original = readFileSync(path, 'utf8');
-    const longFunction = Array.from({ length: 35 }, () => '  value += 1;').join('\n');
-    writeFileSync(path, original + `\nfunction qualityFailure(): number {\n  let value: number = "wrong";\n${longFunction}\n  return value;\n}\nqualityFailure();\n`);
+    injectFailures(workspace, file);
     Object.assign(task.capture, {
       source: { ...task.capture.source, root: source },
       components,
@@ -81,3 +78,11 @@ const qualityOperations = {
         'repository-types': { id: 'repository-types', category: 'build', command: 'npm',
           args: ['run', 'check'], cwd: '.', network: false },
 };
+
+/** Introduce both diagnostics into the selected owner file. */
+function injectFailures(workspace: string, file: string): void {
+  const path = join(workspace, file);
+  const original = readFileSync(path, 'utf8');
+  const longFunction = Array.from({ length: 35 }, () => '  value += 1;').join('\n');
+  writeFileSync(path, original + `\nfunction qualityFailure(): number {\n  let value: number = "wrong";\n${longFunction}\n  return value;\n}\nqualityFailure();\n`);
+}
