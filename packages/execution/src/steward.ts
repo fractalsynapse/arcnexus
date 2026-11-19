@@ -19,7 +19,7 @@ import { decodeSteward, StewardResponseError, type StewardResult } from './stewa
 import { supplierAnswerRequired, supplierContext } from './supplier-context.js';
 
 const correctionInstruction =
-  'Read failedCheck.log first. It is the latest observed failure. Preserve the earlier finding as history. Correct the current failure within the accepted milestone, or request a distinct contribution through Direction when new work is needed. The host reruns the original check with its original expectation.';
+  'Read failedCheck.log first. It is the latest observed failure. Preserve the earlier finding as history. Correct the current failure within the accepted milestone, then invoke the mapped owner check again with its original expectation. Request a distinct contribution through Direction only when new work belongs to another responsibility.';
 
 /** Run one Steward Agent activity and perform only the checked actions it requested. */
 export async function steward(
