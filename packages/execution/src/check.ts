@@ -35,23 +35,34 @@ export async function check(
 ): Promise<CheckResult> {
   signal.throwIfAborted();
   const { executable, args, cwd } = checkCommand(capture, worktree, id, owner);
-  const parameters = { id, command: executable, args, cwd, log };
   if (owner && !Object.hasOwn(capture.components, owner))
     throw new Error(`Unknown captured owner: ${owner}`);
   if (
     owner &&
     (capture.source.paths ?? []).some((path) => path.startsWith('.arc/architecture/components/'))
   ) assertCapturedOwnership(capture, worktree);
-  const reason = await ownerOperationInapplicability(capture, worktree, id, owner);
-  if (reason) {
-    writeFileSync(log, `Not applicable: ${reason}\n`, { mode: 0o600, flag: 'wx' });
-    return { ...parameters, status: 'not-applicable', reason, durationMs: 0 };
+  const applicability = await ownerOperationInapplicability(capture, worktree, id, owner);
+  if (applicability.reason) {
+    writeFileSync(log, `Not applicable: ${applicability.reason}\\n`, { mode: '600', flag: 'wx' });
+    return {
+      id, command: executable, args, cwd, log, selection: applicability.selection,
+      status: 'not-applicable', reason: applicability.reason, durationMs: 0,
+    };
   }
+  const selection = applicability.selection;
+  const runtime = selection && qualityRuntime(selection.operation);
+  const actualCommand = runtime ? join(worktree, 'node_modules/.bin', runtime.executable) : executable;
+  const actualArgs = runtime
+    ? [...runtime.args, '--', ...selection!.files.map((path) => resolve(worktree, path))]
+    : args;
   const start = performance.now();
   const sandbox = mounts(capture.source.root, worktree, common);
-  const invocation = [...sandbox, '--chdir', cwd, '--', executable, ...args];
+  const invocation = [...sandbox, '--chdir', cwd, '--', actualCommand, ...actualArgs];
   const { status } = await execute('/usr/bin/bwrap', invocation, { cwd: worktree, log, signal });
-  return { ...parameters, status, durationMs: Math.round(performance.now() - start) };
+  return {
+    id, command: actualCommand, args: actualArgs, cwd, log, selection,
+    status, durationMs: Math.round(performance.now() - start),
+  };
 }
 
 /** Refuse missing, added or changed ownership declarations against immutable capture. */
