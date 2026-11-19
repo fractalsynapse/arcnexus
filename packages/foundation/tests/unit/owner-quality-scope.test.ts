@@ -358,6 +358,36 @@ for (const [label, ignorePath, pattern, ignoredPath] of [
   });
 }
 
+for (const operation of ['format:check', 'lint'] as const) {
+  test(`${operation} keeps nested examples when the root directory alone is ignored`, async () => {
+    const tree = new QualityFixture();
+    try {
+      tree.owner('alpha', 'packages/alpha');
+      tree.write('.gitignore', '/examples/\n');
+      const path = 'packages/alpha/examples/probe.ts';
+      tree.write(path, 'export const probe = 1;\n');
+      assert((await selection(tree, operation)).files.includes(path));
+    } finally {
+      tree.close();
+    }
+  });
+
+  test(`${operation} ignores exactly one character for a question wildcard`, async () => {
+    const tree = new QualityFixture();
+    try {
+      tree.owner('alpha', 'packages/alpha');
+      tree.write('.gitignore', 'packages/alpha/probe?.ts\n');
+      tree.write('packages/alpha/probe1.ts', 'export const one = 1;\n');
+      tree.write('packages/alpha/probe12.ts', 'export const two = 2;\n');
+      const result = await selection(tree, operation);
+      assert(!result.files.includes('packages/alpha/probe1.ts'));
+      assert(result.files.includes('packages/alpha/probe12.ts'));
+    } finally {
+      tree.close();
+    }
+  });
+}
+
 for (const extension of ['jsx', 'tsx']) {
   test(`lint discovers configuration-enabled ${extension} files`, async () => {
     const tree = new QualityFixture();
