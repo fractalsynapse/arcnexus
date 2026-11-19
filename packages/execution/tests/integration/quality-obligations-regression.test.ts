@@ -19,6 +19,13 @@ const milestone: Milestone = {
   }],
 };
 
+const testing: Milestone = {
+  ...milestone,
+  steps: [{ activity: 'testing', checklist: [
+    { id: 'quality', criteria: ['quality'], expected: 'Red tests and passing formatting' },
+  ] }],
+};
+
 test('a satisfied expected-red owner test cannot satisfy omitted formatting in Testing', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-quality-red-'));
   const task = new StewardFixture(t, root).task;
@@ -40,12 +47,6 @@ test('a satisfied expected-red owner test cannot satisfy omitted formatting in T
     });
     return { kind: 'completed', edits: [], checks: [] };
   });
-  const testing: Milestone = {
-    ...milestone,
-    steps: [{ activity: 'testing', checklist: [
-      { id: 'quality', criteria: ['quality'], expected: 'Red tests and passing formatting' },
-    ] }],
-  };
   const result = await steward(
     new Agent(new Architecture()), task, testing, 'testing', AbortSignal.timeout(5000),
   );
