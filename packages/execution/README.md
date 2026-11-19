@@ -181,3 +181,7 @@ Execution validates model-requested repair targets with Workflow's same target
 validator before accepting the response. An unavailable or forward target returns
 the diagnostic and available rewind choices to the caller. It does not checkpoint
 the malformed response, skip unfinished Steps, or invoke Direction (#653).
+
+On restart, a retained malformed repair target resumes the original caller at its
+unchanged cursor. It never executes the invalid transition or rewrites the failed
+observation. Previously valid repair transitions still replay normally (#653).
