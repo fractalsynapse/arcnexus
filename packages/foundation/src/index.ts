@@ -321,7 +321,9 @@ interface IgnoreScope {
   matcher: IgnoreMatcher;
 }
 
-const createIgnore = createRequire(import.meta.url)('ignore') as () => IgnoreMatcher;
+const createIgnore = createRequire(import.meta.url)('ignore') as (
+  options: IgnoreOptions,
+) => IgnoreMatcher;
 
 /** Walk maintained paths once, loading reachable ignore rules as each directory is entered. */
 function discoverMaintainedFiles(): string[] {
