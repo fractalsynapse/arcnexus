@@ -173,6 +173,21 @@ function resolveReferences(
   return { role, profile, standards, operations };
 }
 
+/** Reject malformed owner-scoped quality declarations before activation. */
+function validateApplicability(
+  id: string,
+  operation: { applicability?: string; tool?: string; command?: string; args?: unknown[] },
+) {
+  const supported = ['owner-test-suites', 'owner-format-files', 'owner-lint-files'];
+  if (operation.applicability === undefined) return;
+  if (!supported.includes(operation.applicability))
+    throw new Error(`Unsupported applicability for operation ${id}: ${operation.applicability}`);
+  if (operation.tool !== 'check' || !operation.command || !Array.isArray(operation.args))
+    throw new Error(`Applicable operation ${id} requires a check handler, command and arguments`);
+  if (!operation.args.some((argument) => typeof argument === 'object' && argument !== null && 'context' in argument && argument.context === 'owner'))
+    throw new Error(`Applicable operation ${id} must preserve owner-scoped arguments`);
+}
+
 /** Resolve a declared ID without accepting inherited object properties. */
 function reference<T>(values: Readonly<Record<string, T>>, id: string | undefined, family: string) {
   const value = id && Object.hasOwn(values, id) ? values[id] : undefined;
