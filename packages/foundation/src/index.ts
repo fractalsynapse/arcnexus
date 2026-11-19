@@ -23,6 +23,17 @@ export async function selectQualityInputs(
   const componentFiles = globSync('.arc/architecture/components/*.yaml');
   const components: Component[] = componentFiles.map((path) => parse(readFileSync(path, 'utf8')));
   assert(!owner || components.some(({ id }) => id === owner), `Unknown owner: ${owner}`);
+  const files = await selectOwnedQualityFiles(operation, owner, components);
+  const identity = qualityIdentity(operation, owner, files, components, componentFiles);
+  return { operation, owner, files, identity };
+}
+
+/** Resolve applicable maintained paths through tool configuration and Team ownership. */
+async function selectOwnedQualityFiles(
+  operation: QualitySelection['operation'],
+  owner: string | undefined,
+  components: readonly Component[],
+): Promise<string[]> {
   const ignored = readOptionalFile('.gitignore').split(/\r?\n/);
   const candidates = globSync('**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}')
     .filter((path) => !isIgnored(path, ignored))
@@ -31,36 +42,31 @@ export async function selectQualityInputs(
     .sort();
   const eslint = operation === 'lint' ? new ESLint() : undefined;
   const files: string[] = [];
-  const owners = new Map<string, string>();
   for (const path of candidates) {
     if (eslint && (await eslint.isPathIgnored(path))) continue;
-    if (operation === 'format:check' && (await getFileInfo(path)).ignored) continue;
+    if (operation === 'format:check' && (await getFileInfo(path, { ignorePath: '.prettierignore' })).ignored) continue;
     const resolution = team.ownerFor(components, path);
     assert.notEqual(resolution.kind, 'collision', `Ambiguous ownership: ${path}`);
     assert.equal(resolution.kind, 'owned', `Unowned maintained input: ${path}`);
-    if (owner && resolution.owner.id !== owner) continue;
-    files.push(path);
-    owners.set(path, resolution.owner.id);
+    if (!owner || resolution.owner.id === owner) files.push(path);
   }
+  return files;
+}
+
+/** Hash selected ownership and every configuration input that affects scope. */
+function qualityIdentity(
+  operation: QualitySelection['operation'],
+  owner: string | undefined,
+  files: readonly string[],
+  components: readonly Component[],
+  componentFiles: readonly string[],
+): string {
   const identity = createHash('sha256');
-  identity.update(JSON.stringify({ operation, owner, files, owners: [...owners] }));
-  for (const path of [
-    ...componentFiles,
-    '.gitignore',
-    '.eslintignore',
-    '.prettierignore',
-    '.prettierrc.yaml',
-    'eslint.config.ts',
-    'package.json',
-    'package-lock.json',
-  ]) {
-    try {
-      identity.update(path).update(readFileSync(path));
-    } catch {
-      identity.update(path).update('missing');
-    }
+  identity.update(JSON.stringify({ operation, owner, files, owners: files.map((path) => [path, team.ownerFor(components, path)]) }));
+  for (const path of [...componentFiles, '.gitignore', '.eslintignore', '.prettierignore', '.prettierrc.yaml', 'eslint.config.ts', 'package.json', 'package-lock.json']) {
+    identity.update(path).update(readOptionalFile(path) || 'missing');
   }
-  return { operation, owner, files, identity: identity.digest('hex') };
+  return identity.digest('hex');
 }
 
 /** Identify exact UTF-8 content used in reviewed proposals and recorded source observations. */
