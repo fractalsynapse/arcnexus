@@ -92,12 +92,13 @@ test('public request rejects a check without an implementation', () => {
   );
 });
 
-for (const missing of ['manifest', 'script', 'runner'] as const) {
-  test(`activation rejects a missing captured ${missing} before invoking the agent`, () => {
-    const capture = fixture(
-      { ...check('format:check'), applicability: 'owner-format-files' },
-      missing,
-    );
+for (const [applicability, operation] of [
+  ['owner-format-files', 'format:check'],
+  ['owner-lint-files', 'lint'],
+] as const) {
+  for (const missing of ['manifest', 'script', 'runner'] as const) {
+    test(`activation rejects a missing captured ${missing} for ${applicability}`, () => {
+      const capture = fixture({ ...check(operation), applicability }, missing);
     let invoked = false;
     const agent = new Agent(new Architecture());
     assert.throws(() => agent.activate(
