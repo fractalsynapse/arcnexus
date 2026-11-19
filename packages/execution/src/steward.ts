@@ -25,6 +25,7 @@ import { supplierAnswerRequired, supplierContext } from './supplier-context.js';
 import { stewardProgress } from './steward-progress.js';
 import { retainedTesting } from './testing-rewind.js';
 import { establishedTestingRed } from './testing-red.js';
+import { retainedEvidence } from './context-evidence.js';
 
 const correctionInstruction =
   'Read failedCheck.log first. It is the latest observed failure. Preserve the earlier finding as history. Correct the current failure within the accepted milestone, or request a distinct contribution through Direction when new work is needed. The host reruns the original check with its original expectation.';
@@ -175,7 +176,7 @@ async function askSteward(
         step: milestone.steps.find((step) => step.activity === scope.activity),
       },
       acceptance: milestone.criteria,
-      evidence: task.evidence.slice(),
+      evidence: retainedEvidence(task, [task.pendingCheck(scope)?.log]),
     },
     signal,
     stewardContinuation(task, milestone, scope, signal),
@@ -196,7 +197,7 @@ function stewardContinuation(
       ...(await stewardAssignment(task, milestone, scope, signal)),
       ...archiveContext(task, scope),
     },
-    evidence: task.evidence.slice(),
+    evidence: retainedEvidence(task, [task.pendingCheck(scope)?.log]),
   });
 }
 
@@ -267,7 +268,7 @@ function responseShape(formatter: boolean) {
     repair:
       'Repair tool and check failures within this milestone. For a self-review finding return kind repair, activity documentation, testing or implementation, and the exact reason; choose the earliest affected applicable activity. If localRepair is present, read its diagnostic. When targetCompleted is true, that target already finished; continue the current activity using its results. Completed Testing with a satisfied expected-fail check is valid retained red evidence. A rewind does not require reproducing it against the implemented candidate. For behavior-preserving corrections, characterize with expected pass. If you mistakenly predicted failure but the actual check passed, correct the prediction with expected pass through the same tool. The host retains the original observation and requires a current passing recheck; this neither invents red nor changes goal acceptance. Add new red only for a relevant new behavioral regression. completedActivities comes from the host cursor. Absence of localRepair is normal initially. Request a supplier only for distinct work requiring another responsibility. Return blocked only for an unavailable prerequisite, not for an ordinary repairable defect.',
     instructions:
-      'Use the mapped local MCP tools for project reads, checked edits and owner checks. The read-only filesystem is deliberate. Make authorized changes through the mapped checked-edit MCP tool even when direct writes are unavailable. Attempt that operation for an owned path before reporting that edits are blocked, and report any exact refusal. A successful edit is already recorded. Mapped checks execute during the MCP call and return their actual status and log. Read that result, correct an ordinary defect locally and recheck without weakening a required-pass check. These tools govern this activation; authored product code may use declared public APIs. Put any narration in summary and omit checks from your reply. If another edit is refused, correct the call or request a distinct supplier contribution. Link its accepted milestone when known, or give the new contribution its own ID. End with one JSON object with kind completed, or kind blocked with a reason. Include answer in a completed response when answering a supplier question. Read retained evidence with read-file. Checks in currentChecks are host-managed. Preserve accepted work when correcting a diagnostic. Only the host performs assembled verification and delivery.',
+      'Unfinished assigned work is not a blocked outcome: continue the current activity with mapped operations until its checklist is met. Request optional research for missing knowledge. Do not return blocked or a self-repair merely as a progress report. Historical evidence is supplied through a complete readable index; use mapped read-file and nextOffset to retrieve relevant observations. Current diagnostics and accepted criteria are authoritative. Use the mapped local MCP tools for project reads, checked edits and owner checks. The read-only filesystem is deliberate. Make authorized changes through the mapped checked-edit MCP tool even when direct writes are unavailable. Attempt that operation for an owned path before reporting that edits are blocked, and report any exact refusal. A successful edit is already recorded. Mapped checks execute during the MCP call and return their actual status and log. Read that result, correct an ordinary defect locally and recheck without weakening a required-pass check. These tools govern this activation; authored product code may use declared public APIs. Put any narration in summary and omit checks from your reply. If another edit is refused, correct the call or request a distinct supplier contribution. Link its accepted milestone when known, or give the new contribution its own ID. End with one JSON object with kind completed, or kind blocked with a reason. Include answer in a completed response when answering a supplier question. Read retained evidence with read-file. Checks in currentChecks are host-managed. Preserve accepted work when correcting a diagnostic. Only the host performs assembled verification and delivery.',
     requests: { formatAvailable: formatter },
   };
 }

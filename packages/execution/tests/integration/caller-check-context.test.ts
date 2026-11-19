@@ -8,6 +8,7 @@ import { Architecture, type TaskContext } from '../../../architecture/src/index.
 import { activities, type Milestone } from '../../../direction/src/index.js';
 import { steward } from '../../src/index.js';
 import { StewardFixture } from '../fixtures/steward.js';
+import { contextEvidence } from '../fixtures/context-evidence.js';
 
 /** Reproduce a newer MCP observation arriving before the same caller repairs an invalid reply. */
 class CallerCheckContext {
@@ -49,7 +50,7 @@ class CallerCheckContext {
       assert.equal(assignment.failedCheck?.expected, 'pass');
       this.observe(0, 'Corrected');
     }
-    assert(data.evidence?.includes(this.logs[0]!));
+    assert(contextEvidence(this.task, data).includes(this.logs[0]!));
     return { kind: 'completed', edits: [], checks: [] };
   }
 

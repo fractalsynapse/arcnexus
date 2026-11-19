@@ -54,19 +54,16 @@ class InboxCheckContext {
     };
     this.task.ask = async () => answer;
     t.after(() => this.task.close());
+    for (let index = 0; index < 150; index++) this.task.store('history.log', `Retained ${index}`);
     this.observe(1, 'Original failure');
     t.mock.method(this.agent, 'activate', async (input: ActivationInput) => this.reply(input));
   }
 
   /** Supply research separately and require the original actor to receive the newest check. */
-  private reply({ selection, task }: ActivationInput) {
-    if (selection.activity === 'research') {
-      assert(
-        task.evidence?.includes(this.logs[1]!),
-        'Research must see the current check reference',
-      );
-      return report;
-    }
+  private reply(input: ActivationInput) {
+    const { selection, task } = input;
+    this.verifyEvidence(input);
+    if (selection.activity === 'research') return report;
     const assignment = task.assignment as CallerAssignment;
     if (++this.calls === 1) {
       assert.equal(assignment.failedCheck?.log, this.logs[0]);
@@ -87,6 +84,19 @@ class InboxCheckContext {
     }
     this.verifyAnswer(assignment);
     return { kind: 'completed', edits: [], checks: [] };
+  }
+
+  /** Keep every caller and research continuation bounded while exposing the newest observation. */
+  private verifyEvidence({ selection, task }: ActivationInput) {
+    assert(
+      (task.evidence?.length ?? 0) < 8,
+      'Inbox continuation must not replay all retained paths',
+    );
+    if (selection.activity === 'research')
+      assert(
+        task.evidence?.includes(this.logs[1]!),
+        'Research must see the current check reference',
+      );
   }
 
   /** Verify the complete answer survives the context refresh alongside retained check evidence. */

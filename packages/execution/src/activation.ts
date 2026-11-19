@@ -12,6 +12,7 @@ import { ResearchInbox } from './research.js';
 import { Clarifications } from './clarifications.js';
 import { ActivationTools } from './activation-tools.js';
 import { LocalMcp } from './mcp.js';
+import { retainedEvidence } from './context-evidence.js';
 
 type ActivityData = Omit<TaskContext, 'goal' | 'worktree'>;
 export type ContextRefresh = (input: ActivityData) => Promise<ActivityData>;
@@ -52,16 +53,13 @@ function actorInvoker(
   refresh?: ContextRefresh,
 ) {
   let invoked = false;
+  let observed = task.evidence.length;
   return async (selection: ActivitySelection, input: ActivityData) => {
     const caller =
       selection.component === original.component && selection.activity === original.activity;
     const current = caller && invoked && refresh ? await refresh(input) : input;
-    const context = {
-      ...current,
-      goal: activationGoal(task),
-      worktree: task.worktree ?? task.capture.source.root,
-    };
-    if (invoked) context.evidence = [...new Set([...(current.evidence ?? []), ...task.evidence])];
+    const context = invocationContext(task, current, invoked ? observed : undefined);
+    observed = task.evidence.length;
     if (caller) invoked = true;
     return agent.activate(
       { capture: task.capture, selection, task: context },
@@ -69,6 +67,24 @@ function actorInvoker(
       signal,
     );
   };
+}
+
+/** Preserve explicit initial input and add current indexed history only when resuming an actor. */
+function invocationContext(task: HostTask, current: ActivityData, observed?: number): TaskContext {
+  const context = {
+    ...current,
+    goal: activationGoal(task),
+    worktree: task.worktree ?? task.capture.source.root,
+  };
+  if (observed !== undefined)
+    context.evidence = [
+      ...new Set([
+        ...(current.evidence ?? []),
+        ...retainedEvidence(task),
+        ...task.evidence.slice(observed),
+      ]),
+    ];
+  return context;
 }
 
 /** Use the verified delivery purpose for prerequisite actors while preserving canonical retry identity. */
