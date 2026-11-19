@@ -48,7 +48,10 @@ test('identity tracks a nested ignore edit even when selected paths stay unchang
 test('identity tracks a non-TypeScript configuration dependency', async () => {
   const tree = fixture();
   try {
-    tree.write('eslint.config.ts', "import rules from './rules.json' with { type: 'json' };\nexport default [rules];\n");
+    tree.write(
+      'eslint.config.ts',
+      "import rules from './rules.json' with { type: 'json' };\nexport default [rules];\n",
+    );
     tree.write('rules.json', '{"rules":{}}\n');
     const before = await selection(tree, 'lint');
     tree.write('rules.json', '{"rules":{"semi":"error"}}\n');
