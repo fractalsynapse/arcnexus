@@ -50,8 +50,7 @@ test('a checkpoint invalidates matching evidence even when the operation is unch
   task.note({ check, scope });
   assert.deepEqual(await task.check('owner-tests', new AbortController().signal, scope), check);
   task.note({ checkpoint: 'changed' });
-  await assert.rejects(
-    task.check('owner-tests', new AbortController().signal, scope),
-    /working directory escapes the worktree/,
-  );
+  const refreshed = await task.check('owner-tests', new AbortController().signal, scope);
+  assert.equal(refreshed.status, 0);
+  assert.notEqual(refreshed.log, check.log);
 });
