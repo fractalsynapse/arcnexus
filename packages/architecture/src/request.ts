@@ -189,7 +189,10 @@ function validateApplicability(
     throw new Error(`Applicable operation ${id} must preserve owner-scoped arguments`);
   if (
     operation.applicability !== 'owner-test-suites' &&
-    !qualityOperationAvailable(operation as Parameters<typeof qualityOperationAvailable>[0])
+    !qualityOperationAvailable({
+      ...operation,
+      source: capture.source,
+    } as Parameters<typeof qualityOperationAvailable>[0])
   )
     throw new Error(`Unavailable quality implementation for operation ${id}`);
 }
