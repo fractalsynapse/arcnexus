@@ -76,6 +76,7 @@ function qualityIdentity(
   );
   for (const path of [
     ...componentFiles,
+    ...files.flatMap((file) => [file, readOptionalFile(file)]),
     '.gitignore',
     '.eslintignore',
     '.prettierignore',
