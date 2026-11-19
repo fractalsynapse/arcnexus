@@ -39,6 +39,53 @@ const lint: Binding = {
   args: ['run', 'lint', { context: 'owner' }],
 };
 
+const approvedFormat = { ...format, args: ['run', 'format:check', '--', { context: 'owner' }] };
+const approvedLint = { ...lint, args: ['run', 'lint', '--', { context: 'owner' }] };
+
+test('public capability accepts the captured owner-format operation binding', () => {
+  assert.equal(capability()(approvedFormat), true);
+});
+
+test('public capability accepts the captured owner-lint binding with operation ID quality', () => {
+  const binding = { ...approvedLint, id: 'quality', category: 'check' };
+  assert.equal(capability()(binding), true);
+});
+
+test('public capability rejects mismatched captured applicability and unknown bindings', () => {
+  assert.equal(capability()({ ...approvedFormat, applicability: 'owner-lint-files' }), false);
+  assert.equal(capability()({ ...approvedLint, args: ['run', 'unknown', '--', { context: 'owner' }] }), false);
+});
+
+test('public capability rejects unavailable command and runner for captured bindings', () => {
+  assert.equal(capability()({ ...approvedFormat, command: '/missing-quality-command' }), false);
+  const tree = new QualityFixture();
+  const previous = process.cwd();
+  try {
+    rmSync(join(tree.root, 'packages/foundation/scripts/owner-quality.ts'));
+    process.chdir(tree.root);
+    assert.equal(capability()(approvedLint), false);
+  } finally {
+    process.chdir(previous);
+    tree.close();
+  }
+});
+
+test('captured binding inspection does not execute its quality command or mutate inputs', () => {
+  const tree = new QualityFixture();
+  const previous = process.cwd();
+  try {
+    const binding = structuredClone(approvedLint);
+    const before = readFileSync(join(tree.root, 'package.json'));
+    process.chdir(tree.root);
+    capability()(binding);
+    assert.deepEqual(binding, approvedLint);
+    assert.deepEqual(readFileSync('package.json'), before);
+  } finally {
+    process.chdir(previous);
+    tree.close();
+  }
+});
+
 test('public capability recognizes the available owner-scoped format binding', () => {
   assert.equal(capability()(format), true);
 });
