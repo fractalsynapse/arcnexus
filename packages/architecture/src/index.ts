@@ -29,6 +29,11 @@ export class Architecture {
   request(capture: Capture, selection: ActivitySelection, task?: TaskContext): AgentInspection {
     return buildCodexRequest(capture, selection, task);
   }
+
+  /** Bind one foreground phase to the supplied captured inputs and journal. */
+  phase(input: ConstructorParameters<typeof ArchitecturePhase>[0]): ArchitecturePhase {
+    return new ArchitecturePhase(input);
+  }
 }
 
 export const architecturePlugin = {
