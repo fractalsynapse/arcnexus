@@ -14,8 +14,12 @@ const remote = 'https://github.com/example/fixture.git';
 const signal = new AbortController().signal;
 
 interface ChildAdmission {
-  admitChild(input: TaskInput, parent: Journal, scope: string, signal: AbortSignal):
-    Promise<HostTask | TaskOutcome>;
+  admitChild(
+    input: TaskInput,
+    parent: Journal,
+    scope: string,
+    signal: AbortSignal,
+  ): Promise<HostTask | TaskOutcome>;
 }
 
 /** Exercise the public Execution admission boundary against a clean local Git source. */
@@ -33,27 +37,42 @@ class AdmissionScenario {
     this.root = join(directory, 'project');
     mkdirSync(this.root);
     this.git('init', '-q');
-    this.git('-c', 'user.name=fixture', '-c', 'user.email=fixture@example.com',
-      'commit', '--allow-empty', '-qm', 'base');
+    this.git(
+      '-c',
+      'user.name=fixture',
+      '-c',
+      'user.email=fixture@example.com',
+      'commit',
+      '--allow-empty',
+      '-qm',
+      'base',
+    );
     this.git('branch', 'staging');
     this.git('remote', 'add', 'origin', this.root);
     const common = join(this.root, '.git');
-    writeFileSync(join(common, 'bindings.yaml'),
-      'schemaVersion: 1\ntools:\n  codex: /bin/true\n');
+    writeFileSync(join(common, 'bindings.yaml'), 'schemaVersion: 1\ntools:\n  codex: /bin/true\n');
     this.capture = {
       source: {
-        root: this.root, remote, revision: this.git('rev-parse', 'HEAD'),
-        paths: [], read: () => '',
+        root: this.root,
+        remote,
+        revision: this.git('rev-parse', 'HEAD'),
+        paths: [],
+        read: () => '',
       },
       project: {
         delivery: { baseBranch: 'staging', protectedBranch: 'main' },
-        checks: { acceptance: ['fixture'] }, bindings: '.git/bindings.yaml',
+        checks: { acceptance: ['fixture'] },
+        bindings: '.git/bindings.yaml',
       },
     } as unknown as Capture;
     const architecture = new Architecture();
     t.mock.method(architecture, 'capture', () => this.capture);
     this.coordination = new Coordination(join(directory, 'state'));
-    this.execution = new Execution(architecture, this.coordination, join(directory, 'state')) as unknown as ChildAdmission;
+    this.execution = new Execution(
+      architecture,
+      this.coordination,
+      join(directory, 'state'),
+    ) as unknown as ChildAdmission;
     const parent = this.coordination.admit(remote, 'Architect phase');
     assert(parent instanceof Journal);
     this.parent = parent;
@@ -111,10 +130,11 @@ test('a repeated child retains its identity and interrupted observations', async
   const resumed = await fixture.admit('Prerequisite', 'prerequisite-1');
   assert(resumed instanceof HostTask);
   assert.equal(resumed.taskID, first.taskID);
-  for (const observation of observations) assert.deepEqual(
-    resumed.observations().find((event) => JSON.stringify(event) === JSON.stringify(observation)),
-    observation,
-  );
+  for (const observation of observations)
+    assert.deepEqual(
+      resumed.observations().find((event) => JSON.stringify(event) === JSON.stringify(observation)),
+      observation,
+    );
   resumed.finish({ kind: 'failed', reason: 'fixture', evidence: [] });
   resumed.close();
   fixture.parent.finish({ kind: 'completed' });
@@ -125,7 +145,9 @@ test('child admission performs normal preflight before claiming a journal', asyn
   const fixture = new AdmissionScenario(t);
   writeFileSync(join(fixture.root, 'dirty.txt'), 'dirty');
   const result = await fixture.admit('Prerequisite');
+  assert(!(result instanceof HostTask));
   assert.equal(result.kind, 'invalid');
+  assert('reason' in result);
   assert.match(result.reason, /clean working tree/);
   fixture.parent.finish({ kind: 'completed' });
   fixture.parent.close();
