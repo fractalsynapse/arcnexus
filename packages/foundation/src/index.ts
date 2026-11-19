@@ -189,8 +189,6 @@ function parentDirectories(file: string): string[] {
   return directories;
 }
 
-
-
 /** Follow local imports from quality configuration without hashing unrelated source. */
 function configurationInputs(operation: QualitySelection['operation']): string[] {
   const pending = operation === 'lint' ? ['eslint.config.ts'] : [];
