@@ -191,6 +191,33 @@ test('an optional owner check without a suite records inapplicability before exe
 });
 
 test(
+  'owner test applicability agrees with Foundation discovery at the confined boundary',
+  { skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1' },
+  async (t) => {
+    const { root, workspace } = fixture(t);
+    const common = join(root, 'common');
+    mkdirSync(common);
+    const authority = ownerCheckCapture(workspace);
+    const components = Object.values(authority.components);
+    for (const name of ['other', 'one']) {
+      const suite = join(workspace, `packages/${name}/tests/unit`);
+      mkdirSync(suite, { recursive: true });
+      writeFileSync(join(suite, 'example.test.ts'), '');
+      const selected = hasOwnerTestSuites(workspace, 'one', components);
+      const result = await check(
+        authority, workspace, common, 'owner-tests', 'one',
+        join(root, `${name}.log`), AbortSignal.timeout(5_000),
+      );
+      assert.equal(result.status === 'not-applicable', !selected);
+      if (selected) {
+        assert.equal(result.status, 0);
+        assert.match(readFileSync(result.log, 'utf8'), /owner check executed/);
+      }
+    }
+  },
+);
+
+test(
   'an added source suite and a required check both reach the confined command',
   { skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1' },
   async (t) => {
