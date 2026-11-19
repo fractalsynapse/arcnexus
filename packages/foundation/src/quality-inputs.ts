@@ -26,17 +26,14 @@ export function configurationInputs(operation: 'format:check' | 'lint', root: st
   return [...visited].sort();
 }
 
-/** Resolve a static local import across supported TypeScript and JavaScript extensions. */
+/** Resolve explicit imports exactly and extensionless imports for bounded discovery. */
 function resolveConfigurationImport(path: string, specifier: string, root: string): string {
   if (!specifier.startsWith('.')) return path;
   const resolved = normalize(join(dirname(path), specifier));
-  const base = resolved.replace(/\.(?:[cm]?[jt]sx?)$/, '');
-  const candidates = [
-    resolved,
-    ...['ts', 'tsx', 'mts', 'cts', 'js', 'jsx', 'mjs', 'cjs'].map(
-      (extension) => `${base}.${extension}`,
-    ),
-  ];
+  if (/\.[cm]?[jt]sx?$/.test(specifier)) return resolved;
+  const candidates = ['ts', 'tsx', 'mts', 'cts', 'js', 'jsx', 'mjs', 'cjs'].map(
+    (extension) => `${resolved}.${extension}`,
+  );
   return candidates.find((candidate) => readConfigurationFile(candidate, root) !== '') ?? resolved;
 }
 
