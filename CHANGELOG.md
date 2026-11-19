@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Preserve established Testing red after a mistaken passing prediction, requiring matching actual diagnostics and unchanged milestone authority (#652).
+
 - Preserve completed activity and initial red evidence across local rewinds; repair mistaken expected-fail predictions after actual passes, preserving required-pass failures and a required current check (#651).
 
 - Verify candidates with their locked dependency tree in the existing networkless confinement; retain prerequisite failures without counting them as expected failing tests (#649).

@@ -167,3 +167,12 @@ An actual failure of a required-pass check cannot become expected-red. Captured
 criteria, ownership, operations and independent assembled verification remain
 unchanged. Use the same caller repair for Testing and Implementation; no phase
 exception or separate recovery lifecycle is needed.
+
+A passing prediction during Testing must not erase an already observed expected-red
+regression. Testing may correct that prediction only when the actual failing
+command has the same diagnostics as retained red under the same milestone,
+acceptance and captured authority. The host retains both requests and results and
+requires another real check. New failures, missing evidence and dependency setup
+failures do not qualify. Implementation and assembled passing checks remain
+mandatory; this is classification of existing red, not acceptance of broken code
+(#652).
