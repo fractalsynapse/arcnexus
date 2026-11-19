@@ -54,7 +54,15 @@ for (const [component, activity, profile] of [
     const records = await scenario(t, component, activity, profile);
     assert.deepEqual(
       records.filter((entry) => entry.nativeInvocation).map((entry) => entry.nativeInvocation),
-      [{ inputBytes: Buffer.byteLength(input, 'utf8'), component, activity, model: 'captured-model', profile }],
+      [
+        {
+          inputBytes: Buffer.byteLength(input, 'utf8'),
+          component,
+          activity,
+          model: 'captured-model',
+          profile,
+        },
+      ],
     );
     assert(Buffer.byteLength(input, 'utf8') > input.length);
   });
