@@ -169,17 +169,16 @@ function revisionQuestion(value: Record<string, unknown>): DirectionResult {
   return value as DirectionResult;
 }
 
-/** Reject cursor entries that do not refer to a pending accepted milestone. */
+/** Reject cursor entries that do not refer to an accepted milestone or valid Step. */
 function validatePositions(
   positions: Readonly<Record<string, number>>,
   accepted: Plan,
-  completed: number,
 ): void {
   for (const [id, offset] of Object.entries(positions)) {
-    const index = accepted.milestones.findIndex((milestone) => milestone.id === id);
-    if (index < 0 || index < completed)
-      throw new DirectorResponseError(`position.activities.${id}: not a pending accepted milestone`);
-    if (!Number.isInteger(offset) || offset < 0 || offset > accepted.milestones[index]!.steps.length)
+    const milestone = accepted.milestones.find((entry) => entry.id === id);
+    if (!milestone)
+      throw new DirectorResponseError(`position.activities.${id}: not an accepted milestone`);
+    if (!Number.isInteger(offset) || offset < 0 || offset > milestone.steps.length)
       throw new DirectorResponseError(`position.activities.${id}: outside accepted Steps`);
   }
 }
