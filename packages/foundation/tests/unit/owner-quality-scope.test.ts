@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 
@@ -15,8 +23,13 @@ class QualityFixture {
     mkdirSync('.test-build', { recursive: true });
     this.root = mkdtempSync(resolve('.test-build/quality-'));
     for (const path of [
-      'package.json', '.prettierignore', '.prettierrc.yaml', 'eslint.config.ts',
-      'packages/foundation/scripts', 'packages/foundation/src', 'packages/team/src',
+      'package.json',
+      '.prettierignore',
+      '.prettierrc.yaml',
+      'eslint.config.ts',
+      'packages/foundation/scripts',
+      'packages/foundation/src',
+      'packages/team/src',
     ]) {
       mkdirSync(join(this.root, path, '..'), { recursive: true });
       cpSync(path, join(this.root, path), { recursive: true });
