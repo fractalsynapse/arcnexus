@@ -471,6 +471,21 @@ for (const operation of ['format:check', 'lint'] as const) {
       }
     });
 
+    test(`${operation} ${owner} restores a directory from its accessible parent ignore file`, async () => {
+      const tree = new QualityFixture();
+      try {
+        tree.owner('alpha', 'packages/alpha');
+        tree.write('.prettierignore', '');
+        tree.write('.gitignore', 'packages/alpha/generated/\n');
+        tree.write('packages/alpha/.gitignore', '!generated/\n!generated/probe.ts\n');
+        const path = 'packages/alpha/generated/probe.ts';
+        tree.write(path, 'export const probe = 1;\n');
+        assert((await selection(tree, operation, owner)).files.includes(path));
+      } finally {
+        tree.close();
+      }
+    });
+
     test(`${operation} ${owner} permits restoration by an applicable ancestor ignore file`, async () => {
       const tree = new QualityFixture();
       try {
