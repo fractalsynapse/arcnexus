@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
+import { QualityFixture, selection } from './quality-fixture.js';
 
 for (const operation of ['format:check', 'lint'] as const) {
   test(`${operation} rejects an unknown owner with its identity`, () => {
