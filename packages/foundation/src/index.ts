@@ -37,7 +37,6 @@ async function selectOwnedQualityFiles(
   const candidates = globSync(operation === 'lint' ? '**/*' : '**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}')
     .filter((path) => !isIgnored(path))
     .filter((path) => operation !== 'format:check' || isFormatCovered(path))
-    .filter((path) => operation !== 'lint' || /\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx)$/.test(path))
     .sort();
   const eslint = operation === 'lint' ? new ESLint() : undefined;
   const files: string[] = [];
