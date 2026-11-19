@@ -13,7 +13,12 @@ const milestone: Milestone = {
   id: 'quality',
   owner: 'owner',
   criteria: [{ id: 'quality', description: 'Owner checks are satisfied' }],
-  steps: [{ activity: 'implementation', checklist: [{ id: 'quality', criteria: ['quality'], expected: 'Checks pass' }] }],
+  steps: [
+    {
+      activity: 'implementation',
+      checklist: [{ id: 'quality', criteria: ['quality'], expected: 'Checks pass' }],
+    },
+  ],
 };
 
 test('an empty completed reply cannot bypass a captured owner check', async (t) => {
