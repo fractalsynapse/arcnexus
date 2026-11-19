@@ -118,8 +118,9 @@ async function selectOwnedQualityFiles(
   owner: string | undefined,
   components: readonly Component[],
   root: string,
+  ignoreContents: Map<string, string>,
 ): Promise<string[]> {
-  const candidates = discoverMaintainedFiles(root)
+  const candidates = discoverMaintainedFiles(root, ignoreContents)
     .filter((path) => operation !== 'format:check' || isFormatCovered(path))
     .sort();
   const eslint = operation === 'lint' ? new ESLint({ cwd: root }) : undefined;
