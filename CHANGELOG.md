@@ -11,6 +11,8 @@
 
 ### Fixed
 
+- Keep distinct Director response errors in the same repair loop and restore immutable pending-milestone ownership and acceptance from host state (#632).
+
 - Reject empty, whitespace-only and decorative-star-only TypeScript documentation headers on classes, constructors, concrete methods and abstract methods; explanatory prose quality remains an independent review concern (#620).
 
 - Return mapped check results directly to their caller, preserve unresolved expectations, reuse proven unchanged observations, and distinguish completed rewind targets before steward progression (#625).

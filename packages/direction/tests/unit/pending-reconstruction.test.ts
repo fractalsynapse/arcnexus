@@ -68,7 +68,7 @@ const finding: RevisionFeedback = {
 };
 
 /** Wrap only the proposed pending milestones in the native wire shape. */
-function proposal(milestones: readonly Milestone[]) {
+function proposal(milestones: readonly unknown[]) {
   return { kind: 'plan', plan: { milestones } };
 }
 
@@ -76,7 +76,7 @@ test('reconstructs a supplier before a partially completed requester after a lar
   const prefix = Array.from({ length: 200 }, (_, index) => milestone(`done-${index}`));
   const original = milestone('requester');
   const accepted: Plan = { focus, milestones: [...prefix, original] };
-  const pending = { ...original, steps: original.steps.slice(2) };
+  const pending = { id: original.id, steps: original.steps.slice(2) };
   const supplier = milestone('supplier', 'supplier');
   const input = request(200, finding, { requester: 2 });
   const before = structuredClone({ accepted, input });
@@ -84,6 +84,24 @@ test('reconstructs a supplier before a partially completed requester after a lar
   assert(result.kind === 'plan');
   assert.deepEqual(result.plan, { focus, milestones: [...prefix, supplier, original] });
   assert.deepEqual({ accepted, input }, before);
+});
+
+test('existing pending work references canonical ownership and acceptance without copying it', () => {
+  const original = milestone('requester');
+  const accepted: Plan = { focus, milestones: [original] };
+  const supplier = milestone('supplier', 'supplier');
+  const result = decode(
+    {
+      kind: 'plan',
+      plan: { milestones: [supplier, { id: original.id, steps: original.steps.slice(2) }] },
+    },
+    capture,
+    accepted,
+    request(0, finding, { requester: 2 }),
+  );
+  assert(result.kind === 'plan');
+  assert.deepEqual(result.plan, { focus, milestones: [supplier, original] });
+  assert.equal(result.plan.milestones[1]!.criteria, original.criteria);
 });
 
 test('rejects an attempted change to completed acceptance with a repair diagnostic', () => {
@@ -101,7 +119,7 @@ test('rejects an attempted change to completed acceptance with a repair diagnost
 
 test('rejects malformed pending fields with their exact path for same-activity repair', () => {
   const accepted: Plan = { focus, milestones: [milestone('requester')] };
-  const malformed = proposal([{ ...accepted.milestones[0]!, owner: 42 } as unknown as Milestone]);
+  const malformed = proposal([{ ...milestone('supplier', 'supplier'), owner: 42 }]);
   assert.throws(() => decode(malformed, capture, accepted, request(0, finding)), {
     message: 'plan.milestones[0].owner: expected string, received number',
   });
@@ -111,7 +129,7 @@ test('reuses a completed supplier while retaining a partially completed requeste
   const supplier = milestone('supplier', 'supplier');
   const original = milestone('requester');
   const accepted: Plan = { focus, milestones: [supplier, original] };
-  const pending = { ...original, steps: original.steps.slice(1) };
+  const pending = { id: original.id, steps: original.steps.slice(1) };
   const result = decode(
     proposal([pending]),
     capture,
@@ -182,7 +200,13 @@ test('supplier revision must schedule the requested supplier before the requeste
   const original = milestone('requester');
   const accepted: Plan = { focus, milestones: [original] };
   assert.throws(
-    () => decode(proposal([original]), capture, accepted, request(0, finding)),
+    () =>
+      decode(
+        proposal([{ id: original.id, steps: original.steps }]),
+        capture,
+        accepted,
+        request(0, finding),
+      ),
     /did not schedule supplier/,
   );
 });
@@ -195,7 +219,7 @@ test('rejects invalid activity positions on completed milestones', () => {
   for (const cursor of [-1, done.steps.length + 1, 1.5]) {
     assert.throws(() =>
       decode(
-        proposal([supplier, original]),
+        proposal([supplier, { id: original.id, steps: original.steps }]),
         capture,
         accepted,
         request(1, finding, { done: cursor }),
@@ -210,7 +234,7 @@ test('accepts a valid retained activity cursor for a completed milestone', () =>
   const accepted: Plan = { focus, milestones: [done, original] };
   const supplier = milestone('supplier', 'supplier');
   const result = decode(
-    proposal([supplier, original]),
+    proposal([supplier, { id: original.id, steps: original.steps }]),
     capture,
     accepted,
     request(1, finding, { done: done.steps.length }),
