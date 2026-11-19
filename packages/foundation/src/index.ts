@@ -44,7 +44,11 @@ async function selectOwnedQualityFiles(
   const files: string[] = [];
   for (const path of candidates) {
     if (eslint && (await eslint.isPathIgnored(path))) continue;
-    if (operation === 'format:check' && (await getFileInfo(path, { ignorePath: '.prettierignore' })).ignored) continue;
+    if (
+      operation === 'format:check' &&
+      (await getFileInfo(path, { ignorePath: '.prettierignore' })).ignored
+    )
+      continue;
     const resolution = team.ownerFor(components, path);
     assert.notEqual(resolution.kind, 'collision', `Ambiguous ownership: ${path}`);
     assert.equal(resolution.kind, 'owned', `Unowned maintained input: ${path}`);
@@ -62,8 +66,24 @@ function qualityIdentity(
   componentFiles: readonly string[],
 ): string {
   const identity = createHash('sha256');
-  identity.update(JSON.stringify({ operation, owner, files, owners: files.map((path) => [path, team.ownerFor(components, path)]) }));
-  for (const path of [...componentFiles, '.gitignore', '.eslintignore', '.prettierignore', '.prettierrc.yaml', 'eslint.config.ts', 'package.json', 'package-lock.json']) {
+  identity.update(
+    JSON.stringify({
+      operation,
+      owner,
+      files,
+      owners: files.map((path) => [path, team.ownerFor(components, path)]),
+    }),
+  );
+  for (const path of [
+    ...componentFiles,
+    '.gitignore',
+    '.eslintignore',
+    '.prettierignore',
+    '.prettierrc.yaml',
+    'eslint.config.ts',
+    'package.json',
+    'package-lock.json',
+  ]) {
     identity.update(path).update(readOptionalFile(path) || 'missing');
   }
   return identity.digest('hex');
