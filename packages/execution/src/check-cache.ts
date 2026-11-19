@@ -17,7 +17,10 @@ export interface CheckObservation {
 /** Validate the captured command before identifying a clean, reproducible check input. */
 export function checkInput(task: HostTask, id: string, scope?: StewardScope) {
   const worktree = task.worktree!;
-  if (scope?.owner) assertCapturedOwnership(task.capture, worktree);
+  if (
+    scope?.owner &&
+    existsSync(join(task.capture.source.root, '.arc/architecture/components'))
+  ) assertCapturedOwnership(task.capture, worktree);
   const command = checkCommand(task.capture, worktree, id, scope?.owner);
   const operation = task.capture.operations[id];
   const ownerScoped = operation?.applicability?.startsWith('owner-');
