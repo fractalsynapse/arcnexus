@@ -50,3 +50,22 @@ for (const [operation, applicability] of [
     assert.equal(result.status === 'not-applicable', selection.files.length === 0);
   });
 }
+
+test('deleting every candidate component file is ownership drift', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'arcnexus-deleted-ownership-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const capture = {
+    source: { root },
+    project: { checks: { acceptance: [] } },
+    components: { owner: { id: 'owner', owns: ['fixture.ts'] } },
+    operations: { quality: {
+      id: 'quality', category: 'build', command: '/usr/bin/true',
+      args: [], cwd: '.', network: false, applicability: 'owner-test-suites',
+    } },
+  } as unknown as Capture;
+  await assert.rejects(
+    check(capture, root, root, 'quality', 'owner', join(root, 'quality.log'),
+      AbortSignal.timeout(30_000)),
+    /ownership drift/i,
+  );
+});
