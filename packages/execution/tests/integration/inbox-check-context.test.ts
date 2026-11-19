@@ -119,6 +119,23 @@ class InboxCheckContext {
     });
   }
 
+  /** Preserve explicit first-activation input before any continuation needs fresh host observations. */
+  async initialInput() {
+    const evidence = ['explicit-caller-reference'];
+    const agent = {
+      activate: async ({ task }: ActivationInput) => {
+        assert.deepEqual(task.evidence, evidence);
+        return { kind: 'completed' };
+      },
+    } as unknown as Agent;
+    await this.task.activate(
+      agent,
+      { component: 'owner', activity: 'implementation' },
+      { milestone: 'explicit', evidence },
+      AbortSignal.timeout(5000),
+    );
+  }
+
   /** Exercise the real Steward, Clarifications, ResearchInbox and shared Agent activation path. */
   async run() {
     const milestone: Milestone = {
@@ -143,3 +160,7 @@ for (const mode of ['research', 'question'] as const) {
     });
   }
 }
+
+test('initial activation preserves explicit caller evidence for request parity', async (t) => {
+  await new InboxCheckContext(t, 'research', false).initialInput();
+});

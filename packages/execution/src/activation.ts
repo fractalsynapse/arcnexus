@@ -56,13 +56,13 @@ function actorInvoker(
     const caller =
       selection.component === original.component && selection.activity === original.activity;
     const current = caller && invoked && refresh ? await refresh(input) : input;
-    if (caller) invoked = true;
     const context = {
       ...current,
-      evidence: [...new Set([...(current.evidence ?? []), ...task.evidence])],
       goal: activationGoal(task),
       worktree: task.worktree ?? task.capture.source.root,
     };
+    if (invoked) context.evidence = [...new Set([...(current.evidence ?? []), ...task.evidence])];
+    if (caller) invoked = true;
     return agent.activate(
       { capture: task.capture, selection, task: context },
       (view, cancellation) => invokeCodex(task, view, context, cancellation),
