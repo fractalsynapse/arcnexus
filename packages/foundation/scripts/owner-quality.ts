@@ -49,14 +49,12 @@ class OwnerQuality {
     process.exitCode = result.status ?? 1;
   }
 
-  /** Include tracked and newly created nonignored maintained files in stable order. */
+  /** Include current maintained files while excluding generated and dependency trees. */
   private currentFiles(): string[] {
-    const tracked = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' });
-    const created = execFileSync('git', ['ls-files', '--others', '--exclude-standard', '-z'], { encoding: 'utf8' });
-    const paths = [...tracked.split('\0'), ...created.split('\0')];
-    return [...new Set(paths.filter((path) =>
-      /\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json|yaml|yml)$/.test(path),
-    ))].sort();
+    const paths = globSync('**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}');
+    return paths.filter((path) =>
+      !/(^|\/)(?:node_modules|dist|\.git|\.test-build|\.fixture-build|context|examples|\.audit-work)(\/|$)/.test(path),
+    ).sort();
   }
 
   /** Apply each tool's own ignore and file applicability rules before command execution. */
