@@ -298,6 +298,18 @@ function isIgnoredDirectory(directory: string, ignoreFiles: readonly string[]): 
   return ignored;
 }
 
+/** Remove only unescaped spaces and tabs at the end of a gitignore rule. */
+function trimUnescapedTrailingWhitespace(value: string): string {
+  let end = value.length;
+  while (end > 0 && (value[end - 1] === ' ' || value[end - 1] === '\t')) {
+    let slashes = 0;
+    for (let index = end - 2; index >= 0 && value[index] === '\\'; index--) slashes++;
+    if (slashes % 2 === 1) break;
+    end--;
+  }
+  return value.slice(0, end);
+}
+
 /** Match ordered gitignore rules against paths relative to one ignore file. */
 function matchesIgnoreRules(
   path: string,
