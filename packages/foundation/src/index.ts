@@ -258,7 +258,7 @@ function matchesIgnoreRules(
     const rule = raw;
     if (!rule || (rule.startsWith('#') && !rule.startsWith('\\#'))) continue;
     const negated = rule.startsWith('!');
-    const source = negated ? rule.slice(1) : rule;
+    const source = (negated ? rule.slice(1) : rule).replace(/^\\([#! ])/g, '$1');
     const anchored = source.startsWith('/');
     const directoryOnly = source.endsWith('/');
     const pattern = source.replace(/^\//, '').replace(/\/$/, '');
