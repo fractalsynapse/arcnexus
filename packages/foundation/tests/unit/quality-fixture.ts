@@ -79,13 +79,19 @@ export function fixture() {
 }
 
 /** Read public applicability in the isolated worktree. */
-export async function selection(tree: QualityFixture, operation: Operation, owner: string | undefined = 'alpha') {
+export async function selection(
+  tree: QualityFixture,
+  operation: Operation,
+  owner: string | undefined = 'alpha',
+) {
   const previous = process.cwd();
   try {
     process.chdir(tree.root);
-    return await foundation.selectQualityInputs(operation, owner === 'repository' ? undefined : owner);
+    return await foundation.selectQualityInputs(
+      operation,
+      owner === 'repository' ? undefined : owner,
+    );
   } finally {
     process.chdir(previous);
   }
 }
-
