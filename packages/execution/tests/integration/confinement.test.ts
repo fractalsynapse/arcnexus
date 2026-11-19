@@ -14,7 +14,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
 import type { Capture } from '../../../architecture/src/index.js';
-import { hasOwnerTestSuites } from '../../../foundation/src/index.js';
 import { check } from '../../src/check.js';
 import { applyEdits } from '../../src/edits.js';
 
