@@ -468,7 +468,23 @@ for (const operation of ['format:check', 'lint'] as const) {
         tree.write('.gitignore', ignored + include);
         tree.write('packages/alpha/generated/.gitignore', '!generated/\n!probe.ts\n');
         assert(!(await selection(tree, operation, owner)).files.includes(path));
-        tree.write('.gitignore', ignored + '!packages/alpha/generated/\n' + include);
+      } finally {
+        tree.close();
+      }
+    });
+
+    test(`${operation} ${owner} permits restoration by an applicable ancestor ignore file`, async () => {
+      const tree = new QualityFixture();
+      try {
+        tree.owner('alpha', 'packages/alpha');
+        tree.write('.prettierignore', '');
+        const path = 'packages/alpha/generated/probe.ts';
+        tree.write(path, 'export const probe = 1;\n');
+        tree.write(
+          '.gitignore',
+          'packages/alpha/generated/\n!packages/alpha/generated/\n!packages/alpha/generated/probe.ts\n',
+        );
+        tree.write('packages/alpha/generated/.gitignore', '!generated/\n!probe.ts\n');
         assert((await selection(tree, operation, owner)).files.includes(path));
       } finally {
         tree.close();
