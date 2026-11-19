@@ -70,6 +70,8 @@ export class Execution {
       if (signal.aborted) throw signal.reason;
       return invalid(error instanceof Error ? error.message : String(error));
     }
+    if (!this.coordination.owns(parent, config.capture.source.remote))
+      return invalid('Child admission requires a Journal from this project Coordination store');
     const journal = parent.child(input.goal, scope, config.fresh);
     if (!journal)
       return invalid(`Task admission requires the current verified ${config.base} head`);
