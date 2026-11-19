@@ -8,7 +8,11 @@ import {
   checkEnvironment,
   type CheckResult,
 } from './check.js';
-import { qualityOperationAvailable, qualityRuntime, selectQualityInputs } from '../../foundation/src/index.js';
+import {
+  qualityOperationAvailable,
+  qualityRuntime,
+  selectQualityInputs,
+} from '../../foundation/src/index.js';
 import type { HostTask } from './index.js';
 import type { StewardScope } from './steward-check.js';
 import { git } from './git.js';
@@ -165,4 +169,3 @@ function fileIdentity(file?: string) {
   const { dev, ino, size, mtimeMs } = statSync(path);
   return { path, dev, ino, size, mtimeMs };
 }
-
