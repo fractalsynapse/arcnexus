@@ -158,7 +158,7 @@ function requiredChecks(
   }>();
   for (const id of stewardOperations(task, scope)) {
     const operation = task.capture.operations?.[id];
-    if (!operation || operation.kind !== 'command' || operation.tool !== 'check') continue;
+    if (!operation || operation.tool !== 'check') continue;
     const latestEdit = events.findLastIndex(
       (event) => event.owner === scope.owner && event.activity === scope.activity && event.edits?.length,
     );
