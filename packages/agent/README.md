@@ -16,3 +16,10 @@ findings remain repairable. An unchanged repeat holds with its honest evidence.
 This corrects the observed Architect response issue in #637 through the existing
 error and caller loops. Architecture requests explicitly require one JSON object,
 without YAML or Markdown fences. Prior failed responses remain evidence.
+
+Planner and Reviewer use this same caller recovery boundary. Successive distinct
+response findings return exact diagnostics to the same activity. Planner retains
+its original mapping and approval scope. Reviewer retains the assembled candidate,
+checks and acceptance; citation repair cannot alter its engineering decision.
+An unchanged repeat becomes a durable hold, rather than an execution abort.
+Valid independent rejection still returns to Direction for pending-work revision.
