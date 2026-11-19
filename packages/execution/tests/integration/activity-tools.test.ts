@@ -156,33 +156,18 @@ test('local MCP returns the observed check before the caller continues', async (
   }
 });
 
-test('a steward who queued checks gets a repair diagnostic before blocking on their results', async () => {
+test('completed replies do not recreate a deferred check queue', async () => {
   const activation = testingActivation();
-  await activation.invoke({ name: 'owner-tests', handler: 'check' }, { expected: 'pass' });
-  assert.throws(
-    () => activation.finish({ kind: 'blocked', reason: 'Still waiting for exit code' }),
-    /queued.*owner-tests.*completed/i,
+  const observed = await activation.invoke(
+    { name: 'owner-tests', handler: 'check' },
+    { expected: 'pass' },
   );
-});
-
-test('describing an already queued check keeps only the mapped request', async () => {
-  const activation = testingActivation();
-  await activation.invoke({ name: 'owner-tests', handler: 'check' }, { expected: 'pass' });
-  assert.deepEqual(
-    activation.finish({
-      kind: 'completed',
-      checks: 'Queued owner-tests. The host will observe its result.',
-    }),
-    { kind: 'completed', edits: [], checks: [{ id: 'owner-tests', expected: 'pass' }] },
-  );
-  assert.throws(
-    () => activation.finish({ kind: 'completed', checks: [{ id: 'unmapped', expected: 'pass' }] }),
-    /Use mapped MCP tools/,
-  );
-  assert.throws(
-    () => testingActivation().finish({ kind: 'completed', checks: 'Run owner-tests.' }),
-    /Use mapped MCP tools/,
-  );
+  assert.deepEqual(observed, { id: 'owner-tests', status: 0, log: '/evidence/owner-tests.log' });
+  assert.deepEqual(activation.finish({ kind: 'completed' }), {
+    kind: 'completed',
+    edits: [],
+    checks: [],
+  });
 });
 
 test('a self-linked supplier request leaves the steward active for a different contribution', async () => {
