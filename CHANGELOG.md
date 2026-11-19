@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Link pending reusable research to its readable retained report before archival so later activities can retrieve the complete findings.
+
 - Return successive invalid Planner, Reviewer and research-report responses to their calling activities, preserving approvals, candidate checks and citation-only decisions. Repeated unchanged findings retain a hold or optional research unavailability.
 
 - Enable optional research with its approved read-only MCP tools while refusing effectful or unresolved research mappings (#645).

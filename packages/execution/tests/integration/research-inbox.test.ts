@@ -76,6 +76,10 @@ class ResearchScenario {
       task.worktree = this.root;
       const [report] = pendingResearch(task, lookup);
       assert(report?.path);
+      assert('evidence' in report, 'A pending report needs its readable source before archival');
+      assert.equal(typeof report.evidence, 'string');
+      const retained = task.readFile(String(report.evidence));
+      assert.match(retained.text, /Ordering is stable for a fixed input/);
       const edits = archiveResearch(task, owner, [report.id]);
       task.edits(owner, 'documentation', edits);
       assert.deepEqual(archiveResearch(task, owner, [report.id]), []);
