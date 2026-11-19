@@ -30,7 +30,7 @@ function services(context: Context): WorkflowServices {
       plan: (session, signal, standing) => direct(context.agent, session, signal, { standing }),
       revise: (session, plan, feedback, signal, standing) => {
         if (
-          (feedback.kind === 'plan-repair' && !feedback.original) ||
+          (feedback.kind === 'plan-repair' && (!feedback.original || !plan)) ||
           (feedback.kind === 'answer' && !plan)
         ) {
           return direct(context.agent, session, signal, { feedback, standing });
