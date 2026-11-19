@@ -211,6 +211,7 @@ function isIgnoredDirectory(directory: string, ignoreFiles: readonly string[]): 
   for (const ignoreFile of ignoreFiles) {
     const base = ignoreFile.slice(0, -'.gitignore'.length).replace(/\/$/, '');
     if (base && !directory.startsWith(`${base}/`)) continue;
+    if (base && base !== directory && isIgnoredDirectory(base, ignoreFiles.slice(0, index))) continue;
     const relative = base ? directory.slice(base.length + 1) : directory;
     const rules = readOptionalFile(ignoreFile).split(String.fromCharCode(10));
     let inherited = false;
