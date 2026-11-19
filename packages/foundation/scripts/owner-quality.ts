@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { globSync } from 'node:fs';
 import { parse } from 'yaml';
-import { team } from '../../team/src/index.js';
+import { selectQualityInputs } from '../src/index.js';
 
 type Operation = 'format:check' | 'lint';
 interface Component {
