@@ -34,7 +34,7 @@ async function selectOwnedQualityFiles(
   owner: string | undefined,
   components: readonly Component[],
 ): Promise<string[]> {
-  const candidates = globSync('**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}')
+  const candidates = globSync(operation === 'lint' ? '**/*' : '**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}')
     .filter((path) => !isIgnored(path))
     .filter((path) => operation !== 'format:check' || isFormatCovered(path))
     .filter((path) => operation !== 'lint' || /\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx)$/.test(path))
