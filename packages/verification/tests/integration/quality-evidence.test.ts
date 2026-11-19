@@ -48,6 +48,9 @@ for (const scenario of [
   'stale-then-pass',
   'applicable-declared-inapplicable',
   'inapplicable',
+  'wrong-selection',
+  'format-red',
+  'implementation-red',
 ] as const) {
   test(`assembled review handles ${scenario} owner-operation evidence`, async (t) => {
     const root = mkdtempSync(join(tmpdir(), 'arcnexus-verification-quality-'));
@@ -118,12 +121,12 @@ for (const scenario of [
         scope: {
           owner: scenario === 'other-owner' ? 'other' : 'verification',
           activity: scenario === 'other-activity' ? 'implementation' : 'testing',
-          expected: 'pass',
+          expected: scenario === 'format-red' ? 'fail' : 'pass',
         },
         check: {
           id: 'owner-format',
-          status: scenario === 'unavailable' ? null : scenario === 'applicable-declared-inapplicable' || scenario === 'inapplicable' ? 'not-applicable' : scenario === 'failed-then-pass' ? 1 : 0,
-          ...(scenario === 'inapplicable' ? { reason: 'No format:check files for verification in the current worktree', selection: { operation: 'format:check', owner: 'verification', files: [], identity: 'empty', reuseEligibility: { eligible: true } } } : {}),
+          status: scenario === 'unavailable' ? null : scenario === 'applicable-declared-inapplicable' || scenario === 'inapplicable' || scenario === 'wrong-selection' ? 'not-applicable' : scenario === 'failed-then-pass' || scenario === 'format-red' ? 1 : 0,
+          ...(['inapplicable', 'wrong-selection'].includes(scenario) ? { reason: 'No format:check files for verification in the current worktree', selection: { operation: scenario === 'wrong-selection' ? 'lint' : 'format:check', owner: 'verification', files: [], identity: 'empty', reuseEligibility: { eligible: true } } } : {}),
           command: 'format',
           args: [],
           cwd: root,
@@ -145,24 +148,6 @@ for (const scenario of [
         task.note({
           scope: { owner: 'verification', activity: 'testing', expected: 'pass' },
           check: { id: 'owner-format', status: 0, command: 'format', args: [], cwd: root, durationMs: 1, log: current },
-        });
-      }
-    }
-    if (scenario === 'valid') {
-      for (const [owner, activity, id] of [
-        ['verification', 'testing', 'read-file'],
-        ['verification', 'testing', 'owner-format'],
-        ['verification', 'research', 'read-file'],
-        ['verification', 'research', 'owner-tests'],
-        ['verification', 'research', 'owner-format'],
-        ['unused', 'testing', 'read-file'],
-        ['unused', 'testing', 'owner-tests'],
-        ['unused', 'testing', 'owner-format'],
-      ]) {
-        const log = task.store(`${owner}-${activity}-${id}.log`, 'Operation observation');
-        task.note({
-          scope: { owner, activity, expected: 'pass' },
-          check: { id, status: 0, command: id, args: [], cwd: root, durationMs: 1, log },
         });
       }
     }
@@ -189,10 +174,15 @@ for (const scenario of [
         return { kind: 'accepted', candidate: 'tree', criteria: ['V-1'], evidence: [redLog] };
       },
     );
+    const activePlan = scenario === 'implementation-red' ? { ...plan, milestones: plan.milestones.map((milestone) => ({ ...milestone, steps: milestone.steps.map((step) => ({ ...step, activity: 'implementation' })) })) } : plan;
+    if (scenario === 'implementation-red') {
+      (capture.components.verification.activities as Record<string, unknown>).implementation = { operations: ['owner-tests'] };
+      task.note({ scope: { owner: 'verification', activity: 'implementation', expected: 'fail' }, check: { id: 'owner-tests', status: 1, command: 'test', args: [], cwd: root, durationMs: 1, log: redLog } });
+    }
     const verdict = await verify(
       {} as Agent,
       task,
-      plan,
+      activePlan,
       { digest: 'tree', evidence: [redLog] },
       AbortSignal.timeout(5000),
     );
