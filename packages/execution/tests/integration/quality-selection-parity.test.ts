@@ -51,6 +51,39 @@ for (const [operation, applicability] of [
   });
 }
 
+test('worktree selection and receipt use the candidate with a nested command cwd', async (t) => {
+  const host = process.cwd();
+  const hostSelection = await selectQualityInputs('format:check', 'execution');
+  assert.ok(hostSelection.files.length, 'host must have execution format inputs');
+  const root = mkdtempSync(join(tmpdir(), 'arcnexus-selection-worktree-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const worktree = join(root, 'worktree');
+  const components = join(worktree, '.arc/architecture/components');
+  mkdirSync(components, { recursive: true });
+  mkdirSync(join(worktree, 'nested'));
+  writeFileSync(join(components, 'execution.yaml'),
+    'id: execution\nowns:\n  - packages/execution\n');
+  const capture = {
+    source: { root: host },
+    project: { checks: { acceptance: [] } },
+    components: { execution: { id: 'execution', owns: ['packages/execution'] } },
+    operations: { quality: {
+      id: 'quality', category: 'build', command: 'npm',
+      args: ['run', 'format:check', '--', { context: 'owner' }],
+      cwd: 'nested', network: false, tool: 'check', applicability: 'owner-format-files',
+    } },
+  } as unknown as Capture;
+  const log = join(root, 'selection.log');
+  const result = await check(capture, worktree, root, 'quality', 'execution', log,
+    AbortSignal.timeout(30_000));
+  assert.equal(result.status, 'not-applicable');
+  assert.equal(result.cwd, join(worktree, 'nested'));
+  assert.equal(result.command, 'npm');
+  assert.deepEqual(result.args, ['run', 'format:check', '--', 'execution']);
+  assert.equal(result.reason, 'No format:check files for execution in the current worktree');
+  assert.equal(readFileSync(log, 'utf8'), `Not applicable: ${result.reason}\n`);
+});
+
 test('deleting every candidate component file is ownership drift', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-deleted-ownership-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
