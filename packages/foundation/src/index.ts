@@ -145,9 +145,10 @@ function isIgnored(path: string, patterns: readonly string[]): boolean {
     const pattern = (negated ? rule.slice(1) : rule).replace(/^\\//, '').replace(/\\/$/, '');
     const expression = pattern
       .replace(/[.+^${}()|[\\]\\\\]/g, '\\\\$&')
-      .replace(/\\*\\*/g, '.*')
-      .replace(/\\*/g, '[^/]*')
-      .replace(/\\?/g, '[^/]');
+      .replaceAll('**', '§')
+      .replaceAll('*', '[^/]*')
+      .replaceAll('§', '.*')
+      .replaceAll('?', '[^/]');
     const matcher = new RegExp(`^(?:${expression})(?:/.*)?$`);
     if (matcher.test(path)) ignored = !negated;
   }
