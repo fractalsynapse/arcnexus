@@ -45,8 +45,12 @@ function ownerEvidenceFailure(task: HostTask, candidate: Candidate) {
   );
   const observations = task.ownerReviewChecks();
   for (const { owner, activity, id, operation } of required) {
-    const observation = observations.find(
+    const matching = observations.filter(
       ({ scope, check }) => scope.owner === owner && scope.activity === activity && check.id === id,
+    );
+    const observation = matching.findLast(({ afterLastEdit }) => afterLastEdit) ?? matching.findLast(
+      ({ scope, expected, check }) =>
+        scope.expected === 'fail' && activity === 'testing' && expected === 'fail' && check.status !== 0,
     );
     if (!observation) return `Required owner operation ${owner}/${activity}/${id} has no current evidence`;
     if (!task.evidence.includes(observation.check.log))
