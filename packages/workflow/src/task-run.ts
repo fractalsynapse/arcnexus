@@ -12,6 +12,9 @@ import {
   type RevisionFeedback,
   type StandingGoalEvidence,
 } from '../../direction/src/index.js';
+import { revisionSnapshot } from '../../coordination/src/index.js';
+import { decodeRevisionResponse } from '../../direction/src/index.js';
+import type { RevisionRequest } from '../../direction/src/index.js';
 import { validateVerdict, type Candidate, type Verdict } from '../../verification/src/index.js';
 import { activityRepair } from './activity-repair.js';
 import { selfLinkedSupplier, stopped, type Interrupted } from './services.js';
