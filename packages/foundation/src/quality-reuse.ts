@@ -74,14 +74,11 @@ function formatterInputReason(path: string, root: string): string | undefined {
   } catch {
     return `Prettier configuration cannot be inspected safely: ${path}`;
   }
-  const value = /(?:^|\/)package\.json$/.test(path) && isRecord(parsed)
-    ? parsed.prettier
-    : parsed;
+  const value = /(?:^|\/)package\.json$/.test(path) && isRecord(parsed) ? parsed.prettier : parsed;
   if (value === undefined) return undefined;
   if (typeof value === 'string')
     return `Prettier configuration references an uncovered shareable config: ${path}`;
-  if (!isRecord(value))
-    return `Prettier configuration has an unsupported shape: ${path}`;
+  if (!isRecord(value)) return `Prettier configuration has an unsupported shape: ${path}`;
   return containsPluginOption(value)
     ? `Prettier configuration may load unselected plugin dependencies: ${path}`
     : undefined;
@@ -156,9 +153,7 @@ function staticLintModuleReason(source: string, path: string): string | undefine
     return `ESLint configuration ${path} contains syntax outside the supported static subset`;
   }
 
-  return hasDefault
-    ? undefined
-    : `ESLint configuration ${path} has no supported default export`;
+  return hasDefault ? undefined : `ESLint configuration ${path} has no supported default export`;
 }
 
 /** Accept recursively literal objects, arrays and imported default bindings. */
@@ -172,14 +167,17 @@ function isStaticData(node: ts.Expression, imported: ReadonlySet<string>): boole
   )
     return true;
   if (ts.isIdentifier(node)) return imported.has(node.text);
-  if (ts.isArrayLiteralExpression(node)) return node.elements.every((element) =>
-    ts.isExpression(element) && isStaticData(element, imported),
-  );
-  if (!ts.isObjectLiteralExpression(node))
-    return false;
-  return node.properties.every((property) =>
-    ts.isPropertyAssignment(property) &&
-    (ts.isIdentifier(property.name) || ts.isStringLiteral(property.name) || ts.isNumericLiteral(property.name)) &&
-    isStaticData(property.initializer, imported),
+  if (ts.isArrayLiteralExpression(node))
+    return node.elements.every(
+      (element) => ts.isExpression(element) && isStaticData(element, imported),
+    );
+  if (!ts.isObjectLiteralExpression(node)) return false;
+  return node.properties.every(
+    (property) =>
+      ts.isPropertyAssignment(property) &&
+      (ts.isIdentifier(property.name) ||
+        ts.isStringLiteral(property.name) ||
+        ts.isNumericLiteral(property.name)) &&
+      isStaticData(property.initializer, imported),
   );
 }
