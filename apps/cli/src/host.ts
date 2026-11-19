@@ -4,6 +4,7 @@ import { direct, track } from '../../../packages/direction/src/index.js';
 import { integrate, resume } from '../../../packages/delivery/src/index.js';
 import {
   applicationStorage,
+  hostTask,
   executionPlugin,
   steward,
 } from '../../../packages/execution/src/index.js';
@@ -23,6 +24,10 @@ export async function mountTaskHost(context: Context) {
 function services(context: Context): WorkflowServices {
   return {
     execution: context.execution,
+    architecture: {
+      propose: (session, feedback, signal) =>
+        context.architecture.propose(context.agent, hostTask(session), feedback, signal),
+    },
     planner: context.planner,
     direction: {
       track,

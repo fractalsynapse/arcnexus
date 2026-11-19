@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import type { Context } from 'cordis';
 import { departed, identity } from './lease.js';
@@ -43,6 +43,15 @@ export class Journal {
     readonly parent?: number,
   ) {}
 
+  /** Check the actual SQLite backing path without registering mutable process-global ownership. */
+  belongsTo(path: string) {
+    const main = this.database
+      .prepare('PRAGMA database_list')
+      .all()
+      .find(({ name }) => name === 'main');
+    return typeof main?.file === 'string' && resolve(main.file) === resolve(path);
+  }
+
   /** Expose the content identity independently of the logical task identity. */
   get goalID() {
     return digest(this.goal);
@@ -64,19 +73,21 @@ export class Journal {
         .get(this.run);
       if (!parent?.active || parent.lease !== identity(process.pid))
         throw new Error('Cannot admit a child from an inactive parent or foreign writer');
-      const result = claim(
-        this.database,
-        goal,
-        fresh,
-        JSON.stringify([this.taskID, scope]),
-        this.run,
-      );
+      const result = claim(this.database, goal, fresh, JSON.stringify([this.taskID, scope]), {
+        parent: this.run,
+      });
       this.database.exec('COMMIT');
       return result;
     } catch (error) {
       this.database.exec('ROLLBACK');
       throw error;
     }
+  }
+
+  /** Read the canonical retained stream for a child phase without opening a second writer or store. */
+  childEvents(goal: string, scope: string): readonly unknown[] {
+    const task = taskIdentity(digest(goal), JSON.stringify([this.taskID, scope]));
+    return retained(this.database, task)?.events ?? [];
   }
 
   /** Store the terminal event and release the lane in one transaction. */
@@ -107,6 +118,37 @@ export class Journal {
       .prepare('SELECT content FROM events WHERE run = ? ORDER BY id')
       .all(this.run)
       .map(({ content }) => JSON.parse(String(content)));
+  }
+
+  /** Authorize a retained artifact by its original host event in this verified project's store. */
+  artifactRecorded(path: string) {
+    return Boolean(
+      this.database
+        .prepare("SELECT 1 FROM events WHERE json_extract(content, '$.artifact') = ? LIMIT 1")
+        .get(path),
+    );
+  }
+
+  /** Read recent observed failures and repairs for architectural assessment without creating another store. */
+  findings() {
+    return this.database
+      .prepare(
+        `
+      SELECT events.id, events.run, runs.goal_id, events.content
+      FROM events JOIN runs ON runs.id = events.run
+      WHERE json_extract(content, '$.outcome.kind') IN ('failed', 'blocked', 'cancelled')
+        OR json_type(content, '$.repair') = 'object'
+        OR json_type(content, '$.stewardRepair') = 'object'
+      ORDER BY events.id DESC LIMIT 20
+    `,
+      )
+      .all()
+      .map(({ id, run, goal_id, content }) => ({
+        id,
+        run,
+        goal: goal_id,
+        observation: JSON.parse(String(content)) as unknown,
+      }));
   }
 
   /** Retrieve reusable research by owner from the existing append-only journal. */
@@ -153,18 +195,35 @@ export class Coordination {
   /** Use trusted application storage outside the maintained project tree. */
   constructor(private readonly storage: string) {}
 
+  /** Verify a supplied parent against this project's actual canonical journal file. */
+  owns(remote: string, journal: Journal) {
+    return journal.belongsTo(join(this.storage, digest(remote), 'tasks.sqlite'));
+  }
+
   /** Claim the lane for a goal when the current staging base permits fresh admission. */
   admit(remote: string, goal: string): Admission;
 
   /** When given a stale checkout, admit only a goal with retained publication evidence. */
-  admit(remote: string, goal: string, fresh: boolean, scope?: string): Admission | undefined;
+  admit(
+    remote: string,
+    goal: string,
+    fresh: boolean,
+    scope?: string,
+    cycle?: boolean,
+  ): Admission | undefined;
 
   /** Claim the lane and recover a departed writer only for its retained publication. */
-  admit(remote: string, goal: string, fresh = true, scope?: string): Admission | undefined {
+  admit(
+    remote: string,
+    goal: string,
+    fresh = true,
+    scope?: string,
+    cycle = false,
+  ): Admission | undefined {
     const database = this.open(remote);
     try {
       database.exec('BEGIN IMMEDIATE');
-      const result = claim(database, goal, fresh, scope);
+      const result = claim(database, goal, fresh, scope, { cycle });
       database.exec('COMMIT');
       if (!(result instanceof Journal)) database.close();
       return result;
@@ -262,6 +321,7 @@ export class Coordination {
 }
 
 type Admission = Journal | { activeGoal: string; run: number };
+type ClaimOptions = { parent?: number; cycle?: boolean };
 
 /** Upgrade historical task rows and replace the former single-row lane constraint atomically. */
 function migrate(database: DatabaseSync) {
@@ -287,10 +347,11 @@ function claim(
   goal: string,
   fresh: boolean,
   scope?: string,
-  parent?: number,
+  { parent, cycle = false }: ClaimOptions = {},
 ): Admission | undefined {
   const goalID = digest(goal);
-  const task = taskIdentity(goalID, scope);
+  const key = taskIdentity(goalID, scope);
+  const task = cycle ? cycleIdentity(database, key) : key;
   const active = database
     .prepare('SELECT id, task_id, goal, lease FROM runs WHERE active = 1 AND parent_id IS ?')
     .get(parent ?? null);
@@ -307,8 +368,32 @@ function claim(
     )
     .run(goalID, task, goal, lease, parent ?? null);
   const journal = new Journal(database, Number(lastInsertRowid), goal, prior, task, parent);
+  if (cycle) journal.record({ cycle: key });
   if (prior) journal.record({ recovering: prior.run });
   return journal;
+}
+
+/** Resume an unfinished foreground cycle, or give the next completed assessment a fresh identity. */
+function cycleIdentity(database: DatabaseSync, key: string) {
+  const row = database
+    .prepare(
+      `
+    SELECT runs.id, runs.task_id, (
+      SELECT json_extract(terminal.content, '$.outcome') FROM events terminal
+      WHERE terminal.run = runs.id AND json_type(terminal.content, '$.outcome') = 'object'
+      ORDER BY terminal.id DESC LIMIT 1
+    ) AS outcome
+    FROM runs JOIN events marker ON marker.run = runs.id
+    WHERE runs.parent_id IS NULL AND json_extract(marker.content, '$.cycle') = ?
+    ORDER BY runs.id DESC LIMIT 1
+  `,
+    )
+    .get(key);
+  if (!row) return key;
+  const outcome =
+    typeof row.outcome === 'string' ? (JSON.parse(row.outcome) as { kind: string }) : undefined;
+  const completed = outcome?.kind === 'planned' || outcome?.kind === 'merged';
+  return completed ? digest(JSON.stringify([key, Number(row.id)])) : String(row.task_id);
 }
 
 /** Preserve honest terminal observations for a departed writer and its unfinished descendants. */

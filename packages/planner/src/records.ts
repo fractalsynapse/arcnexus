@@ -1,15 +1,11 @@
-import { createHash } from 'node:crypto';
 import { parse, stringify } from 'yaml';
 import type { TaskSession } from '../../workflow/src/index.js';
 import type { Capture, RevisionCitation } from '../../architecture/src/index.js';
-import { unifiedDiff } from './diff.js';
+import { unifiedDiff, textDigest, type ContentPatch } from '../../foundation/src/index.js';
 import type { Proposal } from './proposal.js';
 
-export interface GoalPatch {
-  path: string;
-  before: string | null;
-  content: string | null;
-}
+export type GoalPatch = ContentPatch;
+export { textDigest };
 
 export interface HumanReply {
   question: string;
@@ -37,11 +33,6 @@ export function refinement(session: TaskSession) {
     objective?: string;
   } | null;
   return { objective: metadata?.objective ?? previous, supersedes: previous };
-}
-
-/** Fingerprint exact UTF-8 bytes for stable identities and checked edits. */
-export function textDigest(text: string) {
-  return createHash('sha256').update(text).digest('hex');
 }
 
 /** Render the exact old and proposed bytes without suppressing whitespace. */

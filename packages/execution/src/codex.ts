@@ -2,9 +2,10 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import type { AgentInspection } from '../../architecture/src/index.js';
 import { execute } from './process.js';
+import { InvalidAgentResponse } from '../../agent/src/index.js';
 
 /** Distinguish an unreadable actor answer from a failed harness process. */
-export class InvalidCodexResponse extends Error {}
+export class InvalidCodexResponse extends InvalidAgentResponse {}
 
 interface NativeTools {
   schema?: string;

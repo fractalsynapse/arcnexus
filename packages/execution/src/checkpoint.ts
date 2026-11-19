@@ -2,6 +2,8 @@ import type { ActivityCheckpoint } from '../../workflow/src/index.js';
 import { editFingerprint, type ObservedEdit } from './edits.js';
 import type { HostTask } from './index.js';
 import { git } from './git.js';
+import { architectureCheckpoint } from './architecture-edits.js';
+import { protectedFingerprint } from './edits.js';
 
 interface CommitCheckpoint {
   readonly head: string;
@@ -150,6 +152,8 @@ function validateCheckedChanges(task: HostTask, worktree: string) {
   const events = task.observations<CheckpointEvent>();
   const intents = events.slice(events.findLastIndex(({ checkpoint }) => checkpoint) + 1);
   for (const path of new Set(changes)) {
+    const protectedAfter = protectedFingerprint(worktree, path);
+    if (architectureCheckpoint(task, path, protectedAfter)) continue;
     const intent = intents.findLast(({ editIntent }) =>
       editIntent?.some((edit) => edit.path === path),
     );

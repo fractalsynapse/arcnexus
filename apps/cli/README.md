@@ -177,3 +177,26 @@ The submitted objective can be recorded in either case. Approved Markdown
 changes pass through checked edits, candidate checks, independent review and
 verified staging integration. Use `--json` for the structured result and artifact
 locations.
+
+## Assess architecture
+
+`arcnexus architecture update` assesses approved objectives and goals, current
+architecture and implementation, and retained execution findings. Add a quoted
+feedback argument to focus that assessment. The command uses the captured
+`project.architect` activity and the same optional research and human-question
+path as other agents. `--json` retains the normal structured output convention.
+
+A justified no-change result records its source citations. A proposed batch
+shows its purpose, consequences, prerequisite outcomes, exact baseline and full
+diff, including derived registry changes. Enter `approve` or `skip` at the durable
+human gate, followed by a line containing only a period. Noninteractive execution
+reports a pending decision; rerunning resumes its exact retained proposal.
+
+After approval, the ordinary Director and steward workflow handles prerequisites.
+The host applies only the approved guide bytes to the same candidate before
+assembled verification, independent review and staging delivery. Model checked
+edits retain their protected-source refusals. Changed intent, bytes or baselines
+require renewed approval. See the [Architecture application](../../packages/architecture/README.md).
+
+The outer `refine` lifecycle and its consecutive live acceptance remain tracked
+separately in [the refinement work](https://github.com/fractalsynapse/arcnexus/issues/615).

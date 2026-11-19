@@ -6,6 +6,7 @@ import { dirname, join } from 'node:path/posix';
 import { parse } from 'yaml';
 import { team } from '../../team/src/index.js';
 import type { Capture } from '../../architecture/src/index.js';
+import { acceptanceScenarios } from '../src/index.js';
 
 const catalogRoot = '.arc/architecture';
 
@@ -135,9 +136,9 @@ class SpecificationCheck {
 
   /** Check the declared count and register scenario IDs across all contracts. */
   private checkScenarios(contract: Contract, body: string, scenarios: Set<string>): void {
-    const rows = [...body.matchAll(/^\| ([A-Z]+-\d+[a-z]?) \|/gm)];
+    const rows = acceptanceScenarios(body);
     assert.equal(rows.length, contract.scenarios, `Scenario count: ${contract.id}`);
-    for (const [, id] of rows) {
+    for (const id of rows) {
       assert(id && !scenarios.has(id), `Duplicate acceptance scenario: ${id}`);
       scenarios.add(id);
     }

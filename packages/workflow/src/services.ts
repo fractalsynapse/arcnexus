@@ -1,5 +1,6 @@
 import type { StandingGoal } from '../../planner/src/inventory.js';
-import type { Capture } from '../../architecture/src/index.js';
+import type { ArchitectureDecision, Capture } from '../../architecture/src/index.js';
+import { AgentActivityHold } from '../../agent/src/index.js';
 import type {
   DirectionResult,
   Feedback,
@@ -18,6 +19,9 @@ export interface TaskInput {
   scope?: string;
   standing?: boolean;
   planning?: 'exploration' | 'objective';
+  architecture?: boolean;
+  guide?: string;
+  inbox?: { owner: string; question: string };
 }
 
 export interface Observation {
@@ -56,6 +60,7 @@ export type TaskEvent =
 export interface TaskSession {
   readonly capture: Capture;
   readonly goal: string;
+  readonly evidence?: readonly string[];
   record(event: TaskEvent): void;
   finish(outcome: TaskOutcome): void;
   close(): void;
@@ -65,13 +70,10 @@ export interface TaskSession {
 }
 
 /** Hold the current task position while the requested human answer is unavailable. */
-export class ClarificationRequired extends Error {
+export class ClarificationRequired extends AgentActivityHold {
   /** Carry the immutable question artifact into the blocked task outcome. */
-  constructor(
-    message: string,
-    readonly evidence: readonly string[],
-  ) {
-    super(message);
+  constructor(message: string, evidence: readonly string[]) {
+    super(message, evidence);
   }
 }
 
@@ -91,11 +93,11 @@ export function interruptedRun(error: unknown, signal: AbortSignal, evidence?: r
   const reason = error instanceof Error ? error.message : String(error);
   const kind = signal.aborted
     ? 'cancelled'
-    : error instanceof ClarificationRequired
+    : error instanceof AgentActivityHold
       ? 'blocked'
       : 'failed';
   const refs =
-    error instanceof ClarificationRequired
+    error instanceof AgentActivityHold
       ? [...new Set([...(evidence ?? []), ...error.evidence])]
       : evidence;
   return stopped(kind, reason, refs);
@@ -171,8 +173,16 @@ export interface RoundOutcome {
 }
 
 export interface WorkflowServices {
+  architecture?: {
+    propose(
+      session: TaskSession,
+      feedback: string | undefined,
+      signal: AbortSignal,
+    ): Promise<ArchitectureDecision>;
+  };
   execution: {
     round?(directory: string): GoalRound;
+    applyGuide?(session: TaskSession, id: string, signal: AbortSignal): Promise<void>;
     observeGoal?(session: TaskSession, signal: AbortSignal): StandingGoalEvidence;
     prepare?(session: TaskSession, issue: string, signal: AbortSignal): Promise<void>;
     checkpoint?(
@@ -183,6 +193,7 @@ export interface WorkflowServices {
     admit(
       input: TaskInput,
       signal: AbortSignal,
+      parent?: TaskSession,
     ): Promise<TaskSession | Extract<TaskOutcome, { reason: string }>>;
     assemble(
       session: TaskSession,

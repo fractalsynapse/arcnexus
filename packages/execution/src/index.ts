@@ -3,14 +3,14 @@ import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import type { Context } from 'cordis';
 import type { Agent, ActivationInput } from '../../agent/src/index.js';
-import type { Capture, TaskContext } from '../../architecture/src/index.js';
+import type { ActivitySelection, Capture, TaskContext } from '../../architecture/src/index.js';
 import type { Journal } from '../../coordination/src/index.js';
 import type { Candidate } from '../../verification/src/index.js';
 import { reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
 import type { TaskEvent, TaskOutcome, TaskSession } from '../../workflow/src/index.js';
 import { GitHub } from '../../collaboration/src/index.js';
 import { activateActor } from './activation.js';
-import { usedResearch } from './research.js';
+import { inboxIdentity, usedResearch } from './research.js';
 import { formatterPreview } from './formatter.js';
 import { recoverPrepared } from './prepared-recovery.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
@@ -26,10 +26,13 @@ import {
 } from './review-observations.js';
 
 import { Execution } from './execution.js';
+import { Clarifications, type Clarification } from './clarifications.js';
+import { readToolFile } from './tool-files.js';
+import { approvedArchitecture } from './architecture-edits.js';
 
 export { Execution };
 export { type CheckedEdit, editFingerprint } from './edits.js';
-export { Clarifications } from './clarifications.js';
+export { Clarifications };
 export { reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
 export { citesVerifiedRun, verifiedGoalRun, type VerifiedGoalRun } from './goal-evidence.js';
 export { applicationStorage } from './host-config.js';
@@ -56,6 +59,8 @@ export class HostTask implements TaskSession {
     readonly config: HostConfig,
     readonly goal: string,
     readonly journal: Journal,
+    readonly parent?: HostTask,
+    readonly inbox?: { owner: string; question: string },
   ) {
     this.capture = config.capture;
     const prefix = this.evidenceDirectory() + '/';
@@ -67,6 +72,14 @@ export class HostTask implements TaskSession {
     );
   }
 
+  /** Resolve the exact approved guide from this child's actual architecture-phase ancestor. */
+  get guide() {
+    const id = this.parent
+      ?.observations<{ architectureDelivery?: string }>()
+      .findLast(({ architectureDelivery }) => architectureDelivery)?.architectureDelivery;
+    return id ? approvedArchitecture(this, id) : undefined;
+  }
+
   /** Read the prior attempt and its immutable worktree location. */
   retainedPublication() {
     const retained = this.journal.retained;
@@ -76,6 +89,16 @@ export class HostTask implements TaskSession {
   /** Record a delivery intent or provider observation through the task journal. */
   note(event: Record<string, unknown>) {
     this.journal.record(event);
+  }
+
+  /** Read project source or a registered immutable project artifact through the same bounded tool boundary. */
+  readFile(path: string, offset = 0) {
+    return readToolFile(this, path, offset);
+  }
+
+  /** Identify the durable inbox of an actual captured actor without exposing a model-selected scope. */
+  inboxScope(selection: ActivitySelection, data: Omit<TaskContext, 'goal' | 'worktree'>) {
+    return inboxIdentity(this, selection, data);
   }
 
   /** Resolve a legacy publication's parent from the retained Git object. */
@@ -93,6 +116,40 @@ export class HostTask implements TaskSession {
   history(): readonly TaskEvent[] {
     const events = this.observations<TaskEvent & { plannerRefresh?: string }>();
     return events.slice(events.findLastIndex((event) => event.plannerRefresh) + 1);
+  }
+
+  /** Ask a durable host approval question bound to its exact reviewed proposal and actor scope. */
+  async requestDecision(
+    selection: ActivitySelection,
+    proposal: string,
+    question: string,
+    signal: AbortSignal,
+  ) {
+    await new Clarifications(this, selection, signal).decide(
+      decisionContext(proposal),
+      question,
+      (answer) => /^(approve|skip)$/i.test(answer.trim()),
+    );
+    const receipt = this.decisionRecord(selection, proposal, question);
+    if (!receipt) throw new Error('The human decision has no retained host receipt');
+    return receipt;
+  }
+
+  /** Read only a host gate bound to this task, captured revision, actor, proposal and exact question. */
+  decisionRecord(selection: ActivitySelection, proposal: string, question: string) {
+    const scope = inboxIdentity(this, selection, decisionContext(proposal));
+    const gate = this.observations<{ clarification?: Clarification }>().findLast(
+      ({ clarification }) => clarification?.scope === scope && clarification.question === question,
+    )?.clarification;
+    if (
+      !gate ||
+      gate.answer === undefined ||
+      !gate.evidence ||
+      !this.evidence.includes(gate.evidence) ||
+      !existsSync(gate.evidence)
+    )
+      return;
+    return { scope, question, answer: gate.answer, evidence: gate.evidence };
   }
 
   /** Retain the terminal outcome and verified native evidence. */
@@ -393,6 +450,16 @@ export function hostTask(session: TaskSession): HostTask {
   return session;
 }
 
+/** Author the stable scope of host-owned approval gates independently of model-provided questions. */
+function decisionContext(proposal: string) {
+  return {
+    milestone: proposal,
+    assignment: 'Review exact proposed guide content',
+    acceptance: [],
+    evidence: [],
+  };
+}
+
 /** Mount the native host execution boundary with trusted storage. */
 export const executionPlugin = {
   inject: ['architecture', 'coordination'],
@@ -406,3 +473,5 @@ export const executionPlugin = {
 };
 
 export { steward } from './steward.js';
+
+export { approvedArchitecture } from './architecture-edits.js';

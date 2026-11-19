@@ -25,6 +25,7 @@ export interface Project {
   checks?: { acceptance: string[] };
   director: Binding;
   verifier: Binding;
+  architect?: Binding;
 }
 
 export interface Activity {

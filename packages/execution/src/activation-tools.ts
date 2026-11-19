@@ -27,6 +27,7 @@ type RequestEvidence = {
   clarification?: { scope: string; question: string };
   researchRequest?: { inbox: string; question: string; decision: string };
   activation?: ActivityCheckpoint;
+  projectReply?: { scope: string };
 };
 
 /** Dispatch captured project tools and keep final model output free of implicit actions. */
@@ -62,7 +63,8 @@ export class ActivationTools {
     if (!request || selfLinkedSupplier(request, this.milestone)) return;
     const handled = events
       .slice(index + 1)
-      .some(({ clarification, researchRequest, activation }) => {
+      .some(({ clarification, researchRequest, activation, projectReply }) => {
+        if (projectReply?.scope === this.scope) return true;
         if (request.kind === 'question')
           return clarification?.scope === this.scope && clarification.question === request.question;
         if (request.kind === 'research')
@@ -117,6 +119,10 @@ export class ActivationTools {
 
   /** Keep special actors and research read-only even if a capture is misconfigured. */
   private assertAuthority(tool: Tool) {
+    if (this.task.inbox && ['edit', 'archive'].includes(tool.handler))
+      throw new Error(
+        'An inbox contribution is read-only; request explicit implementation through escalation',
+      );
     if (!['edit', 'archive', 'check', 'supplier'].includes(tool.handler)) return;
     const { director, verifier } = this.task.capture.project;
     const { component, activity } = this.selection;
@@ -130,6 +136,11 @@ export class ActivationTools {
   /** Apply one proposed edit exactly once and checkpoint before returning its receipt. */
   private async edit(tool: Tool, args: Record<string, unknown>) {
     const proposal = decodeEdit(args);
+    const root = this.task.capture.project.knowledgeRoot ?? '.arc';
+    if (
+      [`${root}/goals/`, `${root}/objectives/`].some((prefix) => proposal.path.startsWith(prefix))
+    )
+      throw new Error('Objectives and goals require the exact Planner approval route');
     const id = createHash('sha256')
       .update(JSON.stringify([this.scope, tool.name, proposal]))
       .digest('hex');

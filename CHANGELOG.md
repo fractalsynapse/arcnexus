@@ -4,6 +4,8 @@
 
 ### Added
 
+- Assess architecture with `architecture update`, retain exact human approval in the existing journal, and deliver prerequisite work and protected guide bytes through the normal task workflow (#631).
+
 - Retain one project writer across nested sequential task sessions and recover their interrupted journals together (#628).
 
 - Map standing goals and preserve human objectives with `arcnexus task plan`.

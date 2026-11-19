@@ -6,7 +6,7 @@ import { inboxIdentity, verificationContext } from './research.js';
 
 type Assignment = Omit<TaskContext, 'goal' | 'worktree'>;
 
-interface Clarification {
+export interface Clarification {
   scope: string;
   question: string;
   answer?: string;

@@ -5,7 +5,8 @@ import type { HostTask } from './index.js';
 
 /** Read a permitted file and return a bounded text range and current byte digest. */
 export function readToolFile(task: HostTask, path: string, offset: number) {
-  const file = task.evidence.includes(path) ? path : projectPath(task, path);
+  const retained = isAbsolute(path) && task.journal.artifactRecorded(path);
+  const file = task.evidence.includes(path) || retained ? path : projectPath(task, path);
   const stat = lstatSync(file);
   if (!stat.isFile() || stat.nlink !== 1 || realpathSync(file) !== file)
     throw new Error(`File is not an accessible regular file: ${path}`);

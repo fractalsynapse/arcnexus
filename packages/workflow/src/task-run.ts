@@ -14,6 +14,7 @@ import {
 } from '../../direction/src/index.js';
 import { validateVerdict, type Candidate, type Verdict } from '../../verification/src/index.js';
 import { activityRepair } from './activity-repair.js';
+import { assembleCandidate } from './assembly.js';
 import { selfLinkedSupplier, stopped, type Interrupted } from './services.js';
 import type {
   ActivityCheckpoint,
@@ -401,11 +402,7 @@ export class TaskRun {
       phase: 'verification',
       message: 'Assembling the candidate for independent review',
     });
-    const candidate = await this.services.execution.assemble(
-      this.session,
-      this.signal,
-      this.input.standing,
-    );
+    const candidate = await assembleCandidate(this.services, this.session, this.input, this.signal);
     this.signal.throwIfAborted();
     if (this.rejectedReviews.has(reviewKey(candidate)))
       throw new Error('Correction repeated a rejected candidate and its review evidence');

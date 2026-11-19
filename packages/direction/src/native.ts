@@ -61,7 +61,7 @@ export function direct(
       agent,
       task.capture.project.director,
       {
-        assignment: directorAssignment(feedback, standing, revision),
+        assignment: actorAssignment(task, feedback, standing, revision),
         milestone: revision
           ? 'Pending plan revision'
           : standing
@@ -237,4 +237,45 @@ export async function track(session: TaskSession, signal: AbortSignal): Promise<
   const created = await provider.issue(task.goal, taskID, task.goalID);
   task.note({ issue: created });
   return created;
+}
+
+/** Give Direction approved prerequisite outcomes while keeping the exact protected writes host-owned. */
+function architectureDirective(task: HostTask) {
+  const approved = task.guide;
+  if (!approved) return;
+  const { proposal } = approved;
+  const prior = task
+    .observations<{ architectureAuthority?: { id: string; report: string } }>()
+    .findLast(
+      ({ architectureAuthority }) => architectureAuthority?.id === proposal.id,
+    )?.architectureAuthority;
+  const report =
+    prior?.report ?? task.store('approved-architecture.json', JSON.stringify(approved));
+  if (!prior) task.note({ architectureAuthority: { id: proposal.id, report } });
+  return {
+    purpose: proposal.purpose,
+    consequences: proposal.consequences,
+    implementation: proposal.implementation,
+    exactProposal: report,
+    hostApplication:
+      'Plan implementation and verification of the approved outcomes. Do not ask stewards to edit protected guide files. The host applies the exact approved batch after milestones and before assembled independent verification. If no prerequisite code is needed, schedule the smallest read-only architecture review of the proposal and its applicability.',
+  };
+}
+
+/** Combine normal planning with verified prerequisite outcomes and any read-only question. */
+function actorAssignment(
+  task: HostTask,
+  feedback?: Feedback,
+  standing?: StandingGoalEvidence,
+  revision?: RevisionRequest,
+) {
+  return {
+    ...directorAssignment(feedback, standing, revision),
+    architecture: architectureDirective(task),
+    inbox: task.inbox && {
+      ...task.inbox,
+      instructions:
+        'Answer this question completely through read-only steward review. Include the requested owner and require a complete answer. No source changes are authorized for an inbox contribution.',
+    },
+  };
 }
