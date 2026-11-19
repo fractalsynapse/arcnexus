@@ -23,7 +23,7 @@ import { applyEdits, type CheckedEdit } from './edits.js';
 import { candidateDiff, git } from './git.js';
 import { applicationStorage, preflight, type HostConfig } from './host-config.js';
 import { goalRound, observeGoal, recordAdmission, stagingCapture } from './goals.js';
-import { check } from './check.js';
+import { check, type CheckResult } from './check.js';
 import { pendingStewardCheck, type StewardScope } from './steward-check.js';
 import {
   cleanCandidate,
