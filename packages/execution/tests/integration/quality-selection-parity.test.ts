@@ -161,7 +161,9 @@ function prepareNestedWorktree(host: string, worktree: string) {
   const dependencies = join(worktree, 'node_modules');
   mkdirSync(join(dependencies, '.bin'), { recursive: true });
   symlinkSync(join(host, 'node_modules/.bin/jiti'), join(dependencies, '.bin/jiti'));
-  symlinkSync(join(host, 'node_modules/prettier'), join(dependencies, 'prettier'));
+  for (const dependency of ['eslint', 'prettier', 'typescript', 'yaml']) {
+    symlinkSync(join(host, 'node_modules', dependency), join(dependencies, dependency));
+  }
   writeFileSync(
     join(components, 'execution.yaml'),
     'id: execution\nowns:\n  - packages/execution\n',
