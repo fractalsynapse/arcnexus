@@ -18,9 +18,17 @@ type Binding = AgentInspection['request']['options']['tools'][number];
 
 /** Define the wire schema for the fixture's captured operations. */
 function binding(name: string, handler: string, properties: Record<string, object>): Binding {
-  return { name, handler, description: name, inputSchema: {
-    type: 'object', properties, required: Object.keys(properties), additionalProperties: false,
-  } } as Binding;
+  return {
+    name,
+    handler,
+    description: name,
+    inputSchema: {
+      type: 'object',
+      properties,
+      required: Object.keys(properties),
+      additionalProperties: false,
+    },
+  } as Binding;
 }
 
 /** Return the actual response from the connected MCP client. */
@@ -54,37 +62,68 @@ async function connect(activation: ActivationTools) {
     binding('owner-lint', 'check', check),
     binding('repository-types', 'check', check),
     binding('checked-edit', 'edit', {
-      path: { type: 'string' }, expected: { type: 'string' }, content: { type: 'string' },
+      path: { type: 'string' },
+      expected: { type: 'string' },
+      content: { type: 'string' },
     }),
   ];
-  const host = new LocalMcp(bindings, (tool, args) => activation.invoke(tool, args), () => {});
+  const host = new LocalMcp(
+    bindings,
+    (tool, args) => activation.invoke(tool, args),
+    () => {},
+  );
   const client = new Client({ name: 'quality-composition', version: '1' });
   await client.connect(new StreamableHTTPClientTransport(new URL(await host.start())));
   return { client, host };
 }
 
 /** Run real tools in the outer sandbox without claiming native confinement. */
-function installDiagnosticBoundary(t: TestContext, task: StewardFixture['task'], owner: string, workspace: string) {
+function installDiagnosticBoundary(
+  t: TestContext,
+  task: StewardFixture['task'],
+  owner: string,
+  workspace: string,
+) {
   // This controlled boundary runs real tools under the outer test sandbox; it does not
   // exercise HostTask's inner confinement or its production evidence cache.
-  t.mock.method(task, 'check', async (id: string, _signal: AbortSignal, scope?: Parameters<typeof task.check>[2]) => {
-    const args = id === 'owner-lint' ? ['run', 'lint', '--', owner] : ['run', 'check'];
-    const start = Date.now();
-    const result = spawnSync('npm', args, { cwd: workspace, encoding: 'utf8' });
-    const log = task.store(`${id}.log`, (result.stdout ?? '') + (result.stderr ?? ''));
-    const check = { id, status: result.status ?? -1, log, command: 'npm', args,
-      cwd: workspace, durationMs: Date.now() - start };
-    task.note({ check, scope, diagnosticComposition: { signal: result.signal } });
-    return check;
-  });
+  t.mock.method(
+    task,
+    'check',
+    async (id: string, _signal: AbortSignal, scope?: Parameters<typeof task.check>[2]) => {
+      const args = id === 'owner-lint' ? ['run', 'lint', '--', owner] : ['run', 'check'];
+      const start = Date.now();
+      const result = spawnSync('npm', args, { cwd: workspace, encoding: 'utf8' });
+      const log = task.store(`${id}.log`, (result.stdout ?? '') + (result.stderr ?? ''));
+      const check = {
+        id,
+        status: result.status ?? -1,
+        log,
+        command: 'npm',
+        args,
+        cwd: workspace,
+        durationMs: Date.now() - start,
+      };
+      task.note({ check, scope, diagnosticComposition: { signal: result.signal } });
+      return check;
+    },
+  );
 }
 
 test('real lint and type diagnostics reach one MCP caller and survive checked repair', async (t) => {
   const { task, owner, file, workspace, original, broken } = await diagnosticFixture(t);
   installDiagnosticBoundary(t, task, owner, workspace);
-  const activation = new ActivationTools(task, { component: owner, activity: 'implementation' }, {
-    goal: 'quality', assignment: {}, milestone: { id: 'quality' }, acceptance: [], worktree: workspace,
-  }, AbortSignal.timeout(120_000));
+  const activation = new ActivationTools(
+    task,
+    { component: owner, activity: 'implementation' },
+    {
+      goal: 'quality',
+      assignment: {},
+      milestone: { id: 'quality' },
+      acceptance: [],
+      worktree: workspace,
+    },
+    AbortSignal.timeout(120_000),
+  );
   const { client, host } = await connect(activation);
   try {
     await assertRepair(client, file, original, broken);
@@ -107,7 +146,9 @@ async function diagnosticFixture(t: TestContext) {
   Object.assign(task.capture, { components, source: { ...task.capture.source, root: source } });
   const original = readFileSync(join(workspace, file), 'utf8');
   const lines = Array.from({ length: 35 }, () => '  value += 1;').join('\n');
-  const broken = original + `\nfunction qualityFailure(): number {\n  let value: number = "wrong";\n${lines}\n  return value;\n}\nqualityFailure();\n`;
+  const broken =
+    original +
+    `\nfunction qualityFailure(): number {\n  let value: number = "wrong";\n${lines}\n  return value;\n}\nqualityFailure();\n`;
   writeFileSync(join(workspace, file), broken);
 
   return { task, owner, file, workspace, original, broken };
@@ -126,7 +167,9 @@ async function assertRepair(client: Client, file: string, original: string, brok
   assert(lintLog.includes(file));
   assert(typeLog.includes(file));
   const receipt = await call(client, 'checked-edit', {
-    path: file, expected: createHash('sha256').update(broken).digest('hex'), content: original,
+    path: file,
+    expected: createHash('sha256').update(broken).digest('hex'),
+    content: original,
   });
   assert.equal(receipt.path, file);
   const fixedLint = await call(client, 'owner-lint', { expected: 'pass' });
@@ -143,7 +186,8 @@ async function assertRepair(client: Client, file: string, original: string, brok
 function prepareWorkspace(source: string, workspace: string): void {
   cpSync(source, workspace, {
     recursive: true,
-    filter: (path) => !['.git', 'node_modules', 'dist'].includes(relative(source, path).split('/')[0]!),
+    filter: (path) =>
+      !['.git', 'node_modules', 'dist'].includes(relative(source, path).split('/')[0]!),
   });
   symlinkSync(join(source, 'node_modules'), join(workspace, 'node_modules'), 'dir');
 }
