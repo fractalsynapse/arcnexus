@@ -29,21 +29,11 @@ class OwnerQuality {
     this.execute(files);
   }
 
-  /** Resolve validated ownership and operation applicability from the current catalog. */
+  /** Resolve public shared discovery and retain its exact operation selection. */
   private selectFiles(): string[] {
-    const components = globSync('.arc/architecture/components/*.yaml').map(
-      (path) => parse(readFileSync(path, 'utf8')) as Component,
-    );
-    assert(
-      !this.owner || components.some(({ id }) => id === this.owner),
-      `Unknown owner: ${this.owner}`,
-    );
-    const paths = this.currentFiles().filter((path) => {
-      const resolution = team.ownerFor(components, path);
-      assert.notEqual(resolution.kind, 'collision', `Ambiguous ownership: ${path}`);
-      return !this.owner || (resolution.kind === 'owned' && resolution.owner.id === this.owner);
-    });
-    return this.applicableFiles(paths);
+    const selection = selectQualityInputs(this.operation, this.owner);
+    console.log(`${this.operation} scope=${this.owner ?? 'repository'} sha256=${selection.identity}`);
+    return this.applicableFiles(selection.files);
   }
 
   /** Report input identity, then run the configured read-only quality command. */
