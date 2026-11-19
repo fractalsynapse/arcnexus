@@ -200,3 +200,15 @@ Unfinished assigned work is not an unavailable prerequisite. Continue the curren
 activity's mapped operations until its checklist is met, request optional research
 for missing knowledge, or explicitly escalate a distinct ownership contribution.
 A progress report must not end the activity as blocked merely because work remains.
+
+## Recovering acknowledged deletions
+
+A mapped read of an absent project file may identify its latest acknowledged
+checked deletion. The host reads that checkpoint's exact parent blob, verifies
+the recorded before digest and retains the source as an immutable task artifact.
+The operation still reports that the live file is absent, names the historical
+artifact and states that a restoration requires a new owned checked edit with
+`expected: null`. It never substitutes historical text for current contents or
+restores source automatically. Unknown paths, uncheckpointed deletions and
+mismatched evidence remain refusals. All ordinary path and write guards remain
+in force (#655).

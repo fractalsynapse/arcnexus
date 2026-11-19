@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Expose verified parent-checkpoint source after an acknowledged deletion through the existing mapped read refusal, enabling owned checked restoration without operator edits (#655).
+
 - Index retained steward evidence instead of replaying every artifact reference; preserve current diagnostics, complete answers and explicit activation parity across handoffs (#650).
 
 - Return unavailable activity repair targets to the caller before Workflow progression, using the shared target validator (#653).
