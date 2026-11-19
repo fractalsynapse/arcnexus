@@ -30,9 +30,10 @@ export class CheckCacheFixture {
 
   /** Keep source, worktree and journal storage separate, as production does. */
   constructor(t: TestContext) {
-    mkdirSync(this.source);
+    mkdirSync(join(this.source, '.arc/architecture/components'), { recursive: true });
     git(this.source, 'init', '-q');
     writeFileSync(join(this.source, 'fixture.txt'), 'original');
+    writeFileSync(join(this.source, '.arc/architecture/components/owner.yaml'), 'id: owner\\nowns:\\n  - fixture.txt\\n');
     writeFileSync(join(this.source, '.gitignore'), 'node_modules/\n');
     this.commit(this.source);
     this.task = this.open(fixtureOperation, git(this.source, 'rev-parse', 'HEAD'));
@@ -109,7 +110,7 @@ export class CheckCacheFixture {
     const capture = {
       source: {
         root: this.source,
-        paths: [],
+        paths: ['.arc/architecture/components/owner.yaml'],
         remote: 'https://example.com/fixture.git',
         revision: git(this.source, 'rev-parse', 'HEAD'),
       },
