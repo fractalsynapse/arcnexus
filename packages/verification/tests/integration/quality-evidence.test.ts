@@ -151,10 +151,13 @@ for (const scenario of [
     if (scenario === 'valid') {
       for (const [owner, activity, id] of [
         ['verification', 'testing', 'read-file'],
+        ['verification', 'testing', 'owner-format'],
         ['verification', 'research', 'read-file'],
         ['verification', 'research', 'owner-tests'],
+        ['verification', 'research', 'owner-format'],
         ['unused', 'testing', 'read-file'],
         ['unused', 'testing', 'owner-tests'],
+        ['unused', 'testing', 'owner-format'],
       ]) {
         const log = task.store(`${owner}-${activity}-${id}.log`, 'Operation observation');
         task.note({
