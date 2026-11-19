@@ -53,6 +53,9 @@ milestone and engineering criteria stay unchanged. The host reruns the unresolve
 check even when the next response requests no checks. A distinct failure can
 continue local correction; repeating the same diagnostic without changed inputs
 holds before another identical automatic attempt.
+Checked supplier contributions also change the task's check inputs. After that
+contribution, a remaining failure returns to the original caller for local repair;
+the supplier's ownership never grants the caller permission to edit its files.
 
 A steward self-review returns `kind: repair`, the earliest affected applicable
 `activity` (`documentation`, `testing` or `implementation`), and its `reason`.

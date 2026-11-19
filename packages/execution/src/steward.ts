@@ -45,23 +45,19 @@ export async function steward(
   const failed = await perform(task, scope, result, correction, signal);
   const evidence = task.evidence.slice(before);
   return failed
-    ? stewardCheckOutcome(task, milestone, failed, correction, evidence)
+    ? stewardCheckOutcome(task, failed, correction, evidence)
     : { kind: 'completed', evidence, ...(result.answer ? { answer: result.answer } : {}) };
 }
 
 /** Return failed checks to their caller and hold unchanged failures without new progress. */
 function stewardCheckOutcome(
   task: HostTask,
-  milestone: Milestone,
   failed: StewardCheckFailure,
   correction: StewardCheckFailure | undefined,
   evidence: readonly string[],
 ): ActivityOutcome {
   const reason = `Operation ${failed.id} exited ${failed.status}; expected ${failed.expected}`;
-  if (
-    correction?.id === failed.id &&
-    !correctionMadeProgress(task.observations(), milestone.owner, correction.log)
-  )
+  if (correction?.id === failed.id && !correctionMadeProgress(task.observations(), correction.log))
     return {
       kind: 'blocked',
       reason,
