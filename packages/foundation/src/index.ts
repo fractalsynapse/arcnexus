@@ -84,7 +84,7 @@ function qualityIdentity(
     ...componentFiles,
     ...configurationInputs(operation),
     ...files,
-    '.gitignore',
+    ...globSync('**/.gitignore'),
     '.eslintignore',
     '.prettierignore',
     '.prettierrc.yaml',
