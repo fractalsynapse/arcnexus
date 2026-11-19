@@ -43,28 +43,22 @@ interface QualityOperationBinding {
   args: (string | { context: string })[];
 }
 
-/** Report whether a declared owner quality binding has its existing runtime command. */
+/** Resolve the runtime implementation from the package's existing quality scripts. */
 export function qualityOperationAvailable(binding: QualityOperationBinding): boolean {
-  const expected = [
-    {
-      tool: 'check',
-      applicability: 'owner-format-files',
-      command: 'npm',
-      args: ['run', 'format:check', { context: 'owner' }],
-    },
-    {
-      tool: 'check',
-      applicability: 'owner-lint-files',
-      command: 'npm',
-      args: ['run', 'lint', { context: 'owner' }],
-    },
-  ];
-  return expected.some(
-    (candidate) =>
-      binding.tool === candidate.tool &&
-      binding.applicability === candidate.applicability &&
-      binding.command === candidate.command &&
-      JSON.stringify(binding.args) === JSON.stringify(candidate.args),
+  if (binding.tool !== 'check' || binding.command !== 'npm') return false;
+  const [run, operation, context, ...extra] = binding.args;
+  if (
+    run !== 'run' ||
+    typeof operation !== 'string' ||
+    JSON.stringify(context) !== JSON.stringify({ context: 'owner' }) ||
+    extra.length > 0 ||
+    binding.applicability !== `owner-${operation === 'format:check' ? 'format' : operation}-files`
+  )
+    return false;
+  const scripts = JSON.parse(readFileSync('package.json', 'utf8')).scripts as Record<string, string>;
+  return (
+    ['format:check', 'lint'].includes(operation) &&
+    scripts[operation]?.includes('packages/foundation/scripts/owner-quality.ts') === true
   );
 }
 
