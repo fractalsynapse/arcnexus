@@ -24,7 +24,7 @@ export class StewardFixture {
       source: { root, remote: 'https://example.com/project.git' },
       project: { contractRegistry: 'registry.yaml' },
       contracts: [],
-      components,
+      components: structuredClone(components),
     } as unknown as Capture;
     const goal = 'Exercise failed steward check correction';
     const journal = new Coordination(root).admit(capture.source.remote, goal);
