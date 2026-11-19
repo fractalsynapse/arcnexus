@@ -4,9 +4,19 @@ import { Architecture, type Capture } from '../../src/index.js';
 import { Agent } from '../../../agent/src/index.js';
 
 /** Create an isolated captured activity without changing the real catalog. */
-function fixture(operation: Record<string, unknown>): Capture {
+function fixture(operation: Record<string, unknown>, missing?: 'manifest' | 'script' | 'runner'): Capture {
+  const runner = 'packages/foundation/scripts/owner-quality.ts';
+  const scripts: Record<string, string> = {
+    'format:check': `jiti ${runner} format:check`,
+    lint: `jiti ${runner} lint`,
+  };
+  if (missing === 'script') delete scripts['format:check'];
+  const paths = [
+    ...(missing === 'manifest' ? [] : ['package.json']),
+    ...(missing === 'runner' ? [] : [runner]),
+  ];
   return {
-    source: { revision: 'base', paths: [], read: () => '' },
+    source: { revision: 'base', paths, read: () => JSON.stringify({ scripts }) },
     project: {
       id: 'fixture',
       director: { component: 'other', activity: 'planning' },
@@ -69,21 +79,22 @@ test('public request rejects a check without an implementation', () => {
   );
 });
 
-test('activation refuses an unavailable owner-scoped check implementation before invoking the agent', () => {
-  const capture = fixture({
-    ...check('format:check'),
-    command: '/arcnexus-unavailable-quality-implementation',
-    applicability: 'owner-format-files',
+for (const missing of ['manifest', 'script', 'runner'] as const) {
+  test(`activation rejects a missing captured ${missing} before invoking the agent`, () => {
+    const capture = fixture(
+      { ...check('format:check'), applicability: 'owner-format-files' },
+      missing,
+    );
+    let invoked = false;
+    const agent = new Agent(new Architecture());
+    assert.throws(() => agent.activate(
+      { capture, selection, task: { goal: 'test', assignment: {}, milestone: {}, acceptance: [], evidence: [], worktree: '.' } },
+      async () => { invoked = true; },
+      new AbortController().signal,
+    ), /Unavailable quality implementation/);
+    assert.equal(invoked, false);
   });
-  let invoked = false;
-  const agent = new Agent(new Architecture());
-  assert.throws(() => agent.activate(
-    { capture, selection, task: { goal: 'test', assignment: {}, milestone: {}, acceptance: [], evidence: [], worktree: '.' } },
-    async () => { invoked = true; },
-    new AbortController().signal,
-  ));
-  assert.equal(invoked, false);
-});
+}
 
 test('public request rejects an unavailable handler', () => {
   assert.throws(() =>
