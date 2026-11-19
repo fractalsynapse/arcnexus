@@ -82,7 +82,7 @@ function importedLintConfiguration(worktree: string, tracked: readonly string[])
     if (visited.has(path) || !known.has(path)) continue;
     visited.add(path);
     const content = readFileSync(join(worktree, path), 'utf8');
-    for (const match of content.matchAll(/(?:from\\s*|import\\s*)['\"](\\.[^'\"]+)['\"]/g)) {
+    for (const match of content.matchAll(/(?:from\s*|import\s*)['\"](\.[^'\"]+)['\"]/g)) {
       const base = resolve(worktree, path, '..', match[1]!);
       const extensionless = base.replace(/\\.(?:[cm]?js|tsx?)$/, '');
       const dependency = [`${extensionless}.ts`, `${extensionless}.js`, `${extensionless}.mjs`, `${extensionless}.mts`, base]
