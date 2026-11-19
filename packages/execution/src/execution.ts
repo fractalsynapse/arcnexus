@@ -13,6 +13,7 @@ import { goalRound, observeGoal, recordAdmission, stagingCapture } from './goals
 import { preflight } from './host-config.js';
 import { ownerEvidenceDigest } from './review-observations.js';
 import { HostTask, hostTask } from './index.js';
+import { applyArchitecture } from './architecture-edits.js';
 
 /** Admit a clean project at its verified staging head before creating state. */
 export class Execution {
@@ -24,32 +25,55 @@ export class Execution {
   ) {}
 
   /** Resolve the binding and capture the repository before claiming the project lane. */
-  async admit(input: TaskInput, signal: AbortSignal) {
+  async admit(input: TaskInput, signal: AbortSignal, parent?: TaskSession) {
     let config: ReturnType<typeof preflight>;
     try {
       signal.throwIfAborted();
-      const capture = this.architecture.capture(input.directory);
-      const fresh = Boolean(input.standing || input.planning);
-      const selected = fresh ? stagingCapture(this.architecture, capture) : capture;
-      config = preflight(selected, this.storage, fresh);
+      config = this.configuration(input, parent);
     } catch (error) {
       if (signal.aborted) throw signal.reason;
       return invalid(error instanceof Error ? error.message : String(error));
     }
-    const journal = this.coordination.admit(
-      config.capture.source.remote,
-      input.goal,
-      config.fresh,
-      input.planning === 'exploration'
+    return this.claim(config, input, parent);
+  }
+
+  /** Claim a child from its verified project writer or admit one foreground invocation. */
+  private claim(config: ReturnType<typeof preflight>, input: TaskInput, parent?: TaskSession) {
+    const ancestor = parent && hostTask(parent);
+    if (ancestor && !this.coordination.owns(config.capture.source.remote, ancestor.journal))
+      return invalid('The parent writer belongs to a different project store');
+    const scope =
+      input.planning === 'exploration' && !parent
         ? `plan:exploration:${config.capture.source.revision}`
-        : input.scope,
-    );
+        : input.scope;
+    const journal = ancestor
+      ? ancestor.journal.child(input.goal, scope ?? input.goal, config.fresh)
+      : this.coordination.admit(
+          config.capture.source.remote,
+          input.goal,
+          config.fresh,
+          scope,
+          Boolean(input.architecture),
+        );
     if (!journal)
       return invalid(`Task admission requires the current verified ${config.base} head`);
     if ('activeGoal' in journal)
       return invalid(`Active goal: ${journal.activeGoal} (run ${journal.run})`);
     recordAdmission(journal, config, input.planning);
-    return new HostTask(config, input.goal, journal);
+    return new HostTask(config, input.goal, journal, ancestor, input.inbox);
+  }
+
+  /** Capture current staging for assessments while retaining ordinary task admission checks. */
+  private configuration(input: TaskInput, parent?: TaskSession) {
+    const capture = this.architecture.capture(input.directory);
+    const fresh = Boolean(parent || input.standing || input.planning || input.architecture);
+    const selected = fresh ? stagingCapture(this.architecture, capture) : capture;
+    return preflight(selected, this.storage, fresh);
+  }
+
+  /** Apply only the exact human-approved guide batch after normal prerequisite milestones finish. */
+  applyGuide(session: TaskSession, id: string, signal: AbortSignal) {
+    return applyArchitecture(hostTask(session), id, signal);
   }
 
   /** Read the standing goal inventory and recover an interrupted round or start a new one. */

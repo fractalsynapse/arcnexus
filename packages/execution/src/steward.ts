@@ -189,7 +189,10 @@ async function stewardAssignment(
     ...responseShape(scope.activity !== 'review' && Boolean(task.formatPreview)),
     ...supplierContext(task.history(), milestone.id),
     ...stewardProgress(task.history(), milestone),
-    answerRequired: supplierAnswerRequired(task.history(), milestone, scope.activity),
+    inbox: task.inbox,
+    answerRequired:
+      task.inbox?.owner === milestone.owner ||
+      supplierAnswerRequired(task.history(), milestone, scope.activity),
     ...(finding ? { finding } : {}),
     ...(failedCheck ? { failedCheck, correction: correctionInstruction } : {}),
     ...(await correctionChecks(task, scope, finding, signal)),

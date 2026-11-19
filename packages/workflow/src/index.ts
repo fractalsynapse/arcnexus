@@ -9,6 +9,7 @@ import type {
   WorkflowServices,
 } from './services.js';
 import { TaskRun } from './task-run.js';
+import { ArchitectRun } from './architect-run.js';
 
 export type {
   ActivityCheckpoint,
@@ -39,24 +40,71 @@ export class Workflow {
   /** Use the execution, direction, agent, verification and delivery services supplied by the app. */
   constructor(private readonly services?: WorkflowServices) {}
 
-  /** Admit the goal, run the sequential loop and retain one terminal outcome. */
-  async run(input: TaskInput, observer: TaskObserver, signal: AbortSignal): Promise<TaskOutcome> {
+  /** Admit a goal or reuse its foreground parent's writer for a normal sequential child task. */
+  run(input: TaskInput, observer: TaskObserver, signal: AbortSignal, parent?: TaskSession) {
+    return this.invoke(
+      input,
+      observer,
+      signal,
+      (session) => new TaskRun(this.services!, session, observer, signal, input).execute(),
+      parent,
+    );
+  }
+
+  /** Assess accepted direction, obtain exact guide approval and deliver prerequisites before returning. */
+  update(
+    directory: string,
+    feedback: string | undefined,
+    observer: TaskObserver,
+    signal: AbortSignal,
+    parent?: TaskSession,
+  ) {
+    const input = {
+      directory,
+      goal: feedback ?? 'Assess architecture alignment',
+      architecture: true,
+      scope: 'architecture:update',
+    };
+    return this.invoke(
+      input,
+      observer,
+      signal,
+      (session) =>
+        new ArchitectRun(this.services!, session, observer, signal, (child) =>
+          this.run(child, observer, signal, session),
+        ).execute(feedback),
+      parent,
+    );
+  }
+
+  /** Share admission, cancellation, evidence, cleanup and terminal recording across foreground phases. */
+  private async invoke(
+    input: TaskInput,
+    observer: TaskObserver,
+    signal: AbortSignal,
+    execute: (session: TaskSession) => Promise<TaskOutcome>,
+    parent?: TaskSession,
+  ): Promise<TaskOutcome> {
     if (!input.goal.trim()) return stopped('invalid', 'A task goal is required');
     if (signal.aborted) return stopped('cancelled', 'Task cancelled before admission');
     if (!this.services)
       return stopped('invalid', 'Task execution services are unavailable in this build');
     let session: TaskSession | undefined;
-    let run: TaskRun | undefined;
     let outcome: TaskOutcome;
     try {
-      const admitted = await this.services.execution.admit(input, signal);
+      const admitted = await this.services.execution.admit(input, signal, parent);
       if ('kind' in admitted) return admitted;
       session = admitted;
-      run = new TaskRun(this.services, session, observer, signal, input);
-      outcome = await run.execute();
+      session.ask = observer.answer;
+      outcome = await execute(session);
     } catch (error) {
-      outcome = interruptedRun(error, signal, run?.evidence);
+      outcome = interruptedRun(error, signal, session?.evidence);
     }
+    return this.complete(session, outcome);
+  }
+
+  /** Release one admitted session only after its cleanup and terminal observation are recorded. */
+  private complete(session: TaskSession | undefined, outcome: TaskOutcome) {
     try {
       outcome = this.finalize(session, outcome);
       session?.finish(outcome);

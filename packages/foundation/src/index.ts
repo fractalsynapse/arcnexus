@@ -1,7 +1,20 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { globSync, readFileSync } from 'node:fs';
 import { parse } from 'yaml';
 import { team } from '../../team/src/index.js';
+
+export { unifiedDiff, type ContentPatch } from './diff.js';
+
+/** Identify exact UTF-8 content used in reviewed proposals and recorded source observations. */
+export function textDigest(content: string) {
+  return createHash('sha256').update(content).digest('hex');
+}
+
+/** Extract authored acceptance identities for registry amendment and offline validation. */
+export function acceptanceScenarios(content: string) {
+  return [...content.matchAll(/^\| ([A-Z]+-\d+[a-z]?) \|/gm)].map((match) => match[1]!);
+}
 
 interface Component {
   id: string;

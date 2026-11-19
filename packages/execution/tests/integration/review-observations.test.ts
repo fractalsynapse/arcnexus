@@ -41,3 +41,23 @@ class ReviewObservationsScenario {
 
 test('independent review receives exact owner check results with edit freshness', () =>
   ReviewObservationsScenario.run());
+
+test('protected architecture writes invalidate earlier owner-check freshness', () => {
+  const check: CheckResult = {
+    id: 'owner-tests',
+    status: 0,
+    log: 'before.log',
+    command: 'npm',
+    args: ['test'],
+    cwd: '/repo',
+    durationMs: 1,
+  };
+  const scope: StewardScope = { owner: 'execution', activity: 'testing' };
+  const events = [
+    { check, scope },
+    { architectureWrite: { path: '.arc/architecture/operations/check.yaml' } },
+  ];
+  const observations = ownerReviewObservations(events, { tree: 'changed-tree', base: 'base' }, {});
+  assert.equal(observations[0]?.afterLastEdit, false);
+  assert.equal(observations[0]?.candidate, undefined);
+});

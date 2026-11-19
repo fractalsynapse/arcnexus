@@ -12,7 +12,7 @@ export async function runTask(
   commands: Context['commands'],
   goal: string | undefined,
   json: boolean,
-  verb: 'run' | 'plan',
+  verb: 'run' | 'plan' | 'update',
 ) {
   const controller = new AbortController();
   const abort = () => controller.abort(new Error('Task cancelled by SIGINT'));
@@ -29,11 +29,13 @@ async function dispatchTask(
   commands: Context['commands'],
   goal: string | undefined,
   json: boolean,
-  verb: 'run' | 'plan',
+  verb: 'run' | 'plan' | 'update',
   signal: AbortSignal,
 ) {
   const observer: TaskObserver = { progress: (entry) => reportProgress(entry, json), answer: ask };
   const directory = process.cwd();
+  if (verb === 'update')
+    return finish(await commands.updateArchitecture(directory, goal, observer, signal), json);
   if (verb === 'plan')
     return finish(await commands.planTask(directory, goal, observer, signal), json);
   if (goal === undefined)

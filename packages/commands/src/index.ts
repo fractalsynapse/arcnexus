@@ -12,7 +12,17 @@ declare module 'cordis' {
         observer: TaskObserver,
         signal: AbortSignal,
       ): ReturnType<Context['workflow']['run']>;
-      runTask: Context['workflow']['run'];
+      updateArchitecture(
+        directory: string,
+        feedback: string | undefined,
+        observer: TaskObserver,
+        signal: AbortSignal,
+      ): ReturnType<Context['workflow']['update']>;
+      runTask(
+        input: TaskInput,
+        observer: TaskObserver,
+        signal: AbortSignal,
+      ): ReturnType<Context['workflow']['run']>;
       runRound: Context['workflow']['round'];
     };
   }
@@ -35,6 +45,8 @@ export const commandsPlugin = {
           observer,
           signal,
         ),
+      updateArchitecture: (directory, feedback, observer, signal) =>
+        context.workflow.update(directory, feedback, observer, signal),
       runTask: (input: TaskInput, observer: TaskObserver, signal: AbortSignal) =>
         context.workflow.run(input, observer, signal),
       runRound: (directory, observer, signal) =>
