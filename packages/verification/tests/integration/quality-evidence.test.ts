@@ -148,6 +148,21 @@ for (const scenario of [
         });
       }
     }
+    if (scenario === 'valid') {
+      for (const [owner, activity, id] of [
+        ['verification', 'testing', 'read-file'],
+        ['verification', 'research', 'read-file'],
+        ['verification', 'research', 'owner-tests'],
+        ['unused', 'testing', 'read-file'],
+        ['unused', 'testing', 'owner-tests'],
+      ]) {
+        const log = task.store(`${owner}-${activity}-${id}.log`, 'Operation observation');
+        task.note({
+          scope: { owner, activity, expected: 'pass' },
+          check: { id, status: 0, command: id, args: [], cwd: root, durationMs: 1, log },
+        });
+      }
+    }
     const calls: string[] = [];
     t.mock.method(task, 'check', async (id: string) => {
       calls.push(id);
