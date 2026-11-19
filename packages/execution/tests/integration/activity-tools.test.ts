@@ -180,6 +180,19 @@ test('a caller cannot change the expectation of its unresolved operation', async
   );
 });
 
+for (const activity of ['testing', 'implementation']) {
+  for (const id of ['owner-format', 'owner-lint', 'repository-types', 'repository-build', 'owner-tests']) {
+    if (activity === 'testing' && id === 'owner-tests') continue;
+    test(`${activity} refuses expected-fail ${id} before executing the check`, async () => {
+      const activation = testingActivation(false, activity);
+      await assert.rejects(
+        activation.invoke({ ...checkBinding, name: id }, { expected: 'fail' }),
+        /expected|pass|fail/i,
+      );
+    });
+  }
+}
+
 test('a self-linked supplier request leaves the steward active for a different contribution', async () => {
   const activation = testingActivation();
   const tool = { name: 'request-supplier', handler: 'supplier' } as const;
