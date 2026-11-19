@@ -10,6 +10,24 @@ import { StewardFixture } from '../fixtures/steward.js';
 
 const input = 'repair café 🛠';
 
+/** Prepare the exact multibyte request consumed by the native provider. */
+function inspection(root: string, component: string, activity: string) {
+  return {
+    component,
+    activity,
+    request: {
+      input,
+      options: {
+        workingDirectory: root,
+        model: 'captured-model',
+        modelReasoningEffort: 'high',
+        webSearchMode: 'disabled',
+        tools: [],
+      },
+    },
+  } as unknown as AgentInspection;
+}
+
 /** Invoke the actual native boundary with a failing provider and retain its journal. */
 async function scenario(t: TestContext, component: string, activity: string, profile: string) {
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-attribution-'));
