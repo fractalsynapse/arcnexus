@@ -116,6 +116,58 @@ test('worktree selection and receipt use the candidate with a nested command cwd
   assert.equal(readFileSync(log, 'utf8'), `Not applicable: ${result.reason}\n`);
 });
 
+test('nonempty selection executes the captured command from its nested cwd', async (t) => {
+  const host = process.cwd();
+  const hostSelection = await selectQualityInputs('format:check', 'execution');
+  assert.ok(hostSelection.files.length, 'host must have execution format inputs');
+  const root = mkdtempSync(join(tmpdir(), 'arcnexus-selection-worktree-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const worktree = join(root, 'worktree');
+  const components = join(worktree, '.arc/architecture/components');
+  mkdirSync(components, { recursive: true });
+  mkdirSync(join(worktree, 'nested'));
+  mkdirSync(join(worktree, 'packages/execution'), { recursive: true });
+  writeFileSync(join(worktree, 'packages/execution/input.ts'), 'export const value = 1;\n');
+  const declaration = 'id: execution\nowns:\n  - packages/execution\n';
+  writeFileSync(join(components, 'execution.yaml'), declaration);
+  const capture = {
+    source: {
+      root: host,
+      paths: ['.arc/architecture/components/execution.yaml', 'package.json', 'packages/foundation/scripts/owner-quality.ts'],
+      read: (path: string) => path.endsWith('execution.yaml') ? declaration : readFileSync(join(host, path), 'utf8'),
+    },
+    project: { checks: { acceptance: [] } },
+    components: { execution: { id: 'execution', owns: ['packages/execution'] } },
+    operations: {
+      quality: {
+        id: 'quality',
+        category: 'build',
+        command: 'npm',
+        args: ['run', 'format:check', '--', { context: 'owner' }],
+        cwd: 'nested',
+        network: false,
+        tool: 'check',
+        applicability: 'owner-format-files',
+      },
+    },
+  } as unknown as Capture;
+  const log = join(root, 'selection.log');
+  const result = await check(
+    capture,
+    worktree,
+    root,
+    'quality',
+    'execution',
+    log,
+    AbortSignal.timeout(30_000),
+  );
+  assert.notEqual(result.status, 'not-applicable');
+  assert.equal(result.cwd, join(worktree, 'nested'));
+  assert.equal(result.command, 'npm');
+  assert.deepEqual(result.args, ['run', 'format:check', '--', 'execution']);
+  assert.deepEqual(result.selection?.files, ['packages/execution/input.ts']);
+});
+
 test('deleting every candidate component file is ownership drift', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-deleted-ownership-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
