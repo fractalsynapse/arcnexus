@@ -13,6 +13,8 @@ const executableFormatterConfigs = [
   '.prettierrc.cjs',
   '.prettierrc.mjs',
   '.prettierrc.ts',
+  '.prettierrc.mts',
+  '.prettierrc.cts',
   'prettier.config.js',
   'prettier.config.cjs',
   'prettier.config.mjs',
