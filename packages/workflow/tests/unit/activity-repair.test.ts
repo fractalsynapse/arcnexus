@@ -43,6 +43,7 @@ class LocalRepairScenario {
     private readonly target: Editable,
     private readonly interrupt = false,
     private readonly repeat = false,
+    private readonly findingFrom: 'review' | 'implementation' = 'review',
   ) {}
 
   private readonly services: WorkflowServices = {
@@ -70,7 +71,7 @@ class LocalRepairScenario {
     agent: {
       execute: async (_session, _milestone, activity) => {
         this.calls.push(activity);
-        if (activity === 'review' && (++this.reviews === 1 || this.repeat))
+        if (activity === this.findingFrom && (++this.reviews === 1 || this.repeat))
           return {
             kind: 'repair',
             activity: this.target,
@@ -202,4 +203,22 @@ test('restart returns a retained invalid forward response to its original caller
   assert.deepEqual(scenario.calls, ['testing', 'implementation', 'review', 'delivery']);
   assert.equal(JSON.stringify(scenario.events.slice(0, 3)), retained);
   assert.equal(scenario.events.filter((event) => 'plan' in event).length, 1);
+});
+
+test('Implementation rewinds invalid fixtures to Testing inside the accepted milestone', async () => {
+  const scenario = new LocalRepairScenario('testing', false, false, 'implementation');
+  assert.equal((await scenario.run()).kind, 'merged');
+  assert.deepEqual(scenario.calls, [
+    'director',
+    'documentation',
+    'testing',
+    'implementation',
+    'testing',
+    'implementation',
+    'review',
+    'delivery',
+  ]);
+  assert.equal(scenario.events.filter((event) => 'plan' in event).length, 1);
+  const repaired = scenario.events.find((event) => 'position' in event && event.repair);
+  assert(repaired && 'position' in repaired && repaired.repair?.activity === 'testing');
 });

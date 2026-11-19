@@ -46,12 +46,21 @@ export function localRepairIndex(
   const step = milestone.steps[index];
   if (
     !step ||
+    step.activity === 'review' ||
+    step.activity === 'release' ||
     step.inapplicable ||
     index > from ||
     !capture.components[milestone.owner]?.activities[activity]
   )
     return;
   return index;
+}
+
+/** Expose exactly the editable activities the current caller may revisit under captured authority. */
+export function localRepairTargets(capture: Capture, milestone: Milestone, from: number) {
+  return milestone.steps
+    .filter(({ activity }) => localRepairIndex(capture, milestone, from, activity) !== undefined)
+    .map(({ activity }) => activity);
 }
 
 /** Replay completed valid transitions; unavailable responses resume their caller at the retained cursor. */
