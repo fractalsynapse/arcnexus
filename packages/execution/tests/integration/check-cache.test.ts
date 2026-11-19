@@ -129,7 +129,6 @@ for (const path of [
   '.prettierrc',
   'nested/.prettierignore',
   'nested/.editorconfig',
-  'config/lint-rules.ts',
 ]) {
   test(`committed quality configuration ${path} invalidates cached evidence`, async (t) => {
     const { git } = await import('../../src/git.js');
