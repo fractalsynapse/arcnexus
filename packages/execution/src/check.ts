@@ -71,7 +71,7 @@ async function ownerOperationInapplicability(
     owner,
   );
   for (const path of selected.files) {
-    const resolution = team.ownerFor(capture.components, path);
+    const resolution = team.ownerFor(team.list(capture.components), path);
     if (resolution.kind !== 'owned' || resolution.owner.id !== owner)
       throw new Error(`Captured ownership authority does not assign ${path} to ${owner}`);
   }
