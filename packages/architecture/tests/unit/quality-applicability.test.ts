@@ -19,9 +19,17 @@ function fixture(
   const paths = [
     ...(missing === 'manifest' ? [] : ['package.json']),
     ...(missing === 'runner' ? [] : [runner]),
- ];
+  ];
+  contents[runner] = '';
   return {
-    source: { revision: 'base', paths, read: () => JSON.stringify({ scripts }) },
+    source: {
+      revision: 'base',
+      paths,
+      read: (path: string) => {
+        if (!paths.includes(path)) throw new Error(`Missing from captured project: ${path}`);
+        return contents[path]!;
+      },
+    },
     project: {
       id: 'fixture',
       director: { component: 'other', activity: 'planning' },
