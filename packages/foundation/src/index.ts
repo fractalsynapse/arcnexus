@@ -130,9 +130,14 @@ function editorConfigurationInputs(files: readonly string[]): string[] {
 
 /** Find ignore files that can affect the selected paths. */
 function relevantGitignoreFiles(files: readonly string[]): string[] {
-  return globSync('**/.gitignore').filter(
-    (path) => path === '.gitignore' || files.some((file) => file.startsWith(`${dirname(path)}/`)),
-  );
+  const directories = new Set<string>(['.']);
+  for (const file of files) {
+    for (const directory of parentDirectories(file)) directories.add(directory);
+  }
+  return [...directories]
+    .map((directory) => (directory === '.' ? '.gitignore' : `${directory}/.gitignore`))
+    .filter((path) => existsSync(path))
+    .sort();
 }
 
 /** Resolve Prettier configuration files along selected paths without hashing unrelated configs. */
