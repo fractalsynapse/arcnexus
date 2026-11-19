@@ -49,8 +49,7 @@ test('an unchanged checkpoint retains matching evidence', async (t) => {
   };
   task.note({ check, scope });
   assert.deepEqual(await task.check('owner-tests', new AbortController().signal, scope), check);
-  task.note({ checkpoint: 'changed' });
+  task.note({ checkpoint: 'unchanged', baseRevision: 'same' });
   const refreshed = await task.check('owner-tests', new AbortController().signal, scope);
-  assert.equal(typeof refreshed.status, 'number');
-  assert.notEqual(refreshed.log, check.log);
+  assert.deepEqual(refreshed, check);
 });
