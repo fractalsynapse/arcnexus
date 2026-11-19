@@ -321,7 +321,7 @@ const createIgnore = createRequire(import.meta.url)('ignore') as () => IgnoreMat
 
 /** Translate Git's negated character-class marker for the ignore parser. */
 function normalizeIgnorePatterns(patterns: string): string {
-  return patterns.replace(/\\\?/g, '[?]');
+  return patterns.replace(/\\\?/g, '\\\\?').replace(/\[!/g, '[^');
 }
 
 /** Walk maintained paths once, loading reachable ignore rules as each directory is entered. */
