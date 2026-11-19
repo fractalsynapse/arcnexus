@@ -420,6 +420,8 @@ export class HostTask implements TaskSession {
     const events = this.observations<{
       check?: CheckResult;
       scope?: StewardScope;
+      checkpoint?: unknown;
+      baseRevision?: string;
       edits?: readonly { before: string | null; after: string | null }[];
     }>();
     const priorIndex = events.findLastIndex(
