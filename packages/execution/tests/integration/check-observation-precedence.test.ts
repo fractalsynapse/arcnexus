@@ -78,7 +78,7 @@ class RecoveryFixture {
 }
 
 for (const expected of ['pass', 'fail'] as const) {
-  test(`satisfied ${expected} observation B takes precedence over failed supplier check A`, (t) => {
+  test(`satisfied ${expected} observation B does not erase failed supplier check A`, (t) => {
     const fixture = new RecoveryFixture(t);
     const failed = fixture.feedback();
     const status = expected === 'pass' ? 0 : 43;
