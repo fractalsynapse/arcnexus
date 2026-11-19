@@ -167,7 +167,7 @@ function resolveReferences(
     if (!profile.operationCategories.includes(operation.category)) {
       throw new Error(`Operation ${id} is outside profile ${profile.id} categories`);
     }
-    validateApplicability(id, operation);
+    validateApplicability(id, operation, capture);
     if (operation.tool) operationTool(id, operation.tool);
     return operation;
   });
