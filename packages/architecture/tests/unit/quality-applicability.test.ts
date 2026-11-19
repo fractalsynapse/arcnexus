@@ -87,7 +87,7 @@ test('activation refuses an unavailable owner-scoped check implementation before
 
 test('public request rejects an unavailable handler', () => {
   assert.throws(() =>
-    new Architecture().request(fixture({ ...check, tool: 'missing' }), selection),
+    new Architecture().request(fixture({ ...check('format:check'), tool: 'missing' }), selection),
   );
 });
 
