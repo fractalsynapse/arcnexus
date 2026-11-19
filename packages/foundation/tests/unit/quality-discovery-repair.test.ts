@@ -4,13 +4,8 @@ import { syncBuiltinESMExports } from 'node:module';
 import { test, type TestContext } from 'node:test';
 import { fixture, selection } from './quality-fixture.js';
 
-function observeDiscovery(context: TestContext) {
-  const reads: string[] = [];
-  const directories: string[] = [];
-  const globs: string[] = [];
+function observeReads(context: TestContext, reads: string[]) {
   const read = fs.readFileSync;
-  const readdir = fs.readdirSync;
-  const glob = fs.globSync;
   context.mock.method(fs, 'readFileSync', ((
     path: fs.PathOrFileDescriptor,
     ...args: unknown[]
@@ -18,14 +13,31 @@ function observeDiscovery(context: TestContext) {
     if (typeof path === 'string' && path.endsWith('.gitignore')) reads.push(path);
     return Reflect.apply(read, fs, [path, ...args]);
   }) as typeof fs.readFileSync);
+}
+
+function observeDirectories(context: TestContext, directories: string[]) {
+  const readdir = fs.readdirSync;
   context.mock.method(fs, 'readdirSync', ((path: fs.PathLike, ...args: unknown[]) => {
     directories.push(String(path));
     return Reflect.apply(readdir, fs, [path, ...args]);
   }) as typeof fs.readdirSync);
+}
+
+function observeGlobs(context: TestContext, globs: string[]) {
+  const glob = fs.globSync;
   context.mock.method(fs, 'globSync', ((pattern: string | string[], ...args: unknown[]) => {
     globs.push(String(pattern));
     return Reflect.apply(glob, fs, [pattern, ...args]);
   }) as typeof fs.globSync);
+}
+
+function observeDiscovery(context: TestContext) {
+  const reads: string[] = [];
+  const directories: string[] = [];
+  const globs: string[] = [];
+  observeReads(context, reads);
+  observeDirectories(context, directories);
+  observeGlobs(context, globs);
   syncBuiltinESMExports();
   return { reads, directories, globs };
 }
