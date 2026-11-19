@@ -166,7 +166,7 @@ function readOptionalFile(path: string): string {
 
 /** Apply root and nested gitignore rules to a repository-relative input. */
 function isIgnored(path: string): boolean {
-  return globSync('**/.gitignore', { dot: true }).some((ignoreFile) => {
+  return globSync('**/.gitignore').some((ignoreFile) => {
     const directory = ignoreFile.replace(/\\.gitignore$/, '').replace(/\\/$/, '');
     if (directory && !path.startsWith(`${directory}/`)) return false;
     const relative = directory ? path.slice(directory.length + 1) : path;
