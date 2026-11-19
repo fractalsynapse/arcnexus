@@ -231,6 +231,7 @@ export class TaskRun {
         feedback,
         this.signal,
         this.assessmentInput(),
+        this.revision,
       );
       return this.validateProposal(repaired, reason);
     }
