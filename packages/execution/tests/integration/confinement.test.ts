@@ -166,6 +166,32 @@ test('candidate ownership drift is refused before declaring owner tests inapplic
   );
 });
 
+for (const applicability of ['owner-format-files', 'owner-lint-files'] as const) {
+  test(`candidate ownership drift is refused before ${applicability} selection`, async (t) => {
+    const { root, workspace } = fixture(t);
+    const common = join(root, 'common');
+    const components = join(workspace, '.arc/architecture/components');
+    mkdirSync(common);
+    mkdirSync(components, { recursive: true });
+    writeFileSync(join(components, 'one.yaml'), 'id: one\nowns:\n  - other\n');
+    writeFileSync(join(components, 'two.yaml'), 'id: two\nowns:\n  - owned\n');
+    const authority = ownerCheckCapture(workspace);
+    Object.assign(authority.operations['owner-tests'], { applicability });
+    await assert.rejects(
+      check(
+        authority,
+        workspace,
+        common,
+        'owner-tests',
+        'one',
+        join(root, 'quality-drift.log'),
+        AbortSignal.timeout(5_000),
+      ),
+      /ownership|drift|authority/i,
+    );
+  });
+}
+
 test('an optional owner check without a suite records inapplicability before execution', async (t) => {
   const { root, workspace } = fixture(t);
   const common = join(root, 'common');
