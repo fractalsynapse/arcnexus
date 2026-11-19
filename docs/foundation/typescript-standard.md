@@ -24,10 +24,13 @@ See [ESLint rule regressions](quality.md#eslint-rule-regressions).
 
 ## Headers and spacing
 
-Every class and method has a `/** ... */` header. Describe the class responsibility
-and its lifecycle collaborators. A method header explains purpose and material
-effects or failure behavior. Types already express parameter shapes; do not add
-repetitive `@param` annotations or comments that merely repeat a name.
+Under Foundation FND-4, every class, constructor, concrete method and abstract
+method has a `/** ... */` header with nonempty content. Empty, whitespace-only
+and decorative-star-only headers do not satisfy this requirement. Describe the
+class responsibility and its lifecycle collaborators. A method or constructor
+header explains purpose and material effects or failure behavior. Types already
+express parameter shapes; do not add repetitive `@param` annotations or comments
+that merely repeat a name.
 
 ```ts
 /** Retains immutable task input for later authority checks. */
@@ -47,4 +50,6 @@ then leave a blank line before declarations. Logical paragraphs inside methods a
 a review concern: group validation, transformation and side effects where useful.
 Do not extract trivial wrappers or compress statements to satisfy length checks.
 
-Lint checks header presence and spacing. Review names, comments and control flow for explanatory quality.
+Lint checks header presence, nonempty content and spacing. Semantic explanatory
+quality remains an independent review concern; lint does not score prose. Review
+names, comments and control flow for explanatory quality.

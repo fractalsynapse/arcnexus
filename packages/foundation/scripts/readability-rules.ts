@@ -12,7 +12,11 @@ export const documentation: Rule.RuleModule = {
           ? parent
           : node;
       const comment = context.sourceCode.getCommentsBefore(declaration).at(-1);
-      if (comment?.type !== 'Block' || !comment.value.startsWith('*')) {
+      const content = comment?.value
+        .replace(/^\*/, '')
+        .replace(/^\s*\*(?:\s*\*)*\s?/gm, '')
+        .trim();
+      if (comment?.type !== 'Block' || !comment.value.startsWith('*') || !content) {
         context.report({ node, messageId: 'missing' });
       }
     }
