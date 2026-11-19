@@ -162,7 +162,11 @@ function requiredChecks(
         event.check?.id === id &&
         (typeof event.check.status === 'number' || event.check.status === 'not-applicable'),
     );
-    const expected = observed?.scope?.expected ?? 'pass';
+    const declared = observed?.scope?.expected ?? 'pass';
+    const expected =
+      declared === 'fail' && !(scope.activity === 'testing' && id === 'owner-tests')
+        ? 'pass'
+        : declared;
     if (!checks.has(id)) checks.set(id, { id, expected });
   }
   return [...checks.values()];
