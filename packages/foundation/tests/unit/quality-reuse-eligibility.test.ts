@@ -66,7 +66,7 @@ test('lint rejects unsupported dependencies in a statically imported helper', as
 test('declarative formatter plugin configuration declines reuse', async () => {
   const tree = fixture();
   try {
-    tree.write('packages/alpha/.prettierrc.json', '{"plugins":["prettier-plugin-custom"]}\\n');
+    tree.write('packages/alpha/.prettierrc.json', '{"plugins":["prettier-plugin-custom"]}');
     const result = await selectQualityInputs('format:check', 'alpha', tree.root);
     assert.equal(eligibility(result)?.eligible, false);
     assert.match(eligibility(result)?.reason ?? '', /plugin.*prettierrc\\.json/i);
