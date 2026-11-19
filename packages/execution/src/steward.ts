@@ -35,8 +35,7 @@ export async function steward(
   const before = task.evidence.length;
   const scope = { owner: milestone.owner, activity };
   const correction = task.pendingCheck(scope);
-  const assignment = await stewardAssignment(task, milestone, scope, correction, signal);
-  const result = await requestSteward(task, agent, milestone, scope, signal, assignment);
+  const result = await requestSteward(task, agent, milestone, scope, signal);
   if (result.kind !== 'completed')
     return {
       ...result,
@@ -84,12 +83,12 @@ async function requestSteward(
   milestone: Milestone,
   scope: StewardScope,
   signal: AbortSignal,
-  assignment: Awaited<ReturnType<typeof stewardAssignment>>,
 ): Promise<StewardResult> {
   let diagnostic: string | undefined;
   const seen = new Set<string>();
   while (true) {
     try {
+      const assignment = await stewardAssignment(task, milestone, scope, signal);
       const reply = await askSteward(task, agent, milestone, scope, assignment, signal, diagnostic);
       signal.throwIfAborted();
       return await applyStewardReply(task, scope, reply, assignment, signal);
@@ -181,10 +180,10 @@ async function stewardAssignment(
   task: ReturnType<typeof hostTask>,
   milestone: Milestone,
   scope: StewardScope,
-  failedCheck: StewardCheckFailure | undefined,
   signal: AbortSignal,
 ) {
   const finding = correctionFinding(task.history(), milestone);
+  const failedCheck = task.pendingCheck(scope);
   return {
     ...responseShape(scope.activity !== 'review' && Boolean(task.formatPreview)),
     ...supplierContext(task.history(), milestone.id),
