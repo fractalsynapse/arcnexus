@@ -34,7 +34,9 @@ const plan = (expected: 'pass' | 'fail'): Plan => ({
       criteria: [criterion],
       steps: activities.map((activity) => ({
         activity,
-        ...(['implementation', 'review', ...(expected === 'fail' ? ['testing'] : [])].includes(activity)
+        ...(['implementation', 'review', ...(expected === 'fail' ? ['testing'] : [])].includes(
+          activity,
+        )
           ? {
               checklist: [
                 { id: activity, criteria: [criterion.id], expected: 'Retain the repair' },
@@ -297,7 +299,10 @@ class InterruptedCheck {
   private retryProposal(task: HostTask, data: TaskContext) {
     assert(task.worktree);
     assert.equal(readFileSync(join(task.worktree, 'fixture.txt'), 'utf8'), 'checked');
-    const pending = task.pendingCheck({ owner: 'owner', activity: this.expected === 'fail' ? 'testing' : 'implementation' });
+    const pending = task.pendingCheck({
+      owner: 'owner',
+      activity: this.expected === 'fail' ? 'testing' : 'implementation',
+    });
     this.recovered.push(pending);
     if (pending) this.assertRecoveredFailure(data, pending);
     return { kind: 'completed', edits: this.correctionEdits(), checks: [] };
@@ -367,7 +372,9 @@ async function interrupt(scenario: InterruptedCheck) {
   const outcome = await scenario.run('interrupt');
   assert.equal(outcome.kind, 'cancelled', JSON.stringify(outcome));
   assert.match(outcome.reason, /Interrupted after check record, before feedback/);
-  assert.deepEqual(scenario.activations, [scenario.expected === 'fail' ? 'testing' : 'implementation']);
+  assert.deepEqual(scenario.activations, [
+    scenario.expected === 'fail' ? 'testing' : 'implementation',
+  ]);
   assert.deepEqual(scenario.gates, []);
   assert.equal(scenario.checks.length, 1);
   assert.equal(scenario.checks[0]!.status, scenario.expected === 'pass' ? 37 : 0);
