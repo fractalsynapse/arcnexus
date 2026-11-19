@@ -321,9 +321,7 @@ const createIgnore = createRequire(import.meta.url)('ignore') as () => IgnoreMat
 
 /** Convert the two gitignore forms unsupported by ignore 5.3.2 before matching. */
 function normalizeGitignorePatterns(contents: string): string {
-  return contents
-    .replace(/\\([*?])/g, '[$1]')
-    .replace(/\[!/g, '[^');
+  return contents.replace(/\\([*?])/g, '[$1]').replace(/\[!/g, '[^');
 }
 
 /** Walk maintained paths once, loading reachable ignore rules as each directory is entered. */
