@@ -219,6 +219,7 @@ function isIgnoredDirectory(directory: string, ignoreFiles: readonly string[]): 
       const candidate = segments.slice(0, index + 1).join('/');
       const result = matchesIgnoreRules(candidate, rules, true);
       if (result !== undefined) inherited = result;
+      if (inherited && index < segments.length - 1) break;
     }
     if (inherited) ignored = true;
     else if (matchesIgnoreRules(relative, rules, true) === false) ignored = false;
