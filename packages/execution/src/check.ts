@@ -177,10 +177,10 @@ function isOwnerQualityOperation(
 function assertOwnerQualityOperationAvailable(
   capture: Capture,
   id: string,
-  operation: NonNullable<Capture['operations'][string]>,
+  operation: Capture['operations'][string] | undefined,
   applicability: 'owner-lint-files' | 'owner-format-files',
 ): void {
-  if (!operation.tool || !operation.command)
+  if (!operation || !operation.tool || !operation.command)
     throw new Error('Unavailable owner quality operation: ' + id);
   if (
     !qualityOperationAvailable({
