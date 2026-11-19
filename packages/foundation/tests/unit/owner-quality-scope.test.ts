@@ -126,4 +126,3 @@ test('lint honors configuration ignores for owner applicability', () => {
     tree.close();
   }
 });
-
