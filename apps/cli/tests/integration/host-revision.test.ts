@@ -43,7 +43,7 @@ async function fixture(t: TestContext, retained: readonly unknown[] = observatio
   Object.assign(session, {
     capture: { project: { director: { component: 'director', activity: 'planning' } } },
     evidence: [],
-    observations: () => structuredClone(observations),
+    observations: () => structuredClone(retained),
     store: (name: string, contents: string) => {
       const path = join(storage, `${++sequence}-${name}`);
       writeFileSync(path, contents, { flag: 'wx' });
