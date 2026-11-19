@@ -95,7 +95,14 @@ function directorAssignment(
       finding: request.finding,
     },
   };
-  if (!standing) return assignment;
+  return standing ? standingAssignment(assignment, standing) : assignment;
+}
+
+/** Add standing-goal assessment evidence and its required response shape. */
+function standingAssignment(
+  assignment: ReturnType<typeof directorAssignmentBase>,
+  standing: StandingGoalEvidence,
+) {
   return {
     ...assignment,
     standingGoal: {
@@ -116,6 +123,27 @@ function directorAssignment(
           operation: 'observed operation id, or use criterion or delivery: true',
         },
       ],
+    },
+  };
+}
+
+/** Builds shared Director fields without adding standing-goal context. */
+function directorAssignmentBase(
+  feedback?: Feedback,
+  request?: RevisionRequest,
+) {
+  const revisionShape = request
+    ? { ...shape, plan: { kind: 'plan', plan: { milestones: [] } } }
+    : shape;
+  return {
+    revision: revisionInstructions(feedback, Boolean(request)),
+    ...revisionShape,
+    feedback,
+    revisionContext: request && {
+      acceptedPlan: request.acceptedPlan,
+      retainedEvidence: request.retainedEvidence,
+      position: request.position,
+      finding: request.finding,
     },
   };
 }
