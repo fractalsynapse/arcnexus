@@ -433,9 +433,21 @@ export class HostTask implements TaskSession {
     const changed = events
       .slice(priorIndex + 1)
       .some(({ edits }) => edits?.some(({ before, after }) => before !== after));
+    const operation = this.capture.operations[id];
+    const args = operation?.args?.map((arg) =>
+      typeof arg === 'string' ? arg : scope?.owner,
+    );
+    const sameOperation =
+      operation?.command === prior?.command &&
+      JSON.stringify(args ?? []) === JSON.stringify(prior?.args ?? []);
+    const checkpointChanged = events.slice(priorIndex + 1).some(
+      (event) => event.checkpoint !== undefined || event.baseRevision !== undefined,
+    );
     if (
       prior &&
+      sameOperation &&
       !changed &&
+      !checkpointChanged &&
       existsSync(prior.log) &&
       (typeof prior.status === 'number' || prior.status === 'not-applicable')
     )
