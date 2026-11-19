@@ -3,6 +3,16 @@ import { test } from 'node:test';
 import { fixture, QualityFixture, selection } from './quality-fixture.js';
 
 for (const operation of ['format:check', 'lint'] as const) {
+  test(`${operation} treats ignore patterns as case-sensitive`, async () => {
+    const tree = fixture();
+    try {
+      tree.write('packages/alpha/.gitignore', 'PROBE.ts\n');
+      assert((await selection(tree, operation)).files.includes('packages/alpha/probe.ts'));
+    } finally {
+      tree.close();
+    }
+  });
+
   test(`${operation} rejects an explicitly empty owner`, async () => {
     const tree = fixture();
     try {
