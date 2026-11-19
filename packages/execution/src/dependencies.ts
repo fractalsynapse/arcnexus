@@ -130,6 +130,5 @@ const installArgs = [
   '--no-audit',
   '--no-fund',
   '--progress=false',
-  '--logs-max=0',
   '--cache=/tmp/npm-cache',
 ];

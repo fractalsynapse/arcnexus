@@ -1,7 +1,11 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
-import { documentation, spacing } from './packages/foundation/scripts/readability-rules.ts';
+import {
+  documentation,
+  noInlineConfiguration,
+  spacing,
+} from './packages/foundation/scripts/readability-rules.ts';
 
 export default tseslint.config(
   {
@@ -20,11 +24,16 @@ export default tseslint.config(
   {
     files: ['**/*.{ts,mts,cts,js,mjs}'],
     languageOptions: { globals: globals.node },
-    plugins: { arcnexus: { rules: { documentation, spacing } } },
+    plugins: {
+      arcnexus: {
+        rules: { documentation, spacing, 'no-inline-configuration': noInlineConfiguration },
+      },
+    },
     linterOptions: { noInlineConfig: true },
     rules: {
       'arcnexus/documentation': 'error',
       'arcnexus/spacing': 'error',
+      'arcnexus/no-inline-configuration': 'error',
       '@typescript-eslint/no-explicit-any': 'off',
       'no-empty': ['error', { allowEmptyCatch: true }],
       '@typescript-eslint/no-unused-vars': [

@@ -13,7 +13,7 @@
 
 ### Fixed
 
-- Remove unapproved request, research, Planner, citation, history and evidence-read caps, Git timeouts and provider retry ceilings; require logged express human approval for quantitative limits (#658, #659).
+- Remove unapproved request, research, Planner, citation, history and evidence-read caps, Git/CI timeouts, logging and warning-count overrides, and provider retry ceilings; require logged express human approval for quantitative limits. Reject inline lint configuration through an error rule without a warning-count gate (#658, #659).
 
 - Expose earlier applicable repair targets to every steward activity so invalid fixtures return from Implementation to Testing, while redundant model self-repairs stay with their caller (#656, #657).
 
