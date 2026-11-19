@@ -63,7 +63,7 @@ test('lint rejects unsupported dependencies in a statically imported helper', as
     );
     const result = await selectQualityInputs('lint', 'alpha', tree.root);
     assert.equal(eligibility(result)?.eligible, false);
-    assert.match(eligibility(result)?.reason ?? '', /packages\\/foundation\\/rules\\.js.*require/i);
+    assert.match(eligibility(result)?.reason ?? '', /rules\.js.*require/i);
   } finally {
     tree.close();
   }
