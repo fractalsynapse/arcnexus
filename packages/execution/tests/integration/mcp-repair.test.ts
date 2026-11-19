@@ -147,8 +147,14 @@ test(
     Object.assign(task.capture, {
       operations: {
         'owner-tests': {
-          id: 'owner-tests', category: 'build', network: false, command: 'node',
-          args: ['-e', "const fs=require('fs'); const status=fs.readFileSync('fixture.txt','utf8')==='fixed'?0:37; console.log('exit '+status); process.exit(status)"],
+          id: 'owner-tests',
+          category: 'build',
+          network: false,
+          command: 'node',
+          args: [
+            '-e',
+            "const fs=require('fs'); const status=fs.readFileSync('fixture.txt','utf8')==='fixed'?0:37; console.log('exit '+status); process.exit(status)",
+          ],
         },
       },
     });
