@@ -62,7 +62,7 @@ for (const scenario of [
       },
       components: scenario === 'valid' ? {
         verification: { activities: {
-          testing: { operations: ['read-file', ...operations] },
+          testing: { operations },
           research: { operations: ['read-file', 'owner-tests'] },
         } },
         unused: { activities: { testing: { operations: ['read-file', 'owner-tests'] } } },
