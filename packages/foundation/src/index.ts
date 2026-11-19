@@ -95,6 +95,7 @@ function qualityIdentity(
     ...prettierConfigurationInputs(operation, files),
     ...files,
     ...relevantIgnoreFiles,
+    '.editorconfig',
     '.eslintignore',
     '.prettierignore',
     '.prettierrc.yaml',
