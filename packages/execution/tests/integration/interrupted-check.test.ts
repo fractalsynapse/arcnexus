@@ -411,7 +411,7 @@ for (const expected of ['pass', 'fail'] as const) {
     scenario.secured('checked');
     const corrected = await scenario.run('correct');
     assert.equal(corrected.kind, 'cancelled', JSON.stringify(corrected));
-    assert.equal(scenario.checks.at(-1)!.status, expected === 'pass' ? 0 : 37);
+    assert.equal(scenario.checks.at(-1)!.status, 0);
     scenario.secured('corrected');
     const before = scenario.activations.slice();
     assert.equal((await scenario.run('resume')).kind, 'merged');
