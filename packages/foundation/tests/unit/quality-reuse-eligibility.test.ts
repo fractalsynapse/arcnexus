@@ -162,6 +162,20 @@ for (const extension of ['mts', 'cts'] as const) {
   });
 }
 
+test('explicit lint imports do not fall back to a different extension', async () => {
+  const tree = fixture();
+  try {
+    tree.owner('helper-ts', 'helper.ts');
+    tree.write('eslint.config.ts', "import rules from './helper.js'; export default [rules];\\n");
+    tree.write('helper.ts', 'export default {};\\n');
+    const result = await selectQualityInputs('lint', 'alpha', tree.root);
+    assert.equal(eligibility(result)?.eligible, false);
+    assert.match(eligibility(result)?.reason ?? '', /coverage is incomplete at helper\\.js/i);
+  } finally {
+    tree.close();
+  }
+});
+
 test('extensionless lint imports decline reuse when runtime resolution is ambiguous', async () => {
   const tree = fixture();
   try {
