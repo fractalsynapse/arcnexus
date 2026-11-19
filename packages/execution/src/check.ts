@@ -85,33 +85,36 @@ async function ownerOperationInapplicability(
   worktree: string,
   id: string,
   owner?: string,
-): Promise<string | undefined> {
+): Promise<{ reason?: string; selection?: QualitySelection }> {
   const operation = capture.operations[id];
   const required = capture.project.checks?.acceptance.includes(id);
-  if (!owner || required) return;
+  if (!owner || required) return {};
   if (operation?.applicability === 'owner-test-suites') {
     if (!hasOwnerTestSuites(worktree, owner, team.list(capture.components)))
-      return `No test suites for ${owner} in the current worktree`;
-    return;
+      return { reason: `No test suites for ${owner} in the current worktree` };
+    return {};
   }
   const applicability = operation?.applicability;
   if (
     !operation ||
     (applicability !== 'owner-lint-files' && applicability !== 'owner-format-files')
   )
-    return;
-  const selected = await selectQualityInputs(
+    return {};
+  const selection = await selectQualityInputs(
     applicability === 'owner-lint-files' ? 'lint' : 'format:check',
     owner,
     worktree,
   );
-  for (const path of selected.files) {
+  for (const path of selection.files) {
     const resolution = team.ownerFor(team.list(capture.components), path);
     if (resolution.kind !== 'owned' || resolution.owner.id !== owner)
       throw new Error(`Captured ownership authority does not assign ${path} to ${owner}`);
   }
-  if (!selected.files.length)
-    return `No ${selected.operation} files for ${owner} in the current worktree`;
+  if (!selection.files.length)
+    return {
+      reason: `No ${selection.operation} files for ${owner} in the current worktree`,
+      selection,
+    };
   if (!operation.tool || !operation.command)
     throw new Error(`Unavailable owner quality operation: ${id}`);
   if (!qualityOperationAvailable({
@@ -122,6 +125,7 @@ async function ownerOperationInapplicability(
     source: capture.source,
   }))
     throw new Error(`Unavailable owner quality operation: ${id}`);
+  return { selection };
 }
 
 /** Produce formatter stdout in the same disposable, networkless overlay as host checks. */
