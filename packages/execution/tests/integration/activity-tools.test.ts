@@ -171,13 +171,33 @@ test('native replies cannot request raw checks after an observed MCP operation',
   }
 });
 
-test('a caller cannot change the expectation of its unresolved operation', async () => {
-  const activation = testingActivation();
-  await activation.invoke(checkBinding, { expected: 'pass' });
-  await assert.rejects(
-    activation.invoke(checkBinding, { expected: 'fail' }),
-    /Cannot change the required recheck for owner-tests: expected pass/,
+test('Testing corrects a passing expected-fail owner test with a fresh pass', async () => {
+  const events: unknown[] = [];
+  const task = testingTask(events);
+  task.check = async (id: string, _signal: AbortSignal, scope: unknown) => {
+    const check = {
+      id,
+      status: events.length === 0 ? 0 : 0,
+      log: events.length === 0 ? 'prediction.log' : 'correction.log',
+      command: 'fixture',
+      args: [],
+      cwd: '.',
+      durationMs: 0,
+    };
+    events.push({ check, scope });
+    return check;
+  };
+  const activation = new ActivationTools(
+    task,
+    { component: 'fixture', activity: 'testing' },
+    { goal: 'Verify tests', assignment: {}, milestone: { id: 'current' }, acceptance: [], worktree: '.' },
+    new AbortController().signal,
   );
+  await activation.invoke(checkBinding, { expected: 'fail' });
+  await activation.invoke(checkBinding, { expected: 'pass' });
+  assert.equal(events.length, 2);
+  assert.equal((events[0] as { scope: { expected: string } }).scope.expected, 'fail');
+  assert.equal((events[1] as { scope: { expected: string } }).scope.expected, 'pass');
 });
 
 for (const activity of ['testing', 'implementation']) {
