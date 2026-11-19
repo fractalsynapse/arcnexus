@@ -109,3 +109,13 @@ storage. Earlier repair-by-repair development notes are retained in Git history;
 the executable recovery rules are defined by the current contract and tests.
 The approved Architecture and refinement capabilities in the contract remain
 implementation targets until their own tests and live acceptance are reported.
+
+For an Architect prerequisite task, the shared activation path derives the actor's
+implementation and delivery goal from the actual host-verified approved proposal.
+Assessment feedback stays in its original phase; it must not override the approved
+implementation purpose. Direction, stewards and the independent Reviewer use this
+same derivation and request builder. The canonical journal goal and task identity
+remain unchanged for retry lookup, issue/branch/checkpoint reuse and honest history.
+A candidate-side approval claim cannot change the activation goal. Ordinary tasks
+continue to pass their supplied goal unchanged. This handoff is the bootstrap
+correction tracked in #639; a real retained phase must demonstrate it after checks.
