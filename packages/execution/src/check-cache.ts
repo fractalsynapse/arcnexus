@@ -22,18 +22,52 @@ export interface CheckObservation {
 /** Validate captured authority and bind a check to its current candidate inputs. */
 export async function checkInput(task: HostTask, id: string, scope?: StewardScope) {
   const worktree = task.worktree!;
-  if (
-    scope?.owner &&
-    (task.capture.source.paths ?? []).some((path) => path.startsWith('.arc/architecture/components/'))
-  ) assertCapturedOwnership(task.capture, worktree);
+  assertOwnerAuthority(task, scope, worktree);
   const command = checkCommand(task.capture, worktree, id, scope?.owner);
   const operation = task.capture.operations[id];
+  const selection = await qualitySelection(task, operation, scope, worktree, id);
+  if (selection && !selection.reuseEligibility.eligible) return;
+  const inputs = selection?.identity ?? cleanRevision(worktree);
+  if (!inputs) return;
+  return checkIdentity(task, id, scope, command, operation, selection, inputs, worktree);
+}
+
+/** Reject candidate ownership changes before resolving owner-scoped checks. */
+function assertOwnerAuthority(task: HostTask, scope: StewardScope | undefined, worktree: string) {
+  const hasCapturedComponents = (task.capture.source.paths ?? []).some((path) =>
+    path.startsWith('.arc/architecture/components/'),
+  );
+  if (scope?.owner && hasCapturedComponents) assertCapturedOwnership(task.capture, worktree);
+}
+
+/** Resolve explicit-root inputs only for captured owner quality operations. */
+async function qualitySelection(
+  task: HostTask,
+  operation: HostTask['capture']['operations'][string] | undefined,
+  scope: StewardScope | undefined,
+  worktree: string,
+  id: string,
+) {
   const applicability = operation?.applicability;
-  const isOwnerQuality =
+  const ownerQuality =
     applicability === 'owner-lint-files' || applicability === 'owner-format-files';
+  if (!scope?.owner || !ownerQuality) return;
+  assertQualityAvailable(task, operation, applicability, id);
+  return selectQualityInputs(
+    applicability === 'owner-lint-files' ? 'lint' : 'format:check',
+    scope.owner,
+    worktree,
+  );
+}
+
+/** Fail closed when a captured owner quality runtime is unavailable. */
+function assertQualityAvailable(
+  task: HostTask,
+  operation: HostTask['capture']['operations'][string] | undefined,
+  applicability: string,
+  id: string,
+) {
   if (
-    scope?.owner &&
-    isOwnerQuality &&
     !qualityOperationAvailable({
       tool: operation?.tool ?? '',
       command: operation?.command ?? '',
@@ -43,17 +77,19 @@ export async function checkInput(task: HostTask, id: string, scope?: StewardScop
     })
   )
     throw new Error(`Unavailable owner quality operation: ${id}`);
-  const selection =
-    scope?.owner && isOwnerQuality
-      ? await selectQualityInputs(
-          applicability === 'owner-lint-files' ? 'lint' : 'format:check',
-          scope.owner,
-          worktree,
-        )
-      : undefined;
-  if (selection && !selection.reuseEligibility.eligible) return;
-  const inputs = selection?.identity ?? cleanRevision(worktree);
-  if (!inputs) return;
+}
+
+/** Hash the operation, scope, environment and current selected inputs together. */
+function checkIdentity(
+  task: HostTask,
+  id: string,
+  scope: StewardScope | undefined,
+  command: ReturnType<typeof checkCommand>,
+  operation: HostTask['capture']['operations'][string] | undefined,
+  selection: Awaited<ReturnType<typeof selectQualityInputs>> | undefined,
+  inputs: string,
+  worktree: string,
+) {
   const input = {
     revision: inputs,
     authority: task.capture.source.revision,
