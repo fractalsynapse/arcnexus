@@ -53,18 +53,18 @@ function mockCheck(t: TestContext, task: StewardFixture['task'], root: string, c
 }
 
 const repairBindings = [
-      binding('owner-tests', 'check', { expected: { type: 'string' } }),
-      binding('checked-edit', 'edit', {
-        path: { type: 'string' },
-        expected: { type: 'string' },
-        content: { type: 'string' },
-      }),
-      binding('request-supplier', 'supplier', {
-        owner: { type: 'string' },
-        milestone: { type: 'string' },
-        reason: { type: 'string' },
-      }),
-    ];
+  binding('owner-tests', 'check', { expected: { type: 'string' } }),
+  binding('checked-edit', 'edit', {
+    path: { type: 'string' },
+    expected: { type: 'string' },
+    content: { type: 'string' },
+  }),
+  binding('request-supplier', 'supplier', {
+    owner: { type: 'string' },
+    milestone: { type: 'string' },
+    reason: { type: 'string' },
+  }),
+];
 
 /** Create the captured MCP bindings for this activation. */
 function repairHost(task: StewardFixture['task'], root: string) {
@@ -90,32 +90,32 @@ function repairHost(task: StewardFixture['task'], root: string) {
 
 /** Exercise correction and supplier handoff over the connected MCP client. */
 async function repair(client: Client, activation: ActivationTools, checks: string[]) {
-    const first = await call(client, 'owner-tests', { expected: 'pass' });
-    assert.equal(first.status, 37);
-    const expected = createHash('sha256').update('broken').digest('hex');
-    const receipt = await call(client, 'checked-edit', {
-      path: 'fixture.txt',
-      expected,
-      content: 'fixed',
-    });
-    assert.equal(receipt.path, 'fixture.txt');
-    const second = await call(client, 'owner-tests', { expected: 'pass' });
-    assert.equal(second.status, 0);
-    assert.notEqual(first.log, second.log);
-    assert.equal(readFileSync(first.log, 'utf8'), 'exit 37\n');
-    assert.equal(readFileSync(second.log, 'utf8'), 'exit 0\n');
-    await call(client, 'request-supplier', {
-      owner: 'other',
-      milestone: 'supplier',
-      reason: 'Distinct work',
-    });
-    assert.deepEqual(activation.finish({ kind: 'completed' }), {
-      kind: 'supplier',
-      owner: 'other',
-      milestone: 'supplier',
-      reason: 'Distinct work',
-    });
-    assert.equal(checks.length, 2);
+  const first = await call(client, 'owner-tests', { expected: 'pass' });
+  assert.equal(first.status, 37);
+  const expected = createHash('sha256').update('broken').digest('hex');
+  const receipt = await call(client, 'checked-edit', {
+    path: 'fixture.txt',
+    expected,
+    content: 'fixed',
+  });
+  assert.equal(receipt.path, 'fixture.txt');
+  const second = await call(client, 'owner-tests', { expected: 'pass' });
+  assert.equal(second.status, 0);
+  assert.notEqual(first.log, second.log);
+  assert.equal(readFileSync(first.log, 'utf8'), 'exit 37\n');
+  assert.equal(readFileSync(second.log, 'utf8'), 'exit 0\n');
+  await call(client, 'request-supplier', {
+    owner: 'other',
+    milestone: 'supplier',
+    reason: 'Distinct work',
+  });
+  assert.deepEqual(activation.finish({ kind: 'completed' }), {
+    kind: 'supplier',
+    owner: 'other',
+    milestone: 'supplier',
+    reason: 'Distinct work',
+  });
+  assert.equal(checks.length, 2);
 }
 
 test('MCP check, checked correction, recheck and supplier handoff retain observations', async (t) => {
