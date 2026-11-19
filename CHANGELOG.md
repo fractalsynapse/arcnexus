@@ -13,7 +13,7 @@
 
 ### Fixed
 
-- Expose applicable local repair targets to every steward activity so invalid fixture assumptions can return from Implementation to Testing without replanning or losing required checks (#656).
+- Expose earlier applicable repair targets to every steward activity so invalid fixtures return from Implementation to Testing, while redundant model self-repairs stay with their caller (#656, #657).
 
 - Expose verified parent-checkpoint source after an acknowledged deletion through the existing mapped read refusal, enabling owned checked restoration without operator edits (#655).
 

@@ -220,3 +220,9 @@ assertions or fixture assumptions in Testing, and code corrections in
 Implementation. A local rewind keeps the unresolved check, accepted milestone,
 owner and criteria; it adds no Director call or new milestone. Review and Release
 are not editable rewind targets (#656).
+
+Model-directed rewinds select an earlier applicable editable activity. The current
+activity is already running: it must continue its mapped work rather than return
+a self-repair progress report. That redundant response returns an exact diagnostic
+to the same caller through existing response validation. Host-generated recovery
+from an actual failed check can still revisit the current activity (#657).
