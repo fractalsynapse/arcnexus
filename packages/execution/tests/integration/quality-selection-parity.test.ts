@@ -47,6 +47,7 @@ for (const [operation, applicability] of [
           command: '/usr/bin/true',
           args: [],
           network: false,
+          tool: 'check',
           applicability,
         },
       },
