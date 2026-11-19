@@ -65,7 +65,7 @@ next Step in that milestone, defaulting to zero. It is never inferred from a
 model reply. The finding carries the current supplier request or rejected
 criteria and their evidence, including the requester when relevant.
 
-The intended native signature remains
+The native signature is
 `direct(agent, session, signal, options): Promise<unknown>`; its options become
 `{ revision?: RevisionRequest; feedback?: Feedback; standing?: StandingGoalEvidence }`.
 The revision request replaces the inline `plan?: Plan` option. A revision
@@ -140,11 +140,9 @@ and acceptance. Negative proposals must leave accepted inputs unchanged and
 produce repair diagnostics without requesting the completed prefix again.
 Initial complete-plan decoding and same-activity repair remain covered.
 
-Before Workflow resumes `bounded-director-workflow-revision`, the complete
-supplier answer must name the implemented exported types and signatures, the
-pending wire shape, the reconstructed result and exact repair behavior, with
-retained public regression evidence. This intended interface is not yet that
-implementation answer.
+The complete supplier answer naming the implemented exported types and signatures,
+pending wire shape, reconstructed result and repair behavior is retained in the
+host answer record for `bounded-director-workflow-revision`.
 
 ## Required observations
 
