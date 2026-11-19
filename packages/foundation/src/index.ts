@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { existsSync, globSync, readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { dirname, resolve } from 'node:path';
+import { dirname, join, normalize, resolve } from 'node:path';
 import { ESLint } from 'eslint';
 import { getFileInfo } from 'prettier';
 import { parse } from 'yaml';
@@ -288,7 +288,7 @@ function configurationInputs(operation: QualitySelection['operation'], root: str
     const source = readOptionalFile(path, root);
     for (const match of source.matchAll(/(?:from\s*|import\s*)['"](\.[^'"]+)['"]/g)) {
       const specifier = match[1]!;
-      const resolved = resolve(dirname(path), specifier);
+      const resolved = normalize(join(dirname(path), specifier));
       const base = resolved.replace(/\.(?:[cm]?js|tsx?)$/, '');
       const candidates = [`${base}.ts`, `${base}.js`, `${base}.mjs`, `${base}.mts`, resolved];
       const dependency = candidates.find((candidate) => readOptionalFile(candidate, root) !== '');
@@ -384,7 +384,7 @@ function readOptionalFile(path: string, root: string = process.cwd()): string {
 function readIgnoreFile(path: string, root: string = process.cwd()): string {
   const cached = ignoreFileContents.get(path);
   if (cached !== undefined) return cached;
-  const content = readFileSync(resolve(root, path), 'utf8');
+  const content = readFileSync(root === process.cwd() ? path : resolve(root, path), 'utf8');
   ignoreFileContents.set(path, content);
   return content;
 }
