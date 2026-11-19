@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { globSync, readFileSync } from 'node:fs';
 import { ESLint } from 'eslint';
-import ignore from 'ignore';
 import { getFileInfo } from 'prettier';
 import { parse } from 'yaml';
 import { team } from '../../team/src/index.js';
