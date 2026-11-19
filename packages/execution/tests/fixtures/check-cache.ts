@@ -43,7 +43,8 @@ export class CheckCacheFixture {
   }
 
   /** Record known input provenance; this is controlled evidence, not a claim of native execution. */
-  async observe(input = await this.input()) {
+  async observe(input?: string) {
+    input ??= await this.input();
     assert(input);
     const log = this.task.store('controlled-check.log', 'controlled successful observation');
     const check = {
