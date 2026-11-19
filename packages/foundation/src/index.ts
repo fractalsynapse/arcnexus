@@ -196,7 +196,7 @@ function isIgnored(path: string, patterns: readonly string[]): boolean {
 
 /** Preserve repository formatter coverage while allowing package and fixture files. */
 function isFormatCovered(path: string): boolean {
-  return /^(?:[^/]+\.(?:ts|json)|(?:apps|packages|scripts|fixtures)\/.+\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json))$/.test(
+  return /^(?:[^/]+\.(?:ts|json)|(?:apps|packages|scripts|fixtures)\/.+\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json|yaml|yml))$/.test(
     path,
   );
 }
