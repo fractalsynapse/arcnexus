@@ -45,6 +45,10 @@ function fixture(t: TestContext) {
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const workspace = join(root, 'workspace');
   mkdirSync(join(workspace, 'owned'), { recursive: true });
+  const catalog = join(workspace, '.arc/architecture/components');
+  mkdirSync(catalog, { recursive: true });
+  writeFileSync(join(catalog, 'one.yaml'), 'id: one\\nowns:\\n  - owned\\n  - packages/one\\n');
+  writeFileSync(join(catalog, 'two.yaml'), 'id: two\\nowns:\\n  - other\\n  - packages/two\\n');
   const path = join(workspace, 'owned/file.txt');
   writeFileSync(path, 'before');
   return { root, workspace, path };
