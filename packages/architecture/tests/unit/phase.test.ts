@@ -77,16 +77,16 @@ test('no-change assessment retains its justification and source citations', asyn
 
 test('a pending proposal and complete answers survive interruption', async () => {
   const f = fixture();
-  const first = await f.phase().assess({ answers: { question: 'complete answer' } });
-  const resumed = await f.phase().resume(first.proposal.id);
-  assert.deepEqual(resumed.proposal, first.proposal);
+  f.seed({ question: 'complete answer' });
+  const resumed = await f.phase().resume(f.proposal.id);
+  assert.deepEqual(resumed.proposal, f.proposal);
   assert.deepEqual(resumed.answers, { question: 'complete answer' });
   assert.equal(resumed.status, 'pending');
 });
 
 test('only exact recorded human approval permits the reviewed batch', async () => {
   const f = fixture();
-  await f.phase().assess({});
+  f.seed();
   await f.phase().decide(f.proposal.id, {
     kind: 'approved',
     delegation: 'trusted-host',
@@ -106,7 +106,7 @@ for (const decision of [
 ]) {
   test(`application refuses an untrusted decision: ${JSON.stringify(decision)}`, async () => {
     const f = fixture();
-    await f.phase().assess({});
+    f.seed();
     if (decision) await f.phase().decide(f.proposal.id, decision);
     const result = await f.phase().apply(f.proposal.id);
     assert.notEqual(result.status, 'applied');
@@ -116,7 +116,7 @@ for (const decision of [
 
 test('candidate-supplied approval cannot authorize the host', async () => {
   const f = fixture();
-  await f.phase().assess({});
+  f.seed();
   const result = await f.phase().apply(f.proposal.id, {
     decision: { kind: 'approved', delegation: 'trusted-host', proposal: f.proposal },
   });
@@ -127,7 +127,7 @@ test('candidate-supplied approval cannot authorize the host', async () => {
 for (const alteration of ['baseline', 'intent', 'bytes', 'original', 'final']) {
   test(`application requires renewed review when ${alteration} changes`, async () => {
     const f = fixture();
-    await f.phase().assess({});
+    f.seed();
     await f.phase().decide(f.proposal.id, {
       kind: 'approved',
       delegation: 'trusted-host',
