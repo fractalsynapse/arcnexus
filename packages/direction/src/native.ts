@@ -123,7 +123,7 @@ function directorAssignment(
 /** Tell the Director which portions of the sequence the current feedback can change. */
 function revisionInstructions(feedback?: Feedback): string {
   if (feedback?.kind === 'plan-repair')
-    return `Correct the complete Director response using the exact diagnostic in feedback.diagnostic. The rejected reply is in the latest Director transcript in Evidence. Use feedback.original for the original request when present. ${revisionInstructions(feedback.original)}`;
+    return `Correct only the pending Director response using the exact diagnostic in feedback.diagnostic. The rejected reply is in the latest Director transcript in Evidence. Use feedback.original for the original finding when present. ${revisionInstructions(feedback.original)}`;
   if (!feedback)
     return 'Plan the smallest sufficient changes for the goal. Keep the scope, owner and acceptance explicit.';
   const preserve =
