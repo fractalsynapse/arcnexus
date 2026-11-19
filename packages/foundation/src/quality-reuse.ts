@@ -24,6 +24,7 @@ const unsupportedLintDependencies = [
   [/\bexport\s*\{[^}]*\}\s*from\b/, 're-export dependency'],
   [/\bexport\s+\*\s*(?:as\s+\w+\s*)?from\b/, 'export-star dependency'],
   [/\bfrom\s*['"](?:node:)?fs(?:\/[^'"]*)?['"]/, 'filesystem-reading dependency'],
+  [/\bimport\s*['"](?!\.\.?\/|\/|node:)[^'"]+['"]/, 'bare package dependency'],
   [/\bfrom\s*['"](?!\.\.?\/|\/|node:)[^'"]+['"]/, 'bare package dependency'],
   [/\b(?:readFile|readFileSync|readdir|readdirSync|watch)\s*\(/, 'filesystem-reading dependency'],
 ] as const;
