@@ -163,7 +163,7 @@ function requiredChecks(
 function requestedExpectation(
   check: { id: string; expected: 'pass' | 'fail' },
   scope: StewardScope,
-) {
+): { id: string; expected: 'pass' | 'fail' } {
   const expected =
     check.expected === 'fail' && scope.activity === 'testing' && check.id === 'owner-tests'
       ? 'fail'
