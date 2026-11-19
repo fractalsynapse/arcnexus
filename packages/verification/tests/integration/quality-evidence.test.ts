@@ -8,7 +8,7 @@ import type { Capture, TaskContext } from '../../../architecture/src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
 import type { Plan } from '../../../direction/src/index.js';
 import { HostTask } from '../../../execution/src/index.js';
-import { verify } from '../../src/index.js';
+import { validateVerdict, verify } from '../../src/index.js';
 
 const assembled = [
   'repository-build', 'repository-types', 'repository-format', 'repository-lint', 'repository-tests',
@@ -84,3 +84,13 @@ test(`assembled review handles ${scenario} owner-operation evidence`, async (t) 
   assert.deepEqual(calls, assembled);
 });
 }
+
+test('an independent verdict cannot follow a changed candidate', () => {
+  const verdict = { kind: 'accepted' as const, candidate: 'old-tree',
+    criteria: ['V-1'], evidence: ['review.log'] };
+  assert.doesNotThrow(() => validateVerdict(plan, { digest: 'old-tree', evidence: [] }, verdict));
+  assert.throws(
+    () => validateVerdict(plan, { digest: 'new-tree', evidence: [] }, verdict),
+    /different candidate/,
+  );
+});
