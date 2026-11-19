@@ -295,6 +295,8 @@ function collectPrettierConfigurationPaths(
     'prettier.config.cjs',
     'prettier.config.mjs',
     'prettier.config.ts',
+    'prettier.config.mts',
+    'prettier.config.cts',
   ];
   for (const file of files) {
     for (const base of ['.', ...parentDirectories(file)]) {
