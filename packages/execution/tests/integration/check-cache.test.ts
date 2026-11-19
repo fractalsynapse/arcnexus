@@ -242,7 +242,7 @@ for (const path of ['.prettierrc', '.prettierignore', '.editorconfig']) {
 }
 
 for (const [operation, applicability, path, content] of [
-  ['lint', 'owner-lint-files', 'eslint.config.ts', "export default require('./rules');\n"],
+  ['lint', 'owner-lint-files', 'eslint.config.ts', "export default (require('node:path') && []);\n"],
   ['format:check', 'owner-format-files', '.prettierrc.cjs', "module.exports = {};\n"],
 ] as const) {
   test(`uncertain ${operation} configuration cannot reuse evidence`, async (t) => {
