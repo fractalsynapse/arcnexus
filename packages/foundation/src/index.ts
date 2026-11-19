@@ -107,8 +107,9 @@ function configurationInputs(operation: QualitySelection['operation']): string[]
     if (visited.has(path)) continue;
     visited.add(path);
     const source = readOptionalFile(path);
-    for (const [, specifier] of source.matchAll(/(?:from\\s*|import\\s*)['\"](\\.[^'\"]+)['\"]/g)) {
-      const base = specifier.replace(/\\.(?:[cm]?js|tsx?)$/, '');
+    for (const match of source.matchAll(/(?:from\s*|import\s*)['\"](\.[^'\"]+)['\"]/g)) {
+      const specifier = match[1]!;
+      const base = specifier.replace(/\.(?:[cm]?js|tsx?)$/, '');
       const candidates = [`${base}.ts`, `${base}.js`, `${base}.mjs`, `${base}.mts`, base];
       const dependency = candidates.find((candidate) => readOptionalFile(candidate) !== '');
       if (dependency) pending.push(dependency);
