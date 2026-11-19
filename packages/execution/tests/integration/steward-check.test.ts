@@ -168,6 +168,37 @@ test('a local steward check repair delivers within the original milestone withou
   assert.deepEqual(task.calls, ['original', 'check:1', 'original', 'check:0', 'delivery']);
 });
 
+test('a completed reply cannot hide a check failure observed during its activation', async (t) => {
+  const task = new StewardFixture(t, mkdtempSync(join(tmpdir(), 'arcnexus-observed-failure-')))
+    .task;
+  t.after(() => task.close());
+  const log = task.store('failed-check.log', 'error TS1005: Caller must correct this finding');
+  t.mock.method(task, 'activate', async () => {
+    task.note({
+      check: {
+        id: 'owner-tests',
+        status: 37,
+        log,
+        command: 'fixture',
+        args: [],
+        cwd: '.',
+        durationMs: 0,
+      },
+      scope: { owner: 'owner', activity: 'implementation', expected: 'pass' },
+    });
+    return { kind: 'completed', edits: [], checks: [] };
+  });
+  const result = await steward(
+    agent,
+    task,
+    milestone('original'),
+    'implementation',
+    new AbortController().signal,
+  );
+  assert.equal(result.kind, 'repair');
+  assert.match('reason' in result ? result.reason : '', /exited 37.*expected pass/);
+});
+
 test('an unchanged local check failure holds without another Director call', async (t) => {
   const task = new CheckTask(t, false);
   const result = await task.run();

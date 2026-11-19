@@ -42,7 +42,8 @@ export async function steward(
       evidence: task.evidence.slice(before),
       ...(result.kind === 'repair' ? { input: stewardInput(task.observations()) } : {}),
     };
-  const failed = await perform(task, scope, result, correction, signal);
+  const failed =
+    (await perform(task, scope, result, correction, signal)) ?? task.pendingCheck(scope);
   const evidence = task.evidence.slice(before);
   return failed
     ? stewardCheckOutcome(task, failed, correction, evidence)
@@ -223,9 +224,9 @@ async function correctionChecks(
 function responseShape(formatter: boolean) {
   return {
     repair:
-      'Repair tool and check failures within this milestone. For a self-review finding return kind repair, activity documentation, testing or implementation, and the exact reason; choose the earliest affected applicable activity. Read localRepair evidence before correcting its finding. Request a supplier only for distinct work requiring another responsibility. Return blocked only for an unavailable prerequisite, not for an ordinary repairable defect.',
+      'Repair tool and check failures within this milestone. For a self-review finding return kind repair, activity documentation, testing or implementation, and the exact reason; choose the earliest affected applicable activity. If localRepair is present, read its named diagnostic and correct that finding; its absence is normal for an initial activity. Request a supplier only for distinct work requiring another responsibility. Return blocked only for an unavailable prerequisite, not for an ordinary repairable defect.',
     instructions:
-      'Use the mapped local MCP tools for project reads, checked edits and owner checks. The read-only filesystem is deliberate. Make authorized changes through the mapped checked-edit MCP tool even when direct writes are unavailable. Attempt that operation for an owned path before reporting that edits are blocked, and report any exact refusal. A successful edit is already recorded. Queued checks run after your completed response. A queued check is a request, and the host records its result or routes its failure. Put any narration in summary and omit checks from your reply. If another edit is refused, correct the call or request a distinct supplier contribution. Link its accepted milestone when known, or give the new contribution its own ID. End with one JSON object with kind completed, or kind blocked with a reason. Include answer in a completed response when answering a supplier question. Read retained evidence with read-file. Checks in currentChecks are host-managed. Preserve accepted work when correcting a diagnostic. Only the host performs assembled verification and delivery.',
+      'Use the mapped local MCP tools for project reads, checked edits and owner checks. The read-only filesystem is deliberate. Make authorized changes through the mapped checked-edit MCP tool even when direct writes are unavailable. Attempt that operation for an owned path before reporting that edits are blocked, and report any exact refusal. A successful edit is already recorded. Mapped checks execute during the MCP call and return their actual status and log. Read that result, correct an ordinary defect locally and recheck with the original expectation. These tools govern this activation; authored product code may use declared public APIs. Put any narration in summary and omit checks from your reply. If another edit is refused, correct the call or request a distinct supplier contribution. Link its accepted milestone when known, or give the new contribution its own ID. End with one JSON object with kind completed, or kind blocked with a reason. Include answer in a completed response when answering a supplier question. Read retained evidence with read-file. Checks in currentChecks are host-managed. Preserve accepted work when correcting a diagnostic. Only the host performs assembled verification and delivery.',
     requests: { formatAvailable: formatter },
   };
 }
