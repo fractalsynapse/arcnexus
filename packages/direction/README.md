@@ -158,7 +158,7 @@ planning and initial invalid-response repair behavior remain covered.
 
 ## Simplification ledger
 
-- Remove the native inline \`plan?: Plan\` revision input, complete-plan revision
+- Remove the native inline `plan?: Plan` revision input, complete-plan revision
   response shape and decoding, and repair wording that asks revision to regenerate
   a complete response. Keep complete-plan decoding and repair for initial planning.
 - Reuse the canonical accepted plan, retained evidence, existing plan validation
