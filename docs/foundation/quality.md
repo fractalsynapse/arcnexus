@@ -169,6 +169,48 @@ again; unknown or unavailable inputs cannot become successful inapplicability.
 The existing revision/clean-state cache does not by itself complete this obligation.
 Preserve receipts, failed observations and unaffected evidence throughout repair.
 
+## Explicit candidate-root selection
+
+Supplier milestone `quality-foundation-selection`, requested by
+`quality-execution`, requires `selectQualityInputs(operation, owner?, root?)`
+through [Foundation's public entry](../../packages/foundation/src/index.ts).
+FS-1 extends the existing selection path with an optional candidate worktree root.
+This is intended behavior pending implementation and FS-2 public regression
+evidence; documenting it does not establish availability.
+
+When supplied, `root` anchors maintained-file discovery, Team catalog resolution,
+coverage, ignores, configuration lookup and all existing selection identity inputs
+to that candidate. Selected paths remain sorted and repository-relative to that
+root. A different process cwd or nested command cwd must not redirect selection
+or identity to the host checkout. Selection must not change the process cwd.
+Omitting `root` preserves existing default-root resolution, two-argument consumers
+and the command runner's observable behavior, coverage, strictness and receipts.
+The extension preserves existing selection and identity semantics; it does not
+introduce a second selector, inventory or evidence store.
+
+The request follows the retained
+[candidate-selection failure in 86-36-owner-tests.log](/home/adrian/.local/state/arcnexus-planner-594.wr9OzP/state/arcnexus/8b40ccad5a575a6294e2358bad463bbffd81c5c2af4eac5f7c63f83a41af3f4c/evidence/8e8abf1c5eb4ef14ecd9dc22b25de62d96d8d65067bc35510f0b36ccc83d2485/86-36-owner-tests.log):
+`worktree selection and receipt use the candidate with a nested command cwd`
+expected `not-applicable` but observed status `1`. Preserve this Execution
+observation; it does not by itself establish Foundation's FS-2 regression evidence.
+
+FS-2 requires public regressions with candidate-root selection while process cwd
+points elsewhere, differing candidate files or configuration affecting the
+appropriate operation's selection or identity, separate format/lint applicability,
+and unchanged default-root command behavior. Preserve completed
+`quality-foundation` outcomes, ignore and coverage semantics, owner validation,
+read-only flags and the owner-test inventory.
+
+Under [quality-identity-boundary](../../packages/architecture/quality-identity-boundary.md#inputs-at-each-boundary),
+Foundation supplies selection and its documented identity. Execution supplies the
+candidate root, validates captured ownership before selection, execution and reuse,
+and binds current per-operation evidence with matching command cwd and inputs.
+An explicit root grants no authority and does not make a selection digest complete
+execution provenance. FND-1, FND-9 and FND-10 continue to govern output confinement,
+unavailable operations and command parity. Selection emits no generated output
+and changes no maintained source. The five assembled requirements, independent
+assessment and host-owned delivery remain as described above.
+
 ## Applicability and evidence
 
 An empty formatting selection and an empty lint selection are independent
