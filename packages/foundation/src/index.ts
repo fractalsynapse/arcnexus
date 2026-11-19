@@ -143,10 +143,15 @@ function prettierConfigurationInputs(
       }
     }
   }
+  includeNestedPrettierConfigurations(paths, files);
+  return [...paths].sort();
+}
+
+/** Include nested formatter configs when selected inputs live beneath them. */
+function includeNestedPrettierConfigurations(paths: Set<string>, files: readonly string[]): void {
   for (const path of globSync('**/.prettierrc.yaml')) {
     if (files.some((file) => file.startsWith(`${dirname(path)}/`))) paths.add(path);
   }
-  return [...paths].sort();
 }
 
 /** Follow local imports from quality configuration without hashing unrelated source. */
