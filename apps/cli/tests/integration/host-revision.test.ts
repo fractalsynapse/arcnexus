@@ -152,6 +152,21 @@ test('initial planning answer does not require an accepted plan', async (t) => {
   assert.deepEqual((data.assignment as { feedback: Feedback }).feedback, feedback);
 });
 
+test('initial planning repair preserves the complete clarification answer', async (t) => {
+  const host = await fixture(t, [{ question: 'Clarify' }]);
+  const original = {
+    kind: 'answer' as const,
+    question: 'Clarify',
+    answer: 'The complete clarification answer',
+    evidence: ['answer-record'],
+  };
+  const feedback = { kind: 'plan-repair' as const, diagnostic: 'Invalid response', original };
+  await host.direction.revise(host.session, undefined, feedback, new AbortController().signal);
+  const activation = host.activation();
+  assert.equal(activation.milestone, 'Initial planning');
+  assert.deepEqual((activation.assignment as { feedback: Feedback }).feedback, feedback);
+});
+
 test('initial planning and invalid-response repair retain their planning context', async (t) => {
   const host = await fixture(t);
   const signal = new AbortController().signal;
