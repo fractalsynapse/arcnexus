@@ -39,26 +39,7 @@ for (const [operation, applicability] of [
     const selection = await selectQualityInputs(operation, owner);
     const temporary = mkdtempSync(join(tmpdir(), 'arcnexus-quality-parity-'));
     t.after(() => rmSync(temporary, { recursive: true, force: true }));
-    const capture = {
-      source: {
-        root,
-        paths: [...globSync('.arc/architecture/components/*.yaml'), 'package.json', 'packages/foundation/scripts/owner-quality.ts'].sort(),
-        read: (path: string) => readFileSync(join(root, path), 'utf8'),
-      },
-      project: { checks: { acceptance: [] } },
-      components,
-      operations: {
-        quality: {
-          id: 'quality',
-          category: 'build',
-          command: 'npm',
-          args: ['run', operation, '--', { context: 'owner' }],
-          network: false,
-          tool: 'check',
-          applicability,
-        },
-      },
-    } as unknown as Capture;
+    const capture = parityCapture(root, components, operation, applicability);
     const result = await check(
       capture,
       root,
@@ -269,6 +250,30 @@ function deletedOwnershipCapture(root: string): Capture {
         cwd: '.',
         network: false,
         applicability: 'owner-test-suites',
+      },
+    },
+  } as unknown as Capture;
+}
+
+/** Capture the same operation used for the Foundation applicability comparison. */
+function parityCapture(root: string, components: Awaited<ReturnType<typeof emptySelectionOwner>>['components'], operation: string, applicability: string): Capture {
+  return {
+    source: {
+      root,
+      paths: [...globSync('.arc/architecture/components/*.yaml'), 'package.json', 'packages/foundation/scripts/owner-quality.ts'].sort(),
+      read: (path: string) => readFileSync(join(root, path), 'utf8'),
+    },
+    project: { checks: { acceptance: [] } },
+    components,
+    operations: {
+      quality: {
+        id: 'quality',
+        category: 'build',
+        command: 'npm',
+        args: ['run', operation, '--', { context: 'owner' }],
+        network: false,
+        tool: 'check',
+        applicability,
       },
     },
   } as unknown as Capture;
