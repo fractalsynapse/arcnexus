@@ -89,7 +89,7 @@ function repairHost(task: StewardFixture['task'], root: string) {
 }
 
 /** Exercise correction and supplier handoff over the connected MCP client. */
-async function repair(client: Client, activation: ActivationTools, checks: string[]) {
+async function repair(client: Client, activation: ActivationTools, checks?: string[]) {
   const first = await call(client, 'owner-tests', { expected: 'pass' });
   assert.equal(first.status, 37);
   const expected = createHash('sha256').update('broken').digest('hex');
@@ -115,7 +115,7 @@ async function repair(client: Client, activation: ActivationTools, checks: strin
     milestone: 'supplier',
     reason: 'Distinct work',
   });
-  assert.equal(checks.length, 2);
+  if (checks) assert.equal(checks.length, 2);
 }
 
 test('MCP check, checked correction, recheck and supplier handoff retain observations', async (t) => {
@@ -135,3 +135,31 @@ test('MCP check, checked correction, recheck and supplier handoff retain observa
     await host.close();
   }
 });
+
+test(
+  'MCP repairs a failing confined captured command in one activation',
+  { skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1' },
+  async (t) => {
+    const root = mkdtempSync(join(tmpdir(), 'arcnexus-mcp-native-repair-'));
+    const task = new StewardFixture(t, root).task;
+    t.after(() => task.close());
+    writeFileSync(join(root, 'fixture.txt'), 'broken');
+    Object.assign(task.capture, {
+      operations: {
+        'owner-tests': {
+          id: 'owner-tests', category: 'build', network: false, command: 'node',
+          args: ['-e', "const fs=require('fs'); const status=fs.readFileSync('fixture.txt','utf8')==='fixed'?0:37; console.log('exit '+status); process.exit(status)"],
+        },
+      },
+    });
+    const { activation, host } = repairHost(task, root);
+    const client = new Client({ name: 'fixture', version: '1' });
+    try {
+      await client.connect(new StreamableHTTPClientTransport(new URL(await host.start())));
+      await repair(client, activation);
+    } finally {
+      await client.close();
+      await host.close();
+    }
+  },
+);
