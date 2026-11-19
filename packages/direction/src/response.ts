@@ -155,6 +155,30 @@ export function decodeRevisionResponse(
   return { kind: 'plan', plan };
 }
 
+/** Preserve a valid clarification response during revision. */
+function revisionQuestion(value: Record<string, unknown>): DirectionResult {
+  string(value.question, 'question');
+  if (!value.question.trim())
+    throw new DirectorResponseError('question: expected a nonempty human question');
+  list(value.evidence, 'evidence', string);
+  return value as DirectionResult;
+}
+
+/** Reject cursor entries that do not refer to a pending accepted milestone. */
+function validatePositions(
+  positions: Readonly<Record<string, number>>,
+  accepted: Plan,
+  completed: number,
+): void {
+  for (const [id, offset] of Object.entries(positions)) {
+    const index = accepted.milestones.findIndex((milestone) => milestone.id === id);
+    if (index < 0 || index < completed)
+      throw new DirectorResponseError(`position.activities.${id}: not a pending accepted milestone`);
+    if (!Number.isInteger(offset) || offset < 0 || offset > accepted.milestones[index]!.steps.length)
+      throw new DirectorResponseError(`position.activities.${id}: outside accepted Steps`);
+  }
+}
+
 /** Require an object before reading its named fields. */
 function mapping(value: unknown, path: string): Record<string, unknown> {
   if (value === null || typeof value !== 'object' || Array.isArray(value))
