@@ -115,6 +115,7 @@ export class CheckCacheFixture {
         paths: [],
         remote: 'https://example.com/fixture.git',
         revision: git(this.source, 'rev-parse', 'HEAD'),
+        read: (path: string) => git(this.source, 'show', `HEAD:${path}`),
       },
       project: { contractRegistry: 'registry.yaml' },
       contracts: [],
