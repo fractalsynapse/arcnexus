@@ -3,6 +3,7 @@ import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import * as foundation from '../../src/index.js';
+import { QualityFixture } from './quality-fixture.js';
 
 type Binding = {
   tool: string;
