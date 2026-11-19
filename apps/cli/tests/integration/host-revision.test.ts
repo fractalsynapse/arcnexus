@@ -99,8 +99,8 @@ for (const finding of findings) {
     assert.equal(typeof request.acceptedPlan, 'string');
     assert.equal(typeof request.retainedEvidence, 'string');
     assert.deepEqual(JSON.parse(readFileSync(request.acceptedPlan, 'utf8')), plan);
-    assert.deepEqual(JSON.parse(readFileSync(request.retainedEvidence, 'utf8')), observations);
-    assert.deepEqual(request.position, position);
+    assert.deepEqual(JSON.parse(readFileSync(request.retainedEvidence, 'utf8')), retained);
+    assert.deepEqual(request.position, expectedPosition);
     assert.deepEqual(request.finding, finding);
     assert(!JSON.stringify(data).includes('Accepted outcome 0'));
     const acceptedBytes = readFileSync(request.acceptedPlan, 'utf8');
