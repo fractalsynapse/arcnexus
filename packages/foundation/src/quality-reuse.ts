@@ -50,24 +50,8 @@ function formatterReuseEligibility(
   formatterInputs: readonly string[],
 ): QualityReuseEligibility {
   for (const path of formatterInputs) {
-    const config = readFileSync(resolve(root, path), 'utf8');
-    let parsed: unknown;
-    try {
-      parsed = parse(config);
-    } catch {
-      return { eligible: false, reason: `Prettier configuration cannot be inspected safely: ${path}` };
-    }
-    const packageFormatter = /(?:^|\/)package\.json$/.test(path) && isRecord(parsed) ? parsed.prettier : parsed;
-    if (packageFormatter === undefined) continue;
-    if (typeof packageFormatter === 'string')
-      return { eligible: false, reason: `Prettier configuration references an uncovered shareable config: ${path}` };
-    if (!isRecord(packageFormatter))
-      return { eligible: false, reason: `Prettier configuration has an unsupported shape: ${path}` };
-    if (containsPluginOption(packageFormatter))
-      return {
-        eligible: false,
-        reason: `Prettier configuration may load unselected plugin dependencies: ${path}`,
-      };
+    const reason = formatterInputReason(path, root);
+    if (reason) return { eligible: false, reason };
   }
   for (const file of files) {
     let directory = dirname(file);
