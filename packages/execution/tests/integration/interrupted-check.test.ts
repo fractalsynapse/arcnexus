@@ -261,7 +261,7 @@ class InterruptedCheck {
   /** Derive the fixture's exact exit from its bytes and retry phase. */
   private checkStatus(task: HostTask): number {
     const corrected = readFileSync(join(task.worktree!, 'fixture.txt'), 'utf8') === 'corrected';
-    if (corrected) return this.expected === 'fail' && this.phase === 'correct' ? 37 : 0;
+    if (corrected) return 0;
     if (this.expected === 'fail') {
       if (this.phase === 'interrupt') return 0;
       return this.phase === 'correct' ? 37 : 37;
