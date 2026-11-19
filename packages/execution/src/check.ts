@@ -59,8 +59,16 @@ async function executeOwnerCheck(
   if (applicability.reason) return recordInapplicableCheck(id, log, command, applicability);
 
   return runConfinedCheck(
-    capture, worktree, common, id, log, signal, command.cwd,
-    command.executable, command.args, applicability.selection,
+    capture,
+    worktree,
+    common,
+    id,
+    log,
+    signal,
+    command.cwd,
+    command.executable,
+    command.args,
+    applicability.selection,
   );
 }
 
@@ -168,8 +176,7 @@ function isOwnerQualityOperation(
   applicability: string | undefined,
 ): applicability is 'owner-lint-files' | 'owner-format-files' {
   return Boolean(
-    operation &&
-      (applicability === 'owner-lint-files' || applicability === 'owner-format-files'),
+    operation && (applicability === 'owner-lint-files' || applicability === 'owner-format-files'),
   );
 }
 
