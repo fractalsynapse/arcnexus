@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { globSync, readFileSync } from 'node:fs';
+import { ESLint } from 'eslint';
+import ignore from 'ignore';
+import { getFileInfo } from 'prettier';
 import { parse } from 'yaml';
 import { team } from '../../team/src/index.js';
 
@@ -13,22 +16,26 @@ export interface QualitySelection {
   identity: string;
 }
 
-/** Discover operation inputs and bind their identity to ownership and tool configuration. */
-export function selectQualityInputs(
+/** Discover applicable operation inputs and bind them to ownership and tool configuration. */
+export async function selectQualityInputs(
   operation: QualitySelection['operation'],
   owner?: string,
-): QualitySelection {
+): Promise<QualitySelection> {
   const componentFiles = globSync('.arc/architecture/components/*.yaml');
   const components: Component[] = componentFiles.map((path) => parse(readFileSync(path, 'utf8')));
   assert(!owner || components.some(({ id }) => id === owner), `Unknown owner: ${owner}`);
+  const ignored = ignore().add(readFileSync('.gitignore', 'utf8'));
   const candidates = globSync('**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}')
+    .filter((path) => !ignored.ignores(path))
     .filter((path) => operation !== 'format:check' || isFormatCovered(path))
     .filter((path) => operation !== 'lint' || /\.(?:ts|mts|cts|js|mjs|cjs)$/.test(path))
     .sort();
-  const owners = new Map<string, string>();
+  const eslint = operation === 'lint' ? new ESLint() : undefined;
   const files: string[] = [];
+  const owners = new Map<string, string>();
   for (const path of candidates) {
-    if (operation === 'lint' && !/\.(?:ts|mts|cts|js|mjs|cjs)$/.test(path)) continue;
+    if (eslint && (await eslint.isPathIgnored(path))) continue;
+    if (operation === 'format:check' && (await getFileInfo(path)).ignored) continue;
     const resolution = team.ownerFor(components, path);
     assert.notEqual(resolution.kind, 'collision', `Ambiguous ownership: ${path}`);
     assert.equal(resolution.kind, 'owned', `Unowned maintained input: ${path}`);
