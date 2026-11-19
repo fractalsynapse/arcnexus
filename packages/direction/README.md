@@ -1,0 +1,30 @@
+# Direction
+
+Direction turns the goal into the smallest sufficient sequential plan. Its
+[contract](contract.md) and the [plan template](../../.arc/architecture/plan-template.md)
+govern ownership, acceptance and the five Steps.
+
+## Bounded native revisions
+
+The host retains the canonical accepted plan and committed position. On explicit
+escalation or independent rejection, the native Director request supplies immutable
+references to that plan and the complete retained observations, the current
+position, the finding and its evidence. Completed milestones and Steps are not
+serialized into the model prompt or requested in its response.
+
+The model returns the pending sequence. Direction reconstructs it against the
+host's accepted plan and validates ownership, original acceptance, completed work,
+supplier scheduling and rejected criteria. Invalid responses return their exact
+diagnostic through the existing Workflow repair. Initial planning and its repair
+still request a complete plan. Clarification and optional research remain normal
+activity inbox operations.
+
+The internal Workflow service continues to exchange domain plans by reference.
+Only the provider boundary translates to a compact model request and reconstructs
+its response. There is no second plan store, SDK protocol or recovery loop.
+
+Bootstrap work for #617 corrects a generated regression that tested serialization
+at the internal SDK seam. The interrupted platform candidate and observations are
+retained in application storage; operator corrections are excluded from live
+qualification. Verification must inspect the actual Agent request and exercise
+the unchanged Workflow lifecycle.
