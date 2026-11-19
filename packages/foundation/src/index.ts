@@ -68,6 +68,7 @@ function qualityIdentity(
   identity.update(JSON.stringify({ operation, owner, files, owners: files.map((path) => [path, team.ownerFor(components, path)]) }));
   for (const path of [
     ...componentFiles,
+    ...globSync('**/*.{ts,mts,cts}'),
     ...files.flatMap((file) => [file, readOptionalFile(file)]),
     '.gitignore',
     '.eslintignore',
