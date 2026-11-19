@@ -38,7 +38,7 @@ export class CheckCacheFixture {
       join(this.source, 'packages/execution/src/fixture.ts'),
       'export const fixture = true;\n',
     );
-    writeFileSync(join(this.source, 'eslint.config.js'), 'export default [];\n');
+    writeFileSync(join(this.source, 'eslint.config.ts'), 'export default [];\n');
     writeFileSync(
       join(this.source, 'package.json'),
       JSON.stringify({ scripts: { lint: 'jiti packages/foundation/scripts/owner-quality.ts lint', 'format:check': 'jiti packages/foundation/scripts/owner-quality.ts format:check' } }),
@@ -47,7 +47,7 @@ export class CheckCacheFixture {
     writeFileSync(join(this.source, 'packages/foundation/scripts/owner-quality.ts'), '');
     writeFileSync(
       join(this.source, '.arc/architecture/components/owner.yaml'),
-      'id: owner\nowns:\n  - packages/execution/src/fixture.ts\n  - eslint.config.js\n  - lint-rules.ts\n',
+      'id: owner\nowns:\n  - packages/execution/src/fixture.ts\n  - eslint.config.ts\n  - lint-rules.ts\n  - package.json\n',
     );
     writeFileSync(join(this.source, '.gitignore'), 'node_modules/\n');
     this.commit(this.source);
@@ -139,7 +139,7 @@ export class CheckCacheFixture {
       components: {
         owner: {
           id: 'owner',
-          owns: ['packages/execution/src/fixture.ts', 'eslint.config.js', 'lint-rules.ts'],
+          owns: ['packages/execution/src/fixture.ts', 'eslint.config.ts', 'lint-rules.ts', 'package.json'],
           activities: {},
         },
       },
