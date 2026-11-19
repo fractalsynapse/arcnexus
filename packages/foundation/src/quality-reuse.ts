@@ -97,6 +97,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/** Find plugin options at any nested formatter override depth. */
+function containsPluginOption(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(containsPluginOption);
+  if (!isRecord(value)) return false;
+  return Object.entries(value).some(
+    ([key, nested]) => key === 'plugins' || containsPluginOption(nested),
+  );
+}
+
 /** Reject reuse for lint dependency forms that bounded static import traversal cannot resolve. */
 function lintReuseEligibility(
   root: string,
