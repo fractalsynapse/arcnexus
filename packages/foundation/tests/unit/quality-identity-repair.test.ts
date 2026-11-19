@@ -36,7 +36,7 @@ test('format identity includes the applicable nested Prettier configuration', as
   }
 });
 
-test('identity distinguishes empty optional inputs from literal missing', async () => {
+test('identity distinguishes absent optional inputs from empty files', async () => {
   const tree = fixture();
   try {
     const before = await selection(tree, 'format:check');
