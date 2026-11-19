@@ -60,10 +60,13 @@ If staging advanced after the task branch was secured, see [prepared checkpoint 
 
 ## Failed checks during correction
 
-The host returns a fresh failing diagnostic, exit status and complete log reference
-to Direction even when the same operation failed earlier. Direction gives the new
-failure distinct correction work before the paused activity resumes. The steward
-reads the latest failed-check log first and retains earlier findings as history.
+Under EX-22, the host returns a fresh failing diagnostic, exit status and complete
+log reference to the same calling activity, with successful receipts retained.
+Ordinary repair stays in its milestone; distinct cross-owner work and final
+independent rejection use Direction. The steward reads the latest failed-check log
+first and retains earlier findings as history. The
+[quality evidence guide](quality-evidence.md) records the intended per-operation
+progression and reuse obligations.
 
 A diagnostic already sent for correction holds on repetition. TAP numbering,
 source positions and temporary worktree paths do not establish a new failure.
