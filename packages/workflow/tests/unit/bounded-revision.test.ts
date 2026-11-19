@@ -69,6 +69,12 @@ class RevisionScenario {
         goal: 'Deliver',
         record: (event) => this.events.push(event),
         history: () => this.events,
+        observations: () => structuredClone(this.events),
+        store: (name: string, contents: string) => {
+          const reference = `artifact:${name}:${this.artifacts.size}`;
+          this.artifacts.set(reference, contents);
+          return reference;
+        },
         finish() {},
         close() {},
       }),
