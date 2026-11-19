@@ -115,7 +115,7 @@ export class CheckCacheFixture {
         paths: ['.arc/architecture/components/owner.yaml'],
         remote: 'https://example.com/fixture.git',
         revision: git(this.source, 'rev-parse', 'HEAD'),
-        read: (path: string) => git(this.source, 'show', `HEAD:${path}`),
+        read: (path: string) => readFileSync(join(this.source, path), 'utf8'),
       },
       project: { contractRegistry: 'registry.yaml' },
       contracts: [],
