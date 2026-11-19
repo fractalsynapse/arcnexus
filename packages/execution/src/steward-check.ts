@@ -75,7 +75,7 @@ function expectedObservation(
     id === 'owner-tests' &&
     prior?.expected === 'fail' &&
     observed.expected === 'pass';
-  return correctsPrediction ? observed.expected : prior?.expected ?? observed.expected;
+  return correctsPrediction ? observed.expected : (prior?.expected ?? observed.expected);
 }
 
 /** Compare actual failure diagnostics while ignoring TAP numbering and transient process paths. */
