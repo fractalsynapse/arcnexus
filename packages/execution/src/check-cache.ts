@@ -19,8 +19,13 @@ export function checkInput(task: HostTask, id: string, scope?: StewardScope) {
   const command = checkCommand(task.capture, worktree, id, scope?.owner);
   const revision = cleanRevision(worktree);
   if (!revision) return;
+  const operation = task.capture.operations[id];
+  const inputs = operation?.applicability?.startsWith('owner-')
+    ? ownerQualityInputs(task, id, scope?.owner)
+    : revision;
+  if (!inputs) return;
   const input = {
-    revision,
+    revision: inputs,
     authority: task.capture.source.revision,
     id,
     operation: task.capture.operations[id],
@@ -30,6 +35,39 @@ export function checkInput(task: HostTask, id: string, scope?: StewardScope) {
     environment: environmentIdentity(task, command.executable, command.cwd),
   };
   return createHash('sha256').update(JSON.stringify(input)).digest('hex');
+}
+
+/** Bind owner quality evidence to owned code and operation configuration, excluding unrelated commits. */
+function ownerQualityInputs(task: HostTask, id: string, owner?: string) {
+  if (!owner || !task.worktree) return;
+  const operation = task.capture.operations[id];
+  const applicability = operation?.applicability;
+  if (applicability !== 'owner-lint-files' && applicability !== 'owner-format-files') return;
+  try {
+    const entries = git(task.worktree, 'ls-tree', '-r', '--format=%(objectname) %(path)', 'HEAD')
+      .split('\\n')
+      .map((entry) => entry.split(' ', 2) as [string, string]);
+    const config = /^(?:\\.arc\\/architecture\\/components\\/.*\\.yaml|package(?:-lock)?\\.json|eslint\\.config\\.ts|\\.eslintignore|\\.prettierignore|\\.gitignore|packages\\/foundation\\/(?:src\\/index\\.ts|scripts\\/owner-quality\\.ts))$/;
+    const source = applicability === 'owner-lint-files'
+      ? /\\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx)$/
+      : /\\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json|ya?ml)$/;
+    const selected = entries.filter(([, path]) => {
+      if (config.test(path)) return true;
+      if (!source.test(path)) return false;
+      const resolution = team.ownerFor(Object.values(task.capture.components), path);
+      if (resolution.kind !== 'owned') throw new Error(`Invalid captured ownership for ${path}`);
+      return resolution.owner.id === owner;
+    });
+    return createHash('sha256').update(JSON.stringify({
+      applicability,
+      owner,
+      selection: selected,
+      ownership: Object.values(task.capture.components).map(({ id, owns }) => [id, owns]),
+      authority: task.capture.source.revision,
+    })).digest('hex');
+  } catch {
+    return;
+  }
 }
 
 /** Reuse only a satisfied observation whose recorded input identity and immutable log match. */
