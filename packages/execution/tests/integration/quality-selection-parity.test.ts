@@ -68,7 +68,11 @@ test('worktree selection and receipt use the candidate with a nested command cwd
   const declaration = 'id: execution\nowns:\n  - packages/execution\n';
   writeFileSync(join(components, 'execution.yaml'), declaration);
   const capture = {
-    source: { root: host, paths: ['.arc/architecture/components/execution.yaml'] },
+    source: {
+      root: host,
+      paths: ['.arc/architecture/components/execution.yaml'],
+      read: (path: string) => path.endsWith('execution.yaml') ? declaration : '',
+    },
     project: { checks: { acceptance: [] } },
     components: { execution: { id: 'execution', owns: ['packages/execution'] } },
     operations: { quality: {
