@@ -40,7 +40,11 @@ function fixture(operation: Record<string, unknown>): Capture {
 }
 
 const selection = { component: 'sample', activity: 'testing' };
-const check = { tool: 'check', command: 'npm', args: ['run', 'format:check', { context: 'owner' }] };
+const check = (operation: 'format:check' | 'lint') => ({
+  tool: 'check',
+  command: 'npm',
+  args: ['run', operation, '--', { context: 'owner' }],
+});
 
 for (const applicability of ['owner-format-files', 'owner-lint-files']) {
   test(`public request accepts ${applicability} for a bound check`, () => {
