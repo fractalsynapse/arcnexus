@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { selectQualityInputs } from '../src/index.js';
+import { qualityRuntime, selectQualityInputs } from '../src/index.js';
 
 type Operation = 'format:check' | 'lint';
 
