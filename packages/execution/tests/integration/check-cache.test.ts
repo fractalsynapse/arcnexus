@@ -30,6 +30,15 @@ test('a changed actual checkpoint invalidates earlier evidence', (t) => {
   assert.equal(reusableCheck(fixture.task.observations(), after), undefined);
 });
 
+test('changed operation authority invalidates a retained successful observation', (t) => {
+  const fixture = new CheckCacheFixture(t);
+  const before = fixture.input();
+  fixture.observe();
+  fixture.restart({ ...fixtureOperation, args: ['changed'] });
+  assert.notEqual(fixture.input(), before);
+  assert.equal(reusableCheck(fixture.task.observations(), fixture.input()), undefined);
+});
+
 test('a later failure for unchanged inputs supersedes an earlier success', (t) => {
   const fixture = new CheckCacheFixture(t);
   const earlier = fixture.observe();
