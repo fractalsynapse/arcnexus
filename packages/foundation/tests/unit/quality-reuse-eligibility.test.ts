@@ -103,10 +103,8 @@ for (const [form, source, reason] of [
 test('lint side-effect imports decline reuse even when their path is local', async () => {
   const tree = fixture();
   try {
-    tree.write('eslint.config.ts', "import './packages/foundation/rules.js'; export default [];
-");
-    tree.write('packages/foundation/rules.js', 'export default {};
-');
+    tree.write('eslint.config.ts', "import './packages/foundation/rules.js'; export default [];\n");
+    tree.write('packages/foundation/rules.js', 'export default {};\n');
     const result = await selectQualityInputs('lint', 'alpha', tree.root);
     assert.equal(eligibility(result)?.eligible, false);
     assert.match(eligibility(result)?.reason ?? '', /eslint\.config\.ts.*static subset/i);
