@@ -46,8 +46,8 @@ test('a supplier handoff preserves an observed failure when the steward resumes'
   const handoff = await steward(agent, task, milestone, 'implementation', signal);
   assert.equal(handoff.kind, 'supplier');
   const resumed = await steward(agent, task, milestone, 'implementation', signal);
-  assert.equal(resumed.kind, 'repair');
-  if (resumed.kind === 'repair') {
+  assert.equal(resumed.kind, 'blocked');
+  if (resumed.kind === 'blocked') {
     assert.equal(resumed.failedCheck?.expected, 'pass');
     assert.equal(resumed.failedCheck?.status, 7);
     assert.equal(resumed.failedCheck?.log, log);
