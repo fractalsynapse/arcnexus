@@ -255,8 +255,8 @@ function matchesIgnoreRules(
 ): boolean | undefined {
   let ignored: boolean | undefined;
   for (const raw of rules) {
-    const rule = raw.trim();
-    if (!rule || rule.startsWith('#')) continue;
+    const rule = raw;
+    if (!rule || (rule.startsWith('#') && !rule.startsWith('\\#'))) continue;
     const negated = rule.startsWith('!');
     const source = negated ? rule.slice(1) : rule;
     const anchored = source.startsWith('/');
