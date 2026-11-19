@@ -86,11 +86,14 @@ function qualityIdentity(
 ): string {
   const identity = createHash('sha256');
   identity.update(selectionIdentity(operation, owner, files, components));
+  const relevantIgnoreFiles = globSync('**/.gitignore').filter(
+    (path) => path === '.gitignore' || files.some((file) => file.startsWith(`${dirname(path)}/`)),
+  );
   for (const path of [
     ...componentFiles,
     ...configurationInputs(operation),
     ...files,
-    ...globSync('**/.gitignore'),
+    ...relevantIgnoreFiles,
     '.eslintignore',
     '.prettierignore',
     '.prettierrc.yaml',
@@ -98,7 +101,7 @@ function qualityIdentity(
     'package.json',
     'package-lock.json',
   ]) {
-    identity.update(path).update(readOptionalFile(path) || 'missing');
+    identity.update(path).update(JSON.stringify(readOptionalFile(path)));
   }
   return identity.digest('hex');
 }
