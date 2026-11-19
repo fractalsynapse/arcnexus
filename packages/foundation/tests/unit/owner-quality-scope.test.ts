@@ -408,6 +408,23 @@ for (const operation of ['format:check', 'lint'] as const) {
       }
     });
 
+    test(`${operation} ${owner} honors negated gitignore character classes`, async () => {
+      const tree = new QualityFixture();
+      try {
+        tree.owner('alpha', 'packages/alpha');
+        tree.write('.gitignore', 'packages/alpha/[!ab].ts\n');
+        for (const name of ['a', 'b', 'c']) {
+          tree.write(`packages/alpha/${name}.ts`, `export const ${name} = 1;\n`);
+        }
+        const result = await selection(tree, operation, owner);
+        assert(result.files.includes('packages/alpha/a.ts'));
+        assert(result.files.includes('packages/alpha/b.ts'));
+        assert(!result.files.includes('packages/alpha/c.ts'));
+      } finally {
+        tree.close();
+      }
+    });
+
     test(`${operation} ${owner} honors nested re-inclusion`, async () => {
       const tree = new QualityFixture();
       try {
