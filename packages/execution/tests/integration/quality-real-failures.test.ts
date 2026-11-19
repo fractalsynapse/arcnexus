@@ -10,6 +10,7 @@ import { StewardFixture } from '../fixtures/steward.js';
 
 test(
   'real lint and type failures reach the same caller for an owner without suites',
+  { skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1' },
   async (t) => {
     const source = process.cwd();
     const root = mkdtempSync(join(tmpdir(), 'arcnexus-quality-real-'));
