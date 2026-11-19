@@ -23,7 +23,7 @@ const declarations = {
 };
 
 const emptyHeaders = {
-  empty: '/**/',
+  empty: '/** */',
   whitespace: '/**   \n    \t */',
   decorative: '/**\n   *\n   ***\n   */',
 };
