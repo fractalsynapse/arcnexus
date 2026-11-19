@@ -63,6 +63,21 @@ function observeCheck(
     });
 }
 
+/** Preserve a corrected pass prediction while retaining prior operation expectations. */
+function expectedObservation(
+  scope: StewardScope,
+  id: string,
+  prior: StewardCheckFailure | undefined,
+  observed: StewardScope,
+) {
+  const correctsPrediction =
+    scope.activity === 'testing' &&
+    id === 'owner-tests' &&
+    prior?.expected === 'fail' &&
+    observed.expected === 'pass';
+  return correctsPrediction ? observed.expected : prior?.expected ?? observed.expected;
+}
+
 /** Compare actual failure diagnostics while ignoring TAP numbering and transient process paths. */
 export function checkFailureSignature(log: string) {
   const text = readFileSync(log, 'utf8');
