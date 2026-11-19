@@ -107,6 +107,45 @@ function qualityIdentity(
   return identity.digest('hex');
 }
 
+/** Resolve Prettier configuration files along selected paths without hashing unrelated configs. */
+function prettierConfigurationInputs(
+  operation: QualitySelection['operation'],
+  files: readonly string[],
+): string[] {
+  if (operation !== 'format:check') return [];
+  const names = [
+    '.prettierrc',
+    '.prettierrc.yaml',
+    '.prettierrc.yml',
+    '.prettierrc.json',
+    '.prettierrc.json5',
+    '.prettierrc.js',
+    '.prettierrc.cjs',
+    '.prettierrc.mjs',
+    '.prettierrc.ts',
+    'prettier.config.js',
+    'prettier.config.cjs',
+    'prettier.config.mjs',
+    'prettier.config.ts',
+  ];
+  const paths = new Set<string>();
+  for (const file of files) {
+    const directories = ['.'];
+    let directory = dirname(file);
+    while (directory !== '.') {
+      directories.push(directory);
+      directory = dirname(directory);
+    }
+    for (const base of directories) {
+      for (const name of names) {
+        const path = base === '.' ? name : `${base}/${name}`;
+        if (readOptionalFile(path) !== '') paths.add(path);
+      }
+    }
+  }
+  return [...paths].sort();
+}
+
 /** Follow local imports from quality configuration without hashing unrelated source. */
 function configurationInputs(operation: QualitySelection['operation']): string[] {
   const pending = operation === 'lint' ? ['eslint.config.ts'] : [];
