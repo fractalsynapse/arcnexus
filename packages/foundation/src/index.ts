@@ -280,35 +280,36 @@ function prettierConfigurationInputs(
   return [...paths].sort();
 }
 
+const prettierConfigurationNames = [
+  'package.json',
+  '.prettierrc',
+  '.prettierrc.yaml',
+  '.prettierrc.yml',
+  '.prettierrc.json',
+  '.prettierrc.json5',
+  '.prettierrc.js',
+  '.prettierrc.cjs',
+  '.prettierrc.mjs',
+  '.prettierrc.ts',
+  '.prettierrc.mts',
+  '.prettierrc.cts',
+  'prettier.config.js',
+  'prettier.config.cjs',
+  'prettier.config.mjs',
+  'prettier.config.ts',
+  'prettier.config.mts',
+  'prettier.config.cts',
+];
+
 /** Collect existing conventional formatter configs along selected file paths. */
 function collectPrettierConfigurationPaths(
   paths: Set<string>,
   files: readonly string[],
   root: string,
 ): void {
-  const names = [
-    'package.json',
-    '.prettierrc',
-    '.prettierrc.yaml',
-    '.prettierrc.yml',
-    '.prettierrc.json',
-    '.prettierrc.json5',
-    '.prettierrc.js',
-    '.prettierrc.cjs',
-    '.prettierrc.mjs',
-    '.prettierrc.ts',
-    '.prettierrc.mts',
-    '.prettierrc.cts',
-    'prettier.config.js',
-    'prettier.config.cjs',
-    'prettier.config.mjs',
-    'prettier.config.ts',
-    'prettier.config.mts',
-    'prettier.config.cts',
-  ];
   for (const file of files) {
     for (const base of ['.', ...parentDirectories(file)]) {
-      for (const name of names) {
+      for (const name of prettierConfigurationNames) {
         const path = base === '.' ? name : `${base}/${name}`;
         if (readOptionalFile(path, root) !== '') paths.add(path);
       }
