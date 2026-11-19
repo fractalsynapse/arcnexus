@@ -1,4 +1,5 @@
 import type { ActivityOutcome } from '../../workflow/src/index.js';
+import { InvalidAgentResponse } from '../../agent/src/index.js';
 import type { StewardCheckFailure } from '../../direction/src/index.js';
 import type { ProposedEdit } from './formatter.js';
 
@@ -15,15 +16,7 @@ export type StewardResult =
   | Exclude<ActivityOutcome, { kind: 'completed' }>;
 
 /** Distinguish invalid proposals from failures after the host starts executing them. */
-export class StewardResponseError extends Error {
-  /** Identify the rejected reply class independently of a model's changing wording. */
-  constructor(
-    message: string,
-    readonly identity = message,
-  ) {
-    super(message);
-  }
-}
+export class StewardResponseError extends InvalidAgentResponse {}
 
 /** Decode one top-level outcome without executing any proposed edit or check. */
 export function decodeSteward(
@@ -43,7 +36,7 @@ export function decodeSteward(
     case 'blocked':
       throw new StewardResponseError(
         `Unsupported activity block: ${required(value.reason, 'reason')}. A model assertion does not establish an unavailable host prerequisite. Investigate the available public interfaces with mapped tools, request optional research when needed, or explicitly request the owning supplier. Continue this activity; the host retains actual external failures.`,
-        'unsupported-activity-block',
+        { identity: 'unsupported-activity-block' },
       );
     case 'repair':
       return localRepair(value);

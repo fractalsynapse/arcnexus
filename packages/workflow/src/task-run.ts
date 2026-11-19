@@ -217,13 +217,13 @@ export class TaskRun {
       } catch (error) {
         this.signal.throwIfAborted();
         if (!(error instanceof DirectorResponseError)) throw error;
-        if (seen.has(error.message))
+        if (seen.has(error.identity))
           return stopped(
             'blocked',
             `Director repeated an unchanged validation finding: ${error.message}`,
             this.evidence,
           );
-        seen.add(error.message);
+        seen.add(error.identity);
         request = () => this.repairPlan(error.message, context);
       }
     }

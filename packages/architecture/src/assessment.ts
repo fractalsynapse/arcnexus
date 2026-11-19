@@ -85,12 +85,12 @@ export class ArchitectureAssessment {
       } catch (error) {
         this.signal.throwIfAborted();
         if (!(error instanceof InvalidAgentResponse)) throw error;
-        if (seen.has(error.message))
+        if (seen.has(error.identity))
           throw new AgentActivityHold(
             `Architect repeated an unchanged finding: ${error.message}`,
             this.task.evidence.slice(-4),
           );
-        seen.add(error.message);
+        seen.add(error.identity);
         diagnostic = error.message;
         this.task.note({ architectureResponseRepair: diagnostic });
       }

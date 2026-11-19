@@ -54,7 +54,7 @@ export async function codex(
   });
   if (result.status !== 0)
     throw new Error(`Codex activation failed (${result.status}); evidence: ${log}`);
-  return answer(result.stdout, log);
+  return decodeCodexAnswer(result.stdout, log);
 }
 
 /** Start a fresh noninteractive activation without loading personal executable configuration. */
@@ -105,21 +105,24 @@ function settings(
 }
 
 /** Decode the final structured response while keeping the original stream in evidence. */
-function answer(stdout: string, log: string): unknown {
+export function decodeCodexAnswer(stdout: string, log: string): unknown {
   let message: string | undefined;
-  for (const line of stdout.trim().split('\n')) {
+  for (const line of stdout.trim().split('\n').filter(Boolean)) {
     const event = JSON.parse(line);
     if (event.type === 'item.completed' && event.item?.type === 'agent_message')
       message = event.item.text;
   }
   if (!message)
-    throw new InvalidCodexResponse(`Codex returned no final response; evidence: ${log}`);
+    throw new InvalidCodexResponse(`Codex returned no final response; evidence: ${log}`, {
+      identity: 'Codex returned no final response',
+    });
   try {
     return JSON.parse(message);
   } catch (error) {
     const diagnostic = error instanceof Error ? error.message : String(error);
     throw new InvalidCodexResponse(
       `Codex returned an invalid task response: ${diagnostic}; evidence: ${log}`,
+      { identity: `Codex returned an invalid task response: ${diagnostic}`, cause: error },
     );
   }
 }

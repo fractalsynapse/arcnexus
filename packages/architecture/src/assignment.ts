@@ -43,6 +43,7 @@ function architectAnswers(task: HostTask) {
 /** Describe assessment outputs while leaving research and questions to the mapped MCP tools. */
 function responseShape() {
   return {
+    format: 'Return exactly one JSON object. Do not use Markdown fences or YAML.',
     noChange: {
       kind: 'no-change',
       summary: 'Explain alignment with accepted direction and findings',

@@ -1,5 +1,5 @@
 import { team } from '../../team/src/index.js';
-import type { Agent } from '../../agent/src/index.js';
+import { InvalidAgentResponse, type Agent } from '../../agent/src/index.js';
 import type { Milestone, StewardCheckFailure } from '../../direction/src/index.js';
 import type { ActivityOutcome, TaskSession } from '../../workflow/src/index.js';
 import { hostTask, type HostTask } from './index.js';
@@ -110,7 +110,7 @@ async function requestSteward(
 
 /** Match a rejected reply class against checked progress rather than repeated prose. */
 function replyRepairIdentity(error: Error, task: HostTask) {
-  const finding = error instanceof StewardResponseError ? error.identity : error.message;
+  const finding = error instanceof InvalidAgentResponse ? error.identity : error.message;
   return JSON.stringify([finding, stewardInput(task.observations())]);
 }
 
