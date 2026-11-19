@@ -42,6 +42,6 @@ Deliver these prerequisite implementations through the existing accountable owne
 
 ## Observation references (not goal text)
 
-The retained proposal and #623 source analysis are evidence for the assessment, not objectives or acceptance criteria. The latest owner-tests observation for this candidate is exit 1; it reports raw owner arguments reaching Prettier/ESLint as file patterns and failing owner-scoped regression tests. This is implementation failure evidence, not a reason to widen this guide batch or change the original acceptance. Earlier observations 6859 and 6675 record historical code-length defects; they do not assert current files still fail.
+The retained proposal and #623 source analysis are evidence for the assessment, not objectives or acceptance criteria. The latest owner-tests observation for this candidate is exit 1. Its regression log shows format:check passed the owner name as a Prettier path, lint passed it as an ESLint path, and unknown-owner, overlap, distinct-selection, empty-selection, and source-diagnostic expectations consequently failed. This confirms the scoped command prerequisite is not implemented in the observed candidate; it is implementation failure evidence, not a reason to widen this guide batch or change the original acceptance. Earlier observations 6859 and 6675 record historical code-length defects; they do not assert current files still fail.
 
 No implementation, approval, contract amendment, registry bytes, assembled check result, or delivery is claimed by this review batch.
