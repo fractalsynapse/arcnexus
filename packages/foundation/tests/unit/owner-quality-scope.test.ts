@@ -126,6 +126,22 @@ for (const operation of ['format:check', 'lint'] as const) {
   });
 }
 
+test('quality commands preserve the owner test inventory and selection', () => {
+  const all = testInventory();
+  const selected = testInventory('foundation');
+  assert(selected.length > 0);
+  assert.deepEqual(selected, all.filter(({ owner }) => owner === 'foundation'));
+  const tree = fixture();
+  try {
+    tree.run('format:check', 'beta');
+    tree.run('lint', 'beta');
+    assert.deepEqual(testInventory(), all);
+    assert.deepEqual(testInventory('foundation'), selected);
+  } finally {
+    tree.close();
+  }
+});
+
 test('an owner with only JSON has an empty lint selection but a format selection', () => {
   const tree = new QualityFixture();
   try {
