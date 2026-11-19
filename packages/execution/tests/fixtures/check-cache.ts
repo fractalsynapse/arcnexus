@@ -108,6 +108,7 @@ export class CheckCacheFixture {
     const capture = {
       source: {
         root: this.source,
+        paths: [],
         remote: 'https://example.com/fixture.git',
         revision: git(this.source, 'rev-parse', 'HEAD'),
       },
