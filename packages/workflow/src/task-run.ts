@@ -192,6 +192,7 @@ export class TaskRun {
             feedback,
             this.signal,
             this.assessmentInput(),
+            this.revision,
           ),
         reason,
         feedback,
