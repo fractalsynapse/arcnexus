@@ -61,6 +61,8 @@ export interface TaskSession {
   close(): void;
   cleanup?(): void;
   history?(): readonly TaskEvent[];
+  observations?(): readonly unknown[];
+  store?(name: string, contents: string): string;
   ask?: TaskObserver['answer'];
 }
 
