@@ -72,6 +72,28 @@ function ownerQualityInputs(task: HostTask, id: string, owner?: string) {
   }
 }
 
+/** Follow local imports reachable from ESLint configuration to bind their exact inputs. */
+function importedLintConfiguration(worktree: string, tracked: readonly string[]) {
+  const known = new Set(tracked);
+  const pending = ['eslint.config.ts'];
+  const visited = new Set<string>();
+  while (pending.length) {
+    const path = pending.pop()!;
+    if (visited.has(path) || !known.has(path)) continue;
+    visited.add(path);
+    const content = readFileSync(join(worktree, path), 'utf8');
+    for (const match of content.matchAll(/(?:from\\s*|import\\s*)['\"](\\.[^'\"]+)['\"]/g)) {
+      const base = resolve(worktree, path, '..', match[1]!);
+      const extensionless = base.replace(/\\.(?:[cm]?js|tsx?)$/, '');
+      const dependency = [`${extensionless}.ts`, `${extensionless}.js`, `${extensionless}.mjs`, `${extensionless}.mts`, base]
+        .map((candidate) => relative(worktree, candidate))
+        .find((candidate) => known.has(candidate));
+      if (dependency) pending.push(dependency);
+    }
+  }
+  return visited;
+}
+
 /** Reuse only a satisfied observation whose recorded input identity and immutable log match. */
 export function reusableCheck(events: readonly unknown[], input?: string, expected = 'pass') {
   if (!input) return;
