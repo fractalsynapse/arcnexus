@@ -463,9 +463,7 @@ for (const operation of ['format:check', 'lint'] as const) {
         tree.write('.prettierignore', '');
         const path = 'packages/alpha/generated/probe.ts';
         tree.write(path, 'export const probe = 1;\n');
-        const ignored = 'packages/alpha/generated/\n';
-        const include = '!packages/alpha/generated/probe.ts\n';
-        tree.write('.gitignore', ignored + include);
+        tree.write('.gitignore', 'packages/alpha/generated/\n');
         tree.write('packages/alpha/generated/.gitignore', '!generated/\n!probe.ts\n');
         assert(!(await selection(tree, operation, owner)).files.includes(path));
       } finally {
