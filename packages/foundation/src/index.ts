@@ -103,6 +103,8 @@ function identityInputPaths(
     ...new Set([
       ...files,
       ...componentFiles,
+      'packages/foundation/src/index.ts',
+      'packages/foundation/scripts/owner-quality.ts',
       '.eslintignore',
       '.prettierignore',
       ...relevantGitignoreFiles(files),
