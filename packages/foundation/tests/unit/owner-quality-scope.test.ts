@@ -317,7 +317,10 @@ test('public quality identity changes when selected source contents change', asy
 test('public lint identity changes when an imported configuration changes', async () => {
   const tree = fixture();
   try {
-    tree.write('eslint.config.ts', "import rules from './readability-rules.ts';\nexport default [rules];\n");
+    tree.write(
+      'eslint.config.ts',
+      "import rules from './readability-rules.ts';\nexport default [rules];\n",
+    );
     tree.write('readability-rules.ts', 'export default {};\n');
     const before = await selection(tree, 'lint');
     tree.write('readability-rules.ts', 'export default { rules: {} };\n');
@@ -332,7 +335,12 @@ test('public lint identity changes when an imported configuration changes', asyn
 for (const [label, ignorePath, pattern, ignoredPath] of [
   ['nested ignore', 'packages/alpha/.gitignore', 'hidden.ts\n', 'packages/alpha/deep/hidden.ts'],
   ['slashless directory', '.gitignore', 'generated/\n', 'packages/alpha/deep/generated/probe.ts'],
-  ['double wildcard', '.gitignore', 'packages/**/generated/*.ts\n', 'packages/alpha/deep/generated/probe.ts'],
+  [
+    'double wildcard',
+    '.gitignore',
+    'packages/**/generated/*.ts\n',
+    'packages/alpha/deep/generated/probe.ts',
+  ],
 ] as const) {
   test(`discovery honors ${label} patterns`, async () => {
     const tree = new QualityFixture();
