@@ -37,7 +37,7 @@ test('MCP check, checked correction, recheck and supplier handoff retain observa
   t.after(() => task.close());
   writeFileSync(join(root, 'fixture.txt'), 'broken');
   const checks: string[] = [];
-  t.mock.method(task, 'check', async (id, _signal, scope) => {
+  t.mock.method(task, 'check', async (id: string, _signal: AbortSignal, scope?: Parameters<typeof task.check>[2]) => {
     const status = readFileSync(join(root, 'fixture.txt'), 'utf8') === 'fixed' ? 0 : 37;
     const log = task.store('fixture-check.log', `exit ${status}\n`);
     const check = { id, status, log, command: 'fixture', args: [], cwd: root, durationMs: 1 };
