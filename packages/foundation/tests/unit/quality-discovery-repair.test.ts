@@ -73,7 +73,7 @@ for (const operation of ['format:check', 'lint'] as const) {
         assert(!result.files.includes('packages/alpha/generated/hidden.ts'));
         assert(!globs.some((pattern) => pattern.startsWith('**/')));
         assert(!directories.some((path) => path.includes('packages/alpha/generated')));
-        assert.equal(reads.filter((path) => path === '.gitignore').length, 1);
+        assert.equal(reads.filter((path) => path.endsWith('/.gitignore')).length, 1);
         assert.equal(reads.filter((path) => path === 'packages/alpha/.gitignore').length, 1);
         assert(!reads.some((path) => path.includes('packages/alpha/generated/')));
       } finally {
