@@ -179,6 +179,12 @@ export class Coordination {
     }
   }
 
+  /** Confirm a journal was issued by this store for the same verified project remote. */
+  owns(journal: Journal, remote: string): boolean {
+    const provenance = journalOwners.get(journal);
+    return provenance?.coordination === this && provenance.remote === remote;
+  }
+
   /** Reuse the oldest unfinished round or capture the inventory for a new one. */
   round(remote: string, captureInventory: () => string) {
     const database = this.open(remote);
