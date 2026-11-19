@@ -29,6 +29,9 @@ and keeps ArcNexus-specific release rules in this repository.
 - Use the least code that satisfies the accepted outcome. Define each responsibility,
   service shape and command once. Reuse its definition directly. Omit boilerplate,
   duplicate implementations and compatibility machinery for the previous runtime.
+- Never introduce a limit without the human architect's express permission. Let the
+  harness govern its capacity. Do not impose arbitrary content, collection, context,
+  retry or execution caps, or silently truncate information to fit an invented limit.
 - Author all maintained code in strict TypeScript, including tests, fixtures and
   build and CI tooling. Follow the class and helper rules in the
   [TypeScript standard](docs/foundation/typescript-standard.md).

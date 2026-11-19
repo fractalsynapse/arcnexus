@@ -227,8 +227,8 @@ a self-repair progress report. That redundant response returns an exact diagnost
 to the same caller through existing response validation. Host-generated recovery
 from an actual failed check can still revisit the current activity (#657).
 
-Research handoffs validate their bounded fields before MCP acknowledges them.
-An invalid request leaves the caller active so it can correct the tool call. An
-invalid acknowledgement retained from an older runtime receives an appended
-refusal and returns its exact diagnostic to the original caller; it cannot replay
-as accepted work or erase the original failed observation (#658).
+Research handoffs validate required fields before MCP acknowledges them. Requests
+and reports have no application-imposed character or item caps. Preserve complete
+questions, decisions, findings, references and archived metadata. Invalid structure
+returns to the caller for correction without losing acknowledged work. Retained
+requests rejected only by removed limits resume normally (#658, #659).

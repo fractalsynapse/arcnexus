@@ -13,7 +13,7 @@
 
 ### Fixed
 
-- Validate research requests before acknowledging a handoff and return invalid retained requests to their caller without replaying them (#658).
+- Remove arbitrary research request, report and history caps; validate actual structure before acknowledging handoffs and require express human approval for new limits (#658, #659).
 
 - Expose earlier applicable repair targets to every steward activity so invalid fixtures return from Implementation to Testing, while redundant model self-repairs stay with their caller (#656, #657).
 
