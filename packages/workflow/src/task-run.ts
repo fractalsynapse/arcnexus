@@ -13,9 +13,9 @@ import {
   type StandingGoalEvidence,
 } from '../../direction/src/index.js';
 import { validateVerdict, type Candidate, type Verdict } from '../../verification/src/index.js';
-import { activityRepair } from './activity-repair.js';
+import { activityRepair, replayableActivity } from './activity-repair.js';
 import { assembleCandidate } from './assembly.js';
-import { selfLinkedSupplier, stopped, type Interrupted } from './services.js';
+import { stopped, type Interrupted } from './services.js';
 import type {
   ActivityCheckpoint,
   ActivityRepair,
@@ -154,10 +154,14 @@ export class TaskRun {
       if ('verdict' in event && event.verdict.kind === 'rejected')
         return this.correct(event.candidate, event.verdict.findings);
       if (!('activation' in event)) continue;
-      if (selfLinkedSupplier(event.activation.outcome, event.activation.milestone)) continue;
-      if (event.activation.outcome.kind === 'blocked') {
+      if (
+        !replayableActivity(
+          this.session.capture,
+          this.plan!.milestones[this.completed],
+          event.activation,
+        )
+      )
         continue;
-      }
       const interrupted = await this.applyActivity(event.activation);
       if (interrupted) return interrupted;
     }

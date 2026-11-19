@@ -2,6 +2,7 @@ import type { Capture } from '../../architecture/src/index.js';
 import type { Milestone } from '../../direction/src/index.js';
 import {
   stopped,
+  selfLinkedSupplier,
   type ActivityCheckpoint,
   type ActivityRepair,
   type TaskEvent,
@@ -51,6 +52,38 @@ export function localRepairIndex(
   )
     return;
   return index;
+}
+
+/** Replay completed valid transitions; unavailable responses resume their caller at the retained cursor. */
+export function replayableActivity(
+  capture: Capture,
+  milestone: Milestone | undefined,
+  activation: ActivityCheckpoint,
+) {
+  return (
+    activation.outcome.kind !== 'blocked' &&
+    !selfLinkedSupplier(activation.outcome, activation.milestone) &&
+    !invalidRetainedRepair(capture, milestone, activation)
+  );
+}
+
+/** Retry a legacy malformed response at its original cursor rather than replay its invalid transition. */
+function invalidRetainedRepair(
+  capture: Capture,
+  milestone: Milestone | undefined,
+  activation: ActivityCheckpoint,
+) {
+  if (!milestone || activation.outcome.kind !== 'repair') return false;
+  const step = milestone.steps[activation.index];
+  return (
+    milestone.id === activation.milestone &&
+    milestone.owner === activation.owner &&
+    step?.activity === activation.step &&
+    !step.inapplicable &&
+    Boolean(capture.components[milestone.owner]?.activities[activation.step]) &&
+    localRepairIndex(capture, milestone, activation.index, activation.outcome.activity) ===
+      undefined
+  );
 }
 
 /** Stop revisiting a finding when the host's recorded component inputs have not changed. */
