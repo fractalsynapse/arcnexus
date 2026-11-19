@@ -51,7 +51,6 @@ export async function check(
 export function assertCapturedOwnership(capture: Capture, worktree: string) {
   const catalog = join(worktree, '.arc/architecture/components');
   const admittedCatalog = join(capture.source.root, '.arc/architecture/components');
-  if (!existsSync(catalog) && !existsSync(admittedCatalog)) return;
   const files = globSync('.arc/architecture/components/*.yaml', { cwd: worktree }).sort();
   const candidate = files.map((path) => {
     const component = parse(readFileSync(join(worktree, path), 'utf8')) as {
