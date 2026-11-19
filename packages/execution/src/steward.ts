@@ -135,6 +135,38 @@ function stewardOperations(task: ReturnType<typeof hostTask>, scope: StewardScop
   );
 }
 
+/** Require a current result for every captured activity operation before completion. */
+function requiredChecks(
+  task: HostTask,
+  scope: StewardScope,
+  requested: readonly { id: string; expected: 'pass' | 'fail' }[],
+) {
+  const checks = new Map(requested.map((check) => [check.id, check]));
+  const events = task.observations<{
+    check?: CheckResult;
+    scope?: StewardScope;
+    owner?: string;
+    activity?: string;
+    edits?: readonly unknown[];
+  }>();
+  for (const id of stewardOperations(task, scope)) {
+    const latestEdit = events.findLastIndex(
+      (event) => event.owner === scope.owner && event.activity === scope.activity && event.edits?.length,
+    );
+    const observed = events.findLast(
+      (event, index) =>
+        index > latestEdit &&
+        event.scope?.owner === scope.owner &&
+        event.scope.activity === scope.activity &&
+        event.check?.id === id &&
+        (typeof event.check.status === 'number' || event.check.status === 'not-applicable'),
+    );
+    const expected = observed?.scope?.expected ?? 'pass';
+    if (!checks.has(id)) checks.set(id, { id, expected });
+  }
+  return [...checks.values()];
+}
+
 /** Give the owner its exact failing check and log when activating correction work. */
 async function askSteward(
   task: ReturnType<typeof hostTask>,
