@@ -105,7 +105,7 @@ export function decodeRevisionResponse(
   capture: import('../../architecture/src/index.js').Capture,
   accepted: Plan,
   request: RevisionRequest,
-): { kind: 'plan'; plan: Plan } {
+): DirectionResult {
   const value = mapping(response, 'response');
   if (value.kind === 'question') return revisionQuestion(value);
   if (value.kind !== 'plan') throw new DirectorResponseError('response.kind: expected "plan"');
