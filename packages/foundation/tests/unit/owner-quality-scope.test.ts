@@ -11,6 +11,7 @@ import {
 } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
+import * as foundation from '../../src/index.js';
 import { testInventory } from '../../src/index.js';
 
 type Operation = 'format:check' | 'lint';
