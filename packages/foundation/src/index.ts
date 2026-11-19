@@ -298,6 +298,15 @@ function readOptionalFile(path: string): string {
   }
 }
 
+/** Read each reachable ignore file once for discovery and its matching identity. */
+function readIgnoreFile(path: string): string {
+  const cached = ignoreFileContents.get(path);
+  if (cached !== undefined) return cached;
+  const content = readFileSync(path, 'utf8');
+  ignoreFileContents.set(path, content);
+  return content;
+}
+
 interface IgnoreMatcher {
   add(patterns: string): IgnoreMatcher;
   test(path: string): { ignored: boolean; unignored: boolean };
