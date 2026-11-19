@@ -118,7 +118,7 @@ test('nested package formatter plugins decline reuse', async () => {
   try {
     tree.write(
       'package.json',
-      '{"prettier":{"overrides":[{"files":["**/*.ts"],"options":{"plugins":["example"]}}]}}',
+      '{"prettier":{"overrides":[{"files":["**/*.ts"],"options":{"plugins":["prettier/plugins/typescript"]}}]}}',
     );
     const result = await selectQualityInputs('format:check', 'alpha', tree.root);
     assert.equal(eligibility(result)?.eligible, false);
