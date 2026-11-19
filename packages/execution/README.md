@@ -45,6 +45,14 @@ without another research activation, and completion without requesting research.
 These local implementation and test references support this documentation; no
 new test execution is claimed.
 
+## Owner quality evidence
+
+The [quality obligations and evidence guide](docs/quality-evidence.md) records
+E-1 through E-4 intent before behavior changes: independent captured obligations,
+selection parity, current-input reuse and same-caller failure evidence. It consumes
+the architectural identity supplier answer and distinguishes intended enforcement
+from existing implementation limitations.
+
 ## Local activity repair
 
 Mapped MCP checks return their observed result before the caller continues.
