@@ -58,8 +58,8 @@ export async function selectQualityInputs(
     owner === undefined || components.some(({ id }) => id === owner),
     `Unknown owner: ${owner}`,
   );
-  const files = await selectOwnedQualityFiles(operation, owner, components);
-  const identity = qualityIdentity(operation, owner, files, components, componentFiles);
+  const files = await selectOwnedQualityFiles(operation, owner, components, root);
+  const identity = qualityIdentity(operation, owner, files, components, componentFiles, root);
   return { operation, owner, files, identity };
 }
 
@@ -119,17 +119,18 @@ async function selectOwnedQualityFiles(
   operation: QualitySelection['operation'],
   owner: string | undefined,
   components: readonly Component[],
+  root: string,
 ): Promise<string[]> {
-  const candidates = discoverMaintainedFiles()
+  const candidates = discoverMaintainedFiles(root)
     .filter((path) => operation !== 'format:check' || isFormatCovered(path))
     .sort();
-  const eslint = operation === 'lint' ? new ESLint() : undefined;
+  const eslint = operation === 'lint' ? new ESLint({ cwd: root }) : undefined;
   const files: string[] = [];
   for (const path of candidates) {
-    if (eslint && (await eslint.isPathIgnored(path))) continue;
+    if (eslint && (await eslint.isPathIgnored(resolve(root, path)))) continue;
     if (
       operation === 'format:check' &&
-      (await getFileInfo(path, { ignorePath: '.prettierignore' })).ignored
+      (await getFileInfo(resolve(root, path), { ignorePath: resolve(root, '.prettierignore') })).ignored
     )
       continue;
     const resolution = team.ownerFor(components, path);
@@ -162,15 +163,16 @@ function qualityIdentity(
   files: readonly string[],
   components: readonly Component[],
   componentFiles: readonly string[],
+  root: string,
 ): string {
   const identity = createHash('sha256');
   identity.update(selectionIdentity(operation, owner, files, components));
-  for (const path of identityInputPaths(operation, files, componentFiles)) {
-    if (existsSync(path))
+  for (const path of identityInputPaths(operation, files, componentFiles, root)) {
+    if (existsSync(resolve(root, path)))
       identity
         .update(path)
         .update('\u0000present\u0000')
-        .update(path.endsWith('.gitignore') ? readIgnoreFile(path) : readFileSync(path));
+        .update(path.endsWith('.gitignore') ? readIgnoreFile(path, root) : readFileSync(resolve(root, path)));
     else identity.update(path).update('\u0000missing\u0000');
   }
   return identity.digest('hex');
@@ -181,6 +183,7 @@ function identityInputPaths(
   operation: QualitySelection['operation'],
   files: readonly string[],
   componentFiles: readonly string[],
+  root: string,
 ): string[] {
   return [
     ...new Set([
@@ -192,35 +195,35 @@ function identityInputPaths(
       'packages/foundation/scripts/owner-quality.ts',
       '.eslintignore',
       '.prettierignore',
-      ...relevantGitignoreFiles(files),
-      ...editorConfigurationInputs(files),
-      ...prettierConfigurationInputs(operation, files),
-      ...configurationInputs(operation),
+      ...relevantGitignoreFiles(files, root),
+      ...editorConfigurationInputs(files, root),
+      ...prettierConfigurationInputs(operation, files, root),
+      ...configurationInputs(operation, root),
     ]),
   ].sort();
 }
 
 /** Find editor settings that can affect selected files. */
-function editorConfigurationInputs(files: readonly string[]): string[] {
+function editorConfigurationInputs(files: readonly string[], root: string): string[] {
   const directories = new Set(['.']);
   for (const file of files) {
     for (const directory of parentDirectories(file)) directories.add(directory);
   }
   return [...directories]
     .map((directory) => (directory === '.' ? '.editorconfig' : `${directory}/.editorconfig`))
-    .filter((path) => existsSync(path))
+    .filter((path) => existsSync(resolve(root, path)))
     .sort();
 }
 
 /** Find ignore files that can affect the selected paths. */
-function relevantGitignoreFiles(files: readonly string[]): string[] {
+function relevantGitignoreFiles(files: readonly string[], root: string): string[] {
   const directories = new Set<string>(['.']);
   for (const file of files) {
     for (const directory of parentDirectories(file)) directories.add(directory);
   }
   return [...directories]
     .map((directory) => (directory === '.' ? '.gitignore' : `${directory}/.gitignore`))
-    .filter((path) => existsSync(path))
+    .filter((path) => existsSync(resolve(root, path)))
     .sort();
 }
 
@@ -228,15 +231,16 @@ function relevantGitignoreFiles(files: readonly string[]): string[] {
 function prettierConfigurationInputs(
   operation: QualitySelection['operation'],
   files: readonly string[],
+  root: string,
 ): string[] {
   if (operation !== 'format:check') return [];
   const paths = new Set<string>();
-  collectPrettierConfigurationPaths(paths, files);
+  collectPrettierConfigurationPaths(paths, files, root);
   return [...paths].sort();
 }
 
 /** Collect existing conventional formatter configs along selected file paths. */
-function collectPrettierConfigurationPaths(paths: Set<string>, files: readonly string[]): void {
+function collectPrettierConfigurationPaths(paths: Set<string>, files: readonly string[], root: string): void {
   const names = [
     '.prettierrc',
     '.prettierrc.yaml',
@@ -256,7 +260,7 @@ function collectPrettierConfigurationPaths(paths: Set<string>, files: readonly s
     for (const base of ['.', ...parentDirectories(file)]) {
       for (const name of names) {
         const path = base === '.' ? name : `${base}/${name}`;
-        if (readOptionalFile(path) !== '') paths.add(path);
+        if (readOptionalFile(path, root) !== '') paths.add(path);
       }
     }
   }
@@ -274,20 +278,20 @@ function parentDirectories(file: string): string[] {
 }
 
 /** Follow local imports from quality configuration without hashing unrelated source. */
-function configurationInputs(operation: QualitySelection['operation']): string[] {
+function configurationInputs(operation: QualitySelection['operation], root: string): string[] {
   const pending = operation === 'lint' ? ['eslint.config.ts'] : [];
   const visited = new Set<string>();
   while (pending.length) {
     const path = pending.pop()!;
     if (visited.has(path)) continue;
     visited.add(path);
-    const source = readOptionalFile(path);
+    const source = readOptionalFile(path, root);
     for (const match of source.matchAll(/(?:from\s*|import\s*)['"](\.[^'"]+)['"]/g)) {
       const specifier = match[1]!;
       const resolved = resolve(dirname(path), specifier);
       const base = resolved.replace(/\.(?:[cm]?js|tsx?)$/, '');
       const candidates = [`${base}.ts`, `${base}.js`, `${base}.mjs`, `${base}.mts`, resolved];
-      const dependency = candidates.find((candidate) => readOptionalFile(candidate) !== '');
+      const dependency = candidates.find((candidate) => readOptionalFile(candidate, root) !== '');
       if (dependency) pending.push(dependency);
     }
   }
@@ -367,9 +371,9 @@ function discoverSuites(directory: string, pattern: string, components: readonly
 }
 
 /** Read an optional root input when an isolated consumer does not provide one. */
-function readOptionalFile(path: string): string {
+function readOptionalFile(path: string, root: string = process.cwd()): string {
   try {
-    return readFileSync(path, 'utf8');
+    return readFileSync(resolve(root, path), 'utf8');
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return '';
     throw error;
@@ -377,10 +381,10 @@ function readOptionalFile(path: string): string {
 }
 
 /** Read each reachable ignore file once for discovery and its matching identity. */
-function readIgnoreFile(path: string): string {
+function readIgnoreFile(path: string, root: string = process.cwd()): string {
   const cached = ignoreFileContents.get(path);
   if (cached !== undefined) return cached;
-  const content = readFileSync(path, 'utf8');
+  const content = readFileSync(resolve(root, path), 'utf8');
   ignoreFileContents.set(path, content);
   return content;
 }
@@ -404,18 +408,18 @@ const createIgnore = createRequire(import.meta.url)('ignore') as (
 ) => IgnoreMatcher;
 
 /** Walk maintained paths once, loading reachable ignore rules as each directory is entered. */
-function discoverMaintainedFiles(): string[] {
+function discoverMaintainedFiles(root: string = process.cwd()): string[] {
   const files: string[] = [];
   const ignoredRoots = new Set(['.git', 'node_modules', 'dist', '.test-build']);
   const visit = (directory: string, inherited: readonly IgnoreScope[]): void => {
     const ignorePath = directory === '.' ? '.gitignore' : `${directory}/.gitignore`;
     const scopes = [...inherited];
-    if (existsSync(ignorePath)) {
+    if (existsSync(resolve(root, ignorePath))) {
       const matcher = createIgnore({ ignorecase: false });
-      matcher.add(readIgnoreFile(ignorePath));
+      matcher.add(readIgnoreFile(ignorePath, root));
       scopes.push({ directory, matcher });
     }
-    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    for (const entry of readdirSync(resolve(root, directory), { withFileTypes: true })) {
       const path = directory === '.' ? entry.name : `${directory}/${entry.name}`;
       if (entry.isSymbolicLink()) continue;
       if (entry.isDirectory()) {
