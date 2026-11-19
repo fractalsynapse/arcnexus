@@ -328,8 +328,12 @@ function configurationInputs(operation: QualitySelection['operation'], root: str
     if (visited.has(path)) continue;
     visited.add(path);
     const source = readOptionalFile(path, root);
-    for (const match of source.matchAll(/(?:from\s*|import\s*)['"](\.[^'"]+)['"]/g)) {
-      const specifier = match[1]!;
+    const parsed = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    for (const statement of parsed.statements) {
+      if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier))
+        continue;
+      const specifier = statement.moduleSpecifier.text;
+      if (!specifier.startsWith('.')) continue;
       const resolved = normalize(join(dirname(path), specifier));
       const base = resolved.replace(/\.(?:[cm]?js|tsx?)$/, '');
       const candidates = [`${base}.ts`, `${base}.js`, `${base}.mjs`, `${base}.mts`, resolved];
