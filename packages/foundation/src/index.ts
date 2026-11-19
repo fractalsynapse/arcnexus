@@ -16,6 +16,7 @@ export interface QualitySelection {
   owner?: string;
   files: string[];
   identity: string;
+  reuseEligibility: { eligible: boolean; reason?: string };
 }
 
 export type QualityOperation = QualitySelection['operation'];
