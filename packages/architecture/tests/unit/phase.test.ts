@@ -35,7 +35,6 @@ function fixture(assessment?: unknown) {
     baseline: 'revision-1',
     files: [{ path: 'contract.md', original: 'old', final: 'new', bytes: 'new bytes' }],
   };
-  const capture = Object.freeze({ revision: 'revision-1', operations: Object.freeze(['read']) });
   const journal = new Map<string, unknown>();
   const source = new Map([['contract.md', 'old bytes']]);
   const application = new Architecture() as unknown as {
