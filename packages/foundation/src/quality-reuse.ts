@@ -44,7 +44,7 @@ function formatterReuseEligibility(
 ): QualityReuseEligibility {
   for (const path of formatterInputs) {
     const config = readFileSync(resolve(root, path), 'utf8');
-    if (/\bplugins?\s*:/i.test(config))
+    if (/['"]?plugins?['"]?\s*:/i.test(config))
       return {
         eligible: false,
         reason: `Prettier configuration may load unselected plugin dependencies: ${path}`,
