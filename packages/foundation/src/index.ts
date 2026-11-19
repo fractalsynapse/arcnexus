@@ -194,7 +194,7 @@ function isIgnored(path: string): boolean {
     let inherited = false;
     for (let index = 0; index < segments.length; index++) {
       const candidate = segments.slice(0, index + 1).join('/');
-      const result = matchesIgnoreRules(candidate, rules);
+      const result = matchesIgnoreRules(candidate, rules, index < segments.length - 1);
       if (result !== undefined) inherited = result;
       if (inherited && index < segments.length - 1) break;
     }
