@@ -51,6 +51,16 @@ Mapped MCP checks return their observed result before the caller continues.
 A completed response cannot hide a failed check recorded during that activation;
 the host reconciles unresolved observations before advancing the milestone.
 
+Reuse requires a recorded input identity matching the current clean checkpoint,
+captured operation and confined environment. Validate cancellation, confinement
+and arguments before consulting earlier results. Older observations without that
+identity remain evidence and are rerun. Setup events alone do not invalidate an
+unchanged checkpoint, and a new worktree path does not change its contents.
+
+Repair context distinguishes the active activity from an earlier rewind target.
+Completed Testing with an expected failure is valid red evidence for
+Implementation to correct, rather than a reason to restart Testing.
+
 An unexpected check result returns its operation ID, original expectation, exact
 exit status and immutable log to the same accountable activity. The original
 milestone and engineering criteria stay unchanged. The host reruns the unresolved
