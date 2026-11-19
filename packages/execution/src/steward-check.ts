@@ -27,26 +27,43 @@ function recoverObservedCheck(
   recorded: readonly CheckEvent[],
   scope: StewardScope,
 ): ObservedRecovery {
-  const event = recorded.findLast(
-    ({ check, scope: observed }) =>
-      observed?.owner === scope.owner &&
-      observed.activity === scope.activity &&
-      observed.expected &&
-      check?.id &&
-      typeof check.status === 'number',
-  );
-  if (!event?.check || !event.scope?.expected) return { qualifying: false };
-  if ((event.check.status === 0) === (event.scope.expected === 'pass')) return { qualifying: true };
-  return {
-    qualifying: true,
-    pending: {
-      activity: scope.activity,
-      id: event.check.id,
-      expected: event.scope.expected,
-      status: event.check.status as number,
-      log: event.check.log,
-    },
-  };
+  const candidates = recorded
+    .map((event, index) => ({ event, index }))
+    .filter(
+      ({ event }) =>
+        event.scope?.owner === scope.owner &&
+        event.scope.activity === scope.activity &&
+        event.scope.expected &&
+        event.check?.id &&
+        typeof event.check.status === 'number',
+    );
+  for (const { event, index } of candidates.reverse()) {
+    const check = event.check;
+    const expected = event.scope?.expected;
+    if (!check || !expected) continue;
+    if ((check.status === 0) === (expected === 'pass')) continue;
+    const resolved = recorded.slice(index + 1).some(
+      ({ check: later, scope: laterScope }) =>
+        laterScope?.owner === scope.owner &&
+        laterScope.activity === scope.activity &&
+        laterScope.expected === expected &&
+        later?.id === check.id &&
+        typeof later.status === 'number' &&
+        (later.status === 0) === (expected === 'pass'),
+    );
+    if (resolved) continue;
+    return {
+      qualifying: true,
+      pending: {
+        activity: scope.activity,
+        id: check.id,
+        expected,
+        status: check.status,
+        log: check.log,
+      },
+    };
+  }
+  return { qualifying: candidates.length > 0 };
 }
 
 /** Recovers supplier feedback unless a later matching check satisfies its expectation. */
