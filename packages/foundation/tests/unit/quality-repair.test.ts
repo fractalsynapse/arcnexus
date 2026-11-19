@@ -89,6 +89,22 @@ for (const path of ['packages/beta/probe.ts', 'dist/generated.ts']) {
   });
 }
 
+test('selection identity ignores unrelated component metadata', async () => {
+  const tree = fixture();
+  try {
+    const before = await selection(tree, 'format:check');
+    tree.write(
+      '.arc/architecture/components/beta.yaml',
+      'id: beta\nowns:\n- packages/beta\npurpose: unrelated metadata\n',
+    );
+    const after = await selection(tree, 'format:check');
+    assert.deepEqual(after.files, before.files);
+    assert.equal(after.identity, before.identity);
+  } finally {
+    tree.close();
+  }
+});
+
 test('lint discovers an extension enabled by ESLint configuration', async () => {
   const tree = new QualityFixture();
   try {
