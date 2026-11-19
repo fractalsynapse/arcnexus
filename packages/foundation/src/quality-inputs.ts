@@ -11,30 +11,33 @@ export function configurationInputs(operation: 'format:check' | 'lint', root: st
     if (visited.has(path)) continue;
     visited.add(path);
     const source = readConfigurationFile(path, root);
-    const parsed = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const parsed = ts.createSourceFile(
+      path,
+      source,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TS,
+    );
     for (const statement of parsed.statements) {
-      if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier))
-        continue;
-      const specifier = statement.moduleSpecifier.text;
-      if (!specifier.startsWith('.')) continue;
-      const resolved = normalize(join(dirname(path), specifier));
-      const base = resolved.replace(/\.(?:[cm]?[jt]sx?)$/, '');
-      const candidates = [
-        resolved,
-        `${base}.ts`,
-        `${base}.tsx`,
-        `${base}.mts`,
-        `${base}.cts`,
-        `${base}.js`,
-        `${base}.jsx`,
-        `${base}.mjs`,
-        `${base}.cjs`,
-      ];
-      const dependency = candidates.find((candidate) => readConfigurationFile(candidate, root) !== '');
-      pending.push(dependency ?? resolved);
+      if (ts.isImportDeclaration(statement) && ts.isStringLiteral(statement.moduleSpecifier))
+        pending.push(resolveConfigurationImport(path, statement.moduleSpecifier.text, root));
     }
   }
   return [...visited].sort();
+}
+
+/** Resolve a static local import across supported TypeScript and JavaScript extensions. */
+function resolveConfigurationImport(path: string, specifier: string, root: string): string {
+  if (!specifier.startsWith('.')) return path;
+  const resolved = normalize(join(dirname(path), specifier));
+  const base = resolved.replace(/\.(?:[cm]?[jt]sx?)$/, '');
+  const candidates = [
+    resolved,
+    ...['ts', 'tsx', 'mts', 'cts', 'js', 'jsx', 'mjs', 'cjs'].map(
+      (extension) => `${base}.${extension}`,
+    ),
+  ];
+  return candidates.find((candidate) => readConfigurationFile(candidate, root) !== '') ?? resolved;
 }
 
 /** Read a configuration edge when present so absent imports remain visible to eligibility. */
