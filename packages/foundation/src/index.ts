@@ -18,10 +18,13 @@ export interface QualitySelection {
 }
 
 /** Discover applicable operation inputs and bind them to ownership and tool configuration. */
+const ignoreFileContents = new Map<string, string>();
+
 export async function selectQualityInputs(
   operation: QualitySelection['operation'],
   owner?: string,
 ): Promise<QualitySelection> {
+  ignoreFileContents.clear();
   const componentFiles = globSync('.arc/architecture/components/*.yaml');
   const components: Component[] = componentFiles.map((path) => parse(readFileSync(path, 'utf8')));
   assert(
