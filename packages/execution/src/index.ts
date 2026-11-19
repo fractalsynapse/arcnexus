@@ -16,8 +16,7 @@ import { recoverPrepared } from './prepared-recovery.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
 import { git } from './git.js';
 import { applicationStorage, type HostConfig } from './host-config.js';
-import { check } from './check.js';
-import { checkInput, reusableCheck } from './check-cache.js';
+import { runCheck } from './run-check.js';
 import { pendingStewardCheck, type StewardScope } from './steward-check.js';
 import {
   cleanCandidate,
@@ -385,26 +384,7 @@ export class HostTask implements TaskSession {
 
   /** Run a declared check and record its real exit, duration and transcript. */
   async check(id: string, signal: AbortSignal, scope?: StewardScope) {
-    signal.throwIfAborted();
-    if (!this.worktree) throw new Error('No task worktree is available for checks');
-    const input = checkInput(this, id, scope);
-    const reused = reusableCheck(this.observations(), input);
-    if (reused) {
-      this.note({ check: reused, scope, checkInput: input, reusedFrom: reused.log });
-      return reused;
-    }
-    const log = this.artifact(`${id}.log`);
-    const result = await check(
-      this.capture,
-      this.worktree,
-      this.config.common,
-      id,
-      scope?.owner,
-      log,
-      signal,
-    );
-    this.journal.record({ check: result, scope, checkInput: input });
-    return result;
+    return runCheck(this, id, signal, scope);
   }
 
   /** Store an immutable artifact outside maintained source. */

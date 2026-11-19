@@ -297,7 +297,7 @@ async function perform(
       throw new Error(
         `Operation ${id} reported ${check.status}; expected ${expected}; evidence: ${check.log}`,
       );
-    if ((check.status === 0) !== (expected === 'pass'))
+    if (check.prerequisite || (check.status === 0) !== (expected === 'pass'))
       return { id, expected, status: check.status, log: check.log, activity: scope.activity };
   }
 }

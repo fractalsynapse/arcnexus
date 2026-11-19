@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Verify candidates with their locked dependency tree in the existing networkless confinement; retain prerequisite failures without counting them as expected failing tests (#649).
+
 - Refresh steward check diagnostics after research and clarification handoffs while preserving complete answers and the original check expectation.
 
 - Give Architect a compact prior-finding index linked to complete retained observations; keep expected human approval pauses out of technical failure findings.
