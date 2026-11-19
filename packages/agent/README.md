@@ -23,3 +23,8 @@ its original mapping and approval scope. Reviewer retains the assembled candidat
 checks and acceptance; citation repair cannot alter its engineering decision.
 An unchanged repeat becomes a durable hold, rather than an execution abort.
 Valid independent rejection still returns to Direction for pending-work revision.
+
+Research also receives exact report-validation diagnostics, including the existing
+field bounds, before resuming its requester. Distinct findings remain repairable;
+unchanged failure or a genuine external error is retained as optional research
+unavailability. Prior failed reports remain in the original evidence.
