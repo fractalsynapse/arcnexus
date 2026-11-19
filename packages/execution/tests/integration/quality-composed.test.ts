@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, globSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import test from 'node:test';
+import test, { type TestContext } from 'node:test';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { parse } from 'yaml';
@@ -63,6 +63,22 @@ async function connect(activation: ActivationTools) {
   return { client, host };
 }
 
+/** Run real tools in the outer sandbox without claiming native confinement. */
+function installDiagnosticBoundary(t: TestContext, task: StewardFixture['task'], owner: string, workspace: string) {
+  // This controlled boundary runs real tools under the outer test sandbox; it does not
+  // exercise HostTask's inner confinement or its production evidence cache.
+  t.mock.method(task, 'check', async (id: string, _signal: AbortSignal, scope?: Parameters<typeof task.check>[2]) => {
+    const args = id === 'owner-lint' ? ['run', 'lint', '--', owner] : ['run', 'check'];
+    const start = Date.now();
+    const result = spawnSync('npm', args, { cwd: workspace, encoding: 'utf8' });
+    const log = task.store(`${id}.log`, (result.stdout ?? '') + (result.stderr ?? ''));
+    const check = { id, status: result.status ?? -1, log, command: 'npm', args,
+      cwd: workspace, durationMs: Date.now() - start };
+    task.note({ check, scope, diagnosticComposition: { signal: result.signal } });
+    return check;
+  });
+}
+
 test('real lint and type diagnostics reach one MCP caller and survive checked repair', async (t) => {
   const source = process.cwd();
   const { owner, file, components } = await discover(source);
@@ -82,47 +98,41 @@ test('real lint and type diagnostics reach one MCP caller and survive checked re
   const broken = original + `\nfunction qualityFailure(): number {\n  let value: number = "wrong";\n${lines}\n  return value;\n}\nqualityFailure();\n`;
   writeFileSync(join(workspace, file), broken);
 
-  // This controlled boundary runs real tools under the outer test sandbox; it does not
-  // exercise HostTask's inner confinement or its production evidence cache.
-  t.mock.method(task, 'check', async (id: string, _signal: AbortSignal, scope?: Parameters<typeof task.check>[2]) => {
-    const args = id === 'owner-lint' ? ['run', 'lint', '--', owner] : ['run', 'check'];
-    const start = Date.now();
-    const result = spawnSync('npm', args, { cwd: workspace, encoding: 'utf8' });
-    const log = task.store(`${id}.log`, (result.stdout ?? '') + (result.stderr ?? ''));
-    const check = { id, status: result.status ?? -1, log, command: 'npm', args,
-      cwd: workspace, durationMs: Date.now() - start };
-    task.note({ check, scope, diagnosticComposition: { signal: result.signal } });
-    return check;
-  });
+  installDiagnosticBoundary(t, task, owner, workspace);
   const activation = new ActivationTools(task, { component: owner, activity: 'implementation' }, {
     goal: 'quality', assignment: {}, milestone: { id: 'quality' }, acceptance: [], worktree: workspace,
   }, AbortSignal.timeout(120_000));
   const { client, host } = await connect(activation);
   try {
-    const lint = await call(client, 'owner-lint', { expected: 'pass' });
-    const types = await call(client, 'repository-types', { expected: 'pass' });
-    assert.notEqual(lint.status, 0);
-    assert.notEqual(types.status, 0);
-    const lintLog = readFileSync(lint.log, 'utf8');
-    const typeLog = readFileSync(types.log, 'utf8');
-    assert.match(lintLog, /max-lines-per-function|too many lines/i);
-    assert.match(typeLog, /TS2322/);
-    assert(lintLog.includes(file));
-    assert(typeLog.includes(file));
-    const receipt = await call(client, 'checked-edit', {
-      path: file, expected: createHash('sha256').update(broken).digest('hex'), content: original,
-    });
-    assert.equal(receipt.path, file);
-    const fixedLint = await call(client, 'owner-lint', { expected: 'pass' });
-    const fixedTypes = await call(client, 'repository-types', { expected: 'pass' });
-    assert.equal(fixedLint.status, 0, readFileSync(fixedLint.log, 'utf8'));
-    assert.equal(fixedTypes.status, 0, readFileSync(fixedTypes.log, 'utf8'));
-    assert.notEqual(lint.log, fixedLint.log);
-    assert.notEqual(types.log, fixedTypes.log);
-    assert.equal(readFileSync(lint.log, 'utf8'), lintLog);
-    assert.equal(readFileSync(types.log, 'utf8'), typeLog);
+    await assertRepair(client, file, original, broken);
   } finally {
     await client.close();
     await host.close();
   }
 });
+
+/** Check diagnostics, repair through the same caller, and retain earlier logs. */
+async function assertRepair(client: Client, file: string, original: string, broken: string) {
+  const lint = await call(client, 'owner-lint', { expected: 'pass' });
+  const types = await call(client, 'repository-types', { expected: 'pass' });
+  assert.notEqual(lint.status, 0);
+  assert.notEqual(types.status, 0);
+  const lintLog = readFileSync(lint.log, 'utf8');
+  const typeLog = readFileSync(types.log, 'utf8');
+  assert.match(lintLog, /max-lines-per-function|too many lines/i);
+  assert.match(typeLog, /TS2322/);
+  assert(lintLog.includes(file));
+  assert(typeLog.includes(file));
+  const receipt = await call(client, 'checked-edit', {
+    path: file, expected: createHash('sha256').update(broken).digest('hex'), content: original,
+  });
+  assert.equal(receipt.path, file);
+  const fixedLint = await call(client, 'owner-lint', { expected: 'pass' });
+  const fixedTypes = await call(client, 'repository-types', { expected: 'pass' });
+  assert.equal(fixedLint.status, 0, readFileSync(fixedLint.log, 'utf8'));
+  assert.equal(fixedTypes.status, 0, readFileSync(fixedTypes.log, 'utf8'));
+  assert.notEqual(lint.log, fixedLint.log);
+  assert.notEqual(types.log, fixedTypes.log);
+  assert.equal(readFileSync(lint.log, 'utf8'), lintLog);
+  assert.equal(readFileSync(types.log, 'utf8'), typeLog);
+}
