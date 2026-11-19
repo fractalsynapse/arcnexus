@@ -190,7 +190,13 @@ test('Testing corrects a passing expected-fail owner test with a fresh pass', as
   const activation = new ActivationTools(
     task,
     { component: 'fixture', activity: 'testing' },
-    { goal: 'Verify tests', assignment: {}, milestone: { id: 'current' }, acceptance: [], worktree: '.' },
+    {
+      goal: 'Verify tests',
+      assignment: {},
+      milestone: { id: 'current' },
+      acceptance: [],
+      worktree: '.',
+    },
     new AbortController().signal,
   );
   await activation.invoke(checkBinding, { expected: 'fail' });
@@ -201,7 +207,13 @@ test('Testing corrects a passing expected-fail owner test with a fresh pass', as
 });
 
 for (const activity of ['testing', 'implementation']) {
-  for (const id of ['owner-format', 'owner-lint', 'repository-types', 'repository-build', 'owner-tests']) {
+  for (const id of [
+    'owner-format',
+    'owner-lint',
+    'repository-types',
+    'repository-build',
+    'owner-tests',
+  ]) {
     if (activity === 'testing' && id === 'owner-tests') continue;
     test(`${activity} refuses expected-fail ${id} before executing the check`, async () => {
       const activation = testingActivation(false, activity);
