@@ -53,8 +53,14 @@ for (const [form, source, reason] of [
 test('lint rejects unsupported dependencies in a statically imported helper', async () => {
   const tree = fixture();
   try {
-    tree.write('eslint.config.ts', "import rules from './rules.js'; export default [rules];\n");
-    tree.write('rules.js', "const load = () => require('./untracked.cjs'); export default {};\n");
+    tree.write(
+      'eslint.config.ts',
+      "import rules from './packages/foundation/rules.js'; export default [rules];\n",
+    );
+    tree.write(
+      'packages/foundation/rules.js',
+      "const load = () => require('./untracked.cjs'); export default {};\n",
+    );
     const result = await selectQualityInputs('lint', 'alpha', tree.root);
     assert.equal(eligibility(result)?.eligible, false);
     assert.match(eligibility(result)?.reason ?? '', /rules\\.js.*require/i);
