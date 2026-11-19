@@ -105,6 +105,7 @@ async function ownerOperationInapplicability(
     command: operation.command,
     args: operation.args ?? [],
     applicability,
+    source: capture.source,
   }))
     throw new Error(`Unavailable owner quality operation: ${id}`);
 }
