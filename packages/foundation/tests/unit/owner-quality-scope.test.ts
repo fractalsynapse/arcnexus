@@ -116,7 +116,9 @@ for (const operation of ['format:check', 'lint'] as const) {
     try {
       const path = join(tree.root, 'packages/beta/probe.ts');
       const before = readFileSync(path);
-      tree.run(operation, 'beta');
+      const result = tree.run(operation, 'beta');
+      assert.notEqual(result.status, 0, result.output);
+      assert.match(result.output, /packages\/beta\/probe\.ts/);
       assert.deepEqual(readFileSync(path), before);
     } finally {
       tree.close();
