@@ -75,6 +75,33 @@ test('an imported lint configuration change invalidates owner lint evidence', as
   assert.equal(reusableCheck(fixture.task.observations(), fixture.input()), undefined);
 });
 
+test('ownership drift is refused before reusing matching check evidence', async (t) => {
+  const fixture = new CheckCacheFixture(t);
+  fixture.restart({
+    ...fixtureOperation, command: 'npm',
+    args: ['run', 'lint', '--', { context: 'owner' }],
+    applicability: 'owner-lint-files',
+  } as typeof fixtureOperation);
+  fixture.observe();
+  await assert.rejects(
+    fixture.task.check('fixture-check', new AbortController().signal, fixture.scope),
+    /ownership drift/i,
+  );
+});
+
+test('generated ignored output does not invalidate scoped lint evidence', async (t) => {
+  const fixture = new CheckCacheFixture(t);
+  fixture.restart({
+    ...fixtureOperation, command: 'npm',
+    args: ['run', 'lint', '--', { context: 'owner' }],
+    applicability: 'owner-lint-files',
+  } as typeof fixtureOperation);
+  const observed = fixture.observe();
+  mkdirSync(join(fixture.task.worktree!, 'node_modules'));
+  writeFileSync(join(fixture.task.worktree!, 'node_modules', 'generated.js'), 'generated');
+  assert.deepEqual(reusableCheck(fixture.task.observations(), fixture.input()), observed);
+});
+
 test('changed operation authority invalidates a retained successful observation', (t) => {
   const fixture = new CheckCacheFixture(t);
   const before = fixture.input();
