@@ -4,6 +4,25 @@ import { selectQualityInputs } from '../../src/index.js';
 import { fixture, QualityFixture, selection } from './quality-fixture.js';
 
 for (const operation of ['format:check', 'lint'] as const) {
+  test(`${operation} keeps concurrent candidate ignore identities isolated`, async () => {
+    const first = fixture();
+    const second = fixture();
+    try {
+      first.write('.gitignore', '# first candidate\n');
+      second.write('.gitignore', '# second candidate\n');
+      const select = (tree: QualityFixture) => selectQualityInputs(operation, 'alpha', tree.root);
+      const expectedFirst = await select(first);
+      const expectedSecond = await select(second);
+      assert.notEqual(expectedFirst.identity, expectedSecond.identity);
+      const [actualFirst, actualSecond] = await Promise.all([select(first), select(second)]);
+      assert.deepEqual(actualFirst, expectedFirst);
+      assert.deepEqual(actualSecond, expectedSecond);
+    } finally {
+      first.close();
+      second.close();
+    }
+  });
+
   test(`${operation} selects and identifies inputs from the explicit candidate root`, async () => {
     const tree = fixture();
     try {
