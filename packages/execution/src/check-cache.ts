@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { release } from 'node:os';
-import { checkCommand, checkEnvironment, type CheckResult } from './check.js';
+import { assertCapturedOwnership, checkCommand, checkEnvironment, type CheckResult } from './check.js';
 import { team } from '../../team/src/index.js';
 import { git } from './git.js';
 import type { HostTask } from './index.js';
