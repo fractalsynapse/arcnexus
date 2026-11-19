@@ -205,7 +205,11 @@ function isIgnored(path: string): boolean {
 }
 
 /** Match ordered gitignore rules against paths relative to one ignore file. */
-function matchesIgnoreRules(path: string, rules: readonly string[]): boolean | undefined {
+function matchesIgnoreRules(
+  path: string,
+  rules: readonly string[],
+  isDirectory = false,
+): boolean | undefined {
   let ignored: boolean | undefined;
   for (const raw of rules) {
     const rule = raw.trim();
