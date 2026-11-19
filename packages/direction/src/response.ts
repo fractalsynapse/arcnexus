@@ -138,7 +138,8 @@ export function decodeRevisionResponse(
     reconstructed.push({ ...original, steps: [...original.steps.slice(0, offset), ...candidate.steps] });
   }
   for (const original of accepted.milestones.slice(completed)) {
-    if (!proposedIDs.has(original.id)) reconstructed.push(original);
+    if (!proposedIDs.has(original.id))
+      throw new DirectorResponseError(`plan.milestones: missing pending accepted milestone ${original.id}`);
   }
   const plan: Plan = { focus: accepted.focus, milestones: reconstructed };
   try {
