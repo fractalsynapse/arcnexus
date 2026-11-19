@@ -25,7 +25,8 @@ const plan: Plan = {
   }],
 };
 
-test('assembled review cannot accept an omitted owner operation beside expected-red evidence', async (t) => {
+for (const scenario of ['missing', 'unavailable', 'stale', 'other-owner', 'other-activity', 'valid'] as const) {
+test(`assembled review handles ${scenario} owner-operation evidence`, async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-verification-quality-'));
   const capture = {
     source: { root, revision: 'base', remote: 'https://example.com/quality.git' },
@@ -54,6 +55,16 @@ test('assembled review cannot accept an omitted owner operation beside expected-
     check: { id: 'owner-tests', status: 1, command: 'test', args: [], cwd: root,
       durationMs: 1, log: redLog },
   });
+  if (scenario !== 'missing') {
+    const log = task.store('format.log', 'Format observation');
+    task.note({
+      scope: { owner: scenario === 'other-owner' ? 'other' : 'verification',
+        activity: scenario === 'other-activity' ? 'implementation' : 'testing', expected: 'pass' },
+      check: { id: 'owner-format', status: scenario === 'unavailable' ? null : 0,
+        command: 'format', args: [], cwd: root, durationMs: 1, log },
+    });
+    if (scenario === 'stale') task.note({ edits: [{ path: 'source.ts' }] });
+  }
   const calls: string[] = [];
   t.mock.method(task, 'check', async (id: string) => {
     calls.push(id);
@@ -62,12 +73,14 @@ test('assembled review cannot accept an omitted owner operation beside expected-
   });
   t.mock.method(task, 'activate', async (_agent: Agent, _selection: unknown, data: TaskContext) => {
     const ownerChecks = (data.assignment as { ownerChecks: unknown[] }).ownerChecks;
-    assert.equal(ownerChecks.length, 1);
+    assert.equal(ownerChecks.length, scenario === 'missing' ? 1 : 2);
     assert.equal((ownerChecks[0] as { check: { id: string } }).check.id, 'owner-tests');
     return { kind: 'accepted', candidate: 'tree', criteria: ['V-1'], evidence: [redLog] };
   });
   const verdict = await verify({} as Agent, task, plan,
     { digest: 'tree', evidence: [redLog] }, AbortSignal.timeout(5000));
-  assert.notEqual(verdict.kind, 'accepted', 'owner-format has no observation');
+  if (scenario === 'valid') assert.equal(verdict.kind, 'accepted');
+  else assert.notEqual(verdict.kind, 'accepted', `owner-format evidence is ${scenario}`);
   assert.deepEqual(calls, assembled);
 });
+}
