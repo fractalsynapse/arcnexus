@@ -131,11 +131,13 @@ test('nonempty selection executes the captured command from its nested cwd', asy
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const worktree = join(root, 'worktree');
   prepareNestedWorktree(host, worktree);
+  const common = join(root, 'common');
+  mkdirSync(common);
   const log = join(root, 'selection.log');
   const result = await check(
     nestedCapture(host),
     worktree,
-    root,
+    common,
     'quality',
     'execution',
     log,
