@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { cpSync, globSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import test from 'node:test';
+import test, { type TestContext } from 'node:test';
 import { parse } from 'yaml';
 import type { Capture } from '../../../architecture/src/index.js';
 import { selectQualityInputs } from '../../../foundation/src/index.js';
