@@ -103,7 +103,8 @@ function qualityIdentity(
     'package.json',
     'package-lock.json',
   ]) {
-    identity.update(path).update(JSON.stringify(readOptionalFile(path)));
+    identity.update(path).update(existsSync(path) ? '\u0000present\u0000' : '\u0000missing\u0000');
+    if (existsSync(path)) identity.update(readFileSync(path));
   }
   return identity.digest('hex');
 }
