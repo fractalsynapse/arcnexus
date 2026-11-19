@@ -126,6 +126,24 @@ function ownerCheckCapture(workspace: string, required = false) {
   };
 }
 
+test('an unknown owner cannot be reported as having no test suites', async (t) => {
+  const { root, workspace } = fixture(t);
+  const common = join(root, 'common');
+  mkdirSync(common);
+  await assert.rejects(
+    check(
+      ownerCheckCapture(workspace),
+      workspace,
+      common,
+      'owner-tests',
+      'unknown',
+      join(root, 'unknown.log'),
+      AbortSignal.timeout(5_000),
+    ),
+    /unknown/i,
+  );
+});
+
 test('an optional owner check without a suite records inapplicability before execution', async (t) => {
   const { root, workspace } = fixture(t);
   const common = join(root, 'common');
