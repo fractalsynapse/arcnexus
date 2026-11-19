@@ -208,9 +208,9 @@ function matchesIgnoreRules(path: string, rules: readonly string[]): boolean {
 }
 
 /** Convert gitignore wildcards into path-aware matching. */
-function ignoreMatcher(pattern: string): RegExp {
-  const escaped = pattern.replace(/[|\\{}()[\]^$+?.]/g, '\\$&');
-  const slashless = !pattern.includes('/');
+function ignoreMatcher(pattern: string, anchored: boolean): RegExp {
+  const escaped = pattern.replace(/[|\\{}()[\]^$+.]/g, '\\$&');
+  const slashless = !anchored && !pattern.includes('/');
   const expression = escaped
     .replace(/\*\*\//g, '§/')
     .replace(/\*\*/g, '§')
