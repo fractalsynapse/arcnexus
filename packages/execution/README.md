@@ -176,3 +176,8 @@ requires another real check. New failures, missing evidence and dependency setup
 failures do not qualify. Implementation and assembled passing checks remain
 mandatory; this is classification of existing red, not acceptance of broken code
 (#652).
+
+Execution validates model-requested repair targets with Workflow's same target
+validator before accepting the response. An unavailable or forward target returns
+the diagnostic and available rewind choices to the caller. It does not checkpoint
+the malformed response, skip unfinished Steps, or invoke Direction (#653).

@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Return unavailable activity repair targets to the caller before Workflow progression, using the shared target validator (#653).
+
 - Preserve established Testing red after a mistaken passing prediction, requiring matching actual diagnostics and unchanged milestone authority (#652).
 
 - Preserve completed activity and initial red evidence across local rewinds; repair mistaken expected-fail predictions after actual passes, preserving required-pass failures and a required current check (#651).
