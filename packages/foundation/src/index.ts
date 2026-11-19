@@ -36,6 +36,38 @@ export async function selectQualityInputs(
   return { operation, owner, files, identity };
 }
 
+interface QualityOperationBinding {
+  tool: string;
+  applicability: string;
+  command: string;
+  args: (string | { context: string })[];
+}
+
+/** Report whether a declared owner quality binding has its existing runtime command. */
+export function qualityOperationAvailable(binding: QualityOperationBinding): boolean {
+  const expected = [
+    {
+      tool: 'check',
+      applicability: 'owner-format-files',
+      command: 'npm',
+      args: ['run', 'format:check', { context: 'owner' }],
+    },
+    {
+      tool: 'check',
+      applicability: 'owner-lint-files',
+      command: 'npm',
+      args: ['run', 'lint', { context: 'owner' }],
+    },
+  ];
+  return expected.some(
+    (candidate) =>
+      binding.tool === candidate.tool &&
+      binding.applicability === candidate.applicability &&
+      binding.command === candidate.command &&
+      JSON.stringify(binding.args) === JSON.stringify(candidate.args),
+  );
+}
+
 /** Resolve applicable maintained paths through tool configuration and Team ownership. */
 async function selectOwnedQualityFiles(
   operation: QualitySelection['operation'],
