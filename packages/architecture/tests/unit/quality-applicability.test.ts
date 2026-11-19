@@ -92,7 +92,7 @@ test('public request rejects an unavailable handler', () => {
 });
 
 test('public request rejects an unresolved operation', () => {
-  const capture = fixture(check);
+  const capture = fixture(check('format:check'));
   const operations = { ...capture.operations };
   delete operations.quality;
   assert.throws(() => new Architecture().request({ ...capture, operations }, selection));
