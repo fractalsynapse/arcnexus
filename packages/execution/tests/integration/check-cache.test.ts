@@ -56,11 +56,7 @@ test('an imported lint configuration change invalidates owner lint evidence', as
     args: ['run', 'lint', '--', { context: 'owner' }],
     applicability: 'owner-lint-files',
   } as typeof fixtureOperation);
-  Object.assign(fixture.task.capture.components, {
-    config: { id: 'config', owns: ['lint-rules.ts'], activities: {} },
-  });
   const worktree = fixture.task.worktree!;
-  writeFileSync(join(worktree, '.arc/architecture/components/config.yaml'), 'id: config\nowns:\n  - lint-rules.ts\n');
   writeFileSync(join(worktree, 'eslint.config.ts'), "import './lint-rules.ts';\n");
   writeFileSync(join(worktree, 'lint-rules.ts'), 'export default {};\n');
   git(worktree, 'add', 'eslint.config.ts', 'lint-rules.ts');
