@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, globSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  globSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
@@ -89,8 +98,13 @@ function emptyWorktreeCapture(host: string, declaration: string): Capture {
   return {
     source: {
       root: host,
-      paths: ['.arc/architecture/components/execution.yaml', 'package.json', 'packages/foundation/scripts/owner-quality.ts'],
-      read: (path: string) => path.endsWith('execution.yaml') ? declaration : readFileSync(join(host, path), 'utf8'),
+      paths: [
+        '.arc/architecture/components/execution.yaml',
+        'package.json',
+        'packages/foundation/scripts/owner-quality.ts',
+      ],
+      read: (path: string) =>
+        path.endsWith('execution.yaml') ? declaration : readFileSync(join(host, path), 'utf8'),
     },
     project: { checks: { acceptance: [] } },
     components: { execution: { id: 'execution', owns: ['packages/execution'] } },
@@ -139,11 +153,16 @@ function prepareNestedWorktree(host: string, worktree: string) {
   mkdirSync(join(worktree, 'nested'));
   mkdirSync(join(worktree, 'packages/execution'), { recursive: true });
   writeFileSync(join(worktree, 'packages/execution/input.ts'), 'export const value = 1;\n');
-  cpSync(join(host, 'packages/foundation'), join(worktree, 'packages/foundation'), { recursive: true });
+  cpSync(join(host, 'packages/foundation'), join(worktree, 'packages/foundation'), {
+    recursive: true,
+  });
   cpSync(join(host, 'packages/team'), join(worktree, 'packages/team'), { recursive: true });
   cpSync(join(host, 'package.json'), join(worktree, 'package.json'));
   mkdirSync(join(worktree, 'node_modules'));
-  writeFileSync(join(components, 'execution.yaml'), 'id: execution\nowns:\n  - packages/execution\n');
+  writeFileSync(
+    join(components, 'execution.yaml'),
+    'id: execution\nowns:\n  - packages/execution\n',
+  );
   writeFileSync(join(components, 'foundation.yaml'), foundationDeclaration);
 }
 
@@ -156,11 +175,27 @@ function nestedCapture(host: string) {
   return {
     source: {
       root: host,
-      paths: ['.arc/architecture/components/execution.yaml', '.arc/architecture/components/foundation.yaml', 'package.json', 'packages/foundation/scripts/owner-quality.ts'],
-      read: (path: string) => path.endsWith('execution.yaml') ? declaration : path.endsWith('foundation.yaml') ? foundationDeclaration : readFileSync(join(host, path), 'utf8'),
+      paths: [
+        '.arc/architecture/components/execution.yaml',
+        '.arc/architecture/components/foundation.yaml',
+        'package.json',
+        'packages/foundation/scripts/owner-quality.ts',
+      ],
+      read: (path: string) =>
+        path.endsWith('execution.yaml')
+          ? declaration
+          : path.endsWith('foundation.yaml')
+            ? foundationDeclaration
+            : readFileSync(join(host, path), 'utf8'),
     },
     project: { checks: { acceptance: [] } },
-    components: { execution: { id: 'execution', owns: ['packages/execution'] }, foundation: { id: 'foundation', owns: ['package.json', 'packages/foundation', 'packages/team'] } },
+    components: {
+      execution: { id: 'execution', owns: ['packages/execution'] },
+      foundation: {
+        id: 'foundation',
+        owns: ['package.json', 'packages/foundation', 'packages/team'],
+      },
+    },
     operations: {
       quality: {
         id: 'quality',
@@ -193,7 +228,10 @@ function assertComposedCommand(
   const composed = spawnSync('npm', result.args, { cwd: result.cwd, encoding: 'utf8' });
   const output = (composed.stdout ?? '') + (composed.stderr ?? '');
   assert.equal(composed.status, 0, output);
-  assert.match(output, new RegExp(`format:check scope=execution sha256=${result.selection!.identity}`));
+  assert.match(
+    output,
+    new RegExp(`format:check scope=execution sha256=${result.selection!.identity}`),
+  );
   assert.match(output, /format:check scope=execution inputs=1 /);
   const confinedLog = readFileSync(log, 'utf8');
   if (result.status !== 0 && unavailableConfinement(confinedLog)) {
@@ -205,7 +243,9 @@ function assertComposedCommand(
 
 /** Identify only nested Bubblewrap setup failures that prevent native confinement. */
 function unavailableConfinement(log: string) {
-  return /bwrap:.*(operation not permitted|creating new namespace|no permissions to create a new namespace|permission denied)/i.test(log);
+  return /bwrap:.*(operation not permitted|creating new namespace|no permissions to create a new namespace|permission denied)/i.test(
+    log,
+  );
 }
 
 /** Require the confined receipt when the runtime supports nested confinement. */
@@ -213,7 +253,10 @@ function assertConfinedCommand(result: Awaited<ReturnType<typeof check>>, log: s
   const confinedLog = readFileSync(log, 'utf8');
   if (result.status !== 0 && unavailableConfinement(confinedLog)) return;
   assert.equal(result.status, 0, confinedLog);
-  assert.match(confinedLog, new RegExp(`format:check scope=execution sha256=${result.selection!.identity}`));
+  assert.match(
+    confinedLog,
+    new RegExp(`format:check scope=execution sha256=${result.selection!.identity}`),
+  );
   assert.match(confinedLog, /format:check scope=execution inputs=1 /);
 }
 
@@ -256,11 +299,20 @@ function deletedOwnershipCapture(root: string): Capture {
 }
 
 /** Capture the same operation used for the Foundation applicability comparison. */
-function parityCapture(root: string, components: Awaited<ReturnType<typeof emptySelectionOwner>>['components'], operation: string, applicability: string): Capture {
+function parityCapture(
+  root: string,
+  components: Awaited<ReturnType<typeof emptySelectionOwner>>['components'],
+  operation: string,
+  applicability: string,
+): Capture {
   return {
     source: {
       root,
-      paths: [...globSync('.arc/architecture/components/*.yaml'), 'package.json', 'packages/foundation/scripts/owner-quality.ts'].sort(),
+      paths: [
+        ...globSync('.arc/architecture/components/*.yaml'),
+        'package.json',
+        'packages/foundation/scripts/owner-quality.ts',
+      ].sort(),
       read: (path: string) => readFileSync(join(root, path), 'utf8'),
     },
     project: { checks: { acceptance: [] } },
