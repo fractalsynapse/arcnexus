@@ -59,7 +59,7 @@ for (const applicability of ['owner-format-files', 'owner-lint-files']) {
 
 test('public request rejects an invalid applicability declaration', () => {
   assert.throws(() =>
-    new Architecture().request(fixture({ ...check, applicability: 'owner-unknown-files' }), selection),
+    new Architecture().request(fixture({ ...check('format:check'), applicability: 'owner-unknown-files' }), selection),
   );
 });
 
