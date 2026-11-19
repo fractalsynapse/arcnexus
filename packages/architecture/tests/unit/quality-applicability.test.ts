@@ -99,15 +99,16 @@ for (const [applicability, operation] of [
   for (const missing of ['manifest', 'script', 'runner'] as const) {
     test(`activation rejects a missing captured ${missing} for ${applicability}`, () => {
       const capture = fixture({ ...check(operation), applicability }, missing);
-    let invoked = false;
-    const agent = new Agent(new Architecture());
-    assert.throws(() => agent.activate(
-      { capture, selection, task: { goal: 'test', assignment: {}, milestone: {}, acceptance: [], evidence: [], worktree: '.' } },
-      async () => { invoked = true; },
-      new AbortController().signal,
-    ), /Unavailable quality implementation/);
-    assert.equal(invoked, false);
-  });
+      let invoked = false;
+      const agent = new Agent(new Architecture());
+      assert.throws(() => agent.activate(
+        { capture, selection, task: { goal: 'test', assignment: {}, milestone: {}, acceptance: [], evidence: [], worktree: '.' } },
+        async () => { invoked = true; },
+        new AbortController().signal,
+      ), /Unavailable quality implementation/);
+      assert.equal(invoked, false);
+    });
+  }
 }
 
 test('public request rejects an unavailable handler', () => {
