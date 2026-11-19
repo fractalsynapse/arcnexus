@@ -48,12 +48,13 @@ function ownerQualityInputs(task: HostTask, id: string, owner?: string) {
     const entries = git(task.worktree, 'ls-tree', '-r', '--format=%(objectname) %(path)', 'HEAD')
       .split('\n')
       .map((entry) => entry.split(' ', 2) as [string, string]);
-    const config = /^(?:\.arc\/architecture\/components\/.*\.yaml|package(?:-lock)?\.json|eslint\.config\.ts|\.eslintignore|\.prettierignore|\.gitignore|packages\/foundation\/(?:src\/index\.ts|scripts\/owner-quality\.ts))$/;
+    const config = /^(?:\.arc\/architecture\/components\/.*\.yaml|package(?:-lock)?\.json|(?:[^/]+\/)*eslint\.config\.(?:ts|js|mjs|cjs)|(?:[^/]+\/)*(?:\.eslintignore|\.prettierignore|\.gitignore|\.editorconfig|\.prettierrc(?:\..+)?|prettier\.config\.(?:ts|js|mjs|cjs))|packages\/foundation\/(?:src\/index\.ts|scripts\/owner-quality\.ts))$/;
+    const imported = importedLintConfiguration(task.worktree, entries.map(([, path]) => path));
     const source = applicability === 'owner-lint-files'
       ? /\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx)$/
       : /\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json|ya?ml)$/;
     const selected = entries.filter(([, path]) => {
-      if (config.test(path)) return true;
+      if (config.test(path) || imported.has(path)) return true;
       if (!source.test(path)) return false;
       const resolution = team.ownerFor(Object.values(task.capture.components), path);
       if (resolution.kind !== 'owned') throw new Error(`Invalid captured ownership for ${path}`);
