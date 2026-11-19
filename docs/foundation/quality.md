@@ -175,8 +175,12 @@ Supplier milestone `quality-foundation-selection`, requested by
 `quality-execution`, requires `selectQualityInputs(operation, owner?, root?)`
 through [Foundation's public entry](../../packages/foundation/src/index.ts).
 FS-1 extends the existing selection path with an optional candidate worktree root.
-This is intended behavior pending implementation and FS-2 public regression
-evidence; documenting it does not establish availability.
+The completed selection API and FS-2 public regressions are retained in
+[90-22-owner-tests.log](/home/adrian/.local/state/arcnexus-planner-594.wr9OzP/state/arcnexus/8b40ccad5a575a6294e2358bad463bbffd81c5c2af4eac5f7c63f83a41af3f4c/evidence/8e8abf1c5eb4ef14ecd9dc22b25de62d96d8d65067bc35510f0b36ccc83d2485/90-22-owner-tests.log)
+and [quality-candidate-root.test.ts](../../packages/foundation/tests/unit/quality-candidate-root.test.ts).
+That evidence covers candidate inputs and configuration, separate operation
+selections and concurrent candidate isolation; it does not establish complete
+reusable provenance or Execution's journal-cache enforcement.
 
 When supplied, `root` anchors maintained-file discovery, Team catalog resolution,
 coverage, ignores, configuration lookup and all existing selection identity inputs
@@ -210,6 +214,61 @@ execution provenance. FND-1, FND-9 and FND-10 continue to govern output confinem
 unavailable operations and command parity. Selection emits no generated output
 and changes no maintained source. The five assembled requirements, independent
 assessment and host-owned delivery remain as described above.
+
+## Selection reuse eligibility
+
+Supplier milestone `foundation-quality-reuse-eligibility` addresses FQR-1 and
+FQR-2 on the completed `quality-foundation-selection` path. The
+[retained supplier evidence](/home/adrian/.local/state/arcnexus-planner-594.wr9OzP/state/arcnexus/8b40ccad5a575a6294e2358bad463bbffd81c5c2af4eac5f7c63f83a41af3f4c/evidence/8e8abf1c5eb4ef14ecd9dc22b25de62d96d8d65067bc35510f0b36ccc83d2485/96-13-retained-evidence-da53de1de19de2a33e4e941398de3e64cbf2bb2427b8452c4c26a47973472e3f.json)
+and [Execution supplier request](/home/adrian/.local/state/arcnexus-planner-594.wr9OzP/state/arcnexus/8b40ccad5a575a6294e2358bad463bbffd81c5c2af4eac5f7c63f83a41af3f4c/evidence/8e8abf1c5eb4ef14ecd9dc22b25de62d96d8d65067bc35510f0b36ccc83d2485/96-14-codex.jsonl)
+identify the remaining E-4 gap: `selection.identity` alone does not establish
+complete reusable provenance. The following eligibility semantics are intended
+behavior pending implementation and focused public regression evidence.
+
+The existing explicit-root `QualitySelection` result must expose a narrow reuse
+eligibility signal alongside its selection facts and identity. Eligibility means
+that the existing bounded input coverage is sufficient for its supported
+configuration case; it does not mean that a check passed or that Execution may
+reuse an observation. Missing assurance defaults to ineligible. Uncertain
+dependency coverage returns ineligible with a precise reason identifying the
+configuration or dependency form outside that coverage.
+
+Executable formatter configuration can read unselected helpers or other runtime
+inputs. Shareable/package formatter settings and plugins can also load inputs
+outside the bounded identity. Hashing their top-level configuration does not
+establish dependency closure. Such cases must be ineligible unless their relevant
+dependencies are explicitly established within an existing supported bounded case.
+Likewise, lint `require`, dynamic imports, computed reads and unsupported package,
+re-export or resolution forms cannot inherit eligibility from a static-import
+match. Unsupported or unresolved coverage must explain the uncertainty rather
+than claim a complete identity. Syntax matching alone cannot prove that executable
+configuration has no other inputs.
+
+Preserve established known scoped reuse and supported configuration/local-import
+identity behavior. A supported bounded case must have established relevant
+configuration bytes and dependencies; declining every quality reuse would not
+satisfy FQR-2. Reuse the current selector, explicit-root semantics, command path
+and bounded input collection without another discovery engine, dependency resolver
+or inventory. The signal is read-only and adds no generated output or fixer.
+
+Execution consumes the signal in its existing journal cache. It remains responsible
+for captured ownership validation, current discovery and execution inputs,
+applicability/command parity, operation authority, command arguments and cwd,
+expectation, environment and actual observation binding. Ineligible selection
+requires a fresh observation instead of a reusable fingerprint. A fresh satisfied
+observation may meet the current operation obligation without promising later
+reuse; uncertain coverage is not successful inapplicability or an unavailable-tool
+success under FND-9.
+
+FQR-2 requires focused public regressions for executable formatter dependencies and
+unsupported lint dependency forms, precise ineligibility reasons and preservation
+of established known scoped reuse. Retain FS-1/FS-2 explicit-root evidence,
+selected-content and supported configuration invalidation, separate format/lint
+applicability, command parity, no-owner strictness, read-only behavior and the
+owner-test inventory. These semantics implement the
+[architectural E-4 boundary](../../packages/architecture/quality-identity-boundary.md#inputs-at-each-boundary)
+without changing the locked Foundation obligations. The five assembled acceptance
+operations, independent assessment and host-owned delivery remain unchanged.
 
 ## Applicability and evidence
 
