@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { globSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { cpSync, globSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -128,6 +129,9 @@ test('nonempty selection executes the captured command from its nested cwd', asy
   mkdirSync(join(worktree, 'nested'));
   mkdirSync(join(worktree, 'packages/execution'), { recursive: true });
   writeFileSync(join(worktree, 'packages/execution/input.ts'), 'export const value = 1;\n');
+  cpSync(join(host, 'packages/foundation'), join(worktree, 'packages/foundation'), { recursive: true });
+  cpSync(join(host, 'package.json'), join(worktree, 'package.json'));
+  symlinkSync(join(host, 'node_modules'), join(worktree, 'node_modules'), 'dir');
   const declaration = 'id: execution\nowns:\n  - packages/execution\n';
   writeFileSync(join(components, 'execution.yaml'), declaration);
   const capture = {
@@ -161,11 +165,25 @@ test('nonempty selection executes the captured command from its nested cwd', asy
     log,
     AbortSignal.timeout(30_000),
   );
-  assert.notEqual(result.status, 'not-applicable');
   assert.equal(result.cwd, join(worktree, 'nested'));
   assert.equal(result.command, 'npm');
   assert.deepEqual(result.args, ['run', 'format:check', '--', 'execution']);
   assert.deepEqual(result.selection?.files, ['packages/execution/input.ts']);
+  // The outer test sandbox may prohibit nested Bubblewrap. Still exercise the actual
+  // candidate command there, while keeping that observation distinct from confinement.
+  const composed = spawnSync('npm', result.args, { cwd: result.cwd, encoding: 'utf8' });
+  const output = (composed.stdout ?? '') + (composed.stderr ?? '');
+  assert.equal(composed.status, 0, output);
+  assert.match(output, new RegExp(`format:check scope=execution sha256=${result.selection!.identity}`));
+  assert.match(output, /format:check scope=execution inputs=1 /);
+  const confinedLog = readFileSync(log, 'utf8');
+  if (result.status !== 0 && /bwrap:.*(operation not permitted|creating new namespace|permission denied)/i.test(confinedLog)) {
+    t.skip(`Native confinement unavailable: ${confinedLog.trim()}`);
+    return;
+  }
+  assert.equal(result.status, 0, confinedLog);
+  assert.match(confinedLog, new RegExp(`format:check scope=execution sha256=${result.selection!.identity}`));
+  assert.match(confinedLog, /format:check scope=execution inputs=1 /);
 });
 
 test('deleting every candidate component file is ownership drift', async (t) => {
