@@ -214,8 +214,10 @@ function isIgnoredDirectory(directory: string, ignoreFiles: readonly string[]): 
     const relative = base ? directory.slice(base.length + 1) : directory;
     const rules = readOptionalFile(ignoreFile).split(String.fromCharCode(10));
     let inherited = false;
-    for (const segment of relative.split('/')) {
-      const result = matchesIgnoreRules(segment, rules, true);
+    const segments = relative.split('/');
+    for (let index = 0; index < segments.length; index++) {
+      const candidate = segments.slice(0, index + 1).join('/');
+      const result = matchesIgnoreRules(candidate, rules, true);
       if (result !== undefined) inherited = result;
     }
     if (inherited) ignored = true;
