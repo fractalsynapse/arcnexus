@@ -130,11 +130,12 @@ test('nonempty selection executes the captured command from its nested cwd', asy
   mkdirSync(join(worktree, 'packages/execution'), { recursive: true });
   writeFileSync(join(worktree, 'packages/execution/input.ts'), 'export const value = 1;\n');
   cpSync(join(host, 'packages/foundation'), join(worktree, 'packages/foundation'), { recursive: true });
+  cpSync(join(host, 'packages/team'), join(worktree, 'packages/team'), { recursive: true });
   cpSync(join(host, 'package.json'), join(worktree, 'package.json'));
   symlinkSync(join(host, 'node_modules'), join(worktree, 'node_modules'), 'dir');
   const declaration = 'id: execution\nowns:\n  - packages/execution\n';
   writeFileSync(join(components, 'execution.yaml'), declaration);
-  const foundationDeclaration = 'id: foundation\nowns:\n  - package.json\n  - packages/foundation\n';
+  const foundationDeclaration = 'id: foundation\nowns:\n  - package.json\n  - packages/foundation\n  - packages/team\n';
   writeFileSync(join(components, 'foundation.yaml'), foundationDeclaration);
   const capture = {
     source: {
@@ -143,7 +144,7 @@ test('nonempty selection executes the captured command from its nested cwd', asy
       read: (path: string) => path.endsWith('execution.yaml') ? declaration : path.endsWith('foundation.yaml') ? foundationDeclaration : readFileSync(join(host, path), 'utf8'),
     },
     project: { checks: { acceptance: [] } },
-    components: { execution: { id: 'execution', owns: ['packages/execution'] }, foundation: { id: 'foundation', owns: ['package.json', 'packages/foundation'] } },
+    components: { execution: { id: 'execution', owns: ['packages/execution'] }, foundation: { id: 'foundation', owns: ['package.json', 'packages/foundation', 'packages/team'] } },
     operations: {
       quality: {
         id: 'quality',
