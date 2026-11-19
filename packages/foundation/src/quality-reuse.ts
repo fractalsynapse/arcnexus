@@ -19,6 +19,8 @@ const executableFormatterConfigs = [
   'prettier.config.cjs',
   'prettier.config.mjs',
   'prettier.config.ts',
+  'prettier.config.mts',
+  'prettier.config.cts',
 ];
 
 const unsupportedLintDependencies = [
