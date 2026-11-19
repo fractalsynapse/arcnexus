@@ -384,13 +384,19 @@ for (const expected of ['pass', 'fail'] as const) {
       false,
     );
     const first = scenario.checks[0]!;
-    assert.deepEqual(scenario.recovered[0], {
-      id: 'owner-tests',
-      expected,
-      status: first.status,
-      log: first.log,
-      activity: expected === 'fail' ? 'testing' : 'implementation',
-    });
+    if (expected === 'fail') {
+      assert.equal(first.status, 0);
+      assert.equal(scenario.recovered[0], undefined);
+      assert.equal(scenario.checks[1]!.status, 37);
+    } else {
+      assert.deepEqual(scenario.recovered[0], {
+        id: 'owner-tests',
+        expected,
+        status: first.status,
+        log: first.log,
+        activity: 'implementation',
+      });
+    }
     scenario.secured('checked');
   });
 
