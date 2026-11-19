@@ -219,7 +219,7 @@ function matchesIgnoreRules(
     const anchored = source.startsWith('/');
     const directoryOnly = source.endsWith('/');
     const pattern = source.replace(/^\//, '').replace(/\/$/, '');
-    const matcher = ignoreMatcher(pattern, anchored, directoryOnly);
+    const matcher = ignoreMatcher(pattern, anchored, directoryOnly, isDirectory);
     const matches = matcher.test(path);
     if (matches) ignored = !negated;
   }
