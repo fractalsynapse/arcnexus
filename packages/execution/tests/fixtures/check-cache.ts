@@ -119,7 +119,7 @@ export class CheckCacheFixture {
       },
       project: { contractRegistry: 'registry.yaml' },
       contracts: [],
-      components: { owner: { id: 'owner', owns: ['packages/execution/src/fixture.ts', 'eslint.config.js'], activities: {} } },
+      components: { owner: { id: 'owner', owns: ['packages/execution/src/fixture.ts', 'eslint.config.js', 'lint-rules.ts'], activities: {} } },
       operations: { 'fixture-check': operation },
     } as unknown as Capture;
     return capture;
