@@ -84,6 +84,7 @@ test('ownership drift is refused before reusing matching check evidence', async 
     applicability: 'owner-lint-files',
   } as typeof fixtureOperation);
   await fixture.observe();
+  fixture.task.capture.source.paths = ['.arc/architecture/components/owner.yaml'];
   const catalog = join(fixture.task.worktree!, '.arc/architecture/components');
   mkdirSync(catalog, { recursive: true });
   writeFileSync(join(catalog, 'owner.yaml'), 'id: owner\nowns:\n  - other.txt\n');
