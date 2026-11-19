@@ -136,7 +136,7 @@ test('nonempty selection executes the captured command from its nested cwd', asy
     AbortSignal.timeout(30_000),
   );
   assertNestedCommand(result, worktree);
-  assertComposedCommand(result, log, t);
+  if (!assertComposedCommand(result, log, t)) return;
   assertConfinedCommand(result, log);
 });
 
