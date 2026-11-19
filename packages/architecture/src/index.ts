@@ -2,6 +2,9 @@ import type { Context } from 'cordis';
 import { captureProject, type Capture } from './catalog.js';
 import type { ActivitySelection } from './activity.js';
 import { buildCodexRequest, type TaskContext } from './request.js';
+import { ArchitecturePhase } from './phase.js';
+
+export { ArchitecturePhase } from './phase.js';
 
 export type { ActivitySelection, Capture, TaskContext };
 export { revisionCitation, type RevisionCitation } from './revision-citation.js';
