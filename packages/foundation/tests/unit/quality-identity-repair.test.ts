@@ -5,8 +5,9 @@ import { fixture, selection } from './quality-fixture.js';
 test('lint identity follows imports relative to each configuration helper', async () => {
   const tree = fixture();
   try {
+    tree.owner('config-owner', 'config');
     tree.write('eslint.config.ts', "import rules from './config/helper.js';\nexport default [rules];\n");
-    tree.write('config/helper.js', "export { default } from './nested.js';\n");
+    tree.write('config/helper.js', "import nested from './nested.js'; export default nested;\n");
     tree.write('config/nested.js', 'export default {};\n');
     const before = await selection(tree, 'lint');
     tree.write('config/nested.js', 'export default { rules: {} };\n');
@@ -79,8 +80,10 @@ for (const operation of ['format:check', 'lint'] as const) {
     const tree = fixture();
     try {
       tree.write('packages/alpha/.gitignore', 'probe\\?.ts\n');
+      tree.write('packages/alpha/probe?.ts', 'export const hidden = 1;\n');
       tree.write('packages/alpha/probe1.ts', 'export const visible = 1;\n');
       const result = await selection(tree, operation);
+      assert(!result.files.includes('packages/alpha/probe?.ts'));
       assert(result.files.includes('packages/alpha/probe1.ts'));
     } finally {
       tree.close();
