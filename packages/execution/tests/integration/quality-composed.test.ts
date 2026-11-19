@@ -84,11 +84,7 @@ test('real lint and type diagnostics reach one MCP caller and survive checked re
   const { owner, file, components } = await discover(source);
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-quality-composed-'));
   const workspace = join(root, 'workspace');
-  cpSync(source, workspace, {
-    recursive: true,
-    filter: (path) => !['.git', 'node_modules', 'dist'].includes(relative(source, path).split('/')[0]!),
-  });
-  symlinkSync(join(source, 'node_modules'), join(workspace, 'node_modules'), 'dir');
+  prepareWorkspace(source, workspace);
   const task = new StewardFixture(t, root).task;
   t.after(() => task.close());
   task.worktree = workspace;
@@ -135,4 +131,13 @@ async function assertRepair(client: Client, file: string, original: string, brok
   assert.notEqual(types.log, fixedTypes.log);
   assert.equal(readFileSync(lint.log, 'utf8'), lintLog);
   assert.equal(readFileSync(types.log, 'utf8'), typeLog);
+}
+
+/** Copy source into an isolated workspace and attach installed dependencies. */
+function prepareWorkspace(source: string, workspace: string): void {
+  cpSync(source, workspace, {
+    recursive: true,
+    filter: (path) => !['.git', 'node_modules', 'dist'].includes(relative(source, path).split('/')[0]!),
+  });
+  symlinkSync(join(source, 'node_modules'), join(workspace, 'node_modules'), 'dir');
 }
