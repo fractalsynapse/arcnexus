@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Give Architect a compact prior-finding index linked to complete retained observations; keep expected human approval pauses out of technical failure findings.
+
 - Link pending reusable research to its readable retained report before archival so later activities can retrieve the complete findings.
 
 - Return successive invalid Planner, Reviewer and research-report responses to their calling activities, preserving approvals, candidate checks and citation-only decisions. Repeated unchanged findings retain a hold or optional research unavailability.

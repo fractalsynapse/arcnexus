@@ -6,6 +6,7 @@ import { architectureGate, architectureQuestion, type ArchitectureRecord } from 
 import { prepareArchitectureProposal } from './decode-proposal.js';
 import { ArchitectureResponseError, type ArchitectureDecision } from './proposal.js';
 import { architectAssignment } from './assignment.js';
+import { architectureFindings } from './findings.js';
 
 /** Assess real captured source and keep proposals and human decisions in the existing task journal. */
 export class ArchitectureAssessment {
@@ -70,10 +71,7 @@ export class ArchitectureAssessment {
     ArchitectureRecord | Exclude<ArchitectureDecision, { kind: 'approved' }>
   > {
     if (!this.task.worktree) this.task.planningWorkspace(this.signal);
-    const findings = this.task.store(
-      'architecture-findings.json',
-      JSON.stringify(this.task.journal.findings(), null, 2),
-    );
+    const findings = architectureFindings(this.task);
     const seen = new Set<string>();
     let diagnostic: string | undefined;
     while (true) {

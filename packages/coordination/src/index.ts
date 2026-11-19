@@ -26,6 +26,23 @@ const verifiedTerminal = `
   ORDER BY events.id DESC LIMIT 1
 `;
 
+const recentFindings = `
+  SELECT incident.id, incident.run, runs.goal_id, incident.content
+  FROM events AS incident JOIN runs ON runs.id = incident.run
+  WHERE (
+    json_extract(incident.content, '$.outcome.kind') IN ('failed', 'blocked', 'cancelled')
+    OR json_type(incident.content, '$.repair') = 'object'
+    OR json_type(incident.content, '$.stewardRepair') = 'object'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM events AS gate
+    WHERE gate.run = incident.run
+      AND json_extract(gate.content, '$.clarification.question') =
+          json_extract(incident.content, '$.outcome.reason')
+      AND json_type(gate.content, '$.clarification.answer') IS NULL
+  )
+  ORDER BY incident.id DESC LIMIT 20
+`;
+
 export interface RetainedRun {
   run: number;
   events: readonly unknown[];
@@ -132,16 +149,7 @@ export class Journal {
   /** Read recent observed failures and repairs for architectural assessment without creating another store. */
   findings() {
     return this.database
-      .prepare(
-        `
-      SELECT events.id, events.run, runs.goal_id, events.content
-      FROM events JOIN runs ON runs.id = events.run
-      WHERE json_extract(content, '$.outcome.kind') IN ('failed', 'blocked', 'cancelled')
-        OR json_type(content, '$.repair') = 'object'
-        OR json_type(content, '$.stewardRepair') = 'object'
-      ORDER BY events.id DESC LIMIT 20
-    `,
-      )
+      .prepare(recentFindings)
       .all()
       .map(({ id, run, goal_id, content }) => ({
         id,
