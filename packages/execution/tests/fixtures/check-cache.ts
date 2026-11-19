@@ -47,7 +47,7 @@ export class CheckCacheFixture {
     writeFileSync(join(this.source, 'packages/foundation/scripts/owner-quality.ts'), '');
     writeFileSync(
       join(this.source, '.arc/architecture/components/owner.yaml'),
-      'id: owner\nowns:\n  - packages/execution/src/fixture.ts\n  - eslint.config.ts\n  - lint-rules.ts\n  - package.json\n',
+      'id: owner\nowns:\n  - packages/execution/src/fixture.ts\n  - eslint.config.ts\n  - lint-rules.ts\n  - package.json\n  - packages/foundation/scripts/owner-quality.ts\n  - .prettierrc\n  - .prettierignore\n  - .editorconfig\n  - .prettierrc.cjs\n',
     );
     writeFileSync(join(this.source, '.gitignore'), 'node_modules/\n');
     this.commit(this.source);
@@ -139,7 +139,7 @@ export class CheckCacheFixture {
       components: {
         owner: {
           id: 'owner',
-          owns: ['packages/execution/src/fixture.ts', 'eslint.config.ts', 'lint-rules.ts', 'package.json'],
+          owns: ['packages/execution/src/fixture.ts', 'eslint.config.ts', 'lint-rules.ts', 'package.json', 'packages/foundation/scripts/owner-quality.ts', '.prettierrc', '.prettierignore', '.editorconfig', '.prettierrc.cjs'],
           activities: {},
         },
       },
