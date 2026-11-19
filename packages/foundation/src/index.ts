@@ -182,6 +182,7 @@ function readOptionalFile(path: string): string {
 /** Apply root and nested gitignore rules in directory order to one repository path. */
 function isIgnored(path: string): boolean {
   let ignored = false;
+  let parentIgnored = false;
   const ignoreFiles = globSync('**/.gitignore').sort(
     (left, right) => left.split('/').length - right.split('/').length,
   );
