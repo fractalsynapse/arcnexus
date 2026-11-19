@@ -15,7 +15,7 @@ export async function verify(
 ): Promise<Verdict> {
   const task = hostTask(session);
   const checks = pendingReviewChecks(task, candidate) ?? (await runChecks(task, signal));
-  const ownerFailure = ownerEvidenceFailure(task, candidate);
+  const ownerFailure = ownerEvidenceFailure(task, plan, candidate);
   if (ownerFailure)
     return { kind: 'blocked', reason: ownerFailure, evidence: [] };
   const unavailable = checks.find(({ status }) => status === null || status === 'not-applicable');
