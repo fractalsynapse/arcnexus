@@ -60,6 +60,6 @@ test('a captured revision snapshot is detached from later writes and caller muta
   journal.record({ feedback: { kind: 'rejection', findings: ['later'] } });
   (observations[0] as typeof plan & { plan: typeof plan }).plan.milestones[0]!.criteria[0]!.description = 'changed';
   assert.equal(JSON.stringify(snapshot), bytes);
-  snapshot.plan.milestones[0]!.criteria[0]!.description = 'caller mutation';
+  (snapshot.plan as typeof plan).milestones[0]!.criteria[0]!.description = 'caller mutation';
   assert.deepEqual(journal.events()[0], { plan });
 });
