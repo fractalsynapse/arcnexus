@@ -40,7 +40,7 @@ const shape = {
     'When a genuine decision needs human authority, use the mapped ask-question tool and end this activation.',
 };
 
-/** Ask the Director Agent to author the initial plan or the required correction. */
+/** Ask the Director Agent to author an initial plan or a bounded pending correction. */
 export function direct(
   agent: Agent,
   session: TaskSession,
