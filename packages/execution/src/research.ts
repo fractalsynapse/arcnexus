@@ -1,3 +1,4 @@
+import { InvalidAgentResponse } from '../../agent/src/index.js';
 import { createHash } from 'node:crypto';
 import { stringify } from 'yaml';
 import {
@@ -90,27 +91,39 @@ export class ResearchInbox {
   private async research(component: string, request: Request, data: Assignment) {
     let report: ReturnType<typeof decodeReport>;
     try {
-      const response = await this.invoke(
-        { component, activity: 'research' },
-        {
-          ...data,
-          assignment: {
-            question: request.question,
-            decision: request.decision,
-            requestedBy: request.requestedBy,
-            candidate: object(data.assignment)?.candidate,
-            instructions:
-              'Return exactly one JSON object matching the research report schema. Start with { and end with }. Use no Markdown headings, code fences, or explanation outside the object. Cite sources you actually consulted.',
-          },
-        },
-      );
-      this.signal.throwIfAborted();
-      report = decodeReport(response);
+      report = await this.generateReport(component, request, data);
     } catch (error) {
       this.signal.throwIfAborted();
       return this.unavailable(component, request, error);
     }
     return this.retain(component, request, report);
+  }
+
+  /** Return exact report findings to Research while preserving its original read-only question. */
+  private async generateReport(component: string, request: Request, data: Assignment) {
+    const seen = new Set<string>();
+    let diagnostic: string | undefined;
+    while (true) {
+      this.signal.throwIfAborted();
+      try {
+        const response = await this.invoke(
+          { component, activity: 'research' },
+          researchInput(request, data, diagnostic),
+        );
+        this.signal.throwIfAborted();
+        return decodeReport(response);
+      } catch (error) {
+        this.signal.throwIfAborted();
+        if (!(error instanceof InvalidAgentResponse)) throw error;
+        if (seen.has(error.identity))
+          throw new Error(`Research repeated an unchanged finding: ${error.message}`, {
+            cause: error,
+          });
+        seen.add(error.identity);
+        diagnostic = error.message;
+        this.task.note({ researchResponseRepair: { request: request.id, diagnostic } });
+      }
+    }
   }
 
   /** Keep an unavailable result readable without terminating the requesting task. */
@@ -148,6 +161,22 @@ ${diagnostic}
     this.task.note({ researchResult: result });
     return result;
   }
+}
+
+/** Expose the existing report limits and the current caller diagnostic in the shared request. */
+function researchInput(request: Request, data: Assignment, diagnostic?: string): Assignment {
+  return {
+    ...data,
+    assignment: {
+      question: request.question,
+      decision: request.decision,
+      requestedBy: request.requestedBy,
+      candidate: object(data.assignment)?.candidate,
+      diagnostic,
+      instructions:
+        'Return exactly one JSON object matching the research report schema. Start with { and end with }. Use no Markdown headings, code fences, or explanation outside the object. Cite sources you actually consulted. Existing field limits: summary 600 characters; findings 8000; applicability 1000; one to twelve sources with URL 2048 and note 500; up to twelve unresolved strings of 500. reusable is boolean. Repair only the rejected report; retain the original question and decision.',
+    },
+  };
 }
 
 /** List the exact reports attached to this candidate's assessment. */
@@ -240,21 +269,25 @@ function withResults(data: Assignment, results: readonly ResearchResult[]): Assi
 
 /** Validate the researcher's structured synthesis before writing a report. */
 function decodeReport(value: unknown) {
-  const reply = object(value);
-  if (reply?.kind !== 'research-report') throw new Error('Expected a research-report response');
-  if (!Array.isArray(reply.sources) || !reply.sources.length || reply.sources.length > 12)
-    throw new Error('Research needs between one and twelve source references');
-  if (!Array.isArray(reply.unresolved) || reply.unresolved.length > 12)
-    throw new Error('Research unresolved points must be a short array');
-  if (typeof reply.reusable !== 'boolean') throw new Error('Research reusable must be boolean');
-  return {
-    summary: required(reply.summary, 'summary', 600),
-    findings: required(reply.findings, 'findings', 8000),
-    sources: reply.sources.map(source),
-    applicability: required(reply.applicability, 'applicability', 1000),
-    unresolved: reply.unresolved.map((item) => required(item, 'unresolved', 500)),
-    reusable: reply.reusable,
-  };
+  try {
+    const reply = object(value);
+    if (reply?.kind !== 'research-report') throw new Error('Expected a research-report response');
+    if (!Array.isArray(reply.sources) || !reply.sources.length || reply.sources.length > 12)
+      throw new Error('Research needs between one and twelve source references');
+    if (!Array.isArray(reply.unresolved) || reply.unresolved.length > 12)
+      throw new Error('Research unresolved points must be a short array');
+    if (typeof reply.reusable !== 'boolean') throw new Error('Research reusable must be boolean');
+    return {
+      summary: required(reply.summary, 'summary', 600),
+      findings: required(reply.findings, 'findings', 8000),
+      sources: reply.sources.map(source),
+      applicability: required(reply.applicability, 'applicability', 1000),
+      unresolved: reply.unresolved.map((item) => required(item, 'unresolved', 500)),
+      reusable: reply.reusable,
+    };
+  } catch (error) {
+    throw new InvalidAgentResponse((error as Error).message, { cause: error });
+  }
 }
 
 /** Preserve public source URLs and their role in the synthesis. */
@@ -302,7 +335,9 @@ function object(value: unknown) {
 /** Require a bounded nonempty field in a request or report. */
 function required(value: unknown, field: string, max: number) {
   if (typeof value !== 'string' || !value.trim() || value.length > max)
-    throw new Error(`Invalid research ${field}`);
+    throw new Error(
+      `Invalid research ${field}: expected nonempty text of at most ${max} characters; received ${typeof value === 'string' ? value.length : typeof value}`,
+    );
   return value.trim();
 }
 

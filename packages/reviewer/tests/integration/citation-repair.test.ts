@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
-import type { Agent } from '../../../agent/src/index.js';
+import { AgentActivityHold, InvalidAgentResponse, type Agent } from '../../../agent/src/index.js';
 import type { Capture, TaskContext } from '../../../architecture/src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
 import type { Plan } from '../../../direction/src/index.js';
@@ -24,6 +24,9 @@ const plan: Plan = {
   ],
 };
 
+type RepairMode =
+  'valid' | 'invalid' | 'different' | 'successive' | 'native' | 'changed-then-corrected';
+
 /** Drive Verification and Reviewer against one journal and an explicit scripted decision. */
 class CitationScenario {
   readonly task: HostTask;
@@ -35,7 +38,7 @@ class CitationScenario {
   /** Bind the fixture to one admitted run and one observed check. */
   constructor(
     t: TestContext,
-    private readonly repair: 'valid' | 'invalid' | 'different' = 'valid',
+    private readonly repair: RepairMode = 'valid',
   ) {
     this.task = this.admit();
     this.checkLog = this.task.store('check.log', 'Observed exit 0\n');
@@ -95,10 +98,24 @@ class CitationScenario {
   /** Start with an invalid reference and supply the configured repair on a second call. */
   private respond(data: TaskContext) {
     this.requests.push(data);
-    const repairing = this.requests.length > 1;
+    const visit = this.requests.length;
+    if (this.repair === 'native' && visit === 1)
+      throw new InvalidAgentResponse('Malformed native JSON');
+    if (this.repair === 'successive' && visit <= 2)
+      return {
+        kind: 'accepted',
+        candidate: candidate.digest,
+        criteria: ['scope'],
+        evidence: [`missing-${visit}.log`],
+      };
+    const repairing = visit > 1;
     return {
       kind: 'accepted',
-      candidate: repairing && this.repair === 'different' ? 'other-tree' : candidate.digest,
+      candidate:
+        repairing &&
+        (this.repair === 'different' || (this.repair === 'changed-then-corrected' && visit === 2))
+          ? 'other-tree'
+          : candidate.digest,
       criteria: ['scope'],
       evidence: [repairing && this.repair !== 'invalid' ? this.checkLog : invalid],
     };
@@ -133,8 +150,35 @@ test('Reviewer repairs an invalid citation on the same candidate and original ch
 test('a second invalid citation and a changed candidate each fail the same gate', async (t) => {
   for (const repair of ['invalid', 'different'] as const) {
     const fixture = new CitationScenario(t, repair);
-    await assert.rejects(fixture.run(), repair === 'invalid' ? /retained evidence/ : /assessment/);
-    assert.equal(fixture.requests.length, 2);
+    await assert.rejects(fixture.run(), AgentActivityHold);
+    assert.equal(fixture.requests.length, repair === 'invalid' ? 2 : 3);
     assert.equal(fixture.checks, 1);
   }
+});
+
+test('Reviewer repairs native JSON before citation validation without rerunning checks', async (t) => {
+  const fixture = new CitationScenario(t, 'native');
+  assert.equal((await fixture.run()).kind, 'accepted');
+  assert.equal(fixture.requests.length, 2);
+  assert.equal(fixture.checks, 1);
+  assert.match(JSON.stringify(fixture.requests[1]), /Malformed native JSON/);
+});
+
+test('Reviewer repairs successive distinct citation findings in the same assessment', async (t) => {
+  const fixture = new CitationScenario(t, 'successive');
+  assert.equal((await fixture.run()).kind, 'accepted');
+  assert.equal(fixture.requests.length, 3);
+  assert.equal(fixture.checks, 1);
+  assert.match(JSON.stringify(fixture.requests[1]), /missing-1/);
+  assert.match(JSON.stringify(fixture.requests[2]), /missing-2/);
+});
+
+test('Reviewer repairs a changed citation-only candidate while preserving the original verdict', async (t) => {
+  const fixture = new CitationScenario(t, 'changed-then-corrected');
+  const verdict = await fixture.run();
+  assert.equal(verdict.kind, 'accepted');
+  assert.equal(verdict.candidate, candidate.digest);
+  assert.equal(fixture.requests.length, 3);
+  assert.equal(fixture.checks, 1);
+  assert.match(JSON.stringify(fixture.requests[2]), /different candidate/);
 });

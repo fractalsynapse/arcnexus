@@ -4,7 +4,11 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
-import type { ActivationInput, Agent } from '../../../agent/src/index.js';
+import {
+  InvalidAgentResponse,
+  type ActivationInput,
+  type Agent,
+} from '../../../agent/src/index.js';
 import type { Capture } from '../../../architecture/src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
 import { HostTask } from '../../src/index.js';
@@ -302,5 +306,46 @@ test('Reviewer research resumes the same candidate with one checklist and binds 
   assert.equal(
     fixture.activations.filter(({ selection }) => selection.activity === 'research').length,
     1,
+  );
+});
+
+test('research repairs native and bounded-report findings before resuming its requester', async (t) => {
+  const fixture = new ResearchScenario(t);
+  const oversized = { ...report, findings: 'x'.repeat(8001) };
+  assert.deepEqual(
+    await fixture.activate('team', 'testing', [
+      request,
+      new InvalidAgentResponse('Malformed research JSON'),
+      oversized,
+      report,
+      { kind: 'completed' },
+    ]),
+    { kind: 'completed' },
+  );
+  const research = fixture.activations.filter(({ selection }) => selection.activity === 'research');
+  assert.equal(research.length, 3);
+  assert.match(JSON.stringify(research[1]?.task.assignment), /Malformed research JSON/);
+  assert.match(JSON.stringify(research[2]?.task.assignment), /8000.*8001/);
+  assert.match(JSON.stringify(fixture.activations.at(-1)?.task), /research.md/);
+});
+
+test('unchanged research report failure is retained as optional unavailability', async (t) => {
+  const fixture = new ResearchScenario(t);
+  const invalid = { ...report, findings: 'x'.repeat(8001) };
+  assert.deepEqual(
+    await fixture.activate('team', 'testing', [request, invalid, invalid, { kind: 'completed' }]),
+    { kind: 'completed' },
+  );
+  assert.equal(
+    fixture.activations.filter(({ selection }) => selection.activity === 'research').length,
+    2,
+  );
+  const assignment = fixture.activations.at(-1)?.task.assignment as {
+    researchResults: { unavailable: boolean; evidence: string }[];
+  };
+  assert.equal(assignment.researchResults[0]?.unavailable, true);
+  assert.match(
+    readFileSync(assignment.researchResults[0]!.evidence, 'utf8'),
+    /unchanged.*8000.*8001/,
   );
 });

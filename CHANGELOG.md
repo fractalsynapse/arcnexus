@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Return successive invalid Planner, Reviewer and research-report responses to their calling activities, preserving approvals, candidate checks and citation-only decisions. Repeated unchanged findings retain a hold or optional research unavailability.
+
 - Enable optional research with its approved read-only MCP tools while refusing effectful or unresolved research mappings (#645).
 
 - Require JSON Architect replies explicitly and compare actor response findings independently of changing transcript paths, preserving exact diagnostics and checked progress (#637).
