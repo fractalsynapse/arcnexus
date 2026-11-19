@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { isAbsolute, join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import type { Context } from 'cordis';
 import type { Agent, ActivationInput } from '../../agent/src/index.js';
@@ -416,6 +416,7 @@ export class HostTask implements TaskSession {
 
   /** Run a declared check and record its real exit, duration and transcript. */
   async check(id: string, signal: AbortSignal, scope?: StewardScope) {
+    signal.throwIfAborted();
     if (!this.worktree) throw new Error('No task worktree is available for checks');
     const events = this.observations<{
       check?: CheckResult;
@@ -441,6 +442,7 @@ export class HostTask implements TaskSession {
     );
     const sameOperation =
       operation?.network === false &&
+      !isAbsolute(operation.cwd ?? '.') &&
       operation.command === prior?.command &&
       JSON.stringify(args ?? []) === JSON.stringify(prior?.args ?? []) &&
       resolve(this.worktree, operation.cwd ?? '.') === prior?.cwd;
