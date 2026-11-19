@@ -66,6 +66,15 @@ async function ownerOperationInapplicability(
     (applicability !== 'owner-lint-files' && applicability !== 'owner-format-files')
   )
     return;
+  const selected = await selectQualityInputs(
+    applicability === 'owner-lint-files' ? 'lint' : 'format:check',
+    owner,
+  );
+  for (const path of selected.files) {
+    const resolution = team.ownerFor(capture.components, path);
+    if (resolution.kind !== 'owned' || resolution.owner.id !== owner)
+      throw new Error(`Captured ownership authority does not assign ${path} to ${owner}`);
+  }
   if (!operation.tool || !operation.command)
     throw new Error(`Unavailable owner quality operation: ${id}`);
   if (!qualityOperationAvailable({
@@ -75,10 +84,6 @@ async function ownerOperationInapplicability(
     applicability,
   }))
     throw new Error(`Unavailable owner quality operation: ${id}`);
-  const selected = await selectQualityInputs(
-    applicability === 'owner-lint-files' ? 'lint' : 'format:check',
-    owner,
-  );
   if (!selected.files.length)
     return `No ${selected.operation} files for ${owner} in the current worktree`;
 }
