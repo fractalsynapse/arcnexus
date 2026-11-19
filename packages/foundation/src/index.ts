@@ -167,10 +167,10 @@ function readOptionalFile(path: string): string {
 /** Apply root and nested gitignore rules to a repository-relative input. */
 function isIgnored(path: string): boolean {
   return globSync('**/.gitignore').some((ignoreFile) => {
-    const directory = ignoreFile.replace(/\\.gitignore$/, '').replace(/\\/$/, '');
+    const directory = ignoreFile.slice(0, -'.gitignore'.length).replace(/\/$/, '');
     if (directory && !path.startsWith(`${directory}/`)) return false;
     const relative = directory ? path.slice(directory.length + 1) : path;
-    return matchesIgnoreRules(relative, readOptionalFile(ignoreFile).split(/\\r?\\n/));
+    return matchesIgnoreRules(relative, readOptionalFile(ignoreFile).split(String.fromCharCode(10)));
   });
 }
 
@@ -181,7 +181,7 @@ function matchesIgnoreRules(path: string, rules: readonly string[]): boolean {
     const rule = raw.trim();
     if (!rule || rule.startsWith('#')) continue;
     const negated = rule.startsWith('!');
-    const pattern = (negated ? rule.slice(1) : rule).replace(/^\\//, '').replace(/\\/$/, '');
+    const pattern = (negated ? rule.slice(1) : rule).replace(/^\//, '').replace(/\/$/, '');
     if (ignoreMatcher(pattern).test(path)) ignored = !negated;
   }
   return ignored;
@@ -189,13 +189,12 @@ function matchesIgnoreRules(path: string, rules: readonly string[]): boolean {
 
 /** Convert gitignore wildcards into path-aware matching. */
 function ignoreMatcher(pattern: string): RegExp {
-  const expression = pattern.replace(/\\*\\*/g, '§').replace(/\\*/g, '[^/]*')
-    .replace(/\\?/g, '[^/]')
-    .replace(/[.+^${}()|[\\]\\\\]/g, '\\\\$&')
-    .replace(/§\\//g, '(?:.*/)?').replace(/§/g, '.*');
+  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+  const expression = escaped.replace(/\*\*/g, '§').replace(/\*/g, '[^/]*')
+    .replace(/\?/g, '[^/]')
+    .replace(/§\//g, '(?:.*/)?').replace(/§/g, '.*');
   return new RegExp(`^(?:${expression})(?:/.*)?$`);
 }
-
 /** Preserve repository formatter coverage while allowing package and fixture files. */
 function isFormatCovered(path: string): boolean {
   return /^(?:[^/]+\.(?:ts|json)|(?:apps|packages|scripts|fixtures)\/.+\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json|yaml|yml))$/.test(
