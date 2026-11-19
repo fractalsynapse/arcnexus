@@ -189,12 +189,7 @@ function parentDirectories(file: string): string[] {
   return directories;
 }
 
-/** Include nested formatter configs when selected inputs live beneath them. */
-function includeNestedPrettierConfigurations(paths: Set<string>, files: readonly string[]): void {
-  for (const path of globSync('**/.prettierrc.yaml')) {
-    if (files.some((file) => file.startsWith(`${dirname(path)}/`))) paths.add(path);
-  }
-}
+
 
 /** Follow local imports from quality configuration without hashing unrelated source. */
 function configurationInputs(operation: QualitySelection['operation']): string[] {
