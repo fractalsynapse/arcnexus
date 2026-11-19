@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
+import { git } from '../../src/git.js';
 import { reusableCheck } from '../../src/check-cache.js';
 import { CheckCacheFixture, fixtureOperation } from '../fixtures/check-cache.js';
 
@@ -31,7 +32,6 @@ test('a changed actual checkpoint invalidates earlier evidence', async (t) => {
 });
 
 test('owner lint evidence survives an unrelated committed documentation edit', async (t) => {
-  const { git } = await import('../../src/git.js');
   const fixture = new CheckCacheFixture(t);
   fixture.restart({
     ...fixtureOperation,
@@ -43,21 +43,11 @@ test('owner lint evidence survives an unrelated committed documentation edit', a
   const worktree = fixture.task.worktree!;
   writeFileSync(join(worktree, 'unrelated.md'), 'unrelated documentation');
   git(worktree, 'add', 'unrelated.md');
-  git(
-    worktree,
-    '-c',
-    'user.name=Fixture',
-    '-c',
-    'user.email=fixture@example.com',
-    'commit',
-    '-qm',
-    'Unrelated edit',
-  );
+  commitFixture(worktree, 'Unrelated edit');
   assert.deepEqual(reusableCheck(fixture.task.observations(), await fixture.input()), observed);
 });
 
 test('an imported lint configuration change invalidates owner lint evidence', async (t) => {
-  const { git } = await import('../../src/git.js');
   const fixture = new CheckCacheFixture(t);
   fixture.restart({
     ...fixtureOperation,
@@ -69,30 +59,12 @@ test('an imported lint configuration change invalidates owner lint evidence', as
   writeFileSync(join(worktree, 'eslint.config.ts'), "import rules from './lint-rules.ts';\nexport default [rules];\n");
   writeFileSync(join(worktree, 'lint-rules.ts'), 'export default {};\n');
   git(worktree, 'add', 'eslint.config.ts', 'lint-rules.ts');
-  git(
-    worktree,
-    '-c',
-    'user.name=Fixture',
-    '-c',
-    'user.email=fixture@example.com',
-    'commit',
-    '-qm',
-    'Add lint configuration',
-  );
+  commitFixture(worktree, 'Add lint configuration');
   const before = await fixture.input();
   await fixture.observe();
   writeFileSync(join(worktree, 'lint-rules.ts'), 'export default { changed: true };\n');
   git(worktree, 'add', 'lint-rules.ts');
-  git(
-    worktree,
-    '-c',
-    'user.name=Fixture',
-    '-c',
-    'user.email=fixture@example.com',
-    'commit',
-    '-qm',
-    'Change imported lint configuration',
-  );
+  commitFixture(worktree, 'Change imported lint configuration');
   assert.notEqual(await fixture.input(), before);
   assert.equal(reusableCheck(fixture.task.observations(), await fixture.input()), undefined);
 });
@@ -211,8 +183,7 @@ test('a cancelled request cannot reuse an otherwise valid observation', async (t
 
 for (const path of ['.prettierrc', '.prettierignore', '.editorconfig']) {
   test(`committed quality configuration ${path} invalidates cached evidence`, async (t) => {
-    const { git } = await import('../../src/git.js');
-    const fixture = new CheckCacheFixture(t);
+      const fixture = new CheckCacheFixture(t);
     fixture.restart({
       ...fixtureOperation,
       command: 'npm',
@@ -246,8 +217,7 @@ for (const [operation, applicability, path, content] of [
   ['format:check', 'owner-format-files', '.prettierrc.cjs', "module.exports = {};\n"],
 ] as const) {
   test(`uncertain ${operation} configuration cannot reuse evidence`, async (t) => {
-    const { git } = await import('../../src/git.js');
-    const fixture = new CheckCacheFixture(t);
+      const fixture = new CheckCacheFixture(t);
     fixture.restart({
       ...fixtureOperation,
       command: 'npm',
@@ -271,4 +241,10 @@ for (const [operation, applicability, path, content] of [
     assert.ok(observations.some(({ check }) => check?.log === observed.log));
     assert.ok(observations.some(({ check, reusedFrom }) => check?.log === fresh.log && !reusedFrom));
   });
+}
+
+/** Commit fixture changes with a local identity for cache input comparisons. */
+function commitFixture(worktree: string, message: string): void {
+  git(worktree, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com',
+    'commit', '-qm', message);
 }
