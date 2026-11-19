@@ -130,7 +130,10 @@ test('quality commands preserve the owner test inventory and selection', () => {
   const all = testInventory();
   const selected = testInventory('foundation');
   assert(selected.length > 0);
-  assert.deepEqual(selected, all.filter(({ owner }) => owner === 'foundation'));
+  assert.deepEqual(
+    selected,
+    all.filter(({ owner }) => owner === 'foundation'),
+  );
   const tree = fixture();
   try {
     tree.run('format:check', 'beta');
@@ -152,7 +155,10 @@ test('an owner with only JSON has an empty lint selection but a format selection
     assert.match(format.output, /packages\/json-owner\/probe\.json/);
     const lint = tree.run('lint', 'json-owner');
     assert.equal(lint.status, 0, lint.output);
-    assert.match(lint.output, /lint.*(empty|no applicable|inapplicable)|(empty|no applicable|inapplicable).*lint/i);
+    assert.match(
+      lint.output,
+      /lint.*(empty|no applicable|inapplicable)|(empty|no applicable|inapplicable).*lint/i,
+    );
   } finally {
     tree.close();
   }
@@ -166,7 +172,10 @@ test('a Prettier-ignored TypeScript file leaves format empty but remains lint ap
     tree.write('packages/ignored-owner/probe.ts', 'const unused = 1;\n');
     const format = tree.run('format:check', 'ignored-owner');
     assert.equal(format.status, 0, format.output);
-    assert.match(format.output, /format.*(empty|no applicable|inapplicable)|(empty|no applicable|inapplicable).*format/i);
+    assert.match(
+      format.output,
+      /format.*(empty|no applicable|inapplicable)|(empty|no applicable|inapplicable).*format/i,
+    );
     const lint = tree.run('lint', 'ignored-owner');
     assert.notEqual(lint.status, 0, lint.output);
     assert.match(lint.output, /packages\/ignored-owner\/probe\.ts/);
