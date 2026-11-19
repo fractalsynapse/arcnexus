@@ -49,27 +49,18 @@ export async function check(
   return { ...parameters, status, durationMs: Math.round(performance.now() - start) };
 }
 
-/** Refuse a candidate whose component ownership differs from the admitted catalog. */
+/** Refuse missing, added or changed ownership declarations against immutable capture. */
 export function assertCapturedOwnership(capture: Capture, worktree: string) {
-  const catalog = join(worktree, '.arc/architecture/components');
   const admittedPaths = (capture.source.paths ?? []).filter((path) =>
     path.startsWith('.arc/architecture/components/') && path.endsWith('.yaml'),
   ).sort();
   const files = globSync('.arc/architecture/components/*.yaml', { cwd: worktree }).sort();
-  if (JSON.stringify(files) !== JSON.stringify(admittedPaths))
+  if (!admittedPaths.length || JSON.stringify(files) !== JSON.stringify(admittedPaths))
     throw new Error('Candidate ownership drift differs from captured authority');
-  const candidate = files.map((path) => {
-    const component = parse(readFileSync(join(worktree, path), 'utf8')) as {
-      id: string;
-      owns: string[];
-    };
-    return [component.id, [...component.owns].sort()];
-  }).sort(([left], [right]) => String(left).localeCompare(String(right)));
-  const admitted = Object.values(capture.components)
-    .map(({ id, owns }) => [id, [...owns].sort()])
-    .sort(([left], [right]) => String(left).localeCompare(String(right)));
-  if (JSON.stringify(candidate) !== JSON.stringify(admitted))
-    throw new Error('Candidate ownership drift differs from captured authority');
+  for (const path of admittedPaths) {
+    if (readFileSync(join(worktree, path), 'utf8') !== capture.source.read(path))
+      throw new Error('Candidate ownership drift differs from captured authority');
+  }
 }
 
 /** Check captured owner applicability before running its operation in the overlay. */
