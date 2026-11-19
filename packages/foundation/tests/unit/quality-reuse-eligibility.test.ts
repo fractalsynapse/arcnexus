@@ -100,6 +100,37 @@ for (const [form, source, reason] of [
   });
 }
 
+test('lint side-effect imports decline reuse even when their path is local', async () => {
+  const tree = fixture();
+  try {
+    tree.write('eslint.config.ts', "import './packages/foundation/rules.js'; export default [];
+");
+    tree.write('packages/foundation/rules.js', 'export default {};
+');
+    const result = await selectQualityInputs('lint', 'alpha', tree.root);
+    assert.equal(eligibility(result)?.eligible, false);
+    assert.match(eligibility(result)?.reason ?? '', /eslint\.config\.ts.*static subset/i);
+  } finally {
+    tree.close();
+  }
+});
+
+test('nested package formatter plugins decline reuse', async () => {
+  const tree = fixture();
+  try {
+    tree.owner('alpha-manifest', 'packages/alpha/package.json');
+    tree.write(
+      'packages/alpha/package.json',
+      '{"prettier":{"overrides":[{"options":{"plugins":["example"]}}]}}',
+    );
+    const result = await selectQualityInputs('format:check', 'alpha', tree.root);
+    assert.equal(eligibility(result)?.eligible, false);
+    assert.match(eligibility(result)?.reason ?? '', /plugin.*packages\/alpha\/package\.json/i);
+  } finally {
+    tree.close();
+  }
+});
+
 test('known static configuration preserves scoped reuse and identity', async () => {
   const tree = fixture();
   try {
