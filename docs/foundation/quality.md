@@ -56,6 +56,47 @@ all five mandatory operations: `repository-build`, `repository-types`,
 `repository-format`, `repository-lint` and `repository-tests`.
 An engineering observation does not discharge an assembled requirement.
 
+## Quality implementation availability
+
+For supplier milestone `foundation-quality-check-availability`, requested by
+Architecture's `quality-architecture` milestone, FQA-1 and FQA-2 require a
+public Foundation capability/resolution API through
+[Foundation's entry](../../packages/foundation/src/index.ts).
+This is intended behavior pending implementation and public regression evidence.
+It implements FND-9's unavailable-check rule without changing the locked contract.
+
+The API inspects a quality operation's command binding and reports whether a
+supported binding has an available runtime implementation. It derives support
+from the existing implementation definitions; it must not introduce a second
+command inventory or operation handler. A recognized `check` handler and a
+well-formed owner-scoped applicability declaration alone do not establish command
+implementation availability. Unsupported or unresolved bindings return an
+unavailable result, never a successful empty selection or passing observation.
+
+Architecture consumes this public boundary while resolving captured operations,
+before agent activation. It can reject an unavailable implementation without
+executing the command, invoking the agent or reaching into Foundation internals.
+Capability inspection is read-only: it runs no check or fixer, changes no
+maintained source and emits no generated output. Availability describes runtime
+support for the binding; it does not establish applicable inputs, successful
+execution or current per-operation evidence.
+
+The supplier request follows the retained
+[Architecture failure in 78-39-owner-tests.log](/home/adrian/.local/state/arcnexus-planner-594.wr9OzP/state/arcnexus/8b40ccad5a575a6294e2358bad463bbffd81c5c2af4eac5f7c63f83a41af3f4c/evidence/8e8abf1c5eb4ef14ecd9dc22b25de62d96d8d65067bc35510f0b36ccc83d2485/78-39-owner-tests.log):
+the activation regression expected rejection of
+`/arcnexus-unavailable-quality-implementation` with a known `check` handler and
+valid `owner-format-files` declaration, but observed no exception. Retain that
+failure as Architecture's evidence; this documentation does not resolve it.
+
+FQA-2 requires public regressions for available and unavailable bindings,
+including that valid owner-scoped declaration with a known handler and unavailable
+implementation, and read-only inspection. Preserve the completed
+`quality-foundation` selection and command outcomes: owner selections, no-owner
+coverage and strictness, and the existing test inventory. Foundation supplies
+capability facts; Architecture resolves activation, and Execution retains
+applicability and current evidence responsibilities described below. Host-owned
+assembled acceptance, independent review and staging delivery remain unchanged.
+
 ## Discovery and selection boundary
 
 Shared discovery starts from the current worktree's maintained files, including
