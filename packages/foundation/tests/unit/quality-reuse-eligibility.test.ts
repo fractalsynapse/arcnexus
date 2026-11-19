@@ -128,6 +128,40 @@ test('nested package formatter plugins decline reuse', async () => {
   }
 });
 
+test('commented lint imports retain helper identity coverage', async () => {
+  const tree = fixture();
+  try {
+    tree.owner('helper-js', 'helper.js');
+    tree.write(
+      'eslint.config.ts',
+      "import rules from /* comment */ './helper.js'; export default [rules];\\n",
+    );
+    tree.write('helper.js', 'export default {};\\n');
+    const before = await selectQualityInputs('lint', 'alpha', tree.root);
+    assert(before.identity);
+    tree.write('helper.js', 'export default { changed: true };\\n');
+    const changed = await selectQualityInputs('lint', 'alpha', tree.root);
+    assert.notEqual(changed.identity, before.identity);
+    assert.equal(eligibility(changed)?.eligible, true);
+  } finally {
+    tree.close();
+  }
+});
+
+for (const extension of ['mts', 'cts'] as const) {
+  test(`uncovered executable formatter .${extension} configuration declines reuse`, async () => {
+    const tree = fixture();
+    try {
+      tree.write(`packages/alpha/prettier.config.${extension}`, 'export default {};\\n');
+      const result = await selectQualityInputs('format:check', 'alpha', tree.root);
+      assert.equal(eligibility(result)?.eligible, false);
+      assert.match(eligibility(result)?.reason ?? '', new RegExp(`prettier\\.config\\.${extension}`));
+    } finally {
+      tree.close();
+    }
+  });
+}
+
 test('known static configuration preserves scoped reuse and identity', async () => {
   const tree = fixture();
   try {
