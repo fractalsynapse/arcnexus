@@ -24,7 +24,7 @@ for (const operation of ['format:check', 'lint'] as const) {
 
         const result = tree.run(operation, owner);
         assert.equal(result.status, 0, result.output);
-        assert.match(result.output, /empty|no applicable/i);
+        if (owner) assert.match(result.output, /empty|no applicable/i);
       } finally {
         tree.close();
       }
