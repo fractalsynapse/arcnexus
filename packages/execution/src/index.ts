@@ -440,8 +440,10 @@ export class HostTask implements TaskSession {
       typeof arg === 'string' ? arg : scope?.owner,
     );
     const sameOperation =
-      operation?.command === prior?.command &&
-      JSON.stringify(args ?? []) === JSON.stringify(prior?.args ?? []);
+      operation?.network === false &&
+      operation.command === prior?.command &&
+      JSON.stringify(args ?? []) === JSON.stringify(prior?.args ?? []) &&
+      resolve(this.worktree, operation.cwd ?? '.') === prior?.cwd;
     const checkpointChanged = events.slice(priorIndex + 1).some(
       (event) => event.checkpoint !== undefined || event.baseRevision !== undefined,
     );
