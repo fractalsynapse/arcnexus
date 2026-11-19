@@ -127,6 +127,10 @@ for (const operation of ['format:check', 'lint'] as const) {
   });
 }
 
+test('Foundation exposes quality selection to applicability consumers', () => {
+  assert.equal(typeof Reflect.get(foundation, 'selectQualityInputs'), 'function');
+});
+
 test('lint includes CommonJS files in its repository-wide coverage', () => {
   const tree = new QualityFixture();
   try {
