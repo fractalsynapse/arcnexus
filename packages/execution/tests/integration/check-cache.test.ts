@@ -56,7 +56,10 @@ test('an imported lint configuration change invalidates owner lint evidence', as
     applicability: 'owner-lint-files',
   } as typeof fixtureOperation);
   const worktree = fixture.task.worktree!;
-  writeFileSync(join(worktree, 'eslint.config.ts'), "import rules from './lint-rules.ts';\nexport default [rules];\n");
+  writeFileSync(
+    join(worktree, 'eslint.config.ts'),
+    "import rules from './lint-rules.ts';\nexport default [rules];\n",
+  );
   writeFileSync(join(worktree, 'lint-rules.ts'), 'export default {};\n');
   git(worktree, 'add', 'eslint.config.ts', 'lint-rules.ts');
   commitFixture(worktree, 'Add lint configuration');
@@ -183,7 +186,7 @@ test('a cancelled request cannot reuse an otherwise valid observation', async (t
 
 for (const path of ['.prettierrc', '.prettierignore', '.editorconfig']) {
   test(`committed quality configuration ${path} invalidates cached evidence`, async (t) => {
-      const fixture = new CheckCacheFixture(t);
+    const fixture = new CheckCacheFixture(t);
     fixture.restart({
       ...fixtureOperation,
       command: 'npm',
@@ -213,11 +216,16 @@ for (const path of ['.prettierrc', '.prettierignore', '.editorconfig']) {
 }
 
 for (const [operation, applicability, path, content] of [
-  ['lint', 'owner-lint-files', 'eslint.config.ts', "export default (require('node:path') && []);\n"],
-  ['format:check', 'owner-format-files', '.prettierrc.cjs', "module.exports = {};\n"],
+  [
+    'lint',
+    'owner-lint-files',
+    'eslint.config.ts',
+    "export default (require('node:path') && []);\n",
+  ],
+  ['format:check', 'owner-format-files', '.prettierrc.cjs', 'module.exports = {};\n'],
 ] as const) {
   test(`uncertain ${operation} configuration cannot reuse evidence`, async (t) => {
-      const fixture = new CheckCacheFixture(t);
+    const fixture = new CheckCacheFixture(t);
     fixture.restart({
       ...fixtureOperation,
       command: 'npm',
@@ -228,23 +236,48 @@ for (const [operation, applicability, path, content] of [
     const worktree = fixture.task.worktree!;
     writeFileSync(join(worktree, path), content);
     git(worktree, 'add', path);
-    git(worktree, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com',
-      'commit', '-qm', 'Uncertain configuration');
+    git(
+      worktree,
+      '-c',
+      'user.name=Fixture',
+      '-c',
+      'user.email=fixture@example.com',
+      'commit',
+      '-qm',
+      'Uncertain configuration',
+    );
     assert.equal(await fixture.input(), undefined);
     assert.equal(reusableCheck(fixture.task.observations(), await fixture.input()), undefined);
     const priorLog = readFileSync(observed.log, 'utf8');
-    const fresh = await fixture.task.check('fixture-check', new AbortController().signal, fixture.scope);
+    const fresh = await fixture.task.check(
+      'fixture-check',
+      new AbortController().signal,
+      fixture.scope,
+    );
     assert.notEqual(fresh.log, observed.log);
     assert.equal(readFileSync(observed.log, 'utf8'), priorLog);
     assert.ok(readFileSync(fresh.log, 'utf8').length);
-    const observations = fixture.task.observations() as { check?: { log: string }; reusedFrom?: string }[];
+    const observations = fixture.task.observations() as {
+      check?: { log: string };
+      reusedFrom?: string;
+    }[];
     assert.ok(observations.some(({ check }) => check?.log === observed.log));
-    assert.ok(observations.some(({ check, reusedFrom }) => check?.log === fresh.log && !reusedFrom));
+    assert.ok(
+      observations.some(({ check, reusedFrom }) => check?.log === fresh.log && !reusedFrom),
+    );
   });
 }
 
 /** Commit fixture changes with a local identity for cache input comparisons. */
 function commitFixture(worktree: string, message: string): void {
-  git(worktree, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com',
-    'commit', '-qm', message);
+  git(
+    worktree,
+    '-c',
+    'user.name=Fixture',
+    '-c',
+    'user.email=fixture@example.com',
+    'commit',
+    '-qm',
+    message,
+  );
 }
