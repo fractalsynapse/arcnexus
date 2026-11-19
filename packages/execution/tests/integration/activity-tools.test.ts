@@ -32,7 +32,7 @@ class ToolBoundary {
       [this.binding],
       async (_tool, args) => {
         this.calls.push(String(args.path));
-        return { contents: 'fixture' };
+        return { path: args.path, sha256: 'fixture', text: 'fixture', nextOffset: null };
       },
       (_name, error) => {
         if (error) this.refusals.push(error);

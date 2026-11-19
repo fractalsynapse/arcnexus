@@ -155,7 +155,11 @@ function transform(value: unknown, path: string) {
   if (!format && !replace)
     throw new StewardResponseError(`response.${field}: expected format true or a replacement`);
   if (!replace) return { format };
-  const before = required(replace.before, `${field}.replace.before`);
+  const before = required(
+    replace.before,
+    `${field}.replace.before`,
+    'Use one nonempty unique source anchor, or replace the whole file with path, expected current hash and content; omit transform.',
+  );
   if (typeof replace.after !== 'string')
     throw new StewardResponseError(
       `response.${field}.replace.after: expected a string, possibly empty`,
@@ -217,8 +221,10 @@ function object(value: unknown, field: string): Record<string, unknown> {
 }
 
 /** Require nonempty fields consumed inside the authority boundary. */
-function required(value: unknown, field: string) {
+function required(value: unknown, field: string, recovery = '') {
   if (typeof value !== 'string' || !value.trim())
-    throw new StewardResponseError(`response.${field}: expected a nonempty string`);
+    throw new StewardResponseError(
+      `response.${field}: expected a nonempty string${recovery ? `. ${recovery}` : ''}`,
+    );
   return value;
 }

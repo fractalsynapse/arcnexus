@@ -5,6 +5,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { AjvJsonSchemaValidator } from '@modelcontextprotocol/sdk/validation/ajv';
 import type { AgentInspection } from '../../architecture/src/index.js';
+import type { readToolFile } from './tool-files.js';
 
 type Binding = AgentInspection['request']['options']['tools'][number];
 type Arguments = Record<string, unknown>;
@@ -97,11 +98,23 @@ export class LocalMcp {
       if (!validation.valid) throw new Error(validation.errorMessage);
       const result = await this.invoke(binding.tool, validation.data);
       this.observe(name);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
+      return toolResponse(binding.tool, result);
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       this.observe(name, reason);
       return { isError: true, content: [{ type: 'text' as const, text: reason }] };
     }
   }
+}
+
+/** Present read bytes literally while retaining their exact machine-readable fields. */
+function toolResponse(tool: Binding, result: unknown) {
+  if (tool.handler !== 'read')
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
+  const read = result as ReturnType<typeof readToolFile>;
+  const header = `Path: ${read.path}\nSHA-256: ${read.sha256}\nNext offset: ${read.nextOffset ?? 'end'}`;
+  return {
+    structuredContent: read,
+    content: [{ type: 'text' as const, text: `${header}\n\n${read.text}` }],
+  };
 }

@@ -11,7 +11,7 @@ function tool(description: string, properties: Record<string, object>, required:
 
 const definitions = {
   read: tool(
-    'Read a project file or retained evidence. Returns the complete-file hash and a bounded range of text.',
+    'Read a project file or retained evidence. Returns literal source below a path/hash/range header and exact path, sha256, text and nextOffset structured fields. Use source text as written, without adding JSON escaping.',
     {
       path: string,
       offset: { type: 'integer', minimum: 0 },
@@ -20,7 +20,7 @@ const definitions = {
   ),
   list: tool('List one project directory. Use . for the project root.', { path: string }, ['path']),
   edit: tool(
-    'Apply and retain a checked edit to exactly one owned file. Use null expected for creation and null content for deletion. For a literal substitution provide transform instead of content.',
+    'Apply and retain a checked edit to exactly one owned file. To replace a whole file supply path, expected current hash and actual replacement content; omit transform. Use null expected for creation and null content for deletion. A literal transform.replace needs one nonempty unique before anchor and its after text; empty anchors are refused. Source content must not acquire extra JSON escaping.',
     {
       path: string,
       expected: nullable,

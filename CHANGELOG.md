@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Render MCP source reads literally with exact structured fields and explain full-content repair when refusing empty replacement anchors (#641).
+
 - Give approved Architect prerequisite agents the implementation and delivery purpose while retaining the original task lookup and checkpoints (#639).
 
 - Keep distinct Director response errors in the same repair loop and restore immutable pending-milestone ownership and acceptance from host state (#632).
