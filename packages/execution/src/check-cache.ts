@@ -49,6 +49,14 @@ export async function checkInput(task: HostTask, id: string, scope?: StewardScop
     cwd: relative(worktree, command.cwd),
     scope: [scope?.owner, scope?.activity, scope?.expected ?? 'pass'],
     environment: environmentIdentity(task, command.executable, command.cwd),
+    qualityTool: selection
+      ? {
+          runtime: qualityRuntime(selection.operation),
+          executable: fileIdentity(
+            join(worktree, 'node_modules/.bin', qualityRuntime(selection.operation).executable),
+          ),
+        }
+      : undefined,
   };
   return createHash('sha256').update(JSON.stringify(input)).digest('hex');
 }
