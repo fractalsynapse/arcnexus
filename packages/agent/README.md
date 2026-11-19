@@ -28,3 +28,7 @@ Research also receives exact report-validation diagnostics, including the existi
 field bounds, before resuming its requester. Distinct findings remain repairable;
 unchanged failure or a genuine external error is retained as optional research
 unavailability. Prior failed reports remain in the original evidence.
+
+A pending reusable research entry links to its retained readable evidence as well
+as its future archive path. Later activities can read the full report before
+choosing its ordinary checked archival operation.
