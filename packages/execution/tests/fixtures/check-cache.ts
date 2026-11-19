@@ -33,7 +33,7 @@ export class CheckCacheFixture {
     mkdirSync(join(this.source, '.arc/architecture/components'), { recursive: true });
     git(this.source, 'init', '-q');
     writeFileSync(join(this.source, 'fixture.txt'), 'original');
-    writeFileSync(join(this.source, '.arc/architecture/components/owner.yaml'), 'id: owner\\nowns:\\n  - fixture.txt\\n');
+    writeFileSync(join(this.source, '.arc/architecture/components/owner.yaml'), 'id: owner\nowns:\n  - fixture.txt\n');
     writeFileSync(join(this.source, '.gitignore'), 'node_modules/\n');
     this.commit(this.source);
     this.task = this.open(fixtureOperation, git(this.source, 'rev-parse', 'HEAD'));
