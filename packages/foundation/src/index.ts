@@ -47,6 +47,7 @@ export async function selectQualityInputs(
   owner?: string,
   root: string = process.cwd(),
 ): Promise<QualitySelection> {
+  const ignoreContents = new Map<string, string>();
   const componentFiles = globSync('.arc/architecture/components/*.yaml', { cwd: root });
   const components: Component[] = componentFiles.map((path) =>
     parse(readFileSync(resolve(root, path), 'utf8')),
