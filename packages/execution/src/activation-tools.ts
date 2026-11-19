@@ -30,7 +30,6 @@ type RequestEvidence = {
 
 /** Dispatch captured project tools and keep final model output free of implicit actions. */
 export class ActivationTools {
-  private readonly checks = new Map<string, string>();
   private readonly scope: string;
   private readonly milestone?: string;
   private handoff?: Request;
