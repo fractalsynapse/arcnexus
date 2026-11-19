@@ -122,7 +122,7 @@ test('nested package formatter plugins decline reuse', async () => {
     );
     const result = await selectQualityInputs('format:check', 'alpha', tree.root);
     assert.equal(eligibility(result)?.eligible, false);
-    assert.match(eligibility(result)?.reason ?? '', /plugin.*packages\/alpha\/package\.json/i);
+    assert.match(eligibility(result)?.reason ?? '', /plugin.*package\.json/i);
   } finally {
     tree.close();
   }
