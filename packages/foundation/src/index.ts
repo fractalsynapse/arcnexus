@@ -72,6 +72,21 @@ export async function selectQualityInputs(
   return { operation, owner, files, identity, reuseEligibility };
 }
 
+/** Assess bounded reuse using the selector's discovered configuration inputs. */
+function operationReuseEligibility(
+  operation: QualityOperation,
+  files: readonly string[],
+  root: string,
+) {
+  return qualityReuseEligibility(
+    operation,
+    files,
+    root,
+    configurationInputs(operation, root),
+    prettierConfigurationInputs(operation, files, root),
+  );
+}
+
 interface QualityOperationBinding {
   tool: string;
   applicability: string;
