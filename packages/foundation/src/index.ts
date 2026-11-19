@@ -86,9 +86,7 @@ function qualityIdentity(
 ): string {
   const identity = createHash('sha256');
   identity.update(selectionIdentity(operation, owner, files, components));
-  const relevantIgnoreFiles = globSync('**/.gitignore').filter(
-    (path) => path === '.gitignore' || files.some((file) => file.startsWith(`${dirname(path)}/`)),
-  );
+  const relevantIgnoreFiles = relevantGitignoreFiles(files);
   for (const path of [
     ...componentFiles,
     ...configurationInputs(operation),
