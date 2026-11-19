@@ -96,13 +96,11 @@ export class ActivationTools {
       case 'archive':
         return this.archive(String(args.id));
       case 'check':
-        this.checks.set(tool.name, String(args.expected));
-        return {
-          queued: tool.name,
-          expected: args.expected,
-          instructions:
-            'The host runs queued checks after a completed response. Return completed when your requested work is ready for those checks.',
-        };
+        return this.task.check(tool.name, this.signal, {
+          owner: this.selection.component,
+          activity: this.selection.activity as 'documentation' | 'testing' | 'implementation',
+          expected: String(args.expected) as 'pass' | 'fail',
+        });
       default:
         return this.request(tool.handler, args);
     }
