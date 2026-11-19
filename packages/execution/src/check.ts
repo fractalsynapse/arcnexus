@@ -56,9 +56,12 @@ export async function check(
 /** Refuse a candidate whose component ownership differs from the admitted catalog. */
 export function assertCapturedOwnership(capture: Capture, worktree: string) {
   const catalog = join(worktree, '.arc/architecture/components');
-  const admittedCatalog = join(capture.source.root, '.arc/architecture/components');
-  if (!existsSync(admittedCatalog)) return;
+  const admittedPaths = capture.source.paths.filter((path) =>
+    path.startsWith('.arc/architecture/components/') && path.endsWith('.yaml'),
+  ).sort();
   const files = globSync('.arc/architecture/components/*.yaml', { cwd: worktree }).sort();
+  if (JSON.stringify(files) !== JSON.stringify(admittedPaths))
+    throw new Error('Candidate ownership drift differs from captured authority');
   const candidate = files.map((path) => {
     const component = parse(readFileSync(join(worktree, path), 'utf8')) as {
       id: string;
