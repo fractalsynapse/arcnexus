@@ -38,10 +38,18 @@ export class CheckCacheFixture {
       join(this.source, 'packages/execution/src/fixture.ts'),
       'export const fixture = true;\n',
     );
-    writeFileSync(join(this.source, 'eslint.config.ts'), "export default [{ files: ['**/*.ts'] }];\n");
+    writeFileSync(
+      join(this.source, 'eslint.config.ts'),
+      "export default [{ files: ['**/*.ts'] }];\n",
+    );
     writeFileSync(
       join(this.source, 'package.json'),
-      JSON.stringify({ scripts: { lint: 'jiti packages/foundation/scripts/owner-quality.ts lint', 'format:check': 'jiti packages/foundation/scripts/owner-quality.ts format:check' } }),
+      JSON.stringify({
+        scripts: {
+          lint: 'jiti packages/foundation/scripts/owner-quality.ts lint',
+          'format:check': 'jiti packages/foundation/scripts/owner-quality.ts format:check',
+        },
+      }),
     );
     mkdirSync(join(this.source, 'packages/foundation/scripts'), { recursive: true });
     writeFileSync(join(this.source, 'packages/foundation/scripts/owner-quality.ts'), '');
@@ -139,7 +147,17 @@ export class CheckCacheFixture {
       components: {
         owner: {
           id: 'owner',
-          owns: ['packages/execution/src/fixture.ts', 'eslint.config.ts', 'lint-rules.ts', 'package.json', 'packages/foundation/scripts/owner-quality.ts', '.prettierrc', '.prettierignore', '.editorconfig', '.prettierrc.cjs'],
+          owns: [
+            'packages/execution/src/fixture.ts',
+            'eslint.config.ts',
+            'lint-rules.ts',
+            'package.json',
+            'packages/foundation/scripts/owner-quality.ts',
+            '.prettierrc',
+            '.prettierignore',
+            '.editorconfig',
+            '.prettierrc.cjs',
+          ],
           activities: {},
         },
       },
