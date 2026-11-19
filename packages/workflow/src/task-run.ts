@@ -1,4 +1,5 @@
 import {
+  decodeRevisionResponse,
   decodeDirectorResponse,
   DirectorResponseError,
   scheduledSupplier,
