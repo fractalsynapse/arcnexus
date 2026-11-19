@@ -9,7 +9,7 @@ import type { Candidate } from '../../verification/src/index.js';
 import { reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
 import type { TaskEvent, TaskOutcome, TaskSession } from '../../workflow/src/index.js';
 import { GitHub } from '../../collaboration/src/index.js';
-import { activateActor } from './activation.js';
+import { activateActor, type ContextRefresh } from './activation.js';
 import { inboxIdentity, usedResearch } from './research.js';
 import { formatterPreview } from './formatter.js';
 import { recoverPrepared } from './prepared-recovery.js';
@@ -343,8 +343,9 @@ export class HostTask implements TaskSession {
     selection: ActivationInput['selection'],
     data: Omit<TaskContext, 'goal' | 'worktree'>,
     signal: AbortSignal,
+    refresh?: ContextRefresh,
   ) {
-    return activateActor(this, agent, selection, data, signal);
+    return activateActor(this, agent, selection, data, signal, refresh);
   }
 
   /** Return the research evidence used by this captured actor activation. */

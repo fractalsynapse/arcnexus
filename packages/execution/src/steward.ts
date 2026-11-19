@@ -5,6 +5,7 @@ import type { ActivityOutcome, TaskSession } from '../../workflow/src/index.js';
 import { hostTask, type HostTask } from './index.js';
 import { citedAssemblyChecks, correctionFinding } from './correction.js';
 import type { CheckResult } from './check.js';
+import type { ContextRefresh } from './activation.js';
 import { archiveResearch, pendingResearch } from './research-archive.js';
 import { materializeEdits } from './formatter.js';
 import { CheckedEditOwnershipRefusal, StaleCheckedEdit } from './edits.js';
@@ -159,7 +160,26 @@ async function askSteward(
       evidence: task.evidence.slice(),
     },
     signal,
+    stewardContinuation(task, milestone, scope, signal),
   );
+}
+
+/** Reuse the canonical caller builder after research or clarification without losing complete answers. */
+function stewardContinuation(
+  task: HostTask,
+  milestone: Milestone,
+  scope: StewardScope,
+  signal: AbortSignal,
+): ContextRefresh {
+  return async (input) => ({
+    ...input,
+    assignment: {
+      ...(input.assignment as Record<string, unknown>),
+      ...(await stewardAssignment(task, milestone, scope, signal)),
+      ...archiveContext(task, scope),
+    },
+    evidence: task.evidence.slice(),
+  });
 }
 
 /** Offer the editable steward a checked path for archiving reusable reports. */
@@ -193,7 +213,8 @@ async function stewardAssignment(
       task.inbox?.owner === milestone.owner ||
       supplierAnswerRequired(task.history(), milestone, scope.activity),
     ...(finding ? { finding } : {}),
-    ...(failedCheck ? { failedCheck, correction: correctionInstruction } : {}),
+    failedCheck,
+    correction: failedCheck ? correctionInstruction : undefined,
     ...(await correctionChecks(task, scope, finding, signal)),
   };
 }
@@ -216,8 +237,8 @@ async function correctionChecks(
       currentChecks.push(await task.check(id, signal));
   }
   return {
-    ...(currentChecks.length ? { currentChecks } : {}),
-    ...(ownerCheck ? { ownerCheck } : {}),
+    currentChecks,
+    ownerCheck,
   };
 }
 

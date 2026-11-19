@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Refresh steward check diagnostics after research and clarification handoffs while preserving complete answers and the original check expectation.
+
 - Give Architect a compact prior-finding index linked to complete retained observations; keep expected human approval pauses out of technical failure findings.
 
 - Link pending reusable research to its readable retained report before archival so later activities can retrieve the complete findings.
