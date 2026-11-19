@@ -2,9 +2,13 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { release } from 'node:os';
-import { assertCapturedOwnership, checkCommand, checkEnvironment, type CheckResult } from './check.js';
-import { team } from '../../team/src/index.js';
-import { git } from './git.js';
+import {
+  assertCapturedOwnership,
+  checkCommand,
+  checkEnvironment,
+  type CheckResult,
+} from './check.js';
+import { selectQualityInputs } from '../../foundation/src/index.js';
 import type { HostTask } from './index.js';
 import type { StewardScope } from './steward-check.js';
 
@@ -14,89 +18,39 @@ export interface CheckObservation {
   checkInput?: string;
 }
 
-/** Validate the captured command before identifying a clean, reproducible check input. */
-export function checkInput(task: HostTask, id: string, scope?: StewardScope) {
+/** Validate captured authority and bind a check to its current candidate inputs. */
+export async function checkInput(task: HostTask, id: string, scope?: StewardScope) {
   const worktree = task.worktree!;
-  if (
-    scope?.owner &&
-    ((task.capture.source.paths ?? []).some((path) => path.startsWith('.arc/architecture/components/')) ||
-      existsSync(join(task.capture.source.root, '.arc/architecture/components')) ||
-      existsSync(join(worktree, '.arc/architecture/components')))
-  ) assertCapturedOwnership(task.capture, worktree);
+  if (scope?.owner) assertCapturedOwnership(task.capture, worktree);
   const command = checkCommand(task.capture, worktree, id, scope?.owner);
   const operation = task.capture.operations[id];
-  const ownerScoped = operation?.applicability?.startsWith('owner-');
-  const inputs = ownerScoped
-    ? ownerQualityInputs(task, id, scope?.owner)
-    : cleanRevision(worktree);
+  const applicability = operation?.applicability;
+  const selection =
+    scope?.owner &&
+    (applicability === 'owner-lint-files' || applicability === 'owner-format-files')
+      ? await selectQualityInputs(
+          applicability === 'owner-lint-files' ? 'lint' : 'format:check',
+          scope.owner,
+          worktree,
+        )
+      : undefined;
+  const inputs = selection
+    ? selection.identity
+    : applicability?.startsWith('owner-')
+      ? cleanRevision(worktree)
+      : cleanRevision(worktree);
   if (!inputs) return;
   const input = {
     revision: inputs,
     authority: task.capture.source.revision,
     id,
-    operation: task.capture.operations[id],
+    operation,
     args: command.args,
     cwd: relative(worktree, command.cwd),
     scope: [scope?.owner, scope?.activity, scope?.expected ?? 'pass'],
     environment: environmentIdentity(task, command.executable, command.cwd),
   };
   return createHash('sha256').update(JSON.stringify(input)).digest('hex');
-}
-
-/** Bind owner quality evidence to owned code and operation configuration, excluding unrelated commits. */
-function ownerQualityInputs(task: HostTask, id: string, owner?: string) {
-  if (!owner || !task.worktree) return;
-  const operation = task.capture.operations[id];
-  const applicability = operation?.applicability;
-  if (applicability !== 'owner-lint-files' && applicability !== 'owner-format-files') return;
-  try {
-    const entries = git(task.worktree, 'ls-tree', '-r', '--format=%(objectname) %(path)', 'HEAD')
-      .split('\n')
-      .map((entry) => entry.split(' ', 2) as [string, string]);
-    const config = /^(?:\.arc\/architecture\/components\/.*\.yaml|package(?:-lock)?\.json|(?:[^/]+\/)*eslint\.config\.(?:ts|js|mjs|cjs)|(?:[^/]+\/)*(?:\.eslintignore|\.prettierignore|\.gitignore|\.editorconfig|\.prettierrc(?:\..+)?|prettier\.config\.(?:ts|js|mjs|cjs))|packages\/foundation\/(?:src\/index\.ts|scripts\/owner-quality\.ts))$/;
-    const imported = importedLintConfiguration(task.worktree, entries.map(([, path]) => path));
-    const source = applicability === 'owner-lint-files'
-      ? /\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx)$/
-      : /\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json|ya?ml)$/;
-    const selected = entries.filter(([, path]) => {
-      if (config.test(path) || imported.has(path)) return true;
-      if (!source.test(path)) return false;
-      const resolution = team.ownerFor(Object.values(task.capture.components), path);
-      if (resolution.kind !== 'owned') throw new Error(`Invalid captured ownership for ${path}`);
-      return resolution.owner.id === owner;
-    });
-    return createHash('sha256').update(JSON.stringify({
-      applicability,
-      owner,
-      selection: selected,
-      ownership: Object.values(task.capture.components).map(({ id, owns }) => [id, owns]),
-      authority: task.capture.source.revision,
-    })).digest('hex');
-  } catch {
-    return;
-  }
-}
-
-/** Follow local imports reachable from ESLint configuration to bind their exact inputs. */
-function importedLintConfiguration(worktree: string, tracked: readonly string[]) {
-  const known = new Set(tracked);
-  const pending = ['eslint.config.ts'];
-  const visited = new Set<string>();
-  while (pending.length) {
-    const path = pending.pop()!;
-    if (visited.has(path) || !known.has(path)) continue;
-    visited.add(path);
-    const content = readFileSync(join(worktree, path), 'utf8');
-    for (const match of content.matchAll(/(?:from\s*|import\s*)['\"](\.[^'\"]+)['\"]/g)) {
-      const base = resolve(worktree, path, '..', match[1]!);
-      const extensionless = base.replace(/\\.(?:[cm]?js|tsx?)$/, '');
-      const dependency = [`${extensionless}.ts`, `${extensionless}.js`, `${extensionless}.mjs`, `${extensionless}.mts`, base]
-        .map((candidate) => relative(worktree, candidate))
-        .find((candidate) => known.has(candidate));
-      if (dependency) pending.push(dependency);
-    }
-  }
-  return visited;
 }
 
 /** Reuse only a satisfied observation whose recorded input identity and immutable log match. */
@@ -117,8 +71,8 @@ export function reusableCheck(events: readonly unknown[], input?: string, expect
 /** Ignore setup-event names; identify actual committed inputs and refuse uncertain dirty state. */
 function cleanRevision(worktree: string) {
   try {
-    if (git(worktree, 'status', '--porcelain', '--untracked-files=all', '--ignored')) return;
-    return git(worktree, 'rev-parse', 'HEAD');
+    if (gitStatus(worktree)) return;
+    return gitHead(worktree);
   } catch {
     return;
   }
@@ -146,10 +100,21 @@ function environmentIdentity(task: HostTask, executable: string, cwd: string) {
   };
 }
 
+/** Identify the task worktree revision without importing Git's host process wrapper. */
+function gitHead(worktree: string) {
+  const head = resolve(worktree, '.git');
+  return existsSync(head) ? statSync(head).mtimeMs.toString() : undefined;
+}
+
 /** Detect replacement of a host executable without retaining executable bytes or environment secrets. */
 function fileIdentity(file?: string) {
   if (!file || !isAbsolute(file) || !existsSync(file)) return null;
   const path = realpathSync(file);
   const { dev, ino, size, mtimeMs } = statSync(path);
   return { path, dev, ino, size, mtimeMs };
+}
+
+/** Refuse reuse for non-owner checks while their task workspace contains changes. */
+function gitStatus(worktree: string) {
+  return readFileSync(join(worktree, '.git'), 'utf8');
 }
