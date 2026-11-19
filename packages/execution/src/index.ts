@@ -423,6 +423,8 @@ export class HostTask implements TaskSession {
       checkpoint?: unknown;
       baseRevision?: string;
       edits?: readonly { before: string | null; after: string | null }[];
+      checkpoint?: unknown;
+      baseRevision?: string;
     }>();
     const priorIndex = events.findLastIndex(
       ({ check, scope: observed }) =>
