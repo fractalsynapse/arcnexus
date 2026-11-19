@@ -164,6 +164,7 @@ function qualityIdentity(
   components: readonly Component[],
   componentFiles: readonly string[],
   root: string,
+  ignoreContents: Map<string, string>,
 ): string {
   const identity = createHash('sha256');
   identity.update(selectionIdentity(operation, owner, files, components));
