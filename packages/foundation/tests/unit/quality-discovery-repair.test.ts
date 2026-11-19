@@ -34,7 +34,10 @@ for (const operation of ['format:check', 'lint'] as const) {
       const read = fs.readFileSync;
       const readdir = fs.readdirSync;
       const glob = fs.globSync;
-      context.mock.method(fs, 'readFileSync', ((path: fs.PathOrFileDescriptor, ...args: unknown[]) => {
+      context.mock.method(fs, 'readFileSync', ((
+        path: fs.PathOrFileDescriptor,
+        ...args: unknown[]
+      ) => {
         if (typeof path === 'string' && path.endsWith('.gitignore')) reads.push(path);
         return Reflect.apply(read, fs, [path, ...args]);
       }) as typeof fs.readFileSync);
