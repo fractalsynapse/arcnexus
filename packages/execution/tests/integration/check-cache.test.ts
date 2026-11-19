@@ -71,6 +71,15 @@ test('dirty inputs and legacy observations without input provenance are never re
   assert.equal(fixture.input(), undefined);
 });
 
+for (const path of ['new.test.ts', 'tsconfig.json', 'eslint.config.ts']) {
+  test(`an uncommitted ${path} invalidates retained evidence`, (t) => {
+    const fixture = new CheckCacheFixture(t);
+    fixture.observe();
+    writeFileSync(join(fixture.task.worktree!, path), 'changed input');
+    assert.equal(fixture.input(), undefined);
+  });
+}
+
 for (const operation of [
   { ...fixtureOperation, cwd: '/tmp' },
   { ...fixtureOperation, cwd: '..' },
