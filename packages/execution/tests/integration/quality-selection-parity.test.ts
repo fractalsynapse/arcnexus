@@ -33,7 +33,7 @@ for (const [operation, applicability] of [
     const temporary = mkdtempSync(join(tmpdir(), 'arcnexus-quality-parity-'));
     t.after(() => rmSync(temporary, { recursive: true, force: true }));
     const capture = {
-      source: { root },
+      source: { root, paths: globSync('.arc/architecture/components/*.yaml').sort() },
       project: { checks: { acceptance: [] } },
       components,
       operations: {
