@@ -19,6 +19,39 @@ const milestone: Milestone = {
   }],
 };
 
+test('a satisfied expected-red owner test cannot satisfy omitted formatting in Testing', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'arcnexus-quality-red-'));
+  const task = new StewardFixture(t, root).task;
+  t.after(() => task.close());
+  const ids = ['owner-tests', 'owner-format'];
+  const operations = Object.fromEntries(ids.map((id) => [id, {
+    id, kind: 'command', tool: 'check', category: 'build',
+    command: '/usr/bin/false', args: [], cwd: '.', network: false,
+  }]));
+  Object.assign(task.capture, { operations });
+  Object.assign(task.capture.components.owner!.activities, {
+    testing: { profile: 'profile', operations: ids },
+  });
+  t.mock.method(task, 'activate', async () => {
+    const log = task.store('red.log', 'controlled expected test failure');
+    task.note({
+      check: { id: 'owner-tests', status: 1, log, command: 'fixture', args: [], cwd: root, durationMs: 0 },
+      scope: { owner: 'owner', activity: 'testing', expected: 'fail' },
+    });
+    return { kind: 'completed', edits: [], checks: [] };
+  });
+  const testing: Milestone = {
+    ...milestone,
+    steps: [{ activity: 'testing', checklist: [
+      { id: 'quality', criteria: ['quality'], expected: 'Red tests and passing formatting' },
+    ] }],
+  };
+  const result = await steward(
+    new Agent(new Architecture()), task, testing, 'testing', AbortSignal.timeout(5000),
+  );
+  assert.notEqual(result.kind, 'completed', 'owner-format lacks current evidence');
+});
+
 for (const missing of ['owner-format', 'owner-lint', 'repository-types']) {
   test(`an unrelated successful observation cannot satisfy omitted ${missing}`, async (t) => {
     const root = mkdtempSync(join(tmpdir(), 'arcnexus-quality-obligation-'));
