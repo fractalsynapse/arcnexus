@@ -14,8 +14,7 @@ import type { HostTask } from './index.js';
 import { inboxIdentity } from './research.js';
 import { decodeEdit } from './steward-response.js';
 import { listToolDirectory, readToolFile } from './tool-files.js';
-import { type StewardScope } from './steward-check.js';
-import { repairTestingExpectation } from './testing-rewind.js';
+import { repairCheckExpectation, type StewardScope } from './steward-check.js';
 
 type Tool = Pick<AgentInspection['request']['options']['tools'][number], 'name' | 'handler'>;
 type Evidence = {
@@ -112,7 +111,7 @@ export class ActivationTools {
       activity: this.selection.activity as StewardScope['activity'],
       expected,
     };
-    repairTestingExpectation(this.task, id, scope);
+    repairCheckExpectation(this.task, id, scope);
     return this.task.check(id, this.signal, scope);
   }
 

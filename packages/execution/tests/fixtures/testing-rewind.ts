@@ -39,7 +39,12 @@ const tool: AgentInspection['request']['options']['tools'][number] = {
 /** Exercise caller expectation repair through real MCP, journals and the public Steward entry point. */
 export class TestingRewindFixture {
   readonly root = mkdtempSync(join(tmpdir(), 'arcnexus-testing-rewind-'));
-  readonly scope = { owner: 'owner', activity: 'testing' as const };
+  activity: 'testing' | 'implementation' = 'testing';
+
+  /** Bind every controlled tool result to the actual caller selected for the scenario. */
+  get scope() {
+    return { owner: 'owner', activity: this.activity };
+  }
   readonly client = new Client({ name: 'rewind-fixture', version: '1' });
   task: HostTask;
   red: string;
@@ -77,7 +82,10 @@ export class TestingRewindFixture {
         owner: {
           id: 'owner',
           owns: ['fixture.txt'],
-          activities: { testing: { profile: 'profile', operations: ['owner-tests'] } },
+          activities: {
+            testing: { profile: 'profile', operations: ['owner-tests'] },
+            implementation: { profile: 'profile', operations: ['owner-tests'] },
+          },
         },
       },
       operations: {
@@ -127,7 +135,7 @@ export class TestingRewindFixture {
   async connect() {
     const actions = new ActivationTools(
       this.task,
-      { component: 'owner', activity: 'testing' },
+      { component: 'owner', activity: this.activity },
       { milestone: { id: 'original' } },
       new AbortController().signal,
     );
@@ -159,7 +167,7 @@ export class TestingRewindFixture {
       new Agent(new Architecture()),
       this.task,
       rewindMilestone,
-      'testing',
+      this.activity,
       new AbortController().signal,
     );
     return assignment;
@@ -205,7 +213,7 @@ export class TestingRewindFixture {
       'check',
       async (_id: string, _signal: AbortSignal, scope?: { expected?: 'pass' | 'fail' }) => {
         if (this.interrupted) throw new Error('Controlled interruption before the recheck');
-        return this.observation('testing', scope!.expected!, this.status);
+        return this.observation(this.activity, scope!.expected!, this.status);
       },
     );
   }

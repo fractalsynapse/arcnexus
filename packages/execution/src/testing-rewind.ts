@@ -3,7 +3,7 @@ import type { Plan } from '../../direction/src/index.js';
 import type { ActivityCheckpoint, ActivityRepair } from '../../workflow/src/index.js';
 import { checkCommand, type CheckResult } from './check.js';
 import type { HostTask } from './index.js';
-import { pendingStewardCheck, type StewardScope } from './steward-check.js';
+import { type StewardScope } from './steward-check.js';
 
 interface Event {
   plan?: Plan;
@@ -58,19 +58,6 @@ function matchingRed(
   } catch {
     return false;
   }
-}
-
-/** Correct only a repeated-red request after a passing result; required passing failures remain immutable. */
-export function repairTestingExpectation(task: HostTask, id: string, scope: StewardScope) {
-  const pending = pendingStewardCheck(task.observations(), scope, id);
-  if (!pending || pending.id !== id || pending.expected === scope.expected) return;
-  const proof =
-    scope.expected === 'pass' && pending.expected === 'fail' && pending.status === 0
-      ? retainedTesting(task, scope, id)
-      : undefined;
-  if (!proof)
-    throw new Error(`Cannot change the required recheck for ${id}: expected ${pending.expected}`);
-  task.note({ checkExpectationRepair: { scope, log: pending.log, ...proof } });
 }
 
 /** Require the same goal acceptance and captured architecture as the original negative observation. */

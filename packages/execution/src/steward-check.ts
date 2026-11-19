@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import type { Feedback, StewardCheckFailure } from '../../direction/src/index.js';
 import type { CheckResult } from './check.js';
+import type { HostTask } from './index.js';
 
 export interface StewardScope {
   owner: string;
@@ -107,4 +108,13 @@ export function stewardInput(events: readonly unknown[]) {
   return createHash('sha256')
     .update(JSON.stringify([...files].sort()))
     .digest('hex');
+}
+
+/** Correct an unexpected-pass prediction without relabelling any actual required-pass failure. */
+export function repairCheckExpectation(task: HostTask, id: string, scope: StewardScope) {
+  const pending = pendingStewardCheck(task.observations(), scope, id);
+  if (!pending || pending.expected === scope.expected) return;
+  if (scope.expected !== 'pass' || pending.expected !== 'fail' || pending.status !== 0)
+    throw new Error(`Cannot change the required recheck for ${id}: expected ${pending.expected}`);
+  task.note({ checkExpectationRepair: { scope, id, log: pending.log } });
 }

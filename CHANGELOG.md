@@ -13,7 +13,7 @@
 
 ### Fixed
 
-- Preserve completed activity and initial red evidence across local rewinds; repair mistaken repeated-red expectations only against host-verified prior work, retaining a required fresh check (#651).
+- Preserve completed activity and initial red evidence across local rewinds; repair mistaken expected-fail predictions after actual passes, preserving required-pass failures and a required current check (#651).
 
 - Verify candidates with their locked dependency tree in the existing networkless confinement; retain prerequisite failures without counting them as expected failing tests (#649).
 
