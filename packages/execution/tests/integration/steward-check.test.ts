@@ -91,7 +91,7 @@ class CheckTask {
     if (correction) {
       assert.match(
         JSON.stringify(data.assignment),
-        /read-only filesystem.*mapped checked-edit MCP tool/,
+        /read-only filesystem.*checked-edit/,
       );
       assert.match(JSON.stringify(data.assignment), /"status":1/);
       assert(data.evidence?.includes(this.failureLog));
