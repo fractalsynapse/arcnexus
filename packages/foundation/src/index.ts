@@ -39,10 +39,7 @@ async function selectOwnedQualityFiles(
   owner: string | undefined,
   components: readonly Component[],
 ): Promise<string[]> {
-  const candidates = globSync(
-    operation === 'lint' ? '**/*' : '**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}',
-  )
-    .filter((path) => !isIgnored(path))
+  const candidates = discoverMaintainedFiles()
     .filter((path) => operation !== 'format:check' || isFormatCovered(path))
     .sort();
   const eslint = operation === 'lint' ? new ESLint() : undefined;
