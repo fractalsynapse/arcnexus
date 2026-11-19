@@ -18,12 +18,11 @@ export interface CheckObservation {
 export function checkInput(task: HostTask, id: string, scope?: StewardScope) {
   const worktree = task.worktree!;
   const command = checkCommand(task.capture, worktree, id, scope?.owner);
-  const revision = cleanRevision(worktree);
-  if (!revision) return;
   const operation = task.capture.operations[id];
-  const inputs = operation?.applicability?.startsWith('owner-')
+  const ownerScoped = operation?.applicability?.startsWith('owner-');
+  const inputs = ownerScoped
     ? ownerQualityInputs(task, id, scope?.owner)
-    : revision;
+    : cleanRevision(worktree);
   if (!inputs) return;
   const input = {
     revision: inputs,
