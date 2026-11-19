@@ -100,12 +100,6 @@ function environmentIdentity(task: HostTask, executable: string, cwd: string) {
   };
 }
 
-/** Identify the task worktree revision without importing Git's host process wrapper. */
-function gitHead(worktree: string) {
-  const head = resolve(worktree, '.git');
-  return existsSync(head) ? statSync(head).mtimeMs.toString() : undefined;
-}
-
 /** Detect replacement of a host executable without retaining executable bytes or environment secrets. */
 function fileIdentity(file?: string) {
   if (!file || !isAbsolute(file) || !existsSync(file)) return null;
@@ -114,7 +108,3 @@ function fileIdentity(file?: string) {
   return { path, dev, ino, size, mtimeMs };
 }
 
-/** Refuse reuse for non-owner checks while their task workspace contains changes. */
-function gitStatus(worktree: string) {
-  return readFileSync(join(worktree, '.git'), 'utf8');
-}
