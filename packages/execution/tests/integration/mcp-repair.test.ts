@@ -67,7 +67,7 @@ test('MCP check, checked correction, recheck and supplier handoff retain observa
     assert.equal(readFileSync(first.log, 'utf8'), 'exit 37\n');
     assert.equal(readFileSync(second.log, 'utf8'), 'exit 0\n');
     await call(client, 'request-supplier', { owner: 'other', milestone: 'supplier', reason: 'Distinct work' });
-    assert.equal(activation.finish({ kind: 'completed' }).kind, 'supplier');
+    assert.deepEqual(activation.finish({ kind: 'completed' }), { kind: 'supplier', owner: 'other', milestone: 'supplier', reason: 'Distinct work' });
     assert.equal(checks.length, 2);
   } finally {
     await client.close();
