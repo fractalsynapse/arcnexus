@@ -59,17 +59,9 @@ test('host storage preserves exact snapshot bytes after subsequent observations'
   assert.match(evidenceBytes, /complete answer/);
 });
 
-test('revision snapshot selects the accepted plan and committed position after planner refresh', (t) => {
-  const directory = mkdtempSync(join(tmpdir(), 'coordination-revision-'));
-  t.after(() => rmSync(directory, { recursive: true, force: true }));
-  const store = new Coordination(directory);
-  const remote = 'https://example.invalid/repo.git';
-  const first = store.admit(remote, 'goal');
-  assert('record' in first);
-  first.record({ plan: { milestones: [{ id: 'obsolete' }] } });
-  first.record({ position: { completed: 1, activities: { obsolete: 2 } } });
-  first.record({ plannerRefresh: 'new inventory' });
-  const plan = {
+/** Supply the accepted milestones and their original criteria for a resumed task. */
+function acceptedPlan() {
+  return {
     milestones: [
       {
         id: 'done',
@@ -85,11 +77,29 @@ test('revision snapshot selects the accepted plan and committed position after p
       },
     ],
   };
+}
+
+/** Record the previous attempt, including its obsolete position and failed check. */
+function recordPreviousAttempt(store: Coordination, remote: string, plan: ReturnType<typeof acceptedPlan>) {
+  const first = store.admit(remote, 'goal');
+  assert('record' in first);
+  first.record({ plan: { milestones: [{ id: 'obsolete' }] } });
+  first.record({ position: { completed: 1, activities: { obsolete: 2 } } });
+  first.record({ plannerRefresh: 'new inventory' });
   first.record({ plan });
   first.record({ position: { completed: 1, activities: { done: 1, pending: 1 } } });
   first.record({ check: { id: 'owner-tests', status: 'failed', log: 'failure.log' } });
   first.finish({ kind: 'cancelled', evidence: ['failure.log'] });
   first.close();
+}
+
+test('revision snapshot selects the accepted plan and committed position after planner refresh', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'coordination-revision-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const store = new Coordination(directory);
+  const remote = 'https://example.invalid/repo.git';
+  const plan = acceptedPlan();
+  recordPreviousAttempt(store, remote, plan);
 
   const retry = store.admit(remote, 'goal');
   assert('record' in retry);
