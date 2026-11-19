@@ -142,7 +142,7 @@ function prepareNestedWorktree(host: string, worktree: string) {
   cpSync(join(host, 'packages/foundation'), join(worktree, 'packages/foundation'), { recursive: true });
   cpSync(join(host, 'packages/team'), join(worktree, 'packages/team'), { recursive: true });
   cpSync(join(host, 'package.json'), join(worktree, 'package.json'));
-  symlinkSync(join(host, 'node_modules'), join(worktree, 'node_modules'), 'dir');
+  mkdirSync(join(worktree, 'node_modules'));
   writeFileSync(join(components, 'execution.yaml'), 'id: execution\nowns:\n  - packages/execution\n');
   writeFileSync(join(components, 'foundation.yaml'), foundationDeclaration);
 }
