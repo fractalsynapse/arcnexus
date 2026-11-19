@@ -189,11 +189,17 @@ function matchesIgnoreRules(path: string, rules: readonly string[]): boolean {
 
 /** Convert gitignore wildcards into path-aware matching. */
 function ignoreMatcher(pattern: string): RegExp {
-  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&');
-  const expression = escaped.replace(/\*\*/g, '§').replace(/\*/g, '[^/]*')
+  const escaped = pattern.replace(/[|\\{}()[\]^$+?.]/g, '\\$&');
+  const slashless = !pattern.includes('/');
+  const expression = escaped
+    .replace(/\*\*\//g, '§/')
+    .replace(/\*\*/g, '§')
+    .replace(/\*/g, '[^/]*')
     .replace(/\?/g, '[^/]')
-    .replace(/§\//g, '(?:.*/)?').replace(/§/g, '.*');
-  return new RegExp(`^(?:${expression})(?:/.*)?$`);
+    .replace(/§\//g, '(?:.*/)?')
+    .replace(/§/g, '.*');
+  const prefix = slashless ? '(?:.*/)?' : '';
+  return new RegExp(`^${prefix}(?:${expression})(?:/.*)?$`);
 }
 /** Preserve repository formatter coverage while allowing package and fixture files. */
 function isFormatCovered(path: string): boolean {
