@@ -26,13 +26,16 @@ class OwnerQuality {
       parse(readFileSync(path, 'utf8')) as Component,
     );
     assert(!this.owner || components.some(({ id }) => id === this.owner), `Unknown owner: ${this.owner}`);
-    const paths = this.currentFiles().filter((path) =>
-      !this.owner || team.ownerFor(components, path).kind === 'owned' &&
-        team.ownerFor(components, path).owner.id === this.owner,
-    );
+    const paths = this.currentFiles().filter((path) => {
+      const resolution = team.ownerFor(components, path);
+      assert.notEqual(resolution.kind, 'collision', `Ambiguous ownership: ${path}`);
+      return !this.owner || resolution.kind === 'owned' &&
+        resolution.owner.id === this.owner;
+    });
     const files = this.applicableFiles(paths);
-    const identity = createHash('sha256').update(files.join('\n')).digest('hex');
-    console.log(`${this.operation} scope=${this.owner ?? 'repository'} inputs=${files.length} sha256=${identity}`);
+    const identity = createHash('sha256');
+    for (const path of files) identity.update(path).update(readFileSync(path));
+    console.log(`${this.operation} scope=${this.owner ?? 'repository'} inputs=${files.length} sha256=${identity.digest('hex')}`);
     if (!files.length) {
       console.log(`${this.operation} is empty: no applicable maintained files.`);
       return;
@@ -50,7 +53,8 @@ class OwnerQuality {
   private currentFiles(): string[] {
     const tracked = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' });
     const created = execFileSync('git', ['ls-files', '--others', '--exclude-standard', '-z'], { encoding: 'utf8' });
-    return [...new Set([...tracked, ...created].split('\0').filter((path) =>
+    const paths = [...tracked.split('\0'), ...created.split('\0')];
+    return [...new Set(paths.filter((path) =>
       /\.(?:ts|mts|cts|js|mjs|cjs|jsx|tsx|json|yaml|yml)$/.test(path),
     ))].sort();
   }
