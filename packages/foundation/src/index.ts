@@ -312,6 +312,10 @@ interface IgnoreMatcher {
   test(path: string): { ignored: boolean; unignored: boolean };
 }
 
+interface IgnoreOptions {
+  ignorecase: false;
+}
+
 interface IgnoreScope {
   directory: string;
   matcher: IgnoreMatcher;
