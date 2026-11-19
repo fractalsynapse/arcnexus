@@ -44,8 +44,8 @@ for (const [operation, applicability] of [
         quality: {
           id: 'quality',
           category: 'build',
-          command: '/usr/bin/true',
-          args: [],
+          command: 'npm',
+          args: ['run', operation, '--', { context: 'owner' }],
           network: false,
           tool: 'check',
           applicability,
