@@ -348,7 +348,6 @@ interface Component {
   id: string;
   owns: string[];
 }
-
 interface Suite {
   file: string;
   owner: string;
