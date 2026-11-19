@@ -71,6 +71,12 @@ Checked supplier contributions also change the task's check inputs. After that
 contribution, a remaining failure returns to the original caller for local repair;
 the supplier's ownership never grants the caller permission to edit its files.
 
+Every caller-level reply retry rebuilds its assignment from the current journal.
+The newest pending check supplies the diagnostic and unchanged expected outcome;
+a resolved failure stays in history without remaining the current instruction.
+Earlier evidence and receipts remain available. This prevents later repairs from
+being directed at a syntax error after compilation has already succeeded (#642).
+
 A steward self-review returns `kind: repair`, the earliest affected applicable
 `activity` (`documentation`, `testing` or `implementation`), and its `reason`.
 Workflow validates that rewind against the milestone and captured activity map,
