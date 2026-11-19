@@ -38,6 +38,8 @@ const plan: Plan = {
 for (const scenario of [
   'missing',
   'unavailable',
+  'missing-log',
+  'unexpected-green',
   'stale',
   'other-owner',
   'other-activity',
@@ -103,7 +105,7 @@ for (const scenario of [
       scope: { owner: 'verification', activity: 'testing', expected: 'fail' },
       check: {
         id: 'owner-tests',
-        status: 1,
+        status: scenario === 'unexpected-green' ? 0 : 1,
         command: 'test',
         args: [],
         cwd: root,
@@ -127,7 +129,7 @@ for (const scenario of [
           args: [],
           cwd: root,
           durationMs: 1,
-          log,
+          log: scenario === 'missing-log' ? join(root, 'missing.log') : log,
         },
       });
       if (scenario === 'stale' || scenario === 'retained-red' || scenario === 'stale-then-pass')
