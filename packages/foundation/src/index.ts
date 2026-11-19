@@ -156,8 +156,7 @@ async function selectOwnedQualityFiles(
     if (eslint && (await eslint.isPathIgnored(resolve(root, path)))) continue;
     if (
       operation === 'format:check' &&
-      (await getFileInfo(resolve(root, path), { ignorePath: resolve(root, '.prettierignore') }))
-        .ignored
+      (await safePrettierFileInfo(resolve(root, path), root)).ignored
     )
       continue;
     const resolution = team.ownerFor(components, path);
