@@ -84,7 +84,7 @@ test('real lint and type diagnostics reach one MCP caller and survive checked re
 
   // This controlled boundary runs real tools under the outer test sandbox; it does not
   // exercise HostTask's inner confinement or its production evidence cache.
-  t.mock.method(task, 'check', async (id, _signal, scope) => {
+  t.mock.method(task, 'check', async (id: string, _signal: AbortSignal, scope?: Parameters<typeof task.check>[2]) => {
     const args = id === 'owner-lint' ? ['run', 'lint', '--', owner] : ['run', 'check'];
     const start = Date.now();
     const result = spawnSync('npm', args, { cwd: workspace, encoding: 'utf8' });
