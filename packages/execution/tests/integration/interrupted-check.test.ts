@@ -365,7 +365,7 @@ async function interrupt(scenario: InterruptedCheck) {
   scenario.secured('checked');
 }
 
-for (const expected of ['pass'] as const) {
+for (const expected of ['pass', 'fail'] as const) {
   test(`interrupted ${expected} check recovers its expectation, exact exit, evidence and edits`, async (t) => {
     const scenario = new InterruptedCheck(t, expected);
     await interrupt(scenario);
