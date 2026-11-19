@@ -148,7 +148,6 @@ function prettierConfigurationInputs(
   if (operation !== 'format:check') return [];
   const paths = new Set<string>();
   collectPrettierConfigurationPaths(paths, files);
-  includeNestedPrettierConfigurations(paths, files);
   return [...paths].sort();
 }
 
