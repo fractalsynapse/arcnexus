@@ -81,20 +81,7 @@ function directorAssignment(
   standing?: StandingGoalEvidence,
   request?: RevisionRequest,
 ) {
-  const revisionShape = request
-    ? { ...shape, plan: { kind: 'plan', plan: { milestones: [] } } }
-    : shape;
-  const assignment = {
-    revision: revisionInstructions(feedback, Boolean(request)),
-    ...revisionShape,
-    feedback,
-    revisionContext: request && {
-      acceptedPlan: request.acceptedPlan,
-      retainedEvidence: request.retainedEvidence,
-      position: request.position,
-      finding: request.finding,
-    },
-  };
+  const assignment = directorAssignmentBase(feedback, request);
   return standing ? standingAssignment(assignment, standing) : assignment;
 }
 
