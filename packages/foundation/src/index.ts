@@ -278,7 +278,7 @@ function parentDirectories(file: string): string[] {
 }
 
 /** Follow local imports from quality configuration without hashing unrelated source. */
-function configurationInputs(operation: QualitySelection['operation], root: string): string[] {
+function configurationInputs(operation: QualitySelection['operation'], root: string): string[] {
   const pending = operation === 'lint' ? ['eslint.config.ts'] : [];
   const visited = new Set<string>();
   while (pending.length) {
