@@ -38,7 +38,7 @@ test('a checkpoint invalidates matching evidence even when the operation is unch
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-check-checkpoint-'));
   const task = new StewardFixture(t, root).task;
   Object.assign(task.capture, {
-    operations: { 'owner-tests': { command: '/usr/bin/true', args: [], network: false, cwd: '..' } },
+    operations: { 'owner-tests': { command: '/usr/bin/true', args: [], network: false, cwd: '.' } },
   });
   t.after(() => task.close());
   const scope = { owner: 'owner', activity: 'implementation', expected: 'pass' } as const;
