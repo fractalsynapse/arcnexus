@@ -146,3 +146,13 @@ test('rejects invalid activity positions on completed milestones', () => {
       request(1, finding, { done: cursor })));
   }
 });
+
+test('accepts a valid retained activity cursor for a completed milestone', () => {
+  const done = milestone('done');
+  const original = milestone('requester');
+  const accepted: Plan = { focus, milestones: [done, original] };
+  const supplier = milestone('supplier', 'supplier');
+  const result = decode(proposal([supplier, original]), capture, accepted,
+    request(1, finding, { done: done.steps.length }));
+  assert.deepEqual(result.plan.milestones.slice(0, 1), [done]);
+});
