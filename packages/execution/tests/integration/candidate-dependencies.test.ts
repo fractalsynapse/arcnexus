@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
+import { CheckDependencies } from '../../src/dependencies.js';
 import { DependencyFixture } from '../fixtures/dependencies.js';
 
 const native = { skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1' };
@@ -119,3 +120,11 @@ test(
     assert(!existsSync(join(fixture.task.worktree!, 'node_modules')));
   },
 );
+
+test('projects with identical lockfiles do not share a writable preparation directory', (t) => {
+  const fixture = new DependencyFixture(t);
+  const first = new CheckDependencies(fixture.task).directory;
+  Object.assign(fixture.task.capture.source, { remote: 'https://example.com/another.git' });
+  const second = new CheckDependencies(fixture.task).directory;
+  assert.notEqual(first, second);
+});

@@ -19,7 +19,7 @@ export class CheckDependencies {
   /** Retain no mutable process-global state; the project writer serializes preparation. */
   constructor(private readonly task: HostTask) {
     this.worktree = task.worktree!;
-    this.key = dependencyKey(this.worktree);
+    this.key = dependencyKey(this.worktree, task.capture.source.remote);
     const root = join(task.config.storage, 'dependencies', this.key);
     this.directory = join(root, 'node_modules');
     this.receipt = join(root, 'prepared.json');
@@ -86,7 +86,7 @@ export class CheckDependencies {
 }
 
 /** Include local source conservatively when npm can resolve workspace, file or git dependencies. */
-function dependencyKey(worktree: string) {
+function dependencyKey(worktree: string, remote: string) {
   const inputs = ['package.json', 'package-lock.json', 'npm-shrinkwrap.json', '.npmrc'].map(
     (name) => {
       const path = join(worktree, name);
@@ -99,7 +99,9 @@ function dependencyKey(worktree: string) {
     npm: fileIdentity('/usr/bin/npm'),
     nodeExecutable: fileIdentity('/usr/bin/node'),
   };
-  return createHash('sha256').update(JSON.stringify({ inputs, local, tools })).digest('hex');
+  return createHash('sha256')
+    .update(JSON.stringify({ remote, inputs, local, tools }))
+    .digest('hex');
 }
 
 /** Let npm diagnose malformed locks instead of aborting while computing cache metadata. */
