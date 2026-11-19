@@ -55,7 +55,17 @@ test('revision validation preserves acceptance from a large completed prefix', (
 
 test('revision validation rejects changes to completed Steps in a pending milestone', () => {
   const before: Plan = { focus, milestones: [milestone('pending')] };
-  const after = structuredClone(before);
-  after.milestones[0]!.steps[0]!.checklist[0]!.expected = 'Changed completed outcome';
+  const first = before.milestones[0]!;
+  const step = first.steps[0]!;
+  const after: Plan = {
+    ...before,
+    milestones: [{
+      ...first,
+      steps: [
+        { ...step, checklist: [{ ...step.checklist[0]!, expected: 'Changed completed outcome' }] },
+        ...first.steps.slice(1),
+      ],
+    }],
+  };
   assert.throws(() => validateRevision(before, after, 0, new Map([['pending', 1]])), /completed Steps/);
 });
