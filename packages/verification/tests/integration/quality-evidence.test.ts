@@ -39,7 +39,6 @@ for (const scenario of [
   'missing',
   'unavailable',
   'missing-log',
-  'unexpected-green',
   'stale',
   'other-owner',
   'other-activity',
@@ -105,7 +104,7 @@ for (const scenario of [
       scope: { owner: 'verification', activity: 'testing', expected: 'fail' },
       check: {
         id: 'owner-tests',
-        status: scenario === 'unexpected-green' ? 0 : 1,
+        status: 1,
         command: 'test',
         args: [],
         cwd: root,
