@@ -189,11 +189,17 @@ function isIgnored(path: string): boolean {
     const directory = ignoreFile.slice(0, -'.gitignore'.length).replace(/\/$/, '');
     if (directory && !path.startsWith(`${directory}/`)) continue;
     const relative = directory ? path.slice(directory.length + 1) : path;
-    const result = matchesIgnoreRules(
-      relative,
-      readOptionalFile(ignoreFile).split(String.fromCharCode(10)),
-    );
-    if (result !== undefined) ignored = result;
+    const rules = readOptionalFile(ignoreFile).split(String.fromCharCode(10));
+    const segments = relative.split('/');
+    let inherited = false;
+    for (let index = 0; index < segments.length; index++) {
+      const candidate = segments.slice(0, index + 1).join('/');
+      const result = matchesIgnoreRules(candidate, rules);
+      if (result !== undefined) inherited = result;
+      if (inherited && index < segments.length - 1) break;
+    }
+    if (inherited) ignored = true;
+    else if (matchesIgnoreRules(relative, rules) === false) ignored = false;
   }
   return ignored;
 }
