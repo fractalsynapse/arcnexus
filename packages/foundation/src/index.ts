@@ -421,7 +421,10 @@ const createIgnore = createRequire(import.meta.url)('ignore') as (
 ) => IgnoreMatcher;
 
 /** Walk maintained paths once, loading reachable ignore rules as each directory is entered. */
-function discoverMaintainedFiles(root: string = process.cwd()): string[] {
+function discoverMaintainedFiles(
+  root: string = process.cwd(),
+  ignoreContents = new Map<string, string>(),
+): string[] {
   const files: string[] = [];
   const ignoredRoots = new Set(['.git', 'node_modules', 'dist', '.test-build']);
   const visit = (directory: string, inherited: readonly IgnoreScope[]): void => {
