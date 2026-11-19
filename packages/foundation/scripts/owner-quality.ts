@@ -2,42 +2,23 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { globSync } from 'node:fs';
-import { parse } from 'yaml';
 import { selectQualityInputs } from '../src/index.js';
 
 type Operation = 'format:check' | 'lint';
-interface Component {
-  id: string;
-  owns: string[];
-}
 
-/** Select current maintained inputs by captured ownership before invoking quality tools. */
+/** Select maintained inputs by owner before invoking the configured quality tools. */
 class OwnerQuality {
-  private readonly operation: Operation;
-  private readonly owner?: string;
-
   /** Retain the operation and optional validated owner for one invocation. */
-  constructor(operation: Operation, owner?: string) {
-    this.operation = operation;
-    this.owner = owner;
-  }
+  constructor(
+    private readonly operation: Operation,
+    private readonly owner?: string,
+  ) {}
 
-  /** Validate ownership and delegate execution for the selected maintained inputs. */
+  /** Resolve shared discovery, then run the matching read-only quality command. */
   run(): void {
-    const files = this.selectFiles();
-    this.execute(files);
-  }
-
-  /** Resolve public shared discovery and retain its exact operation selection. */
-  private selectFiles(): string[] {
     const selection = selectQualityInputs(this.operation, this.owner);
     console.log(`${this.operation} scope=${this.owner ?? 'repository'} sha256=${selection.identity}`);
-    return this.applicableFiles(selection.files);
-  }
-
-  /** Report input identity, then run the configured read-only quality command. */
-  private execute(files: readonly string[]): void {
+    const files = selection.files;
     const identity = createHash('sha256');
     for (const path of files) identity.update(path).update(readFileSync(path));
     console.log(
@@ -47,6 +28,7 @@ class OwnerQuality {
       console.log(`${this.operation} is empty: no applicable maintained files.`);
       return;
     }
+
     const executable = this.operation === 'lint' ? 'eslint' : 'prettier';
     const args =
       this.operation === 'lint'
@@ -55,32 +37,6 @@ class OwnerQuality {
     const result = spawnSync(executable, args, { stdio: 'inherit' });
     if (result.error) throw result.error;
     process.exitCode = result.status ?? 1;
-  }
-
-  /** Include current maintained files while excluding generated and dependency trees. */
-  private currentFiles(): string[] {
-    const paths = globSync('**/*.{ts,mts,cts,js,mjs,cjs,jsx,tsx,json,yaml,yml}');
-    return paths
-      .filter(
-        (path) =>
-          !/(^|\/)(?:node_modules|dist|\.git|\.test-build|\.fixture-build|context|examples|\.audit-work)(\/|$)/.test(
-            path,
-          ),
-      )
-      .sort();
-  }
-
-  /** Apply each tool's own ignore and file applicability rules before command execution. */
-  private applicableFiles(paths: readonly string[]): string[] {
-    return paths.filter((path) => {
-      if (this.operation === 'lint' && !/\.(?:ts|mts|cts|js|mjs)$/.test(path)) return false;
-      if (this.operation === 'format:check') {
-        const result = spawnSync('prettier', ['--file-info', path], { encoding: 'utf8' });
-        assert.equal(result.status, 0, result.stderr);
-        return JSON.parse(result.stdout).ignored === false;
-      }
-      return true;
-    });
   }
 }
 
