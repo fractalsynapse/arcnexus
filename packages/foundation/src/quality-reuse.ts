@@ -49,7 +49,16 @@ function formatterReuseEligibility(
 ): QualityReuseEligibility {
   for (const path of formatterInputs) {
     const config = readFileSync(resolve(root, path), 'utf8');
-    if (/['"]?plugins?['"]?\s*:/i.test(config))
+    let parsed: unknown;
+    try {
+      parsed = parse(config);
+    } catch {
+      return { eligible: false, reason: `Prettier configuration cannot be inspected safely: ${path}` };
+    }
+    const packageFormatter = path === 'package.json' && isRecord(parsed) ? parsed.prettier : parsed;
+    if (typeof packageFormatter === 'string')
+      return { eligible: false, reason: `Prettier configuration references an uncovered shareable config: ${path}` };
+    if (isRecord(packageFormatter) && 'plugins' in packageFormatter)
       return {
         eligible: false,
         reason: `Prettier configuration may load unselected plugin dependencies: ${path}`,
