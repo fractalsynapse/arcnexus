@@ -228,7 +228,8 @@ function ignoreMatcher(pattern: string, anchored: boolean, directoryOnly = false
     .replace(/§\//g, '(?:.*/)?')
     .replace(/§/g, '.*');
   const prefix = slashless ? '(?:.*/)?' : '';
-  return new RegExp(`^${prefix}(?:${expression})(?:/.*)?$`);
+  const descendants = directoryOnly ? '/.+' : '(?:/.*)?';
+  return new RegExp(`^${prefix}(?:${expression})${descendants}$`);
 }
 /** Preserve repository formatter coverage while allowing package and fixture files. */
 function isFormatCovered(path: string): boolean {
