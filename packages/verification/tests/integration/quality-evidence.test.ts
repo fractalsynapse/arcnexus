@@ -126,7 +126,7 @@ for (const scenario of [
         check: {
           id: 'owner-format',
           status: scenario === 'unavailable' ? null : scenario === 'applicable-declared-inapplicable' || scenario === 'inapplicable' || scenario === 'wrong-selection' ? 'not-applicable' : scenario === 'failed-then-pass' || scenario === 'format-red' ? 1 : 0,
-          ...(['inapplicable', 'wrong-selection'].includes(scenario) ? { reason: 'No format:check files for verification in the current worktree', selection: { operation: scenario === 'wrong-selection' ? 'lint' : 'format:check', owner: 'verification', files: [], identity: 'empty', reuseEligibility: { eligible: true } } } : {}),
+          ...(['inapplicable', 'wrong-selection'].includes(scenario) ? { reason: 'No format:check files for verification in the current worktree', selection: { operation: scenario === 'wrong-selection' ? 'owner-lint' : 'owner-format', owner: 'verification', files: [], identity: 'empty', reuseEligibility: { eligible: true } } } : {}),
           command: 'format',
           args: [],
           cwd: root,
