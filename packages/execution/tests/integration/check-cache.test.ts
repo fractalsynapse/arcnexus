@@ -43,8 +43,16 @@ test('owner lint evidence survives an unrelated committed documentation edit', a
   const worktree = fixture.task.worktree!;
   writeFileSync(join(worktree, 'unrelated.md'), 'unrelated documentation');
   git(worktree, 'add', 'unrelated.md');
-  git(worktree, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com',
-    'commit', '-qm', 'Unrelated edit');
+  git(
+    worktree,
+    '-c',
+    'user.name=Fixture',
+    '-c',
+    'user.email=fixture@example.com',
+    'commit',
+    '-qm',
+    'Unrelated edit',
+  );
   assert.deepEqual(reusableCheck(fixture.task.observations(), await fixture.input()), observed);
 });
 
@@ -52,7 +60,8 @@ test('an imported lint configuration change invalidates owner lint evidence', as
   const { git } = await import('../../src/git.js');
   const fixture = new CheckCacheFixture(t);
   fixture.restart({
-    ...fixtureOperation, command: 'npm',
+    ...fixtureOperation,
+    command: 'npm',
     args: ['run', 'lint', '--', { context: 'owner' }],
     applicability: 'owner-lint-files',
   } as typeof fixtureOperation);
@@ -60,14 +69,30 @@ test('an imported lint configuration change invalidates owner lint evidence', as
   writeFileSync(join(worktree, 'eslint.config.ts'), "import './lint-rules.ts';\n");
   writeFileSync(join(worktree, 'lint-rules.ts'), 'export default {};\n');
   git(worktree, 'add', 'eslint.config.ts', 'lint-rules.ts');
-  git(worktree, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com',
-    'commit', '-qm', 'Add lint configuration');
+  git(
+    worktree,
+    '-c',
+    'user.name=Fixture',
+    '-c',
+    'user.email=fixture@example.com',
+    'commit',
+    '-qm',
+    'Add lint configuration',
+  );
   const before = await fixture.input();
   await fixture.observe();
   writeFileSync(join(worktree, 'lint-rules.ts'), 'export default { changed: true };\n');
   git(worktree, 'add', 'lint-rules.ts');
-  git(worktree, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com',
-    'commit', '-qm', 'Change imported lint configuration');
+  git(
+    worktree,
+    '-c',
+    'user.name=Fixture',
+    '-c',
+    'user.email=fixture@example.com',
+    'commit',
+    '-qm',
+    'Change imported lint configuration',
+  );
   assert.notEqual(await fixture.input(), before);
   assert.equal(reusableCheck(fixture.task.observations(), await fixture.input()), undefined);
 });
@@ -75,12 +100,15 @@ test('an imported lint configuration change invalidates owner lint evidence', as
 test('ownership drift is refused before reusing matching check evidence', async (t) => {
   const fixture = new CheckCacheFixture(t);
   fixture.restart({
-    ...fixtureOperation, command: 'npm',
+    ...fixtureOperation,
+    command: 'npm',
     args: ['run', 'lint', '--', { context: 'owner' }],
     applicability: 'owner-lint-files',
   } as typeof fixtureOperation);
   await fixture.observe();
-  (fixture.task.capture.source as unknown as { paths: string[] }).paths = ['.arc/architecture/components/owner.yaml'];
+  (fixture.task.capture.source as unknown as { paths: string[] }).paths = [
+    '.arc/architecture/components/owner.yaml',
+  ];
   const catalog = join(fixture.task.worktree!, '.arc/architecture/components');
   mkdirSync(catalog, { recursive: true });
   writeFileSync(join(catalog, 'owner.yaml'), 'id: owner\nowns:\n  - other.txt\n');
@@ -93,7 +121,8 @@ test('ownership drift is refused before reusing matching check evidence', async 
 test('generated ignored output does not invalidate scoped lint evidence', async (t) => {
   const fixture = new CheckCacheFixture(t);
   fixture.restart({
-    ...fixtureOperation, command: 'npm',
+    ...fixtureOperation,
+    command: 'npm',
     args: ['run', 'lint', '--', { context: 'owner' }],
     applicability: 'owner-lint-files',
   } as typeof fixtureOperation);
@@ -185,7 +214,8 @@ for (const path of ['.prettierrc', '.prettierignore', '.editorconfig']) {
     const { git } = await import('../../src/git.js');
     const fixture = new CheckCacheFixture(t);
     fixture.restart({
-      ...fixtureOperation, command: 'npm',
+      ...fixtureOperation,
+      command: 'npm',
       args: ['run', 'format:check', '--', { context: 'owner' }],
       applicability: 'owner-format-files',
     } as typeof fixtureOperation);
@@ -196,8 +226,16 @@ for (const path of ['.prettierrc', '.prettierignore', '.editorconfig']) {
     mkdirSync(dirname(join(worktree, path)), { recursive: true });
     writeFileSync(join(worktree, path), 'changed configuration');
     git(worktree, 'add', path);
-    git(worktree, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com',
-      'commit', '-qm', 'Change configuration');
+    git(
+      worktree,
+      '-c',
+      'user.name=Fixture',
+      '-c',
+      'user.email=fixture@example.com',
+      'commit',
+      '-qm',
+      'Change configuration',
+    );
     assert.notEqual(await fixture.input(), before);
     assert.equal(reusableCheck(fixture.task.observations(), await fixture.input()), undefined);
   });
