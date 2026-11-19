@@ -156,9 +156,14 @@ A local rewind does not erase earlier genuine red evidence or completed
 Implementation. The current cursor describes remaining work; prior completion
 and its observed checks remain readable separately (#651). Behavior-preserving
 corrections may characterize the implemented candidate with passing checks, as
-the Designer role permits. A mistaken request for another red is a caller
-expectation diagnostic, not a requirement to manufacture a failing assertion.
-Correction requires host-recorded prior red, completed Implementation and the
-current rewind; it never changes a failed required-pass check into expected red,
-weakens criteria or skips assembled verification. Retain the original request,
-actual result and explicit correction reference in the same journal.
+the Designer role permits. Do not manufacture a failing assertion to advance.
+
+A caller's requested check outcome is a prediction, distinct from captured goal
+acceptance. When a requested failure actually passes, the caller may correct that
+prediction to expected-pass. The journal retains the original request and result,
+records their correction link, and keeps a required current passing recheck even
+across interruption. This neither invents initial red nor approves a criterion.
+An actual failure of a required-pass check cannot become expected-red. Captured
+criteria, ownership, operations and independent assembled verification remain
+unchanged. Use the same caller repair for Testing and Implementation; no phase
+exception or separate recovery lifecycle is needed.
