@@ -33,6 +33,47 @@ cannot change ownership, acceptance or operations, add a milestone, or invoke
 Direction. An explicit escalation for different responsibility or scope and a
 valid final independent rejection invoke Direction.
 
+### Bounded Director revision
+
+This handoff implements Direction DI-21 through the shared `run` lifecycle.
+Initial planning returns a complete plan. Only an explicit escalation or valid
+final independent rejection selects bounded revision; ordinary failures and local
+repair retain the routes above.
+
+At that boundary, capture Coordination's public `revisionSnapshot(observations)`
+once from Execution's `HostTask.observations()`, before allocating artifacts.
+The snapshot selects the accepted plan and committed position after the latest
+`plannerRefresh`, while retaining the complete observation stream across attempts.
+Use `HostTask.store()` to retain the exact structured accepted plan and full
+observations as separate immutable, readable artifacts. Preserve referenced logs,
+transcripts, failed observations, edit receipts and complete answers. Active
+history and a list of evidence paths alone are not the full retained evidence.
+
+Pass the artifact references, committed position and current finding through
+Direction's public boundary. `position.completed` counts the leading completed
+milestones; `position.activities` maps stable milestone IDs to their next Step
+index, defaulting to zero. Earlier Steps remain completed even within a pending
+milestone. A supplier request leaves its requesting activity unfinished; final
+rejection can occur with every original milestone completed. The Director receives
+this position and finding inline, with the large completed prefix available by
+reference rather than copied into its prompt or requested again in its response.
+
+Direction owns pending-only response decoding, reconstruction from the retained
+accepted plan and validation. Workflow uses that public behavior at the activation
+boundary before recording a new accepted plan or advancing its cursor. Preserve
+the accepted Focus, existing milestone owners, original criterion identities and
+descriptions, completed milestones and completed Steps with their outcomes.
+Validate captured authority and the supplier sequence or rejected-criterion
+correction before commit. Workflow must not implement another reconstruction
+algorithm or choose the pending sequence itself.
+
+An invalid proposal preserves the canonical plan and committed cursor. Retain the
+complete rejected response and return the exact diagnostic to the same Director
+activity with the original revision context. A clarification and its complete
+answer retain that context too. Initial invalid-response repair still uses the
+initial complete-plan boundary. No adapter-specific revision path, second store,
+new approval gate or change to captured acceptance is introduced.
+
 Compare a repeated diagnostic with its relevant inputs and checked progress.
 Distinct failures or changed inputs can continue correction. An unchanged failure
 without progress retains an actionable hold or explicit escalation before another
