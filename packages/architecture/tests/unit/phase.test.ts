@@ -112,6 +112,16 @@ for (const decision of [
   });
 }
 
+test('candidate-supplied approval cannot authorize the host', async () => {
+  const f = fixture();
+  await f.phase().assess({});
+  const result = await f.phase().apply(f.proposal.id, {
+    decision: { kind: 'approved', delegation: 'trusted-host', proposal: f.proposal },
+  });
+  assert.notEqual(result.status, 'applied');
+  assert.equal(f.source.get('contract.md'), 'old bytes');
+});
+
 for (const alteration of ['baseline', 'intent', 'bytes', 'original', 'final']) {
   test(`application requires renewed review when ${alteration} changes`, async () => {
     const f = fixture();
