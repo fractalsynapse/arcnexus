@@ -7,7 +7,6 @@ import { ESLint } from 'eslint';
 import { getFileInfo } from 'prettier';
 import { parse } from 'yaml';
 import { team } from '../../team/src/index.js';
-import ts from 'typescript';
 import type { GuidanceSource } from '../../manager/src/index.js';
 import { qualityReuseEligibility } from './quality-reuse.js';
 
