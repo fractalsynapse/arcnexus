@@ -7,7 +7,7 @@ import { Context } from 'cordis';
 import { architecturePlugin } from '../../../../packages/architecture/src/index.js';
 import { agentPlugin } from '../../../../packages/agent/src/index.js';
 import { HostTask } from '../../../../packages/execution/src/index.js';
-import type { Feedback, Plan } from '../../../../packages/direction/src/index.js';
+import type { Feedback, Plan, RevisionFeedback } from '../../../../packages/direction/src/index.js';
 import type { WorkflowServices } from '../../../../packages/workflow/src/index.js';
 import { mountTaskHost } from '../../src/host.js';
 
