@@ -11,6 +11,13 @@ import { Workflow, type TaskObserver, type WorkflowServices } from '../../src/in
 
 export const suite = { owner: 'workflow', level: 'integration', tags: ['regression'] } as const;
 
+type Refinement = (
+  directory: string,
+  rounds: number,
+  observer: TaskObserver,
+  signal: AbortSignal,
+) => Promise<unknown>;
+
 /** Create real Git and SQLite boundaries for the public workflow. */
 function fixture(t: TestContext) {
   const directory = mkdtempSync(join(tmpdir(), 'workflow-refinement-'));
