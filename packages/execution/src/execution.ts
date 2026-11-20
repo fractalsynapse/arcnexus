@@ -53,7 +53,7 @@ export class Execution {
           input.goal,
           config.fresh,
           scope,
-          Boolean(input.architecture || input.refinement),
+          Boolean(input.architecture || input.scope === 'refine'),
         );
     if (!journal)
       return invalid(`Task admission requires the current verified ${config.base} head`);
