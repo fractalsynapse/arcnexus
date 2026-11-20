@@ -327,12 +327,33 @@ for (const relevance of ['arguments', 'selection'] as const) {
     ]);
     assertContinuity(fixture, repeated);
     assertAnswer(fixture, repeated);
-    assert.equal(progressed.kind, 'repair', 'A secured relevant partial correction must permit repair');
+    assert.equal(
+      progressed.kind,
+      'repair',
+      'A secured relevant partial correction must permit repair',
+    );
     assert.deepEqual(
       context(await fixture.run()).progress,
       repeated.progress,
       'An unchanged repeat must stop with the same grounded progress',
     );
+  });
+}
+
+for (const relevance of ['arguments', 'selection'] as const) {
+  test(`observed ${relevance} exclude unrelated edits and reverted relevant bytes`, async (t) => {
+    const fixture = new ReviewedHoldFixture(t, false, relevance);
+    await fixture.prepare();
+    const initial = context(await fixture.run());
+    await fixture.edit('unrelated.txt', 'incidental secured correction');
+    const unrelated = context(await fixture.run());
+    assert.deepEqual(unrelated.progress, initial.progress);
+    await fixture.edit('fixture.txt', 'temporary correction');
+    await fixture.edit('fixture.txt', 'original');
+    const reverted = context(await fixture.run());
+    assert.deepEqual(reverted.progress, initial.progress);
+    assert.equal(reverted.receipts.length, initial.receipts.length + 3);
+    assertContinuity(fixture, reverted);
   });
 }
 
@@ -349,6 +370,9 @@ function assertObservedRelevance(
   ]);
   const observed = held.failure.check!;
   assert.equal(observed.args.includes('fixture.txt'), relevance === 'arguments');
-  assert.deepEqual(observed.selection?.files, relevance === 'selection' ? ['fixture.txt'] : undefined);
+  assert.deepEqual(
+    observed.selection?.files,
+    relevance === 'selection' ? ['fixture.txt'] : undefined,
+  );
   assert.equal(held.failure.diagnostic, 'Error: reviewed behavior still fails');
 }
