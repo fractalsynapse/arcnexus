@@ -45,7 +45,7 @@ async function main(args: string[]) {
 }
 
 /** Accept one positive decimal round count without imposing a resource ceiling. */
-function parseRounds(args: string[]) {
+function parseRounds(args: string[]): string {
   if (
     args.length !== 0 &&
     (args.length !== 2 ||
