@@ -96,8 +96,7 @@ export class Workflow {
     signal: AbortSignal,
   ): Promise<TaskOutcome> {
     const total = roundCount(rounds);
-    if (!total)
-      return stopped('invalid', 'Round count must be a positive integer');
+    if (!total) return stopped('invalid', 'Round count must be a positive integer');
     if (signal.aborted) return stopped('cancelled', 'Task cancelled before admission');
     const reporting = (await import('./observer.js')).RunObserver.for(observer);
     if (!this.services)
