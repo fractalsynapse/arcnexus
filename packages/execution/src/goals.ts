@@ -23,7 +23,7 @@ export function goalRound(
     const goals = goalInventory(capture);
     if (!goals.length) throw new Error('No standing goals in the captured project inventory');
     return JSON.stringify(goals);
-  });
+  }, namespace);
   const goals = JSON.parse(inventory) as GoalRound['goals'];
   return {
     id,
