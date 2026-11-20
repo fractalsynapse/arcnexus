@@ -191,7 +191,7 @@ async function interruptAfterChild(root: string, state: RecoveryState) {
   const outcome = await (Reflect.get(workflow, 'refine') as Refine).call(
     workflow,
     root,
-    1,
+    2,
     interruptingObserver(),
     new AbortController().signal,
   );
