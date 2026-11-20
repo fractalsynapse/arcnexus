@@ -1,37 +1,34 @@
 import type { DatabaseSync } from 'node:sqlite';
 import type { JournalEvent } from './index.js';
 
+const descendantHistory = `
+  WITH RECURSIVE descendants(task_id) AS (
+    SELECT ?
+    UNION
+    SELECT child.task_id
+    FROM runs AS child
+    JOIN runs AS parent ON parent.id = child.parent_id
+    JOIN descendants ON descendants.task_id = parent.task_id
+  )
+  SELECT events.id, events.run, runs.task_id, runs.goal_id, runs.parent_id,
+    events.recorded_at, events.content
+  FROM events
+  JOIN runs ON runs.id = events.run
+  WHERE runs.task_id IN (SELECT task_id FROM descendants)
+  ORDER BY events.id
+`;
+
 /** Read all attempts of one logical task and its nested logical descendants in event order. */
 export function descendantEvents(database: DatabaseSync, task: string): JournalEvent[] {
-  return database
-    .prepare(
-      `
-      WITH RECURSIVE descendants(task_id) AS (
-        SELECT ?
-        UNION
-        SELECT child.task_id
-        FROM runs AS child
-        JOIN runs AS parent ON parent.id = child.parent_id
-        JOIN descendants ON descendants.task_id = parent.task_id
-      )
-      SELECT events.id, events.run, runs.task_id, runs.goal_id, runs.parent_id,
-        events.recorded_at, events.content
-      FROM events
-      JOIN runs ON runs.id = events.run
-      WHERE runs.task_id IN (SELECT task_id FROM descendants)
-      ORDER BY events.id
-    `,
-    )
-    .all(task)
-    .map((row) => ({
-      sequence: String(row.id),
-      run: Number(row.run),
-      taskID: String(row.task_id),
-      goalID: String(row.goal_id),
-      parent: row.parent_id === null ? undefined : Number(row.parent_id),
-      timestamp: typeof row.recorded_at === 'string' ? row.recorded_at : null,
-      observation: JSON.parse(String(row.content)) as unknown,
-    }));
+  return database.prepare(descendantHistory).all(task).map((row) => ({
+    sequence: String(row.id),
+    run: Number(row.run),
+    taskID: String(row.task_id),
+    goalID: String(row.goal_id),
+    parent: row.parent_id === null ? undefined : Number(row.parent_id),
+    timestamp: typeof row.recorded_at === 'string' ? row.recorded_at : null,
+    observation: JSON.parse(String(row.content)) as unknown,
+  }));
 }
 
 export const verifiedTerminal = `
