@@ -260,7 +260,7 @@ export class RefinementRun {
       '',
       JSON.stringify(this.observer.measurementSnapshot(), null, 2),
       '',
-    ].join('\\n');
+    ].join('\n');
     return hostTask(this.parent).store(`refinement-round-${round}.md`, text);
   }
 }
