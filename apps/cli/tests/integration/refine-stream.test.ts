@@ -108,7 +108,7 @@ function collectRecord(
 }
 
 /** Require each phase to be named in the public progress stream. */
-function assertPhases(records: Array<{ type: string; observation?: { message: string } }>): void {
+function assertPhases(records: Array<Record<string, any>>): void {
   const progress = records
     .filter((record) => record.type === 'progress')
     .map((record) => record.observation?.message);
