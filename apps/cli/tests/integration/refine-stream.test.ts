@@ -36,14 +36,10 @@ class StreamScenario {
 
   /** Start one built CLI invocation with the fixture's isolated project state. */
   start(json: boolean): ChildProcessWithoutNullStreams {
-    return spawn(
-      process.execPath,
-      [cli, 'refine', '--rounds', '2', ...(json ? ['--json'] : [])],
-      {
-        cwd: this.fixture.root,
-        env: { ...process.env, XDG_STATE_HOME: this.fixture.storage },
-      },
-    );
+    return spawn(process.execPath, [cli, 'refine', '--rounds', '2', ...(json ? ['--json'] : [])], {
+      cwd: this.fixture.root,
+      env: { ...process.env, XDG_STATE_HOME: this.fixture.storage },
+    });
   }
 
   /** Await the child after attaching the production output observer. */
@@ -78,7 +74,8 @@ function attachStream(child: ChildProcessWithoutNullStreams, json: boolean): Str
   child.stdout.on('data', (chunk: string) => {
     capture.output += chunk;
     if (!json) {
-      if (child.exitCode === null && capture.output.includes('Run measurements')) capture.liveProvider = true;
+      if (child.exitCode === null && capture.output.includes('Run measurements'))
+        capture.liveProvider = true;
       return;
     }
     partial += chunk;
@@ -90,7 +87,11 @@ function attachStream(child: ChildProcessWithoutNullStreams, json: boolean): Str
 }
 
 /** Retain each complete JSONL record and recognize provider and tool results. */
-function collectRecord(line: string, child: ChildProcessWithoutNullStreams, capture: StreamCapture): void {
+function collectRecord(
+  line: string,
+  child: ChildProcessWithoutNullStreams,
+  capture: StreamCapture,
+): void {
   const record = JSON.parse(line) as Record<string, any>;
   capture.streamed.push(record);
   if (record.type !== 'event') return;
@@ -111,8 +112,18 @@ function assertPhases(records: Array<{ type: string; observation?: { message: st
   const progress = records
     .filter((record) => record.type === 'progress')
     .map((record) => record.observation?.message);
-  for (const phase of ['1/2 · Plan', '1/2 · Architect', '1/2 · Run', '2/2 · Plan', '2/2 · Architect', '2/2 · Run']) {
-    assert.ok(progress.some((message) => message?.includes('Refinement round ' + phase)), phase);
+  for (const phase of [
+    '1/2 · Plan',
+    '1/2 · Architect',
+    '1/2 · Run',
+    '2/2 · Plan',
+    '2/2 · Architect',
+    '2/2 · Run',
+  ]) {
+    assert.ok(
+      progress.some((message) => message?.includes('Refinement round ' + phase)),
+      phase,
+    );
   }
 }
 
@@ -125,7 +136,14 @@ function assertProviderRecords(records: Array<Record<string, any>>): void {
   );
   for (const record of provider) {
     const event = record.detail.event;
-    assert.deepEqual(Object.keys(event).sort(), ['component', 'consumption', 'executable', 'input', 'reads', 'type']);
+    assert.deepEqual(Object.keys(event).sort(), [
+      'component',
+      'consumption',
+      'executable',
+      'input',
+      'reads',
+      'type',
+    ]);
     assert.ok(event.input.startsWith('## Actor and project\n'));
     assert.deepEqual(event.consumption, []);
     assert.deepEqual(event.reads, []);
@@ -140,9 +158,16 @@ function assertTerminalRecords(records: Array<Record<string, any>>): void {
     .filter((event) => event?.type === 'item.completed' && event.item?.type === 'mcp_tool_call');
   assert.ok(toolResults.length > 0);
   assert.ok(toolResults.every((event) => event.item.result !== undefined));
-  assert.ok(records.some((record) => record.type === 'measurements' &&
-    record.measurements.profiles.some((profile: { usage: { input_tokens: { reported: number | null } } }) =>
-      profile.usage.input_tokens.reported !== null)));
+  assert.ok(
+    records.some(
+      (record) =>
+        record.type === 'measurements' &&
+        record.measurements.profiles.some(
+          (profile: { usage: { input_tokens: { reported: number | null } } }) =>
+            profile.usage.input_tokens.reported !== null,
+        ),
+    ),
+  );
   assert.equal(records.filter((record) => record.type === 'result').length, 1);
   assert.equal(records.at(-1).outcome.kind, 'planned');
 }
@@ -152,7 +177,10 @@ function assertJsonResult(result: StreamResult): void {
   assert.equal(result.status, 0, result.output);
   assert.ok(result.liveProvider, 'complete provider observation arrives before process completion');
   assert.ok(result.liveToolResult, 'complete tool result arrives before process completion');
-  const records = result.output.trim().split('\n').map((line) => JSON.parse(line) as Record<string, any>);
+  const records = result.output
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line) as Record<string, any>);
   assertPhases(records);
   assertProviderRecords(records);
   assertTerminalRecords(records);
