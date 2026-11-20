@@ -23,8 +23,8 @@ class StreamScenario {
       'if (true)',
     );
     const capturedResult = noGate.replace(
-      "await this.call('read-file', {",
-      "const toolResult = await this.call('ask-question', {",
+      "await this.call('ask-question', {",
+      "const toolResult = await this.call('read-file', { path: 'baseline' });",
     );
     const withToolResult = capturedResult.replace(
       "this.emit({ type: 'item.completed', item: { type: 'agent_message', text: '{}' } });",
