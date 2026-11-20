@@ -146,6 +146,11 @@ test('a headless SDK caller receives pending and resumed refinement with complet
   ]);
   assert.deepEqual(scenario.questions, [question, question]);
   assert.deepEqual(scenario.workflow.answers, [undefined, answer]);
+  assertStream(scenario);
+});
+
+/** Check exact ordered contents and measurement delivery across both attempts. */
+function assertStream(scenario: CommandsScenario) {
   assert.deepEqual(
     scenario.frames.map((frame) => frame.sequence),
     ['1', '2', '3', '4', '1', '2', '3', '4', '5'],
