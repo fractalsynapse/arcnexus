@@ -126,6 +126,111 @@ actual runtime used and the validated transition, reconcile uncertain effects an
 revalidate affected evidence. Retain historical runtime identities. This requires
 neither a supervisor nor an automatic runtime-upgrade framework.
 
+## Completed-round consumption correction
+
+This intent precedes the behavior change for EX-REF-ROUND-CONSUMPTION and
+EX-REF-ROUND-RECOVERY. Its audience is the Execution implementer and the Workflow
+consumer authoring the real prepared-request scenario. Retain the completed
+`refine-execution` admission/recovery contribution and
+`refine-workflow-implementation` round producer. The missing responsibility is
+carrying their observations into the normal actor request.
+
+The originating supplier finding from `refine-workflow` is retained in run 103's
+canonical task timeline at sequence 42772:
+
+> Workflow's real two-round prepared-context regression needs the existing Execution activation boundary to expose the completed parent refinement round to child assessments. HostTask invocationContext currently adds only the child's timeline and the first invocation does not include retainedEvidence; the completedRound belongs to its parent. A stub calling activate without a real Planner assignment cannot prove the production consumer and was removed.
+
+Its exact question is:
+
+> Provide the accepted public mechanism by which a normal Planner, Architect and Director child activation receives readable completed-round report, originating findings and measurement references from its parent refinement journal, and a realistic fixture exercising that mechanism. Preserve normal child admission and all originating evidence.
+
+The complete finding, including its evidence collection, remains in that journal;
+the original admission/inventory supplier request remains at its original identity.
+This correction supplements EX-REF-OBSERVATIONS rather than replacing either
+finding with a new diagnostic.
+
+### Producer and consumer boundary
+
+Workflow exports `CompletedRefinementRound` through its
+[public entry](../../workflow/src/index.ts) and records
+`{ completedRound }` on the foreground parent after retaining a report.
+Its `invocation`, `round`, `report`, `findings`, `measurements` and `evidence`
+fields are the public handoff described in the
+[Workflow refinement guide](../../workflow/refinement.md#public-completed-round-handoff-for-execution).
+The current producer derives complete canonical child and descendant frames using
+`Journal.childTimeline(goal, scope)`. Findings and measurement entries are
+canonical sequence identities, not file paths; the registered report contains
+their full frames and the existing measurement projection. Do not invent
+completion records in an Execution fixture.
+
+Execution must discover completed-round observations from the verified project's
+existing journal, including earlier completed invocations, and pass their report
+and originating artifact references into the normal `HostTask.activate` context.
+The live parent link supplies current-invocation context; it cannot alone discover
+a previous invocation with a different logical task identity. Project-level
+discovery belongs to Coordination's existing journal read boundary. Its current
+`Journal.findings()` selects failures and repairs only, so it must not be described
+as already returning completed rounds. Any necessary selection extension belongs
+to Coordination and must retain complete observations and canonical identities.
+
+Enrich the existing task evidence at the shared activation boundary before the
+first provider invocation, on returning caller invocations and after reopening
+state. Preserve explicit input evidence, the child's timeline and complete
+clarification/research/supplier answers. An immutable index may organize references;
+the current returning-caller-only `retainedEvidence` enrichment is insufficient.
+Every discovered report and originating artifact must be directly readable through
+`HostTask.readFile` and mapped read-file under the existing registered-artifact
+authorization. Merely listing inaccessible sequence numbers or a parent task ID
+does not supply the findings. Preserve complete originating content and answers;
+do not replace them with excerpts, summaries or a paging protocol.
+
+Planner, Architect and Director continue to build their real assignments and call
+the same HostTask/Agent/Architecture request path. Workflow supplies ordinary
+parented child admissions; consumers need no new activation flag, alternate prompt,
+or private Workflow helper. Observations remain distinguishable from instructions
+and acceptance. They cannot change goal bytes, owner scope, approved profiles,
+pending proposals or recorded authority.
+
+This section specifies the correction, not an implemented handoff. The inspected
+`invocationContext` currently adds the child's timeline and indexes retained
+evidence only when returning within its actor invoker. Parent/project completed-round
+discovery and first-call exposure still require behavioral implementation and
+evidence. Existing report production does not establish consumption.
+
+### Discriminating public evidence
+
+Use public `Workflow.refine` with real Execution/HostTask, Coordination SQLite
+and a temporary committed Git project with explicit accepted staging, actor,
+operation and provider bindings. Let normal Planner, Architect and Director
+assignments produce the first completed round, with distinct findings, complete
+answers and explicit profile usage. Read the observed registered report and its
+originating references. In each second-round provider request, require the actor
+to consume and cite a distinct earlier finding and its measurement reference.
+Assert full answer contents and originating identities, rather than only finding
+a report path in a request.
+
+Complete that invocation and begin a fresh one in the same project store. Require
+fresh phase/task identities and prior completed-round observations in the very
+first Planner, Architect and Director requests. Preserve round/invocation identity
+and canonical order, with each originating sequence represented once. A test must
+fail when only the child's timeline, current observer frames or same-invocation
+parent history is consulted.
+
+Interrupt an actual assessment after distinct findings, a durable complete answer
+and provider usage have been recorded. Reopen SQLite/Git and resume through
+validated admission using an explicitly different installed-runtime fixture.
+Verify retained completed-round observations, original task acceptance and owner,
+acknowledged file checkpoints, exact answers and historical runtime attribution
+alongside the new activation's actual identity. Reuse existing checkpoint and
+approved-adoption fixtures for those unchanged effects. Keep successful-child
+recovery without parent acknowledgment as a separate retained scenario; never
+reassess a completed child just to regenerate context.
+
+These controlled provider scenarios demonstrate prepared-request consumption and
+state recovery only after their assertions execute. They do not establish native
+model acceptance, independent assembled acceptance, staging delivery or the live
+three-round streak. Unknown pricing/cost and unavailable usage remain unknown.
+
 ## Evidence required before behavioral acceptance
 
 Focused public-boundary regressions must use real SQLite and Git for shared-parent
