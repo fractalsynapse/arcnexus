@@ -1,0 +1,112 @@
+--- a/.arc/architecture/roles/designer.yaml
++++ b/.arc/architecture/roles/designer.yaml
+@@ -9,6 +9,12 @@
+ instructions:
+   - |
+     Design meaningful public assertions for the accepted outcome and build fixtures that can actually exercise them. Read the original stable criteria, current activity checklist, component contract and production consumer path before choosing a test. Identify the specific wrong behavior the regression must catch. The test should fail for that behavior and be capable of rejecting a plausible incorrect implementation, rather than restating a private helper's present structure.
++
++    Make the coverage argument explicit for each assigned criterion: identify the real caller, observable result, relevant failure or interruption, and the assertion that would reject a plausible defective implementation. A test title, a call count, a non-error exit or absence of a diagnostic cannot establish preservation of inputs, exact values, complete history or ordered output. Read the producer and consumer contracts together. Check actual payloads and correlation identities, not just the presence of a generic status string. When the claim concerns installed plugin availability, exercise real Cordis injection; a cast context only characterizes delegation. For streaming, observe the relevant records before completion. For cancellation, interrupt actual in-flight work and assert retained progress and the terminal outcome, rather than only passing an already-aborted signal.
++
++    Design recovery fixtures as distinguishable events linked to complete retained source artifacts. Write each original transcript or report once and use its actual path, event identity and digest where the public schema permits references. Do not embed a read-file result's entire body into the next provider message, copy assignment.evidence into new findings, or serialize previous transcript messages into subsequent fixture responses. That creates recursive evidence growth and changes the scenario being tested. Preserve source content in its canonical artifact; assert that consumers can read it completely and that exact referenced observations survive restart. When content itself is the behavior under test, use explicit authored distinct content and assert it without feeding growing transcript copies back into later turns. This is fixture construction, not permission to truncate real messages, reports or tool results.
++
++    Before completing Testing, walk the proposed assertions through the specific bad alternatives the criterion rules out: dropped or reordered observations, current-attempt-only history, duplicate replay, an unresolved child, silently altered inputs, shallow composition or a terminal emitted before work finishes where relevant. Strengthen an assertion that would still pass the relevant defective alternative. Keep this reasoning in the test design and retained findings; do not build a separate coverage framework, impose a scenario quota, or add speculative cases unrelated to acceptance. Repair an incorrect fixture directly and preserve its failed evidence. A fixture design weakness is your responsibility to correct, not a reason for Direction to replan ordinary work.
+ 
+     Construct the required environment explicitly. Supply realistic records, source paths, owner metadata, profiles, role and operation mappings, dependencies, configuration and captured source identity. Use real SQLite/Git where transaction, journal, checkpoint or source-capture correctness depends on those boundaries. A loosely cast object that omits a field production reads is not a valid substitute. A missing executable or compiler failure is setup feedback, not the intended behavioral red.
+ 
+--- a/.arc/architecture/standards/agent-operating-protocol.md
++++ b/.arc/architecture/standards/agent-operating-protocol.md
+@@ -280,6 +280,17 @@
+ 
+ ## Questions, research and other owners
+ 
++A supplier request binds its milestone identity to that milestone's accepted owner
++and criteria. Before requesting another component, inspect the current accepted
++plan and Team: link the actual matching supplier milestone, or name a genuinely
++distinct contribution if none exists. The milestone field is not the identity of
++whatever activity last ran or whichever pending milestone is easiest to copy.
++For example, a request for a CLI correction cannot link an accepted Commands
++milestone. A refused inconsistent request stays with this caller: read the exact
++diagnostic, correct the request and preserve acknowledged work. Do not ask Direction
++to reassign accepted ownership or weaken validation to make an invalid link fit.
++
++
+ Consult existing approved guidance and retained answers before asking a question.
+ Routine engineering choices within accepted authority are yours to make. Human
+ decisions concern objectives, goals and architecture; ordinary correction does
+--- a/.arc/architecture/components/architecture.yaml
++++ b/.arc/architecture/components/architecture.yaml
+@@ -359,6 +359,18 @@
+   assessment focused on relevant findings and readable references. Missing usage
+   and unverified monetary cost remain unknown. Measurement does not authorize
+   budgets, automatic profile changes or content limits.
++
++  The component purposes and activity instructions are executable operating guidance
++  for the team's Agents, and assessing their effectiveness is a standing Architecture
++  responsibility. Compare what the accepted objectives and goals require with what
++  the actual requests told each actor to do and what the run shows it did. Repeated
++  shallow tests, invalid supplier links and wasteful evidence fixtures are reasons
++  to inspect the responsible purpose, activity, shared role and standard together.
++  Distinguish a missing or misleading instruction from an ignored adequate one, an
++  unavailable operation and a missing host invariant. Improve the canonical source
++  with a concrete decision procedure or relevant example and propose enforcement
++  when correctness cannot depend on agent compliance. Preserve complete evidence
++  and assess the next run's behavior before claiming an instruction fixed the problem.
+ 
+   Later assessments should consume previous round findings and evaluate whether
+   an accepted change improved real behavior. Compare useful delivery, local repair,
+@@ -386,6 +398,12 @@
+     instructions:
+       - |
+         Assess the accepted objectives and goals against the current integrated architecture, implementation and retained execution findings. An explicit feedback argument focuses this assessment; its absence requires general alignment, not an invented new objective. Read the current components, roles, operations, standards, contracts and registry together. Follow actual failure evidence to the responsible boundary before proposing another mechanism.
++
++        Treat component purposes and activity instructions as assessment inputs on every architecture update, including general alignment without feedback. Compare them with approved objectives, success measures, current implementation and the complete relevant run findings. Use the captured catalog to locate each component and its activities, then follow observed failures and inefficient handoffs to the full selected purpose, procedure, role, standard, operation schema and actual activation request. General alignment must consider guidance quality alongside structural and operation alignment; focused feedback selects the relevant behavior without hiding an observed conflicting guide. Do not assume that passing format/types checks or a long prompt proves an agent knew how to meet the outcome.
++
++        For a missed test obligation, identify the weak assertion or fixture and what the original Testing instructions failed to make actionable. For an invalid supplier request, compare the request with the accepted milestone owner and determine whether caller feedback, clearer instructions and host validation are each needed. For recursive fixture growth, trace which observation was copied into a later response and preserve the original artifact through references rather than deleting or truncating evidence. Examine enough of the complete relevant timeline to distinguish an instruction defect, a fixture implementation defect, an ignored adequate instruction and an unavailable capability. Do not guess causality from the profile name, add quantitative limits or automatically change profiles.
++
++        Propose the smallest coherent improvement at its canonical source: component-specific purpose or activity for local decisions, shared role or standard for shared method, and host behavior for an invariant that must hold despite a mistaken response. Explain the observed pattern, desired decision and a discriminating regression or later live observation that would test the improvement. Keep transient run results in the assessment and learning records rather than in durable purpose text. Preserve adequate instructions and justified no-change outcomes; do not rewrite everything merely because a new assessment ran. Later assessments must inspect whether prior accepted instruction changes improved outcomes, repair routes and measured effort, and retain uncertainty when code or profile changes prevent attribution.
+ 
+         Return either a justified no-change assessment or one reviewable architecture batch in the host-supplied response schema. State purpose, consequences, exact changed content and any prerequisite implementation. Distinguish an instruction correction, an operation parameter or verification mapping, a capability implementation and a locked obligation. A new declaration does not install its handler. Preserve ownership, original acceptance and the active activation's authority while allowing recorded host adoption between activities.
+ 
+--- a/packages/architecture/docs/prompt-practices.md
++++ b/packages/architecture/docs/prompt-practices.md
+@@ -209,8 +209,13 @@
+ results without putting results into the goals themselves.
+ 
+ Architecture's updating assesses approved direction, implementation and observed
+-problems, proposes exact changes where needed, and identifies prerequisite code and
+-operation availability. It cannot approve itself. The approved model can advance
++problems, including component purposes and activity instructions on every assessment.
++Compare guidance with actual activation requests and behavior against objectives,
++goals and complete relevant run findings. Locate the earliest wrong decision and
++separate inadequate instructions, ignored adequate guidance, faulty fixtures,
++missing operations and absent host enforcement. Propose concrete guidance at the
++canonical activity, role or standard, together with code enforcement where needed,
++and identify prerequisite implementation and operation availability. It cannot approve itself. The approved model can advance
+ within a run through the host's recorded adoption boundary after validation.
+ 
+ Reviewer's assessment binds an independent verdict to the assembled candidate,
+@@ -242,6 +247,24 @@
+ Retain complete transcripts and the exact prompt/model identity to explain a result.
+ Subsequent Plan and Architect assessments must use these observations. Do not add
+ numeric work limits or an automated prompt-length rejection rule during evaluation.
++
++## Evaluate Testing instructions against escaped defects
++
++Ask what plausible incorrect implementation could still satisfy each proposed
++assertion. Check values and event identities, durable history across distinct
++attempts, real plugin composition, observations before completion and cancellation
++during execution when those claims belong to acceptance. A parser-only test cannot
++prove production streaming, and absence of an error message cannot prove exact
++input propagation. Use the observed missed case to improve the responsible method;
++do not replace a component-specific activity with another generic exhortation.
++
++Construct fixture responses from explicit authored data and references to retained
++source observations. Never recursively embed read-file bodies, prior assignment
++evidence or transcripts into subsequent fixture messages. Keep complete originals
++readable in canonical artifacts and assert correct reference consumption. This avoids
++manufactured feedback growth without imposing limits or truncating real information.
++Record the regression and later live outcome separately: better prose and valid
++YAML establish authoring, not proof that an agent followed the new instructions.
+ 
+ ## Primary references
+ 

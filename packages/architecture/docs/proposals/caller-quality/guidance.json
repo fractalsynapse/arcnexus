@@ -1,0 +1,27 @@
+{
+  "baseline": "c5655fb42b1d270d2f3870f6a7602c3044e53f64",
+  "patchSHA256": "25a53ca4e47f3fea054a2a109fff5446381f56ec84076d10010ed5e763c78e8e",
+  "status": "proposed; awaiting exact human approval before application",
+  "changes": [
+    {
+      "path": ".arc/architecture/roles/designer.yaml",
+      "beforeSHA256": "76130eeda316f251caab892c75619e61ff63918b162ba79584d34c4fa7b800cb",
+      "afterSHA256": "03086d28458f8d945887f67513d3e5a6d1cbac07f49b6f9baae2f834062d55c1"
+    },
+    {
+      "path": ".arc/architecture/standards/agent-operating-protocol.md",
+      "beforeSHA256": "e8deae63b33844425d88fecd1d2bdaa0188f5468442cfcabd537a1555426ef84",
+      "afterSHA256": "8b6632e2304a5db08acf719ae508f938a6b6765f7f570aea0f320b7a0b70baf9"
+    },
+    {
+      "path": ".arc/architecture/components/architecture.yaml",
+      "beforeSHA256": "3de5493bf785ff75585da8e286f1706e090def3b7b68ff620b9ea36b5fa8e4b7",
+      "afterSHA256": "a47d10916c42cd8615534b517542e7e3cdefb950234b4c0472c09ee3f52a8888"
+    },
+    {
+      "path": "packages/architecture/docs/prompt-practices.md",
+      "beforeSHA256": "c08a55f36c3073d8ee020c140e828f9d7a85a69f891d1fb9335d85cccaab5030",
+      "afterSHA256": "e5435047cf64413b40b631926c6f53f61f1ecf4d67f7e3d5ee6b46b874a34db2"
+    }
+  ]
+}
