@@ -55,10 +55,13 @@ export class RefinementPlanner {
 }
 
 /** Supply a controlled prepared request without substituting the native observation path. */
-function providerView(session: TaskSession, task: TaskContext): AgentInspection {
+function providerView(
+  session: TaskSession,
+  task: TaskContext,
+  selection: { component: string; activity: string },
+): AgentInspection {
   return {
-    component: 'planner',
-    activity: 'planning',
+    ...selection,
     placeholders: [],
     request: {
       input: JSON.stringify(task.assignment),
