@@ -157,6 +157,10 @@ test('nested findings and retained progress survive journal reopening and later 
   const fixture = new TestingRewindFixture(t);
   const saved = replayEvidence(fixture);
   fixture.task.record({
+    position: { completed: 0, activities: { original: 0 } },
+    repair: originalReplay,
+  });
+  fixture.task.record({
     position: { completed: 0, activities: { original: 1 } },
     repair: latestReplay,
   });
