@@ -23,7 +23,11 @@ type Refine = (
   signal: AbortSignal,
 ) => Promise<unknown>;
 type State = ReturnType<typeof services>;
-type RecoveryState = State & { calls: { value: number }; reopen: () => State };
+type RecoveryState = State & {
+  calls: { value: number };
+  reopen: () => State;
+  failFirstPlanner?: boolean;
+};
 
 /** Build a retained SQLite journal and Git project for a restart across service instances. */
 function fixture(t: TestContext) {
