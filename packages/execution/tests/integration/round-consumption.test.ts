@@ -71,7 +71,9 @@ function consumptionGaps(observed: Observations, prior: CompletedRefinementRound
     for (const [index, attempt] of attempts.entries()) {
       const consumed = attempt.consumption.find(({ report }) => report === prior.report);
       const task = parse(
-        attempt.input.split('\n\n## Activity')[0]!.slice(attempt.input.indexOf('\n\nassignment:') + 2),
+        attempt.input
+          .split('\n\n## Activity')[0]!
+          .slice(attempt.input.indexOf('\n\nassignment:') + 2),
       );
       const advertised = task.assignment.completedRounds?.some(
         (round: CompletedRefinementRound) => round.report === prior.report,
