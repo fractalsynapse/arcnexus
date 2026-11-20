@@ -17,20 +17,12 @@ class StreamScenario {
     this.fixture = new RoundConsumptionFixture(t);
     const executable = this.fixture.install('stream');
     const source = readFileSync(executable, 'utf8');
-    assert.ok(source.includes('if (!this.task.assignment.clarifications?.length)'));
-    const noGate = source.replace(
-      'if (!this.task.assignment.clarifications?.length)',
-      'if (true)',
+    assert.ok(source.includes('const consumption = await this.consume();'));
+    const withToolResult = source.replace(
+      'const consumption = await this.consume();',
+      "const consumption = await this.consume();\\n    const toolResult = await this.call('read-file', { path: 'baseline' });\\n    this.emit({ type: 'item.completed', item: { type: 'mcp_tool_call', id: 'read-tool', result: toolResult } });",
     );
-    const capturedResult = noGate.replace(
-      "await this.call('ask-question', {\\n        question: 'Clarify accepted intent for ' + this.component,\\n      });",
-      "const toolResult = await this.call('read-file', { path: 'baseline' });",
-    );
-    const withToolResult = capturedResult.replace(
-      "this.emit({ type: 'item.completed', item: { type: 'agent_message', text: '{}' } });",
-      "this.emit({ type: 'item.completed', item: { type: 'mcp_tool_call', id: 'read-tool', result: toolResult } });\n      this.respond(consumption);",
-    );
-    assert.notEqual(withToolResult, noGate);
+    assert.notEqual(withToolResult, source);
     writeFileSync(executable, withToolResult);
   }
 
