@@ -241,6 +241,11 @@ test('interruption resumes the first unfinished phase or goal without repeating 
   }
 });
 
+const refreshedOrder = [
+  'Plan', 'Architect', 'First goal', 'Second goal', 'Second goal',
+  'Plan', 'Architect', 'First goal', 'Updated goal',
+];
+
 test('an interrupted Run retains its captured goals and the next round captures changes', async (t) => {
   const f = fixture(t);
   const calls: string[] = [];
