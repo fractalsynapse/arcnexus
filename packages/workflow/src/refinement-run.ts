@@ -297,6 +297,36 @@ export class RefinementRun {
   }
 }
 
+/** Render a round report from complete source events and the round's recovery evidence. */
+function roundReport(
+  invocation: string,
+  round: number,
+  goals: readonly StandingGoal[],
+  frames: readonly JournalEvent[],
+  measurements: ReturnType<RunMeasurements['snapshot']>,
+  recovery: readonly unknown[],
+) {
+  return [
+    `# Refinement round ${round}`,
+    '',
+    `Invocation: ${invocation}`,
+    `Captured goals: ${goals.map(({ id, body }) => `${id}: ${body}`).join('; ')}`,
+    '',
+    '## Complete originating journal observations',
+    '',
+    frames.map((frame) => JSON.stringify(frame)).join('\\n'),
+    '',
+    '## Child recovery observations',
+    '',
+    JSON.stringify(recovery, null, 2),
+    '',
+    '## Event-derived measurements',
+    '',
+    JSON.stringify(measurements, null, 2),
+    '',
+  ].join('\\n');
+}
+
 /** Read complete timeline records for one retained child task scope. */
 function retainedFrames(parent: TaskSession, goal: string, scope: string): JournalEvent[] {
   const host = hostTask(parent);
