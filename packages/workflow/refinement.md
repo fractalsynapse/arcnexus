@@ -38,6 +38,91 @@ their intent. Retain the [Execution contribution](../execution/docs/refinement.m
 and its shared-writer, fresh-staging, checkpoint, observation and recovery work;
 this milestone does not replace that machinery.
 
+## Exact round counts and current-phase observations
+
+This section records the intended correction for `refine-workflow-exact-rounds`
+before its behavioral changes. It serves Workflow implementers and Commands/CLI
+consumers, addressing WFL-REF-EXACT-COUNT, WFL-REF-EXACT-RESUME,
+WFL-REF-PHASE-OBSERVATIONS and WFL-REF-EXACT-HANDOFF. The retained
+`106-1693-owner-tests.log` exposes decimal rounding, rejection of larger valid
+totals and missing Architect progress in the built CLI. Current
+[src/index.ts](src/index.ts), [services](src/services.ts) and
+[refinement sequencing](src/refinement-run.ts) use numeric counts and positions;
+the round-entry progress call does not announce uninterrupted Architect and Run
+transitions. This correction is intended behavior, not a claim that those
+regressions pass. Existing completed Workflow contributions remain retained.
+
+The public round-count representation is `RoundCount = string`, exported from
+Workflow's public entry and reused by Commands. Its semantic value is a positive
+base-ten integer. Accept only a nonempty sequence of ASCII decimal digits with
+at least one nonzero digit; remove leading zeroes to obtain canonical form.
+Thus `"0002"` and `"2"` request the same total. Reject zero, signs, whitespace,
+fractions, exponent syntax and non-string values before admission. CLI supplies
+`"1"` when the option is omitted and passes the decimal operand without a
+Number conversion. CLI alone rejects duplicate/unsupported arguments. There is
+no maximum digit count, safe-integer ceiling or finite-Number restriction.
+For example, `"9007199254740993"` and a decimal one followed by 400 zeroes are
+valid exact totals.
+
+Normalize once at the public boundary. Persist new requested totals and current
+rounds as canonical decimal strings in existing refinement journal observations.
+Use exact integer arithmetic for comparisons and increments, converting any
+internal bigint back to decimal text before recording JSON. Never compare,
+increment or serialize these values through Number. Child scopes, inventory
+namespaces, report identities and headings, progress messages and
+`CompletedRefinementRound.round` use the same canonical round text. Goal array
+positions and unrelated standalone round-store identifiers retain their existing
+meaning; this change does not create a second cursor or store.
+
+Read previously persisted numeric totals and round positions as legacy records.
+A finite positive integral Number means the exact integer represented by that
+stored Number, expanded to canonical decimal text without exponent notation.
+Do not impose a safe-integer check that makes an existing record unrecoverable.
+A rounded historical Number cannot reveal the original user's decimal operand;
+do not invent those lost digits. Compare the normalized new request with the
+interpreted stored value, and refuse a different total while unfinished.
+Malformed historical positions yield an explicit diagnostic instead of a fresh
+invocation or guessed position. Interpret legacy observations on read without
+rewriting them, their authority or originating evidence. Retain already recorded
+child and inventory identities, including their historical spelling, when
+reconciling unfinished legacy work. A representation change cannot replay a
+completed assessment or publication. New identities use canonical decimal text.
+
+Before executing each Plan, Architect or Run phase, persist and expose
+`{ refinement: RefinementProgress }` with exact `total`, `round` and current
+`phase` through the existing ordered observer. Publish the corresponding human
+progress naming round, total and phase through the same lifecycle. This applies
+at uninterrupted transitions, resumed entry and before successful-child recovery.
+The observation announces the position being entered, not completion of that
+phase. Preserve the existing goal progress and completed-round observation.
+Both event subscribers and progress-only callers must see Architect and Run
+entry, including an empty Run inventory. Announce a phase before resolving its
+retained successful child; reuse that outcome before any provider assessment
+or delivery. Keep complete provider/tool observations, measurements and one
+foreground terminal result through the existing observer.
+
+Testing must first retain a meaningful failing public regression for this
+correction. Use the existing real SQLite/Git refinement fixtures and explicit
+providers: pause a huge-total invocation, reopen it with the same canonical
+value, refuse a different value and preserve its first unfinished position.
+Cover values above Number.MAX_SAFE_INTEGER and beyond finite Number
+representation, leading-zero normalization, invalid input without admission,
+legacy numeric continuation, and fresh identities after completion. Reuse the
+existing multi-round, gates, inventory, publication and child/parent crash
+scenarios; assert ordered phase entry on uninterrupted, resumed and reused-child
+paths, including exact round strings in reports and completion observations.
+A deliberate pause establishes exact large-total recovery without executing an
+artificially capped subset or claiming completion of that total.
+
+Implementation follows the retained red and demonstrates the same public
+scenarios passing. The eventual complete supplier answer to Commands and
+`refine-cli` must give the exported type, normalization, durable and legacy
+interpretation, resume comparison, phase-event shape, exercised fixture paths
+and actual evidence references. This documentation supplies the intended
+handoff; runtime availability and that exercised answer belong to subsequent
+Testing and Implementation, with assembled verification and staging delivery
+remaining host responsibilities.
+
 ## Durable cursor and recovery
 
 Persist requested total, phase, round and goal position in the existing journal
