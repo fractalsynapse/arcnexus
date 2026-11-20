@@ -62,8 +62,8 @@ export function supersededReviewedHold(session: TaskSession, activation: Activit
   return changed || observedHeldCheckProgress(session, activation, held);
 }
 
-/** Require a newer scoped actual result before treating the historical failed operation as resolved. */
-function resolvedHeldCheck(task: HostTask, activation: ActivityCheckpoint, held: HoldContext) {
+/** Re-enter Execution for newer scoped findings; its canonical hold identity still rejects repetition. */
+function observedHeldCheckProgress(task: HostTask, activation: ActivityCheckpoint, held: HoldContext) {
   const check = held.failure.check;
   if (!check) return false;
   const scope = { owner: activation.owner, activity: activation.step };
