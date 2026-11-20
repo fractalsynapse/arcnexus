@@ -208,6 +208,7 @@ test('interruption resumes the first unfinished phase or goal without repeating 
         visit('Plan');
         return { kind: 'planned', commit: f.revision, summary: 'No change', evidence: [] };
       };
+      assert.ok(services.architecture);
       services.architecture.propose = async () => {
         visit('Architect');
         return { kind: 'no-change', summary: 'No change', evidence: [] };
