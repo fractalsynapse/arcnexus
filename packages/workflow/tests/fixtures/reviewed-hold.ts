@@ -244,6 +244,15 @@ export class ReviewedWorkflow {
     );
     assert.equal(this.fixture.task.readFile('fixture.txt').text, 'corrected');
     assert.equal(this.fixture.checks.at(-1)!.status, 0);
+    const task = this.fixture.task;
+    assert.deepEqual(new Clarifications(task, selection, this.signal).answers({
+      milestone: { id: correction.id }, acceptance: correction.criteria,
+    }).find((entry) => entry.question === question), { question, answer });
+    for (const finding of this.fixture.rejection.findings)
+      for (const evidence of finding.evidence)
+        assert(task.readFile(evidence).text.includes('Independent rejection'));
+    assert.equal(task.issue, this.holds[0]!.task.issue);
+    assert.equal(task.branch, this.holds[0]!.task.branch);
     return {
       kind: 'accepted' as const,
       candidate: candidate.digest,
@@ -255,11 +264,18 @@ export class ReviewedWorkflow {
   /** Require exact diagnostic, exit and evidence in Direction's structured feedback, not a generic blocked string. */
   private assertFeedback(feedback: Feedback) {
     const held = this.holds.at(-1)!;
-    const serialized = JSON.stringify(feedback);
-    assert(serialized.includes(held.failure.diagnostic));
+    assert.equal(feedback.kind, 'supplier');
+    assert(feedback.kind === 'supplier');
+    assert.equal(feedback.owner, 'owner');
+    assert.equal(feedback.requester, correction.id);
+    assert.equal(feedback.reason, held.failure.diagnostic);
     if (held.failure.check) {
-      assert(serialized.includes(held.failure.check.log));
-      assert(serialized.includes(String(held.failure.check.status)));
+      const observed = held.failure.check;
+      assert.deepEqual(feedback.failedCheck, {
+        id: observed.id, activity: 'implementation', expected: 'pass',
+        status: observed.status, log: observed.log, diagnostic: held.failure.diagnostic,
+      });
+      assert(feedback.evidence.includes(observed.log));
     }
   }
 
