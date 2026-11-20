@@ -181,6 +181,22 @@ export class Journal {
       }));
   }
 
+  /** Read every completed refinement round across invocations in this verified project's event order. */
+  completedRounds(): JournalEvent[] {
+    return this.database
+      .prepare(completedRefinementRounds)
+      .all()
+      .map((row) => ({
+        sequence: String(row.id),
+        run: Number(row.run),
+        taskID: String(row.task_id),
+        goalID: String(row.goal_id),
+        parent: row.parent_id === null ? undefined : Number(row.parent_id),
+        timestamp: typeof row.recorded_at === 'string' ? row.recorded_at : null,
+        observation: JSON.parse(String(row.content)) as unknown,
+      }));
+  }
+
   /** Retrieve reusable research by owner from the existing append-only journal. */
   researchReports(component: string, id?: string): unknown[] {
     return this.database
