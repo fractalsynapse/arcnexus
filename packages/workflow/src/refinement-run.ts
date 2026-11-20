@@ -52,7 +52,11 @@ export class RefinementRun {
         summary: 'Refinement is complete',
         evidence: hostTask(this.parent).evidence,
       };
-    for (let round = saved?.round ?? '1'; BigInt(round) <= BigInt(this.total); round = (BigInt(round) + 1n).toString()) {
+    for (
+      let round = saved?.round ?? '1';
+      BigInt(round) <= BigInt(this.total);
+      round = (BigInt(round) + 1n).toString()
+    ) {
       const state = round === saved?.round ? saved : undefined;
       const outcome = await this.runRound(invocation, round, state);
       if (outcome) return outcome;
@@ -277,11 +281,14 @@ export class RefinementRun {
 
   /** Retain the spelling used by old numeric child and inventory identities across retries. */
   private roundIdentity(round: RoundCount) {
-    const legacy = this.parent.history?.().find(
-      (event) => 'refinement' in event &&
-        typeof event.refinement.round === 'number' &&
-        recordedRound(event.refinement.round) === round,
-    );
+    const legacy = this.parent
+      .history?.()
+      .find(
+        (event) =>
+          'refinement' in event &&
+          typeof event.refinement.round === 'number' &&
+          recordedRound(event.refinement.round) === round,
+      );
     return legacy && 'refinement' in legacy ? String(legacy.refinement.round) : round;
   }
 
