@@ -1,3 +1,4 @@
+import type { RoundCount } from './round-count.js';
 import type { StandingGoal } from '../../planner/src/inventory.js';
 import type { ArchitectureDecision, Capture } from '../../architecture/src/index.js';
 import { AgentActivityHold } from '../../agent/src/index.js';
@@ -50,8 +51,8 @@ export type TaskOutcome =
 
 export interface RefinementProgress {
   invocation: string;
-  total: number;
-  round: number;
+  total: RoundCount;
+  round: RoundCount;
   phase: 'Plan' | 'Architect' | 'Run' | 'complete';
   goal?: number;
   inventory?: readonly StandingGoal[];
@@ -60,7 +61,7 @@ export interface RefinementProgress {
 
 export interface CompletedRefinementRound {
   invocation: string;
-  round: number;
+  round: RoundCount;
   report: string;
   findings: readonly string[];
   measurements: readonly string[];
