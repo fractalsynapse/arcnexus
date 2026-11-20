@@ -90,11 +90,10 @@ Workflow. The observer interface is exported by Workflow:
 | `progress(observation: Observation)` | Handle live phase/activity progress and evidence references. Refinement progress identifies the round and phase. |
 | `event?(event: JournalEvent)` | Consume the ordered persisted host/provider stream, including complete messages, tool calls/results and correlation identities. |
 | `measurements?(snapshot)` | Consume the existing event-derived `RunMeasurements` snapshot, retaining profile identity and unknown values. |
-| `answer?(question, signal): Promise<string or undefined>` | Obtain an actual human answer asynchronously, retaining its complete text and meaningful whitespace; return undefined when no answer is available. |
+| `answer?(question, signal)` | Return `Promise<string \| undefined>` with an actual human answer asynchronously, retaining its complete text and meaningful whitespace; return undefined when no answer is available. |
 
-The answer signature above describes the exported TypeScript union
-`Promise<string | undefined>`. Implement `event` to consume the full persisted
-stream; progress alone is not a replacement for provider/tool observations.
+Implement `event` to consume the full persisted stream; progress alone is not a
+replacement for provider/tool observations.
 The current Workflow observer supplies legacy persisted progress when no event
 callback is present. A caller implementing both callbacks must not assume each
 persisted progress observation is also delivered through `progress`.
