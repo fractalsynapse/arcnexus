@@ -10,7 +10,8 @@ import { Execution } from '../../src/execution.js';
 
 export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
 
-test('refinement inventory is isolated from an unfinished standalone round', (t) => {
+/** Build a Git staging ref and isolated Coordination database. */
+function fixture(t: import('node:test').TestContext) {
   const root = mkdtempSync(join(tmpdir(), 'execution-round-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const git = (...args: string[]) =>
@@ -36,12 +37,17 @@ test('refinement inventory is isolated from an unfinished standalone round', (t)
   } as unknown as Capture;
   const architecture = { capture: () => capture } as unknown as Architecture;
   const execution = new Execution(architecture, new Coordination(join(root, 'state')), join(root, 'state'));
+  return { root, execution, setBody: (value: string) => { body = value; } };
+}
+
+test('refinement inventory is isolated from an unfinished standalone round', (t) => {
+  const { root, execution, setBody } = fixture(t);
   const standalone = execution.round(root);
-  body = '---\npriority: 1\n---\nRevised goal\n';
+  setBody('---\npriority: 1\n---\nRevised goal\n');
   const refinement = Reflect.apply(execution.round, execution, [root, 'refine:invocation:1']);
   assert.notEqual(refinement.id, standalone.id);
   assert.equal(refinement.goals[0].body, 'Revised goal\n');
-  body = '---\npriority: 1\n---\nLater goal\n';
+  setBody('---\npriority: 1\n---\nLater goal\n');
   const resumed = Reflect.apply(execution.round, execution, [root, 'refine:invocation:1']);
   assert.deepEqual(resumed.goals, refinement.goals);
   assert.deepEqual(execution.round(root).goals, standalone.goals);
