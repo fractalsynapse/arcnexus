@@ -256,14 +256,24 @@ async function retryAfterChildTerminal(
   f: ReturnType<typeof fixture>,
 ) {
   const first = await refine.call(
-    workflow, f.root, 1, interruptAfterPlannedTerminal(), new AbortController().signal,
+    workflow,
+    f.root,
+    1,
+    interruptAfterPlannedTerminal(),
+    new AbortController().signal,
   );
   assert.equal(Reflect.get(first as object, 'kind'), 'failed');
   const events: unknown[] = [];
-  await refine.call(workflow, f.root, 1, {
-    progress() {},
-    event: (event) => events.push(event),
-  }, new AbortController().signal);
+  await refine.call(
+    workflow,
+    f.root,
+    1,
+    {
+      progress() {},
+      event: (event) => events.push(event),
+    },
+    new AbortController().signal,
+  );
   return events;
 }
 
@@ -440,7 +450,9 @@ function explorationProposal() {
     alignment: 'strong',
     evidence: 'unverified',
     reason: 'The captured goal remains relevant',
-    sources: [{ path: `.arc/goals/${id}.md`, quote: id === 'first' ? 'First goal' : 'Second goal' }],
+    sources: [
+      { path: `.arc/goals/${id}.md`, quote: id === 'first' ? 'First goal' : 'Second goal' },
+    ],
     observations: [],
   });
   return {
@@ -457,14 +469,14 @@ test('each round invokes the real Planner in project-exploration mode', async (t
   const f = fixture(t);
   const services = providers(f, []);
   const modes: unknown[] = [];
-  t.mock.method(HostTask.prototype, 'activate', async function (
-    _agent: Agent,
-    _selection: unknown,
-    data: TaskContext,
-  ) {
-    modes.push((data.assignment as { mode: string }).mode);
-    return explorationProposal();
-  });
+  t.mock.method(
+    HostTask.prototype,
+    'activate',
+    async function (_agent: Agent, _selection: unknown, data: TaskContext) {
+      modes.push((data.assignment as { mode: string }).mode);
+      return explorationProposal();
+    },
+  );
   services.planner = new Planner({} as Agent);
   const workflow = new Workflow(services);
   const refine = Reflect.get(workflow, 'refine') as Refinement;
