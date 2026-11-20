@@ -57,21 +57,7 @@ test('built refinement streams complete ordered JSONL through the production com
     .trim()
     .split('\n')
     .map((line) => JSON.parse(line));
-  const progress = records
-    .filter((record) => record.type === 'progress')
-    .map((record) => record.observation.message);
-  for (const phase of [
-    '1/2 · Plan',
-    '1/2 · Architect',
-    '1/2 · Run',
-    '2/2 · Plan',
-    '2/2 · Architect',
-    '2/2 · Run',
-  ])
-    assert.ok(
-      progress.some((message: string) => message.includes('Refinement round ' + phase)),
-      phase,
-    );
+  assertPhases(records);
   const provider = records.filter((record) => record.detail?.event?.type === 'fixture.consumption');
   assert.deepEqual(
     provider.map((record) => record.detail.event.component),
