@@ -182,6 +182,7 @@ test('a competing foreground task is refused while the refinement phase runs', a
   ) => Promise<unknown>;
   assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
   await refine.call(workflow, f.root, 1, { progress() {} }, signal);
+  assert.equal(competingKind, 'invalid');
 });
 
 test('two refinement rounds assess Plan, Architect and every approved goal in order', async (t) => {
