@@ -7,8 +7,14 @@ import { operationID, resolveOperation } from './operation.js';
 /** Validate the resolved architecture using the same Team, bindings and request builder as activation. */
 export function validateCapture(capture: Capture) {
   const coverage = team.validateCoverage(team.list(capture.components), capture.source.paths);
-  for (const finding of coverage)
-    throw new Error(`Architecture ownership ${finding.kind}: ${finding.path}`);
+  if (coverage.length) {
+    const diagnostics = coverage.map((finding) => {
+      const owners = finding.kind === 'collision' ? finding.owners.map(({ id }) => id) : [];
+      const detail = owners.length ? ` (${owners.join(', ')})` : '';
+      return `Architecture ownership ${finding.kind}: ${finding.path}${detail}`;
+    });
+    throw new Error(diagnostics.join('\n'));
+  }
   for (const component of team.list(capture.components)) {
     assert(component.purpose?.trim(), `Missing purpose: ${component.id}`);
     for (const [activity, mapping] of Object.entries(component.activities)) {
