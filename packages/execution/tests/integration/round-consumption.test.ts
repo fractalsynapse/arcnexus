@@ -138,7 +138,7 @@ test('EX-REF-ROUND-CONSUMPTION: real refinement feeds each next-round and fresh-
   assert.equal(observed.rounds.length, 2, 'both rounds are produced by the public Workflow');
   const first = observed.rounds[0]!;
   const fresh = new Observations();
-  const next = await fixture.reopen().refine(fixture.root, 1, fresh, new AbortController().signal);
+  const next = await fixture.reopen().refine(fixture.root, '1', fresh, new AbortController().signal);
   assert.equal(next.kind, 'planned', JSON.stringify(next));
   assert.notEqual(fresh.rounds[0]!.invocation, first.invocation);
   assert.deepEqual(
