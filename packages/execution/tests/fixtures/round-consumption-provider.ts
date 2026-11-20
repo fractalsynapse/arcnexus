@@ -106,7 +106,7 @@ class RoundConsumer {
       for (const path of value.references)
         if (
           typeof path === 'string' &&
-          /(?:timeline\.jsonl|retained-evidence-.*\.json|refinement-round-.*\.md)$/.test(path)
+          !path.endsWith('-mcp-observation.json')
         )
           await this.discover(path);
     for (const entry of Object.values(value))
@@ -131,12 +131,12 @@ class RoundConsumer {
         }),
       );
       for (const path of sources) await this.discover(path);
-      const findings = [...sources].flatMap((path) =>
+      const messages = [...sources].flatMap((path) =>
         this.values(this.reads.get(path)!).flatMap((value: any) =>
           value?.item?.type === 'agent_message' ? [value.item.text] : [],
         ),
       );
-      consumed.push({ ...completion, reportText: report, findings });
+      consumed.push({ ...completion, reportText: report, messages });
     }
     return consumed;
   }
@@ -156,6 +156,7 @@ class RoundConsumer {
           round: round.round,
           report: round.report,
           findings: round.findings,
+          messages: round.messages,
           measurements: round.measurements,
         })),
       )
