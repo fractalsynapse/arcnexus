@@ -81,7 +81,7 @@ function assessGoal(session: { goal: string }, calls: string[]) {
 }
 
 /** Return explicit no-change and evidence-backed provider decisions. */
-export function providers(f: ReturnType<typeof fixture>, calls: string[]) {
+function providers(f: ReturnType<typeof fixture>, calls: string[]) {
   const { revision, capture, execution } = f;
   return {
     execution: {
