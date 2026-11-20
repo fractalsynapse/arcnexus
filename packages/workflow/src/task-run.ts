@@ -351,7 +351,7 @@ export class TaskRun {
     }
     if (outcome.kind === 'repair') return this.repair(activation);
     if (outcome.kind === 'blocked') {
-      return stopped('blocked', outcome.reason, outcome.evidence);
+      return reviewedHold(this.session, activation, (feedback) => this.revise(feedback));
     }
     if (outcome.kind === 'question') {
       const feedback = await this.answer(outcome);
