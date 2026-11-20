@@ -48,7 +48,7 @@ async function main(args: string[]) {
 function parseRounds(args: string[]) {
   if (
     args.length !== 0 &&
-    (args.length !== 2 || args[0] !== '--rounds' || !/^[0-9]+$/.test(args[1]))
+    (args.length !== 2 || args[0] !== '--rounds' || args[1] === undefined || !/^[0-9]+$/.test(args[1]))
   ) {
     throw new Error('Usage: arcnexus refine [--rounds <N>]');
   }
