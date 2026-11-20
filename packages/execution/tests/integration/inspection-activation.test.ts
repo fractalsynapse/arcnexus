@@ -87,9 +87,25 @@ for (const [component, activity, actor, names, web] of [
       worktree: task.worktree,
     });
     assert.equal(view.actor, actor);
-    assert.ok(view.request.input.includes('purpose: Assess ' + view.component + ' using complete retained findings'));
-    assert.ok(view.request.input.includes('Selected ' + view.component + '/' + activity + ' procedure café 🛠'));
-    assert.ok(view.request.input.includes('Source: .arc/architecture/components/' + view.component + '.yaml (activities.' + activity + ')'));
+    assert.ok(
+      view.request.input.includes(
+        'purpose: Assess ' + view.component + ' using complete retained findings',
+      ),
+    );
+    assert.ok(
+      view.request.input.includes(
+        'Selected ' + view.component + '/' + activity + ' procedure café 🛠',
+      ),
+    );
+    assert.ok(
+      view.request.input.includes(
+        'Source: .arc/architecture/components/' +
+          view.component +
+          '.yaml (activities.' +
+          activity +
+          ')',
+      ),
+    );
     assert.ok(view.request.input.includes('Source: .arc/architecture/roles/assessor.yaml'));
     assert.deepEqual(view.placeholders, []);
     assert.deepEqual(
@@ -184,9 +200,11 @@ test('production activation refuses changed native guidance before starting the 
 });
 
 test('current assembled CLI request-parity and inspection scenarios', (t) => {
-  const paths = ['request-parity', 'inspect'].map((name) => fileURLToPath(
-    new URL('../../../../../apps/cli/tests/integration/' + name + '.test.js', import.meta.url),
-  ));
+  const paths = ['request-parity', 'inspect'].map((name) =>
+    fileURLToPath(
+      new URL('../../../../../apps/cli/tests/integration/' + name + '.test.js', import.meta.url),
+    ),
+  );
   const log = execFileSync(process.execPath, ['--test', ...paths], { encoding: 'utf8' });
   t.diagnostic(log);
   assert.match(log, /# fail 0/);
