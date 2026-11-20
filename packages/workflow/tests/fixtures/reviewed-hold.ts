@@ -245,9 +245,15 @@ export class ReviewedWorkflow {
     assert.equal(this.fixture.task.readFile('fixture.txt').text, 'corrected');
     assert.equal(this.fixture.checks.at(-1)!.status, 0);
     const task = this.fixture.task;
-    assert.deepEqual(new Clarifications(task, selection, this.signal).answers({
-      milestone: { id: correction.id }, acceptance: correction.criteria,
-    }).find((entry) => entry.question === question), { question, answer });
+    assert.deepEqual(
+      new Clarifications(task, selection, this.signal)
+        .answers({
+          milestone: { id: correction.id },
+          acceptance: correction.criteria,
+        })
+        .find((entry) => entry.question === question),
+      { question, answer },
+    );
     for (const finding of this.fixture.rejection.findings)
       for (const evidence of finding.evidence)
         assert(task.readFile(evidence).text.includes('Independent rejection'));
@@ -272,8 +278,12 @@ export class ReviewedWorkflow {
     if (held.failure.check) {
       const observed = held.failure.check;
       assert.deepEqual(feedback.failedCheck, {
-        id: observed.id, activity: 'implementation', expected: 'pass',
-        status: observed.status, log: observed.log, diagnostic: held.failure.diagnostic,
+        id: observed.id,
+        activity: 'implementation',
+        expected: 'pass',
+        status: observed.status,
+        log: observed.log,
+        diagnostic: held.failure.diagnostic,
       });
       assert(feedback.evidence.includes(observed.log));
     }
