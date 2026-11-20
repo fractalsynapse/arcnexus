@@ -20,18 +20,7 @@ export function history(storage: string, remote: string, tasks: ReadonlySet<stri
     `,
       )
       .all();
-    const selected = new Set(tasks);
-    let changed = true;
-    while (changed) {
-      const parents = new Set(
-        rows.filter((row) => selected.has(String(row.task_id))).map((row) => Number(row.run)),
-      );
-      const size = selected.size;
-      for (const row of rows)
-        if (row.parent_id !== null && parents.has(Number(row.parent_id)))
-          selected.add(String(row.task_id));
-      changed = selected.size !== size;
-    }
+    const selected = descendantTasks(rows, tasks);
     return rows
       .filter((row) => selected.has(String(row.task_id)))
       .map((row) => ({
@@ -86,7 +75,6 @@ export function assertOrigins(completion: CompletedRefinementRound, origins: Ori
 export function assertAccounting(report: string, origins: Origins) {
   const snapshot = JSON.parse(report.split('## Event-derived measurements\n\n')[1]!);
   const starts = origins.filter(({ observation }) => observation.nativeStarted);
-  const ends = origins.filter(({ observation }) => observation.nativeFinished);
   const turns = origins.flatMap(({ observation }) =>
     observation.nativeEvent?.event?.type === 'turn.completed'
       ? [observation.nativeEvent.event.usage]
@@ -98,18 +86,7 @@ export function assertAccounting(report: string, origins: Origins) {
     profiles.sort(),
   );
   for (const name of profiles) {
-    const activations = new Set(
-      starts
-        .filter(({ observation }) => observation.nativeStarted.profile === name)
-        .map(({ observation }) => observation.nativeStarted.activation),
-    );
-    const selected = origins.filter(({ observation }) =>
-      activations.has(
-        observation.nativeStarted?.activation ??
-          observation.nativeEvent?.activation ??
-          observation.nativeFinished?.activation,
-      ),
-    );
+    const selected = profileOrigins(origins, name);
     assertProfile(
       snapshot.profiles.find((profile: { profile: string }) => profile.profile === name),
       selected,
@@ -122,6 +99,7 @@ export function assertAccounting(report: string, origins: Origins) {
 
 /** Compare one explicit profile with its originating native activation records. */
 function assertProfile(profile: Record<string, any>, origins: Origins) {
+  const ends = origins.filter(({ observation }) => observation.nativeFinished);
   const starts = origins.filter(({ observation }) => observation.nativeStarted);
   const ends = origins.filter(({ observation }) => observation.nativeFinished);
   const turns = origins.flatMap(({ observation }) =>
@@ -167,4 +145,39 @@ function assertUsage(
     assert.deepEqual(profile[field], expected);
     assert.deepEqual(total[field], expected);
   }
+}
+
+/** Expand logical descendants across all parent attempts independently of the production query. */
+function descendantTasks(rows: Record<string, unknown>[], tasks: ReadonlySet<string>) {
+    const selected = new Set(tasks);
+    let changed = true;
+    while (changed) {
+      const parents = new Set(
+        rows.filter((row) => selected.has(String(row.task_id))).map((row) => Number(row.run)),
+      );
+      const size = selected.size;
+      for (const row of rows)
+        if (row.parent_id !== null && parents.has(Number(row.parent_id)))
+          selected.add(String(row.task_id));
+      changed = selected.size !== size;
+    }
+  return selected;
+}
+
+/** Select all observations correlated to activations attributed to one explicit profile. */
+function profileOrigins(origins: Origins, name: string) {
+ const starts = origins.filter(({ observation }) => observation.nativeStarted);
+    const activations = new Set(
+      starts
+        .filter(({ observation }) => observation.nativeStarted.profile === name)
+        .map(({ observation }) => observation.nativeStarted.activation),
+    );
+    return origins.filter(({ observation }) =>
+      activations.has(
+        observation.nativeStarted?.activation ??
+          observation.nativeEvent?.activation ??
+          observation.nativeFinished?.activation,
+      ),
+    );
+
 }
