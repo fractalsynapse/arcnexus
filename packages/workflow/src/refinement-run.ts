@@ -1,4 +1,5 @@
 import { hostTask } from '../../execution/src/index.js';
+import { RunMeasurements, type JournalEvent } from '../../coordination/src/index.js';
 import type { StandingGoal } from '../../planner/src/inventory.js';
 import type { RunObserver } from './observer.js';
 import type {
