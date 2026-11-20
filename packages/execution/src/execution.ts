@@ -78,9 +78,9 @@ export class Execution {
     await refreshArchitecture(hostTask(session), id, signal);
   }
 
-  /** Read the standing goal inventory and recover an interrupted round or start a new one. */
-  round(directory: string) {
-    return goalRound(this.architecture, this.coordination, directory);
+  /** Read a namespaced goal inventory and recover or start its round. */
+  round(directory: string, namespace = 'task') {
+    return goalRound(this.architecture, this.coordination, directory, namespace);
   }
 
   /** Prepare the exact read-only snapshot that the Director will assess. */
