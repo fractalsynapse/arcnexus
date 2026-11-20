@@ -18,8 +18,18 @@ const terminal = 'apps/shell/tests/unit/terminal.test.ts';
 const engine = 'packages/engine/tests/integration/engine.test.ts';
 
 const expectedInventory = [
-  { file: 'dist/apps/shell/tests/unit/terminal.test.js', owner: 'terminal-owner', level: 'unit', tags: ['fixture'] },
-  { file: 'dist/packages/engine/tests/integration/engine.test.js', owner: 'engine-owner', level: 'integration', tags: ['fixture'] },
+  {
+    file: 'dist/apps/shell/tests/unit/terminal.test.js',
+    owner: 'terminal-owner',
+    level: 'unit',
+    tags: ['fixture'],
+  },
+  {
+    file: 'dist/packages/engine/tests/integration/engine.test.js',
+    owner: 'engine-owner',
+    level: 'integration',
+    tags: ['fixture'],
+  },
 ];
 
 /** Supply corresponding source and emitted trees with explicit, directory-independent ownership. */
