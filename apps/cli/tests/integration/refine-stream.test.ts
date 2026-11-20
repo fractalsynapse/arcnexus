@@ -94,9 +94,9 @@ function releaseObservedPhase(capture: StreamCapture, release: string): void {
   if (!capture.liveProvider || !capture.liveToolResult) return;
   if (capture.streamed.some((record) => record.detail?.event?.type === 'turn.completed')) return;
   assert.ok(!capture.streamed.some((record) => record.type === 'result'));
-  assert.ok(!capture.streamed.some(
-    (record) => record.detail?.event?.item?.type === 'agent_message',
-  ));
+  assert.ok(
+    !capture.streamed.some((record) => record.detail?.event?.item?.type === 'agent_message'),
+  );
   writeFileSync(release, 'release');
 }
 
