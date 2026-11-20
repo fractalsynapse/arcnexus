@@ -11,9 +11,9 @@ import type { TaskSession } from '../../src/index.js';
 export class RefinementPlanner {
   attempts = 0;
   round = 1;
-  readonly tasks = new Map<number, Set<string>>([
-    [1, new Set()],
-    [2, new Set()],
+  readonly tasks = new Map<string, Set<string>>([
+    ['1', new Set()],
+    ['2', new Set()],
   ]);
   readonly identities: string[] = [];
 
@@ -26,7 +26,7 @@ export class RefinementPlanner {
 
   /** Register each phase or goal session so assertions can independently read canonical history. */
   observe(session: TaskSession) {
-    this.tasks.get(this.round)!.add(hostTask(session).taskID);
+    this.tasks.get(String(this.round))!.add(hostTask(session).taskID);
   }
 
   /** Resume the same unfinished child, retaining the answer while changing provider findings. */
