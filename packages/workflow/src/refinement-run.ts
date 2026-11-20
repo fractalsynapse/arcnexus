@@ -303,7 +303,7 @@ export class RefinementRun {
     const recovery = recoveryObservations(
       hostTask(this.parent).history?.() ?? [],
       invocation,
-      round,
+      this.roundIdentity(round),
     );
     return hostTask(this.parent).store(
       `refinement-round-${round}.md`,
