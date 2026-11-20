@@ -241,6 +241,35 @@ test('interruption resumes the first unfinished phase or goal without repeating 
   }
 });
 
+test('an interrupted Run retains its captured goals and the next round captures changes', async (t) => {
+  const f = fixture(t);
+  const calls: string[] = [];
+  const services = providers(f, calls);
+  const controller = new AbortController();
+  let interrupted = false;
+  services.direction.plan = async (session) => {
+    const goal = session.goal.trim();
+    calls.push(goal);
+    if (goal === 'Second goal' && !interrupted) {
+      interrupted = true;
+      f.bodies['.arc/goals/second.md'] = '---\npriority: 2\n---\nUpdated goal\n';
+      controller.abort();
+      controller.signal.throwIfAborted();
+    }
+    return assessGoal(session, []);
+  };
+  const workflow = new Workflow(services);
+  const refine = Reflect.get(workflow, 'refine') as Refinement;
+  assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
+  await refine.call(workflow, f.root, 2, { progress() {} }, controller.signal).catch(() => {});
+  assert.equal(interrupted, true);
+  await refine.call(workflow, f.root, 2, { progress() {} }, new AbortController().signal);
+  assert.deepEqual(calls, [
+    'Plan', 'Architect', 'First goal', 'Second goal', 'Second goal',
+    'Plan', 'Architect', 'First goal', 'Updated goal',
+  ]);
+});
+
 test('two refinement rounds assess Plan, Architect and every approved goal in order', async (t) => {
   const f = fixture(t);
   const calls: string[] = [];
