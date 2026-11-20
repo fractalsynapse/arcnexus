@@ -2,7 +2,9 @@
 
 Status: the architect approved this exact batch and delegated application in
 [the recorded human decision](https://github.com/fractalsynapse/arcnexus/issues/678#issuecomment-7042218618).
-Before and after digests were verified during application. Locked contracts and
+Before and after digests were verified during application. The architect also
+approved the [exact single-blank-line formatter correction](https://github.com/fractalsynapse/arcnexus/issues/678#issuecomment-7042244915);
+its original and resulting digests are retained in the manifest. Locked contracts and
 the registry remain unchanged. Engineering checks and live results are separate.
 
 - [Exact guidance diff](guidance.patch), SHA-256

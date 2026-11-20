@@ -24,5 +24,12 @@
       "afterSHA256": "e5435047cf64413b40b631926c6f53f61f1ecf4d67f7e3d5ee6b46b874a34db2"
     }
   ],
-  "approval": "https://github.com/fractalsynapse/arcnexus/issues/678#issuecomment-7042218618"
+  "approval": "https://github.com/fractalsynapse/arcnexus/issues/678#issuecomment-7042218618",
+  "approvedFormattingCorrection": {
+    "proposal": "https://github.com/fractalsynapse/arcnexus/issues/678#issuecomment-7042244915",
+    "humanApproval": "Recorded in Codex chat after the exact single-blank-line proposal",
+    "path": ".arc/architecture/standards/agent-operating-protocol.md",
+    "beforeSHA256": "8b6632e2304a5db08acf719ae508f938a6b6765f7f570aea0f320b7a0b70baf9",
+    "afterSHA256": "349d6b565bea96fb2418cb9849419cb99167c2a38a6cc2582daaf439ec14daf4"
+  }
 }

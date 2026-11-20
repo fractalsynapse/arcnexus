@@ -290,7 +290,6 @@ milestone. A refused inconsistent request stays with this caller: read the exact
 diagnostic, correct the request and preserve acknowledged work. Do not ask Direction
 to reassign accepted ownership or weaken validation to make an invalid link fit.
 
-
 Consult existing approved guidance and retained answers before asking a question.
 Routine engineering choices within accepted authority are yours to make. Human
 decisions concern objectives, goals and architecture; ordinary correction does
