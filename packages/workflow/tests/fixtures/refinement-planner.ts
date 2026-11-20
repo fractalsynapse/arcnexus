@@ -41,7 +41,7 @@ export class RefinementPlanner {
     } as unknown as Architecture);
     const reply = (await hostTask(session).activate(
       agent,
-      { component: 'planner', activity: 'planning' },
+      this.selection,
       { assignment: { attempt }, acceptance: [] },
       signal,
     )) as { finding: string; answer: string };
