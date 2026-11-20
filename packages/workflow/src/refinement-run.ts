@@ -244,7 +244,7 @@ export class RefinementRun {
       const timelinePath = records
         .map((record) => record.artifact)
         .find((path): path is string => typeof path === 'string' && path.endsWith('run-timeline.jsonl'));
-      if (!timelinePath) continue;
+      if (!timelinePath) throw new Error('Missing retained timeline for refinement child: ' + scope);
       const timeline = host.readFile(timelinePath).text;
       for (const line of timeline.split('\n')) {
         if (!line) continue;
