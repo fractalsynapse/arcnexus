@@ -252,11 +252,21 @@ async function legacyChild(f: ReturnType<typeof fixture>, total: number, round: 
     refinement: { invocation, total, round, phase: 'Plan' },
   } as unknown as Parameters<typeof parent.record>[0]);
   await new Workflow(services).run(
-    { directory: f.root, goal: 'Assess objectives and standing goals',
-      planning: 'exploration', scope: `refine:${invocation}:round:${round}:plan` },
-    { progress() {} }, new AbortController().signal, parent,
+    {
+      directory: f.root,
+      goal: 'Assess objectives and standing goals',
+      planning: 'exploration',
+      scope: `refine:${invocation}:round:${round}:plan`,
+    },
+    { progress() {} },
+    new AbortController().signal,
+    parent,
   );
-  parent.finish({ kind: 'failed', reason: 'Legacy parent acknowledgment interrupted', evidence: [] });
+  parent.finish({
+    kind: 'failed',
+    reason: 'Legacy parent acknowledgment interrupted',
+    evidence: [],
+  });
   parent.close();
   return invocation;
 }
@@ -269,7 +279,10 @@ async function legacyRecovery(t: TestContext, value: number) {
   const calls: string[] = [];
   const events: string[] = [];
   const outcome = await new Workflow(providers(reopened, calls)).refine(
-    f.root, BigInt(value).toString(), phaseObserver(events), new AbortController().signal,
+    f.root,
+    BigInt(value).toString(),
+    phaseObserver(events),
+    new AbortController().signal,
   );
   assert.equal(outcome.kind, 'planned', JSON.stringify(outcome));
   assert.deepEqual(calls, ['Architect', 'First goal', 'Second goal']);
@@ -291,8 +304,13 @@ test('invalid decimal operands are rejected before admission', async (t) => {
     throw new Error('Invalid input reached admission');
   };
   for (const value of ['', '0', '000', '-1', '+1', ' 1', '1 ', '1.0', '1e3', 1, Infinity]) {
-    const outcome = await refine(new Workflow(services), f.root, value,
-      { progress() {} }, new AbortController().signal);
+    const outcome = await refine(
+      new Workflow(services),
+      f.root,
+      value,
+      { progress() {} },
+      new AbortController().signal,
+    );
     assert.equal(Reflect.get(outcome as object, 'kind'), 'invalid');
   }
   assert.equal(admissions, 0);
