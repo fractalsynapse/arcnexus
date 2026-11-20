@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import type { HoldContext } from '../../../execution/src/index.js';
 import { correction } from '../../../execution/tests/fixtures/reviewed-hold.js';
@@ -92,7 +93,7 @@ function assertNewFinding(f: ReviewedWorkflow, held: HoldContext, log: string) {
   const actual = f.fixture.checks.find((check) => check.log === current.failure.check!.log)!;
   assert.equal(actual.diagnostic, f.diagnostic);
   assert.equal(actual.status, 37);
-  assert(f.fixture.task.readFile(actual.log).text.includes(f.diagnostic));
+  assert(readFileSync(actual.log, 'utf8').includes(f.diagnostic));
   assert.notEqual(current.progress.identity, held.progress.identity);
   assert.deepEqual(current.progress.inputs, held.progress.inputs);
   assert.deepEqual(current.task, held.task);
