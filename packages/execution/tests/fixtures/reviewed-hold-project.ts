@@ -43,6 +43,10 @@ export const holdFiles: Record<string, string> = {
   'registry.yaml': 'contracts: []\n',
   '.arc/architecture/project.yaml': JSON.stringify(project),
   '.arc/architecture/components/owner.yaml': JSON.stringify(owner),
+  '.arc/architecture/components/other.yaml': JSON.stringify({
+    id: 'other', purpose: 'Own the external schema', owns: ['schema.txt'],
+    activities: { implementation: activity },
+  }),
   '.arc/architecture/roles/steward.yaml': '{"id":"steward","purpose":"Correct owned work"}',
   '.arc/architecture/execution-profiles/controlled.yaml': JSON.stringify({
     id: 'controlled',
