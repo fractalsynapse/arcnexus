@@ -244,6 +244,17 @@ export class ReviewedWorkflow {
     );
     assert.equal(this.fixture.task.readFile('fixture.txt').text, 'corrected');
     assert.equal(this.fixture.checks.at(-1)!.status, 0);
+    this.assertAssembledContinuity();
+    return {
+      kind: 'accepted' as const,
+      candidate: candidate.digest,
+      criteria: ['original-criterion', 'foreign-criterion'],
+      evidence: [this.fixture.checks.at(-1)!.log],
+    };
+  }
+
+  /** Require original knowledge and review artifacts to survive the entire correction sequence. */
+  private assertAssembledContinuity() {
     const task = this.fixture.task;
     assert.deepEqual(
       new Clarifications(task, selection, this.signal)
@@ -259,12 +270,6 @@ export class ReviewedWorkflow {
         assert(task.readFile(evidence).text.includes('Independent rejection'));
     assert.equal(task.issue, this.holds[0]!.task.issue);
     assert.equal(task.branch, this.holds[0]!.task.branch);
-    return {
-      kind: 'accepted' as const,
-      candidate: candidate.digest,
-      criteria: ['original-criterion', 'foreign-criterion'],
-      evidence: [this.fixture.checks.at(-1)!.log],
-    };
   }
 
   /** Require exact diagnostic, exit and evidence in Direction's structured feedback, not a generic blocked string. */
