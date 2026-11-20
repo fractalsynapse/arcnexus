@@ -64,7 +64,9 @@ test('refinement inventory is isolated from an unfinished standalone round', (t)
   setBody('---\npriority: 1\n---\nRevised goal\n');
   const refinement = Reflect.apply(execution.round, execution, [root, 'refine:invocation:1']);
   assert.notEqual(refinement.id, standalone.id);
-  assert.equal(refinement.goals[0].body, 'Revised goal\n');
+  const [capturedGoal] = refinement.goals;
+  assert.ok(capturedGoal);
+  assert.equal(capturedGoal.body, 'Revised goal\n');
   setBody('---\npriority: 1\n---\nLater goal\n');
   const resumed = Reflect.apply(execution.round, execution, [root, 'refine:invocation:1']);
   assert.deepEqual(resumed.goals, refinement.goals);
