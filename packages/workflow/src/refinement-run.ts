@@ -290,7 +290,8 @@ export class RefinementRun {
     invocation: string,
     round: number,
     goals: readonly StandingGoal[],
-    frames: readonly import('../../coordination/src/index.js').JournalEvent[],
+    frames: readonly JournalEvent[],
+    measurements: ReturnType<RunMeasurements['snapshot']>,
   ) {
     const text = [
       `# Refinement round ${round}`,
