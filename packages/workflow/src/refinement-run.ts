@@ -40,7 +40,11 @@ export class RefinementRun {
     const invocation = hostTask(this.parent).journal.taskID;
     const saved = this.latestProgress();
     if (saved && saved.total !== this.total)
-      return { kind: 'invalid', reason: `Unfinished refinement requested ${saved.total} rounds`, evidence: [] };
+      return {
+        kind: 'invalid',
+        reason: `Unfinished refinement requested ${saved.total} rounds`,
+        evidence: [],
+      };
     for (let round = saved?.round ?? 1; round <= this.total; round++) {
       const state = round === saved?.round ? saved : undefined;
       const outcome = await this.runRound(invocation, round, state);
@@ -88,9 +92,10 @@ export class RefinementRun {
       this.parent.capture.source.root,
       `refine:${invocation}:${round}`,
     );
-    if (!goals) return { kind: 'invalid', reason: 'Standing goal rounds are unavailable', evidence: [] };
+    if (!goals)
+      return { kind: 'invalid', reason: 'Standing goal rounds are unavailable', evidence: [] };
     this.save(invocation, round, 'Run', { inventory: goals.goals });
-    const index = phase === 'Run' && saved?.phase === 'Run' ? saved.goal ?? 0 : 0;
+    const index = phase === 'Run' && saved?.phase === 'Run' ? (saved.goal ?? 0) : 0;
     const outcome = await this.runGoals(invocation, round, goals.goals, index);
     if (outcome) return outcome;
     goals.finish();
@@ -114,7 +119,13 @@ export class RefinementRun {
     const goal = 'Assess architecture alignment';
     return (
       completedChild(this.parent, goal, scope, ['planned', 'merged']) ??
-      this.updateChild(this.parent.capture.source.root, this.observer, this.signal, this.parent, scope)
+      this.updateChild(
+        this.parent.capture.source.root,
+        this.observer,
+        this.signal,
+        this.parent,
+        scope,
+      )
     );
   }
 
@@ -152,7 +163,12 @@ export class RefinementRun {
   }
 
   /** Register the report and expose only references to complete originating evidence. */
-  private completeRound(invocation: string, round: number, goals: readonly StandingGoal[], start: number) {
+  private completeRound(
+    invocation: string,
+    round: number,
+    goals: readonly StandingGoal[],
+    start: number,
+  ) {
     const frames = this.observer.eventFrames().slice(start);
     const report = this.report(invocation, round, goals, frames);
     const completion: CompletedRefinementRound = {
@@ -160,7 +176,9 @@ export class RefinementRun {
       round,
       report,
       findings: frames.map((frame) => frame.sequence),
-      measurements: frames.filter((frame) => hasMeasurement(frame.observation)).map((frame) => frame.sequence),
+      measurements: frames
+        .filter((frame) => hasMeasurement(frame.observation))
+        .map((frame) => frame.sequence),
       evidence: [...new Set(frames.flatMap((frame) => eventEvidence(frame.observation)))],
     };
     this.parent.record({ completedRound: completion });
@@ -224,9 +242,15 @@ export class RefinementRun {
 }
 
 /** Accept only the terminal kinds that mean the child position actually completed. */
-function completedChild(parent: TaskSession, goal: string, scope: string, kinds: readonly string[]) {
+function completedChild(
+  parent: TaskSession,
+  goal: string,
+  scope: string,
+  kinds: readonly string[],
+) {
   const frames = hostTask(parent).journal.childEvents(goal, scope) as Record<string, unknown>[];
-  const terminal = frames.findLast((event) => 'outcome' in event)?.outcome as TaskOutcome | undefined;
+  const terminal = frames.findLast((event) => 'outcome' in event)?.outcome as
+    TaskOutcome | undefined;
   return terminal && kinds.includes(terminal.kind) ? terminal : undefined;
 }
 
@@ -244,5 +268,7 @@ function hasMeasurement(value: unknown) {
 function eventEvidence(value: unknown): string[] {
   if (typeof value !== 'object' || value === null) return [];
   const evidence = (value as Record<string, unknown>).evidence;
-  return Array.isArray(evidence) ? evidence.filter((item): item is string => typeof item === 'string') : [];
+  return Array.isArray(evidence)
+    ? evidence.filter((item): item is string => typeof item === 'string')
+    : [];
 }
