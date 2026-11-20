@@ -45,7 +45,11 @@ class OwnershipProject {
   constructor(t: TestContext, scenario: Scenario) {
     t.after(() => rmSync(this.root, { recursive: true, force: true }));
     execFileSync('git', ['init', '-q'], this.options);
-    execFileSync('git', ['remote', 'add', 'origin', 'https://example.com/ownership.git'], this.options);
+    execFileSync(
+      'git',
+      ['remote', 'add', 'origin', 'https://example.com/ownership.git'],
+      this.options,
+    );
     this.writeAuthority();
     this.writeComponents(scenario === 'collisions' || scenario === 'mixed');
     for (const path of ['src/alpha/unique.ts', 'src/beta/unique.ts', 'src/zeta/unique.ts'])
@@ -73,35 +77,55 @@ class OwnershipProject {
       director: { component: 'zeta', activity: 'testing' },
       verifier: { component: 'alpha', activity: 'testing' },
     });
-    this.yaml('.arc/contracts.yaml', { contracts: [{
-      id: 'fixture/project', owner: 'zeta', file: 'contracts/project.md', stage: 'locked',
-      digest: createHash('sha256').update(contract).digest('hex'),
-      acceptedBy: 'fixture architect', acceptedAt: '2026-01-01',
-    }] });
+    this.yaml('.arc/contracts.yaml', {
+      contracts: [
+        {
+          id: 'fixture/project',
+          owner: 'zeta',
+          file: 'contracts/project.md',
+          stage: 'locked',
+          digest: createHash('sha256').update(contract).digest('hex'),
+          acceptedBy: 'fixture architect',
+          acceptedAt: '2026-01-01',
+        },
+      ],
+    });
     this.writeMappings();
   }
 
   /** Author all references used by the public request builder after ownership succeeds. */
   private writeMappings() {
     this.yaml('.arc/architecture/roles/steward.yaml', {
-      id: 'steward', purpose: 'Inspect the project.', responsibilities: [], instructions: [],
+      id: 'steward',
+      purpose: 'Inspect the project.',
+      responsibilities: [],
+      instructions: [],
     });
     this.yaml('.arc/architecture/execution-profiles/standard.yaml', {
-      id: 'standard', model: 'fixture-model', reasoning: 'high', webSearch: 'disabled',
+      id: 'standard',
+      model: 'fixture-model',
+      reasoning: 'high',
+      webSearch: 'disabled',
       operationCategories: ['project-tool'],
     });
     this.yaml('.arc/architecture/operations/read-file.yaml', {
-      id: 'read-file', category: 'project-tool', tool: 'read',
+      id: 'read-file',
+      category: 'project-tool',
+      tool: 'read',
     });
     this.yaml('.arc/architecture/standards/guide.yaml', {
-      id: 'guide', document: 'contracts/guide.md',
+      id: 'guide',
+      document: 'contracts/guide.md',
     });
   }
 
   /** Include an owner without Testing so an eligible roster cannot replace the full catalog. */
   private writeComponents(colliding: boolean) {
     const components = {
-      zeta: { owns: ['.arc', 'contracts', 'plan.md', 'src/zeta'], activities: { testing: activity } },
+      zeta: {
+        owns: ['.arc', 'contracts', 'plan.md', 'src/zeta'],
+        activities: { testing: activity },
+      },
       beta: { owns: ['src/beta'], activities: { maintenance: activity } },
       alpha: { owns: ['src/alpha'], activities: { testing: activity } },
     };
@@ -112,7 +136,9 @@ class OwnershipProject {
     }
     for (const [id, definition] of Object.entries(components))
       this.yaml(`.arc/architecture/components/${id}.yaml`, {
-        id, purpose: `Maintain ${id}'s resources.`, ...definition,
+        id,
+        purpose: `Maintain ${id}'s resources.`,
+        ...definition,
       });
   }
 
@@ -131,19 +157,23 @@ class OwnershipProject {
 /** Read the caller-visible refusal while rejecting success and non-ownership setup errors. */
 function ownershipDiagnostic(capture: Capture): string {
   let diagnostic: string | undefined;
-  assert.throws(() => validateCapture(capture), (error: unknown) => {
-    assert.ok(error instanceof Error);
-    diagnostic = error.message;
-    assert.match(diagnostic, /Architecture ownership/);
-    return true;
-  });
+  assert.throws(
+    () => validateCapture(capture),
+    (error: unknown) => {
+      assert.ok(error instanceof Error);
+      diagnostic = error.message;
+      assert.match(diagnostic, /Architecture ownership/);
+      return true;
+    },
+  );
   assert.ok(diagnostic);
   return diagnostic;
 }
 
 /** Check independent expected paths and owner identities without prescribing error punctuation. */
 function assertComplete(diagnostic: string, paths: readonly string[], owners: readonly string[]) {
-  for (const path of paths) assert.ok(diagnostic.includes(path), `Missing path ${path}: ${diagnostic}`);
+  for (const path of paths)
+    assert.ok(diagnostic.includes(path), `Missing path ${path}: ${diagnostic}`);
   for (const id of owners)
     assert.match(diagnostic, new RegExp(`\\b${id}\\b`), `Missing owner ${id}: ${diagnostic}`);
 }
@@ -163,9 +193,10 @@ test('ARC-3: ownership refusal names every uncovered maintained resource', (t) =
 
 test('ARC-4: each collision names all owners, including the owner without Testing', (t) => {
   const { capture } = new OwnershipProject(t, 'collisions');
-  assert.deepEqual(team.list(capture.components, { activity: 'testing' }).map(({ id }) => id), [
-    'alpha', 'zeta',
-  ]);
+  assert.deepEqual(
+    team.list(capture.components, { activity: 'testing' }).map(({ id }) => id),
+    ['alpha', 'zeta'],
+  );
   for (const path of collisionPaths) {
     const singleResource = { ...capture, source: { ...capture.source, paths: [path] } };
     assertComplete(ownershipDiagnostic(singleResource), [path], ['alpha', 'beta', 'zeta']);
