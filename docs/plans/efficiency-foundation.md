@@ -135,7 +135,7 @@ broader merge/provenance and runtime-adoption checklist items stay open.
 
 ## C. Parameterize operations and declare activity verification
 
-- [ ] Extend the existing operation declaration with typed named parameters and
+- [x] Extend the existing operation declaration with typed named parameters and
   defaults. Support relevant existing selectors, including owner, test tags and
   levels, paths and native-test selection, according to the actual command API.
 - [x] Resolve defaults → explicit component overrides → explicit activity binding
@@ -373,15 +373,32 @@ logs are retained in application storage. A real read-only Director observation
 and returned a valid plan: 44.3 seconds wall time, 87,083 reported input tokens
 (69,632 cached) and 1,745 output tokens. Its complete timeline, exact request and
 provider results are retained outside source. Cost remains unknown. It made no
-source changes and earns no delivery or qualification credit. Current committed
-head `0e4da679` passed [CI](https://github.com/fractalsynapse/arcnexus/actions/runs/44646556705).
+source changes and earns no delivery or qualification credit. That batch's
+`0e4da679` passed [CI](https://github.com/fractalsynapse/arcnexus/actions/runs/44646556705).
 
 The next operation batch uses one resolver for inspection, execution and check
 identity. It supports typed scalar/argv-array parameters with provenance and
 enforces required passing checks even when the model omits them or predicts red.
 Its 53 focused built-program cases pass, including a real confined argv/cache
 test. [Operation configuration](../../packages/architecture/docs/operations.md)
-describes this boundary. This does not claim test-selector support or activate
-unapproved catalog declarations. Architecture adoption, actual test selection,
-the catalog/prompt rewrite, complete cost/phase analysis and refinement remain
-outstanding. The live streak remains 0/3.
+describes this boundary. That batch did not include test-selector support or
+activate unapproved catalog declarations. The subsequent adoption batch passed
+394 native-enabled built-program cases and
+[CI at b41c162c](https://github.com/fractalsynapse/arcnexus/actions/runs/44653859480).
+The catalog/prompt rewrite, broader architecture merge/provenance, complete
+cost/phase analysis and refinement remain outstanding. The live streak remains 0/3.
+
+The shared test command now accepts declared tag/level and literal path selection,
+with explicit native-test opt-in. Its metadata reader validates literal fields
+against catalog/path ownership without executing tests, and loads TypeScript only
+when discovery is needed. Existing suites now declare their metadata; the incorrect
+CLI owner label was corrected. The selected native integration command passed
+28 tests with no skips. Empty selections fail explicitly. This supplies the real
+command API for operation parameter overrides; new active catalog mappings still
+need exact guide approval.
+
+The assembled selector batch passes all 400 native-enabled built-program tests
+with no failures or skips, plus build, lint and formatting. Its explicit native
+selection refuses disabled execution rather than reporting skipped native cases
+as a native pass. These checks remain separate from real platform-led staging
+delivery and the three-round qualification.

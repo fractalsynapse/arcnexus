@@ -26,8 +26,11 @@ verification:
 - tests
 ```
 
-The command's own documented selector syntax determines which values to supply.
-Configuring selectors does not invent test-runner support for an absent option.
+The shared test runner supports repeated `--tag <tag>` and `--level <level>`
+selectors, literal `--path <file-or-directory>` selection and explicit
+`--native true|false`; see
+[test selection](../../../docs/foundation/quality.md). The command's own documented
+selector syntax determines which values to supply.
 The resolved request shows actual argv, parameter values and their authored sources.
 Execution uses that same resolver and includes resolved parameters in check-input
 identity. Unknown keys, unresolved tokens and incorrect types are errors rather

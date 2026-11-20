@@ -12,6 +12,8 @@ import { Workflow, type WorkflowServices } from '../../../workflow/src/index.js'
 import { Execution, HostTask, hostTask } from '../../src/index.js';
 import { ActivationTools } from '../../src/activation-tools.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 const editTool = {
   name: 'checked-edit',
   handler: 'edit',

@@ -4,6 +4,8 @@ import type { Capture } from '../../../architecture/src/index.js';
 import { activities, type Plan, type Rejection } from '../../../direction/src/index.js';
 import { Workflow, type TaskSession, type WorkflowServices } from '../../src/index.js';
 
+export const suite = { owner: 'workflow', level: 'unit', tags: ['regression'] } as const;
+
 const criterion = {
   id: 'approved-bytes',
   description: 'Apply the reviewed objective and goal bytes',

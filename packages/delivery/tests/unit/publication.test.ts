@@ -3,6 +3,8 @@ import test from 'node:test';
 import { publish, type Publication } from '../../src/index.js';
 import type { PublishedPull } from '../../../collaboration/src/index.js';
 
+export const suite = { owner: 'delivery', level: 'unit', tags: ['regression'] } as const;
+
 const accepted: Publication = {
   target: 'staging',
   branch: '10-task',

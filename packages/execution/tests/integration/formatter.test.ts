@@ -15,6 +15,12 @@ import test from 'node:test';
 import { formatContents } from '../../src/check.js';
 import { formatterPreview } from '../../src/formatter.js';
 
+export const suite = {
+  owner: 'execution',
+  level: 'integration',
+  tags: ['native', 'regression'],
+} as const;
+
 test('formatting can be previewed on stdout without changing checked source', (t) => {
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-format-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));

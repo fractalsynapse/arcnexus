@@ -8,6 +8,8 @@ import { applyEdits } from '../../src/edits.js';
 import { HostTask } from '../../src/index.js';
 import { git } from '../../src/git.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 const signal = new AbortController().signal;
 
 test('protected edits require the exact human gate and cannot be granted by a candidate', async (t) => {

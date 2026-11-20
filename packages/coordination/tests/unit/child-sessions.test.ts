@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 import test, { type TestContext } from 'node:test';
 import { Coordination, Journal } from '../../src/index.js';
 
+export const suite = { owner: 'coordination', level: 'unit', tags: ['regression'] } as const;
+
 const remote = 'https://example.invalid/child-sessions.git';
 
 /** Exercise real writer admission and child journals in one temporary project database. */

@@ -8,6 +8,8 @@ import { Coordination } from '../../../coordination/src/index.js';
 import type { StewardCheckFailure } from '../../../direction/src/index.js';
 import { HostTask } from '../../src/index.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 const scope = { owner: 'owner', activity: 'implementation' } as const;
 type Scope = Parameters<HostTask['pendingCheck']>[0];
 

@@ -6,6 +6,8 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { projectFixture } from '../fixtures/project.js';
 
+export const suite = { owner: 'cli-app', level: 'integration', tags: ['regression'] } as const;
+
 const cli = fileURLToPath(new URL('../../src/index.js', import.meta.url));
 
 /** Run the compiled CLI from a nested path in a generic target. */

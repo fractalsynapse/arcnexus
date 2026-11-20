@@ -4,6 +4,8 @@
 
 ### Added
 
+- Select built test suites by declared tags and levels through the shared runner, with explicit native-test opt-in and literal metadata validation before execution; align existing suite metadata with catalog ownership (#615).
+
 - Adopt exact approved architecture at the existing workspace/checkpoint boundaries once mapped handlers and commands are available; retain the original engineering base, accepted plan, answers and historical authority across restart (#615).
 
 - Resolve reusable operation parameters from declared defaults, component configuration and selected activity bindings; enforce declared passing activity checks through the existing steward repair path (#615).

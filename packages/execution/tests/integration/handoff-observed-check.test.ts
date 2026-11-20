@@ -10,6 +10,8 @@ import { ActivationTools } from '../../src/activation-tools.js';
 import { steward } from '../../src/index.js';
 import { StewardFixture } from '../fixtures/steward.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 const milestone: Milestone = {
   id: 'requester',
   owner: 'owner',

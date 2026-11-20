@@ -13,6 +13,8 @@ import type { Candidate, Verdict } from '../../../verification/src/index.js';
 import { Execution } from '../../src/index.js';
 import { AdoptionFixture } from '../fixtures/architecture-adoption.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 /** Verify the actual outer Workflow and normal task lifecycle against real approved bytes and journals. */
 class ArchitectureDeliveryScenario {
   readonly fixture;

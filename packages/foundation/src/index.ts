@@ -2,9 +2,11 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { globSync, readFileSync } from 'node:fs';
 import { parse } from 'yaml';
+import { matchesTestFilter, SuiteMetadataReader, type TestFilter } from './test-selection.js';
 import { team } from '../../team/src/index.js';
 
 export { unifiedDiff, type ContentPatch } from './diff.js';
+export { TestSelection, type TestFilter } from './test-selection.js';
 
 /** Identify exact UTF-8 content used in reviewed proposals and recorded source observations. */
 export function textDigest(content: string) {
@@ -25,12 +27,17 @@ interface Suite {
   file: string;
   owner: string;
   level: string;
+  tags: string[];
 }
 
 const suitePattern = '{apps,packages}/*/tests/**/*.test';
 
 /** Derive suite registration from the source owner and level directory. */
-export function registerSuite(file: string, components: readonly Component[]): Suite {
+export function registerSuite(
+  file: string,
+  components: readonly Component[],
+  text?: string,
+): Suite {
   const source = file.replace(/^dist\//, '').replace(/\.js$/, '.ts');
   const owners = team.owners(components, source);
   const [owner] = owners;
@@ -40,19 +47,27 @@ export function registerSuite(file: string, components: readonly Component[]): S
     level && ['unit', 'integration', 'acceptance'].includes(level),
     `Invalid test level for ${source}; use tests/unit, tests/integration or tests/acceptance`,
   );
-  return { file, owner: owner.id, level };
+  const metadata = text === undefined ? undefined : new SuiteMetadataReader(file).read(text);
+  if (metadata) {
+    assert.equal(metadata.owner, owner.id, `Suite owner contradicts path: ${source}`);
+    assert.equal(metadata.level, level, `Suite level contradicts path: ${source}`);
+  }
+  return { file, owner: owner.id, level, tags: metadata?.tags ?? [] };
 }
 
 /** Validate all built suite registrations before selecting the requested owner. */
-export function testInventory(owner?: string): Suite[] {
+export function testInventory(owner?: string, filter: TestFilter = {}): Suite[] {
   const components: Component[] = globSync('.arc/architecture/components/*.yaml').map((path) =>
     parse(readFileSync(path, 'utf8')),
   );
   assert(!owner || components.some(({ id }) => id === owner), `Unknown test owner: ${owner}`);
   const selected = discoverSuites('.', `dist/${suitePattern}.js`, components).filter(
-    (suite) => !owner || suite.owner === owner,
+    (suite) => (!owner || suite.owner === owner) && matchesTestFilter(suite, filter),
   );
-  assert(selected.length > 0, `No built test suites for ${owner ?? 'this repository'}`);
+  assert(
+    selected.length > 0,
+    `No built test suites for ${owner ?? 'this repository'}; selection: ${JSON.stringify(filter)}`,
+  );
   return selected;
 }
 
@@ -75,5 +90,5 @@ export function hasOwnerTestSuites(
 function discoverSuites(directory: string, pattern: string, components: readonly Component[]) {
   return globSync(pattern, { cwd: directory })
     .sort()
-    .map((file) => registerSuite(file, components));
+    .map((file) => registerSuite(file, components, readFileSync(`${directory}/${file}`, 'utf8')));
 }

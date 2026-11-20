@@ -4,6 +4,8 @@ import type { CheckResult } from '../../src/check.js';
 import { ownerEvidenceDigest, ownerReviewObservations } from '../../src/review-observations.js';
 import type { StewardScope } from '../../src/steward-check.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 /** Model recorded native observations around the last candidate edit. */
 class ReviewObservationsScenario {
   /** Preserve an earlier failed check without presenting it as current evidence. */

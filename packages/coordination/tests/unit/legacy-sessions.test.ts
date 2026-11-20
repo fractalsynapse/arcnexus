@@ -7,6 +7,8 @@ import { DatabaseSync } from 'node:sqlite';
 import test, { type TestContext } from 'node:test';
 import { Coordination, Journal } from '../../src/index.js';
 
+export const suite = { owner: 'coordination', level: 'unit', tags: ['regression'] } as const;
+
 const remote = 'https://example.invalid/legacy-sessions.git';
 const goal = 'Retained standalone work';
 const digest = (text: string) => createHash('sha256').update(text).digest('hex');

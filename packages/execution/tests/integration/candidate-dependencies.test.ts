@@ -6,7 +6,11 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { CheckDependencies } from '../../src/dependencies.js';
 import { DependencyFixture } from '../fixtures/dependencies.js';
 
-export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+export const suite = {
+  owner: 'execution',
+  level: 'integration',
+  tags: ['native', 'regression'],
+} as const;
 
 const native = { skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1' };
 

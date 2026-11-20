@@ -17,7 +17,11 @@ import type { Capture } from '../../../architecture/src/index.js';
 import { check } from '../../src/check.js';
 import { applyEdits } from '../../src/edits.js';
 
-export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+export const suite = {
+  owner: 'execution',
+  level: 'integration',
+  tags: ['native', 'regression'],
+} as const;
 
 /** Use a small capture with two owners and one locked contract. */
 function capture(root: string) {

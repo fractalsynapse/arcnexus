@@ -5,6 +5,8 @@ import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
 import { Coordination, Journal } from '../../src/index.js';
 
+export const suite = { owner: 'coordination', level: 'unit', tags: ['regression'] } as const;
+
 const remote = 'https://example.invalid/assessment-cycles.git';
 const goal = 'Assess accepted architecture';
 

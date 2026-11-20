@@ -9,6 +9,8 @@ import { activities, type Milestone } from '../../../direction/src/index.js';
 import { steward } from '../../src/index.js';
 import { StewardFixture } from '../fixtures/steward.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 const scope = { owner: 'owner', activity: 'implementation', expected: 'pass' } as const;
 const milestone: Milestone = {
   id: 'original',

@@ -4,6 +4,8 @@ import { Linter } from 'eslint';
 import tseslint from 'typescript-eslint';
 import { documentation } from '../../scripts/readability-rules.js';
 
+export const suite = { owner: 'foundation', level: 'unit', tags: ['regression'] } as const;
+
 const linter = new Linter();
 const config: Linter.Config = {
   files: ['**/*.ts'],

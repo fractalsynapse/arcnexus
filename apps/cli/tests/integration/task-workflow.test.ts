@@ -18,7 +18,7 @@ import {
 } from '../../../../packages/workflow/src/index.js';
 import { projectFixture } from '../fixtures/project.js';
 
-export const suite = { owner: 'cli', level: 'integration', tags: ['regression'] } as const;
+export const suite = { owner: 'cli-app', level: 'integration', tags: ['regression'] } as const;
 
 const cli = fileURLToPath(new URL('../../src/index.js', import.meta.url));
 

@@ -8,6 +8,8 @@ import type { Agent } from '../../../agent/src/index.js';
 import type { AgentInspection } from '../../../architecture/src/index.js';
 import { StewardFixture } from '../fixtures/steward.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 const input = 'repair café 🛠';
 
 /** Prepare the exact multibyte request consumed by the native provider. */
