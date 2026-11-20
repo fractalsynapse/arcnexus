@@ -85,6 +85,10 @@ export class RefinementRun {
     round: number,
     saved?: SavedProgress,
   ): Promise<TaskOutcome | undefined> {
+    if (this.roundAlreadyCompleted(invocation, round)) {
+      this.save(invocation, round + 1, 'Plan');
+      return;
+    }
     const start = this.observer.eventFrames().length;
     let phase: Exclude<SavedProgress['phase'], 'complete'> =
       saved?.phase === 'complete' ? 'Plan' : (saved?.phase ?? 'Plan');
