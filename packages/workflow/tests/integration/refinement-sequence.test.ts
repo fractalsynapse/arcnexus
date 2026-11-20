@@ -266,6 +266,51 @@ test('completed-round reports recover originating findings from an earlier attem
   assert.ok((Reflect.get(round, 'findings') as unknown[]).length >= 4);
 });
 
+test('a committed child outcome is reused after parent acknowledgment is interrupted', async (t) => {
+  const f = fixture(t);
+  const services = providers(f, []);
+  let assessments = 0;
+  services.planner!.propose = async () => ({
+    kind: 'planned',
+    commit: f.revision,
+    summary: `Plan origin finding ${++assessments}`,
+    evidence: [],
+  });
+  const workflow = new Workflow(services);
+  const refine = Reflect.get(workflow, 'refine') as Refinement;
+  let interrupted = false;
+  const initial = {
+    progress() {},
+    event(event: unknown) {
+      const observation =
+        typeof event === 'object' && event !== null ? Reflect.get(event, 'observation') : undefined;
+      const outcome =
+        typeof observation === 'object' && observation !== null
+          ? Reflect.get(observation, 'outcome')
+          : undefined;
+      if (!interrupted && typeof outcome === 'object' && outcome?.kind === 'planned') {
+        interrupted = true;
+        throw new Error('Interrupt after child terminal commit');
+      }
+    },
+  };
+  await refine.call(workflow, f.root, 1, initial, new AbortController().signal);
+  assert.equal(interrupted, true);
+  const events: unknown[] = [];
+  await refine.call(
+    workflow,
+    f.root,
+    1,
+    { progress() {}, event: (event) => events.push(event) },
+    new AbortController().signal,
+  );
+  assert.equal(assessments, 1, 'the successful Planner child was not assessed again');
+  const round = completedRounds(events)[0]!;
+  const report = readFileSync(Reflect.get(round, 'report') as string, 'utf8');
+  assert.match(report, /Plan origin finding 1/);
+  assert.match(report, /Reused completed child outcome for refine:/);
+});
+
 test('a competing foreground task is refused while the refinement phase runs', async (t) => {
   const f = fixture(t);
   const services = providers(f, []);
