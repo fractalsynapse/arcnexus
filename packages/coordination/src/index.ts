@@ -263,12 +263,12 @@ export class Coordination {
     try {
       database.exec('BEGIN IMMEDIATE');
       const previous = database
-        .prepare('SELECT id, inventory FROM rounds WHERE finished = 0 ORDER BY id LIMIT 1')
-        .get();
+        .prepare('SELECT id, inventory FROM rounds WHERE finished = 0 AND namespace = ? ORDER BY id LIMIT 1')
+        .get(namespace);
       const inventory = previous ? String(previous.inventory) : captureInventory();
       const id =
         previous?.id ??
-        database.prepare('INSERT INTO rounds(inventory) VALUES (?)').run(inventory).lastInsertRowid;
+        database.prepare('INSERT INTO rounds(inventory, namespace) VALUES (?, ?)').run(inventory, namespace).lastInsertRowid;
       database.exec('COMMIT');
       return { id: Number(id), inventory };
     } finally {
