@@ -77,8 +77,6 @@ class RoundConsumer {
     const result = await this.call('read-file', { path });
     const text = result.structuredContent.text as string;
     this.reads.set(path, text);
-    const values = this.values(text);
-    for (const value of values) await this.visit(value);
   }
 
   /** Decode complete JSON artifacts and the canonical JSONL frames embedded in readable reports. */
