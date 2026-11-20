@@ -3,8 +3,8 @@
 This implementation-intent note serves Execution maintainers and Workflow
 consumers working on [#699](https://github.com/fractalsynapse/arcnexus/issues/699).
 It records the intended evidence boundary for `hold-context-complete` and
-`hold-progress-grounded` before behavioral changes. The public hold context and
-its end-to-end recovery are implementation targets, not demonstrated capability.
+`hold-progress-grounded` before behavioral changes. Execution now exposes the public hold context through its steward result.
+Workflow routing, assembled independent review and delivery remain later milestones.
 
 The governing obligations are the [Execution contract](../contract.md#obligations),
 especially EX-11, EX-17 and EX-22, and
@@ -127,3 +127,37 @@ prerequisite continuation and fresh independent assessment against the original
 acceptance. Deterministic coverage does not establish native confinement, live
 provider behavior, hosted CI, required PR review or staging delivery. Those
 observations remain separately attributable; this intent note claims none of them.
+
+## Implemented public boundary
+
+The public entry exports `HoldContext` and `StewardOutcome`. A host-generated
+blocked steward result following recorded independent rejection carries
+`holdContext` and a readable immutable `steward-hold.json` artifact. The
+projection uses retained journal observations across attempts. It includes the
+complete originating rejection, original milestone criteria, current position,
+exact failure and actual check when available, deduplicated edit receipts with
+their checkpoint associations, complete caller clarifications, research
+references and supplier replies.
+
+Progress identity combines committed bytes for paths explicitly named by the
+accepted finding/work or observed check selection, normalized diagnostic content,
+and completed caller knowledge. It omits transient log paths, provider claims
+and unrelated edits. The existing caller-repair path uses net relevant checked
+changes for post-rejection check failures; restoring the previous bytes does not
+renew an unchanged hold. Refused replies use the same relevant secured-input
+comparison. Unnamed dependencies are not inferred as relevant progress.
+
+Only a typed host check prerequisite or a recorded unanswered clarification can
+populate the prerequisite projection. Ordinary command stderr remains exact
+diagnostic evidence. A dependency-preparation failure preserves its actual
+command and log and states that the requested check did not run; it never counts
+as a satisfied prerequisite or as the requested check passing.
+
+The deterministic integration regression uses the public types with real
+committed Git fixtures, SQLite continuation, checked-edit receipts and subprocess
+observations. It covers equivalent failures, unrelated changes, net reverted
+corrections, relevant corrections, dependency prerequisites and ownership refusal.
+The command confinement, provider and remote transport are controlled seams;
+these observations establish neither native confinement nor live inference.
+Workflow's task-level gate/resume and independent recovery scenarios remain its
+assembled contribution.
