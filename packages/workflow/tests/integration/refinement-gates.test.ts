@@ -51,7 +51,7 @@ function provider(fixture: RoundConsumptionFixture) {
 
 /** Run each attempt through freshly composed services over the same Git and SQLite state. */
 function refine(fixture: RoundConsumptionFixture, observer: Gates) {
-  return fixture.reopen().refine(fixture.root, 1, observer, new AbortController().signal);
+  return fixture.reopen().refine(fixture.root, '1', observer, new AbortController().signal);
 }
 
 /** A declined proposal leaves accepted authority and the captured standing goal unchanged. */
