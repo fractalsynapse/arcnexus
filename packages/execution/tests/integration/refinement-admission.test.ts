@@ -27,10 +27,18 @@ function fixture(t: TestContext) {
   git('commit', '-m', 'baseline');
   git('remote', 'add', 'origin', root);
   writeFileSync(join(root, '.git', 'bindings.yaml'), `schemaVersion: 1\ntools:\n  codex: ${process.execPath}\n`);
-  const capture = {
+  const capture = authority(root, git('rev-parse', 'HEAD'));
+  const architecture = { capture: () => capture } as unknown as Architecture;
+  const storage = join(directory, 'state');
+  return { root, execution: new Execution(architecture, new Coordination(storage), storage) };
+}
+
+/** Describe the captured authority for the real staging fixture. */
+function authority(root: string, revision: string): Capture {
+  return {
     source: {
       root,
-      revision: git('rev-parse', 'HEAD'),
+      revision,
       remote: 'https://github.com/example/refinement.git',
       paths: [],
       read: () => '',
@@ -41,9 +49,6 @@ function fixture(t: TestContext) {
       bindings: '.git/bindings.yaml',
     },
   } as unknown as Capture;
-  const architecture = { capture: () => capture } as unknown as Architecture;
-  const storage = join(directory, 'state');
-  return { root, execution: new Execution(architecture, new Coordination(storage), storage) };
 }
 
 test('refinement root resumes unfinished identity and starts fresh after completion', async (t) => {
@@ -52,7 +57,7 @@ test('refinement root resumes unfinished identity and starts fresh after complet
   const input = { directory: root, goal: 'Continuous refinement', scope: 'refine', refinement: true };
   const first = await execution.admit(input, signal);
   assert(first instanceof HostTask);
-  first.finish({ kind: 'cancelled', evidence: [] });
+  first.finish({ kind: 'cancelled', reason: 'interrupted', evidence: [] });
   first.close();
   const resumed = await execution.admit(input, signal);
   assert(resumed instanceof HostTask);
@@ -69,20 +74,19 @@ test('refinement root resumes unfinished identity and starts fresh after complet
 test('sequential children share the refinement writer while competing roots are refused', async (t) => {
   const { root, execution } = fixture(t);
   const signal = new AbortController().signal;
-  const parent = await execution.admit(
-    { directory: root, goal: 'Continuous refinement', scope: 'refine', refinement: true },
-    signal,
-  );
+  const input = { directory: root, goal: 'Continuous refinement', scope: 'refine', refinement: true };
+  const parent = await execution.admit(input, signal);
   assert(parent instanceof HostTask);
   t.after(() => parent.close());
   for (const phase of ['Plan', 'Architect', 'Goal']) {
     const child = await execution.admit({ directory: root, goal: phase, scope: phase }, signal, parent);
     assert(child instanceof HostTask);
     const competing = await execution.admit({ directory: root, goal: 'Competing task' }, signal);
+    assert(!(competing instanceof HostTask));
     assert.equal(competing.kind, 'invalid');
     assert.match(competing.reason, /Active goal: Continuous refinement/);
-    child.finish({ kind: 'cancelled', evidence: [] });
+    child.finish({ kind: 'cancelled', reason: 'interrupted', evidence: [] });
     child.close();
   }
-  parent.finish({ kind: 'cancelled', evidence: [] });
+  parent.finish({ kind: 'cancelled', reason: 'interrupted', evidence: [] });
 });
