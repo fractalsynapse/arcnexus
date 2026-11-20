@@ -136,7 +136,7 @@ test('a successful child is reused durably with exact origins and no repeated as
   const workflow = new Workflow(continuationServices(f.reopen(), planner));
   const outcome = await workflow.refine(
     f.root,
-    2,
+    '2',
     interruptingObserver(),
     new AbortController().signal,
   );
@@ -145,7 +145,7 @@ test('a successful child is reused durably with exact origins and no repeated as
   assert.equal(planner.attempts, 2, 'successful first child is reused; next round is assessed');
   assert.deepEqual(
     rounds.map(({ round }) => round),
-    [1, 2],
+    ['1', '2'],
   );
   assertSuccessfulRecovery(f, planner, rounds);
 });
@@ -219,7 +219,7 @@ async function continueUnfinished(f: ReturnType<typeof fixture>, planner: Refine
   const rounds: CompletedRefinementRound[] = [];
   const outcome = await workflow.refine(
     f.root,
-    2,
+    '2',
     {
       progress() {},
       answer: async (question) =>
@@ -247,7 +247,7 @@ function assertContinuation(
 ) {
   assert.deepEqual(
     rounds.map(({ round }) => round),
-    [1, 2],
+    ['1', '2'],
   );
   const [first, second] = reconcileRounds(f, planner, rounds);
   assert.ok(first);
@@ -291,7 +291,7 @@ test('unfinished child recovery retains every attempt exactly once and excludes 
   const workflow = new Workflow(continuationServices(f.reopen(), planner));
   const outcome = await workflow.refine(
     f.root,
-    2,
+    '2',
     unfinishedObserver(controller),
     controller.signal,
   );
@@ -354,7 +354,7 @@ test('nested Architect supplier history survives reopening with isolated complet
   const first = new Workflow(nestedServices(f.reopen(), planner, supplier));
   const outcome = await first.refine(
     f.root,
-    2,
+    '2',
     nestedObserver(controller, rounds, true),
     controller.signal,
   );
@@ -363,7 +363,7 @@ test('nested Architect supplier history survives reopening with isolated complet
   const resumed = new Workflow(nestedServices(f.reopen(), planner, supplier));
   const result = await resumed.refine(
     f.root,
-    2,
+    '2',
     nestedObserver(controller, rounds, false),
     new AbortController().signal,
   );
@@ -401,7 +401,7 @@ function assertNestedRounds(
 ) {
   assert.deepEqual(
     rounds.map(({ round }) => round),
-    [1, 2],
+    ['1', '2'],
   );
   assert.equal(supplier.childTasks.size, 2);
   assert.equal(supplier.provider.identities[0], supplier.provider.identities[1]);
