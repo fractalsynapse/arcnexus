@@ -8,7 +8,7 @@ engineering work, not a hand-authored Director plan or delivered capability.
 
 ## Current position and next work
 
-Updated 2026-11-20 against staging `6fba1f13`. Completed boxes describe the
+Updated 2026-11-20 against staging `0ea0b179`. Completed boxes describe the
 specific capability and linked evidence below, not completion of the entire
 efficiency batch. Unchecked items may have partial implementation; the remaining
 behavior or proof is stated explicitly.
@@ -19,17 +19,16 @@ behavior or proof is stated explicitly.
 | Architecture and operations | [PR #640](https://github.com/fractalsynapse/arcnexus/pull/640) delivered typed operation overrides, activity verification, approved adoption boundaries and observable execution.                                                 | The broader merge/provenance, runtime-adoption and same-run live acceptance items in B remain open.                                                     |
 | Acting context              | [PR #664](https://github.com/fractalsynapse/arcnexus/pull/664) delivered the source-linked component index; [PR #667](https://github.com/fractalsynapse/arcnexus/pull/667) preserved originating findings through nested repairs. | All 18 purposes, 94 model activities and one host procedure were approved by the architect and merged in #673. Live behavioral acceptance remains open. |
 | Timeline and measurements   | Complete provider/MCP artifacts, ordered live human/JSONL observations and time/token accounting are operating through the existing journal.                                                                                      | Full round/phase analysis, verified monetary pricing and subsequent refinement consuming those findings remain open.                                    |
-| Continuous refinement       | Nine #668 milestones remain accepted after controlled cancellation of run 111. Invalid supplier links now return to the caller, and approved Architect prerequisites reached staging through the platform in #682.                                          | CLI self-review and remaining exact-count consumers, assembled delivery, and three consecutive production rounds remain unproved. Qualification remains **0/3**.                                              |
+| Continuous refinement       | All fourteen #668 milestones passed self-review in run 112, and the assembled checks passed. PR #683 delivered all 34 approved Sol profile mappings across 18 components and the preceding checklist update.                                          | Independent review could not start because historical artifact paths were repeated inline. #684 repairs that boundary through the existing file index. Staging delivery and three production rounds remain unproved, **0/3**.                                              |
 
-Latest completed delivery: [PR #682](https://github.com/fractalsynapse/arcnexus/pull/682)
-delivered Architect's exact approved batch `9730646a057f` and its Execution
-prerequisite through the platform. Development and Staging CI passed. Retained
-run 111 then resumed #668 with runtime/source `6fba1f13`, preserved its existing
-issue and checkpoints, and accepted the Execution exact-count fixture correction.
-CLI review returned insufficient streaming assertions to its own Implementation
-activity. The operator cancelled normally after repeated ineffective fixture
-corrections; checkpoints and failed evidence remain retained. Passing owner tests
-alone do not establish acceptance.
+Latest completed delivery: [PR #683](https://github.com/fractalsynapse/arcnexus/pull/683)
+applied the approved Sol profile experiment at `0ea0b179`, with Development and
+Staging CI passing. Run 112 resumed the same goal, issue and checkpoints, accepted
+all fourteen milestones and passed assembled checks. Its independent Reviewer
+could not start: the actual Codex transport rejected the initial request containing
+the complete historical artifact path list inline. The named bootstrap correction
+in [#684](https://github.com/fractalsynapse/arcnexus/issues/684) reuses Execution's
+existing complete evidence-file index for assessment and citation repair.
 No #668 delivery PR exists at this checkpoint; qualification remains **0/3**.
 No operator candidate edits, database repair or bypassed checks occurred.
 
@@ -827,7 +826,8 @@ the prior full attempt, so aggregate differences do not isolate prompt causality
 
 Run 111 ended by controlled SIGINT at 2026-11-20T16:06:13Z after 40.35 minutes,
 18 activations and three Director invocations. Ordinary streaming review repairs
-remained local. Declared checks recorded 31 failures across 81 executions,
+remained local. There were 81 check observations representing 68 distinct
+executions, with 31 failures and 13 reused-result observations,
 including fixture setup, assertion, formatting, lint and type failures. The
 operator stopped the attempt after repeated fixture corrections still failed to
 establish the reviewed controlled-phase streaming proof. This is not a successful
@@ -861,3 +861,61 @@ are `678-run106-vs107-comparison.json`, `680-architect-delivery-proof.json` and
 pricing or billing basis. These deliveries show useful instruction evaluation and
 local recovery; they do not establish that instructions alone caused improvement
 or that the full refinement loop is reliable.
+
+## All-Sol continuation and final-review evidence handoff
+
+[PR #683](https://github.com/fractalsynapse/arcnexus/pull/683) delivered the
+approved profile mappings and preceding checklist at `0ea0b179`. All 34 changed
+activity requests resolved to Sol through built inspection; research remained
+Astra. [Development](https://github.com/fractalsynapse/arcnexus/actions/runs/44797130730)
+and [Staging](https://github.com/fractalsynapse/arcnexus/actions/runs/44797393840)
+CI passed. The rebuilt runtime's 209 JavaScript files had the same compiled digest
+as the previous validated runtime; this experiment changed catalog selection.
+
+Run 112 resumed directly at CLI Implementation and preserved the acknowledged
+checkpoint history. Sol repaired a controlled JSONL streaming fixture; self-review
+then identified missing live human-output proof, which returned locally to
+Implementation and passed the next review. Commands, Coordination, Workflow and
+Release completed their remaining work and self-review. All fourteen milestones
+are accepted in the retained journal, with no Director invocation during this
+attempt. This does not replace the independent assembled verdict.
+
+The assembled build, types, formatting, lint and test checks passed. The test
+runner reported 494 tests: 478 passed, sixteen optional native tests skipped and
+zero failures. Before final review, the attempt had 47 distinct numerical-status
+check executions, including one locally corrected failure, and six not-applicable
+check results. Reused observations are not additional executions. The attempt
+took 22.26 minutes and made fifteen activations, all on Sol. Reported input was
+22,337,803 tokens including 20,031,872 cached, and output was 30,582 tokens.
+The refused Reviewer activation has no reported usage; monetary cost is unknown.
+
+Independent review did not start. Codex `0.166.0-alpha.6` rejected the recorded
+3,043,129-character request at its external `turn/start` boundary. Approximately
+2.75 MB represented 11,434 unique artifact paths repeated inline with the same
+directory prefix. The complete request, exact refusal and invocation remain in
+`112-1090-native-request.json`, `112-1092-codex.stderr.log` and
+`112-1093-native-invocation.json` outside source. Run 112 ended failed at
+2026-11-20T19:19:44Z. Normal cleanup retained matching local and remote checkpoint
+`eee978131264d5862924facc1e358c6b8030c73b` and removed the worktree. No candidate
+hand-edits, database repair, bypassed checks or delivery occurred.
+
+[#684](https://github.com/fractalsynapse/arcnexus/issues/684) names the missing
+bootstrap capability: final assessment and citation repair must use the existing
+complete file index, as Verification VI-4 already requires. Reuse Execution's
+canonical retained-evidence helper through its public entry; preserve its existing
+format, original files, candidate, acceptance and citation authority. The
+[Reviewer evidence procedure](../../packages/reviewer/docs/evidence.md) records
+that intent. The public regression first observed the inline-list defect and now
+passes for assessment and successive citation repairs without repeating checks.
+Assembled verification, current-head CI and the real retained-task delivery remain
+separate requirements. No new store, recovery state, size threshold, cap,
+truncation, sampling or pagination is introduced. Qualification remains **0/3**.
+
+#684 local verification passed all 441 native-enabled tests with no failures or
+skips. Replaying the actual refused assignment through the shared request builder
+produced 281,107 characters, with assignment, milestones and acceptance unchanged.
+The complete 2,757,756-byte file index retains 11,308 original artifact references;
+the existing helper omits 126 superseded index projections from its reference list
+while leaving those files retained. No research report or execution artifact was
+trimmed or deleted. The real resumed Reviewer and staging delivery remain the
+required live proof.

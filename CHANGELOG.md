@@ -35,6 +35,8 @@
 
 ### Fixed
 
+- Supply final Reviewer history and citation repair through the existing complete retained-evidence file index, keeping all artifacts available without repeating the historical path catalog in each request (#684).
+
 - Use the architect-approved `gpt-sol` profile for all activities previously mapped to `gpt-luna` or `gpt-terra` during qualification, preserving Astra research and the original instructions, operations, checks and acceptance (#668).
 
 - Clarify Implementation guidance and host correction feedback to require explicit supplier requests for unfinished foreign prerequisites, linking matching accepted milestones, preserving secured work and acceptance, and refreshing affected required checks after supplier results (#681). Retained #668 delivery and three consecutive Plan -> Architect -> Run qualification rounds remain separate follow-up obligations.
