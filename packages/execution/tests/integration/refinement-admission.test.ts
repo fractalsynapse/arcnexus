@@ -32,8 +32,7 @@ function fixture(t: TestContext) {
   );
   const capture = authority(root, git('rev-parse', 'HEAD'));
   const architecture = {
-    capture: (_root: string, revision?: string) =>
-      revision ? authority(root, revision) : capture,
+    capture: (_root: string, revision?: string) => (revision ? authority(root, revision) : capture),
   } as unknown as Architecture;
   const storage = join(directory, 'state');
   return {
@@ -123,12 +122,21 @@ test('sequential children share the refinement writer while competing roots are 
 test('each child admits the current staging revision under the retained parent writer', async (t) => {
   const { root, execution, advance } = fixture(t);
   const signal = new AbortController().signal;
-  const input = { directory: root, goal: 'Continuous refinement', scope: 'refine', refinement: true };
+  const input = {
+    directory: root,
+    goal: 'Continuous refinement',
+    scope: 'refine',
+    refinement: true,
+  };
   const parent = await execution.admit(input, signal);
   assert(parent instanceof HostTask);
   t.after(() => parent.close());
   const revision = advance();
-  const child = await execution.admit({ directory: root, goal: 'Plan', scope: 'plan' }, signal, parent);
+  const child = await execution.admit(
+    { directory: root, goal: 'Plan', scope: 'plan' },
+    signal,
+    parent,
+  );
   assert(child instanceof HostTask);
   assert.equal(child.capture.source.revision, revision);
   child.finish({ kind: 'cancelled', reason: 'interrupted', evidence: [] });
