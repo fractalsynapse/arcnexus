@@ -108,6 +108,13 @@ function nativeRecords(attempt: number, activation: string): unknown[] {
   ];
 }
 
+const architectPhase = {
+  refinement: { invocation: 'invocation-1', round: exactRound, total: exactTotal, phase: 'Architect' },
+};
+const completedRound = {
+  completedRound: { round: exactRound, report: 'round/one', measurements: 'measurements/report' },
+};
+
 /** Describe the retained gate and the resumed goal and round outcomes. */
 function outcomeRecords(attempt: number): unknown[] {
   return [
@@ -121,14 +128,7 @@ function outcomeRecords(attempt: number): unknown[] {
         }
       : { recovering: 7, checkpoint: 'checkpoint/acknowledged', evidence: ['recovery/report'] },
     attempt === 1
-      ? {
-          refinement: {
-            invocation: 'invocation-1',
-            round: exactRound,
-            total: exactTotal,
-            phase: 'Architect',
-          },
-        }
+      ? architectPhase
       : {
           goal: {
             id: 'goal-a',
@@ -140,13 +140,7 @@ function outcomeRecords(attempt: number): unknown[] {
       : { outcome: { kind: 'merged', commit: 'goal-commit', evidence: ['goal/checks'] } },
     attempt === 1
       ? { pending: { proposal: 'proposal/exact.diff' } }
-      : {
-          completedRound: {
-            round: exactRound,
-            report: 'round/one',
-            measurements: 'measurements/report',
-          },
-        },
+      : completedRound,
   ];
 }
 
