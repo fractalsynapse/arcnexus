@@ -61,6 +61,16 @@ function authority(root: string, directory: string, revision: string) {
   return { root, revision, capture, execution };
 }
 
+/** Give each measured goal an explicit evidence-backed assessment. */
+function assessGoal(session: { goal: string }, calls: string[]) {
+  calls.push(session.goal.trim());
+  return {
+    kind: 'satisfied',
+    summary: 'The measured goal holds',
+    evidence: [{ path: 'baseline', quote: 'measured evidence' }],
+  };
+}
+
 /** Return explicit no-change and evidence-backed provider decisions. */
 function providers(f: ReturnType<typeof fixture>, calls: string[]) {
   const { revision, capture, execution } = f;
