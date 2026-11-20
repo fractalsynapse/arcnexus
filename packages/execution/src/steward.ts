@@ -70,24 +70,33 @@ export async function steward(
   const scope = { owner: milestone.owner, activity };
   const correction = task.pendingCheck(scope);
   const result = await requestSteward(task, agent, milestone, scope, signal);
-  if (result.kind !== 'completed')
-    return retainStewardHold(task, milestone, scope, {
-      ...result,
-      evidence: task.evidence.slice(before),
-      ...(result.kind === 'repair' ? { input: stewardInput(task.observations()) } : {}),
-    });
+  const outcome = result.kind === 'completed'
+    ? await completeSteward(task, milestone, scope, result, correction, signal, before)
+    : {
+        ...result,
+        evidence: task.evidence.slice(before),
+        ...(result.kind === 'repair' ? { input: stewardInput(task.observations()) } : {}),
+      };
+  return retainStewardHold(task, milestone, scope, outcome);
+}
+
+/** Reconcile requested effects and mandatory verification before reporting contribution completion. */
+async function completeSteward(
+  task: HostTask,
+  milestone: Milestone,
+  scope: StewardScope,
+  result: Extract<StewardResult, { kind: 'completed' }>,
+  correction: StewardCheckFailure | undefined,
+  signal: AbortSignal,
+  before: number,
+): Promise<ActivityOutcome> {
   const failed =
     (await perform(task, scope, result, correction, signal)) ??
     (await reconcileCheck(task, scope, correction, signal)) ??
     (await verifyActivity(task, scope, signal));
   const evidence = task.evidence.slice(before);
   return failed
-    ? retainStewardHold(
-        task,
-        milestone,
-        scope,
-        stewardCheckOutcome(task, milestone, failed, correction, evidence),
-      )
+    ? stewardCheckOutcome(task, milestone, failed, correction, evidence)
     : { kind: 'completed', evidence, ...(result.answer ? { answer: result.answer } : {}) };
 }
 
@@ -149,19 +158,24 @@ async function requestSteward(
         };
       diagnostic = error.message;
       seen.add(replyRepairIdentity(error, task));
-      task.note({
-        stewardRepair: {
-          scope,
-          diagnostic,
-          evidence: task.evidence.at(-1),
-          operation:
-            error instanceof CheckedEditOwnershipRefusal || error instanceof StaleCheckedEdit
-              ? 'checked-edit'
-              : 'steward-response',
-        },
-      });
+      recordReplyRepair(task, scope, error);
     }
   }
+}
+
+/** Retain the exact response or checked-edit refusal before returning it to the caller. */
+function recordReplyRepair(task: HostTask, scope: StewardScope, error: Error) {
+  const edit = error instanceof CheckedEditOwnershipRefusal || error instanceof StaleCheckedEdit;
+  task.note({
+    stewardRepair: {
+      scope,
+      diagnostic: error.message,
+      evidence: task.evidence.at(-1),
+      operation: edit ? 'checked-edit' : 'steward-response',
+      ...(error instanceof CheckedEditOwnershipRefusal
+        ? { path: error.path, owners: error.owners } : {}),
+    },
+  });
 }
 
 /** Match a rejected reply class against checked progress rather than repeated prose. */
