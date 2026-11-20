@@ -67,7 +67,7 @@ function authority(root: string, directory: string, revision: string) {
   const architecture = { capture: () => capture } as unknown as Architecture;
   const storage = join(directory, 'state');
   const execution = new Execution(architecture, new Coordination(storage), storage);
-  return { root, revision, capture, execution, bodies };
+  return { root, directory, revision, capture, execution, bodies };
 }
 
 /** Give each measured goal an explicit evidence-backed assessment. */
