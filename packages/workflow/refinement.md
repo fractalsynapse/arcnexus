@@ -163,6 +163,33 @@ Extend this scenario with approved guide delivery and ordinary task publication
 using the existing Execution/publication fixtures. Keep deterministic provider
 responses explicit; never substitute a default profile or claim live inference.
 
+## Regression sequencing at the missing boundary
+
+The retained owner-test log `101-2028-owner-tests.log` observes the public
+refinement-boundary assertion failing because the method is absent. It includes
+the same-total interrupted-invocation regression. Keep those scenarios and their
+original observations; the expected failure establishes the missing entry, not
+successful recovery, report generation or prior-finding consumption.
+
+Testing adds meaningful public scenarios for the remaining acceptance before
+behavior changes. The completed-round consumer scenario above initially fails at
+the absent entry or handoff. Do not require it to generate a successful round
+during that red stage, invent completion observations to proceed, or mark the
+downstream assertions satisfied merely because an earlier assertion failed.
+
+Implementation supplies the entry and handoff, then runs the scenarios far enough
+to produce the first actual completed round, read every originating reference and
+prove later prepared-request consumption. Correct ordinary fixture defects at the
+accountable activity while retaining the original red evidence. A scenario that
+cannot yet reach its consumer assertions remains unproven until those assertions
+execute and pass. This sequencing changes no WFL-REF acceptance criterion.
+
+The Execution supplier answer remains the documented target entry and recipe,
+with availability explicitly pending. Once the genuine scenario passes, return
+its actual public observation and fixture usage with the retained evidence to
+`refine-execution`; Execution can then exercise its context handoff without
+guessing event bytes. No private Workflow test helper is part of that handoff.
+
 ## Required regression coverage and delivery boundary
 
 Focused public regressions must establish multiple sequential Plan → Architect →
