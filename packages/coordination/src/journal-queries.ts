@@ -65,3 +65,18 @@ export const recentFindings = `
   )
   ORDER BY incident.id DESC
 `;
+
+export const completedRefinementRounds = `
+  SELECT events.id, events.run, runs.task_id, runs.goal_id, runs.parent_id,
+    events.recorded_at, events.content
+  FROM events
+  JOIN runs ON runs.id = events.run
+  WHERE json_type(events.content, '$.completedRound') = 'object'
+    AND EXISTS (
+      SELECT 1 FROM events AS terminal
+      WHERE terminal.run = events.run
+        AND json_extract(terminal.content, '$.outcome.kind') = 'refined'
+    )
+  ORDER BY events.id
+`;
+
