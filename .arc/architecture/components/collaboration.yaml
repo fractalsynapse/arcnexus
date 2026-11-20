@@ -162,7 +162,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Exercise the public provider seam with explicit repositories, authorized operations and stable remote identities. Model a successful response, an unavailable operation, an authentication or permission refusal, a pending CI/review observation, a head mismatch and a mutation whose response is lost after the remote effect. The important assertions are the returned facts and absence of an unauthorized or duplicate effect, not merely the number of internal helper calls.
@@ -193,7 +193,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Implement provider operations behind the existing Collaboration interface and the app's trusted composition. Validate host-supplied repository, branch, operation and expected head before an effect. Preserve credentials in the host/provider environment; neither a steward reply nor a request payload may select a new upstream or expose a secret. Reuse one adapter path for real consumers and injected test providers rather than growing transport-specific mutation helpers.

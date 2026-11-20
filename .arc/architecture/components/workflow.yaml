@@ -419,7 +419,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Exercise the public Workflow lifecycle with realistic service responses and actual durable state where correctness depends on it. Cover ordered Agent activities, supplier-before-requester behavior, local rewinds, final rejection and retained acceptance. For refinement, cover Plan, Architect and every captured goal, fresh repeated assessment, exact pending proposals, inventory stability and restart at the first unfinished position.

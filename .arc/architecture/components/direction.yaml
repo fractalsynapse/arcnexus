@@ -411,7 +411,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Exercise real Director response validation and revision through Direction's public interface. Include malformed JSON/schema, nonexistent component/activity, invalid checklist references, attempted completed-work changes, duplicate contributions and a valid distinct supplier before its consumer. Return the exact parser or validation diagnostic to the same Director invocation context and assert a repaired plan stays in the same run.
@@ -442,7 +442,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Keep plan creation and legitimate pending revision in the existing Direction service. Build requests from the accepted Team, goal, previous canonical plan and relevant complete findings, then validate the model's response before the host records it. Preserve initial versus revision schema distinctions, stable acceptance identities, completed outcomes and the accountable owner of retained work.

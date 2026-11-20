@@ -147,7 +147,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Establish the terminal contract with class-based public scenarios that exercise the affected parser or built entry point at the level the claim requires. Cover both permitted --json placements and refusal of duplicate, misplaced, missing or extra arguments before task admission. Inspect must require component and activity, support Director and Reviewer aliases, render the exact request.input bytes with its header, and produce one JSON object in JSON mode without activating a model.
@@ -178,7 +178,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Keep the Cordis app as the terminal gateway. Parse and validate input, resolve the working project, call the public Commands service, and translate the shared observer and typed result into terminal output. Reuse the same SDK operation for in-process callers and the CLI. Do not place task sequencing, architecture approval state, recovery routing, Git worktrees or provider delivery decisions in a parser branch.

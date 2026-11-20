@@ -843,8 +843,16 @@ reported usage: 32,141,670 reported input, 30,608,384 cached and 44,469 output t
 Sol had eight completed activations: 7,917,623 input, 6,831,488 cached and 22,676
 output tokens. Cached input is a subset, not an additional total. These figures
 retain missing usage honestly and do not establish a causal profile comparison.
-The proposed [one-field CLI Implementation profile experiment](https://github.com/fractalsynapse/arcnexus/issues/668#issuecomment-7044253709)
-remains pending human approval; no profile bytes have been changed.
+The architect approved the CLI Implementation experiment and expanded it to every
+active `gpt-luna` and `gpt-terra` activity mapping for testing. The recorded
+[approval](https://github.com/fractalsynapse/arcnexus/issues/668#issuecomment-7047956021)
+authorizes 34 mappings across all 18 component specifications to use `gpt-sol`.
+Workflow Implementation and Execution Testing already use Sol. Research remains
+Astra. Historical observations and dormant profile definitions retain their
+original identities; this is an explicit catalog change, not automatic runtime
+substitution. Verify and deliver this batch, then resume the exact retained task
+through normal checkpoint recovery. Profile selection alone does not establish
+delivery or qualification success.
 
 Complete comparison artifacts, approval receipts, requests, measurements and failed
 observations remain in external application storage. The corresponding records

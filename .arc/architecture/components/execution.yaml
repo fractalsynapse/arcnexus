@@ -415,7 +415,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         # Execution Implementation activity

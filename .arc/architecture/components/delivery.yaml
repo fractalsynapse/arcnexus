@@ -182,7 +182,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Construct the Delivery regression from the actual production assembled candidate shape, including retained engineering base, architecture identity, candidate digest and accepting verdict. Assert the real publication parent rather than supplying an assignment-shaped shortcut. Cover missing or mismatched verdict, unauthorized scope, changed head and refusal of candidate mutation.
@@ -213,7 +213,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Keep Delivery as the sole final staging publication path for an independently accepted assembled candidate. Validate its digest, scope, retained engineering base and verdict before any effect. Use Collaboration for provider facts and verified-head merge, recording actual identities once. Execution's intermediate checkpoint commits do not authorize publication.

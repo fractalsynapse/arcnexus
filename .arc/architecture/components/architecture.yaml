@@ -450,7 +450,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Test the assembled Architecture public boundary with small explicit project sources. Cover deterministic merge and inheritance, explicit empty lists, component types, activity selection, role/standard resolution, typed operation overrides, verification applicability, missing handlers and invalid references. Resolve Director and Reviewer through their actual bindings, and ensure selecting one activity does not pull every unrelated activity into the request.
@@ -481,7 +481,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Implement capture, validation, resolution and accepted-source adoption through the existing Architecture service. Treat the model as one integrated structure with declared inheritance and typed bindings, while keeping provenance for each resolved value. Reload at run start and after an approved host adoption boundary. Do not freeze every later activity to stale declarations or let candidate edits authorize their own adoption.

@@ -411,7 +411,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Exercise the real Coordination persistence boundary with explicit temporary database and project identities. Close and reopen the store around the operation being tested; an in-memory fake cannot establish crash recovery or writer release. Test one project writer across sequential refinement/phase/task sessions, rejection of a competing writer, and safe cleanup without deleting retained facts.
@@ -442,7 +442,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Extend the existing Coordination database and public writer operations only for the accepted durability requirement. Keep one canonical sequence of retained events and identities; derive reports from it rather than maintaining a competing mutable projection. Share the admitted foreground writer with sequential children through the existing ownership seam, and release it through normal cleanup.

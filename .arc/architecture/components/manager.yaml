@@ -169,7 +169,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Exercise Manager's public guidance resolution with explicit temporary projects and scopes. Include root and nested directives, valid skill metadata, relative referenced resources, missing files, conflicting metadata, deterministic order and a scope that must not receive another scope's guidance. Use distinct source identities to establish reproducible capture rather than reading the mutable working tree after the fact.
@@ -200,7 +200,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Implement the accepted guidance resolution or validation through Manager's existing public service. Resolve from the supplied source and scope with deterministic identities, complete contents and meaningful findings. Preserve ordinary harness discovery for directives and skills; do not add a parallel skill-selection engine or hardcode ArcNexus policies into the generic Agent builder.

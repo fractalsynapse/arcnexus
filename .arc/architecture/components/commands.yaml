@@ -428,7 +428,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Write class-based scenarios against the public Commands service with explicit application dependencies. Exercise an in-process caller without a terminal so the test would fail if parsing, stdout or process exit leaked into the SDK. Assert actual structured inputs delivered to the responsible plugin, ordered observer records, complete question/answer forwarding, cancellation and the terminal outcome.
@@ -459,7 +459,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Expose the accepted application behavior through the existing Commands public service and trusted dependency injection. Normalize transport-independent inputs once, delegate lifecycle work to the responsible plugin, and return its typed observations and result without a parallel state machine. Preserve the same service for the CLI and future MCP or OpenAPI gateways. Do not introduce terminal parsing, process-wide output, Git commands or provider credentials in this package.
