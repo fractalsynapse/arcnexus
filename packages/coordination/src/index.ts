@@ -423,7 +423,8 @@ function cycleIdentity(database: DatabaseSync, key: string) {
   if (!row) return key;
   const outcome =
     typeof row.outcome === 'string' ? (JSON.parse(row.outcome) as { kind: string }) : undefined;
-  const completed = outcome?.kind === 'planned' || outcome?.kind === 'merged';
+  const completed =
+    outcome?.kind === 'planned' || outcome?.kind === 'merged' || outcome?.kind === 'refined';
   return completed ? digest(JSON.stringify([key, Number(row.id)])) : String(row.task_id);
 }
 
