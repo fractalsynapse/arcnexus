@@ -63,7 +63,8 @@ function definitions() {
     'AGENTS.md': 'Fixture root directive\n# Fixture heading\n',
     'work/AGENTS.md': 'Fixture owner directive\n',
     'other/AGENTS.md': 'Unrelated directive\n',
-    '.agents/skills/fixture/SKILL.md': '---\nname: fixture\ndescription: Fixture\n---\nFixture skill body\n',
+    '.agents/skills/fixture/SKILL.md':
+      '---\nname: fixture\ndescription: Fixture\n---\nFixture skill body\n',
     'standard.md': 'Fixture standard body\n',
     'work/contract.md': 'Fixture contract body\n',
     'contracts.yaml': {
