@@ -34,7 +34,10 @@ async function interrupt(fixture: RoundConsumptionFixture) {
 
 /** Decode complete typed records from the gateway output. */
 function records(output: string) {
-  return output.trim().split('\n').map((line) => JSON.parse(line));
+  return output
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line));
 }
 
 test('SIGINT preserves the refinement identity for the next built-process invocation', async (t) => {
