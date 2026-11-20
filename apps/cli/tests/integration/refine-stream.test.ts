@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import test from 'node:test';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -91,7 +91,7 @@ function holdProvider(source: string, release: string): string {
 
 /** Release only after the unfinished provider's observations reached the actual pipe. */
 function releaseObservedPhase(capture: StreamCapture, release: string): void {
-  if (!capture.liveProvider || !capture.liveToolResult) return;
+  if (existsSync(release) || !capture.liveProvider || !capture.liveToolResult) return;
   if (capture.streamed.some((record) => record.detail?.event?.type === 'turn.completed')) return;
   assert.ok(!capture.streamed.some((record) => record.type === 'result'));
   assert.ok(
