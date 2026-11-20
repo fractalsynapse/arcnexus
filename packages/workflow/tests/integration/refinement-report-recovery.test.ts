@@ -84,7 +84,11 @@ function workflowServices(state: State, planner: unknown): WorkflowServices {
     execution: {
       admit: state.execution.admit.bind(state.execution),
       round: state.execution.round.bind(state.execution),
-      observeGoal: () => ({ revision: state.revision, source: state.capture.source, recentChanges: [] }),
+      observeGoal: () => ({
+        revision: state.revision,
+        source: state.capture.source,
+        recentChanges: [],
+      }),
     },
     planner: planner as WorkflowServices['planner'],
     architecture: {
@@ -129,8 +133,18 @@ async function recordProviderEvidence(
 function recordUsage(task: ReturnType<typeof hostTask>) {
   const activation = 'fixture-planner-activation';
   const usage = { input_tokens: 17, output_tokens: 5 };
-  const source = task.store('provider-turn.json', JSON.stringify({ type: 'turn.completed', usage }));
-  task.note({ nativeStarted: { activation, profile: 'planner-fixture', model: 'fixture-model', reasoning: 'high' } });
+  const source = task.store(
+    'provider-turn.json',
+    JSON.stringify({ type: 'turn.completed', usage }),
+  );
+  task.note({
+    nativeStarted: {
+      activation,
+      profile: 'planner-fixture',
+      model: 'fixture-model',
+      reasoning: 'high',
+    },
+  });
   task.note({
     nativeEvent: { activation, kind: 'event', source, event: { type: 'turn.completed', usage } },
   });
