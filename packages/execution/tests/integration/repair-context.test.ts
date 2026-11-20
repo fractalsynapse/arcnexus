@@ -89,6 +89,43 @@ test('nested repairs retain the originating finding and latest diagnostic in the
   assert.equal(result.kind, 'completed');
 });
 
+test('nested findings and retained progress survive journal reopening and later requests', async (t) => {
+  const fixture = new TestingRewindFixture(t);
+  const latest = {
+    milestone: 'original',
+    activity: 'testing' as const,
+    reason: 'Repair the repair\nwith the complete diagnostic.',
+    evidence: ['latest.log'],
+  };
+  const original = {
+    milestone: 'original',
+    activity: 'documentation' as const,
+    reason: 'Correct outdated documentation',
+    evidence: [],
+  };
+  fixture.task.record({ position: { completed: 0, activities: { original: 1 } }, repair: latest });
+  const position = fixture.task.history().findLast((event) => 'position' in event);
+  const checks = fixture.task.observations().filter((event) => 'check' in event);
+  await fixture.restart();
+  assert.deepEqual(fixture.task.history().findLast((event) => 'position' in event), position);
+  assert.deepEqual(fixture.task.observations().filter((event) => 'check' in event), checks);
+  for (const activity of ['testing', 'implementation'] as const) {
+    fixture.activity = activity;
+    const context = await fixture.context();
+    assert.deepEqual(context.localRepair, {
+      ...latest,
+      originatingFinding: original,
+      targetCompleted: false,
+    });
+    assert.deepEqual(context.completedActivities, ['documentation']);
+    assert.deepEqual(context.previouslyCompletedActivities, ['testing', 'implementation']);
+    assert.equal(context.retainedTesting.redLog, fixture.red);
+  }
+  const plan = fixture.task.history().findLast((event) => 'plan' in event);
+  assert(plan && 'plan' in plan);
+  assert.deepEqual(plan.plan.milestones[0], rewindMilestone);
+});
+
 for (const completed of [false, true]) {
   test(`repair context identifies whether the rewind target has completed: ${completed}`, async (t) => {
     const task = repairedTask(t, completed);
