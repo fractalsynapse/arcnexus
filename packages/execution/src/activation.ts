@@ -76,13 +76,15 @@ function invocationContext(task: HostTask, current: ActivityData, observed?: num
     goal: activationGoal(task),
     worktree: task.worktree ?? task.capture.source.root,
   };
-  const reports = task.journal.completedRounds().flatMap((event) => {
+  const rounds = task.journal.completedRounds().flatMap((event) => {
     const observation = event.observation as { completedRound?: { report?: unknown } };
     const report = observation.completedRound?.report;
     return typeof report === 'string' && task.journal.artifactRecorded(report) ? [report] : [];
   });
-  context.evidence = [...new Set([...(context.evidence ?? []), ...reports])];
-  if (task.timeline) context.evidence = [...context.evidence, task.timeline];
+  const timelines = [task.parent?.timeline, task.timeline].filter(
+    (path): path is string => path !== undefined && task.journal.artifactRecorded(path),
+  );
+  context.evidence = [...new Set([...(context.evidence ?? []), ...rounds, ...timelines])];
   if (observed !== undefined)
     context.evidence = [
       ...new Set([
