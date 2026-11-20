@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { Agent } from '../../../agent/src/index.js';
-import { Execution } from '../../src/index.js';
+import { Execution, type HostTask } from '../../src/index.js';
 import { GitHub } from '../../../collaboration/src/index.js';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -63,6 +63,46 @@ function assertInvocation(view: AgentInspection, probe: Probe) {
   assert.doesNotMatch(probe.input, /Approved native guidance sentinel|Approved skill sentinel/);
 }
 
+
+/** Supply identical live inputs, including the host's independently retained reviewer observation. */
+function context(task: HostTask, review = false) {
+  const evidence: string[] = [];
+  if (review) {
+    const diff = task.evidence.find((path) => path.endsWith('activity.diff'));
+    assert.ok(diff, 'review activation supplies its candidate diff observation');
+    assert.equal(readFileSync(diff, 'utf8'), '');
+    evidence.push(diff);
+  }
+  return {
+    assignment: { instructions: 'Exact supplied assignment\nSecond line' },
+    milestone: { id: 'parity', owner: 'work' }, acceptance: [{ id: 'exact' }],
+    evidence, goal: task.goal, worktree: task.worktree,
+  };
+}
+
+/** Assert selected source content independently of the comparison between the two request paths. */
+function assertSelected(view: AgentInspection, actor: string, names: readonly string[], web: string) {
+  const source = '.arc/architecture/components/' + view.component + '.yaml';
+  assert.equal(view.actor, actor);
+  assert.deepEqual(view.placeholders, []);
+  assert.deepEqual(view.request.options.tools.map(({ name }) => name), names);
+  assert.equal(view.request.options.webSearchMode, web);
+  assert.ok(view.request.input.includes('purpose: Assess ' + view.component + ' using complete retained findings'));
+  assert.ok(view.request.input.includes('Selected ' + view.component + '/' + view.activity + ' procedure café 🛠'));
+  assert.ok(view.request.input.includes('Source: ' + source + ' (activities.' + view.activity + ')'));
+  assert.ok(view.request.input.includes('Source: .arc/architecture/roles/assessor.yaml'));
+}
+
+/** Read the actual complete subprocess observation from Execution's native transcript. */
+function readProbe(task: HostTask): Probe {
+  const transcript = task.evidence.find((path) => path.endsWith('codex.jsonl'));
+  assert.ok(transcript);
+  const frames = readFileSync(transcript, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+  const probe = frames.find((event) => event.type === 'fixture.inspection') as Probe;
+  assert.ok(probe, 'controlled executable must actually receive the request');
+  return probe;
+}
+
 for (const [component, activity, actor, names, web] of [
   ['director', 'planning', 'director', ['inspect-read'], 'cached'],
   ['work', 'testing', 'steward', ['inspect-read', 'owned-edit'], 'disabled'],
@@ -75,64 +115,11 @@ for (const [component, activity, actor, names, web] of [
     const fixture = new InspectionFixture(t);
     const task = await fixture.open(t);
     const selection = { component, activity };
-    const data = {
-      assignment: { instructions: 'Exact supplied assignment\nSecond line' },
-      milestone: { id: 'parity', owner: 'work' },
-      acceptance: [{ id: 'exact' }],
-      evidence: [],
-    };
-    let view = fixture.agent.prepareRequest(task.capture, selection, {
-      ...data,
-      goal: task.goal,
-      worktree: task.worktree,
-    });
-    assert.equal(view.actor, actor);
-    assert.ok(
-      view.request.input.includes(
-        'purpose: Assess ' + view.component + ' using complete retained findings',
-      ),
-    );
-    assert.ok(
-      view.request.input.includes(
-        'Selected ' + view.component + '/' + activity + ' procedure café 🛠',
-      ),
-    );
-    assert.ok(
-      view.request.input.includes(
-        'Source: .arc/architecture/components/' +
-          view.component +
-          '.yaml (activities.' +
-          activity +
-          ')',
-      ),
-    );
-    assert.ok(view.request.input.includes('Source: .arc/architecture/roles/assessor.yaml'));
-    assert.deepEqual(view.placeholders, []);
-    assert.deepEqual(
-      view.request.options.tools.map(({ name }) => name),
-      names,
-    );
-    assert.equal(view.request.options.webSearchMode, web);
-    await task.activate(fixture.agent, selection, data, new AbortController().signal);
-    if (actor === 'reviewer') {
-      const diff = task.evidence.find((path) => path.endsWith('activity.diff'));
-      assert.ok(diff, 'review activation supplies its candidate diff observation');
-      assert.equal(readFileSync(diff, 'utf8'), '');
-      view = fixture.agent.prepareRequest(task.capture, selection, {
-        ...data,
-        evidence: [diff],
-        goal: task.goal,
-        worktree: task.worktree,
-      });
-    }
-    const transcript = task.evidence.find((path) => path.endsWith('codex.jsonl'));
-    assert.ok(transcript);
-    const frames = readFileSync(transcript, 'utf8')
-      .trim()
-      .split('\n')
-      .map((line) => JSON.parse(line));
-    const probe = frames.find((event) => event.type === 'fixture.inspection') as Probe;
-    assert.ok(probe, 'controlled executable must actually receive the request');
+    const initial = fixture.agent.prepareRequest(task.capture, selection, context(task));
+    assertSelected(initial, actor, names, web);
+    await task.activate(fixture.agent, selection, context(task), new AbortController().signal);
+    const view = fixture.agent.prepareRequest(task.capture, selection, context(task, actor === 'reviewer'));
+    const probe = readProbe(task);
     assert.equal(probe.executable, task.config.executable);
     assert.equal(probe.input, view.request.input);
     assertTools(view, probe);
@@ -202,7 +189,7 @@ test('production activation refuses changed native guidance before starting the 
 test('current assembled CLI request-parity and inspection scenarios', (t) => {
   const paths = ['request-parity', 'inspect'].map((name) =>
     fileURLToPath(
-      new URL('../../../../../apps/cli/tests/integration/' + name + '.test.js', import.meta.url),
+      new URL('../../../../apps/cli/tests/integration/' + name + '.test.js', import.meta.url),
     ),
   );
   const log = execFileSync(process.execPath, ['--test', ...paths], { encoding: 'utf8' });
