@@ -7,7 +7,7 @@ import { RefinementPlanner } from './refinement-planner.js';
 /** Exercise Architect's actual inbox and the normal nested task lifecycle with controlled actors. */
 export class RefinementSupplier {
   readonly provider: RefinementPlanner;
-    readonly childTasks = new Set<string>();
+  readonly childTasks = new Set<string>();
 
   /** Keep native supplier attempts distinguishable from the outer Planner observations. */
   constructor(revision: string) {
@@ -39,28 +39,30 @@ export class RefinementSupplier {
   }
 
   /** Request a normal supplier child until Architect has its durable complete reply. */
-  private assess(session: TaskSession, planner: RefinementPlanner): Awaited<ReturnType<NonNullable<WorkflowServices['architecture']>['propose']>> {
-      planner.observe(session);
-      if (
-        !hostTask(session)
-          .observations<{ projectReply?: unknown }>()
-          .some((event) => event.projectReply)
-      )
-        return {
-          kind: 'supplier',
-          scope: 'assessment',
-          milestone: 'answer',
-          reason: 'Need the complete supplier finding',
-          owner: 'supplier',
-          question: 'Explain the nested finding completely',
-          evidence: [],
-        };
+  private assess(
+    session: TaskSession,
+    planner: RefinementPlanner,
+  ): Awaited<ReturnType<NonNullable<WorkflowServices['architecture']>['propose']>> {
+    planner.observe(session);
+    if (
+      !hostTask(session)
+        .observations<{ projectReply?: unknown }>()
+        .some((event) => event.projectReply)
+    )
       return {
-        kind: 'no-change',
-        summary: 'Architect consumed the complete supplier answer',
+        kind: 'supplier',
+        scope: 'assessment',
+        milestone: 'answer',
+        reason: 'Need the complete supplier finding',
+        owner: 'supplier',
+        question: 'Explain the nested finding completely',
         evidence: [],
       };
-
+    return {
+      kind: 'no-change',
+      summary: 'Architect consumed the complete supplier answer',
+      evidence: [],
+    };
   }
 
   /** Obtain complete findings and answers from the real native observation and clarification path. */
@@ -96,18 +98,18 @@ function supplierPlan() {
 
 /** Keep every engineering step explicit for the read-only supplier activity. */
 function supplierSteps() {
- return activities.map((activity) => ({
-            activity,
-            ...(activity === 'implementation'
-              ? {
-                  checklist: [
-                    {
-                      id: 'answer',
-                      criteria: ['answer'],
-                      expected: 'Return the full finding and answer',
-                    },
-                  ],
-                }
-              : { checklist: [], inapplicable: 'Read-only answer fixture' }),
-          }));
+  return activities.map((activity) => ({
+    activity,
+    ...(activity === 'implementation'
+      ? {
+          checklist: [
+            {
+              id: 'answer',
+              criteria: ['answer'],
+              expected: 'Return the full finding and answer',
+            },
+          ],
+        }
+      : { checklist: [], inapplicable: 'Read-only answer fixture' }),
+  }));
 }
