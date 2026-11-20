@@ -35,6 +35,17 @@ main and retire only issues whose scope is complete or explicitly superseded.
 Keep incomplete prompt work, refinement and qualification open. Production actions
 retain the [maintainer boundary](../../packages/release/contract.md).
 
+[PR #671](https://github.com/fractalsynapse/arcnexus/pull/671) integrated the verified
+staging baseline into main at `2b332637`, under the maintainer's explicitly recorded
+waiver of the maintainer-only merge rule for this unreleased development work.
+[Production CI on the merge commit](https://github.com/fractalsynapse/arcnexus/actions/runs/44699853229)
+passed. No tag or release was created. The audit reduced 72 open work issues to six:
+#600 (retained parity coverage), #615 (full refinement acceptance), #628 (integrated
+writer proof), #634 (offline profile/category validation), #668 (the current live
+implementation) and #669 (this checklist delivery). Superseded interrupted attempts
+were retired without changing their failed observations into successes. The unique
+parity fixtures in draft #601 remain retained for D.
+
 Continue the [self-development qualification](self-development-mvp.md). The end
 condition remains three consecutive successful live Plan → Architect → Run rounds
 with useful approved refinement and staging delivery. Main and releases remain
