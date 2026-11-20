@@ -353,6 +353,18 @@ export class ReviewedWorkflow {
     );
   }
 
+  /** Observe new checked progress through Execution before re-entering the retained Workflow cursor. */
+  async recheck() {
+    const tools = new ActivationTools(
+      this.fixture.task,
+      selection,
+      { milestone: { id: correction.id }, acceptance: correction.criteria },
+      this.signal,
+    );
+    await tools.invoke({ name: 'owner-tests', handler: 'check' }, { expected: 'pass' });
+    return this.fixture.checks.at(-1)!;
+  }
+
   /** Recheck the assembled secured tree immediately before the independent assessment boundary. */
   private async assemble() {
     const task = this.fixture.task;
