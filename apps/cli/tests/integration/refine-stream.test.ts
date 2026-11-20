@@ -185,15 +185,15 @@ function assertToolResults(records: Array<Record<string, any>>): void {
     result: {
       content: [{
         type: 'text',
-        text: 'Path: baseline\\n' +
-          'SHA-256: 382edde31df119f6a9b8298cecd1d0d3a482ca4becd35b5a80827af11d2b92ac\\n' +
-          '\\n' +
-          'durable evidence\\n',
+        text: 'Path: baseline\n' +
+          'SHA-256: 382edde31df119f6a9b8298cecd1d0d3a482ca4becd35b5a80827af11d2b92ac\n' +
+          '\n' +
+          'durable evidence\n',
       }],
       structuredContent: {
         path: 'baseline',
-        sha256: '382edde31df119f119f6a9b8298cecd1d0d3a482ca4becd35b5a80827af11d2b92ac',
-        text: 'durable evidence\\n',
+        sha256: '382edde31df119f6a9b8298cecd1d0d3a482ca4becd35b5a80827af11d2b92ac',
+        text: 'durable evidence\n',
       },
     },
   })));
