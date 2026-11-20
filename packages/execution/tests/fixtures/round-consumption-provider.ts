@@ -65,13 +65,12 @@ class RoundConsumer {
       this.completions.set(round.invocation + ':' + round.round, round);
       await this.discover(round.report);
     }
-    for (const [key, entry] of Object.entries(value)) {
-      if (['references', 'evidence'].includes(key) && Array.isArray(entry))
-        for (const path of entry) await this.discover(path);
-      if (['report', 'request', 'source', 'activation'].includes(key))
-        await this.discover(entry);
+    if (Array.isArray(value.references))
+      for (const path of value.references)
+        if (typeof path === 'string' && /(?:timeline\.jsonl|retained-evidence-.*\.json|refinement-round-.*\.md)$/.test(path))
+          await this.discover(path);
+    for (const entry of Object.values(value))
       if (typeof entry === 'object') await this.visit(entry);
-    }
   }
 
   /** Cite exact originating identities, measurements, findings and full human answers. */
@@ -80,9 +79,16 @@ class RoundConsumer {
     for (const completion of this.completions.values()) {
       await this.discover(completion.report);
       const report = this.reads.get(completion.report)!;
-      const frames = this.values(report) as Frame[];
-      const findings = [...this.reads].filter(([path]) => frames.some((frame) =>
-        frame.observation.nativeEvent?.source === path)).map(([, text]) => text);
+      const frames = this.values(report).filter((value: any) => value?.observation) as Frame[];
+      const sources = new Set(frames.flatMap((frame) => {
+        const observation = frame.observation;
+        return [observation.nativeStarted?.request, observation.nativeEvent?.source,
+          observation.clarification?.evidence].filter((path): path is string =>
+            typeof path === 'string');
+      }));
+      for (const path of sources) await this.discover(path);
+      const findings = [...sources].flatMap((path) => this.values(this.reads.get(path)!)
+        .flatMap((value: any) => value?.item?.type === 'agent_message' ? [value.item.text] : []));
       consumed.push({ ...completion, reportText: report, findings });
     }
     return consumed;
