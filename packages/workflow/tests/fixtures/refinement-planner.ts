@@ -70,7 +70,14 @@ function providerView(
         model: 'fixture-model',
         modelReasoningEffort: 'high',
         webSearchMode: 'disabled',
-        tools: [
+        tools: clarificationTools,
+      },
+    },
+  } as unknown as AgentInspection;
+}
+
+/** Explicit native clarification capability shared by the controlled fixture actors. */
+const clarificationTools = [
           {
             name: 'ask-question',
             handler: 'question',
@@ -82,8 +89,4 @@ function providerView(
               additionalProperties: false,
             },
           },
-        ],
-      },
-    },
-  } as unknown as AgentInspection;
-}
+        ];
