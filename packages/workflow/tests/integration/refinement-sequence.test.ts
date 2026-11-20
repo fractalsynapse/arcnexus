@@ -15,7 +15,7 @@ export const suite = { owner: 'workflow', level: 'integration', tags: ['regressi
 
 type Refinement = (
   directory: string,
-  rounds: number,
+  rounds: string,
   observer: TaskObserver,
   signal: AbortSignal,
 ) => Promise<unknown>;
@@ -134,7 +134,7 @@ test('a completed invocation permits a fresh invocation with new assessments', a
   const workflow = new Workflow(providers(f, calls));
   const refine = Reflect.get(workflow, 'refine') as (
     directory: string,
-    rounds: number,
+    rounds: string,
     observer: TaskObserver,
     signal: AbortSignal,
   ) => Promise<unknown>;
@@ -142,8 +142,8 @@ test('a completed invocation permits a fresh invocation with new assessments', a
   const signal = new AbortController().signal;
   const events: unknown[] = [];
   const observer: TaskObserver = { progress() {}, event: (event) => events.push(event) };
-  await refine.call(workflow, f.root, 1, observer, signal);
-  await refine.call(workflow, f.root, 1, observer, signal);
+  await refine.call(workflow, f.root, '1', observer, signal);
+  await refine.call(workflow, f.root, '1', observer, signal);
   assertFreshInvocations(events);
   assert.deepEqual(calls, [
     'Plan',
@@ -172,13 +172,13 @@ test('an interrupted invocation refuses a changed round total before reassessmen
   const workflow = new Workflow(services);
   const refine = Reflect.get(workflow, 'refine') as Refinement;
   assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
-  await refine.call(workflow, f.root, 2, { progress() {} }, controller.signal).catch(() => {});
+  await refine.call(workflow, f.root, '2', { progress() {} }, controller.signal).catch(() => {});
   const before = [...calls];
   assert.deepEqual(before, ['Plan'], 'the original invocation reached its first phase');
   const changed = await refine.call(
     workflow,
     f.root,
-    3,
+    '3',
     { progress() {} },
     new AbortController().signal,
   );
@@ -194,10 +194,10 @@ test('retrying the same total resumes the interrupted invocation', async (t) => 
   const refine = Reflect.get(workflow, 'refine') as Refinement;
   assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
   await refine
-    .call(workflow, f.root, 2, { progress() {} }, scenario.controller.signal)
+    .call(workflow, f.root, '2', { progress() {} }, scenario.controller.signal)
     .catch(() => {});
   assert.equal(scenario.interrupted(), true);
-  await refine.call(workflow, f.root, 2, { progress() {} }, new AbortController().signal);
+  await refine.call(workflow, f.root, '2', { progress() {} }, new AbortController().signal);
   assert.deepEqual(calls, [
     'Plan',
     'Architect',
@@ -236,7 +236,7 @@ async function retryAfterChildTerminal(
   const first = await refine.call(
     workflow,
     f.root,
-    1,
+    '1',
     interruptAfterPlannedTerminal(),
     new AbortController().signal,
   );
@@ -248,7 +248,7 @@ async function retryAfterChildTerminal(
   await resumedRefine.call(
     resumedWorkflow,
     f.root,
-    1,
+    '1',
     {
       progress() {},
       event: (event) => events.push(event),
@@ -312,12 +312,12 @@ test('a competing foreground task is refused while the refinement phase runs', a
   const workflow = new Workflow(services);
   const refine = Reflect.get(workflow, 'refine') as (
     directory: string,
-    rounds: number,
+    rounds: string,
     observer: TaskObserver,
     signal: AbortSignal,
   ) => Promise<unknown>;
   assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
-  await refine.call(workflow, f.root, 1, { progress() {} }, signal);
+  await refine.call(workflow, f.root, '1', { progress() {} }, signal);
   assert.equal(competingKind, 'invalid');
 });
 
@@ -337,7 +337,7 @@ test('the foreground writer remains held during every goal assessment', async (t
   const workflow = new Workflow(services);
   const refine = Reflect.get(workflow, 'refine') as Refinement;
   assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
-  await refine.call(workflow, f.root, 1, { progress() {} }, signal);
+  await refine.call(workflow, f.root, '1', { progress() {} }, signal);
   assert.deepEqual(attempts, ['invalid', 'invalid']);
 });
 
@@ -380,10 +380,10 @@ async function interruption(t: TestContext, stop: string) {
   const refine = Reflect.get(workflow, 'refine') as Refinement;
   assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
   await refine
-    .call(workflow, f.root, 1, { progress() {} }, scenario.controller.signal)
+    .call(workflow, f.root, '1', { progress() {} }, scenario.controller.signal)
     .catch(() => {});
   assert.equal(scenario.interrupted(), true);
-  await refine.call(workflow, f.root, 1, { progress() {} }, new AbortController().signal);
+  await refine.call(workflow, f.root, '1', { progress() {} }, new AbortController().signal);
   const order = ['Plan', 'Architect', 'First goal', 'Second goal'];
   const index = order.indexOf(stop);
   assert.deepEqual(calls, [...order.slice(0, index + 1), ...order.slice(index)]);
@@ -427,9 +427,9 @@ test('an interrupted Run retains its captured goals and the next round captures 
   const workflow = new Workflow(services);
   const refine = Reflect.get(workflow, 'refine') as Refinement;
   assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
-  await refine.call(workflow, f.root, 2, { progress() {} }, controller.signal).catch(() => {});
+  await refine.call(workflow, f.root, '2', { progress() {} }, controller.signal).catch(() => {});
   assert.equal(interrupted, true);
-  await refine.call(workflow, f.root, 2, { progress() {} }, new AbortController().signal);
+  await refine.call(workflow, f.root, '2', { progress() {} }, new AbortController().signal);
   assert.deepEqual(calls, refreshedOrder);
 });
 
@@ -470,7 +470,7 @@ test('each round invokes the real Planner in project-exploration mode', async (t
   services.planner = new Planner({} as Agent);
   const workflow = new Workflow(services);
   const refine = Reflect.get(workflow, 'refine') as Refinement;
-  await refine.call(workflow, f.root, 2, { progress() {} }, new AbortController().signal);
+  await refine.call(workflow, f.root, '2', { progress() {} }, new AbortController().signal);
   assert.deepEqual(modes, ['project exploration', 'project exploration']);
 });
 
@@ -480,12 +480,12 @@ test('two refinement rounds assess Plan, Architect and every approved goal in or
   const workflow = new Workflow(providers(f, calls));
   const refine = Reflect.get(workflow, 'refine') as (
     directory: string,
-    rounds: number,
+    rounds: string,
     observer: TaskObserver,
     signal: AbortSignal,
   ) => Promise<unknown>;
   assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
-  await refine.call(workflow, f.root, 2, { progress() {} }, new AbortController().signal);
+  await refine.call(workflow, f.root, '2', { progress() {} }, new AbortController().signal);
   assert.deepEqual(calls, [
     'Plan',
     'Architect',
