@@ -146,18 +146,28 @@ test('a successful child is reused durably with exact origins and no repeated as
   installProvider(f.root);
   const planner = new RefinementPlanner(f.revision, false);
   const workflow = new Workflow(continuationServices(f.reopen(), planner));
-  const outcome = await workflow.refine(f.root, 2, interruptingObserver(),
-    new AbortController().signal);
+  const outcome = await workflow.refine(
+    f.root,
+    2,
+    interruptingObserver(),
+    new AbortController().signal,
+  );
   assert.equal(outcome.kind, 'failed');
   const rounds = await continueUnfinished(f, planner);
   assert.equal(planner.attempts, 2, 'successful first child is reused; next round is assessed');
-  assert.deepEqual(rounds.map(({ round }) => round), [1, 2]);
+  assert.deepEqual(
+    rounds.map(({ round }) => round),
+    [1, 2],
+  );
   assertSuccessfulRecovery(f, planner, rounds);
 });
 
 /** Resolve both completed rounds and the durable reuse event to their complete native origins. */
-function assertSuccessfulRecovery(f: ReturnType<typeof fixture>, planner: RefinementPlanner,
-  rounds: CompletedRefinementRound[]) {
+function assertSuccessfulRecovery(
+  f: ReturnType<typeof fixture>,
+  planner: RefinementPlanner,
+  rounds: CompletedRefinementRound[],
+) {
   const results = reconcileRounds(f, planner, rounds);
   assert.match(results[0]!.report, /Reused completed child outcome for refine:/);
   assert.doesNotMatch(results[1]!.report, /Reused completed child outcome for refine:/);
@@ -166,8 +176,10 @@ function assertSuccessfulRecovery(f: ReturnType<typeof fixture>, planner: Refine
   assert.match(results[1]!.native, /Provider finding attempt 2/);
   assert.doesNotMatch(results[1]!.native, /Provider finding attempt 1/);
   for (const result of results)
-    assert.deepEqual(result.terminals.map((outcome) => outcome.kind),
-      ['planned', 'planned', 'satisfied']);
+    assert.deepEqual(
+      result.terminals.map((outcome) => outcome.kind),
+      ['planned', 'planned', 'satisfied'],
+    );
 }
 
 /** Bind a real executable fixture outside source while keeping Git admission clean. */
@@ -222,9 +234,10 @@ async function continueUnfinished(f: ReturnType<typeof fixture>, planner: Refine
     2,
     {
       progress() {},
-      answer: async (question) => question === 'Complete answer 2'
-        ? 'Resumed complete answer.\nA distinguishable continuation and its entire conclusion.'
-        : 'Second-round complete answer.\nA different final conclusion.',
+      answer: async (question) =>
+        question === 'Complete answer 2'
+          ? 'Resumed complete answer.\nA distinguishable continuation and its entire conclusion.'
+          : 'Second-round complete answer.\nA different final conclusion.',
       event(event) {
         const observation = Reflect.get(event, 'observation') as {
           completedRound?: CompletedRefinementRound;
@@ -301,11 +314,17 @@ test('unfinished child recovery retains every attempt exactly once and excludes 
 });
 
 /** Compare each completed round with independent canonical origins and provider accounting. */
-function reconcileRounds(f: ReturnType<typeof fixture>, planner: RefinementPlanner,
-  rounds: CompletedRefinementRound[]) {
+function reconcileRounds(
+  f: ReturnType<typeof fixture>,
+  planner: RefinementPlanner,
+  rounds: CompletedRefinementRound[],
+) {
   return rounds.map((completion) => {
-    const origins = history(join(f.directory, 'state'), f.reopen().capture.source.remote,
-      planner.tasks.get(completion.round)!);
+    const origins = history(
+      join(f.directory, 'state'),
+      f.reopen().capture.source.remote,
+      planner.tasks.get(completion.round)!,
+    );
     const result = assertOrigins(completion, origins);
     assertAccounting(result.report, origins);
     return result;
