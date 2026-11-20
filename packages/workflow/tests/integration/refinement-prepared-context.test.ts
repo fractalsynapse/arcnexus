@@ -34,22 +34,34 @@ class Observations implements TaskObserver {
     const observation = event.observation as Record<string, any>;
     if (observation.completedRound) this.rounds.push(observation.completedRound);
     if (observation.nativeEvent?.event?.type === 'fixture.consumption')
-      this.consumers.push({ ...(event.detail as { event: Consumption }).event, completed: this.rounds.length });
+      this.consumers.push({
+        ...(event.detail as { event: Consumption }).event,
+        completed: this.rounds.length,
+      });
   }
 }
 
 /** Require each actual actor request to advertise and read the exact completed report. */
 function assertConsumption(observed: Observations, prior: CompletedRefinementRound, completed = 0) {
   for (const actor of ['planner', 'architecture', 'direction']) {
-    const attempts = observed.consumers.filter(({ component, completed: position }) => component === actor && position === completed);
+    const attempts = observed.consumers.filter(
+      ({ component, completed: position }) => component === actor && position === completed,
+    );
     assert.ok(attempts.length, actor + ' must be activated');
     for (const attempt of attempts) {
       const assignment = parse(
-        attempt.input.split('\n\n## Activity')[0]!.slice(attempt.input.indexOf('\n\nassignment:') + 2),
+        attempt.input
+          .split('\n\n## Activity')[0]!
+          .slice(attempt.input.indexOf('\n\nassignment:') + 2),
       ).assignment;
-      assert.ok(assignment.completedRounds.some((round: CompletedRefinementRound) =>
-        round.report === prior.report && round.invocation === prior.invocation && round.round === prior.round,
-      ));
+      assert.ok(
+        assignment.completedRounds.some(
+          (round: CompletedRefinementRound) =>
+            round.report === prior.report &&
+            round.invocation === prior.invocation &&
+            round.round === prior.round,
+        ),
+      );
       assert.ok(attempt.reads.includes(prior.report));
       const consumed = attempt.consumption.find(({ report }) => report === prior.report);
       assert.ok(consumed);
@@ -57,15 +69,18 @@ function assertConsumption(observed: Observations, prior: CompletedRefinementRou
       assert.equal(consumed.round, prior.round);
       assert.deepEqual(consumed.findings, prior.findings);
       assert.deepEqual(consumed.measurements, prior.measurements);
-      const sources = consumed.sources.map((source) => {
-        assert.ok(attempt.reads.includes(source));
-        return readFileSync(source, 'utf8');
-      }).join('\n');
+      const sources = consumed.sources
+        .map((source) => {
+          assert.ok(attempt.reads.includes(source));
+          return readFileSync(source, 'utf8');
+        })
+        .join('\n');
       for (const origin of ['planner finding ', 'architecture finding ', 'direction finding '])
         assert.ok(sources.includes(origin), 'the complete originating ' + origin + ' is readable');
       assert.ok(sources.includes('complete second line and final conclusion survive.'));
       const report = readFileSync(prior.report, 'utf8');
-      for (const sequence of prior.findings) assert.ok(report.includes('"sequence":"' + sequence + '"'));
+      for (const sequence of prior.findings)
+        assert.ok(report.includes('"sequence":"' + sequence + '"'));
     }
   }
 }
@@ -73,7 +88,9 @@ function assertConsumption(observed: Observations, prior: CompletedRefinementRou
 test('completed refinement reports reach real prepared assessments across invocations', async (t) => {
   const fixture = new RoundConsumptionFixture(t);
   const first = new Observations();
-  const result = await fixture.reopen().refine(fixture.root, 2, first, new AbortController().signal);
+  const result = await fixture
+    .reopen()
+    .refine(fixture.root, 2, first, new AbortController().signal);
   assert.equal(result.kind, 'planned', JSON.stringify(result));
   assert.equal(first.rounds.length, 2);
   const prior = first.rounds[0]!;
@@ -81,7 +98,9 @@ test('completed refinement reports reach real prepared assessments across invoca
   assert.ok(prior.measurements.length);
   assertConsumption(first, prior, 1);
   const next = new Observations();
-  const resumed = await fixture.reopen().refine(fixture.root, 1, next, new AbortController().signal);
+  const resumed = await fixture
+    .reopen()
+    .refine(fixture.root, 1, next, new AbortController().signal);
   assert.equal(resumed.kind, 'planned', JSON.stringify(resumed));
   assert.notEqual(next.rounds[0]!.invocation, prior.invocation);
   assertConsumption(next, prior);
