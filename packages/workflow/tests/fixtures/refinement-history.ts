@@ -71,7 +71,11 @@ export function assertOrigins(completion: CompletedRefinementRound, origins: Ori
     terminals,
   );
   assert.equal(new Set(completion.findings).size, origins.length);
-  return { report, terminals };
+  const sources = origins.flatMap(({ observation }) =>
+    observation.nativeEvent?.kind === 'event' ? [observation.nativeEvent.source as string] : [],
+  );
+  const native = [...new Set(sources)].map((source) => readFileSync(source, 'utf8')).join('\n');
+  return { report, terminals, native };
 }
 
 /** Reconcile profile totals directly against each retained provider event, without the projection. */
