@@ -4,7 +4,9 @@ import { existsSync, readFileSync } from 'node:fs';
 function main() {
   const schema = process.argv[3];
   if (schema && !existsSync(schema)) {
-    console.error('External schema unavailable. Supply the approved external schema before correction.');
+    console.error(
+      'External schema unavailable. Supply the approved external schema before correction.',
+    );
     process.exitCode = 43;
     return;
   }
