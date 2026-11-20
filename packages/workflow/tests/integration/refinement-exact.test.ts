@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
 import type { Architecture, Capture } from '../../../architecture/src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
-import { Execution } from '../../../execution/src/index.js';
+import { Execution, hostTask } from '../../../execution/src/index.js';
 import { Workflow, type TaskObserver, type WorkflowServices } from '../../src/index.js';
 
 export const suite = { owner: 'workflow', level: 'integration', tags: ['regression'] } as const;
@@ -237,4 +237,63 @@ test('uninterrupted rounds announce each phase before its assessment', async (t)
     'Second goal',
   ]);
   assertPhases(events);
+});
+
+/** Retain an old numeric cursor and a genuinely completed child through the normal journal. */
+async function legacyChild(f: ReturnType<typeof fixture>, total: number, round: number) {
+  const services = providers(f, []);
+  const parent = await f.execution.admit(
+    { directory: f.root, goal: 'Continuous refinement', scope: 'refine' },
+    new AbortController().signal,
+  );
+  assert.ok(!('kind' in parent));
+  const invocation = hostTask(parent).journal.taskID;
+  parent.record({
+    refinement: { invocation, total, round, phase: 'Plan' },
+  } as unknown as Parameters<typeof parent.record>[0]);
+  await new Workflow(services).run(
+    { directory: f.root, goal: 'Assess objectives and standing goals',
+      planning: 'exploration', scope: `refine:${invocation}:round:${round}:plan` },
+    { progress() {} }, new AbortController().signal, parent,
+  );
+  parent.finish({ kind: 'failed', reason: 'Legacy parent acknowledgment interrupted', evidence: [] });
+  parent.close();
+  return invocation;
+}
+
+/** Recover old floating-point spellings without reassessing the committed Planner child. */
+async function legacyRecovery(t: TestContext, value: number) {
+  const f = fixture(t);
+  const invocation = await legacyChild(f, value, value);
+  const reopened = authority(f.root, f.directory, f.revision);
+  const calls: string[] = [];
+  const events: string[] = [];
+  const outcome = await new Workflow(providers(reopened, calls)).refine(
+    f.root, BigInt(value).toString(), phaseObserver(events), new AbortController().signal,
+  );
+  assert.equal(outcome.kind, 'planned', JSON.stringify(outcome));
+  assert.deepEqual(calls, ['Architect', 'First goal', 'Second goal']);
+  assert.ok(events.some((event) => event.includes(invocation)));
+  assert.ok(events.some((event) => event.includes(`"round":"${BigInt(value)}"`)));
+}
+
+test('legacy numeric positions reuse successful children with original decimal or exponent identities', async (t) => {
+  for (const value of [2, 9007199254740992, 1e21])
+    await t.test(String(value), (child) => legacyRecovery(child, value));
+});
+
+test('invalid decimal operands are rejected before admission', async (t) => {
+  const f = fixture(t);
+  const services = providers(f, []);
+  let admissions = 0;
+  services.execution.admit = async () => {
+    admissions++;
+    throw new Error('Invalid input reached admission');
+  };
+  for (const value of ['', '0', '000', '-1', '+1', ' 1', '1 ', '1.0', '1e3', 1, Infinity]) {
+    const outcome = await refine(new Workflow(services), f.root, value,
+      { progress() {} }, new AbortController().signal);
+    assert.equal(Reflect.get(outcome as object, 'kind'), 'invalid');
+  }
+  assert.equal(admissions, 0);
 });
