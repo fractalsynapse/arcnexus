@@ -92,11 +92,29 @@ export class InspectionFixture extends RoundConsumptionFixture {
       const path = catalog + '/components/' + id + '.yaml';
       const component = parse(readFileSync(join(this.root, path), 'utf8'));
       if (id === 'work') component.owns.push('AGENTS.md', '.agents');
+      component.activities = activityDefinitions(id);
+      this.write(path, component);
+    }
+    this.write(catalog + '/execution-profiles/web.yaml', {
+      id: 'web',
+      model: 'explicit-web',
+      reasoning: 'high',
+      webSearch: 'live',
+      operationCategories: ['read'],
+    });
+    const path = catalog + '/execution-profiles/direction.yaml';
+    const profile = parse(readFileSync(join(this.root, path), 'utf8'));
+    this.write(path, { ...profile, webSearch: 'cached' });
+  }
+}
+
+/** Declare disjoint public activity bindings without deriving them from implementation state. */
+function activityDefinitions(id: string) {
       const names =
         id === 'work'
           ? ['testing', 'documentation', 'empty', 'empty-web']
           : [id === 'direction' ? 'planning' : 'review'];
-      component.activities = Object.fromEntries(
+      return Object.fromEntries(
         names.map((name) => [
           name,
           {
@@ -114,17 +132,5 @@ export class InspectionFixture extends RoundConsumptionFixture {
           },
         ]),
       );
-      this.write(path, component);
-    }
-    this.write(catalog + '/execution-profiles/web.yaml', {
-      id: 'web',
-      model: 'explicit-web',
-      reasoning: 'high',
-      webSearch: 'live',
-      operationCategories: ['read'],
-    });
-    const path = catalog + '/execution-profiles/direction.yaml';
-    const profile = parse(readFileSync(join(this.root, path), 'utf8'));
-    this.write(path, { ...profile, webSearch: 'cached' });
-  }
+
 }
