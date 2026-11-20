@@ -54,7 +54,6 @@ export class ReviewedWorkflow {
   readonly reviews: unknown[] = [];
   readonly services: WorkflowServices;
   private head?: string;
-  private closed = false;
   private readonly agent = new Agent(new Architecture());
   private readonly signal = new AbortController().signal;
 
@@ -79,9 +78,6 @@ export class ReviewedWorkflow {
     task.record({ plan: { ...prior, milestones: [...completed, correction] } });
     task.record({ position: { completed: 2, activities: { [correction.id]: 2 } } });
     this.services = this.providers();
-    t.after(() => {
-      if (!this.closed) this.fixture.task.close();
-    });
   }
 
   /** Produce the initial failing check and acknowledged receipt through the preceding Execution contribution. */
@@ -99,6 +95,7 @@ export class ReviewedWorkflow {
   /** Bind controlled model/transport collaborators while retaining actual decoding, commands and journal state. */
   private bind() {
     const task = this.fixture.task;
+    this.bindClosure(task);
     const provider = task.provider(this.signal);
     this.t.mock.method(provider, 'remoteHead', async () => this.head);
     this.t.mock.method(provider, 'push', async (_root: string, _branch: string, head: string) => {
@@ -117,6 +114,17 @@ export class ReviewedWorkflow {
       async (id: string, signal: AbortSignal, scope?: Parameters<HostTask['check']>[2]) =>
         this.check(id, signal, scope),
     );
+  }
+
+  /** Let Workflow and the shared fixture each clean up while closing the real writer exactly once. */
+  private bindClosure(task: HostTask) {
+    const close = task.close.bind(task);
+    let closed = false;
+    this.t.mock.method(task, 'close', () => {
+      if (closed) return;
+      closed = true;
+      close();
+    });
   }
 
   /** Execute a real subprocess and persist its exact log, exit and relevant input identity. */
@@ -347,7 +355,6 @@ export class ReviewedWorkflow {
       observer,
       this.signal,
     );
-    this.closed = true;
     return result;
   }
 
@@ -360,7 +367,6 @@ export class ReviewedWorkflow {
     );
     assert(journal instanceof Journal);
     this.fixture.task = new HostTask(old.config, old.goal, journal);
-    this.closed = false;
     if (satisfied && this.scenario === 'external')
       writeFileSync(join(this.fixture.root, '.git', 'schema-ready'), 'approved external schema\n');
     this.bind();
