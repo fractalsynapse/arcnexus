@@ -306,7 +306,10 @@ export class ReviewedHoldFixture {
   requireDependencies() {
     this.dependencyPrerequisite = true;
     this.t.mock.method(CheckDependencies.prototype, 'prepare', async (abort: AbortSignal) => {
-      const result = { ...(await this.command(this.task, 'owner-tests', abort)), id: 'dependencies' };
+      const result = {
+        ...(await this.command(this.task, 'owner-tests', abort)),
+        id: 'dependencies',
+      };
       this.task.note({ dependencyPreparation: result });
       return result;
     });
