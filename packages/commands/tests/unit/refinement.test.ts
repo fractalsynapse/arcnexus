@@ -109,7 +109,12 @@ function nativeRecords(attempt: number, activation: string): unknown[] {
 }
 
 const architectPhase = {
-  refinement: { invocation: 'invocation-1', round: exactRound, total: exactTotal, phase: 'Architect' },
+  refinement: {
+    invocation: 'invocation-1',
+    round: exactRound,
+    total: exactTotal,
+    phase: 'Architect',
+  },
 };
 const completedRound = {
   completedRound: { round: exactRound, report: 'round/one', measurements: 'measurements/report' },
@@ -138,9 +143,7 @@ function outcomeRecords(attempt: number): unknown[] {
     attempt === 1
       ? { proposal: { path: 'proposal/exact.diff', question } }
       : { outcome: { kind: 'merged', commit: 'goal-commit', evidence: ['goal/checks'] } },
-    attempt === 1
-      ? { pending: { proposal: 'proposal/exact.diff' } }
-      : completedRound,
+    attempt === 1 ? { pending: { proposal: 'proposal/exact.diff' } } : completedRound,
   ];
 }
 
