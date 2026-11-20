@@ -12,6 +12,7 @@ export function goalRound(
   architecture: Architecture,
   coordination: Coordination,
   directory: string,
+  namespace = 'task',
 ): GoalRound {
   const local = architecture.capture(directory);
   if (!local.project.delivery?.baseBranch && !goalInventory(local).length)
