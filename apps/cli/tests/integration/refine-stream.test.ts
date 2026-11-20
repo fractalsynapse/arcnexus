@@ -179,7 +179,14 @@ function assertTerminalRecords(records: Array<Record<string, any>>): void {
     .map((record) => record.detail?.event)
     .filter((event) => event?.type === 'item.completed' && event.item?.type === 'mcp_tool_call');
   assert.ok(toolResults.length > 0);
-  assert.ok(toolResults.every((event) => event.item.result !== undefined));
+  assert.deepEqual(
+    toolResults.map((event) => event.item),
+    Array.from({ length: 6 }, () => ({
+      type: 'mcp_tool_call',
+      id: 'read-tool',
+      result: { content: [{ type: 'text', text: 'durable evidence\\n' }] },
+    })),
+  );
   assert.ok(
     records.some(
       (record) =>
