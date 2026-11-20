@@ -198,12 +198,15 @@ async function interruptAfterChild(root: string, state: RecoveryState) {
   assert.equal(Reflect.get(outcome as object, 'kind'), 'failed');
 }
 
-/** Resume through freshly constructed Workflow, Execution and Coordination objects. */
+/** Resume the interrupted first round, then finish a distinct second round after reopening. */
 async function resume(root: string, state: RecoveryState) {
   const planner = {
-    propose: async () => {
-      state.calls.value++;
-      throw new Error('A successful child must not be assessed again');
+    propose: async (session: TaskSession) => {
+      if (state.calls.value === 1) {
+        state.calls.value++;
+        throw new Error('A successful child must not be assessed again');
+      }
+      return recordProviderEvidence(session, state.calls, state.revision);
     },
     apply: async () => ({ kind: 'completed' as const, evidence: [] }),
   };
@@ -212,7 +215,7 @@ async function resume(root: string, state: RecoveryState) {
   await (Reflect.get(workflow, 'refine') as Refine).call(
     workflow,
     root,
-    1,
+    2,
     { progress() {}, event: (event) => events.push(event) },
     new AbortController().signal,
   );
