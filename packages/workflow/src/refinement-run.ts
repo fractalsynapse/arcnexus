@@ -305,7 +305,7 @@ export class RefinementRun {
       '',
       '## Event-derived measurements',
       '',
-      JSON.stringify(this.observer.measurementSnapshot(), null, 2),
+      JSON.stringify(measurements, null, 2),
       '',
     ].join('\n');
     return hostTask(this.parent).store(`refinement-round-${round}.md`, text);
