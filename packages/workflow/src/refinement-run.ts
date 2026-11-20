@@ -297,7 +297,11 @@ export class RefinementRun {
       '',
       '## Child recovery observations',
       '',
-      JSON.stringify(recoveryObservations(hostTask(this.parent).history?.() ?? []), null, 2),
+      JSON.stringify(
+        recoveryObservations(hostTask(this.parent).history?.() ?? [], invocation, round),
+        null,
+        2,
+      ),
       '',
       '## Event-derived measurements',
       '',
