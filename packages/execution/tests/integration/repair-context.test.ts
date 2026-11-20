@@ -116,7 +116,10 @@ function replayEvidence(fixture: TestingRewindFixture) {
 }
 
 /** Compare complete retained artifacts after the journal has reopened. */
-function assertReplayEvidence(fixture: TestingRewindFixture, saved: ReturnType<typeof replayEvidence>) {
+function assertReplayEvidence(
+  fixture: TestingRewindFixture,
+  saved: ReturnType<typeof replayEvidence>,
+) {
   const retained = fixture.task.observations<{
     edits?: typeof saved.receipt;
     clarification?: { question: string; answer: string };
@@ -127,7 +130,10 @@ function assertReplayEvidence(fixture: TestingRewindFixture, saved: ReturnType<t
     question: 'Which requirement?',
     answer: saved.answer,
   });
-  assert.equal(retained.findLast((event) => event.researchResult)?.researchResult?.evidence, saved.evidence);
+  assert.equal(
+    retained.findLast((event) => event.researchResult)?.researchResult?.evidence,
+    saved.evidence,
+  );
   assert.equal(fixture.task.readFile(saved.evidence).text, saved.report);
 }
 
@@ -150,11 +156,17 @@ async function assertReplayRequests(fixture: TestingRewindFixture) {
 test('nested findings and retained progress survive journal reopening and later requests', async (t) => {
   const fixture = new TestingRewindFixture(t);
   const saved = replayEvidence(fixture);
-  fixture.task.record({ position: { completed: 0, activities: { original: 1 } }, repair: latestReplay });
+  fixture.task.record({
+    position: { completed: 0, activities: { original: 1 } },
+    repair: latestReplay,
+  });
   const position = fixture.task.history().findLast((event) => 'position' in event);
   const checks = fixture.task.observations<{ check?: unknown }>().filter((event) => event.check);
   await fixture.restart();
-  assert.deepEqual(fixture.task.history().findLast((event) => 'position' in event), position);
+  assert.deepEqual(
+    fixture.task.history().findLast((event) => 'position' in event),
+    position,
+  );
   assert.deepEqual(
     fixture.task.observations<{ check?: unknown }>().filter((event) => event.check),
     checks,
