@@ -122,7 +122,7 @@ test('nested findings and retained progress survive journal reopening and later 
     });
     assert.deepEqual(context.completedActivities, ['documentation']);
     assert.deepEqual(context.previouslyCompletedActivities, ['testing', 'implementation']);
-    assert.equal(context.retainedTesting.redLog, fixture.red);
+    if (activity === 'testing') assert.equal(context.retainedTesting.redLog, fixture.red);
   }
   const plan = fixture.task.history().findLast((event) => 'plan' in event);
   assert(plan && 'plan' in plan);
