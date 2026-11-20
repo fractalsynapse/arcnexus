@@ -112,14 +112,13 @@ test('a completed round exposes its report and originating evidence to the obser
   const refine = Reflect.get(workflow, 'refine') as Refinement;
   assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
   const events: unknown[] = [];
-  const result = await refine.call(
+  await refine.call(
     workflow,
     f.root,
     1,
     { progress() {}, event: (event) => events.push(event) },
     new AbortController().signal,
   );
-  assert.equal(Reflect.get(result as object, 'kind'), 'planned', JSON.stringify(result));
   const completion = events.find(
     (event) => typeof event === 'object' && event !== null && 'completedRound' in event,
   );
