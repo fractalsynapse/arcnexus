@@ -276,11 +276,7 @@ function assertRecoveredReport(assessments: number, events: readonly unknown[]) 
     'each originating event is referenced once',
   );
   const recovery = report.match(/Reused completed child outcome for refine:[^\n]+/g) ?? [];
-  assert.deepEqual(
-    recovery,
-    [recovery[0]],
-    'the report contains one durable child reuse for this round',
-  );
+  assert.equal(recovery.length, 1, 'the report contains one durable child reuse');
 }
 
 test('a committed child outcome is reused after parent acknowledgment is interrupted', async (t) => {
