@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
@@ -8,8 +8,7 @@ import type { Agent } from '../../../agent/src/index.js';
 import type { Architecture, Capture, TaskContext } from '../../../architecture/src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
 import { Execution, HostTask } from '../../../execution/src/index.js';
-import { Planner } from '../../../planner/src/index.js';
-import { Workflow, type TaskObserver, type WorkflowServices } from '../../src/index.js';
+import { Workflow, type WorkflowServices } from '../../src/index.js';
 
 export const suite = { owner: 'workflow', level: 'integration', tags: ['regression'] } as const;
 
@@ -113,10 +112,9 @@ function completedRounds(events: readonly unknown[]) {
   });
 }
 
-test('later assessments receive the actual completed round in their prepared context', async (t) => {
-  const f = fixture(t);
+/** Observe the contexts prepared by the real host for each assessment. */
+function observingServices(f: ReturnType<typeof fixture>, contexts: TaskContext[]) {
   const services = providers(f, []);
-  const contexts: TaskContext[] = [];
   const agent = {
     activate: async (input: { task: TaskContext }) => {
       contexts.push(input.task);
@@ -143,6 +141,13 @@ test('later assessments receive the actual completed round in their prepared con
     await activate(session, 'direction');
     return assessGoal(session, []);
   };
+  return services;
+}
+
+test('later assessments receive the actual completed round in their prepared context', async (t) => {
+  const f = fixture(t);
+  const contexts: TaskContext[] = [];
+  const services = observingServices(f, contexts);
   const rounds: Record<string, unknown>[] = [];
   const outcome = await new Workflow(services).refine(
     f.root,
