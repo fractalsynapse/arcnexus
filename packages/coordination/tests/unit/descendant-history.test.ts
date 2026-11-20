@@ -123,10 +123,7 @@ function assertFreshIsolation(fixture: HistoryFixture) {
   fixture.root.finish({ kind: 'blocked' });
   fixture.root.close();
   fixture.root = fixture.admit();
-  assert.deepEqual(
-    (fixture.root as unknown as DescendantJournal).childTimeline(phaseGoal, phaseScope),
-    freshExpected,
-  );
+  assert.deepEqual(fixture.root.childTimeline(phaseGoal, phaseScope), freshExpected);
 }
 
 test('child history includes canonical descendants across retries and excludes other cycles', (t) => {
