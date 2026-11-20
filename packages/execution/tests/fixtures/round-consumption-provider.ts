@@ -134,10 +134,12 @@ class RoundConsumer {
       for (const path of sources) await this.discover(path);
       const messages = [...sources].flatMap((path) =>
         this.values(this.reads.get(path)!).flatMap((value: any) =>
-          value?.item?.type === 'agent_message' ? [value.item.text] : [],
+          value?.item?.type === 'agent_message'
+            ? [{ path, sha256: createHash('sha256').update(value.item.text).digest('hex') }]
+            : [],
         ),
       );
-      consumed.push({ ...completion, reportText: report, messages });
+      consumed.push({ ...completion, sources: [...sources], messages });
     }
     return consumed;
   }
