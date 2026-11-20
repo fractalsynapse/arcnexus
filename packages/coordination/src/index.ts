@@ -257,8 +257,8 @@ export class Coordination {
     }
   }
 
-  /** Reuse the oldest unfinished round or capture the inventory for a new one. */
-  round(remote: string, captureInventory: () => string) {
+  /** Reuse the oldest unfinished round in its namespace or capture a new inventory. */
+  round(remote: string, captureInventory: () => string, namespace = 'task') {
     const database = this.open(remote);
     try {
       database.exec('BEGIN IMMEDIATE');
