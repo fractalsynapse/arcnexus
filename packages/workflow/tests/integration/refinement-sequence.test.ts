@@ -250,17 +250,17 @@ function interruptAfterPlannedTerminal(): TaskObserver {
 }
 
 /** Run a retry after the observer interrupts its committed Planner child. */
-async function retryAfterChildTerminal(refine: Refinement, f: ReturnType<typeof fixture>) {
+async function retryAfterChildTerminal(
+  workflow: Workflow,
+  refine: Refinement,
+  f: ReturnType<typeof fixture>,
+) {
   const first = await refine.call(
-    undefined,
-    f.root,
-    1,
-    interruptAfterPlannedTerminal(),
-    new AbortController().signal,
+    workflow, f.root, 1, interruptAfterPlannedTerminal(), new AbortController().signal,
   );
   assert.equal(Reflect.get(first as object, 'kind'), 'failed');
   const events: unknown[] = [];
-  await refine.call(undefined, f.root, 1, {
+  await refine.call(workflow, f.root, 1, {
     progress() {},
     event: (event) => events.push(event),
   }, new AbortController().signal);
