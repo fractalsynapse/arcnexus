@@ -1,5 +1,5 @@
 import type { Capture } from '../../architecture/src/index.js';
-import type { Milestone } from '../../direction/src/index.js';
+import { supplierLinkDiagnostic, type Milestone, type Plan } from '../../direction/src/index.js';
 import {
   stopped,
   selfLinkedSupplier,
@@ -7,6 +7,20 @@ import {
   type ActivityRepair,
   type TaskEvent,
 } from './services.js';
+
+/** Resume the caller of an invalid retained supplier request without sending it to Direction. */
+export function supplierRequestRepair(plan: Plan, activation: ActivityCheckpoint) {
+  const diagnostic = supplierLinkDiagnostic(plan, {
+    ...activation.outcome,
+    requester: activation.milestone,
+  });
+  if (diagnostic)
+    return {
+      phase: 'activity' as const,
+      message: diagnostic,
+      evidence: activation.outcome.evidence,
+    };
+}
 
 /** Validate a local rewind without changing accepted work, authority or the Director's sequence. */
 export function activityRepair(

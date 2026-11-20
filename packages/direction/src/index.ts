@@ -214,7 +214,7 @@ export function scheduledSupplier(
   const linked = before.milestones.findIndex(
     ({ id }) => id === feedback.milestone && id !== feedback.requester,
   );
-  if (linked >= 0 && before.milestones[linked]?.owner !== feedback.owner) return;
+  if (supplierLinkDiagnostic(before, feedback)) return;
   if (linked >= 0 && linked < completed) return before.milestones[linked]?.id;
 
   const requester = after.milestones.findIndex(({ id }) => id === feedback.requester);
@@ -228,6 +228,17 @@ export function scheduledSupplier(
       return !feedback.failedCheck || activity === feedback.failedCheck.activity;
     });
   })?.id;
+}
+
+/** Reject an existing supplier link that would change its accepted accountable owner. */
+export function supplierLinkDiagnostic(
+  plan: Plan | undefined,
+  request: { kind: string; milestone?: unknown; owner?: unknown; requester?: string },
+) {
+  if (request.kind !== 'supplier' || request.milestone === request.requester) return;
+  const linked = plan?.milestones.find(({ id }) => id === request.milestone);
+  if (!linked || linked.owner === request.owner) return;
+  return `Supplier milestone ${linked.id} belongs to ${linked.owner}, but the request names ${String(request.owner)}. Link accepted work owned by the requested supplier, or name a distinct new contribution. Preserve the accepted milestone's owner and criteria.`;
 }
 
 export { direct, track } from './native.js';

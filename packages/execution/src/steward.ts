@@ -1,6 +1,10 @@
 import { team } from '../../team/src/index.js';
 import { InvalidAgentResponse, type Agent } from '../../agent/src/index.js';
-import type { Milestone, StewardCheckFailure } from '../../direction/src/index.js';
+import {
+  supplierLinkDiagnostic,
+  type Milestone,
+  type StewardCheckFailure,
+} from '../../direction/src/index.js';
 import {
   localRepairIndex,
   localRepairTargets,
@@ -23,7 +27,11 @@ import {
   type StewardScope,
 } from './steward-check.js';
 import { decodeSteward, StewardResponseError, type StewardResult } from './steward-response.js';
-import { supplierAnswerRequired, supplierContext } from './supplier-context.js';
+import {
+  retainedSupplierRepair,
+  supplierAnswerRequired,
+  supplierContext,
+} from './supplier-context.js';
 import { stewardProgress } from './steward-progress.js';
 import { retainedTesting } from './testing-rewind.js';
 import { establishedTestingRed } from './testing-red.js';
@@ -241,6 +249,7 @@ async function stewardAssignment(
   const from = milestone.steps.findIndex(({ activity }) => activity === scope.activity);
   return {
     repairTargets: localRepairTargets(task.capture, milestone, from - 1),
+    ...retainedSupplierRepair(task, milestone, scope.activity),
     ...responseShape(scope.activity !== 'review' && Boolean(task.formatPreview)),
     ...supplierContext(task.history(), milestone.id),
     ...stewardProgress(task.history(), milestone),
@@ -306,7 +315,7 @@ async function applyStewardReply(
     assignment.failedCheck,
     hostChecks,
   );
-  validateRepairTarget(task, milestone, scope, result);
+  validateActivityTransition(task, milestone, scope, result);
   if (result.kind === 'completed' && assignment.answerRequired && !result.answer)
     throw new StewardResponseError(
       'Include the complete response to the supplied question in answer.',
@@ -320,13 +329,21 @@ async function applyStewardReply(
   return result;
 }
 
-/** Return an unavailable model target to its caller before Workflow records an activation. */
-function validateRepairTarget(
+/** Reject an inconsistent supplier or unavailable rewind before Workflow records the transition. */
+function validateActivityTransition(
   task: HostTask,
   milestone: Milestone,
   scope: StewardScope,
   result: StewardResult,
 ) {
+  const diagnostic = supplierLinkDiagnostic(
+    task.history().findLast((event) => 'plan' in event)?.plan,
+    {
+      ...result,
+      requester: milestone.id,
+    },
+  );
+  if (diagnostic) throw new StewardResponseError(diagnostic);
   if (result.kind !== 'repair') return;
   const from = milestone.steps.findIndex(({ activity }) => activity === scope.activity);
   if (localRepairIndex(task.capture, milestone, from - 1, result.activity) !== undefined) return;

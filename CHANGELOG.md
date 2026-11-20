@@ -29,6 +29,8 @@
 
 ### Fixed
 
+- Refuse supplier requests that link another owner’s accepted milestone, return exact diagnostics to the caller, and resume retained invalid handoffs without Director replanning or discarded checkpoints (#678).
+
 - Keep new research and clarification answers in caller-repair input identity, preserve holds for unchanged replies, and apply the approved Execution Testing `gpt-sol` profile trial (#675).
 
 - Preserve the complete originating local-repair finding and its evidence from the canonical journal alongside later repair diagnostics in activity requests, retaining exact text and avoiding duplicate findings for a single rewind (#660).
