@@ -126,7 +126,7 @@ test('reopened recovery reports complete origins and exact round profile usage w
       });
       task.note({ nativeFinished: { activation, durationMs: 7 } });
       return {
-        kind: 'planned',
+        kind: 'planned' as const,
         commit: f.revision,
         summary: `Distinct Planner finding attempt ${plannerCalls}`,
         evidence: [],
