@@ -282,12 +282,16 @@ test('a real unanswered human gate retains its action and resumes only with a re
   const repeated = context(await fixture.run());
   assert.equal(repeated.progress.identity, held.progress.identity);
   assert.deepEqual(repeated.prerequisite, held.prerequisite);
-  fixture.task.ask = async () => 'Use the architect-approved schema A.\n\nRetain original acceptance.';
+  fixture.task.ask = async () =>
+    'Use the architect-approved schema A.\n\nRetain original acceptance.';
   const answered = context(await fixture.run());
   assert.equal(answered.prerequisite, undefined);
   assert.notEqual(answered.progress.identity, held.progress.identity);
   const recorded = answered.answers.find((a) => a.question === held.prerequisite?.requiredAction);
-  assert.equal(recorded?.answer, 'Use the architect-approved schema A.\n\nRetain original acceptance.');
+  assert.equal(
+    recorded?.answer,
+    'Use the architect-approved schema A.\n\nRetain original acceptance.',
+  );
   assert(recorded?.evidence);
   assert.equal(JSON.parse(fixture.task.readFile(recorded.evidence).text).answer, recorded.answer);
   assertContinuity(fixture, answered);
