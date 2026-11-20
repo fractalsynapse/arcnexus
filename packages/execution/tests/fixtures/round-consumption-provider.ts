@@ -104,10 +104,7 @@ class RoundConsumer {
     }
     if (Array.isArray(value.references))
       for (const path of value.references)
-        if (
-          typeof path === 'string' &&
-          !path.endsWith('-mcp-observation.json')
-        )
+        if (typeof path === 'string' && !path.endsWith('-mcp-observation.json'))
           await this.discover(path);
     for (const entry of Object.values(value))
       if (typeof entry === 'object') await this.visit(entry);
