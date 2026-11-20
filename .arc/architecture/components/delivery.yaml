@@ -1,105 +1,278 @@
 id: delivery
 kind: plugin
-purpose: Integrate the accepted candidate through one staging PR.
+purpose: |
+  Delivery owns the transition from an independently accepted engineering candidate to verified staging integration. It consumes the assembled candidate, its retained engineering base and the accepting verification verdict, then uses the trusted Collaboration provider to publish or reuse one pull request, observe required checks and configured review, and merge only the verified head when authorized. Its purpose is to make that final external transition reliable and attributable without letting publication become another implementation or acceptance path.
+
+  The locked contract in packages/delivery/contract.md defines this boundary. Delivery cannot accept work, modify the candidate, approve a PR, bypass review or merge main. It reports the provider's actual merge identity and preserves evidence when publication cannot finish. Release and simulation operations remain deferred. The component's host-only release activity means staging integration of the accepted task; it is not a model role or permission to publish a production release.
+
+  Agents and teams remain the conceptual model. The Delivery steward maintains this plugin through the common Agent activities, with the same documentation, testing, implementation and self-review responsibilities as other stewards. The host service performs the final publication procedure under captured authority. Keeping those identities distinct prevents a steward that is implementing Delivery from treating its own code as accepted or invoking publication directly to make a test appear complete.
+
+  What Delivery receives
+
+  The assembled candidate is the actual result of sequential accountable contributions in one engineering workspace. It carries the retained engineering base, candidate identity, scope and attribution that publication needs. Delivery must read the production assembled record, not assume it is shaped like an assignment or a verification request. A fixture that supplies a convenient base field in the wrong record can make the publication code look correct while the real path uses a different parent.
+
+  The engineering base, accepted architecture source and verification checkout are distinct identities. The engineering base is the retained parent from which the candidate work was assembled. The architecture source governs authority. A verification checkout is an environment for observing the candidate. None can substitute for another merely because they happened to match in an early test. Delivery preserves the engineering base as publication parent and refuses a path that confuses these roles.
+
+  The candidate digest and scope must match the independent verdict. A favorable assessment of an earlier tree does not accept later edits. A green owner test does not replace independent acceptance. The host must validate the candidate/verdict relationship before an effect. If the tree changes because publication exposed a defect, the affected checks and independent assessment must refresh before the changed work is published through this same path.
+
+  Execution may already have committed and pushed checked intermediate checkpoints. These are valuable durable progress and provide a branch from which recovery can reconstruct work. They do not confer integration authority. Delivery must distinguish a checkpoint branch from the final independently accepted candidate and must not infer acceptance because a PR exists or a commit message contains a criterion id.
+
+  One task publication
+
+  A task uses one retained issue and one staging PR for its accepted work. Sequential owners contribute attribution in the same candidate rather than separate steward branches. Direction owns issue creation through Collaboration, and Execution owns branch/worktree preparation and checkpoints. Delivery uses those retained identities for final publication instead of creating a competing tracking lifecycle.
+
+  Opening a PR is an external effect with an identity that must survive process interruption. Before creating another, observe the retained task publication and provider state. A previous request may have succeeded even if its response was lost. If a PR already exists for the task and candidate branch, reuse it according to the accepted lifecycle. A new attempt or local worktree does not automatically justify a new PR.
+
+  The provider supplies actual head, check, review and merge facts. Delivery interprets them under host authorization. It must not manufacture a passed status from an empty response, infer review approval from a model self-review, or use a stale check result from another head. The exact current candidate must remain the one that was verified when the provider is asked to merge.
+
+  After a successful merge, record the returned merge identity once. A later invocation of an already merged candidate should report that retained fact, not publish a second change. The identity must come from the provider's actual result or reconciled observation, not a guessed hash or the latest staging head. Staging may advance again after the task; that does not alter the task's historical merge identity.
+
+  Checks, review and holds
+
+  Configured CI and review are real delivery prerequisites. Pending results leave publication pending. A provider observation that cannot complete is unavailable, not passed and not proof the record is absent. A missing credential, inaccessible repository or irreversible remote state becomes a named hold with the required action. Delivery preserves the candidate and report rather than silently skipping the gate.
+
+  These prerequisites differ from high-level human guide approval. Objectives, goals and architecture require exact human decisions. Routine publication retries under existing authority do not add a new approval prompt. Conversely, a human's general wish to finish does not authorize bypassing an unavailable required check. The system must express the actual blocker clearly enough that the right responsible party can act.
+
+  A model's independent engineering verdict is not a GitHub review approval. Delivery can observe configured review and request an authorized verified-head merge, but cannot submit an approval to satisfy its own gate. An external review requirement may be absent under the project's accepted policy, present and satisfied, or pending; the actual rule matters. Do not hardcode a review ceremony or assume a waiver from unrelated work.
+
+  A candidate may have passed checks before publication and still encounter provider-side CI failure. The cause can be an engineering defect, different environment, missing prerequisite or an observation problem. Preserve the actual diagnostics and classify the boundary before acting. A transport failure in observing a run should not trigger a code edit; a real candidate failure should not be hidden as a transient provider retry.
+
+  Uncertain external effects
+
+  A push, PR creation or merge can take effect before the local caller receives a response. Delivery owns reconciliation of uncertain publication through the existing path. It observes provider state before retrying and records why the observed state makes the next action safe. Blind replay is not recovery, even when the provider often rejects duplicates.
+
+  The retained task identity, branch, PR and expected head provide the lookup anchors. Their persistence belongs in the existing Coordination journal, while Collaboration supplies external facts. Do not introduce another delivery database or status projection to compensate for uncertainty. A derived report should point to canonical observations rather than become a competing authority about whether the merge happened.
+
+  Recovery must work when the prior worktree no longer exists. Execution can reconstruct a fresh worktree from retained checkpoints and clean abandoned worktrees according to its contract. Delivery does not require a long-lived local directory as proof of task identity. The external branch and retained candidate facts can outlive the original process, while original failed observations remain part of history.
+
+  If the remote head changed, stop treating the old candidate as verified. If the PR merged, record the actual merge identity. If it remains pending, keep observing under the existing lifecycle. If the effect is definitively absent, a justified retry can proceed. The important distinction is observed fact, not an arbitrary number of attempts or a timeout after which the system assumes success.
+
+  Publication-discovered engineering defects
+
+  Delivery cannot repair code while publishing. When publication reveals a candidate defect, it returns the complete failure to Workflow, which routes it to the accountable steward. The steward repairs the earliest affected activity within the existing milestone when possible. Ordinary same-owner correction does not invoke Direction or create a new milestone merely because CI found it late.
+
+  Affected downstream activities and verification refresh after the repair. Evidence whose inputs remain unchanged can be retained, but an independent verdict on the old candidate does not automatically cover the new tree. The new accepted candidate re-enters this same Delivery path with the existing issue and PR identity. This preserves useful progress without weakening acceptance.
+
+  A genuine cross-owner contribution or changed scope escalates explicitly to Direction. Final independent rejection also gives Direction the precise rejected criteria and applicable evidence so it can revise pending work. Publication uncertainty itself is not a reason to reconstruct the engineering plan. Keeping those routes distinct prevents expensive replanning for a lost API response.
+
+  Candidate edits remain confined to their accountable owners and checked-edit machinery. Delivery cannot grant file access, widen scope, alter tests or accept a candidate simply to get a PR merged. A supplier request does not transfer ownership. The host preserves original acceptance and successful checkpoints while accountable repair changes the actual outcome.
+
+  Authority and production boundary
+
+  Delivery receives repository, target branch and operation authorization from the trusted host. The model cannot select an arbitrary provider or credential, redirect publication to another repository or convert staging authority into main authority. Collaboration performs provider operations under that policy and returns complete facts. Delivery does not expose secrets in a prompt or diagnostic.
+
+  Main merges, tags, GitHub releases and deployments are outside this plugin's current runtime responsibility. A staging merge closes an engineering task, not a production-release claim. Release maintains repository workflows and documentation, while a maintainer controls production under the current contract. A human-authorized manual maintenance action does not silently change generic runtime behavior.
+
+  Protected architecture changes use the narrow approved host capability and exact proposal identity in the Architect phase. Delivery can publish an accepted candidate containing such an approved batch only after the ordinary validation and independent review requirements are met. It cannot apply protected bytes itself or interpret a PR's existence as approval. Candidate changes cannot grant their own permission.
+
+  The host-only release procedure has no model profile or model-facing operations. It validates candidate and verdict, reconciles external effects, observes gates and records the actual staging outcome. This is ordinary application logic through existing services, not another agent loop. The steward's model activities maintain that logic but do not impersonate its host authorization.
+
+  Verification strategy
+
+  The central regression must begin with the actual production assembled record. Assert the retained engineering base becomes the publication parent and that architecture source and verification checkout cannot be substituted. Include distinct identities so a mistaken fallback cannot pass accidentally. A fixture that makes all hashes equal is inadequate for this responsibility.
+
+  Test refusal of missing verdict, mismatched digest, unauthorized scope and changed verified head before effects. Exercise pending CI/review and unavailable operations as distinct outcomes. Include a valid accepted candidate with sequential owner attribution and one PR, and assert no hidden per-steward branch publication is required. The public result should retain the actual provider identities.
+
+  Unknown-effect tests simulate an effect that occurs before the response is lost, then reopen retained state and observe it. Assert no duplicate PR, no repeated completed merge and no invented success when observation is unavailable. A retry of an already merged candidate should be a no-op with the recorded merge identity. These deterministic scenarios establish the recovery contract without live upstream mutation.
+
+  A publication-defect regression should return the actual diagnostic for accountable repair, preserve the PR, refresh affected checks and independent verdict, then publish the corrected candidate. Verify that Delivery never edits the tree. Use real public response shapes and distinct before/after candidate identities; a fake that always returns accepted hides the important boundary.
+
+  Native provider and live task evidence remain separate. An injected provider can prove state interpretation and call ordering, not actual repository credentials, required review or staging integration. Declared Execution-owned operations capture real versions, requests, responses and diagnostics when needed. A live qualification reaches staging through one PR without operator edits and reports those links explicitly.
+
+  Steward activities
+
+  Research settles a named publication uncertainty using complete retained evidence and, when needed, current primary provider documentation. It does not mutate upstream. Documentation records the accepted identity, gate and recovery semantics at canonical sources. Testing establishes faithful public scenarios. Implementation changes the existing capture/publication path. Self-review checks actual production wiring and negative cases without performing effects.
+
+  Use mapped local MCP operations for engineering. Read complete files and exact schemas, make one acknowledged file edit at a time, preserve receipts and do not repeat a successful write after another file is refused. Tool exit status and logs return to the calling activity. Owned fixture corrections stay local, including within Implementation if an earlier Testing rewind is unavailable.
+
+  Keep the implementation simple. Reuse Collaboration, Coordination, Verification and Workflow rather than adding wrappers that duplicate their status. Remove superseded publication helpers when the accepted path replaces them. A derived delivery report should retain ids and digests, not duplicate Git object content into the database. Repository garbage collection should not invalidate its retained factual records.
+
+  Characteristic failures and their cheapest checks
+
+  An incorrect publication parent can remain invisible until GitHub shows unrelated history. The actual assembled-record regression catches it earlier. A stale verdict can publish unreviewed edits; distinct candidate/verdict identity tests catch that. A lost response can create duplicate PRs; reopen plus observed-effect assertions catch it. A pending review coerced to success needs a provider-state test, not another broad agent prompt.
+
+  A delivery helper that reformats source violates the boundary even if the resulting candidate is better. Read-only publication and checked-edit refusal tests should make that impossible. A repair path that silently changes acceptance can create a green run without satisfying the goal. Preserve original criterion identity through the repair and independent assessment.
+
+  A report may incorrectly call a provider fixture a live merge or staging a production release. The cheapest check is an evidence-category review tied to the actual provider and commit. Avoid turning this into a new generic process framework. Record the concrete escaped defect and update the focused regression or instruction that would have prevented it.
+
+  Efficiency and learning
+
+  Measure time in publication separately from model activity and checks where the timeline supports it. A long required CI run, a provider outage, a repeated blind replay and an expensive Director replan are different costs. Complete events and references should let later Planner and Architect assessments identify which boundary needs improvement. Unknown timing or pricing remains unknown.
+
+  Recovery success means useful work is retained and the correct next action occurs without operator database repair, hand-edited candidates or bypassed gates. It does not mean hiding the original failure. A task can honestly show an uncertain effect followed by successful reconciliation. Historical attempts remain available, and a clean qualification streak follows its actual acceptance rules.
+
+  Research and diagnostics can be detailed. Do not add request-size caps, output clipping, retry budgets or arbitrary timeouts to make publication appear bounded. The provider and harness have their own real behavior, which should be observed rather than preemptively restricted by ArcNexus. Detect unchanged repetition through the finding and relevant inputs, then diagnose or retain an actionable hold without weakening acceptance.
+
+  Evolution and success
+
+  Delivery should remain one understandable path as the platform grows. Additional gateways reuse Commands and Workflow; additional providers use Collaboration's public seam. Neither requires a new publication lifecycle. A new delivery capability is justified by an accepted outcome and must preserve verified candidate identity, independent acceptance and exact host authority.
+
+  Successful Delivery leaves a traceable chain from the accepted goal and accountable contributions to candidate, checks, verdict, PR and staged commit. The user can see what was published, why it was eligible, what happened on interruption and which identity was reused. That trustworthy final transition lets agents focus on engineering while the host makes staging integration dependable and production authority remains explicit.
+
+  Representative delivery journeys
+
+  Consider a candidate assembled from several sequential owners after the architecture source advanced through an approved adoption boundary. The publication parent is still the retained engineering base of the actual assembled work, not whichever revision most recently supplied instructions. The capture regression must use distinct values and the production record shape to prove that relationship. Otherwise a branch may accidentally include unrelated history or omit intended contributions despite passing local code checks.
+
+  Consider a successful push whose acknowledgment never reaches the process. On restart, the branch may already contain the checkpoint. Delivery and Execution retain their own responsibilities, and the responsible caller observes the remote fact before another effect. A reconstructed worktree should reuse that checkpoint rather than reapply the same file edit. Publication then continues with the retained candidate and issue, not a new task invented from the missing foreground output.
+
+  Consider a PR created immediately before a crash. The local journal may have an uncertain operation rather than a recorded PR number. The next attempt inspects the authorized upstream using retained task and branch identities, links the actual existing PR and resumes checks. A fixture should prove one PR even though two process attempts occurred. Merely asserting that createPR was called once in an uninterrupted process does not test this failure.
+
+  Consider CI exposing a real candidate defect. The diagnostic belongs to the accountable steward through Workflow. Delivery retains the PR and cannot patch the accepted tree during publication. After repair, affected checks and the independent verdict refresh against the changed candidate. A green result for the old tree is not reusable for an altered input, while an unrelated unchanged observation may remain valid. The result is one honest evolving publication, not multiple abandoned PRs.
+
+  Consider a final independent rejection before publication. That is not a provider retry. Direction receives the rejected criteria and applicable evidence to revise remaining work under original acceptance. Delivery does not run yet merely because the branch is pushed. A local malformed Reviewer citation is different again: it is repaired by the Reviewer while candidate and checks stay intact. Correct classification avoids unnecessary engineering or replanning.
+
+  Consider configured review that is still pending. The provider can report the PR and green checks while review remains unsatisfied. Delivery must retain pending state rather than submit its own approval or infer that model self-review satisfies a repository rule. If the project has no such required review under its actual accepted policy, do not invent one. Observe the real rule instead of hardcoding a universal count.
+
+  Consider a merge request whose expected head no longer matches the branch. Refuse the effect and identify the changed candidate. The caller must determine what changed and obtain applicable verification rather than merge the latest head under the earlier verdict. Distinct digest/head assertions are essential; a fixture that uses one constant for every revision cannot catch this error.
+
+  Consider an already merged candidate discovered on retry. Return the actual retained or reconciled merge identity and do not create another PR. The current staging head may be newer because other authorized work integrated later; that does not invalidate the historical task merge. Reports should preserve the task's identity rather than replace it with the latest branch head for convenience.
+
+  Consider an unavailable credential or provider observation. The candidate and prior verdict remain retained, but publication cannot claim success. Report the named prerequisite and evidence. Do not convert the hold into a human request to approve bypassing checks or into an automatic retry loop that repeatedly loses the same diagnostic. A changed external state can justify another observation without altering the engineering plan.
+
+  Consider evidence storage after repository garbage collection. Delivery records ids and digests, while Git retains actual objects through its proper mechanisms and retained checkpoints. The coordination store should not duplicate object contents merely to make a report self-contained. Tests should distinguish the durability of the factual record from assumptions about a temporary worktree. Generated transcripts and indexes stay in application storage.
+
+  These journeys explain why Delivery needs a precise boundary rather than more orchestration. Candidate identity, accepting verdict, provider facts, retained position and accountable repair already supply the essential pieces. New code should connect those pieces directly and remove superseded paths. The final report can then show the chain from goal to PR and staged commit, including recovered uncertainty, without inventing a clean history or claiming a production release.
+
+  A resolved operation's typed parameters are part of its evidence identity. If an affected verification operation runs with different tags or selectors after repair, the report must not describe the earlier invocation as proof of the new selection. Delivery consumes the accepted result rather than choosing convenient check parameters itself. This keeps publication eligibility anchored in the same declared verification model that governed engineering.
+
+  The final user-facing result should identify the task, actual PR and staged merge, with clear references to checks and independent acceptance. It should also retain any unresolved follow-up outside the accepted scope rather than imply the entire project is complete. A successful narrow increment can be valuable while broader qualification remains pending. Honest scope is part of dependable delivery, not a reason to manufacture additional work.
+
+  A final result must remain reproducible when its issue is closed or branch is later cleaned. Retain the actual merge identity and evidence references before housekeeping. Branch deletion is a separate authorized operation after merge and retention checks, not part of making a publication look successful.
 objectives:
-- measure: The recorded staging merge corresponds to the one verified task candidate.
+  - measure: The recorded staging merge corresponds to the one verified task candidate.
 constraints:
-- failure: Delivery changes an accepted candidate, bypasses a gate or replays an uncertain effect.
+  - failure: Delivery changes an accepted candidate, bypasses a gate or replays an
+      uncertain effect.
 owns:
-- packages/delivery
-- .arc/research/delivery
+  - packages/delivery
+  - .arc/research/delivery
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
-    - Resolve the verified candidate identity and the provider observation needed to deliver it.
+      - |
+        Investigate the actual publication or reconciliation question using the accepted candidate, engineering base, independent verdict and retained provider observations. Distinguish issue identity, checkpoint branch, proposed PR head, verified candidate digest, merge commit and current staging head. A matching branch name alone does not establish that the candidate was accepted or merged.
+
+        Read complete existing publication evidence before recommending a retry. Determine whether the effect is uncertain, still pending, definitively absent, already complete or exposing an engineering defect. Consult current primary provider documentation only for a named uncertain behavior and record the relevant native configuration. Do not treat an unavailable observation as proof no PR exists.
+
+        Return complete findings, sources, applicability and the next authorized observation. Research does not publish, merge, edit the candidate or accept work. Recommend reuse of the retained issue and PR identity rather than a fresh publication path. Staging delivery remains distinct from production release.
     operations:
-    - read-file
-    - list-files
-    standards: []
+      - read-file
+      - list-files
+    standards: [agent-operating-protocol]
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
-    - State the staging gates and failure behavior at the delivery boundary.
+      - |
+        Document the accepted candidate-publication boundary using the actual production assembled record. Explain the engineering base retained as publication parent, the accepted architecture source, candidate digest, independent verdict and final verified head. Show why these identities differ and why an assignment-shaped fixture cannot prove the production record is handled correctly.
+
+        Describe one staging PR, actual CI and configured review observation, expected-head merge and storage of the returned merge identity. A checkpoint push is not candidate acceptance. Pending checks remain pending; an unavailable external prerequisite is a named hold. Uncertain effects are observed before retry, preserving the existing issue and PR. A publication-discovered defect returns to accountable engineering repair with affected checks and independent review refreshed.
+
+        Keep implementation, verification and delivery responsibility separate without creating another status store. Delivery cannot edit or accept its own candidate, approve a PR, bypass checks or merge main. Document current behavior and evidence links honestly, and keep release and simulation capabilities deferred.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    standards: []
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+    standards: [agent-operating-protocol]
   testing:
     role: designer
     profile: gpt-terra
     instructions:
-    - Exercise a wrong candidate, changed upstream state, pending checks and recorded merge.
+      - |
+        Construct the Delivery regression from the actual production assembled candidate shape, including retained engineering base, architecture identity, candidate digest and accepting verdict. Assert the real publication parent rather than supplying an assignment-shaped shortcut. Cover missing or mismatched verdict, unauthorized scope, changed head and refusal of candidate mutation.
+
+        Use an isolated provider to model one PR, pending CI/review, unavailable prerequisites, a successful verified-head merge and an uncertain push/PR/merge response. Reopen retained state and observe the existing effect before retry; assert one issue/PR and one recorded merge identity. A repeated invocation of an already merged candidate must report the retained fact, not publish again.
+
+        Exercise publication-discovered engineering failure through the public return path: preserve the PR, repair the accountable contribution, refresh affected checks and independent verdict, then update publication. Distinguish these deterministic assertions from a real GitHub delivery. Establish the meaningful red, repair fixtures locally and run mapped checks without weakening required external gates.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
   implementation:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-    - Carry the verified candidate through the configured staging route and retain its attribution.
+      - |
+        Keep Delivery as the sole final staging publication path for an independently accepted assembled candidate. Validate its digest, scope, retained engineering base and verdict before any effect. Use Collaboration for provider facts and verified-head merge, recording actual identities once. Execution's intermediate checkpoint commits do not authorize publication.
+
+        Before retrying an uncertain effect, observe the retained issue, branch, PR and provider state. Preserve pending and unavailable distinctions, complete diagnostics and the current PR identity. Do not open another PR because a response was lost or infer a merge from a push. Never edit the candidate, accept work, approve a review, bypass configured checks or merge main.
+
+        When publication exposes an engineering defect, return the actual diagnostic to Workflow for accountable local repair. Changed work must refresh affected checks and independent acceptance before this same path publishes again. Correct owned production-record adapters and recovery fixtures locally through mapped operations. Remove superseded status reconstruction rather than adding a second delivery orchestrator.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
   review:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-    - Check exact candidate identity, observed gates, and refusal to perform protected actions.
+      - |
+        Trace the real assembled candidate through capture, publication parent selection, provider observation and verified-head merge. Confirm the regression uses the production record and distinguishes architecture, engineering and verification identities. An assignment fixture with the right-looking base is insufficient evidence.
+
+        Inspect uncertain-effect and restart cases for blind replay, duplicate PRs, lost pending review, invented merge identities or candidate mutation during publication. Publication-discovered defects must return to accountable repair and invalidate affected verification, while unaffected evidence may remain. Staging integration must not be described as main release.
+
+        Use exact findings and source references to choose the earliest applicable local repair. A candidate code defect belongs to its steward through Workflow, not to a hidden Delivery edit. This read-only review cannot publish, approve or waive checks. State separately what fixtures, native provider observations and actual staging integration demonstrate.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - request-supplier
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - request-supplier
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
   release:
     role: release-engineer
     executor: host
     instructions:
-    - Integrate the accepted staging candidate only after configured gates pass.
+      - |
+        Execute this activity only as the trusted host delivery procedure; it has no model profile, model prompt or model-facing operations. Receive the assembled candidate and independent accepting verdict, verify exact candidate identity and retained engineering base, and observe the existing task publication before making an effect. A checkpoint alone is not authorization.
+
+        Publish or reuse the one staging PR through Collaboration under host repository/branch policy. Observe actual required checks and configured review on the exact current head. Pending results retain the delivery position. An unavailable prerequisite retains a named hold. If a request's outcome is unknown, inspect the provider before replay; if the verified candidate is already merged, return the recorded merge identity.
+
+        When a provider check exposes an engineering defect, return the full diagnostic to Workflow. The accountable steward repairs it, affected assembled checks and independent review refresh, and this host procedure resumes with the same issue/PR. Do not mutate an accepted tree while publishing, accept its own work, approve a PR, bypass a gate, merge main, tag, publish a production release or deploy.
+
+        Record the provider's actual merge identity and complete evidence before reporting success. Preserve uncertain observations, failure history and checkpoints on a hold or interruption; normal Execution cleanup remains responsible for the worktree.
     operations: []
     standards: []

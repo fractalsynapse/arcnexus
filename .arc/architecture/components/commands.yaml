@@ -1,98 +1,510 @@
 id: commands
 kind: plugin
-purpose: Expose shared inspection and task operations to application adapters.
+purpose: |
+  # Commands component purpose
+
+  ## A transport-neutral application interface
+
+  Commands exposes the shared application SDK through which gateways inspect
+  Agents, run engineering tasks, assess goals, update architecture and drive
+  continuous refinement. It accepts structured inputs, forwards observations and
+  questions, honors cancellation and returns typed outcomes. The CLI uses this
+  interface today; future MCP and OpenAPI gateways should use the same application
+  services when those surfaces are in scope. Terminal syntax is one adapter's
+  concern, not the definition of the application.
+
+  The component exists to keep the real workflow independent of its current
+  gateway. Without a shared SDK, each interface tends to reconstruct admission,
+  plan progression, human decisions, retries and delivery from its own inputs.
+  That creates subtly different lifecycles and makes reliability fixes incomplete.
+  Commands gives callers a stable small public seam while Workflow, Agent and
+  their responsible plugins continue to own the actual behavior.
+
+  This is a real consumer boundary even when its implementation is thin.
+  Inspection delegates to Agent, and task-family operations delegate to Workflow.
+  The plugin should not add state or wrappers merely to look substantial. Its
+  value is a coherent typed contract available outside a terminal and one trusted
+  Cordis composition through which adapters obtain the same services. Reuse
+  public types where they already express the operation rather than maintaining
+  a second copy of each result or event shape.
+
+  Agent and Team remain the conceptual model beneath the SDK. A caller can inspect
+  a selected actor or submit a goal whose Director chooses real accountable
+  stewards. Commands does not expose an unrelated catalog, choose a fixed team or
+  turn raw provider processes into the public application concept. Apps and plugins
+  manage scoped Agents through the existing lifecycle, while the SDK keeps that
+  lifecycle accessible through structured requests and observations.
+
+  ## Inspection is a read-only application capability
+
+  Inspection accepts the project context, component and explicit activity.
+  Agent and Architecture resolve the selected view, complete request string,
+  invocation options and named unavailable inputs. Commands returns that result
+  without starting a model, admitting a task, creating a worktree or contacting
+  an upstream service. The caller can render it for a person or return it as
+  structured data without changing what was inspected.
+
+  The acting component's full purpose and selected activity procedure belong in
+  that request. Source labels identify the approved guidance, task placeholders,
+  capabilities and relevant references. The compact Team index makes other
+  components discoverable without repeating all of their expanded purposes or
+  activity definitions. Commands must not trim the result, manufacture a summary
+  or rebuild a provider-specific prompt for one gateway.
+
+  Special actor selectors and explicit component IDs resolve through the same
+  Agent boundary. The Director's planning activity and independent Reviewer's
+  assessment remain inspectable, while that Reviewer's ordinary research or
+  steward activities use their explicit component mappings. Missing or undeclared
+  activities are input findings. A convenient fallback to another role or
+  profile would make the SDK inspect a different Agent from the one requested.
+
+  The architect accepts the current single-string request representation. Keep
+  that complete prepared input and its separate invocation options consistent
+  across structured inspection, human rendering and actual activation. No new
+  channel protocol or terminal convention is required to improve the activity
+  instructions. Inspection remains a useful way to review the exact context
+  before paying for an activation, with honest placeholders instead of guessed
+  live goal, candidate or worktree values.
+
+  ## Structured task execution delegates to Workflow
+
+  A task request supplies the actual goal and project directory together with
+  the observer and cancellation signal. Workflow admits the task, invokes Direction,
+  executes applicable steward activities, obtains independent verification and
+  observes authorized staging delivery. Commands forwards that lifecycle through
+  its public interface. It does not open its own issue, prepare another branch
+  or decide that a model's completion message means the task succeeded.
+
+  The task's meaning remains the same for a terminal and a nonterminal caller.
+  A local operation failure returns to the responsible activity; a valid supplier
+  or final rejection follows the existing Direction route; an unanswered guide
+  decision remains pending; cancellation preserves acknowledged work. The SDK
+  does not translate these domain outcomes into exit codes or hide them in
+  human-readable strings. A gateway can map them to its own transport while
+  preserving their actual semantics and evidence.
+
+  Keep user goal text and logical identity intact. A gateway may reject an
+  invalid empty argument according to its contract, but should not silently
+  rewrite a valid submitted goal to normalize its digest or make a retry look
+  fresh. The same retained task can reuse its issue, branch, answers, checkpoints
+  and PR. A new provider activation or missing local worktree is not a new SDK
+  goal. The host's normal identity and reconciliation path supplies continuity.
+
+  Parent and child sessions belong to the trusted application lifecycle. Architect
+  prerequisites and refinement phases share the existing project writer through
+  normal sequential sessions. Commands must not create a competing root admission
+  for a child or invent a second queue to hide that mistake. Exposing a structured
+  method does not grant a caller authority to forge a parent, approval receipt or
+  captured capability. Enforcement remains at the responsible host boundary.
+
+  ## Goal planning preserves the source of intent
+
+  Goal planning accepts a project directory and an optional explicit human
+  objective. Without that objective, it requests exploration of captured project
+  direction, goals, implementation and observations. With an objective, it preserves
+  the exact human submission and supports resumable clarification and proposed
+  goal changes. The SDK must preserve this distinction instead of turning an
+  internal descriptive string into a fabricated human objective.
+
+  An orchestration phase may need a stable task description such as assessing
+  the current inventory, but that description is not a new human submission.
+  Passing it in objective mode can create an unnecessary objective record and
+  make later rounds reuse the record instead of performing the required fresh
+  assessment. The calling service must select the intended planning mode from
+  actual input semantics. A fake Planner that always returns no change cannot
+  prove this behavior; public integration should observe the real Planner mode.
+
+  Planner owns goal and objective interpretation. Commands does not assign
+  component owners in goal records, merge ratings, invent approval or suppress
+  unresolved mappings. It returns the domain assessment and progress. Approved
+  record changes use the normal checked-edit, independent assessment and delivery
+  path. A justified no-change assessment can complete without a source merge,
+  while a pending exact proposal remains unfinished and resumable.
+
+  Complete human questions and answers flow through the same observer interface.
+  The CLI decides how to collect multiline input; a future application can present
+  another interaction. Commands does not use terminal reads, period-line parsing
+  or stdout prompts. An unavailable answer remains unavailable to the domain
+  service. No elapsed time, default selection or transport disconnect supplies
+  approval on the human's behalf.
+
+  ## Standing rounds and continuous refinement
+
+  A standing round evaluates the captured approved inventory in priority order
+  through the same task path. Each goal receives Direction assessment even when
+  its measures already pass. A Director may identify a coverage gap or a useful
+  implementation improvement beyond those measures. Commands returns per-goal
+  observations and the actual round outcome without treating a passing check as
+  permission to skip that analysis.
+
+  Continuous refinement composes Plan, Architect and all captured approved goals
+  for the requested positive round count. Workflow owns the sequence, retained
+  positions and child sessions. The SDK forwards structured phase, approval,
+  repair, goal and completion observations. It does not implement a loop that
+  calls itself repeatedly, creates another state database or relies on terminal
+  process restarts to advance phases.
+
+  Resumption preserves the exact unfinished invocation, proposal and first
+  unfinished position. Completed phases and goal outcomes remain completed, and
+  the captured Run inventory remains stable across interruption. A new round
+  can use newly accepted direction. Changing the requested total while an
+  invocation remains unfinished must not silently reinterpret its retained work.
+  These semantics belong to the application contract and must match across callers.
+
+  A completed invocation permits a fresh later invocation. No-change assessments
+  are valid, and real approved guide refinement and useful implementation establish
+  the value of repeated development. The SDK should report what happened rather
+  than equating the requested count with a successful streak. Qualification is
+  an observed acceptance measure, not a value a command adapter can declare from
+  its own invocation arguments.
+
+  ## Architecture assessment and prerequisite delivery
+
+  Architecture update accepts optional feedback. Feedback focuses assessment of
+  accepted direction, current architecture and implementation and relevant prior
+  findings; its absence requests general alignment. The Architecture Agent returns
+  no change or an exact reviewable proposal through the normal application service.
+  Commands preserves that domain distinction and does not treat feedback itself
+  as approval of whatever changes the model later proposes.
+
+  Approved architecture that requires code is delivered inside Architect through
+  the ordinary Director/steward, independent verification and staging lifecycle.
+  The following Run phase captures the accepted result. Commands should delegate
+  to that lifecycle rather than expose a privileged shortcut that writes guides
+  or activates unavailable handlers. A candidate-side approval flag cannot
+  replace the host-held receipt for exact reviewed bytes and baseline.
+
+  Approved model adoption can update subsequent activities at a validated safe
+  boundary. The SDK forwards its actual observation and preserves historical
+  identities. It must not cache an obsolete catalog for the entire foreground
+  invocation or force every caller to manually rebuild context after an update.
+  Architecture and Execution own coherent resolution and enforcement, while
+  Workflow owns the phase and activity position.
+
+  Architecture proposals and objectives/goals retain human approval. Ordinary
+  implementation correction, local check repair and authorized staging integration
+  do not add a gate. A real unavailable external prerequisite remains a named
+  domain hold. The SDK should convey the exact missing decision or capability
+  without inventing an approval ceremony or hiding the reason inside a generic
+  failed response.
+
+  ## One complete observation stream
+
+  The observer carries ordered persisted host and provider events, messages,
+  tool calls and results, evidence references and available measurements while
+  work proceeds. Commands forwards the same stream a terminal and nonterminal
+  caller can follow. It should not collect everything until completion merely
+  to return a final summary, drop unknown provider detail or create another
+  event store beside the journal and existing artifacts.
+
+  Source and correlation identities make the stream meaningful. An activation,
+  mapped MCP call, checked edit, checkpoint, check, answer and publication can
+  be related through their actual observations. Complete raw content stays
+  readable in the responsible artifact, while canonical timeline records avoid
+  recursively embedding the results of reading themselves. The gateway can
+  render or transport those observations without redefining their meaning.
+
+  Human and JSONL CLI modes are adapter choices. JSONL stdout contains typed
+  event and terminal records; a human renderer can show the same actor and
+  activity in readable form. Inspection JSON remains a single read-only result.
+  Commands has no general JSON flag, exit-code policy or direct terminal output.
+  Adding those conventions to the SDK would couple future gateways to today's
+  CLI instead of keeping the application reusable.
+
+  Measurements preserve actual profile alias, provider model/settings and reported
+  usage. Input and cached-input fields are not independent billable totals to
+  sum blindly, and missing usage is unknown. Wall time differs from inclusive
+  nested durations. Monetary estimates need a verified billing basis. The SDK
+  forwards those observations; it cannot infer permission to change a profile,
+  impose a work budget or trim useful context because a run appears expensive.
+
+  ## Cancellation and interrupted interaction
+
+  The caller supplies an AbortSignal that follows the shared lifecycle to the
+  provider and managed operations. Cancellation retains acknowledged edits,
+  answers, evidence and position, stops managed descendants and records the
+  actual outcome. Commands must not catch that result and report success merely
+  because a provider emitted completed prose earlier. The gateway maps the
+  typed result to its own cancellation convention.
+
+  A caller can also be unavailable to answer a high-level question. The
+  application retains the exact pending proposal and reports its durable
+  position rather than assuming approval. A later invocation can resume through
+  the same SDK. Different interactive surfaces must preserve the complete
+  answer, including meaningful whitespace, and its human source. An automatic
+  default or a machine client's absence cannot count as a decision.
+
+  Interruption during publication requires observation of the existing remote
+  effect before replay. Delivery and Collaboration own that reconciliation;
+  Commands should preserve the task outcome and evidence without creating
+  another PR or changing the goal to escape ambiguity. A retry with the same
+  logical input uses retained state. A gateway-specific retry loop that repeats
+  effects blindly would undermine the shared reliability model.
+
+  Transport errors and domain failures also have different meaning. A disconnected
+  terminal or client does not prove that a push failed, and a callback exception
+  does not make a candidate accepted. Preserve the acknowledged observations and
+  let the existing lifecycle record the actual result and cleanup. Do not add
+  timeouts, arbitrary replay counts or an alternate recovery service inside the
+  SDK to mask an adapter's incorrect handling.
+
+  ## Distinguish application gateways from Agent tools
+
+  The planned external MCP gateway and local activity-scoped MCP tools serve
+  different consumers. Commands is an application SDK that can support an
+  authorized gateway submitting a task. The local tools exposed to an Agent
+  are its captured project operations, enforced by Execution. An Agent cannot
+  invoke a full task or privileged host action merely because the application
+  has an SDK method with that name.
+
+  Similarly, an OpenAPI-compatible adapter can translate application requests
+  and outcomes when implemented, but it must not move ownership, approval or
+  execution policy into HTTP-specific handlers. Authentication and transport
+  interaction belong to that app's accepted boundary; actual source and effect
+  authority remain with the existing services. Avoid building those future
+  gateways prematurely as a prerequisite to the working CLI.
+
+  Tests can substitute controlled services at the public composition seam to
+  verify direct delegation and observation forwarding. That is not a separate
+  simulation lifecycle and cannot establish live provider behavior. Use the
+  same application path with explicit collaborators, then exercise the built
+  CLI and actual production composition for claims about default wiring. Keep
+  the distinction clear in test names and reports.
+
+  ## Engineering the SDK with the least necessary code
+
+  Commands should remain a small coherent plugin that exposes real application
+  responsibilities. Reuse public input, event and result types, preserve signal
+  and observer identity and avoid local mutable task state. A thin delegation
+  can be the complete correct implementation. Adding a class, wrapper or
+  abstraction with no lifecycle responsibility merely to make the file look
+  more elaborate would conflict with the project's simplification goal.
+
+  The component steward's documentation explains structured callers and transport
+  boundaries. Tests observe exact inputs, selected modes, progress, complete
+  questions and results through the public SDK. Implementation changes the
+  minimum delegation necessary for an accepted capability. Self-review checks
+  that no terminal parsing, source mutation, approval decision or sequencing
+  policy leaked into this boundary. Final task acceptance still belongs to
+  Verification and its independent Reviewer.
+
+  Preserve strict readable TypeScript and explicit public imports. A fixture
+  should implement the actual service interface and response shape, not a
+  loosely cast object that makes every method succeed. Source-backed instructions
+  and larger purposes must remain intact through inspection delegation. A test
+  that only asserts a method was called cannot establish the complete
+  observer, cancellation or approval behavior promised to nonterminal callers.
+
+  ## Public scenarios and measures
+
+  Consider a headless caller that invokes inspection and then submits a task
+  without any terminal handles. It should receive the exact prepared view,
+  ordered observations and typed outcome through the same services the CLI
+  uses. An absent answer yields a retained pending decision rather than a
+  hidden read from stdin. This scenario proves the SDK boundary instead of
+  testing only a command-line subprocess that happens to accept JSON flags.
+
+  Consider refinement planning after a previous round. The caller must request
+  exploration when there is no new human objective, so real Planner behavior
+  assesses the inventory again. An internal task description must not be
+  persisted as a synthetic human submission that suppresses later assessment.
+  Observe this through the real planning service or a fixture that verifies
+  its actual mode and retained record semantics, not an unconditional no-change
+  stub.
+
+  Consider a local ownership refusal followed by a corrected owned edit.
+  The application stream should expose both observations and preserve the
+  earlier successful receipts. Commands does not turn the refusal into a new
+  task or suppress it to make human output appear clean. The final typed
+  result and artifact references let both a CLI user and another gateway
+  follow the same repair without different orchestration logic.
+
+  Consider a nonterminal client resuming an exact pending architecture proposal.
+  The SDK returns the same retained decision and continues the same phase
+  after a valid answer, with completed earlier work preserved. A new network
+  request is not automatically a fresh refinement invocation. The host's
+  identity, writer and external-effect reconciliation provide that continuity
+  across adapters without additional command-local state.
+
+  Commands succeeds when all gateways can use the same application semantics
+  and the code remains a clear short path to their owning services. Measure
+  input/result parity, complete observation forwarding, cancellation and
+  question fidelity, accidental terminal coupling and duplicated lifecycle
+  state. Improvements should reduce work and ambiguity for real consumers,
+  not create another framework between the caller and the existing plugins.
+
+  ## Keep validation and composition responsibilities clear
+
+  An adapter validates its own argument grammar before admission, while the
+  application services validate domain inputs and project conditions. Bare
+  standing-round execution and an explicitly supplied empty goal are different
+  requests. Unknown components and missing activities are inspection errors.
+  A dirty project or missing required binding is an admission finding. Preserve
+  those exact meanings instead of reducing every refusal to a terminal usage
+  string or creating state before discovering an input could not be accepted.
+
+  Structured callers should not obtain profile or permission overrides merely
+  because a transport can encode extra fields. The selected activity resolves
+  its approved execution settings and tool grants through Architecture. A
+  caller supplies intent and actual allowed application inputs, not arbitrary
+  executable composition or a model-authored approval boolean. The responsible
+  host validates the retained human decision and captured authority where an
+  effect requires them.
+
+  Public types should follow the actual owning service where appropriate.
+  Duplicating a hand-maintained Workflow result union in Commands can make a
+  new durable pending outcome disappear from one gateway's view. A direct
+  type relationship preserves the domain contract while leaving terminal exit
+  mapping local to the app. Prefer that reuse to conversion wrappers that
+  rename fields without serving a real transport requirement.
+
+  Cordis composition supplies the trusted Agent and Workflow services. Missing
+  required injection should be an understandable startup or availability
+  finding, not a reason to instantiate another private lifecycle inside
+  Commands. Tests can replace those services explicitly at the public seam,
+  and production composition must resolve the intended implementations. Do
+  not infer that a successful isolated delegation fake proves the default
+  application mounted the real plugin graph correctly.
+
+  Observation forwarding includes complete questions, evidence identities and
+  the caller's cancellation relationship. Copying only message text can lose
+  the proposal or artifact needed to resume. Returning a simplified final
+  summary can hide a durable hold or partial goal round. Keep the typed domain
+  result intact and let a renderer decide how to present it without changing
+  what happened or suppressing the underlying complete records.
+
+  When the interface evolves for a demonstrated new application capability,
+  update its public documentation and relevant caller scenarios together.
+  Preserve existing standalone operations and remove superseded adapter
+  logic when the canonical path replaces it. The measure is a usable shared
+  SDK with less duplicate policy, not a catalog of speculative commands that
+  have declarations but no working lifecycle behind them.
+  An unavailable method or required handler must remain an explicit capability
+  gap. Do not return a simulated successful result or route the request through
+  a second ad hoc loop to make the surface look complete. Deliver the responsible
+  Workflow capability through its accepted boundary, then expose the same real
+  operation to every caller and retain the resulting integration evidence.
 objectives:
-- measure: The CLI and an in-process consumer use the same structured operations.
+  - measure: The CLI and an in-process consumer use the same structured operations.
 constraints:
-- failure: An SDK consumer must supply terminal arguments or use a second task lifecycle.
+  - failure: An SDK consumer must supply terminal arguments or use a second task
+      lifecycle.
 owns:
-- packages/commands
-- .arc/research/commands
+  - packages/commands
+  - .arc/research/commands
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
-    - Identify the structured input and outcome required by the current app adapter.
+      - |
+        Trace the shared application call relevant to the assignment, starting at the Commands contract and actual in-process consumer. Identify the request, observer, question callback, cancellation signal and typed outcome that a gateway needs. Distinguish reusable application semantics from parsing, terminal formatting and Workflow's execution lifecycle. The research question should name a real ambiguity rather than assume that an HTTP, MCP or SDK framework is required.
+
+        Read existing tests and component reports before requesting external information. For an integration claim, identify the public producer and consumer and the actual data passed between them; a private helper signature is not the SDK contract. Compare how inspection, task execution, planning, architecture assessment and refinement use the same project services without hardcoding the CLI.
+
+        Return the complete answer and relevant source paths through the research response. Local reads do not authorize invocation, task admission, provider effects or code changes. Recommend the smallest public-boundary regression that would settle the uncertain behavior, and identify any missing downstream capability without designing an alternate orchestrator inside Commands.
     operations:
-    - read-file
-    - list-files
-    standards: []
+      - read-file
+      - list-files
+    standards: [agent-operating-protocol]
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
-    - Specify the shared operations and structured results in the SDK contract.
+      - |
+        Describe the transport-neutral SDK behavior for the accepted outcome: arguments, validation before admission, structured observations, asynchronous questions, cancellation and terminal result. Use actual exported types and public methods rather than a CLI command string as the interface. Explain which plugin performs the lifecycle so future gateways can reuse the same application behavior without translating a terminal transcript.
+
+        For inspect, document the selected component/activity and the same complete request builder used by activation. For long operations, explain the observer sequence and result identities, including pending decisions and resumable holds. A no-change assessment is a legitimate typed outcome when supported by analysis; it is not a fabricated staging merge. Do not prescribe stdout, JSONL punctuation, exit codes or terminal approval input in the SDK.
+
+        Keep workflow routing and durable state rules at their canonical owners, linking the relevant contracts. Document any new application capability before implementation and preserve the distinction between an approved declaration and an installed handler. An SDK method that throws unavailable cannot be advertised as production end-to-end support merely because the CLI parser recognizes its name.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    standards: []
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+    standards: [agent-operating-protocol]
   testing:
     role: designer
     profile: gpt-terra
     instructions:
-    - Exercise inspection, task outcomes and cancellation through the in-process SDK.
+      - |
+        Write class-based scenarios against the public Commands service with explicit application dependencies. Exercise an in-process caller without a terminal so the test would fail if parsing, stdout or process exit leaked into the SDK. Assert actual structured inputs delivered to the responsible plugin, ordered observer records, complete question/answer forwarding, cancellation and the terminal outcome.
+
+        For request inspection, compare complete input and invocation options from the shared builder instead of matching a few prompt words. For task, planning, architecture and refinement, include success, durable pending decision, named unavailable prerequisite and downstream diagnostic. Preserve identities on resumption; do not let the SDK reconstruct a second goal or approval record while formatting a result.
+
+        Use injected services to isolate command dispatch, then identify assembled proof needed for the real plugin composition. Mocking Workflow completion cannot prove Workflow execution. Keep fixtures faithful to current public types and avoid importing another owner's private test utilities. Establish the behavioral red for the new SDK obligation and run applicable formatting, lint, type and build operations; an absent owner suite does not justify skipping the other declared checks.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
   implementation:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-    - Delegate to the canonical Agent and task services through transport-neutral operations.
+      - |
+        Expose the accepted application behavior through the existing Commands public service and trusted dependency injection. Normalize transport-independent inputs once, delegate lifecycle work to the responsible plugin, and return its typed observations and result without a parallel state machine. Preserve the same service for the CLI and future MCP or OpenAPI gateways. Do not introduce terminal parsing, process-wide output, Git commands or provider credentials in this package.
+
+        Use the shared Agent/Architecture builder for inspect and pass the selected component/activity explicitly. Forward complete questions and answers, the cancellation signal, observer events and failure diagnostics. Durable phase, task and approval identity belongs to Coordination through Workflow; Commands must not create its own cursor or approval interpretation. Do not turn a missing result into a success or a downstream pending state into an immediate retry loop.
+
+        Correct local adapter types and tests in the same activity using the mapped checks. If the downstream service lacks an agreed capability, request that owner's concrete contribution instead of implementing it privately or exposing a fake method. Remove superseded command paths when replacing them so all gateways enter one application lifecycle.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
   review:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-    - Check that adapters can use the SDK without terminal input, argv or exit-code semantics.
+      - |
+        Review the public call graph from an in-process Commands client to each responsible plugin. Verify that the SDK remains usable without stdin, stdout, process exit or a CLI parser, and that the real app composition installs the same handlers used by the tests. An exported type or mocked callback alone does not establish an available capability.
+
+        Compare the complete inspect request, observation order, question delivery, cancellation and terminal result against the public contracts. Look for stripped diagnostics, duplicate admission, invented no-change evidence, a second approval store or a hidden task loop in command dispatch. Pending work must retain its identity through the actual lifecycle rather than through a gateway-specific retry.
+
+        Route a local SDK or fixture defect to the appropriate available earlier activity, retaining the exact finding. Escalate only a genuinely missing contribution or changed architectural scope. This self-review cannot accept an assembled candidate, edit another plugin or launch a live task. State which public behavior the evidence proves and what remains for assembled or native verification.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - request-supplier
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - request-supplier
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol

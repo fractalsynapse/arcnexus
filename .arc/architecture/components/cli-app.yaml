@@ -1,98 +1,229 @@
 id: cli-app
 kind: app
-purpose: Compose trusted Cordis plugins and expose the terminal interface.
+purpose: |
+  The CLI app is ArcNexus's terminal gateway and trusted composition root. It makes the platform usable from a project's working directory while preserving the same application capabilities available to an in-process SDK consumer. A human can inspect an agent's complete prepared context, submit an engineering goal, assess a standing inventory of goals, plan direction, request an architecture assessment, or start the approved sequential refinement lifecycle. The app turns those terminal intentions into structured requests and turns the resulting observations and outcomes back into readable output. Its reason for existence is access and visibility: the platform must be understandable and operable without requiring a human to reproduce its internal plugin wiring.
+
+  The conceptual entities remain agents and teams. The terminal is a way to interact with those entities, not a separate implementation of their behavior. Director, component stewards and independent Reviewer use the same Agent boundary and selected activity mappings regardless of how a request entered the system. The app composes trusted Cordis plugins and exposes the Commands SDK. It does not become a second scheduler, model provider, approval database, planning service or GitHub delivery engine. Keeping this boundary thin matters because later MCP and OpenAPI gateways should be able to reuse the lifecycle rather than copy a parser-dependent workflow.
+
+  Public contract and user intent
+
+  The CLI contract in apps/cli/contract.md defines the observable terminal behavior. The component specification describes how the app is stewarded within that contract. Command spelling, positional arguments, accepted options, error behavior, live progress, questions, signals and exit status belong here because they change together from the terminal user's perspective. The implementation must distinguish an input error from an admitted operation that later encounters a recoverable failure or named hold. A malformed command cannot quietly begin a task and then report that it merely failed validation.
+
+  Project resolution follows the working directory through the supported project-discovery path, including invocation from a nested directory. The app passes the resolved project into the shared application service rather than relying on a fixed repository name, home directory or ArcNexus-specific architecture. During self-development this repository's guidance applies normally, but the generic product must also operate against explicit other projects with their own guides. Tests therefore construct deliberate temporary projects rather than importing whatever happens to be present in the developer's checkout.
+
+  Inspection requires both component and activity. The user should be able to address an explicitly declared component and also inspect the captured Director and Reviewer bindings through their supported selectors. A missing argument, extra argument, unknown component or unavailable activity is a local input error with no model call, worktree, task admission or upstream effect. An actor alias is convenience for a real captured binding; it does not create an undeclared activity. This prevents an apparently helpful parser default from hiding which agent operation will actually run.
+
+  The value of inspect is exact visibility into activation. The rendered default shows the invocation options and named placeholders, followed by the complete multiline request input in its production assembly order. The JSON form returns the same request, not a compact substitute with different instruction selection. Source labels reveal purpose, selected activity, role, standards, accepted task context and observation boundaries. Before task admission, the goal appears as the explicit placeholder <goal> and other genuinely unavailable values remain named placeholders. The app must never invent a plausible task, evidence record or permission just to make the preview look complete.
+
+  One request representation
+
+  The shared request builder supplies the single request.input string accepted for this version. The CLI prints that string without modifying its wording, truncating long guidance, hiding standards or replacing complete source sections with summaries. It may add the documented header around it, but it cannot make a second prompt template whose behavior diverges from activation. Detailed purpose and activity instructions are useful only if the same instructions reach the real agent. A beautiful preview of a different prompt would mislead the user at exactly the seam inspect is meant to expose.
+
+  Codex discovers applicable AGENTS.md files and skills through its ordinary activation environment. The app does not select and paste every skill into inspect, add a provider instruction-channel migration, or claim that a source label changes provider priority. If a later approved capability needs a different provider representation, its contract and parity evidence must change deliberately. The current rewrite of agent instructions uses existing YAML, roles and standards and preserves this transport. Inspection remains read-only even when its complete output is large.
+
+  The general --json option changes terminal representation, not the underlying application decision. Its allowed placement and duplicate-option refusal are defined by the CLI contract. Inspect prints one structured object. Long-running commands print ordered typed observations as JSONL and then a terminal result. Human mode renders those same observations for a person following the run. Both modes use the same arguments, diagnostics and outcome meanings; there is no separate JSON execution strategy that bypasses questions or suppresses failures.
+
+  Live operation and observation
+
+  The terminal must show work while it happens. A task can spend meaningful time in planning, a steward activity, a check, research, independent assessment or publication. Users need the acting component and activity, the current operation, messages and results, evidence references and measured effort to understand whether the platform is progressing. Buffering all progress until the final outcome would obscure the very inefficiencies the refinement loop is supposed to discover. The app therefore forwards the application's actual observer stream rather than synthesizing periodic reassuring messages.
+
+  Human output can organize a record for readability, but complete artifacts remain available as emitted content or authorized references. JSONL stdout cannot contain decorative prose, terminal escape fragments, untyped progress or unrelated diagnostics. Stderr remains available for terminal diagnostics without corrupting the machine-readable stream. A terminal renderer must preserve ordering and identity, so a tool result is attributable to the operation and activity that produced it. If a connection or output path fails, the app must report the observed condition rather than claim a clean completed transcript.
+
+  Timing and token information is observational, not a budget. Overall and execution-profile views distinguish elapsed time, available usage, unknown usage and the basis of a cost estimate. A profile with unknown pricing cannot be assigned a fabricated zero cost. The terminal should help a human identify repeated expensive Direction invocations, ineffective local repairs or a slow operation without introducing a new numerical cap. Optimization belongs in better instructions, operations and lifecycle behavior under the approved architecture.
+
+  The app is not the authoritative event store. Coordination retains durable identities and positions, Execution captures provider artifacts, and Workflow owns the sequential lifecycle. The terminal reads their structured observations and can point to their complete evidence. It must not keep a separate mutable story that declares a phase complete before its durable record exists. A successful line printed to stdout cannot become the only proof that an edit, answer, child task or merge occurred.
+
+  Questions and approval
+
+  An application question is a structured interaction, not an invitation for the parser to guess the user's intent. The CLI must deliver the complete prompt, collect the supported answer form, and return the complete answer to the application. Multiline input, explicit termination, EOF and interruption need deliberate handling. A temporary loss of the foreground process cannot erase an already recorded answer or cause a clarified objective to be asked again as if the user had never responded.
+
+  Human approval concerns objectives, goals and architecture. The app presents the exact retained proposal and its relevant baseline through the application's decision interface. An affirmative answer applies only to that proposal; it is not permission for changed bytes, a different baseline or unrelated future modifications. Silence, an unknown answer and elapsed time provide no approval. Noninteractive execution must report the durable pending decision, not auto-accept it or invent a default response so a batch can finish.
+
+  Ordinary implementation, local tool correction, check execution, milestone sequencing and authorized staging delivery do not acquire a new human gate merely because they are visible at the terminal. The app must distinguish a guide decision from an unavailable external prerequisite such as missing credentials or a provider state that cannot presently be resolved. The latter is a named hold with an actionable reason, not a request to approve bypassing the failed requirement. This keeps high-level human guidance meaningful without turning every engineering correction into a conversation.
+
+  A user can cancel through the foreground signal path. The app passes cooperative cancellation through the same SDK invocation and reports the cancellation outcome according to the contract. Execution retains acknowledged edits, branch and evidence, then removes its worktree through normal cleanup. The CLI must not kill arbitrary unrelated processes, delete retained state or turn a cancelled task into success because a checkpoint exists. A later invocation resumes through the application's reconciliation path.
+
+  Commands and lifecycle ownership
+
+  The app delegates transport-neutral behavior to Commands. Commands in turn uses the responsible plugins rather than interpreting terminal strings inside Workflow. Task run with an explicit goal enters the normal task service. Bare task run captures the approved goal inventory and assesses it sequentially in priority order. A passing existing measure does not authorize the gateway to skip the Director. The returned outcome must say whether a goal was assessed without change or delivered through verified staging integration.
+
+  Task plan with an objective preserves that human submission and supports clarification. Bare task plan explores existing direction and implementation without synthesizing a human objective from an internal description. Architecture update assesses accepted direction and previous findings, returns a justified no-change assessment or retains an exact proposed architecture batch, and delivers approved prerequisites before Run. Refine composes Plan, Architect and every captured approved goal under Workflow's durable sequential lifecycle. The app exposes these capabilities without privately reconstructing them.
+
+  The rounds option is an explicit user-selected extent for a refinement invocation, not an agent-side retry budget or content restriction. It follows the accepted positive-integer contract, including the default and refusal of changed totals while an invocation is unfinished. The CLI must not add a second counter that loses phase position on restart. Standalone commands continue to use the same application capabilities; refinement is not a separate implementation of planning or tasks.
+
+  A later invocation can encounter an interrupted task, pending approval, completed child or uncertain publication. The app asks the same lifecycle to resume. It does not hash a slightly altered display string, create a new issue because the previous command exited nonzero, or derive completion from the current filesystem alone. Reconciliation must preserve issue, branch, PR, answer and checkpoint identities. Worktrees may have been removed and reconstructed; their absence is not evidence that the engineering work never happened.
+
+  Characteristic risks and verification
+
+  Argument parsing is easy to underestimate. An extra positional argument, duplicated general option, whitespace-only explicit goal or reserved command can otherwise create ambiguous behavior. Public scenarios should establish refusal before admission, with stderr diagnostics and empty stdout where required. Parser tests should use actual accepted command forms, not only a helper called with already normalized arguments. A future gateway should not inherit these terminal-specific concerns through the Commands SDK.
+
+  Output correctness needs more than a snapshot of a final string. A streaming test supplies distinct observations and proves they are delivered before the terminal result in order. A JSONL test parses every line and checks that human diagnostics never leak into stdout. Request parity compares complete input bytes and options rather than matching a few words. Unknown usage remains unknown. A renderer that passes these focused cases can still require assembled proof that the production composition actually subscribes to the observer.
+
+  Signals, stdin and subprocess behavior require real process-level evidence when they are the claim. A mocked event emitter does not establish that SIGINT reaches the child, that stdout flushes, that the executable is built, or that an EOF leaves a durable pending decision. The fixture should identify Node version, actual entry point, temporary project, environment and expected exit. Failures due to missing compiled output or malformed fixtures are setup feedback to repair, not valid behavioral regressions or proof of a platform limitation.
+
+  Composition tests should verify the trusted Cordis graph and public interfaces. Fixture providers are deliberately isolated from live credentials and upstream effects. A controlled service returning a merge outcome proves terminal rendering, not a real GitHub delivery. Native provider observations, Production CI and live end-to-end qualification remain separate evidence categories. The CLI must preserve that distinction in both its output and its own steward's completion report.
+
+  Stewardship and repair
+
+  This component owns apps/cli and its declared research space. It changes app composition, parsing, terminal rendering and transport tests together. It imports other plugins through their public modules and requests a concrete contribution when a required SDK or workflow capability is missing. A general read capability does not authorize editing those plugins' private files. A supplier reply does not transfer ownership, and an interface mismatch should not be hidden by a CLI-only fallback implementation.
+
+  The selected activity procedures explain how this steward researches, documents, tests, implements and self-reviews. Shared role instructions and the Agent operating protocol carry common method once. Activity declarations and host policy determine actual operations; prose cannot grant a shell, check or provider effect. During engineering, a failed mapped operation returns its exact diagnostic to this same caller. A self-review finding rewinds to an applicable earlier local activity that can change the outcome, with affected downstream verification refreshed.
+
+  If an earlier Testing step is unavailable, Implementation can still repair its owned tests and fixtures in place. It must not request an impossible self-rewind or invent another milestone merely to edit a test file. Genuine cross-owner or changed-scope work escalates explicitly to Direction. Final independent rejection is a different boundary from this steward's own review. These distinctions reduce expensive replanning while keeping original acceptance and component ownership intact.
+
+  Evolution and success
+
+  A useful CLI increment makes the platform easier to operate, inspect and diagnose while reducing duplicated application logic. Success is visible when the same SDK request yields consistent human and machine output, questions retain complete answers, cancellation preserves progress, and a restart reaches the retained lifecycle rather than a new task. Time and profile usage help identify friction, but a longer transcript or more terminal options are not progress by themselves.
+
+  Future gateways can reuse Commands without copying the app. Future terminal capabilities should be added only for accepted user outcomes and tested against their actual effects. The app should not become a studio, scheduler or release engine merely because those features are convenient to expose as verbs. Keep one command path, remove superseded dispatch and rendering when replacing it, and preserve accurate availability reporting.
+
+  Lessons from actual runs belong in learning and external evidence storage. They can inform better parser tests, activity instructions or architecture proposals, but they cannot silently grant permission or change acceptance. During the requested instruction rewrite, the proposed component specification remains a review artifact until the human reviews it; no new live task is started merely to demonstrate that text was edited. The ultimate measure remains a trustworthy terminal window into useful agent work, from the first goal submission through honest staging outcome and durable resumption.
+
+  Representative terminal journeys
+
+  Consider a user who first inspects direction planning, then starts a real task from a nested package directory. Inspection must succeed without acquiring the project task lane, opening a provider session or creating application state. Its placeholders must make clear which values do not exist yet. Starting the task resolves the same project and uses the same selected Director request construction with actual task values. Comparing these two views should expose only the declared runtime differences, not a different activity or hidden prompt assembled by the gateway.
+
+  Now consider a script using JSONL output while a steward asks a clarification. The script receives the same structured question and retained decision identity as human mode. If the environment cannot supply an interactive answer, the operation reports its durable pending state and exits according to the contract. Rerunning does not manufacture approval, lose the question or create a new issue. A human can later answer the retained question through the supported path and the application resumes the same work.
+
+  An invalid command is a different journey. A user types inspect with only a component, duplicates --json or supplies an extra task positional. The parser must reject it before calling the application service. A good regression asserts no admission, model activation, filesystem effect or provider access in addition to the diagnostic and exit status. Testing only the returned error string would miss a parser that already started a task before discovering the invalid suffix.
+
+  Streaming should also be tested under slow and interrupted output conditions relevant to the actual implementation. Supply an observation, confirm it is visible, then provide another and finally the result. Distinct activity and operation identities prevent an accidentally repeated first record from satisfying the assertion. The test should not infer liveness from a final buffer containing all records. Where operating-system pipes and flush behavior matter, the built entry point is the appropriate boundary.
+
+  A cancellation journey begins after an edit has been acknowledged. The terminal reports the signal through the application and waits for its normal preservation and cleanup outcome. The next invocation must reuse the recorded edit and answer rather than ask the user to reconstruct them from terminal scrollback. The app's role is to show that retained state and pass the new invocation to the canonical lifecycle, not to inspect arbitrary Git directories and improvise a resume algorithm.
+
+  A no-change journey is equally important. Planner or Architect can justify that accepted guidance needs no modification, and a Director can assess a goal whose measures already hold. The terminal should show the assessment and its basis without inventing a staged commit. A refinement round still runs the required phases and assessments; the CLI does not short-circuit them because it recognizes a familiar goal file or sees an old successful test. This makes repeated use analytical rather than ceremonial.
+
+  A publication hold tests output honesty. The application may have completed all engineering and independent review while GitHub checks are still pending. The user should see that exact state, the retained PR and what remains. A retry that discovers the PR already merged should display the actual merge identity. Neither state should be reduced to a generic failure message that encourages the user to submit a different goal, nor to success before the gate is satisfied.
+
+  An instruction-authoring change has its own journey. A user reviewing longer purposes needs to find the actual YAML field, inspect the complete resolved input and distinguish shared role/standard text from activity-specific paragraphs. The app must not hide the detailed content behind a summary merely because it grew. Measured request sizes can help compare effects, but the terminal adds no content ceiling. This is visibility for deliberate human judgment, not another automatic approval criterion.
+
+  Keeping these journeys in one gateway implementation makes future evolution manageable. Public input tests, real subprocess cases and assembled composition checks each establish a different seam. Reuse those fixtures where their assumptions remain valid and refresh the evidence affected by a change. Avoid a special command implementation for a test or a compatibility parser that accepts undocumented forms indefinitely. The simplest useful terminal is one whose behavior can be traced directly from user input through Commands to the real recorded outcome.
+
+  The app's steward should use these journeys as reasoning aids rather than a mandatory universal test list for every edit. Choose the scenario that distinguishes the accepted change, keep source and runtime identities explicit and report the observed scope. A spelling correction does not require a live task, and a signal-handling change cannot be proved by a document link. This proportionality supports velocity while preserving the user's ability to trust what the terminal says.
+
+  Operation parameters should be visible through the selected request rather than invented by terminal parsing. If a testing activity chooses declared tags or other typed values, inspect should show the resolved binding and its source. The CLI does not accept a raw command string to bypass those declarations. A future transport can supply an application-level parameter only when the shared SDK and accepted architecture support it; a terminal flag is not an independent permission mechanism.
+
+  When reviewing an output change, inspect both ordinary human reading and machine parsing. Long instructions should remain selectable and readable, explicit source boundaries should survive rendering, and an evidence reference should point to the actual retained artifact. A user should not need to remember an earlier collapsed progress message to understand the final outcome. The terminal result and final report need enough identity to stand alone while leaving complete transcripts in their proper storage.
+
+  The gateway also needs to expose genuine unavailability. Recognizing a verb does not mean its composed handler exists; report the actual unavailable capability instead of displaying a simulated success. A public availability test should exercise the production composition, not just the parser's accepted vocabulary.
 objectives:
-- measure: The built CLI preserves SDK outcomes and the documented operator interface.
+  - measure: The built CLI preserves SDK outcomes and the documented operator interface.
 constraints:
-- failure: The CLI owns task policy or creates a second execution path.
+  - failure: The CLI owns task policy or creates a second execution path.
 owns:
-- apps/cli
-- .arc/research/cli-app
+  - apps/cli
+  - .arc/research/cli-app
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
-    - Trace the operator interaction through the CLI into the shared Commands SDK.
+      - |
+        Investigate the CLI adapter only where the current assignment exposes an uncertain terminal or composition behavior. Read the CLI contract and the actual parser, renderer, question adapter and entry-point tests before consulting external material. Trace how a terminal argument becomes a Commands request and how one observer record becomes human output or JSONL. Establish which behavior belongs to this gateway and which belongs to Commands or Workflow; research must not become a reason to move the lifecycle into the app.
+
+        For a platform-dependent uncertainty, describe the actual Node version, terminal conditions, signal sequence or redirected-stream configuration that matters. Distinguish a documented API guarantee from an observed subprocess result. Read existing component reports and return the complete findings, sources, applicability and unresolved questions through the supplied research response. Research itself is read-only. Do not attempt a live task, provider publication, shell operation or alternate gateway under this activity's local read capabilities. Recommend a focused subprocess scenario when it would settle a claim that a parser unit test cannot.
     operations:
-    - read-file
-    - list-files
-    standards: []
+      - read-file
+      - list-files
+    standards: [agent-operating-protocol]
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
-    - Describe argument, terminal display and exit behavior in the CLI contract.
+      - |
+        Document the user-visible terminal behavior before changing its implementation. Start from the locked CLI contract and the selected milestone, preserving the distinction between delivered commands and approved but unfinished surfaces. Show the exact positional arguments, allowed general --json placements, stdout/stderr behavior, exit meanings, cancellation and resumable question behavior for the affected command. Both inspect selectors remain required; Director and Reviewer examples must resolve their actual component bindings.
+
+        Explain the default rendered request as the same single input string used by activation, with source labels and named placeholders. Do not propose extra provider instruction channels or duplicate model-facing guidance in terminal templates. Describe long-running JSON output as ordered event records followed by a terminal result, without plaintext mixed into stdout. An input refusal occurs before admission and must not print a partial result.
+
+        Keep transport examples in the app's owned documentation. Link lifecycle decisions to Commands and Workflow instead of re-authoring their policies. If the change needs a new SDK capability, request the concrete public contribution rather than implementing a private CLI-only lifecycle. Record truthful limitations and a meaningful acceptance example; do not label a deterministic renderer fixture as live execution.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    standards: []
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+    standards: [agent-operating-protocol]
   testing:
     role: designer
     profile: gpt-terra
     instructions:
-    - Exercise built invocation, terminal questions and exit codes against the shared operation outcomes.
+      - |
+        Establish the terminal contract with class-based public scenarios that exercise the affected parser or built entry point at the level the claim requires. Cover both permitted --json placements and refusal of duplicate, misplaced, missing or extra arguments before task admission. Inspect must require component and activity, support Director and Reviewer aliases, render the exact request.input bytes with its header, and produce one JSON object in JSON mode without activating a model.
+
+        For streaming changes, supply distinct structured observations and assert that records arrive before the terminal result, preserve order, and keep diagnostics on stderr. Exercise a real subprocess when validating stdin, EOF, signal propagation, output flushing or exit status; a mocked renderer proves only rendering. Question fixtures must retain the full answer, including multiline input and an interruption followed by resumption. Do not let a fake terminal silently answer an approval.
+
+        Use a temporary explicit project fixture and injected application services so negative cases cannot reach live GitHub or Codex. Check the production composition separately from parser isolation. A missing new command can be a legitimate behavioral red; missing compiled output, malformed fixtures or an unavailable executable are setup failures to correct. Run the mapped checks applicable to this Testing activity, retaining the observation without demanding the later implementation already pass.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
   implementation:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-    - Compose the trusted plugins and translate terminal input and output at the app boundary.
+      - |
+        Keep the Cordis app as the terminal gateway. Parse and validate input, resolve the working project, call the public Commands service, and translate the shared observer and typed result into terminal output. Reuse the same SDK operation for in-process callers and the CLI. Do not place task sequencing, architecture approval state, recovery routing, Git worktrees or provider delivery decisions in a parser branch.
+
+        For inspection, preserve the existing single request string and render its contents without rewriting, clipping or selecting a different source set. For task, planning, architecture and refinement commands, stream the actual observer records as they arrive. Human and JSONL modes must describe the same execution; one mode cannot buffer until completion while claiming live progress. Preserve full question and answer delivery, valid exit status, stderr separation and cooperative signal cancellation.
+
+        Make owned edits through the mapped checked-edit operation, one file per acknowledged change, and use declared owner checks for correction. If a Commands method is unavailable, identify its actual missing behavior and escalate that cross-owner contribution. Do not bypass the SDK by importing another plugin's private implementation. Finish local parser, rendering and fixture corrections within this activity, including owned tests when no earlier Testing rewind is available.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
   review:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-    - Check that the adapter preserves SDK outcomes and carries no second task lifecycle.
+      - |
+        Review the app as a user and as a transport adapter. Compare the documented examples, parser decisions, actual Commands calls, event rendering and terminal result against the CLI contract. Read the real changed code and tests; an assertion that a callback was installed is not evidence that a built subprocess streams, cancels or exits correctly. Verify inspect's two required selectors, Director/Reviewer access, unchanged request.input parity and explicit placeholders.
+
+        Look for lifecycle logic leaking into the gateway, plaintext corrupting JSONL, discarded messages or answers, false zero usage, delayed output, and success reported before the application outcome is known. Negative input must leave admission and stdout untouched. Distinguish a fixture provider demonstration from the production composition and a staging result from a main release.
+
+        This activity has no edit or check-launch capability. Cite the concrete finding and select an available earlier local activity that can repair it; use Documentation for changed user semantics, Testing for an ineffective terminal assertion, or Implementation for the adapter defect. A genuine missing public capability belongs to its owner through escalation. Do not invoke Direction merely to fix a same-owner renderer or fixture. Preserve unaffected evidence and the original acceptance.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - request-supplier
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - request-supplier
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol

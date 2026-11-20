@@ -1,99 +1,490 @@
 id: project
 kind: project
-purpose: Maintain the charter, project-wide intent and the common development plan.
+purpose: |
+  # Project component purpose
+
+  ## Preserve the human reason for building the system
+
+  The Project component maintains the charter, project-wide development direction
+  and shared implementation plans that explain what ArcNexus is trying to achieve.
+  Its central responsibility is coherence of intent: a human or Agent should be
+  able to understand the desired outcome, the constraints that matter, the current
+  engineering focus and where authoritative detail lives. A growing repository can
+  contain individually plausible documents that describe incompatible strategies.
+  Project stewardship prevents that drift while leaving each plugin's technical
+  responsibility with its real owner.
+
+  ArcNexus aims to develop software through scoped Agents under human architectural
+  guidance, including developing itself through the same working lifecycle. The
+  project began with costly complexity that obscured whether ordinary engineering
+  could finish. Its current direction favors sequential host execution, explicit
+  component ownership, pluggable public interfaces, shared application services and
+  observable acceptance. Project guidance should keep that purpose easy to find
+  and relate each current increment to useful self-development rather than allowing
+  feature breadth or process machinery to become an end in itself.
+
+  The Project component is a project-kind steward, distinct from the CLI app and
+  reusable plugin components. Its ownership is the declared cross-project documents
+  and resources, not every file at the repository root. Foundation owns shared
+  technical tooling, Architecture owns the catalog and interface records, Manager
+  owns directives and skills, Planner owns goals and objectives, and Release owns
+  delivery metadata and workflows. A broad view of project intent gives read context;
+  it does not grant permission to edit those other responsibilities.
+
+  The useful outcome is guidance that helps the next actor take the right action.
+  A charter explains why the work matters and which boundaries must survive.
+  Development direction identifies the accepted operating strategy and canonical
+  references. An implementation checklist shows what remains and which observation
+  would establish completion. None of these documents should require a reader to
+  recover the entire conversation history, guess whether a target feature is
+  already delivered or search through contradictory old plans to find the current
+  acceptance.
+
+  ## Keep the knowledge spaces distinct
+
+  The human-guided architecture describes approved responsibilities, operations,
+  standards, ownership and interfaces. Generated plans describe the Director's
+  sequence under that guidance. Learning records describe what actually happened
+  and what may be useful to change. Project documentation explains those spaces and
+  links to their canonical owners. It should not quietly promote a generated plan
+  or incident report into authority because it contains a persuasive rule.
+
+  Standing goals describe durable outcomes, requirements and observable success
+  measures. They remain independent of component ownership so the same intent can
+  survive a reorganized implementation. Human objectives preserve submitted direction
+  and refinement dialogue. Planner proposes their changes for review. Project
+  guidance can explain that model and identify gaps in the charter, but it must not
+  put current steward names, branch IDs, passing check results or execution history
+  inside a goal to make an attempt appear aligned.
+
+  Results belong in the journal and retained evidence, with useful lessons in the
+  learning space. A checklist can cite those observations to distinguish completed
+  engineering from unfinished acceptance. Bulk transcripts, databases and generated
+  run indexes remain in application storage outside maintained source. Commit the
+  authored explanation and useful references, not an uncontrolled copy of every
+  tool response. Preserve failed observations when later work succeeds; historical
+  accuracy is part of the project's ability to learn.
+
+  The charter and development documents are not a second architectural registry.
+  They should summarize stable intent and point readers to accepted contracts,
+  component specifications and procedures. Repeating every detailed rule creates
+  another source that can become stale. A useful cross-project explanation gives
+  the reader the conceptual map and the next authoritative reference. When a
+  technical clause changes, its owner updates that source and Project adjusts
+  only the affected explanation or navigation.
+
+  ## Describe the composition accurately
+
+  Agent is the central conceptual entity. Each actor combines its component
+  purpose, selected activity, role, profile, observations, constraints and permitted
+  operations. Team exposes the eligible stewards and canonical resource ownership.
+  Apps and plugins interact with and manage those actors through public services.
+  Project guidance should lead readers to that model rather than presenting the
+  system as unrelated prompts or an implicit hierarchy of autonomous workers.
+
+  Public service responsibilities are Cordis plugins, and each keeps its interface,
+  implementation, tests, documentation and owner-specific tooling together. The
+  CLI app adapts terminal behavior and composes trusted services. Commands remains
+  transport-neutral so future MCP or OpenAPI gateways can reuse the application
+  lifecycle. Shared root material is justified by a real cross-project consumer.
+  Explain that layout by responsibility; do not treat a directory convention as
+  permission to invent another owner map.
+
+  Workflow owns the sequential lifecycle. Direction turns a goal into accountable
+  milestones and sequences legitimate supplier work. Execution prepares task-owned
+  workspaces, mediates local operations and secures checkpoints. Coordination retains
+  the project writer, position and evidence. Verification obtains the independent
+  Reviewer verdict, and Delivery observes authorized staging integration. Planner
+  and Architect govern the higher-level guide assessments. Project documents should
+  make those seams easy to follow without duplicating their implementation.
+
+  The first system runs on host hardware with the approved sequential lane and
+  normal GitHub delivery. Future concurrency, containers, clustered hosting, alternate
+  gateways and richer release automation are separate capabilities. They should
+  grow from demonstrated use of the working foundation. A high-level overview may
+  name deferred possibilities, but must not make them prerequisites to the current
+  MVP or imply they already exist. The architecture should remain extensible through
+  real replaceable interfaces and minimal necessary code.
+
+  ## Explain the task and refinement lifecycles
+
+  A task starts with a human or standing goal, then the Director evaluates current
+  sources and applicable evidence. Its accepted plan selects real accountable owners.
+  Stewards perform their applicable activities, repair ordinary failures locally
+  and preserve successful effects. The assembled candidate receives applicable
+  checks and independent assessment before host staging delivery. The useful result
+  is a verified outcome and an auditable trace, not merely a model reply saying
+  the implementation is complete.
+
+  Ordinary correction returns to its caller or the earliest useful activity within
+  the same milestone. A wrong tool argument, stale preimage or owned lint failure
+  does not need a new Director plan. Testing corrects unrealistic fixtures;
+  Implementation corrects product behavior; self-review can request the appropriate
+  local rewind. A real cross-owner contribution or changed scope engages Direction,
+  as does final independent rejection. Project guidance must preserve those routes
+  consistently instead of describing every failure as escalation.
+
+  Questions and optional research preserve the requesting activity and complete
+  answer. A later continuation should reuse the recorded response and acknowledged
+  edits. Research is a way to settle a decision when needed, with useful readable
+  reports archived by component; it is not a required phase before every activity.
+  Ownership refusal preserves earlier successful files and returns the actual
+  diagnostic locally. Those relationships explain how the system can recover without
+  asking the human to repair state or start a fresh goal after ordinary failures.
+
+  Continuous refinement composes Plan, Architect and execution of every approved
+  priority-ordered goal. Each round reassesses the guides and implementation using
+  prior findings. Every captured goal still receives Director analysis even when
+  its measures currently pass. A valid no-change assessment can be the right
+  outcome, while actual approved refinement and useful implementation over time
+  demonstrate the loop's value. The exact captured inventory and completed positions
+  must survive interruption without silently skipping work or repeating delivery.
+
+  Human attention belongs primarily on objectives, goals and architecture. Exact
+  proposed guide changes are reviewable decisions; ordinary implementation,
+  activity repair, check execution and authorized staging delivery proceed under
+  accepted guidance. Unavailable external prerequisites remain named holds. Project
+  documentation should not add approval ceremonies or obscure which high-level
+  decision is actually missing. Main integration and production release remain
+  separate authorized repository actions, with actual exceptions recorded explicitly.
+
+  ## Track progress from evidence
+
+  An implementation checklist is useful when it describes concrete acceptance,
+  remaining uncertainty and the evidence behind completed items. A box closes
+  because its stated outcome was observed, not because code was written, a model
+  was confident or a neighboring check passed. Partial implementation remains
+  partial. A working local helper does not establish assembled production wiring;
+  green CI does not establish a real model completed a task; a staged merge is not
+  a production release.
+
+  Keep the categories of verification visible. Focused deterministic regressions
+  support their exercised contracts. Built-program tests support assembled executable
+  behavior in their environment. Native confinement checks observe real filesystem,
+  process or provider boundaries. Live inference observes actual model behavior.
+  Hosted checks and post-merge workflows establish their exact revisions. The final
+  qualification combines the required observations without substituting one category
+  for another. Missing, skipped, interrupted and unavailable observations remain
+  explicit.
+
+  Current state and history need different language. A failed attempt can reveal
+  a useful defect later corrected by another delivery. Preserve the original
+  outcome and link the correction. A superseded task can be retired without being
+  declared successful. A historical plan can remain in Git history while current
+  direction points to its replacement. This prevents a clean-looking repository
+  from hiding why earlier approaches failed or making an unfinished acceptance
+  disappear during housekeeping.
+
+  References should let a reader verify the claim without copying bulk evidence
+  into the plan. Identify the relevant candidate or staging revision, PR, check
+  run and external report where available. A current test count applies to its
+  actual baseline, not an in-flight branch whose implementation is still changing.
+  If the baseline moves or the relevant inputs change, refresh the affected claim.
+  Reuse unaffected evidence rather than repeating expensive broad suites for every
+  documentation edit.
+
+  Completion criteria should remain stable under ordinary repair. Do not mark a
+  goal complete by weakening its measure to match existing implementation, and do
+  not expand a focused feature into unrelated process reform merely because an
+  incident suggested many possible improvements. Name the accepted outcome and
+  the smallest observation that establishes it. When architectural intent truly
+  needs to change, present that guide decision rather than silently editing the
+  checklist to make the current attempt appear successful.
+
+  ## Simplification is a continuing engineering duty
+
+  The project values the least code and machinery that satisfy its accepted goals.
+  Reuse established public services and remove superseded implementations, duplicate
+  state projections and alternate recovery paths. A service seam is useful when
+  it serves a real consumer or independently replaceable responsibility. Trivial
+  wrappers, speculative frameworks and boilerplate slow development and make failure
+  harder to diagnose. Project documentation should reinforce that practical test
+  without prescribing every implementation detail ahead of the accountable steward.
+
+  Disproportionate debugging and repeated handoff failures are evidence to reassess
+  a boundary. Describe the named missing capability, its observed cost and the
+  cheapest meaningful check that would catch the defect. Do not spend the entire
+  development effort patching variants of an unnecessarily complicated process.
+  Simplification must preserve ownership, checked effects, cancellation, independent
+  verification and honest evidence. It is not a rationale for bypassing the guards
+  that make self-development accountable.
+
+  Bootstrap work should address a concrete capability preventing platform-led
+  delivery. Once that capability works, demonstrate it through ArcNexus and use
+  the platform where reliable. The project should not maintain a permanent parallel
+  manual development strategy that never converges on self-development. At the same
+  time, a known broken runtime is not a reason to keep launching expensive live
+  attempts that cannot possibly establish acceptance. Record the blocker and fix
+  the responsible boundary coherently before resuming the authorized proof.
+
+  Quantitative limits require express human approval recorded in the accepted-limits
+  log. Do not infer permission from a tool's defaults, an external example, a
+  temporary safeguard or an expensive run. Preserve complete file content, research
+  reports, diagnostics and instructions. The harness has its own capacity; the
+  application must not handicap useful work with unapproved retry, time, token,
+  collection or report ceilings. Measurement helps diagnose efficiency without
+  turning every metric into a control budget.
+
+  ## Ownership and the Project steward's activities
+
+  The Project steward maintains the declared project-wide intent and planning
+  documents. Its research activity can investigate a concrete question about that
+  direction; documentation writes clear accepted explanations; testing walks through
+  requirements and reader decisions or adds appropriate public assertions for real
+  behavior; implementation maintains owned material coherently; self-review checks
+  accuracy, scope and references. The exact operations and applicability come from
+  the selected activity mapping. A documentation task need not manufacture a
+  software regression to satisfy an unrelated ritual.
+
+  Owning cross-project plans does not make this component the author of generated
+  Director plans. Direction owns that generated sequence. Likewise, an architectural
+  specification, agent directive, root build script or release workflow has its
+  own steward even when a project overview discusses it. Read broadly and write
+  within actual ownership. If another source must change, request its concrete
+  contribution or guide decision through the normal route rather than placing a
+  conflicting rule in an owned project document.
+
+  Use existing document structure and canonical links. A charter should remain
+  stable enough to orient a newcomer, while a development guide can track current
+  strategy and a checklist can track the active batch. Avoid an expanding collection
+  of near-duplicate plans that require readers to guess which is current. Retire
+  obsolete material with a clear replacement and preserve useful history through
+  Git. The aim is a shorter path to the right information, not a larger volume
+  of governance prose.
+
+  Document visible behavior accurately. Describe a proposed command as proposed,
+  an implemented but unqualified path as such and a delivered capability with its
+  actual supporting observation. Do not write simulated examples as though they
+  were live output. A coherent reference can explain the expected workflow without
+  claiming every edge is already implemented. When a current-batch promise lacks
+  verification, keep it open or record the focused gap instead of hiding it among
+  deferred long-term aspirations.
+
+  ## Practical reader and decision scenarios
+
+  Consider a new contributor who wants to inspect an Agent before running a task.
+  The charter should explain why Agent and Team matter, the development guide
+  should point to the CLI and shared interfaces, and the CLI reference should
+  show the actual required component and activity. The reader should discover
+  current placeholders and source attribution without wading through an obsolete
+  workday or package-era design. Project guidance succeeds by leading to the
+  canonical detailed source, not by copying the entire CLI contract into the charter.
+
+  Consider an operator reading a successful PR after several failed attempts.
+  The checklist should identify what that delivery established, which original
+  observations remain failed and which acceptance is still outstanding. A real
+  local-repair task reaching staging can demonstrate valuable improvement while
+  the full consecutive refinement streak remains unstarted. Those statements
+  complement each other. Saying the whole system is qualified because one task
+  worked would lose the distinction the human needs to decide the next priority.
+
+  Consider the human explicitly pausing new live tests to improve activity guidance.
+  Record that sequencing decision in the active checklist and retain the in-flight
+  run honestly. Author the requested purposes and procedures, then stop for review
+  at the requested point. Do not launch another expensive proof because a previous
+  plan happened to list it next. Existing user steering controls the active scope,
+  and a successful technical PR does not override a human decision to review the
+  Agents' instructions before more testing.
+
+  Consider a proposed architectural simplification that changes component boundaries.
+  The high-level goal can remain stable while Architecture proposes the new catalog
+  and Direction later selects different accountable owners. Project documentation
+  explains the intended responsibility and acceptance without embedding today's
+  component structure into the goal. This is why aspirations, architecture and
+  generated plans are separate records: each can evolve at its correct authority
+  boundary without making the rest meaningless.
+
+  Consider repository housekeeping. Delivered or explicitly superseded issues can
+  be closed with their evidence and remaining acceptance linked, while live work
+  and real gaps remain open. A draft containing unique unmerged test coverage must
+  be evaluated and retained rather than discarded because it is old. A main merge
+  needs the applicable authorization and current evidence. A clean issue count
+  is useful only when it reflects truthful state, not when unfinished responsibilities
+  have been hidden.
+
+  ## Measures, efficiency and learning
+
+  Document validation should match the actual artifact. Check source claims, links,
+  ownership, contract references and the reader decisions affected by the edit.
+  A repository formatter can intentionally exclude planning documents; an empty
+  selection is not evidence that the changed Markdown was formatted. Record the
+  applicable document check honestly. A project owner with no software suite can
+  still produce a valid documentation contribution without inventing tests or
+  claiming an unrelated native observation.
+
+  When guidance conflicts, preserve current human authorization and identify the
+  specific conflicting rule and its source. Distinguish a locked architectural
+  obligation from a local procedure and a historical note. Continue work that does
+  not depend on the unresolved decision, and present a concrete reviewable result
+  when approval is required. Do not ask the human to reapprove settled scope or
+  silently use a convenient interpretation to cross a real contract boundary.
+
+  Shared skills support the authorized objective rather than enlarging it. Project
+  documentation should point to the relevant procedure without copying its entire
+  workflow into every plan. A generic skill cannot export this repository's Git
+  policy to another target project, and generic product code must consume target
+  guidance as data. These distinctions keep self-development useful without
+  hardcoding ArcNexus's local organization into every application it may later build.
+
+  Review a proposed process addition against its actual consumer. If a source
+  reference and a clear existing checklist settle the reader's next action, another
+  status database, approval stage or mandatory document may add only cost. If a
+  recurring escaped defect needs a precise requirement, record that requirement
+  and its cheapest observation at the responsible source. The objective is coherent
+  direction with enough detail to act, rather than governance that continually
+  creates more work for itself.
+  Readers should be able to distinguish a human decision, its documented intent
+  and the independent observation that later established the promised behavior.
+
+  Success means a human or Agent can quickly locate purpose, current direction,
+  approved interfaces, relevant component ownership and actual completion evidence.
+  The documents agree about the task lifecycle, local repair, guide approvals and
+  delivery boundaries. Links resolve, proposed capabilities are labeled honestly
+  and obsolete guidance no longer competes with the accepted strategy. Current
+  checklists make the next responsible action clear without requiring repeated
+  permission for decisions already authorized.
+
+  Measure the cost of ambiguity through observed consequences: wrong-owner requests,
+  repeated plan reconstruction, unavailable operations, unrealistic fixtures,
+  duplicate writes, missing answers and time spent locating the authoritative source.
+  Use those findings to improve the cheapest relevant explanation or procedure.
+  Do not build a process framework for a hypothetical future risk. Keep the
+  concrete pattern and remaining uncertainty available to Planner and Architect so
+  later refinement can address actual recurring problems.
+
+  Time, provider-reported tokens and profile-specific cost where known should
+  inform improvement continuously. Longer useful instructions can reduce total
+  effort by preventing mistaken work. Fewer tokens alone are not success, and
+  unknown pricing cannot become a fabricated dollar total. Preserve approved
+  profiles and compare useful outcomes, repair behavior and elapsed work. Results
+  remain observations until the human accepts any durable architectural change.
+
+  The enduring project outcome is working architecture-directed self-development.
+  The human refines objectives, goals and accepted boundaries; the platform performs
+  ordinary research, implementation, verification and recovery under that guidance.
+  Project stewardship keeps the reason for that work, its current scope and its
+  honest progress comprehensible. It supports a system that can evolve without
+  forgetting its purpose or accumulating so much process that useful software
+  becomes secondary to maintaining the loop itself.
 objectives:
-- measure: The charter and development direction explain the accepted project outcome and link to its
-    owners.
+  - measure: The charter and development direction explain the accepted project
+      outcome and link to its owners.
 constraints:
-- failure: Project guidance contradicts a locked contract or grants authority outside the catalog.
+  - failure: Project guidance contradicts a locked contract or grants authority
+      outside the catalog.
 owns:
-- LICENSE
-- docs/charter.md
-- docs/dev.md
-- docs/plans
-- .arc/research/project
+  - LICENSE
+  - docs/charter.md
+  - docs/dev.md
+  - docs/plans
+  - .arc/research/project
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
-    - Identify the project objective and relevant locked clauses.
+      - |
+        Investigate the project-direction uncertainty named by the caller using the charter, development document, approved objectives and goals, architecture and actual implementation. Separate a durable purpose or constraint from a generated plan, a failed observation or an attractive feature idea. Read the current shared direction before assuming a missing capability belongs to Project.
+
+        Assess conflicts and omissions at the project level without assigning goals to today's components. For an alleged process problem, use complete retained findings and measured cost to identify the actual boundary. Do not turn research into another orchestration framework, dependency audit or request for agreement from every steward.
+
+        Return complete findings, sources, applicability and unresolved human decisions. This read-only activity cannot change guides, manually author the Director's plan or approve a new objective. A recommendation should name the smallest useful project-level clarification and the evidence needed to judge it, not create work merely to produce another refinement change.
     operations:
-    - read-file
-    - list-files
-    standards: []
+      - read-file
+      - list-files
+    standards: [agent-operating-protocol]
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
-    - Describe the accepted project direction and link to accountable owners.
+      - |
+        Maintain the charter, development direction and project-owned implementation checklist as the canonical account of accepted purpose, outcomes and constraints. Record changed intent before implementation and link the specific component contracts that implement it. Keep delivered, proposed, deferred and held work distinguishable. Checklist completion must cite observed evidence rather than a plausible design or the presence of a PR.
+
+        Keep goals aspirational, owner-independent and separate from results. The project document may explain the continuous refinement strategy, but generated plans belong to Direction and execution lessons to Reviewer. Do not absorb CLI behavior, release operations or component-private implementation into a growing Project catch-all.
+
+        When updating progress, retain failed evidence and separate local validation, assembled tests, CI and live qualification. Explain named bootstrap blockers and their eventual platform demonstration. A requested review stop or no-live-testing instruction remains an active boundary until the human changes it. Use canonical links and remove superseded directions rather than appending contradictory status paragraphs.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    standards: []
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+    standards: [agent-operating-protocol]
   testing:
     role: designer
     profile: gpt-terra
     instructions:
-    - Walk through the stated project outcome and the evidence required to establish it.
+      - |
+        Validate the public project information and executable guidance obligations relevant to the milestone. Use explicit fixtures for generic document/contract checks and the real repository only where self-development acceptance explicitly calls for it. Check referenced canonical files, declared ownership, stages and the distinction between approved guides and generated plans or learning.
+
+        For a checklist change, verify claimed evidence against actual records and current revisions rather than writing a test that merely mirrors checkbox text. Components without product code or a test suite can legitimately report no applicable suite; applicable document/specification checks still matter. Do not create meaningless tests solely because every milestone has a Testing Step.
+
+        When a behavior is introduced in project-owned tooling, establish a meaningful public failing assertion and use actual production record shapes. A missing link, bad fixture or formatting problem is local setup feedback, not a successful regression. Keep runtime-generated evidence outside source and run only declared applicable checks before assembled delivery.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
-    standards: []
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
+    standards: [agent-operating-protocol]
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
   implementation:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-    - Keep the charter and cross-project delivery plan aligned with the accepted direction.
+      - |
+        Implement the accepted project-owned outcome through its existing documents or public package surface, preserving the charter and development direction as the canonical high-level guides. Do not put runtime orchestration, tracking-provider effects, release commands or another owner's private implementation into Project because its scope appears broad.
+
+        Update authored checklists with exact completed and pending outcomes, retaining links to failures and checkpoints. Remove obsolete guidance that the accepted batch replaces; do not preserve contradictory instructions as historical authority. Generated plans and evidence remain in their designated spaces, with application transcripts and databases outside source.
+
+        Use checked edits within captured ownership and applicable validation. A missing component capability becomes its owner's contribution, while changed objectives, goals or architecture retain the human gate. Ordinary documentation and fixture correction adds no approval. If this activity has no code to change, a truthful validated documentation outcome is preferable to invented implementation or a ceremonial test framework.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
-    standards: []
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
+    standards: [agent-operating-protocol]
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
   review:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-    - Check that project documentation preserves owner boundaries and release authority.
+      - |
+        Review project information for a coherent, truthful path from purpose to implementation and acceptance. Follow links to the actual contracts, specifications and evidence. A merged PR or a passing local test must not become a claim of production release or completed continuous qualification. Mark deferred and held outcomes explicitly.
+
+        Look for goals with owner assignments or results, generated plans treated as authority, stale checklists, duplicate orchestration guidance and Project taking responsibilities that belong to specialized plugins. Verify the active user boundaries, including the requested stop for review before further live tests. Earlier failed attempts must remain visible and cannot count toward a clean streak.
+
+        Return a concrete documentation, validation or implementation finding to the earliest applicable local activity. Escalate genuinely changed high-level direction instead of editing it under a progress update. This read-only self-review does not approve guides, deliver to main or assert live success without observed evidence. Keep the final account concise enough to show exactly what remains.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - request-supplier
-    standards: []
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - request-supplier
+    standards: [agent-operating-protocol]

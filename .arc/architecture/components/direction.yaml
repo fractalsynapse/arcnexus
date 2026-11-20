@@ -1,111 +1,511 @@
 id: direction
 kind: plugin
-purpose: Turn goals and supplier requests into a sequence of accountable milestones.
+purpose: |
+  # Direction component purpose
+
+  ## Convert a goal into accountable sequential work
+
+  Direction turns an accepted goal into an ordered plan that real component
+  stewards can execute. Its Director Agent studies the desired outcome, captured
+  architecture, current implementation and applicable evidence, then chooses the
+  necessary contributions. Each milestone has an accountable owner and stable
+  acceptance, with the activity Steps and checklists defined by the plan template.
+  The result should explain what needs to change, who is responsible and how its
+  completion will be observed without prescribing incidental file permissions or
+  forcing an arbitrary team into every task.
+
+  The component exists because useful multi-agent development needs deliberate
+  sequence and preserved meaning. A human supplies intent, while different components
+  own the implementation, architecture, tooling or delivery responsibilities needed
+  to achieve it. Direction connects that intent to the actual Team. It keeps
+  dependencies as concrete required contributions and makes them occur before the
+  work that consumes them. This lets the first host implementation remain sequential
+  and understandable instead of adding a hierarchy or concurrent dependency engine
+  before ordinary engineering is reliable.
+
+  Direction also owns legitimate revision of the pending plan. An explicit
+  cross-owner or scope escalation and a final independent rejection can reveal
+  work that the initial sequence did not address. The Director receives the retained
+  plan, completed position, exact finding and relevant evidence, then proposes the
+  necessary remaining change. The host preserves original ownership, acceptance
+  and completed outcomes. Revision should be a focused explanation of what the
+  finding changes, not a reconstruction of the entire project or a chance to
+  rewrite accepted obligations.
+
+  Its useful outcome is a plan that shortens the path to independently verified
+  delivery. A complete-looking checklist is not enough if it makes Testing wait
+  for its own future Implementation, requests agreement from every component or
+  requires a steward to prove a staging merge before engineering can finish.
+  Direction must understand temporal responsibility: local activities produce
+  their evidence, final Verification accepts an assembled candidate and Delivery
+  observes integration. Good sequencing makes those seams explicit and avoids
+  work that cannot produce a new useful result.
+
+  ## Distinguish task planning from durable project direction
+
+  Planner maintains human objectives and standing goals. Those records describe
+  aspirations, requirements and success measures without component ownership or
+  historical results. Architecture defines approved responsibilities, operations
+  and constraints. Direction evaluates a particular goal against that current
+  model and produces an execution plan. These are different decisions. A goal
+  should remain meaningful when components evolve, while its next task plan can
+  select the owners appropriate to the accepted architecture.
+
+  The Director may identify missing guidance, conflicting objectives or an absent
+  owner, but it cannot settle that architectural decision by decree. It presents
+  the conflict and required high-level proposal through the normal route. A plan
+  does not create a component, grant new tools, unlock a contract or change the
+  meaning of a human goal. Generated plans are records of intended work under
+  authority; they do not become that authority themselves.
+
+  Standing goals are reassessed rather than consumed permanently. A later round
+  invokes the Director again with current sources and applicable observations,
+  even if a previous measure passed. Other goals may have changed the implementation,
+  tests may miss important cases and the full authored requirement may reveal
+  an improvement. A satisfied assessment needs an explicit source-linked rationale.
+  The goal's own text is not evidence that the desired behavior exists, and a
+  previous unrelated run cannot establish a current revision's measure.
+
+  A no-work conclusion is valid when evidence supports it. Direction should not
+  invent code or documentation changes just to create visible activity. Conversely,
+  a green suite is not a reason to skip analysis or assume every measure is covered.
+  Use actual source and host-attested check, review and delivery observations where
+  the measure requires them. Distinguish an implementation claim, a deterministic
+  test and an observed live workflow rather than treating any positive signal as
+  proof of all three.
+
+  ## Use the real Team and public responsibilities
+
+  Team supplies eligible stewards, explicit activity availability and canonical
+  resource ownership. Direction chooses from those definitions instead of creating
+  a shadow catalog or guessing owners from directory names. A public interface
+  helps identify the contribution that changes with a responsibility. A task
+  mentioning TypeScript does not require every TypeScript-using steward; the owner
+  of the deficient behavior or shared tool is the relevant contributor.
+
+  Each milestone has an accountable owner. It describes the outcome, technical
+  requirements and acceptance rather than a list of allowed files. The steward
+  discovers necessary owned edits under the captured catalog. A required foreign
+  change becomes a preceding contribution by its actual owner. Direction must not
+  loan permissions across milestones, add ad hoc path allowlists or treat a supplier
+  request as authorization for the requesting steward to write elsewhere.
+
+  Choose responsibilities that actually need work. A public API can be used without
+  a conversational acknowledgment from its owner. A shared library does not need
+  to reapprove routine use of its contract. Foundation's technical strategy does
+  not make it a continuous dependency checker for every component. Ask for a
+  supplier when its code, documentation, declared capability or complete technical
+  answer is genuinely needed to change the outcome. Agreement alone is not a
+  deliverable.
+
+  When no accepted component fits, the plan proposes the missing responsibility
+  through the prescribed component/architecture gate and waits for the architect.
+  Do not assign a guessed owner, create a steward in the plan or smuggle ownership
+  into a goal. An unowned resource or collision should carry its actual affected
+  paths and components from Team. Resolving that finding is a guide decision,
+  not a tie-break the Director can make to keep the task moving.
+
+  ## Build a plan whose Steps can finish
+
+  The Focus states purpose, objectives and constraints for the accepted task. Ordered
+  milestones describe necessary contributions, with stable criterion identities.
+  Their checklists reference those criteria and state the observation expected
+  from each activity. Preserve the plan template's complete Step structure and
+  explicit reasons for inapplicability. Avoid a separate framework of task types,
+  parallel dependencies or new orchestration states when ordinary sequential
+  milestones express the work.
+
+  Documentation establishes changed intent and useful public references. Testing
+  designs representative contract assertions and fixtures and observes the relevant
+  red before the behavior change. Implementation makes the smallest correction
+  and obtains current applicable checks. Self-review examines the contribution
+  and can request the earliest useful local rewind. The host integration Step
+  later records applicable independent acceptance, CI and staging observations for
+  the assembled goal. It is not a model release activity for each steward.
+
+  Keep each Step's expected observation appropriate to its position. Testing does
+  not need its future implementation to pass before it can report a valid intended
+  red. A lower-level seam can use an explicit public contract-shaped fixture before
+  its higher-level consumer is finished; assembled integration later proves the
+  real interaction. Requiring successful full orchestration inside a pre-implementation
+  test milestone creates a cycle, not stronger verification. State what Testing
+  establishes now and what Implementation or final assembly will establish later.
+
+  Likewise, do not place remote delivery in a steward's engineering acceptance.
+  The steward can produce correct code and actual local observations; it cannot
+  prove a PR's future CI or merge before the host opens that PR. Keep host effects
+  and their later evidence distinct. A release-owned documentation or metadata
+  contribution can be a real milestone when needed, but its existence must not
+  turn every component task into ceremonial multi-owner release work.
+
+  Milestones should be coherent useful contributions. Excessive splitting makes
+  the Director repeat context, broad checks and handoffs for small edits. Excessive
+  aggregation can mix owners or force a dependency cycle. Use the accepted outcome
+  and real responsibility changes to choose the boundary. Reuse existing code and
+  remove superseded mechanisms; do not plan speculative infrastructure merely
+  because future gateways or distributed deployment might eventually need it.
+
+  ## Keep ordinary correction with its caller
+
+  Direction is invoked initially, on explicit escalation and after final independent
+  rejection. Ordinary tool failures, stale hashes, formatting, lint, type errors,
+  owned assertion failures and self-review findings return locally. The accountable
+  activity reads the exact diagnostic, corrects owned work and obtains the affected
+  observation. If an earlier activity must change, Workflow records a rewind inside
+  the same accepted milestone. Direction should not become a mandatory intermediary
+  for every engineering fork in the road.
+
+  This distinction preserves both efficiency and context. A caller that just saw
+  a failed tool knows its arguments, source and successful earlier effects. Sending
+  it through a new plan revision can lose the original requirement, duplicate
+  milestones and ask the model to reproduce immutable acceptance. Local repair
+  retains the full original finding, current diagnostic, complete answers and edit
+  receipts. It can continue through successive distinct failures that show progress
+  without changing owner or criteria.
+
+  A self-review rejection has a local target when the accepted contribution's
+  intent, fixture or code is wrong. Documentation, Testing or Implementation can
+  change those outcomes. The milestone's original acceptance remains canonical.
+  Do not create a new same-owner milestone merely to restate that unfinished work,
+  and do not call a later Implementation Step a supplier dependency by giving it
+  a different milestone name. The normal cursor and repair route already express
+  the required work.
+
+  An explicit escalation is appropriate when a different responsibility, missing
+  authority or changed scope genuinely prevents local resolution. Read its complete
+  reason and actual evidence before revising. A model's unsupported claim that
+  an API is unavailable is not proof; the caller should investigate its mapped
+  tools and public interfaces. A named external failure, real foreign change or
+  architectural conflict has different meaning. Preserve that distinction instead
+  of treating all negative prose as a reason to replan.
+
+  ## Sequence supplier work and preserve the answer
+
+  A supplier request links an existing accepted contribution when it asks for
+  that same work. Direction preserves its owner and criteria and places required
+  work before the requester resumes. A distinct necessary contribution can become
+  a new accountable milestone. The request supplies its reason, question and
+  relationship to original acceptance. Reusing work means consuming its actual
+  completed result, not merely adding another dependency label to the plan.
+
+  The requester must receive the complete supplier answer. A link to an issue or
+  a conversational acknowledgment cannot settle a technical question whose conditions
+  matter to implementation. Coordination and Execution retain the reply and return
+  it to the original activity, including after interruption. Direction preserves
+  that relationship during resequencing. The requesting actor's earlier acknowledged
+  edits and check obligations remain intact; the supplier's participation does not
+  give it broader scope.
+
+  Read apparent circular dependencies critically. A lower-level owner may need the
+  consumer's public data shape while the consumer needs the lower-level API.
+  Identify the minimum authoritative declaration or contribution that breaks that
+  cycle, then sequence it explicitly. Do not require a completed application before
+  an owner can write its public contract regression. Where ordinary fixtures can
+  represent the accepted seam, use them and reserve end-to-end collaboration for
+  assembly. Where another owner truly must author the interface, request that
+  concrete interface rather than peer agreement.
+
+  When checked supplier progress exposes a different failure, return the actual
+  new observation to the accountable caller through the existing path. The supplier
+  may have removed a compiler blocker so the original component now reaches its
+  real assertion. That is meaningful progress, not an unchanged failed attempt.
+  Conversely, repeating the same unsupported request without changed relevant inputs
+  should lead to diagnosis or an actionable hold. No arbitrary retry count or
+  automatic profile change is needed to distinguish those cases.
+
+  ## Revise only pending work
+
+  The host owns the canonical accepted plan, completed prefix and criterion
+  identities. At a legitimate revision boundary it supplies readable references
+  to that plan and retained evidence plus the current committed position. The
+  Director should focus on the remaining change. Repeating all completed milestones
+  and immutable acceptance adds cost and creates opportunities to accidentally
+  change their meaning. The native revision response uses the domain shape supplied
+  for that boundary, while the host reconstructs the full validated plan.
+
+  Existing pending milestones retain their accepted identities, owners and criteria.
+  The Director can provide the necessary pending Step sequence under those
+  identities, with the required checklist structure and reasons. New distinct work
+  needs its complete owner, criteria and Steps. Completed outcomes and activity
+  prefixes remain unchanged. Do not omit a pending accepted milestone because its
+  implementation seems inconvenient or replace Focus during a correction.
+
+  Validation failures return to the same Director with the exact diagnostic.
+  A missing supplier position, invalid checklist reference or attempted acceptance
+  change should be corrected in that response, preserving the plan and checked
+  work. Distinct errors can be repaired as understanding improves. Repeated unchanged
+  findings without meaningful progress require diagnosis. A changing transcript
+  filename does not make the underlying error new, and the full retained diagnostic
+  must remain available even when its stable identity excludes incidental log paths.
+
+  Final independent rejection supplies a different kind of revision input. It
+  names unmet criteria, actual evidence and accountable responsibility for the
+  assembled candidate. Direction should plan the smallest necessary correction
+  against those rejected criteria, retaining successful unaffected work. A steward's
+  self-review is not that final verdict, and invalid Reviewer citations should
+  first return to the Reviewer for response repair. Do not make every response
+  format error trigger a new engineering plan.
+
+  ## Issue identity and execution handoff
+
+  After plan acceptance, Direction uses Collaboration to find or create the hosted
+  issue for the task identity and passes that identity to Execution. It does not
+  create an issue or worktree while merely considering an invalid initial plan.
+  An interrupted task retains its goal lookup, issue, branch, checkpoint and PR
+  relationships. A new provider activation or missing local directory is not a
+  new engineering goal. Observe retained state before creating another external
+  effect.
+
+  Execution owns branch and worktree preparation before stewards begin. All
+  milestones contribute to the same task branch through checked operations, with
+  recoverable checkpoints and attribution. Direction supplies sequence and issue
+  identity, not raw Git commands or per-steward branches. Collaboration and Delivery
+  own the corresponding external effects and reconciliation. Keeping those seams
+  separate prevents the Director from becoming a host execution engine.
+
+  The Director Agent remains read-only. Its plan can describe required changes
+  but cannot write implementation, contracts, the registry or permissions. Human
+  architectural approval governs objectives, goals and architecture. Routine plan
+  sequencing under that accepted guidance and authorized verified staging delivery
+  do not need another human gate. Main integration and release are separate
+  maintainer concerns, not effects a task plan can grant itself.
+
+  ## Questions, research and evidence
+
+  Director planning can use its own optional research activity when external
+  information could change feasibility, interpretation or sequence. Read relevant
+  retained component reports first and ask a sufficiently detailed question tied
+  to the decision. The host runs the explicit inbox contribution and resumes the
+  same planning caller with the complete report. Research is neither a mandatory
+  pre-plan stage nor a separate steward whose ownership can replace the component's
+  own responsibility.
+
+  Human clarification is appropriate for missing high-level intent or authority.
+  Preserve the exact question and complete answer with the requesting position,
+  then resume without asking again after restart. Ordinary technical uncertainty
+  can be settled from sources, optional research or the owning supplier. A plan
+  that requires a new architectural decision should name that conflict, while an
+  implementation choice already permitted by the public contract remains engineering
+  judgment. Avoid turning every uncertainty into an approval ceremony.
+
+  Read complete relevant evidence rather than relying on a status label. A passing
+  test can concern a different revision or exercise only a controlled provider.
+  The current standing-goal assessment needs applicable captured sources and, when
+  the measure requires a run, host-attested run evidence. Preserve the distinction
+  between native operation checks, real inference, independent assessment and
+  staging observation. Goals express success measures; results stay in the journal
+  and learning records.
+
+  ## Measures and evolution
+
+  Consider a documentation-only goal that changes an existing component guide.
+  The real owner can document and review that change while irrelevant behavioral
+  Steps are explicitly inapplicable for a reason. The plan should not manufacture
+  a failing software test or ask every consumer to acknowledge the paragraph.
+  Normal host checks and independent assessment still establish the applicable
+  delivery evidence. The sequence is small because the required contribution is
+  small, not because acceptance was weakened.
+
+  Consider a host API addition used by a workflow consumer. Sequence the public
+  lower-level contribution with a realistic contract fixture, then the consumer
+  and their assembled integration. If the lower-level Testing activity asks for a
+  complete consumer before observing its own red, inspect that requested dependency:
+  it may confuse future integration with present fixture validity. A missing public
+  type can be a concrete supplier contribution; a demand for all later behavior to
+  pass is not. This diagnosis can remove a circular handoff without introducing
+  another dependency framework.
+
+  Consider a final Reviewer rejecting an ownership-recovery criterion after local
+  tests passed. Direction retains the original criterion and its actual finding,
+  then sequences the accountable correction. A helper contribution can have local
+  engineering measures, but those do not replace the original rejected outcome.
+  The corrected assembled candidate needs fresh applicable assessment. Rewording
+  the acceptance to fit an easier passing test would violate the purpose of review
+  and make a later round unable to judge the original goal honestly.
+
+  The Direction steward's own engineering activities should exercise these cases
+  through public decode, validation, issue-handoff and Workflow seams as appropriate.
+  Observed red establishes the actual defect before correction; passing scoped
+  formatting, lint, types and relevant tests support the resulting contribution.
+  Do not let a suite pass conceal a deterministic source-quality failure until
+  self-review or final assembly. The component's operation mapping and detailed
+  activity procedures should expose that feedback while the responsible caller
+  can still make the smallest local correction.
+  Evidence should retain the actual selected profile and request identity for these
+  decisions, allowing later analysis to separate expensive plan reconstruction from
+  useful engineering progress and ordinary approval waiting.
+
+  Direction succeeds when a goal produces a comprehensible executable sequence,
+  suppliers precede their consumers, original acceptance survives revisions and
+  ordinary local failures stop causing expensive replanning. Measure actual
+  Direction invocations, request and response sizes, repeated validation findings,
+  handoff cost and useful staged outcomes. Detailed instructions can reduce total
+  cost even when their initial request is larger. Preserve complete reports and
+  unknown usage rather than imposing prompt ceilings or inventing dollar estimates.
+
+  Public tests should cover initial planning, standing no-work assessment, absent
+  owners, invalid references, immutable completed work, supplier order and final
+  rejection. Use realistic captured data and the actual native response shapes.
+  An existing-milestone revision must omit host-owned immutable fields where the
+  decoder requires it, while a new milestone remains complete. Comparing two
+  handwritten plans without exercising reconstruction and validation cannot prove
+  the production revision boundary.
+
+  Learn from observed inefficiency. If Testing requests its own future implementation,
+  improve the Step expectations and actor procedure. If a revision repeats a large
+  completed prefix, use the existing canonical plan and pending-only representation.
+  If a supplier answer is lost, correct its actual return seam rather than adding
+  another message store. Keep each correction focused on a demonstrated requirement
+  and remove superseded behavior when the simpler path works.
+
+  The long-term outcome is directed continuous development. Planner and Architect
+  can refine the high-level guides, while Direction repeatedly evaluates goals
+  against the accepted system and chooses useful engineering work. A human spends
+  attention on intent and boundaries; Agents handle ordinary implementation and
+  correction. Direction supports that model by preserving meaning, choosing real
+  responsibilities and sequencing the least necessary work through the existing
+  platform, without becoming the handler for every local failure.
 objectives:
-- measure: A supplier request preserves the owner and acceptance and places required work first.
+  - measure: A supplier request preserves the owner and acceptance and places
+      required work first.
 constraints:
-- failure: A milestone acquires two owners or the director grants itself write authority.
+  - failure: A milestone acquires two owners or the director grants itself write
+      authority.
 owns:
-- packages/direction
-- .arc/plans
-- .arc/research/direction
+  - packages/direction
+  - .arc/plans
+  - .arc/research/direction
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
-    - Investigate external facts and alternatives that can change goal interpretation, feasibility or sequencing.
+      - |
+        Investigate the specific sequencing, scope or planning uncertainty raised by the Director or Direction steward. Read the actual goal, accepted plan, Team selection and retained finding, distinguishing completed contributions from pending work. Determine whether another owner genuinely must implement something, or whether a local fixture or available earlier activity can resolve the issue.
+
+        Use existing source and research before seeking external information. For an alleged dependency, identify the public producer, consumer and missing behavior; agreement-only exchanges and a demand that later Implementation already pass Testing are not engineering contributions. Trace cost through the real timeline, including Direction invocations and request sizes, without imposing a planning budget.
+
+        Return a complete report with the facts, source references, viable ordering and unresolved guide decisions. This read-only activity does not hand-author the canonical accepted plan, create an issue, change acceptance, assign files or schedule agents. Recommend evidence that would distinguish a legitimate escalation from another expensive same-owner loop.
     operations:
-    - read-file
-    - list-files
-    standards: []
+      - read-file
+      - list-files
+    standards: [agent-operating-protocol]
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
-    - Describe planning, reuse and escalation as observable outcomes and keep the plan file a reviewable
-      render.
+      - |
+        Document Direction's accepted public planning behavior and the plan template's invariants. Explain initial analysis, explicit escalation and independent final rejection as the legitimate Director boundaries, with local repair owned by the calling activity or steward. Describe the host-canonical plan, stable acceptance identities, completed prefix and bounded meaning of pending-only revision without adding a numerical retry or milestone cap.
+
+        Use concrete schema examples that match the actual Director parser. Initial and revision responses differ; a revision must not reconstruct completed work, repeat Focus or overwrite retained owners and criteria. Checklists reference valid local acceptance ids. Milestones express outcomes and requirements, not per-file allowlists; Team determines ownership, and goals remain independent of that structure.
+
+        Keep issue lifecycle responsibilities precise: Direction requests tracking through Collaboration while Execution owns branches and worktrees. Plans are generated by the Director, never manually authored as replacement runtime truth. Link journal and learning evidence rather than copying results into goals or the template. Record the changed intent and the exact scenario that will prove simpler recovery without claiming a draft plan has executed.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    standards: []
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+    standards: [agent-operating-protocol]
   testing:
     role: designer
     profile: gpt-terra
     instructions:
-    - Exercise a two-owner task, unavailable supplier and preserved acceptance.
+      - |
+        Exercise real Director response validation and revision through Direction's public interface. Include malformed JSON/schema, nonexistent component/activity, invalid checklist references, attempted completed-work changes, duplicate contributions and a valid distinct supplier before its consumer. Return the exact parser or validation diagnostic to the same Director invocation context and assert a repaired plan stays in the same run.
+
+        Build a canonical accepted plan with completed and pending work, then test legitimate escalation and independent rejection separately from a same-owner check failure. The latter must not invoke Direction. A revision may change only the permitted pending structure while the host retains original acceptance, owners and completed outcomes. Do not hide schema errors by fabricating an assignment-shaped plan fixture.
+
+        Cover a goal whose existing measures pass but still receives analysis, and a proposed new owner that requires architectural acceptance. Tracking tests should inspect the host Collaboration seam rather than give the model GitHub access. Establish the focused behavioral red and relevant mapped checks; controlled model replies prove parser/recovery behavior, while live planning quality requires separately authorized real execution.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
   implementation:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-    - Author and sequence plans in Direction. Use Coordination’s persisted state and deterministic render.
+      - |
+        Keep plan creation and legitimate pending revision in the existing Direction service. Build requests from the accepted Team, goal, previous canonical plan and relevant complete findings, then validate the model's response before the host records it. Preserve initial versus revision schema distinctions, stable acceptance identities, completed outcomes and the accountable owner of retained work.
+
+        Send the exact response diagnostic back to the Director for repair in the same run. Do not rebuild a plan in a caller, silently infer missing schema fields or treat every fresh check failure as a planning boundary. Local steward failures remain with the existing milestone; Direction handles explicit cross-owner/scope escalation and final independent rejection. Distinct same-owner work is not an excuse to clone an unfinished contribution under a new supplier id.
+
+        Request issue creation and linking through the host Collaboration service, leaving Git branches and worktrees to Execution. Correct owned parser, prompt, fixture and test defects through declared tools. If the accepted interface cannot express a required guide decision, prepare the exact architectural proposal rather than weakening acceptance or adding another planning state store.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
   review:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-    - Check that plan changes preserve the goal, one owner per milestone and the one task lane.
+      - |
+        Review the actual generated-plan path, not a manually assembled example alone. Compare request inputs, response validation, journaled canonical plan and revision application. Completed outcomes, original acceptance and retained owners must survive a legitimate revision; invalid schema must return its precise diagnostic to the caller without an operator rebuilding the plan.
+
+        Inspect the regression that ordinary steward check or tool failures never engage Direction. Look for duplicate supplier milestones, circular Testing/Implementation dependencies, file permission lists in plans, fixed steward counts, issue creation in the wrong plugin and goals carrying owner assignments. A local fixture fix must not be escalated merely because an earlier Step is unavailable.
+
+        Use read-only evidence to identify a concrete local correction or a genuine architectural decision. Route the former to an applicable earlier Direction activity and the latter to the explicit high-level gate. This self-review cannot approve a changed contract or declare the final engineering candidate accepted. Distinguish parser correctness, deterministic recovery and actual live plan quality, including the measured cost of avoidable replanning.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - request-supplier
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - request-supplier
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
   planning:
     role: director
     profile: gpt-sol
     instructions:
-    - Use the captured Team component IDs in the plan so supplier links resolve to the same owners.
+      - |
+        Act as the Director for the supplied goal against the captured Team and accepted guides. Assess the full goal and measures even when current checks pass. Read applicable prior findings, complete answers, implementation evidence and the previous accepted plan when supplied. Select the actual accountable steward for each distinct required contribution; goals themselves must not prescribe owners, and today's repository roster must not be hardcoded into the plan.
+
+        For an initial plan, return the host-supplied plan schema with a Focus block, stable acceptance identities, sequential milestones and the five Steps with checklists and justified applicability. Sequence real supplier implementation before its consumer, but do not demand completed higher-level implementation merely to construct a lower-level test fixture. Ordinary local tool, check and self-review repair stays within its milestone. Only explicit escalation or final independent rejection justifies revising pending work.
+
+        At a legitimate revision boundary, preserve completed work and original acceptance. Return only the permitted pending revision shape, omitting host-restored owner/criteria on existing milestones and avoiding a new Focus block. Keep checklist references valid for their milestone. Direction owns issue creation through Collaboration's host service, not through model credentials or raw provider tools.
+
+        Ask for optional research when evidence cannot settle a named uncertainty, and resume with its complete answer. If a new component or changed guide is required, propose it explicitly and retain the human decision. Do not fabricate satisfaction, silently weaken measures, or replan every ordinary failure.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    standards: []
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+    standards: [agent-operating-protocol]

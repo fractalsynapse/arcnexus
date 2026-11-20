@@ -1,98 +1,493 @@
 id: coordination
 kind: plugin
-purpose: Persist task position and evidence through one project writer.
+purpose: |
+  # Coordination component purpose
+
+  ## Retain the truth of a sequential execution
+
+  Coordination owns the durable journal and project writer that make ArcNexus
+  execution recoverable. It persists accepted plan content, position, questions,
+  answers, requests, attribution, outcomes and evidence references in the existing
+  SQLite store for the verified project. Its consumers need a reliable answer to
+  what has been accepted, what actually happened and where the next legitimate
+  activity begins. That answer must survive a process exit without requiring an
+  operator to reconstruct state or invent a separate recovery procedure.
+
+  The component exists because provider processes, local worktrees and foreground
+  commands are temporary, while acknowledged effects and human decisions must
+  persist. An Agent can stop after a checked edit is secured but before its activity
+  completes. A child phase can finish before its parent records the next position.
+  A remote publication can occur before its response arrives. Coordination supplies
+  the identities and observations that let the responsible services reconcile
+  those moments honestly instead of repeating effects or losing successful work.
+
+  Agent and Team remain the conceptual model. Coordination records their work,
+  selected activities, requests and observations; it does not create another actor
+  hierarchy or owner catalog. Architecture supplies accepted definitions, Direction
+  supplies the plan, Workflow manages sequence and Execution performs scoped host
+  effects. A journal record can preserve those decisions and results without
+  claiming authority to change them. Learning and reports derive from actual
+  observations rather than becoming a competing state machine.
+
+  The useful outcome is a coherent recoverable history. A human can follow the
+  live timeline, a returning activity can read its complete answer and retained
+  receipt, and a host can resume at the first unfinished position. Historical
+  failures remain failures even after a later correction works. A clean-looking
+  report is not useful if it hides a missing acknowledgment, duplicate issue or
+  manual database repair that the workflow could not perform itself.
+
+  ## One store and one foreground project writer
+
+  The verified repository identity determines the project's coordination namespace
+  within configured application storage. Relocating a checkout must not accidentally
+  create another project merely because its directory name changed. Generic tests
+  can supply isolated storage and repositories explicitly. The source tree contains
+  authored code and documents, while the live database and bulk execution artifacts
+  remain outside maintained source. Credentials are not project records.
+
+  The first system has a sequential project lane. A foreground invocation owns
+  the existing writer, and competing live admission is refused with the relevant
+  active identity. There is no extra queue row, parallel worker admission or
+  second lock service. Admission and ownership must stay coherent while the
+  invocation moves between planning, architecture assessment, goal work, approval
+  dialogue and publication. An apparently idle transition is not permission for
+  another foreground process to enter.
+
+  Sequential child sessions share their ancestor's writer. A phase can need normal
+  task implementation inside Architect, and refinement contains phase and goal
+  sessions beneath its foreground invocation. Completing or closing a child must
+  not release the live parent's ownership. A sibling cannot overlap an unfinished
+  child, and parent completion must respect actual child state. These are ordinary
+  sessions in the same store, not a second nested scheduler.
+
+  A departed writer is reconciled through the existing restart path. Determine
+  actual process/session ownership using its retained identity rather than treating
+  elapsed time as proof of death. Preserve unfinished child observations and
+  acknowledged work, record honest terminal information where appropriate and
+  readmit the retained logical task. Do not add an application timeout, lease-age
+  budget or background cleanup engine as a substitute for correct ownership.
+
+  Approval pauses have both durable and foreground meaning. An interactive
+  invocation awaiting an answer retains its writer while it is alive. A
+  noninteractive command can report a durable pending decision and exit; its
+  proposal and cursor still survive for the next legitimate continuation. A
+  missing answer never becomes approval because the process ended or time passed.
+  Keep the decision record separate from temporary process liveness.
+
+  ## Distinguish goal, logical task, attempt and round
+
+  A goal identity derives from the complete goal text. Identical text provides
+  a lookup for retained issues, checkpoints and previous work, while a changed
+  goal is a different submission. Preserve the full text without an application
+  content cap. The digest is an identity mechanism, not a reason to replace the
+  readable goal or erase the human's original intent from the retained record.
+
+  Continuous goals can be evaluated repeatedly. A round and inventory entry give
+  each fresh evaluation a logical task identity, while interrupted attempts reuse
+  that identity. Otherwise a permanent goal digest could incorrectly make every
+  future round reuse yesterday's satisfied result, or a new process could create
+  another issue for an unfinished task. The journal must represent this distinction
+  directly enough for normal readers to resume without guessing.
+
+  An attempt is an actual execution episode with its own observations and outcome.
+  It can fail, cancel, hold or complete while sharing the logical task's retained
+  work. A later successful attempt does not rewrite that history. Record actual
+  runtime, architecture and profile identities where observed. The branch and
+  checkpoint relationships let Execution reconstruct a fresh worktree without
+  treating a new local path as a new engineering objective.
+
+  Refinement retains its requested total, current round, phase and per-goal
+  progress in the same store. A retry resumes the unfinished invocation rather
+  than starting another sequence. A changed requested total cannot silently
+  reinterpret already retained work. A completed invocation permits a fresh
+  subsequent cycle with new phase and goal identities. These positions belong to
+  the existing journal and round storage, not duplicated JSON scheduler state.
+
+  Run captures its approved priority-ordered inventory after Plan and Architect.
+  That exact inventory survives an interrupted Run, while a later fresh round
+  can capture accepted changes. Standalone goal rounds and refinement use distinct
+  inventory identities within the same mechanism so one cannot consume another's
+  unfinished record. A completed goal outcome remains associated with its actual
+  inventory entry and evaluated revision, not merely the current filename.
+
+  ## Transactional records and idempotent observations
+
+  Writes must preserve the committed state when interrupted or rejected. A stale
+  expected version fails without partially changing the record. Identical content
+  under the same identity is idempotent rather than another apparent transition.
+  Transactions should make the meaningful state change and its observation agree.
+  A caller needs to know whether an effect was durably acknowledged, not merely
+  whether an in-memory object changed before an exception occurred.
+
+  Events are append-only observations. They preserve actual requests, model
+  responses, check results, refusals, approvals, rewinds and terminal outcomes.
+  Do not rewrite a failed event as success, delete inconvenient history or introduce
+  unused status literals for hypothetical future workflows. A status vocabulary
+  should correspond to real transitions and readers. Fewer necessary states are
+  easier to recover than overlapping projections that each claim to represent
+  the current task.
+
+  Git owns source revisions and object content. Coordination retains identities,
+  digests and observed relationships needed for accountability, not a parallel
+  copy of Git objects or an independently maintained branch-head cache. An
+  observed commit remains a valid historical identity when a branch later moves.
+  Callers must inspect current Git or provider state when their effect depends
+  on it rather than trusting a stale mutable projection in the database.
+
+  Plans are structured agent-authored content retained by the host. The committed
+  plan file is a deterministic render of that state. A manual edit to the render
+  does not become an accepted plan revision; the next render should expose or
+  replace the disagreement from canonical state. This keeps reviewable plan diffs
+  without making an editable Markdown file a second source of sequence, owner
+  permissions or acceptance.
+
+  Terminal recording must be honest and singular for the actual attempt. A
+  cancelled invocation has one terminal outcome, with its last committed position
+  and retained evidence. Closing a connection or cleaning a worktree does not
+  justify another contradictory terminal result. A report should show the real
+  outcome and unresolved work, including any cleanup or publication uncertainty
+  that prevents a stronger completion claim.
+
+  ## Preserve complete answers and acknowledged effects
+
+  A human question is bound to its requesting actor, position, task and proposal
+  where applicable. Store the complete answer before continuation. Significant
+  whitespace, multiple paragraphs and qualifications can determine the implementation.
+  An index or summary is useful for discovery but cannot replace that full content.
+  Restart and approved architecture adoption must not cause the caller to ask
+  again for an already recorded answer.
+
+  Research and supplier results need the same continuity. The original activity
+  receives the complete report or reply and its applicable evidence after the
+  handoff. Direction can link accepted work without changing its owner or criteria.
+  A request that names the same accepted contribution should not create another
+  milestone simply because its caller resumed. Keep the relationship to the
+  requesting acceptance visible in canonical records.
+
+  Checked edits are secured before MCP acknowledges success. Coordination retains
+  the receipt and checkpoint observations so a replay can return the original
+  effect identity rather than write again. An unrelated later refusal does not
+  undo an earlier successful file. A crash before activity completion must retain
+  the acknowledged prefix. Execution owns the actual filesystem and checkpoint
+  reconciliation; the journal supplies its recorded facts and first unfinished
+  position.
+
+  Local rewinds preserve both prior completion and current obligation. A target
+  activity can have finished earlier and need fresh work now, while its original
+  red or answer remains useful historical evidence. Persist the rewind before
+  the next activation, retain the full originating finding alongside later
+  diagnostics and keep current unresolved check expectations discoverable. Do not
+  collapse that meaning into a boolean that loses why the activity is running again.
+
+  Uncertain external effects require observation before replay. A remote push, issue,
+  PR or merge may exist even when the local call returned no response. Delivery
+  and Collaboration inspect the provider through their established boundaries.
+  Coordination retains intent and observed identities so those services can
+  recognize the existing effect. The database must not authorize blind replay
+  or manufacture evidence that the provider operation never occurred.
+
+  ## Approval and evolving authority remain attributable
+
+  Human approval binds exact content and baseline for objectives, goals and
+  architecture. Retain the proposal, question, decision and original source
+  identities. Missing, unknown, declined or mismatched approval cannot advance a
+  protected application cursor. A candidate-side note or registry change is not
+  the human receipt. The host's exact application capability uses those retained
+  facts with its own preimage and result validation.
+
+  Approved architecture can advance between activities after required implementation
+  and handlers are validated. Record the previous and new model identities,
+  approval and actual adoption point. Revalidate pending work and affected
+  evidence before the next actor uses it. An in-flight activation keeps its
+  original authority, and historical observations retain their actual profile
+  and instructions. Updating current state must not relabel earlier results.
+
+  Runtime adoption follows the same honesty. A validated updated runtime can be
+  used at a safe checkpoint through the trusted application composition, with
+  its actual identity recorded. A candidate cannot replace the host or approve
+  itself by editing project data. The journal must preserve enough context to
+  explain which runtime performed each effect and which retained work was
+  revalidated. It does not need to become a runtime installer or supervisor.
+
+  Interrupted transitions are recovered through the normal reader and lifecycle.
+  The proposal's baseline, engineering base, active model and candidate digest
+  serve different meanings and should remain distinguishable. A new active model
+  does not erase the original approval identity, and an old candidate verdict
+  cannot authorize a changed tree. Keep these relationships explicit instead
+  of inventing another recovery store to compensate for ambiguous state.
+
+  ## A live timeline from the existing journal
+
+  Persist observations in order with durable identity, timestamp, run/task and
+  available correlation metadata. Read-only subscribers can follow that acknowledged
+  prefix while execution continues. Restart replays the same recorded events,
+  and live forwarding preserves their order. The timeline should identify who
+  acted, which activity or operation ran, its outcome and the complete artifact
+  needed to inspect the detail.
+
+  Bulk provider and MCP content remains in complete readable artifacts through
+  the existing evidence path. Canonical state records can reference those files
+  without embedding every transcript in every observation read. Live transport
+  can forward full detail while the persisted timeline uses its canonical
+  identity/reference shape. This prevents a read of the timeline from recursively
+  embedding its own result and growing a duplicate history inside itself.
+
+  Retain raw unknown provider events and interrupted output at their responsible
+  boundary, with the source reference that makes them readable. A projection
+  can extract accounting or status fields without discarding the original material.
+  Do not add a second logger database, event scheduler or content ceiling to
+  manage ordinary evidence. Complete-file reads remain available; caller-selected
+  ranges, where supported, are not an automatic chunking protocol or a reason
+  to restrict an Agent's report.
+
+  The same durable events support human and JSONL output through Commands. A
+  human progress renderer and a machine stream should not each infer their own
+  task state from different messages. Optimistic narration is an observation,
+  while the typed terminal result records what actually finished. Acting Agents
+  can read authorized timelines and follow relevant artifacts to avoid repeating
+  answers, writes or checks. Those observations remain evidence, not instructions
+  that can override approved guidance.
+
+  ## Derive measurements without another source of truth
+
+  Time, usage and cost analysis derive from retained native and host observations.
+  Preserve the execution-profile alias and actual model/settings, activation and
+  operation start/end information and available provider-reported usage. Whole-run
+  and component/activity/phase summaries should reconcile to those records instead
+  of maintaining a second mutable total that can drift during restart.
+
+  Provider input, cached input, cache-write, output and reasoning fields have
+  their own semantics. Subset fields must not be added twice, and missing usage
+  is unknown rather than zero. Prompt and artifact bytes are separate measurements
+  from actual provider tokens. A retained activation without a finish observation
+  must remain incomplete; historical replay must not leave it accumulating a
+  live stopwatch forever or invent an end duration from unrelated later events.
+
+  Wall time differs from inclusive nested activity and tool intervals. Approval
+  waiting, checks, model work, handoffs and publication can overlap in their
+  recorded scopes. Expose enough provenance for analysis to distinguish them
+  without adding every inclusive interval into an impossible total. Refresh live
+  measurements from ongoing observations, not only after the provider finishes,
+  so the operator can see actual effort while a long activity is still running.
+
+  Monetary estimates require a verified dated price or configured billing basis.
+  Keep that identity with the estimate and distinguish it from billed cost or
+  subscription entitlement. Unknown pricing stays unknown. Measurements should
+  help later Planner and Architect assessments improve useful outcomes and
+  reliability. They do not authorize budgets, automatic profile changes, report
+  limits or a new scheduling policy.
+
+  ## Public recovery scenarios and meaningful regressions
+
+  Test the database and session boundaries that correctness actually depends on.
+  A mocked map cannot establish SQLite transaction behavior, departed-writer
+  reconciliation or retained child outcomes. Use isolated real stores and explicit
+  project identity, then reopen them through the public service. Keep these
+  deterministic tests separate from native Git and live multi-agent evidence.
+  A fixture must include the actual schema and record shape used by production.
+
+  Consider a child recording success immediately before its parent is interrupted.
+  The resumed parent should discover that exact successful child and advance
+  without another model call or duplicate PR. Observe both sides of the commit
+  window through real journal/session behavior. Merely writing a parent completion
+  record by hand avoids the boundary and cannot prove the recovery claim.
+
+  Consider an edit acknowledged before the process dies. The returning task reads
+  its retained receipt and checkpoint, reconstructs the worktree through Execution
+  and resumes the appropriate activity. A repeated identical checked request
+  returns the same receipt. The earlier failed or interrupted attempt remains
+  visible. Database repair, operator source edits or a fresh goal identity would
+  invalidate a claim that the normal lifecycle recovered itself.
+
+  Consider a foreground refinement invocation with sequential Planner, Architect
+  and goal sessions. Competing admission must remain refused while the parent
+  is active, including after one child finishes. An unanswered exact approval
+  proposal remains intact across restart, and completed earlier phases are not
+  repeated. A later fresh invocation must get a new logical cycle rather than
+  consume an old completed inventory because its goal text matched.
+
+  Consider a timeline read performed by an Agent through local MCP. Its full
+  content remains a readable tool artifact, while recording that tool call adds
+  canonical references to the timeline instead of recursively copying its entire
+  payload into itself. Live and replayed timeline shapes should agree. This
+  case catches a real evidence-design failure without imposing a size cap or
+  discarding useful observations.
+
+  ## Measures and a simpler durable foundation
+
+  Isolation needs a concrete public observation. Distinct verified projects in
+  the same process must not share a writer, task cursor or evidence namespace.
+  Opening a second local checkout of the same project under its normal configured
+  storage should retain that project's identity instead of creating an accidental
+  parallel lane. Fixtures should supply those identities explicitly and assert
+  which admission is refused and which independent project can proceed.
+
+  Stale writes need similarly precise evidence. Read a version, commit a legitimate
+  newer change, then attempt the stale update through the public transaction API.
+  The refusal must leave both current state and event history coherent. Repeating
+  the actual accepted content should be idempotent rather than another transition.
+  These observations distinguish transactional correctness from a test that merely
+  asserts a final object happened to contain the expected text.
+
+  Measurement replay should also preserve uncertainty. Feed an activation with
+  reported input and cached-input usage, another with no usage and an interrupted
+  activation with no finish. The derived totals should retain separate subset
+  fields, unknown categories and incomplete duration rather than fabricated zeroes.
+  Replaying the same durable sequence must not double-count it. The live projection
+  is useful precisely because its totals remain explainable from underlying events.
+
+  The same discipline applies to derived plan and inventory reports. Their bytes
+  can be recreated from retained canonical records and accepted source identities.
+  Removing a disposable report must not erase an approval or make a completed
+  goal run again. This is a practical simplification measure: useful projections
+  can be regenerated, while the few facts needed for authority and recovery have
+  one durable source and a clear owner.
+  Keep origin and correlation identity with replayed child observations so a
+  parent report can include earlier completed work without pretending those events
+  were newly executed in the current attempt.
+
+  Coordination succeeds when normal retained state is sufficient to explain and
+  resume work. The project has one writer and store, accepted identities remain
+  stable, answers and receipts survive interruption, uncertain effects are
+  observed before replay and reports regenerate from the same canonical records.
+  Completed phases and goals stay completed while pending work remains explicit.
+  Historical failures are preserved without becoming permanent prerequisites to
+  proving a fresh useful delivery.
+
+  Measure the work saved and failures prevented: repeated model activations,
+  duplicate writes or publications, lost answers, stale check instructions,
+  unnecessary plan reconstruction and operator interventions. Link the analysis
+  to actual events and profile usage. If disproportionate debugging reveals
+  duplicate states or projections, simplify the existing path and remove the
+  redundancy. Do not respond by adding another scheduler, lock service or
+  recovery framework around the same ambiguous process.
+
+  The durable foundation should let the platform evolve while remaining
+  understandable. Human-approved guides can change, validated runtimes can advance
+  and continuous goals can be reassessed, yet every earlier effect and decision
+  keeps its meaning. Coordination supports that evolution by retaining accurate
+  facts and positions for the responsible plugins, without becoming the owner
+  of planning, permissions, execution or acceptance itself.
 objectives:
-- measure: Reopening the project store yields the last committed position.
+  - measure: Reopening the project store yields the last committed position.
 constraints:
-- failure: Concurrent writers or competing stored versions of a fact are observed.
+  - failure: Concurrent writers or competing stored versions of a fact are observed.
 owns:
-- packages/coordination
-- .arc/research/coordination
+  - packages/coordination
+  - .arc/research/coordination
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
-    - Identify the durable fact and its existing writer before proposing a storage change.
+      - |
+        Investigate the actual durability, admission or recovery ambiguity in the retained journal. Read the Coordination public interface, schema and writer ownership, then follow the relevant Workflow or Execution caller. Distinguish a task identity, refinement sequence, round, phase, activation, event sequence, approval and external effect; a convenient shared string is not proof they are interchangeable.
+
+        For an interrupted history, read complete event artifacts and checkpoints rather than a clipped tail or the latest in-memory collector. Identify the precise persistence boundary and which acknowledged effect exists before the crash. Do not perform manual database repair or discard failed observations to create a clean narrative. Existing reports may already explain the storage behavior.
+
+        Return a complete report with the durable facts, source references and a public reopen scenario that would prove the correction. Research does not acquire a project writer, mutate rows, replay a provider effect or create a new recovery store. Recommend reuse of the existing database and ownership path rather than another scheduler or sidecar cursor.
     operations:
-    - read-file
-    - list-files
-    standards: []
+      - read-file
+      - list-files
+    standards: [agent-operating-protocol]
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
-    - Describe the state, evidence identity and derived views in the coordination contract.
+      - |
+        Describe the existing store's authoritative identities and transitions for the accepted outcome. Explain which host component writes each record and how a foreground refinement writer is shared by sequential phase and task sessions without nested competing admission. Separate retained facts from derived views; reports must not become a second source of task or approval truth.
+
+        Document crash boundaries in concrete terms: proposal retained before a question, answer recorded before resumption, edit acknowledged after its checkpoint, child completion stored before parent advancement, and external effect uncertainty reconciled before replay. Preserve issue, branch, PR, answer and activity identities across attempts. A run that is held or failed remains so in historical evidence even after later recovery succeeds.
+
+        Use actual schema and public operation names, linking Workflow's lifecycle and Execution's filesystem responsibilities. Keep generated databases, transcripts and indexes outside source. Do not introduce paging requirements, arbitrary event-size ceilings, retry budgets or automatic historical rewriting. State the applicable validation and migration behavior rather than claiming a schema declaration alone proves restart safety.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    standards: []
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+    standards: [agent-operating-protocol]
   testing:
     role: designer
     profile: gpt-terra
     instructions:
-    - Exercise stale writes, abrupt exit and retained position using the real record shape.
+      - |
+        Exercise the real Coordination persistence boundary with explicit temporary database and project identities. Close and reopen the store around the operation being tested; an in-memory fake cannot establish crash recovery or writer release. Test one project writer across sequential refinement/phase/task sessions, rejection of a competing writer, and safe cleanup without deleting retained facts.
+
+        Build distinct attempts with separate findings, complete answers, usage, terminal outcomes and event sequences. Assert that recovery sees all applicable history, neither only the first timeline nor only the resumed observer. Cover a successful child retained before the parent cursor advances, a pending exact proposal and approval, an acknowledged checkpoint, and uncertain provider state. Distinguish duplicate replay from a recorded reuse observation.
+
+        Use the actual typed public records and test retention of historical failures. Do not let a repeated generic summary satisfy an assertion that claims complete finding reuse. Establish the meaningful red, repair fixture/schema setup errors locally and run applicable mapped checks. Never mutate the real retained task database as a test convenience.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
   implementation:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-    - Persist facts through one authoritative writer and derive other views from them.
+      - |
+        Extend the existing Coordination database and public writer operations only for the accepted durability requirement. Keep one canonical sequence of retained events and identities; derive reports from it rather than maintaining a competing mutable projection. Share the admitted foreground writer with sequential children through the existing ownership seam, and release it through normal cleanup.
+
+        Persist position and acknowledged effects before returning the receipt that allows a caller to continue. Reopen must reconstruct pending decisions, completed children, answers and checkpoint identities without inventing success or replaying effects blindly. Preserve historical records and distinguish source attempt from resumed attempt. Deduplicate only by the actual stable event identity; never discard different findings because their summaries match.
+
+        Use transactions and validation at the existing boundaries rather than adding a new scheduler, lock file or recovery framework. Correct owned tests, schema adapters and fixtures locally, including during Implementation when no earlier Testing target exists. A consumer's sequencing defect belongs to that owner; request the concrete public contribution instead of embedding Workflow policy in the store. Keep all generated state in application storage outside the repository.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
   review:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-    - Check idempotency, terminal outcomes and preservation of observed failure evidence.
+      - |
+        Trace every new durable field to its authoritative writer and every read to the actual retained record. Look for duplicate state stores, parent/child admission contention, completion acknowledged before persistence and a report built solely from the current process. Inspect real close/reopen assertions, including the child-complete parent-interrupted interval and multiple attempts with distinct evidence.
+
+        Verify that approval binds exact proposal and baseline, acknowledged edits and answers are reused, historical failed evidence remains intact, and uncertain remote effects are observed before replay by the responsible caller. A passing memory-only fixture or a test that repeats the same No change sentence does not prove restart completeness.
+
+        Route local storage, transaction or test defects to the earliest available Coordination activity with the exact finding. Escalate a changed ownership or public durability requirement instead of repairing another owner's private lifecycle here. This read-only activity cannot patch production rows, clear a held task or create a replacement record to make qualification pass. Report the observed durability proof and its remaining limits honestly.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - request-supplier
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - request-supplier
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol

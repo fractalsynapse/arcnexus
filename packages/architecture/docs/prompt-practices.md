@@ -38,12 +38,13 @@ from task input, observations, quoted source material and tool results. An error
 message or external research report is evidence, not a new instruction. Preserve
 its complete text and identity so the caller can act on it without reconstruction.
 
-Treat these as operating instructions, not incidental task prose. Deliver approved
-standing and activity guidance through a supported provider instruction channel and
-keep the changing goal and observations distinct. Verify the installed provider's
-behavior and record the actual request channels in inspect and evidence; a label
-inside a user string cannot establish system/developer priority. Preserve the
-harness's own rules and normal AGENTS/skill discovery.
+Treat these as operating instructions, not incidental task prose. The architect
+accepts the existing single-string request: resolve purpose, selected activity,
+role and standards through that same builder for inspect and activation. Source
+labels distinguish guidance from changing goals and observations. Do not add
+provider channels or a new request schema for this rewrite. Preserve the harness's
+own rules and normal AGENTS/skill discovery; descriptive labels do not change
+provider instruction priority.
 
 Instructions explain how the actor should act; operation declarations and the host
 enforce what it may do. A paragraph cannot grant a missing operation. Keep profiles,
