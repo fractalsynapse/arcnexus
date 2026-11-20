@@ -106,7 +106,7 @@ export class RefinementRun {
     if (!goals)
       return { kind: 'invalid', reason: 'Standing goal rounds are unavailable', evidence: [] };
     this.save(invocation, round, 'Run', { inventory: goals.goals });
-    const index = phase === 'Run' && saved?.phase === 'Run' ? saved.goal ?? 0 : 0;
+    const index = phase === 'Run' && saved?.phase === 'Run' ? (saved.goal ?? 0) : 0;
     const outcome = await this.runGoals(invocation, round, goals.goals, index);
     if (outcome) return outcome;
     goals.finish();
