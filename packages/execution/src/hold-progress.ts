@@ -31,7 +31,10 @@ export function checkedCorrectionProgress(
   const finding = correctionFinding(task.history(), milestone);
   if (finding?.kind !== 'rejection') return correctionMadeProgress(task.observations(), previous);
   if (checkFailureSignature(previous) !== checkFailureSignature(current)) return true;
-  const paths = holdInputPaths(task, milestone);
+  const check = task
+    .observations<{ check?: CheckResult }>()
+    .findLast((event) => event.check?.log === current)?.check;
+  const paths = holdInputPaths(task, milestone, check);
   return correctionMadeProgress(task.observations(), previous, paths);
 }
 
