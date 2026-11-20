@@ -17,11 +17,17 @@ export const skill =
 
 /** Own realistic committed captures and real admission without borrowing developer configuration. */
 export class InspectionFixture extends RoundConsumptionFixture {
+  private readonly sessions: HostTask[];
   readonly agent = new Agent(this.architecture);
 
   /** Extend the generic catalog with disjoint activities and independently controlled web profiles. */
   constructor(t: TestContext) {
+    const sessions: HostTask[] = [];
+    t.after(() => {
+      for (const task of sessions) { task.cleanup(); task.close(); }
+    });
     super(t);
+    this.sessions = sessions;
     this.configureActors();
     this.write('AGENTS.md', guidance);
     this.write('.agents/skills/example/SKILL.md', skill);
@@ -50,10 +56,7 @@ export class InspectionFixture extends RoundConsumptionFixture {
       new AbortController().signal,
     );
     assert(session instanceof HostTask, JSON.stringify(session));
-    t.after(() => {
-      session.cleanup();
-      session.close();
-    });
+    this.sessions.push(session);
     t.mock.method(GitHub.prototype, 'publication', async () => undefined);
     t.mock.method(GitHub.prototype, 'remoteHead', async () => undefined);
     await execution.prepare(session, '42', new AbortController().signal);
