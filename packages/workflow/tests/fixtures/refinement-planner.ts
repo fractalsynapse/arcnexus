@@ -18,7 +18,10 @@ export class RefinementPlanner {
   readonly identities: string[] = [];
 
   /** Bind the captured revision to justified read-only Planner outcomes. */
-  constructor(private readonly revision: string) {}
+  constructor(
+    private readonly revision: string,
+    private readonly unfinished = true,
+  ) {}
 
   /** Register each phase or goal session so assertions can independently read canonical history. */
   observe(session: TaskSession) {
@@ -28,7 +31,7 @@ export class RefinementPlanner {
   /** Resume the same unfinished child, retaining the answer while changing provider findings. */
   async propose(session: TaskSession, _mode: unknown, _report: unknown, signal: AbortSignal) {
     const attempt = ++this.attempts;
-    this.round = attempt < 3 ? 1 : 2;
+    this.round = this.unfinished ? (attempt < 3 ? 1 : 2) : attempt;
     this.observe(session);
     this.identities.push(hostTask(session).taskID);
     const agent = new Agent({
