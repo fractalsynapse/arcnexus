@@ -116,31 +116,25 @@ async function recordProviderEvidence(
   calls.value++;
   const answer = await session.ask?.('Retain this complete answer', new AbortController().signal);
   session.record({ phase: 'question', message: `Complete answer: ${answer}` });
-  const task = hostTask(session);
-  const activation = 'fixture-planner-activation';
-  const usage = { input_tokens: 17, output_tokens: 5 };
-  const source = task.store(
-    'provider-turn.json',
-    JSON.stringify({ type: 'turn.completed', usage }),
-  );
-  task.note({
-    nativeStarted: {
-      activation,
-      profile: 'planner-fixture',
-      model: 'fixture-model',
-      reasoning: 'high',
-    },
-  });
-  task.note({
-    nativeEvent: { activation, kind: 'event', source, event: { type: 'turn.completed', usage } },
-  });
-  task.note({ nativeFinished: { activation, durationMs: 7 } });
+  recordUsage(hostTask(session));
   return {
     kind: 'planned' as const,
     commit: revision,
     summary: `Distinct Planner finding attempt ${calls.value}`,
     evidence: [],
   };
+}
+
+/** Retain controlled provider attribution and usage in the real child journal. */
+function recordUsage(task: ReturnType<typeof hostTask>) {
+  const activation = 'fixture-planner-activation';
+  const usage = { input_tokens: 17, output_tokens: 5 };
+  const source = task.store('provider-turn.json', JSON.stringify({ type: 'turn.completed', usage }));
+  task.note({ nativeStarted: { activation, profile: 'planner-fixture', model: 'fixture-model', reasoning: 'high' } });
+  task.note({
+    nativeEvent: { activation, kind: 'event', source, event: { type: 'turn.completed', usage } },
+  });
+  task.note({ nativeFinished: { activation, durationMs: 7 } });
 }
 
 /** Return the controlled Planner that should run once before restart. */
