@@ -18,7 +18,7 @@ type ArchitectureChild = (
   parent: TaskSession,
   scope: string,
 ) => Promise<TaskOutcome>;
-type SavedProgress = Extract<NonNullable<ReturnType<TaskSession['history']>[number]>, { refinement: unknown }>['refinement'];
+type SavedProgress = RefinementProgress;
 
 /** Sequence resumable assessments and goals inside one admitted foreground journal. */
 export class RefinementRun {
