@@ -48,41 +48,44 @@ function assertConsumption(observed: Observations, prior: CompletedRefinementRou
       ({ component, completed: position }) => component === actor && position === completed,
     );
     assert.ok(attempts.length, actor + ' must be activated');
-    for (const attempt of attempts) {
-      const assignment = parse(
-        attempt.input
-          .split('\n\n## Activity')[0]!
-          .slice(attempt.input.indexOf('\n\nassignment:') + 2),
-      ).assignment;
-      assert.ok(
-        assignment.completedRounds.some(
-          (round: CompletedRefinementRound) =>
-            round.report === prior.report &&
-            round.invocation === prior.invocation &&
-            round.round === prior.round,
-        ),
-      );
-      assert.ok(attempt.reads.includes(prior.report));
-      const consumed = attempt.consumption.find(({ report }) => report === prior.report);
-      assert.ok(consumed);
-      assert.equal(consumed.invocation, prior.invocation);
-      assert.equal(consumed.round, prior.round);
-      assert.deepEqual(consumed.findings, prior.findings);
-      assert.deepEqual(consumed.measurements, prior.measurements);
-      const sources = consumed.sources
-        .map((source) => {
-          assert.ok(attempt.reads.includes(source));
-          return readFileSync(source, 'utf8');
-        })
-        .join('\n');
-      for (const origin of ['planner finding ', 'architecture finding ', 'direction finding '])
-        assert.ok(sources.includes(origin), 'the complete originating ' + origin + ' is readable');
-      assert.ok(sources.includes('complete second line and final conclusion survive.'));
-      const report = readFileSync(prior.report, 'utf8');
-      for (const sequence of prior.findings)
-        assert.ok(report.includes('"sequence":"' + sequence + '"'));
-    }
+    for (const attempt of attempts) assertAttempt(attempt, prior);
   }
+}
+
+/** Check the prepared assignment and the complete sources actually read by this actor. */
+function assertAttempt(attempt: Consumption, prior: CompletedRefinementRound) {
+  const assignment = parse(
+    attempt.input
+      .split('\n\n## Activity')[0]!
+      .slice(attempt.input.indexOf('\n\nassignment:') + 2),
+  ).assignment;
+  assert.ok(
+    assignment.completedRounds.some(
+      (round: CompletedRefinementRound) =>
+        round.report === prior.report &&
+        round.invocation === prior.invocation &&
+        round.round === prior.round,
+    ),
+  );
+  assert.ok(attempt.reads.includes(prior.report));
+  const consumed = attempt.consumption.find(({ report }) => report === prior.report);
+  assert.ok(consumed);
+  assert.equal(consumed.invocation, prior.invocation);
+  assert.equal(consumed.round, prior.round);
+  assert.deepEqual(consumed.findings, prior.findings);
+  assert.deepEqual(consumed.measurements, prior.measurements);
+  const sources = consumed.sources
+    .map((source) => {
+      assert.ok(attempt.reads.includes(source));
+      return readFileSync(source, 'utf8');
+    })
+    .join('\n');
+  for (const origin of ['planner finding ', 'architecture finding ', 'direction finding '])
+    assert.ok(sources.includes(origin), 'the complete originating ' + origin + ' is readable');
+  assert.ok(sources.includes('complete second line and final conclusion survive.'));
+  const report = readFileSync(prior.report, 'utf8');
+  for (const sequence of prior.findings)
+    assert.ok(report.includes('"sequence":"' + sequence + '"'));
 }
 
 test('completed refinement reports reach real prepared assessments across invocations', async (t) => {
