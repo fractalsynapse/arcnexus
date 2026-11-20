@@ -36,7 +36,7 @@ function completedRounds(journal: Journal): JournalEvent[] {
 function completed(journal: Journal, round: number, suffix: string) {
   const marker: CompletedRefinementRound = {
     invocation: journal.taskID,
-    round,
+    round: String(round),
     report: `/evidence/report-${suffix}.md`,
     findings: [`finding-${suffix}`, `answer-${suffix}`],
     measurements: [`usage-${suffix}`],
