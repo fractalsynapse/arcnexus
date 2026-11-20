@@ -60,7 +60,13 @@ function retainedHoldContext(
     ...checkedReceipts(events),
     ...knowledge,
     position: task.history().findLast((event) => 'position' in event)?.position,
-    progress: holdProgress(task, milestone, failure.diagnostic, failure.check, knowledge.knowledgeIdentity),
+    progress: holdProgress(
+      task,
+      milestone,
+      failure.diagnostic,
+      failure.check,
+      knowledge.knowledgeIdentity,
+    ),
     prerequisite: holdPrerequisite(failure.check, knowledge.gates),
     ...supplierContext(task.history(), milestone.id),
   };
