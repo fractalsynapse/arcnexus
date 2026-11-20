@@ -49,7 +49,10 @@ test('accepted foreign handoff retains the owned checkpoint and consumes the com
   scenario.assertRetained();
   scenario.task.record({
     activation: {
-      milestone: requester.id, owner: requester.owner, step: 'implementation', index: 2,
+      milestone: requester.id,
+      owner: requester.owner,
+      step: 'implementation',
+      index: 2,
       outcome,
     },
   });
