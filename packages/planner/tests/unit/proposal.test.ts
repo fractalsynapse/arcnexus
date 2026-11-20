@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { Capture } from '../../../architecture/src/index.js';
+import type { VerifiedGoalRun } from '../../../execution/src/index.js';
 import type { TaskSession } from '../../../workflow/src/index.js';
 import { goalInventory } from '../../src/inventory.js';
 import { decodeProposal } from '../../src/proposal.js';
-import { objectivePath, objectiveRecord, showPatch } from '../../src/records.js';
+import { objectivePath, objectiveRecord, reportProposal, showPatch } from '../../src/records.js';
 
 export const suite = { owner: 'planner', level: 'unit', tags: ['planning'] } as const;
 const id = 'reviewed-tree';
@@ -145,33 +146,132 @@ test('source coverage alone cannot give a demonstrated runtime rating', () => {
   assert.throws(() => decodeProposal({ ...reply, ratings }, capture, [id], false), /verified run/);
 });
 
-test('verified ratings name an observed operation at the evaluated revision', () => {
+type Selection = { operation: string } | { criterion: string } | { delivery: true };
+
+const verifiedRun: VerifiedGoalRun = {
+  id: 'run:8',
+  revision: 'fixture',
+  tree: 'current-tree',
+  goalID: 'current-goal',
+  pull: 'https://github.com/example/fixture/pull/8',
+  checks: [
+    { operation: 'owner-format', status: 0 },
+    { operation: 'repository-tests', status: 0 },
+  ],
+  criteria: ['approval-preserved', 'tree-matches'],
+};
+
+const selections: { selection: Selection; category: RegExp; observed: string }[] = [
+  { selection: { operation: 'repository-tests' }, category: /check/i, observed: 'repository-tests' },
+  { selection: { criterion: 'tree-matches' }, category: /independent review/i, observed: 'tree-matches' },
+  { selection: { delivery: true }, category: /delivery/i, observed: verifiedRun.pull! },
+];
+
+/** Decode the same neutral assessment with only its selected host observation changed. */
+function observedProposal(selection: Selection, run: VerifiedGoalRun = verifiedRun) {
   const { capture, reply } = new ProposalScenario();
-  const run = {
-    id: 'run:8',
-    revision: capture.source.revision,
-    tree: 'current-tree',
-    goalID: 'current-goal',
-    checks: [{ operation: 'repository-tests', status: 0 as const }],
-    criteria: ['tree-matches'],
-  };
   const proposed = {
     ...reply,
     ratings: [
-      {
-        ...reply.ratings[0],
-        evidence: 'demonstrated',
-        run: { run: run.id, operation: 'repository-tests' },
-      },
+      { ...reply.ratings[0], evidence: 'demonstrated', run: { run: verifiedRun.id, ...selection } },
     ],
   };
-  assert.equal(decodeProposal(proposed, capture, [id], false, run).ratings[0]?.run, run);
-  assert.throws(
-    () => decodeProposal(proposed, capture, [id], false, { ...run, revision: 'stale' }),
-    /stale verified run/,
+  return decodeProposal(proposed, capture, [id], false, run);
+}
+
+// Planner.propose passes decoded proposals to reportProposal. Distinct selections must
+// remain distinct without prescribing the representation used to retain that selection.
+test('mapping validation retains distinct check, review and delivery selections', () => {
+  const proposals = selections.map(({ selection }) => observedProposal(selection));
+  for (const [index, proposal] of proposals.entries()) {
+    assert.notDeepEqual(proposal, proposals[(index + 1) % proposals.length]);
+    assert.deepEqual(proposal.changes, []);
+  }
+});
+
+test('mapping validation retains the exact operation instead of choosing the first check', () => {
+  assert.notDeepEqual(
+    observedProposal({ operation: 'repository-tests' }),
+    observedProposal({ operation: 'owner-format' }),
   );
+});
+
+test('mapping validation retains the exact criterion instead of choosing the first review finding', () => {
+  assert.notDeepEqual(
+    observedProposal({ criterion: 'tree-matches' }),
+    observedProposal({ criterion: 'approval-preserved' }),
+  );
+});
+
+// Each decoded proposal reaches the real renderer separately so one missing category
+// cannot hide the failures for the other forms. Neutral prose cannot echo the selection.
+for (const { selection, category, observed } of selections) {
+  test(`mapping report traces selected ${Object.keys(selection)[0]} to its verified run`, () => {
+    const { capture } = new ProposalScenario();
+    const proposal = observedProposal(selection);
+    const report = reportProposal(proposal, capture.source, []);
+    assert(report.includes(verifiedRun.id), 'the verified run identity survives');
+    assert(report.includes(`\`${verifiedRun.revision}\``), 'the evaluated revision survives');
+    assert(report.includes('- Source ·'), 'accepted direction stays labelled as source');
+    assert(report.includes(source.quote), 'the captured source quote survives');
+    assert.match(report, category, 'the selected evidence category is explicit');
+    assert(report.includes(observed), 'the exact selected observation is explicit');
+    assert(!report.includes('owner-format'), 'an unselected check is not substituted');
+    assert(!report.includes('approval-preserved'), 'an unselected criterion is not substituted');
+    if (!('operation' in selection)) assert(!report.includes('repository-tests'));
+    if (!('criterion' in selection)) assert(!report.includes('tree-matches'));
+    assert.deepEqual(proposal.changes, [], 'observations do not create standing goal edits');
+    assert.equal(capture.source.read(`.arc/goals/${id}.md`), goal);
+  });
+}
+
+test('verified mapping rejects unknown run identities for every citation form', () => {
+  const { capture, reply } = new ProposalScenario();
+  for (const { selection } of selections) {
+    const ratings = [
+      { ...reply.ratings[0], evidence: 'demonstrated', run: { run: 'run:unknown', ...selection } },
+    ];
+    assert.throws(
+      () => decodeProposal({ ...reply, ratings }, capture, [id], false, verifiedRun),
+      /Unknown or stale verified run citation/,
+    );
+  }
+});
+
+test('verified mapping rejects stale revisions for every citation form', () => {
+  for (const { selection } of selections) {
+    assert.throws(
+      () => observedProposal(selection, { ...verifiedRun, revision: 'stale' }),
+      /Unknown or stale verified run citation/,
+    );
+  }
+});
+
+test('verified mapping rejects operations and criteria absent from a populated run', () => {
+  for (const selection of [
+    { operation: 'unknown-operation' },
+    { criterion: 'unknown-criterion' },
+  ]) {
+    assert.throws(
+      () => observedProposal(selection),
+      /Unknown or stale verified run citation/,
+    );
+  }
+});
+
+test('verified mapping rejects delivery without supporting publication', () => {
+  const { pull: _pull, ...reviewedOnly } = verifiedRun;
   assert.throws(
-    () => decodeProposal(proposed, capture, [id], false, { ...run, checks: [] }),
-    /stale verified run/,
+    () => observedProposal({ delivery: true }, reviewedOnly),
+    /Unknown or stale verified run citation/,
+  );
+});
+
+test('an available verified run does not promote source coverage into demonstrated results', () => {
+  const { capture, reply } = new ProposalScenario();
+  const ratings = [{ ...reply.ratings[0], evidence: 'demonstrated', observations: [source] }];
+  assert.throws(
+    () => decodeProposal({ ...reply, ratings }, capture, [id], false, verifiedRun),
+    /Demonstrated evidence requires an applicable verified run/,
   );
 });
