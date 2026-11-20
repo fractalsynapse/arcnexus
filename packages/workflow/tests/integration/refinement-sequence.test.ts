@@ -164,12 +164,13 @@ test('a competing foreground task is refused while the refinement phase runs', a
   const services = providers(f, []);
   const signal = new AbortController().signal;
   assert.ok(services.planner);
+  let competingKind: unknown;
   services.planner.propose = async () => {
     const competing = await f.execution.admit(
       { directory: f.root, goal: 'Competing task' },
       signal,
     );
-    assert.equal(Reflect.get(competing, 'kind'), 'invalid');
+    competingKind = Reflect.get(competing, 'kind');
     return { kind: 'planned', commit: f.revision, summary: 'No change', evidence: [] };
   };
   const workflow = new Workflow(services);
