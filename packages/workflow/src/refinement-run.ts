@@ -355,7 +355,8 @@ function completedChild(
 }
 
 /** Select durable recovery observations without copying assessment content. */
-function recoveryObservations(events: readonly unknown[]) {
+function recoveryObservations(events: readonly unknown[], invocation: string, round: number) {
+  const roundScope = 'for refine:' + invocation + ':round:' + round + ':';
   return events.filter(
     (event) =>
       typeof event === 'object' &&
@@ -363,7 +364,8 @@ function recoveryObservations(events: readonly unknown[]) {
       'phase' in event &&
       Reflect.get(event, 'phase') === 'planning' &&
       typeof Reflect.get(event, 'message') === 'string' &&
-      Reflect.get(event, 'message').startsWith('Reused completed child outcome for '),
+      Reflect.get(event, 'message').startsWith('Reused completed child outcome for ') &&
+      Reflect.get(event, 'message').includes(roundScope),
   );
 }
 
