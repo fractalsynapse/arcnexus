@@ -150,7 +150,14 @@ function assertProviderRecords(records: Array<Record<string, any>>): void {
       'type',
     ]);
     assert.ok(event.input.startsWith('## Actor and project\n'));
-    assert.deepEqual(event.consumption, []);
+    if (provider.indexOf(record) < 3) {
+      assert.deepEqual(event.consumption, []);
+    } else {
+      assert.ok(event.consumption.length > 0);
+      assert.equal(event.consumption[0].round, '1');
+      assert.ok(event.consumption[0].findings.length > 0);
+      assert.ok(event.consumption[0].measurements.length > 0);
+    }
     assert.deepEqual(event.reads, []);
     assert.match(event.executable, /stream-provider/);
   }
