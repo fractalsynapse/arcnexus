@@ -39,19 +39,19 @@ export function checkedCorrectionProgress(
 export function holdProgress(
   task: HostTask,
   milestone: Milestone,
-  diagnostic: string,
-  check?: CheckResult,
+  failure: { diagnostic: string; check?: CheckResult },
   knowledge?: string,
 ) {
+  const { diagnostic, check } = failure;
   const inputs = holdInputPaths(task, milestone, check).map((path) => ({
     path,
     digest: createHash('sha256')
       .update(gitSource(task.worktree!, 'HEAD', path))
       .digest('hex'),
   }));
-  const failure = check ? checkFailureSignature(check.log) : diagnostic;
+  const finding = check ? checkFailureSignature(check.log) : diagnostic;
   const identity = createHash('sha256')
-    .update(JSON.stringify([milestone.criteria, inputs, failure, knowledge]))
+    .update(JSON.stringify([milestone.criteria, inputs, finding, knowledge]))
     .digest('hex');
   return { identity, inputs };
 }
