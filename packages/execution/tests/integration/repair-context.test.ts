@@ -57,6 +57,11 @@ function nestedTask(t: TestContext) {
     repair: { ...latest, milestone: 'unrelated', reason: 'Unrelated milestone finding' },
   });
   task.record({ position: { completed: 0, activities: { original: 0 } }, repair: latest });
+  return { task, original, latest };
+}
+
+test('nested repairs retain the originating finding and latest diagnostic in the accepted milestone', async (t) => {
+  const { task, original, latest } = nestedTask(t);
   t.mock.method(
     task,
     'activate',
