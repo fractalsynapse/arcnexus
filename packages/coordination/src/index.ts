@@ -188,19 +188,7 @@ export class Journal {
 
   /** Retrieve reusable research by owner from the existing append-only journal. */
   researchReports(component: string, id?: string): unknown[] {
-    return this.database
-      .prepare(
-        `
-      SELECT json_extract(content, '$.researchResult') AS report
-      FROM events
-      WHERE json_extract(content, '$.researchResult.component') = ?
-        AND json_type(content, '$.researchResult.archive') = 'text'
-        AND (? IS NULL OR json_extract(content, '$.researchResult.request.id') = ?)
-      ORDER BY events.id DESC
-    `,
-      )
-      .all(component, id ?? null, id ?? null)
-      .map(({ report }) => JSON.parse(String(report)));
+    return researchReports(this.database, component, id);
   }
 
   /** Read the observed verification and delivery events for this revision. */
