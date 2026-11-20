@@ -37,11 +37,15 @@ class SpecificationFixture {
     execFileSync('git', ['remote', 'add', 'origin', 'https://example.com/specification.git'], {
       cwd: this.cwd,
     });
-    this.write('.arc/architecture/project.yaml', stringify({
-      id: 'fixture', contractRegistry: '.arc/contracts.yaml',
-      director: { component: 'project', activity: 'inspect' },
-      verifier: { component: 'project', activity: 'inspect' },
-    }));
+    this.write(
+      '.arc/architecture/project.yaml',
+      stringify({
+        id: 'fixture',
+        contractRegistry: '.arc/contracts.yaml',
+        director: { component: 'project', activity: 'inspect' },
+        verifier: { component: 'project', activity: 'inspect' },
+      }),
+    );
     this.write('.arc/architecture/roles/inspector.yaml', stringify({ id: 'inspector' }));
     this.component('project', ['.arc', 'docs']);
     this.component('zeta', collision ? ['packages/zeta', 'shared'] : ['packages/zeta']);
@@ -54,24 +58,48 @@ class SpecificationFixture {
 
   /** Declare host activities so ownership validation can proceed through the real catalog checks. */
   private component(id: string, owns: string[]): void {
-    this.write(`.arc/architecture/components/${id}.yaml`, stringify({
-      id, kind: id === 'project' ? 'project' : 'plugin', purpose: `Fixture ${id} owner.`,
-      owns, activities: { inspect: {
-        executor: 'host', role: 'inspector', instructions: ['Inspect the fixture.'],
-        operations: [], standards: [],
-      } },
-    }));
+    this.write(
+      `.arc/architecture/components/${id}.yaml`,
+      stringify({
+        id,
+        kind: id === 'project' ? 'project' : 'plugin',
+        purpose: `Fixture ${id} owner.`,
+        owns,
+        activities: {
+          inspect: {
+            executor: 'host',
+            role: 'inspector',
+            instructions: ['Inspect the fixture.'],
+            operations: [],
+            standards: [],
+          },
+        },
+      }),
+    );
   }
 
   /** Register real contract bytes and a local documentation link for the valid control. */
   private contract(): void {
-    const body = '# Fixture contract\n\n| ID | Observation |\n| --- | --- |\n| FIX-1 | Valid ownership. |\n';
+    const body =
+      '# Fixture contract\n\n| ID | Observation |\n| --- | --- |\n| FIX-1 | Valid ownership. |\n';
     this.write('docs/contract.md', body);
     this.write('docs/guide.md', '# Fixture guide\n\n[Contract](contract.md)\n');
-    this.write('.arc/contracts.yaml', stringify({ contracts: [{
-      id: 'fixture/contract', file: 'docs/contract.md', owner: 'project', stage: 'proposed',
-      digest: createHash('sha256').update(body).digest('hex'), dependsOn: [], scenarios: 1,
-    }] }));
+    this.write(
+      '.arc/contracts.yaml',
+      stringify({
+        contracts: [
+          {
+            id: 'fixture/contract',
+            file: 'docs/contract.md',
+            owner: 'project',
+            stage: 'proposed',
+            digest: createHash('sha256').update(body).digest('hex'),
+            dependsOn: [],
+            scenarios: 1,
+          },
+        ],
+      }),
+    );
   }
 
   /** Author fixture bytes explicitly; callers track them before invoking the checker. */
@@ -88,11 +116,13 @@ class SpecificationFixture {
   /** Retain exact tracked bytes and Git state, including additions outside the tracked inventory. */
   snapshot() {
     const paths = execFileSync('git', ['ls-files', '-z'], { cwd: this.cwd, encoding: 'utf8' })
-      .split('\0').filter(Boolean);
+      .split('\0')
+      .filter(Boolean);
     return {
       files: paths.map((path) => [path, readFileSync(join(this.cwd, path)).toString('base64')]),
       status: execFileSync('git', ['status', '--porcelain=v1', '--untracked-files=all'], {
-        cwd: this.cwd, encoding: 'utf8',
+        cwd: this.cwd,
+        encoding: 'utf8',
       }),
     };
   }
@@ -101,11 +131,17 @@ class SpecificationFixture {
   run() {
     const before = this.snapshot();
     const result = spawnSync(process.execPath, [checker], {
-      cwd: this.cwd, encoding: 'utf8', env: { ...process.env, GITHUB_OUTPUT: '' },
+      cwd: this.cwd,
+      encoding: 'utf8',
+      env: { ...process.env, GITHUB_OUTPUT: '' },
     });
     assert.equal(result.error, undefined);
     assert.equal(result.signal, null);
-    assert.deepEqual(this.snapshot(), before, 'Specification checks must preserve maintained bytes');
+    assert.deepEqual(
+      this.snapshot(),
+      before,
+      'Specification checks must preserve maintained bytes',
+    );
     return result;
   }
 
@@ -115,7 +151,11 @@ class SpecificationFixture {
     const repeated = this.run();
     assert.equal(first.status, 1, first.stderr);
     assert.equal(repeated.status, 1, repeated.stderr);
-    assert.equal(repeated.stderr, first.stderr, 'Unchanged ownership diagnostics must be repeatable');
+    assert.equal(
+      repeated.stderr,
+      first.stderr,
+      'Unchanged ownership diagnostics must be repeatable',
+    );
     assert.equal(repeated.stdout, first.stdout);
     return first.stderr;
   }
@@ -149,9 +189,13 @@ test('mixed ownership failures report every uncovered and colliding path in stab
   for (const path of [...paths].reverse()) fixture.write(path, `# ${path}\n`);
   fixture.track();
   const diagnostics = fixture.invalid();
-  for (const path of paths) assert(diagnostics.includes(path), `Missing ownership finding: ${path}`);
+  for (const path of paths)
+    assert(diagnostics.includes(path), `Missing ownership finding: ${path}`);
   const positions = paths.map((path) => diagnostics.indexOf(path));
-  assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
+  assert.deepEqual(
+    positions,
+    [...positions].sort((a, b) => a - b),
+  );
   assert.match(diagnostics, /unowned/i);
   assert.match(diagnostics, /collision/i);
 });
