@@ -75,7 +75,6 @@ test('refinement root resumes unfinished identity and starts fresh after complet
     directory: root,
     goal: 'Continuous refinement',
     scope: 'refine',
-    refinement: true,
   };
   const first = await execution.admit(input, signal);
   assert(first instanceof HostTask);
