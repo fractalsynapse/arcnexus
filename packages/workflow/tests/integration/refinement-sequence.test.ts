@@ -263,7 +263,7 @@ function assertRecoveredReport(assessments: number, events: readonly unknown[]) 
   assert.match(report, /Plan origin finding 1/);
   assert.match(report, /Reused completed child outcome for refine:/);
   assert.match(report, /"summary":"The measured goal holds"/);
-  assert.match(report, /"assessment":\\{"kind":"satisfied"/);
+  assert.match(report, /"assessment":\{"kind":"satisfied"/);
   assert.ok((Reflect.get(round, 'findings') as unknown[]).length >= 4);
 }
 
