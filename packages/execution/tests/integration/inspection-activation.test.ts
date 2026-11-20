@@ -75,7 +75,7 @@ for (const [component, activity, actor, names, web] of [
       acceptance: [{ id: 'exact' }],
       evidence: [],
     };
-    const view = fixture.agent.prepareRequest(task.capture, selection, {
+    let view = fixture.agent.prepareRequest(task.capture, selection, {
       ...data,
       goal: task.goal,
       worktree: task.worktree,
@@ -88,6 +88,14 @@ for (const [component, activity, actor, names, web] of [
     );
     assert.equal(view.request.options.webSearchMode, web);
     await task.activate(fixture.agent, selection, data, new AbortController().signal);
+    if (actor === 'reviewer') {
+      const diff = task.evidence.find((path) => path.endsWith('activity.diff'));
+      assert.ok(diff, 'review activation supplies its candidate diff observation');
+      assert.equal(readFileSync(diff, 'utf8'), '');
+      view = fixture.agent.prepareRequest(task.capture, selection, {
+        ...data, evidence: [diff], goal: task.goal, worktree: task.worktree,
+      });
+    }
     const transcript = task.evidence.find((path) => path.endsWith('codex.jsonl'));
     assert.ok(transcript);
     const frames = readFileSync(transcript, 'utf8')
