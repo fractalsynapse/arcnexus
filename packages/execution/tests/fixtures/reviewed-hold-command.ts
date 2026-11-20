@@ -10,7 +10,7 @@ function main() {
     process.exitCode = 43;
     return;
   }
-  const input = readFileSync('fixture.txt', 'utf8');
+  const input = readFileSync(process.argv[4] ?? 'fixture.txt', 'utf8');
   console.error(
     process.argv[3] === 'stable'
       ? 'Error: reviewed behavior still fails'
