@@ -171,6 +171,7 @@ export class TaskRun {
         )
       )
         continue;
+      if (supersededReviewedHold(this.session, event.activation)) continue;
       const interrupted = await this.applyActivity(event.activation);
       if (interrupted) return interrupted;
     }
