@@ -12,7 +12,7 @@ import { GitHub } from '../../collaboration/src/index.js';
 import { activateActor, type ContextRefresh } from './activation.js';
 import { inboxIdentity, usedResearch } from './research.js';
 import { formatterPreview } from './formatter.js';
-import { recoverPrepared } from './prepared-recovery.js';
+import { observePreparedPublication, recoverPrepared } from './prepared-recovery.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
 import { git } from './git.js';
 import { applicationStorage, type HostConfig } from './host-config.js';
@@ -237,8 +237,7 @@ export class HostTask implements TaskSession {
     this.recoverMeasureWorkspace();
     this.branch = `${issue}-task`;
     this.issue = issue;
-    if (await this.provider(signal).publication(this.branch))
-      throw new Error('An existing pull request must match a retained accepting publication');
+    await observePreparedPublication(this, signal);
     const ref = `refs/heads/${this.branch}`;
     await reconcileCheckpoint(this, signal);
     if (this.recoverWorkspace()) await reconcileCheckpoint(this, signal);

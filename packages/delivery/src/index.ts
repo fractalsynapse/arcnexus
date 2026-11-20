@@ -4,8 +4,11 @@ import { hostTask, type HostTask } from '../../execution/src/index.js';
 import type { Candidate, Verdict } from '../../verification/src/index.js';
 import type { TaskObserver, TaskOutcome, TaskSession } from '../../workflow/src/index.js';
 import { publish, type Publication } from './publication.js';
+import { GitHubCheckFailure } from '../../collaboration/src/index.js';
+import { PublicationCheckFailure } from './check-failure.js';
 
 export { publish, type Publication } from './publication.js';
+export { PublicationCheckFailure } from './check-failure.js';
 
 /** Integrate only the exact candidate accepted by Verification and the provider's gates. */
 export async function integrate(
@@ -39,22 +42,42 @@ export async function resume(
 ): Promise<TaskOutcome | undefined> {
   const task = hostTask(session);
   const retained = task.retainedPublication();
-  if (!retained) {
-    if (!task.config.fresh)
-      return {
-        kind: 'invalid',
+  const stale = task.config.fresh
+    ? undefined
+    : {
+        kind: 'invalid' as const,
         reason: `Task admission requires the current verified ${task.config.base} head`,
         evidence: [],
       };
-    return undefined;
-  }
+  if (!retained) return stale;
   const publication = recover(task, retained);
   if (!publication) return undefined;
+  if (await refreshUnmerged(task, publication, signal)) return stale;
   progress({
     phase: 'delivery',
     message: `Reconciling retained GitHub publication ${publication.branch}`,
   });
   return deliver(task, publication, signal);
+}
+
+/** Observe an unmerged effect before handing changed authority or work back to Execution. */
+async function refreshUnmerged(task: HostTask, publication: Publication, signal: AbortSignal) {
+  const provider = task.provider(signal);
+  const pull = await provider.publication(publication.branch);
+  task.note({ publicationObserved: { branch: publication.branch, pull: pull ?? null } });
+  if (pull && pull.target !== publication.target)
+    throw new Error(`GitHub publication target changed: ${pull.url}`);
+  if (pull && pull.state !== 'open') return false;
+  const sameHead = !pull || pull.head === publication.head;
+  if (sameHead && publication.parent === task.capture.source.revision) return false;
+  if (pull && sameHead && task.config.fresh) {
+    try {
+      await provider.verify(pull.url, publication.head, publication.target);
+    } catch (error) {
+      throw recordedFailure(task, publication, error);
+    }
+  }
+  return true;
 }
 
 /** Validate the original acceptance and adapt the publication artifact used before journaling. */
@@ -101,15 +124,52 @@ async function deliver(
   publication: Publication,
   signal: AbortSignal,
 ): Promise<TaskOutcome> {
-  const { branch, head, parent, candidate, target } = publication;
-  const { pr, commit } = await publish(publication, {
-    provider: task.provider(signal),
-    worktree: task.capture.source.root,
-    goal: task.goal,
-    title: task.trackingTitle,
-    validateLocal: () => task.validatePublication(branch, head, parent, candidate),
-    record: (event) => task.note(event),
-  });
+  const { head, target } = publication;
+  const { pr, commit } = await checkedPublication(task, publication, signal);
   task.store('staging-merge.json', JSON.stringify({ pr, head, commit, target }));
   return { kind: 'merged', commit, evidence: [pr, ...task.evidence] };
+}
+
+/** Retain complete hosted failure evidence before returning it to the ordinary task loop. */
+async function checkedPublication(task: HostTask, publication: Publication, signal: AbortSignal) {
+  try {
+    return await publish(publication, {
+      provider: task.provider(signal),
+      worktree: task.capture.source.root,
+      goal: task.goal,
+      title: task.trackingTitle,
+      validateLocal: () =>
+        task.validatePublication(
+          publication.branch,
+          publication.head,
+          publication.parent,
+          publication.candidate,
+        ),
+      record: (event) => task.note(event),
+    });
+  } catch (error) {
+    throw recordedFailure(task, publication, error);
+  }
+}
+
+/** Preserve provider diagnostics without turning them into an engineering verdict. */
+function recordedFailure(task: HostTask, publication: Publication, error: unknown) {
+  if (!(error instanceof GitHubCheckFailure)) throw error;
+  const evidence = [task.store('publication-check-failure.log', error.log)];
+  task.note({
+    publicationCheckFailure: {
+      candidate: publication.candidate,
+      head: error.head,
+      pr: error.pr,
+      check: error.check,
+      diagnostic: error.message,
+      evidence,
+    },
+  });
+  return new PublicationCheckFailure(
+    error.message,
+    publication.candidate,
+    evidence,
+    `${publication.candidate}:${error.identity}`,
+  );
 }

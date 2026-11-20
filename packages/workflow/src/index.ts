@@ -134,7 +134,6 @@ export class Workflow {
       const admitted = await this.services.execution.admit(input, signal, parent);
       if ('kind' in admitted) return admitted;
       session = admitted;
-      session.ask = (question, cancellation) => observer.answer(question, cancellation);
       session.listen?.((event) => observer.event?.(event));
       observer.admittedSession(session);
       outcome = await execute(session);

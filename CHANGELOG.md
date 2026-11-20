@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Return failed hosted checks with their complete provider logs to independent assessment and accountable repair, retaining checkpoints and the existing staging PR across restarts (#687).
+
 ### Added
 
 - Add `arcnexus refine [--rounds N]` through the shared Commands SDK and Workflow lifecycle: default to one round, preserve positive decimal counts exactly without a numeric ceiling, and run Planner, Architect and every captured approved goal in priority order each round. Retain one foreground project writer across sequential child sessions, with fresh staging authority at phase/task admission and the normal Director, steward, independent Reviewer and verified staging delivery path ([#615](https://github.com/fractalsynapse/arcnexus/issues/615)).

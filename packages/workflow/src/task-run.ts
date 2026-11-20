@@ -12,9 +12,15 @@ import {
   type RevisionFeedback,
   type StandingGoalEvidence,
 } from '../../direction/src/index.js';
-import { validateVerdict, type Candidate, type Verdict } from '../../verification/src/index.js';
+import type { Candidate, Verdict } from '../../verification/src/index.js';
+import { PublicationCheckFailure } from '../../delivery/src/index.js';
 import { activityRepair, replayableActivity, supplierRequestRepair } from './activity-repair.js';
-import { assembleCandidate, reviewKey } from './assembly.js';
+import {
+  assessCandidate,
+  deliverAcceptedCandidate,
+  plannerCorrection,
+  reviewKey,
+} from './assembly.js';
 import { stopped, type Interrupted } from './services.js';
 import type {
   ActivityCheckpoint,
@@ -33,6 +39,7 @@ export class TaskRun {
   readonly evidence: string[] = [];
   private plan?: Plan;
   private standing?: StandingGoalEvidence;
+  private publicationFailure?: PublicationCheckFailure;
   private completed = 0;
   private readonly activityPositions = new Map<string, number>();
   private readonly rejectedReviews = new Set<string>();
@@ -48,10 +55,7 @@ export class TaskRun {
 
   /** Execute accepted milestones, re-plan on feedback and publish only an accepted candidate. */
   async execute(): Promise<TaskOutcome> {
-    this.session.ask = (question) => this.prompt(question);
-    const resumed = await this.services.delivery.resume?.(this.session, this.signal, (event) =>
-      this.report(event),
-    );
+    const resumed = await this.resumeDelivery();
     if (resumed) return resumed;
     const setup = await this.prepare();
     if (setup) return setup;
@@ -69,10 +73,19 @@ export class TaskRun {
     }
   }
 
-  /** Expose a native clarification gate through the same transport-neutral observer. */
-  private prompt(question: string) {
-    this.report({ phase: 'question', message: question });
-    return this.observer.answer?.(question, this.signal) ?? Promise.resolve(undefined);
+  /** Observe retained publication first and return failed checks to normal preparation. */
+  private async resumeDelivery() {
+    try {
+      return await this.services.delivery.resume?.(
+        this.session,
+        this.signal,
+        this.report.bind(this),
+      );
+    } catch (error) {
+      this.signal.throwIfAborted();
+      if (!(error instanceof PublicationCheckFailure)) throw error;
+      this.publicationFailure = error;
+    }
   }
 
   /** Restore an accepted plan or evaluate and plan fresh work before preparing the issue branch. */
@@ -116,12 +129,7 @@ export class TaskRun {
   private async startPlanner(mode: NonNullable<TaskInput['planning']>) {
     const planner = this.services.planner;
     if (!planner) return stopped('invalid', 'Planner is unavailable in this build');
-    const decision = await planner.propose(
-      this.session,
-      mode,
-      (event) => this.report(event),
-      this.signal,
-    );
+    const decision = await planner.propose(this.session, mode, this.report.bind(this), this.signal);
     if ('kind' in decision) {
       this.session.record({ assessment: decision });
       return decision;
@@ -411,42 +419,37 @@ export class TaskRun {
       phase: 'verification',
       message: 'Assembling the candidate for independent review',
     });
-    const candidate = await assembleCandidate(this.services, this.session, this.input, this.signal);
-    this.signal.throwIfAborted();
-    if (this.rejectedReviews.has(reviewKey(candidate)))
-      throw new Error('Correction repeated a rejected candidate and its review evidence');
-    const verdict = await this.services.verification.assess(
+    const { candidate, verdict } = await assessCandidate(
+      this.services,
       this.session,
+      this.input,
       plan,
-      candidate,
       this.signal,
+      this.rejectedReviews,
     );
-    this.signal.throwIfAborted();
-    validateVerdict(plan, candidate, verdict);
-    this.session.record({ candidate, verdict });
     if (verdict.kind === 'blocked') return stopped('blocked', verdict.reason, verdict.evidence);
     if (verdict.kind === 'rejected') return this.correct(candidate, verdict.findings);
-    return this.acceptCandidate(candidate, verdict);
+    return this.publish(candidate, verdict);
   }
 
-  /** Record a verified check-only assessment or deliver a changed candidate. */
-  private acceptCandidate(candidate: Candidate, verdict: Extract<Verdict, { kind: 'accepted' }>) {
-    if (candidate.unchanged) {
-      const assessment = {
-        kind: 'satisfied' as const,
-        commit: this.session.capture.source.revision,
-        summary: 'Independent review accepted the checks on the unchanged staging tree',
-        evidence: verdict.evidence,
-      };
-      this.session.record({ assessment });
-      return assessment;
+  /** Reconcile provider facts before holding an unchanged publication finding. */
+  private async publish(candidate: Candidate, verdict: Extract<Verdict, { kind: 'accepted' }>) {
+    try {
+      return await deliverAcceptedCandidate(
+        this.services,
+        this.session,
+        candidate,
+        verdict,
+        this.signal,
+        this.report.bind(this),
+      );
+    } catch (error) {
+      this.signal.throwIfAborted();
+      if (!(error instanceof PublicationCheckFailure)) throw error;
+      if (this.publicationFailure?.identity === error.identity)
+        return stopped('blocked', error.message, error.evidence);
+      this.publicationFailure = error;
     }
-    this.report({
-      phase: 'delivery',
-      message: 'Reviewer accepted the candidate',
-      evidence: verdict.evidence,
-    });
-    return this.services.delivery.integrate(this.session, candidate, verdict, this.signal);
   }
 
   /** Hold delivery and route criterion-linked rejection evidence to Direction. */
@@ -466,24 +469,19 @@ export class TaskRun {
 
   /** Get a corrected proposal and retain earlier checkpoints before reviewing it again. */
   private async correctPlanner(findings: Extract<Feedback, { kind: 'rejection' }>['findings']) {
-    const prior = this.plan!;
-    const decision = await this.services.planner!.propose(
-      this.session,
-      this.input.planning!,
-      (event) => this.report(event),
-      this.signal,
-      findings,
+    const decision = await plannerCorrection(
+      this.services.planner!.propose(
+        this.session,
+        this.input.planning!,
+        this.report.bind(this),
+        this.signal,
+        findings,
+      ),
+      this.plan!,
+      this.session.capture,
+      this.evidence,
     );
-    if ('kind' in decision)
-      return stopped('blocked', 'Planner correction needs an approved goal change', this.evidence);
-    const correction = {
-      ...decision.milestones[0]!,
-      id: `planner-correction-${prior.milestones.length}`,
-      criteria: prior.milestones[0]!.criteria,
-    };
-    const revised = { ...prior, milestones: [...prior.milestones, correction] };
-    validatePlan(this.session.capture, revised);
-    return this.commitPlan(revised);
+    return 'kind' in decision ? decision : this.commitPlan(decision);
   }
 
   /** Preserve the plan and live cursor for later observations. */
