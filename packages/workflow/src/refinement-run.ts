@@ -288,7 +288,9 @@ function hasMeasurement(value: unknown) {
   return (
     typeof value === 'object' &&
     value !== null &&
-    ['nativeStarted', 'nativeEvent', 'nativeFinished', 'nativeInvocation'].some((key) => key in value)
+    ['nativeStarted', 'nativeEvent', 'nativeFinished', 'nativeInvocation'].some(
+      (key) => key in value,
+    )
   );
 }
 
