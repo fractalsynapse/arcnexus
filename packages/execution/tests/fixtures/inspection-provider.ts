@@ -9,7 +9,7 @@ class InspectionProvider {
     const input = readFileSync(0, 'utf8');
     const tools = await this.rpc('tools/list');
     const refusals = [];
-    for (const name of ['foreign-write', 'shell']) {
+    for (const name of [tools.tools.some((tool: { name: string }) => tool.name === 'inspect-read') ? 'inspect-list' : 'inspect-read', 'shell']) {
       refusals.push(await this.rpc('tools/call', { name, arguments: {} }));
     }
     if (tools.tools.some((tool: { name: string }) => tool.name === 'owned-edit'))
