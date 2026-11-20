@@ -74,6 +74,25 @@ test('a resumed parent can observe a completed child before acknowledging its ou
   resumed.finish({ kind: 'refined' });
 });
 
+test('standalone and refinement rounds retain independent unfinished inventories', (t) => {
+  const fixture = new RefinementFixture(t);
+  const standalone = fixture.store.round(remote, () => 'standalone goals');
+  const refine = Reflect.apply(fixture.store.round, fixture.store, [
+    remote,
+    () => 'refinement goals',
+    'refine:invocation:round:1',
+  ]) as { id: number; inventory: string };
+  assert.notEqual(refine.id, standalone.id);
+  assert.equal(refine.inventory, 'refinement goals');
+  const resumed = Reflect.apply(fixture.store.round, fixture.store, [
+    remote,
+    () => 'changed goals',
+    'refine:invocation:round:1',
+  ]) as { id: number; inventory: string };
+  assert.deepEqual(resumed, refine);
+  assert.deepEqual(fixture.store.round(remote, () => 'changed standalone'), standalone);
+});
+
 test('an active approval child keeps competing foreground writers out', (t) => {
   const fixture = new RefinementFixture(t);
   const root = fixture.admit();
