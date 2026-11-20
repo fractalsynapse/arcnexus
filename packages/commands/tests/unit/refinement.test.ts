@@ -5,13 +5,19 @@ import { agentPlugin } from '../../../agent/src/index.js';
 import { architecturePlugin } from '../../../architecture/src/index.js';
 import { RunMeasurements, type JournalEvent } from '../../../coordination/src/index.js';
 import { teamPlugin } from '../../../team/src/index.js';
-import { Workflow, type RoundCount, type TaskObserver, type TaskOutcome } from '../../../workflow/src/index.js';
+import {
+  Workflow,
+  type RoundCount,
+  type TaskObserver,
+  type TaskOutcome,
+} from '../../../workflow/src/index.js';
 import { commandsPlugin } from '../../src/index.js';
 
 export const suite = { owner: 'commands', level: 'unit', tags: ['regression'] } as const;
 
 const exactRound = '9007199254740993';
-const exactTotal = '1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
+const exactTotal =
+  '1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
 const question = 'Approve the exact proposal?\n  Preserve this second line.';
 const answer = 'Approved with context.\n  Keep this whitespace.\n';
 const pending: TaskOutcome = {
@@ -115,7 +121,14 @@ function outcomeRecords(attempt: number): unknown[] {
         }
       : { recovering: 7, checkpoint: 'checkpoint/acknowledged', evidence: ['recovery/report'] },
     attempt === 1
-      ? { refinement: { invocation: 'invocation-1', round: exactRound, total: exactTotal, phase: 'Architect' } }
+      ? {
+          refinement: {
+            invocation: 'invocation-1',
+            round: exactRound,
+            total: exactTotal,
+            phase: 'Architect',
+          },
+        }
       : {
           goal: {
             id: 'goal-a',
@@ -127,7 +140,13 @@ function outcomeRecords(attempt: number): unknown[] {
       : { outcome: { kind: 'merged', commit: 'goal-commit', evidence: ['goal/checks'] } },
     attempt === 1
       ? { pending: { proposal: 'proposal/exact.diff' } }
-      : { completedRound: { round: exactRound, report: 'round/one', measurements: 'measurements/report' } },
+      : {
+          completedRound: {
+            round: exactRound,
+            report: 'round/one',
+            measurements: 'measurements/report',
+          },
+        },
   ];
 }
 
@@ -231,10 +250,16 @@ test('installed SDK forwards distinct pending and resumed observations before ea
   const scenario = new CommandsScenario();
   const commands = await scenario.mount();
   const signal = new AbortController().signal;
-  assert.deepEqual(await commands.refine('/project', exactTotal, scenario.observer, signal), pending);
+  assert.deepEqual(
+    await commands.refine('/project', exactTotal, scenario.observer, signal),
+    pending,
+  );
   assert.deepEqual(scenario.stream, expectedStream(1));
   scenario.response = answer;
-  assert.deepEqual(await commands.refine('/project', exactTotal, scenario.observer, signal), complete);
+  assert.deepEqual(
+    await commands.refine('/project', exactTotal, scenario.observer, signal),
+    complete,
+  );
   assert.deepEqual(scenario.stream, [...expectedStream(1), ...expectedStream(2)]);
   assert.deepEqual(scenario.workflow.calls, [
     { directory: '/project', rounds: exactTotal, observer: scenario.observer, signal },
@@ -253,7 +278,12 @@ test('cancellation during execution reaches Workflow through the original signal
   const commands = await scenario.mount();
   const controller = new AbortController();
   scenario.onProgress = () => controller.abort();
-  const outcome = await commands.refine('/project', exactRound, scenario.observer, controller.signal);
+  const outcome = await commands.refine(
+    '/project',
+    exactRound,
+    scenario.observer,
+    controller.signal,
+  );
   assert.deepEqual(outcome, cancelled);
   assert.equal(scenario.workflow.calls[0]?.rounds, exactRound);
   assert.equal(scenario.workflow.calls[0]?.signal, controller.signal);
