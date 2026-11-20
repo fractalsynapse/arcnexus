@@ -237,7 +237,9 @@ test('completed-round reports recover originating findings from an earlier attem
   const scenario = interruptProviders(f, calls, 'Architect');
   const workflow = new Workflow(scenario.services);
   const refine = Reflect.get(workflow, 'refine') as Refinement;
-  await refine.call(workflow, f.root, 1, { progress() {} }, scenario.controller.signal).catch(() => {});
+  await refine
+    .call(workflow, f.root, 1, { progress() {} }, scenario.controller.signal)
+    .catch(() => {});
   assert.equal(scenario.interrupted(), true);
 
   const events: unknown[] = [];
