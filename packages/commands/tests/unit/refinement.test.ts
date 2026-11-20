@@ -168,7 +168,7 @@ function assertStream(scenario: CommandsScenario) {
   });
   assert.equal(scenario.measurements.length, 2);
   assert.equal(scenario.measurements[0]?.cost.estimate, null);
-});
+}
 
 test('cancellation remains the Workflow outcome and retains the supplied signal', async () => {
   const scenario = new CommandsScenario();
