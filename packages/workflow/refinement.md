@@ -81,8 +81,11 @@ phase. Preserve unknown provider events and complete originating content.
 ## Public completed-round handoff for Execution
 
 This is the target public handoff for the `refine-execution` supplier request.
-It must be established by Workflow's testing and implementation activities before
-Execution treats it as available. No completed-round event or reusable refinement
+Testing authors the public consumer scenario and records its expected failure at
+the missing refinement boundary before implementation. Implementation then makes
+that same scenario executable and demonstrates actual completed-round production
+and later consumption before the handoff is offered to Execution as available.
+Testing does not need a successful completed round from an absent public method. No completed-round event or reusable refinement
 fixture currently exists in the public entry. The existing
 [goal-round scenario](tests/unit/goal-round.test.ts) covers standalone Run only;
 the [observer scenario](tests/unit/run-observer.test.ts) covers forwarding and
