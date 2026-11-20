@@ -19,6 +19,7 @@ type StreamResult = {
 /** Run the actual gateway with explicit provider answers and retain live output. */
 class StreamScenario {
   readonly fixture: RoundConsumptionFixture;
+  readonly release = join(this.fixture.root, '.git', 'release-stream');
 
   /** Permit no-change answers without inventing an approval for a proposal. */
   constructor(t: import('node:test').TestContext) {
