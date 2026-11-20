@@ -68,27 +68,31 @@ export const recentFindings = `
 
 export function researchReports(database: DatabaseSync, component: string, id?: string): unknown[] {
   return database
-    .prepare(`
+    .prepare(
+      `
       SELECT json_extract(content, '$.researchResult') AS report
       FROM events
       WHERE json_extract(content, '$.researchResult.component') = ?
         AND json_type(content, '$.researchResult.archive') = 'text'
         AND (? IS NULL OR json_extract(content, '$.researchResult.request.id') = ?)
       ORDER BY events.id DESC
-    `)
+    `,
+    )
     .all(component, id ?? null, id ?? null)
     .map(({ report }) => JSON.parse(String(report)));
 }
 
 export function completedRefinementRounds(database: DatabaseSync): JournalEvent[] {
   return database
-    .prepare(`
+    .prepare(
+      `
       SELECT events.id, events.run, runs.task_id, runs.goal_id, runs.parent_id,
         events.recorded_at, events.content
       FROM events JOIN runs ON runs.id = events.run
       WHERE json_type(events.content, '$.completedRound') = 'object'
       ORDER BY events.id
-    `)
+    `,
+    )
     .all()
     .map((row) => ({
       sequence: String(row.id),
@@ -100,4 +104,3 @@ export function completedRefinementRounds(database: DatabaseSync): JournalEvent[
       observation: JSON.parse(String(row.content)) as unknown,
     }));
 }
-
