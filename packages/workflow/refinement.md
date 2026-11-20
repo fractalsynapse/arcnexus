@@ -1,0 +1,184 @@
+# Continuous refinement implementation intent
+
+This records intent before behavior changes for #615 and WFL-REF-SEQUENCE,
+WFL-REF-RESUME, WFL-REF-LIFECYCLE and WFL-REF-REPORT. It elaborates WFL-9 and
+WFL-12 in the [Workflow contract](contract.md), under CO-21 through CO-25 in the
+[Coordination contract](../coordination/contract.md). It does not establish
+implemented behavior, assembled acceptance or the separate WFL-10 live streak.
+
+## Sequence and shared lifecycle
+
+Expose the contract's public `Workflow.refine(directory, rounds, observer, signal)`
+through [Workflow's public entry](src/index.ts). Commands supplies validated
+transport-neutral input; CLI owns argument parsing and rendering. The default is
+one positive integer round. Reject invalid, duplicate or unsupported arguments
+before admission, without a safe-integer ceiling or other resource cap.
+
+Use the canonical admission, observer, cancellation, cleanup and terminal lifecycle
+already shared by `run` and `update`. Hold one foreground Coordination writer
+through sequential Planner, Architect and goal child sessions. Inner completion
+must not release the live parent writer; competing foreground roots remain refused.
+Keep standalone commands. Reuse the normal task executor for Director, steward,
+independent Reviewer and verified staging delivery. Remove superseded orchestration
+rather than introducing another task loop, scheduler, worker lane or state store.
+
+Every round invokes Planner, then Architect, then every approved goal in priority
+order through Direction, even when its measures already pass. Plan and Architect
+may justify no change. Capture inventory after both phases complete. Keep those
+exact entries throughout interrupted Run recovery; capture fresh inventory after
+the next round's new assessments. Namespace existing round storage by consumer,
+invocation and round so standalone task rounds cannot consume refinement inventory.
+
+Use the accepted `refine-coordination` supplier contribution, recorded complete
+at run 101 timeline sequence 27259, as the persistence boundary for this candidate.
+Its public [Coordination and Journal entry](../coordination/src/index.ts) supplies
+foreground cycles, `Journal.child`, `Journal.childEvents` and namespaced round
+storage. The [Coordination session guide](../coordination/README.md) describes
+their intent. Retain the [Execution contribution](../execution/docs/refinement.md)
+and its shared-writer, fresh-staging, checkpoint, observation and recovery work;
+this milestone does not replace that machinery.
+
+## Durable cursor and recovery
+
+Persist requested total, phase, round and goal position in the existing journal
+and round storage. An exact retry resumes the same invocation and first unfinished
+position. Refuse changed totals while unfinished. Once complete, a subsequent
+invocation obtains fresh phase and goal identities even when goal text and total
+match. Preserve completed phases and goal outcomes across attempts.
+
+Before replaying an unfinished parent position, read the complete retained child
+history using the goal and scope used for admission. A successful read-only
+Planner mapping, Architect assessment or delivered goal can finish the parent
+position when the child succeeded before the parent acknowledged it. Record the
+recovery and reuse that outcome without repeating assessment or delivery. Failed,
+interrupted and pending outcomes are not success. Reconcile uncertain issues,
+branches, pushes, PRs and merges through existing task/publication recovery before
+replay.
+
+Retain exact pending proposals and baselines, approvals, declines, submitted
+intent, answers, issues, branches, PRs and acknowledged file checkpoints.
+An unanswered noninteractive gate yields a durable pending outcome. Interactive
+answers and later invocations continue the same phase and round; elapsed time
+cannot approve. A decline preserves submitted intent and accepted authority.
+Only objectives, goals and architecture use human gates; routine repair and
+verified staging integration add no gate.
+
+Each phase/task admission resolves freshly accepted staging authority. The parent
+writer does not freeze authority for the invocation. Retain approved in-run
+adoption, original task acceptance and ownership; validate implementation and
+available handlers before using declarations. Record actual source/runtime
+identities. A validated newer installed runtime may resume retained progress at
+the existing admission/adoption boundary, preserving historical identities and
+revalidating affected evidence. No runtime supervisor or upgrade framework is needed.
+
+Cancellation stops the active child through the shared signal, retains the cursor,
+answers, checked work and evidence, and performs normal task-owned cleanup. Each
+session records its terminal observation; the foreground observer returns one
+aggregate terminal result. Stream complete phase, provider/tool, progress and
+measurement events through the existing observer. Human progress names round and
+phase. Preserve unknown provider events and complete originating content.
+
+## Public completed-round handoff for Execution
+
+This is the target public handoff for the `refine-execution` supplier request.
+It must be established by Workflow's testing and implementation activities before
+Execution treats it as available. No completed-round event or reusable refinement
+fixture currently exists in the public entry. The existing
+[goal-round scenario](tests/unit/goal-round.test.ts) covers standalone Run only;
+the [observer scenario](tests/unit/run-observer.test.ts) covers forwarding and
+measurement projection only. Neither establishes a completed refinement round.
+
+Export a `CompletedRefinementRound` observation from `src/index.ts`, using the
+same definition in the public `TaskEvent` union as
+`{ completedRound: CompletedRefinementRound }`. Publish it only after all captured
+goals and both phase outcomes have completed and the derived report is retained.
+Its public fields have the following meaning:
+
+| Field | Meaning |
+| --- | --- |
+| `invocation` | Stable logical foreground identity across attempts; fresh after full completion. |
+| `round` | Round position within that invocation. |
+| `report` | Registered external readable round-report artifact. |
+| `findings` | References to complete originating phase assessments, exact guide decisions and answers, and goal findings, in execution order. |
+| `measurements` | References to the existing event-derived measurements and their originating timeline records, including execution-profile attribution. |
+| `evidence` | Canonical evidence references for goal outcomes, issues/PRs, checks, recovery, source/runtime identities and delivered commits. |
+
+References identify complete immutable artifacts or canonical journal observations,
+not previews or newly authored summaries standing in for findings. A report
+organizes these references and explains outcomes; it does not replace them.
+Empty collections mean no such observation was produced, never a fabricated
+success or zero usage. Missing measurement values and unknown pricing/cost remain
+unknown. Derive elapsed time and provider-reported token totals by actual profile
+through the existing RunMeasurements projection; do not double-count nested
+durations, cached-token subsets or repeated stream observations.
+
+Execution consumes this public observation through the normal HostTask/journal
+and activation-request path. It makes the complete originating findings, answers,
+report and measurement references directly available to subsequent Planner,
+Architect and Director assessments, including later invocations. Use existing
+registered artifact access. Do not copy results into objective/goal files or build
+another evidence store, preview, truncation or paging loop. Workflow owns producing
+the observation; Execution owns carrying it into actual actor context. Consumers
+must not import Workflow implementation helpers or invent a matching journal event.
+
+## Deterministic consumer scenario
+
+Use `new Workflow(services).refine(directory, 2, observer, signal)` from the public
+entry, with real Execution admission/HostTask, Coordination SQLite and a temporary
+Git repository with accepted staging authority. This is a scenario recipe for the
+forthcoming public regression, not an available helper export. Execution can keep
+its fixture on its own side of the service boundary; it needs no Workflow-internal
+test imports or synthetic completed-round records.
+
+Supply controlled explicit provider responses at the normal Planner, Architecture
+and Direction/Agent ports. In the first round, return a justified no-change Planner
+mapping, a justified no-change Architect assessment and evidence-backed Director
+satisfaction for each captured goal. Emit distinct complete findings and answers
+and provider usage under explicit profiles through the normal provider path.
+Observe the resulting completed-round event via `TaskObserver.event`; read its
+registered report and originating references through the ordinary artifact path.
+Do not prepopulate either the completion marker or the report.
+
+During the second round's Planner, Architect and Director activations, assert that
+the actual prepared requests expose the first round's originating findings,
+complete answers and measurement references. The provider fixture should consume
+and cite a distinct first-round finding in each assessment, rather than merely
+asserting that a report path exists. Observe a second completed-round event and
+compare the public measurements to retained provider records, preserving unknowns.
+This proves the handoff without requiring a guide or code change in every round;
+it does not prove live model acceptance.
+
+For cross-invocation retention, complete the invocation, start another through
+the same public entry and storage, and require fresh phase/task identities with
+the prior completed-round observations still available. For recovery, interrupt
+after a child terminal event but before parent phase acknowledgement, reopen the
+same SQLite/Git state, and retry with the same total. Require reuse of the observed
+successful child and no repeated provider assessment or delivery. The fixture
+must create that crash at a lifecycle boundary, not manufacture journal content.
+
+Extend this scenario with approved guide delivery and ordinary task publication
+using the existing Execution/publication fixtures. Keep deterministic provider
+responses explicit; never substitute a default profile or claim live inference.
+
+## Required regression coverage and delivery boundary
+
+Focused public regressions must establish multiple sequential Plan → Architect →
+all-goal rounds, parent-writer retention and competing-root refusal, fresh
+subsequent invocations, unchanged-total resume and changed-total refusal, gates
+and declines, interruption in each phase and goal, and successful-child/parent
+crash recovery. Cover immutable Run inventory and fresh next-round inventory,
+prior-finding consumption and report/measurement reconciliation.
+
+Use real SQLite/Git boundaries where recovery depends on them. Reuse existing
+task, local repair, checked-edit, approved adoption, independent verification and
+publication regressions for unchanged machinery. CLI/Commands regressions cover
+parsing before admission, general JSON/JSONL observation and shared cancellation.
+Behavioral regressions must first exhibit their meaningful expected failure;
+existing accepted Coordination and Execution evidence remains retained.
+
+The host owns assembled verification, independent assessment and one normal
+issue-linked task PR's verified staging delivery. These documentation decisions
+do not establish that delivery. The separate production acceptance is
+`arcnexus refine --rounds 3`, with all phases and goals, useful approved guide/code
+refinement, later use of prior findings and no operator edits, database repair,
+bypassed checks or uncontrolled aborts. Execution-path changes restart that streak.
