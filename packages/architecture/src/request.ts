@@ -115,6 +115,7 @@ function renderActivity({ selected, references }: RequestContext) {
       constraints: component.constraints,
       activity: name,
       instructions: activity.instructions,
+      ...(activity.verification?.length ? { verification: activity.verification } : {}),
     }),
     section('Role', definitionPath('roles', role.id), {
       purpose: role.purpose,

@@ -120,6 +120,19 @@ Acceptance: a real approved architecture update changes what the next activity c
 see and execute in the same logical run, without operator database repair or
 retroactively changing the authority used for a completed activation.
 
+Implemented bootstrap boundary: Execution now applies/adopts approved guides at its
+existing workspace setup and activity checkpoint calls, with no added Workflow
+hook, lock, store or recovery service. The committed candidate is captured through
+the normal Git loader. Adoption retains exact approval, validates bindings and
+handler/command availability, revalidates pending activities and checked owners,
+and records the transition before switching the next request. Original engineering
+and approval baselines remain separate from active authority. Complete answers are
+reused across adoption. [The adoption reference](../../packages/execution/docs/architecture-adoption.md)
+describes this implementation and its availability-versus-acceptance distinction.
+Focused generic Git/SQLite regressions pass, including a real confined operation.
+The live retained delivery and qualified same-run adoption remain unproven; the
+broader merge/provenance and runtime-adoption checklist items stay open.
+
 ## C. Parameterize operations and declare activity verification
 
 - [ ] Extend the existing operation declaration with typed named parameters and

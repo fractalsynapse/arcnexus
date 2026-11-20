@@ -25,7 +25,7 @@ export async function integrate(
     issue,
     head,
     candidate: candidate.digest,
-    parent: task.capture.source.revision,
+    parent: task.config.capture.source.revision,
   };
   task.note({ publication });
   return deliver(task, publication, signal);

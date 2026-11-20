@@ -13,7 +13,7 @@ import { goalRound, observeGoal, recordAdmission, stagingCapture } from './goals
 import { preflight } from './host-config.js';
 import { ownerEvidenceDigest } from './review-observations.js';
 import { HostTask, hostTask } from './index.js';
-import { applyArchitecture } from './architecture-edits.js';
+import { refreshArchitecture } from './architecture-edits.js';
 
 /** Admit a clean project at its verified staging head before creating state. */
 export class Execution {
@@ -71,9 +71,9 @@ export class Execution {
     return preflight(selected, this.storage, fresh);
   }
 
-  /** Apply only the exact human-approved guide batch after normal prerequisite milestones finish. */
-  applyGuide(session: TaskSession, id: string, signal: AbortSignal) {
-    return applyArchitecture(hostTask(session), id, signal);
+  /** Adopt an approved guide at a safe activity boundary once its required handlers are available. */
+  async applyGuide(session: TaskSession, id: string, signal: AbortSignal) {
+    await refreshArchitecture(hostTask(session), id, signal);
   }
 
   /** Read the standing goal inventory and recover an interrupted round or start a new one. */
@@ -87,13 +87,17 @@ export class Execution {
   }
 
   /** Materialize the task branch at its recovered checkpoint before any steward activation. */
-  prepare(session: TaskSession, issue: string, signal: AbortSignal) {
-    return hostTask(session).setupWorkspace(issue, signal);
+  async prepare(session: TaskSession, issue: string, signal: AbortSignal) {
+    const task = hostTask(session);
+    await task.setupWorkspace(issue, signal);
+    if (task.guide) await refreshArchitecture(task, task.guide.proposal.id, signal, false);
   }
 
   /** Publish checked bytes and record the cursor for the just-completed activation. */
-  checkpoint(session: TaskSession, activity: ActivityCheckpoint, signal: AbortSignal) {
-    return checkpoint(hostTask(session), activity, signal);
+  async checkpoint(session: TaskSession, activity: ActivityCheckpoint, signal: AbortSignal) {
+    const task = hostTask(session);
+    await checkpoint(task, activity, signal);
+    if (task.guide) await refreshArchitecture(task, task.guide.proposal.id, signal, false);
   }
 
   /** Index the approved working changes and bind the candidate to its Git tree. */
@@ -108,11 +112,11 @@ export class Execution {
     git(task.worktree, 'add', '-A', '--', '.');
     const digest = git(task.worktree, 'write-tree');
     const unchanged =
-      digest === git(task.worktree, 'rev-parse', `${task.capture.source.revision}^{tree}`);
+      digest === git(task.worktree, 'rev-parse', `${task.config.capture.source.revision}^{tree}`);
     if (unchanged && !allowUnchanged) throw new Error('The plan produced no candidate changes');
     const log = task.store(
       'candidate.diff',
-      candidateDiff(task.worktree, task.capture.source.revision),
+      candidateDiff(task.worktree, task.config.capture.source.revision),
     );
     return {
       digest,

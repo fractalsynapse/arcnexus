@@ -46,7 +46,7 @@ declare module 'cordis' {
 /** Carry the admitted authority and one worktree through the workflow. */
 export class HostTask implements TaskSession {
   ask?: TaskSession['ask'];
-  readonly capture: Capture;
+  capture: Capture;
   readonly evidence: string[] = [];
   worktree?: string;
   branch?: string;

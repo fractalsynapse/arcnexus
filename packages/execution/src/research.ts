@@ -10,7 +10,8 @@ import {
 import type { HostTask } from './index.js';
 import { InvalidCodexResponse } from './codex.js';
 
-type InboxTask = Pick<HostTask, 'capture' | 'taskID' | 'note' | 'observations' | 'store'>;
+type InboxTask = Pick<HostTask, 'capture' | 'taskID' | 'note' | 'observations' | 'store'> &
+  Partial<Pick<HostTask, 'config'>>;
 type Assignment = Omit<TaskContext, 'goal' | 'worktree'>;
 type Invoke = (selection: ActivitySelection, assignment: Assignment) => Promise<unknown>;
 
@@ -215,7 +216,7 @@ export function verificationContext(
   };
 }
 
-/** Preserve a request's identity for the same captured activation after retry. */
+/** Preserve caller answers across approved in-run adoption; exact host gates also bind their proposal baseline. */
 export function inboxIdentity(task: InboxTask, selection: ActivitySelection, data: Assignment) {
   const intent =
     selection.component === 'planner' &&
@@ -223,7 +224,9 @@ export function inboxIdentity(task: InboxTask, selection: ActivitySelection, dat
     object(data.assignment)?.mode === 'human objective';
   return identity([
     task.taskID,
-    intent ? 'human objective' : task.capture.source.revision,
+    intent
+      ? 'human objective'
+      : (task.config?.capture.source.revision ?? task.capture.source.revision),
     selection.component,
     selection.activity,
     data.milestone,

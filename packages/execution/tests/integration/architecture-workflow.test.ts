@@ -1,6 +1,4 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
 import { Architecture } from '../../../architecture/src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
@@ -13,7 +11,7 @@ import {
 } from '../../../workflow/src/index.js';
 import type { Candidate, Verdict } from '../../../verification/src/index.js';
 import { Execution } from '../../src/index.js';
-import { ArchitectureFixture } from '../fixtures/architecture.js';
+import { AdoptionFixture } from '../fixtures/architecture-adoption.js';
 
 /** Verify the actual outer Workflow and normal task lifecycle against real approved bytes and journals. */
 class ArchitectureDeliveryScenario {
@@ -24,8 +22,8 @@ class ArchitectureDeliveryScenario {
 
   /** Substitute agent and delivery ports only; preserve real guide application, Git and Coordination. */
   constructor(t: TestContext) {
-    this.fixture = new ArchitectureFixture(t);
-    t.mock.method(this.fixture.child, 'cleanup', () => {});
+    this.fixture = new AdoptionFixture(t);
+    t.mock.method(this.fixture.task, 'cleanup', () => {});
     t.mock.method(this.fixture.parent, 'close', () => {});
     this.workflow = new Workflow(this.services());
   }
@@ -42,12 +40,13 @@ class ArchitectureDeliveryScenario {
 
   /** Keep ordinary prerequisite activities before exact host writes and independent candidate review. */
   private services(): WorkflowServices {
-    const { parent, proposal, storage } = this.fixture;
+    const { parent, proposal } = this.fixture;
+    const storage = parent.config.storage;
     const native = new Execution(new Architecture(), new Coordination(storage), storage);
     return {
       architecture: {
         propose: async () => {
-          await this.fixture.decide('approve');
+          await this.fixture.approve();
           return { kind: 'approved', proposal, report: parent.evidence[0]! };
         },
       },
@@ -80,7 +79,7 @@ class ArchitectureDeliveryScenario {
     }
     assert.equal(ancestor, this.fixture.parent);
     assert.equal(input.guide, this.fixture.proposal.id);
-    return this.fixture.child;
+    return this.fixture.task;
   }
 
   /** Supply an explicit actor-authored fixture plan through the ordinary Direction port. */
@@ -129,15 +128,12 @@ class ArchitectureDeliveryScenario {
   /** Inspect actual candidate contents at the independent-review boundary. */
   private review(candidate: Candidate): Verdict {
     this.calls.push('independent-review');
-    assert.notEqual(
-      readFileSync(join(this.fixture.workspace, 'contract.md'), 'utf8'),
-      this.fixture.original,
-    );
+    assert(this.fixture.task.capture.operations['service-check']);
     return {
       kind: 'accepted',
       candidate: candidate.digest,
       criteria: ['approved-outcome'],
-      evidence: this.fixture.child.evidence,
+      evidence: this.fixture.task.evidence,
     };
   }
 
@@ -147,17 +143,15 @@ class ArchitectureDeliveryScenario {
     return {
       kind: 'merged' as const,
       commit: 'fixture-staging-commit',
-      evidence: this.fixture.child.evidence,
+      evidence: this.fixture.task.evidence,
     };
   }
 
-  /** Ensure ordinary stewardship runs against original authority before the host applies the new guide. */
+  /** Require the next steward to consume adopted authority while keeping the engineering base intact. */
   private activity() {
     this.calls.push('steward');
-    assert.equal(
-      readFileSync(join(this.fixture.workspace, 'contract.md'), 'utf8'),
-      this.fixture.original,
-    );
+    assert(this.fixture.task.capture.operations['service-check']);
+    assert.equal(this.fixture.task.config.capture, this.fixture.parent.config.capture);
     return { kind: 'completed' as const, evidence: [] };
   }
 }

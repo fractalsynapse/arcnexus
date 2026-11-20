@@ -4,6 +4,8 @@
 
 ### Added
 
+- Adopt exact approved architecture at the existing workspace/checkpoint boundaries once mapped handlers and commands are available; retain the original engineering base, accepted plan, answers and historical authority across restart (#615).
+
 - Resolve reusable operation parameters from declared defaults, component configuration and selected activity bindings; enforce declared passing activity checks through the existing steward repair path (#615).
 
 - Stream persisted host/provider observations through the task observer and human/JSONL CLI, retain exact requests and complete readable run timelines, and derive live elapsed-time and reported-token accounting per execution profile without inventing missing usage or pricing (#615).

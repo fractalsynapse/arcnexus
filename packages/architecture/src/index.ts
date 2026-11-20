@@ -50,3 +50,4 @@ export const architecturePlugin = {
 
 export { prepareArchitectureProposal } from './decode-proposal.js';
 export { operationID, resolveOperation } from './operation.js';
+export { validateCapture } from './validation.js';

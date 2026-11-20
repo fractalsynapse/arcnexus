@@ -31,7 +31,7 @@ export function activateActor(
   verifyNativeGuidance(capture, worktree);
   const diff =
     task.branch && selection.activity === 'review'
-      ? task.store('activity.diff', candidateDiff(worktree, capture.source.revision))
+      ? task.store('activity.diff', candidateDiff(worktree, task.config.capture.source.revision))
       : undefined;
   const evidence = diff ? [...(data.evidence ?? []), diff] : data.evidence;
   const inbox = new ResearchInbox(

@@ -32,8 +32,8 @@ export function approvedArchitecture(task: HostTask, id: string) {
   if (receipt?.answer.trim().toLowerCase() !== 'approve')
     throw new Error('Architecture delivery requires the exact human approval receipt');
   if (
-    proposal.baseline !== task.capture.source.revision ||
-    proposal.baseline !== parent.capture.source.revision
+    proposal.baseline !== task.config.capture.source.revision ||
+    proposal.baseline !== parent.config.capture.source.revision
   )
     throw new Error('Architecture proposal baseline changed; renewed approval is required');
   return { ...record, receipt: receipt.evidence };
@@ -106,3 +106,5 @@ function architectureFiles(task: HostTask, proposal: ArchitectureProposal) {
     return [{ file, before, after }];
   });
 }
+
+export { refreshArchitecture } from './architecture-adoption.js';
