@@ -138,8 +138,9 @@ export class RefinementRun {
     const index = phase === 'Run' && saved?.phase === 'Run' ? (saved.goal ?? 0) : 0;
     const outcome = await this.runGoals(invocation, round, goals.goals, index);
     if (outcome) return outcome;
-    goals.finish();
     this.completeRound(invocation, round, goals.goals, start);
+    goals.finish();
+    this.save(invocation, round + 1, 'Plan');
   }
 
   /** Execute the Planner assessment as a normal task child of the retained writer. */
