@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
@@ -183,4 +183,22 @@ test('Reviewer repairs a changed citation-only candidate while preserving the or
   assert.equal(fixture.requests.length, 3);
   assert.equal(fixture.checks, 1);
   assert.match(JSON.stringify(fixture.requests[2]), /different candidate/);
+});
+
+test('assessment and successive citation repairs reference the complete historical catalog', async (t) => {
+  const fixture = new CitationScenario(t, 'successive');
+  fixture.task.store('earliest-report.txt', 'Complete original report\nsecond line\n');
+  fixture.task.store('latest-answer.txt', 'Complete clarification answer\nsecond line\n');
+  const expected = [...fixture.task.evidence];
+  assert.equal((await fixture.run()).kind, 'accepted');
+  assert.equal(fixture.requests.length, 3);
+  for (const request of fixture.requests) {
+    const evidence = request.evidence as string[];
+    assert.equal(evidence.length, 1);
+    const index = JSON.parse(readFileSync(evidence[0]!, 'utf8'));
+    assert.equal(index.kind, 'retained-task-evidence');
+    assert.deepEqual(index.references, expected);
+    assert.ok(expected.every((path) => !evidence.includes(path)));
+  }
+  assert.equal(fixture.checks, 1);
 });
