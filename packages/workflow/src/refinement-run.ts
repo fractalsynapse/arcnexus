@@ -88,6 +88,17 @@ export class RefinementRun {
       this.save(invocation, round, 'Run', { outcome });
       phase = 'Run';
     }
+    return this.runInventory(invocation, round, phase, saved, start);
+  }
+
+  /** Capture this round's immutable inventory and resume its first unfinished goal. */
+  private async runInventory(
+    invocation: string,
+    round: number,
+    phase: SavedProgress['phase'],
+    saved: SavedProgress | undefined,
+    start: number,
+  ): Promise<TaskOutcome | undefined> {
     const goals = this.services.execution.round?.(
       this.parent.capture.source.root,
       `refine:${invocation}:${round}`,
@@ -95,7 +106,7 @@ export class RefinementRun {
     if (!goals)
       return { kind: 'invalid', reason: 'Standing goal rounds are unavailable', evidence: [] };
     this.save(invocation, round, 'Run', { inventory: goals.goals });
-    const index = phase === 'Run' && saved?.phase === 'Run' ? (saved.goal ?? 0) : 0;
+    const index = phase === 'Run' && saved?.phase === 'Run' ? saved.goal ?? 0 : 0;
     const outcome = await this.runGoals(invocation, round, goals.goals, index);
     if (outcome) return outcome;
     goals.finish();
