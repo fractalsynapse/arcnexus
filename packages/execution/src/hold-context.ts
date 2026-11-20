@@ -5,7 +5,7 @@ import type { CheckResult } from './check.js';
 import type { Clarification } from './clarifications.js';
 import type { ObservedEdit } from './edits.js';
 import type { ResearchResult } from './research.js';
-import type { StewardScope } from './steward-check.js';
+import { stewardReplyInput, type StewardScope } from './steward-check.js';
 import { correctionFeedback } from './correction.js';
 import { git } from './git.js';
 import { holdProgress } from './hold-progress.js';
@@ -60,7 +60,7 @@ function retainedHoldContext(
     ...checkedReceipts(events),
     ...knowledge,
     position: task.history().findLast((event) => 'position' in event)?.position,
-    progress: holdProgress(task, milestone, failure.diagnostic, failure.check),
+    progress: holdProgress(task, milestone, failure.diagnostic, failure.check, knowledge.knowledgeIdentity),
     prerequisite: holdPrerequisite(failure.check, knowledge.gates),
     ...supplierContext(task.history(), milestone.id),
   };
@@ -133,6 +133,10 @@ function holdKnowledge(
     answers: [...gates.values()].filter((gate) => gate.answer !== undefined),
     gates: [...gates.values()].filter((gate) => gate.answer === undefined),
     research: [...research.values()],
+    knowledgeIdentity: stewardReplyInput([
+      ...[...gates.values()].map((clarification) => ({ clarification })),
+      ...[...research.values()].map((researchResult) => ({ researchResult })),
+    ]),
   };
 }
 
@@ -169,4 +173,10 @@ function holdScopes(task: HostTask, milestone: Milestone, scope: StewardScope) {
       },
     }),
   ];
+}
+
+/** Apply the same relevant secured input and completed knowledge comparison to refused replies. */
+export function reviewedReplyInput(task: HostTask, milestone: Milestone, scope: StewardScope) {
+  const knowledge = holdKnowledge(task, milestone, scope, task.observations());
+  return holdProgress(task, milestone, '', undefined, knowledge.knowledgeIdentity).identity;
 }
