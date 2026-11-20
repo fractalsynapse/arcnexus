@@ -63,7 +63,11 @@ export function supersededReviewedHold(session: TaskSession, activation: Activit
 }
 
 /** Re-enter Execution for newer scoped findings; its canonical hold identity still rejects repetition. */
-function observedHeldCheckProgress(task: HostTask, activation: ActivityCheckpoint, held: HoldContext) {
+function observedHeldCheckProgress(
+  task: HostTask,
+  activation: ActivityCheckpoint,
+  held: HoldContext,
+) {
   const check = held.failure.check;
   if (!check) return false;
   const scope = { owner: activation.owner, activity: activation.step };
