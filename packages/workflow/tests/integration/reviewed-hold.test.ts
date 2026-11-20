@@ -13,7 +13,15 @@ export const suite = {
 } as const;
 
 /**
- * Workflow.run consumes real Execution holds after retained independent rejection.
+ * reviewed-hold-correction/continuity: Workflow.run consumes real Execution holds
+ * from the preceding Execution contribution after its retained independent rejection.
+ * The original verdict is a public durable fixture; final assessment is controlled.
+ * reviewed-hold-sequential-split: native decoding, real receipts and checkpoint
+ * interruption reject altered acceptance, premature successors and duplicate replay.
+ * reviewed-hold-progress-stop: equivalent logs and incidental edits cannot renew
+ * correction; relevant secured successive inputs must continue.
+ * reviewed-hold-prerequisite-gates: unanswered decisions and missing external
+ * artifacts stop dependents until actual answer/artifact observation on restart.
  * Exact native revision payloads reject diagnostic/log loss and altered acceptance.
  * Secured sequential contributions reject early caller resume and shallow splitting.
  * Reopening real SQLite/Git rejects lost answers, checkpoint replacement and replay.
