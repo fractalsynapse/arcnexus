@@ -1,3 +1,4 @@
+import type { HoldContext } from '../../execution/src/index.js';
 import type { RoundCount } from './round-count.js';
 import type { StandingGoal } from '../../planner/src/inventory.js';
 import type { ArchitectureDecision, Capture } from '../../architecture/src/index.js';
