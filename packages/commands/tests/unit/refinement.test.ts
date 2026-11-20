@@ -32,7 +32,21 @@ const cancelled: TaskOutcome = {
 /** Produce correlated, distinguishable child observations for each attempt. */
 function frames(attempt: number): JournalEvent[] {
   const activation = attempt === 1 ? 'planner-first' : 'director-resumed';
-  const records: unknown[] = [
+  const records = [...providerRecords(attempt, activation), ...outcomeRecords(attempt)];
+  return records.map((observation, index) => ({
+    sequence: String((attempt - 1) * records.length + index + 1),
+    run: attempt === 1 ? 7 : 9,
+    parent: attempt === 1 ? 6 : 8,
+    taskID: attempt === 1 ? 'plan-task' : 'goal-task',
+    goalID: attempt === 1 ? 'plan-goal' : 'goal-a',
+    timestamp: null,
+    observation,
+  }));
+}
+
+/** Provide the phase and native activation metadata. */
+function providerRecords(attempt: number, activation: string): unknown[] {
+  return [
     {
       refinement: {
         invocation: 'invocation-1',
@@ -50,6 +64,13 @@ function frames(attempt: number): JournalEvent[] {
         reasoning: 'high',
       },
     },
+    ...nativeRecords(attempt, activation),
+  ];
+}
+
+/** Preserve complete provider, tool and usage observations. */
+function nativeRecords(attempt: number, activation: string): unknown[] {
+  return [
     {
       nativeEvent: {
         activation,
@@ -76,6 +97,12 @@ function frames(attempt: number): JournalEvent[] {
       },
     },
     { nativeFinished: { activation, durationMs: attempt * 20 } },
+  ];
+}
+
+/** Describe the retained gate and the resumed goal and round outcomes. */
+function outcomeRecords(attempt: number): unknown[] {
+  return [
     attempt === 1
       ? {
           outcome: {
@@ -100,15 +127,6 @@ function frames(attempt: number): JournalEvent[] {
       ? { pending: { proposal: 'proposal/exact.diff' } }
       : { completedRound: { round: 1, report: 'round/one', measurements: 'measurements/report' } },
   ];
-  return records.map((observation, index) => ({
-    sequence: String((attempt - 1) * records.length + index + 1),
-    run: attempt === 1 ? 7 : 9,
-    parent: attempt === 1 ? 6 : 8,
-    taskID: attempt === 1 ? 'plan-task' : 'goal-task',
-    goalID: attempt === 1 ? 'plan-goal' : 'goal-a',
-    timestamp: null,
-    observation,
-  }));
 }
 
 /** Supply a controlled Workflow without replacing the Commands plugin or its injection. */
@@ -121,7 +139,6 @@ class RefinementWorkflow extends Workflow {
   }[] = [];
   readonly answers: (string | undefined)[] = [];
   readonly answerSignals: AbortSignal[] = [];
-  cancelDuringProgress = false;
 
   /** Stream child records before returning the gate or aggregate outcome. */
   override async refine(
