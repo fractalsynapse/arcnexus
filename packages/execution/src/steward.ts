@@ -70,8 +70,8 @@ export async function steward(
   const before = task.evidence.length;
   const scope = { owner: milestone.owner, activity };
   const correction = task.pendingCheck(scope);
-  const result = await requestSteward(task, agent, milestone, scope, signal).catch((error: unknown) =>
-    stewardQuestionOutcome(task, milestone, error, signal),
+  const result = await requestSteward(task, agent, milestone, scope, signal).catch(
+    (error: unknown) => stewardQuestionOutcome(task, milestone, error, signal),
   );
   const outcome =
     result.kind === 'completed'
@@ -91,8 +91,12 @@ function stewardQuestionOutcome(
   error: unknown,
   signal: AbortSignal,
 ): Extract<ActivityOutcome, { kind: 'blocked' }> {
-  if (signal.aborted || !(error instanceof ClarificationRequired) ||
-      correctionFinding(task.history(), milestone)?.kind !== 'rejection') throw error;
+  if (
+    signal.aborted ||
+    !(error instanceof ClarificationRequired) ||
+    correctionFinding(task.history(), milestone)?.kind !== 'rejection'
+  )
+    throw error;
   return { kind: 'blocked', reason: error.message, evidence: error.evidence };
 }
 
