@@ -98,7 +98,10 @@ class RoundConsumer {
   private finding(consumption: unknown[]) {
     return this.component + ' finding ' + createHash('sha256').update(this.input).digest('hex') +
       '\nComplete answer: ' + JSON.stringify(this.task.assignment.clarifications) +
-      '\nConsumed originating findings and measurement references: ' + JSON.stringify(consumption);
+      '\nConsumed originating findings and measurement references: ' + JSON.stringify(consumption.map((round: any) => ({
+        invocation: round.invocation, round: round.round, report: round.report,
+        findings: round.findings, measurements: round.measurements,
+      })));
   }
 
   /** Return valid production actor shapes and real captured citations with no inventory changes. */
