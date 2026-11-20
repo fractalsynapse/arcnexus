@@ -117,27 +117,26 @@ for (const scenario of ['human', 'external'] as const) {
       'The terminal gate must name the required action',
     );
     await resumeGate(f, held.task.checkpoint);
-
   });
 }
 
 /** Reopen unchanged gates first, then observe a complete decision or real external artifact. */
 async function resumeGate(f: ReviewedWorkflow, checkpoint: string) {
-    await f.reopen();
-    assert.equal(f.fixture.checkpoint(), checkpoint);
-    assert.equal((await f.run()).kind, 'blocked');
-    assert.equal(f.revisions.length, 0);
-    assert.equal(f.reviews.length, 0);
-    await f.reopen(true);
-    assert.equal(
-      (await f.run()).kind,
-      'merged',
-      'Observed satisfaction resumes the retained correction',
-    );
-    assert.equal(f.reviews.length, 1);
-    if (f.scenario === 'human') {
-      const answered = f.holds.flatMap((h) => h.answers).find((a) => a.question === gateQuestion);
-      assert.equal(answered?.answer, gateAnswer);
-    }
-    assert(f.checkpoints.every((c) => c.owner === 'owner'));
+  await f.reopen();
+  assert.equal(f.fixture.checkpoint(), checkpoint);
+  assert.equal((await f.run()).kind, 'blocked');
+  assert.equal(f.revisions.length, 0);
+  assert.equal(f.reviews.length, 0);
+  await f.reopen(true);
+  assert.equal(
+    (await f.run()).kind,
+    'merged',
+    'Observed satisfaction resumes the retained correction',
+  );
+  assert.equal(f.reviews.length, 1);
+  if (f.scenario === 'human') {
+    const answered = f.holds.flatMap((h) => h.answers).find((a) => a.question === gateQuestion);
+    assert.equal(answered?.answer, gateAnswer);
+  }
+  assert(f.checkpoints.every((c) => c.owner === 'owner'));
 }
