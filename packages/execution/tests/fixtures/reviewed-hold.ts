@@ -155,8 +155,11 @@ export class ReviewedHoldFixture {
       'check',
       async (id: string, abort: AbortSignal, scope?: Parameters<HostTask['check']>[2]) => {
         const check = await this.command(task, id, abort);
-        task.note({ check, scope,
-          checkInput: textDigest(readFileSync(join(task.worktree!, 'fixture.txt'), 'utf8')) });
+        task.note({
+          check,
+          scope,
+          checkInput: textDigest(readFileSync(join(task.worktree!, 'fixture.txt'), 'utf8')),
+        });
         this.checks.push(check);
         return check;
       },
@@ -164,11 +167,7 @@ export class ReviewedHoldFixture {
   }
 
   /** Run a real subprocess in Testing's outer sandbox; this does not prove native HostTask confinement. */
-  private async command(
-    task: HostTask,
-    id: string,
-    abort: AbortSignal,
-  ) {
+  private async command(task: HostTask, id: string, abort: AbortSignal) {
     const log = task.artifact('controlled-check.log');
     const args = [
       join(import.meta.dirname, 'reviewed-hold-command.js'),
