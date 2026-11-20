@@ -205,11 +205,7 @@ export class RefinementRun {
   }
 
   /** Register the report and expose only references to complete originating evidence. */
-  private completeRound(
-    invocation: string,
-    round: number,
-    goals: readonly StandingGoal[],
-  ) {
+  private completeRound(invocation: string, round: number, goals: readonly StandingGoal[]) {
     const frames = this.originatingFrames(invocation, round, goals);
     const measurements = new RunMeasurements();
     for (const frame of frames) measurements.accept(frame);
