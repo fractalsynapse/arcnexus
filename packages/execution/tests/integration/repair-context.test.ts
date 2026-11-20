@@ -76,7 +76,8 @@ test('nested repairs retain the originating finding and latest diagnostic in the
         assert(assignment.includes(JSON.stringify(value).slice(1, -1)), value);
       assert(!assignment.includes('Unrelated milestone finding'));
       assert.deepEqual(input.acceptance, milestone.criteria);
-      assert.deepEqual((input.assignment as { completedActivities: string[] }).completedActivities, []);
+      const context = input.assignment as { completedActivities: string[] };
+      assert.deepEqual(context.completedActivities, []);
       return { kind: 'completed', edits: [], checks: [] };
     },
   );
