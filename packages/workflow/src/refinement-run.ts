@@ -236,15 +236,21 @@ export class RefinementRun {
     const children: [string, string][] = [
       ['Assess objectives and standing goals', this.scope(invocation, round, 'plan')],
       ['Assess architecture alignment', this.scope(invocation, round, 'architect')],
-      ...goals.map((goal): [string, string] => [goal.body, this.scope(invocation, round, `goal:${goal.id}`)]),
+      ...goals.map((goal): [string, string] => [
+        goal.body,
+        this.scope(invocation, round, `goal:${goal.id}`),
+      ]),
     ];
     const frames = new Map<string, JournalEvent>();
     for (const [goal, scope] of children) {
       const records = host.journal.childEvents(goal!, scope!) as Record<string, unknown>[];
       const timelinePath = records
         .map((record) => record.artifact)
-        .find((path): path is string => typeof path === 'string' && path.endsWith('run-timeline.jsonl'));
-      if (!timelinePath) throw new Error('Missing retained timeline for refinement child: ' + scope);
+        .find(
+          (path): path is string => typeof path === 'string' && path.endsWith('run-timeline.jsonl'),
+        );
+      if (!timelinePath)
+        throw new Error('Missing retained timeline for refinement child: ' + scope);
       const timeline = host.readFile(timelinePath).text;
       for (const line of timeline.split('\n')) {
         if (!line) continue;
@@ -252,7 +258,9 @@ export class RefinementRun {
         frames.set(frame.sequence, frame);
       }
     }
-    return [...frames.values()].sort((left, right) => Number(left.sequence) - Number(right.sequence));
+    return [...frames.values()].sort(
+      (left, right) => Number(left.sequence) - Number(right.sequence),
+    );
   }
 
   /** Persist the requested total and first unfinished logical position. */
