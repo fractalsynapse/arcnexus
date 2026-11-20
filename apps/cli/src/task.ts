@@ -14,7 +14,7 @@ export async function runTask(
   goal: string | undefined,
   json: boolean,
   verb: 'run' | 'plan' | 'update' | 'refine',
-  rounds = 1,
+  rounds = '1',
 ) {
   const controller = new AbortController();
   const abort = () => controller.abort(new Error('Task cancelled by SIGINT'));
