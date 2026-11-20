@@ -54,7 +54,6 @@ class StreamScenario {
   /** Await the child after attaching the production output observer. */
   async run(json: boolean): Promise<StreamResult> {
     const child = this.start(json);
-    if (!json) writeFileSync(this.release, 'release');
     const capture = attachStream(child, json, this.release);
     const status = await new Promise<number | null>((resolve, reject) => {
       child.on('error', reject);
@@ -117,8 +116,7 @@ function attachStream(
   child.stdout.on('data', (chunk: string) => {
     capture.output += chunk;
     if (!json) {
-      if (child.exitCode === null && capture.output.includes('Run measurements'))
-        capture.liveProvider = true;
+      observeHumanPhase(child, capture, release);
       return;
     }
     partial += chunk;
@@ -128,6 +126,25 @@ function attachStream(
     releaseObservedPhase(capture, release);
   });
   return capture;
+}
+
+/** Confirm the held Plan is visible before allowing its provider to finish. */
+function observeHumanPhase(
+  child: ChildProcessWithoutNullStreams,
+  capture: StreamCapture,
+  release: string,
+): void {
+  if (existsSync(release) || child.exitCode !== null) return;
+  const output = capture.output;
+  if (!output.includes('"type": "fixture.consumption"')) return;
+  if (!output.includes('"id": "read-tool"') || !output.includes('durable evidence')) return;
+  assert.match(output, /Refinement round 1\/2 · Plan/);
+  assert.ok(!output.includes('"type": "turn.completed"'));
+  assert.ok(!output.includes('"type": "agent_message"'));
+  assert.ok(!output.includes('Refinement round 1/2 · Architect'));
+  capture.liveProvider = true;
+  capture.liveToolResult = true;
+  writeFileSync(release, 'release');
 }
 
 /** Retain each complete JSONL record and recognize provider and tool results. */
@@ -287,6 +304,8 @@ test('built refinement streams complete ordered JSONL through the production com
 test('built refinement identifies round and phase in live human output', async (t) => {
   const result = await new StreamScenario(t).run(false);
   assert.equal(result.status, 0, result.output);
+  assert.ok(result.liveProvider, 'round and phase arrive while the provider remains held');
+  assert.ok(result.liveToolResult, 'tool output arrives before releasing the unfinished phase');
   assert.match(result.output, /Refinement round 1\/2 · Plan/);
   assert.match(result.output, /Refinement round 2\/2 · Architect/);
   assert.match(result.output, /Refinement round 2\/2 · Run/);
