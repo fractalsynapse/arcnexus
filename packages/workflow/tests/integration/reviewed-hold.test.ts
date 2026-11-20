@@ -223,9 +223,12 @@ test('interruption after a secured split contribution reuses it before the succe
 
 /** Interrupt only after the real journal commits the successful contribution activation. */
 function interruptFirstContribution(): TaskObserver {
-  return { progress() {}, event(event) {
-    const observation = event.observation as { activation?: { milestone: string } };
-    if (observation.activation?.milestone === 'part-a')
-      throw new Error('Interrupt after the first contribution was retained');
-  } };
+  return {
+    progress() {},
+    event(event) {
+      const observation = event.observation as { activation?: { milestone: string } };
+      if (observation.activation?.milestone === 'part-a')
+        throw new Error('Interrupt after the first contribution was retained');
+    },
+  };
 }
