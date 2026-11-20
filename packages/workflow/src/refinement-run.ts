@@ -316,7 +316,7 @@ function retainedFrames(parent: TaskSession, goal: string, scope: string): Journ
   if (!path) throw new Error('Missing retained timeline for refinement child: ' + scope);
   return host
     .readFile(path)
-    .text.split('\\n')
+    .text.split('\n')
     .filter(Boolean)
     .map((line) => JSON.parse(line) as JournalEvent);
 }
