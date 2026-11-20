@@ -70,7 +70,7 @@ function providers(state: ReturnType<typeof services>, planner: () => unknown) {
       round: state.execution.round.bind(state.execution),
       observeGoal: () => ({ revision: state.revision, source: state.capture.source, recentChanges: [] }),
     },
-    planner: planner(),
+    planner: planner() as WorkflowServices['planner'],
     architecture: {
       propose: async () => ({ kind: 'no-change', summary: 'Architect retained its finding', evidence: [] }),
     },
