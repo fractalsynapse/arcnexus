@@ -27,7 +27,6 @@ class InspectionProvider {
     });
   }
 
-
   /** Probe disjoint activity calls and foreign writes before observing unchanged source. */
   private async refuse(tools: Array<{ name: string }>) {
     const refusals = [];
