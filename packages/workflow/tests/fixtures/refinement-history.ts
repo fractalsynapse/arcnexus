@@ -40,19 +40,31 @@ type Origins = ReturnType<typeof history>;
 /** Compare every origin and terminal result, in order, against the canonical journal. */
 export function assertOrigins(completion: CompletedRefinementRound, origins: Origins) {
   const report = readFileSync(completion.report, 'utf8');
-  const frames = report.split('\n').filter((line) => line.startsWith('{"sequence":'))
+  const frames = report
+    .split('\n')
+    .filter((line) => line.startsWith('{"sequence":'))
     .map((line) => JSON.parse(line) as JournalEvent);
-  assert.deepEqual(completion.findings, origins.map((event) => event.sequence));
+  assert.deepEqual(
+    completion.findings,
+    origins.map((event) => event.sequence),
+  );
   assert.deepEqual(frames, origins);
   const measured = origins.filter(({ observation }) =>
-    ['nativeStarted', 'nativeEvent', 'nativeFinished', 'nativeInvocation']
-      .some((key) => key in observation));
-  assert.deepEqual(completion.measurements, measured.map(({ sequence }) => sequence));
+    ['nativeStarted', 'nativeEvent', 'nativeFinished', 'nativeInvocation'].some(
+      (key) => key in observation,
+    ),
+  );
+  assert.deepEqual(
+    completion.measurements,
+    measured.map(({ sequence }) => sequence),
+  );
   const terminals = origins.flatMap(({ observation }) =>
-    observation.outcome ? [observation.outcome] : []);
+    observation.outcome ? [observation.outcome] : [],
+  );
   assert.equal(new Set(completion.findings).size, origins.length);
   const sources = origins.flatMap(({ observation }) =>
-    observation.nativeEvent?.kind === 'event' ? [observation.nativeEvent.source as string] : []);
+    observation.nativeEvent?.kind === 'event' ? [observation.nativeEvent.source as string] : [],
+  );
   const native = [...new Set(sources)].map((source) => readFileSync(source, 'utf8')).join('\n');
   return { report, terminals, native };
 }
