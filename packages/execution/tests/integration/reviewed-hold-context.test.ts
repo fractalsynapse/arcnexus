@@ -236,3 +236,22 @@ test('a checked edit restored to the same relevant bytes does not renew an uncha
   assert.equal(repeated.receipts.length, initial.receipts.length + 2);
   assertContinuity(fixture, repeated);
 });
+
+test('unrelated checked edits cannot renew the same reviewed checked-edit refusal', async (t) => {
+  const fixture = new ReviewedHoldFixture(t);
+  await fixture.prepare();
+  let calls = 0;
+  t.mock.method(fixture.task, 'activate', async () => {
+    calls++;
+    await fixture.edit('unrelated.txt', `incidental edit ${calls}`);
+    return {
+      kind: 'completed',
+      edits: calls === 3 ? [] : [{ path: 'schema.txt', expected: null, content: 'foreign' }],
+      checks: [],
+    };
+  });
+  const held = context(await fixture.run());
+  assert.equal(calls, 2, 'An unchanged ownership refusal must stop before another automatic reply');
+  assert.equal(held.failure.operation, 'checked-edit');
+  assertContinuity(fixture, held);
+});
