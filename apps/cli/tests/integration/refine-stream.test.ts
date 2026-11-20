@@ -49,6 +49,25 @@ class StreamScenario {
   }
 }
 
+/** Require each phase to be named in the public progress stream. */
+function assertPhases(records: Array<{ type: string; observation?: { message: string } }>) {
+  const progress = records
+    .filter((record) => record.type === 'progress')
+    .map((record) => record.observation?.message);
+  for (const phase of [
+    '1/2 · Plan',
+    '1/2 · Architect',
+    '1/2 · Run',
+    '2/2 · Plan',
+    '2/2 · Architect',
+    '2/2 · Run',
+  ])
+    assert.ok(
+      progress.some((message) => message?.includes('Refinement round ' + phase)),
+      phase,
+    );
+}
+
 test('built refinement streams complete ordered JSONL through the production composition', async (t) => {
   const result = await new StreamScenario(t).run(true);
   assert.equal(result.status, 0, result.output);
