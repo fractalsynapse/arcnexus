@@ -8,7 +8,7 @@ engineering work, not a hand-authored Director plan or delivered capability.
 
 ## Current position and next work
 
-Updated 2026-11-20 against staging `5f91f4a6`. Completed boxes describe the
+Updated 2026-11-20 against staging `c5655fb4`. Completed boxes describe the
 specific capability and linked evidence below, not completion of the entire
 efficiency batch. Unchecked items may have partial implementation; the remaining
 behavior or proof is stated explicitly.
@@ -19,14 +19,16 @@ behavior or proof is stated explicitly.
 | Architecture and operations | [PR #640](https://github.com/fractalsynapse/arcnexus/pull/640) delivered typed operation overrides, activity verification, approved adoption boundaries and observable execution.                                                 | The broader merge/provenance, runtime-adoption and same-run live acceptance items in B remain open.                                                     |
 | Acting context              | [PR #664](https://github.com/fractalsynapse/arcnexus/pull/664) delivered the source-linked component index; [PR #667](https://github.com/fractalsynapse/arcnexus/pull/667) preserved originating findings through nested repairs. | All 18 purposes, 94 model activities and one host procedure were approved by the architect and merged in #673. Live behavioral acceptance remains open. |
 | Timeline and measurements   | Complete provider/MCP artifacts, ordered live human/JSONL observations and time/token accounting are operating through the existing journal.                                                                                      | Full round/phase analysis, verified monetary pricing and subsequent refinement consuming those findings remain open.                                    |
-| Continuous refinement       | Run 102 exercised local repair without Direction, then ended by controlled cancellation after repeated incomplete recovery proof. Checkpoints and prior failed evidence remain retained.                                          | `refine` delivery and the three consecutive production rounds are unproved. Qualification remains **0/3**.                                              |
+| Continuous refinement       | Eight #668 milestones are accepted. Local self-review corrections operated without Direction; attempt 106 stopped on an invalid supplier link. Checkpoints and failed evidence remain retained.                                          | `refine` delivery and the three consecutive production rounds are unproved. Qualification remains **0/3**.                                              |
 
-Latest live result: run 103 advanced the retained #668 task to five accepted
-milestones, then stopped in Execution Testing after a completed research answer
-was omitted from the reply-repetition identity. Its code and evidence remain
-retained. [#675](https://github.com/fractalsynapse/arcnexus/issues/675) names the
-bootstrap correction and the separately approved Execution Testing profile trial;
-see the detailed run record below. This is not a successful delivery.
+Latest live result: run 106 retained eight accepted milestones but ended at an
+invalid supplier link: Coordination requested CLI work while linking an accepted
+Commands milestone. Direction correctly refused the ownership mismatch. The caller
+boundary failed to reject it first. No #668 delivery PR exists; qualification is
+**0/3**. [#678](https://github.com/fractalsynapse/arcnexus/issues/678) names the
+bootstrap caller-validation correction and exact proposed instruction improvements.
+Code and failed observations remain retained; no operator candidate edits, database
+repair or bypassed checks occurred.
 
 The architect reviewed the complete rewrite and explicitly approved merging #673
 and proceeding with testing. The earlier D review stop is satisfied. All 18
@@ -703,3 +705,75 @@ locked contracts and registry bytes stay unchanged. This does not establish a
 general model ranking or authorize automatic profile substitution. After verified
 integration, resume the exact retained #668 task with its plan, checkpoint and
 complete research answer through normal Execution recovery.
+
+
+## Retained refinement attempts 104–106 and caller prevention correction
+
+[PR #676](https://github.com/fractalsynapse/arcnexus/pull/676) delivered the completed
+answer repair identity and exact approved Execution Testing profile change at
+staging `c5655fb4`. All 431 native-enabled tests and exact-head Development and
+Staging CI passed. This is bootstrap evidence, not refinement qualification.
+
+Attempt 104 found recursive fixture evidence copying: read-file bodies were copied
+into subsequent controlled-provider messages. Its test eventually passed, but the
+fixture had generated hundreds of megabytes of transcript content. The operator
+cancelled normally and retained the diagnosis in
+[#677](https://github.com/fractalsynapse/arcnexus/issues/677). Attempt 105 tried to
+send implementation feedback through an inbox contribution, whose documented scope
+is read-only. The host correctly refused the write; the operator cancelled that
+attempt and resumed through the ordinary CLI. Neither attempt counts as clean.
+
+Attempt 106 corrected those fixture copies through mapped edits. Subsequent owner
+checks completed in approximately 19–25 seconds. Self-review returned missing
+Commands and CLI test coverage locally to Testing, without Director replanning.
+Commands passed its improved boundary scenarios and review. CLI review identified
+numeric round-count rounding and missing real-process streaming/cancellation
+proof. Genuine supplier work then migrated exact count types across components.
+Eight milestones remain accepted; partial scoped corrections remain checkpointed.
+
+The final Coordination request asked `cli-app` for work but linked
+`refine-commands-exact-rounds`, whose accepted owner is `commands`. Two Director
+proposals could not satisfy that inconsistent request. The host should have returned
+the error to its caller before Direction. The run ended blocked, exit 1, at
+2026-11-20T13:37:17Z. Checkpoint `edb75e7933d8e0be07301ffc4a5aa17c761efe9b`
+is retained on `668-task`; normal cleanup removed the worktree. The raw stream and
+terminal receipt remain in external storage as `677-cli-resumed-live.jsonl` and
+`677-cli-resumed-live-exit.json`.
+
+Attempt 106 took 75.25 minutes and 31 activations. Reported input was 50,342,955
+tokens, including a cached subset of 45,912,064, and output was 119,679 tokens.
+Cost remains unknown without a verified billing/pricing basis. These observations
+show useful progress and meaningful local review, not reliable end-to-end delivery
+or isolated proof that instructions alone caused the improvement.
+
+The #678 batch returns invalid accepted-owner supplier links through the existing
+caller repair, including after retained acknowledgment or activation. It uses one
+Direction-owned validation rule, the canonical accepted plan and journal, with no
+new store, limit, retry ceiling or orchestration path. Its exact proposed guidance
+batch is [caller-quality](../../packages/architecture/docs/proposals/caller-quality/README.md):
+Testing must reject plausible wrong behavior, fixture responses must reference
+complete original artifacts instead of recursively copying them, and every Architect
+update must assess purpose/activity effectiveness against objectives, goals and
+run findings. The architect approved exact patch `25a53ca4e47f`; its guide bytes were applied
+with verified before/after digests. Live resumption and the
+three-round production qualification remain outstanding.
+
+
+#678 local verification: six new public-boundary regressions cover local MCP refusal,
+structured reply repair, unchanged invalid-reply holds, exact diagnostic retention
+across answer continuation, and real SQLite reopen after acknowledged request or
+activation. The initial valid fixture observed the intended missing caller refusal,
+missing structured repair and premature Direction invocation. A later focused red
+caught diagnostic loss in the proposed continuation merge and was corrected before
+integration. The final assembled native-enabled run passed all 437 tests with no
+failures or skips. Formatting, lint, strict TypeScript and specification/ownership/
+contract/link/skill checks passed. These are local engineering observations;
+current-head CI, staging delivery and live #668 resumption remain separate.
+
+
+The architect also requested comparison of the next updated run with attempt 106.
+Retain the original checkpoint, actor outputs, review findings, repair routes,
+request sizes and profile-specific time/token measurements before resumption.
+Compare actual subsequent output and progress, not only passing counts. The host
+validation correction and guidance both change; resumed pending work differs from
+the prior full attempt, so aggregate differences do not isolate prompt causality.

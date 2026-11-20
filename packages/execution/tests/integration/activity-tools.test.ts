@@ -80,6 +80,7 @@ function testingTask(events: unknown[]) {
     taskID: 'fixture',
     capture: testingCapture,
     observations: () => events,
+    history: () => events,
     note: (event: unknown) => events.push(event),
     check: async (id: string, _signal: AbortSignal, scope: unknown) => {
       const check = {

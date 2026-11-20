@@ -8,6 +8,7 @@ import {
 import { archiveResearch } from './research-archive.js';
 import { saveCheckpoint } from './checkpoint.js';
 import { InvalidCodexResponse } from './codex.js';
+import { supplierLinkDiagnostic } from '../../direction/src/index.js';
 import { selfLinkedSupplier, type ActivityCheckpoint } from '../../workflow/src/index.js';
 import { materializeEdits } from './formatter.js';
 import type { HostTask } from './index.js';
@@ -60,7 +61,8 @@ export class ActivationTools {
       ({ projectRequest }) => projectRequest?.scope === this.scope,
     );
     const request = events[index]?.projectRequest;
-    if (!request || selfLinkedSupplier(request, this.milestone)) return;
+    if (!request || selfLinkedSupplier(request, this.milestone) || this.supplierDiagnostic(request))
+      return;
     const handled = events
       .slice(index + 1)
       .some(({ clarification, researchRequest, activation, projectReply }) => {
@@ -188,12 +190,20 @@ export class ActivationTools {
       throw new Error(
         `Supplier milestone ${this.milestone} is your current milestone. Continue this activity or link a distinct contribution.`,
       );
+    const diagnostic = this.supplierDiagnostic(request);
+    if (diagnostic) throw new Error(diagnostic);
     this.handoff = request;
     this.task.note({ projectRequest: { scope: this.scope, ...this.handoff } });
     return {
       recorded: kind,
       instructions: 'Return an empty JSON object now so the host can fulfill the request.',
     };
+  }
+
+  /** Resolve a link against the canonical accepted plan, including on acknowledged-request recovery. */
+  private supplierDiagnostic(request: Request) {
+    const plan = this.task.history().findLast((event) => 'plan' in event)?.plan;
+    return supplierLinkDiagnostic(plan, { ...request, requester: this.milestone });
   }
 
   /** Accept a structured outcome and attach only requests received over MCP. */
