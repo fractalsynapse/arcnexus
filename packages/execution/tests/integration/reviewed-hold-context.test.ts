@@ -194,3 +194,21 @@ test('an actual unavailable input stays an unsatisfied prerequisite despite opti
   assert.equal(resumed.prerequisite?.satisfied, false);
   assert.deepEqual(resumed.rejection, held.rejection);
 });
+
+test('an ownership hold retains its exact refusal and prior receipts without inventing a check exit', async (t) => {
+  const fixture = new ReviewedHoldFixture(t);
+  await fixture.prepare();
+  const observedChecks = fixture.checks.length;
+  fixture.refuseForeignEdit();
+  const result = await fixture.run();
+  assert.equal(result.kind, 'blocked');
+  assert.match(result.reason, /schema.txt/);
+  assert.equal(fixture.checks.length, observedChecks);
+  const held = context(result);
+  assertContinuity(fixture, held);
+  assert.equal(held.failure.operation, 'checked-edit');
+  assert.equal(held.failure.diagnostic, result.reason);
+  assert.equal(held.failure.check, undefined);
+  assert.deepEqual(held.receipts, fixture.receipts);
+  assert.equal(fixture.task.readFile('unrelated.txt').text, 'acknowledged before hold');
+});
