@@ -4,7 +4,8 @@ import type { JournalEvent } from './index.js';
 /** Read all attempts of one logical task and its nested logical descendants in event order. */
 export function descendantEvents(database: DatabaseSync, task: string): JournalEvent[] {
   return database
-    .prepare(`
+    .prepare(
+      `
       WITH RECURSIVE descendants(task_id) AS (
         SELECT ?
         UNION
@@ -19,7 +20,8 @@ export function descendantEvents(database: DatabaseSync, task: string): JournalE
       JOIN runs ON runs.id = events.run
       WHERE runs.task_id IN (SELECT task_id FROM descendants)
       ORDER BY events.id
-    `)
+    `,
+    )
     .all(task)
     .map((row) => ({
       sequence: String(row.id),
