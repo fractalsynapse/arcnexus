@@ -149,35 +149,34 @@ function assertUsage(
 
 /** Expand logical descendants across all parent attempts independently of the production query. */
 function descendantTasks(rows: Record<string, unknown>[], tasks: ReadonlySet<string>) {
-    const selected = new Set(tasks);
-    let changed = true;
-    while (changed) {
-      const parents = new Set(
-        rows.filter((row) => selected.has(String(row.task_id))).map((row) => Number(row.run)),
-      );
-      const size = selected.size;
-      for (const row of rows)
-        if (row.parent_id !== null && parents.has(Number(row.parent_id)))
-          selected.add(String(row.task_id));
-      changed = selected.size !== size;
-    }
+  const selected = new Set(tasks);
+  let changed = true;
+  while (changed) {
+    const parents = new Set(
+      rows.filter((row) => selected.has(String(row.task_id))).map((row) => Number(row.run)),
+    );
+    const size = selected.size;
+    for (const row of rows)
+      if (row.parent_id !== null && parents.has(Number(row.parent_id)))
+        selected.add(String(row.task_id));
+    changed = selected.size !== size;
+  }
   return selected;
 }
 
 /** Select all observations correlated to activations attributed to one explicit profile. */
 function profileOrigins(origins: Origins, name: string) {
- const starts = origins.filter(({ observation }) => observation.nativeStarted);
-    const activations = new Set(
-      starts
-        .filter(({ observation }) => observation.nativeStarted.profile === name)
-        .map(({ observation }) => observation.nativeStarted.activation),
-    );
-    return origins.filter(({ observation }) =>
-      activations.has(
-        observation.nativeStarted?.activation ??
-          observation.nativeEvent?.activation ??
-          observation.nativeFinished?.activation,
-      ),
-    );
-
+  const starts = origins.filter(({ observation }) => observation.nativeStarted);
+  const activations = new Set(
+    starts
+      .filter(({ observation }) => observation.nativeStarted.profile === name)
+      .map(({ observation }) => observation.nativeStarted.activation),
+  );
+  return origins.filter(({ observation }) =>
+    activations.has(
+      observation.nativeStarted?.activation ??
+        observation.nativeEvent?.activation ??
+        observation.nativeFinished?.activation,
+    ),
+  );
 }
