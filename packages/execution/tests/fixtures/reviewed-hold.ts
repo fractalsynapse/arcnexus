@@ -153,8 +153,13 @@ export class ReviewedHoldFixture {
     this.t.mock.method(
       task,
       'check',
-      async (id: string, abort: AbortSignal, scope?: Parameters<HostTask['check']>[2]) =>
-        this.command(task, id, abort, scope),
+      async (id: string, abort: AbortSignal, scope?: Parameters<HostTask['check']>[2]) => {
+        const check = await this.command(task, id, abort);
+        task.note({ check, scope,
+          checkInput: textDigest(readFileSync(join(task.worktree!, 'fixture.txt'), 'utf8')) });
+        this.checks.push(check);
+        return check;
+      },
     );
   }
 
@@ -163,7 +168,6 @@ export class ReviewedHoldFixture {
     task: HostTask,
     id: string,
     abort: AbortSignal,
-    scope?: Parameters<HostTask['check']>[2],
   ) {
     const log = task.artifact('controlled-check.log');
     const args = [
@@ -183,23 +187,18 @@ export class ReviewedHoldFixture {
       durationMs: performance.now() - start,
       diagnostic: observed.stderr.trim(),
     };
-    task.note({
-      check,
-      scope,
-      checkInput: textDigest(readFileSync(join(cwd, 'fixture.txt'), 'utf8')),
-    });
-    this.checks.push(check);
     return check;
   }
 
   /** Persist an independent verdict and its Direction revision using production event shapes. */
   private recordReview() {
     const original = { ...correction, id: 'original' };
+    const digest = git(this.root, 'rev-parse', 'HEAD^{tree}');
     const plan: Plan = { focus, milestones: [original] };
     this.task.record({ plan });
     this.task.record({
-      candidate: { digest: 'reviewed-tree', evidence: [] },
-      verdict: { kind: 'rejected', candidate: 'reviewed-tree', findings: this.rejection.findings },
+      candidate: { digest, evidence: [] },
+      verdict: { kind: 'rejected', candidate: digest, findings: this.rejection.findings },
     });
     this.task.record({ feedback: this.rejection });
     this.task.record({ plan: { focus, milestones: [correction, original] } });
