@@ -223,7 +223,6 @@ export class RefinementRun {
       evidence: [...new Set(frames.flatMap((frame) => eventEvidence(frame.observation)))],
     };
     this.parent.record({ completedRound: completion });
-    this.save(invocation, round + 1, 'Plan');
   }
 
   /** Persist the requested total and first unfinished logical position. */
