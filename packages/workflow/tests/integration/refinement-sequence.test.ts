@@ -212,11 +212,7 @@ function interruptProviders(f: ReturnType<typeof fixture>, calls: string[], stop
   };
   services.direction.plan = async (session) => {
     visit(session.goal.trim());
-    return {
-      kind: 'satisfied',
-      summary: 'The measured goal holds',
-      evidence: [{ path: 'baseline', quote: 'measured evidence' }],
-    };
+    return assessGoal(session, []);
   };
   return { services, controller, interrupted: () => interrupted };
 }
