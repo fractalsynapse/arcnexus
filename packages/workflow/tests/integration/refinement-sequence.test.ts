@@ -125,6 +125,32 @@ test('a completed invocation permits a fresh invocation with new assessments', a
   ]);
 });
 
+test('an interrupted invocation refuses a changed round total before reassessment', async (t) => {
+  const f = fixture(t);
+  const calls: string[] = [];
+  const services = providers(f, calls);
+  const controller = new AbortController();
+  services.planner.propose = async () => {
+    calls.push('Plan');
+    controller.abort();
+    controller.signal.throwIfAborted();
+    throw new Error('Unreachable');
+  };
+  const workflow = new Workflow(services);
+  const refine = Reflect.get(workflow, 'refine') as (
+    directory: string,
+    rounds: number,
+    observer: TaskObserver,
+    signal: AbortSignal,
+  ) => Promise<unknown>;
+  assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
+  await refine.call(workflow, f.root, 2, { progress() {} }, controller.signal).catch(() => {});
+  const before = [...calls];
+  await refine.call(workflow, f.root, 3, { progress() {} }, new AbortController().signal)
+    .catch(() => {});
+  assert.deepEqual(calls, before, 'a changed total must not restart assessment');
+});
+
 test('two refinement rounds assess Plan, Architect and every approved goal in order', async (t) => {
   const f = fixture(t);
   const calls: string[] = [];
