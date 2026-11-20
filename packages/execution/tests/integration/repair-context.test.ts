@@ -99,6 +99,7 @@ for (const completed of [false, true]) {
           localRepair: { targetCompleted: boolean };
         };
         assert.equal(context.localRepair.targetCompleted, completed);
+        assert.equal(JSON.stringify(data.assignment).split('Add missing regression').length - 1, 1);
         assert.deepEqual(
           context.completedActivities,
           completed ? ['documentation', 'testing'] : ['documentation'],
