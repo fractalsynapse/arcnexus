@@ -131,6 +131,19 @@ test('a completed round exposes its report and originating evidence to the obser
   assert.ok(Array.isArray(round.evidence) && round.evidence.length > 0);
 });
 
+/** Require completed invocations to retain distinct public identities. */
+function assertFreshInvocations(events: unknown[]) {
+  const rounds = events.filter(
+    (event) => typeof event === 'object' && event !== null && 'completedRound' in event,
+  );
+  assert.equal(rounds.length, 2);
+  const identities = rounds.map((event) =>
+    Reflect.get(Reflect.get(event as object, 'completedRound'), 'invocation'),
+  );
+  assert.ok(identities[0]);
+  assert.notEqual(identities[0], identities[1], 'completed invocations have distinct identities');
+}
+
 test('a completed invocation permits a fresh invocation with new assessments', async (t) => {
   const f = fixture(t);
   const calls: string[] = [];
