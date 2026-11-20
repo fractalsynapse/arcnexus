@@ -321,8 +321,8 @@ export class ReviewedWorkflow {
     if (milestone.id === 'part-b') {
       assert(prior && 'activation' in prior);
       assert.equal(prior.activation.milestone, 'part-a');
-      assert.equal(prior.outcome.kind, 'completed');
-      assert(prior.outcome.evidence.length);
+      assert.equal(prior.activation.outcome.kind, 'completed');
+      assert(prior.activation.outcome.evidence.length);
       assert.equal(this.fixture.task.readFile('fixture.txt').text, 'partial-a');
     }
     const count = this.revisions.length;
