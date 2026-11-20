@@ -33,6 +33,56 @@ export function reviewedHold(
   return revise(holdFeedback(held, activation));
 }
 
+/** Re-enter the retained caller when secured relevant bytes or a resolved check supersede its hold. */
+export function supersededReviewedHold(session: TaskSession, activation: ActivityCheckpoint) {
+  const outcome = activation.outcome;
+  const held = outcome.kind === 'blocked' ? outcome.holdContext : undefined;
+  if (!(session instanceof HostTask) || !held || held.prerequisite) return false;
+  if (
+    held.task.id !== session.taskID ||
+    held.task.authority !== session.capture.source.revision ||
+    !session.worktree
+  )
+    return false;
+  const receipts = session.observations<{
+    editReceipt?: HoldContext['receipts'][number];
+    checkpoint?: { head: string };
+  }>();
+  const changed = held.progress.inputs.some(({ path, digest }) =>
+    receipts.some(({ editReceipt, checkpoint }) =>
+      Boolean(
+        checkpoint &&
+        editReceipt?.path === path &&
+        editReceipt.after !== digest &&
+        editReceipt.after ===
+          editFingerprint(session.worktree!, session.capture, activation.owner, path),
+      ),
+    ),
+  );
+  return changed || resolvedHeldCheck(session, activation, held);
+}
+
+/** Require a newer scoped actual result before treating the historical failed operation as resolved. */
+function resolvedHeldCheck(task: HostTask, activation: ActivityCheckpoint, held: HoldContext) {
+  const check = held.failure.check;
+  if (!check) return false;
+  const scope = { owner: activation.owner, activity: activation.step };
+  const latest = task
+    .observations<{
+      check?: typeof check;
+      scope?: typeof scope;
+    }>()
+    .findLast(
+      (event) =>
+        event.check?.id === check.id &&
+        event.scope?.owner === scope.owner &&
+        event.scope.activity === scope.activity,
+    )?.check;
+  return Boolean(
+    latest && latest.log !== check.log && latest.status === 0 && !task.pendingCheck(scope),
+  );
+}
+
 /** Compare host-observed relevant inputs and finding, excluding incidental artifact allocation. */
 function sameHold(previous: HoldContext, current: HoldContext) {
   return (
