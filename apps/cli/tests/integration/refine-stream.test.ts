@@ -24,7 +24,7 @@ class StreamScenario {
     );
   }
 
-  /** Read output while the child is running and resolve only after normal process termination. */
+  /** Retain complete JSONL records as they arrive and mark records seen before termination. */
   async run(json: boolean) {
     const child = spawn(
       process.execPath,
@@ -35,17 +35,34 @@ class StreamScenario {
       },
     );
     let output = '';
-    let live = false;
+    let partial = '';
+    const streamed: Array<Record<string, any>> = [];
+    let liveProvider = false;
+    let liveToolResult = false;
     child.stdout.setEncoding('utf8');
     child.stdout.on('data', (chunk: string) => {
       output += chunk;
-      if (output.includes('Refinement round 1/2 · Plan')) live = child.exitCode === null;
+      partial += chunk;
+      const lines = partial.split('\n');
+      partial = lines.pop() ?? '';
+      for (const line of lines) {
+        const record = JSON.parse(line) as Record<string, any>;
+        streamed.push(record);
+        if (record.type !== 'event') continue;
+        const event = record.detail?.event;
+        if (event?.type === 'fixture.consumption') {
+          liveProvider = child.exitCode === null;
+        }
+        if (event?.type === 'item.completed' && event.item?.type === 'mcp_tool_call') {
+          liveToolResult = child.exitCode === null;
+        }
+      }
     });
     const status = await new Promise<number | null>((resolve, reject) => {
       child.on('error', reject);
       child.on('close', resolve);
     });
-    return { status, output, live };
+    return { status, output, streamed, liveProvider, liveToolResult };
   }
 }
 
@@ -71,7 +88,8 @@ function assertPhases(records: Array<{ type: string; observation?: { message: st
 test('built refinement streams complete ordered JSONL through the production composition', async (t) => {
   const result = await new StreamScenario(t).run(true);
   assert.equal(result.status, 0, result.output);
-  assert.ok(result.live);
+  assert.ok(result.liveProvider, 'complete provider observation arrives before process completion');
+  assert.ok(result.liveToolResult, 'complete tool result arrives before process completion');
   const records = result.output
     .trim()
     .split('\n')
@@ -82,7 +100,25 @@ test('built refinement streams complete ordered JSONL through the production com
     provider.map((record) => record.detail.event.component),
     ['planner', 'architecture', 'direction', 'planner', 'architecture', 'direction'],
   );
-  assert.ok(provider.every((record) => record.detail.event.input.includes('## Actor and project')));
+  for (const record of provider) {
+    assert.deepEqual(Object.keys(record.detail.event).sort(), [
+      'component',
+      'consumption',
+      'executable',
+      'input',
+      'reads',
+      'type',
+    ]);
+    assert.ok(record.detail.event.input.startsWith('## Actor and project\n'));
+    assert.deepEqual(record.detail.event.consumption, []);
+    assert.deepEqual(record.detail.event.reads, []);
+    assert.match(record.detail.event.executable, /stream-provider/);
+  }
+  const toolResults = records
+    .map((record) => record.detail?.event)
+    .filter((event) => event?.type === 'item.completed' && event.item?.type === 'mcp_tool_call');
+  assert.ok(toolResults.length > 0);
+  assert.ok(toolResults.every((event) => event.item.result !== undefined));
   assert.ok(
     records.some(
       (record) =>
@@ -100,7 +136,6 @@ test('built refinement streams complete ordered JSONL through the production com
 test('built refinement identifies round and phase in live human output', async (t) => {
   const result = await new StreamScenario(t).run(false);
   assert.equal(result.status, 0, result.output);
-  assert.ok(result.live);
   assert.match(result.output, /Refinement round 1\/2 · Plan/);
   assert.match(result.output, /Refinement round 2\/2 · Architect/);
   assert.match(result.output, /Refinement round 2\/2 · Run/);
