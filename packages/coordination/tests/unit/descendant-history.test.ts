@@ -75,7 +75,10 @@ function firstAttempt(fixture: HistoryFixture) {
 /** Continue both nested logical tasks and preserve their separate terminal observations. */
 function continuedAttempt(fixture: HistoryFixture) {
   const phase = fixture.child(fixture.root, phaseGoal, phaseScope);
-  phase.record({ finding: 'architect resumed finding', answer: 'Second line\n\nFull second answer' });
+  phase.record({
+    finding: 'architect resumed finding',
+    answer: 'Second line\n\nFull second answer',
+  });
   const task = fixture.child(phase, 'Prerequisite', 'supplier');
   task.record({ finding: 'supplier resumed finding', profile: 'fast', usage: { output: 47 } });
   const nested = fixture.child(task, 'Nested review', 'review');
@@ -131,9 +134,15 @@ test('child history includes canonical descendants across retries and excludes o
   fresh.record({ finding: 'excluded fresh invocation' });
   fresh.finish({ kind: 'planned' });
   const freshExpected = fresh.timeline();
-  assert.deepEqual((fixture.root as unknown as DescendantJournal).childTimeline(phaseGoal, phaseScope), freshExpected);
+  assert.deepEqual(
+    (fixture.root as unknown as DescendantJournal).childTimeline(phaseGoal, phaseScope),
+    freshExpected,
+  );
   fixture.root.finish({ kind: 'blocked' });
   fixture.root.close();
   fixture.root = fixture.admit();
-  assert.deepEqual((fixture.root as unknown as DescendantJournal).childTimeline(phaseGoal, phaseScope), freshExpected);
+  assert.deepEqual(
+    (fixture.root as unknown as DescendantJournal).childTimeline(phaseGoal, phaseScope),
+    freshExpected,
+  );
 });
