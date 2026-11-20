@@ -186,7 +186,9 @@ export class ForeignHandoffScenario {
 
   /** Record controlled command outcomes honestly; this is not native confinement or live inference. */
   private observe(id: string, scope: Parameters<HostTask['check']>[2]) {
-    const migrated = this.task.observations<any>().some(({ editReceipt }) => editReceipt?.path === 'other.txt');
+    const migrated = this.task
+      .observations<any>()
+      .some(({ editReceipt }) => editReceipt?.path === 'other.txt');
     const status = migrated ? 0 : 23;
     const log = this.task.store(
       'repository-types.log',
