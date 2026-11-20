@@ -7,6 +7,12 @@ import { RoundConsumptionFixture } from '../fixtures/round-consumption.js';
 
 export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
 
+/** Retain complete native diagnostics in the assertion log before temporary storage is removed. */
+function diagnostic(outcome: { evidence: readonly string[] }) {
+  return JSON.stringify(outcome) + '\n' + outcome.evidence.filter((path) =>
+    path.endsWith('codex.stderr.log')).map((path) => readFileSync(path, 'utf8')).join('\n');
+}
+
 const answer = 'Preserve accepted intent exactly.\nThe complete second line and final conclusion survive.';
 
 interface Consumption {
