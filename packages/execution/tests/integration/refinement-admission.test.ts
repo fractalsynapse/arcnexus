@@ -99,7 +99,6 @@ test('sequential children share the refinement writer while competing roots are 
     directory: root,
     goal: 'Continuous refinement',
     scope: 'refine',
-    refinement: true,
   };
   const parent = await execution.admit(input, signal);
   assert(parent instanceof HostTask);
