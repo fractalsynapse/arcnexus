@@ -99,7 +99,6 @@ export function assertAccounting(report: string, origins: Origins) {
 
 /** Compare one explicit profile with its originating native activation records. */
 function assertProfile(profile: Record<string, any>, origins: Origins) {
-  const ends = origins.filter(({ observation }) => observation.nativeFinished);
   const starts = origins.filter(({ observation }) => observation.nativeStarted);
   const ends = origins.filter(({ observation }) => observation.nativeFinished);
   const turns = origins.flatMap(({ observation }) =>
