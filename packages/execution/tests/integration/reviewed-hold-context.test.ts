@@ -66,6 +66,7 @@ function assertAnswer(fixture: ReviewedHoldFixture, held: HoldContext) {
   const retained = held.answers[0]!;
   assert.equal(retained.question, question);
   assert.equal(retained.answer, answer);
+  assert(retained.evidence);
   assert.equal(JSON.parse(fixture.task.readFile(retained.evidence).text).answer, answer);
   assert.deepEqual(
     new Clarifications(fixture.task, selection, new AbortController().signal).answers({
