@@ -135,6 +135,9 @@ test('child history includes canonical descendants across retries and excludes o
   const immediate = fixture.root.childEvents(phaseGoal, phaseScope);
   assert(immediate.some((value) => JSON.stringify(value).includes('architect first finding')));
   assert(!immediate.some((value) => JSON.stringify(value).includes('supplier first finding')));
-  assert.deepEqual(fixture.root.childTimeline(phaseGoal, phaseScope), uniqueOrdered(fixture.expected));
+  assert.deepEqual(
+    fixture.root.childTimeline(phaseGoal, phaseScope),
+    uniqueOrdered(fixture.expected),
+  );
   assertFreshIsolation(fixture);
 });
