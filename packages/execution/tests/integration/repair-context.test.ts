@@ -36,7 +36,8 @@ function repairedTask(t: TestContext, completed: boolean) {
 }
 
 test('nested repairs retain the originating finding and latest diagnostic in the accepted milestone', async (t) => {
-  const task = repairedTask(t, true);
+  const task = new StewardFixture(t, mkdtempSync(join(tmpdir(), 'arcnexus-nested-repair-'))).task;
+  t.after(() => task.close());
   const original = {
     milestone: 'original',
     activity: 'testing' as const,
@@ -55,17 +56,33 @@ test('nested repairs retain the originating finding and latest diagnostic in the
     repair: { ...latest, milestone: 'unrelated', reason: 'Unrelated milestone finding' },
   });
   task.record({ position: { completed: 0, activities: { original: 0 } }, repair: latest });
-  t.mock.method(task, 'activate', async (_agent: Agent, _selection: unknown, input: TaskContext) => {
-    const assignment = JSON.stringify(input.assignment);
-    for (const value of [original.reason, ...original.evidence, latest.reason, ...latest.evidence])
-      assert(assignment.includes(JSON.stringify(value).slice(1, -1)), value);
-    assert(!assignment.includes('Unrelated milestone finding'));
-    assert.deepEqual(input.acceptance, milestone.criteria);
-    assert.deepEqual((input.assignment as { completedActivities: string[] }).completedActivities, []);
-    return { kind: 'completed', edits: [], checks: [] };
-  });
+  t.mock.method(
+    task,
+    'activate',
+    async (_agent: Agent, _selection: unknown, input: TaskContext) => {
+      const assignment = JSON.stringify(input.assignment);
+      for (const value of [
+        original.reason,
+        ...original.evidence,
+        latest.reason,
+        ...latest.evidence,
+      ])
+        assert(assignment.includes(JSON.stringify(value).slice(1, -1)), value);
+      assert(!assignment.includes('Unrelated milestone finding'));
+      assert.deepEqual(input.acceptance, milestone.criteria);
+      assert.deepEqual(
+        (input.assignment as { completedActivities: string[] }).completedActivities,
+        [],
+      );
+      return { kind: 'completed', edits: [], checks: [] };
+    },
+  );
   const result = await steward(
-    new Agent(new Architecture()), task, milestone, 'documentation', new AbortController().signal,
+    new Agent(new Architecture()),
+    task,
+    milestone,
+    'documentation',
+    new AbortController().signal,
   );
   assert.equal(result.kind, 'completed');
 });
