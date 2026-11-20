@@ -24,6 +24,7 @@ declare module 'cordis' {
         signal: AbortSignal,
       ): ReturnType<Context['workflow']['run']>;
       runRound: Context['workflow']['round'];
+      refine: Context['workflow']['refine'];
     };
   }
 }
