@@ -48,9 +48,30 @@ export type TaskOutcome =
       evidence: readonly string[];
     };
 
+export interface RefinementProgress {
+  invocation: string;
+  total: number;
+  round: number;
+  phase: 'Plan' | 'Architect' | 'Run' | 'complete';
+  goal?: number;
+  inventory?: readonly StandingGoal[];
+  outcome?: TaskOutcome;
+}
+
+export interface CompletedRefinementRound {
+  invocation: string;
+  round: number;
+  report: string;
+  findings: readonly string[];
+  measurements: readonly string[];
+  evidence: readonly string[];
+}
+
 export type TaskEvent =
   | Observation
   | { invocation: { startedAt: string } }
+  | { refinement: RefinementProgress }
+  | { completedRound: CompletedRefinementRound }
   | { plan: Plan; supplier?: SupplierLink }
   | {
       position: { completed: number; activities: Readonly<Record<string, number>> };
