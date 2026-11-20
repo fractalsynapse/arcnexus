@@ -291,7 +291,7 @@ test('a committed child outcome is reused after parent acknowledgment is interru
   });
   const workflow = new Workflow(services);
   const refine = Reflect.get(workflow, 'refine') as Refinement;
-  const events = await retryAfterChildTerminal.call(workflow, refine, f);
+  const events = await retryAfterChildTerminal(workflow, refine, f);
   assertRecoveredReport(assessments, events);
 });
 
