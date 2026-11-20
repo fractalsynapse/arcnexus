@@ -63,15 +63,11 @@ class SpecificationCheck {
 
   /** Refuse all Team coverage findings together, with stable path and conflicting-ID ordering. */
   private checkOwnership(components: ReadonlyMap<string, Component>): void {
-    const findings = team.validateCoverage(
-      Array.from(components.values()),
-      [...this.paths].sort(),
-    );
+    const findings = team.validateCoverage(Array.from(components.values()), [...this.paths].sort());
     if (!findings.length) return;
 
     const diagnostics = findings.map((finding) => {
-      const owners =
-        finding.kind === 'collision' ? finding.owners.map(({ id }) => id).sort() : [];
+      const owners = finding.kind === 'collision' ? finding.owners.map(({ id }) => id).sort() : [];
       const detail = owners.length ? ` (${owners.join(', ')})` : '';
       return `Specification ownership ${finding.kind}: ${finding.path}${detail}`;
     });
