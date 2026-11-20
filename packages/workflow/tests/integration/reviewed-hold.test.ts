@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { type Plan, type RevisionRequest } from '../../../direction/src/index.js';
+import { type HoldContext } from '../../../execution/src/index.js';
 import { correction } from '../../../execution/tests/fixtures/reviewed-hold.js';
 import { gateAnswer, gateQuestion, ReviewedWorkflow } from '../fixtures/reviewed-hold.js';
 
@@ -140,3 +142,54 @@ async function resumeGate(f: ReviewedWorkflow, checkpoint: string) {
   }
   assert(f.checkpoints.every((c) => c.owner === 'owner'));
 }
+
+/** Characterize the fixture's native decoder before relying on later unreachable recovery assertions. */
+test('real Execution hold supplies a valid sequential native revision with unchanged completed prefix', async (t) => {
+  const f = new ReviewedWorkflow(t, 'split');
+  await f.prepare();
+  const outcome = await f.fixture.run();
+  assert.equal(outcome.kind, 'blocked');
+  assert('holdContext' in outcome && outcome.holdContext);
+  const held = outcome.holdContext as HoldContext;
+  f.holds.push(held);
+  const task = f.fixture.task;
+  const plan = task.history().findLast((event) => 'plan' in event)!.plan!;
+  const feedback = holdFeedback(held);
+  const revision = await f.services.direction.revise(task, plan, feedback, new AbortController().signal) as { kind: string; plan: Plan };
+  assert.equal(revision.kind, 'plan');
+  assert.deepEqual(revision.plan.milestones.slice(0, 2), plan.milestones.slice(0, 2));
+  assert.deepEqual(revision.plan.milestones.slice(2).map((m) => m.id), ['part-a', 'part-b', correction.id]);
+  assert.deepEqual(revision.plan.milestones[2]!.criteria, correction.criteria);
+  assert.equal((f.revisions[0] as RevisionRequest).position.completed, 2);
+});
+
+/** Use the existing explicit correction feedback shape with actual host exit and evidence. */
+function holdFeedback(held: HoldContext) {
+  const observed = held.failure.check!;
+  return {
+    kind: 'supplier' as const, owner: 'owner', milestone: correction.id, requester: correction.id,
+    reason: held.failure.diagnostic, evidence: [observed.log],
+    failedCheck: { id: observed.id, activity: 'implementation' as const, expected: 'pass' as const,
+      status: Number(observed.status), log: observed.log, diagnostic: held.failure.diagnostic },
+  };
+}
+
+test('interruption after a secured split contribution reuses it before the successor and original review', async (t) => {
+  const f = new ReviewedWorkflow(t, 'split');
+  await f.prepare();
+  const stopped = await f.run({ progress() {}, event(event) {
+    const text = JSON.stringify(event);
+    if (text.includes('"activation":') && text.includes('"milestone":"part-a"'))
+      throw new Error('Interrupt after the first contribution was retained');
+  } });
+  assert.equal(stopped.kind, 'failed', 'The planned interruption must reach its real checkpoint boundary');
+  assert.deepEqual(f.calls, [correction.id, 'Direction', 'part-a']);
+  const task = f.holds[0]!.task;
+  await f.reopen();
+  assert.equal(f.fixture.task.taskID, task.id);
+  assert.equal(f.fixture.task.issue, task.issue);
+  assert.equal(f.fixture.task.branch, task.branch);
+  assert.equal(f.fixture.task.readFile('fixture.txt').text, 'partial-a');
+  assert.equal((await f.run()).kind, 'merged');
+  assert.deepEqual(f.calls, [correction.id, 'Direction', 'part-a', 'part-b', correction.id, 'Review', 'Delivery']);
+});
