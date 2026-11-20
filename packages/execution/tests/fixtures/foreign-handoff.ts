@@ -69,13 +69,30 @@ export class ForeignHandoffScenario {
   /** Capture a committed isolated project and replace only external model and check execution. */
   constructor(t: TestContext) {
     this.prepareSource();
+    this.task = this.admit();
+    Object.assign(this.task, { worktree: this.workspace, branch: '7-task', issue: '7' });
+    this.task.record({ plan });
+    t.mock.method(this.task, 'activate', async (...args: Parameters<HostTask['activate']>) =>
+      this.reply(args[1], args[2]),
+    );
+    t.mock.method(this.task, 'check', async (...args: Parameters<HostTask['check']>) =>
+      this.observe(args[0], args[2]),
+    );
+    t.after(() => {
+      this.task.journal.close();
+      rmSync(this.root, { recursive: true, force: true });
+    });
+  }
+
+  /** Admit a real isolated journal with the committed architecture and external evidence storage. */
+  private admit() {
     const capture = this.architecture.capture(this.workspace);
     const journal = new Coordination(this.storage).admit(
       remote,
       'Explicit accepted foreign handoff',
     );
     assert(journal instanceof Journal);
-    this.task = new HostTask(
+    return new HostTask(
       {
         capture,
         common: join(this.workspace, '.git'),
@@ -87,16 +104,6 @@ export class ForeignHandoffScenario {
       journal.goal,
       journal,
     );
-    Object.assign(this.task, { worktree: this.workspace, branch: '7-task', issue: '7' });
-    this.task.record({ plan });
-    t.mock.method(this.task, 'activate', async (_agent, selection, input) =>
-      this.reply(selection, input),
-    );
-    t.mock.method(this.task, 'check', async (id, _signal, scope) => this.observe(id, scope));
-    t.after(() => {
-      this.task.journal.close();
-      rmSync(this.root, { recursive: true, force: true });
-    });
   }
 
   /** Write complete generic guidance and committed source rather than borrowing live configuration. */
@@ -141,6 +148,11 @@ export class ForeignHandoffScenario {
     };
     for (const [id, tool] of Object.entries(operations))
       this.write(`.arc/architecture/operations/${id}.yaml`, { id, tool, category: 'project' });
+    this.writeOwners(Object.keys(operations));
+  }
+
+  /** Capture unique owner scopes and the exact activity grants independently of transport behavior. */
+  private writeOwners(operations: string[]) {
     for (const [id, owns] of Object.entries({
       owner: ['fixture.txt'],
       other: ['other.txt'],
@@ -156,7 +168,7 @@ export class ForeignHandoffScenario {
             profile: 'controlled',
             instructions: ['Use mapped operations'],
             standards: [],
-            operations: Object.keys(operations),
+            operations,
             verification: ['repository-types'],
           },
         },
@@ -269,16 +281,7 @@ export class ForeignHandoffScenario {
       plan: { ...plan, milestones: [supplier, requester] },
       supplier: { milestone: supplier.id, request },
     });
-    const actions = new ActivationTools(
-      this.task,
-      { component: 'other', activity: 'implementation' },
-      { milestone: { id: supplier.id }, acceptance: supplier.criteria },
-      this.signal,
-    );
-    await actions.invoke(
-      { name: 'checked-edit', handler: 'edit' },
-      { path: 'other.txt', expected: null, content: 'Migrated foreign consumer\n' },
-    );
+    await this.editSupplier();
     const evidence = [this.task.store('supplier-result.md', answer)];
     this.task.record({
       activation: {
@@ -290,6 +293,20 @@ export class ForeignHandoffScenario {
       },
     });
     return evidence;
+  }
+
+  /** Secure the other owner's source through its own checked scope and real Git checkpoint. */
+  private async editSupplier() {
+    const actions = new ActivationTools(
+      this.task,
+      { component: 'other', activity: 'implementation' },
+      { milestone: { id: supplier.id }, acceptance: supplier.criteria },
+      this.signal,
+    );
+    await actions.invoke(
+      { name: 'checked-edit', handler: 'edit' },
+      { path: 'other.txt', expected: null, content: 'Migrated foreign consumer\n' },
+    );
   }
 
   /** Check exact retained receipts, source bytes and accepted identities after either caller route. */
