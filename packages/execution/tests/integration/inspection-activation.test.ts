@@ -93,7 +93,10 @@ for (const [component, activity, actor, names, web] of [
       assert.ok(diff, 'review activation supplies its candidate diff observation');
       assert.equal(readFileSync(diff, 'utf8'), '');
       view = fixture.agent.prepareRequest(task.capture, selection, {
-        ...data, evidence: [diff], goal: task.goal, worktree: task.worktree,
+        ...data,
+        evidence: [diff],
+        goal: task.goal,
+        worktree: task.worktree,
       });
     }
     const transcript = task.evidence.find((path) => path.endsWith('codex.jsonl'));
