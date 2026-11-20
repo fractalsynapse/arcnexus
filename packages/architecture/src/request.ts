@@ -4,6 +4,7 @@ import { resolveActivity, type ActivitySelection } from './activity.js';
 import { catalogRoot, definitionPath, type Capture } from './catalog.js';
 import { canResearch, researchIndex, researchReportSchema } from './research.js';
 import { operationTool } from './tools.js';
+import { operationID, resolveOperation } from './operation.js';
 
 export interface TaskContext {
   assignment?: unknown;
@@ -133,10 +134,11 @@ function renderActivity({ selected, references }: RequestContext) {
 /** Name each captured operation's source and model-facing tool description. */
 function operationReferences(operations: ReturnType<typeof resolveReferences>['operations']) {
   return Object.fromEntries(
-    operations.map(({ id, tool }) => [
+    operations.map(({ id, tool, command, args, parameterValues, parameterSources }) => [
       id,
       {
         source: definitionPath('operations', id),
+        ...(command ? { command, args, parameters: parameterValues, parameterSources } : {}),
         ...(tool ? { mcp: operationTool(id, tool).description } : {}),
       },
     ]),
@@ -161,8 +163,9 @@ function resolveReferences(
     const standard = reference(capture.standards, id, 'standard');
     return document(standard.document, capture.source.read(standard.document));
   });
-  const operations = activity.operations.map((id) => {
-    const operation = reference(capture.operations, id, 'operation');
+  const operations = activity.operations.map((binding) => {
+    const id = operationID(binding);
+    const operation = resolveOperation(capture, id, component.id, name);
     if (!profile.operationCategories.includes(operation.category)) {
       throw new Error(`Operation ${id} is outside profile ${profile.id} categories`);
     }

@@ -27,6 +27,7 @@ import { stewardProgress } from './steward-progress.js';
 import { retainedTesting } from './testing-rewind.js';
 import { establishedTestingRed } from './testing-red.js';
 import { retainedEvidence } from './context-evidence.js';
+import { operationID } from '../../architecture/src/index.js';
 
 const correctionInstruction =
   'Read failedCheck.log first. It is the latest observed failure. Preserve the earlier finding as history. Correct the current failure within the accepted milestone, or request a distinct contribution through Direction when new work is needed. The host reruns the original check with its original expectation.';
@@ -65,7 +66,8 @@ export async function steward(
     };
   const failed =
     (await perform(task, scope, result, correction, signal)) ??
-    (await reconcileCheck(task, scope, correction, signal));
+    (await reconcileCheck(task, scope, correction, signal)) ??
+    (await verifyActivity(task, scope, signal));
   const evidence = task.evidence.slice(before);
   return failed
     ? stewardCheckOutcome(task, failed, correction, evidence)
@@ -150,7 +152,15 @@ function stewardOperations(task: ReturnType<typeof hostTask>, scope: StewardScop
   return (
     team.list(task.capture.components, { component: scope.owner, activity: scope.activity })[0]
       ?.activities[scope.activity]?.operations ?? []
-  );
+  ).map(operationID);
+}
+
+/** Require the architect-declared passing operations even when the model omits them. */
+function verifyActivity(task: HostTask, scope: StewardScope, signal: AbortSignal) {
+  const required =
+    task.capture.components[scope.owner]?.activities[scope.activity]?.verification ?? [];
+  const checks = required.map((id) => ({ id, expected: 'pass' as const }));
+  return perform(task, scope, { kind: 'completed', edits: [], checks }, undefined, signal);
 }
 
 /** Give the owner its exact failing check and log when activating correction work. */

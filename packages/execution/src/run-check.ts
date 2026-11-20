@@ -16,7 +16,7 @@ export async function runCheck(
   signal.throwIfAborted();
   const worktree = task.worktree;
   if (!worktree) throw new Error('No task worktree is available for checks');
-  checkCommand(task.capture, worktree, id, scope?.owner);
+  checkCommand(task.capture, worktree, id, scope?.owner, scope?.activity);
   const applicable = !ownerTestInapplicability(task.capture, worktree, id, scope?.owner);
   const environment =
     applicable && existsSync(join(worktree, 'package.json'))
@@ -70,6 +70,7 @@ async function executeCheck(
     log,
     signal,
     dependencies,
+    scope?.activity,
   );
   task.note({ check: result, scope, checkInput: input });
   return result;

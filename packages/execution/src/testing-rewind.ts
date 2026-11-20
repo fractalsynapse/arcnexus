@@ -50,7 +50,13 @@ function matchingRed(
   const check = event.check!;
   if (!sameAuthority(task, before, milestone)) return false;
   try {
-    const command = checkCommand(task.capture, task.worktree!, check.id, scope.owner);
+    const command = checkCommand(
+      task.capture,
+      task.worktree!,
+      check.id,
+      scope.owner,
+      scope.activity,
+    );
     return (
       command.executable === check.command &&
       JSON.stringify(command.args) === JSON.stringify(check.args)

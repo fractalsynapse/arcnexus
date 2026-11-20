@@ -33,8 +33,22 @@ export interface Activity {
   profile?: string;
   executor?: 'host';
   instructions: string[];
-  operations: string[];
+  operations: Array<string | OperationBinding>;
   standards: string[];
+  verification?: string[];
+}
+
+export type ParameterValue = string | number | boolean | string[];
+
+export interface OperationBinding {
+  operation: string;
+  parameters?: Record<string, ParameterValue>;
+}
+
+export interface OperationParameter {
+  type: 'string' | 'number' | 'boolean' | 'array';
+  items?: { type: 'string' };
+  default?: ParameterValue;
 }
 
 interface Definition {
@@ -46,6 +60,7 @@ export interface Component extends Definition {
   constraints?: unknown[];
   owns: string[];
   activities: Record<string, Activity>;
+  operationParameters?: Record<string, Record<string, ParameterValue>>;
 }
 
 interface Role extends Definition {
@@ -65,7 +80,8 @@ interface Operation extends Definition {
   category: string;
   tool?: string;
   command?: string;
-  args?: Array<string | { context: 'owner' }>;
+  args?: Array<string | { context: 'owner' } | { parameter: string }>;
+  parameters?: Record<string, OperationParameter>;
   cwd?: string;
   network?: boolean;
   applicability?: 'owner-test-suites';

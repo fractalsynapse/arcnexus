@@ -4,6 +4,8 @@
 
 ### Added
 
+- Resolve reusable operation parameters from declared defaults, component configuration and selected activity bindings; enforce declared passing activity checks through the existing steward repair path (#615).
+
 - Stream persisted host/provider observations through the task observer and human/JSONL CLI, retain exact requests and complete readable run timelines, and derive live elapsed-time and reported-token accounting per execution profile without inventing missing usage or pricing (#615).
 
 - Document the efficiency foundation checklist, detailed prompt-authoring practices and proposed contract amendment for approved in-run architecture adoption, reusable activity checks, live events and continuous profile-aware time/token/cost optimization (#615).

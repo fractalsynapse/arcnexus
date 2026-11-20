@@ -21,7 +21,7 @@ export function checkInput(
   dependencies?: string,
 ) {
   const worktree = task.worktree!;
-  const command = checkCommand(task.capture, worktree, id, scope?.owner);
+  const command = checkCommand(task.capture, worktree, id, scope?.owner, scope?.activity);
   const revision = cleanRevision(worktree);
   if (!revision) return;
   const input = {
@@ -30,6 +30,7 @@ export function checkInput(
     id,
     operation: task.capture.operations[id],
     args: command.args,
+    parameters: command.parameters,
     cwd: relative(worktree, command.cwd),
     scope: [scope?.owner, scope?.activity, scope?.expected ?? 'pass'],
     environment: environmentIdentity(task, command.executable, command.cwd, dependencies),

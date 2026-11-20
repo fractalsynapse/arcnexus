@@ -1,5 +1,6 @@
 import { parse } from 'yaml';
 import type { Capture } from './catalog.js';
+import { operationID } from './operation.js';
 
 /** Resolve the component's research archive under the captured knowledge root. */
 export function researchDirectory(capture: Capture, component: string) {
@@ -12,8 +13,8 @@ export function canResearch(capture: Capture, component: string) {
   return (
     !!research?.profile &&
     !research.executor &&
-    !!research.operations?.every((id) => {
-      const operation = capture.operations?.[id];
+    !!research.operations?.every((binding) => {
+      const operation = capture.operations?.[operationID(binding)];
       return (
         !!operation &&
         operation.command === undefined &&

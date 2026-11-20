@@ -67,7 +67,7 @@ unresolved authority transition or a result that its current evidence cannot sup
   task. Replace that task-wide freeze with recorded adoption of approved model
   versions within the existing run. Align Workflow, Direction, Coordination,
   Verification, Agent and CLI references at the same time. Workflow stays proposed.
-- [ ] Include typed operation parameters, activity completion requirements and
+- [x] Include typed operation parameters, activity completion requirements and
   full event streaming in the same reviewed public-boundary amendment. Preserve
   ownership, exact guide approval, checked edits, independent review and cancellation.
 - [ ] Reconcile approved but unapplied quality batch `303689eed95a` with this
@@ -125,17 +125,17 @@ retroactively changing the authority used for a completed activation.
 - [ ] Extend the existing operation declaration with typed named parameters and
   defaults. Support relevant existing selectors, including owner, test tags and
   levels, paths and native-test selection, according to the actual command API.
-- [ ] Resolve defaults → explicit component overrides → explicit activity binding
+- [x] Resolve defaults → explicit component overrides → explicit activity binding
   overrides. Preserve parameter provenance. Host-supplied identity values are
   authoritative; model-supplied values are accepted only where the declaration
   explicitly permits them. Missing/unknown parameters and invalid types name the
   precise binding and field in their diagnostics.
-- [ ] Interpolate declared values into executable arguments as data. Lists expand
+- [x] Interpolate declared values into executable arguments as data. Lists expand
   to argument lists; strings remain individual arguments. Reuse the current owner
   argument resolver. Do not introduce a shell, expression language, script generator
   or separate operation engine. Parameters do not rewrite executable, confinement,
   ownership or network policy outside their approved declaration.
-- [ ] Add an activity `verification` declaration referencing its resolved operation
+- [x] Add an activity `verification` declaration referencing its resolved operation
   bindings. Define each operation and its parameter values once; the completion
   declaration refers to that binding instead of restating its command/configuration.
 - [ ] Make required applicable operations run before activity completion. Testing
@@ -355,7 +355,20 @@ reads use references. Missing usage and unverified pricing remain unknown.
 Local evidence for this batch: build, strict TypeScript, lint, formatting and
 specification/ownership/guidance checks pass; 379 native-enabled built-program
 tests pass with no failures or skips. The observed failing regressions and check
-logs are retained in application storage. A real read-only provider demonstration
-and current-head hosted CI are separate next checks. Architecture adoption,
-parameterized operations, the catalog/prompt rewrite, complete cost/phase analysis,
-and refinement qualification remain outstanding. The live streak remains 0/3.
+logs are retained in application storage. A real read-only Director observation
+(run 97) then used the production provider, read real project sources through MCP,
+and returned a valid plan: 44.3 seconds wall time, 87,083 reported input tokens
+(69,632 cached) and 1,745 output tokens. Its complete timeline, exact request and
+provider results are retained outside source. Cost remains unknown. It made no
+source changes and earns no delivery or qualification credit. Current committed
+head `0e4da679` passed [CI](https://github.com/fractalsynapse/arcnexus/actions/runs/44646556705).
+
+The next operation batch uses one resolver for inspection, execution and check
+identity. It supports typed scalar/argv-array parameters with provenance and
+enforces required passing checks even when the model omits them or predicts red.
+Its 53 focused built-program cases pass, including a real confined argv/cache
+test. [Operation configuration](../../packages/architecture/docs/operations.md)
+describes this boundary. This does not claim test-selector support or activate
+unapproved catalog declarations. Architecture adoption, actual test selection,
+the catalog/prompt rewrite, complete cost/phase analysis and refinement remain
+outstanding. The live streak remains 0/3.

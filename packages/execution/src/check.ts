@@ -1,7 +1,7 @@
 import { writeFileSync } from 'node:fs';
 import { isAbsolute, join, resolve, sep } from 'node:path';
 import { team } from '../../team/src/index.js';
-import type { Capture } from '../../architecture/src/index.js';
+import { resolveOperation, type Capture } from '../../architecture/src/index.js';
 import { hasOwnerTestSuites } from '../../foundation/src/index.js';
 import { execute } from './process.js';
 import { checkMounts } from './check-sandbox.js';
@@ -29,9 +29,10 @@ export async function check(
   log: string,
   signal: AbortSignal,
   dependencies = join(capture.source.root, 'node_modules'),
+  activity?: string,
 ): Promise<CheckResult> {
   signal.throwIfAborted();
-  const { executable, args, cwd } = checkCommand(capture, worktree, id, owner);
+  const { executable, args, cwd } = checkCommand(capture, worktree, id, owner, activity);
   const parameters = { id, command: executable, args, cwd, log };
   const reason = ownerTestInapplicability(capture, worktree, id, owner);
   if (reason) {
@@ -87,18 +88,19 @@ export async function formatContents(
 }
 
 /** Resolve a captured operation and owner-dependent arguments in the sealed workspace. */
-export function checkCommand(capture: Capture, worktree: string, id: string, owner?: string) {
-  const operation = Object.hasOwn(capture.operations, id) && capture.operations[id];
+export function checkCommand(
+  capture: Capture,
+  worktree: string,
+  id: string,
+  owner?: string,
+  activity?: string,
+) {
+  const operation = resolveOperation(capture, id, owner, activity);
   if (!operation || !operation.command || operation.network !== false)
     throw new Error(`Unavailable confined operation: ${id}`);
-  const args = (operation.args ?? []).map((arg) => {
-    if (typeof arg === 'string') return arg;
-    if (!owner || !arg || arg.context !== 'owner')
-      throw new Error(`Unresolved operation argument: ${id}`);
-    return owner;
-  });
+  const args = operation.args;
   const cwd = resolve(worktree, operation.cwd ?? '.');
   if (isAbsolute(operation.cwd ?? '.') || (cwd !== worktree && !cwd.startsWith(worktree + sep)))
     throw new Error(`Operation working directory escapes the worktree: ${id}`);
-  return { executable: operation.command, args, cwd };
+  return { executable: operation.command, args, cwd, parameters: operation.parameterValues };
 }

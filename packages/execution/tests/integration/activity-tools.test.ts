@@ -78,7 +78,7 @@ test('local MCP exposes only the captured operation and refuses alternate action
 function testingTask(events: unknown[]) {
   return {
     taskID: 'fixture',
-    capture: { source: { revision: 'staging' }, project: {} },
+    capture: testingCapture,
     observations: () => events,
     note: (event: unknown) => events.push(event),
     check: async (id: string, _signal: AbortSignal, scope: unknown) => {
@@ -96,6 +96,12 @@ function testingTask(events: unknown[]) {
     },
   } as unknown as HostTask;
 }
+
+const testingCapture = {
+  source: { revision: 'staging' },
+  project: {},
+  components: { fixture: { activities: { testing: { operations: ['owner-tests'] } } } },
+};
 
 /** Open one native testing activation without invoking external services. */
 function testingActivation(retainedSelfLink = false) {
