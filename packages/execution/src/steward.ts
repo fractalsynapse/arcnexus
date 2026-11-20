@@ -70,13 +70,14 @@ export async function steward(
   const scope = { owner: milestone.owner, activity };
   const correction = task.pendingCheck(scope);
   const result = await requestSteward(task, agent, milestone, scope, signal);
-  const outcome = result.kind === 'completed'
-    ? await completeSteward(task, milestone, scope, result, correction, signal, before)
-    : {
-        ...result,
-        evidence: task.evidence.slice(before),
-        ...(result.kind === 'repair' ? { input: stewardInput(task.observations()) } : {}),
-      };
+  const outcome =
+    result.kind === 'completed'
+      ? await completeSteward(task, milestone, scope, result, correction, signal, before)
+      : {
+          ...result,
+          evidence: task.evidence.slice(before),
+          ...(result.kind === 'repair' ? { input: stewardInput(task.observations()) } : {}),
+        };
   return retainStewardHold(task, milestone, scope, outcome);
 }
 
@@ -173,7 +174,8 @@ function recordReplyRepair(task: HostTask, scope: StewardScope, error: Error) {
       evidence: task.evidence.at(-1),
       operation: edit ? 'checked-edit' : 'steward-response',
       ...(error instanceof CheckedEditOwnershipRefusal
-        ? { path: error.path, owners: error.owners } : {}),
+        ? { path: error.path, owners: error.owners }
+        : {}),
     },
   });
 }
