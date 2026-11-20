@@ -175,7 +175,7 @@ test('EX-REF-ROUND-RECOVERY: interrupted real assessment retains prior rounds an
     if (original.rounds.length === 1 && native?.event?.type === 'turn.completed')
       controller.abort();
   };
-  const interrupted = await fixture.reopen().refine(fixture.root, 2, original, controller.signal);
+  const interrupted = await fixture.reopen().refine(fixture.root, '2', original, controller.signal);
   assert.equal(interrupted.kind, 'cancelled', diagnostic(interrupted));
   assert.equal(original.rounds.length, 1);
   const executable = fixture.install('replacement-v2');
