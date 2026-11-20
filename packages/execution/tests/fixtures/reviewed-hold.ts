@@ -15,6 +15,7 @@ import type { CheckResult } from '../../src/check.js';
 import { git } from '../../src/git.js';
 import { Clarifications, HostTask, steward } from '../../src/index.js';
 import { execute } from '../../src/process.js';
+import { holdFiles } from './reviewed-hold-project.js';
 
 export const selection = { component: 'owner', activity: 'implementation' };
 export const question = 'Which inputs govern the rejected criterion?';
@@ -96,71 +97,12 @@ export class ReviewedHoldFixture {
     git(this.root, 'config', 'user.name', 'Hold fixture');
     git(this.root, 'config', 'user.email', 'hold@example.invalid');
     git(this.root, 'remote', 'add', 'origin', remote);
-    for (const [path, content] of Object.entries(this.files())) {
+    for (const [path, content] of Object.entries(holdFiles)) {
       mkdirSync(dirname(join(this.root, path)), { recursive: true });
       writeFileSync(join(this.root, path), content);
     }
     git(this.root, 'add', '.');
     git(this.root, 'commit', '-m', 'Explicit hold fixture');
-  }
-
-  /** Supply actual catalog shapes instead of a cast assignment hiding the engineering base. */
-  private files(): Record<string, string> {
-    const project = {
-      id: 'hold-fixture',
-      remote,
-      contractRegistry: 'registry.yaml',
-      planTemplate: 'plan.md',
-      director: { component: 'director', activity: 'planning' },
-      verifier: { component: 'reviewer', activity: 'review' },
-      checks: { acceptance: [] },
-    };
-    const activity = {
-      role: 'steward',
-      profile: 'controlled',
-      instructions: [],
-      operations: ['checked-edit', 'read-file', 'owner-tests'],
-      standards: [],
-    };
-    const owner = {
-      id: 'owner',
-      purpose: 'Own reviewed inputs',
-      owns: ['fixture.txt', 'unrelated.txt'],
-      activities: { implementation: activity },
-    };
-    const operations = {
-      'owner-tests': {
-        id: 'owner-tests',
-        category: 'test',
-        command: process.execPath,
-        args: [join(import.meta.dirname, 'reviewed-hold-command.js')],
-        network: false,
-      },
-      'checked-edit': { id: 'checked-edit', category: 'edit', tool: 'edit' },
-      'read-file': { id: 'read-file', category: 'read', tool: 'read' },
-    };
-    return {
-      'fixture.txt': 'original',
-      'unrelated.txt': 'unrelated',
-      'plan.md': '# Plan\n',
-      'registry.yaml': 'contracts: []\n',
-      '.arc/architecture/project.yaml': JSON.stringify(project),
-      '.arc/architecture/components/owner.yaml': JSON.stringify(owner),
-      '.arc/architecture/roles/steward.yaml': '{"id":"steward","purpose":"Correct owned work"}',
-      '.arc/architecture/execution-profiles/controlled.yaml': JSON.stringify({
-        id: 'controlled',
-        model: 'controlled',
-        reasoning: 'high',
-        webSearch: 'disabled',
-        operationCategories: ['test', 'edit', 'read'],
-      }),
-      ...Object.fromEntries(
-        Object.entries(operations).map(([id, operation]) => [
-          `.arc/architecture/operations/${id}.yaml`,
-          JSON.stringify(operation),
-        ]),
-      ),
-    };
   }
 
   /** Re-admit the same goal and isolate Collaboration without replacing checkpoint commits. */
@@ -182,6 +124,7 @@ export class ReviewedHoldFixture {
     );
     const provider = new GitHub(remote, signal);
     this.t.mock.method(provider, 'remoteHead', async () => this.head);
+    this.t.mock.method(provider, 'publication', async () => undefined);
     this.t.mock.method(provider, 'push', async (_root: string, _branch: string, head: string) => {
       this.head = head;
     });
@@ -223,17 +166,16 @@ export class ReviewedHoldFixture {
     scope?: Parameters<HostTask['check']>[2],
   ) {
     const log = task.artifact('controlled-check.log');
-    const command = process.execPath;
     const args = [
       join(import.meta.dirname, 'reviewed-hold-command.js'),
       this.external ? 'external' : 'local',
     ];
     const cwd = task.worktree!;
     const start = performance.now();
-    const observed = await execute(command, args, { cwd, log, signal: abort });
+    const observed = await execute(process.execPath, args, { cwd, log, signal: abort });
     const check: CheckResult = {
       id,
-      command,
+      command: process.execPath,
       args,
       cwd,
       log,
