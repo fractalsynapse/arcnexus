@@ -53,9 +53,18 @@ activities:
     - checked-edit
     - archive-research
     - request-supplier
+    - owner-format
+    - owner-lint
+    - repository-types
+    - repository-build
     - owner-tests
     standards:
     - readable-typescript
+    verification:
+    - owner-format
+    - owner-lint
+    - repository-types
+    - repository-build
   implementation:
     role: systems-engineer
     profile: gpt-luna
@@ -69,9 +78,19 @@ activities:
     - checked-edit
     - archive-research
     - request-supplier
+    - owner-format
+    - owner-lint
+    - repository-types
+    - repository-build
     - owner-tests
     standards:
     - readable-typescript
+    verification:
+    - owner-format
+    - owner-lint
+    - repository-types
+    - repository-build
+    - owner-tests
   review:
     role: self-reviewer
     profile: gpt-sol

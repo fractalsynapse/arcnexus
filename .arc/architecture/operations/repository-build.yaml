@@ -1,5 +1,6 @@
 id: repository-build
 kind: command
+tool: check
 category: build
 command: npm
 args:

@@ -46,6 +46,13 @@ Before running the optional `owner-tests` operation, ArcNexus checks for
 suites in the steward's current worktree. An owner with no suites gets an
 inapplicability record. Assembled verification still runs its required checks.
 
+Formatting and lint share their public commands with owner checks. Use
+`npm run format:check -- <owner>` or `npm run lint -- <owner>`; omit the owner
+for the assembled repository check. The shared selector uses Git, Team and each
+tool's actual configuration. It records the complete selected scope and never
+fixes source. See the [owner quality path](../../packages/foundation/docs/owner-quality.md)
+for confinement, independent applicability and conservative evidence reuse.
+
 ## ESLint rule regressions
 
 For rejected input, assert both the rule ID and message ID. For valid input,

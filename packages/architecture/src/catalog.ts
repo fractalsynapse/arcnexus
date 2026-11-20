@@ -77,6 +77,12 @@ interface Profile extends Definition {
   operationCategories: string[];
 }
 
+export const operationApplicability = [
+  'owner-test-suites',
+  'owner-format-files',
+  'owner-lint-files',
+] as const;
+
 interface Operation extends Definition {
   category: string;
   tool?: string;
@@ -85,7 +91,7 @@ interface Operation extends Definition {
   parameters?: Record<string, OperationParameter>;
   cwd?: string;
   network?: boolean;
-  applicability?: 'owner-test-suites';
+  applicability?: (typeof operationApplicability)[number];
 }
 
 interface Standard extends Definition {

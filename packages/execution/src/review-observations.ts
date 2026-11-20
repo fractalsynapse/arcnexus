@@ -34,7 +34,7 @@ export function ownerReviewObservations(
   for (const [index, { check, scope }] of events.entries()) {
     if (!check || !scope) continue;
     const afterLastEdit = index > lastEdit;
-    const key = JSON.stringify([scope, check.id, check.status, afterLastEdit]);
+    const key = JSON.stringify([scope, check.id, check.status, check.diagnostic, afterLastEdit]);
     const operation = operations?.[check.id];
     const source = candidate && afterLastEdit && operation ? { candidate, operation } : {};
     unique.delete(key);
@@ -54,6 +54,8 @@ export function ownerEvidenceDigest(observations: readonly OwnerObservation[], t
         check.command,
         check.args,
         check.status,
+        check.diagnostic,
+        check.selection,
         candidate,
         operation,
       ]),

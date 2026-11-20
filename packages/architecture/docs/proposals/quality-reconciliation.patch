@@ -1,0 +1,827 @@
+--- a/.arc/architecture/components/agent.yaml
++++ b/.arc/architecture/components/agent.yaml
+@@ -47,9 +47,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -63,9 +72,19 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/architecture.yaml
++++ b/.arc/architecture/components/architecture.yaml
+@@ -63,9 +63,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -79,9 +88,19 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/cli-app.yaml
++++ b/.arc/architecture/components/cli-app.yaml
+@@ -45,9 +45,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -61,9 +70,19 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/collaboration.yaml
++++ b/.arc/architecture/components/collaboration.yaml
+@@ -45,9 +45,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -61,9 +70,19 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/commands.yaml
++++ b/.arc/architecture/components/commands.yaml
+@@ -45,9 +45,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -61,9 +70,19 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/coordination.yaml
++++ b/.arc/architecture/components/coordination.yaml
+@@ -45,9 +45,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -61,9 +70,19 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/delivery.yaml
++++ b/.arc/architecture/components/delivery.yaml
+@@ -45,9 +45,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -61,9 +70,19 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/direction.yaml
++++ b/.arc/architecture/components/direction.yaml
+@@ -47,9 +47,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -63,9 +72,19 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/execution.yaml
++++ b/.arc/architecture/components/execution.yaml
+@@ -45,9 +45,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -61,9 +70,19 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/foundation.yaml
++++ b/.arc/architecture/components/foundation.yaml
+@@ -53,9 +53,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -69,9 +78,19 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/manager.yaml
++++ b/.arc/architecture/components/manager.yaml
+@@ -47,9 +47,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -63,9 +72,19 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/planner.yaml
++++ b/.arc/architecture/components/planner.yaml
+@@ -46,7 +46,17 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+     standards: []
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -60,7 +70,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+     standards: []
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/project.yaml
++++ b/.arc/architecture/components/project.yaml
+@@ -49,7 +49,17 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+     standards: []
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -63,7 +73,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+     standards: []
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/release.yaml
++++ b/.arc/architecture/components/release.yaml
+@@ -51,9 +51,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -67,9 +76,19 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/reviewer.yaml
++++ b/.arc/architecture/components/reviewer.yaml
+@@ -46,9 +46,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -62,9 +71,19 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/team.yaml
++++ b/.arc/architecture/components/team.yaml
+@@ -45,9 +45,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -61,9 +70,19 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/verification.yaml
++++ b/.arc/architecture/components/verification.yaml
+@@ -45,9 +45,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -61,9 +70,19 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- a/.arc/architecture/components/workflow.yaml
++++ b/.arc/architecture/components/workflow.yaml
+@@ -46,9 +46,18 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+   implementation:
+     role: systems-engineer
+     profile: gpt-luna
+@@ -62,9 +71,19 @@ activities:
+     - checked-edit
+     - archive-research
+     - request-supplier
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
+     - owner-tests
+     standards:
+     - readable-typescript
++    verification:
++    - owner-format
++    - owner-lint
++    - repository-types
++    - repository-build
++    - owner-tests
+   review:
+     role: self-reviewer
+     profile: gpt-sol
+--- /dev/null
++++ b/.arc/architecture/operations/owner-format.yaml
+@@ -0,0 +1,13 @@
++id: owner-format
++kind: command
++tool: check
++category: lint
++command: npm
++args:
++- run
++- format:check
++- --
++- context: owner
++cwd: .
++network: false
++applicability: owner-format-files
+--- /dev/null
++++ b/.arc/architecture/operations/owner-lint.yaml
+@@ -0,0 +1,13 @@
++id: owner-lint
++kind: command
++tool: check
++category: lint
++command: npm
++args:
++- run
++- lint
++- --
++- context: owner
++cwd: .
++network: false
++applicability: owner-lint-files
+--- a/.arc/architecture/operations/owner-tests.yaml
++++ b/.arc/architecture/operations/owner-tests.yaml
+@@ -5,7 +5,15 @@ category: integration-test
+ command: npm
+ args:
+ - test
++- --
+ - context: owner
++- parameter: selectors
+ cwd: .
+ network: false
+ applicability: owner-test-suites
++parameters:
++  selectors:
++    type: array
++    items:
++      type: string
++    default: []
+--- a/.arc/architecture/operations/repository-build.yaml
++++ b/.arc/architecture/operations/repository-build.yaml
+@@ -1,5 +1,6 @@
+ id: repository-build
+ kind: command
++tool: check
+ category: build
+ command: npm
+ args:
+--- a/.arc/architecture/operations/repository-types.yaml
++++ b/.arc/architecture/operations/repository-types.yaml
+@@ -1,5 +1,6 @@
+ id: repository-types
+ kind: command
++tool: check
+ category: build
+ command: npm
+ args:
+--- a/.arc/architecture/roles/designer.yaml
++++ b/.arc/architecture/roles/designer.yaml
+@@ -10,3 +10,6 @@ instructions:
+   - Behaviour-preserving work may characterise existing behaviour instead of manufacturing a red
+   - Repair ordinary operation and check failures in this milestone; request an explicit escalation for work requiring another owner or changed authority
+   - Preserve prior edit receipts and complete answers; never repeat acknowledged work merely because another request failed
++  - Before completing Testing, obtain current evidence for every applicable mapped check. Owner-scoped formatting and lint and applicable shared types/build checks must pass; retain the intentional expected-red or passing owner-test observation separately.
++  - Select formatting and lint files from captured ownership and each tool's maintained coverage. Test-suite absence makes only owner-tests inapplicable; evaluate every other operation independently and retain the scope and reason for inapplicability.
++  - Return exact failures to this activity for ordinary local repair. Reuse evidence only when relevant inputs, captured authority, expectations and environment match. Missing or unavailable required evidence prevents progression; assembled acceptance remains independent.
+--- a/.arc/architecture/roles/systems-engineer.yaml
++++ b/.arc/architecture/roles/systems-engineer.yaml
+@@ -4,9 +4,12 @@ responsibilities:
+   - Change source only inside the component ownership declared by the plan
+   - Keep declared tests, acceptance and architecture invariants intact unless the task is explicitly to change them
+   - Refuse silently weakening a check to pass it; escalate instead
+-  - Run the owner-scoped checks that resolve a concrete uncertainty before assembling
++  - Obtain current passing evidence for every applicable mapped check before completing Implementation
+ instructions:
+   - Reuse existing code and remove superseded implementation rather than wrapping it
+   - No placeholder implementation and no simulated output presented as delivered behaviour
+   - Repair ordinary operation and check failures in this milestone; request an explicit escalation for work requiring another owner or changed authority
+   - Preserve prior edit receipts and complete answers; never repeat acknowledged work merely because another request failed
++  - Run owner-scoped formatting and lint, applicable shared types/build checks and profile-selected owner tests through captured operations. Select maintained files from captured ownership; never substitute full repository formatting or lint for an engineering owner check.
++  - Evaluate applicability per operation. Test-suite absence makes only owner-tests inapplicable; record each other operation's own scope and reason. Missing or unavailable required evidence prevents progression, and all assembled acceptance checks remain mandatory.
++  - Keep checks read-only. Correct owned files through single-file checked edits and request a supplier for foreign-owned defects. Retain exact diagnostics, exits, logs, receipts and complete answers; reuse observations only when relevant inputs, authority, expectations and environment match.

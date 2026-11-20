@@ -88,6 +88,7 @@ function implemented(events: Event[], milestone: string, owner: string, id?: str
       scope.expected === 'pass' &&
       check?.status === 0 &&
       !check.prerequisite &&
+      !check.diagnostic &&
       (!id || check.id === id) &&
       existsSync(check.log)
         ? [check.log]
@@ -141,6 +142,7 @@ function implementationGreen(
       result?.id === check.id &&
       result.status === 0 &&
       !result.prerequisite &&
+      !result.diagnostic &&
       result.command === check.command &&
       JSON.stringify(result.args) === JSON.stringify(check.args) &&
       existsSync(result.log) &&
@@ -154,6 +156,7 @@ function negativeCheck(event: Event, scope: StewardScope, id?: string) {
   return (
     check &&
     !check.prerequisite &&
+    !check.diagnostic &&
     typeof check.status === 'number' &&
     check.status > 0 &&
     event.scope?.owner === scope.owner &&

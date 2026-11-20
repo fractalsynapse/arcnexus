@@ -42,6 +42,7 @@ export interface Rejection {
 }
 
 export interface StewardCheckFailure {
+  diagnostic?: string;
   activity: Exclude<PlanActivity, 'release'>;
   id: string;
   expected: 'pass' | 'fail';

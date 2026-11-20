@@ -7,6 +7,7 @@ import { team } from '../../team/src/index.js';
 
 export { unifiedDiff, type ContentPatch } from './diff.js';
 export { TestSelection, type TestFilter } from './test-selection.js';
+export { Quality, qualityScopePrefix, type QualityScope } from './quality.js';
 
 /** Identify exact UTF-8 content used in reviewed proposals and recorded source observations. */
 export function textDigest(content: string) {

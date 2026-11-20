@@ -1,5 +1,6 @@
 import {
   definitionPath,
+  operationApplicability,
   type Capture,
   type OperationBinding,
   type ParameterValue,
@@ -36,6 +37,8 @@ class OperationResolution {
   ) {
     const operation = Object.hasOwn(capture.operations, id) && capture.operations[id];
     if (!operation) throw new Error(`Unknown operation: ${id}`);
+    if (operation.applicability && !operationApplicability.includes(operation.applicability))
+      throw new Error(`Operation ${id}: unknown applicability ${operation.applicability}`);
     this.operation = operation;
   }
 
