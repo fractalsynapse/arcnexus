@@ -120,18 +120,7 @@ function holdKnowledge(
   scope: StewardScope,
   events: readonly Observation[],
 ) {
-  const selection = { component: scope.owner, activity: scope.activity };
-  const data = { milestone: { id: milestone.id }, acceptance: milestone.criteria };
-  const scopes = [
-    task.inboxScope(selection, data),
-    task.inboxScope(selection, {
-      ...data,
-      milestone: {
-        ...data.milestone,
-        step: milestone.steps.find((s) => s.activity === scope.activity),
-      },
-    }),
-  ];
+  const scopes = holdScopes(task, milestone, scope);
   const gates = new Map<string, Clarification>();
   const research = new Map<string, ResearchResult>();
   for (const { clarification, researchResult } of events) {
@@ -164,4 +153,20 @@ function holdPrerequisite(check: CheckResult | undefined, gates: readonly Clarif
       requiredAction: gate.question,
       evidence: gate.evidence ? [gate.evidence] : [],
     };
+}
+
+/** Match both direct host conversations and the complete prepared steward assignment. */
+function holdScopes(task: HostTask, milestone: Milestone, scope: StewardScope) {
+  const selection = { component: scope.owner, activity: scope.activity };
+  const data = { milestone: { id: milestone.id }, acceptance: milestone.criteria };
+  return [
+    task.inboxScope(selection, data),
+    task.inboxScope(selection, {
+      ...data,
+      milestone: {
+        ...data.milestone,
+        step: milestone.steps.find((s) => s.activity === scope.activity),
+      },
+    }),
+  ];
 }
