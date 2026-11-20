@@ -83,6 +83,33 @@ export class Workflow {
     );
   }
 
+  /** Run repeatable Planner, Architect and priority-ordered goal assessments under one writer. */
+  async refine(
+    directory: string,
+    rounds: number,
+    observer: TaskObserver,
+    signal: AbortSignal,
+  ): Promise<TaskOutcome> {
+    if (!Number.isInteger(rounds) || rounds < 1)
+      return stopped('invalid', 'Round count must be a positive integer');
+    const reporting = (await import('./observer.js')).RunObserver.for(observer);
+    if (!this.services)
+      return stopped('invalid', 'Task execution services are unavailable in this build');
+    const input = { directory, goal: 'Continuous refinement', scope: 'refine' };
+    return this.invoke(input, reporting, signal, (session) =>
+      new RefinementRun(
+        this.services!,
+        session,
+        reporting,
+        signal,
+        rounds,
+        (child, parent) => this.run(child, reporting, signal, parent),
+        (root, output, cancellation, parent, scope) =>
+          this.update(root, undefined, output, cancellation, parent, scope),
+      ).execute(),
+    );
+  }
+
   /** Share admission, cancellation, evidence, cleanup and terminal recording across foreground phases. */
   private async invoke(
     input: TaskInput,
