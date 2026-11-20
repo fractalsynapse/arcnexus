@@ -55,11 +55,8 @@ class StreamScenario {
         if (record.type !== 'event') continue;
         const event = record.detail?.event;
         if (event?.type === 'fixture.consumption') liveProvider = child.exitCode === null;
-        const detail = JSON.stringify(record.detail);
-        if (
-          child.exitCode === null &&
-          (detail.includes('ask-question') || detail.includes('toolResult'))
-        ) {
+        const toolResult = record.detail?.toolResult;
+        if (child.exitCode === null && toolResult?.result !== undefined) {
           liveToolResult = true;
         }
       }
