@@ -241,24 +241,8 @@ export class RefinementRun {
         this.scope(invocation, round, `goal:${goal.id}`),
       ]),
     ];
-    const frames = new Map<string, JournalEvent>();
-    for (const [goal, scope] of children) {
-      const records = host.journal.childEvents(goal!, scope!) as Record<string, unknown>[];
-      const timelinePath = records
-        .map((record) => record.artifact)
-        .find(
-          (path): path is string => typeof path === 'string' && path.endsWith('run-timeline.jsonl'),
-        );
-      if (!timelinePath)
-        throw new Error('Missing retained timeline for refinement child: ' + scope);
-      const timeline = host.readFile(timelinePath).text;
-      for (const line of timeline.split('\n')) {
-        if (!line) continue;
-        const frame = JSON.parse(line) as JournalEvent;
-        frames.set(frame.sequence, frame);
-      }
-    }
-    return [...frames.values()].sort(
+    const frames = children.flatMap(([goal, scope]) => retainedFrames(host, goal, scope));
+    return [...new Map(frames.map((frame) => [frame.sequence, frame])).values()].sort(
       (left, right) => Number(left.sequence) - Number(right.sequence),
     );
   }
