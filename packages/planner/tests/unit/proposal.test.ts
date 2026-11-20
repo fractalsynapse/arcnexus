@@ -162,8 +162,16 @@ const verifiedRun: VerifiedGoalRun = {
 };
 
 const selections: { selection: Selection; category: RegExp; observed: string }[] = [
-  { selection: { operation: 'repository-tests' }, category: /check/i, observed: 'repository-tests' },
-  { selection: { criterion: 'tree-matches' }, category: /independent review/i, observed: 'tree-matches' },
+  {
+    selection: { operation: 'repository-tests' },
+    category: /check/i,
+    observed: 'repository-tests',
+  },
+  {
+    selection: { criterion: 'tree-matches' },
+    category: /independent review/i,
+    observed: 'tree-matches',
+  },
   { selection: { delivery: true }, category: /delivery/i, observed: verifiedRun.pull! },
 ];
 
@@ -252,10 +260,7 @@ test('verified mapping rejects operations and criteria absent from a populated r
     { operation: 'unknown-operation' },
     { criterion: 'unknown-criterion' },
   ]) {
-    assert.throws(
-      () => observedProposal(selection),
-      /Unknown or stale verified run citation/,
-    );
+    assert.throws(() => observedProposal(selection), /Unknown or stale verified run citation/);
   }
 });
 
