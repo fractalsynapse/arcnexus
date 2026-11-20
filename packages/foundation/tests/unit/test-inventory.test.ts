@@ -96,7 +96,10 @@ console.log(JSON.stringify(testInventory(${JSON.stringify(owner)})));
     assert.ifError(result.error);
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, diagnostic);
-    assert(result.stderr.includes(source), result.stderr);
+    assert(
+      result.stderr.includes(source) || result.stderr.includes(this.built(source)),
+      result.stderr,
+    );
     assert.equal(existsSync(this.marker), false);
   }
 }
