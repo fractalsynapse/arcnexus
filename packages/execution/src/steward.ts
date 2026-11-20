@@ -36,6 +36,8 @@ import { stewardProgress } from './steward-progress.js';
 import { retainedTesting } from './testing-rewind.js';
 import { establishedTestingRed } from './testing-red.js';
 import { retainedEvidence } from './context-evidence.js';
+import { retainStewardHold, type StewardOutcome } from './hold-context.js';
+import { checkedCorrectionProgress } from './hold-progress.js';
 import { operationID } from '../../architecture/src/index.js';
 
 const correctionInstruction =
@@ -61,7 +63,7 @@ export async function steward(
   milestone: Milestone,
   activity: StewardScope['activity'],
   signal: AbortSignal,
-): Promise<ActivityOutcome> {
+): Promise<StewardOutcome> {
   const task = hostTask(session);
   if (!task.worktree) throw new Error('Steward activation requires a prepared worktree');
   const before = task.evidence.length;
@@ -69,24 +71,26 @@ export async function steward(
   const correction = task.pendingCheck(scope);
   const result = await requestSteward(task, agent, milestone, scope, signal);
   if (result.kind !== 'completed')
-    return {
+    return retainStewardHold(task, milestone, scope, {
       ...result,
       evidence: task.evidence.slice(before),
       ...(result.kind === 'repair' ? { input: stewardInput(task.observations()) } : {}),
-    };
+    });
   const failed =
     (await perform(task, scope, result, correction, signal)) ??
     (await reconcileCheck(task, scope, correction, signal)) ??
     (await verifyActivity(task, scope, signal));
   const evidence = task.evidence.slice(before);
   return failed
-    ? stewardCheckOutcome(task, failed, correction, evidence)
+    ? retainStewardHold(task, milestone, scope,
+        stewardCheckOutcome(task, milestone, failed, correction, evidence))
     : { kind: 'completed', evidence, ...(result.answer ? { answer: result.answer } : {}) };
 }
 
 /** Return failed checks to their caller and hold unchanged failures without new progress. */
 function stewardCheckOutcome(
   task: HostTask,
+  milestone: Milestone,
   failed: StewardCheckFailure,
   correction: StewardCheckFailure | undefined,
   evidence: readonly string[],
@@ -94,7 +98,8 @@ function stewardCheckOutcome(
   const reason =
     failed.diagnostic ??
     `Operation ${failed.id} exited ${failed.status}; expected ${failed.expected}`;
-  if (correction?.id === failed.id && !correctionMadeProgress(task.observations(), correction.log))
+  if (correction?.id === failed.id &&
+    !checkedCorrectionProgress(task, milestone, correction.log, failed.log))
     return {
       kind: 'blocked',
       reason,
@@ -138,7 +143,9 @@ async function requestSteward(
         };
       diagnostic = error.message;
       seen.add(replyRepairIdentity(error, task));
-      task.note({ stewardRepair: { scope, diagnostic, evidence: task.evidence.at(-1) } });
+      task.note({ stewardRepair: { scope, diagnostic, evidence: task.evidence.at(-1),
+        operation: error instanceof CheckedEditOwnershipRefusal || error instanceof StaleCheckedEdit
+          ? 'checked-edit' : 'steward-response' } });
     }
   }
 }
