@@ -118,7 +118,9 @@ export function correctionMadeProgress(
   const observed = recorded.findLastIndex(({ check }) => check?.log === log);
   return recorded
     .slice(observed + 1)
-    .some(({ edits }) => edits?.some(({ before, after }) => before !== after));
+    .some(({ edits }) =>
+      edits?.some(({ path, before, after }) => before !== after && (!paths || paths.includes(path))),
+    );
 }
 
 /** Identify the latest secured task edit inputs without copying their contents. */
