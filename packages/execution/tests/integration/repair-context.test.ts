@@ -103,6 +103,14 @@ test('nested findings and retained progress survive journal reopening and later 
     reason: 'Correct outdated documentation',
     evidence: [],
   };
+  const receipt = fixture.task.edits('owner', 'testing', [
+    { path: 'fixture.txt', expected: null, content: 'retained edit\n' },
+  ]);
+  const answer = '  Complete clarification\nwith its second line.  ';
+  const report = 'Complete research findings\nincluding the final line.\n';
+  const evidence = fixture.task.store('research.md', report);
+  fixture.task.note({ clarification: { question: 'Which requirement?', answer } });
+  fixture.task.note({ researchResult: { evidence } });
   fixture.task.record({ position: { completed: 0, activities: { original: 1 } }, repair: latest });
   const position = fixture.task.history().findLast((event) => 'position' in event);
   const checks = fixture.task.observations<{ check?: unknown }>().filter((event) => event.check);
