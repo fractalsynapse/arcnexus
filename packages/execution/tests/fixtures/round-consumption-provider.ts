@@ -46,6 +46,11 @@ class RoundConsumer {
       this.emit({ type: 'item.completed', item: { type: 'agent_message', text: '{}' } });
       return;
     }
+    this.respond(consumption);
+  }
+
+  /** Emit a complete validated actor reply and independently reported usage for this invocation. */
+  private respond(consumption: unknown[]) {
     const finding = this.finding(consumption);
     this.emit({
       type: 'item.completed',
