@@ -110,27 +110,26 @@ export class InspectionFixture extends RoundConsumptionFixture {
 
 /** Declare disjoint public activity bindings without deriving them from implementation state. */
 function activityDefinitions(id: string) {
-      const names =
-        id === 'work'
-          ? ['testing', 'documentation', 'empty', 'empty-web']
-          : [id === 'direction' ? 'planning' : 'review'];
-      return Object.fromEntries(
-        names.map((name) => [
-          name,
-          {
-            role: 'assessor',
-            profile: name === 'empty-web' ? 'web' : id,
-            instructions: ['Selected ' + id + '/' + name + ' procedure café 🛠'],
-            operations: name.startsWith('empty')
-              ? []
-              : name === 'documentation'
-                ? ['inspect-list']
-                : id === 'work'
-                  ? ['inspect-read', 'owned-edit']
-                  : ['inspect-read'],
-            standards: [],
-          },
-        ]),
-      );
-
+  const names =
+    id === 'work'
+      ? ['testing', 'documentation', 'empty', 'empty-web']
+      : [id === 'direction' ? 'planning' : 'review'];
+  return Object.fromEntries(
+    names.map((name) => [
+      name,
+      {
+        role: 'assessor',
+        profile: name === 'empty-web' ? 'web' : id,
+        instructions: ['Selected ' + id + '/' + name + ' procedure café 🛠'],
+        operations: name.startsWith('empty')
+          ? []
+          : name === 'documentation'
+            ? ['inspect-list']
+            : id === 'work'
+              ? ['inspect-read', 'owned-edit']
+              : ['inspect-read'],
+        standards: [],
+      },
+    ]),
+  );
 }
