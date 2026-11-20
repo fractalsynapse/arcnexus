@@ -11,7 +11,7 @@ import {
 export function reviewedHold(
   session: TaskSession,
   activation: ActivityCheckpoint,
-  revise: (feedback: RevisionFeedback) => Promise<ReturnType<typeof stopped> | undefined>,
+  revise: (feedback: RevisionFeedback) => Promise<TaskOutcome | undefined>,
 ) {
   const outcome = activation.outcome;
   if (outcome.kind !== 'blocked' || !outcome.holdContext)
