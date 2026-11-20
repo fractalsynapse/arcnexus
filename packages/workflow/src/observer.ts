@@ -28,8 +28,19 @@ export class RunObserver implements TaskObserver {
     this.caller.progress(observation);
   }
 
+  /** Return complete event identities accumulated by this foreground observer. */
+  eventFrames() {
+    return this.frames;
+  }
+
+  /** Return the existing event-derived projection without estimating unknown values. */
+  measurementSnapshot() {
+    return this.projection.snapshot();
+  }
+
   /** Forward every durable event, legacy progress when needed, and updated measured totals. */
   event(frame: JournalEvent) {
+    this.frames.push(frame);
     const changed = this.projection.accept(frame);
     this.caller.event?.(frame);
     const observation = frame.observation as Partial<Observation> | null;
