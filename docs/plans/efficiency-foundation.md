@@ -13,19 +13,22 @@ specific capability and linked evidence below, not completion of the entire
 efficiency batch. Unchecked items may have partial implementation; the remaining
 behavior or proof is stated explicitly.
 
-| Area                        | Verified delivery                                                                                                                                                                                                                 | Still outstanding                                                                                                                                                 |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Retained quality work       | [PR #665](https://github.com/fractalsynapse/arcnexus/pull/665) reconciled the exact approved guide batch and delivered the reduced confined owner-check implementation.                                                           | The old interrupted #638 attempt remains historical evidence; its failed attempt is not a successful run.                                                         |
-| Architecture and operations | [PR #640](https://github.com/fractalsynapse/arcnexus/pull/640) delivered typed operation overrides, activity verification, approved adoption boundaries and observable execution.                                                 | The broader merge/provenance, runtime-adoption and same-run live acceptance items in B remain open.                                                               |
-| Acting context              | [PR #664](https://github.com/fractalsynapse/arcnexus/pull/664) delivered the source-linked component index; [PR #667](https://github.com/fractalsynapse/arcnexus/pull/667) preserved originating findings through nested repairs. | All 18 component purposes and 94 model activity instructions still need the complete rewrite and review in D. Representative drafts are not an activated catalog. |
-| Timeline and measurements   | Complete provider/MCP artifacts, ordered live human/JSONL observations and time/token accounting are operating through the existing journal.                                                                                      | Full round/phase analysis, verified monetary pricing and subsequent refinement consuming those findings remain open.                                              |
-| Continuous refinement       | The current platform-led [implementation task #668](https://github.com/fractalsynapse/arcnexus/issues/668) is in progress.                                                                                                        | `refine` delivery and the three consecutive production rounds are unproved. Qualification remains **0/3**.                                                        |
+| Area                        | Verified delivery                                                                                                                                                                                                                 | Still outstanding                                                                                                                                         |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Retained quality work       | [PR #665](https://github.com/fractalsynapse/arcnexus/pull/665) reconciled the exact approved guide batch and delivered the reduced confined owner-check implementation.                                                           | The old interrupted #638 attempt remains historical evidence; its failed attempt is not a successful run.                                                 |
+| Architecture and operations | [PR #640](https://github.com/fractalsynapse/arcnexus/pull/640) delivered typed operation overrides, activity verification, approved adoption boundaries and observable execution.                                                 | The broader merge/provenance, runtime-adoption and same-run live acceptance items in B remain open.                                                       |
+| Acting context              | [PR #664](https://github.com/fractalsynapse/arcnexus/pull/664) delivered the source-linked component index; [PR #667](https://github.com/fractalsynapse/arcnexus/pull/667) preserved originating findings through nested repairs. | All 18 purposes, 94 model activities and one host procedure are rewritten in draft #673. Human review, adoption and live behavioral proof remain pending. |
+| Timeline and measurements   | Complete provider/MCP artifacts, ordered live human/JSONL observations and time/token accounting are operating through the existing journal.                                                                                      | Full round/phase analysis, verified monetary pricing and subsequent refinement consuming those findings remain open.                                      |
+| Continuous refinement       | The retained platform-led [implementation task #668](https://github.com/fractalsynapse/arcnexus/issues/668) ended held before staging; its checkpoints and failed evidence are retained.                                          | `refine` delivery and the three consecutive production rounds are unproved. Qualification remains **0/3**.                                                |
 
 The architect's current sequencing instruction is explicit: allow the existing
 live implementation run to finish, then **start no further live tests until D has
-been addressed**. Complete the component purposes, individual activity instructions,
-their operation/verification alignment and the instruction-channel work before
-resuming live acceptance. Deterministic construction checks and documentation
+been addressed and reviewed**. Rewrite all component purposes and individual
+activity instructions, align their operations/verification, and stop for the
+architect's feedback before resuming live acceptance. Keep the existing single
+request string; the architect has explicitly accepted it for the activity prompt.
+Separate provider channels are not a prerequisite for this batch.
+Deterministic construction checks and documentation
 validation remain available; a technically successful PR alone does not establish
 that the rewritten agents are effective. Retain any unfinished live result and its
 checkpoints instead of silently restarting it during this pause.
@@ -41,7 +44,7 @@ waiver of the maintainer-only merge rule for this unreleased development work.
 [Production CI on the merge commit](https://github.com/fractalsynapse/arcnexus/actions/runs/44699853229)
 passed. No tag or release was created. The audit reduced 72 open work issues to six:
 #600 (retained parity coverage), #615 (full refinement acceptance), #628 (integrated
-writer proof), #634 (offline profile/category validation), #668 (the current live
+writer proof), #634 (offline profile/category validation), #668 (the retained held
 implementation) and #669 (this checklist delivery). Superseded interrupted attempts
 were retired without changing their failed observations into successes. The unique
 parity fixtures in draft #601 remain retained for D.
@@ -229,8 +232,9 @@ The approved #665 mappings declare owner format/lint plus shared types/build for
 Testing, and add passing owner tests for Implementation. Run 100 (#667) observed
 the intended red, returned lint/type/build failures to their callers, reused
 unchanged check observations, and reached independent acceptance and staging.
-The real native/provider operation declarations and complete per-activity rewrite
-remain open; existing integration tests do not by themselves complete those items.
+The real native/provider operation declarations and guide review/adoption remain
+open. The complete per-activity authoring proposal is in draft #673; existing
+integration tests do not establish improved behavior under those proposed prompts.
 
 ## D. Rewrite component purposes and every activity prompt
 
@@ -241,13 +245,13 @@ authoring targets; do not turn them into runtime rejection, truncation or paddin
 Measure authored and resolved text with the identified tokenizer when available,
 not a guessed characters-to-tokens ratio. Report unmeasured counts honestly.
 
-- [ ] Approve the practices, template and representative rewritten prompts as one
-      guide batch before rolling out the complete catalog rewrite. Preserve detailed
-      component-specific content and reuse shared protocols from their authored source.
-- [ ] For each purpose, explain the component's reason for existence, consumers,
+- [ ] Review the complete practices, purposes and individual activity procedures
+      together before adoption or further live tests. The architect requested the
+      full authoring pass before this feedback boundary.
+- [x] For each purpose, explain the component's reason for existence, consumers,
       public service, responsibilities, collaboration boundaries, data/lifecycle,
       constraints, characteristic failure modes, measures and evolution strategy.
-- [ ] For each model activity, author detailed paragraphs covering mission, inputs,
+- [x] For each model activity, author detailed paragraphs covering mission, inputs,
       method, exact available operations, realistic evidence, expected output, completion
       requirements, repair/escalation routes and concrete good/bad scenarios.
 - [x] Include complete originating findings, successful edit receipts, supplier and
@@ -257,12 +261,12 @@ not a guessed characters-to-tokens ratio. Report unmeasured counts honestly.
       record shape. Explain filesystem layout, owner metadata, nested cwd, configuration,
       confinement and native availability. Avoid fixtures that manufacture a pass by
       bypassing the production boundary or by skipping the behavior under test.
-- [ ] Make Foundation's purpose broad shared technical strategy and reusable tooling.
+- [x] Make Foundation's purpose broad shared technical strategy and reusable tooling.
       Revisit dependencies when a concrete wall or new capability requires it. Use
       conservative checks, rather than speculative exhaustive dependency analysis.
-- [ ] Give Director and Reviewer independent, detailed decision instructions;
+- [x] Give Director and Reviewer independent, detailed decision instructions;
       distinguish them from a steward planning or self-reviewing its own contribution.
-- [ ] Treat research as optional, component-owned learning with complete readable
+- [x] Treat research as optional, component-owned learning with complete readable
       reports. Long instructions and reports are valid; no previews or size ceilings.
 - [x] Fix the compact component index before expanding purposes: include identity,
       authored short summary and source reference; include the acting component's full
@@ -270,10 +274,10 @@ not a guessed characters-to-tokens ratio. Report unmeasured counts honestly.
 - [ ] Render complete selected instructions through inspect and activation using
       the same builder. Show source labels and architecture identity. Let Codex discover
       AGENTS.md and skills, and verify the delivered guidance reaches the real harness.
-- [ ] Deliver approved standing/activity instructions through the installed
-      provider's supported instruction channel, keeping task input and observed logs
-      distinct. Inspect and record the actual channel/content; a heading saying
-      "system prompt" inside a user message is not proof of instruction priority.
+- [x] Retain the existing single-string request representation accepted by the
+      architect. Make the complete purpose and selected activity procedure readable
+      with source boundaries distinguishing guidance, task input and observations.
+      Do not introduce a request-channel or CLI contract change for this rewrite.
 - [ ] Review every entry below for purpose, each activity's instruction text,
       operation bindings, verification and representative behavioral evidence. A box
       closes only when that component's complete set is rewritten and verified.
@@ -303,15 +307,30 @@ The host-only release activity receives a complete host lifecycle specification,
 operation mapping, verification and failure behavior. It must not acquire a model
 profile or a fabricated system prompt simply to fill an inventory row.
 
-Only the context mechanics above are complete. The representative Execution purpose
-and Implementation drafts measured 4,143 and 6,270 tokens respectively; they are
-not the 18-purpose/94-activity rewrite, and no component row is closed by those
-drafts. The [prompt practices](../../packages/architecture/docs/prompt-practices.md)
-remain proposed. Review their exact guide changes before activation, preserve the
-human-approved profiles, and do not substitute a shared role expansion for each
-component's specific instructions. Instruction-channel separation also remains
-unimplemented and requires the applicable exact contract review before changing
-the inspect/harness request contract.
+All 18 purposes and all 95 declared activity procedures are authored directly in
+the component YAML specifications in [draft PR #673](https://github.com/fractalsynapse/arcnexus/pull/673).
+The [complete review guide](https://github.com/fractalsynapse/arcnexus/blob/672-activity-operating-instructions/packages/architecture/docs/proposals/activity-instructions/review.md)
+on that branch links every component and explains the shared role/standard
+composition. All ten role instruction sets are rewritten. The component rows
+remain open for human review and behavioral verification; authored text is not
+activation or demonstrated agent improvement.
+
+At catalog commit `b4308901`, the existing builder assembled all 94 model
+activities locally. With tiktoken 0.14.0 / o200k_base, purposes measured
+4,004–4,150 tokens and resolved activity procedures excluding purpose measured
+6,115–12,907 tokens. Activity-specific text alone measured 163–6,282; common
+method is authored once in the selected role and Agent operating protocol.
+No new runtime size gate, schema, channel, loader or product code was added.
+The structural audit preserves owners, profiles, roles, operations, verification,
+locked contracts and registry bytes. Specification validation passes.
+
+Planner planning lacks a research-request mapping and Planner lacks a declared
+research archive root. Native/provider operation completion is also still open.
+The proposal exposes those gaps rather than claiming prose implements them.
+The architect has accepted the single input string and required a stop after this
+complete rewrite for feedback. No new live test or guide adoption proceeds before
+that review. [Issue #672](https://github.com/fractalsynapse/arcnexus/issues/672)
+tracks this review boundary.
 
 ## E. Capture and stream the complete execution timeline
 
@@ -349,7 +368,7 @@ the inspect/harness request contract.
       a real parity check. Prefer its typed streaming interface if it preserves all
       necessary behavior. It wraps the CLI, so switching alone does not create missing
       observations. Keep one production adapter, not parallel SDK and CLI lifecycles.
-      Include the configured instruction channel and complete event coverage in that
+      Include the configured request representation and complete event coverage in that
       evaluation, not just final-response parity.
 - [ ] Verify the real provider path emits useful events before completion, records
       tool results and usage, handles an unknown event, and leaves a complete reviewable
@@ -452,7 +471,8 @@ describes this boundary. That batch did not include test-selector support or
 activate unapproved catalog declarations. The subsequent adoption batch passed
 394 native-enabled built-program cases and
 [CI at b41c162c](https://github.com/fractalsynapse/arcnexus/actions/runs/44653859480).
-The catalog/prompt rewrite, broader architecture merge/provenance, complete
+That batch did not complete the catalog rewrite. The later authoring proposal is
+recorded in D; review/adoption, broader architecture merge/provenance, complete
 cost/phase analysis and refinement remain outstanding. The live streak remains 0/3.
 
 The shared test command now accepts declared tag/level and literal path selection,
@@ -524,7 +544,35 @@ of the interrupted attempts or claiming the full integrated acceptance in G.
   basis has been supplied. Round/phase analysis and demonstrated later use of
   findings remain open.
 
-No complete rewrite of the component/activity catalog, new instruction-channel
-delivery, full same-run adoption demonstration or production refinement round is
-claimed by these passes. Keep the live refinement streak at **0/3** until the
-authorized production acceptance actually completes after D.
+The complete catalog authoring proposal is now in draft #673; these earlier
+passes do not prove its agent behavior. Full same-run adoption and production
+refinement remain unproved. Keep the live streak at **0/3** until authorized
+production acceptance actually completes after D review.
+
+## Retained run 101 and current review stop
+
+Run 101 of #668 ended in a durable hold before staging. Coordination and
+Execution contributions completed, but Workflow's implementation still lacked
+the required realistic Planner and multi-attempt regression proof. The final
+response requested repair to the current Implementation activity even though no
+earlier rewind target was available. The exact terminal diagnostic was:
+
+> Steward reply repair failed: Unavailable local repair: workflow/implementation;
+> available rewind targets: none. Finish the current activity; do not jump forward
+> or skip an incomplete Step.
+
+The attempt made 41 native activations and six Direction invocations. Its task
+identity is `c2bffee5a1df1b17c2054831dd5fe2e2e8e7272260143efb8ce4aa3492a8ed12`;
+branch `668-task` retains checkpoint
+`9e429f0e6c151b961d4fb4fcab09851202ba8844`. Normal cleanup removed its
+worktree. No operator candidate edits or database repair were used, no PR reached
+staging, and this is not a successful qualification round. Complete requests,
+messages, checks and failed observations remain in application storage.
+
+The D procedures directly address the observed failure decisions. Testing
+establishes valid red without demanding future Implementation, real Planner mode
+tests cannot be replaced by a fake propose method, recovered history must contain
+distinct findings/answers/usage/outcomes from all relevant attempts, and
+Implementation repairs its owned tests in place when no earlier Testing target
+exists. These are proposed instructions, not claims that the runtime defect is
+already fixed. No additional live attempt has been started.
