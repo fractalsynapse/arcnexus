@@ -6,25 +6,34 @@ refinement and observation behavior. [Workflow](../workflow/contract.md) owns
 sequencing and durable lifecycle state; [Agent](../agent/contract.md) owns
 inspection and activation preparation.
 
-## Availability and intended contribution
+## Public boundary and exact round counts
 
-The public entry is [src/index.ts](src/index.ts). It currently registers
+The public entry is [src/index.ts](src/index.ts). It registers
 `commandsPlugin` with required Agent and Workflow injections and exposes
-`inspect`, `runTask`, `planTask`, `runRound` and `updateArchitecture` on
-`Context['commands']`. Workflow already exports `Workflow.refine`; Commands
-does not yet expose it. The intended contribution adds direct SDK delegation
-to that operation. This document records intent before that behavior changes;
-neither this documentation nor an accepted declaration establishes installed
-end-to-end support or live refinement qualification.
+`inspect`, `runTask`, `planTask`, `runRound`, `updateArchitecture` and
+`refine` on `Context['commands']`. Refinement delegates directly to
+`Workflow.refine`; its signature is derived from
+`Context['workflow']['refine']`. This SDK boundary does not establish assembled
+production support or live refinement qualification.
 
-The intended public method is
-`refine(directory, rounds, observer, signal): Promise<TaskOutcome>`, reusing
-the signature of `Context['workflow']['refine']`. Callers pass the project
-directory, an explicit positive integer round count, a `TaskObserver` and an
-`AbortSignal`. The CLI owns its default of one round and validates its argument
-grammar before admission. Workflow validates the structured count before
-admission. No arbitrary safe-integer ceiling or other resource cap is added.
-Commands has no argv, JSON option, terminal handles or exit-code policy.
+The public method is
+`refine(directory, rounds, observer, signal): Promise<TaskOutcome>`.
+Callers supply the project directory, a `RoundCount`, a `TaskObserver` and an
+`AbortSignal`. Workflow exports these types from
+[its public entry](../workflow/src/index.ts). `RoundCount` is a string:
+supply the decimal digits directly, such as `'1'`, `'9007199254740993'` or
+`'1' + '0'.repeat(400)`. The latter two illustrate exact values beyond safe
+integer and finite Number representation respectively; they do not require
+conversion through Number.
+
+Workflow validates the structured count before admission. It accepts nonempty
+ASCII decimal strings containing a nonzero digit and removes leading zeroes
+(`'0002'` becomes `'2'`). Numbers, zero-only strings, signs, whitespace,
+fractions and exponents are invalid. No arbitrary safe-integer ceiling or other
+resource cap is added. Commands forwards the supplied string unchanged; Workflow
+owns validation, normalization and exact arithmetic using bigint internally.
+The CLI owns its one-round default and argument grammar. Commands has no argv,
+JSON option, terminal handles or exit-code policy.
 
 Commands reuses Workflow's public types from
 [its entry](../workflow/src/index.ts), rather than maintaining another event
@@ -37,7 +46,7 @@ or outcome union. The existing SDK preserves standalone operations:
 | `planTask(directory, objective, observer, signal)` | `Workflow.run` with the selected planning mode |
 | `runRound(directory, observer, signal)` | `Workflow.round`, returning `RoundOutcome` |
 | `updateArchitecture(directory, feedback, observer, signal)` | `Workflow.update` |
-| Intended `refine(directory, rounds, observer, signal)` | `Workflow.refine`, returning `TaskOutcome` |
+| `refine(directory, rounds, observer, signal)` | `Workflow.refine`, returning `TaskOutcome` |
 
 `InspectionInput` comes from [Agent's public entry](../agent/src/index.ts).
 It includes the directory and selected component and activity. Inspection
@@ -98,7 +107,12 @@ The current Workflow observer supplies legacy persisted progress when no event
 callback is present. A caller implementing both callbacks must not assume each
 persisted progress observation is also delivered through `progress`.
 
-The stream carries phase/goal positions through `RefinementProgress`, per-goal
+The stream carries phase/goal positions through `RefinementProgress`. Its
+`total` and `round` fields, and `CompletedRefinementRound.round`, use exact
+canonical decimal strings. Preserve them as strings when consuming or
+transporting observations; converting to Number can lose position or total
+identity. Workflow records phase entries and emits round/phase progress before
+Plan, Architect and Run, including recovery. The stream carries per-goal
 outcomes through retained Workflow observations, and report/finding/measurement
 references through `CompletedRefinementRound`. Preserve complete originating
 records and evidence links without previews or truncation. Completed-round reports
@@ -147,3 +161,12 @@ detectable. Preserve existing inspection, task, planning, standing-round and
 architecture delegation coverage. These tests establish the SDK boundary;
 Workflow recovery tests, assembled production wiring, CLI rendering and the
 separate live three-round acceptance establish their respective behaviors.
+
+For CMD-REF-EXACT-FORWARDING / CMD-REF-EXACT-CONSUMER, the owner-local
+controlled Workflow fixture must consume the exported `RoundCount` type.
+SDK scenarios must forward `'9007199254740993'` and a decimal outside finite
+Number representation unchanged and observe exact string totals and round
+positions in ordered phase events. Preserve the complete observation,
+measurement, pending-answer and cancellation assertions. These regressions
+establish consumer fidelity through direct delegation; Workflow's own
+regressions establish validation, arithmetic and durable recovery.
