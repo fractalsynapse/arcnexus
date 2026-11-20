@@ -126,8 +126,9 @@ async function recordProviderEvidence(
 ) {
   calls.value++;
   const answer = await session.ask?.('Retain this complete answer', new AbortController().signal);
-  session.record({ phase: 'question', message: `Complete answer: ${answer}` });
+  session.record({ phase: 'question', message: `Complete answer attempt ${calls.value}: ${answer}` });
   recordUsage(hostTask(session));
+  if (calls.value === 1) throw new Error('Interrupt unfinished Planner assessment');
   return {
     kind: 'planned' as const,
     commit: revision,
