@@ -1,7 +1,7 @@
 import { AgentActivityHold, InvalidAgentResponse, type Agent } from '../../agent/src/index.js';
 import { resolve } from 'node:path';
 import type { Plan } from '../../direction/src/index.js';
-import { hostTask } from '../../execution/src/index.js';
+import { hostTask, retainedEvidence } from '../../execution/src/index.js';
 import { validateVerdict, type Candidate, type Verdict } from '../../verification/src/index.js';
 import type { TaskSession } from '../../workflow/src/index.js';
 
@@ -43,7 +43,7 @@ function assessmentInput(
     acceptance: plan.milestones.flatMap(({ owner, criteria }) =>
       criteria.map((criterion) => ({ owner, ...criterion })),
     ),
-    evidence: [...new Set([...candidate.evidence, ...task.evidence])],
+    evidence: retainedEvidence(task, candidate.evidence),
   };
 }
 
@@ -154,7 +154,7 @@ function citationRepairInput(
   return {
     ...data,
     assignment: { ...data.assignment, citationRepair },
-    evidence: [...new Set([...data.evidence, ...task.evidence])],
+    evidence: retainedEvidence(task, data.evidence),
   };
 }
 
@@ -171,7 +171,7 @@ function reviewPosition(verdict: CitedVerdict) {
 function responseShape(candidate: Candidate, checks: unknown) {
   return {
     instructions:
-      'Read the candidate diff and trusted check evidence to assess the engineering criteria and engineering goal. The ownerChecks field contains exact host operations and statuses. An observation with a candidate tree and captured operation binds to that checkpoint. Compare its tree with the candidate being reviewed. Owner checks run in a networkless overlay. Observations before the last edit remain historical. The host observes GitHub checks, configured PR review, and the staging merge after independent acceptance. Treat those Release items as future delivery observations. Use ask-question if human clarification is required. Once the assessment is complete, return one JSON verdict without code fences. Cite paths from the evidence list.',
+      'Read the candidate diff and trusted check evidence to assess the engineering criteria and engineering goal. The ownerChecks field contains exact host operations and statuses. An observation with a candidate tree and captured operation binds to that checkpoint. Compare its tree with the candidate being reviewed. Owner checks run in a networkless overlay. Observations before the last edit remain historical. The host observes GitHub checks, configured PR review, and the staging merge after independent acceptance. Treat those Release items as future delivery observations. Use ask-question if human clarification is required. Once the assessment is complete, return one JSON verdict without code fences. Evidence includes complete retained-task-evidence index files and current artifact paths. Read an index to discover the original references, read the relevant complete artifacts, and cite their exact retained paths.',
     candidate: candidate.digest,
     ownerEvidenceDigest: candidate.ownerEvidenceDigest,
     diagnostic: undefined as string | undefined,

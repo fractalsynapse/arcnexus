@@ -36,6 +36,7 @@ export { reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
 export { citesVerifiedRun, verifiedGoalRun, type VerifiedGoalRun } from './goal-evidence.js';
 export { applicationStorage } from './host-config.js';
 export { InvalidCodexResponse } from './codex.js';
+export { retainedEvidence } from './context-evidence.js';
 
 declare module 'cordis' {
   interface Context {
