@@ -453,49 +453,43 @@ test('each round invokes the real Planner in project-exploration mode', async (t
   const f = fixture(t);
   const services = providers(f, []);
   const modes: unknown[] = [];
-  t.mock.method(HostTask.prototype, 'activate', async function (
-    _agent: Agent,
-    _selection: unknown,
-    data: TaskContext,
-  ) {
-    const assignment = data.assignment as { mode: string };
-    modes.push(assignment.mode);
-    return {
-      summary: 'Distinct retained exploration finding',
-      ratings: [
-        {
-          id: 'first',
-          alignment: 'strong',
-          evidence: 'unverified',
-          reason: 'The captured goal remains relevant',
-          sources: [{ path: '.arc/goals/first.md', quote: 'First goal' }],
-          observations: [],
-        },
-        {
-          id: 'second',
-          alignment: 'strong',
-          evidence: 'unverified',
-          reason: 'The captured goal remains relevant',
-          sources: [{ path: '.arc/goals/second.md', quote: 'Second goal' }],
-          observations: [],
-        },
-      ],
-      comparison: ['No conflicting coverage'],
-      changes: [],
-      links: [],
-      sources: [],
-    };
-  });
+  t.mock.method(
+    HostTask.prototype,
+    'activate',
+    async function (_agent: Agent, _selection: unknown, data: TaskContext) {
+      const assignment = data.assignment as { mode: string };
+      modes.push(assignment.mode);
+      return {
+        summary: 'Distinct retained exploration finding',
+        ratings: [
+          {
+            id: 'first',
+            alignment: 'strong',
+            evidence: 'unverified',
+            reason: 'The captured goal remains relevant',
+            sources: [{ path: '.arc/goals/first.md', quote: 'First goal' }],
+            observations: [],
+          },
+          {
+            id: 'second',
+            alignment: 'strong',
+            evidence: 'unverified',
+            reason: 'The captured goal remains relevant',
+            sources: [{ path: '.arc/goals/second.md', quote: 'Second goal' }],
+            observations: [],
+          },
+        ],
+        comparison: ['No conflicting coverage'],
+        changes: [],
+        links: [],
+        sources: [],
+      };
+    },
+  );
   services.planner = new Planner({} as Agent);
   const workflow = new Workflow(services);
   const refine = Reflect.get(workflow, 'refine') as Refinement;
-  await refine.call(
-    workflow,
-    f.root,
-    2,
-    { progress() {} },
-    new AbortController().signal,
-  );
+  await refine.call(workflow, f.root, 2, { progress() {} }, new AbortController().signal);
   assert.deepEqual(modes, ['project exploration', 'project exploration']);
 });
 
