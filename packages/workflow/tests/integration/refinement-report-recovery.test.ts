@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import type { Architecture, Capture } from '../../../architecture/src/index.js';
+import { RefinementSupplier } from '../fixtures/refinement-supplier.js';
 import { RefinementPlanner } from '../fixtures/refinement-planner.js';
 import { assertAccounting, assertOrigins, history } from '../fixtures/refinement-history.js';
 import type { CompletedRefinementRound } from '../../src/index.js';
@@ -316,4 +317,69 @@ function reconcileRounds(
     assertAccounting(result.report, origins);
     return result;
   });
+}
+
+/** Reopen the production child lifecycle with an explicit nested supplier profile. */
+function nestedServices(state: State, planner: RefinementPlanner, supplier: RefinementSupplier) {
+  Object.assign(state.capture.components, {
+    supplier: { id: 'supplier', purpose: 'Answer Architect', owns: [], activities: {
+      implementation: { role: 'steward', profile: 'supplier-fixture', instructions: [], operations: [], standards: [] },
+    } },
+  });
+  const services = continuationServices(state, planner);
+  services.execution.assemble = state.execution.assemble.bind(state.execution);
+  supplier.bind(services, planner);
+  return services;
+}
+
+/** Keep the native supplier's unfinished attempt and resume it through Architect's real inbox. */
+test('nested Architect supplier history survives reopening with isolated complete round accounting', async (t) => {
+  const f = fixture(t);
+  installProvider(f.root);
+  const planner = new RefinementPlanner(f.revision, false);
+  const supplier = new RefinementSupplier(f.revision);
+  const controller = new AbortController();
+  const rounds: CompletedRefinementRound[] = [];
+  const first = new Workflow(nestedServices(f.reopen(), planner, supplier));
+  const outcome = await first.refine(f.root, 2, nestedObserver(controller, rounds, true), controller.signal);
+  assert.equal(outcome.kind, 'cancelled');
+  assert.equal(supplier.provider.attempts, 11, 'interruption reached the actual supplier provider');
+  const resumed = new Workflow(nestedServices(f.reopen(), planner, supplier));
+  const result = await resumed.refine(f.root, 2, nestedObserver(controller, rounds, false), new AbortController().signal);
+  assert.equal(result.kind, 'planned');
+  assertNestedRounds(f, planner, supplier, rounds);
+});
+
+/** Interrupt on supplier usage, preserving full native observations and multiline answers. */
+function nestedObserver(controller: AbortController, rounds: CompletedRefinementRound[], stop: boolean): TaskObserver {
+  return {
+    progress() {},
+    answer: async (question) => 'Complete nested answer to ' + question + '\nAll details and the final conclusion remain verbatim.',
+    event(event) {
+      const observation = event.observation as Record<string, any>;
+      if (observation.completedRound) rounds.push(observation.completedRound);
+      if (stop && observation.nativeEvent?.event?.usage?.input_tokens === 11 * 19) controller.abort();
+    },
+  };
+}
+
+/** Compare the real nested task's attempts and terminals against independent SQLite origins. */
+function assertNestedRounds(f: ReturnType<typeof fixture>, planner: RefinementPlanner, supplier: RefinementSupplier, rounds: CompletedRefinementRound[]) {
+  assert.deepEqual(rounds.map(({ round }) => round), [1, 2]);
+  assert.equal(supplier.childTasks.size, 2);
+  assert.equal(supplier.provider.identities[0], supplier.provider.identities[1]);
+  assert.notEqual(supplier.provider.identities[1], supplier.provider.identities[2]);
+  const results = reconcileRounds(f, planner, rounds);
+  assert.match(results[0]!.native, /Provider finding attempt 11/);
+  assert.match(results[0]!.native, /Provider finding attempt 12/);
+  assert.doesNotMatch(results[1]!.native, /Provider finding attempt 1[12]/);
+  assert.match(results[1]!.native, /Provider finding attempt 13/);
+  for (const result of results) {
+    assert.match(result.report, /All details and the final conclusion remain verbatim/);
+    assert.match(result.report, /Architect consumed the complete supplier answer/);
+    assert.match(result.report, /supplier-fixture/);
+    assert.ok(result.terminals.some((terminal) => terminal.kind === 'satisfied'));
+  }
+  assert.deepEqual(results[0]!.terminals.map(({ kind }) => kind), ['planned', 'cancelled', 'cancelled', 'satisfied', 'planned', 'satisfied']);
+  assert.deepEqual(results[1]!.terminals.map(({ kind }) => kind), ['planned', 'satisfied', 'planned', 'satisfied']);
 }
