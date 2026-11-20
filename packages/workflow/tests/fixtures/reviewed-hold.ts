@@ -129,13 +129,7 @@ export class ReviewedWorkflow {
       status: actual.status,
       durationMs: performance.now() - start,
       ...(actual.status ? { diagnostic: actual.stderr.trim() } : {}),
-      ...(this.scenario === 'external' &&
-      !existsSync(join(this.fixture.root, '.git', 'schema-ready'))
-        ? {
-            prerequisite: 'dependencies' as const,
-            reason: 'Supply the approved external schema before correction.',
-          }
-        : {}),
+      ...externalPrerequisite(this.scenario, this.fixture.root),
     };
     task.note({
       check,
@@ -364,4 +358,13 @@ export class ReviewedWorkflow {
     await this.fixture.task.setupWorkspace('699', this.signal);
     assert.equal(this.fixture.task.taskID, old.taskID);
   }
+}
+
+/** Observe the external artifact independently of model prose or a requested continuation. */
+function externalPrerequisite(scenario: Scenario, root: string) {
+  if (scenario !== 'external' || existsSync(join(root, '.git', 'schema-ready'))) return {};
+  return {
+    prerequisite: 'dependencies' as const,
+    reason: 'Supply the approved external schema before correction.',
+  };
 }
