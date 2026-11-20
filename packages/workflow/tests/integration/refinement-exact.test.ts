@@ -108,11 +108,19 @@ function providers(f: ReturnType<typeof fixture>, calls: string[]) {
   } as unknown as WorkflowServices;
 }
 
-
 /** Invoke the intended decimal-string public boundary without assuming its implementation type. */
-function refine(workflow: Workflow, root: string, total: string, observer: TaskObserver, signal: AbortSignal) {
+function refine(
+  workflow: Workflow,
+  root: string,
+  total: string,
+  observer: TaskObserver,
+  signal: AbortSignal,
+) {
   const entry = Reflect.get(workflow, 'refine') as (
-    directory: string, rounds: string, observer: TaskObserver, signal: AbortSignal,
+    directory: string,
+    rounds: string,
+    observer: TaskObserver,
+    signal: AbortSignal,
   ) => Promise<unknown>;
   return entry.call(workflow, root, total, observer, signal);
 }
@@ -130,7 +138,13 @@ test('exact large totals survive interruption and reject adjacent requests after
         controller.signal.throwIfAborted();
         throw new Error('Unreachable');
       };
-      const first = await refine(new Workflow(services), f.root, total, { progress() {} }, controller.signal);
+      const first = await refine(
+        new Workflow(services),
+        f.root,
+        total,
+        { progress() {} },
+        controller.signal,
+      );
       assert.deepEqual(calls, ['Plan'], 'the large request reaches the first assessment');
       assert.notEqual(Reflect.get(first as object, 'kind'), 'invalid');
       const reopened = authority(f.root, f.directory, f.revision);
@@ -143,11 +157,23 @@ test('exact large totals survive interruption and reject adjacent requests after
         next.signal.throwIfAborted();
         throw new Error('Unreachable');
       };
-      const resumed = await refine(new Workflow(retry), f.root, '00' + total, { progress() {} }, next.signal);
+      const resumed = await refine(
+        new Workflow(retry),
+        f.root,
+        '00' + total,
+        { progress() {} },
+        next.signal,
+      );
       assert.notEqual(Reflect.get(resumed as object, 'kind'), 'invalid');
       assert.deepEqual(retryCalls, ['Plan resumed']);
       const changed = (BigInt(total) + 1n).toString();
-      const refused = await refine(new Workflow(retry), f.root, changed, { progress() {} }, new AbortController().signal);
+      const refused = await refine(
+        new Workflow(retry),
+        f.root,
+        changed,
+        { progress() {} },
+        new AbortController().signal,
+      );
       assert.equal(Reflect.get(refused as object, 'kind'), 'invalid');
       assert.deepEqual(retryCalls, ['Plan resumed'], 'a different total does not reassess');
     });
@@ -160,7 +186,9 @@ test('uninterrupted rounds announce each phase before its assessment', async (t)
   const events: string[] = [];
   const services = providers(f, calls);
   const observer: TaskObserver = {
-    progress(value) { events.push(value.message); },
+    progress(value) {
+      events.push(value.message);
+    },
     event(event) {
       const observation = Reflect.get(event, 'observation');
       if (typeof observation === 'object' && observation !== null && 'refinement' in observation) {
@@ -170,11 +198,31 @@ test('uninterrupted rounds announce each phase before its assessment', async (t)
     },
   };
   await refine(new Workflow(services), f.root, '2', observer, new AbortController().signal);
-  assert.deepEqual(calls, ['Plan', 'Architect', 'First goal', 'Second goal', 'Plan', 'Architect', 'First goal', 'Second goal']);
+  assert.deepEqual(calls, [
+    'Plan',
+    'Architect',
+    'First goal',
+    'Second goal',
+    'Plan',
+    'Architect',
+    'First goal',
+    'Second goal',
+  ]);
   for (const round of ['1', '2']) {
     for (const phase of ['Plan', 'Architect', 'Run']) {
-      assert.ok(events.some((value) => value.includes(`Refinement round ${round}/2 · ${phase}`)), `progress for ${round} ${phase}`);
-      assert.ok(events.some((value) => value.startsWith('event:') && value.includes(`"round":"${round}"`) && value.includes(`"phase":"${phase}"`)), `event for ${round} ${phase}`);
+      assert.ok(
+        events.some((value) => value.includes(`Refinement round ${round}/2 · ${phase}`)),
+        `progress for ${round} ${phase}`,
+      );
+      assert.ok(
+        events.some(
+          (value) =>
+            value.startsWith('event:') &&
+            value.includes(`"round":"${round}"`) &&
+            value.includes(`"phase":"${phase}"`),
+        ),
+        `event for ${round} ${phase}`,
+      );
     }
   }
 });
