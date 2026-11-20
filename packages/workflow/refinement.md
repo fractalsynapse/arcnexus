@@ -98,14 +98,14 @@ same definition in the public `TaskEvent` union as
 goals and both phase outcomes have completed and the derived report is retained.
 Its public fields have the following meaning:
 
-| Field | Meaning |
-| --- | --- |
-| `invocation` | Stable logical foreground identity across attempts; fresh after full completion. |
-| `round` | Round position within that invocation. |
-| `report` | Registered external readable round-report artifact. |
-| `findings` | References to complete originating phase assessments, exact guide decisions and answers, and goal findings, in execution order. |
+| Field          | Meaning                                                                                                                                |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `invocation`   | Stable logical foreground identity across attempts; fresh after full completion.                                                       |
+| `round`        | Round position within that invocation.                                                                                                 |
+| `report`       | Registered external readable round-report artifact.                                                                                    |
+| `findings`     | References to complete originating phase assessments, exact guide decisions and answers, and goal findings, in execution order.        |
 | `measurements` | References to the existing event-derived measurements and their originating timeline records, including execution-profile attribution. |
-| `evidence` | Canonical evidence references for goal outcomes, issues/PRs, checks, recovery, source/runtime identities and delivered commits. |
+| `evidence`     | Canonical evidence references for goal outcomes, issues/PRs, checks, recovery, source/runtime identities and delivered commits.        |
 
 References identify complete immutable artifacts or canonical journal observations,
 not previews or newly authored summaries standing in for findings. A report
@@ -202,6 +202,22 @@ terminal outcome and measurement reference with canonical retained history, in
 order. Repeated timeline prefixes must contribute once, and the next round must
 exclude earlier usage. Keep successful-child-before-parent-acknowledgment recovery
 as a separate scenario requiring durable reuse without another assessment.
+
+## Nested lifecycle history
+
+Completed-round reconstruction uses `Journal.childTimeline(goal, scope)` for
+each admitted phase and captured goal. This public read-only query includes normal
+nested Architect supplier and prerequisite tasks across all attempts. Merge by
+canonical sequence identity in execution order; do not reconstruct origins from
+immediate-child artifact lists. Retain the existing successful-child recovery path.
+
+The nested regression runs Architect's real inbox, normal supplier task admission,
+native provider observations and durable clarification answers against SQLite/Git.
+Interrupt the supplier after reported usage, reopen all services, resume its logical
+task and complete two rounds. Compare exact origin sequences, terminal outcomes and
+explicit Planner/supplier profile totals with independently read SQLite history.
+This rejects omitted descendants, omitted continuations, duplicate accounting and
+prior-round carryover without manufacturing completion events.
 
 ## Required regression coverage and delivery boundary
 
