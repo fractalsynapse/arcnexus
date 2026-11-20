@@ -947,8 +947,12 @@ durably; a changed external gate is observed again rather than presumed failed.
 The accountable platform steward must repair the #686 fixture; operator edits to
 that candidate are not part of this bootstrap. Qualification remains **0/3**.
 
-#687 local assembly passed all 450 native-enabled tests without failures or skips,
+#687 local assembly passed all 451 native-enabled tests without failures or skips,
 plus specification/ownership/guidance validation, formatting, lint and strict
 TypeScript compilation. Public regressions first observed the abort and diagnostic
 loss. Current-head CI, staging integration and the real #686 recovery remain
 separate outstanding proof.
+The added production-shaped regression first reproduced Execution's existing-PR
+refusal, then verified actual worktree reconstruction after a staging advance,
+preserving both checkpoint edits and staging files. Unrecognized PRs and divergent
+checkpoints remain refused.

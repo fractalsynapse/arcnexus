@@ -1,6 +1,8 @@
 import { git } from './git.js';
 import { validateRetainedWork } from './architecture-adoption.js';
 import type { HostTask } from './index.js';
+import type { Candidate, Verdict } from '../../verification/src/index.js';
+import type { Publication } from '../../delivery/src/index.js';
 
 interface Checkpoint {
   head: string;
@@ -10,9 +12,35 @@ interface Checkpoint {
 
 interface History {
   baseRevision?: string;
-  publication?: unknown;
+  publication?: Publication;
+  candidate?: Candidate;
+  verdict?: Verdict;
   checkpoint?: Checkpoint;
   confirmed?: string;
+}
+
+/** Permit repair of an observed open PR only when it belongs to a recorded accepted publication. */
+export async function observePreparedPublication(task: HostTask, signal: AbortSignal) {
+  const pull = await task.provider(signal).publication(task.branch!);
+  if (!pull) return;
+  const history = task.observations<History>();
+  const publication = history.findLast((event) => event.publication)?.publication;
+  const accepted = history.findLast((event) => event.verdict?.kind === 'accepted');
+  const confirmed = history.findLast((event) => event.confirmed)?.confirmed;
+  if (
+    !publication ||
+    publication.branch !== task.branch ||
+    publication.issue !== task.issue ||
+    pull.state !== 'open' ||
+    pull.target !== publication.target ||
+    publication.target !== task.config.base ||
+    accepted?.candidate?.digest !== publication.candidate ||
+    accepted.verdict?.kind !== 'accepted' ||
+    accepted.verdict.candidate !== publication.candidate ||
+    (pull.head !== publication.head && pull.head !== confirmed)
+  )
+    throw new Error('An existing pull request must match a retained accepting publication');
+  task.note({ publicationObserved: { branch: task.branch, pull } });
 }
 
 /** Confirm the admission and recover compatible prepared work through its existing checkpoint. */
@@ -53,8 +81,6 @@ async function observedCheckpoint(
   const branch = git(root, 'for-each-ref', '--format=%(objectname)', ref);
   if (!checkpoint || checkpoint.head !== confirmed || branch !== confirmed)
     throw new Error('Moved staging recovery needs the same secured local checkpoint');
-  if (history.some((event) => event.publication))
-    throw new Error('Moved staging recovery cannot reuse a recorded publication');
   if (git(root, 'worktree', 'list', '--porcelain').split('\n').includes(`branch ${ref}`))
     throw new Error('Moved staging recovery needs the task worktree removed after its checkpoint');
   if (git(root, 'merge-base', checkpoint.head, revision) !== before)

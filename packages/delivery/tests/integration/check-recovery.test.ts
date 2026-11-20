@@ -110,6 +110,9 @@ class CheckScenario {
         this.opened++;
         throw new Error('Unexpected new PR');
       },
+      push: async (_root: string, _branch: string, head: string) => {
+        this.head = head;
+      },
     };
   }
 
@@ -147,6 +150,11 @@ class CheckScenario {
 
   /** Retain the failed attempt and provide a fresh authority or branch before resuming. */
   reopen(change: 'base' | 'head') {
+    this.task.note({
+      baseRevision: this.base,
+      checkpoint: { head: this.head, previous: '', parent: this.base },
+      confirmed: this.head,
+    });
     this.task.finish({ kind: 'failed', reason: 'Hosted check failed', evidence: [] });
     this.task.close();
     if (change === 'base') this.git('checkout', 'staging');
@@ -170,6 +178,26 @@ class CheckScenario {
     }).trim();
   }
 }
+
+test('an observed accepted open PR can reconstruct its checkpoint on advanced staging', async (t) => {
+  const scenario = new CheckScenario(t);
+  await scenario.failPublication();
+  const checkpoint = scenario.head;
+  scenario.reopen('base');
+  assert.equal(await resume(scenario.task, scenario.signal, () => {}), undefined);
+  scenario.task.worktree = undefined;
+  scenario.git('checkout', 'staging');
+  const execution = new Execution({} as Architecture, scenario.coordination, scenario.storage);
+  await execution.prepare(scenario.task, '7', scenario.signal);
+  assert.ok(scenario.task.worktree);
+  assert.equal(readFileSync(join(scenario.task.worktree, 'baseline'), 'utf8'), 'candidate\n');
+  assert.equal(readFileSync(join(scenario.task.worktree, 'fresh'), 'utf8'), 'base\n');
+  assert.equal(scenario.git('merge-base', scenario.head, checkpoint), checkpoint);
+  assert.equal(scenario.git('merge-base', scenario.head, scenario.authority), scenario.authority);
+  assert.equal(scenario.opened, 0);
+  assert.equal(scenario.merged, 0);
+  scenario.task.cleanup();
+});
 
 test('Delivery retains complete CI diagnostics for the actual assembled candidate', async (t) => {
   const scenario = new CheckScenario(t);

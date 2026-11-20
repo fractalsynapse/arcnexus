@@ -15,3 +15,10 @@ Restart observes existing effects first. An unmerged publication needing a new
 base or acknowledged candidate returns to normal Execution preparation and
 verification. Already merged effects retain their original identity. This adds
 no scheduler, store, retry ceiling, size threshold or human approval gate.
+
+Execution reconstructs an open published branch only when its journal contains
+the matching accepted publication and its observed head matches that publication
+or a confirmed checkpoint. Unrecognized PRs, changed targets and divergent
+checkpoints remain refused. A production-shaped regression continues through
+Delivery resume and actual Execution preparation after staging advances, checking
+that both accepted edits and the new staging files survive without another PR.
