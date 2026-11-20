@@ -246,7 +246,9 @@ function assertRound(
   const { completion, report } = result;
   assert.match(report, new RegExp('Distinct Planner finding attempt ' + attempt));
   assert.doesNotMatch(report, new RegExp('Distinct Planner finding attempt ' + (attempt === 1 ? 2 : 1)));
-  assert.match(report, /The complete answer is retained verbatim, including its full conclusion\./);
+  if (attempt === 1)
+    assert.match(report, /The complete answer is retained verbatim, including its full conclusion\./);
+  else assert.match(report, /The resumed complete answer for attempt 2\./);
   if (reused) assert.match(report, /Reused completed child outcome for refine:/);
   else assert.doesNotMatch(report, /Reused completed child outcome for refine:/);
   assert.equal(new Set(completion.findings).size, completion.findings.length);
