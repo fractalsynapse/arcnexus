@@ -67,10 +67,8 @@ function phase(root: Journal, suffix: string) {
   ));
 }
 
-test('completed rounds survive attempts and remain discoverable by later project children', (t) => {
-  const directory = mkdtempSync(join(tmpdir(), 'arcnexus-round-discovery-'));
-  const store = new Coordination(directory);
-  t.after(() => rmSync(directory, { recursive: true, force: true }));
+/** Populate two completed rounds across reopened attempts. */
+function priorRounds(store: Coordination) {
   const first = admit(store);
   phase(first, 'first');
   first.record({ failure: 'retained failure' });
@@ -86,8 +84,13 @@ test('completed rounds survive attempts and remain discoverable by later project
   resumed.finish({ kind: 'refined' });
   resumed.close();
 
+  return [one, two] as const;
+}
+
+/** Check project-wide selection from an ordinary child of a later invocation. */
+function assertDiscovery(store: Coordination, one: JournalEvent, two: JournalEvent) {
   const later = admit(store);
-  assert.notEqual(later.taskID, first.taskID);
+  assert.notEqual(later.taskID, one.taskID);
   const observer = child(later, 'Architect', 'round:1:architect');
   observer.record({ artifact: '/evidence/incomplete-report.md' });
   observer.record({ unrelated: { completedRound: { round: 99 } } });
@@ -112,7 +115,14 @@ test('completed rounds survive attempts and remain discoverable by later project
   observer.finish({ kind: 'planned' });
   later.finish({ kind: 'cancelled' });
   later.close();
+}
 
+test('completed rounds survive attempts and remain discoverable by later project children', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'arcnexus-round-discovery-'));
+  const store = new Coordination(directory);
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const [one, two] = priorRounds(store);
+  assertDiscovery(store, one, two);
   const reopened = admit(store);
   assert.deepEqual(completedRounds(reopened), [one, two]);
   reopened.finish({ kind: 'refined' });
