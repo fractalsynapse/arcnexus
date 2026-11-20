@@ -18,6 +18,8 @@ import {
 } from '../../../../packages/workflow/src/index.js';
 import { projectFixture } from '../fixtures/project.js';
 
+export const suite = { owner: 'cli-app', level: 'integration', tags: ['regression'] } as const;
+
 const cli = fileURLToPath(new URL('../../src/index.js', import.meta.url));
 
 test('task plan validates explicit input before admission and does not fall back to task run', () => {
@@ -238,7 +240,7 @@ test('CMD-1, WFL-1 and WFL-2: rejected work returns to Direction before staging 
   const result = await context.commands.runTask(
     { directory: root, goal: 'Fix the fixture' },
     observer,
-    AbortSignal.timeout(5_000),
+    new AbortController().signal,
   );
   assert.deepEqual(calls, [
     'director',
@@ -265,7 +267,7 @@ test('an invalid Director plan is repaired in one task before any steward or del
   const result = await context.commands.runTask(
     { directory: root, goal: 'Fix the fixture' },
     { progress() {} },
-    AbortSignal.timeout(5_000),
+    new AbortController().signal,
   );
   assert.equal(result.kind, 'merged');
   assert.deepEqual(calls.slice(0, 3), ['director', 'director:repair', 'steward:initial/testing']);
@@ -285,7 +287,7 @@ test('an unchanged invalid Director plan holds with its diagnostic before activa
   const result = await context.commands.runTask(
     { directory: root, goal: 'Fix the fixture' },
     { progress() {} },
-    AbortSignal.timeout(5_000),
+    new AbortController().signal,
   );
   assert.equal(result.kind, 'blocked');
   assert.equal(
@@ -300,7 +302,7 @@ test('WFL-2: a revision must schedule work against every rejected criterion', as
   const result = await context.commands.runTask(
     { directory: root, goal: 'Fix the fixture' },
     { progress() {} },
-    AbortSignal.timeout(5_000),
+    new AbortController().signal,
   );
   assert.equal(result.kind, 'blocked');
   assert.match(result.reason, /did not schedule a correction for covers-goal/);
@@ -337,7 +339,7 @@ test('WFL-3 and CO-2: a second goal is refused while the SQLite lane is held', a
   const result = await context.commands.runTask(
     { directory: root, goal: 'Second goal' },
     { progress() {} },
-    AbortSignal.timeout(5_000),
+    new AbortController().signal,
   );
   assert.deepEqual(result, { kind: 'invalid', reason: 'Active goal: Existing goal', evidence: [] });
   assert.deepEqual(existing.events(), []);

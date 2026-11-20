@@ -4,6 +4,8 @@ import type { Capture } from '../../../architecture/src/index.js';
 import { validateVerdict } from '../../../verification/src/index.js';
 import { activities, validatePlan, type Plan } from '../../src/index.js';
 
+export const suite = { owner: 'direction', level: 'unit', tags: ['regression'] } as const;
+
 const capture: Capture = {
   source: { root: '.', revision: 'base', remote: '', paths: [], read: () => '' },
   project: {

@@ -18,6 +18,8 @@ import {
 import { Workflow, type TaskEvent, type WorkflowServices } from '../../../workflow/src/index.js';
 import { Execution, HostTask, steward } from '../../src/index.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 const remote = 'https://github.com/fixture/interrupted-check.git';
 const criterion = { id: 'fixed', description: 'The checked contribution survives restart' };
 const agent = new Agent(new Architecture());

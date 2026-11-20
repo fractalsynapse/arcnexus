@@ -1,14 +1,17 @@
-import { existsSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { isAbsolute, join, resolve, sep } from 'node:path';
 import { team } from '../../team/src/index.js';
-import type { Capture } from '../../architecture/src/index.js';
+import { resolveOperation, type Capture } from '../../architecture/src/index.js';
 import { hasOwnerTestSuites } from '../../foundation/src/index.js';
 import { execute } from './process.js';
+import { checkMounts } from './check-sandbox.js';
+export { checkEnvironment } from './check-sandbox.js';
 
 export interface CheckResult {
   id: string;
   status: number | null | 'not-applicable';
   reason?: string;
+  prerequisite?: 'dependencies';
   command: string;
   args: string[];
   cwd: string;
@@ -25,9 +28,11 @@ export async function check(
   owner: string | undefined,
   log: string,
   signal: AbortSignal,
+  dependencies = join(capture.source.root, 'node_modules'),
+  activity?: string,
 ): Promise<CheckResult> {
   signal.throwIfAborted();
-  const { executable, args, cwd } = checkCommand(capture, worktree, id, owner);
+  const { executable, args, cwd } = checkCommand(capture, worktree, id, owner, activity);
   const parameters = { id, command: executable, args, cwd, log };
   const reason = ownerTestInapplicability(capture, worktree, id, owner);
   if (reason) {
@@ -35,14 +40,14 @@ export async function check(
     return { ...parameters, status: 'not-applicable', reason, durationMs: 0 };
   }
   const start = performance.now();
-  const sandbox = mounts(capture.source.root, worktree, common);
+  const sandbox = checkMounts(worktree, common, dependencies);
   const invocation = [...sandbox, '--chdir', cwd, '--', executable, ...args];
   const { status } = await execute('/usr/bin/bwrap', invocation, { cwd: worktree, log, signal });
   return { ...parameters, status, durationMs: Math.round(performance.now() - start) };
 }
 
 /** Check the captured prerequisite only for optional, owner-scoped operations. */
-function ownerTestInapplicability(
+export function ownerTestInapplicability(
   capture: Capture,
   worktree: string,
   id: string,
@@ -69,7 +74,7 @@ export async function formatContents(
   signal: AbortSignal,
 ) {
   const args = [
-    ...mounts(root, directory, common),
+    ...checkMounts(directory, common, join(root, 'node_modules')),
     '--chdir',
     directory,
     '--',
@@ -83,70 +88,19 @@ export async function formatContents(
 }
 
 /** Resolve a captured operation and owner-dependent arguments in the sealed workspace. */
-export function checkCommand(capture: Capture, worktree: string, id: string, owner?: string) {
-  const operation = Object.hasOwn(capture.operations, id) && capture.operations[id];
+export function checkCommand(
+  capture: Capture,
+  worktree: string,
+  id: string,
+  owner?: string,
+  activity?: string,
+) {
+  const operation = resolveOperation(capture, id, owner, activity);
   if (!operation || !operation.command || operation.network !== false)
     throw new Error(`Unavailable confined operation: ${id}`);
-  const args = (operation.args ?? []).map((arg) => {
-    if (typeof arg === 'string') return arg;
-    if (!owner || !arg || arg.context !== 'owner')
-      throw new Error(`Unresolved operation argument: ${id}`);
-    return owner;
-  });
+  const args = operation.args;
   const cwd = resolve(worktree, operation.cwd ?? '.');
   if (isAbsolute(operation.cwd ?? '.') || (cwd !== worktree && !cwd.startsWith(worktree + sep)))
     throw new Error(`Operation working directory escapes the worktree: ${id}`);
-  return { executable: operation.command, args, cwd };
+  return { executable: operation.command, args, cwd, parameters: operation.parameterValues };
 }
-
-/** Expose system binaries and staged inputs without writable source or host credentials. */
-function mounts(root: string, worktree: string, common: string) {
-  const args = [
-    ...environment,
-    '--overlay-src',
-    worktree,
-    '--tmp-overlay',
-    worktree,
-    '--ro-bind',
-    common,
-    common,
-  ];
-  const bindings = join(common, 'arcnexus');
-  if (existsSync(bindings)) args.push('--tmpfs', bindings);
-  const dependencies = join(root, 'node_modules');
-  if (existsSync(dependencies))
-    args.push('--ro-bind', dependencies, join(worktree, 'node_modules'));
-  return args;
-}
-
-export const checkEnvironment = Object.freeze({
-  PATH: '/usr/local/bin:/usr/bin:/bin',
-  HOME: '/tmp',
-  GIT_CONFIG_NOSYSTEM: '1',
-  GIT_OPTIONAL_LOCKS: '0',
-});
-
-const environment = [
-  '--unshare-all',
-  '--die-with-parent',
-  '--clearenv',
-  '--ro-bind',
-  '/usr',
-  '/usr',
-  '--symlink',
-  'usr/lib',
-  '/lib',
-  '--symlink',
-  'usr/lib64',
-  '/lib64',
-  '--symlink',
-  'usr/bin',
-  '/bin',
-  '--proc',
-  '/proc',
-  '--dev',
-  '/dev',
-  '--tmpfs',
-  '/tmp',
-  ...Object.entries(checkEnvironment).flatMap(([name, value]) => ['--setenv', name, value]),
-];

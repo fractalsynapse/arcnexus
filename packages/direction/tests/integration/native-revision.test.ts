@@ -10,6 +10,8 @@ import { HostTask } from '../../../execution/src/index.js';
 import { Workflow, type WorkflowServices } from '../../../workflow/src/index.js';
 import { activities, direct, type Feedback, type Milestone, type Plan } from '../../src/index.js';
 
+export const suite = { owner: 'direction', level: 'integration', tags: ['regression'] } as const;
+
 /** Build distinct acceptance identities without embedding real project policy in the fixture. */
 function milestone(id: string): Milestone {
   return {

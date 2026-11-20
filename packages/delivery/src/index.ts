@@ -25,7 +25,7 @@ export async function integrate(
     issue,
     head,
     candidate: candidate.digest,
-    parent: task.capture.source.revision,
+    parent: task.config.capture.source.revision,
   };
   task.note({ publication });
   return deliver(task, publication, signal);
@@ -106,6 +106,7 @@ async function deliver(
     provider: task.provider(signal),
     worktree: task.capture.source.root,
     goal: task.goal,
+    title: task.trackingTitle,
     validateLocal: () => task.validatePublication(branch, head, parent, candidate),
     record: (event) => task.note(event),
   });

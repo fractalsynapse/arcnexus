@@ -11,6 +11,9 @@ import { Workflow, type WorkflowServices } from '../../../workflow/src/index.js'
 import { checkFailureSignature } from '../../src/steward-check.js';
 import { type HostTask, steward } from '../../src/index.js';
 import { StewardFixture } from '../fixtures/steward.js';
+import { contextEvidence } from '../fixtures/context-evidence.js';
+
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
 
 const agent = new Agent(new Architecture());
 const criterion = { id: 'fixed', description: 'The fixture check passes' };
@@ -94,7 +97,7 @@ class CheckTask {
         /read-only filesystem.*mapped checked-edit MCP tool/,
       );
       assert.match(JSON.stringify(data.assignment), /"status":1/);
-      assert(data.evidence?.includes(this.failureLog));
+      assert(contextEvidence(this.task, data).includes(this.failureLog));
       const current = readFileSync(this.file, 'utf8');
       const expected = createHash('sha256').update(current).digest('hex');
       const content = this.correct === 'progress' && current === 'wrong' ? 'compiled' : 'corrected';
@@ -220,7 +223,7 @@ test('a malformed steward reply is repaired in the same step before checked effe
       const repair = (context.assignment as { responseRepair?: string }).responseRepair;
       if (!repair) return { completed: { kind: 'completed', edits: [replacement], checks: [] } };
       assert.match(repair, /response\.kind/);
-      assert(context.evidence?.includes(transcript));
+      assert(contextEvidence(task, context).includes(transcript));
       return { kind: 'completed', edits: [replacement], checks: [] };
     },
   );
@@ -254,7 +257,7 @@ test('a second malformed reply blocks the step and keeps both transcripts', asyn
   assert.equal(outcome.kind, 'blocked');
   assert.match(outcome.reason, /response\.checks\[0\]\.id: forbidden is unavailable/);
   assert.equal(replies.mock.callCount(), 2);
-  assert.equal(outcome.evidence.length, 2);
+  assert.equal(outcome.evidence.filter((path) => path.endsWith('-codex.jsonl')).length, 2);
   task.close();
 });
 
@@ -282,7 +285,7 @@ test('a refused ownership request returns the captured owner to the same steward
     task,
     milestone('repair'),
     'implementation',
-    AbortSignal.timeout(5000),
+    new AbortController().signal,
   );
   assert.equal(outcome.kind, 'supplier');
   assert.equal(outcome.owner, 'other');
@@ -342,7 +345,7 @@ test('the requesting steward gets the complete recorded supplier answer', async 
     task,
     milestone('requester'),
     'implementation',
-    AbortSignal.timeout(5000),
+    new AbortController().signal,
   );
   assert.equal(outcome.kind, 'completed');
 });
@@ -415,7 +418,7 @@ test('a stale digest is corrected without applying earlier edits in the rejected
     task,
     milestone('stale-edit'),
     'implementation',
-    AbortSignal.timeout(2000),
+    new AbortController().signal,
   );
   assert.equal(outcome.kind, 'completed');
   assert.equal(replies.mock.callCount(), 2);

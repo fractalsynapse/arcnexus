@@ -1,10 +1,10 @@
+import { AgentActivityHold, InvalidAgentResponse } from '../../agent/src/index.js';
 import type { Context } from 'cordis';
 import { activities, type Plan, type Rejection } from '../../direction/src/index.js';
 import {
   Clarifications,
   editFingerprint,
   hostTask,
-  InvalidCodexResponse,
   reconcileCheckpoint,
   saveCheckpoint,
   type CheckedEdit,
@@ -156,7 +156,7 @@ export class Planner {
     return plannerProposal;
   }
 
-  /** Repair one invalid model response in its original clarification scope. */
+  /** Repair distinct response findings in the original mapping and hold unchanged repetition. */
   private async generate(
     task: HostTask,
     data: ReturnType<typeof assignment>,
@@ -164,20 +164,26 @@ export class Planner {
     previous?: Map<string, string | null>,
   ) {
     const ids = [...projectedGoalIDs(task, previous)];
-    const ask = async (input: typeof data) => {
-      const reply = await task.activate(this.agent, selection, input, signal);
-      return validateReply(task, data, ids, reply);
-    };
-    try {
-      return await ask(data);
-    } catch (error) {
-      if (signal.aborted) throw error;
-      if (!(error instanceof InvalidCodexResponse) && !(error instanceof ProposalError))
-        throw error;
-      return await ask({
-        ...data,
-        assignment: { ...data.assignment, diagnostic: error.message },
-      });
+    const seen = new Set<string>();
+    let diagnostic: string | undefined;
+    while (true) {
+      signal.throwIfAborted();
+      try {
+        const input = { ...data, assignment: { ...data.assignment, diagnostic } };
+        const reply = await task.activate(this.agent, selection, input, signal);
+        return validateReply(task, data, ids, reply);
+      } catch (error) {
+        signal.throwIfAborted();
+        if (!(error instanceof InvalidAgentResponse)) throw error;
+        if (seen.has(error.identity))
+          throw new AgentActivityHold(
+            `Planner repeated an unchanged finding: ${error.message}`,
+            task.evidence.slice(),
+          );
+        seen.add(error.identity);
+        diagnostic = error.message;
+        task.note({ plannerResponseRepair: diagnostic });
+      }
     }
   }
 
@@ -215,7 +221,7 @@ export class Planner {
 }
 
 /** Distinguish a repairable proposal from an execution or human gate failure. */
-class ProposalError extends Error {}
+class ProposalError extends InvalidAgentResponse {}
 
 /** Keep model validation failures eligible for the ordinary Planner repair. */
 function validateReply(

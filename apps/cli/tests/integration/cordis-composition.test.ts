@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Context } from 'cordis';
 
+export const suite = { owner: 'cli-app', level: 'integration', tags: ['regression'] } as const;
+
 declare module 'cordis' {
   interface Context {
     compositionProbe: string;

@@ -15,13 +15,16 @@ observed verification rather than failed cycles.
 
 Bind the verdict to the candidate, captured acceptance, checks and environment.
 Reuse evidence only when those inputs match. The reviewer receives the complete
-evidence by reference with bounded reads. Measure evidence size and report harness
+evidence by reference with complete file reads. Measure evidence size and report harness
 refusals without suppressing or sampling evidence. A verdict records reviewer
 identity, profile, criteria, evidence and input digest. The reviewer never writes
 candidate files or uses the delivery capability.
 
 Bind each check or observation to its actual relevant inputs and environment;
-bind the independent verdict to the full candidate. A scoped observation may be
+bind the independent verdict to the full candidate and the approved model used
+for verification. Resolved operation parameters participate in relevant inputs.
+An approved in-run model transition revalidates affected observations before the
+next activity; it never rewrites a historical result or weakens original acceptance. A scoped observation may be
 reused after unrelated edits only when its declared inputs and environment match.
 A changed candidate always requires an applicable independent verdict. Return
 malformed or invalid review citations to the Reviewer for repair with the exact
@@ -49,6 +52,7 @@ finding while retaining the candidate and unchanged check evidence.
 | VI-16 | Verification never merges, publishes or answers a human gate on anyone's behalf. |
 | VI-17 | An ordinary failed component check returns to its accountable activity without Direction. Final independent rejection invokes Direction. Reviewer response repair retains the exact candidate and applicable check evidence. |
 | VI-18 | Reuse depends on a check's declared relevant inputs and environment. An unrelated edit does not alone invalidate a scoped observation; a changed relevant input reruns it, and a changed candidate invalidates its prior verdict. |
+| VI-19 | An approved model transition preserves unaffected observations and original acceptance, refreshes checks whose relevant authority or parameters changed, and obtains an applicable independent verdict for the final candidate and model. |
 
 ## Deferred
 

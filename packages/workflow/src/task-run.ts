@@ -13,9 +13,9 @@ import {
   type StandingGoalEvidence,
 } from '../../direction/src/index.js';
 import { validateVerdict, type Candidate, type Verdict } from '../../verification/src/index.js';
-import { activityRepair } from './activity-repair.js';
+import { activityRepair, replayableActivity } from './activity-repair.js';
 import { assembleCandidate } from './assembly.js';
-import { selfLinkedSupplier, stopped, type Interrupted } from './services.js';
+import { stopped, type Interrupted } from './services.js';
 import type {
   ActivityCheckpoint,
   ActivityRepair,
@@ -154,10 +154,14 @@ export class TaskRun {
       if ('verdict' in event && event.verdict.kind === 'rejected')
         return this.correct(event.candidate, event.verdict.findings);
       if (!('activation' in event)) continue;
-      if (selfLinkedSupplier(event.activation.outcome, event.activation.milestone)) continue;
-      if (event.activation.outcome.kind === 'blocked') {
+      if (
+        !replayableActivity(
+          this.session.capture,
+          this.plan!.milestones[this.completed],
+          event.activation,
+        )
+      )
         continue;
-      }
       const interrupted = await this.applyActivity(event.activation);
       if (interrupted) return interrupted;
     }
@@ -167,7 +171,7 @@ export class TaskRun {
   private report(observation: Observation) {
     if (observation.evidence) this.evidence.push(...observation.evidence);
     this.session.record(observation);
-    this.observer.progress(observation);
+    if (!this.session.listen || !this.observer.event) this.observer.progress(observation);
     this.signal.throwIfAborted();
   }
 
@@ -217,13 +221,13 @@ export class TaskRun {
       } catch (error) {
         this.signal.throwIfAborted();
         if (!(error instanceof DirectorResponseError)) throw error;
-        if (seen.has(error.message))
+        if (seen.has(error.identity))
           return stopped(
             'blocked',
             `Director repeated an unchanged validation finding: ${error.message}`,
             this.evidence,
           );
-        seen.add(error.message);
+        seen.add(error.identity);
         request = () => this.repairPlan(error.message, context);
       }
     }

@@ -11,10 +11,10 @@ import { InvalidCodexResponse } from './codex.js';
 import { selfLinkedSupplier, type ActivityCheckpoint } from '../../workflow/src/index.js';
 import { materializeEdits } from './formatter.js';
 import type { HostTask } from './index.js';
-import { inboxIdentity } from './research.js';
+import { inboxIdentity, researchFields } from './research.js';
 import { decodeEdit } from './steward-response.js';
 import { listToolDirectory, readToolFile } from './tool-files.js';
-import { pendingStewardCheck, type StewardScope } from './steward-check.js';
+import { repairCheckExpectation, type StewardScope } from './steward-check.js';
 
 type Tool = Pick<AgentInspection['request']['options']['tools'][number], 'name' | 'handler'>;
 type Evidence = {
@@ -106,14 +106,16 @@ export class ActivationTools {
 
   /** Preserve unresolved expectations before executing another request for the same operation. */
   private check(id: string, expected: 'pass' | 'fail') {
+    const activity =
+      this.task.capture.components[this.selection.component]?.activities[this.selection.activity];
+    if (expected !== 'pass' && activity?.verification?.includes(id))
+      throw new Error(`Operation ${id} requires pass for declared activity verification`);
     const scope: StewardScope = {
       owner: this.selection.component,
       activity: this.selection.activity as StewardScope['activity'],
       expected,
     };
-    const pending = pendingStewardCheck(this.task.observations(), scope, id);
-    if (pending && pending.expected !== expected)
-      throw new Error(`Cannot change the required recheck for ${id}: expected ${pending.expected}`);
+    repairCheckExpectation(this.task, id, scope);
     return this.task.check(id, this.signal, scope);
   }
 
@@ -181,7 +183,7 @@ export class ActivationTools {
     for (const value of Object.values(args))
       if (typeof value !== 'string' || !value.trim())
         throw new Error(`Empty ${kind} request field`);
-    const request = { ...args, kind };
+    const request = { ...args, ...(kind === 'research' ? researchFields(args) : {}), kind };
     if (selfLinkedSupplier(request, this.milestone))
       throw new Error(
         `Supplier milestone ${this.milestone} is your current milestone. Continue this activity or link a distinct contribution.`,

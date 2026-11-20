@@ -4,6 +4,8 @@ import type { Capture } from '../../../architecture/src/index.js';
 import { activities, type Plan, type PlanActivity } from '../../../direction/src/index.js';
 import { Workflow, type TaskEvent, type WorkflowServices } from '../../src/index.js';
 
+export const suite = { owner: 'workflow', level: 'unit', tags: ['regression'] } as const;
+
 type Editable = Exclude<PlanActivity, 'review' | 'release'>;
 
 /** Keep the public workflow fixture explicit while isolating inference and upstream effects. */
@@ -43,6 +45,7 @@ class LocalRepairScenario {
     private readonly target: Editable,
     private readonly interrupt = false,
     private readonly repeat = false,
+    private readonly findingFrom: 'review' | 'implementation' = 'review',
   ) {}
 
   private readonly services: WorkflowServices = {
@@ -70,7 +73,7 @@ class LocalRepairScenario {
     agent: {
       execute: async (_session, _milestone, activity) => {
         this.calls.push(activity);
-        if (activity === 'review' && (++this.reviews === 1 || this.repeat))
+        if (activity === this.findingFrom && (++this.reviews === 1 || this.repeat))
           return {
             kind: 'repair',
             activity: this.target,
@@ -96,6 +99,29 @@ class LocalRepairScenario {
       },
     },
   };
+
+  /** Preserve a legacy invalid forward response without granting its requested transition. */
+  retainInvalidRepair() {
+    this.reviews = 1;
+    this.events.push(
+      { plan: this.plan },
+      { position: { completed: 0, activities: { work: 1 } } },
+      {
+        activation: {
+          milestone: 'work',
+          owner: 'owner',
+          index: 1,
+          step: 'testing',
+          outcome: {
+            kind: 'repair',
+            activity: 'implementation',
+            reason: 'Need implementation',
+            evidence: ['retained-invalid-response'],
+          },
+        },
+      },
+    );
+  }
 
   /** Drive the canonical public entry and optionally cancel after the atomic repair position. */
   run(signal = this.cancellation.signal) {
@@ -169,4 +195,32 @@ test('WFL-6: unchanged repeated self-review findings hold before a third activat
     'implementation',
     'review',
   ]);
+});
+
+test('restart returns a retained invalid forward response to its original caller without changing authority', async () => {
+  const scenario = new LocalRepairScenario('testing');
+  scenario.retainInvalidRepair();
+  const retained = JSON.stringify(scenario.events);
+  assert.equal((await scenario.run()).kind, 'merged');
+  assert.deepEqual(scenario.calls, ['testing', 'implementation', 'review', 'delivery']);
+  assert.equal(JSON.stringify(scenario.events.slice(0, 3)), retained);
+  assert.equal(scenario.events.filter((event) => 'plan' in event).length, 1);
+});
+
+test('Implementation rewinds invalid fixtures to Testing inside the accepted milestone', async () => {
+  const scenario = new LocalRepairScenario('testing', false, false, 'implementation');
+  assert.equal((await scenario.run()).kind, 'merged');
+  assert.deepEqual(scenario.calls, [
+    'director',
+    'documentation',
+    'testing',
+    'implementation',
+    'testing',
+    'implementation',
+    'review',
+    'delivery',
+  ]);
+  assert.equal(scenario.events.filter((event) => 'plan' in event).length, 1);
+  const repaired = scenario.events.find((event) => 'position' in event && event.repair);
+  assert(repaired && 'position' in repaired && repaired.repair?.activity === 'testing');
 });

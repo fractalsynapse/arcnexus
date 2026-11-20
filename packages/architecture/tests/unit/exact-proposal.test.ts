@@ -5,6 +5,8 @@ import { textDigest } from '../../../foundation/src/index.js';
 import type { Capture } from '../../src/index.js';
 import { prepareArchitectureProposal } from '../../src/decode-proposal.js';
 
+export const suite = { owner: 'architecture', level: 'unit', tags: ['regression'] } as const;
+
 const original = '# Contract\n\n| FIX-1 | Existing outcome |\n';
 const changed = original + '| FIX-2 | Additional approved outcome |\n';
 

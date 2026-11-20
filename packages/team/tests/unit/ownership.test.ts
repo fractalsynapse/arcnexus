@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { team } from '../../src/index.js';
 
+export const suite = { owner: 'team', level: 'unit', tags: ['regression'] } as const;
+
 const members = {
   c: { id: 'c', owns: ['docs'], activities: { review: { profile: 'review' } } },
   b: { id: 'b', owns: ['src/b'], activities: { testing: { profile: 'test' } } },

@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { decodeSteward } from '../../src/steward-response.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 /** Exercise the exact boundary between steward operations and scheduled host checks. */
 class HostCheckScenario {
   private static readonly hostCheck = 'repository-format';

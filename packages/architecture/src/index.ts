@@ -11,6 +11,7 @@ export { revisionCitation, type RevisionCitation } from './revision-citation.js'
 export { canResearch, researchDirectory } from './research.js';
 export type AgentInspection = ReturnType<typeof buildCodexRequest>;
 export type { OperationHandler } from './tools.js';
+export { operationTool } from './tools.js';
 export type { ArchitectureProposal, ArchitectureDecision } from './proposal.js';
 export type { ArchitectureRecord } from './approval.js';
 export { architectureIdentity } from './proposal.js';
@@ -48,3 +49,5 @@ export const architecturePlugin = {
 };
 
 export { prepareArchitectureProposal } from './decode-proposal.js';
+export { operationID, resolveOperation } from './operation.js';
+export { validateCapture } from './validation.js';

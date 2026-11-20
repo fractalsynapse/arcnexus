@@ -4,12 +4,23 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
-import type { ActivationInput, Agent } from '../../../agent/src/index.js';
+import { parse } from 'yaml';
+import {
+  InvalidAgentResponse,
+  type ActivationInput,
+  type Agent,
+} from '../../../agent/src/index.js';
 import type { Capture } from '../../../architecture/src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
 import { HostTask } from '../../src/index.js';
 import { archiveResearch, pendingResearch } from '../../src/research-archive.js';
 import { verify } from '../../../verification/src/index.js';
+
+export const suite = {
+  owner: 'execution',
+  level: 'integration',
+  tags: ['regression'],
+} as const;
 
 const request = {
   kind: 'research',
@@ -39,7 +50,7 @@ class ResearchScenario {
   checks = 0;
 
   /** Set up a local Git source without a delivery branch or task worktree. */
-  constructor(t: TestContext) {
+  constructor(t: TestContext, operations = ['read-file', 'list-files']) {
     t.after(() => rmSync(this.base, { force: true, recursive: true }));
     mkdirSync(this.root);
     execFileSync('git', ['init', '-q', this.root]);
@@ -50,16 +61,11 @@ class ResearchScenario {
         checks: { acceptance: ['build'] },
       },
       contracts: [],
-      components: Object.fromEntries(
-        ['direction', 'reviewer', 'team'].map((id) => [
-          id,
-          {
-            id,
-            owns: [`.arc/research/${id}`],
-            activities: { research: { profile: 'fixture', operations: [] } },
-          },
-        ]),
-      ),
+      components: researchComponents(operations),
+      operations: {
+        'read-file': { id: 'read-file', kind: 'tool', category: 'project-tool', tool: 'read' },
+        'list-files': { id: 'list-files', kind: 'tool', category: 'project-tool', tool: 'list' },
+      },
       source: { root: this.root, revision: 'captured', paths: [], remote: 'https://example.com' },
     } as unknown as Capture;
   }
@@ -75,8 +81,13 @@ class ResearchScenario {
   archive(owner: string, lookup = owner) {
     return this.withTask('Archive fixture', async (task) => {
       task.worktree = this.root;
+
       const [report] = pendingResearch(task, lookup);
       assert(report?.path);
+      assert('evidence' in report, 'A pending report needs its readable source before archival');
+      assert.equal(typeof report.evidence, 'string');
+      const retained = task.readFile(String(report.evidence));
+      assert.match(retained.text, /Ordering is stable for a fixed input/);
       const edits = archiveResearch(task, owner, [report.id]);
       task.edits(owner, 'documentation', edits);
       assert.deepEqual(archiveResearch(task, owner, [report.id]), []);
@@ -148,6 +159,29 @@ class ResearchScenario {
     return reply;
   }
 }
+
+/** Give each generic actor the same explicit read-only research capability. */
+function researchComponents(operations: string[]) {
+  return Object.fromEntries(
+    ['direction', 'reviewer', 'team'].map((id) => [
+      id,
+      {
+        id,
+        owns: [`.arc/research/${id}`],
+        activities: { research: { profile: 'fixture', operations } },
+      },
+    ]),
+  );
+}
+
+test('legacy model research without project tools remains available', async (t) => {
+  const fixture = new ResearchScenario(t, []);
+  assert.deepEqual(
+    await fixture.activate('direction', 'planning', [request, report, { kind: 'plan' }]),
+    { kind: 'plan' },
+  );
+  assert.equal(fixture.activations.length, 3);
+});
 
 /** Verify answered gates expose one durable artifact with the unmodified input. */
 function verifyClarificationEvidence(
@@ -284,5 +318,71 @@ test('Reviewer research resumes the same candidate with one checklist and binds 
   assert.equal(
     fixture.activations.filter(({ selection }) => selection.activity === 'research').length,
     1,
+  );
+});
+
+/** Exercise complete prose, source references and open questions beyond the removed arbitrary caps. */
+function detailedReport() {
+  return {
+    ...report,
+    summary: 'Detailed summary. '.repeat(100),
+    findings: 'Complete researched finding. '.repeat(1000),
+    applicability: 'Applicable implementation conditions. '.repeat(100),
+    sources: Array.from({ length: 20 }, (_, index) => ({
+      url: `https://example.com/${index}/${'source/'.repeat(400)}`,
+      note: 'Evidence and its relevance. '.repeat(100),
+    })),
+    unresolved: Array.from({ length: 20 }, () => 'Open research question. '.repeat(100)),
+  };
+}
+
+test('research repairs malformed responses and preserves a complete detailed report', async (t) => {
+  const fixture = new ResearchScenario(t);
+  const detailed = detailedReport();
+  assert.deepEqual(
+    await fixture.activate('team', 'testing', [
+      request,
+      new InvalidAgentResponse('Malformed research JSON'),
+      detailed,
+      { kind: 'completed' },
+    ]),
+    { kind: 'completed' },
+  );
+  const research = fixture.activations.filter(({ selection }) => selection.activity === 'research');
+  assert.equal(research.length, 2);
+  assert.match(JSON.stringify(research[1]?.task.assignment), /Malformed research JSON/);
+  const evidence = fixture.activations
+    .at(-1)
+    ?.task.evidence?.find((path) => String(path).endsWith('research.md'));
+  const markdown = readFileSync(String(evidence), 'utf8');
+  const metadata = parse(/^---\n([\s\S]*?)\n---/.exec(markdown)![1]!);
+  assert.equal(metadata.summary, detailed.summary);
+  for (const text of [
+    detailed.findings,
+    detailed.applicability,
+    ...detailed.sources.flatMap((source) => [source.url, source.note]),
+    ...detailed.unresolved,
+  ])
+    assert(markdown.includes(text));
+});
+
+test('unchanged research report failure is retained as optional unavailability', async (t) => {
+  const fixture = new ResearchScenario(t);
+  const invalid = { ...report, findings: null };
+  assert.deepEqual(
+    await fixture.activate('team', 'testing', [request, invalid, invalid, { kind: 'completed' }]),
+    { kind: 'completed' },
+  );
+  assert.equal(
+    fixture.activations.filter(({ selection }) => selection.activity === 'research').length,
+    2,
+  );
+  const assignment = fixture.activations.at(-1)?.task.assignment as {
+    researchResults: { unavailable: boolean; evidence: string }[];
+  };
+  assert.equal(assignment.researchResults[0]?.unavailable, true);
+  assert.match(
+    readFileSync(assignment.researchResults[0]!.evidence, 'utf8'),
+    /unchanged.*findings.*nonempty/,
   );
 });

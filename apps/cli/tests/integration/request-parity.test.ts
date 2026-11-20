@@ -8,6 +8,8 @@ import { Agent } from '../../../../packages/agent/src/index.js';
 import { Architecture } from '../../../../packages/architecture/src/index.js';
 import { projectFixture } from '../fixtures/project.js';
 
+export const suite = { owner: 'cli-app', level: 'integration', tags: ['regression'] } as const;
+
 const cli = fileURLToPath(new URL('../../src/index.js', import.meta.url));
 
 test('GW-16 and GW-25: the CLI prints the exact prepared model envelope', (t) => {

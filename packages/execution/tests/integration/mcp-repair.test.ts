@@ -11,6 +11,12 @@ import { ActivationTools } from '../../src/activation-tools.js';
 import { LocalMcp } from '../../src/mcp.js';
 import { StewardFixture } from '../fixtures/steward.js';
 
+export const suite = {
+  owner: 'execution',
+  level: 'integration',
+  tags: ['native', 'regression'],
+} as const;
+
 type Binding = AgentInspection['request']['options']['tools'][number];
 
 /** Make the narrow wire schema for a captured fixture operation. */

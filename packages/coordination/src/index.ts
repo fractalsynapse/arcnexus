@@ -4,6 +4,8 @@ import { join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import type { Context } from 'cordis';
 import { departed, identity } from './lease.js';
+import { verifiedTerminal, recentFindings } from './journal-queries.js';
+export { RunMeasurements } from './measurements.js';
 
 declare module 'cordis' {
   interface Context {
@@ -11,20 +13,16 @@ declare module 'cordis' {
   }
 }
 
-const verifiedTerminal = `
-  SELECT events.id, events.run, runs.task_id, runs.goal_id
-  FROM events JOIN runs ON runs.id = events.run
-  WHERE json_extract(content, '$.outcome.commit') = ?
-    AND (
-      json_extract(content, '$.outcome.kind') = 'merged'
-      OR (json_extract(content, '$.outcome.kind') = 'satisfied' AND EXISTS (
-        SELECT 1 FROM events reviewed WHERE reviewed.run = events.run
-          AND json_extract(reviewed.content, '$.candidate.unchanged') = 1
-          AND json_extract(reviewed.content, '$.verdict.kind') = 'accepted'
-      ))
-    )
-  ORDER BY events.id DESC LIMIT 1
-`;
+export interface JournalEvent {
+  sequence: string;
+  run: number;
+  taskID: string;
+  goalID: string;
+  parent?: number;
+  timestamp: string | null;
+  observation: unknown;
+  detail?: unknown;
+}
 
 export interface RetainedRun {
   run: number;
@@ -59,9 +57,20 @@ export class Journal {
 
   /** Append an observation in order without changing an earlier entry. */
   record(event: unknown) {
-    this.database
-      .prepare('INSERT INTO events (run, content) VALUES (?, ?)')
-      .run(this.run, JSON.stringify(event));
+    const timestamp = new Date().toISOString();
+    const content = JSON.stringify(event);
+    const result = this.database
+      .prepare('INSERT INTO events (run, content, recorded_at) VALUES (?, ?, ?)')
+      .run(this.run, content, timestamp);
+    return {
+      sequence: String(result.lastInsertRowid),
+      run: this.run,
+      taskID: this.taskID,
+      goalID: this.goalID,
+      parent: this.parent,
+      timestamp,
+      observation: JSON.parse(content) as unknown,
+    } satisfies JournalEvent;
   }
 
   /** Admit one nested session while retaining this live writer and its shared connection. */
@@ -104,8 +113,9 @@ export class Journal {
         .prepare('UPDATE runs SET active = 0 WHERE id = ? AND active = 1')
         .run(this.run);
       if (!updated.changes) throw new Error('This task already has a terminal outcome');
-      this.record({ outcome });
+      const event = this.record({ outcome });
       this.database.exec('COMMIT');
+      return event;
     } catch (error) {
       this.database.exec('ROLLBACK');
       throw error;
@@ -120,6 +130,29 @@ export class Journal {
       .map(({ content }) => JSON.parse(String(content)));
   }
 
+  /** Render complete task history with durable identities, including honest unknown historical timestamps. */
+  timeline(): JournalEvent[] {
+    return this.database
+      .prepare(
+        `
+      SELECT events.id, events.run, runs.task_id, runs.goal_id, runs.parent_id,
+        events.recorded_at, events.content
+      FROM events JOIN runs ON events.run = runs.id
+      WHERE runs.task_id = ? ORDER BY events.id
+    `,
+      )
+      .all(this.taskID)
+      .map((row) => ({
+        sequence: String(row.id),
+        run: Number(row.run),
+        taskID: String(row.task_id),
+        goalID: String(row.goal_id),
+        parent: row.parent_id === null ? undefined : Number(row.parent_id),
+        timestamp: typeof row.recorded_at === 'string' ? row.recorded_at : null,
+        observation: JSON.parse(String(row.content)) as unknown,
+      }));
+  }
+
   /** Authorize a retained artifact by its original host event in this verified project's store. */
   artifactRecorded(path: string) {
     return Boolean(
@@ -132,16 +165,7 @@ export class Journal {
   /** Read recent observed failures and repairs for architectural assessment without creating another store. */
   findings() {
     return this.database
-      .prepare(
-        `
-      SELECT events.id, events.run, runs.goal_id, events.content
-      FROM events JOIN runs ON runs.id = events.run
-      WHERE json_extract(content, '$.outcome.kind') IN ('failed', 'blocked', 'cancelled')
-        OR json_type(content, '$.repair') = 'object'
-        OR json_type(content, '$.stewardRepair') = 'object'
-      ORDER BY events.id DESC LIMIT 20
-    `,
-      )
+      .prepare(recentFindings)
       .all()
       .map(({ id, run, goal_id, content }) => ({
         id,
@@ -161,7 +185,7 @@ export class Journal {
       WHERE json_extract(content, '$.researchResult.component') = ?
         AND json_type(content, '$.researchResult.archive') = 'text'
         AND (? IS NULL OR json_extract(content, '$.researchResult.request.id') = ?)
-      ORDER BY events.id DESC LIMIT 8
+      ORDER BY events.id DESC
     `,
       )
       .all(component, id ?? null, id ?? null)
@@ -300,7 +324,6 @@ export class Coordination {
   /** Create storage constraints before the first admission. */
   private initialize(database: DatabaseSync) {
     database.exec(`
-      PRAGMA busy_timeout = 2000;
       PRAGMA foreign_keys = ON;
       BEGIN IMMEDIATE;
       CREATE TABLE IF NOT EXISTS runs (
@@ -312,7 +335,8 @@ export class Coordination {
         id INTEGER PRIMARY KEY, inventory TEXT NOT NULL, finished INTEGER NOT NULL DEFAULT 0
       ) STRICT;
       CREATE TABLE IF NOT EXISTS events (
-        id INTEGER PRIMARY KEY, run INTEGER NOT NULL REFERENCES runs(id), content TEXT NOT NULL
+        id INTEGER PRIMARY KEY, run INTEGER NOT NULL REFERENCES runs(id), content TEXT NOT NULL,
+        recorded_at TEXT
       ) STRICT;
     `);
     migrate(database);
@@ -329,6 +353,9 @@ function migrate(database: DatabaseSync) {
     .prepare('PRAGMA table_info(runs)')
     .all()
     .map(({ name }) => name);
+  const events = database.prepare('PRAGMA table_info(events)').all();
+  if (!events.some(({ name }) => name === 'recorded_at'))
+    database.exec('ALTER TABLE events ADD COLUMN recorded_at TEXT');
   if (!fields.includes('lease')) database.exec('ALTER TABLE runs ADD COLUMN lease TEXT');
   if (!fields.includes('task_id')) database.exec('ALTER TABLE runs ADD COLUMN task_id TEXT');
   if (!fields.includes('parent_id'))
@@ -410,8 +437,8 @@ function retire(database: DatabaseSync, run: number) {
   for (const { id } of rows) {
     const outcome = { kind: 'cancelled', reason: 'Task writer exited', evidence: [] };
     database
-      .prepare('INSERT INTO events (run, content) VALUES (?, ?)')
-      .run(id!, JSON.stringify({ outcome }));
+      .prepare('INSERT INTO events (run, content, recorded_at) VALUES (?, ?, ?)')
+      .run(id!, JSON.stringify({ outcome }), new Date().toISOString());
     database.prepare('UPDATE runs SET active = 0 WHERE id = ?').run(id!);
   }
 }

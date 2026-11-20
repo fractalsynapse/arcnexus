@@ -17,12 +17,20 @@ task identity. Retain issue and checkpoint identities and the last committed
 activity position in the same journal.
 Transactional writes reject stale versions and are idempotent for identical content.
 Events are append-only observations. Git owns revisions, and reports are derived
-from retained records.
+from retained records. The existing journal and external artifacts supply the
+canonical live timeline: ordered identities, timestamps, correlations and complete
+host/provider observations. Read-only subscribers can follow persisted events
+without another store or writer. Record approved model transitions and the version
+used by each activation; a restart reconciles an interrupted transition before work.
+Derive live and final elapsed-time, reported-token and attributable-cost summaries
+from these records overall and by profile, component, activity and phase. Preserve
+unknown measurements and pricing provenance instead of inventing zero or billed cost.
+Planner and Architect consume the measured findings in subsequent assessments.
 
 The runtime persists structured agent-authored plan content. The committed plan is
 a deterministic render. The store and external application artifacts remain the
 durable evidence. Retain authored evidence, including failed or unavailable checks,
-and expose artifacts by identity with bounded range reads. The first build applies
+and expose complete artifacts by identity, with optional caller-selected ranges. The first build applies
 no automatic per-goal cache threshold. Record one terminal outcome and retain the
 last committed position for restart inspection. Observe an uncertain upstream effect
 before attempting it again.
@@ -51,7 +59,7 @@ records the validated runtime identity and preserves original task evidence.
 | CO-8 | No stored record duplicates a Git fact: changing the branch head does not stale any stored revision field, because none exists beyond ids and digests. |
 | CO-9 | A foreground human answer is evidence against the open gate. Continue from the recorded position without replaying an uncertain operation. |
 | CO-10 | A request that names existing accepted work links to it and preserves owner and acceptance; it creates no duplicate milestone. |
-| CO-11 | Evidence reads honor offset and length and never inline an unbounded artifact. |
+| CO-11 | Evidence reads honor caller-selected offsets and ranges. Complete artifacts remain readable without application-imposed file-size or response-chunk caps. |
 | CO-12 | Measures are recorded per milestone; a milestone closed without measures is a validation finding, not a silent zero. |
 | CO-13 | `planRender` is deterministic: the same store state produces byte-identical plan output, so plan changes review as diffs. |
 | CO-15 | Reopening the store after an abrupt process exit yields the last committed position. Resume reconciles uncertain provider effects before replaying an activity, without operator repair. |
@@ -62,6 +70,8 @@ records the validated runtime identity and preserves original task evidence.
 | CO-21 | Refinement, phase and task sessions use one SQLite store and one project writer. A second invocation is refused throughout phase transitions and approval pauses, and a finished child cannot release the live outer writer. |
 | CO-22 | Restart during a phase, approval pause or goal restores its exact logical identity, proposal and first unfinished position. Completed phases and goals are not repeated, and the next fresh round captures the new inventory. |
 | CO-23 | Approval names the exact baseline and content. Missing, unknown or mismatched approval cannot advance the cursor. A safe runtime change records its identity and reconciles uncertain effects before continuation. |
+| CO-24 | A subscriber receives persisted observations in order while work is running. Restart preserves the observed prefix, model transition, correlations and complete artifact references without a competing log store. |
+| CO-25 | Live and final time/token/profile summaries reconcile to retained records. Missing provider usage remains unknown, cost estimates retain their pricing basis, and later assessments receive the measured findings. |
 
 ## Deferred
 

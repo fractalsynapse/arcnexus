@@ -5,7 +5,7 @@ import { appendFileSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path/posix';
 import { parse } from 'yaml';
 import { team } from '../../team/src/index.js';
-import type { Capture } from '../../architecture/src/index.js';
+import { operationID, resolveOperation, type Capture } from '../../architecture/src/index.js';
 import { acceptanceScenarios } from '../src/index.js';
 
 const catalogRoot = '.arc/architecture';
@@ -70,8 +70,12 @@ class SpecificationCheck {
   private checkActivities(components: ReadonlyMap<string, Component>): void {
     const roles = this.catalog('roles');
     const profiles = this.catalog('execution-profiles');
-    const operations = this.catalog('operations');
+    const operations = this.catalog<Capture['operations'][string]>('operations');
     const standards = this.catalog('standards');
+    const catalog = {
+      components: Object.fromEntries(components),
+      operations: Object.fromEntries(operations),
+    };
     for (const { id, activities } of components.values()) {
       assert(Object.keys(activities).length, `${id} declares no activities`);
       for (const [name, activity] of Object.entries(activities)) {
@@ -84,7 +88,31 @@ class SpecificationCheck {
             `${scope}: unknown profile ${activity.profile}`,
           );
         this.checkActivityReferences(scope, activity, operations, standards);
+        this.checkOperationConfiguration(catalog, id, name, activity);
       }
+    }
+  }
+
+  /** Validate the same resolved parameters and completion bindings used by inspection and execution. */
+  private checkOperationConfiguration(
+    catalog: Pick<Capture, 'components' | 'operations'>,
+    component: string,
+    name: string,
+    activity: Activity,
+  ) {
+    const ids = activity.operations.map(operationID);
+    for (const id of ids) resolveOperation(catalog, id, component, name);
+    assert(
+      activity.verification === undefined || Array.isArray(activity.verification),
+      `${component}/${name}: verification must be a list`,
+    );
+    for (const id of activity.verification ?? []) {
+      assert(ids.includes(id), `${component}/${name}: unmapped verification ${id}`);
+      const operation = resolveOperation(catalog, id, component, name);
+      assert(
+        operation.command && operation.tool === 'check',
+        `${component}/${name}: verification ${id} requires a check command`,
+      );
     }
   }
 
@@ -97,7 +125,8 @@ class SpecificationCheck {
   ): void {
     assert(activity.instructions?.length, `${scope}: missing instructions`);
     assert(
-      Array.isArray(activity.operations) && activity.operations.every((id) => operations.has(id)),
+      Array.isArray(activity.operations) &&
+        activity.operations.every((binding) => operations.has(operationID(binding))),
       `${scope}: missing or unknown operations`,
     );
     assert(

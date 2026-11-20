@@ -13,7 +13,9 @@ when project authority is captured.
 
 Architecture owns the capture and model-facing request. Manager supplies
 guidance through that capture. Later directive edits become inputs to a future
-capture and cannot change an active agent's instructions, operations or acceptance.
+capture. Approved guidance can reach the next activation through Architecture's
+recorded in-run model adoption boundary; it cannot rewrite an in-flight agent's
+instructions, grant candidate-side authority or weaken original acceptance.
 The Manager service does not schedule, activate or review agents.
 
 ## Acceptance scenarios
@@ -22,4 +24,4 @@ The Manager service does not schedule, activate or review agents.
 | --- | --- |
 | MGR-1 | The same revision and scope resolve the same guidance. Different scopes receive their applicable directives and skill references. |
 | MGR-2 | Invalid metadata or a missing skill reference is reported by the shared validation path. |
-| MGR-3 | Editing directives after admission leaves the active Agent view unchanged. A later capture can see the newly approved guidance. |
+| MGR-3 | Unapproved directive edits cannot change the Agent view. After approved model adoption, the next activation receives the updated guidance; in-flight activations and historical evidence retain their original identity and original acceptance is preserved. |

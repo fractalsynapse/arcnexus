@@ -8,6 +8,8 @@ import type { HostTask } from '../../src/index.js';
 import { LocalMcp } from '../../src/mcp.js';
 import { inboxIdentity } from '../../src/research.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 type Binding = AgentInspection['request']['options']['tools'][number];
 
 /** Test the wire boundary and refusal evidence with one captured, single-path operation. */
@@ -32,7 +34,7 @@ class ToolBoundary {
       [this.binding],
       async (_tool, args) => {
         this.calls.push(String(args.path));
-        return { contents: 'fixture' };
+        return { path: args.path, sha256: 'fixture', text: 'fixture' };
       },
       (_name, error) => {
         if (error) this.refusals.push(error);
@@ -76,7 +78,7 @@ test('local MCP exposes only the captured operation and refuses alternate action
 function testingTask(events: unknown[]) {
   return {
     taskID: 'fixture',
-    capture: { source: { revision: 'staging' }, project: {} },
+    capture: testingCapture,
     observations: () => events,
     note: (event: unknown) => events.push(event),
     check: async (id: string, _signal: AbortSignal, scope: unknown) => {
@@ -94,6 +96,12 @@ function testingTask(events: unknown[]) {
     },
   } as unknown as HostTask;
 }
+
+const testingCapture = {
+  source: { revision: 'staging' },
+  project: {},
+  components: { fixture: { activities: { testing: { operations: ['owner-tests'] } } } },
+};
 
 /** Open one native testing activation without invoking external services. */
 function testingActivation(retainedSelfLink = false) {

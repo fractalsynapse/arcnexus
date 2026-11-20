@@ -3,6 +3,8 @@ import test from 'node:test';
 import { parse } from 'yaml';
 import { Architecture, type Capture } from '../../src/index.js';
 
+export const suite = { owner: 'architecture', level: 'unit', tags: ['regression'] } as const;
+
 const actingPurpose = 'Acting purpose with complete detail. '.repeat(200);
 const instructions = ['Selected instructions with complete detail. '.repeat(200)];
 const foreignPurpose = 'Foreign purpose that must remain outside the index. '.repeat(200);
@@ -43,7 +45,7 @@ const capture: Capture = {
     other: {
       id: 'other',
       purpose: foreignPurpose,
-      ...{ summary: 'A deliberately authored summary.' },
+      summary: 'A deliberately authored summary.',
       owns: ['other'],
       activities: { direct: { ...activity, instructions: [foreignInstruction] } },
     },

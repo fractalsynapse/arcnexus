@@ -6,6 +6,8 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { Coordination } from '../../src/index.js';
 
+export const suite = { owner: 'coordination', level: 'unit', tags: ['regression'] } as const;
+
 test('retry retains the exact accepted publication for the identical goal', (t) => {
   const directory = mkdtempSync(join(tmpdir(), 'arcnexus-publication-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));

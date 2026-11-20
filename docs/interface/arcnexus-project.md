@@ -27,9 +27,15 @@ authored rules and commands are reused by reference. Use the least code that mee
 accepted contract. Add a service seam for an actual consumer or a responsibility that
 must be independently replaceable.
 
-Admission freezes the catalog, authority, checks, revision, bindings identity and
-trusted plugin composition. Commit and upstream authority belong to the host.
-Target source cannot supply executable host plugins or change active composition.
+Admission resolves the approved catalog, authority, checks, revision, bindings
+identity and trusted plugin composition. Reload that integrated model after every
+applied human-approved architecture update at a recorded activity boundary, once
+required implementation and handlers are validated. Revalidate retained work before
+the next activation in the same run, preserving original acceptance and historical
+evidence. An in-flight activation keeps its recorded model identity. Commit and
+upstream authority belong to the host. Candidate source cannot authorize executable
+host plugins or composition changes; adopting an updated runtime requires the
+trusted host's recorded validation under the approved architectural authority.
 `.arc/plans/` and `.arc/learning/` are generated records. They cannot grant authority.
 Authored goals under the project knowledge root persist across rounds. Each goal
 declares priority, requirements and observable measures. A round evaluates the
@@ -43,7 +49,7 @@ holds on current staging. Keep one configuration version. Main integration, tags
 | PRJ-1 | Resolve from a nested directory returns the project and the deepest applicable component; an unrelated directory returns an input error naming what was missing. |
 | PRJ-2 | Two equally applicable components for one path is an input error, not a tie-break. |
 | PRJ-3 | A tracked maintained path with zero owners or two owners fails validation, naming the path. |
-| PRJ-4 | Editing architecture, guidance or plugin selection after admission leaves the active capture unchanged. A later run reads the new approved inputs. |
+| PRJ-4 | Unapproved architecture, guidance or plugin edits cannot change authority. An exact human-approved update, validated implementation and recorded host adoption can update the next activity in the same run. Historical observations retain their original model identity and original acceptance is preserved. |
 | PRJ-5 | A dirty working tree or a HEAD that differs from the captured base is refused before any store row is written. |
 | PRJ-6 | A second staging publication grant is a finding naming its owner and source. |
 | PRJ-7 | A missing executable binding fails with the binding name; setting `PATH` does not satisfy it. |

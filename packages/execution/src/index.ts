@@ -1,23 +1,22 @@
-import { existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import type { Context } from 'cordis';
 import type { Agent, ActivationInput } from '../../agent/src/index.js';
 import type { ActivitySelection, Capture, TaskContext } from '../../architecture/src/index.js';
-import type { Journal } from '../../coordination/src/index.js';
+import type { Journal, JournalEvent } from '../../coordination/src/index.js';
 import type { Candidate } from '../../verification/src/index.js';
 import { reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
 import type { TaskEvent, TaskOutcome, TaskSession } from '../../workflow/src/index.js';
 import { GitHub } from '../../collaboration/src/index.js';
-import { activateActor } from './activation.js';
+import { activateActor, type ContextRefresh } from './activation.js';
 import { inboxIdentity, usedResearch } from './research.js';
 import { formatterPreview } from './formatter.js';
 import { recoverPrepared } from './prepared-recovery.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
 import { git } from './git.js';
 import { applicationStorage, type HostConfig } from './host-config.js';
-import { check } from './check.js';
-import { checkInput, reusableCheck } from './check-cache.js';
+import { runCheck } from './run-check.js';
 import { pendingStewardCheck, type StewardScope } from './steward-check.js';
 import {
   cleanCandidate,
@@ -47,12 +46,14 @@ declare module 'cordis' {
 /** Carry the admitted authority and one worktree through the workflow. */
 export class HostTask implements TaskSession {
   ask?: TaskSession['ask'];
-  readonly capture: Capture;
+  capture: Capture;
   readonly evidence: string[] = [];
   worktree?: string;
   branch?: string;
   issue?: string;
+  timeline?: string;
   private sequence = 0;
+  private listener?: (event: JournalEvent) => void;
 
   /** Bind the session to a captured project and its already claimed journal. */
   constructor(
@@ -80,6 +81,11 @@ export class HostTask implements TaskSession {
     return id ? approvedArchitecture(this, id) : undefined;
   }
 
+  /** Use the Director's accepted purpose for tracking while retaining the complete goal separately. */
+  get trackingTitle() {
+    return this.history().findLast((event) => 'plan' in event)?.plan.focus.purpose ?? this.goal;
+  }
+
   /** Read the prior attempt and its immutable worktree location. */
   retainedPublication() {
     const retained = this.journal.retained;
@@ -87,11 +93,27 @@ export class HostTask implements TaskSession {
   }
 
   /** Record a delivery intent or provider observation through the task journal. */
-  note(event: Record<string, unknown>) {
-    this.journal.record(event);
+  note(event: TaskEvent | Record<string, unknown>, detail?: unknown) {
+    const recorded = this.journal.record(event);
+    this.listener?.(detail === undefined ? recorded : { ...recorded, detail });
   }
 
-  /** Read project source or a registered immutable project artifact through the same bounded tool boundary. */
+  /** Subscribe the foreground observer to committed task observations. */
+  listen(observer: (event: JournalEvent) => void) {
+    if (!this.timeline) {
+      this.timeline = this.artifact('run-timeline.jsonl');
+      const records = this.journal.timeline().map((event) => JSON.stringify(event) + '\n');
+      writeFileSync(this.timeline, records.join(''), { mode: 0o600, flag: 'wx' });
+    }
+    const timeline = this.timeline;
+    this.listener = (event) => {
+      const { detail: _detail, ...recorded } = event;
+      appendFileSync(timeline, JSON.stringify(recorded) + '\n');
+      observer(event);
+    };
+  }
+
+  /** Read complete project source or a registered immutable artifact from the requested offset. */
   readFile(path: string, offset = 0) {
     return readToolFile(this, path, offset);
   }
@@ -109,7 +131,7 @@ export class HostTask implements TaskSession {
 
   /** Record Workflow observations through Coordination. */
   record(event: TaskEvent) {
-    this.journal.record(event);
+    this.note(event);
   }
 
   /** Read journaled Workflow checkpoints, including previously published activities. */
@@ -154,10 +176,11 @@ export class HostTask implements TaskSession {
 
   /** Retain the terminal outcome and verified native evidence. */
   finish(outcome: TaskOutcome) {
-    this.journal.finish({
+    const event = this.journal.finish({
       ...outcome,
       evidence: [...new Set([...outcome.evidence, ...this.evidence])],
     });
+    this.listener?.(event);
   }
 
   /** Close the storage connection without removing retained source or evidence. */
@@ -343,8 +366,9 @@ export class HostTask implements TaskSession {
     selection: ActivationInput['selection'],
     data: Omit<TaskContext, 'goal' | 'worktree'>,
     signal: AbortSignal,
+    refresh?: ContextRefresh,
   ) {
-    return activateActor(this, agent, selection, data, signal);
+    return activateActor(this, agent, selection, data, signal, refresh);
   }
 
   /** Return the research evidence used by this captured actor activation. */
@@ -362,7 +386,7 @@ export class HostTask implements TaskSession {
     const observed = applyEdits(this.worktree, this.capture, owner, edits, (editIntent) =>
       this.note({ owner, activity, editIntent }),
     );
-    this.journal.record({ owner, activity, edits: observed });
+    this.note({ owner, activity, edits: observed });
     return observed;
   }
 
@@ -384,26 +408,7 @@ export class HostTask implements TaskSession {
 
   /** Run a declared check and record its real exit, duration and transcript. */
   async check(id: string, signal: AbortSignal, scope?: StewardScope) {
-    signal.throwIfAborted();
-    if (!this.worktree) throw new Error('No task worktree is available for checks');
-    const input = checkInput(this, id, scope);
-    const reused = reusableCheck(this.observations(), input, scope?.expected);
-    if (reused) {
-      this.note({ check: reused, scope, checkInput: input, reusedFrom: reused.log });
-      return reused;
-    }
-    const log = this.artifact(`${id}.log`);
-    const result = await check(
-      this.capture,
-      this.worktree,
-      this.config.common,
-      id,
-      scope?.owner,
-      log,
-      signal,
-    );
-    this.journal.record({ check: result, scope, checkInput: input });
-    return result;
+    return runCheck(this, id, signal, scope);
   }
 
   /** Store an immutable artifact outside maintained source. */

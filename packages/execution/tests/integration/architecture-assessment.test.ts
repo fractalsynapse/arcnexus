@@ -6,6 +6,9 @@ import { Agent } from '../../../agent/src/index.js';
 import { ArchitectureFixture } from '../fixtures/architecture.js';
 import type { HostTask } from '../../src/index.js';
 import { Architecture } from '../../../architecture/src/index.js';
+import { decodeCodexAnswer } from '../../src/codex.js';
+
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
 
 const signal = new AbortController().signal;
 
@@ -92,4 +95,53 @@ test('repeated unchanged Architect diagnostics hold durably instead of spinning'
   await assert.rejects(fixture.assess(), /repeated an unchanged finding/);
   assert.equal(calls, 2);
   fixture.parent.cleanup();
+});
+
+test('Architect native parse repair holds the same finding across changing transcript paths', async (t) => {
+  const fixture = new AssessmentFixture(t);
+  let calls = 0;
+  t.mock.method(
+    fixture.parent,
+    'activate',
+    async (...[_agent, _selection, data]: Parameters<HostTask['activate']>) => {
+      calls++;
+      if (calls > 2) return fixture.noChange();
+      if (calls === 2) assert.match(JSON.stringify(data.assignment), /first-codex.jsonl/);
+      const stdout = JSON.stringify({
+        type: 'item.completed',
+        item: { type: 'agent_message', text: 'not JSON' },
+      });
+      const log = fixture.parent.store(
+        calls === 1 ? 'first-codex.jsonl' : 'second-codex.jsonl',
+        stdout,
+      );
+      return decodeCodexAnswer(stdout, log);
+    },
+  );
+  await assert.rejects(fixture.assess(), /repeated an unchanged finding.*second-codex.jsonl/);
+  assert.equal(calls, 2);
+});
+
+test('Architect requires JSON explicitly and repairs distinct native findings without Direction', async (t) => {
+  const fixture = new AssessmentFixture(t);
+  let calls = 0;
+  t.mock.method(
+    fixture.parent,
+    'activate',
+    async (...[_agent, _selection, data]: Parameters<HostTask['activate']>) => {
+      calls++;
+      assert.match(JSON.stringify(data.assignment), /one JSON object.*fences.*YAML/);
+      if (calls === 3) return fixture.noChange();
+      const stdout =
+        calls === 1
+          ? ''
+          : JSON.stringify({
+              type: 'item.completed',
+              item: { type: 'agent_message', text: 'not JSON' },
+            });
+      return decodeCodexAnswer(stdout, fixture.parent.store(`${calls}-codex.jsonl`, stdout));
+    },
+  );
+  assert.equal((await fixture.assess()).kind, 'no-change');
+  assert.equal(calls, 3);
 });

@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { decodeDirectorResponse, type StandingGoalEvidence } from '../../src/index.js';
 
+export const suite = { owner: 'direction', level: 'unit', tags: ['regression'] } as const;
+
 const quote = 'A substantive observed effect.';
 const path = 'packages/delivery/src/index.ts';
 const observation: StandingGoalEvidence = {

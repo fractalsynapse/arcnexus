@@ -16,14 +16,35 @@ After approval, Direction plans prerequisite implementation through the ordinary
 steward lifecycle. The host applies the approved guide batch to that same candidate
 before assembled verification and independent review. Model checked edits cannot
 perform this protected application. A completed delivery supplies a fresh capture
-to subsequent work; the active capture remains immutable.
+to subsequent work. The approved efficiency amendment permits the host to adopt
+resolved architecture between activities in the same run once the necessary
+implementation is validated. Execution uses its existing workspace/checkpoint
+boundaries for [validated adoption](../execution/docs/architecture-adoption.md);
+an in-flight activation and historical observations retain their actual authority.
+
+Follow the [efficiency checklist](../../docs/plans/efficiency-foundation.md) and
+[prompt practices](docs/prompt-practices.md) for the model resolution, operation
+parameter, activity instruction and observability changes. Here “model” means
+resolved architecture; the execution profile separately selects an AI model.
 
 Implementation of this approved capability is bootstrap work in #631. Deterministic
 checks, hosted CI and real phase acceptance are reported separately.
 
-## Component index intent (#615)
+Optional component research admits a model activity with no operations or only
+mapped read/list tools. The same capability predicate governs the request context,
+inbox and MCP request boundary. Command executors, unknown mappings and effectful
+tools cannot enable research. Inspection and activation refuse an invalid research
+activity before constructing its request. This aligns the runtime with the
+already approved read-only tool declarations (#645); it adds no operation authority.
 
-Planned behavior for the efficiency work in #615 follows the
+Prior-finding assessment references the complete recorded technical outcomes and
+repairs in one readable artifact derived from the append-only journal.
+Expected human decision pauses are preserved as gates, rather than classified
+as technical failures. Referencing the artifact adds no scheduler or separate knowledge store.
+
+## Component discovery (#615)
+
+The source-linked index delivered through [PR #664](https://github.com/fractalsynapse/arcnexus/pull/664) follows the
 [Architecture contract](contract.md#obligations), especially ARC-9 and ARC-10:
 keep complete definitions in the immutable capture and build one source-attributed
 request for inspection and activation.
@@ -66,6 +87,8 @@ activity definitions, and that a component without a summary remains discoverabl
 by source. Retain the intended failing observation before implementation and current
 passing owner evidence afterward, with candidate identity, actual exit statuses
 and logs. Keep literal suite metadata aligned with path ownership and preserve
-inspect/activation parity and Director/Reviewer access coverage. This section records
-intent before behavioral edits; implementation and assembled acceptance remain to
-be demonstrated through the normal workflow.
+inspect/activation parity and Director/Reviewer access coverage. The live task
+retained its intended red and passing results, repaired one caller response and
+resumed after a controlled logging correction through one PR. Its staging merge
+`1ebec5bd` passed the [Staging workflow](https://github.com/fractalsynapse/arcnexus/actions/runs/44660298873).
+This establishes the index delivery, not the complete refinement qualification.

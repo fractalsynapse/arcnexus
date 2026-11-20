@@ -18,7 +18,17 @@ export interface ActivationInput {
 }
 
 /** Identify invalid actor output that the calling activity can repair without replaying effects. */
-export class InvalidAgentResponse extends Error {}
+export class InvalidAgentResponse extends Error {
+  readonly identity: string;
+
+  /** Retain the exact diagnostic while preserving its finding through domain error causes. */
+  constructor(message: string, options?: ErrorOptions & { identity?: string }) {
+    super(message, options);
+    this.identity =
+      options?.identity ??
+      (options?.cause instanceof InvalidAgentResponse ? options.cause.identity : message);
+  }
+}
 
 /** Retain an unresolved actor finding as a durable hold rather than an unhandled execution failure. */
 export class AgentActivityHold extends Error {

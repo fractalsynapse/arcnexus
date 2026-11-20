@@ -1,4 +1,5 @@
 import { citesVerifiedRun } from '../../execution/src/index.js';
+import { InvalidAgentResponse } from '../../agent/src/index.js';
 import { revisionCitation, type Capture } from '../../architecture/src/index.js';
 import {
   activities,
@@ -14,7 +15,7 @@ import {
 } from './index.js';
 
 /** Carry a rejected Director proposal's diagnostic across the planning boundary. */
-export class DirectorResponseError extends Error {}
+export class DirectorResponseError extends InvalidAgentResponse {}
 
 /** Decode arbitrary model output before plan rules inspect its fields. */
 export function decodeDirectorResponse(

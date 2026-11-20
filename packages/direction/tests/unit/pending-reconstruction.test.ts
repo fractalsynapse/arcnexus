@@ -4,6 +4,8 @@ import type { Capture } from '../../../architecture/src/index.js';
 import * as direction from '../../src/index.js';
 import type { Milestone, Plan, RevisionFeedback } from '../../src/index.js';
 
+export const suite = { owner: 'direction', level: 'unit', tags: ['regression'] } as const;
+
 const focus = { purpose: 'Deliver', objectives: ['Improve'], constraints: ['Preserve authority'] };
 const profile = {
   role: 'steward',

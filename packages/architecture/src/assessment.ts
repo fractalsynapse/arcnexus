@@ -6,6 +6,7 @@ import { architectureGate, architectureQuestion, type ArchitectureRecord } from 
 import { prepareArchitectureProposal } from './decode-proposal.js';
 import { ArchitectureResponseError, type ArchitectureDecision } from './proposal.js';
 import { architectAssignment } from './assignment.js';
+import { architectureFindings } from './findings.js';
 
 /** Assess real captured source and keep proposals and human decisions in the existing task journal. */
 export class ArchitectureAssessment {
@@ -70,10 +71,7 @@ export class ArchitectureAssessment {
     ArchitectureRecord | Exclude<ArchitectureDecision, { kind: 'approved' }>
   > {
     if (!this.task.worktree) this.task.planningWorkspace(this.signal);
-    const findings = this.task.store(
-      'architecture-findings.json',
-      JSON.stringify(this.task.journal.findings(), null, 2),
-    );
+    const findings = architectureFindings(this.task);
     const seen = new Set<string>();
     let diagnostic: string | undefined;
     while (true) {
@@ -85,12 +83,12 @@ export class ArchitectureAssessment {
       } catch (error) {
         this.signal.throwIfAborted();
         if (!(error instanceof InvalidAgentResponse)) throw error;
-        if (seen.has(error.message))
+        if (seen.has(error.identity))
           throw new AgentActivityHold(
             `Architect repeated an unchanged finding: ${error.message}`,
-            this.task.evidence.slice(-4),
+            this.task.evidence.slice(),
           );
-        seen.add(error.message);
+        seen.add(error.identity);
         diagnostic = error.message;
         this.task.note({ architectureResponseRepair: diagnostic });
       }

@@ -57,6 +57,16 @@ and arguments before consulting earlier results. Older observations without that
 identity remain evidence and are rerun. Setup events alone do not invalidate an
 unchanged checkpoint, and a new worktree path does not change its contents.
 
+Reuse includes failed numeric observations. Repeating a mapped check against the
+same validated inputs returns its latest actual failure and original log, rather
+than launching the expensive command again. It remains pending and cannot be
+discharged by an older success. A changed checkpoint, authority, operation,
+expectation, configuration or environment requires fresh evidence; missing input
+provenance or a missing log prevents reuse. Cancellation and confinement are
+validated first. This is the same observation cache, not another retry path (#643).
+The process path creates its supplied transcript before execution, so a silent
+command retains an honest empty log rather than a nonexistent evidence path (#644).
+
 Repair context distinguishes the active activity from an earlier rewind target.
 Completed Testing with an expected failure is valid red evidence for
 Implementation to correct, rather than a reason to restart Testing.
@@ -70,6 +80,12 @@ holds before another identical automatic attempt.
 Checked supplier contributions also change the task's check inputs. After that
 contribution, a remaining failure returns to the original caller for local repair;
 the supplier's ownership never grants the caller permission to edit its files.
+
+Every caller-level reply retry rebuilds its assignment from the current journal.
+The newest pending check supplies the diagnostic and unchanged expected outcome;
+a resolved failure stays in history without remaining the current instruction.
+Earlier evidence and receipts remain available. This prevents later repairs from
+being directed at a syntax error after compilation has already succeeded (#642).
 
 A steward self-review returns `kind: repair`, the earliest affected applicable
 `activity` (`documentation`, `testing` or `implementation`), and its `reason`.
@@ -109,3 +125,110 @@ storage. Earlier repair-by-repair development notes are retained in Git history;
 the executable recovery rules are defined by the current contract and tests.
 The approved Architecture and refinement capabilities in the contract remain
 implementation targets until their own tests and live acceptance are reported.
+
+For an Architect prerequisite task, the shared activation path derives the actor's
+implementation and delivery goal from the actual host-verified approved proposal.
+Assessment feedback stays in its original phase; it must not override the approved
+implementation purpose. Direction, stewards and the independent Reviewer use this
+same derivation and request builder. The canonical journal goal and task identity
+remain unchanged for retry lookup, issue/branch/checkpoint reuse and honest history.
+A candidate-side approval claim cannot change the activation goal. Ordinary tasks
+continue to pass their supplied goal unchanged. This handoff is the bootstrap
+correction tracked in #639; a real retained phase must demonstrate it after checks.
+
+## Candidate dependencies
+
+Confined checks must use the candidate's dependency manifest and lockfile, rather
+than the original checkout's installation (#649). The host prepares npm inputs
+in its existing networkless overlay, with lifecycle scripts disabled, and retains
+the exact prerequisite command, status and log. A failed prerequisite returns to
+the caller; the requested check has not run and cannot pass.
+
+Prepared dependencies live in external application storage and are read-only to
+checks. Reuse binds their identity to the candidate's manifest, lockfile, npm
+configuration and runtime. Local dependency inputs conservatively bind to the
+candidate revision. Interrupted preparation is discarded before retry; successful
+source edits, answers and check observations remain in the journal. The existing
+npm cache supplies packages offline; an unavailable package is an observed failure,
+never permission to use ambient dependencies or enable network access.
+
+A local rewind does not erase earlier genuine red evidence or completed
+Implementation. The current cursor describes remaining work; prior completion
+and its observed checks remain readable separately (#651). Behavior-preserving
+corrections may characterize the implemented candidate with passing checks, as
+the Designer role permits. Do not manufacture a failing assertion to advance.
+
+A caller's requested check outcome is a prediction, distinct from captured goal
+acceptance. When a requested failure actually passes, the caller may correct that
+prediction to expected-pass. The journal retains the original request and result,
+records their correction link, and keeps a required current passing recheck even
+across interruption. This neither invents initial red nor approves a criterion.
+An actual failure of a required-pass check cannot become expected-red. Captured
+criteria, ownership, operations and independent assembled verification remain
+unchanged. Use the same caller repair for Testing and Implementation; no phase
+exception or separate recovery lifecycle is needed.
+
+A passing prediction during Testing must not erase an already observed expected-red
+regression. Testing may correct that prediction only when the actual failing
+command has the same diagnostics as retained red under the same milestone,
+acceptance and captured authority. The host retains both requests and results and
+requires another real check. New failures, missing evidence and dependency setup
+failures do not qualify. Implementation and assembled passing checks remain
+mandatory; this is classification of existing red, not acceptance of broken code
+(#652).
+
+Execution validates model-requested repair targets with Workflow's same target
+validator before accepting the response. An unavailable or forward target returns
+the diagnostic and available rewind choices to the caller. It does not checkpoint
+the malformed response, skip unfinished Steps, or invoke Direction (#653).
+
+On restart, a retained malformed repair target resumes the original caller at its
+unchanged cursor. It never executes the invalid transition or rewrites the failed
+observation. Previously valid repair transitions still replay normally (#653).
+
+## Focused retained evidence
+
+Steward requests reference a complete immutable evidence index in existing task
+storage instead of repeating every historical artifact path. Current assignments
+still carry exact pending diagnostics, complete answers, research and acceptance.
+Mapped reads can follow the index to any retained observation; index artifacts do
+not recursively index themselves. Returning callers add newly observed artifacts
+while preserving their explicit inputs and complete inbox answers. Initial explicit
+activation context remains unchanged for inspection/harness parity (#650).
+
+Unfinished assigned work is not an unavailable prerequisite. Continue the current
+activity's mapped operations until its checklist is met, request optional research
+for missing knowledge, or explicitly escalate a distinct ownership contribution.
+A progress report must not end the activity as blocked merely because work remains.
+
+## Recovering acknowledged deletions
+
+A mapped read of an absent project file may identify its latest acknowledged
+checked deletion. The host reads that checkpoint's exact parent blob, verifies
+the recorded before digest and retains the source as an immutable task artifact.
+The operation still reports that the live file is absent, names the historical
+artifact and states that a restoration requires a new owned checked edit with
+`expected: null`. It never substitutes historical text for current contents or
+restores source automatically. Unknown paths, uncheckpointed deletions and
+mismatched evidence remain refusals. All ordinary path and write guards remain
+in force (#655).
+
+Every steward activity receives `repairTargets` from Workflow's canonical target
+validator. An earlier applicable activity may be selected by Implementation as
+well as self-review: intent corrections belong in Documentation, incorrect
+assertions or fixture assumptions in Testing, and code corrections in
+Implementation. A local rewind keeps the unresolved check, accepted milestone,
+owner and criteria; it adds no Director call or new milestone. Review and Release
+are not editable rewind targets (#656).
+
+Model-directed rewinds select an earlier applicable editable activity. The current
+activity is already running: it must continue its mapped work rather than return
+a self-repair progress report. That redundant response returns an exact diagnostic
+to the same caller through existing response validation. Host-generated recovery
+from an actual failed check can still revisit the current activity (#657).
+
+Research handoffs validate required fields before MCP acknowledges them. Requests
+and reports have no application-imposed character or item caps. Preserve complete
+questions, decisions, findings, references and archived metadata. Invalid structure
+returns to the caller for correction without losing acknowledged work. Retained
+requests rejected only by removed limits resume normally (#658, #659).

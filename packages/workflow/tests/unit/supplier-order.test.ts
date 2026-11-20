@@ -9,6 +9,8 @@ import {
 } from '../../../direction/src/index.js';
 import { Workflow, type ActivityOutcome, type WorkflowServices } from '../../src/index.js';
 
+export const suite = { owner: 'workflow', level: 'unit', tags: ['regression'] } as const;
+
 const activity = {
   role: 'steward',
   profile: 'profile',

@@ -5,6 +5,8 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { Coordination, Journal } from '../../src/index.js';
 
+export const suite = { owner: 'coordination', level: 'unit', tags: ['regression'] } as const;
+
 test('project provenance follows the actual journal database rather than a service instance', (t) => {
   const storage = mkdtempSync(join(tmpdir(), 'arcnexus-provenance-'));
   t.after(() => rmSync(storage, { recursive: true, force: true }));

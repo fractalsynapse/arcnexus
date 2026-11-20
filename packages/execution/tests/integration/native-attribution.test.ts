@@ -8,6 +8,8 @@ import type { Agent } from '../../../agent/src/index.js';
 import type { AgentInspection } from '../../../architecture/src/index.js';
 import { StewardFixture } from '../fixtures/steward.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 const input = 'repair café 🛠';
 
 /** Prepare the exact multibyte request consumed by the native provider. */
@@ -53,7 +55,7 @@ async function scenario(t: TestContext, component: string, activity: string, pro
     ),
     /Codex activation failed/,
   );
-  return task.observations<{ nativeInvocation?: unknown }>();
+  return task.observations<{ nativeStarted?: Record<string, unknown> }>();
 }
 
 for (const [component, activity, profile] of [
@@ -63,7 +65,19 @@ for (const [component, activity, profile] of [
   test(`native invocation records ${component}/${activity} bytes before provider failure`, async (t) => {
     const records = await scenario(t, component, activity, profile);
     assert.deepEqual(
-      records.filter((entry) => entry.nativeInvocation).map((entry) => entry.nativeInvocation),
+      records.flatMap(({ nativeStarted }) =>
+        nativeStarted
+          ? [
+              {
+                inputBytes: nativeStarted.inputBytes,
+                component: nativeStarted.component,
+                activity: nativeStarted.activity,
+                model: nativeStarted.model,
+                profile: nativeStarted.profile,
+              },
+            ]
+          : [],
+      ),
       [
         {
           inputBytes: Buffer.byteLength(input, 'utf8'),

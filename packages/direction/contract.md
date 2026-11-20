@@ -34,7 +34,9 @@ operation failures and same-owner activity repair do not invoke Direction. The
 host retains the canonical accepted plan and completed outcomes. At a revision
 boundary the Director receives the previous plan, completed position, current
 finding and relevant evidence references. Its response changes pending work; the
-host preserves completed outcomes, original acceptance identities and authority.
+host preserves completed outcomes and original acceptance identities. The host alone
+can adopt a human-approved architecture update at a recorded activity boundary;
+Direction cannot change authority through a plan revision.
 Malformed revision output returns to the same Director call with the exact
 validation finding, without discarding the existing accepted plan.
 
@@ -51,7 +53,7 @@ validation finding, without discarding the existing accepted plan.
 | DI-7 | A failed ordinary tool, check or self-review returns to the accountable activity or an earlier applicable activity in the same milestone. No Director call or correction milestone is added. An explicit escalation or final independent rejection invokes Direction. |
 | DI-8 | A goal that conflicts with a locked contract yields a change-request gate naming the contract id and clause, and no milestone touching that path is admitted. |
 | DI-9 | Direction cannot write the registry or any locked contract file; the checked-edit refusal is observed, not merely asserted in the prompt. |
-| DI-11 | Director input uses the bounded context from Architecture Model and names what was withheld. |
+| DI-11 | Director input uses the selected activity context from Architecture, names referenced inputs, and makes complete definitions and relevant run evidence readable without application-imposed size caps. |
 | DI-12 | Removing a prohibition paragraph that the host enforces leaves every scenario passing; removing an enforced check fails one. |
 | DI-13 | A human clarification records its requesting actor and position. The original activity receives the complete recorded answer on continuation, including after restart without a duplicate prompt. |
 | DI-14 | The plan render after `revise` differs from the previous render only in the fields the observation changed, so plan evolution is reviewable as a diff. |
@@ -60,7 +62,7 @@ validation finding, without discarding the existing accepted plan.
 | DI-17 | A verified staging goal closes after the configured checks and review are observed and the provider reports its merge identity. The host can integrate once gates are satisfied. |
 | DI-19 | The first build refuses a component-scoped workday directive with a stated reason. |
 | DI-20 | The director selects a supplier from a Team view. An unowned resource or ownership collision is reported with affected resources and owners instead of guessing a recipient. A supplier request grants no write authority. |
-| DI-21 | A revision consumes the retained plan and relevant finding and proposes changes to pending work. The host rejects changes that remove completed outcomes, alter original acceptance or expand captured authority. |
+| DI-21 | A revision consumes the retained plan and complete relevant finding and proposes changes to pending work. The host rejects changes that remove completed outcomes, alter original acceptance or grant authority. A recorded human-approved model adoption can update subsequent activity capabilities in the same run. |
 
 ## Deferred
 

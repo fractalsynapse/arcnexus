@@ -1,5 +1,6 @@
 import type { Context } from 'cordis';
 import { createInterface } from 'node:readline';
+import type { JournalEvent } from '../../../packages/coordination/src/index.js';
 import type {
   Observation,
   RoundOutcome,
@@ -32,7 +33,12 @@ async function dispatchTask(
   verb: 'run' | 'plan' | 'update',
   signal: AbortSignal,
 ) {
-  const observer: TaskObserver = { progress: (entry) => reportProgress(entry, json), answer: ask };
+  const observer: TaskObserver = {
+    progress: (entry) => reportProgress(entry, json),
+    event: (entry) => reportEvent(entry, json),
+    measurements: (entry) => reportMeasurements(entry, json),
+    answer: ask,
+  };
   const directory = process.cwd();
   if (verb === 'update')
     return finish(await commands.updateArchitecture(directory, goal, observer, signal), json);
@@ -46,8 +52,26 @@ async function dispatchTask(
 /** Stream task progress in the chosen output representation. */
 function reportProgress(observation: Observation, json: boolean) {
   const message = [observation.message, ...(observation.evidence ?? [])].join('\n');
-  if (json) console.error(message);
+  if (json) console.log(JSON.stringify({ type: 'progress', observation }));
   else console.log(message);
+}
+
+/** Render the complete persisted observation with its sequence and provenance while work runs. */
+function reportEvent(event: JournalEvent, json: boolean) {
+  if (json) console.log(JSON.stringify({ type: 'event', ...event }));
+  else
+    console.log(
+      `${event.timestamp ?? 'Time unknown'} · run ${event.run} · event ${event.sequence}\n${JSON.stringify({ observation: event.observation, detail: event.detail }, null, 2)}`,
+    );
+}
+
+/** Show observed totals per execution profile without inventing pricing or a work budget. */
+function reportMeasurements(
+  measurements: Parameters<NonNullable<TaskObserver['measurements']>>[0],
+  json: boolean,
+) {
+  if (json) console.log(JSON.stringify({ type: 'measurements', measurements }));
+  else console.log(`Run measurements\n${JSON.stringify(measurements, null, 2)}`);
 }
 
 /** Ask for input on a terminal and allow a noninteractive caller to leave the gate open. */
@@ -74,7 +98,7 @@ async function ask(question: string, signal: AbortSignal) {
 
 /** Render one aggregate round while keeping the failing goal's diagnostic visible. */
 function finishRound(round: RoundOutcome, json: boolean, signal: AbortSignal) {
-  if (json) console.log(JSON.stringify(round));
+  if (json) console.log(JSON.stringify({ type: 'result', outcome: round }));
   else {
     for (const { id, outcome } of round.goals) {
       const summary = outcome.kind === 'satisfied' ? ` · ${outcome.summary}` : '';
@@ -90,24 +114,14 @@ function finishRound(round: RoundOutcome, json: boolean, signal: AbortSignal) {
 
 /** Translate a structured outcome into the gateway exit status and terminal output. */
 function finish(outcome: TaskOutcome, json: boolean) {
-  if (outcome.kind === 'planned') {
-    console.log(json ? JSON.stringify(outcome) : outcome.summary);
-    return;
-  }
-  if (outcome.kind === 'merged' || outcome.kind === 'satisfied') {
+  if (json && outcome.kind !== 'invalid') console.log(JSON.stringify({ type: 'result', outcome }));
+  if (!json && outcome.kind === 'planned') console.log(outcome.summary);
+  if (!json && (outcome.kind === 'merged' || outcome.kind === 'satisfied'))
     console.log(
-      json
-        ? JSON.stringify(outcome)
-        : `${outcome.kind === 'merged' ? 'Merged to staging' : 'Measure satisfied'}: ${outcome.commit}`,
+      `${outcome.kind === 'merged' ? 'Merged to staging' : 'Measure satisfied'}: ${outcome.commit}`,
     );
-    return;
+  if ('reason' in outcome) {
+    console.error([outcome.reason, ...outcome.evidence].join('\n'));
+    process.exitCode = outcome.kind === 'invalid' ? 2 : outcome.kind === 'cancelled' ? 130 : 1;
   }
-  if (json && outcome.kind === 'invalid') {
-    console.error(outcome.reason);
-    process.exitCode = 2;
-    return;
-  }
-  if (json) console.log(JSON.stringify(outcome));
-  console.error([outcome.reason, ...outcome.evidence].join('\n'));
-  process.exitCode = outcome.kind === 'invalid' ? 2 : outcome.kind === 'cancelled' ? 130 : 1;
 }

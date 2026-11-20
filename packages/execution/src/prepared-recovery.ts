@@ -1,6 +1,5 @@
-import { parse } from 'yaml';
 import { git } from './git.js';
-import { isNativeGuidance, isTargetCodexConfig } from './host-config.js';
+import { validateRetainedWork } from './architecture-adoption.js';
 import type { HostTask } from './index.js';
 
 interface Checkpoint {
@@ -16,11 +15,6 @@ interface History {
   confirmed?: string;
 }
 
-interface Registry {
-  contracts: { id: string; stage: string }[];
-  [key: string]: unknown;
-}
-
 /** Confirm the admission and recover compatible prepared work through its existing checkpoint. */
 export async function recoverPrepared(task: HostTask, signal: AbortSignal) {
   if (!task.config.fresh) throw new Error('The task does not have a verified current staging base');
@@ -29,9 +23,8 @@ export async function recoverPrepared(task: HostTask, signal: AbortSignal) {
   const { revision, root } = task.capture.source;
   if (!before || before === revision) return;
   const parent = await observedCheckpoint(task, before, history, signal);
-  validateAdvance(task, before, parent);
-  const tree = git(root, 'merge-tree', '--write-tree', parent, revision);
-  validateTree(root, before, parent, revision, tree);
+  validateRetainedWork(task, task.capture);
+  const tree = mergeCheckpoint(root, parent, revision);
   const head = git(
     root,
     'commit-tree',
@@ -74,77 +67,13 @@ async function observedCheckpoint(
   return checkpoint.head;
 }
 
-/** Keep captured authority and all checked paths independent of the staging advance. */
-function validateAdvance(task: HostTask, before: string, checkpoint: string) {
-  const { source, project, contracts, standards } = task.capture;
-  const staged = paths(source.root, before, source.revision);
-  const edits = new Set(paths(source.root, before, checkpoint));
-  const authority = new Set([
-    project.planTemplate,
-    ...Object.values(standards).map(({ document }) => document),
-    ...contracts.filter(({ stage }) => stage === 'locked').map(({ file }) => file),
-  ]);
-  const conflict = staged.find((path) => edits.has(path));
-  if (conflict) throw new Error(`Staging overlaps a checked path: ${conflict}`);
-  const changedAuthority = staged.find(
-    (path) =>
-      authority.has(path) ||
-      path.startsWith('.arc/architecture/') ||
-      isNativeGuidance(path) ||
-      isTargetCodexConfig(path),
-  );
-  if (changedAuthority)
-    throw new Error(`Staging changed captured authority or guidance: ${changedAuthority}`);
-  if (staged.includes(project.contractRegistry))
-    validateRegistry(source.root, before, source.revision, project.contractRegistry);
-}
-
-/** Compare registry policy and locked contracts independently of proposed documents. */
-function validateRegistry(root: string, before: string, after: string, path: string) {
-  if (lockedRegistry(root, before, path) !== lockedRegistry(root, after, path))
-    throw new Error(`Staging changed captured registry authority: ${path}`);
-}
-
-/** Read only registry fields that determine captured locked authority. */
-function lockedRegistry(root: string, revision: string, path: string) {
-  const { contracts, ...policy } = parse(git(root, 'show', `${revision}:${path}`)) as Registry;
-  const locked = contracts
-    .filter(({ stage }) => stage === 'locked')
-    .sort((left, right) => left.id.localeCompare(right.id));
-  return JSON.stringify({ policy, locked });
-}
-
-/** Return byte-preserving path identities without Git rename inference. */
-function paths(root: string, before: string, after: string) {
-  return git(root, 'diff', '--name-only', '--no-renames', '-z', before, after, '--')
-    .split('\0')
-    .filter(Boolean);
-}
-
-/** Prove each parent's changes survive byte for byte before retaining the new checkpoint. */
-function validateTree(
-  root: string,
-  before: string,
-  parent: string,
-  revision: string,
-  tree: string,
-) {
-  const patch = (from: string, to: string) =>
-    git(
-      root,
-      'diff',
-      '--binary',
-      '--full-index',
-      '--no-renames',
-      '--no-ext-diff',
-      '--no-textconv',
-      from,
-      to,
-      '--',
-    );
-  if (
-    patch(before, parent) !== patch(revision, tree) ||
-    patch(before, revision) !== patch(parent, tree)
-  )
-    throw new Error('Checkpoint recovery changed validated file contents');
+/** Merge retained changes normally and preserve Git's complete conflict output without moving a ref. */
+function mergeCheckpoint(root: string, checkpoint: string, revision: string) {
+  try {
+    return git(root, 'merge-tree', '--write-tree', checkpoint, revision);
+  } catch (error) {
+    const failure = error as Error & { stdout?: string | Buffer; stderr?: string | Buffer };
+    const details = [failure.message, failure.stdout?.toString(), failure.stderr?.toString()];
+    throw new Error(details.filter(Boolean).join('\n'), { cause: error });
+  }
 }

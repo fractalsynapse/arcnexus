@@ -61,7 +61,12 @@ A no-change assessment completes at its captured revision. For a change, retain
 one exact proposal and await human approval. Use the normal task workflow inside
 Architect for prerequisite implementation and approved host application. Verify
 and deliver the combined candidate before the following Run phase. Candidate
-edits never change active authority; capture the accepted architecture afresh.
+edits never authorize a change. After exact approved host application and
+validation of the prerequisite implementation, adopt the new model at an activity
+boundary in the same run, including during Architect prerequisite work. Reload
+context, Team, operation bindings and completion requirements together. Revalidate
+pending work and affected evidence while retaining acceptance, answers and
+checkpoints. Deliver the combined candidate before the following Run phase.
 
 `refine(directory, rounds, observer, signal)` drives Plan, Architect and Run in
 order for each requested round. The default count is one. Run captures the
@@ -72,7 +77,11 @@ Use the existing Coordination store and one project writer across sequential
 phase and task sessions. A pending approval preserves the exact phase and proposal.
 Restart resumes the same invocation and first unfinished position without duplicate
 issues, edits or PRs. Runtime updates may be adopted only at a recorded validated
-safe boundary, with uncertain effects reconciled before continuing.
+safe boundary, with uncertain effects reconciled before continuing. The same
+lifecycle streams complete host/provider observations through Commands and records
+timing and reported usage overall and per profile. Later Plan and Architect
+assessments consume these measurements to optimize useful outcomes, reliability
+and attributable cost without adding quantitative work limits.
 
 ## Project and task loops
 
@@ -102,3 +111,5 @@ separate [release boundary](../release/contract.md).
 | WFL-8 | Architect delivers required implementation and approved architecture through the canonical task lifecycle before Run captures it. A candidate cannot approve or activate its own authority. |
 | WFL-9 | Each refinement round assesses Plan and Architect and invokes Direction for every priority-ordered approved goal. A restarted phase or approval pause resumes the same invocation without repeating completed outcomes. |
 | WFL-10 | Three consecutive live rounds assess every captured goal and show approved guide improvement, a useful staged implementation and later consumption of prior findings. Justified no change is valid. Operator state repair, bypassed checks or uncontrolled aborts break the streak; execution-path changes restart qualification. |
+| WFL-11 | An approved architecture update can advance the next activity in the same run after implementation availability and retained-work validation. No parallel lifecycle, candidate-side approval or historical evidence rewrite participates. |
+| WFL-12 | Required activity verification completes before progression, and events/metrics stream throughout the canonical lifecycle. Later refinement assessments consume time, token and profile-cost findings without a separate scheduler or budget mechanism. |

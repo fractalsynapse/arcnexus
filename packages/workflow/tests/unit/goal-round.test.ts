@@ -11,6 +11,8 @@ import {
   type WorkflowServices,
 } from '../../src/index.js';
 
+export const suite = { owner: 'workflow', level: 'unit', tags: ['regression'] } as const;
+
 const ids = ['checkpoint', 'ownership', 'inspect', 'tests', 'delivery'];
 const goals: StandingGoal[] = ids.map((id, index) => ({
   id,
