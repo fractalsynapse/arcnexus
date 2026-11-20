@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import type { ActivityOutcome } from '../../../workflow/src/index.js';
 import {
   ForeignHandoffScenario,
   answer,
@@ -49,23 +50,7 @@ test('accepted foreign handoff retains the owned checkpoint and consumes the com
   const evidence = await scenario.supply();
   scenario.mode = 'resume';
   assert.equal((await scenario.run()).kind, 'completed');
-  const assignment = scenario.contexts.at(-1)!.assignment as Record<string, unknown>;
-  assert.deepEqual(assignment.supplierAnswers, [
-    {
-      supplier: supplier.id,
-      question,
-      replies: [{ step: 'implementation', answer, evidence }],
-    },
-  ]);
-  assert.equal(readFileSync(evidence[0]!, 'utf8'), answer);
-  assert.deepEqual(
-    scenario.checks.map(({ id, status }) => [id, status]),
-    [
-      ['repository-types', 23],
-      ['repository-types', 0],
-      ['repository-types', 0],
-    ],
-  );
+  assertSupplierReturn(scenario, evidence);
   scenario.assertRetained();
 });
 
@@ -74,13 +59,7 @@ test('acknowledging unresolved foreign failure cannot complete or bypass the unc
   const first = await scenario.run();
   assert.equal(first.kind, 'repair');
   assert(first.kind === 'repair');
-  assert.deepEqual(first.failedCheck, {
-    id: 'repository-types',
-    expected: 'pass',
-    status: 23,
-    log: scenario.checks[0]!.log,
-    activity: 'implementation',
-  });
+  assertOriginalFailure(scenario, first);
   scenario.mode = 'acknowledge';
   const held = await scenario.run();
   assert.equal(held.kind, 'blocked');
@@ -104,3 +83,36 @@ test('acknowledging unresolved foreign failure cannot complete or bypass the unc
   assert(!scenario.task.observations<any>().some(({ projectRequest }) => projectRequest));
   scenario.assertRetained();
 });
+
+/** Compare the complete child return and ordered affected rechecks, rejecting shallow acknowledgment. */
+function assertSupplierReturn(scenario: ForeignHandoffScenario, evidence: string[]) {
+  const assignment = scenario.contexts.at(-1)!.assignment as Record<string, unknown>;
+  assert.deepEqual(assignment.supplierAnswers, [
+    {
+      supplier: supplier.id,
+      question,
+      replies: [{ step: 'implementation', answer, evidence }],
+    },
+  ]);
+  assert.equal(readFileSync(evidence[0]!, 'utf8'), answer);
+  assert.deepEqual(
+    scenario.checks.map(({ id, status }) => [id, status]),
+    [
+      ['repository-types', 23],
+      ['repository-types', 0],
+      ['repository-types', 0],
+    ],
+  );
+}
+
+/** Preserve the original expected pass and exact failing observation through caller correction. */
+function assertOriginalFailure(scenario: ForeignHandoffScenario, first: ActivityOutcome) {
+  assert(first.kind === 'repair');
+  assert.deepEqual(first.failedCheck, {
+    id: 'repository-types',
+    expected: 'pass',
+    status: 23,
+    log: scenario.checks[0]!.log,
+    activity: 'implementation',
+  });
+}
