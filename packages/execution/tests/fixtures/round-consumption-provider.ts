@@ -12,8 +12,8 @@ interface Completion {
 /** Exercise real request preparation and mapped complete-file consumption with controlled responses. */
 class RoundConsumer {
   readonly input = readFileSync(0, 'utf8');
-  readonly task = parse(this.input.split('## Task\nSource: Task inputs supplied at activation\n\n')[1]!
-    .split('\n\n## Activity')[0]!.split('\n\n').slice(1).join('\n\n')) as any;
+  readonly task = parse(this.input.split('\n\n## Activity')[0]!
+    .slice(this.input.indexOf('\n\nassignment:') + 2)) as any;
   readonly component = parse(this.input.split('## Activity\n')[1]!
     .split('\n\n')[1]!.split('\n\n## Role')[0]!).component as string;
   readonly reads = new Map<string, string>();
