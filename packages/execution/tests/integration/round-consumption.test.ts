@@ -182,7 +182,7 @@ test('EX-REF-ROUND-RECOVERY: interrupted real assessment retains prior rounds an
   const resumed = new Observations();
   const outcome = await fixture
     .reopen()
-    .refine(fixture.root, 2, resumed, new AbortController().signal);
+    .refine(fixture.root, '2', resumed, new AbortController().signal);
   assert.equal(outcome.kind, 'planned', diagnostic(outcome));
   assert.equal(resumed.rounds.length, 1);
   assert.equal(resumed.rounds[0]!.invocation, original.rounds[0]!.invocation);
