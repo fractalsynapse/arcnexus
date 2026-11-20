@@ -82,8 +82,12 @@ export async function steward(
     (await verifyActivity(task, scope, signal));
   const evidence = task.evidence.slice(before);
   return failed
-    ? retainStewardHold(task, milestone, scope,
-        stewardCheckOutcome(task, milestone, failed, correction, evidence))
+    ? retainStewardHold(
+        task,
+        milestone,
+        scope,
+        stewardCheckOutcome(task, milestone, failed, correction, evidence),
+      )
     : { kind: 'completed', evidence, ...(result.answer ? { answer: result.answer } : {}) };
 }
 
@@ -98,8 +102,10 @@ function stewardCheckOutcome(
   const reason =
     failed.diagnostic ??
     `Operation ${failed.id} exited ${failed.status}; expected ${failed.expected}`;
-  if (correction?.id === failed.id &&
-    !checkedCorrectionProgress(task, milestone, correction.log, failed.log))
+  if (
+    correction?.id === failed.id &&
+    !checkedCorrectionProgress(task, milestone, correction.log, failed.log)
+  )
     return {
       kind: 'blocked',
       reason,
@@ -143,9 +149,17 @@ async function requestSteward(
         };
       diagnostic = error.message;
       seen.add(replyRepairIdentity(error, task));
-      task.note({ stewardRepair: { scope, diagnostic, evidence: task.evidence.at(-1),
-        operation: error instanceof CheckedEditOwnershipRefusal || error instanceof StaleCheckedEdit
-          ? 'checked-edit' : 'steward-response' } });
+      task.note({
+        stewardRepair: {
+          scope,
+          diagnostic,
+          evidence: task.evidence.at(-1),
+          operation:
+            error instanceof CheckedEditOwnershipRefusal || error instanceof StaleCheckedEdit
+              ? 'checked-edit'
+              : 'steward-response',
+        },
+      });
     }
   }
 }
