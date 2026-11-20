@@ -31,7 +31,12 @@ class StreamScenario {
       "const consumption = await this.consume();\n    const toolResult = await this.call('read-file', { path: 'baseline' });\n    this.emit({ type: 'item.completed', item: { type: 'mcp_tool_call', id: 'read-tool', result: toolResult } });",
     );
     assert.notEqual(withToolResult, source);
-    writeFileSync(executable, withToolResult);
+    const successfulReply = withToolResult.replace(
+      'if (!this.task.assignment.clarifications?.length) {',
+      'if (false) {',
+    );
+    assert.notEqual(successfulReply, withToolResult);
+    writeFileSync(executable, successfulReply);
   }
 
   /** Start one built CLI invocation with the fixture's isolated project state. */
