@@ -20,15 +20,18 @@ const descendantHistory = `
 
 /** Read all attempts of one logical task and its nested logical descendants in event order. */
 export function descendantEvents(database: DatabaseSync, task: string): JournalEvent[] {
-  return database.prepare(descendantHistory).all(task).map((row) => ({
-    sequence: String(row.id),
-    run: Number(row.run),
-    taskID: String(row.task_id),
-    goalID: String(row.goal_id),
-    parent: row.parent_id === null ? undefined : Number(row.parent_id),
-    timestamp: typeof row.recorded_at === 'string' ? row.recorded_at : null,
-    observation: JSON.parse(String(row.content)) as unknown,
-  }));
+  return database
+    .prepare(descendantHistory)
+    .all(task)
+    .map((row) => ({
+      sequence: String(row.id),
+      run: Number(row.run),
+      taskID: String(row.task_id),
+      goalID: String(row.goal_id),
+      parent: row.parent_id === null ? undefined : Number(row.parent_id),
+      timestamp: typeof row.recorded_at === 'string' ? row.recorded_at : null,
+      observation: JSON.parse(String(row.content)) as unknown,
+    }));
 }
 
 export const verifiedTerminal = `
