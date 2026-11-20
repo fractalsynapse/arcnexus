@@ -160,15 +160,7 @@ test('a completed invocation permits a fresh invocation with new assessments', a
   const observer: TaskObserver = { progress() {}, event: (event) => events.push(event) };
   await refine.call(workflow, f.root, 1, observer, signal);
   await refine.call(workflow, f.root, 1, observer, signal);
-  const rounds = events.filter(
-    (event) => typeof event === 'object' && event !== null && 'completedRound' in event,
-  );
-  assert.equal(rounds.length, 2);
-  const identities = rounds.map((event) =>
-    Reflect.get(Reflect.get(event as object, 'completedRound'), 'invocation'),
-  );
-  assert.ok(identities[0]);
-  assert.notEqual(identities[0], identities[1], 'completed invocations have distinct identities');
+  assertFreshInvocations(events);
   assert.deepEqual(calls, [
     'Plan',
     'Architect',
