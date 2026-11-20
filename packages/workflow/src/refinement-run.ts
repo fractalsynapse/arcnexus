@@ -9,7 +9,13 @@ import type {
 } from './services.js';
 
 type Child = (input: TaskInput, parent: TaskSession) => Promise<TaskOutcome>;
-type ArchitectureChild = (directory: string, observer: RunObserver, signal: AbortSignal, parent: TaskSession, scope: string) => Promise<TaskOutcome>;
+type ArchitectureChild = (
+  directory: string,
+  observer: RunObserver,
+  signal: AbortSignal,
+  parent: TaskSession,
+  scope: string,
+) => Promise<TaskOutcome>;
 
 /** Sequence resumable assessments and goals inside one admitted foreground journal. */
 export class RefinementRun {
@@ -30,10 +36,17 @@ export class RefinementRun {
       return { kind: 'invalid', reason: 'Round count must be a positive integer', evidence: [] };
     const journal = hostTask(this.parent).journal;
     const invocation = journal.taskID;
-    const previous = this.parent.history?.().filter((event) => 'refinement' in event).at(-1);
+    const previous = this.parent
+      .history?.()
+      .filter((event) => 'refinement' in event)
+      .at(-1);
     const saved = previous && 'refinement' in previous ? previous.refinement : undefined;
     if (saved && saved.total !== this.total)
-      return { kind: 'invalid', reason: `Unfinished refinement requested ${saved.total} rounds`, evidence: [] };
+      return {
+        kind: 'invalid',
+        reason: `Unfinished refinement requested ${saved.total} rounds`,
+        evidence: [],
+      };
 
     for (let round = saved?.round ?? 1; round <= this.total; round++) {
       let phase = round === saved?.round ? saved.phase : 'Plan';
@@ -42,7 +55,12 @@ export class RefinementRun {
         const scope = this.scope(invocation, round, 'plan');
         const outcome = await this.phaseOutcome(
           'Planner',
-          { directory: this.parent.capture.source.root, goal: 'Assess objectives and standing goals', planning: 'objective', scope },
+          {
+            directory: this.parent.capture.source.root,
+            goal: 'Assess objectives and standing goals',
+            planning: 'objective',
+            scope,
+          },
           scope,
         );
         if (!successfulPhase(outcome)) return outcome;
@@ -59,9 +77,14 @@ export class RefinementRun {
 
       const namespace = `refine:${invocation}:${round}`;
       const goals = this.services.execution.round?.(this.parent.capture.source.root, namespace);
-      if (!goals) return { kind: 'invalid', reason: 'Standing goal rounds are unavailable', evidence: [] };
+      if (!goals)
+        return { kind: 'invalid', reason: 'Standing goal rounds are unavailable', evidence: [] };
       this.save(invocation, round, 'Run', { inventory: goals.goals });
-      for (let index = phase === 'Run' && round === saved?.round ? saved.goal ?? 0 : 0; index < goals.goals.length; index++) {
+      for (
+        let index = phase === 'Run' && round === saved?.round ? (saved.goal ?? 0) : 0;
+        index < goals.goals.length;
+        index++
+      ) {
         const goal = goals.goals[index]!;
         this.progress(invocation, round, 'Run', index, goals.goals);
         const scope = this.scope(invocation, round, `goal:${goal.id}`);
@@ -88,10 +111,15 @@ export class RefinementRun {
         round,
         report,
         findings: this.observer.eventFrames().map((frame) => frame.sequence),
-        measurements: this.observer.eventFrames()
+        measurements: this.observer
+          .eventFrames()
           .filter((frame) => hasMeasurement(frame.observation))
           .map((frame) => frame.sequence),
-        evidence: [...new Set(this.observer.eventFrames().flatMap((frame) => eventEvidence(frame.observation)))],
+        evidence: [
+          ...new Set(
+            this.observer.eventFrames().flatMap((frame) => eventEvidence(frame.observation)),
+          ),
+        ],
       } satisfies CompletedRefinementRound;
       this.parent.record({ completedRound: completion });
       this.observer.eventFrames();
@@ -135,7 +163,11 @@ export class RefinementRun {
     invocation: string,
     round: number,
     phase: 'Plan' | 'Architect' | 'Run',
-    details: { goal?: number; inventory?: readonly import('../../planner/src/inventory.js').StandingGoal[]; outcome?: TaskOutcome } = {},
+    details: {
+      goal?: number;
+      inventory?: readonly import('../../planner/src/inventory.js').StandingGoal[];
+      outcome?: TaskOutcome;
+    } = {},
   ) {
     this.parent.record({
       refinement: { invocation, total: this.total, round, phase, ...details },
@@ -163,7 +195,11 @@ export class RefinementRun {
   }
 
   /** Derive an external report from complete observed events and register it with the parent. */
-  private report(invocation: string, round: number, goals: readonly { id: string; body: string }[]) {
+  private report(
+    invocation: string,
+    round: number,
+    goals: readonly { id: string; body: string }[],
+  ) {
     const frames = this.observer.eventFrames();
     const source = frames.map((frame) => JSON.stringify(frame)).join('\n');
     const text = [
@@ -193,7 +229,8 @@ function completedChild(
   kinds: readonly string[],
 ): TaskOutcome | undefined {
   const frames = hostTask(parent).journal.childEvents(goal, scope) as Record<string, unknown>[];
-  const terminal = frames.findLast((event) => 'outcome' in event)?.outcome as TaskOutcome | undefined;
+  const terminal = frames.findLast((event) => 'outcome' in event)?.outcome as
+    TaskOutcome | undefined;
   return terminal && kinds.includes(terminal.kind) ? terminal : undefined;
 }
 
@@ -212,5 +249,7 @@ function eventEvidence(value: unknown): string[] {
   if (typeof value !== 'object' || value === null) return [];
   const record = value as Record<string, unknown>;
   const evidence = record.evidence;
-  return Array.isArray(evidence) ? evidence.filter((item): item is string => typeof item === 'string') : [];
+  return Array.isArray(evidence)
+    ? evidence.filter((item): item is string => typeof item === 'string')
+    : [];
 }
