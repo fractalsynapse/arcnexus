@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
@@ -92,7 +100,7 @@ function successfulPhases() {
   return {
     architecture: {
       propose: async () => ({
-        kind: 'no-change',
+        kind: 'no-change' as const,
         summary: 'Architect retained its finding',
         evidence: [],
       }),
@@ -297,11 +305,15 @@ test('reopened recovery reports every origin and exact round profile usage witho
 /** Bind a real executable fixture outside source while keeping Git admission clean. */
 function installProvider(root: string) {
   const executable = join(root, '.git', 'refinement-provider.mjs');
-  copyFileSync(fileURLToPath(new URL('../fixtures/refinement-provider.js', import.meta.url)),
-    executable);
+  copyFileSync(
+    fileURLToPath(new URL('../fixtures/refinement-provider.js', import.meta.url)),
+    executable,
+  );
   chmodSync(executable, 0o700);
-  writeFileSync(join(root, '.git', 'bindings.yaml'),
-    'schemaVersion: 1\ntools:\n  codex: ' + executable + '\n');
+  writeFileSync(
+    join(root, '.git', 'bindings.yaml'),
+    'schemaVersion: 1\ntools:\n  codex: ' + executable + '\n',
+  );
 }
 
 /** Track actual child identities without deriving the report's scopes or timeline paths. */
@@ -337,32 +349,52 @@ function unfinishedObserver(controller: AbortController): TaskObserver {
 async function continueUnfinished(f: ReturnType<typeof fixture>, planner: RefinementPlanner) {
   const workflow = new Workflow(continuationServices(f.reopen(), planner));
   const rounds: CompletedRefinementRound[] = [];
-  const outcome = await workflow.refine(f.root, 2, {
-    progress() {},
-    answer: async () => 'Second-round complete answer.\nA different final conclusion.',
-    event(event) {
-      const observation = Reflect.get(event, 'observation') as {
-        completedRound?: CompletedRefinementRound;
-      };
-      if (observation.completedRound) rounds.push(observation.completedRound);
+  const outcome = await workflow.refine(
+    f.root,
+    2,
+    {
+      progress() {},
+      answer: async () => 'Second-round complete answer.\nA different final conclusion.',
+      event(event) {
+        const observation = Reflect.get(event, 'observation') as {
+          completedRound?: CompletedRefinementRound;
+        };
+        if (observation.completedRound) rounds.push(observation.completedRound);
+      },
     },
-  }, new AbortController().signal);
+    new AbortController().signal,
+  );
   assert.equal(outcome.kind, 'planned');
   return rounds;
 }
 
 /** Require both attempts, all terminal outcomes and exact per-round retained accounting. */
-function assertContinuation(f: ReturnType<typeof fixture>, planner: RefinementPlanner,
-  rounds: CompletedRefinementRound[]) {
-  assert.deepEqual(rounds.map(({ round }) => round), [1, 2]);
-  const origins = rounds.map(({ round }) => history(join(f.directory, 'state'),
-    f.reopen().capture.source.remote, planner.tasks.get(round)!));
+function assertContinuation(
+  f: ReturnType<typeof fixture>,
+  planner: RefinementPlanner,
+  rounds: CompletedRefinementRound[],
+) {
+  assert.deepEqual(
+    rounds.map(({ round }) => round),
+    [1, 2],
+  );
+  const origins = rounds.map(({ round }) =>
+    history(
+      join(f.directory, 'state'),
+      f.reopen().capture.source.remote,
+      planner.tasks.get(round)!,
+    ),
+  );
   const first = assertOrigins(rounds[0]!, origins[0]!);
   const second = assertOrigins(rounds[1]!, origins[1]!);
-  assert.deepEqual(first.terminals.map((outcome) => outcome.kind),
-    ['cancelled', 'planned', 'planned', 'satisfied']);
-  assert.deepEqual(second.terminals.map((outcome) => outcome.kind),
-    ['planned', 'planned', 'satisfied']);
+  assert.deepEqual(
+    first.terminals.map((outcome) => outcome.kind),
+    ['cancelled', 'planned', 'planned', 'satisfied'],
+  );
+  assert.deepEqual(
+    second.terminals.map((outcome) => outcome.kind),
+    ['planned', 'planned', 'satisfied'],
+  );
   assertFindings(first.report, second.report);
   const firstProfile = assertAccounting(first.report, origins[0]!);
   const secondProfile = assertAccounting(second.report, origins[1]!);
@@ -393,7 +425,12 @@ test('unfinished child recovery retains every attempt exactly once and excludes 
   const planner = new RefinementPlanner(f.revision);
   const controller = new AbortController();
   const workflow = new Workflow(continuationServices(f.reopen(), planner));
-  const outcome = await workflow.refine(f.root, 2, unfinishedObserver(controller), controller.signal);
+  const outcome = await workflow.refine(
+    f.root,
+    2,
+    unfinishedObserver(controller),
+    controller.signal,
+  );
   assert.equal(controller.signal.aborted, true, 'the real provider reached reported usage');
   assert.equal(outcome.kind, 'cancelled');
   const rounds = await continueUnfinished(f, planner);
