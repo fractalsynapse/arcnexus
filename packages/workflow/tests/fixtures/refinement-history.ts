@@ -93,18 +93,28 @@ export function assertAccounting(report: string, origins: Origins) {
   assert.equal(profile.activationsWithoutUsage, starts.length - turns.length);
   assert.equal(profile.activeActivations, 0);
   assert.equal(profile.incompleteActivations, 0);
-  assert.equal(profile.failedActivations,
-    ends.filter(({ observation }) => observation.nativeFinished.failure !== undefined).length);
+  assert.equal(
+    profile.failedActivations,
+    ends.filter(({ observation }) => observation.nativeFinished.failure !== undefined).length,
+  );
   assert.equal(snapshot.cost.estimate, null);
   return profile;
 }
 
 /** Verify reported token subsets separately and keep absent provider categories unknown. */
-function assertUsage(total: Record<string, unknown>, profile: Record<string, unknown>,
-  turns: Record<string, number>[]) {
-  for (const field of ['input_tokens', 'output_tokens', 'cached_input_tokens',
-    'cache_write_input_tokens', 'reasoning_output_tokens']) {
-    const values = turns.flatMap((turn) => field in turn ? [turn[field]!] : []);
+function assertUsage(
+  total: Record<string, unknown>,
+  profile: Record<string, unknown>,
+  turns: Record<string, number>[],
+) {
+  for (const field of [
+    'input_tokens',
+    'output_tokens',
+    'cached_input_tokens',
+    'cache_write_input_tokens',
+    'reasoning_output_tokens',
+  ]) {
+    const values = turns.flatMap((turn) => (field in turn ? [turn[field]!] : []));
     const expected = {
       reported: values.length ? values.reduce((sum, value) => sum + value, 0) : null,
       missingTurns: turns.length - values.length,
