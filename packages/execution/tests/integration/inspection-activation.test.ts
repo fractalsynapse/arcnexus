@@ -63,7 +63,6 @@ function assertInvocation(view: AgentInspection, probe: Probe) {
   assert.doesNotMatch(probe.input, /Approved native guidance sentinel|Approved skill sentinel/);
 }
 
-
 /** Supply identical live inputs, including the host's independently retained reviewer observation. */
 function context(task: HostTask, review = false) {
   const evidence: string[] = [];
@@ -75,21 +74,42 @@ function context(task: HostTask, review = false) {
   }
   return {
     assignment: { instructions: 'Exact supplied assignment\nSecond line' },
-    milestone: { id: 'parity', owner: 'work' }, acceptance: [{ id: 'exact' }],
-    evidence, goal: task.goal, worktree: task.worktree,
+    milestone: { id: 'parity', owner: 'work' },
+    acceptance: [{ id: 'exact' }],
+    evidence,
+    goal: task.goal,
+    worktree: task.worktree,
   };
 }
 
 /** Assert selected source content independently of the comparison between the two request paths. */
-function assertSelected(view: AgentInspection, actor: string, names: readonly string[], web: string) {
+function assertSelected(
+  view: AgentInspection,
+  actor: string,
+  names: readonly string[],
+  web: string,
+) {
   const source = '.arc/architecture/components/' + view.component + '.yaml';
   assert.equal(view.actor, actor);
   assert.deepEqual(view.placeholders, []);
-  assert.deepEqual(view.request.options.tools.map(({ name }) => name), names);
+  assert.deepEqual(
+    view.request.options.tools.map(({ name }) => name),
+    names,
+  );
   assert.equal(view.request.options.webSearchMode, web);
-  assert.ok(view.request.input.includes('purpose: Assess ' + view.component + ' using complete retained findings'));
-  assert.ok(view.request.input.includes('Selected ' + view.component + '/' + view.activity + ' procedure café 🛠'));
-  assert.ok(view.request.input.includes('Source: ' + source + ' (activities.' + view.activity + ')'));
+  assert.ok(
+    view.request.input.includes(
+      'purpose: Assess ' + view.component + ' using complete retained findings',
+    ),
+  );
+  assert.ok(
+    view.request.input.includes(
+      'Selected ' + view.component + '/' + view.activity + ' procedure café 🛠',
+    ),
+  );
+  assert.ok(
+    view.request.input.includes('Source: ' + source + ' (activities.' + view.activity + ')'),
+  );
   assert.ok(view.request.input.includes('Source: .arc/architecture/roles/assessor.yaml'));
 }
 
@@ -97,7 +117,10 @@ function assertSelected(view: AgentInspection, actor: string, names: readonly st
 function readProbe(task: HostTask): Probe {
   const transcript = task.evidence.find((path) => path.endsWith('codex.jsonl'));
   assert.ok(transcript);
-  const frames = readFileSync(transcript, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+  const frames = readFileSync(transcript, 'utf8')
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line));
   const probe = frames.find((event) => event.type === 'fixture.inspection') as Probe;
   assert.ok(probe, 'controlled executable must actually receive the request');
   return probe;
@@ -118,7 +141,11 @@ for (const [component, activity, actor, names, web] of [
     const initial = fixture.agent.prepareRequest(task.capture, selection, context(task));
     assertSelected(initial, actor, names, web);
     await task.activate(fixture.agent, selection, context(task), new AbortController().signal);
-    const view = fixture.agent.prepareRequest(task.capture, selection, context(task, actor === 'reviewer'));
+    const view = fixture.agent.prepareRequest(
+      task.capture,
+      selection,
+      context(task, actor === 'reviewer'),
+    );
     const probe = readProbe(task);
     assert.equal(probe.executable, task.config.executable);
     assert.equal(probe.input, view.request.input);
