@@ -22,19 +22,13 @@ class StreamScenario {
       'if (!this.task.assignment.clarifications?.length)',
       'if (false)',
     );
-    const withToolResult = noGate.replace(
-      `await this.call('ask-question', {
-        question: 'Clarify accepted intent for ' + this.component,
-      });
-      this.emit({ type: 'item.completed', item: { type: 'agent_message', text: '{}' } });`,
-      `const toolResult = await this.call('ask-question', {
-        question: 'Clarify accepted intent for ' + this.component,
-      });
-      this.emit({
-        type: 'item.completed',
-        item: { type: 'mcp_tool_call', id: 'question-tool', result: toolResult },
-      });
-      this.emit({ type: 'item.completed', item: { type: 'agent_message', text: '{}' } });`,
+    const capturedResult = noGate.replace(
+      "await this.call('ask-question', {",
+      "const toolResult = await this.call('ask-question', {",
+    );
+    const withToolResult = capturedResult.replace(
+      "this.emit({ type: 'item.completed', item: { type: 'agent_message', text: '{}' } });",
+      "this.emit({ type: 'item.completed', item: { type: 'mcp_tool_call', id: 'question-tool', result: toolResult } });\n      this.emit({ type: 'item.completed', item: { type: 'agent_message', text: '{}' } });",
     );
     assert.notEqual(withToolResult, noGate);
     writeFileSync(executable, withToolResult);
