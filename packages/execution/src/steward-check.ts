@@ -109,7 +109,11 @@ export function checkFailureSignature(log: string) {
 }
 
 /** Recognize checked task-input changes, including supplier contributions, since the diagnosis. */
-export function correctionMadeProgress(events: readonly unknown[], log: string) {
+export function correctionMadeProgress(
+  events: readonly unknown[],
+  log: string,
+  paths?: readonly string[],
+) {
   const recorded = events as readonly CheckEvent[];
   const observed = recorded.findLastIndex(({ check }) => check?.log === log);
   return recorded
