@@ -59,7 +59,7 @@ export function supersededReviewedHold(session: TaskSession, activation: Activit
       ),
     ),
   );
-  return changed || resolvedHeldCheck(session, activation, held);
+  return changed || observedHeldCheckProgress(session, activation, held);
 }
 
 /** Require a newer scoped actual result before treating the historical failed operation as resolved. */
