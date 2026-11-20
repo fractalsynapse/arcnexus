@@ -109,7 +109,7 @@ function refine(
 ) {
   const entry = Reflect.get(workflow, 'refine') as unknown as (
     directory: string,
-    rounds: string,
+    rounds: string | number,
     observer: TaskObserver,
     signal: AbortSignal,
   ) => Promise<unknown>;
