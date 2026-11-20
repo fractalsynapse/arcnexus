@@ -10,7 +10,7 @@ import { Architecture } from '../../../architecture/src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
 import { direct, track } from '../../../direction/src/index.js';
 import { Planner } from '../../../planner/src/index.js';
-import { Workflow, type WorkflowServices } from '../../../workflow/src/index.js';
+import { Workflow } from '../../../workflow/src/index.js';
 import { Execution, hostTask, steward } from '../../src/index.js';
 import { verify } from '../../../verification/src/index.js';
 import { integrate, resume } from '../../../delivery/src/index.js';
@@ -56,7 +56,7 @@ export class RoundConsumptionFixture {
       new Coordination(this.storage),
       this.storage,
     );
-    const services: WorkflowServices = {
+    return new Workflow({
       execution,
       planner: new Planner(agent),
       architecture: {
@@ -78,8 +78,7 @@ export class RoundConsumptionFixture {
           verify(agent, session, plan, candidate, signal),
       },
       delivery: { integrate, resume },
-    };
-    return new Workflow(services);
+    });
   }
 
   /** Bind an explicit installed executable; changing it never edits the captured project. */
@@ -108,7 +107,47 @@ export class RoundConsumptionFixture {
 /** Declare real actor assignments and read/question tools with disjoint captured ownership. */
 function definitions(): Record<string, unknown> {
   return {
-    [catalog + '/project.yaml']: {
+    [catalog + '/project.yaml']: projectDefinition(),
+    'contracts.yaml': { contracts: [] },
+    [catalog + '/plan-template.md']: 'Use the normal five ordered activities.\n',
+    '.arc/goals/baseline.md':
+      '---\npriority: 1\n---\nPreserve the baseline.\n\n## Success measures\nThe baseline contains durable evidence.\n',
+    baseline: 'durable evidence\n',
+    ...actorDefinitions(),
+    [catalog + '/roles/assessor.yaml']: {
+      id: 'assessor',
+      instructions: ['Assess the supplied assignment.'],
+    },
+    ...operationDefinitions(),
+  };
+}
+
+/** Give each actual actor a distinguishable profile while keeping the catalog fully owned. */
+function actorDefinitions() {
+  const definitions: Record<string, unknown> = {};
+  const owners = {
+    planner: ['.arc/goals', '.arc/objectives'],
+    architecture: [catalog, 'contracts.yaml'],
+    direction: ['.arc/plans'],
+    reviewer: ['review'],
+    work: ['baseline'],
+  };
+  for (const [id, owns] of Object.entries(owners)) {
+    definitions[catalog + '/components/' + id + '.yaml'] = actorDefinition(id, owns);
+    definitions[catalog + '/execution-profiles/' + id + '.yaml'] = {
+      id,
+      model: 'explicit-' + id,
+      reasoning: 'medium',
+      webSearch: 'disabled',
+      operationCategories: ['read'],
+    };
+  }
+  return definitions;
+}
+
+/** Bind foreground assessment roles and the existing staging lifecycle in the committed catalog. */
+function projectDefinition() {
+  return {
       id: 'round-consumption',
       remote,
       knowledgeRoot: '.arc',
@@ -120,17 +159,12 @@ function definitions(): Record<string, unknown> {
       architect: { component: 'architecture', activity: 'assessment' },
       delivery: { baseBranch: 'staging', protectedBranch: 'main', requiredGates: [] },
       checks: { acceptance: ['fixture-check'] },
-    },
-    'contracts.yaml': { contracts: [] },
-    [catalog + '/plan-template.md']: 'Use the normal five ordered activities.\n',
-    '.arc/goals/baseline.md':
-      '---\npriority: 1\n---\nPreserve the baseline.\n\n## Success measures\nThe baseline contains durable evidence.\n',
-    baseline: 'durable evidence\n',
-    ...actorDefinitions(),
-    [catalog + '/roles/assessor.yaml']: {
-      id: 'assessor',
-      instructions: ['Assess the supplied assignment.'],
-    },
+    ;
+}
+
+/** Supply the explicit mapped read and human decision transport plus the admission check. */
+function operationDefinitions() {
+  return {
     [catalog + '/operations/read-file.yaml']: { id: 'read-file', category: 'read', tool: 'read' },
     [catalog + '/operations/ask-question.yaml']: {
       id: 'ask-question',
@@ -148,40 +182,14 @@ function definitions(): Record<string, unknown> {
   };
 }
 
-/** Give each actual actor a distinguishable profile while keeping the catalog fully owned. */
-function actorDefinitions() {
-  const definitions: Record<string, unknown> = {};
-  const owners = {
-    planner: ['.arc/goals', '.arc/objectives'],
-    architecture: [catalog, 'contracts.yaml'],
-    direction: ['.arc/plans'],
-    reviewer: ['review'],
-    work: ['baseline'],
+/** Describe the activity that the normal request builder resolves for each actor. */
+function actorDefinition(id: string, owns: string[]) {
+  const activity = id === 'architecture' ? 'assessment' : id === 'reviewer' ? 'review' : 'planning';
+  return {
+    id, purpose: 'Assess ' + id + ' using complete retained findings', owns,
+    activities: { [activity]: {
+      role: 'assessor', profile: id, instructions: ['Use the real assignment and cite prior evidence.'],
+      operations: ['read-file', 'ask-question'], standards: [],
+    } },
   };
-  for (const [id, owns] of Object.entries(owners)) {
-    const activity =
-      id === 'architecture' ? 'assessment' : id === 'reviewer' ? 'review' : 'planning';
-    definitions[catalog + '/components/' + id + '.yaml'] = {
-      id,
-      purpose: 'Assess ' + id + ' using complete retained findings',
-      owns,
-      activities: {
-        [activity]: {
-          role: 'assessor',
-          profile: id,
-          instructions: ['Use the real assignment and cite prior evidence.'],
-          operations: ['read-file', 'ask-question'],
-          standards: [],
-        },
-      },
-    };
-    definitions[catalog + '/execution-profiles/' + id + '.yaml'] = {
-      id,
-      model: 'explicit-' + id,
-      reasoning: 'medium',
-      webSearch: 'disabled',
-      operationCategories: ['read'],
-    };
-  }
-  return definitions;
 }
