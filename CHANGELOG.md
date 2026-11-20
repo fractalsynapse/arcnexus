@@ -29,6 +29,8 @@
 
 ### Fixed
 
+- Keep new research and clarification answers in caller-repair input identity, preserve holds for unchanged replies, and apply the approved Execution Testing `gpt-sol` profile trial (#675).
+
 - Preserve the complete originating local-repair finding and its evidence from the canonical journal alongside later repair diagnostics in activity requests, retaining exact text and avoiding duplicate findings for a single rewind (#660).
 
 - Recover secured checkpoints across compatible staging changes with Git's three-way merge and current ownership/activity validation, preserving real conflict diagnostics instead of rejecting every overlapping path (#615).

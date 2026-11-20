@@ -8,7 +8,7 @@ engineering work, not a hand-authored Director plan or delivered capability.
 
 ## Current position and next work
 
-Updated 2026-11-20 against staging `ffed7c41`. Completed boxes describe the
+Updated 2026-11-20 against staging `5f91f4a6`. Completed boxes describe the
 specific capability and linked evidence below, not completion of the entire
 efficiency batch. Unchecked items may have partial implementation; the remaining
 behavior or proof is stated explicitly.
@@ -20,6 +20,13 @@ behavior or proof is stated explicitly.
 | Acting context              | [PR #664](https://github.com/fractalsynapse/arcnexus/pull/664) delivered the source-linked component index; [PR #667](https://github.com/fractalsynapse/arcnexus/pull/667) preserved originating findings through nested repairs. | All 18 purposes, 94 model activities and one host procedure were approved by the architect and merged in #673. Live behavioral acceptance remains open. |
 | Timeline and measurements   | Complete provider/MCP artifacts, ordered live human/JSONL observations and time/token accounting are operating through the existing journal.                                                                                      | Full round/phase analysis, verified monetary pricing and subsequent refinement consuming those findings remain open.                                    |
 | Continuous refinement       | Run 102 exercised local repair without Direction, then ended by controlled cancellation after repeated incomplete recovery proof. Checkpoints and prior failed evidence remain retained.                                          | `refine` delivery and the three consecutive production rounds are unproved. Qualification remains **0/3**.                                              |
+
+Latest live result: run 103 advanced the retained #668 task to five accepted
+milestones, then stopped in Execution Testing after a completed research answer
+was omitted from the reply-repetition identity. Its code and evidence remain
+retained. [#675](https://github.com/fractalsynapse/arcnexus/issues/675) names the
+bootstrap correction and the separately approved Execution Testing profile trial;
+see the detailed run record below. This is not a successful delivery.
 
 The architect reviewed the complete rewrite and explicitly approved merging #673
 and proceeding with testing. The earlier D review stop is satisfied. All 18
@@ -636,3 +643,63 @@ operations, verification, ownership, original acceptance, locked contracts and
 registry bytes stay unchanged. Resume the exact retained goal after verified
 staging integration and compare the result. Do not infer success from the profile
 selection, add a limit, or weaken the required recovery proof.
+
+## Run 103 progress, failure and caller-recovery correction
+
+Run 103 used accepted source `5f91f4a6` and installed runtime code `05a87607`.
+The retained task now has five accepted milestones. During this attempt, Workflow
+Implementation on Sol established unfinished-child continuation across attempts,
+real provider usage and nested Architect-history recovery, and passed self-review.
+Coordination supplied canonical descendant history and completed-round discovery
+across invocations through its existing journal. Both contributions passed owner
+checks and self-review. Execution's prior admission/inventory work remains accepted.
+Downstream context consumption, Commands/CLI wiring, assembled independent review
+and staging delivery remain pending. No #668 delivery PR was produced.
+
+Three explicit cross-owner supplier requests invoked Direction. Ordinary checks
+and a Workflow self-review finding remained local. Execution Testing repeatedly
+reported unfinished work as blocked despite acknowledging that checked editing
+was available. The host rejected unsupported blocks and returned their exact
+diagnostics to the caller. Optional Astra research completed a fixture-design
+report and resumed Terra with the complete answer. Terra again returned blocked
+without a reason. Reply recovery then held on the repeated diagnostic because its
+input identity recognized file changes but not the newly completed research.
+
+The typed terminal result was `blocked`, exit 1, at 2026-11-20T11:42:29Z. Normal
+cleanup removed the worktree. Local and remote `668-task` both retain checkpoint
+`2ac828d42b83082ec258d3addabace7ce6edb6c2`. No operator candidate edits, database
+repair or bypassed checks occurred. Failed observations remain retained. The
+research report is in external evidence as `103-2190-research.md`; its proposed
+component archive remains pending the steward's checked archival action.
+
+The attempt took 59.51 minutes and 24 native activations. Provider turns completing
+normally do not imply acceptance of the steward's work. Reported input includes
+the cached subset shown separately:
+
+| Profile | Activations | Input tokens | Cached input subset | Output tokens |
+| --- | --- | --- | --- | --- |
+| gpt-sol | 13 | 24,924,587 | 23,147,520 | 63,103 |
+| gpt-terra | 8 | 16,139,417 | 14,759,552 | 18,534 |
+| gpt-luna | 2 | 6,479,273 | 6,257,664 | 17,805 |
+| gpt-astra | 1 | 3,016,918 | 2,818,944 | 9,773 |
+
+Monetary cost remains unknown without a verified pricing/billing basis. The full
+stream, terminal receipt and measurements remain outside source as
+`670-sol-refine-live.jsonl`, `670-sol-refine-live-exit.json` and
+`670-sol-refine-live-summary.json`. Qualification remains **0/3**.
+
+The named bootstrap fix in #675 extends the existing reply-input fingerprint to
+include completed research and clarification answers. Identical answers and
+unrelated artifacts cannot manufacture progress; there is no new retry count,
+limit, store or orchestration path. Focused public steward regressions first
+observed the incorrect hold for both new answer types while duplicate controls
+passed. Runtime validation and live delivery are separate requirements.
+
+The architect separately approved the exact
+[Execution Testing profile trial](https://github.com/fractalsynapse/arcnexus/issues/675#issuecomment-7038726833):
+only `execution/testing.profile` changes from `gpt-terra` to `gpt-sol`.
+All other profiles, instructions, operations, verification, ownership, acceptance,
+locked contracts and registry bytes stay unchanged. This does not establish a
+general model ranking or authorize automatic profile substitution. After verified
+integration, resume the exact retained #668 task with its plan, checkpoint and
+complete research answer through normal Execution recovery.
