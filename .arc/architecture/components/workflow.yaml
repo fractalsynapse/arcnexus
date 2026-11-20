@@ -454,7 +454,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Implement the canonical Workflow path with the least necessary state and code. Reuse the existing invocation lifecycle, session/journal, observer, Agent request builder and owning services. Put sequencing here rather than in Commands or a gateway. Remove superseded queue, cursor or recovery projections instead of creating a parallel refinement engine.

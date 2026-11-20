@@ -1,11 +1,12 @@
 # Review the complete component instruction rewrite
 
-This is the complete authoring proposal for checklist D, in
-[draft PR #673](https://github.com/fractalsynapse/arcnexus/pull/673), tracked by
+This records the complete architect-approved checklist D guide batch, delivered in
+[PR #673](https://github.com/fractalsynapse/arcnexus/pull/673), tracked by
 [issue #672](https://github.com/fractalsynapse/arcnexus/issues/672).
 Rewritten text is in the actual component YAML files. This guide is not another
-set of component definitions. The proposal is unmerged and unadopted. Stop for
-human feedback before activation or another live test.
+set of component definitions. The architect approved the complete batch and
+resumed testing after staging integration at `ffed7c41`. This review record
+preserves the measured authoring baseline; live acceptance remains separate.
 
 ## Actual specifications
 
@@ -95,6 +96,7 @@ procedures address observed failures: demanding finished Implementation during
 Testing, testing only a fake Planner method, losing distinct retained history,
 and requesting an unavailable self-rewind instead of fixing owned tests in place.
 
-Review the component-specific text with its role and shared protocol for decision
-quality, unnecessary repetition and agreement with actual operations. Feedback
-precedes adoption and further live testing.
+Use the component-specific text with its role and shared protocol for decision
+quality, unnecessary repetition and agreement with actual operations. The original
+review pause is satisfied. Future guide changes require their applicable human
+approval, and live tests must report their actual results separately.

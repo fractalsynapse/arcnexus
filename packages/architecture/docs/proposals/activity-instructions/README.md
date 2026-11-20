@@ -1,16 +1,18 @@
 # Detailed operating instructions for every Agent activity
 
-Status: proposed work for efficiency-checklist D, tracked in
+Status: the complete efficiency-checklist D guide batch was reviewed and approved
+by the architect and delivered in [PR #673](https://github.com/fractalsynapse/arcnexus/pull/673)
+at staging `ffed7c41`. It is tracked in
 [issue #672](https://github.com/fractalsynapse/arcnexus/issues/672) under
 [the implementation checklist](../../../../../docs/plans/efficiency-foundation.md).
-These drafts are not active instructions or approved architecture. Do not load
-them as authority for the retained run or report live acceptance complete.
+The specifications are accepted guide source. This record does not claim that
+all live behavioral acceptance or continuous refinement is complete.
 
 The authoring pass is complete across the actual 18 component specifications,
 94 model activities and one host activity. Start with the
 [complete review guide](review.md) for source links, composition, measured sizes,
-preserved boundaries and remaining capability gaps. The proposal awaits human
-review; authoring completion is distinct from adoption or live acceptance.
+preserved boundaries and remaining capability gaps. The requested human review
+and staging delivery are complete; live behavioral acceptance remains separate.
 
 ## Deliverable
 
@@ -35,7 +37,7 @@ without a model profile or pretend system prompt.
 
 Rewritten purposes and component-specific activity instructions are authored
 **directly in the component YAML specifications**, not in a separate set of
-replacement purpose documents. The proposed specifications are in
+replacement purpose documents. The accepted specifications are in
 [the component directory](../../../../../.arc/architecture/components/).
 The corresponding role definitions and explicitly selected standards supply
 shared procedure through the existing request builder.
@@ -57,11 +59,10 @@ readable with its ordinary source labels. Existing activities, profiles,
 ownership and operation authority remain explicit. The host-only release
 specification does not acquire a model profile or a generic Agent prompt.
 
-This branch is a review proposal. It is not staging or an adopted runtime model.
-Finish every component purpose and activity, then stop for human review before
-activation or further live testing. The retained run used its original installed
-runtime and captured source and ended held before staging. Its checkpoints and
-failed evidence remain retained.
+The requested authoring/review stop was observed. The architect subsequently
+approved merging the complete batch and resuming testing. Run 102 consumed the
+accepted guidance through the unchanged request builder. Historical held and
+cancelled attempts retain their checkpoints and failed observations.
 
 ## Preserve the single request string
 
@@ -74,10 +75,10 @@ observed evidence within the complete string. Codex still discovers AGENTS.md an
 skills normally. A longer well-written activity procedure is the correction;
 a new transport or provider lifecycle is not a prerequisite.
 
-Author all component purposes and all explicit activity procedures, then stop for
-the architect's review and feedback. Do not start another live test, activate the
-new catalog or treat review drafts as authority before that review. The retained
-run may finish under its existing guidance.
+All purposes and explicit activity procedures were authored before the architect's
+review. The architect completed that review and authorized integration and testing;
+that particular review pause is satisfied. Later changed architectural intent
+retains its own human approval.
 
 ## Decisions drawn from real failures
 
@@ -142,7 +143,6 @@ introducing a size gate. Compare relevant pre-rewrite findings and post-rewrite
 decisions when live acceptance is authorized. Static validity and a lengthy prompt
 do not demonstrate that an agent performs better.
 
-The architect has prohibited another live test until D is addressed. The retained
-run 101 may finish; no new live acceptance is started as part of authoring this
-proposal or running deterministic checks. Keep qualification at 0/3 until the full
-approved production refinement acceptance actually succeeds.
+No live test was started during the authoring/review pause. After approval, testing
+resumed under accepted guides. Keep qualification at 0/3 until the full approved
+production refinement acceptance actually succeeds.
