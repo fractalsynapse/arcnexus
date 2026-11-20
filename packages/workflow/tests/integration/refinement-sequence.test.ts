@@ -4,9 +4,11 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
-import type { Architecture, Capture } from '../../../architecture/src/index.js';
+import type { Agent } from '../../../agent/src/index.js';
+import type { Architecture, Capture, TaskContext } from '../../../architecture/src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
-import { Execution } from '../../../execution/src/index.js';
+import { Execution, HostTask } from '../../../execution/src/index.js';
+import { Planner } from '../../../planner/src/index.js';
 import { Workflow, type TaskObserver, type WorkflowServices } from '../../src/index.js';
 
 export const suite = { owner: 'workflow', level: 'integration', tags: ['regression'] } as const;
