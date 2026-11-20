@@ -32,7 +32,7 @@ async function dispatchTask(
   goal: string | undefined,
   json: boolean,
   verb: 'run' | 'plan' | 'update' | 'refine',
-  rounds: number,
+  rounds: string,
   signal: AbortSignal,
 ) {
   const observer: TaskObserver = {
