@@ -97,6 +97,24 @@ available. Explicit cross-owner work uses Direction; final independent rejection
 also returns to Direction. Ordinary local repair does not create a milestone or
 invoke the Director.
 
+The intended nested-repair behavior (#660) extends this journal-backed context:
+subsequent activity requests expose the complete originating local-repair finding
+and its evidence alongside the latest relevant repair diagnostic for the accepted
+milestone. Preserve the exact recorded text and evidence references, without
+paraphrasing or truncation. When there has been only one rewind, the originating
+and latest finding are the same and appear once. A later distinct repair must not
+replace the original engineering requirement with only the repair's diagnostic.
+
+Derive this context from the canonical journal through the existing activity
+request path. Journal replay and subsequent requests retain the current activity
+position, completed work and completion history, accepted criteria, check
+expectations, complete clarification and research answers, and successful edit
+receipts. Ordinary same-owner repair continues without another Director call.
+This implements the repair-preservation obligations and EX-17/EX-22 in the
+[Execution contract](contract.md#obligations); it adds no store, orchestration
+path, resource limit or fixed owner assignment. Behavioral regression evidence
+and independent assembled verification remain required before claiming delivery.
+
 A model's assertion that a capability is unavailable does not establish a host
 prerequisite. Return that unsupported `blocked` response and its exact reason to
 the same caller for investigation through mapped tools, optional research or
