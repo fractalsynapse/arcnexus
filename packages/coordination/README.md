@@ -62,6 +62,73 @@ can continue retained progress. Workflow admits each phase or task against fresh
 accepted staging authority and retains the approved in-run adoption boundary;
 Coordination does not freeze authority for the invocation or authorize declarations.
 
+## Descendant history intent — CO-REF-DESCENDANT-HISTORY
+
+For Workflow consumers assembling retained phase evidence, the intended public
+addition is `Journal.childTimeline(goal: string, scope: string): JournalEvent[]`.
+This query is not implemented or demonstrated by this intent note. It reads the
+existing connection without admission, writes, another store or a new cursor.
+An unknown child returns an empty array.
+
+Use the exact full goal and admission scope passed to `Journal.child` on the
+parent journal. Child identity uses the same derivation: the full-goal digest and
+the scope encoded with the parent's logical `taskID`. A logical task identifies
+retained work; each `runs.id` identifies one attempt. The same goal in a different
+scope or parent logical task is different work. A resumed parent retains its
+logical identity, while a fresh completed invocation has a new identity.
+
+Start with every `runs` row for that child `task_id`. Follow
+`runs.parent_id` to children of those attempts, include every attempt sharing
+each discovered descendant's `task_id`, and repeat through their children.
+Both relationships are necessary: following only the current attempt loses older
+findings, while following physical descendants alone can miss a later
+continuation of a nested logical task. Select each resulting event once from
+`events`, joined by `events.run = runs.id`, in global numeric `events.id` order.
+The query must exclude the calling parent, sibling phases, other rounds, other
+invocations and unrelated roots; matching goal text alone never widens its scope.
+
+Return the canonical `JournalEvent` shape defined in the
+[public entry](src/index.ts): `sequence` is the original event ID rendered as a
+string, `run` is its originating attempt, `taskID` and `goalID` come from that
+attempt, `parent` is its actual parent run when present, `timestamp` is the
+recorded timestamp or honest historical null, and `observation` is the complete
+parsed content. Preserve artifact references and correlation fields within that
+content. Do not renumber, synthesize replay timestamps, invent parents or turn
+old observations into new execution. Repeated reads expose the same acknowledged
+prefix and any subsequently committed events, without duplicate sequences.
+
+`Journal.child` continues to admit ordinary sequential children sharing the
+writer. `childEvents` continues to return only the named immediate logical
+child's unframed observations across attempts. `timeline` continues to return
+canonical events for the receiving journal's own logical task across attempts.
+Neither existing read gains descendant semantics. The new query requires no
+schema change or historical rewrite: existing additive initialization retains
+`task_id`, `parent_id` and timestamps, including null historical timestamps.
+Only recorded relationships establish ancestry; absent historical relationships
+must not be guessed.
+
+Coordination records observations through `record` and atomically records an
+attempt's terminal outcome through `finish`. Workflow owns the decision to
+advance after reading a successful child outcome, including the crash window
+between child completion and parent acknowledgement. Workflow also owns report
+production, round isolation at admission and the actual nested Architect supplier
+integration regression. [Execution](../execution/contract.md) owns checkpoint
+and filesystem reconciliation: a checked edit is acknowledged after its checkpoint,
+an answer is stored before continuation, and uncertain publication is observed
+before replay. This read changes none of those boundaries or retained approvals,
+issues, branches, PRs and answers. Historical interrupted outcomes remain visible.
+
+Real SQLite regressions must create children through the public admission API,
+close and reopen storage, and exercise nested interrupted attempts and later
+continuations. Give attempts distinct findings, complete multiline answers,
+explicit profile usage and terminal outcomes. Assert complete canonical records,
+global ordering, unique sequences and exclusion of sibling phases, other rounds,
+fresh invocations and unrelated roots, including equal goal text in different
+scopes. Retain existing `childEvents` and standalone assertions. The supplier
+handoff must identify this API, exercised public fixture usage and retained
+verification evidence; deterministic results do not establish live acceptance.
+No event cap, paging protocol, scheduler or duplicated evidence store is required.
+
 ## Evidence and derived reports — CO-24, CO-25
 
 The journal and its referenced external artifacts remain the evidence source.
