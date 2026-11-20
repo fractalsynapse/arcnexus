@@ -133,7 +133,7 @@ test('EX-REF-ROUND-CONSUMPTION: real refinement feeds each next-round and fresh-
   const observed = new Observations();
   const outcome = await fixture
     .reopen()
-    .refine(fixture.root, 2, observed, new AbortController().signal);
+    .refine(fixture.root, '2', observed, new AbortController().signal);
   assert.equal(outcome.kind, 'planned', diagnostic(outcome));
   assert.equal(observed.rounds.length, 2, 'both rounds are produced by the public Workflow');
   const first = observed.rounds[0]!;
