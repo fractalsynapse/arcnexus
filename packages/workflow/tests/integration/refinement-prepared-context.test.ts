@@ -74,6 +74,11 @@ function assertAttempt(attempt: Consumption, prior: CompletedRefinementRound) {
   assert.equal(consumed.round, prior.round);
   assert.deepEqual(consumed.findings, prior.findings);
   assert.deepEqual(consumed.measurements, prior.measurements);
+  assertSources(attempt, consumed, prior);
+}
+
+/** Verify the report and complete originating artifacts were read. */
+function assertSources(attempt: Consumption, consumed: CompletedRefinementRound & { sources: string[] }, prior: CompletedRefinementRound) {
   const sources = consumed.sources
     .map((source) => {
       assert.ok(attempt.reads.includes(source));
