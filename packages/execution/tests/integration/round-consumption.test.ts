@@ -73,7 +73,7 @@ test('EX-REF-ROUND-CONSUMPTION: real refinement feeds each next-round and fresh-
   const observed = new Observations();
   const outcome = await fixture.reopen().refine(fixture.root, 2, observed,
     new AbortController().signal);
-  assert.equal(outcome.kind, 'planned', JSON.stringify(outcome));
+  assert.equal(outcome.kind, 'planned', diagnostic(outcome));
   assert.equal(observed.rounds.length, 2, 'both rounds are produced by the public Workflow');
   const first = observed.rounds[0]!;
   const later = new Observations();
@@ -116,13 +116,13 @@ test('EX-REF-ROUND-RECOVERY: interrupted real assessment retains prior rounds an
       controller.abort();
   };
   const interrupted = await fixture.reopen().refine(fixture.root, 2, original, controller.signal);
-  assert.equal(interrupted.kind, 'cancelled', JSON.stringify(interrupted));
+  assert.equal(interrupted.kind, 'cancelled', diagnostic(interrupted));
   assert.equal(original.rounds.length, 1);
   const executable = fixture.install('newer-installed');
   const resumed = new Observations();
   const outcome = await fixture.reopen().refine(fixture.root, 2, resumed,
     new AbortController().signal);
-  assert.equal(outcome.kind, 'planned', JSON.stringify(outcome));
+  assert.equal(outcome.kind, 'planned', diagnostic(outcome));
   assert.equal(resumed.rounds.length, 1);
   assert.equal(resumed.rounds[0]!.invocation, original.rounds[0]!.invocation);
   assert.ok(resumed.consumers.every((consumer) => consumer.executable === executable));
