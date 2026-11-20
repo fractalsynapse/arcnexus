@@ -129,6 +129,117 @@ handoff must identify this API, exercised public fixture usage and retained
 verification evidence; deterministic results do not establish live acceptance.
 No event cap, paging protocol, scheduler or duplicated evidence store is required.
 
+## Cross-invocation completed-round discovery intent
+
+This intent precedes behavior changes for CO-REF-ROUND-DISCOVERY,
+CO-REF-ROUND-REFERENCES, CO-REF-ROUND-RECOVERY and CO-REF-ROUND-HANDOFF.
+It answers the discovery gap raised by supplier milestone
+`refine-execution-round-consumption` for EX-REF-ROUND-CONSUMPTION in
+[Execution's correction](../execution/docs/refinement.md#completed-round-consumption-correction).
+The audience is the Coordination implementer and Execution consumer. Preserve
+the completed admission, inventory and descendant-history contributions.
+
+### Public selection and canonical identities
+
+Add `Journal.completedRounds(): JournalEvent[]` to the
+[public Journal entry](src/index.ts). This is intended behavior, not an available
+or demonstrated operation at this documentation step. Read the existing
+project connection without admission, writes, another cursor or another store.
+Return all persisted top-level `{ completedRound }` observations matching
+Workflow's public
+[CompletedRefinementRound](../workflow/src/index.ts) handoff, joined from
+`events.run` to `runs.id`, ordered by global numeric `events.id` ascending.
+Return an empty array when none exist. Do not select progress, report
+registration alone, child success alone, standalone round completion, nested
+copies of observations or unrelated events as completed rounds.
+
+Workflow owns the meaning and production of this marker through its
+[completed-round handoff](../workflow/refinement.md#public-completed-round-handoff-for-execution).
+Its producer retains the registered report and then records the marker only
+after both phases and every captured goal complete. A round can therefore be
+discoverable while its foreground invocation is still unfinished. Do not require
+a later parent cursor acknowledgement or whole-invocation terminal success:
+a crash between marker persistence and parent advancement must not hide the
+completed round. Coordination selects the persisted observation; it does not
+reassess goals or manufacture completion from a report or cursor.
+
+Return complete canonical `JournalEvent` records, using the same framing as
+`timeline()` and `childTimeline()`: original string `sequence`, originating
+numeric `run`, logical `taskID`, full-goal digest `goalID`, actual optional
+parent run, recorded `timestamp` or historical null, and complete parsed
+`observation`. Preserve `completedRound.invocation`, `round`, `report`,
+`findings`, `measurements` and `evidence` without rewriting their contents.
+Select each event identity once; repeated reads must not create new identities
+or relabel old events as current execution. Round numbers can repeat in fresh
+invocations and must not be used alone to collapse observations.
+
+The connection already belongs to one verified repository: trusted application
+storage and the verified remote digest select its `tasks.sqlite`.
+A normal child sharing that connection can discover prior completed invocations,
+not just its own ancestry. Another project's store is outside the query.
+No directory-name lookup, goal-text matching or live parent link can substitute
+for that project boundary. `findings()` retains its existing failure/repair
+selection. `childEvents()`, `childTimeline()` and `timeline()` retain their
+existing logical-task scopes; none supplies project-wide cross-invocation
+discovery. Writer ownership and standalone admission remain unchanged.
+
+### Reports, originating references and authorization
+
+The marker's `report` is a registered external artifact path. Its `findings`
+and `measurements` are original event sequence references, not file paths.
+Workflow's current report contains the complete canonical originating frames
+and the event-derived measurement projection; its `evidence` collection
+preserves originating evidence paths. Return the entire marker and frame so
+Execution can expose that report, follow its full originating observations and
+carry their complete finding, answer, measurement and artifact references into
+normal Planner, Architect and Director requests.
+
+Existing `Journal.artifactRecorded(path)` checks original top-level
+`{ artifact: path }` registrations across this project's events.
+[Execution's file reader](../execution/src/tool-files.ts) consults that operation
+for retained absolute paths and enforces its regular-file and alias checks.
+Discovery neither registers referenced files nor grants access because a string
+appears in a marker or report. A registered originating artifact in this project
+remains readable by a normal child through `HostTask.readFile` and mapped
+read-file; an unregistered or solely foreign-project artifact gains no access
+from discovery. Explicit task evidence retains its existing authorization path.
+
+Execution owns activation enrichment, including first calls, resumed callers
+and later invocations, through the normal HostTask boundary. Workflow owns
+report production and phase advancement. Coordination adds no Workflow
+dependency or duplicate report format, copies no findings into goal files and
+creates no second evidence store. Preserve full answers and originating content;
+no previews, truncation, paging protocol or automatic profile substitution.
+
+### Recovery evidence and supplier handoff
+
+No schema change or data rewrite is needed: `events` already retains content,
+run identity and timestamps, and `runs` retains task, goal and parent identities.
+Existing additive initialization remains authoritative. Historical rows without
+a completion marker must not be backfilled from inferred success. A schema
+declaration alone does not demonstrate recovery.
+
+Before implementation, Testing must exercise the new public selection against
+isolated real SQLite storage and observe the missing behavior. Create sessions
+through public admission with distinct invocations, rounds, interrupted attempts,
+complete findings, multiline answers, explicit profile usage and registered
+artifacts using Workflow's actual public record shape. Close and reopen storage,
+resume an unfinished invocation, and begin a fresh invocation after completion.
+Assert all complete canonical frames in global order, stable unique sequences,
+retained origin identities and exclusion of incomplete rounds, unrelated events
+and another verified project. Include a persisted completion marker before
+parent cursor acknowledgement, and demonstrate unchanged child history,
+failure/repair findings and writer exclusion. Controlled contract-shaped records
+establish this selection boundary; genuine Workflow production and prepared
+actor consumption remain assembled owner responsibilities.
+
+The later completed supplier answer must name `Journal.completedRounds()`,
+its return shape, project scope and ordering, explain registered-report and
+originating-reference retrieval through the existing authorization boundary,
+and link the exercised public fixture and retained current owner-check evidence.
+This documentation step supplies intent only; it does not claim that behavioral
+evidence, independent acceptance, staging delivery or live qualification exists.
+
 ## Evidence and derived reports — CO-24, CO-25
 
 The journal and its referenced external artifacts remain the evidence source.
