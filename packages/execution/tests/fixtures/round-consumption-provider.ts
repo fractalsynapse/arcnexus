@@ -29,6 +29,10 @@ class RoundConsumer {
 
   /** Read advertised evidence before responding, preserving exactly what each subprocess consumed. */
   async run() {
+    for (const completion of this.task.assignment.completedRounds ?? []) {
+      this.completions.set(completion.invocation + ':' + completion.round, completion);
+      await this.discover(completion.report);
+    }
     for (const path of this.task.evidence) await this.discover(path);
     const consumption = await this.consume();
     this.emit({
