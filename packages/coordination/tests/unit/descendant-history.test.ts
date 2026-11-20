@@ -119,10 +119,7 @@ function assertFreshIsolation(fixture: HistoryFixture) {
   fresh.record({ finding: 'excluded fresh invocation' });
   fresh.finish({ kind: 'planned' });
   const freshExpected = fresh.timeline();
-  assert.deepEqual(
-    (fixture.root as unknown as DescendantJournal).childTimeline(phaseGoal, phaseScope),
-    freshExpected,
-  );
+  assert.deepEqual(fixture.root.childTimeline(phaseGoal, phaseScope), freshExpected);
   fixture.root.finish({ kind: 'blocked' });
   fixture.root.close();
   fixture.root = fixture.admit();
