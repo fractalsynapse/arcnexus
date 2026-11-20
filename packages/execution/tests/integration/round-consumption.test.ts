@@ -27,7 +27,7 @@ interface Consumption {
   input: string;
   executable: string;
   reads: [string, string][];
-  consumption: Array<CompletedRefinementRound & { reportText: string; findings: string[] }>;
+  consumption: Array<CompletedRefinementRound & { reportText: string; messages: string[] }>;
 }
 
 /** Collect complete originating observations without altering sessions or manufacturing round events. */
@@ -80,11 +80,12 @@ function assertOrigins(
   prior: CompletedRefinementRound,
 ) {
   assert.deepEqual(consumed.measurements, prior.measurements);
+  assert.deepEqual(consumed.findings, prior.findings);
   assert.ok(prior.measurements.length, 'the real producer records provider measurement references');
   assert.ok(attempt.reads.some(([path]) => path === prior.report));
   assert.match(consumed.reportText, /Event-derived measurements/);
   for (const actor of ['planner', 'architecture', 'direction'])
-    assert.ok(consumed.findings.some((finding) => finding.includes(actor + ' finding ')));
+    assert.ok(consumed.messages.some((finding) => finding.includes(actor + ' finding ')));
   assert.match(JSON.stringify(consumed), /complete second line and final conclusion survive/);
   for (const sequence of prior.findings)
     assert.ok(consumed.reportText.includes('"sequence":"' + sequence + '"'));
