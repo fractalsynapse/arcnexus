@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import type { JournalEvent } from '../../../coordination/src/index.js';
@@ -26,8 +27,13 @@ interface Consumption {
   component: string;
   input: string;
   executable: string;
-  reads: [string, string][];
-  consumption: Array<CompletedRefinementRound & { reportText: string; messages: string[] }>;
+  reads: string[];
+  consumption: Array<
+    CompletedRefinementRound & {
+      sources: string[];
+      messages: Array<{ path: string; sha256: string }>;
+    }
+  >;
 }
 
 /** Collect complete originating observations without altering sessions or manufacturing round events. */
@@ -82,13 +88,34 @@ function assertOrigins(
   assert.deepEqual(consumed.measurements, prior.measurements);
   assert.deepEqual(consumed.findings, prior.findings);
   assert.ok(prior.measurements.length, 'the real producer records provider measurement references');
-  assert.ok(attempt.reads.some(([path]) => path === prior.report));
-  assert.match(consumed.reportText, /Event-derived measurements/);
+  assert.ok(attempt.reads.includes(prior.report));
+  const report = readFileSync(prior.report, 'utf8');
+  assert.match(report, /Event-derived measurements/);
+  const messages = originatingMessages(attempt, consumed);
   for (const actor of ['planner', 'architecture', 'direction'])
-    assert.ok(consumed.messages.some((finding) => finding.includes(actor + ' finding ')));
-  assert.match(JSON.stringify(consumed), /complete second line and final conclusion survive/);
+    assert.ok(messages.some((finding) => finding.includes(actor + ' finding ')));
+  assert.ok(messages.some((finding) => finding.includes(JSON.stringify(answer).slice(1, -1))));
   for (const sequence of prior.findings)
-    assert.ok(consumed.reportText.includes('"sequence":"' + sequence + '"'));
+    assert.ok(report.includes('"sequence":"' + sequence + '"'));
+}
+
+/** Resolve cited message identities against complete originating artifacts read by the provider. */
+function originatingMessages(
+  attempt: Consumption,
+  consumed: Consumption['consumption'][number],
+) {
+  for (const source of consumed.sources) assert.ok(attempt.reads.includes(source));
+  return consumed.messages.map(({ path, sha256 }) => {
+    assert.ok(consumed.sources.includes(path));
+    const records = readFileSync(path, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+    const message = records.find(
+      (record) =>
+        record.item?.type === 'agent_message' &&
+        createHash('sha256').update(record.item.text).digest('hex') === sha256,
+    );
+    assert.ok(message, 'the consumed identity resolves to the complete originating message');
+    return message.item.text as string;
+  });
 }
 
 test('EX-REF-ROUND-CONSUMPTION: real refinement feeds each next-round and fresh-invocation actor', async (t) => {
