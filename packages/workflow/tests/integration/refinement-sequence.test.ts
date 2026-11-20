@@ -21,7 +21,7 @@ type Refinement = (
 ) => Promise<unknown>;
 
 /** Create real Git and SQLite boundaries for the public workflow. */
-export function fixture(t: TestContext) {
+function fixture(t: TestContext) {
   const directory = mkdtempSync(join(tmpdir(), 'workflow-refinement-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const root = join(directory, 'project');
