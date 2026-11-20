@@ -134,7 +134,7 @@ async function interruptAfterChild(root: string, state: RecoveryState) {
 }
 
 /** Resume through freshly constructed Workflow, Execution and Coordination objects. */
-async function resume(root: string, state: State) {
+async function resume(root: string, state: RecoveryState) {
   const planner = {
     propose: async () => {
       state.calls.value++;
