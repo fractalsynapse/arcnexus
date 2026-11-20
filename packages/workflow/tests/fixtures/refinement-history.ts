@@ -23,10 +23,13 @@ export function history(storage: string, remote: string, tasks: ReadonlySet<stri
     const selected = new Set(tasks);
     let changed = true;
     while (changed) {
-      const parents = new Set(rows.filter((row) => selected.has(String(row.task_id))).map((row) => Number(row.run)));
+      const parents = new Set(
+        rows.filter((row) => selected.has(String(row.task_id))).map((row) => Number(row.run)),
+      );
       const size = selected.size;
       for (const row of rows)
-        if (row.parent_id !== null && parents.has(Number(row.parent_id))) selected.add(String(row.task_id));
+        if (row.parent_id !== null && parents.has(Number(row.parent_id)))
+          selected.add(String(row.task_id));
       changed = selected.size !== size;
     }
     return rows
@@ -90,11 +93,27 @@ export function assertAccounting(report: string, origins: Origins) {
       : [],
   );
   const profiles = [...new Set(starts.map(({ observation }) => observation.nativeStarted.profile))];
-  assert.deepEqual(snapshot.profiles.map((profile: { profile: string }) => profile.profile).sort(), profiles.sort());
+  assert.deepEqual(
+    snapshot.profiles.map((profile: { profile: string }) => profile.profile).sort(),
+    profiles.sort(),
+  );
   for (const name of profiles) {
-    const activations = new Set(starts.filter(({ observation }) => observation.nativeStarted.profile === name).map(({ observation }) => observation.nativeStarted.activation));
-    const selected = origins.filter(({ observation }) => activations.has(observation.nativeStarted?.activation ?? observation.nativeEvent?.activation ?? observation.nativeFinished?.activation));
-    assertProfile(snapshot.profiles.find((profile: { profile: string }) => profile.profile === name), selected);
+    const activations = new Set(
+      starts
+        .filter(({ observation }) => observation.nativeStarted.profile === name)
+        .map(({ observation }) => observation.nativeStarted.activation),
+    );
+    const selected = origins.filter(({ observation }) =>
+      activations.has(
+        observation.nativeStarted?.activation ??
+          observation.nativeEvent?.activation ??
+          observation.nativeFinished?.activation,
+      ),
+    );
+    assertProfile(
+      snapshot.profiles.find((profile: { profile: string }) => profile.profile === name),
+      selected,
+    );
   }
   assertUsage(snapshot.usage, snapshot.usage, turns);
   assert.equal(snapshot.cost.estimate, null);
@@ -105,16 +124,26 @@ export function assertAccounting(report: string, origins: Origins) {
 function assertProfile(profile: Record<string, any>, origins: Origins) {
   const starts = origins.filter(({ observation }) => observation.nativeStarted);
   const ends = origins.filter(({ observation }) => observation.nativeFinished);
-  const turns = origins.flatMap(({ observation }) => observation.nativeEvent?.event?.type === 'turn.completed' ? [observation.nativeEvent.event.usage] : []);
+  const turns = origins.flatMap(({ observation }) =>
+    observation.nativeEvent?.event?.type === 'turn.completed'
+      ? [observation.nativeEvent.event.usage]
+      : [],
+  );
   assert.equal(profile.model, 'fixture-model');
   assert.equal(profile.activations, starts.length);
   assert.equal(profile.finishedActivations, ends.length);
-  assert.equal(profile.durationMs, ends.reduce((sum, frame) => sum + frame.observation.nativeFinished.durationMs, 0));
+  assert.equal(
+    profile.durationMs,
+    ends.reduce((sum, frame) => sum + frame.observation.nativeFinished.durationMs, 0),
+  );
   assertUsage(profile.usage, profile.usage, turns);
   assert.equal(profile.activationsWithoutUsage, starts.length - turns.length);
   assert.equal(profile.activeActivations, 0);
   assert.equal(profile.incompleteActivations, 0);
-  assert.equal(profile.failedActivations, ends.filter(({ observation }) => observation.nativeFinished.failure !== undefined).length);
+  assert.equal(
+    profile.failedActivations,
+    ends.filter(({ observation }) => observation.nativeFinished.failure !== undefined).length,
+  );
 }
 
 /** Verify reported token subsets separately and keep absent provider categories unknown. */
