@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import type { TestContext } from 'node:test';
 import { Agent } from '../../../agent/src/index.js';
-import { Architecture, type TaskContext } from '../../../architecture/src/index.js';
+import { Architecture, resolveOperation, type TaskContext } from '../../../architecture/src/index.js';
 import { GitHub } from '../../../collaboration/src/index.js';
 import { Coordination, Journal } from '../../../coordination/src/index.js';
 import { activities, type Milestone, type Plan } from '../../../direction/src/index.js';
@@ -58,16 +58,25 @@ export class ReviewedHoldFixture {
   readonly rejection;
   readonly originalReport = 'Independent rejection A\nKeep the exact originating finding.\n';
   private head?: string;
-  private external = false;
   private refusal = false;
 
   /** Commit a complete explicit catalog before capture and admit the real journal. */
-  constructor(private readonly t: TestContext) {
+  constructor(private readonly t: TestContext, private readonly external = false) {
     mkdirSync(this.root);
     this.source();
     this.task = this.open();
+    this.rejection = this.reviewEvidence();
+    this.recordReview();
+    t.after(() => {
+      this.task.close();
+      rmSync(this.directory, { recursive: true, force: true });
+    });
+  }
+
+  /** Preserve distinguishable full rejection artifacts without recursively copying transcripts. */
+  private reviewEvidence() {
     const report = this.task.store('independent-review.md', this.originalReport);
-    this.rejection = {
+    return {
       kind: 'rejection' as const,
       findings: [
         {
@@ -84,11 +93,6 @@ export class ReviewedHoldFixture {
         },
       ],
     };
-    this.recordReview();
-    t.after(() => {
-      this.task.close();
-      rmSync(this.directory, { recursive: true, force: true });
-    });
   }
 
   /** Write committed source, registry, bindings, profile and ownership with no live developer inputs. */
@@ -97,7 +101,12 @@ export class ReviewedHoldFixture {
     git(this.root, 'config', 'user.name', 'Hold fixture');
     git(this.root, 'config', 'user.email', 'hold@example.invalid');
     git(this.root, 'remote', 'add', 'origin', remote);
-    for (const [path, content] of Object.entries(holdFiles)) {
+    const files = { ...holdFiles };
+    const path = '.arc/architecture/operations/owner-tests.yaml';
+    const operation = JSON.parse(files[path]!);
+    operation.args.push(this.external ? 'external' : 'local');
+    files[path] = JSON.stringify(operation);
+    for (const [path, content] of Object.entries(files)) {
       mkdirSync(dirname(join(this.root, path)), { recursive: true });
       writeFileSync(join(this.root, path), content);
     }
@@ -173,16 +182,15 @@ export class ReviewedHoldFixture {
   /** Run a real subprocess in Testing's outer sandbox; this does not prove native HostTask confinement. */
   private async command(task: HostTask, id: string, abort: AbortSignal) {
     const log = task.artifact('controlled-check.log');
-    const args = [
-      join(import.meta.dirname, 'reviewed-hold-command.js'),
-      this.external ? 'external' : 'local',
-    ];
+    const operation = resolveOperation(task.capture, id, 'owner', 'implementation');
+    assert(operation?.command);
+    const { command, args } = operation;
     const cwd = task.worktree!;
     const start = performance.now();
-    const observed = await execute(process.execPath, args, { cwd, log, signal: abort });
+    const observed = await execute(command, args, { cwd, log, signal: abort });
     const check: CheckResult = {
       id,
-      command: process.execPath,
+      command,
       args,
       cwd,
       log,
@@ -257,11 +265,6 @@ export class ReviewedHoldFixture {
     this.task.close();
     this.task = this.open();
     await this.task.setupWorkspace('699', signal);
-  }
-
-  /** Select an actually absent external input while preserving the same accepted criterion. */
-  requireExternal() {
-    this.external = true;
   }
 
   /** Exercise a real checked-edit refusal after earlier acknowledged work. */
