@@ -60,6 +60,7 @@ export class ReviewedHoldFixture {
   readonly storage = join(this.directory, 'state');
   task: HostTask;
   readonly checks: CheckResult[] = [];
+  readonly milestone: Milestone;
   readonly receipts: unknown[] = [];
   readonly rejection;
   readonly originalReport = 'Independent rejection A\nKeep the exact originating finding.\n';
@@ -71,7 +72,11 @@ export class ReviewedHoldFixture {
   constructor(
     private readonly t: TestContext,
     private readonly external = false,
+    private readonly relevance?: 'arguments' | 'selection',
   ) {
+    this.milestone = relevance
+      ? JSON.parse(JSON.stringify(correction).replace('Repair fixture.txt', 'Repair reviewed behavior'))
+      : correction;
     mkdirSync(this.root);
     this.source();
     this.task = this.open();
@@ -92,7 +97,7 @@ export class ReviewedHoldFixture {
         {
           owner: 'owner',
           criterion: 'original-criterion',
-          reason: 'fixture.txt loses reviewed context A',
+          reason: this.relevance ? 'Reviewed context A is lost' : 'fixture.txt loses reviewed context A',
           evidence: [report],
         },
         {
@@ -116,6 +121,8 @@ export class ReviewedHoldFixture {
     const path = '.arc/architecture/operations/owner-tests.yaml';
     const operation = JSON.parse(files[path]!);
     operation.args.push(this.external ? 'external' : 'local');
+    if (this.relevance) operation.args.push('stable');
+    if (this.relevance === 'arguments') operation.args.push('fixture.txt');
     files[path] = JSON.stringify(operation);
     for (const [path, content] of Object.entries(files)) {
       mkdirSync(dirname(join(this.root, path)), { recursive: true });
@@ -181,7 +188,7 @@ export class ReviewedHoldFixture {
 
   /** Keep provider prose distinguishable from actual scope, checks and host receipts. */
   private reply(task: HostTask, data: TaskContext) {
-    assert.deepEqual(data.acceptance, correction.criteria);
+    assert.deepEqual(data.acceptance, this.milestone.criteria);
     assert.deepEqual((data.assignment as { finding: unknown }).finding, {
       kind: 'rejection',
       findings: [this.rejection.findings[0]],
@@ -214,13 +221,16 @@ export class ReviewedHoldFixture {
       status: observed.status,
       durationMs: performance.now() - start,
       diagnostic: observed.stderr.trim(),
+      ...(this.relevance === 'selection'
+        ? { selection: { operation: 'lint' as const, owner: 'owner', files: ['fixture.txt'] } }
+        : {}),
     };
     return check;
   }
 
   /** Persist an independent verdict and its Direction revision using production event shapes. */
   private recordReview() {
-    const original = { ...correction, id: 'original' };
+    const original = { ...this.milestone, id: 'original' };
     const digest = git(this.root, 'rev-parse', 'HEAD^{tree}');
     const foreign = {
       ...original,
@@ -235,8 +245,8 @@ export class ReviewedHoldFixture {
       verdict: { kind: 'rejected', candidate: digest, findings: this.rejection.findings },
     });
     this.task.record({ feedback: this.rejection });
-    this.task.record({ plan: { focus, milestones: [correction, ...plan.milestones] } });
-    this.task.record({ position: { completed: 0, activities: { [correction.id]: 2 } } });
+    this.task.record({ plan: { focus, milestones: [this.milestone, ...plan.milestones] } });
+    this.task.record({ position: { completed: 0, activities: { [this.milestone.id]: 2 } } });
   }
 
   /** Prepare the real issue branch and record one full answered clarification through its host API. */
@@ -252,7 +262,7 @@ export class ReviewedHoldFixture {
     await this.task.setupWorkspace('699', signal);
     this.task.ask = async () => answer;
     await new Clarifications(this.task, selection, signal).decide(
-      { milestone: { id: correction.id }, acceptance: correction.criteria },
+      { milestone: { id: this.milestone.id }, acceptance: this.milestone.criteria },
       question,
     );
     await this.edit('unrelated.txt', 'acknowledged before hold');
@@ -269,7 +279,7 @@ export class ReviewedHoldFixture {
     const tools = new ActivationTools(
       this.task,
       selection,
-      { milestone: { id: correction.id }, acceptance: correction.criteria },
+      { milestone: { id: this.milestone.id }, acceptance: this.milestone.criteria },
       signal,
     );
     const receipt = await tools.invoke(
@@ -282,7 +292,7 @@ export class ReviewedHoldFixture {
 
   /** Produce a host hold through the public Execution steward boundary, never a model blocked claim. */
   run(): Promise<ActivityOutcome> {
-    return steward(new Agent(new Architecture()), this.task, correction, 'implementation', signal);
+    return steward(new Agent(new Architecture()), this.task, this.milestone, 'implementation', signal);
   }
 
   /** Reopen durable state and reconstruct a clean worktree from the same secured checkpoint. */
