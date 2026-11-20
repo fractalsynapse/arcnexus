@@ -8,30 +8,37 @@ engineering work, not a hand-authored Director plan or delivered capability.
 
 ## Current position and next work
 
-Updated 2026-11-20 against staging `05a87607`. Completed boxes describe the
+Updated 2026-11-20 against staging `ffed7c41`. Completed boxes describe the
 specific capability and linked evidence below, not completion of the entire
 efficiency batch. Unchecked items may have partial implementation; the remaining
 behavior or proof is stated explicitly.
 
-| Area                        | Verified delivery                                                                                                                                                                                                                 | Still outstanding                                                                                                                                         |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Retained quality work       | [PR #665](https://github.com/fractalsynapse/arcnexus/pull/665) reconciled the exact approved guide batch and delivered the reduced confined owner-check implementation.                                                           | The old interrupted #638 attempt remains historical evidence; its failed attempt is not a successful run.                                                 |
-| Architecture and operations | [PR #640](https://github.com/fractalsynapse/arcnexus/pull/640) delivered typed operation overrides, activity verification, approved adoption boundaries and observable execution.                                                 | The broader merge/provenance, runtime-adoption and same-run live acceptance items in B remain open.                                                       |
-| Acting context              | [PR #664](https://github.com/fractalsynapse/arcnexus/pull/664) delivered the source-linked component index; [PR #667](https://github.com/fractalsynapse/arcnexus/pull/667) preserved originating findings through nested repairs. | All 18 purposes, 94 model activities and one host procedure are rewritten in draft #673. Human review, adoption and live behavioral proof remain pending. |
-| Timeline and measurements   | Complete provider/MCP artifacts, ordered live human/JSONL observations and time/token accounting are operating through the existing journal.                                                                                      | Full round/phase analysis, verified monetary pricing and subsequent refinement consuming those findings remain open.                                      |
-| Continuous refinement       | The retained platform-led [implementation task #668](https://github.com/fractalsynapse/arcnexus/issues/668) ended held before staging; its checkpoints and failed evidence are retained.                                          | `refine` delivery and the three consecutive production rounds are unproved. Qualification remains **0/3**.                                                |
+| Area                        | Verified delivery                                                                                                                                                                                                                 | Still outstanding                                                                                                                                       |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Retained quality work       | [PR #665](https://github.com/fractalsynapse/arcnexus/pull/665) reconciled the exact approved guide batch and delivered the reduced confined owner-check implementation.                                                           | The old interrupted #638 attempt remains historical evidence; its failed attempt is not a successful run.                                               |
+| Architecture and operations | [PR #640](https://github.com/fractalsynapse/arcnexus/pull/640) delivered typed operation overrides, activity verification, approved adoption boundaries and observable execution.                                                 | The broader merge/provenance, runtime-adoption and same-run live acceptance items in B remain open.                                                     |
+| Acting context              | [PR #664](https://github.com/fractalsynapse/arcnexus/pull/664) delivered the source-linked component index; [PR #667](https://github.com/fractalsynapse/arcnexus/pull/667) preserved originating findings through nested repairs. | All 18 purposes, 94 model activities and one host procedure were approved by the architect and merged in #673. Live behavioral acceptance remains open. |
+| Timeline and measurements   | Complete provider/MCP artifacts, ordered live human/JSONL observations and time/token accounting are operating through the existing journal.                                                                                      | Full round/phase analysis, verified monetary pricing and subsequent refinement consuming those findings remain open.                                    |
+| Continuous refinement       | The retained #668 implementation resumed as run 102 with the accepted guidance, original issue and secured checkpoint. Prior run 101 remains a held observation.                                                                  | `refine` delivery and the three consecutive production rounds are unproved. Qualification remains **0/3**.                                              |
 
-The architect's current sequencing instruction is explicit: allow the existing
-live implementation run to finish, then **start no further live tests until D has
-been addressed and reviewed**. Rewrite all component purposes and individual
-activity instructions, align their operations/verification, and stop for the
-architect's feedback before resuming live acceptance. Keep the existing single
-request string; the architect has explicitly accepted it for the activity prompt.
-Separate provider channels are not a prerequisite for this batch.
-Deterministic construction checks and documentation
-validation remain available; a technically successful PR alone does not establish
-that the rewritten agents are effective. Retain any unfinished live result and its
-checkpoints instead of silently restarting it during this pause.
+The architect reviewed the complete rewrite and explicitly approved merging #673
+and proceeding with testing. The earlier D review stop is satisfied. All 18
+purposes, 94 model activity procedures, the host-only Delivery procedure and all
+ten roles are now accepted in staging. The existing single request string remains
+unchanged. Authoring and guide delivery are complete; useful agent behavior,
+remaining operation capabilities and three-round live qualification still need
+observed evidence.
+
+[PR #673](https://github.com/fractalsynapse/arcnexus/pull/673) merged at
+`ffed7c41a9fde0008b807a0d99dc4e6a48f878e7`. Its exact-head
+[Development CI](https://github.com/fractalsynapse/arcnexus/actions/runs/44714117574)
+and [Staging CI](https://github.com/fractalsynapse/arcnexus/actions/runs/44715213130)
+passed. Run 102 resumes the exact #668 goal through the existing installed runtime
+(code source `05a87607`, unchanged by the documentation merge), with accepted
+source `ffed7c41`. Its actual native request includes the rewritten Workflow
+purpose, activity, role and Agent protocol. It resumed directly at Workflow
+Implementation without another Director invocation, reusing issue #668 and the
+secured checkpoint. This is initial recovery evidence, not a completed delivery.
 
 Repository housekeeping proceeds separately: reconcile delivered staging work with
 main and retire only issues whose scope is complete or explicitly superseded.
@@ -245,7 +252,7 @@ authoring targets; do not turn them into runtime rejection, truncation or paddin
 Measure authored and resolved text with the identified tokenizer when available,
 not a guessed characters-to-tokens ratio. Report unmeasured counts honestly.
 
-- [ ] Review the complete practices, purposes and individual activity procedures
+- [x] Review the complete practices, purposes and individual activity procedures
       together before adoption or further live tests. The architect requested the
       full authoring pass before this feedback boundary.
 - [x] For each purpose, explain the component's reason for existence, consumers,
@@ -257,7 +264,7 @@ not a guessed characters-to-tokens ratio. Report unmeasured counts honestly.
 - [x] Include complete originating findings, successful edit receipts, supplier and
       research answers, current check observations and run-log access in activity context.
       Fix the existing finding-propagation path tracked in #660; do not add a second store.
-- [ ] Design realistic fixtures around the actual public contract and assembled
+- [x] Design realistic fixtures around the actual public contract and assembled
       record shape. Explain filesystem layout, owner metadata, nested cwd, configuration,
       confinement and native availability. Avoid fixtures that manufacture a pass by
       bypassing the production boundary or by skipping the behavior under test.
@@ -271,49 +278,53 @@ not a guessed characters-to-tokens ratio. Report unmeasured counts honestly.
 - [x] Fix the compact component index before expanding purposes: include identity,
       authored short summary and source reference; include the acting component's full
       purpose once. Make other full purposes readable through ordinary file operations.
-- [ ] Render complete selected instructions through inspect and activation using
+- [x] Render complete selected instructions through inspect and activation using
       the same builder. Show source labels and architecture identity. Let Codex discover
       AGENTS.md and skills, and verify the delivered guidance reaches the real harness.
 - [x] Retain the existing single-string request representation accepted by the
       architect. Make the complete purpose and selected activity procedure readable
       with source boundaries distinguishing guidance, task input and observations.
       Do not introduce a request-channel or CLI contract change for this rewrite.
-- [ ] Review every entry below for purpose, each activity's instruction text,
-      operation bindings, verification and representative behavioral evidence. A box
-      closes only when that component's complete set is rewritten and verified.
+- [x] Complete the authoring/static review of every component purpose, individual
+      activity, operation/verification alignment and host-only procedure. The
+      architect reviewed and approved the complete batch. The table records that
+      completed guide work, not successful live behavior for every activity.
+- [ ] Demonstrate improved decisions and useful delivery through the rewritten
+      activities in the live lifecycle. Retain remaining capability gaps and failed
+      observations; static validity and human approval alone do not complete this.
 
 | Done | Component specification                                                | Activities requiring individual review                                   | Specific emphasis                                                    |
 | ---- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------- |
-| [ ]  | [project](../../.arc/architecture/components/project.yaml)             | research, documentation, testing, implementation, review                 | Durable intent, owner-free goals, guide/result separation.           |
-| [ ]  | [foundation](../../.arc/architecture/components/foundation.yaml)       | research, documentation, testing, implementation, review                 | Broad tooling strategy, actual selectors, conservative reuse.        |
-| [ ]  | [cli-app](../../.arc/architecture/components/cli-app.yaml)             | research, documentation, testing, implementation, review                 | Live human/JSONL rendering, terminal questions and cancellation.     |
-| [ ]  | [agent](../../.arc/architecture/components/agent.yaml)                 | research, documentation, testing, implementation, review                 | Central actor interface, complete instructions and observations.     |
-| [ ]  | [team](../../.arc/architecture/components/team.yaml)                   | research, documentation, testing, implementation, review                 | Sole roster and ownership resolution across model versions.          |
-| [ ]  | [architecture](../../.arc/architecture/components/architecture.yaml)   | updating, research, documentation, testing, implementation, review       | Integrated resolution, exact approval, live adoption and validation. |
-| [ ]  | [commands](../../.arc/architecture/components/commands.yaml)           | research, documentation, testing, implementation, review                 | Transport-neutral structured lifecycle and event subscription.       |
-| [ ]  | [workflow](../../.arc/architecture/components/workflow.yaml)           | research, documentation, testing, implementation, review                 | Local recovery, canonical position, Plan → Architect → Run.          |
-| [ ]  | [direction](../../.arc/architecture/components/direction.yaml)         | planning, research, documentation, testing, implementation, review       | Initial sequencing, explicit escalation, final rejection.            |
-| [ ]  | [planner](../../.arc/architecture/components/planner.yaml)             | planning, research, documentation, testing, implementation, review       | Human objectives, owner-free goals, measured prior findings.         |
-| [ ]  | [execution](../../.arc/architecture/components/execution.yaml)         | research, documentation, testing, implementation, review                 | MCP checks/edits, checkpoint recovery, native events and metrics.    |
-| [ ]  | [coordination](../../.arc/architecture/components/coordination.yaml)   | research, documentation, testing, implementation, review                 | One journal/writer, ordered events, replay and durable cursors.      |
-| [ ]  | [collaboration](../../.arc/architecture/components/collaboration.yaml) | research, documentation, testing, implementation, review                 | External-effect identity, issue/PR reconciliation and links.         |
-| [ ]  | [verification](../../.arc/architecture/components/verification.yaml)   | research, documentation, testing, implementation, review                 | Applicable observations, truthful expected red, independent verdict. |
-| [ ]  | [reviewer](../../.arc/architecture/components/reviewer.yaml)           | assessment, research, documentation, testing, implementation, review     | Complete evidence, useful lessons, rejected criteria and costs.      |
-| [ ]  | [delivery](../../.arc/architecture/components/delivery.yaml)           | research, documentation, testing, implementation, review, release (host) | Verified staging, uncertain publication, host operation contract.    |
-| [ ]  | [manager](../../.arc/architecture/components/manager.yaml)             | research, documentation, testing, implementation, review                 | Guidance consistency, skills discovery, no duplicate policy.         |
-| [ ]  | [release](../../.arc/architecture/components/release.yaml)             | research, documentation, testing, implementation, review                 | CI parity, delivery records and separate production authority.       |
+| [x]  | [project](../../.arc/architecture/components/project.yaml)             | research, documentation, testing, implementation, review                 | Durable intent, owner-free goals, guide/result separation.           |
+| [x]  | [foundation](../../.arc/architecture/components/foundation.yaml)       | research, documentation, testing, implementation, review                 | Broad tooling strategy, actual selectors, conservative reuse.        |
+| [x]  | [cli-app](../../.arc/architecture/components/cli-app.yaml)             | research, documentation, testing, implementation, review                 | Live human/JSONL rendering, terminal questions and cancellation.     |
+| [x]  | [agent](../../.arc/architecture/components/agent.yaml)                 | research, documentation, testing, implementation, review                 | Central actor interface, complete instructions and observations.     |
+| [x]  | [team](../../.arc/architecture/components/team.yaml)                   | research, documentation, testing, implementation, review                 | Sole roster and ownership resolution across model versions.          |
+| [x]  | [architecture](../../.arc/architecture/components/architecture.yaml)   | updating, research, documentation, testing, implementation, review       | Integrated resolution, exact approval, live adoption and validation. |
+| [x]  | [commands](../../.arc/architecture/components/commands.yaml)           | research, documentation, testing, implementation, review                 | Transport-neutral structured lifecycle and event subscription.       |
+| [x]  | [workflow](../../.arc/architecture/components/workflow.yaml)           | research, documentation, testing, implementation, review                 | Local recovery, canonical position, Plan → Architect → Run.          |
+| [x]  | [direction](../../.arc/architecture/components/direction.yaml)         | planning, research, documentation, testing, implementation, review       | Initial sequencing, explicit escalation, final rejection.            |
+| [x]  | [planner](../../.arc/architecture/components/planner.yaml)             | planning, research, documentation, testing, implementation, review       | Human objectives, owner-free goals, measured prior findings.         |
+| [x]  | [execution](../../.arc/architecture/components/execution.yaml)         | research, documentation, testing, implementation, review                 | MCP checks/edits, checkpoint recovery, native events and metrics.    |
+| [x]  | [coordination](../../.arc/architecture/components/coordination.yaml)   | research, documentation, testing, implementation, review                 | One journal/writer, ordered events, replay and durable cursors.      |
+| [x]  | [collaboration](../../.arc/architecture/components/collaboration.yaml) | research, documentation, testing, implementation, review                 | External-effect identity, issue/PR reconciliation and links.         |
+| [x]  | [verification](../../.arc/architecture/components/verification.yaml)   | research, documentation, testing, implementation, review                 | Applicable observations, truthful expected red, independent verdict. |
+| [x]  | [reviewer](../../.arc/architecture/components/reviewer.yaml)           | assessment, research, documentation, testing, implementation, review     | Complete evidence, useful lessons, rejected criteria and costs.      |
+| [x]  | [delivery](../../.arc/architecture/components/delivery.yaml)           | research, documentation, testing, implementation, review, release (host) | Verified staging, uncertain publication, host operation contract.    |
+| [x]  | [manager](../../.arc/architecture/components/manager.yaml)             | research, documentation, testing, implementation, review                 | Guidance consistency, skills discovery, no duplicate policy.         |
+| [x]  | [release](../../.arc/architecture/components/release.yaml)             | research, documentation, testing, implementation, review                 | CI parity, delivery records and separate production authority.       |
 
 The host-only release activity receives a complete host lifecycle specification,
 operation mapping, verification and failure behavior. It must not acquire a model
 profile or a fabricated system prompt simply to fill an inventory row.
 
 All 18 purposes and all 95 declared activity procedures are authored directly in
-the component YAML specifications in [draft PR #673](https://github.com/fractalsynapse/arcnexus/pull/673).
-The [complete review guide](https://github.com/fractalsynapse/arcnexus/blob/672-activity-operating-instructions/packages/architecture/docs/proposals/activity-instructions/review.md)
-on that branch links every component and explains the shared role/standard
-composition. All ten role instruction sets are rewritten. The component rows
-remain open for human review and behavioral verification; authored text is not
-activation or demonstrated agent improvement.
+the component YAML specifications in [PR #673](https://github.com/fractalsynapse/arcnexus/pull/673).
+The [complete review guide](https://github.com/fractalsynapse/arcnexus/blob/ffed7c41a9fde0008b807a0d99dc4e6a48f878e7/packages/architecture/docs/proposals/activity-instructions/review.md)
+links every component and explains the shared role/standard composition. All ten
+role instruction sets are rewritten. The architect approved the complete guide
+batch and staging integration; the component rows record completed authoring and
+review. Actual agent improvement remains a separate live acceptance claim.
 
 At catalog commit `b4308901`, the existing builder assembled all 94 model
 activities locally. With tiktoken 0.14.0 / o200k_base, purposes measured
@@ -327,10 +338,10 @@ locked contracts and registry bytes. Specification validation passes.
 Planner planning lacks a research-request mapping and Planner lacks a declared
 research archive root. Native/provider operation completion is also still open.
 The proposal exposes those gaps rather than claiming prose implements them.
-The architect has accepted the single input string and required a stop after this
-complete rewrite for feedback. No new live test or guide adoption proceeds before
-that review. [Issue #672](https://github.com/fractalsynapse/arcnexus/issues/672)
-tracks this review boundary.
+The architect accepted the single input string, completed the requested review
+and authorized #673 integration and resumed testing. [Issue #672](https://github.com/fractalsynapse/arcnexus/issues/672)
+retains the review/approval record. Research mapping and native-operation gaps
+remain open rather than being completed by instruction text.
 
 ## E. Capture and stream the complete execution timeline
 
@@ -544,12 +555,12 @@ of the interrupted attempts or claiming the full integrated acceptance in G.
   basis has been supplied. Round/phase analysis and demonstrated later use of
   findings remain open.
 
-The complete catalog authoring proposal is now in draft #673; these earlier
+The complete catalog rewrite is approved and merged in #673; these earlier
 passes do not prove its agent behavior. Full same-run adoption and production
 refinement remain unproved. Keep the live streak at **0/3** until authorized
-production acceptance actually completes after D review.
+production acceptance actually completes under the accepted guidance.
 
-## Retained run 101 and current review stop
+## Retained run 101 and resumed testing
 
 Run 101 of #668 ended in a durable hold before staging. Coordination and
 Execution contributions completed, but Workflow's implementation still lacked
@@ -574,5 +585,7 @@ establishes valid red without demanding future Implementation, real Planner mode
 tests cannot be replaced by a fake propose method, recovered history must contain
 distinct findings/answers/usage/outcomes from all relevant attempts, and
 Implementation repairs its owned tests in place when no earlier Testing target
-exists. These are proposed instructions, not claims that the runtime defect is
-already fixed. No additional live attempt has been started.
+exists. These are accepted instructions, not claims that the runtime defect is already
+fixed. After human review and #673 staging CI, run 102 resumed the same goal
+without operator candidate edits or database repair. Its result will be recorded
+separately; qualification remains 0/3.
