@@ -254,7 +254,7 @@ export class RefinementRun {
       '',
       '## Complete originating journal observations',
       '',
-      frames.map((frame) => JSON.stringify(frame)).join('\\n'),
+      frames.map((frame) => JSON.stringify(frame)).join('\n'),
       '',
       '## Event-derived measurements',
       '',
