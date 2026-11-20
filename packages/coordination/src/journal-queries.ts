@@ -66,6 +66,20 @@ export const recentFindings = `
   ORDER BY incident.id DESC
 `;
 
+export function researchReports(database: DatabaseSync, component: string, id?: string): unknown[] {
+  return database
+    .prepare(`
+      SELECT json_extract(content, '$.researchResult') AS report
+      FROM events
+      WHERE json_extract(content, '$.researchResult.component') = ?
+        AND json_type(content, '$.researchResult.archive') = 'text'
+        AND (? IS NULL OR json_extract(content, '$.researchResult.request.id') = ?)
+      ORDER BY events.id DESC
+    `)
+    .all(component, id ?? null, id ?? null)
+    .map(({ report }) => JSON.parse(String(report)));
+}
+
 export function completedRefinementRounds(database: DatabaseSync): JournalEvent[] {
   return database
     .prepare(`
