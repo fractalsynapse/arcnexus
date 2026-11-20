@@ -211,10 +211,12 @@ export class RefinementRun {
     invocation: string,
     round: number,
     goals: readonly StandingGoal[],
-    start: number,
+    _start: number,
   ) {
-    const frames = this.observer.eventFrames().slice(start);
-    const report = this.report(invocation, round, goals, frames);
+    const frames = this.originatingFrames(invocation, round, goals);
+    const measurements = new RunMeasurements();
+    for (const frame of frames) measurements.accept(frame);
+    const report = this.report(invocation, round, goals, frames, measurements.snapshot());
     const completion: CompletedRefinementRound = {
       invocation,
       round,
@@ -226,6 +228,31 @@ export class RefinementRun {
       evidence: [...new Set(frames.flatMap((frame) => eventEvidence(frame.observation)))],
     };
     this.parent.record({ completedRound: completion });
+  }
+
+  /** Rebuild this round's complete originating stream from retained child timeline artifacts. */
+  private originatingFrames(invocation: string, round: number, goals: readonly StandingGoal[]) {
+    const host = hostTask(this.parent);
+    const children = [
+      ['Assess objectives and standing goals', this.scope(invocation, round, 'plan')],
+      ['Assess architecture alignment', this.scope(invocation, round, 'architect')],
+      ...goals.map((goal) => [goal.body, this.scope(invocation, round, `goal:${goal.id}`)]),
+    ];
+    const frames = new Map<string, JournalEvent>();
+    for (const [goal, scope] of children) {
+      const records = host.journal.childEvents(goal!, scope!) as Record<string, unknown>[];
+      const timelinePath = records
+        .map((record) => record.artifact)
+        .find((path): path is string => typeof path === 'string' && path.endsWith('run-timeline.jsonl'));
+      if (!timelinePath) continue;
+      const timeline = host.readFile(timelinePath).text;
+      for (const line of timeline.split('\n')) {
+        if (!line) continue;
+        const frame = JSON.parse(line) as JournalEvent;
+        frames.set(frame.sequence, frame);
+      }
+    }
+    return [...frames.values()].sort((left, right) => Number(left.sequence) - Number(right.sequence));
   }
 
   /** Persist the requested total and first unfinished logical position. */
