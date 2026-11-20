@@ -25,13 +25,20 @@ class RefinementGateProvider {
     if (this.component === 'planner')
       return {
         summary: 'Propose removing the baseline goal for human review.',
-        ratings: [{
-          id: 'baseline', alignment: 'strong', evidence: 'unverified',
-          reason: 'The baseline is covered.', sources: [citation], observations: [],
-        }],
+        ratings: [
+          {
+            id: 'baseline',
+            alignment: 'strong',
+            evidence: 'unverified',
+            reason: 'The baseline is covered.',
+            sources: [citation],
+            observations: [],
+          },
+        ],
         comparison: ['The single goal covers the baseline without overlap.'],
         changes: [{ id: 'baseline', content: null }],
-        links: [], sources: [citation],
+        links: [],
+        sources: [citation],
       };
     if (this.component === 'architecture')
       return {
@@ -39,10 +46,12 @@ class RefinementGateProvider {
         purpose: 'Explain evidence retention in the accepted plan template.',
         consequences: ['Future plans explain evidence retention.'],
         implementation: [],
-        changes: [{
-          path: '.arc/architecture/plan-template.md',
-          content: 'Use the normal five ordered activities.\nRetain complete evidence.\n',
-        }],
+        changes: [
+          {
+            path: '.arc/architecture/plan-template.md',
+            content: 'Use the normal five ordered activities.\nRetain complete evidence.\n',
+          },
+        ],
       };
     return {
       kind: 'satisfied',
