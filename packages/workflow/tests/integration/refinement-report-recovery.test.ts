@@ -13,6 +13,7 @@ export const suite = { owner: 'workflow', level: 'integration', tags: ['regressi
 
 type Refine = (directory: string, rounds: number, observer: TaskObserver, signal: AbortSignal) => Promise<unknown>;
 type State = ReturnType<typeof services>;
+type RecoveryState = State & { calls: { value: number }; reopen: () => State };
 
 /** Build a retained SQLite journal and Git project for a restart across service instances. */
 function fixture(t: TestContext) {
