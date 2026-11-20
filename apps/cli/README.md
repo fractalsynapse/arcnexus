@@ -206,9 +206,10 @@ require renewed approval. See the [Architecture application](../../packages/arch
 
 The following is approved implementation intent for
 [the refinement work](https://github.com/fractalsynapse/arcnexus/issues/615),
-under CLI gateway GW-29 through GW-32. At this documentation step, the CLI
-dispatcher does not yet expose `refine`; these examples describe the accepted
-surface to implement, not demonstrated runtime availability.
+under CLI gateway GW-29 through GW-32. The dispatcher exposes `refine` through
+Commands. The behavior below remains the acceptance target while the complete
+built-process observation and recovery evidence is being established; command
+recognition alone does not demonstrate the full lifecycle or live qualification.
 
 ```sh
 arcnexus refine
@@ -226,7 +227,11 @@ once before the command or at the end of its arguments. For example,
 `refine --json --rounds 2` and `refine --rounds --json 2` are misplaced.
 Input errors produce a stderr diagnostic, exit 2 and empty stdout before host
 admission or provider access. Do not impose a safe-integer ceiling or another
-resource cap on the requested round count.
+resource cap on the requested round count. The adapter passes the decimal text
+unchanged to Commands, using the string `1` when omitted. It must not convert the
+value through a JavaScript number: `9007199254740992` and `9007199254740993` must
+remain distinct requested totals, and a longer positive decimal remains valid.
+Workflow owns the exact durable comparison when an unfinished invocation resumes.
 
 Each round runs Plan, Architect and Run in sequence. Planner and Architect assess
 again each round and can justify no change. After those phases, Run captures the
@@ -299,9 +304,22 @@ Historical results do not belong in objective or goal files.
 
 A built CLI scenario with two rounds and distinguishable phase/goal observations
 must show Plan, Architect and every captured goal in order for both rounds,
-with human round/phase visibility or parseable JSONL arriving before the sole
-terminal result. Invalid argument cases must prove exit 2, empty stdout and no
-admission. Process-level cancellation and pending-input cases must demonstrate
+with human round/phase visibility and parseable JSONL arriving before the sole
+terminal result. The controlled provider must actually emit distinguishable
+complete message and tool-result observations through the normal provider path.
+The subprocess consumer must observe them while the process is still running,
+then compare their complete payloads and ordering, reported profile usage and
+terminal uniqueness. A final output buffer or a fixture that never emits its
+intended tool result cannot establish streaming. Diagnose a missing observation
+at its originating fixture or production boundary; retain the completeness and
+liveness assertions through any correction.
+
+Built-process argument scenarios must establish default `1` and exact decimal
+handoff through the SDK into the retained invocation, including adjacent totals
+above JavaScript's safe-integer range and a decimal beyond its finite number
+range. They need only reach a deliberate durable pending phase to observe the
+requested total; executing that many rounds is unnecessary. Invalid argument
+cases must prove exit 2, empty stdout and no admission. Process-level cancellation and pending-input cases must demonstrate
 the shared SDK path and documented exits; retry must preserve the unfinished
 position rather than replay completed work. Existing task/publication regressions
 cover preserved machinery. Controlled fixtures establish deterministic behavior,
