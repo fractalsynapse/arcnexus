@@ -256,7 +256,11 @@ test('completed-round reports recover originating findings from an earlier attem
   assert.equal(typeof reportPath, 'string');
   const report = readFileSync(reportPath as string, 'utf8');
   assert.match(report, /"summary":"No change"/);
+  assert.match(report, /"goal":"Assess objectives and standing goals"/);
+  assert.match(report, /"goal":"Assess architecture alignment"/);
+  assert.match(report, /"goal":"First goal"/);
   assert.ok(Array.isArray(Reflect.get(round, 'findings')));
+  assert.ok((Reflect.get(round, 'findings') as unknown[]).length >= 4);
 });
 
 test('a competing foreground task is refused while the refinement phase runs', async (t) => {
