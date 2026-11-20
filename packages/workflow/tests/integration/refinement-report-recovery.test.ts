@@ -125,7 +125,7 @@ function interruptingObserver(): TaskObserver {
 }
 
 /** Run the first attempt until its committed child is interrupted before parent acknowledgment. */
-async function interruptAfterChild(root: string, state: State) {
+async function interruptAfterChild(root: string, state: RecoveryState) {
   const workflow = new Workflow(workflowServices(state, measuredPlanner(state.calls, state.revision)));
   const outcome = await (Reflect.get(workflow, 'refine') as Refine).call(
     workflow, root, 1, interruptingObserver(), new AbortController().signal,
