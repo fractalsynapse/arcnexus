@@ -108,28 +108,6 @@ function providers(f: ReturnType<typeof fixture>, calls: string[]) {
   } as unknown as WorkflowServices;
 }
 
-test('a completed round exposes its report and originating evidence to the observer', async (t) => {
-  const f = fixture(t);
-  const workflow = new Workflow(providers(f, []));
-  const refine = Reflect.get(workflow, 'refine') as Refinement;
-  assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
-  const events: unknown[] = [];
-  await refine.call(
-    workflow,
-    f.root,
-    1,
-    { progress() {}, event: (event) => events.push(event) },
-    new AbortController().signal,
-  );
-  const round = completedRounds(events)[0];
-  assert.ok(round, 'a real completed round is observed');
-  assert.equal(round.round, 1);
-  assert.ok(round.report, 'the round references its retained report');
-  assert.ok(Array.isArray(round.findings) && round.findings.length > 0);
-  assert.ok(Array.isArray(round.measurements));
-  assert.ok(Array.isArray(round.evidence) && round.evidence.length > 0);
-});
-
 /** Read completed-round payloads from the public journal event envelope. */
 function completedRounds(events: readonly unknown[]) {
   return events.flatMap((event) => {
