@@ -270,9 +270,17 @@ function assertRecoveredReport(assessments: number, events: readonly unknown[]) 
   assert.match(report, /"assessment":\{"kind":"satisfied"/);
   const findings = Reflect.get(round, 'findings') as string[];
   assert.ok(findings.length >= 4);
-  assert.equal(new Set(findings).size, findings.length, 'each originating event is referenced once');
+  assert.equal(
+    new Set(findings).size,
+    findings.length,
+    'each originating event is referenced once',
+  );
   const recovery = report.match(/Reused completed child outcome for refine:[^\n]+/g) ?? [];
-  assert.deepEqual(recovery, [recovery[0]], 'the report contains one durable child reuse for this round');
+  assert.deepEqual(
+    recovery,
+    [recovery[0]],
+    'the report contains one durable child reuse for this round',
+  );
 }
 
 test('a committed child outcome is reused after parent acknowledgment is interrupted', async (t) => {
