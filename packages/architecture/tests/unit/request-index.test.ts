@@ -21,7 +21,9 @@ const capture: Capture = {
     revision: 'generic-revision',
     remote: 'https://example.com/generic.git',
     paths: [],
-    read: (path: string) => { throw new Error(`Unexpected source read: ${path}`); },
+    read: (path: string) => {
+      throw new Error(`Unexpected source read: ${path}`);
+    },
   },
   project: {
     id: 'generic',
@@ -32,18 +34,38 @@ const capture: Capture = {
     verifier: { component: 'plain', activity: 'review' },
   },
   components: {
-    acting: { id: 'acting', purpose: actingPurpose, owns: ['acting'], activities: { work: activity } },
+    acting: {
+      id: 'acting',
+      purpose: actingPurpose,
+      owns: ['acting'],
+      activities: { work: activity },
+    },
     other: {
       id: 'other',
       purpose: foreignPurpose,
-      summary: 'A deliberately authored summary.',
+      ...{ summary: 'A deliberately authored summary.' },
       owns: ['other'],
       activities: { direct: { ...activity, instructions: [foreignInstruction] } },
     },
-    plain: { id: 'plain', purpose: 'Another private purpose.', owns: ['plain'], activities: { review: activity } },
+    plain: {
+      id: 'plain',
+      purpose: 'Another private purpose.',
+      owns: ['plain'],
+      activities: { review: activity },
+    },
   },
-  roles: { designer: { id: 'designer', purpose: 'Design', responsibilities: [], instructions: [] } },
-  profiles: { standard: { id: 'standard', model: 'model', reasoning: 'high', webSearch: 'disabled', operationCategories: ['read'] } },
+  roles: {
+    designer: { id: 'designer', purpose: 'Design', responsibilities: [], instructions: [] },
+  },
+  profiles: {
+    standard: {
+      id: 'standard',
+      model: 'model',
+      reasoning: 'high',
+      webSearch: 'disabled',
+      operationCategories: ['read'],
+    },
+  },
   operations: { read: { id: 'read', category: 'read' } },
   standards: {},
   contracts: [],
@@ -60,12 +82,23 @@ function decodedSection(input: string, name: string) {
 test('request preserves complete selected content with source and task placeholders', () => {
   const result = new Architecture().request(capture, { component: 'acting', activity: 'work' });
   const activitySection = decodedSection(result.request.input, 'Activity');
-  assert.equal(activitySection.source, 'Source: .arc/architecture/components/acting.yaml (activities.work)');
+  assert.equal(
+    activitySection.source,
+    'Source: .arc/architecture/components/acting.yaml (activities.work)',
+  );
   assert.deepEqual(activitySection.value, {
-    component: 'acting', purpose: actingPurpose, activity: 'work', instructions,
+    component: 'acting',
+    purpose: actingPurpose,
+    activity: 'work',
+    instructions,
   });
   assert.deepEqual(result.placeholders, [
-    '<assignment>', '<goal>', '<milestone>', '<acceptance>', '<evidence>', '<worktree>',
+    '<assignment>',
+    '<goal>',
+    '<milestone>',
+    '<acceptance>',
+    '<evidence>',
+    '<worktree>',
   ]);
   assert.match(result.request.input, /Goal: <goal>/);
   assert.match(result.request.input, /assignment: <assignment>/);
@@ -76,7 +109,10 @@ test('component index exposes authored summaries and sources without foreign def
   const index = decodedSection(result.request.input, 'Component index');
   assert.equal(index.source, 'Source: .arc/architecture/components/');
   assert.deepEqual(index.value, {
-    other: { source: '.arc/architecture/components/other.yaml', summary: 'A deliberately authored summary.' },
+    other: {
+      source: '.arc/architecture/components/other.yaml',
+      summary: 'A deliberately authored summary.',
+    },
     plain: { source: '.arc/architecture/components/plain.yaml' },
   });
   const decoded = JSON.stringify(index.value);
