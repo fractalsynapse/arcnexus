@@ -22,12 +22,18 @@ interface Probe {
 
 /** Require exact public advertised metadata, so renamed or stale tool descriptions cannot pass. */
 function assertTools(view: AgentInspection, probe: Probe) {
-  const expected = view.request.options.tools.map(({ name, description, inputSchema }) =>
-    ({ name, description, inputSchema }));
+  const expected = view.request.options.tools.map(({ name, description, inputSchema }) => ({
+    name,
+    description,
+    inputSchema,
+  }));
   assert.deepEqual(probe.tools, expected);
   const section = view.request.input.split('## Operations\n')[1]!.split('\n\n## Standards')[0]!;
   const operations = parse(section.slice(section.indexOf('\n\n') + 2));
-  assert.deepEqual(Object.keys(operations), expected.map(({ name }) => name));
+  assert.deepEqual(
+    Object.keys(operations),
+    expected.map(({ name }) => name),
+  );
   for (const tool of expected) assert.equal(operations[tool.name].mcp, tool.description);
   assert.ok(probe.refusals.every(({ isError }) => isError));
 }
@@ -38,7 +44,9 @@ function assertInvocation(view: AgentInspection, probe: Probe) {
   assert.equal(probe.cwd, options.workingDirectory);
   assert.equal(probe.args[probe.args.indexOf('--model') + 1], options.model);
   assert.equal(probe.args[probe.args.indexOf('--cd') + 1], options.workingDirectory);
-  assert.ok(probe.args.includes('model_reasoning_effort=' + JSON.stringify(options.modelReasoningEffort)));
+  assert.ok(
+    probe.args.includes('model_reasoning_effort=' + JSON.stringify(options.modelReasoningEffort)),
+  );
   assert.ok(probe.args.includes('web_search=' + JSON.stringify(options.webSearchMode)));
   assert.ok(probe.args.includes('features.shell_tool=false'));
   assert.ok(probe.args.includes('features.unified_exec=false'));
@@ -61,25 +69,41 @@ for (const [component, activity, actor, names, web] of [
     const fixture = new InspectionFixture(t);
     const task = await fixture.open(t);
     const selection = { component, activity };
-    const data = { assignment: { instructions: 'Exact supplied assignment\nSecond line' },
-      milestone: { id: 'parity', owner: 'work' }, acceptance: [{ id: 'exact' }], evidence: [] };
-    const view = fixture.agent.prepareRequest(task.capture, selection,
-      { ...data, goal: task.goal, worktree: task.worktree });
+    const data = {
+      assignment: { instructions: 'Exact supplied assignment\nSecond line' },
+      milestone: { id: 'parity', owner: 'work' },
+      acceptance: [{ id: 'exact' }],
+      evidence: [],
+    };
+    const view = fixture.agent.prepareRequest(task.capture, selection, {
+      ...data,
+      goal: task.goal,
+      worktree: task.worktree,
+    });
     assert.equal(view.actor, actor);
     assert.deepEqual(view.placeholders, []);
-    assert.deepEqual(view.request.options.tools.map(({ name }) => name), names);
+    assert.deepEqual(
+      view.request.options.tools.map(({ name }) => name),
+      names,
+    );
     assert.equal(view.request.options.webSearchMode, web);
     await task.activate(fixture.agent, selection, data, new AbortController().signal);
     const transcript = task.evidence.find((path) => path.endsWith('codex.jsonl'));
     assert.ok(transcript);
-    const frames = readFileSync(transcript, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+    const frames = readFileSync(transcript, 'utf8')
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line));
     const probe = frames.find((event) => event.type === 'fixture.inspection') as Probe;
     assert.ok(probe, 'controlled executable must actually receive the request');
     assert.equal(probe.executable, task.config.executable);
     assert.equal(probe.input, view.request.input);
     assertTools(view, probe);
     assertInvocation(view, probe);
-    assert.equal(readFileSync(join(task.worktree!, 'review/foreign.txt'), 'utf8'), 'foreign original\n');
+    assert.equal(
+      readFileSync(join(task.worktree!, 'review/foreign.txt'), 'utf8'),
+      'foreign original\n',
+    );
   });
 }
 
@@ -87,9 +111,23 @@ test('inspection is repeatable with named live inputs and no admission, provider
   const fixture = new InspectionFixture(t);
   const before = fixture.git('worktree', 'list', '--porcelain');
   const status = fixture.git('status', '--porcelain');
-  const view = fixture.agent.inspect({ directory: fixture.root, component: 'work', activity: 'testing' });
-  assert.deepEqual(view.placeholders, ['<assignment>', '<goal>', '<milestone>', '<acceptance>', '<evidence>', '<worktree>']);
-  assert.deepEqual(view, fixture.agent.inspect({ directory: fixture.root, component: 'work', activity: 'testing' }));
+  const view = fixture.agent.inspect({
+    directory: fixture.root,
+    component: 'work',
+    activity: 'testing',
+  });
+  assert.deepEqual(view.placeholders, [
+    '<assignment>',
+    '<goal>',
+    '<milestone>',
+    '<acceptance>',
+    '<evidence>',
+    '<worktree>',
+  ]);
+  assert.deepEqual(
+    view,
+    fixture.agent.inspect({ directory: fixture.root, component: 'work', activity: 'testing' }),
+  );
   assert.equal(fixture.git('worktree', 'list', '--porcelain'), before);
   assert.equal(fixture.git('status', '--porcelain'), status);
   assert.equal(existsSync(fixture.storage), false);
@@ -101,10 +139,20 @@ test('production activation refuses changed native guidance before starting the 
   const path = join(task.worktree!, 'AGENTS.md');
   writeFileSync(path, guidance + 'Candidate instruction');
   try {
-    await assert.rejects(async () => task.activate(fixture.agent,
-      { component: 'work', activity: 'empty' }, {}, new AbortController().signal),
-    /Captured project guidance differs/);
-    assert.equal(task.evidence.some((path) => path.endsWith('native-request.json')), false);
+    await assert.rejects(
+      async () =>
+        task.activate(
+          fixture.agent,
+          { component: 'work', activity: 'empty' },
+          {},
+          new AbortController().signal,
+        ),
+      /Captured project guidance differs/,
+    );
+    assert.equal(
+      task.evidence.some((path) => path.endsWith('native-request.json')),
+      false,
+    );
   } finally {
     writeFileSync(path, guidance);
   }
