@@ -94,6 +94,7 @@ export class Workflow {
   ): Promise<TaskOutcome> {
     if (!Number.isInteger(rounds) || rounds < 1)
       return stopped('invalid', 'Round count must be a positive integer');
+    if (signal.aborted) return stopped('cancelled', 'Task cancelled before admission');
     const reporting = (await import('./observer.js')).RunObserver.for(observer);
     if (!this.services)
       return stopped('invalid', 'Task execution services are unavailable in this build');
