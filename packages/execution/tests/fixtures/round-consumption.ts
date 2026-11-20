@@ -159,7 +159,7 @@ function projectDefinition() {
       architect: { component: 'architecture', activity: 'assessment' },
       delivery: { baseBranch: 'staging', protectedBranch: 'main', requiredGates: [] },
       checks: { acceptance: ['fixture-check'] },
-    ;
+    };
 }
 
 /** Supply the explicit mapped read and human decision transport plus the admission check. */
