@@ -33,18 +33,66 @@ const cancelled: TaskOutcome = {
 function frames(attempt: number): JournalEvent[] {
   const activation = attempt === 1 ? 'planner-first' : 'director-resumed';
   const records: unknown[] = [
-    { refinement: { invocation: 'invocation-1', round: 1, total: 2, phase: attempt === 1 ? 'Plan' : 'Run', goal: attempt } },
-    { nativeStarted: { activation, profile: attempt === 1 ? 'planner' : 'steward', model: 'model-a', reasoning: 'high' } },
-    { nativeEvent: { activation, kind: 'message', event: { message: `Complete provider ${attempt}\nsecond line` } } },
-    { tool: { activation, call: `call-${attempt}`, name: 'read-file', result: `Complete tool ${attempt}\nsecond line` } },
-    { nativeEvent: { activation, kind: 'event', event: { type: 'turn.completed', usage: { input_tokens: attempt * 100, output_tokens: attempt * 10 } } } },
+    {
+      refinement: {
+        invocation: 'invocation-1',
+        round: 1,
+        total: 2,
+        phase: attempt === 1 ? 'Plan' : 'Run',
+        goal: attempt,
+      },
+    },
+    {
+      nativeStarted: {
+        activation,
+        profile: attempt === 1 ? 'planner' : 'steward',
+        model: 'model-a',
+        reasoning: 'high',
+      },
+    },
+    {
+      nativeEvent: {
+        activation,
+        kind: 'message',
+        event: { message: `Complete provider ${attempt}\nsecond line` },
+      },
+    },
+    {
+      tool: {
+        activation,
+        call: `call-${attempt}`,
+        name: 'read-file',
+        result: `Complete tool ${attempt}\nsecond line`,
+      },
+    },
+    {
+      nativeEvent: {
+        activation,
+        kind: 'event',
+        event: {
+          type: 'turn.completed',
+          usage: { input_tokens: attempt * 100, output_tokens: attempt * 10 },
+        },
+      },
+    },
     { nativeFinished: { activation, durationMs: attempt * 20 } },
     attempt === 1
-      ? { outcome: { kind: 'planned', summary: 'Planner assessment', evidence: ['plan/assessment'] } }
+      ? {
+          outcome: {
+            kind: 'planned',
+            summary: 'Planner assessment',
+            evidence: ['plan/assessment'],
+          },
+        }
       : { recovering: 7, checkpoint: 'checkpoint/acknowledged', evidence: ['recovery/report'] },
     attempt === 1
       ? { refinement: { invocation: 'invocation-1', round: 1, total: 2, phase: 'Architect' } }
-      : { goal: { id: 'goal-a', outcome: { kind: 'merged', commit: 'goal-commit', evidence: ['goal/checks', 'pr/615'] } } },
+      : {
+          goal: {
+            id: 'goal-a',
+            outcome: { kind: 'merged', commit: 'goal-commit', evidence: ['goal/checks', 'pr/615'] },
+          },
+        },
     attempt === 1
       ? { proposal: { path: 'proposal/exact.diff', question } }
       : { outcome: { kind: 'merged', commit: 'goal-commit', evidence: ['goal/checks'] } },
@@ -65,13 +113,23 @@ function frames(attempt: number): JournalEvent[] {
 
 /** Supply a controlled Workflow without replacing the Commands plugin or its injection. */
 class RefinementWorkflow extends Workflow {
-  readonly calls: { directory: string; rounds: number; observer: TaskObserver; signal: AbortSignal }[] = [];
+  readonly calls: {
+    directory: string;
+    rounds: number;
+    observer: TaskObserver;
+    signal: AbortSignal;
+  }[] = [];
   readonly answers: (string | undefined)[] = [];
   readonly answerSignals: AbortSignal[] = [];
   cancelDuringProgress = false;
 
   /** Stream child records before returning the gate or aggregate outcome. */
-  override async refine(directory: string, rounds: number, observer: TaskObserver, signal: AbortSignal) {
+  override async refine(
+    directory: string,
+    rounds: number,
+    observer: TaskObserver,
+    signal: AbortSignal,
+  ) {
     this.calls.push({ directory, rounds, observer, signal });
     const attempt = this.calls.length;
     const accounting = new RunMeasurements();
@@ -79,7 +137,11 @@ class RefinementWorkflow extends Workflow {
       observer.event?.(frame);
       accounting.accept(frame);
     }
-    observer.progress({ phase: 'activity', message: `Attempt ${attempt} progress`, evidence: [`progress/${attempt}`] });
+    observer.progress({
+      phase: 'activity',
+      message: `Attempt ${attempt} progress`,
+      evidence: [`progress/${attempt}`],
+    });
     observer.measurements?.(accounting.snapshot(0));
     if (signal.aborted) return cancelled;
     const response = await observer.answer?.(question, signal);
@@ -97,7 +159,10 @@ class CommandsScenario {
   response: string | undefined;
   onProgress?: () => void;
   readonly observer: TaskObserver = {
-    progress: (value) => { this.stream.push({ progress: value }); this.onProgress?.(); },
+    progress: (value) => {
+      this.stream.push({ progress: value });
+      this.onProgress?.();
+    },
     event: (value) => this.stream.push({ event: value }),
     measurements: (value) => this.stream.push({ measurements: value }),
     answer: async (value) => {
@@ -131,7 +196,13 @@ function measurements(attempt: number) {
 function expectedStream(attempt: number) {
   return [
     ...frames(attempt).map((event) => ({ event })),
-    { progress: { phase: 'activity', message: `Attempt ${attempt} progress`, evidence: [`progress/${attempt}`] } },
+    {
+      progress: {
+        phase: 'activity',
+        message: `Attempt ${attempt} progress`,
+        evidence: [`progress/${attempt}`],
+      },
+    },
     { measurements: measurements(attempt) },
     { question },
   ];
