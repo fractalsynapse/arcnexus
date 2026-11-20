@@ -63,7 +63,7 @@ function services(root: string, directory: string, revision: string) {
 }
 
 /** Supply one measured Planner child and normal successful Architect and goal outcomes. */
-function providers(state: ReturnType<typeof services>, planner: () => WorkflowServices['planner']) {
+function providers(state: ReturnType<typeof services>, planner: () => unknown) {
   return {
     execution: {
       admit: state.execution.admit.bind(state.execution),
