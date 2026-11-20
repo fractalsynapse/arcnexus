@@ -1,6 +1,11 @@
 import type { HoldContext } from '../../execution/src/index.js';
 import type { RevisionFeedback } from '../../direction/src/index.js';
-import { stopped, type ActivityCheckpoint, type TaskSession } from './services.js';
+import {
+  stopped,
+  type ActivityCheckpoint,
+  type TaskSession,
+  type TaskOutcome,
+} from './services.js';
 
 /** Route retained independent-review corrections without turning genuine prerequisites into work. */
 export function reviewedHold(
