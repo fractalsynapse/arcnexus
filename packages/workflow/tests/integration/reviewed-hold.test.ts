@@ -90,8 +90,10 @@ test('meaningful successive checked corrections continue despite the same diagno
     'Direction',
     'part-1',
     correction.id,
+    correction.id,
     'Direction',
     'part-2',
+    correction.id,
     correction.id,
     'Direction',
     'part-3',
@@ -139,7 +141,13 @@ async function resumeGate(f: ReviewedWorkflow, checkpoint: string) {
   assert.equal(f.revisions.length, 0);
   assert.equal(f.reviews.length, 0);
   await f.reopen(true);
-  const resumed = await f.run();
+  const resumed = await f.run({
+    progress() {},
+    answer: async (question) => {
+      assert.equal(question, gateQuestion);
+      return gateAnswer;
+    },
+  });
   assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
   assert.equal(f.reviews.length, 1);
   if (f.scenario === 'human') {
