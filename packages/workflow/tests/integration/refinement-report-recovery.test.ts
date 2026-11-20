@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { installProvider } from '../fixtures/refinement-install.js';
 import type { Architecture, Capture } from '../../../architecture/src/index.js';
 import { RefinementSupplier } from '../fixtures/refinement-supplier.js';
 import { RefinementPlanner } from '../fixtures/refinement-planner.js';
@@ -168,20 +168,6 @@ function assertSuccessfulRecovery(
       result.terminals.map((outcome) => outcome.kind),
       ['planned', 'planned', 'satisfied'],
     );
-}
-
-/** Bind a real executable fixture outside source while keeping Git admission clean. */
-function installProvider(root: string) {
-  const executable = join(root, '.git', 'refinement-provider.mjs');
-  copyFileSync(
-    fileURLToPath(new URL('../fixtures/refinement-provider.js', import.meta.url)),
-    executable,
-  );
-  chmodSync(executable, 0o700);
-  writeFileSync(
-    join(root, '.git', 'bindings.yaml'),
-    'schemaVersion: 1\ntools:\n  codex: ' + executable + '\n',
-  );
 }
 
 /** Track actual child identities without deriving the report's scopes or timeline paths. */
