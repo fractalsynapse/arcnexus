@@ -6,6 +6,7 @@ import {
   type StewardCheckFailure,
 } from '../../direction/src/index.js';
 import {
+  ClarificationRequired,
   localRepairIndex,
   localRepairTargets,
   type ActivityOutcome,
@@ -69,7 +70,9 @@ export async function steward(
   const before = task.evidence.length;
   const scope = { owner: milestone.owner, activity };
   const correction = task.pendingCheck(scope);
-  const result = await requestSteward(task, agent, milestone, scope, signal);
+  const result = await requestSteward(task, agent, milestone, scope, signal).catch(
+    (error: unknown) => stewardQuestionOutcome(task, milestone, error, signal),
+  );
   const outcome =
     result.kind === 'completed'
       ? await completeSteward(task, milestone, scope, result, correction, signal, before)
@@ -79,6 +82,22 @@ export async function steward(
           ...(result.kind === 'repair' ? { input: stewardInput(task.observations()) } : {}),
         };
   return retainStewardHold(task, milestone, scope, outcome);
+}
+
+/** Expose an actual unanswered host gate following rejection without treating other errors as holds. */
+function stewardQuestionOutcome(
+  task: HostTask,
+  milestone: Milestone,
+  error: unknown,
+  signal: AbortSignal,
+): Extract<ActivityOutcome, { kind: 'blocked' }> {
+  if (
+    signal.aborted ||
+    !(error instanceof ClarificationRequired) ||
+    correctionFinding(task.history(), milestone)?.kind !== 'rejection'
+  )
+    throw error;
+  return { kind: 'blocked', reason: error.message, evidence: error.evidence };
 }
 
 /** Reconcile requested effects and mandatory verification before reporting contribution completion. */
