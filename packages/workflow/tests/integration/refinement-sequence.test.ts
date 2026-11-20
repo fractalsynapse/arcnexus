@@ -187,50 +187,61 @@ test('a competing foreground task is refused while the refinement phase runs', a
   assert.equal(competingKind, 'invalid');
 });
 
+/** Interrupt one selected assessment and record each visit. */
+function interruptProviders(f: ReturnType<typeof fixture>, calls: string[], stop: string) {
+  const services = providers(f, calls);
+  const controller = new AbortController();
+  let interrupted = false;
+  const visit = (name: string) => {
+    calls.push(name);
+    if (name === stop && !interrupted) {
+      interrupted = true;
+      controller.abort();
+      controller.signal.throwIfAborted();
+    }
+  };
+  assert.ok(services.planner);
+  services.planner.propose = async () => {
+    visit('Plan');
+    return { kind: 'planned', commit: f.revision, summary: 'No change', evidence: [] };
+  };
+  assert.ok(services.architecture);
+  services.architecture.propose = async () => {
+    visit('Architect');
+    return { kind: 'no-change', summary: 'No change', evidence: [] };
+  };
+  services.direction.plan = async (session) => {
+    visit(session.goal.trim());
+    return {
+      kind: 'satisfied',
+      summary: 'The measured goal holds',
+      evidence: [{ path: 'baseline', quote: 'measured evidence' }],
+    };
+  };
+  return { services, controller, interrupted: () => interrupted };
+}
+
+/** Exercise one interrupted position using the same durable state on retry. */
+async function interruption(t: TestContext, stop: string) {
+  const f = fixture(t);
+  const calls: string[] = [];
+  const scenario = interruptProviders(f, calls, stop);
+  const workflow = new Workflow(scenario.services);
+  const refine = Reflect.get(workflow, 'refine') as Refinement;
+  assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
+  await refine
+    .call(workflow, f.root, 1, { progress() {} }, scenario.controller.signal)
+    .catch(() => {});
+  assert.equal(scenario.interrupted(), true);
+  await refine.call(workflow, f.root, 1, { progress() {} }, new AbortController().signal);
+  const order = ['Plan', 'Architect', 'First goal', 'Second goal'];
+  const index = order.indexOf(stop);
+  assert.deepEqual(calls, [...order.slice(0, index + 1), ...order.slice(index)]);
+}
+
 test('interruption resumes the first unfinished phase or goal without repeating earlier work', async (t) => {
   for (const stop of ['Plan', 'Architect', 'First goal', 'Second goal']) {
-    await t.test(stop, async (child) => {
-      const f = fixture(child);
-      const calls: string[] = [];
-      const services = providers(f, calls);
-      const controller = new AbortController();
-      let interrupted = false;
-      const visit = (name: string) => {
-        calls.push(name);
-        if (name === stop && !interrupted) {
-          interrupted = true;
-          controller.abort();
-          controller.signal.throwIfAborted();
-        }
-      };
-      assert.ok(services.planner);
-      services.planner.propose = async () => {
-        visit('Plan');
-        return { kind: 'planned', commit: f.revision, summary: 'No change', evidence: [] };
-      };
-      assert.ok(services.architecture);
-      services.architecture.propose = async () => {
-        visit('Architect');
-        return { kind: 'no-change', summary: 'No change', evidence: [] };
-      };
-      services.direction.plan = async (session) => {
-        visit(session.goal.trim());
-        return {
-          kind: 'satisfied',
-          summary: 'The measured goal holds',
-          evidence: [{ path: 'baseline', quote: 'measured evidence' }],
-        };
-      };
-      const workflow = new Workflow(services);
-      const refine = Reflect.get(workflow, 'refine') as Refinement;
-      assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
-      await refine.call(workflow, f.root, 1, { progress() {} }, controller.signal).catch(() => {});
-      assert.equal(interrupted, true);
-      await refine.call(workflow, f.root, 1, { progress() {} }, new AbortController().signal);
-      const order = ['Plan', 'Architect', 'First goal', 'Second goal'];
-      const index = order.indexOf(stop);
-      assert.deepEqual(calls, [...order.slice(0, index + 1), ...order.slice(index)]);
-    });
+    await t.test(stop, (child) => interruption(child, stop));
   }
 });
 
