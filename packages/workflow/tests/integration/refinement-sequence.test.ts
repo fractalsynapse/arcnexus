@@ -143,8 +143,19 @@ test('a completed invocation permits a fresh invocation with new assessments', a
   ) => Promise<unknown>;
   assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
   const signal = new AbortController().signal;
-  await refine.call(workflow, f.root, 1, { progress() {} }, signal);
-  await refine.call(workflow, f.root, 1, { progress() {} }, signal);
+  const events: unknown[] = [];
+  const observer: TaskObserver = { progress() {}, event: (event) => events.push(event) };
+  await refine.call(workflow, f.root, 1, observer, signal);
+  await refine.call(workflow, f.root, 1, observer, signal);
+  const rounds = events.filter(
+    (event) => typeof event === 'object' && event !== null && 'completedRound' in event,
+  );
+  assert.equal(rounds.length, 2);
+  const identities = rounds.map((event) =>
+    Reflect.get(Reflect.get(event as object, 'completedRound'), 'invocation'),
+  );
+  assert.ok(identities[0]);
+  assert.notEqual(identities[0], identities[1], 'completed invocations have distinct identities');
   assert.deepEqual(calls, [
     'Plan',
     'Architect',
