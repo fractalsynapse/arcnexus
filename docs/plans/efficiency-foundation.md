@@ -827,7 +827,7 @@ the prior full attempt, so aggregate differences do not isolate prompt causality
 
 Run 111 ended by controlled SIGINT at 2026-11-20T16:06:13Z after 40.35 minutes,
 18 activations and three Director invocations. Ordinary streaming review repairs
-remained local. The owner checks recorded 31 failures across 81 executions,
+remained local. Declared checks recorded 31 failures across 81 executions,
 including fixture setup, assertion, formatting, lint and type failures. The
 operator stopped the attempt after repeated fixture corrections still failed to
 establish the reviewed controlled-phase streaming proof. This is not a successful
