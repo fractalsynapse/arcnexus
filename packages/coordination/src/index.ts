@@ -355,6 +355,9 @@ function migrate(database: DatabaseSync) {
     .all()
     .map(({ name }) => name);
   const events = database.prepare('PRAGMA table_info(events)').all();
+  const rounds = database.prepare('PRAGMA table_info(rounds)').all();
+  if (!rounds.some(({ name }) => name === 'namespace'))
+    database.exec("ALTER TABLE rounds ADD COLUMN namespace TEXT NOT NULL DEFAULT 'task'");
   if (!events.some(({ name }) => name === 'recorded_at'))
     database.exec('ALTER TABLE events ADD COLUMN recorded_at TEXT');
   if (!fields.includes('lease')) database.exec('ALTER TABLE runs ADD COLUMN lease TEXT');
