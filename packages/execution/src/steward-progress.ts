@@ -10,23 +10,38 @@ export function stewardProgress(events: readonly TaskEvent[], milestone: Milesto
     .slice(0, cursor)
     .filter((step) => !step.inapplicable)
     .map((step) => step.activity);
-  const repair = events.findLast(
-    (event) => 'position' in event && event.repair?.milestone === milestone.id,
+  const repairs = events.flatMap((event) =>
+    'position' in event && event.repair?.milestone === milestone.id ? [event.repair] : [],
   );
+  const repair = repairs.at(-1);
+  const originatingFinding = repairs[0];
   return {
     completedActivities,
     previouslyCompletedActivities: previousCompletion(events, milestone),
-    ...(repair && 'position' in repair && repair.repair
+    ...(repair
       ? {
           localRepair: {
-            ...repair.repair,
-            targetCompleted: completedActivities.some(
-              (activity) => activity === repair.repair!.activity,
-            ),
+            ...repair,
+            ...(originatingFinding && !sameFinding(originatingFinding, repair)
+              ? { originatingFinding }
+              : {}),
+            targetCompleted: completedActivities.includes(repair.activity),
           },
         }
       : {}),
   };
+}
+
+/** Compare exact finding content so a sole rewind is not repeated in its own context. */
+function sameFinding(
+  left: NonNullable<Extract<TaskEvent, { position: unknown }>['repair']>,
+  right: NonNullable<Extract<TaskEvent, { position: unknown }>['repair']>,
+) {
+  return (
+    left.activity === right.activity &&
+    left.reason === right.reason &&
+    JSON.stringify(left.evidence) === JSON.stringify(right.evidence)
+  );
 }
 
 /** Keep historical completion distinct from the current post-rewind cursor. */
