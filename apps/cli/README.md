@@ -44,6 +44,99 @@ arcnexus --json inspect director planning
 arcnexus inspect reviewer assessment --json
 ```
 
+## Inspection parity acceptance
+
+This is the intended comparison matrix for `inspection-request-parity`, recorded
+before CLI behavior changes. The locked [gateway scenarios](contract.md#acceptance-scenarios)
+GW-15–GW-18 and GW-20/GW-23–GW-26 govern the observations below; GW-22 governs
+delegation through the Commands SDK. The
+[Execution supplier intent](../../packages/execution/docs/request-parity.md)
+defines the activation boundary comparisons for `activation-request-parity`
+under EX-6. These observations use the shared Architecture request builder through
+Agent and Commands; the CLI adds no request builder or task execution path.
+
+| Actor selection                           | Comparison inputs                                                                                         | Required observation                                                                                        |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `director planning`                       | Captured Director binding and complete planning inputs                                                    | Rendered prompt, JSON request and production Director activation request agree.                             |
+| A declared steward component and activity | Captured owner, selected activity, current milestone and Step, complete assignment                        | Rendered prompt, JSON request and production steward activation request agree within that activity's scope. |
+| `reviewer assessment`                     | Captured Reviewer binding, assessment assignment, acceptance and authorized candidate/evidence references | Rendered prompt, JSON request and production Reviewer activation request agree.                             |
+| `direction planning`                      | Declared component/activity selection                                                                     | Remains a valid explicit component selection alongside the special actor selectors (GW-24).                 |
+
+For `rendered-structured-parity`, observe the built CLI on the evaluated staging
+revision for all three actors. Parse the rendered invocation/placeholder header
+separately: JSON `request.input` must equal the complete multiline rendered prompt
+byte for byte. Do not trim, normalize whitespace, omit sections or compare only
+fragments. Compare invocation options separately, including effective model,
+reasoning effort, built-in web policy, working directory and mapped tool bindings.
+Operation IDs, descriptions and argument schemas must agree with the captured
+selection; model settings remain invocation options.
+
+Both modes must expose the selected activity's instructions, role, standards,
+observations, authorized scope and operations in assembly order. Source labels
+identify the captured project, task inputs, selected component/activity, role,
+standards, operation definitions and contract references where applicable.
+Unselected activity instructions must not leak into the request.
+
+Before admission, list named placeholders in both the rendered header and JSON
+`placeholders`, with each value at its corresponding prompt or invocation position:
+`<assignment>`, `<goal>`, `<milestone>`, `<acceptance>`, `<evidence>` and
+`<worktree>` as applicable. Never invent missing live-only content. Complete
+identical inputs, including capture/revision, actor, component, activity, nested
+task data and worktree, must match Execution's observed activation boundary
+evidence without placeholder exceptions. Supplied empty collections are values,
+not missing inputs. CLI inspection need not admit a task to perform this comparison
+through the shared public inspection boundary.
+
+Codex retains normal discovery of project `AGENTS.md` files and skills in the
+harness activation environment. Do not embed their bodies in the prompt or disable
+discovery to make equality pass. Deterministic harness fixtures and installed-Codex
+discovery observations remain separate evidence, as specified by the supplier.
+
+For `inspection-without-effects`, observe valid, repeated and invalid built-CLI
+invocations. Unchanged inputs must give byte-identical repeated output. Establish
+that inspection causes no task admission, model call, harness activation, host
+startup, upstream call, maintained-file change, state creation or worktree creation
+(GW-17). Preserve the following terminal behavior:
+
+| Invocation                                                                    | Expected terminal result                                                             |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Valid rendered inspection                                                     | Exit 0 with the complete header and prompt.                                          |
+| `--json` before the command or after the activity                             | Exit 0 with the same single structured result on stdout in either placement (GW-26). |
+| Missing or extra positionals, including an actor selector without an activity | Exit 2 with a diagnostic and no effects (GW-23).                                     |
+| Unknown component or undeclared activity                                      | Exit 2 naming valid selections and no effects (GW-20).                               |
+| Duplicate or misplaced `--json`                                               | Exit 2, stderr diagnostic and empty stdout (GW-26).                                  |
+
+### Required evidence and current limits
+
+For `inspection-regression-evidence`, retain passing `cli-app` owner-suite
+observations covering
+[request-parity.test.ts](tests/integration/request-parity.test.ts) and
+[inspect.test.ts](tests/integration/inspect.test.ts). Map each observed case to
+`rendered-structured-parity` or `inspection-without-effects` and the applicable
+GW scenario. Retain candidate/revision, inputs, environment, command, exact exit
+status and readable logs outside maintained source. The host must also observe
+assembled build, strict types, format, lint and repository tests for the candidate
+and map those results to `inspection-regression-evidence`.
+
+Existing test source and `run:6` alone do not establish this goal. The retained
+planning evidence `8-1-codex.jsonl` identifies the prepared Director comparison's
+limited scope; `run:6` concerned recovery and repository checks. Execution's
+retained `8-4-owner-tests.log` reports 47 tests: 44 passed, none failed and three
+skipped. It covers Execution's suite, including captured-guidance validation, not
+the CLI owner suite or all three subprocess request comparisons. Its native
+confined-check and formatter cases remain skipped observations.
+
+Consume supplier evidence for `activation-request-parity` with its candidate and
+environment identity; a supplier intent document or prepared request is not an
+observed activation payload. Preserve failures, skips and unavailable results
+alongside later passes. Report installed-Codex guidance discovery, native
+confinement, live inference, hosted CI and staging integration separately.
+Outstanding native or live evidence cannot be discharged by fixture passes.
+
+This documentation records intent only. No executable check result is claimed
+here. Subsequent queued checks, assembled verification, independent assessment
+and delivery belong to the host.
+
 ## Run a task
 
 `arcnexus task run "<goal>"` submits one goal for the project resolved from the

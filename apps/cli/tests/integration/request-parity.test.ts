@@ -90,3 +90,44 @@ test('GW-26: both global JSON placements return the exact prepared request', (t)
   );
   assertHumanOutput(run(...command), result);
 });
+
+const selection = [
+  ['director', 'planning', 'director'],
+  ['plan', 'planning', 'director'],
+  ['work', 'testing', 'engineer'],
+  ['reviewer', 'assessment', 'reviewer'],
+] as const;
+
+/** Compare the rendered and structured forms using public inspection for the exact actor. */
+function compareActor(root: string, [component, activity, role]: (typeof selection)[number]) {
+  const args = ['inspect', component, activity];
+  const run = (...flags: string[]) =>
+    execFileSync(process.execPath, [cli, ...flags], { cwd: root, encoding: 'utf8' });
+  const rendered = run(...args);
+  const json = run('--json', ...args);
+  assert.equal(json, run(...args, '--json'));
+  const result = JSON.parse(json) as ReturnType<Agent['inspect']>;
+  assert.deepEqual(
+    result,
+    new Agent(new Architecture()).inspect({ directory: root, component, activity }),
+  );
+  const marker = '--- Codex input ---\n';
+  const start = rendered.indexOf(marker);
+  assert(start >= 0);
+  assert.equal(rendered.slice(start + marker.length), result.request.input + '\n');
+  assert(rendered.slice(0, start).includes(JSON.stringify(result.request.options, null, 2)));
+  for (const value of result.placeholders) assert(rendered.includes(value));
+  assert(result.placeholders.includes('<goal>'));
+  assert(result.placeholders.includes('<worktree>'));
+  assert.match(result.request.input, new RegExp(`Fixture ${role} instruction`));
+  assert.match(result.request.input, /Component activity instruction/);
+  assert.match(result.request.input, /Fixture standard body/);
+  assert(result.request.input.includes('Source: .arc/architecture/roles/'));
+  assert.doesNotMatch(result.request.input, /Inactive activity instructions/);
+}
+
+test('GW-26: rendered and structured requests agree for each actor', (t) => {
+  const root = projectFixture();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  for (const actor of selection) compareActor(root, actor);
+});

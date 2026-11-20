@@ -4,6 +4,13 @@ Execution activates scoped stewards, applies checked edits and supervises declar
 operations in one task worktree. Its public obligations are in the
 [locked contract](contract.md).
 
+## Inspection and activation request parity
+
+The [request parity intent](docs/request-parity.md) records EX-6's exact
+Director, steward and Reviewer comparisons, live-only placeholders, native Codex
+guidance discovery and the evidence limits for `activation-request-parity`.
+It records intended behavior before changes and claims no passing activation result.
+
 ## Activity-scoped operation recovery
 
 Use the [verified local MCP operations guide](docs/mcp-operations.md) to check one
