@@ -241,9 +241,12 @@ async function retryAfterChildTerminal(
     new AbortController().signal,
   );
   assert.equal(Reflect.get(first as object, 'kind'), 'failed');
+  const reopened = authority(f.root, f.directory, f.revision);
+  const resumedWorkflow = new Workflow(providers(reopened, []));
+  const resumedRefine = Reflect.get(resumedWorkflow, 'refine') as Refinement;
   const events: unknown[] = [];
-  await refine.call(
-    workflow,
+  await resumedRefine.call(
+    resumedWorkflow,
     f.root,
     1,
     {
