@@ -1,3 +1,6 @@
+import type { DatabaseSync } from 'node:sqlite';
+import type { JournalEvent } from './index.js';
+
 export const verifiedTerminal = `
   SELECT events.id, events.run, runs.task_id, runs.goal_id
   FROM events JOIN runs ON runs.id = events.run
