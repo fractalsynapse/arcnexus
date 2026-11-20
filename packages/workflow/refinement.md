@@ -191,6 +191,18 @@ its actual public observation and fixture usage with the retained evidence to
 `refine-execution`; Execution can then exercise its context handoff without
 guessing event bytes. No private Workflow test helper is part of that handoff.
 
+## Same-child continuation evidence
+
+The report recovery regression must also stop an unfinished Planner child after
+a controlled provider has emitted a distinct finding, a complete durable answer
+and reported usage through native observation. Reopen Workflow, Execution and
+Coordination against the same Git/SQLite state, resume that child with distinct
+observations, then complete another round. Compare every originating sequence,
+terminal outcome and measurement reference with canonical retained history, in
+order. Repeated timeline prefixes must contribute once, and the next round must
+exclude earlier usage. Keep successful-child-before-parent-acknowledgment recovery
+as a separate scenario requiring durable reuse without another assessment.
+
 ## Required regression coverage and delivery boundary
 
 Focused public regressions must establish multiple sequential Plan → Architect →
