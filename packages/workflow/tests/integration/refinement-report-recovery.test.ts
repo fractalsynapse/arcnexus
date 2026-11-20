@@ -222,48 +222,54 @@ async function resume(root: string, state: RecoveryState) {
   return events;
 }
 
-/** Resolve the typed public completion event and its registered readable report. */
-function completedReport(events: readonly unknown[]) {
-  const event = events.find((item) => {
-    const observation = Reflect.get(item as object, 'observation');
-    return (
-      typeof observation === 'object' && observation !== null && 'completedRound' in observation
-    );
+/** Resolve every typed completion event to its registered readable report. */
+function completedReports(events: readonly unknown[]) {
+  return events.flatMap((event) => {
+    const observation = Reflect.get(event as object, 'observation');
+    if (typeof observation !== 'object' || observation === null || !('completedRound' in observation))
+      return [];
+    const completion = Reflect.get(observation, 'completedRound') as {
+      report: string;
+      findings: readonly string[];
+      measurements: readonly string[];
+      round: number;
+    };
+    return [{ completion, report: readFileSync(completion.report, 'utf8') }];
   });
-  assert.ok(event);
-  const completion = Reflect.get(
-    Reflect.get(event as object, 'observation') as object,
-    'completedRound',
-  ) as {
-    report: string;
-    findings: readonly string[];
-    measurements: readonly string[];
-  };
-  return { completion, report: readFileSync(completion.report, 'utf8') };
 }
 
-/** Check complete source references, no replay and round-local event-derived accounting. */
-function assertRecovery(state: RecoveryState, result: ReturnType<typeof completedReport>) {
+/** Check one round's complete origins, deduplicated references and profile accounting. */
+function assertRound(
+  result: ReturnType<typeof completedReports>[number],
+  attempt: number,
+  reused: boolean,
+) {
   const { completion, report } = result;
-  assert.match(report, /Distinct Planner finding attempt 1/);
-  assert.doesNotMatch(report, /Distinct Planner finding attempt 2/);
+  assert.match(report, new RegExp('Distinct Planner finding attempt ' + attempt));
+  assert.doesNotMatch(report, new RegExp('Distinct Planner finding attempt ' + (attempt === 1 ? 2 : 1)));
   assert.match(report, /The complete answer is retained verbatim, including its full conclusion\./);
-  assert.match(report, /Reused completed child outcome for refine:/);
-  assert.equal(state.calls.value, 1);
+  if (reused) assert.match(report, /Reused completed child outcome for refine:/);
+  else assert.doesNotMatch(report, /Reused completed child outcome for refine:/);
   assert.equal(new Set(completion.findings).size, completion.findings.length);
   assert.equal(new Set(completion.measurements).size, completion.measurements.length);
-  assert.equal(completion.measurements.length, 3);
+  assert.equal(completion.measurements.length, 3, 'only this round\'s provider stream is measured');
   assert.match(report, /"profile": "planner-fixture"/);
   assert.match(report, /"input_tokens": \{\n\s+"reported": 17/);
   assert.match(report, /"output_tokens": \{\n\s+"reported": 5/);
   assert.match(report, /"cost": \{\n\s+"estimate": null/);
 }
 
-test('reopened recovery reports complete origins and exact round profile usage without replay', async (t) => {
+test('reopened recovery reports every origin and exact round profile usage without replay', async (t) => {
   const f = fixture(t);
   const calls = { value: 0 };
   const state = { ...f.reopen(), calls, reopen: f.reopen };
   await interruptAfterChild(f.root, state);
   const events = await resume(f.root, state);
-  assertRecovery(state, completedReport(events));
+  const rounds = completedReports(events);
+  assert.equal(rounds.length, 2);
+  assert.equal(rounds[0]!.completion.round, 1);
+  assert.equal(rounds[1]!.completion.round, 2);
+  assertRound(rounds[0]!, 1, true);
+  assertRound(rounds[1]!, 2, false);
+  assert.equal(calls.value, 2, 'the recovered first child is not repeated; round two is assessed');
 });
