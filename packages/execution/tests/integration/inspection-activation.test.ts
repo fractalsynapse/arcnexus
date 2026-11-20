@@ -221,7 +221,10 @@ test('current assembled CLI request-parity and inspection scenarios', (t) => {
   );
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;
-  const log = execFileSync(process.execPath, ['--test', '--test-reporter=tap', ...paths], { encoding: 'utf8', env });
+  const log = execFileSync(process.execPath, ['--test', '--test-reporter=tap', ...paths], {
+    encoding: 'utf8',
+    env,
+  });
   t.diagnostic(log);
   assert.match(log, /# fail 0/);
   assert.match(log, /# skipped 0/);
