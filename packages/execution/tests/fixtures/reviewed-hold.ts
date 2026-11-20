@@ -55,11 +55,11 @@ export class ReviewedHoldFixture {
   task: HostTask;
   readonly checks: CheckResult[] = [];
   readonly receipts: unknown[] = [];
-  readonly contexts: TaskContext[] = [];
   readonly rejection;
   readonly originalReport = 'Independent rejection A\nKeep the exact originating finding.\n';
   private head?: string;
   private external = false;
+  private refusal = false;
 
   /** Commit a complete explicit catalog before capture and admit the real journal. */
   constructor(private readonly t: TestContext) {
@@ -138,17 +138,7 @@ export class ReviewedHoldFixture {
     this.t.mock.method(
       task,
       'activate',
-      async (_agent: Agent, _selection: unknown, data: TaskContext) => {
-        this.contexts.push(data);
-        task.store(
-          'controlled-provider.json',
-          JSON.stringify({
-            kind: 'completed',
-            summary: 'Model claims progress and schema availability; neither claim is evidence.',
-          }),
-        );
-        return { kind: 'completed', edits: [], checks: [] };
-      },
+      async (_agent: Agent, _selection: unknown, data: TaskContext) => this.reply(task, data),
     );
     this.t.mock.method(
       task,
@@ -164,6 +154,20 @@ export class ReviewedHoldFixture {
         return check;
       },
     );
+  }
+
+  /** Keep provider prose distinguishable from actual scope, checks and host receipts. */
+  private reply(task: HostTask, data: TaskContext) {
+    assert.deepEqual(data.acceptance, correction.criteria);
+    assert.deepEqual((data.assignment as { finding: unknown }).finding, {
+      kind: 'rejection', findings: [this.rejection.findings[0]],
+    });
+    const reply = { kind: 'completed',
+      summary: 'Model claims progress and schema availability; neither claim is evidence.',
+      edits: this.refusal ? [{ path: 'schema.txt', expected: null, content: 'unauthorized' }] : [],
+      checks: [] };
+    task.store('controlled-provider.json', JSON.stringify(reply));
+    return reply;
   }
 
   /** Run a real subprocess in Testing's outer sandbox; this does not prove native HostTask confinement. */
@@ -258,6 +262,11 @@ export class ReviewedHoldFixture {
   /** Select an actually absent external input while preserving the same accepted criterion. */
   requireExternal() {
     this.external = true;
+  }
+
+  /** Exercise a real checked-edit refusal after earlier acknowledged work. */
+  refuseForeignEdit() {
+    this.refusal = true;
   }
 
   /** Read checkpoint identity directly from real Git, independently of a projected hold context. */
