@@ -24,6 +24,11 @@ function fixture(t: import('node:test').TestContext) {
   git('commit', '-m', 'baseline');
   git('remote', 'add', 'origin', root);
   const revision = git('rev-parse', 'HEAD');
+  return inventoryFixture(root, revision);
+}
+
+/** Supply a mutable captured inventory backed by the same real journal store. */
+function inventoryFixture(root: string, revision: string) {
   let body = '---\npriority: 1\n---\nFirst goal\n';
   const capture = {
     source: {
