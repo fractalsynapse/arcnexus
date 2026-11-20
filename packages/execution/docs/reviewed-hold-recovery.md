@@ -156,7 +156,9 @@ as a satisfied prerequisite or as the requested check passing.
 The deterministic integration regression uses the public types with real
 committed Git fixtures, SQLite continuation, checked-edit receipts and subprocess
 observations. It covers equivalent failures, unrelated changes, net reverted
-corrections, relevant corrections, dependency prerequisites and ownership refusal.
+corrections, relevant corrections, dependency prerequisites, ownership refusal and
+an actual unanswered human clarification continued after restart. The human gate
+retains its exact question and evidence until a complete answer is recorded.
 The command confinement, provider and remote transport are controlled seams;
 these observations establish neither native confinement nor live inference.
 Workflow's task-level gate/resume and independent recovery scenarios remain its
