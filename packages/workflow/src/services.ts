@@ -207,7 +207,7 @@ export interface WorkflowServices {
     ): Promise<ArchitectureDecision>;
   };
   execution: {
-    round?(directory: string): GoalRound;
+    round?(directory: string, namespace?: string): GoalRound;
     applyGuide?(session: TaskSession, id: string, signal: AbortSignal): Promise<void>;
     observeGoal?(session: TaskSession, signal: AbortSignal): StandingGoalEvidence;
     prepare?(session: TaskSession, issue: string, signal: AbortSignal): Promise<void>;
