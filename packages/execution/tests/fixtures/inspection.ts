@@ -5,6 +5,7 @@ import type { TestContext } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { parse, stringify } from 'yaml';
 import { Agent } from '../../../agent/src/index.js';
+import { GitHub } from '../../../collaboration/src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
 import { Execution, HostTask } from '../../src/index.js';
 import { RoundConsumptionFixture } from './round-consumption.js';
@@ -39,6 +40,7 @@ export class InspectionFixture extends RoundConsumptionFixture {
       new AbortController().signal);
     assert(session instanceof HostTask, JSON.stringify(session));
     t.after(() => { session.cleanup(); session.close(); });
+    t.mock.method(GitHub.prototype, 'publication', async () => undefined);
     await execution.prepare(session, '42', new AbortController().signal);
     assert.equal(this.git('branch', '--list', '42-task'), '42-task');
     return session;
