@@ -18,6 +18,8 @@ export type {
   ActivityOutcome,
   ActivityRepair,
   CompletedGoalOutcome,
+  CompletedRefinementRound,
+  RefinementProgress,
   GoalRound,
   RoundOutcome,
   Observation,
