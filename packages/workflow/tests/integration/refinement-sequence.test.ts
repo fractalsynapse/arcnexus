@@ -138,12 +138,7 @@ test('an interrupted invocation refuses a changed round total before reassessmen
     throw new Error('Unreachable');
   };
   const workflow = new Workflow(services);
-  const refine = Reflect.get(workflow, 'refine') as (
-    directory: string,
-    rounds: number,
-    observer: TaskObserver,
-    signal: AbortSignal,
-  ) => Promise<unknown>;
+  const refine = Reflect.get(workflow, 'refine') as Refinement;
   assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
   await refine.call(workflow, f.root, 2, { progress() {} }, controller.signal).catch(() => {});
   const before = [...calls];
