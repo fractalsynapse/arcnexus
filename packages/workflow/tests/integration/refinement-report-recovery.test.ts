@@ -167,7 +167,7 @@ function completedReport(events: readonly unknown[]) {
 }
 
 /** Check complete source references, no replay and round-local event-derived accounting. */
-function assertRecovery(state: State, result: ReturnType<typeof completedReport>) {
+function assertRecovery(state: RecoveryState, result: ReturnType<typeof completedReport>) {
   const { completion, report } = result;
   assert.match(report, /Distinct Planner finding attempt 1/);
   assert.doesNotMatch(report, /Distinct Planner finding attempt 2/);
