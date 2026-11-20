@@ -404,6 +404,55 @@ test('an interrupted Run retains its captured goals and the next round captures 
   assert.deepEqual(calls, refreshedOrder);
 });
 
+test('each round invokes the real Planner in project-exploration mode', async (t) => {
+  const f = fixture(t);
+  const services = providers(f, []);
+  const modes: unknown[] = [];
+  t.mock.method(HostTask.prototype, 'activate', async function (
+    _agent: Agent,
+    _selection: unknown,
+    data: TaskContext,
+  ) {
+    const assignment = data.assignment as { mode: string };
+    modes.push(assignment.mode);
+    return {
+      summary: 'Distinct retained exploration finding',
+      ratings: [
+        {
+          id: 'first',
+          alignment: 'strong',
+          evidence: 'unverified',
+          reason: 'The captured goal remains relevant',
+          sources: [{ path: '.arc/goals/first.md', quote: 'First goal' }],
+          observations: [],
+        },
+        {
+          id: 'second',
+          alignment: 'strong',
+          evidence: 'unverified',
+          reason: 'The captured goal remains relevant',
+          sources: [{ path: '.arc/goals/second.md', quote: 'Second goal' }],
+          observations: [],
+        },
+      ],
+      comparison: ['No conflicting coverage'],
+      changes: [],
+      links: [],
+      sources: [],
+    };
+  });
+  services.planner = new Planner({} as Agent);
+  const refine = Reflect.get(new Workflow(services), 'refine') as Refinement;
+  await refine.call(
+    new Workflow(services),
+    f.root,
+    2,
+    { progress() {} },
+    new AbortController().signal,
+  );
+  assert.deepEqual(modes, ['project exploration', 'project exploration']);
+});
+
 test('two refinement rounds assess Plan, Architect and every approved goal in order', async (t) => {
   const f = fixture(t);
   const calls: string[] = [];
