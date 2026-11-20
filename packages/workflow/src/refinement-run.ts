@@ -236,7 +236,7 @@ export class RefinementRun {
     const children: [string, string][] = [
       ['Assess objectives and standing goals', this.scope(invocation, round, 'plan')],
       ['Assess architecture alignment', this.scope(invocation, round, 'architect')],
-      ...goals.map((goal) => [goal.body, this.scope(invocation, round, `goal:${goal.id}`)]),
+      ...goals.map((goal): [string, string] => [goal.body, this.scope(invocation, round, `goal:${goal.id}`)]),
     ];
     const frames = new Map<string, JournalEvent>();
     for (const [goal, scope] of children) {
