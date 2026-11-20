@@ -67,7 +67,7 @@ export class Execution {
   private configuration(input: TaskInput, parent?: TaskSession) {
     const capture = this.architecture.capture(input.directory);
     const fresh = Boolean(
-      parent || input.standing || input.planning || input.architecture || input.refinement,
+      parent || input.standing || input.planning || input.architecture || input.scope === 'refine',
     );
     const selected = fresh ? stagingCapture(this.architecture, capture) : capture;
     return preflight(selected, this.storage, fresh);
