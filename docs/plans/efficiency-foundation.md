@@ -19,15 +19,17 @@ behavior or proof is stated explicitly.
 | Architecture and operations | [PR #640](https://github.com/fractalsynapse/arcnexus/pull/640) delivered typed operation overrides, activity verification, approved adoption boundaries and observable execution.                                                 | The broader merge/provenance, runtime-adoption and same-run live acceptance items in B remain open.                                                     |
 | Acting context              | [PR #664](https://github.com/fractalsynapse/arcnexus/pull/664) delivered the source-linked component index; [PR #667](https://github.com/fractalsynapse/arcnexus/pull/667) preserved originating findings through nested repairs. | All 18 purposes, 94 model activities and one host procedure were approved by the architect and merged in #673. Live behavioral acceptance remains open. |
 | Timeline and measurements   | Complete provider/MCP artifacts, ordered live human/JSONL observations and time/token accounting are operating through the existing journal.                                                                                      | Full round/phase analysis, verified monetary pricing and subsequent refinement consuming those findings remain open.                                    |
-| Continuous refinement       | Nine #668 milestones are accepted in retained run 111. Invalid supplier links now return to the caller, and approved Architect prerequisites reached staging through the platform in #682.                                          | CLI self-review and remaining exact-count consumers, assembled delivery, and three consecutive production rounds remain unproved. Qualification remains **0/3**.                                              |
+| Continuous refinement       | Nine #668 milestones remain accepted after controlled cancellation of run 111. Invalid supplier links now return to the caller, and approved Architect prerequisites reached staging through the platform in #682.                                          | CLI self-review and remaining exact-count consumers, assembled delivery, and three consecutive production rounds remain unproved. Qualification remains **0/3**.                                              |
 
 Latest completed delivery: [PR #682](https://github.com/fractalsynapse/arcnexus/pull/682)
 delivered Architect's exact approved batch `9730646a057f` and its Execution
 prerequisite through the platform. Development and Staging CI passed. Retained
 run 111 then resumed #668 with runtime/source `6fba1f13`, preserved its existing
 issue and checkpoints, and accepted the Execution exact-count fixture correction.
-CLI review is still returning insufficient streaming assertions to its own
-Implementation activity. Passing owner tests alone do not establish acceptance.
+CLI review returned insufficient streaming assertions to its own Implementation
+activity. The operator cancelled normally after repeated ineffective fixture
+corrections; checkpoints and failed evidence remain retained. Passing owner tests
+alone do not establish acceptance.
 No #668 delivery PR exists at this checkpoint; qualification remains **0/3**.
 No operator candidate edits, database repair or bypassed checks occurred.
 
@@ -818,10 +820,31 @@ the prior full attempt, so aggregate differences do not isolate prompt causality
       automated refinement round.
 - [ ] Finish retained #668 delivery, compare its final outputs and repair routes
       with attempts 106 and 107, then qualify the production `refine --rounds 3`
-      lifecycle. Run 111 currently has nine accepted milestones. CLI self-review
+      lifecycle. Run 111 retained nine accepted milestones. CLI self-review
       has twice rejected shallow streaming assertions and returned exact findings
       locally. Those useful findings also show remaining fixture/assertion
       weaknesses; green owner checks do not supersede them.
+
+Run 111 ended by controlled SIGINT at 2026-11-20T16:06:13Z after 40.35 minutes,
+18 activations and three Director invocations. Ordinary streaming review repairs
+remained local. The owner checks recorded 31 failures across 81 executions,
+including fixture setup, assertion, formatting, lint and type failures. The
+operator stopped the attempt after repeated fixture corrections still failed to
+establish the reviewed controlled-phase streaming proof. This is not a successful
+delivery or qualification round. Normal cleanup removed the worktree and retained
+local checkpoint `88412d63699e9af46c31a841bad65a1a4b8e79b0`; the last observed
+remote checkpoint was `2aeb36d053480e716f7092e54d18d9ba16c948fa`.
+Normal Execution recovery must reconcile those retained checkpoints before
+resumption. No operator source or database repair was performed.
+
+Reported input was 40,059,293 tokens including 37,439,872 cached, with 67,145 output
+tokens. Luna had ten activations, including the interrupted activation without
+reported usage: 32,141,670 reported input, 30,608,384 cached and 44,469 output tokens.
+Sol had eight completed activations: 7,917,623 input, 6,831,488 cached and 22,676
+output tokens. Cached input is a subset, not an additional total. These figures
+retain missing usage honestly and do not establish a causal profile comparison.
+The proposed [one-field CLI Implementation profile experiment](https://github.com/fractalsynapse/arcnexus/issues/668#issuecomment-7044253709)
+remains pending human approval; no profile bytes have been changed.
 
 Complete comparison artifacts, approval receipts, requests, measurements and failed
 observations remain in external application storage. The corresponding records
