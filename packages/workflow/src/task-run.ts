@@ -22,7 +22,7 @@ import {
   reviewKey,
 } from './assembly.js';
 import { stopped, type Interrupted } from './services.js';
-import { reviewedHold } from './reviewed-hold.js';
+import { reviewedHold, supersededReviewedHold } from './reviewed-hold.js';
 import type {
   ActivityCheckpoint,
   ActivityRepair,
