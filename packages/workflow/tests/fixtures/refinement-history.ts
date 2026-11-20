@@ -14,7 +14,8 @@ export function history(storage: string, remote: string, tasks: ReadonlySet<stri
     return database
       .prepare(
         `
-      SELECT events.id, events.run, runs.task_id, events.content FROM events
+      SELECT events.id, events.run, runs.task_id, runs.goal_id, runs.parent_id,
+        events.recorded_at, events.content FROM events
       JOIN runs ON events.run = runs.id ORDER BY events.id
     `,
       )
@@ -23,6 +24,10 @@ export function history(storage: string, remote: string, tasks: ReadonlySet<stri
       .map((row) => ({
         sequence: String(row.id),
         run: Number(row.run),
+        taskID: String(row.task_id),
+        goalID: String(row.goal_id),
+        parent: row.parent_id === null ? undefined : Number(row.parent_id),
+        timestamp: row.recorded_at as string | null,
         observation: JSON.parse(String(row.content)) as Record<string, any>,
       }));
   } finally {
@@ -35,45 +40,19 @@ type Origins = ReturnType<typeof history>;
 /** Compare every origin and terminal result, in order, against the canonical journal. */
 export function assertOrigins(completion: CompletedRefinementRound, origins: Origins) {
   const report = readFileSync(completion.report, 'utf8');
-  const frames = report
-    .split('\n')
-    .filter((line) => line.startsWith('{"sequence":'))
+  const frames = report.split('\n').filter((line) => line.startsWith('{"sequence":'))
     .map((line) => JSON.parse(line) as JournalEvent);
-  assert.deepEqual(
-    completion.findings,
-    origins.map((event) => event.sequence),
-  );
-  assert.deepEqual(
-    frames.map(({ sequence, run, observation }) => ({
-      sequence,
-      run,
-      observation,
-    })),
-    origins,
-  );
+  assert.deepEqual(completion.findings, origins.map((event) => event.sequence));
+  assert.deepEqual(frames, origins);
   const measured = origins.filter(({ observation }) =>
-    ['nativeStarted', 'nativeEvent', 'nativeFinished', 'nativeInvocation'].some(
-      (key) => key in observation,
-    ),
-  );
-  assert.deepEqual(
-    completion.measurements,
-    measured.map(({ sequence }) => sequence),
-  );
+    ['nativeStarted', 'nativeEvent', 'nativeFinished', 'nativeInvocation']
+      .some((key) => key in observation));
+  assert.deepEqual(completion.measurements, measured.map(({ sequence }) => sequence));
   const terminals = origins.flatMap(({ observation }) =>
-    observation.outcome ? [observation.outcome] : [],
-  );
-  assert.deepEqual(
-    frames.flatMap(({ observation }) => {
-      const record = observation as { outcome?: unknown };
-      return record.outcome ? [record.outcome] : [];
-    }),
-    terminals,
-  );
+    observation.outcome ? [observation.outcome] : []);
   assert.equal(new Set(completion.findings).size, origins.length);
   const sources = origins.flatMap(({ observation }) =>
-    observation.nativeEvent?.kind === 'event' ? [observation.nativeEvent.source as string] : [],
-  );
+    observation.nativeEvent?.kind === 'event' ? [observation.nativeEvent.source as string] : []);
   const native = [...new Set(sources)].map((source) => readFileSync(source, 'utf8')).join('\n');
   return { report, terminals, native };
 }
