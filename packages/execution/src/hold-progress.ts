@@ -28,9 +28,10 @@ export function checkedCorrectionProgress(
   previous: string,
   current: string,
 ) {
-  if (checkFailureSignature(previous) !== checkFailureSignature(current)) return true;
   const finding = correctionFinding(task.history(), milestone);
-  const paths = finding?.kind === 'rejection' ? holdInputPaths(task, milestone) : undefined;
+  if (finding?.kind !== 'rejection') return correctionMadeProgress(task.observations(), previous);
+  if (checkFailureSignature(previous) !== checkFailureSignature(current)) return true;
+  const paths = holdInputPaths(task, milestone);
   return correctionMadeProgress(task.observations(), previous, paths);
 }
 
