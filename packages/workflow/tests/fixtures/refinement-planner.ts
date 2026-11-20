@@ -78,15 +78,15 @@ function providerView(
 
 /** Explicit native clarification capability shared by the controlled fixture actors. */
 const clarificationTools = [
-          {
-            name: 'ask-question',
-            handler: 'question',
-            description: 'Ask the human',
-            inputSchema: {
-              type: 'object',
-              required: ['question'],
-              properties: { question: { type: 'string' } },
-              additionalProperties: false,
-            },
-          },
-        ];
+  {
+    name: 'ask-question',
+    handler: 'question',
+    description: 'Ask the human',
+    inputSchema: {
+      type: 'object',
+      required: ['question'],
+      properties: { question: { type: 'string' } },
+      additionalProperties: false,
+    },
+  },
+];
