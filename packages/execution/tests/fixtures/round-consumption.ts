@@ -40,30 +40,43 @@ export class RoundConsumptionFixture {
     }
     this.git('add', '.');
     this.git('commit', '-m', 'Explicit accepted refinement fixture');
-    symlinkSync(fileURLToPath(new URL('../../../../../node_modules', import.meta.url)),
-      join(this.root, '.git', 'node_modules'), 'dir');
+    symlinkSync(
+      fileURLToPath(new URL('../../../../../node_modules', import.meta.url)),
+      join(this.root, '.git', 'node_modules'),
+      'dir',
+    );
     this.install('original');
   }
 
   /** Resolve the same public plugin services afresh over the existing SQLite/Git state. */
   reopen() {
     const agent = new Agent(this.architecture);
-    const execution = new Execution(this.architecture, new Coordination(this.storage), this.storage);
+    const execution = new Execution(
+      this.architecture,
+      new Coordination(this.storage),
+      this.storage,
+    );
     const services: WorkflowServices = {
       execution,
       planner: new Planner(agent),
-      architecture: { propose: (session, feedback, signal) =>
-        this.architecture.propose(agent, hostTask(session), feedback, signal) },
+      architecture: {
+        propose: (session, feedback, signal) =>
+          this.architecture.propose(agent, hostTask(session), feedback, signal),
+      },
       direction: {
         track,
         plan: (session, signal, standing) => direct(agent, session, signal, { standing }),
         revise: (session, plan, feedback, signal, standing) =>
           direct(agent, session, signal, { plan, feedback, standing }),
       },
-      agent: { execute: (session, milestone, activity, signal) =>
-        steward(agent, session, milestone, activity, signal) },
-      verification: { assess: (session, plan, candidate, signal) =>
-        verify(agent, session, plan, candidate, signal) },
+      agent: {
+        execute: (session, milestone, activity, signal) =>
+          steward(agent, session, milestone, activity, signal),
+      },
+      verification: {
+        assess: (session, plan, candidate, signal) =>
+          verify(agent, session, plan, candidate, signal),
+      },
       delivery: { integrate, resume },
     };
     return new Workflow(services);
@@ -72,12 +85,17 @@ export class RoundConsumptionFixture {
   /** Bind an explicit installed executable; changing it never edits the captured project. */
   install(identity: string) {
     const executable = join(this.root, '.git', identity + '-provider.mjs');
-    const source = readFileSync(fileURLToPath(
-      new URL('./round-consumption-provider.js', import.meta.url)), 'utf8');
-    writeFileSync(executable, source.replace(/^#![^\n]*/, '#!' + process.execPath),
-      { mode: 0o700 });
-    writeFileSync(join(this.root, '.git', 'bindings.yaml'),
-      stringify({ schemaVersion: 1, tools: { codex: executable } }));
+    const source = readFileSync(
+      fileURLToPath(new URL('./round-consumption-provider.js', import.meta.url)),
+      'utf8',
+    );
+    writeFileSync(executable, source.replace(/^#![^\n]*/, '#!' + process.execPath), {
+      mode: 0o700,
+    });
+    writeFileSync(
+      join(this.root, '.git', 'bindings.yaml'),
+      stringify({ schemaVersion: 1, tools: { codex: executable } }),
+    );
     return executable;
   }
 
@@ -91,8 +109,11 @@ export class RoundConsumptionFixture {
 function definitions(): Record<string, unknown> {
   return {
     [catalog + '/project.yaml']: {
-      id: 'round-consumption', remote, knowledgeRoot: '.arc',
-      contractRegistry: 'contracts.yaml', planTemplate: catalog + '/plan-template.md',
+      id: 'round-consumption',
+      remote,
+      knowledgeRoot: '.arc',
+      contractRegistry: 'contracts.yaml',
+      planTemplate: catalog + '/plan-template.md',
       bindings: '.git/bindings.yaml',
       director: { component: 'direction', activity: 'planning' },
       verifier: { component: 'reviewer', activity: 'review' },
@@ -102,15 +123,27 @@ function definitions(): Record<string, unknown> {
     },
     'contracts.yaml': { contracts: [] },
     [catalog + '/plan-template.md']: 'Use the normal five ordered activities.\n',
-    '.arc/goals/baseline.md': '---\npriority: 1\n---\nPreserve the baseline.\n\n## Success measures\nThe baseline contains durable evidence.\n',
+    '.arc/goals/baseline.md':
+      '---\npriority: 1\n---\nPreserve the baseline.\n\n## Success measures\nThe baseline contains durable evidence.\n',
     baseline: 'durable evidence\n',
     ...actorDefinitions(),
-    [catalog + '/roles/assessor.yaml']: { id: 'assessor', instructions: ['Assess the supplied assignment.'] },
+    [catalog + '/roles/assessor.yaml']: {
+      id: 'assessor',
+      instructions: ['Assess the supplied assignment.'],
+    },
     [catalog + '/operations/read-file.yaml']: { id: 'read-file', category: 'read', tool: 'read' },
-    [catalog + '/operations/ask-question.yaml']: { id: 'ask-question', category: 'read', tool: 'question' },
+    [catalog + '/operations/ask-question.yaml']: {
+      id: 'ask-question',
+      category: 'read',
+      tool: 'question',
+    },
     [catalog + '/operations/fixture-check.yaml']: {
-      id: 'fixture-check', category: 'check', tool: 'check',
-      command: process.execPath, args: ['--version'], network: false,
+      id: 'fixture-check',
+      category: 'check',
+      tool: 'check',
+      command: process.execPath,
+      args: ['--version'],
+      network: false,
     },
   };
 }
@@ -126,16 +159,27 @@ function actorDefinitions() {
     work: ['baseline'],
   };
   for (const [id, owns] of Object.entries(owners)) {
-    const activity = id === 'architecture' ? 'assessment' : id === 'reviewer' ? 'review' : 'planning';
+    const activity =
+      id === 'architecture' ? 'assessment' : id === 'reviewer' ? 'review' : 'planning';
     definitions[catalog + '/components/' + id + '.yaml'] = {
-      id, purpose: 'Assess ' + id + ' using complete retained findings', owns,
-      activities: { [activity]: {
-        role: 'assessor', profile: id, instructions: ['Use the real assignment and cite prior evidence.'],
-        operations: ['read-file', 'ask-question'], standards: [],
-      } },
+      id,
+      purpose: 'Assess ' + id + ' using complete retained findings',
+      owns,
+      activities: {
+        [activity]: {
+          role: 'assessor',
+          profile: id,
+          instructions: ['Use the real assignment and cite prior evidence.'],
+          operations: ['read-file', 'ask-question'],
+          standards: [],
+        },
+      },
     };
     definitions[catalog + '/execution-profiles/' + id + '.yaml'] = {
-      id, model: 'explicit-' + id, reasoning: 'medium', webSearch: 'disabled',
+      id,
+      model: 'explicit-' + id,
+      reasoning: 'medium',
+      webSearch: 'disabled',
       operationCategories: ['read'],
     };
   }
