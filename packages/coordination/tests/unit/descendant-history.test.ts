@@ -12,10 +12,6 @@ const goal = 'Refinement';
 const phaseGoal = 'Architect';
 const phaseScope = 'round:1:architect';
 
-interface DescendantJournal {
-  childTimeline(goal: string, scope: string): JournalEvent[];
-}
-
 /** Exercise real nested admissions across connections to one temporary SQLite store. */
 class HistoryFixture {
   readonly store: Coordination;
