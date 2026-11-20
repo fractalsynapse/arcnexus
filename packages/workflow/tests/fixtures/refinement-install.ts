@@ -16,4 +16,3 @@ export function installProvider(root: string) {
   );
   return executable;
 }
-
