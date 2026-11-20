@@ -20,10 +20,15 @@ function launch(t: TestContext, executable: string, path: string) {
       clarifications: [{ question: 'Complete answer 1', answer }],
     }),
   });
-  t.diagnostic(JSON.stringify({
-    executable, selectedRuntime: process.execPath, selectedVersion: process.version,
-    env: { PATH: path, LANG: 'C.UTF-8' }, ...result,
-  }));
+  t.diagnostic(
+    JSON.stringify({
+      executable,
+      selectedRuntime: process.execPath,
+      selectedVersion: process.version,
+      env: { PATH: path, LANG: 'C.UTF-8' },
+      ...result,
+    }),
+  );
   return { path, result };
 }
 
@@ -31,12 +36,23 @@ function launch(t: TestContext, executable: string, path: string) {
 function assertLaunch({ path, result }: ReturnType<typeof launch>) {
   assert.equal(result.error, undefined);
   assert.equal(result.status, 0, result.stderr);
-  assert.deepEqual(result.stdout.trim().split('\n').map((line) => JSON.parse(line)), [
-    { type: 'fixture.runtime', executable: process.execPath, version: process.version, path },
-    { type: 'item.completed', item: { type: 'agent_message',
-      text: JSON.stringify({ finding: 'Provider finding attempt 1', answer }) } },
-    { type: 'turn.completed', usage: { input_tokens: 19, output_tokens: 7 } },
-  ]);
+  assert.deepEqual(
+    result.stdout
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line)),
+    [
+      { type: 'fixture.runtime', executable: process.execPath, version: process.version, path },
+      {
+        type: 'item.completed',
+        item: {
+          type: 'agent_message',
+          text: JSON.stringify({ finding: 'Provider finding attempt 1', answer }),
+        },
+      },
+      { type: 'turn.completed', usage: { input_tokens: 19, output_tokens: 7 } },
+    ],
+  );
 }
 
 test('installed recovery provider selects the test runtime independently of PATH', (t) => {
