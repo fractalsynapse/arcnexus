@@ -91,20 +91,7 @@ function workflowServices(state: State, planner: unknown): WorkflowServices {
       }),
     },
     planner: planner as WorkflowServices['planner'],
-    architecture: {
-      propose: async () => ({
-        kind: 'no-change',
-        summary: 'Architect retained its finding',
-        evidence: [],
-      }),
-    },
-    direction: {
-      plan: async () => ({
-        kind: 'satisfied',
-        summary: 'Captured goal outcome retained',
-        evidence: [{ path: 'baseline', quote: 'durable report evidence' }],
-      }),
-    },
+    ...successfulPhases(),
     agent: {},
     verification: {},
     delivery: {},
