@@ -20,7 +20,7 @@ class StreamScenario {
     assert.ok(source.includes('if (!this.task.assignment.clarifications?.length)'));
     const noGate = source.replace(
       'if (!this.task.assignment.clarifications?.length)',
-      'if (false)',
+      'if (true)',
     );
     const capturedResult = noGate.replace(
       "await this.call('ask-question', {",
