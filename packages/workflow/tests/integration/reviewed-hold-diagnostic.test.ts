@@ -76,10 +76,7 @@ function assertContinuity(f: ReviewedWorkflow, held: HoldContext) {
   const events = task.history();
   const plan = events.findLast((event) => 'plan' in event)!.plan!;
   assert.deepEqual(plan.milestones.find((m) => m.id === correction.id)!.criteria, held.acceptance);
-  assert.deepEqual(
-    events.findLast((event) => 'position' in event)!.position,
-    held.position,
-  );
+  assert.deepEqual(events.findLast((event) => 'position' in event)!.position, held.position);
   assert(events.some((event) => 'verdict' in event && event.verdict.kind === 'rejected'));
   for (const finding of held.rejection.findings)
     for (const evidence of finding.evidence)
@@ -100,7 +97,12 @@ function assertNewFinding(f: ReviewedWorkflow, held: HoldContext, log: string) {
   assert.deepEqual(current.acceptance, held.acceptance);
   assert.deepEqual(current.receipts, held.receipts);
   assert.deepEqual(f.calls.slice(4), [
-    correction.id, 'Direction', 'part-2', correction.id, 'Review', 'Delivery',
+    correction.id,
+    'Direction',
+    'part-2',
+    correction.id,
+    'Review',
+    'Delivery',
   ]);
   assert.equal(f.reviews.length, 1, 'The corrected candidate requires fresh independent review');
 }
