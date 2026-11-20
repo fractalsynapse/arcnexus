@@ -4,7 +4,9 @@ import { existsSync, readFileSync } from 'node:fs';
 function main() {
   const external = process.argv[2] === 'external';
   if (external && !existsSync('schema.txt')) {
-    console.error('External prerequisite unavailable: schema.txt\nRequired action: supply the approved schema.');
+    console.error(
+      'External prerequisite unavailable: schema.txt\nRequired action: supply the approved schema.',
+    );
     process.exitCode = 43;
     return;
   }
