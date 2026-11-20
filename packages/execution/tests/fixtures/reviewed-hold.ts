@@ -19,6 +19,8 @@ import type { CheckResult } from '../../src/check.js';
 import { git } from '../../src/git.js';
 import { Clarifications, HostTask, steward } from '../../src/index.js';
 import { execute } from '../../src/process.js';
+import { CheckDependencies } from '../../src/dependencies.js';
+import { runCheck } from '../../src/run-check.js';
 import { holdFiles } from './reviewed-hold-project.js';
 
 export const selection = { component: 'owner', activity: 'implementation' };
@@ -63,6 +65,7 @@ export class ReviewedHoldFixture {
   readonly originalReport = 'Independent rejection A\nKeep the exact originating finding.\n';
   private head?: string;
   private refusal = false;
+  private dependencyPrerequisite = false;
 
   /** Commit a complete explicit catalog before capture and admit the real journal. */
   constructor(
@@ -109,6 +112,7 @@ export class ReviewedHoldFixture {
     git(this.root, 'config', 'user.email', 'hold@example.invalid');
     git(this.root, 'remote', 'add', 'origin', remote);
     const files = { ...holdFiles };
+    if (this.external) files['package.json'] = '{"name":"prerequisite-fixture","private":true}';
     const path = '.arc/architecture/operations/owner-tests.yaml';
     const operation = JSON.parse(files[path]!);
     operation.args.push(this.external ? 'external' : 'local');
@@ -160,7 +164,9 @@ export class ReviewedHoldFixture {
       task,
       'check',
       async (id: string, abort: AbortSignal, scope?: Parameters<HostTask['check']>[2]) => {
-        const check = await this.command(task, id, abort);
+        const check = this.dependencyPrerequisite
+          ? await runCheck(task, id, abort, scope)
+          : await this.command(task, id, abort);
         task.note({
           check,
           scope,
@@ -289,6 +295,20 @@ export class ReviewedHoldFixture {
     this.task.close();
     this.task = this.open();
     await this.task.setupWorkspace('699', signal);
+  }
+
+  /**
+   * Exercise runCheck's host prerequisite classification with a controlled preparation
+   * collaborator. Its real subprocess diagnostic is retained; this proves neither
+   * npm installation nor native confinement.
+   */
+  requireDependencies() {
+    this.dependencyPrerequisite = true;
+    this.t.mock.method(CheckDependencies.prototype, 'prepare', async (abort: AbortSignal) => {
+      const result = { ...(await this.command(this.task, 'owner-tests', abort)), id: 'dependencies' };
+      this.task.note({ dependencyPreparation: result });
+      return result;
+    });
   }
 
   /** Exercise a real checked-edit refusal after earlier acknowledged work. */
