@@ -104,7 +104,6 @@ export class RefinementRun {
       this.save(invocation, round + 1, 'Plan');
       return;
     }
-    const start = this.observer.eventFrames().length;
     let phase: Exclude<SavedProgress['phase'], 'complete'> =
       saved?.phase === 'complete' ? 'Plan' : (saved?.phase ?? 'Plan');
     this.progress(invocation, round, phase);
@@ -120,7 +119,7 @@ export class RefinementRun {
       this.save(invocation, round, 'Run', { outcome });
       phase = 'Run';
     }
-    return this.runInventory(invocation, round, phase, saved, start);
+    return this.runInventory(invocation, round, phase, saved);
   }
 
   /** Capture this round's immutable inventory and resume its first unfinished goal. */
@@ -129,7 +128,6 @@ export class RefinementRun {
     round: number,
     phase: SavedProgress['phase'],
     saved: SavedProgress | undefined,
-    start: number,
   ): Promise<TaskOutcome | undefined> {
     const goals = this.services.execution.round?.(
       this.parent.capture.source.root,
@@ -141,7 +139,7 @@ export class RefinementRun {
     const index = phase === 'Run' && saved?.phase === 'Run' ? (saved.goal ?? 0) : 0;
     const outcome = await this.runGoals(invocation, round, goals.goals, index);
     if (outcome) return outcome;
-    this.completeRound(invocation, round, goals.goals, start);
+    this.completeRound(invocation, round, goals.goals);
     goals.finish();
     this.save(invocation, round + 1, 'Plan');
   }
@@ -211,7 +209,6 @@ export class RefinementRun {
     invocation: string,
     round: number,
     goals: readonly StandingGoal[],
-    _start: number,
   ) {
     const frames = this.originatingFrames(invocation, round, goals);
     const measurements = new RunMeasurements();
