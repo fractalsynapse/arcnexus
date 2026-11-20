@@ -4,6 +4,8 @@
 
 ### Added
 
+- Expand all component purposes and activity operating procedures through the existing single-string builder, retain shared instructions once, and apply the architect-approved Workflow Implementation profile selection of `gpt-sol` (#672, #669).
+
 - Use the same read-only formatting and lint commands for repository and owner scopes, with Git/Team selection, complete scope records and real tool configuration inside confinement (#615, #638).
 
 - Select built test suites by declared tags and levels through the shared runner, with explicit native-test opt-in and literal metadata validation before execution; align existing suite metadata with catalog ownership (#615).
