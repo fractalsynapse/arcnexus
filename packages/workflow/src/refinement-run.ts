@@ -233,7 +233,7 @@ export class RefinementRun {
   /** Rebuild this round's complete originating stream from retained child timeline artifacts. */
   private originatingFrames(invocation: string, round: number, goals: readonly StandingGoal[]) {
     const host = hostTask(this.parent);
-    const children = [
+    const children: [string, string][] = [
       ['Assess objectives and standing goals', this.scope(invocation, round, 'plan')],
       ['Assess architecture alignment', this.scope(invocation, round, 'architect')],
       ...goals.map((goal) => [goal.body, this.scope(invocation, round, `goal:${goal.id}`)]),
