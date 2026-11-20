@@ -29,5 +29,10 @@ routes through the public Workflow entry.
 The approved Plan → Architect → Run capability is being implemented in
 [#615](https://github.com/fractalsynapse/arcnexus/issues/615). Its command surface,
 high-level approvals, prerequisite delivery and durable phase recovery are targets
-in the contract. Their availability and three-round live acceptance must be
-established separately from local activity repair.
+in the contract. The [refinement implementation intent](refinement.md) records
+sequencing, recovery, shared lifecycle and reports before behavior changes. It
+also defines the target public completed-round observation and a deterministic
+consumer scenario for Execution; that handoff is unavailable until the subsequent
+Workflow testing and implementation activities establish it. Their availability
+and three-round live acceptance must be established separately from local
+activity repair.
