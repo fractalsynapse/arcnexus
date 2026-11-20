@@ -42,8 +42,10 @@ function assertTools(view: AgentInspection, probe: Probe) {
   for (const tool of expected) assert.equal(operations[tool.name].mcp, tool.description);
   assert.equal(probe.refusals.length, expected.some(({ name }) => name === 'owned-edit') ? 3 : 2);
   assert.ok(probe.refusals.every(({ isError }) => isError));
-  for (const refusal of probe.refusals.slice(0, 2)) assert.match(refusal.content[0]!.text, /not mapped to this activity/);
-  if (probe.refusals[2]) assert.match(probe.refusals[2].content[0]!.text, /captured owners: reviewer/);
+  for (const refusal of probe.refusals.slice(0, 2))
+    assert.match(refusal.content[0]!.text, /not mapped to this activity/);
+  if (probe.refusals[2])
+    assert.match(probe.refusals[2].content[0]!.text, /captured owners: reviewer/);
 }
 
 /** Assert effective native invocation policy and visible guidance without claiming harness interpretation. */
@@ -149,7 +151,11 @@ for (const [component, activity, actor, names, web] of [
       context(task, actor === 'reviewer'),
     );
     const probe = readProbe(task);
-    t.diagnostic(JSON.stringify({ controlledNativeObservation: { revision: task.capture.source.revision, probe } }));
+    t.diagnostic(
+      JSON.stringify({
+        controlledNativeObservation: { revision: task.capture.source.revision, probe },
+      }),
+    );
     assert.equal(probe.executable, task.config.executable);
     assert.equal(probe.input, view.request.input);
     assertTools(view, probe);
