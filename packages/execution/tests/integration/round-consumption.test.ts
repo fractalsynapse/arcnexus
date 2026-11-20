@@ -41,8 +41,7 @@ class Observations implements TaskObserver {
     const observation = event.observation as Record<string, any>;
     if (observation.completedRound) this.rounds.push(observation.completedRound);
     if (observation.nativeEvent?.event?.type === 'fixture.consumption') {
-      const payload = JSON.parse(readFileSync(observation.nativeEvent.source, 'utf8'));
-      this.consumers.push(payload.event ?? payload);
+      this.consumers.push((event.detail as { event: Consumption }).event);
     }
   }
 }
@@ -76,9 +75,6 @@ test('EX-REF-ROUND-CONSUMPTION: real refinement feeds each next-round and fresh-
   assert.equal(outcome.kind, 'planned', diagnostic(outcome));
   assert.equal(observed.rounds.length, 2, 'both rounds are produced by the public Workflow');
   const first = observed.rounds[0]!;
-  const later = new Observations();
-  later.consumers.push(...observed.consumers.filter(({ input }) => !first.findings.some(
-    (sequence) => input.includes('"sequence":"' + sequence + '"'))));
   const fresh = new Observations();
   const next = await fixture.reopen().refine(fixture.root, 1, fresh,
     new AbortController().signal);
@@ -93,13 +89,9 @@ function secondRound(observed: Observations) {
   const later = new Observations();
   const completion = observed.events.findIndex(({ observation }) =>
     Boolean((observation as Record<string, unknown>).completedRound));
-  const sources = new Set(observed.events.slice(completion + 1).flatMap(({ observation }) => {
-    const event = (observation as Record<string, any>).nativeEvent;
-    return event?.event?.type === 'fixture.consumption' ? [event.source] : [];
-  }));
-  for (const path of sources) {
-    const payload = JSON.parse(readFileSync(path, 'utf8'));
-    later.consumers.push(payload.event ?? payload);
+  for (const frame of observed.events.slice(completion + 1)) {
+    const detail = frame.detail as { event?: Consumption & { type?: string } } | undefined;
+    if (detail?.event?.type === 'fixture.consumption') later.consumers.push(detail.event);
   }
   return later;
 }
