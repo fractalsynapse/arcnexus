@@ -103,7 +103,7 @@ function providers(f: ReturnType<typeof fixture>, calls: string[]) {
 function refine(
   workflow: Workflow,
   root: string,
-  total: string,
+  total: string | number,
   observer: TaskObserver,
   signal: AbortSignal,
 ) {
