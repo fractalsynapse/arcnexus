@@ -18,10 +18,26 @@ class StreamScenario {
     const executable = this.fixture.install('stream');
     const source = readFileSync(executable, 'utf8');
     assert.ok(source.includes('if (!this.task.assignment.clarifications?.length)'));
-    writeFileSync(
-      executable,
-      source.replace('if (!this.task.assignment.clarifications?.length)', 'if (false)'),
+    const noGate = source.replace(
+      'if (!this.task.assignment.clarifications?.length)',
+      'if (false)',
     );
+    const withToolResult = noGate.replace(
+      `await this.call('ask-question', {
+        question: 'Clarify accepted intent for ' + this.component,
+      });
+      this.emit({ type: 'item.completed', item: { type: 'agent_message', text: '{}' } });`,
+      `const toolResult = await this.call('ask-question', {
+        question: 'Clarify accepted intent for ' + this.component,
+      });
+      this.emit({
+        type: 'item.completed',
+        item: { type: 'mcp_tool_call', id: 'question-tool', result: toolResult },
+      });
+      this.emit({ type: 'item.completed', item: { type: 'agent_message', text: '{}' } });`,
+    );
+    assert.notEqual(withToolResult, noGate);
+    writeFileSync(executable, withToolResult);
   }
 
   /** Retain complete JSONL records as they arrive and mark records seen before termination. */
