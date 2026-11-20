@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
+import test, { type TestContext } from 'node:test';
 import type { ActivityOutcome } from '../../../workflow/src/index.js';
 import type { HoldContext } from '../../src/index.js';
 import {
@@ -254,4 +254,41 @@ test('unrelated checked edits cannot renew the same reviewed checked-edit refusa
   assert.equal(calls, 2, 'An unchanged ownership refusal must stop before another automatic reply');
   assert.equal(held.failure.operation, 'checked-edit');
   assertContinuity(fixture, held);
+});
+
+/** Exercise the real durable human gate while controlling only provider invocation. */
+function questionProvider(t: TestContext, fixture: ReviewedHoldFixture) {
+  t.mock.method(fixture.task, 'activate', async () => {
+    await new Clarifications(fixture.task, selection, new AbortController().signal).decide(
+      { milestone: { id: correction.id }, acceptance: correction.criteria },
+      'Which approved schema must this correction use?',
+    );
+    return { kind: 'completed', edits: [], checks: [] };
+  });
+}
+
+test('a real unanswered human gate retains its action and resumes only with a recorded answer', async (t) => {
+  const fixture = new ReviewedHoldFixture(t);
+  await fixture.prepare();
+  fixture.task.ask = async () => undefined;
+  questionProvider(t, fixture);
+  const held = context(await fixture.run());
+  assert.equal(held.prerequisite?.kind, 'human-decision');
+  assert.equal(held.prerequisite.satisfied, false);
+  assert.equal(held.prerequisite.requiredAction, 'Which approved schema must this correction use?');
+  assertContinuity(fixture, held);
+  await fixture.restart();
+  questionProvider(t, fixture);
+  const repeated = context(await fixture.run());
+  assert.equal(repeated.progress.identity, held.progress.identity);
+  assert.deepEqual(repeated.prerequisite, held.prerequisite);
+  fixture.task.ask = async () => 'Use the architect-approved schema A.\n\nRetain original acceptance.';
+  const answered = context(await fixture.run());
+  assert.equal(answered.prerequisite, undefined);
+  assert.notEqual(answered.progress.identity, held.progress.identity);
+  const recorded = answered.answers.find((a) => a.question === held.prerequisite?.requiredAction);
+  assert.equal(recorded?.answer, 'Use the architect-approved schema A.\n\nRetain original acceptance.');
+  assert(recorded?.evidence);
+  assert.equal(JSON.parse(fixture.task.readFile(recorded.evidence).text).answer, recorded.answer);
+  assertContinuity(fixture, answered);
 });
