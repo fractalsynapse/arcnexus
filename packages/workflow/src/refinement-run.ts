@@ -285,30 +285,15 @@ export class RefinementRun {
     frames: readonly JournalEvent[],
     measurements: ReturnType<RunMeasurements['snapshot']>,
   ) {
-    const text = [
-      `# Refinement round ${round}`,
-      '',
-      `Invocation: ${invocation}`,
-      `Captured goals: ${goals.map(({ id, body }) => `${id}: ${body}`).join('; ')}`,
-      '',
-      '## Complete originating journal observations',
-      '',
-      frames.map((frame) => JSON.stringify(frame)).join('\n'),
-      '',
-      '## Child recovery observations',
-      '',
-      JSON.stringify(
-        recoveryObservations(hostTask(this.parent).history?.() ?? [], invocation, round),
-        null,
-        2,
-      ),
-      '',
-      '## Event-derived measurements',
-      '',
-      JSON.stringify(measurements, null, 2),
-      '',
-    ].join('\n');
-    return hostTask(this.parent).store(`refinement-round-${round}.md`, text);
+    const recovery = recoveryObservations(
+      hostTask(this.parent).history?.() ?? [],
+      invocation,
+      round,
+    );
+    return hostTask(this.parent).store(
+      `refinement-round-${round}.md`,
+      roundReport(invocation, round, goals, frames, measurements, recovery),
+    );
   }
 }
 
