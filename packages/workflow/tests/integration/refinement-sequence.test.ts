@@ -474,6 +474,54 @@ test('each round invokes the real Planner in project-exploration mode', async (t
   assert.deepEqual(modes, ['project exploration', 'project exploration']);
 });
 
+test('later assessments receive the actual completed round in their prepared context', async (t) => {
+  const f = fixture(t);
+  const services = providers(f, []);
+  const contexts: TaskContext[] = [];
+  const agent = {
+    activate: async (input: { task: TaskContext }) => {
+      contexts.push(input.task);
+      return {};
+    },
+  } as unknown as Agent;
+  const activate = async (session: import('../../src/index.js').TaskSession, component: string) => {
+    await (session as HostTask).activate(
+      agent,
+      { component, activity: 'planning' },
+      { assignment: {}, acceptance: [] },
+      new AbortController().signal,
+    );
+  };
+  services.planner!.propose = async (session) => {
+    await activate(session, 'planner');
+    return { kind: 'planned', commit: f.revision, summary: 'First round finding', evidence: [] };
+  };
+  services.architecture!.propose = async (session) => {
+    await activate(session, 'architecture');
+    return { kind: 'no-change', summary: 'Architecture finding', evidence: [] };
+  };
+  services.direction.plan = async (session) => {
+    await activate(session, 'direction');
+    return assessGoal(session, []);
+  };
+  const rounds: Record<string, unknown>[] = [];
+  const outcome = await new Workflow(services).refine(
+    f.root,
+    2,
+    { progress() {}, event: (event) => rounds.push(...completedRounds([event])) },
+    new AbortController().signal,
+  );
+  assert.equal(outcome.kind, 'planned');
+  assert.equal(rounds.length, 2);
+  const prior = rounds[0]!;
+  for (const context of contexts.slice(4)) {
+    const prepared = JSON.stringify(context);
+    assert.ok(prepared.includes(String(prior.report)), 'prepared assessment references prior report');
+    for (const finding of prior.findings as string[])
+      assert.ok(prepared.includes(finding), 'prepared assessment retains each originating finding');
+  }
+});
+
 test('two refinement rounds assess Plan, Architect and every approved goal in order', async (t) => {
   const f = fixture(t);
   const calls: string[] = [];
