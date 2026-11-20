@@ -158,7 +158,12 @@ async function exactRecovery(t: TestContext, total: string) {
 }
 
 /** Reject a different requested total without entering another assessment. */
-async function assertChangedTotal(root: string, total: string, retry: WorkflowServices, retryCalls: string[]) {
+async function assertChangedTotal(
+  root: string,
+  total: string,
+  retry: WorkflowServices,
+  retryCalls: string[],
+) {
   const refused = await refine(
     new Workflow(retry),
     root,
