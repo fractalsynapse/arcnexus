@@ -55,9 +55,7 @@ function assertConsumption(observed: Observations, prior: CompletedRefinementRou
 /** Check the prepared assignment and the complete sources actually read by this actor. */
 function assertAttempt(attempt: Consumption, prior: CompletedRefinementRound) {
   const assignment = parse(
-    attempt.input
-      .split('\n\n## Activity')[0]!
-      .slice(attempt.input.indexOf('\n\nassignment:') + 2),
+    attempt.input.split('\n\n## Activity')[0]!.slice(attempt.input.indexOf('\n\nassignment:') + 2),
   ).assignment;
   assert.ok(
     assignment.completedRounds.some(
@@ -78,7 +76,11 @@ function assertAttempt(attempt: Consumption, prior: CompletedRefinementRound) {
 }
 
 /** Verify the report and complete originating artifacts were read. */
-function assertSources(attempt: Consumption, consumed: CompletedRefinementRound & { sources: string[] }, prior: CompletedRefinementRound) {
+function assertSources(
+  attempt: Consumption,
+  consumed: CompletedRefinementRound & { sources: string[] },
+  prior: CompletedRefinementRound,
+) {
   const sources = consumed.sources
     .map((source) => {
       assert.ok(attempt.reads.includes(source));
