@@ -55,6 +55,7 @@ export class InspectionFixture extends RoundConsumptionFixture {
       session.close();
     });
     t.mock.method(GitHub.prototype, 'publication', async () => undefined);
+    t.mock.method(GitHub.prototype, 'remoteHead', async () => undefined);
     await execution.prepare(session, '42', new AbortController().signal);
     assert.equal(this.git('branch', '--list', '42-task'), '42-task');
     return session;
