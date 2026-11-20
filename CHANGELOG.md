@@ -27,6 +27,8 @@
 
 ### Fixed
 
+- Preserve the complete originating local-repair finding and its evidence from the canonical journal alongside later repair diagnostics in activity requests, retaining exact text and avoiding duplicate findings for a single rewind (#660).
+
 - Recover secured checkpoints across compatible staging changes with Git's three-way merge and current ownership/activity validation, preserving real conflict diagnostics instead of rejecting every overlapping path (#615).
 
 - Refresh elapsed measurements on ongoing observations and mark terminated unfinished activations with unknown duration, preserving reported usage and avoiding historical live stopwatches (#662).
