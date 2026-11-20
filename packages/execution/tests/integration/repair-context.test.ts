@@ -105,10 +105,13 @@ test('nested findings and retained progress survive journal reopening and later 
   };
   fixture.task.record({ position: { completed: 0, activities: { original: 1 } }, repair: latest });
   const position = fixture.task.history().findLast((event) => 'position' in event);
-  const checks = fixture.task.observations().filter((event) => 'check' in event);
+  const checks = fixture.task.observations<{ check?: unknown }>().filter((event) => event.check);
   await fixture.restart();
   assert.deepEqual(fixture.task.history().findLast((event) => 'position' in event), position);
-  assert.deepEqual(fixture.task.observations().filter((event) => 'check' in event), checks);
+  assert.deepEqual(
+    fixture.task.observations<{ check?: unknown }>().filter((event) => event.check),
+    checks,
+  );
   for (const activity of ['testing', 'implementation'] as const) {
     fixture.activity = activity;
     const context = await fixture.context();
