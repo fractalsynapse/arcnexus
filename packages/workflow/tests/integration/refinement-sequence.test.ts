@@ -233,8 +233,6 @@ test('retrying the same total resumes the interrupted invocation', async (t) => 
   ]);
 });
 
-
-
 /** Stop once the successful child terminal observation is durably forwarded. */
 function interruptAfterPlannedTerminal(): TaskObserver {
   return {
@@ -264,14 +262,24 @@ test('a committed child outcome is reused after parent acknowledgment is interru
   const workflow = new Workflow(services);
   const refine = Reflect.get(workflow, 'refine') as Refinement;
   const first = await refine.call(
-    workflow, f.root, 1, interruptAfterPlannedTerminal(), new AbortController().signal,
+    workflow,
+    f.root,
+    1,
+    interruptAfterPlannedTerminal(),
+    new AbortController().signal,
   );
   assert.equal(Reflect.get(first as object, 'kind'), 'failed');
   const events: unknown[] = [];
-  await refine.call(workflow, f.root, 1, {
-    progress() {},
-    event: (event) => events.push(event),
-  }, new AbortController().signal);
+  await refine.call(
+    workflow,
+    f.root,
+    1,
+    {
+      progress() {},
+      event: (event) => events.push(event),
+    },
+    new AbortController().signal,
+  );
   assert.equal(assessments, 1, 'the successful Planner child was not assessed again');
   const round = completedRounds(events)[0]!;
   const report = readFileSync(Reflect.get(round, 'report') as string, 'utf8');
