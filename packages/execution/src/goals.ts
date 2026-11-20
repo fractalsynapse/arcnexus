@@ -19,11 +19,15 @@ export function goalRound(
     throw new Error('No standing goals in the captured project inventory');
   const capture = stagingCapture(architecture, local);
   const remote = capture.source.remote;
-  const { id, inventory } = coordination.round(remote, () => {
-    const goals = goalInventory(capture);
-    if (!goals.length) throw new Error('No standing goals in the captured project inventory');
-    return JSON.stringify(goals);
-  }, namespace);
+  const { id, inventory } = coordination.round(
+    remote,
+    () => {
+      const goals = goalInventory(capture);
+      if (!goals.length) throw new Error('No standing goals in the captured project inventory');
+      return JSON.stringify(goals);
+    },
+    namespace,
+  );
   const goals = JSON.parse(inventory) as GoalRound['goals'];
   return {
     id,
