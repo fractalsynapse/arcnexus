@@ -81,7 +81,8 @@ export class RefinementRun {
     saved?: SavedProgress,
   ): Promise<TaskOutcome | undefined> {
     const start = this.observer.eventFrames().length;
-    let phase = saved?.phase ?? 'Plan';
+    let phase: Exclude<SavedProgress['phase'], 'complete'> =
+      saved?.phase === 'complete' ? 'Plan' : saved?.phase ?? 'Plan';
     this.progress(invocation, round, phase);
     if (phase === 'Plan') {
       const outcome = await this.runPlanner(invocation, round);
