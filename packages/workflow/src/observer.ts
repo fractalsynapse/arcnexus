@@ -5,7 +5,6 @@ import type { Observation, TaskObserver, TaskSession } from './services.js';
 export class RunObserver implements TaskObserver {
   private readonly projection = new RunMeasurements();
   private readonly startedAt = new Date().toISOString();
-  private readonly frames: JournalEvent[] = [];
   private admitted = false;
 
   /** Retain the caller's output and question handlers without a separate event store. */
@@ -28,11 +27,6 @@ export class RunObserver implements TaskObserver {
     this.caller.progress(observation);
   }
 
-  /** Return complete event identities accumulated by this foreground observer. */
-  eventFrames() {
-    return this.frames;
-  }
-
   /** Return the existing event-derived projection without estimating unknown values. */
   measurementSnapshot() {
     return this.projection.snapshot();
@@ -40,7 +34,6 @@ export class RunObserver implements TaskObserver {
 
   /** Forward every durable event, legacy progress when needed, and updated measured totals. */
   event(frame: JournalEvent) {
-    this.frames.push(frame);
     const changed = this.projection.accept(frame);
     this.caller.event?.(frame);
     const observation = frame.observation as Partial<Observation> | null;
