@@ -44,7 +44,18 @@ does not claim that a controlled provider fixture was a live model observation.
 
 Before running the optional `owner-tests` operation, ArcNexus checks for
 suites in the steward's current worktree. An owner with no suites gets an
-inapplicability record. Assembled verification still runs its required checks.
+inapplicability record. It remains a valid component and still needs applicable
+formatting and lint, shared types/build and mandatory assembled verification.
+`npm run check` checks source, tests, fixtures and tooling without emitting;
+`npm run build` cleans generated output and compiles the assembled program.
+These are repository checks, not owner-suite substitutes.
+
+Repository source preparation uses the locked toolchain. Preparing dependencies
+for a managed runtime candidate belongs to
+[Execution](../../packages/execution/contract.md); a working-copy build does not
+establish that candidate's dependency environment. Read-only owner checks never
+reformat files. Authorized fixes use explicit captured owned paths through the
+checked-edit operation or its supported formatting transform.
 
 Formatting and lint share their public commands with owner checks. Use
 `npm run format:check -- <owner>` or `npm run lint -- <owner>`; omit the owner
