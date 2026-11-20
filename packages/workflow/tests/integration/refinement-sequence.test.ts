@@ -365,6 +365,38 @@ test('an interrupted Run retains its captured goals and the next round captures 
   assert.deepEqual(calls, refreshedOrder);
 });
 
+test('later Planner assessments can observe the completed prior round', async (t) => {
+  const f = fixture(t);
+  const services = providers(f, []);
+  assert.ok(services.planner);
+  let visits = 0;
+  let prior: unknown;
+  services.planner.propose = async (session) => {
+    visits += 1;
+    if (visits === 2) prior = session.observations();
+    return { kind: 'planned', commit: f.revision, summary: 'No change', evidence: [] };
+  };
+  const workflow = new Workflow(services);
+  const refine = Reflect.get(workflow, 'refine') as Refinement;
+  assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
+  const events: unknown[] = [];
+  await refine.call(
+    workflow,
+    f.root,
+    2,
+    { progress() {}, event: (event) => events.push(event) },
+    new AbortController().signal,
+  );
+  const completed = events.find(
+    (event) => typeof event === 'object' && event !== null && 'completedRound' in event,
+  );
+  assert.ok(completed, 'the first round produced a real completion observation');
+  assert.ok(
+    JSON.stringify(prior).includes(JSON.stringify(Reflect.get(completed, 'completedRound'))),
+    'the next Planner receives the complete prior observation',
+  );
+});
+
 test('two refinement rounds assess Plan, Architect and every approved goal in order', async (t) => {
   const f = fixture(t);
   const calls: string[] = [];
