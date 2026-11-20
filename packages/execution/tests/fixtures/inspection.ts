@@ -12,7 +12,8 @@ import { RoundConsumptionFixture } from './round-consumption.js';
 
 const catalog = '.arc/architecture';
 export const guidance = 'Approved native guidance sentinel café 🛠\n';
-export const skill = '---\nname: example\ndescription: Explicit fixture skill\n---\nApproved skill sentinel\n';
+export const skill =
+  '---\nname: example\ndescription: Explicit fixture skill\n---\nApproved skill sentinel\n';
 
 /** Own realistic committed captures and real admission without borrowing developer configuration. */
 export class InspectionFixture extends RoundConsumptionFixture {
@@ -26,8 +27,12 @@ export class InspectionFixture extends RoundConsumptionFixture {
     this.write('.agents/skills/example/SKILL.md', skill);
     this.write('review/foreign.txt', 'foreign original\n');
     for (const [id, tool] of Object.entries({
-      'inspect-read': 'read', 'inspect-list': 'list', 'owned-edit': 'edit', 'foreign-write': 'edit',
-    })) this.write(catalog + '/operations/' + id + '.yaml', { id, category: 'read', tool });
+      'inspect-read': 'read',
+      'inspect-list': 'list',
+      'owned-edit': 'edit',
+      'foreign-write': 'edit',
+    }))
+      this.write(catalog + '/operations/' + id + '.yaml', { id, category: 'read', tool });
     this.git('add', '.');
     this.git('commit', '-m', 'Capture explicit inspection parity activities and guidance');
     this.installProbe();
@@ -35,11 +40,20 @@ export class InspectionFixture extends RoundConsumptionFixture {
 
   /** Admit through production validation and materialize the actual issue branch before activation. */
   async open(t: TestContext) {
-    const execution = new Execution(this.architecture, new Coordination(this.storage), this.storage);
-    const session = await execution.admit({ directory: this.root, goal: 'Exact goal café 🛠\nSecond line' },
-      new AbortController().signal);
+    const execution = new Execution(
+      this.architecture,
+      new Coordination(this.storage),
+      this.storage,
+    );
+    const session = await execution.admit(
+      { directory: this.root, goal: 'Exact goal café 🛠\nSecond line' },
+      new AbortController().signal,
+    );
     assert(session instanceof HostTask, JSON.stringify(session));
-    t.after(() => { session.cleanup(); session.close(); });
+    t.after(() => {
+      session.cleanup();
+      session.close();
+    });
     t.mock.method(GitHub.prototype, 'publication', async () => undefined);
     await execution.prepare(session, '42', new AbortController().signal);
     assert.equal(this.git('branch', '--list', '42-task'), '42-task');
@@ -55,8 +69,13 @@ export class InspectionFixture extends RoundConsumptionFixture {
   /** Bind the controlled compiled executable without changing captured source. */
   private installProbe() {
     const executable = join(this.root, '.git', 'inspection-provider.mjs');
-    const source = readFileSync(fileURLToPath(new URL('./inspection-provider.js', import.meta.url)), 'utf8');
-    writeFileSync(executable, source.replace(/^#![^\n]*/, '#!' + process.execPath), { mode: 0o700 });
+    const source = readFileSync(
+      fileURLToPath(new URL('./inspection-provider.js', import.meta.url)),
+      'utf8',
+    );
+    writeFileSync(executable, source.replace(/^#![^\n]*/, '#!' + process.execPath), {
+      mode: 0o700,
+    });
     this.write('.git/bindings.yaml', { schemaVersion: 1, tools: { codex: executable } });
   }
 
@@ -66,21 +85,36 @@ export class InspectionFixture extends RoundConsumptionFixture {
       const path = catalog + '/components/' + id + '.yaml';
       const component = parse(readFileSync(join(this.root, path), 'utf8'));
       if (id === 'work') component.owns.push('AGENTS.md', '.agents');
-      const names = id === 'work' ? ['testing', 'documentation', 'empty', 'empty-web'] :
-        [id === 'direction' ? 'planning' : 'review'];
-      component.activities = Object.fromEntries(names.map((name) => [name, {
-        role: 'assessor', profile: name === 'empty-web' ? 'web' : id,
-        instructions: ['Selected ' + id + '/' + name + ' procedure café 🛠'],
-        operations: name.startsWith('empty') ? [] :
-          name === 'documentation' ? ['inspect-list'] :
-            id === 'work' ? ['inspect-read', 'owned-edit'] : ['inspect-read'],
-        standards: [],
-      }]));
+      const names =
+        id === 'work'
+          ? ['testing', 'documentation', 'empty', 'empty-web']
+          : [id === 'direction' ? 'planning' : 'review'];
+      component.activities = Object.fromEntries(
+        names.map((name) => [
+          name,
+          {
+            role: 'assessor',
+            profile: name === 'empty-web' ? 'web' : id,
+            instructions: ['Selected ' + id + '/' + name + ' procedure café 🛠'],
+            operations: name.startsWith('empty')
+              ? []
+              : name === 'documentation'
+                ? ['inspect-list']
+                : id === 'work'
+                  ? ['inspect-read', 'owned-edit']
+                  : ['inspect-read'],
+            standards: [],
+          },
+        ]),
+      );
       this.write(path, component);
     }
     this.write(catalog + '/execution-profiles/web.yaml', {
-      id: 'web', model: 'explicit-web', reasoning: 'high',
-      webSearch: 'live', operationCategories: ['read'],
+      id: 'web',
+      model: 'explicit-web',
+      reasoning: 'high',
+      webSearch: 'live',
+      operationCategories: ['read'],
     });
     const path = catalog + '/execution-profiles/direction.yaml';
     const profile = parse(readFileSync(join(this.root, path), 'utf8'));
