@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { parse } from 'yaml';
 import type { ActivityOutcome } from '../../../workflow/src/index.js';
 import {
   ForeignHandoffScenario,
@@ -22,7 +23,7 @@ test('the actual steward correction request explicitly sequences accepted unfini
   assert.equal((await scenario.run()).kind, 'repair');
   scenario.mode = 'acknowledge';
   await scenario.run();
-  const assignment = scenario.contexts.at(-1)!.assignment as Record<string, unknown>;
+  const assignment = renderedAssignment(scenario);
   assert(
     scenario.requests.at(-1)!.request.options.tools.some(({ name }) => name === 'request-supplier'),
   );
@@ -124,4 +125,11 @@ function assertOriginalFailure(scenario: ForeignHandoffScenario, first: Activity
     log: scenario.checks[0]!.log,
     activity: 'implementation',
   });
+}
+
+/** Read the actual serialized Task section, catching request assembly that drops caller guidance. */
+function renderedAssignment(scenario: ForeignHandoffScenario): Record<string, unknown> {
+  const input = scenario.requests.at(-1)!.request.input;
+  const task = input.slice(input.indexOf('Goal:'), input.indexOf('\n\n## Activity'));
+  return (parse(task) as { assignment: Record<string, unknown> }).assignment;
 }
