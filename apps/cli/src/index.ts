@@ -55,11 +55,10 @@ function parseRounds(args: string[]): string {
   ) {
     throw new Error('Usage: arcnexus refine [--rounds <N>]');
   }
-  if (args.length === 0) return 1;
-  const rounds = Number(args[1]);
-  if (!Number.isInteger(rounds) || rounds < 1)
+  if (args.length === 0) return '1';
+  if (!/[1-9]/.test(args[1]))
     throw new Error('Usage: arcnexus refine [--rounds <N>]');
-  return rounds;
+  return args[1];
 }
 
 /** Compose the trusted CLI services for either command. */
