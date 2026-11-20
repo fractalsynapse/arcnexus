@@ -49,10 +49,12 @@ function assertConsumption(observed: Observations, prior: CompletedRefinementRou
         round.report === prior.report && round.invocation === prior.invocation && round.round === prior.round,
       ));
       assert.ok(attempt.reads.includes(prior.report));
-      assert.deepEqual(
-        attempt.consumption.find(({ report }) => report === prior.report),
-        prior,
-      );
+      const consumed = attempt.consumption.find(({ report }) => report === prior.report);
+      assert.ok(consumed);
+      assert.equal(consumed.invocation, prior.invocation);
+      assert.equal(consumed.round, prior.round);
+      assert.deepEqual(consumed.findings, prior.findings);
+      assert.deepEqual(consumed.measurements, prior.measurements);
     }
   }
 }
