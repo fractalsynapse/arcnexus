@@ -4,6 +4,8 @@
 
 ### Added
 
+- Stream persisted host/provider observations through the task observer and human/JSONL CLI, retain exact requests and complete readable run timelines, and derive live elapsed-time and reported-token accounting per execution profile without inventing missing usage or pricing (#615).
+
 - Document the efficiency foundation checklist, detailed prompt-authoring practices and proposed contract amendment for approved in-run architecture adoption, reusable activity checks, live events and continuous profile-aware time/token/cost optimization (#615).
 
 - Assess architecture with `architecture update`, retain exact human approval in the existing journal, and deliver prerequisite work and protected guide bytes through the normal task workflow (#631).
@@ -261,7 +263,7 @@
 - **The reserved workday surface refuses instead of pretending** (#449 C2, gateway GW-11):
   `workday start|stop|status` now exits 2 reporting that the self-directed loop is reserved for a
   future surface on the same plan machinery, and `pause|resume` report that one lane per project
-  refuses while busy. The suites that had used those verbs as their way of *looking at* state observe
+  refuses while busy. The suites that had used those verbs as their way of _looking at_ state observe
   the delivered surfaces instead, or assert the refusal; `platform-execution.test.ts`'s startup probe
   no longer treats a reserved command as an entry point that can reach catalog loading, which is why it
   could not see the architecture refusal it was claiming to check.

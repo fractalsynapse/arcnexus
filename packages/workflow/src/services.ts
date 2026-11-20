@@ -1,6 +1,7 @@
 import type { StandingGoal } from '../../planner/src/inventory.js';
 import type { ArchitectureDecision, Capture } from '../../architecture/src/index.js';
 import { AgentActivityHold } from '../../agent/src/index.js';
+import type { JournalEvent, RunMeasurements } from '../../coordination/src/index.js';
 import type {
   DirectionResult,
   Feedback,
@@ -32,6 +33,8 @@ export interface Observation {
 
 export interface TaskObserver {
   progress(observation: Observation): void;
+  event?(event: JournalEvent): void;
+  measurements?(measurements: ReturnType<RunMeasurements['snapshot']>): void;
   answer?(question: string, signal: AbortSignal): Promise<string | undefined>;
 }
 
@@ -47,6 +50,7 @@ export type TaskOutcome =
 
 export type TaskEvent =
   | Observation
+  | { invocation: { startedAt: string } }
   | { plan: Plan; supplier?: SupplierLink }
   | {
       position: { completed: number; activities: Readonly<Record<string, number>> };
@@ -67,6 +71,7 @@ export interface TaskSession {
   cleanup?(): void;
   history?(): readonly TaskEvent[];
   ask?: TaskObserver['answer'];
+  listen?(observer: NonNullable<TaskObserver['event']>): void;
 }
 
 /** Hold the current task position while the requested human answer is unavailable. */

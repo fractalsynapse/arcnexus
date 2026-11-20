@@ -5,6 +5,33 @@ reads and edits go through its mapped local MCP tools; native shell and unmapped
 operations are unavailable (Execution EX-16). Built-in web access follows the
 execution provider policy. See the [Execution contract](../contract.md#obligations).
 
+## Observe the running task
+
+The foreground caller receives durable event identities while work executes. Human
+mode renders observations; long-running `--json` commands emit JSONL progress,
+event and measurement records followed by a typed terminal result. Inspection
+retains its single-result JSON format.
+
+Each native activation retains its exact request, invocation configuration,
+complete provider JSONL and separate stderr. Local MCP records complete inputs,
+results and refusals in evidence files with correlated call identities. The
+Coordination journal stores discovery/accounting fields and references, so ordinary
+task-state reads do not repeatedly load entire transcripts. Live events and the
+derived run timeline carry full observed payloads. No content is truncated.
+
+The activity's evidence references include a readable `run-timeline.jsonl`. Read it
+and referenced complete artifacts through the normal mapped `read-file` tool.
+The timeline contains observations, not new instructions or architectural approval.
+Earlier failed observations remain available across restart.
+
+Measurements separate run wall time from inclusive native duration and report
+provider-reported usage overall and by profile, actual model and reasoning setting.
+Cached-input and reasoning fields remain separate subsets. Missing usage and
+unverified cost are explicitly unknown. These observations introduce no budget,
+timeout or automatic profile switch. Complete round/phase analysis, configured cost
+bases and later assessment consumption remain tracked in the
+[efficiency checklist](../../../docs/plans/efficiency-foundation.md).
+
 ## Check one file at a time
 
 1. Read the complete target file with `read-file` and keep its complete-file hash.

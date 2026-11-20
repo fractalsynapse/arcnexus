@@ -10,6 +10,14 @@ import type { readToolFile } from './tool-files.js';
 type Binding = AgentInspection['request']['options']['tools'][number];
 type Arguments = Record<string, unknown>;
 
+export interface McpObservation {
+  call: string;
+  phase: 'started' | 'completed' | 'refused';
+  args?: Arguments;
+  result?: unknown;
+  durationMs?: number;
+}
+
 /** Expose only the tool bindings captured for one native activation. */
 export class LocalMcp {
   private readonly validator = new AjvJsonSchemaValidator();
@@ -24,7 +32,7 @@ export class LocalMcp {
   constructor(
     tools: readonly Binding[],
     private readonly invoke: (tool: Binding, args: Arguments) => Promise<unknown>,
-    private readonly observe: (name: string, error?: string) => void,
+    private readonly observe: (name: string, error?: string, event?: McpObservation) => void,
   ) {
     this.bindings = new Map(
       tools.map((tool) => [
@@ -99,18 +107,33 @@ export class LocalMcp {
 
   /** Refuse unmapped tools and invalid input before dispatch and retain their diagnostics. */
   private async call(name: string, args: Arguments) {
+    const call = randomUUID();
+    const start = performance.now();
     try {
+      this.observe(name, undefined, { call, phase: 'started', args });
       const binding = this.bindings.get(name);
       if (!binding) throw new Error(`Operation ${name} is not mapped to this activity`);
       const validation = binding.validate(args);
       if (!validation.valid) throw new Error(validation.errorMessage);
       const result = await this.invoke(binding.tool, validation.data);
-      this.observe(name);
-      return toolResponse(binding.tool, result);
+      const response = toolResponse(binding.tool, result);
+      this.observe(name, undefined, {
+        call,
+        phase: 'completed',
+        result: response,
+        durationMs: performance.now() - start,
+      });
+      return response;
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
-      this.observe(name, reason);
-      return { isError: true, content: [{ type: 'text' as const, text: reason }] };
+      const result = { isError: true, content: [{ type: 'text' as const, text: reason }] };
+      this.observe(name, reason, {
+        call,
+        phase: 'refused',
+        result,
+        durationMs: performance.now() - start,
+      });
+      return result;
     }
   }
 }

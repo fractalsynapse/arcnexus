@@ -2,14 +2,14 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import type { AgentInspection } from '../../architecture/src/index.js';
 import { execute } from './process.js';
-import { InvalidAgentResponse } from '../../agent/src/index.js';
-
-/** Distinguish an unreadable actor answer from a failed harness process. */
-export class InvalidCodexResponse extends InvalidAgentResponse {}
+import { CodexEvents, type CodexObservation } from './codex-events.js';
+export { InvalidCodexResponse } from './codex-events.js';
 
 interface NativeTools {
   schema?: string;
   url: string;
+  stderr?: string;
+  observe?(event: CodexObservation): void;
 }
 
 const unusedFeatures = [
@@ -40,10 +40,14 @@ export async function codex(
   const { input, options } = view.request;
   const cwd = options.workingDirectory;
   const params = invocation(executable, cwd, log, options, tools);
+  const events = new CodexEvents(log, tools.observe);
   const result = await execute(executable, params, {
     cwd,
     signal,
     log,
+    stderrLog: tools.stderr,
+    captureOutput: false,
+    output: (output) => events.accept(output),
     input,
     env: {
       PATH: '/usr/bin:/bin',
@@ -54,7 +58,7 @@ export async function codex(
   });
   if (result.status !== 0)
     throw new Error(`Codex activation failed (${result.status}); evidence: ${log}`);
-  return decodeCodexAnswer(result.stdout, log);
+  return events.answer();
 }
 
 /** Start a fresh noninteractive activation without loading personal executable configuration. */
@@ -65,7 +69,7 @@ function invocation(
   options: AgentInspection['request']['options'],
   tools: NativeTools,
 ) {
-  return [
+  const params = [
     'exec',
     '--ignore-user-config',
     '--ignore-rules',
@@ -81,6 +85,8 @@ function invocation(
     ...(tools.schema ? ['--output-schema', tools.schema] : []),
     '-',
   ];
+  tools.observe?.({ kind: 'invocation', command: executable, args: params, cwd });
+  return params;
 }
 
 /** Disable executable tools while retaining native guidance and provider-level web policy. */
@@ -106,23 +112,7 @@ function settings(
 
 /** Decode the final structured response while keeping the original stream in evidence. */
 export function decodeCodexAnswer(stdout: string, log: string): unknown {
-  let message: string | undefined;
-  for (const line of stdout.trim().split('\n').filter(Boolean)) {
-    const event = JSON.parse(line);
-    if (event.type === 'item.completed' && event.item?.type === 'agent_message')
-      message = event.item.text;
-  }
-  if (!message)
-    throw new InvalidCodexResponse(`Codex returned no final response; evidence: ${log}`, {
-      identity: 'Codex returned no final response',
-    });
-  try {
-    return JSON.parse(message);
-  } catch (error) {
-    const diagnostic = error instanceof Error ? error.message : String(error);
-    throw new InvalidCodexResponse(
-      `Codex returned an invalid task response: ${diagnostic}; evidence: ${log}`,
-      { identity: `Codex returned an invalid task response: ${diagnostic}`, cause: error },
-    );
-  }
+  const events = new CodexEvents(log);
+  events.accept({ channel: 'stdout', text: stdout });
+  return events.answer();
 }

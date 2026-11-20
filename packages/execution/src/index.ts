@@ -1,10 +1,10 @@
-import { existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import type { Context } from 'cordis';
 import type { Agent, ActivationInput } from '../../agent/src/index.js';
 import type { ActivitySelection, Capture, TaskContext } from '../../architecture/src/index.js';
-import type { Journal } from '../../coordination/src/index.js';
+import type { Journal, JournalEvent } from '../../coordination/src/index.js';
 import type { Candidate } from '../../verification/src/index.js';
 import { reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
 import type { TaskEvent, TaskOutcome, TaskSession } from '../../workflow/src/index.js';
@@ -51,7 +51,9 @@ export class HostTask implements TaskSession {
   worktree?: string;
   branch?: string;
   issue?: string;
+  timeline?: string;
   private sequence = 0;
+  private listener?: (event: JournalEvent) => void;
 
   /** Bind the session to a captured project and its already claimed journal. */
   constructor(
@@ -91,8 +93,23 @@ export class HostTask implements TaskSession {
   }
 
   /** Record a delivery intent or provider observation through the task journal. */
-  note(event: Record<string, unknown>) {
-    this.journal.record(event);
+  note(event: TaskEvent | Record<string, unknown>, detail?: unknown) {
+    const recorded = this.journal.record(event);
+    this.listener?.(detail === undefined ? recorded : { ...recorded, detail });
+  }
+
+  /** Subscribe the foreground observer to committed task observations. */
+  listen(observer: (event: JournalEvent) => void) {
+    if (!this.timeline) {
+      this.timeline = this.artifact('run-timeline.jsonl');
+      const records = this.journal.timeline().map((event) => JSON.stringify(event) + '\n');
+      writeFileSync(this.timeline, records.join(''), { mode: 0o600, flag: 'wx' });
+    }
+    const timeline = this.timeline;
+    this.listener = (event) => {
+      appendFileSync(timeline, JSON.stringify(event) + '\n');
+      observer(event);
+    };
   }
 
   /** Read complete project source or a registered immutable artifact from the requested offset. */
@@ -113,7 +130,7 @@ export class HostTask implements TaskSession {
 
   /** Record Workflow observations through Coordination. */
   record(event: TaskEvent) {
-    this.journal.record(event);
+    this.note(event);
   }
 
   /** Read journaled Workflow checkpoints, including previously published activities. */
@@ -158,10 +175,11 @@ export class HostTask implements TaskSession {
 
   /** Retain the terminal outcome and verified native evidence. */
   finish(outcome: TaskOutcome) {
-    this.journal.finish({
+    const event = this.journal.finish({
       ...outcome,
       evidence: [...new Set([...outcome.evidence, ...this.evidence])],
     });
+    this.listener?.(event);
   }
 
   /** Close the storage connection without removing retained source or evidence. */
@@ -367,7 +385,7 @@ export class HostTask implements TaskSession {
     const observed = applyEdits(this.worktree, this.capture, owner, edits, (editIntent) =>
       this.note({ owner, activity, editIntent }),
     );
-    this.journal.record({ owner, activity, edits: observed });
+    this.note({ owner, activity, edits: observed });
     return observed;
   }
 

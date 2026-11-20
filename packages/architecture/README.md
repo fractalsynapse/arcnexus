@@ -16,7 +16,15 @@ After approval, Direction plans prerequisite implementation through the ordinary
 steward lifecycle. The host applies the approved guide batch to that same candidate
 before assembled verification and independent review. Model checked edits cannot
 perform this protected application. A completed delivery supplies a fresh capture
-to subsequent work; the active capture remains immutable.
+to subsequent work. The approved efficiency amendment permits the host to adopt
+resolved architecture between activities in the same run once the necessary
+implementation is validated. That adoption mechanism is pending implementation;
+an in-flight activation and historical observations retain their actual authority.
+
+Follow the [efficiency checklist](../../docs/plans/efficiency-foundation.md) and
+[prompt practices](docs/prompt-practices.md) for the model resolution, operation
+parameter, activity instruction and observability changes. Here “model” means
+resolved architecture; the execution profile separately selects an AI model.
 
 Implementation of this approved capability is bootstrap work in #631. Deterministic
 checks, hosted CI and real phase acceptance are reported separately.

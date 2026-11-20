@@ -171,7 +171,7 @@ export class TaskRun {
   private report(observation: Observation) {
     if (observation.evidence) this.evidence.push(...observation.evidence);
     this.session.record(observation);
-    this.observer.progress(observation);
+    if (!this.session.listen || !this.observer.event) this.observer.progress(observation);
     this.signal.throwIfAborted();
   }
 

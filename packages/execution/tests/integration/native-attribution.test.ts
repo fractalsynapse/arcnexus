@@ -53,7 +53,7 @@ async function scenario(t: TestContext, component: string, activity: string, pro
     ),
     /Codex activation failed/,
   );
-  return task.observations<{ nativeInvocation?: unknown }>();
+  return task.observations<{ nativeStarted?: Record<string, unknown> }>();
 }
 
 for (const [component, activity, profile] of [
@@ -63,7 +63,19 @@ for (const [component, activity, profile] of [
   test(`native invocation records ${component}/${activity} bytes before provider failure`, async (t) => {
     const records = await scenario(t, component, activity, profile);
     assert.deepEqual(
-      records.filter((entry) => entry.nativeInvocation).map((entry) => entry.nativeInvocation),
+      records.flatMap(({ nativeStarted }) =>
+        nativeStarted
+          ? [
+              {
+                inputBytes: nativeStarted.inputBytes,
+                component: nativeStarted.component,
+                activity: nativeStarted.activity,
+                model: nativeStarted.model,
+                profile: nativeStarted.profile,
+              },
+            ]
+          : [],
+      ),
       [
         {
           inputBytes: Buffer.byteLength(input, 'utf8'),

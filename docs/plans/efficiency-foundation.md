@@ -344,3 +344,18 @@ At checklist creation, no behavior above is claimed implemented or qualified.
 Documentation validation is separate from executable checks, hosted CI, native
 observations and live acceptance. Mark each box only with the relevant observed
 evidence; keep failure and operator-assistance history intact.
+
+The first implementation batch applies the exact approved contract amendment and
+connects native/host observations to durable journal identities, complete readable
+timeline files and human/JSONL output. One event-derived projection reports live
+elapsed time and provider usage by execution profile, model and reasoning setting.
+Complete raw messages and MCP payloads stay in evidence files; ordinary task-state
+reads use references. Missing usage and unverified pricing remain unknown.
+
+Local evidence for this batch: build, strict TypeScript, lint, formatting and
+specification/ownership/guidance checks pass; 379 native-enabled built-program
+tests pass with no failures or skips. The observed failing regressions and check
+logs are retained in application storage. A real read-only provider demonstration
+and current-head hosted CI are separate next checks. Architecture adoption,
+parameterized operations, the catalog/prompt rewrite, complete cost/phase analysis,
+and refinement qualification remain outstanding. The live streak remains 0/3.

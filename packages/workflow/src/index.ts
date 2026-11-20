@@ -10,6 +10,7 @@ import type {
 } from './services.js';
 import { TaskRun } from './task-run.js';
 import { ArchitectRun } from './architect-run.js';
+import type { RunObserver } from './observer.js';
 
 export type {
   ActivityCheckpoint,
@@ -42,24 +43,26 @@ export class Workflow {
   constructor(private readonly services?: WorkflowServices) {}
 
   /** Admit a goal or reuse its foreground parent's writer for a normal sequential child task. */
-  run(input: TaskInput, observer: TaskObserver, signal: AbortSignal, parent?: TaskSession) {
+  async run(input: TaskInput, observer: TaskObserver, signal: AbortSignal, parent?: TaskSession) {
+    const reporting = (await import('./observer.js')).RunObserver.for(observer);
     return this.invoke(
       input,
-      observer,
+      reporting,
       signal,
-      (session) => new TaskRun(this.services!, session, observer, signal, input).execute(),
+      (session) => new TaskRun(this.services!, session, reporting, signal, input).execute(),
       parent,
     );
   }
 
   /** Assess accepted direction, obtain exact guide approval and deliver prerequisites before returning. */
-  update(
+  async update(
     directory: string,
     feedback: string | undefined,
     observer: TaskObserver,
     signal: AbortSignal,
     parent?: TaskSession,
   ) {
+    const reporting = (await import('./observer.js')).RunObserver.for(observer);
     const input = {
       directory,
       goal: feedback ?? 'Assess architecture alignment',
@@ -68,11 +71,11 @@ export class Workflow {
     };
     return this.invoke(
       input,
-      observer,
+      reporting,
       signal,
       (session) =>
-        new ArchitectRun(this.services!, session, observer, signal, (child) =>
-          this.run(child, observer, signal, session),
+        new ArchitectRun(this.services!, session, reporting, signal, (child) =>
+          this.run(child, reporting, signal, session),
         ).execute(feedback),
       parent,
     );
@@ -81,7 +84,7 @@ export class Workflow {
   /** Share admission, cancellation, evidence, cleanup and terminal recording across foreground phases. */
   private async invoke(
     input: TaskInput,
-    observer: TaskObserver,
+    observer: RunObserver,
     signal: AbortSignal,
     execute: (session: TaskSession) => Promise<TaskOutcome>,
     parent?: TaskSession,
@@ -96,7 +99,9 @@ export class Workflow {
       const admitted = await this.services.execution.admit(input, signal, parent);
       if ('kind' in admitted) return admitted;
       session = admitted;
-      session.ask = observer.answer;
+      session.ask = (question, cancellation) => observer.answer(question, cancellation);
+      session.listen?.((event) => observer.event?.(event));
+      observer.admittedSession(session);
       outcome = await execute(session);
     } catch (error) {
       outcome = interruptedRun(error, signal, session?.evidence);
@@ -121,6 +126,7 @@ export class Workflow {
     observer: TaskObserver,
     signal: AbortSignal,
   ): Promise<RoundOutcome> {
+    observer = (await import('./observer.js')).RunObserver.for(observer);
     const round = this.services?.execution.round?.(directory);
     if (!round) throw new Error('Standing goal rounds are unavailable');
     const goals: RoundOutcome['goals'][number][] = [];

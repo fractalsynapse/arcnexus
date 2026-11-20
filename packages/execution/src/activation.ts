@@ -4,7 +4,6 @@ import type {
   AgentInspection,
   TaskContext,
 } from '../../architecture/src/index.js';
-import { codex } from './codex.js';
 import { candidateDiff } from './git.js';
 import { verifyNativeGuidance } from './host-config.js';
 import type { HostTask } from './index.js';
@@ -13,6 +12,7 @@ import { Clarifications } from './clarifications.js';
 import { ActivationTools } from './activation-tools.js';
 import { LocalMcp } from './mcp.js';
 import { retainedEvidence } from './context-evidence.js';
+import { NativeObservation } from './native-observation.js';
 
 type ActivityData = Omit<TaskContext, 'goal' | 'worktree'>;
 export type ContextRefresh = (input: ActivityData) => Promise<ActivityData>;
@@ -76,6 +76,7 @@ function invocationContext(task: HostTask, current: ActivityData, observed?: num
     goal: activationGoal(task),
     worktree: task.worktree ?? task.capture.source.root,
   };
+  if (task.timeline) context.evidence = [...(context.evidence ?? []), task.timeline];
   if (observed !== undefined)
     context.evidence = [
       ...new Set([
@@ -111,11 +112,8 @@ async function invokeCodex(
   const server = localTools(task, view, actions);
   const url = await server.start();
   try {
-    recordInvocation(task, view);
-    const reply = await codex(task.config.executable, view, task.artifact('codex.jsonl'), signal, {
-      schema,
-      url,
-    });
+    const observation = new NativeObservation(task, view);
+    const reply = await observation.run(schema, url, signal);
     return actions.finish(reply);
   } catch (error) {
     if (!signal.aborted && actions.requestedHandoff) return actions.finish(undefined);
@@ -125,29 +123,32 @@ async function invokeCodex(
   }
 }
 
-/** Record attempted native input size and identity before provider effects, without copying its text. */
-function recordInvocation(task: HostTask, view: AgentInspection) {
-  const profile = task.capture.components[view.component]?.activities[view.activity]?.profile;
-  task.note({
-    nativeInvocation: {
-      inputBytes: Buffer.byteLength(view.request.input, 'utf8'),
-      component: view.component,
-      activity: view.activity,
-      model: view.request.options.model,
-      profile,
-    },
-  });
-}
-
 /** Stamp each tool observation with the native activation identity. */
 function localTools(task: HostTask, view: AgentInspection, actions: ActivationTools) {
   const { tools } = view.request.options;
   return new LocalMcp(
     tools,
     (tool, args) => actions.invoke(tool, args),
-    (name, refusal) =>
-      task.note({
-        operation: { component: view.component, activity: view.activity, name, refusal },
-      }),
+    (name, refusal, event) => {
+      const source = task.store(
+        'mcp-observation.json',
+        JSON.stringify({ name, refusal, ...event }),
+      );
+      task.note(
+        {
+          operation: {
+            component: view.component,
+            activity: view.activity,
+            name,
+            refusal,
+            call: event?.call,
+            phase: event?.phase,
+            durationMs: event?.durationMs,
+            source,
+          },
+        },
+        event,
+      );
+    },
   );
 }
