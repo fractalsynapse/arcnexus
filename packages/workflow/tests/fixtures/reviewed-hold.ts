@@ -315,9 +315,12 @@ export class ReviewedWorkflow {
   /** Give correction inputs distinguishable secured bytes; incidental writes cannot manufacture progress. */
   private async contribute(milestone: Milestone): Promise<StewardOutcome> {
     assert.deepEqual(milestone.criteria, correction.criteria);
-    const prior = this.checkpoints.at(-1);
+    const prior = this.fixture.task
+      .history()
+      .findLast((event) => 'activation' in event && event.activation.milestone === 'part-a');
     if (milestone.id === 'part-b') {
-      assert.equal(prior?.milestone, 'part-a');
+      assert(prior && 'activation' in prior);
+      assert.equal(prior.activation.milestone, 'part-a');
       assert.equal(prior.outcome.kind, 'completed');
       assert(prior.outcome.evidence.length);
       assert.equal(this.fixture.task.readFile('fixture.txt').text, 'partial-a');
