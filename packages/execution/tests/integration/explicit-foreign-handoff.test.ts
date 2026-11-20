@@ -47,6 +47,12 @@ test('accepted foreign handoff retains the owned checkpoint and consumes the com
   assert.equal(outcome.question, question);
   assert.deepEqual(scenario.task.history().findLast((event) => 'plan' in event)?.plan, plan);
   scenario.assertRetained();
+  scenario.task.record({
+    activation: {
+      milestone: requester.id, owner: requester.owner, step: 'implementation', index: 2,
+      outcome,
+    },
+  });
   const evidence = await scenario.supply();
   scenario.mode = 'resume';
   assert.equal((await scenario.run()).kind, 'completed');
