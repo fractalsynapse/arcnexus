@@ -25,7 +25,7 @@ class VerificationScenario {
   readonly checks: string[] = [];
 
   /** Model a completion claim that omits its required operation; no native pass is simulated here. */
-  constructor(t: TestContext, status: number) {
+  constructor(t: TestContext, status: number, diagnostic?: string) {
     const root = mkdtempSync(join(tmpdir(), 'arcnexus-activity-verification-'));
     this.task = new StewardFixture(t, root).task;
     t.after(() => this.task.close());
@@ -37,13 +37,27 @@ class VerificationScenario {
       edits: [],
       checks: [],
     }));
+    this.observeChecks(t, status, diagnostic);
+  }
+
+  /** Record the controlled command exit separately from any scope-validation diagnostic. */
+  private observeChecks(t: TestContext, status: number, diagnostic?: string) {
     t.mock.method(this.task, 'check', async (id: string, _signal: AbortSignal, scope: unknown) => {
       this.checks.push(id);
       const log = this.task.store(
         'controlled-verification.log',
-        status ? 'Required assertion failed' : 'Passed',
+        diagnostic ?? (status ? 'Required assertion failed' : 'Passed'),
       );
-      const check = { id, command: 'controlled', args: [], cwd: root, durationMs: 0, log, status };
+      const check = {
+        id,
+        command: 'controlled',
+        args: [],
+        cwd: this.task.worktree!,
+        durationMs: 0,
+        log,
+        status,
+        diagnostic,
+      };
       this.task.note({ check, scope });
       return check;
     });
@@ -88,4 +102,12 @@ test('required-pass verification cannot be weakened by an expected-fail tool req
     /owner-tests.*requires.*pass/i,
   );
   assert.deepEqual(scenario.checks, []);
+});
+
+test('a successful process exit with invalid scope returns to its same steward for repair', async (t) => {
+  const scenario = new VerificationScenario(t, 0, 'Quality selection binding mismatch');
+  const outcome = await scenario.run();
+  assert.equal(outcome.kind, 'repair');
+  assert.equal(outcome.kind === 'repair' && outcome.activity, 'implementation');
+  assert.match(outcome.kind === 'repair' ? outcome.reason : '', /selection binding mismatch/);
 });

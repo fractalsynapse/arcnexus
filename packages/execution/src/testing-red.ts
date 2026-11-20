@@ -21,7 +21,7 @@ export function establishedTestingRed(
   const events = task.observations<Event>();
   const index = events.findLastIndex(({ check }) => check?.log === pending.log);
   const current = events[index]?.check;
-  if (!current || current.prerequisite) return;
+  if (!current || current.prerequisite || current.diagnostic) return;
   const boundary = testingBoundary(events.slice(0, index), scope.owner);
   if (!boundary || boundary !== testingBoundary(events, scope.owner)) return;
   for (let at = index - 1; at >= 0; at--) {
@@ -43,6 +43,7 @@ function matchingCommand(event: Event, current: CheckResult, owner: string) {
   return (
     check &&
     !check.prerequisite &&
+    !check.diagnostic &&
     scope?.owner === owner &&
     scope.activity === 'testing' &&
     scope.expected === 'fail' &&

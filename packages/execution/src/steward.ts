@@ -34,6 +34,7 @@ const correctionInstruction =
 
 /** Distinguish a caller's mistaken prediction from an actual failing required-pass operation. */
 function checkRepairInstruction(task: HostTask, scope: StewardScope, failed: StewardCheckFailure) {
+  if (failed.diagnostic) return correctionInstruction;
   const redLog = establishedTestingRed(task, scope, failed);
   if (redLog)
     return `Read failedCheck.log and established red ${redLog ?? failed.log}. If your passing prediction was mistaken, call the same check with expected fail. The host requires matching actual negative evidence under the same milestone and a fresh recheck. Finish Testing's checklist; Implementation and assembled checks must still pass. Do not ask for a forward local rewind or weaken acceptance.`;
@@ -81,7 +82,9 @@ function stewardCheckOutcome(
   correction: StewardCheckFailure | undefined,
   evidence: readonly string[],
 ): ActivityOutcome {
-  const reason = `Operation ${failed.id} exited ${failed.status}; expected ${failed.expected}`;
+  const reason =
+    failed.diagnostic ??
+    `Operation ${failed.id} exited ${failed.status}; expected ${failed.expected}`;
   if (correction?.id === failed.id && !correctionMadeProgress(task.observations(), correction.log))
     return {
       kind: 'blocked',
@@ -348,8 +351,15 @@ async function perform(
       throw new Error(
         `Operation ${id} reported ${check.status}; expected ${expected}; evidence: ${check.log}`,
       );
-    if (check.prerequisite || (check.status === 0) !== (expected === 'pass'))
-      return { id, expected, status: check.status, log: check.log, activity: scope.activity };
+    if (check.prerequisite || check.diagnostic || (check.status === 0) !== (expected === 'pass'))
+      return {
+        id,
+        expected,
+        status: check.status,
+        log: check.log,
+        activity: scope.activity,
+        ...(check.diagnostic ? { diagnostic: check.diagnostic } : {}),
+      };
   }
 }
 

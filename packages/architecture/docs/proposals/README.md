@@ -1,5 +1,10 @@
 # Efficiency foundation contract amendment
 
+For the subsequent owner-quality guide decision, see the
+[retained quality reconciliation](quality-reconciliation.md). It preserves this
+amendment's approved bytes and requires a separate exact review of its changed
+guide baseline and activity bindings.
+
 Status: the architect approved exact patch `cb6a431032a9` in Codex chat and
 delegated application and implementation. All resulting contract and registry bytes
 match the approved manifest. The actual human approval receipt is retained in
@@ -26,9 +31,9 @@ and delegation in the existing approval/evidence path before application.
 
 ## Why an amendment is necessary
 
-Project PRJ-4 currently makes a new run the way to see changed authority.
-Architecture ARC-8/17/22 and Execution EX-18/25 require a task-wide capture and
-prohibit changing active authority. Applying the requested dynamic model without
+At the reviewed baseline, Project PRJ-4 made a new run the way to see changed authority.
+Architecture ARC-8/17/22 and Execution EX-18/25 required a task-wide capture and
+prohibited changing active authority. Applying the requested dynamic model without
 amending those clauses would violate them. The proposed replacement lets the
 trusted host adopt an exactly approved update between activities in the same run,
 after validating required implementation and available handlers. It retains the

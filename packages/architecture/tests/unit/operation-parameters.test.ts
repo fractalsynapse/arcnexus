@@ -82,3 +82,14 @@ test('ARC-24: literal metacharacters stay individual arguments without shell eva
     '$(not-a-command)',
   ]);
 });
+
+test('operation applicability accepts declared scope kinds and rejects unknown policy', () => {
+  const scenario = new ParameterScenario();
+  const operation = scenario.capture.operations.tests as any;
+  for (const value of ['owner-test-suites', 'owner-format-files', 'owner-lint-files']) {
+    operation.applicability = value;
+    assert.equal(scenario.resolve('testing').applicability, value);
+  }
+  operation.applicability = 'invented-policy';
+  assert.throws(() => scenario.resolve('testing'), /tests.*applicability.*invented-policy/);
+});

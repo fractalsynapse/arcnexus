@@ -4,6 +4,8 @@
 
 ### Added
 
+- Use the same read-only formatting and lint commands for repository and owner scopes, with Git/Team selection, complete scope records and real tool configuration inside confinement (#615, #638).
+
 - Select built test suites by declared tags and levels through the shared runner, with explicit native-test opt-in and literal metadata validation before execution; align existing suite metadata with catalog ownership (#615).
 
 - Adopt exact approved architecture at the existing workspace/checkpoint boundaries once mapped handlers and commands are available; retain the original engineering base, accepted plan, answers and historical authority across restart (#615).

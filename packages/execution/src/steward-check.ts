@@ -73,13 +73,14 @@ function observeCheck(
   const expected = pending.get(check.id)?.expected ?? observed.expected;
   if (!expected) return;
   pending.delete(check.id);
-  if (check.prerequisite || (check.status === 0) !== (expected === 'pass'))
+  if (check.prerequisite || check.diagnostic || (check.status === 0) !== (expected === 'pass'))
     pending.set(check.id, {
       activity: scope.activity,
       id: check.id,
       expected,
       status: check.status,
       log: check.log,
+      ...(check.diagnostic ? { diagnostic: check.diagnostic } : {}),
     });
 }
 

@@ -5,12 +5,16 @@ import { resolveOperation, type Capture } from '../../architecture/src/index.js'
 import { hasOwnerTestSuites } from '../../foundation/src/index.js';
 import { execute } from './process.js';
 import { checkMounts } from './check-sandbox.js';
+import { qualityObservation } from './quality-observation.js';
+import type { QualityScope } from '../../foundation/src/index.js';
 export { checkEnvironment } from './check-sandbox.js';
 
 export interface CheckResult {
   id: string;
   status: number | null | 'not-applicable';
   reason?: string;
+  diagnostic?: string;
+  selection?: QualityScope;
   prerequisite?: 'dependencies';
   command: string;
   args: string[];
@@ -42,8 +46,13 @@ export async function check(
   const start = performance.now();
   const sandbox = checkMounts(worktree, common, dependencies);
   const invocation = [...sandbox, '--chdir', cwd, '--', executable, ...args];
-  const { status } = await execute('/usr/bin/bwrap', invocation, { cwd: worktree, log, signal });
-  return { ...parameters, status, durationMs: Math.round(performance.now() - start) };
+  const { status, stdout } = await execute('/usr/bin/bwrap', invocation, {
+    cwd: worktree,
+    log,
+    signal,
+  });
+  const result = { ...parameters, status, durationMs: Math.round(performance.now() - start) };
+  return qualityObservation(capture, worktree, owner, result, stdout);
 }
 
 /** Check the captured prerequisite only for optional, owner-scoped operations. */
