@@ -223,3 +223,16 @@ test('an ownership hold retains its exact refusal and prior receipts without inv
   assert.deepEqual(held.receipts, fixture.receipts);
   assert.equal(fixture.task.readFile('unrelated.txt').text, 'acknowledged before hold');
 });
+
+test('a checked edit restored to the same relevant bytes does not renew an unchanged hold', async (t) => {
+  const fixture = new ReviewedHoldFixture(t);
+  await fixture.prepare();
+  const initial = context(await fixture.run());
+  await fixture.edit('fixture.txt', 'temporary correction');
+  await fixture.edit('fixture.txt', 'original');
+  const repeated = context(await fixture.run());
+  assert.equal(repeated.progress.identity, initial.progress.identity);
+  assert.deepEqual(repeated.progress.inputs, initial.progress.inputs);
+  assert.equal(repeated.receipts.length, initial.receipts.length + 2);
+  assertContinuity(fixture, repeated);
+});
