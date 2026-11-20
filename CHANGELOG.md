@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Report every uncovered or colliding path and all conflicting component IDs in deterministic Team-derived ownership diagnostics during architecture admission and specification checks. Validation remains read-only, ownership and supplier authority remain unchanged, and supplier requests grant no edit capability (#691).
+
 - Return failed hosted checks with their complete provider logs to independent assessment and accountable repair, retaining checkpoints and the existing staging PR across restarts (#687).
 
 ### Added
