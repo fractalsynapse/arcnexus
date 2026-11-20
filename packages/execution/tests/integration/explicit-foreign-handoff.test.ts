@@ -2,7 +2,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
-  ForeignHandoffScenario, answer, diagnostic, plan, question, requester, supplier,
+  ForeignHandoffScenario,
+  answer,
+  diagnostic,
+  plan,
+  question,
+  requester,
+  supplier,
 } from '../fixtures/foreign-handoff.js';
 
 export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
@@ -16,7 +22,9 @@ test('the actual steward correction request explicitly sequences accepted unfini
   scenario.mode = 'acknowledge';
   await scenario.run();
   const assignment = scenario.contexts.at(-1)!.assignment as Record<string, unknown>;
-  assert(scenario.requests.at(-1)!.request.options.tools.some(({ name }) => name === 'request-supplier'));
+  assert(
+    scenario.requests.at(-1)!.request.options.tools.some(({ name }) => name === 'request-supplier'),
+  );
   assert.equal(assignment.correction, approvedCorrection);
   const guidance = String(assignment.instructions) + String(assignment.repair);
   assert.match(guidance, /request-supplier before returning completed/);
@@ -42,12 +50,22 @@ test('accepted foreign handoff retains the owned checkpoint and consumes the com
   scenario.mode = 'resume';
   assert.equal((await scenario.run()).kind, 'completed');
   const assignment = scenario.contexts.at(-1)!.assignment as Record<string, unknown>;
-  assert.deepEqual(assignment.supplierAnswers, [{
-    supplier: supplier.id, question, replies: [{ step: 'implementation', answer, evidence }],
-  }]);
+  assert.deepEqual(assignment.supplierAnswers, [
+    {
+      supplier: supplier.id,
+      question,
+      replies: [{ step: 'implementation', answer, evidence }],
+    },
+  ]);
   assert.equal(readFileSync(evidence[0]!, 'utf8'), answer);
-  assert.deepEqual(scenario.checks.map(({ id, status }) => [id, status]),
-    [['repository-types', 23], ['repository-types', 0], ['repository-types', 0]]);
+  assert.deepEqual(
+    scenario.checks.map(({ id, status }) => [id, status]),
+    [
+      ['repository-types', 23],
+      ['repository-types', 0],
+      ['repository-types', 0],
+    ],
+  );
   scenario.assertRetained();
 });
 
@@ -57,8 +75,11 @@ test('acknowledging unresolved foreign failure cannot complete or bypass the unc
   assert.equal(first.kind, 'repair');
   assert(first.kind === 'repair');
   assert.deepEqual(first.failedCheck, {
-    id: 'repository-types', expected: 'pass', status: 23,
-    log: scenario.checks[0]!.log, activity: 'implementation',
+    id: 'repository-types',
+    expected: 'pass',
+    status: 23,
+    log: scenario.checks[0]!.log,
+    activity: 'implementation',
   });
   scenario.mode = 'acknowledge';
   const held = await scenario.run();
@@ -70,8 +91,16 @@ test('acknowledging unresolved foreign failure cannot complete or bypass the unc
   assert.equal(readFileSync(held.failedCheck!.log, 'utf8'), diagnostic);
   assert.equal(readFileSync(first.failedCheck!.log, 'utf8'), diagnostic);
   assert(held.evidence.includes(first.failedCheck!.log));
-  assert(!scenario.task.history().some((event) => 'activation' in event &&
-    event.activation.milestone === requester.id && event.activation.outcome.kind === 'completed'));
+  assert(
+    !scenario.task
+      .history()
+      .some(
+        (event) =>
+          'activation' in event &&
+          event.activation.milestone === requester.id &&
+          event.activation.outcome.kind === 'completed',
+      ),
+  );
   assert(!scenario.task.observations<any>().some(({ projectRequest }) => projectRequest));
   scenario.assertRetained();
 });
