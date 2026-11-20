@@ -4,7 +4,13 @@ Status: proposed work for efficiency-checklist D, tracked in
 [issue #672](https://github.com/fractalsynapse/arcnexus/issues/672) under
 [the implementation checklist](../../../../../docs/plans/efficiency-foundation.md).
 These drafts are not active instructions or approved architecture. Do not load
-them as authority for the retained run or report the catalog rewrite complete.
+them as authority for the retained run or report live acceptance complete.
+
+The authoring pass is complete across the actual 18 component specifications,
+94 model activities and one host activity. Start with the
+[complete review guide](review.md) for source links, composition, measured sizes,
+preserved boundaries and remaining capability gaps. The proposal awaits human
+review; authoring completion is distinct from adoption or live acceptance.
 
 ## Deliverable
 
@@ -53,8 +59,9 @@ specification does not acquire a model profile or a generic Agent prompt.
 
 This branch is a review proposal. It is not staging or an adopted runtime model.
 Finish every component purpose and activity, then stop for human review before
-activation or further live testing. The in-flight run uses its original installed
-runtime and captured source.
+activation or further live testing. The retained run used its original installed
+runtime and captured source and ended held before staging. Its checkpoints and
+failed evidence remain retained.
 
 ## Preserve the single request string
 
