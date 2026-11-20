@@ -200,10 +200,11 @@ async function interruptAfterChild(root: string, state: RecoveryState) {
 
 /** Resume the interrupted first round, then finish a distinct second round after reopening. */
 async function resume(root: string, state: RecoveryState) {
+  let firstResumedAssessment = true;
   const planner = {
     propose: async (session: TaskSession) => {
-      if (state.calls.value === 1) {
-        state.calls.value++;
+      if (firstResumedAssessment) {
+        firstResumedAssessment = false;
         throw new Error('A successful child must not be assessed again');
       }
       return recordProviderEvidence(session, state.calls, state.revision);
