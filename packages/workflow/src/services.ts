@@ -82,6 +82,7 @@ export type TaskEvent =
   | { candidate: Candidate; verdict: Verdict }
   | { feedback: Feedback }
   | { activation: ActivityCheckpoint }
+  | { reviewedHold: HoldContext }
   | { assessment: Extract<TaskOutcome, { kind: 'satisfied' | 'planned' }> };
 
 export interface TaskSession {
