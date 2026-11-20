@@ -409,7 +409,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Test the real Planner service with explicit charter, development, objective and goal fixtures. Exercise exploration without a human objective, explicit objective capture with verbatim original text, clarification and full answer reuse, conflict comparison, priority changes, deletion, no-change and malformed response repair. Assert the actual raw Planner fields instead of a fabricated kind discriminator.
@@ -438,7 +438,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Implement objective and goal assessment through the existing Planner public service and Workflow lane. Select exploration when there is no real human objective and objective mode only for the submitted human text. Preserve the original submission, full clarification answers and the exact proposal identity. Do not synthesize an objective from an internal phase prompt merely to reuse a convenient API.

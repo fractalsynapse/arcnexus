@@ -408,7 +408,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Translate the accepted Agent milestone into assertions through its public inspect and activate boundary. Cover the actual actor selection, complete request, invocation options and selected operation set rather than mirroring a private helper. Include Director, ordinary steward and independent Reviewer with explicit fixture components, roles, profiles, standards and source. A type cast that omits fields production reads is not a valid fixture.
@@ -443,7 +443,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Implement the smallest accepted change to the Agent public interface or lifecycle forwarding. Begin with the actual public consumer path and the current meaningful regression. Keep Architecture as the sole resolver and request builder, Team as the ownership source, Workflow as the sequence owner and Execution as the effect boundary. Reuse existing public types instead of creating another actor model or provider wrapper.

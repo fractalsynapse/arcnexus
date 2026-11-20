@@ -427,7 +427,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Exercise reusable tooling through its public entry points with small explicit project fixtures. Cover workspace app/package builds, strict TypeScript rejection of tracked JavaScript, readable class/method checks, owner-scoped formatting and lint, metadata discovery, selector validation and refusal before importing an unselected suite. Validate literal owner/level/tag records using actual source shapes.
@@ -458,7 +458,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Implement the accepted reusable tooling capability once in Foundation and expose it through the existing operation/test entry points. Keep strict class-based TypeScript, literal metadata and typed parameters. Resolve selectors before importing suites, preserve complete diagnostics and real exit status, and treat no applicable suite differently from a failed check.

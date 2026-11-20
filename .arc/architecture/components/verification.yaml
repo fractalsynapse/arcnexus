@@ -425,7 +425,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Test operation selection using real declared bindings and explicit component fixtures with and without suites. Cover formatting, lint, types/build, relevant tests, typed selectors, invalid overrides, unavailable handlers and mandatory assembled operations. Assert category/applicability decisions rather than assuming every owner has one test command.
@@ -456,7 +456,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Implement applicability, evidence capture and assembled verification through the existing public Verification path. Resolve declared operations and typed overrides against the accepted capture, retaining category, candidate, parameters and environment in results. Absence of an owner suite is inapplicability for that suite, not a waiver of other applicable or required assembled checks.

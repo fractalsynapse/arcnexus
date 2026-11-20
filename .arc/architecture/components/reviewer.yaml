@@ -418,7 +418,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Exercise the real Reviewer response and citation validation path with actual candidate and evidence record shapes. Cover accepted and rejected criteria, missing or wrong evidence references, malformed verdicts, and repair of a citation error in the same assessment. Assert that a response-only repair retains candidate identity and unaffected checks rather than replanning or rebuilding.
@@ -449,7 +449,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Implement assessment request construction, verdict validation and learned-observation handling through the existing Reviewer service. Use the actual assembled candidate, original criteria and complete applicable evidence. Preserve independent read-only judgment and the exact canonical citation scheme; do not infer a favorable verdict from a passing test summary.

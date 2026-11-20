@@ -407,7 +407,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Exercise the Team public interface using explicit, small component catalogs rather than the real repository's fixed roster. Include project, app and plugin records, Director and Reviewer bindings, missing activity mappings, deterministic filtered order, and legitimate components without a test suite. Adding or renaming a fixture component should not require updating a hardcoded expected production team.
@@ -438,7 +438,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Keep Team as the single public seam for steward discovery, filtering, ordering and ownership. Derive its records from the accepted Architecture capture and reuse the Agent bindings rather than rebuilding a separate catalog inside a caller. Return source identity and meaningful diagnostics so Direction and checked-edit confinement agree on who can perform the work.
