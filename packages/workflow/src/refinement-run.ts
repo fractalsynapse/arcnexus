@@ -324,9 +324,11 @@ function retainedFrames(parent: TaskSession, goal: string, scope: string): Journ
       .readFile(path)
       .text.split('\n')
       .filter(Boolean)
-      .map((line) => ({ path, frame: JSON.parse(line) as JournalEvent })),
+      .map((line) => JSON.parse(line) as JournalEvent),
   );
-  return [...new Map(frames.map(({ path, frame }) => [`${path}:${frame.sequence}`, frame])).values()];
+  return [...new Map(frames.map((frame) => [frame.sequence, frame])).values()].sort(
+    (left, right) => Number(left.sequence) - Number(right.sequence),
+  );
 }
 
 /** Accept only the terminal kinds that mean the child position actually completed. */
