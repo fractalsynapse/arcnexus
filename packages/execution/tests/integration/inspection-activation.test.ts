@@ -1,4 +1,9 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { Agent } from '../../../agent/src/index.js';
+import { Execution } from '../../src/index.js';
+import { GitHub } from '../../../collaboration/src/index.js';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -35,6 +40,7 @@ function assertTools(view: AgentInspection, probe: Probe) {
     expected.map(({ name }) => name),
   );
   for (const tool of expected) assert.equal(operations[tool.name].mcp, tool.description);
+  assert.equal(probe.refusals.length, expected.some(({ name }) => name === 'owned-edit') ? 3 : 2);
   assert.ok(probe.refusals.every(({ isError }) => isError));
 }
 
@@ -81,6 +87,10 @@ for (const [component, activity, actor, names, web] of [
       worktree: task.worktree,
     });
     assert.equal(view.actor, actor);
+    assert.ok(view.request.input.includes('purpose: Assess ' + view.component + ' using complete retained findings'));
+    assert.ok(view.request.input.includes('Selected ' + view.component + '/' + activity + ' procedure café 🛠'));
+    assert.ok(view.request.input.includes('Source: .arc/architecture/components/' + view.component + '.yaml (activities.' + activity + ')'));
+    assert.ok(view.request.input.includes('Source: .arc/architecture/roles/assessor.yaml'));
     assert.deepEqual(view.placeholders, []);
     assert.deepEqual(
       view.request.options.tools.map(({ name }) => name),
@@ -120,6 +130,10 @@ for (const [component, activity, actor, names, web] of [
 
 test('inspection is repeatable with named live inputs and no admission, provider or worktree effects', (t) => {
   const fixture = new InspectionFixture(t);
+  t.mock.method(Agent.prototype, 'activate', () => assert.fail('Inspection called a model'));
+  t.mock.method(Execution.prototype, 'admit', () => assert.fail('Inspection admitted a task'));
+  for (const method of ['issue', 'push', 'publication'] as const)
+    t.mock.method(GitHub.prototype, method, () => assert.fail('Inspection reached upstream'));
   const before = fixture.git('worktree', 'list', '--porcelain');
   const status = fixture.git('status', '--porcelain');
   const view = fixture.agent.inspect({
@@ -167,4 +181,14 @@ test('production activation refuses changed native guidance before starting the 
   } finally {
     writeFileSync(path, guidance);
   }
+});
+
+test('current assembled CLI request-parity and inspection scenarios', (t) => {
+  const paths = ['request-parity', 'inspect'].map((name) => fileURLToPath(
+    new URL('../../../../../apps/cli/tests/integration/' + name + '.test.js', import.meta.url),
+  ));
+  const log = execFileSync(process.execPath, ['--test', ...paths], { encoding: 'utf8' });
+  t.diagnostic(log);
+  assert.match(log, /# fail 0/);
+  assert.match(log, /# skipped 0/);
 });
