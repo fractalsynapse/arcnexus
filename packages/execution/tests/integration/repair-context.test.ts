@@ -120,6 +120,18 @@ test('nested findings and retained progress survive journal reopening and later 
     fixture.task.observations<{ check?: unknown }>().filter((event) => event.check),
     checks,
   );
+  const retained = fixture.task.observations<{
+    edits?: typeof receipt;
+    clarification?: { question: string; answer: string };
+    researchResult?: { evidence: string };
+  }>();
+  assert.deepEqual(retained.findLast((event) => event.edits)?.edits, receipt);
+  assert.deepEqual(retained.findLast((event) => event.clarification)?.clarification, {
+    question: 'Which requirement?',
+    answer,
+  });
+  assert.equal(retained.findLast((event) => event.researchResult)?.researchResult?.evidence, evidence);
+  assert.equal(fixture.task.readFile(evidence).text, report);
   for (const activity of ['testing', 'implementation'] as const) {
     fixture.activity = activity;
     const context = await fixture.context();
