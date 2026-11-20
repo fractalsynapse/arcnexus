@@ -76,12 +76,14 @@ export class RefinementRun {
   /** Recover a report already acknowledged before a round cursor update was interrupted. */
   private roundAlreadyCompleted(invocation: string, round: number) {
     return Boolean(
-      this.parent.history?.().some(
-        (event) =>
-          'completedRound' in event &&
-          event.completedRound.invocation === invocation &&
-          event.completedRound.round === round,
-      ),
+      this.parent
+        .history?.()
+        .some(
+          (event) =>
+            'completedRound' in event &&
+            event.completedRound.invocation === invocation &&
+            event.completedRound.round === round,
+        ),
     );
   }
 
