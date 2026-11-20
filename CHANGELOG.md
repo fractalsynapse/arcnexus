@@ -8,6 +8,10 @@
 
 ### Added
 
+- Add `arcnexus refine [--rounds N]` through the shared Commands SDK and Workflow lifecycle: default to one round, preserve positive decimal counts exactly without a numeric ceiling, and run Planner, Architect and every captured approved goal in priority order each round. Retain one foreground project writer across sequential child sessions, with fresh staging authority at phase/task admission and the normal Director, steward, independent Reviewer and verified staging delivery path ([#615](https://github.com/fractalsynapse/arcnexus/issues/615)).
+  Resume the first unfinished phase or goal with the same requested total, retaining exact proposals, approvals, answers, checkpoints and the captured Run inventory; reconcile uncertain effects and reuse successful children after an interrupted parent acknowledgement. Completed invocations permit fresh identities. Stream current round/phase, complete provider/tool observations and measurements through human output or ordered JSONL with one terminal result. Retain readable reports outside source and expose prior findings and profile-attributed time/token references to subsequent assessments; unknown usage, pricing and cost remain unknown.
+  Implementation verification and staging delivery are distinct from the outstanding production `arcnexus refine --rounds 3` qualification: deterministic fixtures do not establish three consecutive live rounds with useful approved guide/code refinement and later consumption of prior findings. Staging integration is not a production release.
+
 - Teach discriminating public-boundary testing, evidence-reference fixtures and owner-consistent supplier requests, and make every Architect update assess component purpose and activity instruction effectiveness against objectives, goals and run findings (#678).
 
 - Expand all component purposes and activity operating procedures through the existing single-string builder, retain shared instructions once, and apply the architect-approved Workflow Implementation profile selection of `gpt-sol` (#672, #669).

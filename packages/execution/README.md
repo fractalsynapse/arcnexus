@@ -4,6 +4,14 @@ Execution activates scoped stewards, applies checked edits and supervises declar
 operations in one task worktree. Its public obligations are in the
 [locked contract](contract.md).
 
+## Refinement handoffs
+
+The [refinement execution intent](docs/refinement.md) describes shared-writer
+admission, fresh staging authority, retained child outcomes and complete
+observations for #615. It links the accepted Coordination contribution and the
+existing goal, HostTask and activation boundaries; behavioral qualification
+remains separate.
+
 ## Activity-scoped operation recovery
 
 Use the [verified local MCP operations guide](docs/mcp-operations.md) to check one

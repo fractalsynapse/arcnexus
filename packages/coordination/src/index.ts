@@ -4,7 +4,13 @@ import { join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import type { Context } from 'cordis';
 import { departed, identity } from './lease.js';
-import { verifiedTerminal, recentFindings } from './journal-queries.js';
+import {
+  completedRefinementRounds,
+  descendantEvents,
+  researchReports,
+  verifiedTerminal,
+  recentFindings,
+} from './journal-queries.js';
 export { RunMeasurements } from './measurements.js';
 
 declare module 'cordis' {
@@ -99,6 +105,12 @@ export class Journal {
     return retained(this.database, task)?.events ?? [];
   }
 
+  /** Read a child's complete canonical history and every logical descendant across attempts. */
+  childTimeline(goal: string, scope: string): JournalEvent[] {
+    const task = taskIdentity(digest(goal), JSON.stringify([this.taskID, scope]));
+    return descendantEvents(this.database, task);
+  }
+
   /** Store the terminal event and release the lane in one transaction. */
   finish(outcome: unknown) {
     this.database.exec('BEGIN IMMEDIATE');
@@ -175,21 +187,14 @@ export class Journal {
       }));
   }
 
+  /** Read every completed refinement round across invocations in this verified project's event order. */
+  completedRounds(): JournalEvent[] {
+    return completedRefinementRounds(this.database);
+  }
+
   /** Retrieve reusable research by owner from the existing append-only journal. */
   researchReports(component: string, id?: string): unknown[] {
-    return this.database
-      .prepare(
-        `
-      SELECT json_extract(content, '$.researchResult') AS report
-      FROM events
-      WHERE json_extract(content, '$.researchResult.component') = ?
-        AND json_type(content, '$.researchResult.archive') = 'text'
-        AND (? IS NULL OR json_extract(content, '$.researchResult.request.id') = ?)
-      ORDER BY events.id DESC
-    `,
-      )
-      .all(component, id ?? null, id ?? null)
-      .map(({ report }) => JSON.parse(String(report)));
+    return researchReports(this.database, component, id);
   }
 
   /** Read the observed verification and delivery events for this revision. */
@@ -257,18 +262,22 @@ export class Coordination {
     }
   }
 
-  /** Reuse the oldest unfinished round or capture the inventory for a new one. */
-  round(remote: string, captureInventory: () => string) {
+  /** Reuse the oldest unfinished round in its namespace or capture a new inventory. */
+  round(remote: string, captureInventory: () => string, namespace = 'task') {
     const database = this.open(remote);
     try {
       database.exec('BEGIN IMMEDIATE');
       const previous = database
-        .prepare('SELECT id, inventory FROM rounds WHERE finished = 0 ORDER BY id LIMIT 1')
-        .get();
+        .prepare(
+          'SELECT id, inventory FROM rounds WHERE finished = 0 AND namespace = ? ORDER BY id LIMIT 1',
+        )
+        .get(namespace);
       const inventory = previous ? String(previous.inventory) : captureInventory();
       const id =
         previous?.id ??
-        database.prepare('INSERT INTO rounds(inventory) VALUES (?)').run(inventory).lastInsertRowid;
+        database
+          .prepare('INSERT INTO rounds(inventory, namespace) VALUES (?, ?)')
+          .run(inventory, namespace).lastInsertRowid;
       database.exec('COMMIT');
       return { id: Number(id), inventory };
     } finally {
@@ -332,7 +341,8 @@ export class Coordination {
         parent_id INTEGER REFERENCES runs(id)
       ) STRICT;
       CREATE TABLE IF NOT EXISTS rounds (
-        id INTEGER PRIMARY KEY, inventory TEXT NOT NULL, finished INTEGER NOT NULL DEFAULT 0
+        id INTEGER PRIMARY KEY, inventory TEXT NOT NULL, finished INTEGER NOT NULL DEFAULT 0,
+        namespace TEXT NOT NULL DEFAULT 'task'
       ) STRICT;
       CREATE TABLE IF NOT EXISTS events (
         id INTEGER PRIMARY KEY, run INTEGER NOT NULL REFERENCES runs(id), content TEXT NOT NULL,
@@ -354,6 +364,9 @@ function migrate(database: DatabaseSync) {
     .all()
     .map(({ name }) => name);
   const events = database.prepare('PRAGMA table_info(events)').all();
+  const rounds = database.prepare('PRAGMA table_info(rounds)').all();
+  if (!rounds.some(({ name }) => name === 'namespace'))
+    database.exec("ALTER TABLE rounds ADD COLUMN namespace TEXT NOT NULL DEFAULT 'task'");
   if (!events.some(({ name }) => name === 'recorded_at'))
     database.exec('ALTER TABLE events ADD COLUMN recorded_at TEXT');
   if (!fields.includes('lease')) database.exec('ALTER TABLE runs ADD COLUMN lease TEXT');
@@ -419,7 +432,8 @@ function cycleIdentity(database: DatabaseSync, key: string) {
   if (!row) return key;
   const outcome =
     typeof row.outcome === 'string' ? (JSON.parse(row.outcome) as { kind: string }) : undefined;
-  const completed = outcome?.kind === 'planned' || outcome?.kind === 'merged';
+  const completed =
+    outcome?.kind === 'planned' || outcome?.kind === 'merged' || outcome?.kind === 'refined';
   return completed ? digest(JSON.stringify([key, Number(row.id)])) : String(row.task_id);
 }
 

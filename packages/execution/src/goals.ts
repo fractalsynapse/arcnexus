@@ -12,17 +12,19 @@ export function goalRound(
   architecture: Architecture,
   coordination: Coordination,
   directory: string,
+  namespace = 'task',
 ): GoalRound {
-  const local = architecture.capture(directory);
-  if (!local.project.delivery?.baseBranch && !goalInventory(local).length)
-    throw new Error('No standing goals in the captured project inventory');
-  const capture = stagingCapture(architecture, local);
+  const capture = stagingCapture(architecture, architecture.capture(directory));
   const remote = capture.source.remote;
-  const { id, inventory } = coordination.round(remote, () => {
-    const goals = goalInventory(capture);
-    if (!goals.length) throw new Error('No standing goals in the captured project inventory');
-    return JSON.stringify(goals);
-  });
+  const { id, inventory } = coordination.round(
+    remote,
+    () => {
+      const goals = goalInventory(capture);
+      if (!goals.length) throw new Error('No standing goals in the captured project inventory');
+      return JSON.stringify(goals);
+    },
+    namespace,
+  );
   const goals = JSON.parse(inventory) as GoalRound['goals'];
   return {
     id,

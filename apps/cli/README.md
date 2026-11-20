@@ -73,7 +73,11 @@ returns the retained receipt without repeating the write. The host runs
 captured checks in a disposable networkless overlay. See the
 [local MCP operations guide](../../packages/execution/docs/mcp-operations.md)
 for Execution EX-1, EX-14, EX-16 and EX-17.
-In JSON mode, progress uses stderr and the outcome is one JSON object on stdout.
+The shared long-running output contract is ordered JSONL observations followed by
+one terminal result on stdout; stderr carries diagnostics and interactive prompts.
+The existing task renderer already emits typed progress, event, measurements and
+result records. Refinement will use that same observer and cancellation path,
+as described below.
 
 For a terminal clarification (CLI gateway GW-19), enter the complete answer
 across as many lines as needed, preserving blank lines. Finish with a line
@@ -198,5 +202,144 @@ assembled verification, independent review and staging delivery. Model checked
 edits retain their protected-source refusals. Changed intent, bytes or baselines
 require renewed approval. See the [Architecture application](../../packages/architecture/README.md).
 
-The outer `refine` lifecycle and its consecutive live acceptance remain tracked
-separately in [the refinement work](https://github.com/fractalsynapse/arcnexus/issues/615).
+## Refine the project
+
+The following is approved implementation intent for
+[the refinement work](https://github.com/fractalsynapse/arcnexus/issues/615),
+under CLI gateway GW-29 through GW-32. The dispatcher exposes `refine` through
+Commands. The behavior below remains the acceptance target while the complete
+built-process observation and recovery evidence is being established; command
+recognition alone does not demonstrate the full lifecycle or live qualification.
+
+```sh
+arcnexus refine
+arcnexus refine --rounds 2
+arcnexus --json refine --rounds 2
+arcnexus refine --rounds 2 --json
+arcnexus refine --json
+```
+
+There are no positional arguments. Omit `--rounds` for one round, or supply it
+once with a positive integer written as decimal digits. Zero, negative values,
+fractions, exponent notation, missing values, extra positionals, duplicate options
+and unsupported options are input errors. The general `--json` flag is accepted
+once before the command or at the end of its arguments. For example,
+`refine --json --rounds 2` and `refine --rounds --json 2` are misplaced.
+Input errors produce a stderr diagnostic, exit 2 and empty stdout before host
+admission or provider access. Do not impose a safe-integer ceiling or another
+resource cap on the requested round count. The adapter passes the decimal text
+unchanged to Commands, using the string `1` when omitted. It must not convert the
+value through a JavaScript number: `9007199254740992` and `9007199254740993` must
+remain distinct requested totals, and a longer positive decimal remains valid.
+Workflow owns the exact durable comparison when an unfinished invocation resumes.
+
+Each round runs Plan, Architect and Run in sequence. Planner and Architect assess
+again each round and can justify no change. After those phases, Run captures the
+approved goal inventory and invokes Direction for every goal in priority order,
+including goals with passing measures. Work follows the ordinary steward,
+independent Reviewer and verified staging delivery path. An interrupted Run keeps
+that exact inventory; the next round captures a fresh one.
+
+The CLI passes structured rounds, observer and cancellation inputs through
+[Commands](../../packages/commands/contract.md).
+[Workflow](../../packages/workflow/contract.md) owns sequencing, admission,
+cleanup and recovery. One Coordination project writer remains held throughout
+the foreground invocation; sequential phase and goal sessions share it as children.
+A competing foreground root is refused with exit 2. Standalone `task run`,
+`task plan`, `architecture update` and `inspect` retain their public paths.
+The terminal adds no scheduler, lock store, state database or private task loop.
+
+Human output identifies the current round and phase as work proceeds, with the
+acting component/activity, operations, outcomes and evidence references. JSON mode
+streams the same ordered typed phase, provider/tool, progress and measurement
+observations, then exactly one terminal result for the invocation. Child outcomes
+remain observations inside that stream. Complete originating messages, tool
+results, findings and answers remain emitted or available through authorized
+evidence references; the renderer adds no previews or truncation. Stderr prompts
+and diagnostics never become plaintext in JSONL stdout.
+
+| Exit | Meaning |
+| --- | --- |
+| 0 | All requested rounds completed, with every captured goal assessed or delivered. No-change assessments can complete without a new merge. |
+| 1 | An admitted invocation failed, awaits a human decision or has an external prerequisite hold. Its durable position and evidence remain available. |
+| 2 | Invalid or unavailable input, changed requested total for an unfinished invocation, or refused competing foreground admission. |
+| 130 | Foreground SIGINT cancellation, after normal preservation and cleanup. |
+
+For an objective, goal or architecture gate, review the complete retained proposal
+and baseline. Interactive answers use the multiline terminal form above; approval
+applies only to the shown proposal. Noninteractive input or EOF leaves an
+unanswered gate durably pending with exit 1 and its question/evidence reference.
+Silence, an unknown response and elapsed time never approve it. A decline retains
+the submitted intent and accepted authority. Routine repair, checks and verified
+staging integration add no human gate.
+
+After a pending decision, interruption or recoverable failure, rerun the exact
+command, including its requested total. For example, retry
+`arcnexus refine --rounds 2` with the same command to resume its first unfinished
+phase or goal; retrying it as bare `refine` requests one and is refused while the
+two-round invocation remains unfinished. Completed phases and goal outcomes,
+exact proposals, approvals, complete answers, file checkpoints, issues, branches
+and PRs survive. Workflow reconciles uncertain effects and reuses an observed
+successful child if its parent did not yet record completion. Do not repair the
+database or submit a replacement task. Once all requested rounds finish, the
+same command starts a fresh invocation with new phase and goal identities.
+
+SIGINT uses the existing SDK signal path. The host preserves acknowledged work
+and evidence and cleans its managed worktree; cancellation does not imply success.
+A later invocation resumes the retained position. Each phase/task admission uses
+freshly accepted staging authority, retaining the approved in-run adoption
+boundary and original task acceptance/ownership. The host records the runtime
+actually used; resuming on a validated newer installed runtime retains progress.
+
+The readable round report lives outside source alongside existing retained
+evidence. It references phase assessments, exact guide decisions, goal outcomes,
+issues/PRs, checks, recovery events, source/runtime identities and delivered
+commits. The observer supplies elapsed time and provider-reported token usage
+overall and by execution profile; missing usage, pricing and cost stay unknown.
+Subsequent Planner, Architect and Director assessments receive prior findings and
+measurement references as observations through the existing evidence path.
+Historical results do not belong in objective or goal files.
+
+### Acceptance evidence to obtain
+
+A built CLI scenario with two rounds and distinguishable phase/goal observations
+must show Plan, Architect and every captured goal in order for both rounds,
+with human round/phase visibility and parseable JSONL arriving before the sole
+terminal result. The controlled provider must actually emit distinguishable
+complete message and tool-result observations through the normal provider path.
+The subprocess consumer must observe both records while a controlled phase is
+still unfinished. Hold that provider phase at an explicit release handshake after
+it emits the observations; release it only after the consumer has parsed and
+asserted both complete records and confirmed that no phase completion or terminal
+result has arrived. Process liveness alone cannot establish this: output buffered
+until phase completion can arrive before process exit. Use the same controlled
+boundary to establish live human round/phase visibility, without sleeps or a new
+timeout.
+
+Compare the complete provider payload and mapped tool response, including every
+content block, literal newlines, the read-file path/hash header and its
+structuredContent path, sha256 and text. Derive the expected digest from the
+fixture's known file bytes; preserve the full response rather than matching only
+its body or discarding additional fields. Then compare observation ordering,
+reported profile usage and terminal uniqueness after release. A final output
+buffer or a fixture that never emits its intended tool result cannot establish
+streaming. Diagnose a missing observation at its originating fixture or
+production boundary; retain the completeness and liveness assertions through
+any correction.
+
+Built-process argument scenarios must establish default `1` and exact decimal
+handoff through the SDK into the retained invocation, including adjacent totals
+above JavaScript's safe-integer range and a decimal beyond its finite number
+range. They need only reach a deliberate durable pending phase to observe the
+requested total; executing that many rounds is unnecessary. Invalid argument
+cases must prove exit 2, empty stdout and no admission. Process-level cancellation
+and pending-input cases must demonstrate the shared SDK path and documented exits; retry must preserve the unfinished
+position rather than replay completed work. Existing task/publication regressions
+cover preserved machinery. Controlled fixtures establish deterministic behavior,
+not live model acceptance or actual GitHub delivery.
+
+The separate final live acceptance is the production command
+`arcnexus refine --rounds 3`: three consecutive rounds assessing every approved
+goal, useful approved guide and code refinement, and later consumption of prior
+findings without operator candidate edits, database repair or uncontrolled aborts.
+This documentation and deterministic CLI scenarios do not satisfy that streak.

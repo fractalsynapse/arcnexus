@@ -8,18 +8,19 @@ import type {
   TaskObserver,
 } from '../../../packages/workflow/src/index.js';
 
-/** Start a foreground task and forward Ctrl-C through its structured cancellation signal. */
+/** Start a foreground operation and forward Ctrl-C through structured cancellation. */
 export async function runTask(
   commands: Context['commands'],
   goal: string | undefined,
   json: boolean,
-  verb: 'run' | 'plan' | 'update',
+  verb: 'run' | 'plan' | 'update' | 'refine',
+  rounds = '1',
 ) {
   const controller = new AbortController();
   const abort = () => controller.abort(new Error('Task cancelled by SIGINT'));
   process.on('SIGINT', abort);
   try {
-    await dispatchTask(commands, goal, json, verb, controller.signal);
+    await dispatchTask(commands, goal, json, verb, rounds, controller.signal);
   } finally {
     process.off('SIGINT', abort);
   }
@@ -30,7 +31,8 @@ async function dispatchTask(
   commands: Context['commands'],
   goal: string | undefined,
   json: boolean,
-  verb: 'run' | 'plan' | 'update',
+  verb: 'run' | 'plan' | 'update' | 'refine',
+  rounds: string,
   signal: AbortSignal,
 ) {
   const observer: TaskObserver = {
@@ -44,6 +46,8 @@ async function dispatchTask(
     return finish(await commands.updateArchitecture(directory, goal, observer, signal), json);
   if (verb === 'plan')
     return finish(await commands.planTask(directory, goal, observer, signal), json);
+  if (verb === 'refine')
+    return finish(await commands.refine(directory, rounds, observer, signal), json);
   if (goal === undefined)
     finishRound(await commands.runRound(directory, observer, signal), json, signal);
   else finish(await commands.runTask({ directory, goal }, observer, signal), json);

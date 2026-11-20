@@ -1,0 +1,319 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { Context } from 'cordis';
+import { agentPlugin } from '../../../agent/src/index.js';
+import { architecturePlugin } from '../../../architecture/src/index.js';
+import { RunMeasurements, type JournalEvent } from '../../../coordination/src/index.js';
+import { teamPlugin } from '../../../team/src/index.js';
+import {
+  Workflow,
+  type RoundCount,
+  type TaskObserver,
+  type TaskOutcome,
+} from '../../../workflow/src/index.js';
+import { commandsPlugin } from '../../src/index.js';
+
+export const suite = { owner: 'commands', level: 'unit', tags: ['regression'] } as const;
+
+const exactRound = '9007199254740993';
+const exactTotal =
+  '1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
+const question = 'Approve the exact proposal?\n  Preserve this second line.';
+const answer = 'Approved with context.\n  Keep this whitespace.\n';
+const pending: TaskOutcome = {
+  kind: 'blocked',
+  reason: 'Architecture approval is pending',
+  evidence: ['proposal/exact.diff', 'round/one'],
+};
+const complete: TaskOutcome = {
+  kind: 'planned',
+  commit: 'accepted-staging',
+  summary: 'Two rounds assessed',
+  evidence: ['round/one', 'round/two', 'measurements/report'],
+};
+const cancelled: TaskOutcome = {
+  kind: 'cancelled',
+  reason: 'Interrupted during execution',
+  evidence: ['checkpoint'],
+};
+
+/** Produce correlated, distinguishable child observations for each attempt. */
+function frames(attempt: number): JournalEvent[] {
+  const activation = attempt === 1 ? 'planner-first' : 'director-resumed';
+  const records = [...providerRecords(attempt, activation), ...outcomeRecords(attempt)];
+  return records.map((observation, index) => ({
+    sequence: String((attempt - 1) * records.length + index + 1),
+    run: attempt === 1 ? 7 : 9,
+    parent: attempt === 1 ? 6 : 8,
+    taskID: attempt === 1 ? 'plan-task' : 'goal-task',
+    goalID: attempt === 1 ? 'plan-goal' : 'goal-a',
+    timestamp: null,
+    observation,
+  }));
+}
+
+/** Provide the phase and native activation metadata. */
+function providerRecords(attempt: number, activation: string): unknown[] {
+  return [
+    {
+      refinement: {
+        invocation: 'invocation-1',
+        round: exactRound,
+        total: exactTotal,
+        phase: attempt === 1 ? 'Plan' : 'Run',
+        goal: attempt,
+      },
+    },
+    {
+      nativeStarted: {
+        activation,
+        profile: attempt === 1 ? 'planner' : 'steward',
+        model: 'model-a',
+        reasoning: 'high',
+      },
+    },
+    ...nativeRecords(attempt, activation),
+  ];
+}
+
+/** Preserve complete provider, tool and usage observations. */
+function nativeRecords(attempt: number, activation: string): unknown[] {
+  return [
+    {
+      nativeEvent: {
+        activation,
+        kind: 'message',
+        event: { message: `Complete provider ${attempt}\nsecond line` },
+      },
+    },
+    {
+      tool: {
+        activation,
+        call: `call-${attempt}`,
+        name: 'read-file',
+        result: `Complete tool ${attempt}\nsecond line`,
+      },
+    },
+    {
+      nativeEvent: {
+        activation,
+        kind: 'event',
+        event: {
+          type: 'turn.completed',
+          usage: { input_tokens: attempt * 100, output_tokens: attempt * 10 },
+        },
+      },
+    },
+    { nativeFinished: { activation, durationMs: attempt * 20 } },
+  ];
+}
+
+const architectPhase = {
+  refinement: {
+    invocation: 'invocation-1',
+    round: exactRound,
+    total: exactTotal,
+    phase: 'Architect',
+  },
+};
+const completedRound = {
+  completedRound: { round: exactRound, report: 'round/one', measurements: 'measurements/report' },
+};
+
+/** Describe the retained gate and the resumed goal and round outcomes. */
+function outcomeRecords(attempt: number): unknown[] {
+  return [
+    attempt === 1
+      ? {
+          outcome: {
+            kind: 'planned',
+            summary: 'Planner assessment',
+            evidence: ['plan/assessment'],
+          },
+        }
+      : { recovering: 7, checkpoint: 'checkpoint/acknowledged', evidence: ['recovery/report'] },
+    attempt === 1
+      ? architectPhase
+      : {
+          goal: {
+            id: 'goal-a',
+            outcome: { kind: 'merged', commit: 'goal-commit', evidence: ['goal/checks', 'pr/615'] },
+          },
+        },
+    attempt === 1
+      ? { proposal: { path: 'proposal/exact.diff', question } }
+      : { outcome: { kind: 'merged', commit: 'goal-commit', evidence: ['goal/checks'] } },
+    attempt === 1 ? { pending: { proposal: 'proposal/exact.diff' } } : completedRound,
+  ];
+}
+
+/** Supply a controlled Workflow without replacing the Commands plugin or its injection. */
+class RefinementWorkflow extends Workflow {
+  readonly calls: {
+    directory: string;
+    rounds: RoundCount;
+    observer: TaskObserver;
+    signal: AbortSignal;
+  }[] = [];
+  readonly answers: (string | undefined)[] = [];
+  readonly answerSignals: AbortSignal[] = [];
+
+  /** Stream child records before returning the gate or aggregate outcome. */
+  override async refine(
+    directory: string,
+    rounds: RoundCount,
+    observer: TaskObserver,
+    signal: AbortSignal,
+  ) {
+    this.calls.push({ directory, rounds, observer, signal });
+    const attempt = this.calls.length;
+    const accounting = new RunMeasurements();
+    for (const frame of frames(attempt)) {
+      observer.event?.(frame);
+      accounting.accept(frame);
+    }
+    observer.progress({
+      phase: 'activity',
+      message: `Attempt ${attempt} progress`,
+      evidence: [`progress/${attempt}`],
+    });
+    observer.measurements?.(accounting.snapshot(0));
+    if (signal.aborted) return cancelled;
+    const response = await observer.answer?.(question, signal);
+    this.answers.push(response);
+    this.answerSignals.push(signal);
+    return response === undefined ? pending : complete;
+  }
+}
+
+/** Record the complete stream received by a nonterminal SDK caller. */
+class CommandsScenario {
+  readonly workflow = new RefinementWorkflow();
+  readonly stream: unknown[] = [];
+  readonly questions: string[] = [];
+  response: string | undefined;
+  onProgress?: () => void;
+  readonly observer: TaskObserver = {
+    progress: (value) => {
+      this.stream.push({ progress: value });
+      this.onProgress?.();
+    },
+    event: (value) => this.stream.push({ event: value }),
+    measurements: (value) => this.stream.push({ measurements: value }),
+    answer: async (value) => {
+      this.questions.push(value);
+      this.stream.push({ question: value });
+      return this.response;
+    },
+  };
+
+  /** Install actual Cordis plugins with an explicit controlled Workflow dependency. */
+  async mount() {
+    const context = new Context();
+    await context.use(teamPlugin);
+    await context.use(architecturePlugin);
+    await context.use(agentPlugin);
+    await context.use((scope: Context) => scope.provide('workflow', this.workflow));
+    await context.use(commandsPlugin);
+    assert(context.commands);
+    return context.commands;
+  }
+}
+
+/** Build the expected measurement snapshot from the same public accounting interface. */
+function measurements(attempt: number) {
+  const accounting = new RunMeasurements();
+  for (const frame of frames(attempt)) accounting.accept(frame);
+  return accounting.snapshot(0);
+}
+
+/** Describe every ordered callback expected before the attempt returns. */
+function expectedStream(attempt: number) {
+  return [
+    ...frames(attempt).map((event) => ({ event })),
+    {
+      progress: {
+        phase: 'activity',
+        message: `Attempt ${attempt} progress`,
+        evidence: [`progress/${attempt}`],
+      },
+    },
+    { measurements: measurements(attempt) },
+    { question },
+  ];
+}
+
+test('installed SDK forwards distinct pending and resumed observations before each outcome', async () => {
+  const scenario = new CommandsScenario();
+  const commands = await scenario.mount();
+  const signal = new AbortController().signal;
+  assert.deepEqual(
+    await commands.refine('/project', exactTotal, scenario.observer, signal),
+    pending,
+  );
+  assert.deepEqual(scenario.stream, expectedStream(1));
+  scenario.response = answer;
+  assert.deepEqual(
+    await commands.refine('/project', exactTotal, scenario.observer, signal),
+    complete,
+  );
+  assert.deepEqual(scenario.stream, [...expectedStream(1), ...expectedStream(2)]);
+  assert.deepEqual(scenario.workflow.calls, [
+    { directory: '/project', rounds: exactTotal, observer: scenario.observer, signal },
+    { directory: '/project', rounds: exactTotal, observer: scenario.observer, signal },
+  ]);
+  assert.deepEqual(scenario.questions, [question, question]);
+  assert.deepEqual(scenario.workflow.answers, [undefined, answer]);
+  assert.deepEqual(scenario.workflow.answerSignals, [signal, signal]);
+  assert.equal(measurements(1).profiles[0]?.usage.input_tokens.reported, 100);
+  assert.equal(measurements(2).profiles[0]?.usage.output_tokens.reported, 20);
+  assert.equal(measurements(2).cost.estimate, null);
+});
+
+test('exact phase observations reach the SDK caller while the terminal outcome is pending', async () => {
+  const scenario = new CommandsScenario();
+  const commands = await scenario.mount();
+  let release!: (value: string | undefined) => void;
+  const heldAnswer = new Promise<string | undefined>((resolve) => {
+    release = resolve;
+  });
+  const originalAnswer = scenario.observer.answer!;
+  scenario.observer.answer = async (value, signal) => {
+    await originalAnswer(value, signal);
+    return heldAnswer;
+  };
+  const outcomes: TaskOutcome[] = [];
+  const result = commands.refine(
+    '/project',
+    exactTotal,
+    scenario.observer,
+    new AbortController().signal,
+  );
+  void result.then((outcome) => outcomes.push(outcome));
+  await Promise.resolve();
+  assert.deepEqual(scenario.stream, expectedStream(1));
+  assert.deepEqual(outcomes, []);
+  release(undefined);
+  assert.strictEqual(await result, pending);
+  assert.deepEqual(outcomes, [pending]);
+});
+
+test('cancellation during execution reaches Workflow through the original signal', async () => {
+  const scenario = new CommandsScenario();
+  const commands = await scenario.mount();
+  const controller = new AbortController();
+  scenario.onProgress = () => controller.abort();
+  const outcome = await commands.refine(
+    '/project',
+    exactRound,
+    scenario.observer,
+    controller.signal,
+  );
+  assert.deepEqual(outcome, cancelled);
+  assert.equal(scenario.workflow.calls[0]?.rounds, exactRound);
+  assert.equal(scenario.workflow.calls[0]?.signal, controller.signal);
+  assert.equal(scenario.workflow.calls[0]?.observer, scenario.observer);
+  assert.equal(controller.signal.aborted, true);
+  assert.deepEqual(scenario.stream, expectedStream(1).slice(0, -1));
+  assert.deepEqual(scenario.questions, []);
+});

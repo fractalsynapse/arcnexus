@@ -36,6 +36,9 @@ export function projectFixture(): string {
     '-m',
     'fixture',
   );
+  git('branch', 'staging');
+  git('update-ref', 'refs/remotes/origin/staging', 'HEAD');
+  git('config', `url.file://${root}/.insteadOf`, remote);
   return root;
 }
 
@@ -49,6 +52,7 @@ function definitions() {
       contractRegistry: 'contracts.yaml',
       planTemplate: `${architecture}/plan-template.md`,
       application: 'work',
+      delivery: delivery(),
       bindings: '.git/bindings.yaml',
       director: { component: 'plan', activity: 'planning' },
       verifier: { component: 'review', activity: 'assessment' },
@@ -60,14 +64,27 @@ function definitions() {
     'work/AGENTS.md': 'Fixture owner directive\n',
     'other/AGENTS.md': 'Unrelated directive\n',
     '.agents/skills/fixture/SKILL.md':
-      '---\nname: fixture\ndescription: Fixture skill description\n---\nFixture skill body\n',
+      '---\nname: fixture\ndescription: Fixture\n---\nFixture skill body\n',
     'standard.md': 'Fixture standard body\n',
     'work/contract.md': 'Fixture contract body\n',
-    'contracts.yaml': {
-      contracts: [
-        { id: 'fixture/work', owner: 'work', stage: 'proposed', file: 'work/contract.md' },
-      ],
-    },
+    'contracts.yaml': { contracts: [contract()] },
+  };
+}
+
+/** Declare the fixture's proposed public interface. */
+function contract() {
+  return { id: 'fixture/work', owner: 'work', stage: 'proposed', file: 'work/contract.md' };
+}
+
+/** Provide a staging configuration for the isolated Git fixture. */
+function delivery() {
+  return {
+    baseBranch: 'staging',
+    protectedBranch: 'main',
+    workBranch: '<issue>-<description>',
+    provider: 'collaboration',
+    owner: 'work',
+    requiredGates: ['CI'],
   };
 }
 

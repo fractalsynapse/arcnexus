@@ -76,16 +76,42 @@ function invocationContext(task: HostTask, current: ActivityData, observed?: num
     goal: activationGoal(task),
     worktree: task.worktree ?? task.capture.source.root,
   };
-  if (task.timeline) context.evidence = [...(context.evidence ?? []), task.timeline];
+  const retained = completedRoundContext(task, context.assignment);
+  context.assignment = retained.assignment;
+  context.evidence = [...new Set([...(context.evidence ?? []), ...retained.evidence])];
   if (observed !== undefined)
     context.evidence = [
       ...new Set([
-        ...(current.evidence ?? []),
+        ...(context.evidence ?? []),
         ...retainedEvidence(task),
         ...task.evidence.slice(observed),
       ]),
     ];
   return context;
+}
+
+/** Add compact round references and readable registered sources to the prepared observation. */
+function completedRoundContext(task: HostTask, assignment: unknown) {
+  const rounds = task.journal.completedRounds().flatMap((event) => {
+    const observation = event.observation as { completedRound?: { report?: unknown } };
+    const report = observation.completedRound?.report;
+    return typeof report === 'string' && task.journal.artifactRecorded(report)
+      ? [observation.completedRound!]
+      : [];
+  });
+  const instructions =
+    typeof assignment === 'object' && assignment !== null
+      ? assignment
+      : assignment === undefined
+        ? {}
+        : { instructions: assignment };
+  const timelines = [task.parent?.timeline, task.timeline].filter(
+    (path): path is string => path !== undefined && task.journal.artifactRecorded(path),
+  );
+  return {
+    assignment: rounds.length ? { ...instructions, completedRounds: rounds } : assignment,
+    evidence: [...rounds.map(({ report }) => report as string), ...timelines],
+  };
 }
 
 /** Use the verified delivery purpose for prerequisite actors while preserving canonical retry identity. */

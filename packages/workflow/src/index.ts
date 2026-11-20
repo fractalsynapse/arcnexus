@@ -1,3 +1,4 @@
+import { roundCount, type RoundCount } from './round-count.js';
 import type { Context } from 'cordis';
 import { interruptedRun, stopped } from './services.js';
 import type {
@@ -10,13 +11,18 @@ import type {
 } from './services.js';
 import { TaskRun } from './task-run.js';
 import { ArchitectRun } from './architect-run.js';
+import { RefinementRun } from './refinement-run.js';
 import type { RunObserver } from './observer.js';
+
+export type { RoundCount } from './round-count.js';
 
 export type {
   ActivityCheckpoint,
   ActivityOutcome,
   ActivityRepair,
   CompletedGoalOutcome,
+  CompletedRefinementRound,
+  RefinementProgress,
   GoalRound,
   RoundOutcome,
   Observation,
@@ -61,13 +67,14 @@ export class Workflow {
     observer: TaskObserver,
     signal: AbortSignal,
     parent?: TaskSession,
+    scope = 'architecture:update',
   ) {
     const reporting = (await import('./observer.js')).RunObserver.for(observer);
     const input = {
       directory,
       goal: feedback ?? 'Assess architecture alignment',
       architecture: true,
-      scope: 'architecture:update',
+      scope,
     };
     return this.invoke(
       input,
@@ -78,6 +85,34 @@ export class Workflow {
           this.run(child, reporting, signal, session),
         ).execute(feedback),
       parent,
+    );
+  }
+
+  /** Run repeatable Planner, Architect and priority-ordered goal assessments under one writer. */
+  async refine(
+    directory: string,
+    rounds: RoundCount,
+    observer: TaskObserver,
+    signal: AbortSignal,
+  ): Promise<TaskOutcome> {
+    const total = roundCount(rounds);
+    if (!total) return stopped('invalid', 'Round count must be a positive integer');
+    if (signal.aborted) return stopped('cancelled', 'Task cancelled before admission');
+    const reporting = (await import('./observer.js')).RunObserver.for(observer);
+    if (!this.services)
+      return stopped('invalid', 'Task execution services are unavailable in this build');
+    const input = { directory, goal: 'Continuous refinement', scope: 'refine' };
+    return this.invoke(input, reporting, signal, (session) =>
+      new RefinementRun(
+        this.services!,
+        session,
+        reporting,
+        signal,
+        total,
+        (child, parent) => this.run(child, reporting, signal, parent),
+        (root, output, cancellation, parent, scope) =>
+          this.update(root, undefined, output, cancellation, parent, scope),
+      ).execute(),
     );
   }
 

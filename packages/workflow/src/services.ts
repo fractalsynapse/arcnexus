@@ -1,3 +1,4 @@
+import type { RoundCount } from './round-count.js';
 import type { StandingGoal } from '../../planner/src/inventory.js';
 import type { ArchitectureDecision, Capture } from '../../architecture/src/index.js';
 import { AgentActivityHold } from '../../agent/src/index.js';
@@ -48,9 +49,30 @@ export type TaskOutcome =
       evidence: readonly string[];
     };
 
+export interface RefinementProgress {
+  invocation: string;
+  total: RoundCount;
+  round: RoundCount;
+  phase: 'Plan' | 'Architect' | 'Run' | 'complete';
+  goal?: number;
+  inventory?: readonly StandingGoal[];
+  outcome?: TaskOutcome;
+}
+
+export interface CompletedRefinementRound {
+  invocation: string;
+  round: RoundCount;
+  report: string;
+  findings: readonly string[];
+  measurements: readonly string[];
+  evidence: readonly string[];
+}
+
 export type TaskEvent =
   | Observation
   | { invocation: { startedAt: string } }
+  | { refinement: RefinementProgress }
+  | { completedRound: CompletedRefinementRound }
   | { plan: Plan; supplier?: SupplierLink }
   | {
       position: { completed: number; activities: Readonly<Record<string, number>> };
@@ -186,7 +208,7 @@ export interface WorkflowServices {
     ): Promise<ArchitectureDecision>;
   };
   execution: {
-    round?(directory: string): GoalRound;
+    round?(directory: string, namespace?: string): GoalRound;
     applyGuide?(session: TaskSession, id: string, signal: AbortSignal): Promise<void>;
     observeGoal?(session: TaskSession, signal: AbortSignal): StandingGoalEvidence;
     prepare?(session: TaskSession, issue: string, signal: AbortSignal): Promise<void>;

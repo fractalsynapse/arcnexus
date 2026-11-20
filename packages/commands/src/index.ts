@@ -24,6 +24,7 @@ declare module 'cordis' {
         signal: AbortSignal,
       ): ReturnType<Context['workflow']['run']>;
       runRound: Context['workflow']['round'];
+      refine: Context['workflow']['refine'];
     };
   }
 }
@@ -51,6 +52,8 @@ export const commandsPlugin = {
         context.workflow.run(input, observer, signal),
       runRound: (directory, observer, signal) =>
         context.workflow.round(directory, observer, signal),
+      refine: (directory, rounds, observer, signal) =>
+        context.workflow.refine(directory, rounds, observer, signal),
     });
   },
 };
