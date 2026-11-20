@@ -99,6 +99,32 @@ function providers(f: ReturnType<typeof fixture>, calls: string[]) {
   } as unknown as WorkflowServices;
 }
 
+test('a completed invocation permits a fresh invocation with new assessments', async (t) => {
+  const f = fixture(t);
+  const calls: string[] = [];
+  const workflow = new Workflow(providers(f, calls));
+  const refine = Reflect.get(workflow, 'refine') as (
+    directory: string,
+    rounds: number,
+    observer: TaskObserver,
+    signal: AbortSignal,
+  ) => Promise<unknown>;
+  assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
+  const signal = new AbortController().signal;
+  await refine.call(workflow, f.root, 1, { progress() {} }, signal);
+  await refine.call(workflow, f.root, 1, { progress() {} }, signal);
+  assert.deepEqual(calls, [
+    'Plan',
+    'Architect',
+    'First goal',
+    'Second goal',
+    'Plan',
+    'Architect',
+    'First goal',
+    'Second goal',
+  ]);
+});
+
 test('two refinement rounds assess Plan, Architect and every approved goal in order', async (t) => {
   const f = fixture(t);
   const calls: string[] = [];
