@@ -88,7 +88,11 @@ function assertNewFinding(f: ReviewedWorkflow, held: HoldContext, log: string) {
   const current = f.holds.at(-1)!;
   assert.equal(current.failure.diagnostic, f.diagnostic);
   assert.equal(current.failure.check!.status, 37);
-  assert.equal(current.failure.check!.log, log);
+  assert(f.fixture.checks.some((check) => check.log === log));
+  const actual = f.fixture.checks.find((check) => check.log === current.failure.check!.log)!;
+  assert.equal(actual.diagnostic, f.diagnostic);
+  assert.equal(actual.status, 37);
+  assert(f.fixture.task.readFile(actual.log).text.includes(f.diagnostic));
   assert.notEqual(current.progress.identity, held.progress.identity);
   assert.deepEqual(current.progress.inputs, held.progress.inputs);
   assert.deepEqual(current.task, held.task);
