@@ -23,6 +23,10 @@
 
 ### Fixed
 
+- Refresh elapsed measurements on ongoing observations and mark terminated unfinished activations with unknown duration, preserving reported usage and avoiding historical live stopwatches (#662).
+
+- Keep the readable run timeline in canonical journal form, referencing complete raw artifacts while streaming full details, so reading it cannot embed its payload back into itself (#663).
+
 - Remove unapproved request, research, Planner, citation, history and evidence-read caps, Git/CI timeouts, logging and warning-count overrides, and provider retry ceilings; require logged express human approval for quantitative limits. Reject inline lint configuration through an error rule without a warning-count gate (#658, #659).
 
 - Expose earlier applicable repair targets to every steward activity so invalid fixtures return from Implementation to Testing, while redundant model self-repairs stay with their caller (#656, #657).

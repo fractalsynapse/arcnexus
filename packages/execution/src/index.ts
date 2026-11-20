@@ -107,7 +107,8 @@ export class HostTask implements TaskSession {
     }
     const timeline = this.timeline;
     this.listener = (event) => {
-      appendFileSync(timeline, JSON.stringify(event) + '\n');
+      const { detail: _detail, ...recorded } = event;
+      appendFileSync(timeline, JSON.stringify(recorded) + '\n');
       observer(event);
     };
   }

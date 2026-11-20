@@ -18,12 +18,14 @@ interface Profile {
   activations: number;
   finishedActivations: number;
   failedActivations: number;
+  incompleteActivations: number;
   activationsWithoutUsage: number;
   durationMs: number;
   usage: Usage;
 }
 
 interface Activation {
+  run: number;
   profile: Profile;
   startedAt: number | null;
   usageObserved: boolean;
@@ -62,15 +64,11 @@ export class RunMeasurements {
     if (record?.invocation) this.startedAt = Date.parse(record.invocation.startedAt);
     this.endedAt = record?.outcome && frame.parent === undefined ? at : null;
     if (record?.nativeInvocation) this.historicalUnmeasuredActivations++;
-    if (record?.nativeStarted) this.start(record.nativeStarted, at);
+    if (record?.nativeStarted) this.start(record.nativeStarted, at, frame.run);
     if (record?.nativeEvent?.event?.type === 'turn.completed') this.usage(record.nativeEvent);
     if (record?.nativeFinished) this.finish(record.nativeFinished);
-    return Boolean(
-      record?.nativeStarted ||
-      record?.nativeFinished ||
-      record?.nativeEvent?.event?.type === 'turn.completed' ||
-      record?.outcome,
-    );
+    if (record?.outcome) this.interrupt(frame.run);
+    return true;
   }
 
   /** Render an independent current snapshot with inclusive native time separated from run wall time. */
@@ -78,9 +76,16 @@ export class RunMeasurements {
     const profiles = [...this.profiles.values()].map((profile) =>
       this.profileSnapshot(profile, now),
     );
+    const observedNativeElapsedMs = profiles.reduce(
+      (sum, profile) => sum + profile.observedElapsedMs,
+      0,
+    );
     return {
       wallElapsedMs: this.startedAt === null ? null : (this.endedAt ?? now) - this.startedAt,
-      nativeElapsedMs: profiles.reduce((sum, profile) => sum + profile.elapsedMs, 0),
+      nativeElapsedMs: profiles.some((profile) => profile.elapsedMs === null)
+        ? null
+        : observedNativeElapsedMs,
+      observedNativeElapsedMs,
       usage: totalUsage(profiles.map(({ usage }) => usage)),
       historicalUnmeasuredActivations: this.historicalUnmeasuredActivations,
       cost: { estimate: null, reason: 'No verified pricing or billing basis was supplied' },
@@ -89,7 +94,7 @@ export class RunMeasurements {
   }
 
   /** Attribute each activation to the exact alias, resolved model and reasoning configuration. */
-  private start(start: NonNullable<NativeRecord['nativeStarted']>, at: number | null) {
+  private start(start: NonNullable<NativeRecord['nativeStarted']>, at: number | null, run: number) {
     const profile = start.profile ?? null;
     const model = start.model ?? null;
     const reasoning = start.reasoning ?? null;
@@ -103,6 +108,7 @@ export class RunMeasurements {
         activations: 0,
         finishedActivations: 0,
         failedActivations: 0,
+        incompleteActivations: 0,
         activationsWithoutUsage: 0,
         durationMs: 0,
         usage: emptyUsage(),
@@ -110,7 +116,12 @@ export class RunMeasurements {
       this.profiles.set(key, record);
     }
     record.activations++;
-    this.active.set(start.activation, { profile: record, startedAt: at, usageObserved: false });
+    this.active.set(start.activation, {
+      run,
+      profile: record,
+      startedAt: at,
+      usageObserved: false,
+    });
   }
 
   /** Account for each reported category independently; cached and reasoning subsets are never added twice. */
@@ -138,6 +149,16 @@ export class RunMeasurements {
     this.active.delete(end.activation);
   }
 
+  /** Close only this terminated attempt's unfinished observations without inventing provider completion or duration. */
+  private interrupt(run: number) {
+    for (const [id, active] of this.active) {
+      if (active.run !== run) continue;
+      active.profile.incompleteActivations++;
+      if (!active.usageObserved) active.profile.activationsWithoutUsage++;
+      this.active.delete(id);
+    }
+  }
+
   /** Include ongoing activation time without mutating or double-counting completed observations. */
   private profileSnapshot(profile: Profile, now: number) {
     const active = [...this.active.values()].filter((entry) => entry.profile === profile);
@@ -145,12 +166,15 @@ export class RunMeasurements {
       (sum, entry) => sum + (entry.startedAt === null ? 0 : now - entry.startedAt),
       0,
     );
+    const unknownActiveDurations = active.filter(({ startedAt }) => startedAt === null).length;
+    const observedElapsedMs = profile.durationMs + running;
     return {
       ...profile,
       usage: totalUsage([profile.usage]),
       activeActivations: active.length,
-      elapsedMs: profile.durationMs + running,
-      unknownActiveDurations: active.filter(({ startedAt }) => startedAt === null).length,
+      elapsedMs: profile.incompleteActivations || unknownActiveDurations ? null : observedElapsedMs,
+      observedElapsedMs,
+      unknownActiveDurations,
     };
   }
 }

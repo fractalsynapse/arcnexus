@@ -18,7 +18,7 @@ class MeasurementScenario {
 
   /** Supply ordered journal-shaped observations with a deterministic wall clock. */
   feed(observation: unknown, milliseconds: number) {
-    this.projection.accept({
+    return this.projection.accept({
       sequence: String(++this.sequence),
       run: 1,
       taskID: 'task',
@@ -88,5 +88,33 @@ test('CO-25: an active profile reports elapsed time without inventing token usag
   assert.equal(result.wallElapsedMs, 50);
   assert.equal(result.nativeElapsedMs, 50);
   assert.equal(result.profiles[0]!.activeActivations, 1);
+  assert.equal(result.usage.input_tokens.reported, null);
+});
+
+test('CO-25: ongoing provider observations refresh elapsed measurements while usage remains unknown', () => {
+  const scenario = new MeasurementScenario();
+  scenario.feed({ nativeStarted: { activation: 'ongoing', profile: 'sol' } }, 1000);
+  assert.equal(
+    scenario.feed(
+      { nativeEvent: { activation: 'ongoing', kind: 'event', event: { type: 'item.completed' } } },
+      1500,
+    ),
+    true,
+  );
+  const result = scenario.projection.snapshot(1500);
+  assert.equal(result.nativeElapsedMs, 500);
+  assert.equal(result.usage.input_tokens.reported, null);
+});
+
+test('CO-25: a terminated unfinished activation is incomplete rather than an ever-running historical stopwatch', () => {
+  const scenario = new MeasurementScenario();
+  scenario.feed({ nativeStarted: { activation: 'interrupted', profile: 'sol' } }, 1000);
+  scenario.feed({ outcome: { kind: 'cancelled' } }, 1100);
+  const result = scenario.projection.snapshot(2000);
+  assert.equal(result.nativeElapsedMs, null);
+  assert.equal(result.profiles[0]!.activeActivations, 0);
+  assert.equal(result.profiles[0]!.incompleteActivations, 1);
+  assert.equal(result.profiles[0]!.finishedActivations, 0);
+  assert.equal(result.profiles[0]!.elapsedMs, null);
   assert.equal(result.usage.input_tokens.reported, null);
 });

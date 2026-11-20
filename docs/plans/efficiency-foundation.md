@@ -402,3 +402,24 @@ with no failures or skips, plus build, lint and formatting. Its explicit native
 selection refuses disabled execution rather than reporting skipped native cases
 as a native pass. These checks remain separate from real platform-led staging
 delivery and the three-round qualification.
+
+Production run 98 opened #661 for the source-linked component index. It completed
+Documentation, observed a meaningful failing regression, implemented the change,
+passed owner checks and repaired one malformed Implementation response with that
+same caller; Direction was invoked once. The run then exposed recursive payload
+duplication when an activity read its timeline (#663), plus stale elapsed-time
+updates during ongoing events (#662). It was deliberately cancelled through the
+normal signal path before continuing final evidence reads. Its task checkpoint
+`4f5862a35633ee881622a29fcdeb6cf0d96249f9`, issue, failed observations and complete
+raw evidence remain retained. Cleanup removed its worktree, without candidate
+file edits or database repair. This is a controlled interruption, not clean-cycle
+credit.
+
+The existing-path corrections pass 403 native-enabled built-program tests with
+no failures or skips, plus build, lint and formatting. The timeline's live/replayed
+canonical shape references complete artifacts rather than embedding its own
+read results. Streaming still forwards full observed detail. The same projection
+refreshes elapsed time on ongoing events and marks unfinished terminated native
+observations incomplete with unknown total duration. No store, scheduler, content
+ceiling or retry budget was introduced. Resume the exact retained goal through
+that validated runtime; hosted CI and live delivery remain separate gates.

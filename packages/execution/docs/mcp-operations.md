@@ -16,8 +16,11 @@ Each native activation retains its exact request, invocation configuration,
 complete provider JSONL and separate stderr. Local MCP records complete inputs,
 results and refusals in evidence files with correlated call identities. The
 Coordination journal stores discovery/accounting fields and references, so ordinary
-task-state reads do not repeatedly load entire transcripts. Live events and the
-derived run timeline carry full observed payloads. No content is truncated.
+task-state reads do not repeatedly load entire transcripts. Live events carry
+complete observed payloads. The readable timeline has the same canonical journal
+shape on replay and during execution, with references to those complete raw
+artifacts. Reading the timeline therefore cannot copy its payload recursively
+back into that same file. No request, report, file or observation is truncated.
 
 The activity's evidence references include a readable `run-timeline.jsonl`. Read it
 and referenced complete artifacts through the normal mapped `read-file` tool.
@@ -27,7 +30,10 @@ Earlier failed observations remain available across restart.
 Measurements separate run wall time from inclusive native duration and report
 provider-reported usage overall and by profile, actual model and reasoning setting.
 Cached-input and reasoning fields remain separate subsets. Missing usage and
-unverified cost are explicitly unknown. These observations introduce no budget,
+unverified cost are explicitly unknown. Each incoming observation refreshes elapsed
+measurements. A terminated activation without a completion receipt remains
+incomplete, with unknown total duration; observed duration is reported separately
+and its historical stopwatch does not continue running. These observations introduce no budget,
 timeout or automatic profile switch. Complete round/phase analysis, configured cost
 bases and later assessment consumption remain tracked in the
 [efficiency checklist](../../../docs/plans/efficiency-foundation.md).
