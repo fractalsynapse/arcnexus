@@ -37,3 +37,24 @@ actually used. The next Implementation activity should select the test runtime
 explicitly in the installed executable, following the existing prepared-context
 fixture. Reaching the original recovery assertions after that correction remains
 required; setup characterization alone does not satisfy completed-round acceptance.
+
+## Observed characterization
+
+Retained `114-228-owner-tests.log` records the meaningful portability failure.
+With `PATH=/usr/bin:/bin`, the installed provider launches as `/usr/bin/node`
+v22.22.1, matching this check's test runtime, and emits the exact complete finding,
+multiline answer and usage. With only the isolated empty-bin directory in PATH,
+the same executable exits 127 before producing any provider event. Its stderr is
+`env: 'node': No such file or directory`, followed by
+`env: use -[v]S to pass options in shebang lines`. Both complete launch results,
+environments and executable/runtime identities are retained in TAP diagnostics.
+The failure is at the explicit runtime-portability assertion, not a compiler,
+SQLite, Git, missing fixture file or report-history assertion. All three existing
+recovery scenarios still reach and pass their original assertions locally in the
+same observation. This establishes why local success is compatible with a hosted
+setup failure without claiming to have recovered the unavailable hosted stderr.
+
+The installer was extracted unchanged into `tests/fixtures/refinement-install.ts`
+so the characterization and the real recovery scenarios exercise one installation
+path. Implementation can correct that installer once and use the retained red
+without repeating or weakening the original recovery scenarios.
