@@ -179,24 +179,30 @@ function assertToolResults(records: Array<Record<string, any>>): void {
     .map((record) => record.detail?.event)
     .filter((event) => event?.type === 'item.completed' && event.item?.type === 'mcp_tool_call');
   assert.ok(toolResults.length > 0);
-  assert.deepEqual(toolResults.map((event) => event.item), Array.from({ length: 6 }, () => ({
-    type: 'mcp_tool_call',
-    id: 'read-tool',
-    result: {
-      content: [{
-        type: 'text',
-        text: 'Path: baseline\n' +
-          'SHA-256: 382edde31df119f6a9b8298cecd1d0d3a482ca4becd35b5a80827af11d2b92ac\n' +
-          '\n' +
-          'durable evidence\n',
-      }],
-      structuredContent: {
-        path: 'baseline',
-        sha256: '382edde31df119f6a9b8298cecd1d0d3a482ca4becd35b5a80827af11d2b92ac',
-        text: 'durable evidence\n',
+  assert.deepEqual(
+    toolResults.map((event) => event.item),
+    Array.from({ length: 6 }, () => ({
+      type: 'mcp_tool_call',
+      id: 'read-tool',
+      result: {
+        content: [
+          {
+            type: 'text',
+            text:
+              'Path: baseline\n' +
+              'SHA-256: 382edde31df119f6a9b8298cecd1d0d3a482ca4becd35b5a80827af11d2b92ac\n' +
+              '\n' +
+              'durable evidence\n',
+          },
+        ],
+        structuredContent: {
+          path: 'baseline',
+          sha256: '382edde31df119f6a9b8298cecd1d0d3a482ca4becd35b5a80827af11d2b92ac',
+          text: 'durable evidence\n',
+        },
       },
-    },
-  })));
+    })),
+  );
 }
 
 /** Require measurements and one terminal result after every observation. */
