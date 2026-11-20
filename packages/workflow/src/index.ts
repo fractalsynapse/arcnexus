@@ -62,13 +62,14 @@ export class Workflow {
     observer: TaskObserver,
     signal: AbortSignal,
     parent?: TaskSession,
+    scope = 'architecture:update',
   ) {
     const reporting = (await import('./observer.js')).RunObserver.for(observer);
     const input = {
       directory,
       goal: feedback ?? 'Assess architecture alignment',
       architecture: true,
-      scope: 'architecture:update',
+      scope,
     };
     return this.invoke(
       input,
