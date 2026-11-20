@@ -25,7 +25,7 @@ export function stewardProgress(events: readonly TaskEvent[], milestone: Milesto
             ...(originatingFinding && !sameFinding(originatingFinding, repair)
               ? { originatingFinding }
               : {}),
-            targetCompleted: completedActivities.includes(repair.activity),
+            targetCompleted: completedActivities.some((activity) => activity === repair.activity),
           },
         }
       : {}),
