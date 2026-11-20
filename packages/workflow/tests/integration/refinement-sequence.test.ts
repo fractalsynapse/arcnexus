@@ -123,7 +123,7 @@ test('a completed round exposes its report and originating evidence to the obser
   const completion = events.find(
     (event) => typeof event === 'object' && event !== null && 'completedRound' in event,
   );
-  assert.ok(completion, 'a real completed round is observed');
+  assert.ok(completion, JSON.stringify(events));
   const round = Reflect.get(completion, 'completedRound') as Record<string, unknown>;
   assert.equal(round.round, 1);
   assert.ok(round.report, 'the round references its retained report');
