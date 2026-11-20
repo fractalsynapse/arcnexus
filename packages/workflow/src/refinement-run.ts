@@ -285,7 +285,11 @@ function successfulPhase(outcome: TaskOutcome) {
 
 /** Select event records carrying provider measurement observations. */
 function hasMeasurement(value: unknown) {
-  return typeof value === 'object' && value !== null && 'provider' in value;
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    ['nativeStarted', 'nativeEvent', 'nativeFinished', 'nativeInvocation'].some((key) => key in value)
+  );
 }
 
 /** Preserve every evidence path exposed by an original observation. */
