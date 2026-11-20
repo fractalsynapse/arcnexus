@@ -307,12 +307,25 @@ must show Plan, Architect and every captured goal in order for both rounds,
 with human round/phase visibility and parseable JSONL arriving before the sole
 terminal result. The controlled provider must actually emit distinguishable
 complete message and tool-result observations through the normal provider path.
-The subprocess consumer must observe them while the process is still running,
-then compare their complete payloads and ordering, reported profile usage and
-terminal uniqueness. A final output buffer or a fixture that never emits its
-intended tool result cannot establish streaming. Diagnose a missing observation
-at its originating fixture or production boundary; retain the completeness and
-liveness assertions through any correction.
+The subprocess consumer must observe both records while a controlled phase is
+still unfinished. Hold that provider phase at an explicit release handshake after
+it emits the observations; release it only after the consumer has parsed and
+asserted both complete records and confirmed that no phase completion or terminal
+result has arrived. Process liveness alone cannot establish this: output buffered
+until phase completion can arrive before process exit. Use the same controlled
+boundary to establish live human round/phase visibility, without sleeps or a new
+timeout.
+
+Compare the complete provider payload and mapped tool response, including every
+content block, literal newlines, the read-file path/hash header and its
+structuredContent path, sha256 and text. Derive the expected digest from the
+fixture's known file bytes; preserve the full response rather than matching only
+its body or discarding additional fields. Then compare observation ordering,
+reported profile usage and terminal uniqueness after release. A final output
+buffer or a fixture that never emits its intended tool result cannot establish
+streaming. Diagnose a missing observation at its originating fixture or
+production boundary; retain the completeness and liveness assertions through
+any correction.
 
 Built-process argument scenarios must establish default `1` and exact decimal
 handoff through the SDK into the retained invocation, including adjacent totals
