@@ -40,7 +40,7 @@ class RoundConsumer {
       component: this.component,
       consumption,
       input: this.input,
-      reads: [...this.reads],
+      reads: [...this.reads.keys()],
       executable: process.argv[1],
     });
     if (!this.task.assignment.clarifications?.length) {
