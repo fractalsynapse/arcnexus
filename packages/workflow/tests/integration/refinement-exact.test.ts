@@ -222,7 +222,7 @@ test('uninterrupted rounds announce each phase before its assessment', async (t)
   await refine(
     new Workflow(providers(f, calls)),
     f.root,
-    2,
+    '2',
     phaseObserver(events),
     new AbortController().signal,
   );
