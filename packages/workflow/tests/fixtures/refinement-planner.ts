@@ -21,6 +21,7 @@ export class RefinementPlanner {
   constructor(
     private readonly revision: string,
     private readonly unfinished = true,
+    private readonly selection = { component: 'planner', activity: 'planning' },
   ) {}
 
   /** Register each phase or goal session so assertions can independently read canonical history. */
