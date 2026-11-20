@@ -264,10 +264,15 @@ function assertRecoveredReport(assessments: number, events: readonly unknown[]) 
   const round = completedRounds(events)[0]!;
   const report = readFileSync(Reflect.get(round, 'report') as string, 'utf8');
   assert.match(report, /Plan origin finding 1/);
+  assert.doesNotMatch(report, /Plan origin finding 2/);
   assert.match(report, /Reused completed child outcome for refine:/);
   assert.match(report, /"summary":"The measured goal holds"/);
   assert.match(report, /"assessment":\{"kind":"satisfied"/);
-  assert.ok((Reflect.get(round, 'findings') as unknown[]).length >= 4);
+  const findings = Reflect.get(round, 'findings') as string[];
+  assert.ok(findings.length >= 4);
+  assert.equal(new Set(findings).size, findings.length, 'each originating event is referenced once');
+  const recovery = report.match(/Reused completed child outcome for refine:[^\n]+/g) ?? [];
+  assert.deepEqual(recovery, [recovery[0]], 'the report contains one durable child reuse for this round');
 }
 
 test('a committed child outcome is reused after parent acknowledgment is interrupted', async (t) => {
