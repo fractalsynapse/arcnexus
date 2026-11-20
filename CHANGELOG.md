@@ -14,6 +14,8 @@
 
 - Document the efficiency foundation checklist, detailed prompt-authoring practices and proposed contract amendment for approved in-run architecture adoption, reusable activity checks, live events and continuous profile-aware time/token/cost optimization (#615).
 
+- Discover other components through definition source references and optional authored summaries in the shared inspect and activation request, while preserving the acting component’s complete purpose and selected activity instructions (#615).
+
 - Assess architecture with `architecture update`, retain exact human approval in the existing journal, and deliver prerequisite work and protected guide bytes through the normal task workflow (#631).
 
 - Retain one project writer across nested sequential task sessions and recover their interrupted journals together (#628).

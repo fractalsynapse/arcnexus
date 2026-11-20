@@ -225,13 +225,19 @@ function contractReferences(capture: Capture) {
   );
 }
 
-/** Keep other owners discoverable without including their full activity definitions. */
+/** Keep other owners discoverable without including their full definitions. */
 function componentIndex(capture: Capture, current: string) {
   return Object.fromEntries(
     team
       .list(capture.components)
       .filter(({ id }) => id !== current)
-      .map(({ id, purpose }) => [id, purpose]),
+      .map(({ id, summary }) => [
+        id,
+        {
+          source: definitionPath('components', id),
+          ...(summary === undefined ? {} : { summary }),
+        },
+      ]),
   );
 }
 
