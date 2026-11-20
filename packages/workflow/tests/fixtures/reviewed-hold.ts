@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import type { Candidate } from '../../../verification/src/index.js';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
 import { Agent } from '../../../agent/src/index.js';
@@ -54,7 +55,6 @@ export class ReviewedWorkflow {
   readonly services: WorkflowServices;
   private head?: string;
   private closed = false;
-  private satisfied = false;
   private readonly agent = new Agent(new Architecture());
   private readonly signal = new AbortController().signal;
 
@@ -113,7 +113,7 @@ export class ReviewedWorkflow {
   private async check(id: string, signal: AbortSignal, scope?: Parameters<HostTask['check']>[2]) {
     const task = this.fixture.task;
     const log = task.artifact('reviewed-check.log');
-    const args = [join(import.meta.dirname, 'reviewed-hold-command.js'), 'fixture.txt'];
+    const args = [join(import.meta.dirname, 'reviewed-hold-command.js'), 'fixture.txt', ...(this.scenario === 'external' ? [join(this.fixture.root, '.git', 'schema-ready')] : [])];
     const start = performance.now();
     const actual = await execute(process.execPath, args, { cwd: task.worktree!, log, signal });
     const check = {
@@ -125,7 +125,7 @@ export class ReviewedWorkflow {
       status: actual.status,
       durationMs: performance.now() - start,
       ...(actual.status ? { diagnostic: actual.stderr.trim() } : {}),
-      ...(this.scenario === 'external' && !this.satisfied
+      ...(this.scenario === 'external' && !existsSync(join(this.fixture.root, '.git', 'schema-ready'))
         ? {
             prerequisite: 'dependencies' as const,
             reason: 'Supply the approved external schema before correction.',
@@ -145,11 +145,13 @@ export class ReviewedWorkflow {
   private async reply(data: TaskContext): Promise<unknown> {
     const assignment = data.assignment as { revisionContext?: RevisionRequest };
     if (assignment.revisionContext) return this.proposal(assignment.revisionContext);
-    if (this.scenario === 'human' && !this.satisfied) {
+    if (this.scenario === 'human') {
       const gates = new Clarifications(this.fixture.task, selection, this.signal);
-      return gates.run(
-        { milestone: { id: correction.id }, acceptance: correction.criteria },
-        async () => ({ kind: 'question', question: gateQuestion }),
+      const context = { milestone: { id: correction.id }, acceptance: correction.criteria };
+      return gates.run(context, async () =>
+        gates.answers(context).some((gate) => gate.question === gateQuestion)
+          ? { kind: 'completed', edits: [], checks: [] }
+          : { kind: 'question', question: gateQuestion },
       );
     }
     return { kind: 'completed', edits: [], checks: [] };
@@ -205,8 +207,18 @@ export class ReviewedWorkflow {
         },
       },
       agent: { execute: async (_session, milestone) => this.activate(milestone) },
-      verification: {
-        assess: async (_session, plan, candidate) => {
+      verification: { assess: async (_session, plan, candidate) => this.assess(plan, candidate) },
+      delivery: {
+        integrate: async () => {
+          this.calls.push('Delivery');
+          return { kind: 'merged', commit: 'controlled-staging', evidence: [] };
+        },
+      },
+    };
+  }
+
+  /** Assess the actual assembled bytes and refreshed check against the original acceptance. */
+  private async assess(plan: Plan, candidate: Candidate) {
           this.calls.push('Review');
           this.reviews.push({ plan, candidate });
           assert.deepEqual(
@@ -216,20 +228,11 @@ export class ReviewedWorkflow {
           assert.equal(this.fixture.task.readFile('fixture.txt').text, 'corrected');
           assert.equal(this.fixture.checks.at(-1)!.status, 0);
           return {
-            kind: 'accepted',
+            kind: 'accepted' as const,
             candidate: candidate.digest,
             criteria: ['original-criterion', 'foreign-criterion'],
             evidence: [this.fixture.checks.at(-1)!.log],
           };
-        },
-      },
-      delivery: {
-        integrate: async () => {
-          this.calls.push('Delivery');
-          return { kind: 'merged', commit: 'controlled-staging', evidence: [] };
-        },
-      },
-    };
   }
 
   /** Require exact diagnostic, exit and evidence in Direction's structured feedback, not a generic blocked string. */
@@ -349,7 +352,7 @@ export class ReviewedWorkflow {
     assert(journal instanceof Journal);
     this.fixture.task = new HostTask(old.config, old.goal, journal);
     this.closed = false;
-    this.satisfied = satisfied;
+    if (satisfied && this.scenario === 'external') writeFileSync(join(this.fixture.root, '.git', 'schema-ready'), 'approved external schema\n');
     this.bind();
     this.fixture.task.ask = async () => (satisfied ? gateAnswer : undefined);
     await this.fixture.task.setupWorkspace('699', this.signal);
