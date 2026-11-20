@@ -159,6 +159,30 @@ test('an interrupted invocation refuses a changed round total before reassessmen
   assert.deepEqual(calls, before, 'a changed total must not restart assessment');
 });
 
+test('a competing foreground task is refused while the refinement phase runs', async (t) => {
+  const f = fixture(t);
+  const services = providers(f, []);
+  const signal = new AbortController().signal;
+  assert.ok(services.planner);
+  services.planner.propose = async () => {
+    const competing = await f.execution.admit(
+      { directory: f.root, goal: 'Competing task' },
+      signal,
+    );
+    assert.equal(Reflect.get(competing, 'kind'), 'invalid');
+    return { kind: 'planned', commit: f.revision, summary: 'No change', evidence: [] };
+  };
+  const workflow = new Workflow(services);
+  const refine = Reflect.get(workflow, 'refine') as (
+    directory: string,
+    rounds: number,
+    observer: TaskObserver,
+    signal: AbortSignal,
+  ) => Promise<unknown>;
+  assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
+  await refine.call(workflow, f.root, 1, { progress() {} }, signal);
+});
+
 test('two refinement rounds assess Plan, Architect and every approved goal in order', async (t) => {
   const f = fixture(t);
   const calls: string[] = [];
