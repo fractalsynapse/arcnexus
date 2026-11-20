@@ -11,7 +11,12 @@ import { Workflow, type TaskObserver, type WorkflowServices } from '../../src/in
 
 export const suite = { owner: 'workflow', level: 'integration', tags: ['regression'] } as const;
 
-type Refine = (directory: string, rounds: number, observer: TaskObserver, signal: AbortSignal) => Promise<unknown>;
+type Refine = (
+  directory: string,
+  rounds: number,
+  observer: TaskObserver,
+  signal: AbortSignal,
+) => Promise<unknown>;
 
 /** Build a retained SQLite journal and Git project for a restart across service instances. */
 function fixture(t: TestContext) {
@@ -19,7 +24,8 @@ function fixture(t: TestContext) {
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const root = join(directory, 'project');
   mkdirSync(root);
-  const git = (...args: string[]) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
+  const git = (...args: string[]) =>
+    execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
   git('init', '-b', 'staging');
   git('config', 'user.name', 'Fixture');
   git('config', 'user.email', 'fixture@example.invalid');
@@ -27,7 +33,10 @@ function fixture(t: TestContext) {
   git('add', '.');
   git('commit', '-m', 'baseline');
   git('remote', 'add', 'origin', root);
-  writeFileSync(join(root, '.git', 'bindings.yaml'), `schemaVersion: 1\ntools:\n  codex: ${process.execPath}\n`);
+  writeFileSync(
+    join(root, '.git', 'bindings.yaml'),
+    `schemaVersion: 1\ntools:\n  codex: ${process.execPath}\n`,
+  );
   const revision = git('rev-parse', 'HEAD');
   return { directory, root, revision, reopen: () => services(root, directory, revision) };
 }
@@ -68,11 +77,19 @@ function providers(state: ReturnType<typeof services>, planner: () => unknown) {
     execution: {
       admit: state.execution.admit.bind(state.execution),
       round: state.execution.round.bind(state.execution),
-      observeGoal: () => ({ revision: state.revision, source: state.capture.source, recentChanges: [] }),
+      observeGoal: () => ({
+        revision: state.revision,
+        source: state.capture.source,
+        recentChanges: [],
+      }),
     },
     planner: planner() as WorkflowServices['planner'],
     architecture: {
-      propose: async () => ({ kind: 'no-change', summary: 'Architect retained its finding', evidence: [] }),
+      propose: async () => ({
+        kind: 'no-change',
+        summary: 'Architect retained its finding',
+        evidence: [],
+      }),
     },
     direction: {
       plan: async () => ({
@@ -91,7 +108,9 @@ function providers(state: ReturnType<typeof services>, planner: () => unknown) {
 function completion(events: readonly unknown[]) {
   const event = events.find((item) => {
     const observation = Reflect.get(item as object, 'observation');
-    return typeof observation === 'object' && observation !== null && 'completedRound' in observation;
+    return (
+      typeof observation === 'object' && observation !== null && 'completedRound' in observation
+    );
   });
   assert.ok(event);
   return Reflect.get(Reflect.get(event as object, 'observation') as object, 'completedRound') as {
@@ -105,9 +124,14 @@ test('reopened recovery reports complete origins and exact round profile usage w
   const f = fixture(t);
   let plannerCalls = 0;
   const planner = () => ({
-    propose: async (session: Parameters<NonNullable<WorkflowServices['planner']>['propose']>[0]) => {
+    propose: async (
+      session: Parameters<NonNullable<WorkflowServices['planner']>['propose']>[0],
+    ) => {
       plannerCalls++;
-      const answer = await session.ask?.('Retain this complete answer', new AbortController().signal);
+      const answer = await session.ask?.(
+        'Retain this complete answer',
+        new AbortController().signal,
+      );
       session.record({ phase: 'question', message: `Complete answer: ${answer}` });
       const task = hostTask(session);
       const activation = 'fixture-planner-activation';
@@ -115,7 +139,14 @@ test('reopened recovery reports complete origins and exact round profile usage w
         'provider-turn.json',
         JSON.stringify({ type: 'turn.completed', usage: { input_tokens: 17, output_tokens: 5 } }),
       );
-      task.note({ nativeStarted: { activation, profile: 'planner-fixture', model: 'fixture-model', reasoning: 'high' } });
+      task.note({
+        nativeStarted: {
+          activation,
+          profile: 'planner-fixture',
+          model: 'fixture-model',
+          reasoning: 'high',
+        },
+      });
       task.note({
         nativeEvent: {
           activation,
@@ -142,12 +173,14 @@ test('reopened recovery reports complete origins and exact round profile usage w
     1,
     {
       progress() {},
-      answer: async () => 'The complete answer is retained verbatim, including its full conclusion.',
+      answer: async () =>
+        'The complete answer is retained verbatim, including its full conclusion.',
       event(event) {
         const observation = Reflect.get(event, 'observation');
-        const outcome = typeof observation === 'object' && observation !== null
-          ? Reflect.get(observation, 'outcome')
-          : undefined;
+        const outcome =
+          typeof observation === 'object' && observation !== null
+            ? Reflect.get(observation, 'outcome')
+            : undefined;
         if (typeof outcome === 'object' && outcome?.kind === 'planned')
           throw new Error('Interrupt after child terminal commit');
       },
@@ -157,13 +190,15 @@ test('reopened recovery reports complete origins and exact round profile usage w
   assert.equal(Reflect.get(interrupted as object, 'kind'), 'failed');
   assert.equal(plannerCalls, 1);
 
-  const resumed = new Workflow(providers(f.reopen(), () => ({
-    propose: async () => {
-      plannerCalls++;
-      throw new Error('A successful child must not be assessed again');
-    },
-    apply: async () => ({ kind: 'completed', evidence: [] }),
-  })));
+  const resumed = new Workflow(
+    providers(f.reopen(), () => ({
+      propose: async () => {
+        plannerCalls++;
+        throw new Error('A successful child must not be assessed again');
+      },
+      apply: async () => ({ kind: 'completed', evidence: [] }),
+    })),
+  );
   const events: unknown[] = [];
   await (Reflect.get(resumed, 'refine') as Refine).call(
     resumed,
