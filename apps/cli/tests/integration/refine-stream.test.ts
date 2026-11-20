@@ -173,33 +173,34 @@ function assertRoundHistory(event: Record<string, any>, index: number): void {
   assert.ok(event.reads.some((path: string) => path.endsWith('codex.jsonl')));
 }
 
-/** Check full tool results, measured usage and one terminal outcome. */
-function assertTerminalRecords(records: Array<Record<string, any>>): void {
+/** Check complete tool results and their mapped read metadata. */
+function assertToolResults(records: Array<Record<string, any>>): void {
   const toolResults = records
     .map((record) => record.detail?.event)
     .filter((event) => event?.type === 'item.completed' && event.item?.type === 'mcp_tool_call');
   assert.ok(toolResults.length > 0);
-  assert.deepEqual(
-    toolResults.map((event) => event.item),
-    Array.from({ length: 6 }, () => ({
-      type: 'mcp_tool_call',
-      id: 'read-tool',
-      result: {
-        content: [{
-          type: 'text',
-          text: 'Path: baseline\\n' +
-            'SHA-256: 382edde31df119f6a9b8298cecd1d0d3a482ca4becd35b5a80827af11d2b92ac\\n' +
-            '\\n' +
-            'durable evidence\\n',
-        }],
-        structuredContent: {
-          path: 'baseline',
-          sha256: '382edde31df119f6a9b8298cecd1d0d3a482ca4becd35b5a80827af11d2b92ac',
-          text: 'durable evidence\\n',
-        },
+  assert.deepEqual(toolResults.map((event) => event.item), Array.from({ length: 6 }, () => ({
+    type: 'mcp_tool_call',
+    id: 'read-tool',
+    result: {
+      content: [{
+        type: 'text',
+        text: 'Path: baseline\\n' +
+          'SHA-256: 382edde31df119f6a9b8298cecd1d0d3a482ca4becd35b5a80827af11d2b92ac\\n' +
+          '\\n' +
+          'durable evidence\\n',
+      }],
+      structuredContent: {
+        path: 'baseline',
+        sha256: '382edde31df119f119f6a9b8298cecd1d0d3a482ca4becd35b5a80827af11d2b92ac',
+        text: 'durable evidence\\n',
       },
-    })),
-  );
+    },
+  })));
+}
+
+/** Require measurements and one terminal result after every observation. */
+function assertTerminalOutcome(records: Array<Record<string, any>>): void {
   assert.ok(
     records.some(
       (record) =>
@@ -214,6 +215,12 @@ function assertTerminalRecords(records: Array<Record<string, any>>): void {
   const terminal = records.at(-1);
   assert.ok(terminal);
   assert.equal(terminal.outcome.kind, 'planned');
+}
+
+/** Check full tool results, measured usage and one terminal outcome. */
+function assertTerminalRecords(records: Array<Record<string, any>>): void {
+  assertToolResults(records);
+  assertTerminalOutcome(records);
 }
 
 /** Validate streamed output from a complete production CLI invocation. */
