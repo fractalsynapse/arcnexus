@@ -4,6 +4,7 @@ import { promisify } from 'node:util';
 import { retryRead } from './read.js';
 
 export { isTransientReadFailure } from './read.js';
+export { GitHubCheckFailure } from './check-failure.js';
 
 const run = promisify(execFile);
 

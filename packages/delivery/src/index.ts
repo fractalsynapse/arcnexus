@@ -6,6 +6,7 @@ import type { TaskObserver, TaskOutcome, TaskSession } from '../../workflow/src/
 import { publish, type Publication } from './publication.js';
 
 export { publish, type Publication } from './publication.js';
+export { PublicationCheckFailure } from './check-failure.js';
 
 /** Integrate only the exact candidate accepted by Verification and the provider's gates. */
 export async function integrate(
