@@ -24,7 +24,10 @@ export class InspectionFixture extends RoundConsumptionFixture {
   constructor(t: TestContext) {
     const sessions: HostTask[] = [];
     t.after(() => {
-      for (const task of sessions) { task.cleanup(); task.close(); }
+      for (const task of sessions) {
+        task.cleanup();
+        task.close();
+      }
     });
     super(t);
     this.sessions = sessions;
