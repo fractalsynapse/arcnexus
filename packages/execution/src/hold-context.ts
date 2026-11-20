@@ -60,13 +60,7 @@ function retainedHoldContext(
     ...checkedReceipts(events),
     ...knowledge,
     position: task.history().findLast((event) => 'position' in event)?.position,
-    progress: holdProgress(
-      task,
-      milestone,
-      failure.diagnostic,
-      failure.check,
-      knowledge.knowledgeIdentity,
-    ),
+    progress: holdProgress(task, milestone, failure, knowledge.knowledgeIdentity),
     prerequisite: holdPrerequisite(failure.check, knowledge.gates),
     ...supplierContext(task.history(), milestone.id),
   };
@@ -184,5 +178,5 @@ function holdScopes(task: HostTask, milestone: Milestone, scope: StewardScope) {
 /** Apply the same relevant secured input and completed knowledge comparison to refused replies. */
 export function reviewedReplyInput(task: HostTask, milestone: Milestone, scope: StewardScope) {
   const knowledge = holdKnowledge(task, milestone, scope, task.observations());
-  return holdProgress(task, milestone, '', undefined, knowledge.knowledgeIdentity).identity;
+  return holdProgress(task, milestone, { diagnostic: '' }, knowledge.knowledgeIdentity).identity;
 }
