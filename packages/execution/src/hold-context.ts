@@ -90,8 +90,7 @@ function heldFailure(
     : undefined;
   const refusal = events.findLast(
     ({ stewardRepair }) =>
-      stewardRepair?.scope.owner === scope.owner &&
-      stewardRepair.scope.activity === scope.activity,
+      stewardRepair?.scope.owner === scope.owner && stewardRepair.scope.activity === scope.activity,
   )?.stewardRepair;
   return {
     diagnostic: failed?.diagnostic ?? outcome.reason,
@@ -127,7 +126,10 @@ function holdKnowledge(
     task.inboxScope(selection, data),
     task.inboxScope(selection, {
       ...data,
-      milestone: { ...data.milestone, step: milestone.steps.find((s) => s.activity === scope.activity) },
+      milestone: {
+        ...data.milestone,
+        step: milestone.steps.find((s) => s.activity === scope.activity),
+      },
     }),
   ];
   const gates = new Map<string, Clarification>();
