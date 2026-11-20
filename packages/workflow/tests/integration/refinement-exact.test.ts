@@ -154,9 +154,14 @@ async function exactRecovery(t: TestContext, total: string) {
   );
   assert.notEqual(Reflect.get(resumed as object, 'kind'), 'invalid');
   assert.deepEqual(retryCalls, ['Plan']);
+  await assertChangedTotal(f.root, total, retry, retryCalls);
+}
+
+/** Reject a different requested total without entering another assessment. */
+async function assertChangedTotal(root: string, total: string, retry: WorkflowServices, retryCalls: string[]) {
   const refused = await refine(
     new Workflow(retry),
-    f.root,
+    root,
     (BigInt(total) + 1n).toString(),
     { progress() {} },
     new AbortController().signal,
