@@ -77,15 +77,6 @@ class RefinementWorkflow extends Workflow {
       evidence: ['proposal/exact.diff'],
     });
     observer.measurements?.(new RunMeasurements().snapshot(0));
-    const response = await observer.answer?.(question, signal);
-    this.answers.push(response);
-    if (response === undefined) return pending;
-    observer.event?.(
-      this.frame(5, {
-        refinement: { invocation: 'invocation-1', round: 2, total: rounds, phase: 'Run', goal: 1 },
-      }),
-    );
-    return complete;
   }
 
   /** Preserve source and correlation identities in each simulated persisted frame. */
