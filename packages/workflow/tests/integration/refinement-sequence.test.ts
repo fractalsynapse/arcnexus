@@ -256,9 +256,10 @@ test('completed-round reports recover originating findings from an earlier attem
   assert.equal(typeof reportPath, 'string');
   const report = readFileSync(reportPath as string, 'utf8');
   assert.match(report, /"summary":"No change"/);
-  assert.match(report, /"goal":"Assess objectives and standing goals"/);
-  assert.match(report, /"goal":"Assess architecture alignment"/);
-  assert.match(report, /"goal":"First goal"/);
+  assert.match(report, /"summary":"The measured goal holds"/);
+  assert.match(report, /"goalID":"[a-f0-9]+"/);
+  assert.match(report, /"assessment":\{"kind":"planned"/);
+  assert.match(report, /"assessment":\{"kind":"satisfied"/);
   assert.ok(Array.isArray(Reflect.get(round, 'findings')));
   assert.ok((Reflect.get(round, 'findings') as unknown[]).length >= 4);
 });
