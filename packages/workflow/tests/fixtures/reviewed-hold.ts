@@ -135,9 +135,8 @@ export class ReviewedWorkflow {
     const args = [
       join(import.meta.dirname, 'reviewed-hold-command.js'),
       'fixture.txt',
-      ...(this.scenario === 'external'
-        ? [join(this.fixture.root, '.git', 'schema-ready')]
-        : ['', this.diagnostic]),
+      this.scenario === 'external' ? join(this.fixture.root, '.git', 'schema-ready') : '',
+      this.diagnostic,
     ];
     const start = performance.now();
     const actual = await execute(process.execPath, args, { cwd: task.worktree!, log, signal });
