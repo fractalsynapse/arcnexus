@@ -147,9 +147,15 @@ test('an interrupted invocation refuses a changed round total before reassessmen
   assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
   await refine.call(workflow, f.root, 2, { progress() {} }, controller.signal).catch(() => {});
   const before = [...calls];
-  await refine
-    .call(workflow, f.root, 3, { progress() {} }, new AbortController().signal)
-    .catch(() => {});
+  assert.deepEqual(before, ['Plan'], 'the original invocation reached its first phase');
+  const changed = await refine.call(
+    workflow,
+    f.root,
+    3,
+    { progress() {} },
+    new AbortController().signal,
+  );
+  assert.equal(Reflect.get(changed as object, 'kind'), 'invalid');
   assert.deepEqual(calls, before, 'a changed total must not restart assessment');
 });
 
