@@ -67,11 +67,7 @@ function definitions() {
       '---\nname: fixture\ndescription: Fixture\n---\nFixture skill body\n',
     'standard.md': 'Fixture standard body\n',
     'work/contract.md': 'Fixture contract body\n',
-    'contracts.yaml': {
-      contracts: [
-        { id: 'fixture/work', owner: 'work', stage: 'proposed', file: 'work/contract.md' },
-      ],
-    },
+    'contracts.yaml': { contracts: [contract()] },
   };
 }
 
