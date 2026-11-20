@@ -7,11 +7,21 @@ import test, { type TestContext } from 'node:test';
 import type { Architecture, Capture } from '../../../architecture/src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
 import { Execution, hostTask } from '../../../execution/src/index.js';
-import { Workflow, type TaskObserver, type TaskSession, type WorkflowServices } from '../../src/index.js';
+import {
+  Workflow,
+  type TaskObserver,
+  type TaskSession,
+  type WorkflowServices,
+} from '../../src/index.js';
 
 export const suite = { owner: 'workflow', level: 'integration', tags: ['regression'] } as const;
 
-type Refine = (directory: string, rounds: number, observer: TaskObserver, signal: AbortSignal) => Promise<unknown>;
+type Refine = (
+  directory: string,
+  rounds: number,
+  observer: TaskObserver,
+  signal: AbortSignal,
+) => Promise<unknown>;
 type State = ReturnType<typeof services>;
 type RecoveryState = State & { calls: { value: number }; reopen: () => State };
 
@@ -21,7 +31,8 @@ function fixture(t: TestContext) {
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const root = join(directory, 'project');
   mkdirSync(root);
-  const git = (...args: string[]) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
+  const git = (...args: string[]) =>
+    execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
   git('init', '-b', 'staging');
   git('config', 'user.name', 'Fixture');
   git('config', 'user.email', 'fixture@example.invalid');
@@ -29,7 +40,10 @@ function fixture(t: TestContext) {
   git('add', '.');
   git('commit', '-m', 'baseline');
   git('remote', 'add', 'origin', root);
-  writeFileSync(join(root, '.git', 'bindings.yaml'), `schemaVersion: 1\ntools:\n  codex: ${process.execPath}\n`);
+  writeFileSync(
+    join(root, '.git', 'bindings.yaml'),
+    `schemaVersion: 1\ntools:\n  codex: ${process.execPath}\n`,
+  );
   const revision = git('rev-parse', 'HEAD');
   return { directory, root, revision, reopen: () => services(root, directory, revision) };
 }
@@ -56,7 +70,11 @@ function services(root: string, directory: string, revision: string) {
     },
   } as unknown as Capture;
   const storage = join(directory, 'state');
-  const execution = new Execution({ capture: () => capture } as unknown as Architecture, new Coordination(storage), storage);
+  const execution = new Execution(
+    { capture: () => capture } as unknown as Architecture,
+    new Coordination(storage),
+    storage,
+  );
   return { revision, capture, execution };
 }
 
@@ -66,11 +84,19 @@ function workflowServices(state: State, planner: unknown): WorkflowServices {
     execution: {
       admit: state.execution.admit.bind(state.execution),
       round: state.execution.round.bind(state.execution),
-      observeGoal: () => ({ revision: state.revision, source: state.capture.source, recentChanges: [] }),
+      observeGoal: () => ({
+        revision: state.revision,
+        source: state.capture.source,
+        recentChanges: [],
+      }),
     },
     planner: planner as WorkflowServices['planner'],
     architecture: {
-      propose: async () => ({ kind: 'no-change', summary: 'Architect retained its finding', evidence: [] }),
+      propose: async () => ({
+        kind: 'no-change',
+        summary: 'Architect retained its finding',
+        evidence: [],
+      }),
     },
     direction: {
       plan: async () => ({
@@ -86,18 +112,39 @@ function workflowServices(state: State, planner: unknown): WorkflowServices {
 }
 
 /** Retain a complete answer and explicit profile usage as originating child events. */
-async function recordProviderEvidence(session: TaskSession, calls: { value: number }, revision: string) {
+async function recordProviderEvidence(
+  session: TaskSession,
+  calls: { value: number },
+  revision: string,
+) {
   calls.value++;
   const answer = await session.ask?.('Retain this complete answer', new AbortController().signal);
   session.record({ phase: 'question', message: `Complete answer: ${answer}` });
   const task = hostTask(session);
   const activation = 'fixture-planner-activation';
   const usage = { input_tokens: 17, output_tokens: 5 };
-  const source = task.store('provider-turn.json', JSON.stringify({ type: 'turn.completed', usage }));
-  task.note({ nativeStarted: { activation, profile: 'planner-fixture', model: 'fixture-model', reasoning: 'high' } });
-  task.note({ nativeEvent: { activation, kind: 'event', source, event: { type: 'turn.completed', usage } } });
+  const source = task.store(
+    'provider-turn.json',
+    JSON.stringify({ type: 'turn.completed', usage }),
+  );
+  task.note({
+    nativeStarted: {
+      activation,
+      profile: 'planner-fixture',
+      model: 'fixture-model',
+      reasoning: 'high',
+    },
+  });
+  task.note({
+    nativeEvent: { activation, kind: 'event', source, event: { type: 'turn.completed', usage } },
+  });
   task.note({ nativeFinished: { activation, durationMs: 7 } });
-  return { kind: 'planned' as const, commit: revision, summary: `Distinct Planner finding attempt ${calls.value}`, evidence: [] };
+  return {
+    kind: 'planned' as const,
+    commit: revision,
+    summary: `Distinct Planner finding attempt ${calls.value}`,
+    evidence: [],
+  };
 }
 
 /** Return the controlled Planner that should run once before restart. */
@@ -115,9 +162,10 @@ function interruptingObserver(): TaskObserver {
     answer: async () => 'The complete answer is retained verbatim, including its full conclusion.',
     event(event) {
       const observation = Reflect.get(event, 'observation');
-      const outcome = typeof observation === 'object' && observation !== null
-        ? Reflect.get(observation, 'outcome')
-        : undefined;
+      const outcome =
+        typeof observation === 'object' && observation !== null
+          ? Reflect.get(observation, 'outcome')
+          : undefined;
       if (typeof outcome === 'object' && outcome?.kind === 'planned')
         throw new Error('Interrupt after child terminal commit');
     },
@@ -126,9 +174,15 @@ function interruptingObserver(): TaskObserver {
 
 /** Run the first attempt until its committed child is interrupted before parent acknowledgment. */
 async function interruptAfterChild(root: string, state: RecoveryState) {
-  const workflow = new Workflow(workflowServices(state, measuredPlanner(state.calls, state.revision)));
+  const workflow = new Workflow(
+    workflowServices(state, measuredPlanner(state.calls, state.revision)),
+  );
   const outcome = await (Reflect.get(workflow, 'refine') as Refine).call(
-    workflow, root, 1, interruptingObserver(), new AbortController().signal,
+    workflow,
+    root,
+    1,
+    interruptingObserver(),
+    new AbortController().signal,
   );
   assert.equal(Reflect.get(outcome as object, 'kind'), 'failed');
 }
@@ -145,7 +199,10 @@ async function resume(root: string, state: RecoveryState) {
   const workflow = new Workflow(workflowServices(state.reopen(), planner));
   const events: unknown[] = [];
   await (Reflect.get(workflow, 'refine') as Refine).call(
-    workflow, root, 1, { progress() {}, event: (event) => events.push(event) },
+    workflow,
+    root,
+    1,
+    { progress() {}, event: (event) => events.push(event) },
     new AbortController().signal,
   );
   return events;
@@ -155,10 +212,15 @@ async function resume(root: string, state: RecoveryState) {
 function completedReport(events: readonly unknown[]) {
   const event = events.find((item) => {
     const observation = Reflect.get(item as object, 'observation');
-    return typeof observation === 'object' && observation !== null && 'completedRound' in observation;
+    return (
+      typeof observation === 'object' && observation !== null && 'completedRound' in observation
+    );
   });
   assert.ok(event);
-  const completion = Reflect.get(Reflect.get(event as object, 'observation') as object, 'completedRound') as {
+  const completion = Reflect.get(
+    Reflect.get(event as object, 'observation') as object,
+    'completedRound',
+  ) as {
     report: string;
     findings: readonly string[];
     measurements: readonly string[];
