@@ -259,7 +259,11 @@ test('unrelated checked edits cannot renew the same reviewed checked-edit refusa
 /** Exercise the real durable human gate while controlling only provider invocation. */
 function questionProvider(t: TestContext, fixture: ReviewedHoldFixture) {
   t.mock.method(fixture.task, 'activate', async () => {
-    const clarifications = new Clarifications(fixture.task, selection, new AbortController().signal);
+    const clarifications = new Clarifications(
+      fixture.task,
+      selection,
+      new AbortController().signal,
+    );
     const data = { milestone: { id: correction.id }, acceptance: correction.criteria };
     const question = 'Which approved schema must this correction use?';
     return clarifications.run(data, async () => {
