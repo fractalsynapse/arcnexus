@@ -116,14 +116,17 @@ export class RefinementRun {
     );
   }
 
-  /** Run Architect through its standalone lifecycle as a sequential child of the writer. */
+  /** Reuse an acknowledged Architect child or run its ordinary lifecycle under the parent writer. */
   private async architectOutcome(scope: string) {
-    return this.updateChild(
-      this.parent.capture.source.root,
-      this.observer,
-      this.signal,
-      this.parent,
-      scope,
+    return (
+      completedChild(this.parent, 'Assess architecture alignment', scope, ['planned', 'merged']) ??
+      (await this.updateChild(
+        this.parent.capture.source.root,
+        this.observer,
+        this.signal,
+        this.parent,
+        scope,
+      ))
     );
   }
 
