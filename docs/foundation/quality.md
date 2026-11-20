@@ -44,7 +44,18 @@ does not claim that a controlled provider fixture was a live model observation.
 
 Before running the optional `owner-tests` operation, ArcNexus checks for
 suites in the steward's current worktree. An owner with no suites gets an
-inapplicability record. Assembled verification still runs its required checks.
+inapplicability record. It remains a valid component and still needs applicable
+formatting and lint, shared types/build and mandatory assembled verification.
+`npm run check` checks source, tests, fixtures and tooling without emitting;
+`npm run build` cleans generated output and compiles the assembled program.
+These are repository checks, not owner-suite substitutes.
+
+Repository source preparation uses the locked toolchain. Preparing dependencies
+for a managed runtime candidate belongs to
+[Execution](../../packages/execution/contract.md); a working-copy build does not
+establish that candidate's dependency environment. Read-only owner checks never
+reformat files. Authorized fixes use explicit captured owned paths through the
+checked-edit operation or its supported formatting transform.
 
 Formatting and lint share their public commands with owner checks. Use
 `npm run format:check -- <owner>` or `npm run lint -- <owner>`; omit the owner
@@ -52,6 +63,61 @@ for the assembled repository check. The shared selector uses Git, Team and each
 tool's actual configuration. It records the complete selected scope and never
 fixes source. See the [owner quality path](../../packages/foundation/docs/owner-quality.md)
 for confinement, independent applicability and conservative evidence reuse.
+
+## Owner suite inventory expectations
+
+This reference guides stewards choosing checks and maintainers correcting shared
+suite discovery. The accepted correction preserves Foundation FND-5 and FND-6:
+owner selection runs exactly the catalog owner's suites, and invalid registration
+fails before execution. The diagnostic distinction and expanded parity scenarios
+below are intended behavior awaiting executable evidence.
+
+Source applicability and built registration use the same ownership and metadata
+rules. `hasOwnerTestSuites(directory, owner, components)` inspects source suites
+using the supplied catalog; `testInventory(owner, filter)` inspects built suites
+using the working tree catalog. Ownership comes from Team's resolution of the
+source path, independently of app/package directory names or exported labels.
+For corresponding source and built trees under the same catalog, every owner
+with a valid source suite has a corresponding built registration. A known owner
+without suites returns false for source applicability. An explicit built
+selection with no suites still fails; it is not an inapplicable operation or a
+successful test run. Unknown owners remain refused.
+
+Registration maps a built path to its source identity only to validate ownership
+and level. It retains the original emitted `file` unchanged for selection results
+and execution. For every owner represented in the complete built inventory,
+selecting that owner must equal exactly its subset of that inventory. Existing
+owner, tag, level, literal path and native selectors retain the semantics above;
+the correction requires no caller or operation-parameter changes.
+
+Missing ownership and ownership collisions need distinct diagnostics. Both name
+the affected source path; a collision also names every conflicting component ID.
+Neither may fall back to a directory-derived owner. Invalid level placement,
+contradictory owner or level metadata, duplicate fields and nonliteral metadata
+remain errors. Validate the complete discovered inventory before filtering, so
+requesting a different owner cannot conceal an invalid suite. Read metadata
+without importing suite code; observable module effects occur only during actual
+execution.
+
+Extend the existing public
+[inventory scenarios](../../packages/foundation/tests/unit/test-inventory.test.ts)
+and [selection scenarios](../../packages/foundation/tests/unit/test-selection.test.ts)
+with explicit catalog fixtures, an owner without suites and ownership independent
+of directory names. Compare source applicability with corresponding built
+registrations, and compare every represented owner's selection with the complete
+built subset, including unchanged emitted paths. Negative cases must identify the
+missing-owner or collision cause and path, all collision IDs, invalid placement
+and metadata. Include an invalid suite outside the selected owner and an
+observable import effect to distinguish validation from execution.
+
+Retain characterization evidence for behavior already correct and an intended
+failing public regression for the diagnostic correction before implementation.
+The corrected candidate needs passing inventory and selection scenarios and
+applicable owner formatting, lint, repository types and build observations.
+Assembled verification and independent review remain separate host obligations.
+The measurable benefit is actionable ownership failures and exact suite coverage
+for every represented owner through the existing shared path. Human callers,
+steward operation bindings and CI keep their existing entries.
 
 ## Specification ownership diagnostics
 

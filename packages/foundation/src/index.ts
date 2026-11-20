@@ -42,7 +42,11 @@ export function registerSuite(
   const source = file.replace(/^dist\//, '').replace(/\.js$/, '.ts');
   const owners = team.owners(components, source);
   const [owner] = owners;
-  assert(owners.length === 1 && owner, `Expected one test owner for ${source}`);
+  assert(owner, `Missing test owner for ${source}`);
+  assert(
+    owners.length === 1,
+    `Test ownership collision for ${source}: ${owners.map(({ id }) => id).join(', ')}`,
+  );
   const level = source.match(/\/tests\/([^/]+)\//)?.[1];
   assert(
     level && ['unit', 'integration', 'acceptance'].includes(level),
