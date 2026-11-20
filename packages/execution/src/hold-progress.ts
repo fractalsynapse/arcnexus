@@ -41,6 +41,7 @@ export function holdProgress(
   milestone: Milestone,
   diagnostic: string,
   check?: CheckResult,
+  knowledge?: string,
 ) {
   const inputs = holdInputPaths(task, milestone, check).map((path) => ({
     path,
@@ -50,7 +51,7 @@ export function holdProgress(
   }));
   const failure = check ? checkFailureSignature(check.log) : diagnostic;
   const identity = createHash('sha256')
-    .update(JSON.stringify([milestone.criteria, inputs, failure]))
+    .update(JSON.stringify([milestone.criteria, inputs, failure, knowledge]))
     .digest('hex');
   return { identity, inputs };
 }
