@@ -78,8 +78,14 @@ function observedHeldCheckProgress(task: HostTask, activation: ActivityCheckpoin
         event.scope?.owner === scope.owner &&
         event.scope.activity === scope.activity,
     )?.check;
+  if (!latest || latest.log === check.log) return false;
+  const pending = task.pendingCheck(scope);
+  if (latest.status === 0) return !pending;
   return Boolean(
-    latest && latest.log !== check.log && latest.status === 0 && !task.pendingCheck(scope),
+    !latest.prerequisite &&
+    pending?.log === latest.log &&
+    pending.diagnostic &&
+    pending.diagnostic !== held.failure.diagnostic,
   );
 }
 
