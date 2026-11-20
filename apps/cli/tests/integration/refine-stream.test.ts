@@ -23,7 +23,7 @@ class StreamScenario {
       'if (true)',
     );
     const capturedResult = noGate.replace(
-      "await this.call('ask-question', {",
+      "await this.call('ask-question', {\\n        question: 'Clarify accepted intent for ' + this.component,\\n      });",
       "const toolResult = await this.call('read-file', { path: 'baseline' });",
     );
     const withToolResult = capturedResult.replace(
