@@ -10,7 +10,11 @@ export function reviewedHold(
 ) {
   const outcome = activation.outcome;
   if (outcome.kind !== 'blocked' || !outcome.holdContext)
-    return stopped('blocked', outcome.kind === 'blocked' ? outcome.reason : 'Expected a hold', outcome.evidence);
+    return stopped(
+      'blocked',
+      outcome.kind === 'blocked' ? outcome.reason : 'Expected a hold',
+      outcome.evidence,
+    );
   const held = outcome.holdContext;
   if (held.prerequisite && !held.prerequisite.satisfied)
     return stopped('blocked', held.prerequisite.requiredAction, outcome.evidence);
@@ -26,9 +30,11 @@ export function reviewedHold(
 
 /** Compare host-observed relevant inputs and finding, excluding incidental artifact allocation. */
 function sameHold(previous: HoldContext, current: HoldContext) {
-  return previous.milestone === current.milestone &&
+  return (
+    previous.milestone === current.milestone &&
     previous.activity === current.activity &&
-    previous.progress.identity === current.progress.identity;
+    previous.progress.identity === current.progress.identity
+  );
 }
 
 /** Preserve an actionable original criterion and exact diagnostic when correction made no progress. */
@@ -50,15 +56,17 @@ function holdFeedback(
     requester: activation.milestone,
     reason: held.failure.diagnostic,
     evidence: [...new Set([...activation.outcome.evidence, ...(check ? [check.log] : [])])],
-    ...(check && typeof check.status === 'number' ? {
-      failedCheck: {
-        id: check.id,
-        activity: held.activity,
-        expected: held.failure.expected ?? 'pass',
-        status: check.status,
-        log: check.log,
-        diagnostic: held.failure.diagnostic,
-      },
-    } : {}),
+    ...(check && typeof check.status === 'number'
+      ? {
+          failedCheck: {
+            id: check.id,
+            activity: held.activity,
+            expected: held.failure.expected ?? 'pass',
+            status: check.status,
+            log: check.log,
+            diagnostic: held.failure.diagnostic,
+          },
+        }
+      : {}),
   };
 }
