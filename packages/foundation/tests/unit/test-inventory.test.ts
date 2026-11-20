@@ -17,6 +17,11 @@ const components = [
 const terminal = 'apps/shell/tests/unit/terminal.test.ts';
 const engine = 'packages/engine/tests/integration/engine.test.ts';
 
+const expectedInventory = [
+  { file: 'dist/apps/shell/tests/unit/terminal.test.js', owner: 'terminal-owner', level: 'unit', tags: ['fixture'] },
+  { file: 'dist/packages/engine/tests/integration/engine.test.js', owner: 'engine-owner', level: 'integration', tags: ['fixture'] },
+];
+
 /** Supply corresponding source and emitted trees with explicit, directory-independent ownership. */
 class InventoryScenario {
   readonly root = mkdtempSync(join(tmpdir(), 'arcnexus-inventory-'));
@@ -112,15 +117,7 @@ test('source applicability and built selection agree for explicit catalog owners
   assert.ifError(result.error);
   assert.equal(result.status, 0, result.stderr);
   const all = JSON.parse(result.stdout) as ReturnType<typeof testInventory>;
-  assert.deepEqual(all, [
-    { file: scenario.built(terminal), owner: 'terminal-owner', level: 'unit', tags: ['fixture'] },
-    {
-      file: scenario.built(engine),
-      owner: 'engine-owner',
-      level: 'integration',
-      tags: ['fixture'],
-    },
-  ]);
+  assert.deepEqual(all, expectedInventory);
   for (const { id } of components) {
     const expected = all.filter(({ owner }) => owner === id);
     assert.equal(hasOwnerTestSuites(scenario.root, id, components), expected.length > 0);
@@ -179,7 +176,7 @@ test('ownership collisions identify the source and every conflicting component',
   );
 });
 
-test('unowned and colliding foreign suites cannot disappear behind an owner filter', (context) => {
+test('an unowned foreign suite cannot disappear behind an owner filter', (context) => {
   const scenario = new InventoryScenario(context);
   const orphan = 'packages/orphan/tests/unit/orphan.test.ts';
   scenario.pair(orphan, scenario.metadata('orphan', 'unit'));
