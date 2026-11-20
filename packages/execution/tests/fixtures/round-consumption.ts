@@ -148,18 +148,18 @@ function actorDefinitions() {
 /** Bind foreground assessment roles and the existing staging lifecycle in the committed catalog. */
 function projectDefinition() {
   return {
-      id: 'round-consumption',
-      remote,
-      knowledgeRoot: '.arc',
-      contractRegistry: 'contracts.yaml',
-      planTemplate: catalog + '/plan-template.md',
-      bindings: '.git/bindings.yaml',
-      director: { component: 'direction', activity: 'planning' },
-      verifier: { component: 'reviewer', activity: 'review' },
-      architect: { component: 'architecture', activity: 'assessment' },
-      delivery: { baseBranch: 'staging', protectedBranch: 'main', requiredGates: [] },
-      checks: { acceptance: ['fixture-check'] },
-    };
+    id: 'round-consumption',
+    remote,
+    knowledgeRoot: '.arc',
+    contractRegistry: 'contracts.yaml',
+    planTemplate: catalog + '/plan-template.md',
+    bindings: '.git/bindings.yaml',
+    director: { component: 'direction', activity: 'planning' },
+    verifier: { component: 'reviewer', activity: 'review' },
+    architect: { component: 'architecture', activity: 'assessment' },
+    delivery: { baseBranch: 'staging', protectedBranch: 'main', requiredGates: [] },
+    checks: { acceptance: ['fixture-check'] },
+  };
 }
 
 /** Supply the explicit mapped read and human decision transport plus the admission check. */
@@ -186,10 +186,17 @@ function operationDefinitions() {
 function actorDefinition(id: string, owns: string[]) {
   const activity = id === 'architecture' ? 'assessment' : id === 'reviewer' ? 'review' : 'planning';
   return {
-    id, purpose: 'Assess ' + id + ' using complete retained findings', owns,
-    activities: { [activity]: {
-      role: 'assessor', profile: id, instructions: ['Use the real assignment and cite prior evidence.'],
-      operations: ['read-file', 'ask-question'], standards: [],
-    } },
+    id,
+    purpose: 'Assess ' + id + ' using complete retained findings',
+    owns,
+    activities: {
+      [activity]: {
+        role: 'assessor',
+        profile: id,
+        instructions: ['Use the real assignment and cite prior evidence.'],
+        operations: ['read-file', 'ask-question'],
+        standards: [],
+      },
+    },
   };
 }
