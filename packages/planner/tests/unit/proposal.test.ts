@@ -222,7 +222,9 @@ for (const { selection, category, observed } of selections) {
   test(`mapping report traces selected ${Object.keys(selection)[0]} to its verified run`, () => {
     const { capture } = new ProposalScenario();
     const proposal = observedProposal(selection);
-    const report = reportProposal(proposal, capture.source, []).split(`## ${id} ·`)[1]!.split('\n## ')[0]!;
+    const report = reportProposal(proposal, capture.source, [])
+      .split(`## ${id} ·`)[1]!
+      .split('\n## ')[0]!;
     assert(report.includes(verifiedRun.id), 'the verified run identity survives');
     assert(report.includes(`\`${verifiedRun.revision}\``), 'the evaluated revision survives');
     assert(report.includes('- Source ·'), 'accepted direction stays labelled as source');
