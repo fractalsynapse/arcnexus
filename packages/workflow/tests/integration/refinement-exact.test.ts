@@ -116,7 +116,6 @@ function refine(
   return entry.call(workflow, root, total, observer, signal);
 }
 
-
 /** Pause Planner at an observable phase so an enormous request remains unfinished. */
 function pause(services: WorkflowServices, calls: string[]) {
   const controller = new AbortController();
@@ -134,16 +133,34 @@ async function exactRecovery(t: TestContext, total: string) {
   const f = fixture(t);
   const calls: string[] = [];
   const services = providers(f, calls);
-  const first = await refine(new Workflow(services), f.root, total, { progress() {} }, pause(services, calls));
+  const first = await refine(
+    new Workflow(services),
+    f.root,
+    total,
+    { progress() {} },
+    pause(services, calls),
+  );
   assert.deepEqual(calls, ['Plan'], 'the large request reaches the first assessment');
   assert.notEqual(Reflect.get(first as object, 'kind'), 'invalid');
   const reopened = authority(f.root, f.directory, f.revision);
   const retryCalls: string[] = [];
   const retry = providers(reopened, retryCalls);
-  const resumed = await refine(new Workflow(retry), f.root, '00' + total, { progress() {} }, pause(retry, retryCalls));
+  const resumed = await refine(
+    new Workflow(retry),
+    f.root,
+    '00' + total,
+    { progress() {} },
+    pause(retry, retryCalls),
+  );
   assert.notEqual(Reflect.get(resumed as object, 'kind'), 'invalid');
   assert.deepEqual(retryCalls, ['Plan']);
-  const refused = await refine(new Workflow(retry), f.root, (BigInt(total) + 1n).toString(), { progress() {} }, new AbortController().signal);
+  const refused = await refine(
+    new Workflow(retry),
+    f.root,
+    (BigInt(total) + 1n).toString(),
+    { progress() {} },
+    new AbortController().signal,
+  );
   assert.equal(Reflect.get(refused as object, 'kind'), 'invalid');
   assert.deepEqual(retryCalls, ['Plan'], 'a different total does not reassess');
 }
@@ -156,7 +173,9 @@ test('exact large totals survive interruption and reject adjacent requests after
 /** Collect both progress and durable event envelopes exposed by the observer. */
 function phaseObserver(events: string[]): TaskObserver {
   return {
-    progress(value) { events.push(value.message); },
+    progress(value) {
+      events.push(value.message);
+    },
     event(event) {
       const observation = Reflect.get(event, 'observation');
       if (typeof observation === 'object' && observation !== null && 'refinement' in observation)
@@ -169,8 +188,19 @@ function phaseObserver(events: string[]): TaskObserver {
 function assertPhases(events: string[]) {
   for (const round of ['1', '2']) {
     for (const phase of ['Plan', 'Architect', 'Run']) {
-      assert.ok(events.some((value) => value.includes(`Refinement round ${round}/2 · ${phase}`)), `progress for ${round} ${phase}`);
-      assert.ok(events.some((value) => value.startsWith('event:') && value.includes(`"round":"${round}"`) && value.includes(`"phase":"${phase}"`)), `event for ${round} ${phase}`);
+      assert.ok(
+        events.some((value) => value.includes(`Refinement round ${round}/2 · ${phase}`)),
+        `progress for ${round} ${phase}`,
+      );
+      assert.ok(
+        events.some(
+          (value) =>
+            value.startsWith('event:') &&
+            value.includes(`"round":"${round}"`) &&
+            value.includes(`"phase":"${phase}"`),
+        ),
+        `event for ${round} ${phase}`,
+      );
     }
   }
 }
@@ -179,7 +209,22 @@ test('uninterrupted rounds announce each phase before its assessment', async (t)
   const f = fixture(t);
   const calls: string[] = [];
   const events: string[] = [];
-  await refine(new Workflow(providers(f, calls)), f.root, '2', phaseObserver(events), new AbortController().signal);
-  assert.deepEqual(calls, ['Plan', 'Architect', 'First goal', 'Second goal', 'Plan', 'Architect', 'First goal', 'Second goal']);
+  await refine(
+    new Workflow(providers(f, calls)),
+    f.root,
+    '2',
+    phaseObserver(events),
+    new AbortController().signal,
+  );
+  assert.deepEqual(calls, [
+    'Plan',
+    'Architect',
+    'First goal',
+    'Second goal',
+    'Plan',
+    'Architect',
+    'First goal',
+    'Second goal',
+  ]);
   assertPhases(events);
 });
