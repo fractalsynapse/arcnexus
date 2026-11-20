@@ -171,9 +171,8 @@ test('a relevant secured correction changes grounded progress while preserving t
 });
 
 test('an actual unavailable input stays an unsatisfied prerequisite despite optimistic model claims', async (t) => {
-  const fixture = new ReviewedHoldFixture(t);
+  const fixture = new ReviewedHoldFixture(t, true);
   await fixture.prepare();
-  fixture.requireExternal();
   await fixture.run();
   const result = await fixture.run();
   const observed = fixture.checks.at(-1)!;
