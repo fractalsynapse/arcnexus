@@ -31,6 +31,8 @@
 
 ### Fixed
 
+- Clarify Implementation guidance and host correction feedback to require explicit supplier requests for unfinished foreign prerequisites, linking matching accepted milestones, preserving secured work and acceptance, and refreshing affected required checks after supplier results (#681). Retained #668 delivery and three consecutive Plan -> Architect -> Run qualification rounds remain separate follow-up obligations.
+
 - Refuse supplier requests that link another owner’s accepted milestone, return exact diagnostics to the caller, and resume retained invalid handoffs without Director replanning or discarded checkpoints (#678).
 
 - Keep new research and clarification answers in caller-repair input identity, preserve holds for unchanged replies, and apply the approved Execution Testing `gpt-sol` profile trial (#675).
