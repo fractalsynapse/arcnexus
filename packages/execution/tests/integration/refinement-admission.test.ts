@@ -31,9 +31,21 @@ function fixture(t: TestContext) {
     `schemaVersion: 1\ntools:\n  codex: ${process.execPath}\n`,
   );
   const capture = authority(root, git('rev-parse', 'HEAD'));
-  const architecture = { capture: () => capture } as unknown as Architecture;
+  const architecture = {
+    capture: (_root: string, revision?: string) =>
+      revision ? authority(root, revision) : capture,
+  } as unknown as Architecture;
   const storage = join(directory, 'state');
-  return { root, execution: new Execution(architecture, new Coordination(storage), storage) };
+  return {
+    root,
+    execution: new Execution(architecture, new Coordination(storage), storage),
+    advance: () => {
+      writeFileSync(join(root, 'baseline'), 'new staging\n');
+      git('add', '.');
+      git('commit', '-m', 'new staging');
+      return git('rev-parse', 'HEAD');
+    },
+  };
 }
 
 /** Describe the captured authority for the real staging fixture. */
@@ -105,5 +117,21 @@ test('sequential children share the refinement writer while competing roots are 
     child.finish({ kind: 'cancelled', reason: 'interrupted', evidence: [] });
     child.close();
   }
+  parent.finish({ kind: 'cancelled', reason: 'interrupted', evidence: [] });
+});
+
+test('each child admits the current staging revision under the retained parent writer', async (t) => {
+  const { root, execution, advance } = fixture(t);
+  const signal = new AbortController().signal;
+  const input = { directory: root, goal: 'Continuous refinement', scope: 'refine', refinement: true };
+  const parent = await execution.admit(input, signal);
+  assert(parent instanceof HostTask);
+  t.after(() => parent.close());
+  const revision = advance();
+  const child = await execution.admit({ directory: root, goal: 'Plan', scope: 'plan' }, signal, parent);
+  assert(child instanceof HostTask);
+  assert.equal(child.capture.source.revision, revision);
+  child.finish({ kind: 'cancelled', reason: 'interrupted', evidence: [] });
+  child.close();
   parent.finish({ kind: 'cancelled', reason: 'interrupted', evidence: [] });
 });
