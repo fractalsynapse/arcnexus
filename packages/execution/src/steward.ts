@@ -39,7 +39,7 @@ import { retainedEvidence } from './context-evidence.js';
 import { operationID } from '../../architecture/src/index.js';
 
 const correctionInstruction =
-  'Read failedCheck.log first. It is the latest observed failure. Preserve the earlier finding as history. Correct the current failure within the accepted milestone, or request a distinct contribution through Direction when new work is needed. The host reruns the original check with its original expectation.';
+  'Read failedCheck.log first. It is the latest observed failure. Preserve the earlier finding and acknowledged edits. Correct an owned defect through this activity. If a required check needs unfinished work from another owner, use request-supplier before returning completed. Link the existing accepted milestone with its actual owner and criteria when it covers that work; already accepted pending work still requires explicit sequencing. Describe distinct new work only when no accepted milestone covers it. Listing foreign failures in summary or answer does not request their contribution. After the supplier result, refresh affected checks; the host preserves the original expectation and required completion verification.';
 
 /** Distinguish a caller's mistaken prediction from an actual failing required-pass operation. */
 function checkRepairInstruction(task: HostTask, scope: StewardScope, failed: StewardCheckFailure) {
