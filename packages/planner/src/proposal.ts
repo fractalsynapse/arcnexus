@@ -16,8 +16,10 @@ export interface Rating {
   reason: string;
   sources: RevisionCitation[];
   observations: RevisionCitation[];
-  run?: VerifiedGoalRun;
+  run?: VerifiedGoalRun & { selection: RunSelection };
 }
+
+type RunSelection = { operation: string } | { criterion: string } | { delivery: true };
 
 export interface GoalChange {
   id: string;
@@ -96,8 +98,16 @@ function rating(entry: unknown, capture: Capture, run?: VerifiedGoalRun): Rating
     reason: word(value.reason, 'rating reason'),
     sources,
     observations,
-    run: citedRun,
+    run: citedRun && { ...citedRun, selection: selectedObservation(value.run) },
   };
+}
+
+/** Retain only the observation selected by Execution's validated citation precedence. */
+function selectedObservation(input: unknown): RunSelection {
+  const value = mapping(input);
+  if ('operation' in value) return { operation: word(value.operation, 'operation') };
+  if ('criterion' in value) return { criterion: word(value.criterion, 'criterion') };
+  return { delivery: true };
 }
 
 /** Admit only complete, owner-free goal documents or removals of existing IDs. */

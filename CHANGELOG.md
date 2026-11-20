@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Preserve the exact selected check operation, independent review criterion or delivery observation in goal mapping reports alongside the verified run ID and evaluated revision. Keep source coverage distinct from observed results, reject unknown or stale verified citations, and keep standing goals free of component ownership and execution results ([#697](https://github.com/fractalsynapse/arcnexus/issues/697)).
+
 - Distinguish missing test ownership from ownership collisions, naming the source path and every conflicting component ID. Preserve catalog-derived owner selection and emitted suite paths, with regressions covering source/built parity, owners without suites, and invalid placement or metadata refused before filtering or execution ([#695](https://github.com/fractalsynapse/arcnexus/issues/695)).
 
 - Report every uncovered or colliding path and all conflicting component IDs in deterministic Team-derived ownership diagnostics during architecture admission and specification checks. Validation remains read-only, ownership and supplier authority remain unchanged, and supplier requests grant no edit capability (#691).
