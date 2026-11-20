@@ -57,6 +57,11 @@ export class RefinementRun {
       const outcome = await this.runRound(invocation, round, state);
       if (outcome) return outcome;
     }
+    return this.completeInvocation(invocation);
+  }
+
+  /** Record the completed cursor and return the aggregate invocation result. */
+  private completeInvocation(invocation: string): TaskOutcome {
     this.parent.record({
       refinement: { invocation, total: this.total, round: this.total, phase: 'complete' },
     });
