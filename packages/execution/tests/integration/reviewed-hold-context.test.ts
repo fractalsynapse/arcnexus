@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { ActivityOutcome } from '../../../workflow/src/index.js';
-import type { CheckResult } from '../../src/check.js';
+import type { HoldContext } from '../../src/index.js';
 import {
   answer,
   correction,
@@ -28,34 +28,7 @@ export const suite = {
  * cannot satisfy these assertions. Workflow routing and independent re-review
  * belong to assembled integration; this controlled seam proves neither.
  *
- * Expected observable projection at the Execution/Workflow boundary.
- * Keep this test-local until Implementation adds the public recovery type.
  */
-interface HoldContext {
-  task: {
-    id: string;
-    issue: string;
-    branch: string;
-    base: string;
-    checkpoint: string;
-    authority: string;
-  };
-  milestone: string;
-  activity: string;
-  acceptance: typeof correction.criteria;
-  rejection: ReviewedHoldFixture['rejection'];
-  failure: { diagnostic: string; operation: string; expected?: string; check?: CheckResult };
-  receipts: readonly unknown[];
-  answers: readonly { question: string; answer: string; evidence: string }[];
-  progress: { identity: string; inputs: readonly { path: string; digest: string }[] };
-  prerequisite?: {
-    kind: string;
-    satisfied: boolean;
-    requiredAction: string;
-    evidence: readonly string[];
-  };
-}
-
 /** Require structured host evidence rather than interpreting the model's summary as recovery authority. */
 function context(outcome: ActivityOutcome): HoldContext {
   assert.equal(outcome.kind, 'blocked', JSON.stringify(outcome));
