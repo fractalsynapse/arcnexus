@@ -35,7 +35,8 @@ function repairedTask(t: TestContext, completed: boolean) {
   return task;
 }
 
-test('nested repairs retain the originating finding and latest diagnostic in the accepted milestone', async (t) => {
+/** Set up distinct same-milestone repairs with an unrelated finding between them. */
+function nestedTask(t: TestContext) {
   const task = new StewardFixture(t, mkdtempSync(join(tmpdir(), 'arcnexus-nested-repair-'))).task;
   t.after(() => task.close());
   const original = {
