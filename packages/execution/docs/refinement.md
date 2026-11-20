@@ -18,9 +18,8 @@ not a separately integrated release. Consume its public
 
 [Execution.admit](../src/execution.ts) admits the foreground invocation through
 the existing verified-project Coordination writer. Workflow supplies
-`TaskInput.refinement: true` and `TaskInput.scope: 'refine'` for a resumable
-foreground cycle; Execution captures fresh staging authority and passes the
-cycle flag to `Coordination.admit(remote, goal, fresh, scope, cycle)`. This
+`TaskInput.scope: 'refine'` for a resumable foreground cycle; Execution captures
+fresh staging authority and passes the cycle flag to `Coordination.admit(remote, goal, fresh, scope, cycle)`. This
 distinguishes an unfinished retry from a new invocation after a `refined` result.
 Each sequential Planner, Architect or goal task is an ordinary child admitted by
 `Execution.admit(input, signal, parent)`. Verify the parent belongs to the same
