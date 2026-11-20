@@ -73,7 +73,56 @@ test('equivalent holds with new artifacts stop before another automatic correcti
   assert.equal((await f.run()).kind, 'blocked');
   assert.deepEqual(f.calls, before, 'Restart alone cannot renew an unchanged automatic attempt');
   assert.equal(f.reviews.length, 0);
+  await resumeCheckedProgress(f);
 });
+
+/**
+ * Reject replay of a historical hold after new relevant host observations.
+ * The same task must retain the original checkpoint and complete answers, then
+ * observe a real checked edit/check before fresh assessment can permit delivery.
+ */
+async function resumeCheckedProgress(f: ReviewedWorkflow) {
+  const held = f.holds.at(-1)!;
+  const original = JSON.stringify(held);
+  await f.reopen();
+  assert.equal(f.fixture.task.taskID, held.task.id);
+  assert.equal(f.fixture.task.issue, held.task.issue);
+  assert.equal(f.fixture.task.branch, held.task.branch);
+  assert.equal(f.fixture.checkpoint(), held.task.checkpoint);
+  const receipt = await f.fixture.edit('fixture.txt', 'corrected');
+  const checked = await f.recheck();
+  assert.equal(checked.status, 0);
+  assert.notEqual(checked.log, held.failure.check!.log);
+  assert.notEqual(f.fixture.checkpoint(), held.task.checkpoint);
+  assert(f.fixture.task.readFile(checked.log).text !== undefined);
+  assert.equal(f.reviews.length, 0, 'New checked evidence alone cannot accept the task');
+  const resumed = await f.run();
+  assert.equal(resumed.kind, 'merged', 'Relevant checked progress must release the retained hold');
+  assert.deepEqual(f.calls.slice(-3), [correction.id, 'Review', 'Delivery']);
+  assert.equal(
+    f.reviews.length,
+    1,
+    'The corrected candidate requires fresh independent assessment',
+  );
+  assert.equal(JSON.stringify(held), original, 'Historical findings and evidence remain immutable');
+  await assertRecoveredProgress(f, receipt, checked.log);
+}
+
+/** Reopen secured completion to reject lost receipts, accepted inputs or complete historical answers. */
+async function assertRecoveredProgress(f: ReviewedWorkflow, receipt: unknown, log: string) {
+  await f.reopen();
+  assert.equal(f.fixture.task.readFile('fixture.txt').text, 'corrected');
+  const observations = f.fixture.task.observations<{ editReceipt?: unknown }>();
+  assert(
+    observations.some((event) => JSON.stringify(event.editReceipt) === JSON.stringify(receipt)),
+  );
+  assert.equal(f.fixture.task.readFile(log).path, log);
+  const plan = f.fixture.task.history().findLast((event) => 'plan' in event)!.plan!;
+  assert.deepEqual(
+    plan.milestones.find((m) => m.id === correction.id)!.criteria,
+    correction.criteria,
+  );
+}
 
 test('meaningful successive checked corrections continue despite the same diagnostic', async (t) => {
   const f = new ReviewedWorkflow(t, 'progress');
