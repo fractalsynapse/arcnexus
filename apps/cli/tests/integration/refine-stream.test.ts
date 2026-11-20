@@ -42,6 +42,10 @@ class StreamScenario {
     child.stdout.setEncoding('utf8');
     child.stdout.on('data', (chunk: string) => {
       output += chunk;
+      if (!json) {
+        if (child.exitCode === null && output.includes('Run measurements')) liveProvider = true;
+        return;
+      }
       partial += chunk;
       const lines = partial.split('\n');
       partial = lines.pop() ?? '';
@@ -50,11 +54,13 @@ class StreamScenario {
         streamed.push(record);
         if (record.type !== 'event') continue;
         const event = record.detail?.event;
-        if (event?.type === 'fixture.consumption') {
-          liveProvider = child.exitCode === null;
-        }
-        if (event?.type === 'item.completed' && event.item?.type === 'mcp_tool_call') {
-          liveToolResult = child.exitCode === null;
+        if (event?.type === 'fixture.consumption') liveProvider = child.exitCode === null;
+        const detail = JSON.stringify(record.detail);
+        if (
+          child.exitCode === null &&
+          (detail.includes('ask-question') || detail.includes('toolResult'))
+        ) {
+          liveToolResult = true;
         }
       }
     });
