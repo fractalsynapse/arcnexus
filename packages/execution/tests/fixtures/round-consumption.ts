@@ -52,11 +52,7 @@ export class RoundConsumptionFixture {
   reopen() {
     const agent = new Agent(this.architecture);
     return new Workflow({
-      execution: new Execution(
-        this.architecture,
-        new Coordination(this.storage),
-        this.storage,
-      ),
+      execution: new Execution(this.architecture, new Coordination(this.storage), this.storage),
       planner: new Planner(agent),
       architecture: {
         propose: (session, feedback, signal) =>
