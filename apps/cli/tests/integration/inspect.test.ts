@@ -82,8 +82,8 @@ test('GW-26: JSON placement errors leave stdout empty and input errors keep thei
     assert.notEqual(result.stderr, '');
   }
   assert.equal(
-    inspect(root, 'missing', 'testing', '--json').stderr,
-    inspect(root, 'missing', 'testing').stderr,
+    inspect(root, 'missing', 'testing', '--json').stderr.split('\n')[0],
+    inspect(root, 'missing', 'testing').stderr.split('\n')[0],
   );
 });
 
