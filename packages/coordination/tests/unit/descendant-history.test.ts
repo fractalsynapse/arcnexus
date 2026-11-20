@@ -134,4 +134,19 @@ function assertFreshIsolation(fixture: HistoryFixture) {
     (fixture.root as unknown as DescendantJournal).childTimeline(phaseGoal, phaseScope),
     freshExpected,
   );
+}
+
+test('child history includes canonical descendants across retries and excludes other cycles', (t) => {
+  const fixture = new HistoryFixture(t);
+  firstAttempt(fixture);
+  fixture.reopen();
+  continuedAttempt(fixture);
+  otherScopes(fixture);
+  const immediate = fixture.root.childEvents(phaseGoal, phaseScope);
+  assert(immediate.some((value) => JSON.stringify(value).includes('architect first finding')));
+  assert(!immediate.some((value) => JSON.stringify(value).includes('supplier first finding')));
+  const query = fixture.root as unknown as Partial<DescendantJournal>;
+  assert.equal(typeof query.childTimeline, 'function', 'public descendant timeline is available');
+  assert.deepEqual(query.childTimeline!(phaseGoal, phaseScope), uniqueOrdered(fixture.expected));
+  assertFreshIsolation(fixture);
 });
