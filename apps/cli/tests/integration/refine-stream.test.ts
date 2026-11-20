@@ -25,6 +25,7 @@ class StreamScenario {
   /** Permit no-change answers without inventing an approval for a proposal. */
   constructor(t: import('node:test').TestContext) {
     this.fixture = new RoundConsumptionFixture(t);
+    this.release = join(this.fixture.root, '.git', 'release-stream');
     const executable = this.fixture.install('stream');
     const source = readFileSync(executable, 'utf8');
     assert.ok(source.includes('const consumption = await this.consume();'));
