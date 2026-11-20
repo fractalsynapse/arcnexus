@@ -225,7 +225,11 @@ async function resume(root: string, state: RecoveryState) {
 function completedReports(events: readonly unknown[]) {
   return events.flatMap((event) => {
     const observation = Reflect.get(event as object, 'observation');
-    if (typeof observation !== 'object' || observation === null || !('completedRound' in observation))
+    if (
+      typeof observation !== 'object' ||
+      observation === null ||
+      !('completedRound' in observation)
+    )
       return [];
     const completion = Reflect.get(observation, 'completedRound') as {
       report: string;
@@ -245,15 +249,21 @@ function assertRound(
 ) {
   const { completion, report } = result;
   assert.match(report, new RegExp('Distinct Planner finding attempt ' + attempt));
-  assert.doesNotMatch(report, new RegExp('Distinct Planner finding attempt ' + (attempt === 1 ? 2 : 1)));
+  assert.doesNotMatch(
+    report,
+    new RegExp('Distinct Planner finding attempt ' + (attempt === 1 ? 2 : 1)),
+  );
   if (attempt === 1)
-    assert.match(report, /The complete answer is retained verbatim, including its full conclusion\./);
+    assert.match(
+      report,
+      /The complete answer is retained verbatim, including its full conclusion\./,
+    );
   else assert.match(report, /The resumed complete answer for attempt 2\./);
   if (reused) assert.match(report, /Reused completed child outcome for refine:/);
   else assert.doesNotMatch(report, /Reused completed child outcome for refine:/);
   assert.equal(new Set(completion.findings).size, completion.findings.length);
   assert.equal(new Set(completion.measurements).size, completion.measurements.length);
-  assert.equal(completion.measurements.length, 3, 'only this round\'s provider stream is measured');
+  assert.equal(completion.measurements.length, 3, "only this round's provider stream is measured");
   assert.match(report, /"profile": "planner-fixture"/);
   assert.match(report, /"input_tokens": \{\n\s+"reported": 17/);
   assert.match(report, /"output_tokens": \{\n\s+"reported": 5/);
