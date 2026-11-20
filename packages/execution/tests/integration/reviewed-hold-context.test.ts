@@ -303,3 +303,52 @@ test('a real unanswered human gate retains its action and resumes only with a re
   assert.equal(JSON.parse(fixture.task.readFile(recorded.evidence).text).answer, recorded.answer);
   assertContinuity(fixture, answered);
 });
+
+/**
+ * Only the host-observed argv or selection establishes relevance here. A stable
+ * diagnostic rejects implementations that mistake identical failure text for
+ * unchanged inputs, or accept every receipt regardless of its net relevant effect.
+ */
+for (const relevance of ['arguments', 'selection'] as const) {
+  test(`observed ${relevance} permit a secured partial correction but stop unchanged repeats`, async (t) => {
+    const fixture = new ReviewedHoldFixture(t, false, relevance);
+    await fixture.prepare();
+    const initial = context(await fixture.run());
+    assertObservedRelevance(fixture, initial, relevance);
+    await fixture.edit('fixture.txt', 'partially corrected');
+    const progressed = await fixture.run();
+    const repeated = context(await fixture.run());
+    assert.equal(repeated.failure.diagnostic, initial.failure.diagnostic);
+    assert.equal(repeated.failure.check!.status, initial.failure.check!.status);
+    assert.notEqual(repeated.failure.check!.log, initial.failure.check!.log);
+    assert.notEqual(repeated.progress.identity, initial.progress.identity);
+    assert.deepEqual(repeated.progress.inputs, [
+      { path: 'fixture.txt', digest: fixture.task.readFile('fixture.txt').sha256 },
+    ]);
+    assertContinuity(fixture, repeated);
+    assertAnswer(fixture, repeated);
+    assert.equal(progressed.kind, 'repair', 'A secured relevant partial correction must permit repair');
+    assert.deepEqual(
+      context(await fixture.run()).progress,
+      repeated.progress,
+      'An unchanged repeat must stop with the same grounded progress',
+    );
+  });
+}
+
+/** Check the actual observation and exclude accepted prose as an accidental relevance source. */
+function assertObservedRelevance(
+  fixture: ReviewedHoldFixture,
+  held: HoldContext,
+  relevance: 'arguments' | 'selection',
+) {
+  assert(!JSON.stringify([held.rejection, fixture.milestone]).includes('fixture.txt'));
+  assert.deepEqual(held.acceptance, correction.criteria);
+  assert.deepEqual(held.progress.inputs, [
+    { path: 'fixture.txt', digest: fixture.task.readFile('fixture.txt').sha256 },
+  ]);
+  const observed = held.failure.check!;
+  assert.equal(observed.args.includes('fixture.txt'), relevance === 'arguments');
+  assert.deepEqual(observed.selection?.files, relevance === 'selection' ? ['fixture.txt'] : undefined);
+  assert.equal(held.failure.diagnostic, 'Error: reviewed behavior still fails');
+}
