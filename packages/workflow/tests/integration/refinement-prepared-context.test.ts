@@ -1,0 +1,74 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { parse } from 'yaml';
+import type { JournalEvent } from '../../../coordination/src/index.js';
+import { RoundConsumptionFixture } from '../../../execution/tests/fixtures/round-consumption.js';
+import type { CompletedRefinementRound, TaskObserver } from '../../src/index.js';
+
+export const suite = { owner: 'workflow', level: 'integration', tags: ['regression'] } as const;
+
+interface Consumption {
+  component: string;
+  input: string;
+  reads: string[];
+  consumption: CompletedRefinementRound[];
+}
+
+/** Collect actual completed rounds and prepared provider observations from the shared observer. */
+class Observations implements TaskObserver {
+  readonly rounds: CompletedRefinementRound[] = [];
+  readonly consumers: Consumption[] = [];
+
+  /** Supply a complete answer through the normal clarification gate. */
+  async answer() {
+    return 'Preserve accepted intent exactly.\nThe complete second line and final conclusion survive.';
+  }
+
+  /** The journal retains progress independently of the terminal observer. */
+  progress() {}
+
+  /** Associate each controlled provider observation with its real lifecycle position. */
+  event(event: JournalEvent) {
+    const observation = event.observation as Record<string, any>;
+    if (observation.completedRound) this.rounds.push(observation.completedRound);
+    if (observation.nativeEvent?.event?.type === 'fixture.consumption')
+      this.consumers.push((event.detail as { event: Consumption }).event);
+  }
+}
+
+/** Require each actual actor request to advertise and read the exact completed report. */
+function assertConsumption(observed: Observations, prior: CompletedRefinementRound) {
+  for (const actor of ['planner', 'architecture', 'direction']) {
+    const attempts = observed.consumers.filter(({ component }) => component === actor);
+    assert.ok(attempts.length, actor + ' must be activated');
+    for (const attempt of attempts) {
+      const assignment = parse(
+        attempt.input.split('\n\n## Activity')[0]!.slice(attempt.input.indexOf('\n\nassignment:') + 2),
+      ).assignment;
+      assert.ok(assignment.completedRounds.some((round: CompletedRefinementRound) =>
+        round.report === prior.report && round.invocation === prior.invocation && round.round === prior.round,
+      ));
+      assert.ok(attempt.reads.includes(prior.report));
+      assert.deepEqual(
+        attempt.consumption.find(({ report }) => report === prior.report),
+        prior,
+      );
+    }
+  }
+}
+
+test('completed refinement reports reach real prepared assessments across invocations', async (t) => {
+  const fixture = new RoundConsumptionFixture(t);
+  const first = new Observations();
+  const result = await fixture.reopen().refine(fixture.root, 1, first, new AbortController().signal);
+  assert.equal(result.kind, 'planned', JSON.stringify(result));
+  assert.equal(first.rounds.length, 1);
+  const prior = first.rounds[0]!;
+  assert.ok(prior.findings.length);
+  assert.ok(prior.measurements.length);
+  const next = new Observations();
+  const resumed = await fixture.reopen().refine(fixture.root, 1, next, new AbortController().signal);
+  assert.equal(resumed.kind, 'planned', JSON.stringify(resumed));
+  assert.notEqual(next.rounds[0]!.invocation, prior.invocation);
+  assertConsumption(next, prior);
+});
