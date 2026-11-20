@@ -181,10 +181,17 @@ function recordReplyRepair(task: HostTask, scope: StewardScope, error: Error) {
 }
 
 /** Match a rejected reply class against checked progress rather than repeated prose. */
-function replyRepairIdentity(error: Error, task: HostTask, milestone: Milestone, scope: StewardScope) {
+function replyRepairIdentity(
+  error: Error,
+  task: HostTask,
+  milestone: Milestone,
+  scope: StewardScope,
+) {
   const finding = error instanceof InvalidAgentResponse ? error.identity : error.message;
-  const input = correctionFinding(task.history(), milestone)?.kind === 'rejection'
-    ? reviewedReplyInput(task, milestone, scope) : stewardReplyInput(task.observations());
+  const input =
+    correctionFinding(task.history(), milestone)?.kind === 'rejection'
+      ? reviewedReplyInput(task, milestone, scope)
+      : stewardReplyInput(task.observations());
   return JSON.stringify([finding, input]);
 }
 
