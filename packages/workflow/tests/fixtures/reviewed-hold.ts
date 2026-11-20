@@ -53,6 +53,7 @@ export class ReviewedWorkflow {
   readonly checkpoints: ActivityCheckpoint[] = [];
   readonly reviews: unknown[] = [];
   readonly services: WorkflowServices;
+  diagnostic = 'Error: reviewed behavior still fails';
   private head?: string;
   private readonly agent = new Agent(new Architecture());
   private readonly signal = new AbortController().signal;
@@ -134,7 +135,9 @@ export class ReviewedWorkflow {
     const args = [
       join(import.meta.dirname, 'reviewed-hold-command.js'),
       'fixture.txt',
-      ...(this.scenario === 'external' ? [join(this.fixture.root, '.git', 'schema-ready')] : []),
+      ...(this.scenario === 'external'
+        ? [join(this.fixture.root, '.git', 'schema-ready')]
+        : ['', this.diagnostic]),
     ];
     const start = performance.now();
     const actual = await execute(process.execPath, args, { cwd: task.worktree!, log, signal });
@@ -329,7 +332,9 @@ export class ReviewedWorkflow {
     const progress = this.scenario === 'progress' && count < 3;
     const content =
       milestone.id === 'part-a' ? 'partial-a' : progress ? `partial-${count}` : 'corrected';
-    const path = this.scenario === 'repeat' ? 'unrelated.txt' : 'fixture.txt';
+    const incidental =
+      this.scenario === 'repeat' || (this.scenario === 'diagnostic' && count === 1);
+    const path = incidental ? 'unrelated.txt' : 'fixture.txt';
     const receipt = await this.edit(milestone, path, content);
     const evidence = this.fixture.task.store(
       'contribution.json',
