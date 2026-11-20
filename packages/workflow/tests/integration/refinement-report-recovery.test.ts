@@ -211,7 +211,11 @@ async function resume(root: string, state: RecoveryState) {
     workflow,
     root,
     2,
-    { progress() {}, event: (event) => events.push(event) },
+    {
+      progress() {},
+      answer: async () => 'The resumed complete answer for attempt 2.',
+      event: (event) => events.push(event),
+    },
     new AbortController().signal,
   );
   return events;
