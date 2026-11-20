@@ -10,6 +10,12 @@ interface Input {
 class RefinementProvider {
   /** Ask once, then expose a distinct complete finding and explicit provider usage. */
   async run() {
+    this.emit({
+      type: 'fixture.runtime',
+      executable: process.execPath,
+      version: process.version,
+      path: process.env.PATH,
+    });
     const input = JSON.parse(readFileSync(0, 'utf8')) as Input;
     if (
       !input.clarifications?.some(({ question }) => question === 'Complete answer ' + input.attempt)
