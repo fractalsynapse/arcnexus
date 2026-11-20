@@ -158,7 +158,12 @@ function assertProviderRecords(records: Array<Record<string, any>>): void {
       assert.ok(event.consumption[0].findings.length > 0);
       assert.ok(event.consumption[0].measurements.length > 0);
     }
-    assert.deepEqual(event.reads, []);
+    if (provider.indexOf(record) < 3) {
+      assert.deepEqual(event.reads, []);
+    } else {
+      assert.ok(event.reads.some((path: string) => path.includes('refinement-round-1.md')));
+      assert.ok(event.reads.some((path: string) => path.endsWith('codex.jsonl')));
+    }
     assert.match(event.executable, /stream-provider/);
   }
 }
