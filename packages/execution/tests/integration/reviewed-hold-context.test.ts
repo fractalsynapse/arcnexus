@@ -22,7 +22,8 @@ export const suite = {
  * rejection, acceptance, command, receipt, checkpoint and full answer assertions
  * reject current-attempt-only history, swapped logs and a generic blocked string.
  * hold-progress-grounded: compare repeated observations after incidental writes
- * and relevant checked changes; observe an absent schema through a real command.
+ * and relevant checked changes; distinguish command prose from runCheck's typed
+ * dependency prerequisite observation through a controlled preparation collaborator.
  * Constant identities, artifact-derived progress and model-claimed prerequisites
  * cannot satisfy these assertions. Workflow routing and independent re-review
  * belong to assembled integration; this controlled seam proves neither.
@@ -179,7 +180,7 @@ test('a relevant secured correction changes grounded progress while preserving t
   );
 });
 
-test('an actual unavailable input stays an unsatisfied prerequisite despite optimistic model claims', async (t) => {
+test('command stderr cannot promote an ordinary failure into prerequisite authority', async (t) => {
   const fixture = new ReviewedHoldFixture(t, true);
   await fixture.prepare();
   await fixture.run();
@@ -193,13 +194,41 @@ test('an actual unavailable input stays an unsatisfied prerequisite despite opti
   const held = context(result);
   assertContinuity(fixture, held);
   assert.deepEqual(held.failure.check, observed);
-  assert.equal(held.prerequisite?.kind, 'external');
-  assert.equal(held.prerequisite.satisfied, false);
-  assert.equal(held.prerequisite.requiredAction, 'Supply the approved schema.');
-  assert(held.prerequisite.evidence.includes(observed.log));
+  assert.equal(observed.prerequisite, undefined);
+  assert.equal(held.failure.diagnostic, observed.diagnostic);
+  assert.equal(held.prerequisite, undefined);
   await fixture.restart();
   const resumed = context(await fixture.run());
-  assert.equal(resumed.prerequisite?.satisfied, false);
+  assert.equal(resumed.prerequisite, undefined);
+  assert.deepEqual(resumed.rejection, held.rejection);
+});
+
+test('a host-observed dependency prerequisite retains its diagnostic and required action after restart', async (t) => {
+  const fixture = new ReviewedHoldFixture(t, true);
+  fixture.requireDependencies();
+  await fixture.prepare();
+  await fixture.run();
+  const observed = fixture.checks.at(-1)!;
+  assert.equal(observed.status, 43);
+  assert.equal(observed.prerequisite, 'dependencies');
+  assert.equal(
+    observed.reason,
+    `Dependency prerequisite failed; requested check owner-tests did not run. See ${observed.log}`,
+  );
+  const held = context(await fixture.run());
+  assertContinuity(fixture, held);
+  const latest = fixture.checks.at(-1)!;
+  assert.deepEqual(held.failure.check, latest);
+  assert.equal(held.failure.diagnostic, latest.diagnostic);
+  assert.equal(held.prerequisite?.kind, 'dependencies');
+  assert.equal(held.prerequisite.satisfied, false);
+  assert.equal(held.prerequisite.requiredAction, latest.reason);
+  assert(held.prerequisite.evidence.includes(latest.log));
+  await fixture.restart();
+  const resumed = context(await fixture.run());
+  assert.equal(resumed.prerequisite?.kind, 'dependencies');
+  assert.equal(resumed.prerequisite.satisfied, false);
+  assert.equal(resumed.prerequisite.requiredAction, fixture.checks.at(-1)!.reason);
   assert.deepEqual(resumed.rejection, held.rejection);
 });
 
