@@ -85,10 +85,7 @@ async function resumeCheckedProgress(f: ReviewedWorkflow) {
   const held = f.holds.at(-1)!;
   const original = JSON.stringify(held);
   await f.reopen();
-  assert.equal(f.fixture.task.taskID, held.task.id);
-  assert.equal(f.fixture.task.issue, held.task.issue);
-  assert.equal(f.fixture.task.branch, held.task.branch);
-  assert.equal(f.fixture.checkpoint(), held.task.checkpoint);
+  assertReopenedHold(f, held);
   const receipt = await f.fixture.edit('fixture.txt', 'corrected');
   const checked = await f.recheck();
   assert.equal(checked.status, 0);
@@ -96,6 +93,7 @@ async function resumeCheckedProgress(f: ReviewedWorkflow) {
   assert.notEqual(f.fixture.checkpoint(), held.task.checkpoint);
   assert(f.fixture.task.readFile(checked.log).text !== undefined);
   assert.equal(f.reviews.length, 0, 'New checked evidence alone cannot accept the task');
+  assertCheckedProgress(f, receipt, checked.log);
   const resumed = await f.run();
   assert.equal(resumed.kind, 'merged', 'Relevant checked progress must release the retained hold');
   assert.deepEqual(f.calls.slice(-3), [correction.id, 'Review', 'Delivery']);
@@ -105,12 +103,18 @@ async function resumeCheckedProgress(f: ReviewedWorkflow) {
     'The corrected candidate requires fresh independent assessment',
   );
   assert.equal(JSON.stringify(held), original, 'Historical findings and evidence remain immutable');
-  await assertRecoveredProgress(f, receipt, checked.log);
 }
 
-/** Reopen secured completion to reject lost receipts, accepted inputs or complete historical answers. */
-async function assertRecoveredProgress(f: ReviewedWorkflow, receipt: unknown, log: string) {
-  await f.reopen();
+/** Compare reconstructed task identity and secured bytes with the actual held activation. */
+function assertReopenedHold(f: ReviewedWorkflow, held: HoldContext) {
+  assert.equal(f.fixture.task.taskID, held.task.id);
+  assert.equal(f.fixture.task.issue, held.task.issue);
+  assert.equal(f.fixture.task.branch, held.task.branch);
+  assert.equal(f.fixture.checkpoint(), held.task.checkpoint);
+}
+
+/** Require retained Execution receipts and unchanged acceptance before resuming the original task. */
+function assertCheckedProgress(f: ReviewedWorkflow, receipt: unknown, log: string) {
   assert.equal(f.fixture.task.readFile('fixture.txt').text, 'corrected');
   const observations = f.fixture.task.observations<{ editReceipt?: unknown }>();
   assert(
