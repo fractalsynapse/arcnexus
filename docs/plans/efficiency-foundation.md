@@ -19,7 +19,7 @@ behavior or proof is stated explicitly.
 | Architecture and operations | [PR #640](https://github.com/fractalsynapse/arcnexus/pull/640) delivered typed operation overrides, activity verification, approved adoption boundaries and observable execution.                                                 | The broader merge/provenance, runtime-adoption and same-run live acceptance items in B remain open.                                                     |
 | Acting context              | [PR #664](https://github.com/fractalsynapse/arcnexus/pull/664) delivered the source-linked component index; [PR #667](https://github.com/fractalsynapse/arcnexus/pull/667) preserved originating findings through nested repairs. | All 18 purposes, 94 model activities and one host procedure were approved by the architect and merged in #673. Live behavioral acceptance remains open. |
 | Timeline and measurements   | Complete provider/MCP artifacts, ordered live human/JSONL observations and time/token accounting are operating through the existing journal.                                                                                      | Full round/phase analysis, verified monetary pricing and subsequent refinement consuming those findings remain open.                                    |
-| Continuous refinement       | The retained #668 implementation resumed as run 102 with the accepted guidance, original issue and secured checkpoint. Prior run 101 remains a held observation.                                                                  | `refine` delivery and the three consecutive production rounds are unproved. Qualification remains **0/3**.                                              |
+| Continuous refinement       | Run 102 exercised local repair without Direction, then ended by controlled cancellation after repeated incomplete recovery proof. Checkpoints and prior failed evidence remain retained.                                          | `refine` delivery and the three consecutive production rounds are unproved. Qualification remains **0/3**.                                              |
 
 The architect reviewed the complete rewrite and explicitly approved merging #673
 and proceeding with testing. The earlier D review stop is satisfied. All 18
@@ -33,7 +33,7 @@ observed evidence.
 `ffed7c41a9fde0008b807a0d99dc4e6a48f878e7`. Its exact-head
 [Development CI](https://github.com/fractalsynapse/arcnexus/actions/runs/44714117574)
 and [Staging CI](https://github.com/fractalsynapse/arcnexus/actions/runs/44715213130)
-passed. Run 102 resumes the exact #668 goal through the existing installed runtime
+passed. Run 102 resumed the exact #668 goal through the existing installed runtime
 (code source `05a87607`, unchanged by the documentation merge), with accepted
 source `ffed7c41`. Its actual native request includes the rewritten Workflow
 purpose, activity, role and Agent protocol. It resumed directly at Workflow
@@ -78,9 +78,9 @@ sentences for special actors. The request builder includes the complete purpose 
 every other component in its index. Expanding purposes without correcting that
 index would repeat every long purpose in every activation.
 
-Codex output is retained, but execution currently accumulates process output and
-decodes the final answer after completion. The foreground CLI forwards coarse
-progress. It does not expose a complete structured live timeline. Research
+At checklist creation, Codex output was retained but execution accumulated process
+output and decoded the final answer after completion. The foreground CLI forwarded
+coarse progress without a complete structured live timeline. Research
 reports and exact tool diagnostics must remain complete; reducing their content
 is not the efficiency correction.
 
@@ -587,5 +587,52 @@ distinct findings/answers/usage/outcomes from all relevant attempts, and
 Implementation repairs its owned tests in place when no earlier Testing target
 exists. These are accepted instructions, not claims that the runtime defect is already
 fixed. After human review and #673 staging CI, run 102 resumed the same goal
-without operator candidate edits or database repair. Its result will be recorded
-separately; qualification remains 0/3.
+without operator candidate edits or database repair. It ended by controlled cancellation as recorded below; qualification remains 0/3.
+
+## Run 102 evaluation and approved profile experiment
+
+Run 102 used accepted guidance `ffed7c41` with the unchanged installed runtime.
+The actual native request contained the complete selected purpose, activity, role
+and Agent protocol; the retained comparison found no truncation. It reused the
+existing issue and checkpoints and made **zero Direction invocations**.
+Tool/check failures and three self-review findings returned to Workflow's caller
+or Implementation activity inside the same milestone.
+
+The attempt improved real-Planner exploration coverage, fresh-service recovery
+tests, round-specific reporting and sequence deduplication. Those contributions
+remain retained, not delivered. Three reviews still found the same essential gap:
+an unfinished child must resume with distinct observations across attempts and
+multiple rounds, with exact originating references, answers, usage and outcomes.
+The steward repeatedly supplied narrower completed-child fixtures. Green owner
+checks did not establish that missing behavior.
+
+After 33.40 minutes and seven native activations, normal SIGINT ended the attempt.
+Cleanup removed its worktree; there were no operator candidate edits, database
+repairs or bypassed checks. The journal retains local checkpoint
+`d2074f22e8cd1fe512f3ba7b7bdc0fb409ef52f6` and last confirmed remote checkpoint
+`f40d32c6c2d2d0339032466d3fa026fe47ddd5e0`. Normal Execution recovery reconciles
+pending checkpoints before adopting the next staging base. This is a controlled
+test interruption, not a completed delivery or qualification round.
+
+The retained report `673-live-evaluation-report.json` records profile usage and
+timing. Luna had four activations, with 30,884,341 reported input tokens of which
+30,176,640 were cached, and 55,746 output tokens. Sol had three review activations,
+with 3,180,595 reported input tokens of which 2,727,296 were cached, and 5,571 output
+tokens. Cached input is a subset, not an additional total. Provider-reported
+categories remain distinct; monetary cost remains unknown without a verified
+pricing/billing basis. Interrupted work is not assigned invented complete usage.
+
+The request-composition observation also found 571 evidence-reference occurrences
+representing 351 unique references in one assignment. Its Task section accounted
+for 163,356 of 236,652 request bytes. Removing redundant representations through
+existing complete indexes is a potential later simplification; no information cap
+or implementation change is introduced by this observation.
+
+The architect approved the exact
+[one-field profile experiment](https://github.com/fractalsynapse/arcnexus/issues/668#issuecomment-7037329841):
+Workflow Implementation changes from `gpt-luna` to `gpt-sol`. This delivery
+applies only that approved profile change. All other profiles, instructions,
+operations, verification, ownership, original acceptance, locked contracts and
+registry bytes stay unchanged. Resume the exact retained goal after verified
+staging integration and compare the result. Do not infer success from the profile
+selection, add a limit, or weaken the required recovery proof.
