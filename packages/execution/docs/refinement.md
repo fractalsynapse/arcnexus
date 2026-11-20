@@ -17,13 +17,24 @@ not a separately integrated release. Consume its public
 ## Admission and authority
 
 [Execution.admit](../src/execution.ts) admits the foreground invocation through
-the existing verified-project Coordination writer. Each sequential Planner,
-Architect or goal task is an ordinary child of that admitted session. Verify the
-parent belongs to the same canonical project store before using `Journal.child`.
-Child completion, cleanup and close leave the live parent writer intact.
-Competing foreground roots remain refused through phase transitions and active
-approval handling. Standalone task, planning and architecture commands retain
-their existing admission path.
+the existing verified-project Coordination writer. Workflow supplies
+`TaskInput.refinement: true` and `TaskInput.scope: 'refine'` for a resumable
+foreground cycle; Execution captures fresh staging authority and passes the
+cycle flag to `Coordination.admit(remote, goal, fresh, scope, cycle)`. This
+distinguishes an unfinished retry from a new invocation after a `refined` result.
+Each sequential Planner, Architect or goal task is an ordinary child admitted by
+`Execution.admit(input, signal, parent)`. Verify the parent belongs to the same
+canonical project store before using `Journal.child`. Child completion, cleanup
+and close leave the live parent writer intact. Competing foreground roots remain
+refused through phase transitions and active approval handling. Standalone task,
+planning and architecture commands retain their existing admission path.
+
+For goal inventories, Workflow calls
+`Execution.round(directory, namespace?)`. Omitting the namespace preserves the
+standalone `task` inventory. Refinement selects a stable invocation-and-round
+namespace such as `refine:<invocation>:<round>`; Execution forwards it to
+`Coordination.round(remote, captureInventory, namespace)` so unfinished task
+rounds cannot consume the captured refinement inventory.
 
 Resolve freshly accepted staging authority at every phase or task admission
 through [Execution.goals](../src/goals.ts)'s `stagingCapture` and the existing
