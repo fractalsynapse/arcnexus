@@ -100,14 +100,14 @@ function assertOrigins(
 }
 
 /** Resolve cited message identities against complete originating artifacts read by the provider. */
-function originatingMessages(
-  attempt: Consumption,
-  consumed: Consumption['consumption'][number],
-) {
+function originatingMessages(attempt: Consumption, consumed: Consumption['consumption'][number]) {
   for (const source of consumed.sources) assert.ok(attempt.reads.includes(source));
   return consumed.messages.map(({ path, sha256 }) => {
     assert.ok(consumed.sources.includes(path));
-    const records = readFileSync(path, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+    const records = readFileSync(path, 'utf8')
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line));
     const message = records.find(
       (record) =>
         record.item?.type === 'agent_message' &&
