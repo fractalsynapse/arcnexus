@@ -49,4 +49,26 @@ class RefinementGateProvider {
   }
 }
 
+/** Supply a complete production Planner proposal with exact bytes for the real approval gate. */
+function goalProposal() {
+  const citation = { path: 'baseline', quote: 'durable evidence' };
+  return {
+    summary: 'Propose removing the baseline goal for human review.',
+    ratings: [
+      {
+        id: 'baseline',
+        alignment: 'strong',
+        evidence: 'unverified',
+        reason: 'The baseline is covered.',
+        sources: [citation],
+        observations: [],
+      },
+    ],
+    comparison: ['The single goal covers the baseline without overlap.'],
+    changes: [{ id: 'baseline', content: null }],
+    links: [],
+    sources: [citation],
+  };
+}
+
 new RefinementGateProvider().run();
