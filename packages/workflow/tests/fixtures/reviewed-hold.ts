@@ -70,7 +70,10 @@ export class ReviewedWorkflow {
       ...milestone,
       steps: milestone.steps.map((step) => ({
         ...step,
-        checklist: step.checklist.map((item) => ({ ...item, criteria: milestone.criteria.map((criterion) => criterion.id) })),
+        checklist: step.checklist.map((item) => ({
+          ...item,
+          criteria: milestone.criteria.map((criterion) => criterion.id),
+        })),
       })),
     }));
     task.record({ plan: { ...prior, milestones: [...completed, correction] } });
