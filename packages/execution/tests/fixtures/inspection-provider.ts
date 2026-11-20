@@ -8,22 +8,7 @@ class InspectionProvider {
   async run() {
     const input = readFileSync(0, 'utf8');
     const tools = await this.rpc('tools/list');
-    const refusals = [];
-    for (const name of [
-      tools.tools.some((tool: { name: string }) => tool.name === 'inspect-read')
-        ? 'inspect-list'
-        : 'inspect-read',
-      'shell',
-    ]) {
-      refusals.push(await this.rpc('tools/call', { name, arguments: {} }));
-    }
-    if (tools.tools.some((tool: { name: string }) => tool.name === 'owned-edit'))
-      refusals.push(
-        await this.rpc('tools/call', {
-          name: 'owned-edit',
-          arguments: { path: 'review/foreign.txt', expected: null, content: 'unauthorized' },
-        }),
-      );
+    const refusals = await this.refuse(tools.tools);
     this.emit({
       type: 'fixture.inspection',
       input,
@@ -40,6 +25,28 @@ class InspectionProvider {
       type: 'item.completed',
       item: { type: 'agent_message', text: '{"kind":"completed"}' },
     });
+  }
+
+
+  /** Probe disjoint activity calls and foreign writes before observing unchanged source. */
+  private async refuse(tools: Array<{ name: string }>) {
+    const refusals = [];
+    for (const name of [
+      tools.some((tool: { name: string }) => tool.name === 'inspect-read')
+        ? 'inspect-list'
+        : 'inspect-read',
+      'shell',
+    ]) {
+      refusals.push(await this.rpc('tools/call', { name, arguments: {} }));
+    }
+    if (tools.some((tool: { name: string }) => tool.name === 'owned-edit'))
+      refusals.push(
+        await this.rpc('tools/call', {
+          name: 'owned-edit',
+          arguments: { path: 'review/foreign.txt', expected: null, content: 'unauthorized' },
+        }),
+      );
+    return refusals;
   }
 
   /** Send actual JSON-RPC requests to production LocalMcp using its native binding. */
