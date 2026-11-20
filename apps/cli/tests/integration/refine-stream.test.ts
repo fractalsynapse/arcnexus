@@ -155,6 +155,21 @@ function assertProviderRecords(records: Array<Record<string, any>>): void {
   }
 }
 
+/** Distinguish untouched first-round inputs from consumed second-round findings. */
+function assertRoundHistory(event: Record<string, any>, index: number): void {
+  if (index < 3) {
+    assert.deepEqual(event.consumption, []);
+    assert.deepEqual(event.reads, []);
+    return;
+  }
+  assert.ok(event.consumption.length > 0);
+  assert.equal(event.consumption[0].round, '1');
+  assert.ok(event.consumption[0].findings.length > 0);
+  assert.ok(event.consumption[0].measurements.length > 0);
+  assert.ok(event.reads.some((path: string) => path.includes('refinement-round-1.md')));
+  assert.ok(event.reads.some((path: string) => path.endsWith('codex.jsonl')));
+}
+
 /** Check full tool results, measured usage and one terminal outcome. */
 function assertTerminalRecords(records: Array<Record<string, any>>): void {
   const toolResults = records
