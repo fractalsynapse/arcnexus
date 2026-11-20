@@ -4,7 +4,11 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import type { TestContext } from 'node:test';
 import { Agent } from '../../../agent/src/index.js';
-import { Architecture, resolveOperation, type TaskContext } from '../../../architecture/src/index.js';
+import {
+  Architecture,
+  resolveOperation,
+  type TaskContext,
+} from '../../../architecture/src/index.js';
 import { GitHub } from '../../../collaboration/src/index.js';
 import { Coordination, Journal } from '../../../coordination/src/index.js';
 import { activities, type Milestone, type Plan } from '../../../direction/src/index.js';
@@ -61,7 +65,10 @@ export class ReviewedHoldFixture {
   private refusal = false;
 
   /** Commit a complete explicit catalog before capture and admit the real journal. */
-  constructor(private readonly t: TestContext, private readonly external = false) {
+  constructor(
+    private readonly t: TestContext,
+    private readonly external = false,
+  ) {
     mkdirSync(this.root);
     this.source();
     this.task = this.open();
@@ -169,12 +176,15 @@ export class ReviewedHoldFixture {
   private reply(task: HostTask, data: TaskContext) {
     assert.deepEqual(data.acceptance, correction.criteria);
     assert.deepEqual((data.assignment as { finding: unknown }).finding, {
-      kind: 'rejection', findings: [this.rejection.findings[0]],
+      kind: 'rejection',
+      findings: [this.rejection.findings[0]],
     });
-    const reply = { kind: 'completed',
+    const reply = {
+      kind: 'completed',
       summary: 'Model claims progress and schema availability; neither claim is evidence.',
       edits: this.refusal ? [{ path: 'schema.txt', expected: null, content: 'unauthorized' }] : [],
-      checks: [] };
+      checks: [],
+    };
     task.store('controlled-provider.json', JSON.stringify(reply));
     return reply;
   }
