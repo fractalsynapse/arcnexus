@@ -4,6 +4,8 @@ import type { Feedback, StewardCheckFailure } from '../../direction/src/index.js
 import type { CheckResult } from './check.js';
 import type { HostTask } from './index.js';
 import { establishedTestingRed } from './testing-red.js';
+import type { Clarification } from './clarifications.js';
+import type { ResearchResult } from './research.js';
 
 export interface StewardScope {
   owner: string;
@@ -24,6 +26,11 @@ interface CheckEvent {
     redLog?: string;
   };
   edits?: readonly { path: string; before: string | null; after: string | null }[];
+}
+
+interface AnswerEvent {
+  clarification?: Clarification;
+  researchResult?: ResearchResult;
 }
 
 /** Reconstruct unresolved operations in order; passing another check cannot erase a failure. */
@@ -118,6 +125,34 @@ export function stewardInput(events: readonly unknown[]) {
   }
   return createHash('sha256')
     .update(JSON.stringify([...files].sort()))
+    .digest('hex');
+}
+
+/** Include completed caller knowledge without treating repeated answers or artifacts as progress. */
+export function stewardReplyInput(events: readonly unknown[]) {
+  const answers = new Set<string>();
+  for (const { clarification, researchResult } of events as readonly AnswerEvent[]) {
+    if (clarification?.answer !== undefined)
+      answers.add(
+        JSON.stringify([
+          'clarification',
+          clarification.scope,
+          clarification.question,
+          clarification.answer,
+        ]),
+      );
+    if (researchResult)
+      answers.add(
+        JSON.stringify([
+          'research',
+          researchResult.request.id,
+          researchResult.digest,
+          researchResult.unavailable,
+        ]),
+      );
+  }
+  return createHash('sha256')
+    .update(JSON.stringify([stewardInput(events), [...answers].sort()]))
     .digest('hex');
 }
 

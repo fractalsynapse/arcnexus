@@ -384,7 +384,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Build public-boundary scenarios for the production Execution wiring using explicit temporary projects, real record shapes and isolated provider composition. Cover worktree/branch preparation before activation, candidate dependency availability, actual request input/options, local MCP capability mapping, ownership refusal, one-file checkpoint acknowledgment, full answer delivery and cleanup after success, hold, cancellation or crash.

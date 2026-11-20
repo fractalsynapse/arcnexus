@@ -19,6 +19,7 @@ import {
   checkFailureSignature,
   correctionMadeProgress,
   stewardInput,
+  stewardReplyInput,
   type StewardScope,
 } from './steward-check.js';
 import { decodeSteward, StewardResponseError, type StewardResult } from './steward-response.js';
@@ -137,7 +138,7 @@ async function requestSteward(
 /** Match a rejected reply class against checked progress rather than repeated prose. */
 function replyRepairIdentity(error: Error, task: HostTask) {
   const finding = error instanceof InvalidAgentResponse ? error.identity : error.message;
-  return JSON.stringify([finding, stewardInput(task.observations())]);
+  return JSON.stringify([finding, stewardReplyInput(task.observations())]);
 }
 
 /** Restrict retries to rejected replies with no checked edits applied. */
