@@ -38,13 +38,16 @@ function fixture(t: TestContext) {
   return {
     root,
     execution: new Execution(architecture, new Coordination(storage), storage),
-    advance: () => {
-      writeFileSync(join(root, 'baseline'), 'new staging\n');
-      git('add', '.');
-      git('commit', '-m', 'new staging');
-      return git('rev-parse', 'HEAD');
-    },
+    advance: () => advance(root, git),
   };
+}
+
+/** Move the real staging branch after the parent has been admitted. */
+function advance(root: string, git: (...args: string[]) => string) {
+  writeFileSync(join(root, 'baseline'), 'new staging\n');
+  git('add', '.');
+  git('commit', '-m', 'new staging');
+  return git('rev-parse', 'HEAD');
 }
 
 /** Describe the captured authority for the real staging fixture. */
