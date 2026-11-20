@@ -30,11 +30,21 @@ const complete: TaskOutcome = {
 
 /** Provide distinguishable Workflow observations and outcomes to an SDK caller. */
 class RefinementWorkflow extends Workflow {
-  readonly calls: { directory: string; rounds: number; observer: TaskObserver; signal: AbortSignal }[] = [];
+  readonly calls: {
+    directory: string;
+    rounds: number;
+    observer: TaskObserver;
+    signal: AbortSignal;
+  }[] = [];
   readonly answers: (string | undefined)[] = [];
 
   /** Emit the same structured stream and gate response through the supplied observer. */
-  override async refine(directory: string, rounds: number, observer: TaskObserver, signal: AbortSignal) {
+  override async refine(
+    directory: string,
+    rounds: number,
+    observer: TaskObserver,
+    signal: AbortSignal,
+  ) {
     this.calls.push({ directory, rounds, observer, signal });
     if (signal.aborted)
       return { kind: 'cancelled' as const, reason: 'Interrupted', evidence: ['checkpoint'] };
@@ -44,21 +54,36 @@ class RefinementWorkflow extends Workflow {
       { tool: { call: 'read-file', result: 'Complete tool\nresult' } },
       { refinement: { invocation: 'invocation-1', round: 1, total: rounds, phase: 'Architect' } },
     ];
-    observations.forEach((observation, index) => observer.event?.(this.frame(index + 1, observation)));
-    observer.progress({ phase: 'activity', message: 'Round 1 · Architect', evidence: ['proposal/exact.diff'] });
+    observations.forEach((observation, index) =>
+      observer.event?.(this.frame(index + 1, observation)),
+    );
+    observer.progress({
+      phase: 'activity',
+      message: 'Round 1 · Architect',
+      evidence: ['proposal/exact.diff'],
+    });
     observer.measurements?.(new RunMeasurements().snapshot(0));
     const response = await observer.answer?.(question, signal);
     this.answers.push(response);
     if (response === undefined) return pending;
-    observer.event?.(this.frame(5, {
-      refinement: { invocation: 'invocation-1', round: 2, total: rounds, phase: 'Run', goal: 1 },
-    }));
+    observer.event?.(
+      this.frame(5, {
+        refinement: { invocation: 'invocation-1', round: 2, total: rounds, phase: 'Run', goal: 1 },
+      }),
+    );
     return complete;
   }
 
   /** Preserve source and correlation identities in each simulated persisted frame. */
   private frame(sequence: number, observation: unknown): JournalEvent {
-    return { sequence: String(sequence), run: 7, taskID: 'task-1', goalID: 'goal-1', timestamp: null, observation };
+    return {
+      sequence: String(sequence),
+      run: 7,
+      taskID: 'task-1',
+      goalID: 'goal-1',
+      timestamp: null,
+      observation,
+    };
   }
 }
 
@@ -86,7 +111,9 @@ class CommandsScenario {
     let registered: Context['commands'] | undefined;
     const context = {
       workflow: this.workflow,
-      provide: (_name: string, service: Context['commands']) => { registered = service; },
+      provide: (_name: string, service: Context['commands']) => {
+        registered = service;
+      },
     } as unknown as Context;
     commandsPlugin.apply(context);
     assert(registered);
@@ -114,7 +141,10 @@ test('a headless SDK caller receives pending and resumed refinement with complet
   ]);
   assert.deepEqual(scenario.questions, [question, question]);
   assert.deepEqual(scenario.workflow.answers, [undefined, answer]);
-  assert.deepEqual(scenario.frames.map((frame) => frame.sequence), ['1', '2', '3', '4', '1', '2', '3', '4', '5']);
+  assert.deepEqual(
+    scenario.frames.map((frame) => frame.sequence),
+    ['1', '2', '3', '4', '1', '2', '3', '4', '5'],
+  );
   assert.deepEqual(scenario.frames[1]?.observation, {
     nativeEvent: { activation: 'planner', event: { message: 'Complete provider\nmessage' } },
   });
@@ -122,7 +152,9 @@ test('a headless SDK caller receives pending and resumed refinement with complet
     tool: { call: 'read-file', result: 'Complete tool\nresult' },
   });
   assert.deepEqual(scenario.progress[0], {
-    phase: 'activity', message: 'Round 1 · Architect', evidence: ['proposal/exact.diff'],
+    phase: 'activity',
+    message: 'Round 1 · Architect',
+    evidence: ['proposal/exact.diff'],
   });
   assert.equal(scenario.measurements.length, 2);
   assert.equal(scenario.measurements[0]?.cost.estimate, null);
