@@ -199,6 +199,16 @@ does not establish native behavior. A controlled executable can establish an
 adapter boundary without establishing that a real model followed instructions.
 Label each observation accurately.
 
+Use distinguishable observations when proving history and recovery. If every
+phase returns the same generic no-change text, an assertion that finds that text
+cannot establish that both the original and resumed attempts were included.
+Give the relevant attempts distinct findings, complete answers, profile usage and
+outcomes, then assert their identities and completeness through the public result.
+A test should fail if an implementation reads only the first timeline or only
+the current observer frames. Service fakes also cannot establish a real service's
+mode, persistence or repeat-assessment semantics; exercise that behavior through
+the actual service where the acceptance depends on it.
+
 Avoid circular test dependencies. A lower-level interface can be verified against
 an explicit public contract-shaped fixture before its higher-level consumer is
 finished. The actual producer/consumer interaction belongs in assembled integration.

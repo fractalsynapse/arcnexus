@@ -1,100 +1,111 @@
 id: manager
 kind: plugin
-purpose: Maintain project agent directives and supply guidance inputs for authority capture.
+purpose: Maintain project agent directives and supply guidance inputs for
+  authority capture.
 objectives:
-- measure: Each scope resolves and validates its directives and skill references from the admitted revision.
+  - measure: Each scope resolves and validates its directives and skill references
+      from the admitted revision.
 constraints:
-- failure: A guidance edit changes active instructions or grants authority outside the captured scope.
+  - failure: A guidance edit changes active instructions or grants authority outside
+      the captured scope.
 owns:
-- packages/manager
-- AGENTS.md
-- .agents
-- .arc/research/manager
+  - packages/manager
+  - AGENTS.md
+  - .agents
+  - .arc/research/manager
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
-    - Identify the applicable directive or skill and trace its authority to the catalog.
+      - Identify the applicable directive or skill and trace its authority to
+        the catalog.
     operations:
-    - read-file
-    - list-files
-    standards: []
+      - read-file
+      - list-files
+    standards: [ agent-operating-protocol ]
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
-    - Explain guidance behavior and link shared project policies from local skills.
+      - Explain guidance behavior and link shared project policies from local
+        skills.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    standards: []
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+    standards: [ agent-operating-protocol ]
   testing:
     role: designer
     profile: gpt-terra
     instructions:
-    - Exercise scoped guidance selection, bad metadata and changes after admission.
+      - Exercise scoped guidance selection, bad metadata and changes after
+        admission.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
   implementation:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-    - Keep directives and skill references coherent and expose the resolved guidance inputs.
+      - Keep directives and skill references coherent and expose the resolved
+        guidance inputs.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
   review:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-    - Check that the same revision resolves the same guidance and preserves captured scope.
+      - Check that the same revision resolves the same guidance and preserves
+        captured scope.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - request-supplier
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - request-supplier
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol

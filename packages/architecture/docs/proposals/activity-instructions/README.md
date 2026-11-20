@@ -25,30 +25,36 @@ testing, implementation and self-review. They cannot share an interchangeable
 generic prompt. The host-only release activity remains a host specification,
 without a model profile or pretend system prompt.
 
-## One authored source and explicit composition
+## Actual specifications and one authored source
 
-Keep component-specific guidance beside that component's catalog declaration, in
-its own directory under `.arc/architecture/components/`. Keep reusable operating
-protocols in the architectural guidance space and reference their complete text
-explicitly from each applicable activity. This preserves the existing Architecture
-ownership of the catalog and its protected-edit boundary; it does not move plugin
-implementation, tests or ordinary documentation into another component.
+Rewritten purposes and component-specific activity instructions are authored
+**directly in the component YAML specifications**, not in a separate set of
+replacement purpose documents. The proposed specifications are in
+[the component directory](../../../../../.arc/architecture/components/).
+The corresponding role definitions and explicitly selected standards supply
+shared procedure through the existing request builder.
 
-An activity's explicit ordered instruction list can combine a shared Agent
-protocol, its activity-specific protocol and a component/activity-specific
-document. These are complete source files, not excerpt selectors, templates with
-an expression language, paging APIs or implicit inherited activities. A missing
-file is a validation error. A supplied empty list stays empty. Neither a role
-name nor an automatically expanded generic role completes a component's rewrite.
-Review the component-specific text and the complete resolved procedure together.
+The shared [Agent operating protocol](../../../../../.arc/architecture/standards/agent-operating-protocol.md)
+is authored once and selected explicitly in each model activity's standards.
+Activity-specific shared methods belong in the selected role's instructions;
+component-specific method, fixtures, decisions and outputs belong in that
+component activity's own instruction paragraphs. The complete activity operating
+prompt combines these sources in the existing single request string. Report
+both source-specific and complete resolved token counts. Neither a generic role
+expansion nor a newly added standard alone completes a component's individual
+activity rewrite.
 
-Inline authored text remains useful for small target projects and explicit test
-fixtures. Source references are an alternative representation of authored text,
-not a compatibility lifecycle or second prompt builder. Both resolve from the
-same captured Git source and preserve exact bytes and provenance. Reference only
-architecture-owned guidance in this batch, so current proposal, adoption and
-checked-edit protection continue to cover every instruction source. Do not invent
-another authority store or allow candidate files to become instructions.
+This uses the existing purpose, instructions, role and standard fields. No new
+source-reference syntax, loader, templating framework or provider channel is
+needed. Each rule has one authored home; complete selected guidance remains
+readable with its ordinary source labels. Existing activities, profiles,
+ownership and operation authority remain explicit. The host-only release
+specification does not acquire a model profile or a generic Agent prompt.
+
+This branch is a review proposal. It is not staging or an adopted runtime model.
+Finish every component purpose and activity, then stop for human review before
+activation or further live testing. The in-flight run uses its original installed
+runtime and captured source.
 
 ## Preserve the single request string
 

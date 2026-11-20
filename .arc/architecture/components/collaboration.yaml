@@ -2,97 +2,106 @@ id: collaboration
 kind: plugin
 purpose: Expose the provider interface and GitHub operations to trusted host services.
 objectives:
-- measure: A provider-observed merge identifies the verified head and resulting commit.
+  - measure: A provider-observed merge identifies the verified head and resulting
+      commit.
 constraints:
-- failure: A steward obtains upstream credentials or a changed head can be merged.
+  - failure: A steward obtains upstream credentials or a changed head can be merged.
 owns:
-- packages/collaboration
-- .arc/research/collaboration
+  - packages/collaboration
+  - .arc/research/collaboration
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
-    - Establish the provider observation needed to confirm the intended upstream effect.
+      - Establish the provider observation needed to confirm the intended
+        upstream effect.
     operations:
-    - read-file
-    - list-files
-    standards: []
+      - read-file
+      - list-files
+    standards: [ agent-operating-protocol ]
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
-    - Describe the provider operation, its authorized input and the returned observation.
+      - Describe the provider operation, its authorized input and the returned
+        observation.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    standards: []
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+    standards: [ agent-operating-protocol ]
   testing:
     role: designer
     profile: gpt-terra
     instructions:
-    - Use an isolated provider fixture to exercise changed heads, checks and unavailable results.
+      - Use an isolated provider fixture to exercise changed heads, checks and
+        unavailable results.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
   implementation:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-    - Perform only the host-authorized GitHub operation and report the observed identity.
+      - Perform only the host-authorized GitHub operation and report the
+        observed identity.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
   review:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-    - Check that provider calls stay outside agent authority and cannot merge a changed head.
+      - Check that provider calls stay outside agent authority and cannot merge
+        a changed head.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - request-supplier
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - request-supplier
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol

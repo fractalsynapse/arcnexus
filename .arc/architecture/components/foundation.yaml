@@ -1,106 +1,487 @@
 id: foundation
 kind: plugin
-purpose: Provide shared build and verification tooling.
+purpose: |
+  # Foundation component purpose
+
+  ## Shared technical strategy with reusable executable tools
+
+  Foundation supplies the common technical base that lets apps and plugins build,
+  type-check, format, lint and test through consistent public commands. Its purpose
+  is broad shared strategy and useful reusable tooling, not continuous approval
+  of every component's dependency graph. An accountable steward should be able
+  to use the declared toolchain directly, select the relevant checks and receive
+  an exact diagnostic without starting a separate coordination process for routine
+  engineering.
+
+  The component exists because decentralized ownership still needs common execution
+  semantics. A formatter invoked by a human, a steward operation and CI should mean
+  the same thing. A test suite belongs with its plugin while discovery and build
+  configuration remain shared. Type checking must include source, tests, fixtures
+  and tooling. These shared foundations keep each component isolated and independently
+  maintainable without making every owner reimplement build scripts, test selection
+  or lint policy.
+
+  Foundation also expresses the project's technical quality standard. Maintained
+  code is strict class-based TypeScript, with coherent lifecycle responsibilities,
+  small pure transformations and explanatory headers. The approved readable standard
+  governs physical structure and suppressions. Tooling enforces the mechanical
+  parts, while independent review assesses explanatory quality and design. A class
+  with an empty formal header should not pass as documented, but lint cannot
+  prove that a nonempty comment helps a newcomer understand an invariant.
+
+  The useful outcome is a small trustworthy toolchain that supports fast iterative
+  delivery. A clean checkout can install the locked dependencies, build the app
+  and package layout and run the actual built program. Scoped engineering checks
+  give immediate feedback; assembled checks establish the combined candidate.
+  Foundation should remove duplicate commands, discovery rules and speculative
+  classifiers when the direct shared path supplies the accepted behavior.
+
+  ## Public command semantics stay consistent
+
+  The shared commands provide build, strict type checking, lint, formatting checks,
+  authorized fixers and tests. Their names and semantics are recorded in the
+  Foundation contract and quality reference. Model activities use captured
+  operation bindings to invoke those commands through Execution; they do not gain
+  native shell simply because the repository exposes an npm script. Human callers
+  and CI can use the same entries under their own authorized scope.
+
+  Read-only checks must leave maintained source unchanged. A check reports its
+  actual command, directory, status and useful output so the responsible caller can
+  correct a defect. Fixers are separate effects and act only within the caller's
+  writable scope. A repository-wide formatter invocation can affect many owners,
+  so routine stewards use explicit owned paths or the supported checked-edit
+  formatting transform. The host must never hide a source mutation inside what
+  it reports as verification.
+
+  Build emits only into the declared generated roots. Generated JavaScript belongs
+  there, while maintained executable source, configuration code, fixtures and
+  tooling remain TypeScript. A successful build that wrote a tracked source path
+  would violate the boundary. Clean-build behavior should remove stale generated
+  artifacts so tests do not pass because obsolete compiled files survived. Preserve
+  source and generated output as different inventories with explicit lifecycle.
+
+  Strict type checking covers the assembled maintained program rather than only
+  the package a steward happened to open. A source defect, fixture error or tooling
+  type mismatch should identify the affected file. An explicit dynamic boundary
+  can use the accepted TypeScript facilities without weakening the shared strict
+  configuration. Do not add an exclusion, suppression or duplicate loose build to
+  make one contribution appear successful while the real composition remains broken.
+
+  The same command must retain the same observable meaning across local and host
+  execution. A confined check may have a different mounted root but still uses
+  the declared operation, actual dependencies and selected working directory. A
+  test fixture should verify that relationship rather than assuming the interactive
+  developer environment matches the managed process. Execution owns confinement;
+  Foundation supplies the reusable command and its truthful result.
+
+  ## App and plugin layout supports local ownership
+
+  Each app or plugin keeps its implementation, tests, public entry, contract and
+  ordinary documentation together. Shared root scripts and configuration serve
+  real cross-component consumers. Foundation maintains those common entries without
+  absorbing plugin-specific scenario fixtures or release workflows. A new component
+  should reuse the existing build and test path rather than copy a scaffold of
+  nearly identical scripts that later drift apart.
+
+  Cordis composition is exercised through the built application, not only by
+  type-checking plugin exports. A public service can be replaced at a real seam,
+  and the app's composition determines its trusted runtime wiring. Foundation
+  supports the shared compilation and test environment; the app and plugin owners
+  maintain their actual composition scenarios. Do not turn the shared toolchain
+  into another application launcher, runtime manager or plugin installation service
+  without a demonstrated approved responsibility.
+
+  Public imports preserve component isolation. Consumers use another plugin's
+  declared entry rather than its private helper files. Shared low-level utilities
+  can live in Foundation when multiple real owners need them, but an abstraction
+  is not justified merely because it might be reused someday. Prefer a cohesive
+  existing helper to a trivial wrapper or parallel type definition. Keep dependency
+  direction understandable and validate actual import boundaries and cycles.
+
+  Source classification should be authored once and used consistently. Maintained
+  files, generated roots, vendor dependencies, ignored evidence and protected
+  architecture have different treatment. Formatting coverage and the declared
+  maintained formatting inventory must agree. An intentionally excluded guide or
+  planning document is not proof that its bytes were checked. A tool should expose
+  the selected scope so a reader can understand what its result covers.
+
+  ## Owner-scoped quality is real tool behavior
+
+  Owner-scoped formatting and lint reuse their repository commands with an owner
+  selection. Git supplies the actual maintained inventory, Team supplies ownership
+  and each tool supplies its real applicability. Do not maintain a hardcoded owner
+  list or a second pattern classifier that diverges from production configuration.
+  The selected scope and tool result must be retained completely enough for
+  Execution to validate what was checked.
+
+  Apply ownership selection before loading another owner's executable tool
+  configuration. Candidate formatter or linter configuration is code and belongs
+  inside the existing confined check environment when the host verifies it. A
+  trusted host must not evaluate arbitrary candidate config merely to discover
+  which files might be applicable. Foundation's tool API runs in the caller's
+  environment; Execution owns the effect and trust boundary around host checks.
+
+  Applicability is per operation. No owner test suite can make owner tests
+  inapplicable, while formatting and lint have their own maintained scope. Shared
+  types and build remain applicable where declared. An empty scope must be
+  distinguished from a successful check of files that were never selected. Preserve
+  the actual reason and let required assembled acceptance remain mandatory. A
+  component that owns only project documents is still a valid steward.
+
+  Lint severity comes from the accepted configuration. Reject inline configuration
+  through the actual semantic rule rather than adding a warning-count quota.
+  Mechanical source rules should fail with useful file and rule diagnostics.
+  Do not add unapproved numerical overrides, content caps or temporary bypasses to
+  make verification finish. The accepted-limits log records actual human permission;
+  an external tool's example settings are not authorization to introduce another
+  application restriction.
+
+  Formatting is also a real operation with configuration and source inputs.
+  A selected file should be checked using the same parser and configuration that
+  would format it, without writing during the check. A legitimate formatter transform
+  returns the actual resulting bytes through the checked edit path. A stubbed
+  formatter that returns the input can test a caller's response handling but
+  cannot establish production formatting behavior. Preserve that distinction in
+  regressions and reports.
+
+  ## Test selection follows literal metadata and ownership
+
+  The shared runner discovers maintained suites beside their owning code and
+  selects by owner, declared level, tags and literal paths according to its public
+  API. Metadata must agree with catalog ownership and directory level. A test
+  cannot claim another owner through a convenient exported label. Validate
+  declarations before executing test code so discovery itself does not become
+  an arbitrary effect or hide an inconsistent suite behind a filter.
+
+  Read literal suite metadata rather than importing a test to discover its
+  classification. Computed metadata, duplicate fields or unsupported values need
+  precise diagnostics. A filter should select from a valid inventory, not make an
+  invalid declaration disappear because another owner was requested. Keep discovery,
+  selection and execution as clear responsibilities that reuse the shared sources
+  and command entry.
+
+  Different selectors combine according to the documented API. Repeated values
+  within a selector can offer alternatives, while independent owner, tag, level
+  and path requirements narrow the set together. Paths are literal file or
+  directory identities, not shell fragments. A selected directory includes its
+  descendants, with proper boundaries. An explicit selection that matches nothing
+  must not report a test pass without running suites. This differs from an
+  optional owner operation that truthfully reports no owned suite.
+
+  Native execution is an explicit availability decision. A default deterministic
+  run may report native cases skipped; it is not evidence they passed. An explicit
+  native selection requires its actual environment and must fail honestly when
+  disabled or unavailable. A controlled provider fixture remains controlled even
+  when it uses a real executable. The runner should not label it live inference
+  merely because its metadata contains a native tag.
+
+  Compiled tests should execute the actual built program and public modules.
+  Their source remains class-based TypeScript with meaningful scenario names and
+  literal metadata. Generated temporary scripts can serve as controlled executable
+  artifacts when the maintained fixture source is typed and their role is clear.
+  Avoid implementation-mirroring assertions, meaningless numeric scenario suffixes
+  and fakes that bypass the very boundary acceptance requires.
+
+  ## Realistic fixtures and useful feedback
+
+  A meaningful regression isolates the defect class through a public contract.
+  For a documentation lint rule, rejected input should assert its rule and message
+  identities while valid input has no diagnostics. For formatting, exercise actual
+  configuration and selected files. For metadata discovery, include realistic
+  source declarations and ownership. A test that only checks a private helper's
+  current output shape can pass while the production command remains broken.
+
+  Generic fixtures explicitly supply their Git repository, remote, captured files,
+  owner metadata, dependencies and command configuration. They should not rely on
+  the live ArcNexus checkout or a developer's personal tool setup. A native
+  filesystem scenario must match its mount destinations and selected working
+  directory. A fixture type cast cannot replace required runtime data. Repair
+  such setup failures locally and preserve them separately from the intended
+  behavioral red.
+
+  Testing can complete once the valid new regression reaches the intended missing
+  behavior and other applicable required checks pass. It need not wait for its
+  future Implementation Step to make that assertion green. Do not request another
+  Foundation milestone just to perform the already accepted implementation. If a
+  consumer truly needs a different owner's public contribution, state that
+  concrete dependency and let Direction place it first. Avoid circular fixture
+  requirements that make useful red impossible to acknowledge.
+
+  During Implementation, read actual exits and logs and repair the smallest
+  responsible owned defect. A compiler error in a fixture is different from a
+  failed behavior assertion, and a prediction that a check should fail does not
+  change what occurred. Keep established red evidence, current passing observations
+  and unresolved required-pass failures distinct. The host's completion verification
+  uses those actual observations rather than the model's optimism.
+
+  Self-review should assess design and explanatory quality as well as mechanical
+  results. A nonempty header that repeats a signature can satisfy lint while still
+  being poor documentation. A split method can meet the accepted physical rules
+  while introducing meaningless forwarding wrappers. A shared selector can pass
+  happy-path tests while evaluating foreign config before filtering. Identify the
+  actual remaining issue and route local correction to the activity that can
+  change its cause.
+
+  ## Dependency strategy stays proportional
+
+  Use the locked toolchain reproducibly. A clean checkout should install its
+  declared versions and produce the same supported command behavior. Shared package
+  updates need a real capability or demonstrated incompatibility, primary-source
+  evidence where relevant and appropriate integration checks. Do not continuously
+  revisit every dependency because a different component encountered an ordinary
+  test failure. Its accountable steward should first inspect the actual diagnostic
+  and public interface it uses.
+
+  Foundation provides broad technical strategy and reusable tooling. Execution owns
+  the managed candidate environment and actual confined operations, including the
+  requirement that observed dependencies match the candidate being checked. A
+  generic offline package-management service is a separate architectural capability.
+  Do not blur those scopes or add a general dependency orchestrator as a response
+  to a concrete candidate-check defect. Reuse the existing lifecycle and evidence
+  path for the actual prerequisite being observed.
+
+  Evidence reuse should be conservative and explainable. Effective source inputs,
+  operation parameters, authority and environment determine whether an observation
+  still applies. Unknown coverage calls for a fresh check; changed relevant inputs
+  invalidate it. That does not require a speculative exhaustive dependency graph
+  or a second cache policy in Foundation. Supply accurate scope and real command
+  semantics so the responsible host can make its existing reuse decision honestly.
+
+  Before adding a new utility or dependency, look for an existing public service
+  or installed library that already performs the required work. Keep one authored
+  definition for shared concepts such as suite metadata and operation scope records.
+  Remove superseded classifiers and wrappers when a direct path replaces them.
+  The goal is a foundation that lets components move independently with less code,
+  not a central layer that must approve every local engineering choice.
+
+  ## Integration with the rest of the platform
+
+  Architecture declares operations and typed parameter overrides, then resolves
+  them for inspection and activation. Foundation implements the real shared command
+  API those declarations use. A parameter is valid only when the command supports
+  its semantics. If a new selector is needed, deliver its implementation and
+  tests before activating the corresponding guide mapping. A declaration alone
+  must not make a missing handler or unsupported flag appear usable.
+
+  Execution runs captured operations through local MCP and host confinement,
+  records actual results and returns failures to the calling activity. Foundation
+  should make those diagnostics useful enough for a local correction. It does
+  not own the Agent loop, retry policy or task journal. A failed lint invocation
+  should not require a new Director milestone when the original steward can fix
+  its owned source and rerun the affected check.
+
+  Verification consumes applicable observations and required assembled checks.
+  Reviewer independently judges their support for acceptance. Foundation supplies
+  the tools, not the verdict, and cannot turn an unavailable native observation
+  into a passing result. Keep a real expected-red regression distinct from a
+  final failed candidate. Required missing or skipped evidence remains a gap for
+  the responsible lifecycle to report.
+
+  Release owns workflow configuration and hosted delivery documentation. Shared
+  toolchain changes that affect CI may need its concrete contribution, sequenced
+  under the same task. The local command, compiled program and hosted workflow
+  should agree, while their results remain separate evidence. Foundation should
+  not edit another owner's workflow as a shortcut or assume local success proves
+  current-head CI and post-merge staging behavior.
+
+  ## Practical quality scenarios
+
+  Consider a component with a failing lint diagnostic and a passing behavioral
+  suite. The correct operation map exposes both categories before self-review.
+  The accountable caller reads the lint result, corrects its owned source and
+  obtains a current passing observation. Sending the issue through Foundation
+  dependency analysis or waiting for final review adds no useful information.
+  Shared tooling succeeds when the cheap deterministic feedback reaches the person
+  or Agent who can change the outcome.
+
+  Consider a candidate whose own linter configuration executes code. Owner selection
+  must not evaluate another plugin's configuration in a trusted host while deciding
+  scope. The actual check runs inside the existing confined environment and retains
+  its complete selected file list and status. A generic regression can supply a
+  foreign configuration that would reveal premature evaluation, then observe that
+  the scoped path avoids it. Do not substitute a hardcoded filename exception
+  for the responsibility boundary.
+
+  Consider a selected native suite with native execution disabled. Reporting all
+  cases skipped and exit zero would not establish the requested observation.
+  The runner needs an honest unavailable or invalid selection result according
+  to its public contract. A default broader run that truthfully reports skipped
+  native cases is a different observation. Clear selection semantics prevent the
+  workflow from claiming a provider or confinement proof that never occurred.
+
+  Consider an empty documentation header on an abstract TypeScript method. A
+  mechanical public rule regression should show the missing useful header
+  diagnostic without altering the standard or adding a separate comment-scoring
+  framework. Meaningful nonempty headers continue to pass, and independent review
+  still judges whether their explanation is helpful. This is a small shared
+  correction that improves all stewards without asking each to duplicate lint logic.
+
+  Consider a repository operation invoked from a nested directory. The selected
+  root, configuration, generated output and literal suite paths must resolve
+  according to the public command contract. A fixture that works only from an
+  interactive root can conceal the production failure. Verify the actual built
+  entry and environment, preserve the failing observation and correct the shared
+  responsible resolver rather than teaching every component a different workaround.
+
+  ## Measures and continuing improvement
+
+  Another useful scenario changes a candidate's dependency lockfile while retaining
+  the original checkout. The observed check must identify which dependency environment
+  it actually used. A failure against an old installed version cannot prove the
+  new candidate is defective, and a result prepared with a different manifest
+  cannot be reused as equivalent. Foundation supplies reproducible tool semantics;
+  Execution retains the candidate preparation and environment observations. Keep
+  the exact configuration instead of announcing a universal library limitation
+  from a single failed experiment.
+
+  Metadata discovery needs its own negative case. A test module can have an
+  observable import side effect, while its literal owner, level and tags are
+  readable as source. Discovering and selecting suites should not trigger that
+  effect before execution. A computed or conflicting declaration should fail with
+  its actual field context. This establishes a meaningful public boundary that
+  would be missed by a test which simply imports every module and counts results.
+
+  Source immutability is equally observable. Capture maintained bytes before a
+  read-only quality command, run it against a realistic selected scope and compare
+  the source afterward. A failing check must remain failing with its real
+  diagnostic, not silently repair the file and claim it passed. An authorized
+  fix is a separate checked effect with its own receipt. This distinction lets
+  Agents learn from actual failures and keeps independently verified acceptance
+  from depending on hidden mutations.
+
+  Reports should name the environment and exact candidate for each observation.
+  That allows a later steward to reuse valid unchanged evidence or diagnose a
+  real difference without repeating unrelated suites. The same discipline keeps
+  local checks, hosted CI and live self-development as complementary observations
+  instead of interchangeable labels for a green result.
+
+  Foundation succeeds when a clean supported checkout builds the real app/plugin
+  composition, shared commands behave consistently, scoped selection is truthful
+  and mechanical defects reach their accountable caller early. The build writes
+  only generated roots, maintained executable code remains TypeScript and tests
+  exercise actual public behavior. Independent review and live qualification remain
+  distinct from the toolchain's deterministic passes.
+
+  Measure command duration, selected scope, repeated unchanged checks, fixture
+  setup failures and the cost of unnecessary dependency investigations. The
+  timeline and profile usage can reveal that a small missing lint operation caused
+  many expensive model activations. Prefer the cheapest meaningful correction at
+  its actual source. Preserve complete logs, negative findings and unknown
+  measurements; do not add execution budgets or automatic profile changes in the
+  name of optimization.
+
+  The long-term foundation is simple enough for other component stewards to trust
+  without constant consultation. Its broad strategy keeps the project coherent,
+  and its reusable implementations eliminate boilerplate. Evolve it when a real
+  blocker or new capability demands shared work, then demonstrate that correction
+  through the normal platform. The result should shorten the next Agent's path
+  from a concrete requirement to working verified software.
 objectives:
-- measure: An owner test selection executes exactly that owner’s suites.
+  - measure: An owner test selection executes exactly that owner’s suites.
 constraints:
-- failure: A check writes outside its declared generated roots.
+  - failure: A check writes outside its declared generated roots.
 owns:
-- packages/foundation
-- docs/foundation
-- scripts
-- package.json
-- package-lock.json
-- .prettierignore
-- .prettierrc.yaml
-- eslint.config.ts
-- tsconfig.json
-- .arc/research/foundation
+  - packages/foundation
+  - docs/foundation
+  - scripts
+  - package.json
+  - package-lock.json
+  - .prettierignore
+  - .prettierrc.yaml
+  - eslint.config.ts
+  - tsconfig.json
+  - .arc/research/foundation
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
-    - Locate the shared owner selection or build decision before changing tooling.
+      - Locate the shared owner selection or build decision before changing
+        tooling.
     operations:
-    - read-file
-    - list-files
-    standards: []
+      - read-file
+      - list-files
+    standards: [ agent-operating-protocol ]
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
-    - Describe observable command behavior and generated output boundaries.
+      - Describe observable command behavior and generated output boundaries.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    standards: []
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+    standards: [ agent-operating-protocol ]
   testing:
     role: designer
     profile: gpt-terra
     instructions:
-    - Exercise owner selection, missing checks and reproducible toolchain inputs.
+      - Exercise owner selection, missing checks and reproducible toolchain
+        inputs.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
   implementation:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-    - Keep a shared command path with owner-scoped tests and declared generated outputs.
+      - Keep a shared command path with owner-scoped tests and declared
+        generated outputs.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
   review:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-    - Check parity between human, steward and CI invocations.
+      - Check parity between human, steward and CI invocations.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - request-supplier
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - request-supplier
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol

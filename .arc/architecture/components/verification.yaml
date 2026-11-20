@@ -1,98 +1,484 @@
 id: verification
 kind: plugin
-purpose: Assess one assembled task candidate against the captured acceptance.
+purpose: |
+  # Verification component purpose
+
+  ## Bind acceptance to the work that was actually produced
+
+  Verification owns the host acceptance gate for an assembled task candidate.
+  It runs the required applicable checklist, gathers trusted observations and
+  obtains the final independent read-only Reviewer verdict against the original
+  goal and captured criteria. It binds that judgment to the candidate, authority,
+  environment and evidence actually assessed. Delivery can consume an accepting
+  result only for that verified work. This service makes acceptance a reproducible
+  observed relationship rather than a model's statement that the task looks done.
+
+  The component exists because engineering activity, evidence and acceptance can
+  otherwise drift apart. A check may concern an earlier tree, a fixture may omit
+  a production field or a verdict may cite the wrong log. A source change after
+  review can make the accepted candidate different from the one published.
+  Verification supplies the precise boundary that prevents those plausible-looking
+  but unsupported transitions. It preserves the original promise while allowing
+  accountable repair and reuse of observations that still apply.
+
+  Reviewer supplies the reasoning Agent; Verification supplies the gate and its
+  trusted inputs. Execution performs scoped host checks and candidate assembly,
+  Coordination retains observations, Workflow routes outcomes and Direction revises
+  legitimate remaining work. Verification should use those services through public
+  interfaces. It must not become another task scheduler, private provider adapter,
+  owner catalog or publication implementation merely because it sees the assembled
+  result.
+
+  The useful outcome is a verdict whose meaning a human can audit. The report
+  identifies the actual candidate and criteria, which required operations ran,
+  their scope and results, who assessed them and which evidence supported each
+  claim. Missing, skipped or unavailable required evidence remains visible. A
+  rejection names actionable deficiencies; an invalid response returns to its
+  caller for repair. Neither outcome authorizes weakening acceptance to make the
+  workflow continue.
+
+  ## Consume the actual assembled record
+
+  Candidate assembly belongs to Execution and returns the real production record.
+  Verification must consume that public shape, including the source location,
+  retained engineering relationship, candidate identity and relevant attribution.
+  A test fixture modeled after an earlier assignment object can hide the fields
+  production actually reads. The acceptance regression must use the actual
+  assembled boundary rather than an alternate object that happens to satisfy
+  a type cast or helper signature.
+
+  The engineering base, active approved architecture and assembled tree have
+  different meanings. The base establishes what the task changed relative to
+  staging. Architecture governs the operations and acceptance context. The
+  candidate identifies the combined source assessed. An approved model adoption
+  must not make the candidate compare against itself and appear unchanged.
+  Preserve those identities explicitly and use the actual assembled record when
+  checking what Delivery will later publish.
+
+  Accepted criteria come from the canonical host-retained plan and original goal.
+  Completed milestones and supplier contributions preserve their original
+  criterion identities. A correction can add local measures without replacing
+  the rejected original outcome. Verification must evaluate the promised result,
+  not a model-authored summary that quietly omits inconvenient requirements.
+  Unknown or duplicated acceptance references are invalid input to the gate.
+
+  The candidate should remain stable while it is being assessed. Required checks
+  are read-only, and the Reviewer receives no write capability. Recording an
+  observation or lesson through the journal must not change the candidate tree.
+  If a real source change occurs, its previous verdict is inapplicable and the
+  affected evidence must be refreshed before a new accepting result can authorize
+  delivery. A new filename or timestamp cannot make stale acceptance current.
+
+  ## Select applicable operations without losing assembled requirements
+
+  Formatting, lint, strict types/build, behavioral tests and real native observations
+  serve different verification purposes. Applicable component checks should provide
+  feedback during engineering before an activity progresses. Required assembled
+  checks still apply to the combined candidate. A suite's presence is not the
+  definition of verification, and its absence does not waive other applicable
+  operations. Keep each operation's actual applicability and reason visible.
+
+  The architecture declares operations, typed parameters, prerequisites and activity
+  completion requirements. Verification and Execution use the resolved values,
+  not an independently reconstructed command. Effective owner, tag, level, path,
+  working directory, native selection and environment matter to the result.
+  An operation with the same ID but changed parameters may establish a different
+  observation. Unknown or invalid bindings are findings before they become a
+  misleading check result.
+
+  An explicitly selected test set that matches nothing is different from an optional
+  owner with no suite. A native case disabled by configuration is different from
+  an observed native pass. A required executable that cannot run is unavailable,
+  not skipped-and-passed. Inspect the actual operation report and retained scope.
+  A zero exit cannot establish a criterion whose relevant behavior never ran.
+  Missing required evidence leaves the candidate unaccepted with a precise reason.
+
+  Expected-red regression assertions and deliberate negative cases also need their
+  correct interpretation. Testing can intentionally observe the missing behavior
+  before Implementation corrects it. A refusal test can prove that unauthorized
+  effects were blocked. Those are useful verification, not uncontrolled aborts.
+  Retain the actual observations and current applicable passing evidence rather
+  than rewriting every historical nonzero exit or refusal as though it never
+  occurred.
+
+  Keep the assembled checklist canonical. Delivery consumes its accepting result
+  and does not run a second engineering acceptance process with different criteria.
+  Do not insert an arbitrary owner-scoped re-verification pass between final
+  checklist and verdict. Reuse applicable existing observations through the same
+  evidence identity, and run missing or affected required checks when needed.
+  This keeps the acceptance trace clear and avoids redundant expensive work.
+
+  ## Evidence is complete, scoped and attributable
+
+  An observation records what actually ran: command, arguments, working directory,
+  status, duration, scope, environment and readable log where appropriate. A
+  steward's prose that tests passed is not that trusted record. Preserve the
+  candidate and runtime relationship and distinguish native behavior from a
+  controlled executable or simulated response. The gate should make unsupported
+  claims visible before publication rather than expecting a later release review
+  to rediscover the gap.
+
+  The Reviewer receives the complete authorized evidence by reference and can
+  read whole files on demand. There is no automatic evidence sampling, report
+  ceiling or paging loop to make the bundle fit a convenient transport size.
+  Measure its actual size and contributors for analysis, while keeping the
+  content intact. If an external harness refuses an input, retain the real
+  diagnostic and measured cause as unavailable instead of trimming the material
+  until the candidate appears accepted.
+
+  Evidence scope is an authority condition, not a size optimization. A retained
+  artifact must belong to the authorized task or captured scope and remain
+  retrievable under its actual identity. Unsafe aliases, guessed relative paths
+  and another task's similarly named log do not become valid because they contain
+  useful text. Widening the read scope is an architectural decision. Verification
+  cannot make that choice silently to obtain an easier assessment.
+
+  Complete answers and originating findings matter to acceptance. A clarification
+  can include the condition that distinguishes the intended implementation from
+  a plausible shortcut. A later local repair diagnostic can omit the original
+  requirement if the caller context is wrong. Preserve both the exact source
+  material and current applicable observations so the independent assessor can
+  judge what was actually promised and whether the final candidate resolves it.
+
+  Retained history supports diagnosis without becoming active authority. Earlier
+  failures, interrupted work and successful receipts remain available, while the
+  current result is bound to its actual inputs. A later correction does not turn
+  an old failed run into a clean cycle. Likewise, a prior successful unrelated
+  task does not prove the current goal. Reports should link the relevant identities
+  and state the limit of each observation honestly.
+
+  ## Reuse observations only when their meaning still holds
+
+  Reuse depends on the check's actual relevant inputs, parameters, authority and
+  environment. An unrelated edit need not invalidate a declared scoped observation
+  when those inputs are known unchanged. A changed relevant file, dependency,
+  parameter or environment requires a fresh observation. Unknown input coverage
+  calls for conservative verification, not an invented guarantee or a speculative
+  dependency-analysis framework.
+
+  Independent verdicts have a broader binding than individual checks. A changed
+  candidate needs an applicable independent assessment even if some scoped checks
+  remain reusable. Identical candidate, criteria, evidence and environment can
+  recover the retained verdict. A previously rejected tree can be reconsidered
+  when genuine relevant evidence changes, but repeating the same tree and evidence
+  does not make another identical review useful. Preserve the actual difference
+  that justifies a new assessment.
+
+  Approved model adoption can also affect observation applicability. Revalidate
+  changed operation parameters, ownership, instructions and completion obligations
+  before the next activity. Keep unaffected evidence and original acceptance
+  where they still apply. Historical records retain the authority they actually
+  used. A candidate's registry or instruction change cannot retroactively authorize
+  a check or relabel an earlier profile as though a new model had executed it.
+
+  Reuse decisions should be explainable from retained records. A reader should
+  be able to tell why a log applies to this candidate and why a fresh operation
+  was or was not required. Do not maintain another verdict cache or mutable
+  evidence store beside Coordination and the existing check path. Simpler state
+  is useful when it preserves the meaning of the observation rather than merely
+  reducing the number of fields in a report.
+
+  ## Independent assessment and caller-level repair
+
+  Verification obtains the final read-only Agent through the project's explicit
+  Reviewer binding and selected profile. Its request uses the same Agent and
+  Architecture builder as inspect. The Reviewer is independent of the steward
+  who authored the contribution, and its allowed operations remain read-only.
+  The host supplies the actual candidate, original acceptance, checks and evidence
+  instead of asking the assessor to infer them from a PR description.
+
+  A valid accepting verdict cites the required criteria and permitted evidence
+  and matches the candidate identity. A valid rejection names failed criteria,
+  observations and accountable responsibility so Direction can sequence correction.
+  Unknown acceptance IDs, missing support, incorrect candidate binding and invalid
+  references are malformed assessment responses, not valid substantive decisions
+  that should automatically create new engineering work.
+
+  Return the exact response-validation diagnostic to the same Reviewer for repair.
+  Keep the candidate and unchanged check evidence intact while it corrects JSON,
+  field shape or citations under the supplied repair conditions. Do not rerun
+  all checks or invoke Direction because the assessor guessed a relative evidence
+  path. Distinct errors can be corrected in the same assessment; unchanged
+  repetition needs diagnosis rather than an arbitrary attempt count or profile
+  downgrade.
+
+  Substantive rejection takes the broader route. Workflow gives Direction the
+  rejected stable criteria and complete relevant finding, and accountable stewards
+  repair the needed work. The changed assembled candidate receives affected
+  checks and an applicable independent verdict before delivery. Verification
+  does not edit files, modify acceptance or direct source changes itself. A
+  rejection is useful feedback about the original promise, not permission to
+  invent a new scope.
+
+  Optional research and human clarification can support the assessment without
+  changing its candidate or checklist. The original Reviewer resumes with the
+  complete report or answer. External facts can explain expected behavior but
+  do not replace local observations that the candidate actually exercised it.
+  An unanswered high-level decision remains pending. Ordinary technical repair
+  within approved intent must not become a new approval ceremony.
+
+  ## Publication and learning preserve candidate identity
+
+  Delivery consumes the verified candidate and accepting result. It observes
+  current CI, configured review and actual integration through its own boundary.
+  A pending remote check or uncertain merge response is not a new engineering
+  verdict. Delivery reconciles external effects before retry. If publication
+  reveals an engineering defect, return that exact finding for accountable
+  repair, then refresh affected verification for the resulting candidate.
+
+  Verification cannot merge, publish, approve a PR, deploy or answer a human gate.
+  Its public result establishes engineering acceptance, not release authority.
+  An operator's explicitly authorized repository action remains separate from
+  the generic runtime capability. Keep those distinctions in the outcome and
+  evidence so a steward is not asked to prove future GitHub effects before its
+  own contribution can complete.
+
+  Reviewer lessons are recorded through the journal without changing the assessed
+  tree. A tracked learning note is an ordinary source contribution with its own
+  accepted scope. Do not accept a digest, write a lesson into that candidate
+  afterward and publish under the old verdict. The lesson's usefulness does not
+  exempt it from the same source and acceptance identities as other maintained
+  changes.
+
+  Interrupted verification preserves actual checks and observations without
+  inventing a completed verdict. Restart reads applicable retained state before
+  repeating an operation or assessment. The candidate may need reconstruction
+  from its secured checkpoint, but a new worktree path alone is not a new goal.
+  Cleanup and cancellation retain their actual outcomes and acknowledged prefix.
+  Manual database repair or operator source edits are not self-healing acceptance.
+
+  ## Engineering this component through its real boundaries
+
+  The Verification steward maintains the gate, evidence binding and integration
+  tests within its own component. Documentation should explain the distinction
+  between observed checks, independent judgment and delivery. Testing should
+  target the public assembled-candidate path, required evidence failures,
+  reuse/invalidation and response repair. Implementation should use existing
+  services and preserve read-only verification. Self-review assesses that change
+  without issuing its own task-level independent verdict.
+
+  Fixtures must contain the actual production record shape and identities.
+  Supply realistic candidate source, accepted criteria, trusted check records,
+  environment and permitted evidence. A provider fake can test deterministic
+  verdict handling, while real SQLite/Git boundaries establish retained state
+  and candidate relationships. Native or live claims need their own actual
+  observations. An assertion against an alternate assignment-shaped fixture
+  cannot prove the assembled record contract.
+
+  Keep maintained code strict and readable with cohesive lifecycle classes and
+  small pure transformations. Reuse the shared Agent, operation resolver,
+  Coordination evidence and existing checks rather than adding a verification
+  framework around them. Remove superseded paths when a direct correction
+  replaces them. The source should make it easy to identify which fact prevents
+  acceptance and which responsible service must act next.
+
+  Required owner-scoped quality checks should provide immediate feedback while
+  engineering this plugin. A passing suite does not excuse lint, types or build
+  failure. Meaningful red observes the intended gate defect; malformed fixture
+  setup is corrected locally and retained separately. Do not change a locked
+  contract, remove assertions or weaken candidate identity to make a contribution
+  pass. A real architectural conflict follows the human guide route.
+
+  ## Concrete boundary scenarios
+
+  Consider a verdict obtained for a candidate before an owned source edit. Even
+  if the change appears harmless, the old full-candidate verdict is no longer
+  applicable. Some scoped checks can remain reusable if their relevant inputs
+  are unchanged, but the final independent assessment must match the actual
+  new tree. This separates efficient evidence reuse from stale acceptance and
+  prevents a later metadata or learning edit from silently changing delivered work.
+
+  Consider a required native test selected while its environment is disabled.
+  The log can show a valid deterministic run with skipped native cases, but
+  that is not the native observation required by the criterion. Leave the
+  candidate unaccepted with the exact availability reason. Do not synthesize
+  a pass or ask a model to infer the missing behavior from source. The
+  responsible operation or environment must provide the actual observation.
+
+  Consider an invalid evidence citation in an otherwise supported Reviewer
+  response. Return the canonical diagnostic to that same caller and preserve
+  the current candidate and check records. A corrected citation can complete
+  the assessment without another plan, owner activity or PR. A separate actual
+  criterion failure should still produce a valid rejected verdict through the
+  normal Direction route. These are different recovery responsibilities.
+
+  Consider an approved operation override that changes selected test tags.
+  The earlier observation used different effective arguments and cannot silently
+  be reused as equivalent. Inspection, check records and input identity should
+  show the parameter change and its source. Run the affected operation and
+  retain its actual result, while preserving unrelated observations whose
+  declared inputs remain unchanged. No second dependency-analysis service is
+  needed to explain that decision.
+
+  Consider a false fixture that supplies the expected candidate digest but omits
+  the actual assembled directory and engineering relationship. A private helper
+  test might pass while production verification or publication uses the wrong
+  base. The public regression must construct or obtain the real assembly record
+  and observe that relationship through the service boundary. This catches the
+  escaped defect class instead of freezing an inaccurate mock shape.
+
+  ## Measures and continuing refinement
+
+  Read-only independence should also be observed, not merely requested in prose.
+  An assessment that attempts a candidate write must be refused even if the
+  Reviewer component owns a related learning directory in ordinary stewardship.
+  The selected assessment activity has no checked-edit grant. A positive test
+  of ordinary steward editing cannot establish that refusal; exercise the actual
+  assessment scope and preserve the result before any mutation.
+
+  Reassessment of an unchanged tree needs careful evidence identity. A previous
+  rejection may have lacked a genuine current owner observation that a later
+  authorized check now supplies. The new assessment can be justified by that
+  changed evidence even though source bytes are identical. Repeating the same
+  tree, criteria and equivalent observations is different and should not create
+  an endless sequence of identical verdicts. Preserve the actual reason a
+  reassessment is applicable rather than treating another model call as progress.
+
+  Publication feedback also needs classification. An uncertain GitHub response
+  belongs with Delivery's observation and reconciliation, while a CI diagnostic
+  that exposes a real candidate defect belongs with accountable engineering
+  repair and affected verification. Verification should not edit the accepted
+  tree in place or mark the remote failure passed. The existing issue and PR
+  identity remain available while the responsible lifecycle refreshes the changed
+  candidate's evidence and verdict.
+
+  Qualification reports can then distinguish recovered internal failures from
+  uncontrolled terminal aborts. An intended negative assertion, a corrected local
+  check and a repaired response are actual observations within a lifecycle,
+  not reasons to rewrite the history as error-free tool output. A bypassed
+  check, operator state repair or unproved required behavior cannot count as
+  clean acceptance. Keep that distinction explicit so later refinement measures
+  the system's ability to recover rather than its ability to hide failures.
+
+  The observation bundle should preserve enough source and correlation metadata
+  for another reader to follow every conclusion. A vague summary that the
+  candidate passed loses the useful relation between criterion, current check,
+  independent reasoning and delivered revision. A concise report with exact
+  retrievable references can remain readable while retaining all underlying
+  messages and logs in the existing evidence path.
+  Keep the recorded Reviewer request and actual profile with its verdict so later
+  analysis can establish what information the assessor received, rather than
+  assuming the latest inspection reproduces an earlier activation.
+
+  Verification succeeds when acceptance is tied to the exact work assessed,
+  required missing evidence blocks it, invalid responses repair locally and
+  substantive rejection remains actionable against stable criteria. A changed
+  candidate cannot reuse an inapplicable verdict, and unchanged applicable checks
+  do not rerun needlessly. Delivery receives one clear accepting result and
+  the independent Reviewer never acquires candidate write or publication scope.
+
+  Measure check duration, repeated unchanged work, evidence size, response repairs,
+  assessment time and actual profile usage. Keep provider token subsets separate
+  and missing usage or pricing unknown. A complete evidence bundle can be large
+  and useful; measurements should reveal irrelevant duplication without trimming
+  its substance. The cheapest meaningful assertion and a clearer activity
+  procedure can save more time than another layer of orchestration.
+
+  Later Planner and Architect assessments should use actual escaped defects,
+  unavailable operations and review findings to refine goals and guides where
+  warranted. Those records are observations, not immediate authority. Preserve
+  failed attempts and clean-cycle rules honestly. The enduring goal is a simple
+  independent gate that makes a self-developing system trustworthy while letting
+  ordinary local engineering correction proceed efficiently under approved direction.
 objectives:
-- measure: One independent verdict cites evidence for the engineering criteria and the original goal.
+  - measure: One independent verdict cites evidence for the engineering criteria and
+      the original goal.
 constraints:
-- failure: A missing required check counts as passed or a changed digest reuses a verdict.
+  - failure: A missing required check counts as passed or a changed digest reuses a
+      verdict.
 owns:
-- packages/verification
-- .arc/research/verification
+  - packages/verification
+  - .arc/research/verification
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
-    - Trace an acceptance criterion to its captured check and evidence input.
+      - Trace an acceptance criterion to its captured check and evidence input.
     operations:
-    - read-file
-    - list-files
-    standards: []
+      - read-file
+      - list-files
+    standards: [ agent-operating-protocol ]
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
-    - Specify verdict identity, evidence completeness and unavailable outcomes.
+      - Specify verdict identity, evidence completeness and unavailable outcomes.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    standards: []
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+    standards: [ agent-operating-protocol ]
   testing:
     role: designer
     profile: gpt-terra
     instructions:
-    - Exercise stale verdicts, missing evidence and recorded expected-red checks.
+      - Exercise stale verdicts, missing evidence and recorded expected-red
+        checks.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
   implementation:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-    - Implement one acceptance and verdict path for the assembled candidate.
+      - Implement one acceptance and verdict path for the assembled candidate.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
   review:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-    - Check the verifier implementation against its contract without authorizing candidate delivery.
+      - Check the verifier implementation against its contract without
+        authorizing candidate delivery.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - request-supplier
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - request-supplier
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol

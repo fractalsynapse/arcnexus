@@ -2,97 +2,105 @@ id: cli-app
 kind: app
 purpose: Compose trusted Cordis plugins and expose the terminal interface.
 objectives:
-- measure: The built CLI preserves SDK outcomes and the documented operator interface.
+  - measure: The built CLI preserves SDK outcomes and the documented operator interface.
 constraints:
-- failure: The CLI owns task policy or creates a second execution path.
+  - failure: The CLI owns task policy or creates a second execution path.
 owns:
-- apps/cli
-- .arc/research/cli-app
+  - apps/cli
+  - .arc/research/cli-app
 activities:
   research:
     role: researcher
     profile: gpt-astra
     instructions:
-    - Trace the operator interaction through the CLI into the shared Commands SDK.
+      - Trace the operator interaction through the CLI into the shared Commands
+        SDK.
     operations:
-    - read-file
-    - list-files
-    standards: []
+      - read-file
+      - list-files
+    standards: [ agent-operating-protocol ]
   documentation:
     role: technical-writer
     profile: gpt-sol
     instructions:
-    - Describe argument, terminal display and exit behavior in the CLI contract.
+      - Describe argument, terminal display and exit behavior in the CLI
+        contract.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    standards: []
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+    standards: [ agent-operating-protocol ]
   testing:
     role: designer
     profile: gpt-terra
     instructions:
-    - Exercise built invocation, terminal questions and exit codes against the shared operation outcomes.
+      - Exercise built invocation, terminal questions and exit codes against the
+        shared operation outcomes.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
   implementation:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-    - Compose the trusted plugins and translate terminal input and output at the app boundary.
+      - Compose the trusted plugins and translate terminal input and output at
+        the app boundary.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - checked-edit
-    - archive-research
-    - request-supplier
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - checked-edit
+      - archive-research
+      - request-supplier
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
     verification:
-    - owner-format
-    - owner-lint
-    - repository-types
-    - repository-build
-    - owner-tests
+      - owner-format
+      - owner-lint
+      - repository-types
+      - repository-build
+      - owner-tests
   review:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-    - Check that the adapter preserves SDK outcomes and carries no second task lifecycle.
+      - Check that the adapter preserves SDK outcomes and carries no second task
+        lifecycle.
     operations:
-    - read-file
-    - list-files
-    - ask-question
-    - request-research
-    - request-supplier
+      - read-file
+      - list-files
+      - ask-question
+      - request-research
+      - request-supplier
     standards:
-    - readable-typescript
+      - readable-typescript
+      - agent-operating-protocol
