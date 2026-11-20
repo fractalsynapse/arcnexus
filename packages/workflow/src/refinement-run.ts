@@ -223,7 +223,7 @@ export class RefinementRun {
     this.parent.record({ completedRound: completion });
   }
 
-  /** Rebuild this round's complete originating stream from retained child timeline artifacts. */
+  /** Rebuild this round from canonical child and descendant history across every attempt. */
   private originatingFrames(invocation: string, round: number, goals: readonly StandingGoal[]) {
     const host = hostTask(this.parent);
     const children: [string, string][] = [
@@ -234,7 +234,7 @@ export class RefinementRun {
         this.scope(invocation, round, `goal:${goal.id}`),
       ]),
     ];
-    const frames = children.flatMap(([goal, scope]) => retainedFrames(host, goal, scope));
+    const frames = children.flatMap(([goal, scope]) => host.journal.childTimeline(goal, scope));
     return [...new Map(frames.map((frame) => [frame.sequence, frame])).values()].sort(
       (left, right) => Number(left.sequence) - Number(right.sequence),
     );
@@ -318,29 +318,6 @@ function roundReport(
     JSON.stringify(measurements, null, 2),
     '',
   ].join('\n');
-}
-
-/** Read complete timeline records for one retained child task scope. */
-function retainedFrames(parent: TaskSession, goal: string, scope: string): JournalEvent[] {
-  const host = hostTask(parent);
-  const records = host.journal.childEvents(goal, scope) as Record<string, unknown>[];
-  const paths = records
-    .map((record) => record.artifact)
-    .filter(
-      (item): item is string => typeof item === 'string' && item.endsWith('run-timeline.jsonl'),
-    );
-  if (paths.length === 0)
-    throw new Error('Missing retained timeline for refinement child: ' + scope);
-  const frames = paths.flatMap((path) =>
-    host
-      .readFile(path)
-      .text.split('\n')
-      .filter(Boolean)
-      .map((line) => JSON.parse(line) as JournalEvent),
-  );
-  return [...new Map(frames.map((frame) => [frame.sequence, frame])).values()].sort(
-    (left, right) => Number(left.sequence) - Number(right.sequence),
-  );
 }
 
 /** Accept only the terminal kinds that mean the child position actually completed. */
