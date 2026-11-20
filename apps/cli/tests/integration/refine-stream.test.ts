@@ -71,8 +71,12 @@ class StreamScenario {
         if (record.type !== 'event') continue;
         const event = record.detail?.event;
         if (event?.type === 'fixture.consumption') liveProvider = child.exitCode === null;
-        const toolResult = record.detail?.toolResult;
-        if (child.exitCode === null && toolResult?.result !== undefined) {
+        if (
+          child.exitCode === null &&
+          event?.type === 'item.completed' &&
+          event.item?.type === 'mcp_tool_call' &&
+          event.item.result !== undefined
+        ) {
           liveToolResult = true;
         }
       }
