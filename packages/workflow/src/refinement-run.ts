@@ -314,7 +314,7 @@ function roundReport(
     '',
     '## Complete originating journal observations',
     '',
-    frames.map((frame) => JSON.stringify(frame)).join('\\n'),
+    frames.map((frame) => JSON.stringify(frame)).join('\n'),
     '',
     '## Child recovery observations',
     '',
@@ -324,7 +324,7 @@ function roundReport(
     '',
     JSON.stringify(measurements, null, 2),
     '',
-  ].join('\\n');
+  ].join('\n');
 }
 
 /** Read complete timeline records for one retained child task scope. */
