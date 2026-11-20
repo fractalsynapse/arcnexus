@@ -237,6 +237,26 @@ test('a competing foreground task is refused while the refinement phase runs', a
   assert.equal(competingKind, 'invalid');
 });
 
+test('the foreground writer remains held during every goal assessment', async (t) => {
+  const f = fixture(t);
+  const services = providers(f, []);
+  const signal = new AbortController().signal;
+  const attempts: unknown[] = [];
+  services.direction.plan = async (session) => {
+    const competing = await f.execution.admit(
+      { directory: f.root, goal: 'Competing task' },
+      signal,
+    );
+    attempts.push(Reflect.get(competing, 'kind'));
+    return assessGoal(session, []);
+  };
+  const workflow = new Workflow(services);
+  const refine = Reflect.get(workflow, 'refine') as Refinement;
+  assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
+  await refine.call(workflow, f.root, 1, { progress() {} }, signal);
+  assert.deepEqual(attempts, ['invalid', 'invalid']);
+});
+
 /** Interrupt one selected assessment and record each visit. */
 function interruptProviders(f: ReturnType<typeof fixture>, calls: string[], stop: string) {
   const services = providers(f, calls);
