@@ -4,7 +4,6 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test, { type TestContext } from 'node:test';
-import { pathToFileURL } from 'node:url';
 import { stringify } from 'yaml';
 import { hasOwnerTestSuites, registerSuite, testInventory } from '../../src/index.js';
 
@@ -94,11 +93,17 @@ test('every current built owner selects exactly its inventory subset with unchan
   for (const owner of new Set(all.map((entry) => entry.owner))) {
     const expected = all.filter((entry) => entry.owner === owner);
     assert.deepEqual(testInventory(owner), expected);
-    assert.deepEqual(testInventory(owner).map((entry) => entry.file), expected.map((entry) => entry.file));
+    assert.deepEqual(
+      testInventory(owner).map((entry) => entry.file),
+      expected.map((entry) => entry.file),
+    );
     assert(expected.every(({ file }) => file.startsWith('dist/') && file.endsWith('.test.js')));
   }
   assert.throws(() => testInventory('missing'), /Unknown test owner/);
-  assert.throws(() => testInventory('foundation', { tags: ['absent-inventory-tag'] }), /No built test suites/);
+  assert.throws(
+    () => testInventory('foundation', { tags: ['absent-inventory-tag'] }),
+    /No built test suites/,
+  );
 });
 
 test('source applicability and built selection agree for explicit catalog owners and an owner without suites', (context) => {
@@ -109,7 +114,12 @@ test('source applicability and built selection agree for explicit catalog owners
   const all = JSON.parse(result.stdout) as ReturnType<typeof testInventory>;
   assert.deepEqual(all, [
     { file: scenario.built(terminal), owner: 'terminal-owner', level: 'unit', tags: ['fixture'] },
-    { file: scenario.built(engine), owner: 'engine-owner', level: 'integration', tags: ['fixture'] },
+    {
+      file: scenario.built(engine),
+      owner: 'engine-owner',
+      level: 'integration',
+      tags: ['fixture'],
+    },
   ]);
   for (const { id } of components) {
     const expected = all.filter(({ owner }) => owner === id);
@@ -123,7 +133,10 @@ test('source applicability and built selection agree for explicit catalog owners
       assert.match(selected.stderr, /No built test suites/);
     }
   }
-  assert.throws(() => hasOwnerTestSuites(scenario.root, 'missing', components), /Unknown test owner/);
+  assert.throws(
+    () => hasOwnerTestSuites(scenario.root, 'missing', components),
+    /Unknown test owner/,
+  );
   assert.equal(existsSync(scenario.marker), false);
 });
 
@@ -144,17 +157,25 @@ test('missing ownership has a distinct diagnostic with the source identity', () 
   const source = 'apps/orphan/tests/unit/probe.test.ts';
   assert.throws(
     () => registerSuite('dist/' + source.replace(/\.ts$/, '.js'), components),
-    (error: Error) => /missing|unowned|no .*owner/i.test(error.message) && error.message.includes(source),
+    (error: Error) =>
+      /missing|unowned|no .*owner/i.test(error.message) && error.message.includes(source),
   );
 });
 
 test('ownership collisions identify the source and every conflicting component', () => {
   const source = 'apps/shell/tests/unit/probe.test.ts';
-  const owners = [...components, { id: 'umbrella-owner', owns: ['apps'] }, { id: 'overlap-owner', owns: ['apps/shell/tests'] }];
+  const owners = [
+    ...components,
+    { id: 'umbrella-owner', owns: ['apps'] },
+    { id: 'overlap-owner', owns: ['apps/shell/tests'] },
+  ];
   assert.throws(
     () => registerSuite('dist/' + source.replace(/\.ts$/, '.js'), owners),
-    (error: Error) => /collision|conflict|multiple.*owner/i.test(error.message) &&
-      [source, 'terminal-owner', 'umbrella-owner', 'overlap-owner'].every((text) => error.message.includes(text)),
+    (error: Error) =>
+      /collision|conflict|multiple.*owner/i.test(error.message) &&
+      [source, 'terminal-owner', 'umbrella-owner', 'overlap-owner'].every((text) =>
+        error.message.includes(text),
+      ),
   );
 });
 
@@ -175,24 +196,65 @@ test('a foreign ownership collision reports every catalog claimant before select
   for (const text of [engine, 'engine-owner', 'overlap-owner'])
     assert(result.stderr.includes(text), result.stderr);
   const owners = [...components, { id: 'overlap-owner', owns: ['packages/engine'] }];
-  assert.throws(() => hasOwnerTestSuites(scenario.root, 'terminal-owner', owners), /collision|conflict|multiple.*owner/i);
+  assert.throws(
+    () => hasOwnerTestSuites(scenario.root, 'terminal-owner', owners),
+    /collision|conflict|multiple.*owner/i,
+  );
   assert.equal(existsSync(scenario.marker), false);
 });
 
 const invalidMetadata = [
-  { name: 'contradictory owner', before: "owner: 'engine-owner'", after: "owner: 'terminal-owner'", diagnostic: /owner contradicts path/i },
-  { name: 'contradictory level', before: "level: 'integration'", after: "level: 'unit'", diagnostic: /level contradicts path/i },
-  { name: 'computed owner', before: "owner: 'engine-owner'", after: "owner: String('engine-owner')", diagnostic: /literal suite owner/i },
-  { name: 'computed tags', before: "tags: ['fixture']", after: "tags: Array.of('fixture')", diagnostic: /literal suite tags/i },
-  { name: 'nonliteral tag', before: "tags: ['fixture']", after: "tags: [String('fixture')]", diagnostic: /literal suite tag/i },
-  { name: 'duplicate field', before: "owner: 'engine-owner'", after: "owner: 'engine-owner', owner: 'engine-owner'", diagnostic: /duplicate suite metadata owner/i },
-  { name: 'spread metadata', before: "tags: ['fixture']", after: "...{ tags: ['fixture'] }", diagnostic: /literal suite metadata/i },
+  {
+    name: 'contradictory owner',
+    before: "owner: 'engine-owner'",
+    after: "owner: 'terminal-owner'",
+    diagnostic: /owner contradicts path/i,
+  },
+  {
+    name: 'contradictory level',
+    before: "level: 'integration'",
+    after: "level: 'unit'",
+    diagnostic: /level contradicts path/i,
+  },
+  {
+    name: 'computed owner',
+    before: "owner: 'engine-owner'",
+    after: "owner: String('engine-owner')",
+    diagnostic: /literal suite owner/i,
+  },
+  {
+    name: 'computed tags',
+    before: "tags: ['fixture']",
+    after: "tags: Array.of('fixture')",
+    diagnostic: /literal suite tags/i,
+  },
+  {
+    name: 'nonliteral tag',
+    before: "tags: ['fixture']",
+    after: "tags: [String('fixture')]",
+    diagnostic: /literal suite tag/i,
+  },
+  {
+    name: 'duplicate field',
+    before: "owner: 'engine-owner'",
+    after: "owner: 'engine-owner', owner: 'engine-owner'",
+    diagnostic: /duplicate suite metadata owner/i,
+  },
+  {
+    name: 'spread metadata',
+    before: "tags: ['fixture']",
+    after: "...{ tags: ['fixture'] }",
+    diagnostic: /literal suite metadata/i,
+  },
 ];
 
 for (const invalid of invalidMetadata) {
   test(`foreign ${invalid.name} is refused in source and built discovery before import`, (context) => {
     const scenario = new InventoryScenario(context);
-    scenario.pair(engine, scenario.metadata('engine-owner', 'integration').replace(invalid.before, invalid.after));
+    scenario.pair(
+      engine,
+      scenario.metadata('engine-owner', 'integration').replace(invalid.before, invalid.after),
+    );
     scenario.refuses(engine, invalid.diagnostic);
   });
 }
