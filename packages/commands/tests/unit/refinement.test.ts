@@ -48,6 +48,20 @@ class RefinementWorkflow extends Workflow {
     this.calls.push({ directory, rounds, observer, signal });
     if (signal.aborted)
       return { kind: 'cancelled' as const, reason: 'Interrupted', evidence: ['checkpoint'] };
+    this.emitObservations(observer, rounds);
+    const response = await observer.answer?.(question, signal);
+    this.answers.push(response);
+    if (response === undefined) return pending;
+    observer.event?.(
+      this.frame(5, {
+        refinement: { invocation: 'invocation-1', round: 2, total: rounds, phase: 'Run', goal: 1 },
+      }),
+    );
+    return complete;
+  }
+
+  /** Forward phase, provider, tool and measurement observations before the gate. */
+  private emitObservations(observer: TaskObserver, rounds: number) {
     const observations = [
       { refinement: { invocation: 'invocation-1', round: 1, total: rounds, phase: 'Plan' } },
       { nativeEvent: { activation: 'planner', event: { message: 'Complete provider\nmessage' } } },
