@@ -1,3 +1,4 @@
+import { recordedRound, type RoundCount } from './round-count.js';
 import { hostTask } from '../../execution/src/index.js';
 import { RunMeasurements, type JournalEvent } from '../../coordination/src/index.js';
 import type { StandingGoal } from '../../planner/src/inventory.js';
@@ -29,15 +30,13 @@ export class RefinementRun {
     private readonly parent: TaskSession,
     private readonly observer: RunObserver,
     private readonly signal: AbortSignal,
-    private readonly total: number,
+    private readonly total: RoundCount,
     private readonly runChild: Child,
     private readonly updateChild: ArchitectureChild,
   ) {}
 
   /** Resume the first unacknowledged phase and return one foreground terminal outcome. */
   async execute(): Promise<TaskOutcome> {
-    if (!Number.isInteger(this.total) || this.total < 1)
-      return { kind: 'invalid', reason: 'Round count must be a positive integer', evidence: [] };
     const invocation = hostTask(this.parent).journal.taskID;
     const saved = this.latestProgress();
     if (saved && saved.total !== this.total)
@@ -53,7 +52,7 @@ export class RefinementRun {
         summary: 'Refinement is complete',
         evidence: hostTask(this.parent).evidence,
       };
-    for (let round = saved?.round ?? 1; round <= this.total; round++) {
+    for (let round = saved?.round ?? '1'; BigInt(round) <= BigInt(this.total); round = (BigInt(round) + 1n).toString()) {
       const state = round === saved?.round ? saved : undefined;
       const outcome = await this.runRound(invocation, round, state);
       if (outcome) return outcome;
@@ -75,7 +74,7 @@ export class RefinementRun {
   }
 
   /** Recover a report already acknowledged before a round cursor update was interrupted. */
-  private roundAlreadyCompleted(invocation: string, round: number) {
+  private roundAlreadyCompleted(invocation: string, round: RoundCount) {
     return Boolean(
       this.parent
         .history?.()
@@ -83,7 +82,7 @@ export class RefinementRun {
           (event) =>
             'completedRound' in event &&
             event.completedRound.invocation === invocation &&
-            event.completedRound.round === round,
+            recordedRound(event.completedRound.round) === round,
         ),
     );
   }
@@ -91,33 +90,39 @@ export class RefinementRun {
   /** Read the latest durable cursor from this task's append-only history. */
   private latestProgress(): SavedProgress | undefined {
     const event = this.parent.history?.().findLast((item) => 'refinement' in item);
-    return event && 'refinement' in event ? event.refinement : undefined;
+    if (!event || !('refinement' in event)) return undefined;
+    const saved = event.refinement;
+    if (!['Plan', 'Architect', 'Run', 'complete'].includes(saved.phase))
+      throw new Error('Invalid retained refinement phase');
+    return { ...saved, total: recordedRound(saved.total), round: recordedRound(saved.round) };
   }
 
   /** Run each phase in order, then retain the completed round's observation and report. */
   private async runRound(
     invocation: string,
-    round: number,
+    round: RoundCount,
     saved?: SavedProgress,
   ): Promise<TaskOutcome | undefined> {
     if (this.roundAlreadyCompleted(invocation, round)) {
-      this.save(invocation, round + 1, 'Plan');
+      this.save(invocation, (BigInt(round) + 1n).toString(), 'Plan');
       return;
     }
     let phase: Exclude<SavedProgress['phase'], 'complete'> =
       saved?.phase === 'complete' ? 'Plan' : (saved?.phase ?? 'Plan');
-    this.progress(invocation, round, phase);
+    this.progress(invocation, round, phase, saved?.goal, saved?.inventory);
     if (phase === 'Plan') {
       const outcome = await this.runPlanner(invocation, round);
       if (!successfulPhase(outcome)) return outcome;
       this.save(invocation, round, 'Architect', { outcome });
       phase = 'Architect';
+      this.progress(invocation, round, phase);
     }
     if (phase === 'Architect') {
       const outcome = await this.runArchitect(invocation, round);
       if (!successfulPhase(outcome)) return outcome;
       this.save(invocation, round, 'Run', { outcome });
       phase = 'Run';
+      this.progress(invocation, round, phase);
     }
     return this.runInventory(invocation, round, phase, saved);
   }
@@ -125,27 +130,27 @@ export class RefinementRun {
   /** Capture this round's immutable inventory and resume its first unfinished goal. */
   private async runInventory(
     invocation: string,
-    round: number,
+    round: RoundCount,
     phase: SavedProgress['phase'],
     saved: SavedProgress | undefined,
   ): Promise<TaskOutcome | undefined> {
     const goals = this.services.execution.round?.(
       this.parent.capture.source.root,
-      `refine:${invocation}:${round}`,
+      `refine:${invocation}:${this.roundIdentity(round)}`,
     );
     if (!goals)
       return { kind: 'invalid', reason: 'Standing goal rounds are unavailable', evidence: [] };
-    this.save(invocation, round, 'Run', { inventory: goals.goals });
     const index = phase === 'Run' && saved?.phase === 'Run' ? (saved.goal ?? 0) : 0;
+    this.save(invocation, round, 'Run', { goal: index, inventory: goals.goals });
     const outcome = await this.runGoals(invocation, round, goals.goals, index);
     if (outcome) return outcome;
     this.completeRound(invocation, round, goals.goals);
     goals.finish();
-    this.save(invocation, round + 1, 'Plan');
+    this.save(invocation, (BigInt(round) + 1n).toString(), 'Plan');
   }
 
   /** Execute the Planner assessment as a normal task child of the retained writer. */
-  private runPlanner(invocation: string, round: number) {
+  private runPlanner(invocation: string, round: RoundCount) {
     const input: TaskInput = {
       directory: this.parent.capture.source.root,
       goal: 'Assess objectives and standing goals',
@@ -156,7 +161,7 @@ export class RefinementRun {
   }
 
   /** Execute Architect as a normal child while keeping its round identity distinct. */
-  private runArchitect(invocation: string, round: number) {
+  private runArchitect(invocation: string, round: RoundCount) {
     const scope = this.scope(invocation, round, 'architect');
     const goal = 'Assess architecture alignment';
     return (
@@ -182,7 +187,7 @@ export class RefinementRun {
   /** Run every goal from this round's pinned inventory in priority order. */
   private async runGoals(
     invocation: string,
-    round: number,
+    round: RoundCount,
     goals: readonly StandingGoal[],
     start: number,
   ): Promise<TaskOutcome | undefined> {
@@ -205,7 +210,7 @@ export class RefinementRun {
   }
 
   /** Register the report and expose only references to complete originating evidence. */
-  private completeRound(invocation: string, round: number, goals: readonly StandingGoal[]) {
+  private completeRound(invocation: string, round: RoundCount, goals: readonly StandingGoal[]) {
     const frames = this.originatingFrames(invocation, round, goals);
     const measurements = new RunMeasurements();
     for (const frame of frames) measurements.accept(frame);
@@ -224,7 +229,7 @@ export class RefinementRun {
   }
 
   /** Rebuild this round from canonical child and descendant history across every attempt. */
-  private originatingFrames(invocation: string, round: number, goals: readonly StandingGoal[]) {
+  private originatingFrames(invocation: string, round: RoundCount, goals: readonly StandingGoal[]) {
     const host = hostTask(this.parent);
     const children: [string, string][] = [
       ['Assess objectives and standing goals', this.scope(invocation, round, 'plan')],
@@ -243,7 +248,7 @@ export class RefinementRun {
   /** Persist the requested total and first unfinished logical position. */
   private save(
     invocation: string,
-    round: number,
+    round: RoundCount,
     phase: 'Plan' | 'Architect' | 'Run',
     details: { goal?: number; inventory?: readonly StandingGoal[]; outcome?: TaskOutcome } = {},
   ) {
@@ -253,7 +258,7 @@ export class RefinementRun {
   /** Publish human progress and persist its matching cursor before activating a child. */
   private progress(
     invocation: string,
-    round: number,
+    round: RoundCount,
     phase: 'Plan' | 'Architect' | 'Run',
     goal?: number,
     inventory?: readonly StandingGoal[],
@@ -266,14 +271,24 @@ export class RefinementRun {
   }
 
   /** Give every phase and captured goal a stable child identity for restart recovery. */
-  private scope(invocation: string, round: number, part: string) {
-    return `refine:${invocation}:round:${round}:${part}`;
+  private scope(invocation: string, round: RoundCount, part: string) {
+    return `refine:${invocation}:round:${this.roundIdentity(round)}:${part}`;
+  }
+
+  /** Retain the spelling used by old numeric child and inventory identities across retries. */
+  private roundIdentity(round: RoundCount) {
+    const legacy = this.parent.history?.().find(
+      (event) => 'refinement' in event &&
+        typeof event.refinement.round === 'number' &&
+        recordedRound(event.refinement.round) === round,
+    );
+    return legacy && 'refinement' in legacy ? String(legacy.refinement.round) : round;
   }
 
   /** Derive a readable report from full events and the existing event-derived projection. */
   private report(
     invocation: string,
-    round: number,
+    round: RoundCount,
     goals: readonly StandingGoal[],
     frames: readonly JournalEvent[],
     measurements: ReturnType<RunMeasurements['snapshot']>,
@@ -293,7 +308,7 @@ export class RefinementRun {
 /** Render a round report from complete source events and the round's recovery evidence. */
 function roundReport(
   invocation: string,
-  round: number,
+  round: RoundCount,
   goals: readonly StandingGoal[],
   frames: readonly JournalEvent[],
   measurements: ReturnType<RunMeasurements['snapshot']>,
@@ -340,7 +355,7 @@ function completedChild(
 }
 
 /** Select durable recovery observations without copying assessment content. */
-function recoveryObservations(events: readonly unknown[], invocation: string, round: number) {
+function recoveryObservations(events: readonly unknown[], invocation: string, round: RoundCount) {
   const roundScope = 'for refine:' + invocation + ':round:' + round + ':';
   return events.filter(
     (event) =>
