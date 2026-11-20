@@ -11,12 +11,12 @@ test('a cancelled refinement stops before admitting any phase', async () => {
   const refine = Reflect.get(workflow, 'refine') as
     | ((
         directory: string,
-        rounds: number,
+        rounds: string,
         observer: TaskObserver,
         signal: AbortSignal,
       ) => Promise<TaskOutcome>)
     | undefined;
   assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
-  const outcome = await refine!.call(workflow, '.', 1, { progress() {} }, controller.signal);
+  const outcome = await refine!.call(workflow, '.', '1', { progress() {} }, controller.signal);
   assert.equal(outcome.kind, 'cancelled');
 });
