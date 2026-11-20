@@ -3,6 +3,7 @@ import type { StandingGoal } from '../../planner/src/inventory.js';
 import type { RunObserver } from './observer.js';
 import type {
   CompletedRefinementRound,
+  RefinementProgress,
   TaskInput,
   TaskOutcome,
   TaskSession,
