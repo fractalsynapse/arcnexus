@@ -214,7 +214,8 @@ test('interruption after a secured split contribution reuses it before the succe
   assert.equal(f.fixture.task.issue, task.issue);
   assert.equal(f.fixture.task.branch, task.branch);
   assert.equal(f.fixture.task.readFile('fixture.txt').text, 'partial-a');
-  assert.equal((await f.run()).kind, 'merged');
+  const resumed = await f.run();
+  assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
   assert.deepEqual(f.calls, [
     correction.id,
     'Direction',
