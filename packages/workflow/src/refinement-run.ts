@@ -45,6 +45,13 @@ export class RefinementRun {
         reason: `Unfinished refinement requested ${saved.total} rounds`,
         evidence: [],
       };
+    if (saved?.phase === 'complete')
+      return {
+        kind: 'planned',
+        commit: this.parent.capture.source.revision,
+        summary: 'Refinement is complete',
+        evidence: hostTask(this.parent).evidence,
+      };
     for (let round = saved?.round ?? 1; round <= this.total; round++) {
       const state = round === saved?.round ? saved : undefined;
       const outcome = await this.runRound(invocation, round, state);
