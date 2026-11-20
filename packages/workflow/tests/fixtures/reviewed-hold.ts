@@ -185,10 +185,7 @@ export class ReviewedWorkflow {
     assert(held, 'Direction received the actual Execution hold');
     const history = JSON.parse(task.readFile(request.retainedEvidence).text);
     assert(JSON.stringify(history).includes(held.failure.check?.log ?? held.failure.diagnostic));
-    assert(JSON.stringify(request.finding).includes(held.failure.diagnostic));
-    assert(
-      JSON.stringify(request.finding).includes(held.failure.check?.log ?? held.failure.operation),
-    );
+    this.assertFeedback(request.finding);
     const accepted: Plan = JSON.parse(task.readFile(request.acceptedPlan).text);
     assert.deepEqual(
       accepted.milestones.find((m) => m.id === correction.id)!.criteria,
