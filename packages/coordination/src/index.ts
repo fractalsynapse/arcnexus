@@ -102,33 +102,7 @@ export class Journal {
   /** Read a child's complete canonical history and every logical descendant across attempts. */
   childTimeline(goal: string, scope: string): JournalEvent[] {
     const task = taskIdentity(digest(goal), JSON.stringify([this.taskID, scope]));
-    return this.database
-      .prepare(`
-        WITH RECURSIVE descendants(task_id) AS (
-          SELECT ?
-          UNION
-          SELECT child.task_id
-          FROM runs AS child
-          JOIN runs AS parent ON parent.id = child.parent_id
-          JOIN descendants ON descendants.task_id = parent.task_id
-        )
-        SELECT events.id, events.run, runs.task_id, runs.goal_id, runs.parent_id,
-          events.recorded_at, events.content
-        FROM events
-        JOIN runs ON runs.id = events.run
-        WHERE runs.task_id IN (SELECT task_id FROM descendants)
-        ORDER BY events.id
-      `)
-      .all(task)
-      .map((row) => ({
-        sequence: String(row.id),
-        run: Number(row.run),
-        taskID: String(row.task_id),
-        goalID: String(row.goal_id),
-        parent: row.parent_id === null ? undefined : Number(row.parent_id),
-        timestamp: typeof row.recorded_at === 'string' ? row.recorded_at : null,
-        observation: JSON.parse(String(row.content)) as unknown,
-      }));
+    return descendantEvents(this.database, task);
   }
 
   /** Store the terminal event and release the lane in one transaction. */
