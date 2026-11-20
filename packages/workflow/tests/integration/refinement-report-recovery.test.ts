@@ -84,11 +84,7 @@ function workflowServices(state: State, planner: unknown): WorkflowServices {
     execution: {
       admit: state.execution.admit.bind(state.execution),
       round: state.execution.round.bind(state.execution),
-      observeGoal: () => ({
-        revision: state.revision,
-        source: state.capture.source,
-        recentChanges: [],
-      }),
+      observeGoal: () => ({ revision: state.revision, source: state.capture.source, recentChanges: [] }),
     },
     planner: planner as WorkflowServices['planner'],
     architecture: {
