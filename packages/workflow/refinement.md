@@ -165,6 +165,12 @@ phase. Preserve unknown provider events and complete originating content.
 
 ## Public completed-round handoff for Execution
 
+The following handoff and red-stage descriptions retain the original intent and
+its historical availability statements. The current source exports the handoff
+and implements refinement; the exact-count correction above extends that work
+without discarding its retained evidence. These descriptions do not assert
+current runtime unavailability or establish completed acceptance.
+
 This is the target public handoff for the `refine-execution` supplier request.
 Testing authors the public consumer scenario and records its expected failure at
 the missing refinement boundary before implementation. Implementation then makes
@@ -212,7 +218,7 @@ must not import Workflow implementation helpers or invent a matching journal eve
 
 ## Deterministic consumer scenario
 
-Use `new Workflow(services).refine(directory, 2, observer, signal)` from the public
+Use `new Workflow(services).refine(directory, "2", observer, signal)` from the public
 entry, with real Execution admission/HostTask, Coordination SQLite and a temporary
 Git repository with accepted staging authority. This is a scenario recipe for the
 forthcoming public regression, not an available helper export. Execution can keep
