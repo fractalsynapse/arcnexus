@@ -33,11 +33,24 @@ function fixture(t: import('node:test').TestContext) {
       paths: ['.arc/goals/first.md'],
       read: () => body,
     },
-    project: { knowledgeRoot: '.arc', delivery: { baseBranch: 'staging', protectedBranch: 'main' } },
+    project: {
+      knowledgeRoot: '.arc',
+      delivery: { baseBranch: 'staging', protectedBranch: 'main' },
+    },
   } as unknown as Capture;
   const architecture = { capture: () => capture } as unknown as Architecture;
-  const execution = new Execution(architecture, new Coordination(join(root, 'state')), join(root, 'state'));
-  return { root, execution, setBody: (value: string) => { body = value; } };
+  const execution = new Execution(
+    architecture,
+    new Coordination(join(root, 'state')),
+    join(root, 'state'),
+  );
+  return {
+    root,
+    execution,
+    setBody: (value: string) => {
+      body = value;
+    },
+  };
 }
 
 test('refinement inventory is isolated from an unfinished standalone round', (t) => {
