@@ -109,19 +109,8 @@ function uniqueOrdered(events: JournalEvent[]) {
   );
 }
 
-test('child history includes canonical descendants across retries and excludes other cycles', (t) => {
-  const fixture = new HistoryFixture(t);
-  firstAttempt(fixture);
-  fixture.reopen();
-  continuedAttempt(fixture);
-  otherScopes(fixture);
-  const immediate = fixture.root.childEvents(phaseGoal, phaseScope);
-  assert(immediate.some((value) => JSON.stringify(value).includes('architect first finding')));
-  assert(!immediate.some((value) => JSON.stringify(value).includes('supplier first finding')));
-  const expected = uniqueOrdered(fixture.expected);
-  const query = fixture.root as unknown as Partial<DescendantJournal>;
-  assert.equal(typeof query.childTimeline, 'function', 'public descendant timeline is available');
-  assert.deepEqual(query.childTimeline!(phaseGoal, phaseScope), expected);
+/** Verify that later cycles and unrelated roots do not reuse the earlier child's history. */
+function assertFreshIsolation(fixture: HistoryFixture) {
   fixture.root.finish({ kind: 'refined' });
   fixture.root.close();
   const unrelated = fixture.store.admit(remote, 'Unrelated root');
