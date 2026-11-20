@@ -35,6 +35,41 @@ function repairedTask(t: TestContext, completed: boolean) {
   return task;
 }
 
+test('nested repairs retain the originating finding and latest diagnostic in the accepted milestone', async (t) => {
+  const task = repairedTask(t, true);
+  const original = {
+    milestone: 'original',
+    activity: 'testing' as const,
+    reason: 'Preserve the entire original requirement: first line\nsecond line, exactly.',
+    evidence: ['original-finding.log', 'original-detail.log'],
+  };
+  const latest = {
+    milestone: 'original',
+    activity: 'documentation' as const,
+    reason: 'Correct the repair diagnostic: distinct wording.',
+    evidence: ['latest-repair.log'],
+  };
+  task.record({ position: { completed: 0, activities: { original: 1 } }, repair: original });
+  task.record({
+    position: { completed: 0, activities: { original: 0 } },
+    repair: { ...latest, milestone: 'unrelated', reason: 'Unrelated milestone finding' },
+  });
+  task.record({ position: { completed: 0, activities: { original: 0 } }, repair: latest });
+  t.mock.method(task, 'activate', async (_agent: Agent, _selection: unknown, input: TaskContext) => {
+    const assignment = JSON.stringify(input.assignment);
+    for (const value of [original.reason, ...original.evidence, latest.reason, ...latest.evidence])
+      assert(assignment.includes(JSON.stringify(value).slice(1, -1)), value);
+    assert(!assignment.includes('Unrelated milestone finding'));
+    assert.deepEqual(input.acceptance, milestone.criteria);
+    assert.deepEqual((input.assignment as { completedActivities: string[] }).completedActivities, []);
+    return { kind: 'completed', edits: [], checks: [] };
+  });
+  const result = await steward(
+    new Agent(new Architecture()), task, milestone, 'documentation', new AbortController().signal,
+  );
+  assert.equal(result.kind, 'completed');
+});
+
 for (const completed of [false, true]) {
   test(`repair context identifies whether the rewind target has completed: ${completed}`, async (t) => {
     const task = repairedTask(t, completed);
