@@ -5,19 +5,43 @@ import type { TestContext } from 'node:test';
 import { Agent } from '../../../agent/src/index.js';
 import { Architecture, type TaskContext } from '../../../architecture/src/index.js';
 import { Coordination, Journal } from '../../../coordination/src/index.js';
-import { direct, type Feedback, type Milestone, type Plan, type RevisionRequest } from '../../../direction/src/index.js';
-import { Clarifications, HostTask, steward, type HoldContext, type StewardOutcome } from '../../../execution/src/index.js';
+import {
+  direct,
+  type Feedback,
+  type Milestone,
+  type Plan,
+  type RevisionRequest,
+} from '../../../direction/src/index.js';
+import {
+  Clarifications,
+  HostTask,
+  steward,
+  type HoldContext,
+  type StewardOutcome,
+} from '../../../execution/src/index.js';
 import { ActivationTools } from '../../../execution/src/activation-tools.js';
 import { checkpoint } from '../../../execution/src/checkpoint.js';
 import { git } from '../../../execution/src/git.js';
 import { execute } from '../../../execution/src/process.js';
 import { textDigest } from '../../../foundation/src/index.js';
-import { answer, correction, question, ReviewedHoldFixture, selection } from '../../../execution/tests/fixtures/reviewed-hold.js';
-import { Workflow, type ActivityCheckpoint, type TaskObserver, type WorkflowServices } from '../../src/index.js';
+import {
+  answer,
+  correction,
+  question,
+  ReviewedHoldFixture,
+  selection,
+} from '../../../execution/tests/fixtures/reviewed-hold.js';
+import {
+  Workflow,
+  type ActivityCheckpoint,
+  type TaskObserver,
+  type WorkflowServices,
+} from '../../src/index.js';
 
 export type Scenario = 'split' | 'repeat' | 'progress' | 'human' | 'external';
 export const gateQuestion = 'Approve the corrected schema architecture?';
-export const gateAnswer = 'Approve schema A.\n\nKeep the original criterion and captured ownership.';
+export const gateAnswer =
+  'Approve schema A.\n\nKeep the original criterion and captured ownership.';
 
 /** Continue Execution's real rejected-task fixture through Workflow and native Direction reconstruction. */
 export class ReviewedWorkflow {
@@ -35,14 +59,19 @@ export class ReviewedWorkflow {
   private readonly signal = new AbortController().signal;
 
   /** Start at the retained rejected correction, with unaffected completed work before it. */
-  constructor(private readonly t: TestContext, readonly scenario: Scenario) {
+  constructor(
+    private readonly t: TestContext,
+    readonly scenario: Scenario,
+  ) {
     this.fixture = new ReviewedHoldFixture(t, scenario === 'external', 'arguments');
     const task = this.fixture.task;
     const prior = task.history().findLast((event) => 'plan' in event)!.plan!;
     task.record({ plan: { ...prior, milestones: [...prior.milestones.slice(1), correction] } });
     task.record({ position: { completed: 2, activities: { [correction.id]: 2 } } });
     this.services = this.providers();
-    t.after(() => { if (!this.closed) this.fixture.task.close(); });
+    t.after(() => {
+      if (!this.closed) this.fixture.task.close();
+    });
   }
 
   /** Produce the initial failing check and acknowledged receipt through the preceding Execution contribution. */
@@ -50,7 +79,11 @@ export class ReviewedWorkflow {
     await this.fixture.prepare();
     this.head = this.fixture.checkpoint();
     this.bind();
-    await this.fixture.task.check('owner-tests', this.signal, { owner: 'owner', activity: 'implementation', expected: 'pass' });
+    await this.fixture.task.check('owner-tests', this.signal, {
+      owner: 'owner',
+      activity: 'implementation',
+      expected: 'pass',
+    });
   }
 
   /** Bind controlled model/transport collaborators while retaining actual decoding, commands and journal state. */
@@ -58,11 +91,22 @@ export class ReviewedWorkflow {
     const task = this.fixture.task;
     const provider = task.provider(this.signal);
     this.t.mock.method(provider, 'remoteHead', async () => this.head);
-    this.t.mock.method(provider, 'push', async (_root: string, _branch: string, head: string) => { this.head = head; });
+    this.t.mock.method(provider, 'push', async (_root: string, _branch: string, head: string) => {
+      this.head = head;
+    });
     this.t.mock.method(provider, 'publication', async () => undefined);
     this.t.mock.method(task, 'provider', () => provider);
-    this.t.mock.method(task, 'activate', async (_agent: Agent, _selection: unknown, data: TaskContext) => this.reply(data));
-    this.t.mock.method(task, 'check', async (id: string, signal: AbortSignal, scope?: Parameters<HostTask['check']>[2]) => this.check(id, signal, scope));
+    this.t.mock.method(
+      task,
+      'activate',
+      async (_agent: Agent, _selection: unknown, data: TaskContext) => this.reply(data),
+    );
+    this.t.mock.method(
+      task,
+      'check',
+      async (id: string, signal: AbortSignal, scope?: Parameters<HostTask['check']>[2]) =>
+        this.check(id, signal, scope),
+    );
   }
 
   /** Execute a real subprocess and persist its exact log, exit and relevant input identity. */
@@ -72,10 +116,27 @@ export class ReviewedWorkflow {
     const args = [join(import.meta.dirname, 'reviewed-hold-command.js'), 'fixture.txt'];
     const start = performance.now();
     const actual = await execute(process.execPath, args, { cwd: task.worktree!, log, signal });
-    const check = { id, command: process.execPath, args, cwd: task.worktree!, log, status: actual.status, durationMs: performance.now() - start,
+    const check = {
+      id,
+      command: process.execPath,
+      args,
+      cwd: task.worktree!,
+      log,
+      status: actual.status,
+      durationMs: performance.now() - start,
       ...(actual.status ? { diagnostic: actual.stderr.trim() } : {}),
-      ...(this.scenario === 'external' && !this.satisfied ? { prerequisite: 'dependencies' as const, reason: 'Supply the approved external schema before correction.' } : {}) };
-    task.note({ check, scope, checkInput: textDigest(readFileSync(join(task.worktree!, 'fixture.txt'), 'utf8')) });
+      ...(this.scenario === 'external' && !this.satisfied
+        ? {
+            prerequisite: 'dependencies' as const,
+            reason: 'Supply the approved external schema before correction.',
+          }
+        : {}),
+    };
+    task.note({
+      check,
+      scope,
+      checkInput: textDigest(readFileSync(join(task.worktree!, 'fixture.txt'), 'utf8')),
+    });
     this.fixture.checks.push(check);
     return check;
   }
@@ -86,7 +147,10 @@ export class ReviewedWorkflow {
     if (assignment.revisionContext) return this.proposal(assignment.revisionContext);
     if (this.scenario === 'human' && !this.satisfied) {
       const gates = new Clarifications(this.fixture.task, selection, this.signal);
-      return gates.run({ milestone: { id: correction.id }, acceptance: correction.criteria }, async () => ({ kind: 'question', question: gateQuestion }));
+      return gates.run(
+        { milestone: { id: correction.id }, acceptance: correction.criteria },
+        async () => ({ kind: 'question', question: gateQuestion }),
+      );
     }
     return { kind: 'completed', edits: [], checks: [] };
   }
@@ -101,12 +165,23 @@ export class ReviewedWorkflow {
     const history = JSON.parse(task.readFile(request.retainedEvidence).text);
     assert(JSON.stringify(history).includes(held.failure.check?.log ?? held.failure.diagnostic));
     assert(JSON.stringify(request.finding).includes(held.failure.diagnostic));
-    assert(JSON.stringify(request.finding).includes(held.failure.check?.log ?? held.failure.operation));
+    assert(
+      JSON.stringify(request.finding).includes(held.failure.check?.log ?? held.failure.operation),
+    );
     const accepted: Plan = JSON.parse(task.readFile(request.acceptedPlan).text);
-    assert.deepEqual(accepted.milestones.find((m) => m.id === correction.id)!.criteria, correction.criteria);
-    const pending = accepted.milestones.slice(request.position.completed).map((m) => ({ id: m.id, steps: m.steps.slice(request.position.activities[m.id] ?? 0) }));
-    const parts = this.scenario === 'split' ? ['part-a', 'part-b'] : [`part-${this.revisions.length}`];
-    return { kind: 'plan', plan: { milestones: [...parts.map((id) => ({ ...correction, id })), ...pending] } };
+    assert.deepEqual(
+      accepted.milestones.find((m) => m.id === correction.id)!.criteria,
+      correction.criteria,
+    );
+    const pending = accepted.milestones
+      .slice(request.position.completed)
+      .map((m) => ({ id: m.id, steps: m.steps.slice(request.position.activities[m.id] ?? 0) }));
+    const parts =
+      this.scenario === 'split' ? ['part-a', 'part-b'] : [`part-${this.revisions.length}`];
+    return {
+      kind: 'plan',
+      plan: { milestones: [...parts.map((id) => ({ ...correction, id })), ...pending] },
+    };
   }
 
   /** Compose real native revision and checkpoint boundaries with controlled independent assessment and delivery. */
@@ -114,26 +189,46 @@ export class ReviewedWorkflow {
     return {
       execution: {
         admit: async () => this.fixture.task,
-        checkpoint: async (_session, record, signal) => { await checkpoint(this.fixture.task, record, signal); this.checkpoints.push(record); },
+        checkpoint: async (_session, record, signal) => {
+          await checkpoint(this.fixture.task, record, signal);
+          this.checkpoints.push(record);
+        },
         assemble: async () => this.assemble(),
       },
       direction: {
-        plan: async () => { throw new Error('Retained plan must be reused'); },
+        plan: async () => {
+          throw new Error('Retained plan must be reused');
+        },
         revise: async (session, plan, feedback, signal) => {
           this.assertFeedback(feedback);
           return direct(this.agent, session, signal, { plan, feedback });
         },
       },
       agent: { execute: async (_session, milestone) => this.activate(milestone) },
-      verification: { assess: async (_session, plan, candidate) => {
-        this.calls.push('Review');
-        this.reviews.push({ plan, candidate });
-        assert.deepEqual(plan.milestones.find((m) => m.id === correction.id)!.criteria, correction.criteria);
-        assert.equal(this.fixture.task.readFile('fixture.txt').text, 'corrected');
-        assert.equal(this.fixture.checks.at(-1)!.status, 0);
-        return { kind: 'accepted', candidate: candidate.digest, criteria: ['original-criterion', 'foreign-criterion'], evidence: [this.fixture.checks.at(-1)!.log] };
-      } },
-      delivery: { integrate: async () => { this.calls.push('Delivery'); return { kind: 'merged', commit: 'controlled-staging', evidence: [] }; } },
+      verification: {
+        assess: async (_session, plan, candidate) => {
+          this.calls.push('Review');
+          this.reviews.push({ plan, candidate });
+          assert.deepEqual(
+            plan.milestones.find((m) => m.id === correction.id)!.criteria,
+            correction.criteria,
+          );
+          assert.equal(this.fixture.task.readFile('fixture.txt').text, 'corrected');
+          assert.equal(this.fixture.checks.at(-1)!.status, 0);
+          return {
+            kind: 'accepted',
+            candidate: candidate.digest,
+            criteria: ['original-criterion', 'foreign-criterion'],
+            evidence: [this.fixture.checks.at(-1)!.log],
+          };
+        },
+      },
+      delivery: {
+        integrate: async () => {
+          this.calls.push('Delivery');
+          return { kind: 'merged', commit: 'controlled-staging', evidence: [] };
+        },
+      },
     };
   }
 
@@ -152,7 +247,13 @@ export class ReviewedWorkflow {
   private async activate(milestone: Milestone): Promise<StewardOutcome> {
     this.calls.push(milestone.id);
     if (milestone.id !== correction.id) return this.contribute(milestone);
-    const result = await steward(this.agent, this.fixture.task, milestone, 'implementation', this.signal);
+    const result = await steward(
+      this.agent,
+      this.fixture.task,
+      milestone,
+      'implementation',
+      this.signal,
+    );
     if (result.holdContext) {
       this.assertHold(result.holdContext);
       this.holds.push(result.holdContext);
@@ -172,25 +273,44 @@ export class ReviewedWorkflow {
     }
     const count = this.revisions.length;
     const progress = this.scenario === 'progress' && count < 3;
-    const content = milestone.id === 'part-a' ? 'partial-a' : progress ? `partial-${count}` : 'corrected';
+    const content =
+      milestone.id === 'part-a' ? 'partial-a' : progress ? `partial-${count}` : 'corrected';
     const path = this.scenario === 'repeat' ? 'unrelated.txt' : 'fixture.txt';
     const receipt = await this.edit(milestone, path, content);
-    const evidence = this.fixture.task.store('contribution.json', JSON.stringify({ milestone: milestone.id, finding: this.holds[0]!.rejection, receipt }));
+    const evidence = this.fixture.task.store(
+      'contribution.json',
+      JSON.stringify({ milestone: milestone.id, finding: this.holds[0]!.rejection, receipt }),
+    );
     return { kind: 'completed', evidence: [evidence] };
   }
 
   /** Apply actual scoped checked edits and retain their receipts through Execution. */
   private async edit(milestone: Milestone, path: string, content: string) {
     const task = this.fixture.task;
-    const tools = new ActivationTools(task, selection, { milestone: { id: milestone.id }, acceptance: milestone.criteria }, this.signal);
-    return tools.invoke({ name: 'checked-edit', handler: 'edit' }, { path, expected: task.readFile(path).sha256, content });
+    const tools = new ActivationTools(
+      task,
+      selection,
+      { milestone: { id: milestone.id }, acceptance: milestone.criteria },
+      this.signal,
+    );
+    return tools.invoke(
+      { name: 'checked-edit', handler: 'edit' },
+      { path, expected: task.readFile(path).sha256, content },
+    );
   }
 
   /** Recheck the assembled secured tree immediately before the independent assessment boundary. */
   private async assemble() {
     const task = this.fixture.task;
-    await task.check('owner-tests', this.signal, { owner: 'owner', activity: 'implementation', expected: 'pass' });
-    return { digest: git(task.worktree!, 'rev-parse', 'HEAD^{tree}'), evidence: [this.fixture.checks.at(-1)!.log] };
+    await task.check('owner-tests', this.signal, {
+      owner: 'owner',
+      activity: 'implementation',
+      expected: 'pass',
+    });
+    return {
+      digest: git(task.worktree!, 'rev-parse', 'HEAD^{tree}'),
+      evidence: [this.fixture.checks.at(-1)!.log],
+    };
   }
 
   /** Reject dropped acceptance, answers, checkpoint identities or originating findings at the consumer boundary. */
@@ -203,12 +323,18 @@ export class ReviewedWorkflow {
     assert.equal(held.task.branch, '699-task');
     assert.equal(held.task.checkpoint, this.fixture.checkpoint());
     assert.equal(held.answers.find((a) => a.question === question)?.answer, answer);
-    assert(held.receipts.some((receipt) => JSON.stringify(this.fixture.receipts).includes(receipt.id)));
+    assert(
+      held.receipts.some((receipt) => JSON.stringify(this.fixture.receipts).includes(receipt.id)),
+    );
   }
 
   /** Drive the public caller and retain terminal observations before real cleanup closes SQLite. */
   async run(observer: TaskObserver = { progress() {} }) {
-    const result = await new Workflow(this.services).run({ directory: this.fixture.root, goal: this.fixture.task.goal }, observer, this.signal);
+    const result = await new Workflow(this.services).run(
+      { directory: this.fixture.root, goal: this.fixture.task.goal },
+      observer,
+      this.signal,
+    );
     this.closed = true;
     return result;
   }
@@ -216,13 +342,16 @@ export class ReviewedWorkflow {
   /** Reopen the same durable task; no cursor, answer or checkpoint is repaired by the test. */
   async reopen(satisfied = false) {
     const old = this.fixture.task;
-    const journal = new Coordination(this.fixture.storage).admit(old.capture.source.remote, old.goal);
+    const journal = new Coordination(this.fixture.storage).admit(
+      old.capture.source.remote,
+      old.goal,
+    );
     assert(journal instanceof Journal);
     this.fixture.task = new HostTask(old.config, old.goal, journal);
     this.closed = false;
     this.satisfied = satisfied;
     this.bind();
-    this.fixture.task.ask = async () => satisfied ? gateAnswer : undefined;
+    this.fixture.task.ask = async () => (satisfied ? gateAnswer : undefined);
     await this.fixture.task.setupWorkspace('699', this.signal);
     assert.equal(this.fixture.task.taskID, old.taskID);
   }
