@@ -36,6 +36,7 @@ export function projectFixture(): string {
     '-m',
     'fixture',
   );
+  git('update-ref', 'refs/remotes/origin/staging', 'HEAD');
   return root;
 }
 
