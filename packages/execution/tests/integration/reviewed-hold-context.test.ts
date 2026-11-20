@@ -18,6 +18,15 @@ export const suite = {
 } as const;
 
 /**
+ * hold-context-complete: Workflow consumes the actual steward outcome. Exact
+ * rejection, acceptance, command, receipt, checkpoint and full answer assertions
+ * reject current-attempt-only history, swapped logs and a generic blocked string.
+ * hold-progress-grounded: compare repeated observations after incidental writes
+ * and relevant checked changes; observe an absent schema through a real command.
+ * Constant identities, artifact-derived progress and model-claimed prerequisites
+ * cannot satisfy these assertions. Workflow routing and independent re-review
+ * belong to assembled integration; this controlled seam proves neither.
+ *
  * Expected observable projection at the Execution/Workflow boundary.
  * Keep this test-local until Implementation adds the public recovery type.
  */
