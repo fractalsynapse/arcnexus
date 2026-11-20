@@ -32,6 +32,8 @@ export class RefinementSupplier {
         return {
           kind: 'supplier',
           scope: 'assessment',
+          milestone: 'answer',
+          reason: 'Need the complete supplier finding',
           owner: 'supplier',
           question: 'Explain the nested finding completely',
           evidence: [],
