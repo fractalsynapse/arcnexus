@@ -78,6 +78,26 @@ function services(root: string, directory: string, revision: string) {
   return { revision, capture, execution };
 }
 
+/** Return the successful phase fixtures used after Planner recovery. */
+function successfulPhases() {
+  return {
+    architecture: {
+      propose: async () => ({
+        kind: 'no-change',
+        summary: 'Architect retained its finding',
+        evidence: [],
+      }),
+    },
+    direction: {
+      plan: async () => ({
+        kind: 'satisfied',
+        summary: 'Captured goal outcome retained',
+        evidence: [{ path: 'baseline', quote: 'durable report evidence' }],
+      }),
+    },
+  };
+}
+
 /** Compose the same real admission and namespaced goal round after every service reopen. */
 function workflowServices(state: State, planner: unknown): WorkflowServices {
   return {
