@@ -82,16 +82,7 @@ function providers(f: ReturnType<typeof fixture>, calls: string[]) {
         return { kind: 'no-change', summary: 'No change', evidence: [] };
       },
     },
-    direction: {
-      plan: async (session: { goal: string }) => {
-        calls.push(session.goal.trim());
-        return {
-          kind: 'satisfied',
-          summary: 'The measured goal holds',
-          evidence: [{ path: 'baseline', quote: 'measured evidence' }],
-        };
-      },
-    },
+    direction: { plan: async (session: { goal: string }) => assessGoal(session, calls) },
     agent: {},
     verification: {},
     delivery: {},
