@@ -231,6 +231,32 @@ test('retrying the same total resumes the interrupted invocation', async (t) => 
   ]);
 });
 
+test('completed-round reports recover originating findings from an earlier attempt', async (t) => {
+  const f = fixture(t);
+  const calls: string[] = [];
+  const scenario = interruptProviders(f, calls, 'Architect');
+  const workflow = new Workflow(scenario.services);
+  const refine = Reflect.get(workflow, 'refine') as Refinement;
+  await refine.call(workflow, f.root, 1, { progress() {} }, scenario.controller.signal).catch(() => {});
+  assert.equal(scenario.interrupted(), true);
+
+  const events: unknown[] = [];
+  await refine.call(
+    workflow,
+    f.root,
+    1,
+    { progress() {}, event: (event) => events.push(event) },
+    new AbortController().signal,
+  );
+  const round = completedRounds(events)[0];
+  assert.ok(round);
+  const reportPath = Reflect.get(round, 'report');
+  assert.equal(typeof reportPath, 'string');
+  const report = readFileSync(reportPath as string, 'utf8');
+  assert.match(report, /"summary":"No change"/);
+  assert.ok(Array.isArray(Reflect.get(round, 'findings')));
+});
+
 test('a competing foreground task is refused while the refinement phase runs', async (t) => {
   const f = fixture(t);
   const services = providers(f, []);
