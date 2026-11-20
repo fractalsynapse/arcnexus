@@ -919,3 +919,36 @@ the existing helper omits 126 superseded index projections from its reference li
 while leaving those files retained. No research report or execution artifact was
 trimmed or deleted. The real resumed Reviewer and staging delivery remain the
 required live proof.
+
+## Independent review completed; hosted-check recovery
+
+[PR #685](https://github.com/fractalsynapse/arcnexus/pull/685) staged the existing
+evidence-index reuse at `d76beaf3`. Both Development and Staging CI passed.
+Run 113 then demonstrated the real handoff: Reviewer read the complete
+2,760,410-byte index with 11,319 references through MCP and accepted all 38
+criteria. The indexed request was 281,468 bytes. The complete read receipt and
+comparison remain in external `684-live-index-read-proof.json`.
+
+ArcNexus opened [PR #686](https://github.com/fractalsynapse/arcnexus/pull/686)
+for the retained #668 candidate at `9d600582`. Local assembly passed 495 tests
+(479 passes, sixteen optional native skips). Hosted Development then failed three
+Workflow refinement-recovery fixture tests, while specification, formatting, lint
+and TypeScript checks passed. Run 113 ended failed; it is not a successful delivery
+or qualification round. Its full provider job log remains outside source in
+`686-development-provider-job.log`.
+
+[#687](https://github.com/fractalsynapse/arcnexus/issues/687) bootstraps the missing
+DE-17 path: preserve complete hosted diagnostics, independently assess the actual
+defect, route a criterion-linked rejection through the existing Direction and
+steward workflow, refresh affected verification, and reuse the same PR. Ordinary
+steward failures remain local. Provider reconciliation precedes replay, including
+when the staging base or checkpoint head changes. An unchanged finding holds
+durably; a changed external gate is observed again rather than presumed failed.
+The accountable platform steward must repair the #686 fixture; operator edits to
+that candidate are not part of this bootstrap. Qualification remains **0/3**.
+
+#687 local assembly passed all 450 native-enabled tests without failures or skips,
+plus specification/ownership/guidance validation, formatting, lint and strict
+TypeScript compilation. Public regressions first observed the abort and diagnostic
+loss. Current-head CI, staging integration and the real #686 recovery remain
+separate outstanding proof.

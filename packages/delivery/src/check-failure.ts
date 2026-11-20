@@ -5,6 +5,7 @@ export class PublicationCheckFailure extends Error {
     message: string,
     readonly candidate: string,
     readonly evidence: readonly string[],
+    readonly identity: string,
   ) {
     super(message);
   }

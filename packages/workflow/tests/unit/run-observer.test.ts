@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { JournalEvent, RunMeasurements } from '../../../coordination/src/index.js';
 import { RunObserver } from '../../src/observer.js';
+import type { TaskEvent, TaskSession } from '../../src/services.js';
 
 export const suite = { owner: 'workflow', level: 'unit', tags: ['regression'] } as const;
 
@@ -60,4 +61,25 @@ test('nested observation shares one projection and returns the complete original
     'Complete human answer',
   );
   assert.deepEqual(scenario.answers, ['Clarify the goal']);
+});
+
+test('each admitted session records its own question and preserves the complete caller answer', async () => {
+  const scenario = new ObserverScenario();
+  const events: TaskEvent[] = [];
+  const session = { record: (event: TaskEvent) => events.push(event) } as unknown as TaskSession;
+  const child = { record: (event: TaskEvent) => events.push(event) } as unknown as TaskSession;
+  scenario.observer.admittedSession(session);
+  scenario.observer.admittedSession(child);
+  const signal = new AbortController().signal;
+  assert.equal(await session.ask!('Parent question', signal), 'Complete human answer');
+  assert.equal(await child.ask!('Child question', signal), 'Complete human answer');
+  assert.deepEqual(scenario.answers, ['Parent question', 'Child question']);
+  assert.equal(events.filter((event) => 'invocation' in event).length, 1);
+  assert.deepEqual(
+    events.filter((event) => 'phase' in event),
+    [
+      { phase: 'question', message: 'Parent question' },
+      { phase: 'question', message: 'Child question' },
+    ],
+  );
 });

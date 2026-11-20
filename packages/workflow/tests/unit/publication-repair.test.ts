@@ -37,6 +37,8 @@ class PublicationScenario implements WorkflowServices {
   };
   private corrected = false;
   private observed = false;
+  recoverExternal = false;
+  private recovered = false;
 
   /** Select first publication, resumed publication or a genuine external hold. */
   constructor(
@@ -136,6 +138,7 @@ class PublicationScenario implements WorkflowServices {
   /** Return new engineering evidence through the independent verdict boundary. */
   private async assess(candidate: string) {
     this.calls.push('review:' + candidate);
+    if (this.observed && this.external && this.recoverExternal) this.recovered = true;
     if (this.observed && !this.corrected && !this.external)
       return {
         kind: 'rejected' as const,
@@ -160,16 +163,19 @@ class PublicationScenario implements WorkflowServices {
   /** Keep one publication identity and expose only the corrected merge. */
   private async publish() {
     this.calls.push('publish');
-    if (!this.corrected) this.fail();
+    if (!this.corrected && !this.recovered) this.fail();
     return { kind: 'merged' as const, commit: 'staging', evidence: ['same-pr'] };
   }
 
   /** Model the typed actual failure after Delivery retained its complete diagnostics. */
   private fail(): never {
     this.observed = true;
-    throw new PublicationCheckFailure('Required check failed on the same PR', 'original-tree', [
-      'complete-ci.log',
-    ]);
+    throw new PublicationCheckFailure(
+      'Required check failed on the same PR',
+      'original-tree',
+      ['complete-ci.log'],
+      'same-hosted-finding',
+    );
   }
 }
 
@@ -203,6 +209,21 @@ test('an accepted candidate with the same failed external gate holds without a p
   const outcome = await scenario.run();
   assert.equal(outcome.kind, 'blocked');
   assert.deepEqual(outcome.evidence, ['complete-ci.log']);
-  assert.equal(scenario.calls.filter((call) => call === 'publish').length, 1);
+  assert.equal(scenario.calls.filter((call) => call === 'publish').length, 2);
   assert.ok(!scenario.calls.includes('direction'));
+});
+
+test('a changed external gate is reconciled and succeeds without changing the candidate', async () => {
+  const scenario = new PublicationScenario(false, true);
+  scenario.recoverExternal = true;
+  const outcome = await scenario.run();
+  assert.equal(outcome.kind, 'merged', JSON.stringify(outcome));
+  assert.ok(!scenario.calls.includes('direction'));
+  assert.deepEqual(scenario.calls, [
+    'original',
+    'review:original-tree',
+    'publish',
+    'review:original-tree',
+    'publish',
+  ]);
 });

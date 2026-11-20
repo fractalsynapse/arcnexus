@@ -2,6 +2,7 @@ import { execFile } from 'node:child_process';
 import { setTimeout } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { retryRead } from './read.js';
+import { GitHubCheckFailure, type ProviderCheck } from './check-failure.js';
 
 export { isTransientReadFailure } from './read.js';
 export { GitHubCheckFailure } from './check-failure.js';
@@ -200,7 +201,7 @@ ${marker}`,
           (status === 'COMPLETED' && conclusion !== 'SUCCESS') ||
           ['ERROR', 'FAILURE'].includes(state ?? ''),
       );
-      if (failed) throw new Error(`Required GitHub checks failed: ${pr}`);
+      if (failed) throw await this.failedCheck(pr, head, failed);
       if (
         checks.length &&
         current.reviewDecision !== 'REVIEW_REQUIRED' &&
@@ -209,6 +210,15 @@ ${marker}`,
         return;
       await setTimeout(5_000, undefined, { signal: this.signal });
     }
+  }
+
+  /** Preserve complete check diagnostics from the authorized repository's provider job. */
+  private async failedCheck(pr: string, head: string, check: ProviderCheck) {
+    const job = /\/job\/(\d+)/.exec(check.detailsUrl ?? '')?.[1];
+    const log = job
+      ? await this.query(['api', `repos/${this.repository}/actions/jobs/${job}/logs`], true)
+      : JSON.stringify(check, null, 2);
+    return new GitHubCheckFailure(pr, head, check, log);
   }
 
   /** Request a head-pinned squash merge and verify the resulting provider identity. */
@@ -243,8 +253,8 @@ ${marker}`,
   }
 
   /** Retry transient failures only at explicit read-only provider call sites. */
-  private query(args: string[]) {
-    return retryRead(() => this.command(args), this.signal);
+  private query(args: string[], complete = false) {
+    return retryRead(() => this.command(args, complete), this.signal);
   }
 
   /** Read every provider page, retaining complete JSON values without a local result-count ceiling. */
@@ -263,14 +273,14 @@ ${marker}`,
   }
 
   /** Run a scoped provider action without interpolating model content into a shell. */
-  private async command(args: string[]) {
+  private async command(args: string[], complete = false) {
     const scoped = args[0] === 'api' ? args : [...args, '--repo', this.repository];
     const { stdout } = await run('/usr/bin/gh', scoped, {
       signal: this.signal,
       maxBuffer: Infinity,
       env: { ...process.env, GH_PROMPT_DISABLED: '1' },
     });
-    return stdout.trim();
+    return complete ? stdout : stdout.trim();
   }
 }
 
@@ -297,7 +307,7 @@ interface Pull {
   baseRefName: string;
   reviewDecision: string;
   mergeCommit?: { oid: string };
-  statusCheckRollup: { status?: string; conclusion?: string; state?: string }[];
+  statusCheckRollup: ProviderCheck[];
 }
 
 /** Use only the first line of the goal as the provider title. */
