@@ -150,20 +150,7 @@ function assertProviderRecords(records: Array<Record<string, any>>): void {
       'type',
     ]);
     assert.ok(event.input.startsWith('## Actor and project\n'));
-    if (provider.indexOf(record) < 3) {
-      assert.deepEqual(event.consumption, []);
-    } else {
-      assert.ok(event.consumption.length > 0);
-      assert.equal(event.consumption[0].round, '1');
-      assert.ok(event.consumption[0].findings.length > 0);
-      assert.ok(event.consumption[0].measurements.length > 0);
-    }
-    if (provider.indexOf(record) < 3) {
-      assert.deepEqual(event.reads, []);
-    } else {
-      assert.ok(event.reads.some((path: string) => path.includes('refinement-round-1.md')));
-      assert.ok(event.reads.some((path: string) => path.endsWith('codex.jsonl')));
-    }
+    assertRoundHistory(event, provider.indexOf(record));
     assert.match(event.executable, /stream-provider/);
   }
 }
