@@ -149,6 +149,7 @@ export type ActivityOutcome =
       reason: string;
       evidence: readonly string[];
       failedCheck?: StewardCheckFailure;
+      holdContext?: HoldContext;
     };
 
 /** Identify an explicit link to the requester while preserving host-generated check corrections. */
