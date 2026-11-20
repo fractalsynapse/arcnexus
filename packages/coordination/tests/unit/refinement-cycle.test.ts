@@ -90,7 +90,10 @@ test('standalone and refinement rounds retain independent unfinished inventories
     'refine:invocation:round:1',
   ]) as { id: number; inventory: string };
   assert.deepEqual(resumed, refine);
-  assert.deepEqual(fixture.store.round(remote, () => 'changed standalone'), standalone);
+  assert.deepEqual(
+    fixture.store.round(remote, () => 'changed standalone'),
+    standalone,
+  );
 });
 
 test('an active approval child keeps competing foreground writers out', (t) => {
