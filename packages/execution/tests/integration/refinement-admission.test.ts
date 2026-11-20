@@ -127,7 +127,6 @@ test('each child admits the current staging revision under the retained parent w
     directory: root,
     goal: 'Continuous refinement',
     scope: 'refine',
-    refinement: true,
   };
   const parent = await execution.admit(input, signal);
   assert(parent instanceof HostTask);
