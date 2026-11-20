@@ -89,20 +89,21 @@ test('nested repairs retain the originating finding and latest diagnostic in the
   assert.equal(result.kind, 'completed');
 });
 
-test('nested findings and retained progress survive journal reopening and later requests', async (t) => {
-  const fixture = new TestingRewindFixture(t);
-  const latest = {
-    milestone: 'original',
-    activity: 'testing' as const,
-    reason: 'Repair the repair\nwith the complete diagnostic.',
-    evidence: ['latest.log'],
-  };
-  const original = {
-    milestone: 'original',
-    activity: 'documentation' as const,
-    reason: 'Correct outdated documentation',
-    evidence: [],
-  };
+const latestReplay = {
+  milestone: 'original',
+  activity: 'testing' as const,
+  reason: 'Repair the repair\nwith the complete diagnostic.',
+  evidence: ['latest.log'],
+};
+const originalReplay = {
+  milestone: 'original',
+  activity: 'documentation' as const,
+  reason: 'Correct outdated documentation',
+  evidence: [],
+};
+
+/** Retain an edit and complete answer artifacts before the second rewind. */
+function replayEvidence(fixture: TestingRewindFixture) {
   const receipt = fixture.task.edits('owner', 'testing', [
     { path: 'fixture.txt', expected: null, content: 'retained edit\n' },
   ]);
@@ -111,7 +112,45 @@ test('nested findings and retained progress survive journal reopening and later 
   const evidence = fixture.task.store('research.md', report);
   fixture.task.note({ clarification: { question: 'Which requirement?', answer } });
   fixture.task.note({ researchResult: { evidence } });
-  fixture.task.record({ position: { completed: 0, activities: { original: 1 } }, repair: latest });
+  return { receipt, answer, report, evidence };
+}
+
+/** Compare complete retained artifacts after the journal has reopened. */
+function assertReplayEvidence(fixture: TestingRewindFixture, saved: ReturnType<typeof replayEvidence>) {
+  const retained = fixture.task.observations<{
+    edits?: typeof saved.receipt;
+    clarification?: { question: string; answer: string };
+    researchResult?: { evidence: string };
+  }>();
+  assert.deepEqual(retained.findLast((event) => event.edits)?.edits, saved.receipt);
+  assert.deepEqual(retained.findLast((event) => event.clarification)?.clarification, {
+    question: 'Which requirement?',
+    answer: saved.answer,
+  });
+  assert.equal(retained.findLast((event) => event.researchResult)?.researchResult?.evidence, saved.evidence);
+  assert.equal(fixture.task.readFile(saved.evidence).text, saved.report);
+}
+
+/** Request each subsequent activity through the public steward boundary. */
+async function assertReplayRequests(fixture: TestingRewindFixture) {
+  for (const activity of ['testing', 'implementation'] as const) {
+    fixture.activity = activity;
+    const context = await fixture.context();
+    assert.deepEqual(context.localRepair, {
+      ...latestReplay,
+      originatingFinding: originalReplay,
+      targetCompleted: false,
+    });
+    assert.deepEqual(context.completedActivities, ['documentation']);
+    assert.deepEqual(context.previouslyCompletedActivities, ['testing', 'implementation']);
+    if (activity === 'testing') assert.equal(context.retainedTesting.redLog, fixture.red);
+  }
+}
+
+test('nested findings and retained progress survive journal reopening and later requests', async (t) => {
+  const fixture = new TestingRewindFixture(t);
+  const saved = replayEvidence(fixture);
+  fixture.task.record({ position: { completed: 0, activities: { original: 1 } }, repair: latestReplay });
   const position = fixture.task.history().findLast((event) => 'position' in event);
   const checks = fixture.task.observations<{ check?: unknown }>().filter((event) => event.check);
   await fixture.restart();
@@ -120,30 +159,8 @@ test('nested findings and retained progress survive journal reopening and later 
     fixture.task.observations<{ check?: unknown }>().filter((event) => event.check),
     checks,
   );
-  const retained = fixture.task.observations<{
-    edits?: typeof receipt;
-    clarification?: { question: string; answer: string };
-    researchResult?: { evidence: string };
-  }>();
-  assert.deepEqual(retained.findLast((event) => event.edits)?.edits, receipt);
-  assert.deepEqual(retained.findLast((event) => event.clarification)?.clarification, {
-    question: 'Which requirement?',
-    answer,
-  });
-  assert.equal(retained.findLast((event) => event.researchResult)?.researchResult?.evidence, evidence);
-  assert.equal(fixture.task.readFile(evidence).text, report);
-  for (const activity of ['testing', 'implementation'] as const) {
-    fixture.activity = activity;
-    const context = await fixture.context();
-    assert.deepEqual(context.localRepair, {
-      ...latest,
-      originatingFinding: original,
-      targetCompleted: false,
-    });
-    assert.deepEqual(context.completedActivities, ['documentation']);
-    assert.deepEqual(context.previouslyCompletedActivities, ['testing', 'implementation']);
-    if (activity === 'testing') assert.equal(context.retainedTesting.redLog, fixture.red);
-  }
+  assertReplayEvidence(fixture, saved);
+  await assertReplayRequests(fixture);
   const plan = fixture.task.history().findLast((event) => 'plan' in event);
   assert(plan && 'plan' in plan);
   assert.deepEqual(plan.plan.milestones[0], rewindMilestone);
