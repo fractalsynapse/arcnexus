@@ -146,7 +146,11 @@ test('Reviewer repairs an invalid citation on the same candidate and original ch
   assert.deepEqual(second?.acceptance, first?.acceptance);
   assert(JSON.stringify(citationRepair).includes(invalid));
   assert(JSON.stringify(citationRepair).includes('retained evidence'));
-  assert(second?.evidence?.includes(fixture.checkLog));
+  const catalog = (second?.evidence as string[]).find((path) =>
+    path.includes('-retained-evidence-'),
+  );
+  assert(catalog);
+  assert(JSON.parse(readFileSync(catalog, 'utf8')).references.includes(fixture.checkLog));
 });
 
 test('a second invalid citation and a changed candidate each fail the same gate', async (t) => {
