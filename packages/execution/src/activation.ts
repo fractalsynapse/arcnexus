@@ -76,27 +76,9 @@ function invocationContext(task: HostTask, current: ActivityData, observed?: num
     goal: activationGoal(task),
     worktree: task.worktree ?? task.capture.source.root,
   };
-  const rounds = task.journal.completedRounds().flatMap((event) => {
-    const observation = event.observation as { completedRound?: { report?: unknown } };
-    const report = observation.completedRound?.report;
-    return typeof report === 'string' && task.journal.artifactRecorded(report)
-      ? [observation.completedRound!]
-      : [];
-  });
-  if (rounds.length) {
-    const assignment =
-      typeof context.assignment === 'object' && context.assignment !== null
-        ? context.assignment
-        : context.assignment === undefined
-          ? {}
-          : { instructions: context.assignment };
-    context.assignment = { ...assignment, completedRounds: rounds };
-  }
-  const reports = rounds.map(({ report }) => report as string);
-  const timelines = [task.parent?.timeline, task.timeline].filter(
-    (path): path is string => path !== undefined && task.journal.artifactRecorded(path),
-  );
-  context.evidence = [...new Set([...(context.evidence ?? []), ...reports, ...timelines])];
+  const retained = completedRoundContext(task, context.assignment);
+  context.assignment = retained.assignment;
+  context.evidence = [...new Set([...(context.evidence ?? []), ...retained.evidence])];
   if (observed !== undefined)
     context.evidence = [
       ...new Set([
@@ -106,6 +88,30 @@ function invocationContext(task: HostTask, current: ActivityData, observed?: num
       ]),
     ];
   return context;
+}
+
+/** Add compact round references and readable registered sources to the prepared observation. */
+function completedRoundContext(task: HostTask, assignment: unknown) {
+  const rounds = task.journal.completedRounds().flatMap((event) => {
+    const observation = event.observation as { completedRound?: { report?: unknown } };
+    const report = observation.completedRound?.report;
+    return typeof report === 'string' && task.journal.artifactRecorded(report)
+      ? [observation.completedRound!]
+      : [];
+  });
+  const instructions =
+    typeof assignment === 'object' && assignment !== null
+      ? assignment
+      : assignment === undefined
+        ? {}
+        : { instructions: assignment };
+  const timelines = [task.parent?.timeline, task.timeline].filter(
+    (path): path is string => path !== undefined && task.journal.artifactRecorded(path),
+  );
+  return {
+    assignment: rounds.length ? { ...instructions, completedRounds: rounds } : assignment,
+    evidence: [...rounds.map(({ report }) => report as string), ...timelines],
+  };
 }
 
 /** Use the verified delivery purpose for prerequisite actors while preserving canonical retry identity. */
