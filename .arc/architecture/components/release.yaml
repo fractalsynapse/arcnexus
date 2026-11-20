@@ -1,7 +1,135 @@
 id: release
 kind: plugin
-purpose: Maintain repository release infrastructure and preserve the human
-  production gate.
+purpose: |
+  Release owns the repository infrastructure and authored information needed to prepare, verify and explain delivery beyond ordinary engineering. Its scope includes the release package, GitHub workflows, repository ignore policy, changelog and release documentation. These responsibilities change together when the project changes how it validates or packages a release. The component keeps that process coherent while preserving the distinction between a verified staging increment and an actual production release. Its purpose is trustworthy release preparation, not automatic authority over protected branches or published identities.
+
+  The locked contract in packages/release/contract.md states the production boundary. Production release remains outside the first CLI runtime. A task's staging integration cannot be reported as a release, and the runtime refuses protected main merges, tags, publication and deployment. A maintainer's explicitly authorized repository operation is a separate scoped action; it does not silently install a generic runtime release capability. The component's name does not confer permission that its activity mappings and host policy do not grant.
+
+  Agents and teams remain the conceptual model. The Release steward is an agent with selected research, documentation, testing, implementation and self-review activities. It maintains the infrastructure through the same confined engineering path as other stewards. The host-only Delivery release activity is a different responsibility: integrating an accepted task into staging. Neither should be confused with a model autonomously publishing production. Clear names and source links should make that distinction visible to a human and to the Director selecting work.
+
+  Repository infrastructure
+
+  GitHub workflows connect repository events to the shared engineering toolchain. Release owns their triggers, permissions, job dependencies, action pins and evidence links. Foundation owns reusable build, TypeScript, formatting, lint and test tools. A workflow should call those canonical tools rather than copy their implementation into YAML or a release-only script. Otherwise a green CI job can drift away from the checks used locally and during assembled verification.
+
+  A workflow change must preserve actual required check identities and gate semantics. Renaming a job, changing path filters or moving a check behind a condition can affect whether Delivery sees a required result. A syntactically valid workflow can still leave a required check pending forever or skip a relevant verification. The steward must trace the changed trigger to the configured repository rules and the resulting run, not assume that a successful local YAML parse proves integration correctness.
+
+  Action pins and runtime transitions require precise evidence. Record the exact action revision and the actual workflow head tested. A warning that an action uses an old Node runtime is resolved only when the relevant observed run no longer emits it under the new configuration. A newer-looking version string alone does not prove the warning is gone. Current primary documentation and the configured run are stronger evidence than remembered release behavior.
+
+  Workflow permissions should match the event and authorized effect. Read-only verification jobs do not need an accidental publication capability, while a deliberately authorized release path needs its actual prerequisites stated. The component must not solve a permissions failure by broadening every job. Preserve secret boundaries and do not print credentials in logs or source examples. Tests and fixtures should remain isolated from live publication even when they inspect workflow syntax.
+
+  Ignore and source hygiene
+
+  The repository ignore file is part of release infrastructure because it influences what authored material is delivered and what generated runtime state stays local. Application databases, worktrees, transcripts, generated evidence indexes and temporary native artifacts belong in application storage outside source. Ignore rules are a defense against accidental tracking, not permission to discard failed evidence. Retained execution artifacts still need their actual storage and identity.
+
+  A broad ignore rule can also hide intended source, tests or documentation. Review both directions: generated output should stay out, and authored release files should remain visible. Do not add a catch-all pattern merely because one live run produced a noisy directory. Identify the actual responsibility and put the generated path in the right storage location. A clean git status achieved by hiding source is not a successful housekeeping outcome.
+
+  Changelog entries describe user- or developer-visible changes, not every internal edit or failed attempt. They should state delivered behavior at the appropriate stage and avoid claiming future qualification. A guidance-only change does not require an invented version bump. An implementation batch can have one coherent entry even when several stewards contributed, provided attribution and issue links remain accurate.
+
+  Release notes explain a particular candidate or published version. They derive from the actual commit range and accepted evidence. Include complete issues and identify partial work honestly. A PR that contains a preparatory interface declaration is not proof the full feature works. Retain meaningful known gaps rather than closing every related issue for appearance. Clear release notes make it possible to understand what a user receives without reading the entire development conversation.
+
+  Stages of delivery
+
+  A development PR verifies a candidate head under the relevant checks and review requirements. Staging integration records a verified engineering increment. Staging CI observes the resulting staged commit. A staging-to-main PR collects a release candidate from the actual range. Production CI on the merge commit observes that main revision. A tag identifies a release revision, and publication creates the external release artifact or record. These are separate facts even when they occur close together.
+
+  The Release steward must keep those identities distinct. A passing check on a PR head does not automatically prove the main merge commit; a successful staging run does not establish Production CI; an existing tag does not establish a live GitHub release. A report should name the actual revision and evidence for the claim being made. If the relevant run is pending or unavailable, say so and preserve the candidate rather than substituting a nearby green result.
+
+  Published tags are immutable identities. Do not move or replace one to hide a failed workflow or include a later fix. A corrective release uses a new authorized version and honest notes. The component can help prepare that correction, but the production effect still follows maintainer authority. Repository convenience must not erase the ability to reproduce what was released.
+
+  The runtime's ordinary task lifecycle ends at verified staging delivery or a justified assessment outcome under its contract. Main merges and releases remain separate from continuous goal alignment. A successful refine round is not a release cycle, and a no-change goal assessment does not imply a new version should be published. This keeps continuous self-development useful without turning every improvement into an uncontrolled production event.
+
+  Human authority and scoped authorization
+
+  Objectives, goals and architecture are high-level guides controlled by the human. Ordinary implementation correction under those guides should proceed without a new gate. Production operations are a separate maintainer boundary in the current contract. A user can explicitly authorize a particular repository action or temporary process waiver, and that authorization persists within its stated scope. The steward must record what was authorized rather than repeatedly ask the same question.
+
+  A temporary waiver does not change the generic product's locked obligations. For example, authorization to integrate an unreleased maintenance PR manually cannot be translated into a runtime feature that merges main for every future goal. If the product boundary itself must change, prepare the exact contract amendment and registry update for review. Do not quietly edit locked bytes to make a release script pass.
+
+  Required CI and review remain real gates for staging delivery. Release infrastructure should expose their actual observations, not create a second approval mechanism. An unavailable external prerequisite is a named hold with an actionable reason. It is not permission to skip a check or ask the human to approve an unverifiable claim. Keep the distinction between high-level guide approval and external delivery prerequisites clear in docs and output.
+
+  The component cannot approve its own PR or manufacture a required review. It may prepare a candidate, verify evidence and report readiness through the authorized procedure. A self-review is useful engineering evidence but is not a GitHub approval or the final independent Reviewer verdict. Tests should preserve these different identities rather than call every favorable observation approved.
+
+  Working with other plugins
+
+  Foundation provides common tooling and code-quality strategy. Release should request a concrete Foundation change when a required check is missing or incorrectly scoped. It should not copy a test runner into a workflow to bypass the missing capability. Likewise, Foundation is not required to re-prove every dependency for every release edit; revisit it when a real blocker or new shared capability requires work.
+
+  Execution provides native commands, candidate preparation and complete operation evidence. A workflow or provider observation that needs a real executable should use the declared execution path, recording version, environment, arguments, exit status and diagnostics. Release does not add an untracked shell escape for a model or treat a failed configured experiment as proof of a universal limitation.
+
+  Delivery owns task publication to staging, and Collaboration supplies external provider facts and effects. Release owns the workflow configuration they rely on, not their state machines. If a changed required check name affects Delivery observation, that consumer contribution must be explicit. One coherent delivery can include related contributions without creating another scheduler or a separate release-status store.
+
+  Architecture owns the declared component, role, operation and standard model. Manager owns repository directives and skills. Release documentation should link their canonical sources rather than duplicate authority rules in every checklist. A change to a release guide can be ordinary documentation, but a change to the runtime's protected-operation boundary is architectural and must be handled as such.
+
+  Characteristic risks
+
+  The most dangerous release failure is a false claim: reporting production success from staging evidence, reporting a tag as a published release, or declaring a warning fixed without observing the relevant run. These errors can survive ordinary unit tests because the text looks plausible. The cheapest prevention is an exact evidence checklist tied to the actual commit and external record, with unknown or pending states retained honestly.
+
+  Another risk is accidental gate weakening. A workflow may remain green because a path filter skipped tests, a job condition became false, a renamed check was no longer required, or a test command selected nothing. The steward must inspect applicability and execution, not merely the final color. Declared operations and literal test metadata help make those decisions explicit, but they still require correct configuration.
+
+  A third risk is duplication. Build steps copied into several workflows drift from Foundation's local tools. Release scripts and Delivery helpers can both attempt the same provider effect. Changelog and release notes can contradict one another about whether a feature is complete. The correction is one canonical source and one effect path, with links and generated observations where useful, rather than another wrapper around each duplicate.
+
+  A fourth risk is treating cleanup as deletion. Stale branches can be removed only after verifying merge, later work, other open PRs, worktree use and retention requirements. Failed task checkpoints may remain valuable even when an old issue is superseded. Closing an issue should state complete versus superseded acceptance accurately. A clean issue list obtained by discarding open qualification is misleading.
+
+  Verification strategy
+
+  Document-only changes use document, link, ownership and specification validation appropriate to their scope. Workflow changes need syntax and policy checks plus observation of the actual affected run when that is the claim. Product code changes need focused behavioral regressions, mapped owner checks and assembled verification. Do not manufacture a code test for prose alone, and do not substitute prose review for an executable workflow behavior.
+
+  Fixtures should use realistic workflow and provider shapes. A regex that finds npm run check somewhere in a YAML file does not establish that the required job runs on staging or main. A fake provider returning success does not establish actual repository permission or a published artifact. Isolate fixtures from live credentials and label their evidence category. Real integration must name the exact run and revision.
+
+  When an action update fixes a runtime warning, retain the old observed diagnostic and the new observed log. Include the configured pinned revisions and relevant runtime versions. Avoid guessing that a moving major label resolves a specific warning. Current primary documentation can explain the change, but the actual workflow proves the configured result.
+
+  The component also preserves the runtime refusal regression for protected production effects. A future approved release capability would need its own exact released identity and live proof. Until then, the default production composition must refuse a model request to merge main, tag, publish or deploy. Tests cannot quietly install an alternate permissive provider and call that production wiring.
+
+  Steward activities and local repair
+
+  Release's research activity settles a named uncertainty in infrastructure or external behavior. Documentation states the accepted intent and evidence expectations. Testing establishes realistic assertions. Implementation edits owned workflows, ignore rules, changelog or package code through checked edits. Self-review examines the full diff and actual proof without performing publication. Shared role and Agent instructions supply common procedure once.
+
+  A mapped check failure returns exact exit status and complete diagnostics to the same caller. Correct an owned workflow fixture or local configuration problem within the existing milestone. Preserve acknowledged file checkpoints and earlier successful checks whose inputs did not change. A self-review finding can rewind to the earliest available local activity that can change the outcome; ordinary repair does not require Director replanning.
+
+  When another owner truly must change a public capability, escalate the concrete contribution with its evidence. Do not demand conversational agreement before implementing Release's own accepted contract. If earlier Testing is unavailable, Implementation can repair its owned tests in place. A request to repeat the current activity is not a substitute for the work it can already perform.
+
+  Measure useful progress, not ceremony
+
+  Useful release work reduces the distance between a verified staged change and a trustworthy human-controlled production decision. It keeps checks consistent, identities reproducible, notes accurate and external status observable. More release scripts, more checklist layers or more PRs do not inherently improve safety. Prefer coherent batches that preserve ownership and evidence while removing duplicate mechanics.
+
+  Measure actual elapsed workflow time, queue time where available, failed check causes and repeated corrections. Agent token and cost observations remain attributed to their execution profiles and actual pricing basis. A long workflow wait is different from repeated expensive model replanning caused by poor instructions. Unknown metrics remain unknown, and no unapproved budget or timeout is added to force a shorter-looking run.
+
+  Learning records can capture a warning that escaped checks, an invalid release claim or a confusing gate. Record the concrete pattern, cost and cheapest check that would have caught it. Promote a durable rule through the human architecture path rather than appending broad restrictions after every incident. Historical failed observations remain intact even when a later release succeeds.
+
+  Evolution and success
+
+  The current boundary deliberately supports reliable engineering before a broad production automation surface. Future release capabilities should follow demonstrated need and preserve exact authorization, immutable published identities, actual released revision and live verification. Do not add a release CLI verb or runnable publication target simply because a component exists with that name. Availability requires code, operations, ownership, contracts and validation to agree.
+
+  Successful stewardship leaves one clear release procedure, canonical workflow tooling, an accurate changelog and traceable evidence for every claim. A human can identify what reached staging, what reached main, what was tagged and what is actually published without reconstructing the conversation. The generic runtime remains within its accepted production boundary, and the repository can evolve quickly without trading truthful evidence for apparent completion.
+
+  Representative release journeys
+
+  Consider a maintenance PR that changes a pinned checkout action. Local validation can establish the exact YAML and referenced revision, and current primary documentation can explain the action's runtime. The relevant hosted run then establishes whether the configured workflow executes and whether the old warning remains. The report should preserve both observations instead of claiming a runtime fix from a successful parse. The source diff and external run are complementary evidence.
+
+  Consider staging advancing after a release PR was opened. The candidate's commit range, included issues and check evidence may need refresh. A release description written for the earlier head cannot remain a complete account of the later candidate. Update the actual scope and retain partial acceptance honestly. Do not close an issue merely because a related file appears in the range; its promised behavior may still be unqualified.
+
+  Consider Production CI failing after a main merge even though the staging PR was green. The actual merge commit and environment are the relevant observation. Preserve the failure and diagnose the responsible boundary rather than retagging an earlier green commit without authorization. A release tag must identify the revision the human intends to publish, and a published tag cannot be moved to erase the discrepancy.
+
+  Consider a tag that already exists but has no GitHub release. Publication can use the authorized existing identity and prepared notes, but success requires observing the live release and the triggered workflow. The existence of the tag is only the starting fact. The report should say which record is live, which run completed and which source revision it represents. A generated notes file alone is not publication.
+
+  Consider an agent task that asks Release to change a workflow and then deploy it. The engineering part may fit the current ownership and accepted milestone; the runtime production effect conflicts with the present release boundary. The steward must identify that distinction rather than partly complying through a hidden provider call. A high-level contract change is the human's decision, while the ordinary owned workflow correction can proceed only within its authorized scope.
+
+  Consider a stale branch after a merged maintenance PR. Before deleting it, inspect whether its head has later commits, whether another open PR uses it, whether a worktree is attached and whether retention evidence still depends on it. A safe merged branch can be removed under the release procedure. A failed live task branch with unique checkpoints must remain retained even when an associated issue is superseded. Housekeeping should reduce confusion without destroying recoverable work.
+
+  Consider a workflow whose tests pass because the selector matched nothing. The relevant regression must assert literal suite metadata, applicability and actual execution where required. A test-count claim should come from the observed runner result, including skips or inapplicability. Do not add an arbitrary minimum suite count; verify the intended selected behavior and mandatory assembled checks. Components without suites remain legitimate.
+
+  Consider a changelog entry written before implementation. It can record intended behavior under an unreleased section, but the final release notes must be reconciled to what actually delivered. If the behavior is still proposed or held, say so. Do not copy a draft claim into a published release simply because it was already committed. The acceptance and evidence determine the claim, not the age of the sentence.
+
+  Consider a temporary manual authorization that allows an unreleased main integration for velocity. Record the actual scope and perform only the authorized operation after current checks. The runtime's release-refusal tests remain unchanged unless the human separately approves a contract amendment. This keeps a practical repository decision from silently becoming a permanent feature or a general exception that future agents assume.
+
+  Consider a long CI wait during a refinement test. The timeline should separate external wait from agent reasoning and local check time. Repeatedly invoking Direction cannot make the provider finish faster. Delivery observes the actual state through Collaboration, and Release changes infrastructure only if evidence identifies a real configuration defect. This is a boundary diagnosis, not a reason to add an arbitrary timeout or weaken the gate.
+
+  These journeys should guide focused verification and truthful reporting. They do not require a new release framework, one PR for every file or a live production effect for every documentation edit. Reuse current evidence when its inputs remain unchanged, refresh what the candidate actually affects and keep the final human-controlled decision concrete. A simple, traceable release path is more useful than layers of checks that cannot explain what revision they proved.
+
+  Version preparation should use the project's actual current version and accepted release intent rather than infer a new number from the number of merged PRs. A guidance rewrite, workflow repair and product capability can have different release significance. The steward should explain the candidate's contents and let the authorized release procedure establish its identity, preserving any version already published.
+
+  Release documentation must remain usable after the current chat ends. Link the canonical workflow, contract and actual evidence instead of depending on conversational assurances. When a referenced run or issue is unavailable, retain that uncertainty explicitly. This gives the next maintainer a reproducible path to the same decision and prevents an old status message from becoming an unverified permanent claim.
+
+  A published release can remain valid while a later maintenance change is pending. Reports should preserve the released version's evidence and describe the new candidate separately. Avoid rewriting old notes to imply the pending fix was already included; accurate version boundaries are essential for users diagnosing their installed behavior.
+
+  The installed runtime identity should accompany qualification evidence so a later workflow change cannot be mistaken for the version actually exercised.
 objectives:
   - measure: Release checks and delivery metadata describe the candidate and actual
       observed repository gates.
@@ -29,7 +157,7 @@ activities:
     operations:
       - read-file
       - list-files
-    standards: [ agent-operating-protocol ]
+    standards: [agent-operating-protocol]
   documentation:
     role: technical-writer
     profile: gpt-sol
@@ -48,7 +176,7 @@ activities:
       - checked-edit
       - archive-research
       - request-supplier
-    standards: [ agent-operating-protocol ]
+    standards: [agent-operating-protocol]
   testing:
     role: designer
     profile: gpt-terra

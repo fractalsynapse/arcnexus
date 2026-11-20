@@ -387,7 +387,7 @@ activities:
     operations:
       - read-file
       - list-files
-    standards: [ agent-operating-protocol ]
+    standards: [agent-operating-protocol]
   documentation:
     role: technical-writer
     profile: gpt-sol
@@ -406,7 +406,7 @@ activities:
       - checked-edit
       - archive-research
       - request-supplier
-    standards: [ agent-operating-protocol ]
+    standards: [agent-operating-protocol]
   testing:
     role: designer
     profile: gpt-terra
@@ -430,7 +430,7 @@ activities:
       - repository-types
       - repository-build
       - owner-tests
-    standards: [ agent-operating-protocol ]
+    standards: [agent-operating-protocol]
     verification:
       - owner-format
       - owner-lint
@@ -459,7 +459,7 @@ activities:
       - repository-types
       - repository-build
       - owner-tests
-    standards: [ agent-operating-protocol ]
+    standards: [agent-operating-protocol]
     verification:
       - owner-format
       - owner-lint
@@ -482,7 +482,7 @@ activities:
       - ask-question
       - request-research
       - request-supplier
-    standards: [ agent-operating-protocol ]
+    standards: [agent-operating-protocol]
   planning:
     role: planner
     profile: gpt-sol
@@ -499,4 +499,4 @@ activities:
       - read-file
       - list-files
       - ask-question
-    standards: [ agent-operating-protocol ]
+    standards: [agent-operating-protocol]

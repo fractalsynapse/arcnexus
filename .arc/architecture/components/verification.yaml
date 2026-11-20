@@ -403,7 +403,7 @@ activities:
     operations:
       - read-file
       - list-files
-    standards: [ agent-operating-protocol ]
+    standards: [agent-operating-protocol]
   documentation:
     role: technical-writer
     profile: gpt-sol
@@ -422,7 +422,7 @@ activities:
       - checked-edit
       - archive-research
       - request-supplier
-    standards: [ agent-operating-protocol ]
+    standards: [agent-operating-protocol]
   testing:
     role: designer
     profile: gpt-terra

@@ -78,6 +78,34 @@ purpose: |
   Future gateways can reuse Commands without copying the app. Future terminal capabilities should be added only for accepted user outcomes and tested against their actual effects. The app should not become a studio, scheduler or release engine merely because those features are convenient to expose as verbs. Keep one command path, remove superseded dispatch and rendering when replacing it, and preserve accurate availability reporting.
 
   Lessons from actual runs belong in learning and external evidence storage. They can inform better parser tests, activity instructions or architecture proposals, but they cannot silently grant permission or change acceptance. During the requested instruction rewrite, the proposed component specification remains a review artifact until the human reviews it; no new live task is started merely to demonstrate that text was edited. The ultimate measure remains a trustworthy terminal window into useful agent work, from the first goal submission through honest staging outcome and durable resumption.
+
+  Representative terminal journeys
+
+  Consider a user who first inspects direction planning, then starts a real task from a nested package directory. Inspection must succeed without acquiring the project task lane, opening a provider session or creating application state. Its placeholders must make clear which values do not exist yet. Starting the task resolves the same project and uses the same selected Director request construction with actual task values. Comparing these two views should expose only the declared runtime differences, not a different activity or hidden prompt assembled by the gateway.
+
+  Now consider a script using JSONL output while a steward asks a clarification. The script receives the same structured question and retained decision identity as human mode. If the environment cannot supply an interactive answer, the operation reports its durable pending state and exits according to the contract. Rerunning does not manufacture approval, lose the question or create a new issue. A human can later answer the retained question through the supported path and the application resumes the same work.
+
+  An invalid command is a different journey. A user types inspect with only a component, duplicates --json or supplies an extra task positional. The parser must reject it before calling the application service. A good regression asserts no admission, model activation, filesystem effect or provider access in addition to the diagnostic and exit status. Testing only the returned error string would miss a parser that already started a task before discovering the invalid suffix.
+
+  Streaming should also be tested under slow and interrupted output conditions relevant to the actual implementation. Supply an observation, confirm it is visible, then provide another and finally the result. Distinct activity and operation identities prevent an accidentally repeated first record from satisfying the assertion. The test should not infer liveness from a final buffer containing all records. Where operating-system pipes and flush behavior matter, the built entry point is the appropriate boundary.
+
+  A cancellation journey begins after an edit has been acknowledged. The terminal reports the signal through the application and waits for its normal preservation and cleanup outcome. The next invocation must reuse the recorded edit and answer rather than ask the user to reconstruct them from terminal scrollback. The app's role is to show that retained state and pass the new invocation to the canonical lifecycle, not to inspect arbitrary Git directories and improvise a resume algorithm.
+
+  A no-change journey is equally important. Planner or Architect can justify that accepted guidance needs no modification, and a Director can assess a goal whose measures already hold. The terminal should show the assessment and its basis without inventing a staged commit. A refinement round still runs the required phases and assessments; the CLI does not short-circuit them because it recognizes a familiar goal file or sees an old successful test. This makes repeated use analytical rather than ceremonial.
+
+  A publication hold tests output honesty. The application may have completed all engineering and independent review while GitHub checks are still pending. The user should see that exact state, the retained PR and what remains. A retry that discovers the PR already merged should display the actual merge identity. Neither state should be reduced to a generic failure message that encourages the user to submit a different goal, nor to success before the gate is satisfied.
+
+  An instruction-authoring change has its own journey. A user reviewing longer purposes needs to find the actual YAML field, inspect the complete resolved input and distinguish shared role/standard text from activity-specific paragraphs. The app must not hide the detailed content behind a summary merely because it grew. Measured request sizes can help compare effects, but the terminal adds no content ceiling. This is visibility for deliberate human judgment, not another automatic approval criterion.
+
+  Keeping these journeys in one gateway implementation makes future evolution manageable. Public input tests, real subprocess cases and assembled composition checks each establish a different seam. Reuse those fixtures where their assumptions remain valid and refresh the evidence affected by a change. Avoid a special command implementation for a test or a compatibility parser that accepts undocumented forms indefinitely. The simplest useful terminal is one whose behavior can be traced directly from user input through Commands to the real recorded outcome.
+
+  The app's steward should use these journeys as reasoning aids rather than a mandatory universal test list for every edit. Choose the scenario that distinguishes the accepted change, keep source and runtime identities explicit and report the observed scope. A spelling correction does not require a live task, and a signal-handling change cannot be proved by a document link. This proportionality supports velocity while preserving the user's ability to trust what the terminal says.
+
+  Operation parameters should be visible through the selected request rather than invented by terminal parsing. If a testing activity chooses declared tags or other typed values, inspect should show the resolved binding and its source. The CLI does not accept a raw command string to bypass those declarations. A future transport can supply an application-level parameter only when the shared SDK and accepted architecture support it; a terminal flag is not an independent permission mechanism.
+
+  When reviewing an output change, inspect both ordinary human reading and machine parsing. Long instructions should remain selectable and readable, explicit source boundaries should survive rendering, and an evidence reference should point to the actual retained artifact. A user should not need to remember an earlier collapsed progress message to understand the final outcome. The terminal result and final report need enough identity to stand alone while leaving complete transcripts in their proper storage.
+
+  The gateway also needs to expose genuine unavailability. Recognizing a verb does not mean its composed handler exists; report the actual unavailable capability instead of displaying a simulated success. A public availability test should exercise the production composition, not just the parser's accepted vocabulary.
 objectives:
   - measure: The built CLI preserves SDK outcomes and the documented operator interface.
 constraints:
@@ -97,7 +125,7 @@ activities:
     operations:
       - read-file
       - list-files
-    standards: [ agent-operating-protocol ]
+    standards: [agent-operating-protocol]
   documentation:
     role: technical-writer
     profile: gpt-sol
@@ -116,7 +144,7 @@ activities:
       - checked-edit
       - archive-research
       - request-supplier
-    standards: [ agent-operating-protocol ]
+    standards: [agent-operating-protocol]
   testing:
     role: designer
     profile: gpt-terra

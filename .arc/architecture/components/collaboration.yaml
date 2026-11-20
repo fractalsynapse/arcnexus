@@ -84,6 +84,40 @@ purpose: |
   Deferred simulation and evidence-package providers remain deferred until approved and implemented. A test injection seam is not a public simulation mode. New commands or flags require their own accepted transport contract and production wiring. The adapter must report unavailable capability honestly rather than provide a plausible no-op that lets an end-to-end run appear complete.
 
   Success is an agent lifecycle that can track work, retain checkpoints, publish one independently accepted candidate and recover uncertain external effects without operator repair. Collaboration's contribution is accurate facts, authorized effects and complete diagnostics, not the number of API helpers or provider abstractions. Keeping this boundary trustworthy allows the rest of ArcNexus to remain sequential, understandable and replaceable while real engineering reaches staging.
+
+  Representative provider journeys
+
+  Consider issue creation for a goal whose previous attempt ended after the upstream accepted the request but before the local response was recorded. The next attempt retains the same goal identity and asks for existing tracking facts. The provider must return the actual issue if observed, including its stable repository identity. It must not interpret the missing local success receipt as proof the issue does not exist. The caller can then record reconciliation and continue without another issue.
+
+  Consider a branch push that receives a transport failure. The remote head may equal the intended checkpoint, remain at the previous checkpoint, or have moved to another value. These outcomes require different actions. A provider observation should preserve the head it actually saw and its context. Returning a generic pushed flag or retrying immediately erases the distinction. Execution can decide whether the checkpoint is retained only from a reliable fact, not a reassuring adapter message.
+
+  Consider a PR whose CI succeeded on one head and whose branch was updated before merge. Delivery's expected head no longer matches. Collaboration must refuse the merge request for the stale head rather than accept the old green checks as sufficient. This scenario needs distinct candidate and head identities in the fixture. If both are represented by the same constant, a broken comparison can pass unnoticed.
+
+  Consider a repository that requires review while another fixture repository does not. The provider reports each repository's actual observed review state under its host configuration. It should not hardcode a universal required approval count or a universal waiver. The application can apply the accepted project's policy to those facts. A model cannot supply a convenient policy override in the merge payload or submit its own approval to make the state favorable.
+
+  A missing credential tests availability, not absence. Listing PRs may fail before any upstream inventory is obtained. The result must preserve that failure so the caller retains a named hold. An empty successful array would tell the caller that no PR exists and could trigger a duplicate publication after the credential is restored. The difference should be established by a focused adapter/public-consumer regression rather than left to a live incident.
+
+  A stale comment or issue link is a different failure from a missing engineering artifact. Tracking text can be corrected under the authorized provider operation without rewriting code or replanning completed milestones. The provider should return the actual effect and any uncertainty. It must not let a cosmetic update mutate unrelated issue state or choose a different repository. Specific operation authorization keeps the surface understandable and testable.
+
+  Provider test isolation deserves an explicit scenario. A fixture implementation is composed with deliberate fake credentials and a network path that cannot reach the real upstream. When an operation is unsupported, it returns unavailable; it does not fall back to the application's default GitHub implementation. The test asserts both the result and the absence of a live effect path. This establishes isolation more strongly than relying on the developer to remember not to export a token.
+
+  An API-version change can alter a field that the adapter uses to interpret checks or merge results. Research should identify the primary documentation and the actual pinned client or CLI. A native observation should retain the real response shape, while decoder tests exercise both the meaningful valid shape and explicit invalid or missing fields. Do not respond by accepting any vaguely hash-like string as a merge identity or by treating all parse failures as transient.
+
+  A provider operation can be slow because of remote processing, local process startup, authentication or repeated polling. Complete timing and operation identity help distinguish these causes. Do not put a speculative timeout around every call or truncate the response to make the metric smaller. Improve the actual path, reuse a definitive observation and avoid asking the same question repeatedly when no relevant fact changed.
+
+  The provider seam should remain useful when agents ask richer questions. An architectural clarification still goes through the relevant agent inbox and returns a complete answer; it does not become a GitHub comment lookup unless the accepted operation actually needs that record. Collaboration manages external engineering records, not all human or inter-agent communication simply because the word collaboration sounds broad. Keeping that scope prevents a catch-all integration layer.
+
+  These journeys show the intended contract under stress without creating another recovery framework. Stable identities, complete diagnostics, host authorization and observable effects are enough for the existing lifecycle to reconcile most uncertainty. New helper code is justified only when it removes duplication or implements a real public obligation. The result should be easier to explain than the failure it fixes: who asked, what was authorized, what the provider observed, what effect occurred and what the caller can safely do next.
+
+  Typed operation configuration belongs to the accepted architecture and execution path, not an arbitrary field the provider passes through to a shell. A consumer may use declared parameters where the operation supports them, but repository, credentials and verified candidate identity remain host-controlled facts. Adapter code should reject unsupported values explicitly and preserve the originating diagnostic. This avoids a superficially flexible provider API that actually grants an unchecked native command capability.
+
+  Source ownership also applies when the adapter needs a realistic fixture. The steward can build explicit public-interface records in its own tests without importing another owner's private helpers. If the real consumer assembles a materially different shape, add an assembled boundary scenario or request that owner's concrete contribution. Do not keep an artificial adapter-only record as the permanent excuse for missing production proof.
+
+  A provider fact can become stale after it was correctly observed. Retain its time and relevant identity so later callers know what it established. Do not rewrite the earlier observation to match current state, and do not treat historical failure as permanent evidence that the operation can never work. The timeline should tell the sequence: prior condition, changed external fact, justified next action and actual result. That sequence is the basis for reliable learning and useful automated refinement.
+
+  Merge methods and repository capabilities should be observed through the authorized provider configuration rather than guessed from project convention. If the requested merge mode is unsupported, return the actual refusal and preserve the verified head. Do not silently switch to a different integration method that changes history or required checks. A focused fixture can assert the refusal; the native observation establishes what the configured upstream supports.
+
+  Keep the operation name in every failure reference so a later reader can distinguish a failed observation from a failed mutation.
 objectives:
   - measure: A provider-observed merge identifies the verified head and resulting
       commit.
@@ -106,7 +140,7 @@ activities:
     operations:
       - read-file
       - list-files
-    standards: [ agent-operating-protocol ]
+    standards: [agent-operating-protocol]
   documentation:
     role: technical-writer
     profile: gpt-sol
@@ -125,7 +159,7 @@ activities:
       - checked-edit
       - archive-research
       - request-supplier
-    standards: [ agent-operating-protocol ]
+    standards: [agent-operating-protocol]
   testing:
     role: designer
     profile: gpt-terra
