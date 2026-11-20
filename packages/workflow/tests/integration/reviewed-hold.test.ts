@@ -139,11 +139,8 @@ async function resumeGate(f: ReviewedWorkflow, checkpoint: string) {
   assert.equal(f.revisions.length, 0);
   assert.equal(f.reviews.length, 0);
   await f.reopen(true);
-  assert.equal(
-    (await f.run()).kind,
-    'merged',
-    'Observed satisfaction resumes the retained correction',
-  );
+  const resumed = await f.run();
+  assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
   assert.equal(f.reviews.length, 1);
   if (f.scenario === 'human') {
     const answered = f.holds.flatMap((h) => h.answers).find((a) => a.question === gateQuestion);
