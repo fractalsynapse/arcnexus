@@ -20,7 +20,7 @@ class StreamScenario {
     assert.ok(source.includes('const consumption = await this.consume();'));
     const withToolResult = source.replace(
       'const consumption = await this.consume();',
-      "const consumption = await this.consume();\\n    const toolResult = await this.call('read-file', { path: 'baseline' });\\n    this.emit({ type: 'item.completed', item: { type: 'mcp_tool_call', id: 'read-tool', result: toolResult } });",
+      "const consumption = await this.consume();\n    const toolResult = await this.call('read-file', { path: 'baseline' });\n    this.emit({ type: 'item.completed', item: { type: 'mcp_tool_call', id: 'read-tool', result: toolResult } });",
     );
     assert.notEqual(withToolResult, source);
     writeFileSync(executable, withToolResult);
