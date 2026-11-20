@@ -7,6 +7,12 @@ type Correction = Extract<RevisionFeedback, { kind: 'supplier' | 'rejection' }>;
 
 /** Recover the specific feedback that first introduced this milestone into the admitted plan. */
 export function correctionFinding(events: readonly TaskEvent[], milestone: Milestone) {
+  const feedback = correctionFeedback(events, milestone);
+  return feedback && feedbackForOwner(feedback, milestone);
+}
+
+/** Retain the complete originating correction before narrowing the steward's assignment. */
+export function correctionFeedback(events: readonly TaskEvent[], milestone: Milestone) {
   const addition = events.findIndex(
     (event) => 'plan' in event && event.plan.milestones.some(({ id }) => id === milestone.id),
   );
@@ -17,7 +23,7 @@ export function correctionFinding(events: readonly TaskEvent[], milestone: Miles
     .slice(previous + 1)
     .findLast((event) => 'feedback' in event && isCorrection(event.feedback));
   if (!event || !('feedback' in event) || !isCorrection(event.feedback)) return undefined;
-  return feedbackForOwner(event.feedback, milestone);
+  return event.feedback;
 }
 
 /** Only a supplier request or reviewer rejection can open correction work. */
