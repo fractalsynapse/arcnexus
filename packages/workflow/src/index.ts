@@ -10,6 +10,7 @@ import type {
 } from './services.js';
 import { TaskRun } from './task-run.js';
 import { ArchitectRun } from './architect-run.js';
+import { RefinementRun } from './refinement-run.js';
 import type { RunObserver } from './observer.js';
 
 export type {
