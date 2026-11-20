@@ -270,6 +270,51 @@ test('installed SDK forwards distinct pending and resumed observations before ea
   assert.equal(measurements(2).cost.estimate, null);
 });
 
+test('exact phase observations reach the SDK caller while the terminal outcome is pending', async () => {
+  const scenario = new CommandsScenario();
+  const commands = await scenario.mount();
+  let release!: (value: string | undefined) => void;
+  const heldAnswer = new Promise<string | undefined>((resolve) => {
+    release = resolve;
+  });
+  const originalAnswer = scenario.observer.answer!;
+  scenario.observer.answer = async (value, signal) => {
+    await originalAnswer(value, signal);
+    return heldAnswer;
+  };
+  const outcomes: TaskOutcome[] = [];
+  const result = commands.refine(
+    '/project',
+    exactTotal,
+    scenario.observer,
+    new AbortController().signal,
+  );
+  void result.then((outcome) => outcomes.push(outcome));
+  await Promise.resolve();
+  assert.deepEqual(scenario.stream, expectedStream(1));
+  assert.deepEqual(outcomes, []);
+  assert.deepEqual(
+    frames(1)
+      .filter((frame) => 'refinement' in (frame.observation as object))
+      .map((frame) => frame.observation),
+    [
+      {
+        refinement: {
+          invocation: 'invocation-1',
+          round: exactRound,
+          total: exactTotal,
+          phase: 'Plan',
+          goal: 1,
+        },
+      },
+      architectPhase,
+    ],
+  );
+  release(undefined);
+  assert.strictEqual(await result, pending);
+  assert.deepEqual(outcomes, [pending]);
+});
+
 test('cancellation during execution reaches Workflow through the original signal', async () => {
   const scenario = new CommandsScenario();
   const commands = await scenario.mount();
