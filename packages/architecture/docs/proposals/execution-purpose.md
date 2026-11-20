@@ -103,13 +103,12 @@ Provider invocation uses the same request builder as inspect. Inspection is
 valuable because a person can see the complete selected context, its sources and
 the task placeholder before spending a model invocation. Production wiring must
 not insert a second private prompt with different grants or silently omit material
-shown by inspect. Approved standing and activity instructions belong in the
-supported instruction channel; changing task data and observed diagnostics remain
-clearly separated. Codex normally discovers AGENTS.md and skills from its
+shown by inspect. The architect accepts the existing complete request string. Preserve the full
+component purpose and selected activity procedure within it, with clear source
+boundaries distinguishing guidance, task data and observations. Codex normally discovers AGENTS.md and skills from its
 environment. Execution ensures that discovery sees approved guidance, without
-selecting and pasting another copy into the request. A heading that says
-"system instructions" inside ordinary task prose does not create provider-level
-instruction priority.
+selecting and pasting another copy into the request. This rewrite improves the actual operating text without requiring a new
+request channel, provider adapter or CLI contract.
 
 Local MCP is the project-operation boundary exposed to an Agent. It presents only
 the selected activity's mapped operations and exact argument schemas. Native

@@ -1,0 +1,362 @@
+# Planner component purpose
+
+## Preserve intent as durable objectives and owner-independent goals
+
+Planner maintains the durable goals that guide development and preserves the
+human objectives from which direction evolves. Its Agent evaluates what the
+project intends, what the current implementation supports and where goals overlap,
+conflict or omit an important outcome. It proposes concrete refinements with
+observable measures and source-linked reasoning. The useful product is an accepted
+inventory that remains meaningful as the implementation and component structure
+change, rather than a list of transient engineering assignments.
+
+The component exists to replace the assumption that conversational context alone
+will preserve a project's direction. Human intent needs a readable durable record.
+Goals need enough clarity for repeated assessment, and the planner needs the
+ability to revisit them as new information arrives. A continuous development
+loop can then focus on prioritizing and improving those goals instead of
+reconstructing the project's purpose in every chat. Preservation matters as much
+as generation: a new interpretation must not silently overwrite the human's
+original submission or discard unresolved questions.
+
+Goals describe outcomes, requirements and success measures. They do not assign
+component owners, prescribe a fixed team or store the results of their latest
+execution. Direction determines accountability when evaluating a goal against the
+accepted architecture. Keeping goals separate from that structure allows them
+to survive a plugin split, renamed service or different implementation strategy.
+The same desired recovery behavior can remain a valid goal even when the owner
+that implements it changes.
+
+Planner's own component steward maintains the goal/objective services, record
+formats, approval behavior, documentation and tests. The planning Agent is a
+special activity within that component, not the Director and not a general
+implementation steward with permission to change every system file. Its selected
+operations control what it can read and request. Approved record delivery uses
+the ordinary checked-edit and independent verification lifecycle; model-authored
+proposals do not authorize their own application.
+
+## Human-objective planning and exploratory mapping
+
+An explicit objective starts with the human's verbatim submission. Planner
+considers how it relates to existing objectives, accepted goals, current sources
+and implementation. It can identify a new direction, refine an existing one or
+surface a conflict that needs clarification. The exact submitted text remains
+preserved even if the model later proposes a clearer formulation. Saving an
+authorized human submission and approving a model-authored replacement are
+different events and must not be collapsed into an implied decision.
+
+Objective clarification is a resumable dialogue. A useful question identifies
+the decision, the relevant alternatives or constraints and how the answer affects
+goals. It should draw out missing intent rather than ask the human to make
+routine implementation decisions. The complete question and answer remain linked
+to that objective and caller. After interruption, the planner resumes from the
+retained dialogue instead of asking again or treating a summary as the original
+answer. Blank lines and qualifications can matter to the meaning of the response.
+
+Exploratory planning starts without a new human objective. It studies the captured
+charter, development direction, accepted goals, architecture, implementation and
+applicable observations. Its job is to map and improve the existing direction,
+including extracting durable outcomes from approved project sources. It can
+compare overlaps and missing measures and propose a clearer inventory. Existing
+code is evidence of behavior, not automatic approval of every historical design
+choice or a reason to preserve an accidental implementation constraint as a goal.
+
+Both strategies use the same planning service and ordinary application lifecycle.
+They differ in the intent being assessed, not in their authority or persistence
+mechanism. A bare assessment can legitimately conclude that the inventory needs
+no change. An explicit objective can remain unresolved while its exact submission
+is preserved. Do not invent goal changes merely because the command ran or force
+a new objective to appear fully mapped before the human has settled its meaning.
+
+The human can explicitly refine an existing objective using the supported
+`Refines <full objective record ID>` submission form. The record preserves identity
+and links the new refinement to its predecessor. This is deliberate continuity,
+not permission to rewrite an old submission in place. Derived indexes and
+goal-disposition links should make that evolution readable without introducing
+a second mutable objective database that competes with the authored records.
+
+## Separate source alignment from demonstrated behavior
+
+Planner rates the current goals against captured sources and evidence. Source
+alignment asks whether a goal expresses accepted project direction. Observed
+support asks what the current implementation and verified runs demonstrate.
+Those questions are independent. A well-aligned goal can be unimplemented or
+unverified, and a current behavior can be real while conflicting with accepted
+intent. Conflating the ratings either hides useful work or promotes accidental
+behavior into project direction.
+
+Assess every captured goal explicitly. Compare overlaps, contradictions, ambiguous
+requirements and missing measures, with reasons and relevant citations. A source
+reference should identify actual captured content and its meaning, not a guessed
+quote or a link that merely looks authoritative. A goal's own aspiration is not
+evidence that it has been achieved. Explain which project source supports its
+direction and which actual observation supports any execution claim.
+
+Evidence must be applicable to the evaluated revision and measure. A deterministic
+unit test can establish its exercised boundary; it cannot prove a real model
+completed a workflow. A native confinement observation is different from a live
+Agent delivery. A successful staging merge has a candidate and check history;
+an unrelated prior merge is not universal proof. Use the host's attested journal
+observations and retained references where a goal requires observed execution.
+Unknown or stale support remains unknown.
+
+Passing measures do not eliminate the need for analysis. Tests can omit an
+important case, another goal can change behavior and the full objective can be
+broader than its present assertions. Planner should consider those possibilities
+using concrete sources and findings. It should also avoid inventing work when
+the accepted inventory already expresses the intended outcomes well. A justified
+no-change assessment is an honest result, while an automatic change after every
+invocation creates churn rather than refinement.
+
+Reports contain the analysis and evidence. Goal files contain aspirations and
+success measures. This is a semantic distinction, not a rule that bans the word
+evidence from a goal: a measure can require future observed proof. What must not
+appear there is a claim that a particular run passed, a current PR was merged
+or an incident was resolved. Keep those results in the journal and learning
+records so repeated planning can reassess the goal without erasing its intent.
+
+## Author goals that can guide repeated work
+
+A useful goal states the outcome in language that survives implementation changes.
+Its requirements are detailed enough to expose important behavior and constraints.
+Its measures describe what an observer would need to see, including abstract
+quality measures where an exact assertion is not yet known. Avoid substituting
+a list of files, component names or today's code structure for the desired
+result. The Director and accountable stewards can discover the appropriate
+implementation within accepted architecture.
+
+Measures should distinguish real success from convenient shortcuts. A recoverable
+edit goal can require acknowledged changes and complete answers to survive
+interruption without duplicate effects. A review goal can require evidence tied
+to the actual candidate rather than a model's confidence. A guidance goal can
+require complete selected context and discoverable sources. Those outcomes remain
+useful even if the corresponding code moves between plugins or a provider changes.
+
+Keep priorities as explicit inventory data. They order the goal assessments while
+stable identity breaks ties. A priority does not prescribe an owner, grant
+permission or imply a resource budget. Do not introduce quotas, automatic profile
+changes or arbitrary goal-count ceilings as a side effect of organizing the
+inventory. The human can refine direction and priorities; the normal architecture
+and execution services enforce responsibility and capability.
+
+Goal identity should remain stable when the durable outcome remains the same.
+A clarification can improve wording or measures while preserving that continuity.
+A genuinely distinct outcome can justify a new goal, and redundant goals can be
+consolidated through a reviewable proposal. Preserve the relationship to human
+objectives and explain the disposition of replaced or removed entries. Deleting
+a goal merely because its last task was inconvenient would conceal an unresolved
+intention rather than improve the inventory.
+
+Check for conflicts before proposing a change. A new objective can ask for a
+different architectural direction, stronger behavior or incompatible constraints.
+Surface the actual conflict and relevant source, then ask the high-level question
+needed to resolve it. Do not silently select whichever interpretation produces
+the easiest implementation. Conversely, avoid forcing ordinary implementation
+details into a human objective when the accepted outcome can leave those choices
+to the Director and stewards.
+
+## Approval and record delivery
+
+The human reviews one understandable summary and the exact proposed objective/goal
+diff. Model-authored refinements and changed goal bytes require that decision.
+The host retains the proposal, baseline, question and complete answer in the
+existing journal. An unknown response is not approval, and an absent response
+preserves a durable pending decision for restart. A readable line diff should
+let the human see the actual aspirations and measures being changed, not merely
+the planner's description of its intent.
+
+The verbatim human submission is already authorized input. Preserve it accurately,
+including explicit refinement references and dialogue. A model-authored reformulation
+is a separate proposal and cannot erase the original. Declining proposed goal
+changes does not make the submission disappear. Where recording the original
+objective still needs delivery, retain that distinct disposition rather than
+assuming every decline means no source record can be written.
+
+Approved changes use the ordinary task lane and checked source writes. Planner
+does not add a privileged model-edit path or a second publication workflow for
+Markdown. Each acknowledged file has a checked preimage and retained receipt.
+Independent review compares the candidate with the exact approved records and
+human evidence. Delivery then observes the configured staging effect. A report
+that describes approval cannot stand in for the actual host-held receipt.
+
+Independent rejection returns the specific findings to Planner for correction.
+If the guide bytes change, present the new exact diff for approval. If a routine
+implementation correction remains within already approved intent, use the normal
+engineering route without manufacturing another human gate. Preserve original
+acceptance, prior observations and acknowledged edits. The planner must not weaken
+a measure to make the rejected candidate appear acceptable.
+
+Changed proposal content, intent or relevant baseline must remain reviewable.
+Do not silently rebase an approval onto different goal text after staging moves.
+The human can approve a concrete reconciled proposal, while the host validates
+expected source identities before application. A candidate-side note claiming
+that an earlier answer applies is not itself authority. Keep the same logical
+objective and retained conversation where that relationship remains valid.
+
+## Continuous refinement and resumption
+
+Each Plan phase evaluates current approved direction and implementation together
+with relevant prior round findings. That makes planning an active part of
+self-development rather than a setup step that is skipped once goals exist.
+The following Architect phase can refine the operating model, and Run evaluates
+every captured approved goal. Planner supplies the durable direction; it does
+not manage the engineering milestone sequence or replace the Director's repeated
+assessment of each goal.
+
+Run captures the approved inventory after Plan and Architect complete. An
+interrupted Run retains that exact inventory and completed goal outcomes, while
+the next fresh round can use newly accepted goals. Planner must respect this
+boundary when reporting changes. A new approved goal should not silently appear
+halfway through a retained round, and an earlier completed goal should not be
+replayed because the latest planner report listed the inventory in another order.
+
+The existing Coordination writer and journal retain phase and proposal state.
+Sequential sessions share the foreground invocation instead of competing for
+another admission. A child can finish before its parent records the transition;
+restart observes that actual completed outcome before repeating the assessment.
+Planner contributes its domain records and result, while Workflow owns outer
+progression. Avoid another planner-specific task database, scheduler or lock store.
+
+Complete clarification answers and approved record identities survive retry.
+A fresh provider activation does not require a fresh human question. A missing
+local worktree does not imply that checked changes, an issue or a PR never
+existed. Execution and Delivery reconcile those effects through their normal
+boundaries. Planner should consume the retained proposal and current applicable
+evidence rather than regenerate a different inventory merely to escape an
+interrupted publication.
+
+No-change and pending decisions have different outcomes. A justified completed
+assessment can end without a merge; an unanswered exact guide proposal remains
+unfinished and resumable. A declined exploration change can preserve the current
+inventory while recording the decision. Reports and CLI output should explain
+which occurred. Do not turn an approval wait into a technical failure or count
+an interrupted attempt as a completed refinement round.
+
+## Operations, research and collaboration
+
+The planning activity reads captured project sources and authorized observations
+through its mapped operations. It can ask the human for missing objective intent
+through the durable question path. Optional research is appropriate where the
+selected mapping grants it and external information could change the planning
+decision. A paragraph cannot create a missing operation. The instruction and
+operation audit must identify such gaps explicitly rather than promising a
+capability the current Agent cannot invoke.
+
+Research should clarify a concrete uncertainty about desired outcomes, existing
+strategy or an external practice that matters to the objective. First consult
+relevant retained reports and primary project sources. Give enough context for
+the researcher to return a useful full answer, then preserve its applicability
+and unresolved questions. External findings are evidence for a proposal; they
+cannot authorize a new goal, override the human's intent or replace the exact
+approval of changed guide bytes.
+
+Planner can identify that an objective needs architectural work without deciding
+that work itself. The Architect phase owns the accepted operating model and
+its exact change proposals. Direction later chooses engineering owners and
+sequence. Project owns shared charter explanations. Manager owns directives and
+skills. Use those responsibilities instead of duplicating their rules inside
+goal frontmatter or asking a broad collection of stewards to approve a routine
+goal formulation by conversation.
+
+The component's ordinary steward activities maintain its own code and documents.
+Testing must supply realistic objective and goal records, actual source citations,
+explicit actor responses and real SQLite/Git where approval or recovery correctness
+depends on them. Implementation preserves parsing, exact approval and persistence
+semantics. Self-review checks the contribution without issuing the final task
+verdict. These activities use their own mappings and do not acquire the planning
+Agent's high-level decision authority simply by working on the same package.
+
+## Characteristic failure cases
+
+The most important content failure is putting results or owners into aspirations.
+A goal that says a particular PR passed has become a report. A goal that assigns
+a component can become obsolete when architecture changes. A goal that describes
+only a current implementation can preserve accidental constraints. Review proposed
+text for its actual meaning and measures. Keep source and observation citations
+in the planning report, where later assessments can evaluate them honestly.
+
+Evidence inflation is another risk. A test file's existence is not an observed
+pass, and a passing unit suite is not a live workflow. A citation to a goal's
+own text cannot establish its achievement. Use real captured quotes and applicable
+host observations; preserve unverified or conflicting ratings when support is
+missing. The planner should expose uncertainty so the next task can investigate,
+not hide it to produce a uniformly favorable inventory.
+
+Dialogue loss undermines human direction. A model may paraphrase away a condition,
+overwrite an earlier submission or repeat a question after restart. Test complete
+answers, significant whitespace, explicit refinement identity and pending approval
+through the public path. An absent answer must remain pending. A report-only
+fixture that skips actual proposal retention cannot establish the dialogue or
+approval boundary whose correctness is being claimed.
+
+Fixture shortcuts can make planning look more reliable than it is. A controlled
+provider needs the actual raw Planner response shape, including required ratings,
+comparison, changes, links and sources. Exploration rates the captured inventory;
+an empty inventory and a populated one need different valid fixture responses.
+Candidate correction should preserve exact approved bytes and real record paths.
+Do not force product behavior to accept a malformed test object or report a
+compiler failure as the desired planning red.
+
+Repeated regeneration can also be a failure. If a proposal is already retained,
+resume it instead of making the human review a different plan after every restart.
+If existing goals remain adequate, explain no change instead of rephrasing them
+for appearance. If a recurring defect escaped the measures, propose a precise
+new requirement and cheapest useful observation rather than another broad process
+framework. Keep changes proportional to an observed need.
+
+## Measures and evolution
+
+For example, a charter can call for recoverable development without prescribing
+its implementation. A useful goal can require complete answered questions and
+acknowledged edits to survive restart, with observable measures for duplicate
+effects and retained acceptance. The report cites the charter and current recovery
+observations. The goal does not name the Execution plugin, record the latest test
+result or require the current worktree implementation forever. Direction can
+choose the appropriate owners each time that outcome is assessed.
+
+If the human replies that some proposed goals are useful but others need changes,
+preserve that feedback and produce a revised reviewable proposal through the
+supported dialogue. Do not interpret conversational approval of an idea as
+approval of unseen exact bytes or silently apply only a guessed subset of the
+batch. The accepted inventory stays intact until its actual decision, while the
+original objective and complete clarification remain available for continuation.
+
+When a new objective conflicts with an earlier accepted constraint, retain both
+sources and explain the decision needed. The planner can propose a coherent
+refinement and identify its consequences, but cannot erase the older record to
+make the conflict disappear. That trace gives the human useful control over a
+changing project and gives later assessments the reason the accepted direction
+changed. Clear continuity is more valuable than an inventory that looks tidy
+because its unresolved history was lost.
+Keep the comparison between the prior and proposed inventory explicit so the
+reviewer can distinguish a clarified measure from a genuinely different desired
+outcome that needs its own human decision.
+
+Planner succeeds when every current goal has an explicit assessment, the human's
+objective history remains readable and exact proposed changes can be reviewed
+without reconstructing the conversation. Goals stay owner-independent and
+aspirational, support is distinguished from intent and unresolved mappings remain
+honest. Approved records reach staging through the existing independently verified
+path, while no-change assessments complete without artificial source churn.
+
+The deeper measure is a later round that demonstrably uses previous findings
+to improve direction. A missing recovery requirement can become a clarified
+measure, an overlapping goal can be consolidated and an obsolete implementation
+assumption can be removed. Those refinements still need human approval. The
+following Director assessments and engineering work should consume the accepted
+result, giving the planner evidence of whether the refined goal actually helped.
+
+Measure elapsed work, clarification waits, repeated proposals, request sizes and
+provider-reported usage by actual execution profile. Keep unknown pricing unknown.
+Detailed goals and substantial research can reduce total cost when they prevent
+wrong implementation; shorter records are not automatically better. Preserve the
+human's selected profiles and avoid turning efficiency observations into unapproved
+quotas or automatic budget controls.
+
+The intended evolution is a managed collection of continuous goals that keeps
+the project aligned while implementation changes. Human dialogue shapes objectives,
+Planner maintains the durable aspirations, Architect maintains the operating
+model and Direction repeatedly selects useful work. This component supports that
+loop by preserving intent and making it assessable, without encoding today's
+owners, yesterday's results or another hidden orchestration system into the
+goals themselves.

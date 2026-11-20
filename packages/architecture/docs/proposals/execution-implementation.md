@@ -281,8 +281,8 @@ native operations, without implying a live model was involved. Introducing or
 changing real harness behavior also needs an actual provider demonstration
 through production assembly. Record the real request, binding, versions, flags,
 tool observations, result and diagnostics. Never report a mock that returned
-the expected JSON as evidence that Codex respected an instruction channel or
-used local MCP in a real invocation.
+the expected JSON as evidence that Codex received the complete prepared activity
+prompt or used local MCP in a real invocation.
 
 Assertions should distinguish correct behavior from plausible shortcuts. For
 an acknowledged edit, test its retained receipt and checkpoint, then restart
@@ -518,11 +518,12 @@ execution. A local rewind names an available earlier activity, its exact reason
 and originating evidence. Use mapped tools for research, questions and distinct
 supplier requests, then end the activation so the host can fulfill the handoff.
 
-Use blocked only for a genuinely unavailable prerequisite that cannot be
-resolved through your current owned operations or the normal handoff route.
-Unfinished assigned work, a recoverable check failure or a desire to narrate
-progress is not a blocked outcome. State the exact missing capability, the
-observed refusal or diagnostic and what responsibility must change. Keep all
+The native steward decoder refuses unsupported model-authored blocked claims.
+Investigate the actual public interface and mapped tools rather than using blocked
+to announce unfinished work. Use a valid supplier request for a genuine foreign
+contribution or the high-level guide route for changed authority, naming the exact
+missing capability and observed diagnostic. Actual external holds are recorded
+by the host; do not manufacture them in a completion reply. Keep all
 successful receipts, failed observations and complete answers intact. The
 host records terminal state; do not manufacture a passing history or count
 an assisted experiment as a clean cycle. Useful honest progress and a working
