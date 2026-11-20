@@ -8,7 +8,7 @@ engineering work, not a hand-authored Director plan or delivered capability.
 
 ## Current position and next work
 
-Updated 2026-11-20 against staging `c5655fb4`. Completed boxes describe the
+Updated 2026-11-20 against staging `6fba1f13`. Completed boxes describe the
 specific capability and linked evidence below, not completion of the entire
 efficiency batch. Unchecked items may have partial implementation; the remaining
 behavior or proof is stated explicitly.
@@ -19,16 +19,17 @@ behavior or proof is stated explicitly.
 | Architecture and operations | [PR #640](https://github.com/fractalsynapse/arcnexus/pull/640) delivered typed operation overrides, activity verification, approved adoption boundaries and observable execution.                                                 | The broader merge/provenance, runtime-adoption and same-run live acceptance items in B remain open.                                                     |
 | Acting context              | [PR #664](https://github.com/fractalsynapse/arcnexus/pull/664) delivered the source-linked component index; [PR #667](https://github.com/fractalsynapse/arcnexus/pull/667) preserved originating findings through nested repairs. | All 18 purposes, 94 model activities and one host procedure were approved by the architect and merged in #673. Live behavioral acceptance remains open. |
 | Timeline and measurements   | Complete provider/MCP artifacts, ordered live human/JSONL observations and time/token accounting are operating through the existing journal.                                                                                      | Full round/phase analysis, verified monetary pricing and subsequent refinement consuming those findings remain open.                                    |
-| Continuous refinement       | Eight #668 milestones are accepted. Local self-review corrections operated without Direction; attempt 106 stopped on an invalid supplier link. Checkpoints and failed evidence remain retained.                                          | `refine` delivery and the three consecutive production rounds are unproved. Qualification remains **0/3**.                                              |
+| Continuous refinement       | Nine #668 milestones are accepted in retained run 111. Invalid supplier links now return to the caller, and approved Architect prerequisites reached staging through the platform in #682.                                          | CLI self-review and remaining exact-count consumers, assembled delivery, and three consecutive production rounds remain unproved. Qualification remains **0/3**.                                              |
 
-Latest live result: run 106 retained eight accepted milestones but ended at an
-invalid supplier link: Coordination requested CLI work while linking an accepted
-Commands milestone. Direction correctly refused the ownership mismatch. The caller
-boundary failed to reject it first. No #668 delivery PR exists; qualification is
-**0/3**. [#678](https://github.com/fractalsynapse/arcnexus/issues/678) names the
-bootstrap caller-validation correction and exact proposed instruction improvements.
-Code and failed observations remain retained; no operator candidate edits, database
-repair or bypassed checks occurred.
+Latest completed delivery: [PR #682](https://github.com/fractalsynapse/arcnexus/pull/682)
+delivered Architect's exact approved batch `9730646a057f` and its Execution
+prerequisite through the platform. Development and Staging CI passed. Retained
+run 111 then resumed #668 with runtime/source `6fba1f13`, preserved its existing
+issue and checkpoints, and accepted the Execution exact-count fixture correction.
+CLI review is still returning insufficient streaming assertions to its own
+Implementation activity. Passing owner tests alone do not establish acceptance.
+No #668 delivery PR exists at this checkpoint; qualification remains **0/3**.
+No operator candidate edits, database repair or bypassed checks occurred.
 
 The architect reviewed the complete rewrite and explicitly approved merging #673
 and proceeding with testing. The earlier D review stop is satisfied. All 18
@@ -777,3 +778,55 @@ request sizes and profile-specific time/token measurements before resumption.
 Compare actual subsequent output and progress, not only passing counts. The host
 validation correction and guidance both change; resumed pending work differs from
 the prior full attempt, so aggregate differences do not isolate prompt causality.
+
+## Verified caller recovery and platform Architect delivery
+
+- [x] [PR #679](https://github.com/fractalsynapse/arcnexus/pull/679) delivered
+      #678 at `4d82c905`: one Direction-owned supplier-link validation rule,
+      caller repair through existing journal history, and the exact approved
+      instruction batch. Six new regressions and all 437 native-enabled tests
+      passed. Both [Development](https://github.com/fractalsynapse/arcnexus/actions/runs/44756026569)
+      and [Staging](https://github.com/fractalsynapse/arcnexus/actions/runs/44756268855)
+      CI passed. No additional recovery store, retry ceiling or orchestration path
+      was introduced.
+- [x] Compare the next real run with attempt 106. Attempt 107 returned the invalid
+      supplier link to Coordination without invoking Direction, establishing the
+      caller correction in production. It then held on unchanged failed checks:
+      the steward acknowledged unfinished foreign work but returned completed
+      without requesting it. Its 2.23 minutes, two activations, zero Director calls,
+      1,065,464 input tokens including 931,328 cached, and 3,994 output tokens are
+      observations of an earlier hold, not a successful efficiency result. Attempt
+      106 took 75.25 minutes and made five Director calls, but covered different
+      work. Neither run completed delivery or qualification.
+- [x] Use the updated Architecture activity to assess the observed failure.
+      Run 108 inspected objectives, goals, the accepted plan, real requests,
+      transcripts, checks and relevant instructions. It proposed exact batch
+      `9730646a057f`; the architect approved its
+      [complete diff and prerequisite](https://github.com/fractalsynapse/arcnexus/issues/680#issuecomment-7042750155).
+      It clarifies that required unfinished foreign work needs an explicit
+      supplier request even when already present in the accepted plan.
+- [x] Deliver that prerequisite inside Architect through the normal platform.
+      Parent 109 and child 110 produced issue #681 and one PR, #682, merged at
+      `6fba1f13`. Execution Testing established the public failing assertion;
+      Implementation corrected the existing feedback; self-review, independent
+      review, assembled checks and delivery completed without operator candidate
+      edits. The host applied the exact approved guide bytes and recorded their
+      in-run adoption. All 440 native-enabled tests passed after integration;
+      [Development](https://github.com/fractalsynapse/arcnexus/actions/runs/44762201969)
+      and [Staging](https://github.com/fractalsynapse/arcnexus/actions/runs/44762467886)
+      CI passed. This proves one real Architect prerequisite delivery, not an
+      automated refinement round.
+- [ ] Finish retained #668 delivery, compare its final outputs and repair routes
+      with attempts 106 and 107, then qualify the production `refine --rounds 3`
+      lifecycle. Run 111 currently has nine accepted milestones. CLI self-review
+      has twice rejected shallow streaming assertions and returned exact findings
+      locally. Those useful findings also show remaining fixture/assertion
+      weaknesses; green owner checks do not supersede them.
+
+Complete comparison artifacts, approval receipts, requests, measurements and failed
+observations remain in external application storage. The corresponding records
+are `678-run106-vs107-comparison.json`, `680-architect-delivery-proof.json` and
+`680-recovered-refine-live.jsonl`. Monetary cost remains unknown without a verified
+pricing or billing basis. These deliveries show useful instruction evaluation and
+local recovery; they do not establish that instructions alone caused improvement
+or that the full refinement loop is reliable.
