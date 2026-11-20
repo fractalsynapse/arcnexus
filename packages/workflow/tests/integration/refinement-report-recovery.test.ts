@@ -1,13 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import {
-  chmodSync,
-  copyFileSync,
-  mkdirSync,
-  mkdtempSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
@@ -18,11 +11,7 @@ import { assertAccounting, assertOrigins, history } from '../fixtures/refinement
 import type { CompletedRefinementRound } from '../../src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
 import { Execution } from '../../../execution/src/index.js';
-import {
-  Workflow,
-  type TaskObserver,
-  type WorkflowServices,
-} from '../../src/index.js';
+import { Workflow, type TaskObserver, type WorkflowServices } from '../../src/index.js';
 
 export const suite = { owner: 'workflow', level: 'integration', tags: ['regression'] } as const;
 
