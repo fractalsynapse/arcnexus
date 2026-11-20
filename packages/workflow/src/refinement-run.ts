@@ -64,7 +64,11 @@ export class RefinementRun {
   }
 
   /** Run each phase in order, then retain the completed round's observation and report. */
-  private async runRound(invocation: string, round: number, saved?: SavedProgress) {
+  private async runRound(
+    invocation: string,
+    round: number,
+    saved?: SavedProgress,
+  ): Promise<TaskOutcome | undefined> {
     const start = this.observer.eventFrames().length;
     let phase = saved?.phase ?? 'Plan';
     this.progress(invocation, round, phase);
