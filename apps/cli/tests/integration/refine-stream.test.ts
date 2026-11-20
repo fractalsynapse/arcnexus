@@ -29,7 +29,8 @@ class StreamScenario {
     const executable = this.fixture.install('stream');
     const source = readFileSync(executable, 'utf8');
     assert.ok(source.includes('const consumption = await this.consume();'));
-    const withToolResult = source.replace(
+    const controlled = holdProvider(source, this.release);
+    const withToolResult = controlled.replace(
       'const consumption = await this.consume();',
       "const consumption = await this.consume();\n    const toolResult = await this.call('read-file', { path: 'baseline' });\n    this.emit({ type: 'item.completed', item: { type: 'mcp_tool_call', id: 'read-tool', result: toolResult } });",
     );
@@ -53,7 +54,8 @@ class StreamScenario {
   /** Await the child after attaching the production output observer. */
   async run(json: boolean): Promise<StreamResult> {
     const child = this.start(json);
-    const capture = attachStream(child, json);
+    if (!json) writeFileSync(this.release, 'release');
+    const capture = attachStream(child, json, this.release);
     const status = await new Promise<number | null>((resolve, reject) => {
       child.on('error', reject);
       child.on('close', resolve);
@@ -69,8 +71,41 @@ type StreamCapture = {
   liveToolResult: boolean;
 };
 
+/** Hold the first controlled phase until stdout exposes both complete observations. */
+function holdProvider(source: string, release: string): string {
+  const setup = [
+    "const { watch, existsSync } = await import('node:fs');",
+    'const release = ' + JSON.stringify(release) + ';',
+    'const held = existsSync(release) ? Promise.resolve() : new Promise((resolve) => {',
+    "  const watcher = watch(new URL('.', 'file://' + release), () => {",
+    '    if (existsSync(release)) { watcher.close(); resolve(); }',
+    '  });',
+    '  if (existsSync(release)) { watcher.close(); resolve(); }',
+    '});',
+    'const consumption = await this.consume();',
+  ].join('\n');
+  return source
+    .replace('const consumption = await this.consume();', setup)
+    .replace('this.respond(consumption);', 'await held;\n    this.respond(consumption);');
+}
+
+/** Release only after the unfinished provider's observations reached the actual pipe. */
+function releaseObservedPhase(capture: StreamCapture, release: string): void {
+  if (!capture.liveProvider || !capture.liveToolResult) return;
+  if (capture.streamed.some((record) => record.detail?.event?.type === 'turn.completed')) return;
+  assert.ok(!capture.streamed.some((record) => record.type === 'result'));
+  assert.ok(!capture.streamed.some(
+    (record) => record.detail?.event?.item?.type === 'agent_message',
+  ));
+  writeFileSync(release, 'release');
+}
+
 /** Parse complete arriving JSONL lines and retain live observations before exit. */
-function attachStream(child: ChildProcessWithoutNullStreams, json: boolean): StreamCapture {
+function attachStream(
+  child: ChildProcessWithoutNullStreams,
+  json: boolean,
+  release: string,
+): StreamCapture {
   const capture: StreamCapture = {
     output: '',
     streamed: [],
@@ -90,6 +125,7 @@ function attachStream(child: ChildProcessWithoutNullStreams, json: boolean): Str
     const lines = partial.split('\n');
     partial = lines.pop() ?? '';
     for (const line of lines) collectRecord(line, child, capture);
+    releaseObservedPhase(capture, release);
   });
   return capture;
 }
