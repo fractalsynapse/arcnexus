@@ -1,8 +1,10 @@
-import { parse } from 'yaml';
+import type { HostTask } from './index.js';
 import type { Architecture, Capture } from '../../architecture/src/index.js';
-import type { Coordination } from '../../coordination/src/index.js';
-import { team } from '../../team/src/index.js';
-import type { GoalRound, StandingGoal } from '../../workflow/src/index.js';
+import type { HostConfig } from './host-config.js';
+import type { Coordination, Journal } from '../../coordination/src/index.js';
+import { goalInventory } from '../../planner/src/inventory.js';
+import type { CompletedGoalOutcome, GoalRound, TaskInput } from '../../workflow/src/index.js';
+import { verifiedGoalRun } from './goal-evidence.js';
 import { git, remoteRead } from './git.js';
 
 /** Read goals from one reviewed staging revision and give this evaluation round a durable identity. */
@@ -12,11 +14,25 @@ export function goalRound(
   directory: string,
 ): GoalRound {
   const local = architecture.capture(directory);
+  if (!local.project.delivery?.baseBranch && !goalInventory(local).length)
+    throw new Error('No standing goals in the captured project inventory');
   const capture = stagingCapture(architecture, local);
-  const goals = inventory(capture);
   const remote = capture.source.remote;
-  const id = coordination.round(remote, JSON.stringify(goals));
-  return { id, goals, finish: () => coordination.completeRound(remote, id) };
+  const { id, inventory } = coordination.round(remote, () => {
+    const goals = goalInventory(capture);
+    if (!goals.length) throw new Error('No standing goals in the captured project inventory');
+    return JSON.stringify(goals);
+  });
+  const goals = JSON.parse(inventory) as GoalRound['goals'];
+  return {
+    id,
+    goals,
+    completed: ({ body }, scope) => {
+      const result = coordination.completedTask(remote, body, scope);
+      if (result !== undefined) return JSON.parse(result) as CompletedGoalOutcome;
+    },
+    finish: () => coordination.completeRound(remote, id),
+  };
 }
 
 /** Observe staging and materialize its exact commit only when it is absent locally. */
@@ -28,8 +44,7 @@ export function stagingCapture(
   const { source, project } = capture;
   const branch = project.delivery?.baseBranch;
   if (!branch) {
-    inventory(capture);
-    throw new Error('Standing goals need a staging delivery branch');
+    throw new Error('Task needs a staging delivery branch');
   }
   if (
     !/^[\w/-]+$/.test(branch) ||
@@ -66,27 +81,51 @@ function ensureStagingCommit(
     throw new Error('The staging head changed while fetching it');
 }
 
-/** Read Markdown goals once and order equal priorities by their stable file IDs. */
-function inventory(capture: Capture) {
-  const prefix = `${capture.project.knowledgeRoot ?? '.arc'}/goals/`;
-  const goals = capture.source.paths
-    .filter((path) => path.startsWith(prefix) && path.endsWith('.md'))
-    .map((path) => definition(capture, path, path.slice(prefix.length, -3)));
-  if (!goals.length) throw new Error('No standing goals in the captured project inventory');
-  return goals.sort((a, b) => a.priority - b.priority || a.id.localeCompare(b.id));
+/** Bind the Director's evidence to the exact captured staging revision. */
+export function observeGoal(task: HostTask, signal: AbortSignal) {
+  task.planningWorkspace(signal);
+  const { source } = task.capture;
+  const recentChanges = git(
+    source.root,
+    'log',
+    '--first-parent',
+    '--format=%h %s',
+    source.revision,
+  ).split('\n');
+  const measures = task.goal
+    .split(/(?:\*\*Success measures\.\*\*|^#{1,6} Success measures)/im)
+    .at(-1);
+  const requiresRun = /\b(?:pass(?:es|ing)?|runs?|real delivery|live|exit status)\b/i.test(
+    measures ?? '',
+  );
+  return {
+    revision: source.revision,
+    recentChanges,
+    source,
+    run: verifiedGoalRun(task),
+    requiresRun,
+  };
 }
 
-/** Validate the identity, priority, accountable owner and executable measure of one goal. */
-function definition(capture: Capture, path: string, id: string): StandingGoal {
-  const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]+)$/.exec(capture.source.read(path));
-  if (!match || !/^[a-z0-9][a-z0-9-]*$/.test(id))
-    throw new Error(`Invalid standing goal document: ${path}`);
-  const [, metadata, body] = match;
-  const fields = parse(metadata!) as { priority?: number; owner?: string } | null;
-  if (!Number.isSafeInteger(fields?.priority) || typeof fields?.owner !== 'string' || !body?.trim())
-    throw new Error(`Standing goal requires a numeric priority, owner and goal text: ${path}`);
-  const member = team.list(capture.components, { component: fields.owner, activity: 'testing' })[0];
-  if (!member?.activities.testing?.operations.includes('owner-tests'))
-    throw new Error(`Standing goal owner has no declared owner-tests measure: ${path}`);
-  return { id, priority: fields.priority!, owner: fields.owner, body };
+/** Refresh a pending planning admission before any issue branch has been prepared. */
+export function recordAdmission(
+  journal: Journal,
+  config: HostConfig,
+  planning?: TaskInput['planning'],
+) {
+  if (!config.fresh) return;
+  const revision = config.capture.source.revision;
+  if (!journal.retained) {
+    journal.record({ baseRevision: revision });
+    return;
+  }
+  if (!planning) return;
+  const events = journal.retained.events as {
+    baseRevision?: string;
+    workspace?: number;
+    publication?: unknown;
+  }[];
+  const previous = events.findLast((event) => event.baseRevision)?.baseRevision;
+  if (previous === revision || events.some((event) => event.workspace || event.publication)) return;
+  journal.record({ baseRevision: revision, plannerRefresh: revision });
 }

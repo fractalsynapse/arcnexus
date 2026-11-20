@@ -41,6 +41,7 @@ function git(directory: string, ...args: string[]): string {
     return execFileSync('git', args, {
       cwd: directory,
       encoding: 'utf8',
+      maxBuffer: Infinity,
       stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' },
     });

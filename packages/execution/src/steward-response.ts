@@ -1,4 +1,5 @@
 import type { ActivityOutcome } from '../../workflow/src/index.js';
+import { InvalidAgentResponse } from '../../agent/src/index.js';
 import type { StewardCheckFailure } from '../../direction/src/index.js';
 import type { ProposedEdit } from './formatter.js';
 
@@ -15,7 +16,7 @@ export type StewardResult =
   | Exclude<ActivityOutcome, { kind: 'completed' }>;
 
 /** Distinguish invalid proposals from failures after the host starts executing them. */
-export class StewardResponseError extends Error {}
+export class StewardResponseError extends InvalidAgentResponse {}
 
 /** Decode one top-level outcome without executing any proposed edit or check. */
 export function decodeSteward(
@@ -27,26 +28,49 @@ export function decodeSteward(
   const value = object(reply, 'response');
   switch (value.kind) {
     case 'completed':
-      return {
-        kind: 'completed',
-        edits: edits(value.edits),
-        checks: checks(value.checks, allowed, correction, hostChecks),
-        ...archiveSelection(value.archiveResearch),
-        ...(typeof value.answer === 'string' && value.answer.trim()
-          ? { answer: value.answer }
-          : {}),
-      };
+      return completedReply(value, allowed, correction, hostChecks);
     case 'supplier':
       return supplier(value);
     case 'question':
       return { kind: 'question', question: required(value.question, 'question'), evidence: [] };
     case 'blocked':
-      return { kind: 'blocked', reason: required(value.reason, 'reason'), evidence: [] };
+      throw new StewardResponseError(
+        `Unsupported activity block: ${required(value.reason, 'reason')}. A model assertion does not establish an unavailable host prerequisite. Investigate the available public interfaces with mapped tools, request optional research when needed, or explicitly request the owning supplier. Continue this activity; the host retains actual external failures.`,
+        { identity: 'unsupported-activity-block' },
+      );
+    case 'repair':
+      return localRepair(value);
     default:
       throw new StewardResponseError(
-        'response.kind: expected a top-level completed, supplier, question, or blocked outcome',
+        'response.kind: expected a top-level completed, repair, supplier, question, or blocked outcome',
       );
   }
+}
+
+/** Decode a completed proposal's authorized effects and optional complete supplier answer. */
+function completedReply(
+  value: Record<string, unknown>,
+  allowed: readonly string[],
+  correction: StewardCheckFailure | undefined,
+  hostChecks: readonly string[],
+): StewardResult {
+  return {
+    kind: 'completed',
+    edits: edits(value.edits),
+    checks: checks(value.checks, allowed, correction, hostChecks),
+    ...archiveSelection(value.archiveResearch),
+    ...(typeof value.answer === 'string' && value.answer.trim() ? { answer: value.answer } : {}),
+  };
+}
+
+/** Accept a steward finding without letting it supply progress evidence or new authority. */
+function localRepair(value: Record<string, unknown>): StewardResult {
+  const activity = value.activity;
+  if (activity !== 'documentation' && activity !== 'testing' && activity !== 'implementation')
+    throw new StewardResponseError(
+      'response.activity: expected documentation, testing or implementation',
+    );
+  return { kind: 'repair', activity, reason: required(value.reason, 'reason'), evidence: [] };
 }
 
 /** Accept only distinct report identities for copying checked evidence into the archive. */
@@ -124,7 +148,11 @@ function transform(value: unknown, path: string) {
   if (!format && !replace)
     throw new StewardResponseError(`response.${field}: expected format true or a replacement`);
   if (!replace) return { format };
-  const before = required(replace.before, `${field}.replace.before`);
+  const before = required(
+    replace.before,
+    `${field}.replace.before`,
+    'Use one nonempty unique source anchor, or replace the whole file with path, expected current hash and content; omit transform.',
+  );
   if (typeof replace.after !== 'string')
     throw new StewardResponseError(
       `response.${field}.replace.after: expected a string, possibly empty`,
@@ -132,7 +160,7 @@ function transform(value: unknown, path: string) {
   return { format, replace: { before, after: replace.after } };
 }
 
-/** Validate declared operations and keep an unresolved check first with its original expectation. */
+/** Validate declared requests without scheduling an operation already observed through MCP. */
 function checks(
   value: unknown,
   allowed: readonly string[],
@@ -154,7 +182,7 @@ function checks(
     throw new StewardResponseError(
       `Cannot change the required recheck for ${correction.id}: expected ${correction.expected}`,
     );
-  return [correction, ...requested.filter(({ id }) => id !== correction.id)];
+  return requested;
 }
 
 /** Permit declared operations and discard passing declarations for scheduled host checks. */
@@ -186,8 +214,10 @@ function object(value: unknown, field: string): Record<string, unknown> {
 }
 
 /** Require nonempty fields consumed inside the authority boundary. */
-function required(value: unknown, field: string) {
+function required(value: unknown, field: string, recovery = '') {
   if (typeof value !== 'string' || !value.trim())
-    throw new StewardResponseError(`response.${field}: expected a nonempty string`);
+    throw new StewardResponseError(
+      `response.${field}: expected a nonempty string${recovery ? `. ${recovery}` : ''}`,
+    );
   return value;
 }

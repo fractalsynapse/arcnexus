@@ -12,7 +12,12 @@ export function pendingResearch(task: HostTask, owner: string) {
   const reports = task.researchReports(owner) as ResearchResult[];
   return reports
     .filter(({ archive }) => archive && !task.capture.source.paths.includes(archive))
-    .map(({ request, archive, summary }) => ({ id: request.id, path: archive, summary }));
+    .map(({ request, archive, summary, evidence }) => ({
+      id: request.id,
+      path: archive,
+      summary,
+      evidence,
+    }));
 }
 
 /** Turn an explicit archive selection into ordinary checked edits of the retained bytes. */

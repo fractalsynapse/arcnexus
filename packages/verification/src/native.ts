@@ -23,7 +23,7 @@ export async function verify(
       evidence: [unavailable.log],
     };
   const verdict = await assess(agent, session, plan, candidate, checks, signal);
-  const failed = checks.filter((result) => result.status !== 0);
+  const failed = checks.filter((result) => result.status !== 0 || result.diagnostic);
   if (verdict.kind === 'accepted' && failed.length)
     return {
       kind: 'blocked',

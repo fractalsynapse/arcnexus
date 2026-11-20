@@ -5,11 +5,15 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { Agent } from '../../../agent/src/index.js';
-import { Architecture, type Capture, type TaskContext } from '../../../architecture/src/index.js';
-import { Coordination } from '../../../coordination/src/index.js';
+import { Architecture, type TaskContext } from '../../../architecture/src/index.js';
 import { activities, type Milestone, type Plan } from '../../../direction/src/index.js';
 import { Workflow, type WorkflowServices } from '../../../workflow/src/index.js';
-import { HostTask, steward } from '../../src/index.js';
+import { checkFailureSignature } from '../../src/steward-check.js';
+import { type HostTask, steward } from '../../src/index.js';
+import { StewardFixture } from '../fixtures/steward.js';
+import { contextEvidence } from '../fixtures/context-evidence.js';
+
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
 
 const agent = new Agent(new Architecture());
 const criterion = { id: 'fixed', description: 'The fixture check passes' };
@@ -34,37 +38,6 @@ function milestone(id: string): Milestone {
   };
 }
 
-/** Bind one private fixture worktree and record all evidence to its real task journal. */
-function nativeTask(t: TestContext, root: string): HostTask {
-  const capture = {
-    source: { root, remote: 'https://example.com/project.git' },
-    project: { contractRegistry: 'registry.yaml' },
-    contracts: [],
-    components: {
-      owner: {
-        id: 'owner',
-        owns: ['fixture.txt', 'earlier.txt'],
-        activities: {
-          implementation: { profile: 'profile', operations: ['owner-tests'] },
-        },
-      },
-      other: { id: 'other', owns: ['other.txt'], activities: {} },
-    },
-  } as unknown as Capture;
-  const goal = 'Exercise failed steward check correction';
-  const journal = new Coordination(root).admit(capture.source.remote, goal);
-  assert('close' in journal);
-  const task = new HostTask(
-    { capture, common: root, executable: '', base: 'staging', fresh: true, storage: root },
-    goal,
-    journal,
-  );
-  task.worktree = root;
-  t.mock.method(task, 'cleanup', () => {});
-  t.after(() => rmSync(root, { recursive: true, force: true }));
-  return task;
-}
-
 /** Exercise the real Workflow and steward with observable model and command boundaries. */
 class CheckTask {
   readonly calls: string[] = [];
@@ -77,27 +50,13 @@ class CheckTask {
   /** Make the check fail on the original bytes and pass only after the checked edit. */
   constructor(
     t: TestContext,
-    private readonly correct: boolean,
+    private readonly correct: boolean | 'progress',
   ) {
-    this.task = nativeTask(t, this.root);
+    this.task = new StewardFixture(t, this.root).task;
     writeFileSync(this.file, 'wrong');
-    t.mock.method(this.task, 'check', async (id: string, _signal: AbortSignal, scope: unknown) => {
-      const status = readFileSync(this.file, 'utf8') === 'corrected' ? 0 : 1;
-      const log = this.task.store('fixture-check.log', `exit ${status}\n`);
-      if (!this.failureLog) this.failureLog = log;
-      this.calls.push(`check:${status}`);
-      const check = {
-        id,
-        status,
-        command: 'fixture',
-        args: [],
-        cwd: this.root,
-        durationMs: 0,
-        log,
-      };
-      this.task.note({ check, scope });
-      return check;
-    });
+    t.mock.method(this.task, 'check', async (id: string, _signal: AbortSignal, scope: unknown) =>
+      this.check(id, scope),
+    );
     t.mock.method(
       this.task,
       'activate',
@@ -105,15 +64,44 @@ class CheckTask {
     );
   }
 
+  /** Retain the actual failing stage and the exact command observation. */
+  private async check(id: string, scope: unknown) {
+    const status = readFileSync(this.file, 'utf8') === 'corrected' ? 0 : 1;
+    const stage = readFileSync(this.file, 'utf8');
+    const diagnostic =
+      stage === 'compiled' ? 'not ok 3 - Reviewer assertion' : 'error TS1005: Expected token';
+    const log = this.task.store('fixture-check.log', status ? diagnostic : 'passed');
+    if (!this.failureLog) this.failureLog = log;
+    this.calls.push(`check:${status}`);
+    const check = {
+      id,
+      status,
+      command: 'fixture',
+      args: [],
+      cwd: this.root,
+      durationMs: 0,
+      log,
+    };
+    this.task.note({ check, scope });
+    return check;
+  }
+
   /** Return a valid scoped edit on the correcting activation. */
   private proposal(data: TaskContext) {
-    const correction = JSON.stringify(data.milestone).includes('"id":"correction"');
-    this.calls.push(correction ? 'correction' : 'original');
+    const id = (data.milestone as { id: string }).id;
+    const correction = Boolean((data.assignment as { failedCheck?: unknown }).failedCheck);
+    this.calls.push(correction ? id : 'original');
     if (correction) {
+      assert.match(
+        JSON.stringify(data.assignment),
+        /read-only filesystem.*mapped checked-edit MCP tool/,
+      );
       assert.match(JSON.stringify(data.assignment), /"status":1/);
-      assert(JSON.stringify(data.assignment).includes(this.failureLog));
-      const expected = createHash('sha256').update('wrong').digest('hex');
-      const edits = this.correct ? [{ path: 'fixture.txt', expected, content: 'corrected' }] : [];
+      assert(contextEvidence(this.task, data).includes(this.failureLog));
+      const current = readFileSync(this.file, 'utf8');
+      const expected = createHash('sha256').update(current).digest('hex');
+      const content = this.correct === 'progress' && current === 'wrong' ? 'compiled' : 'corrected';
+      const edits = this.correct ? [{ path: 'fixture.txt', expected, content }] : [];
       return { kind: 'completed', edits, checks: [] };
     }
     const checks = this.calls.includes('check:0') ? [] : [{ id: 'owner-tests', expected: 'pass' }];
@@ -129,13 +117,21 @@ class CheckTask {
       plan: async () => ({ kind: 'plan', plan: this.goalPlan }),
       revise: async (_session, previous, feedback) => {
         this.calls.push('direction');
-        assert.deepEqual(previous, this.goalPlan);
+        assert(previous);
         assert.equal(feedback.kind, 'supplier');
         assert.equal(feedback.owner, 'owner');
-        assert(feedback.evidence.includes(this.failureLog));
+        assert(feedback.failedCheck);
+        if (this.calls.filter((call) => call === 'direction').length === 2)
+          assert.match(readFileSync(feedback.failedCheck.log, 'utf8'), /Reviewer assertion/);
         return {
           kind: 'plan',
-          plan: { focus, milestones: [milestone('correction'), ...this.goalPlan.milestones] },
+          plan: {
+            focus,
+            milestones: [
+              milestone(previous.milestones.length === 1 ? 'correction' : 'correction-reviewer'),
+              ...previous.milestones,
+            ],
+          },
         };
       },
     },
@@ -169,30 +165,53 @@ class CheckTask {
   }
 }
 
-test('a failing steward check reaches its owner and is rerun before the task delivers', async (t) => {
+test('a local steward check repair delivers within the original milestone without Direction', async (t) => {
   const task = new CheckTask(t, true);
   assert.equal((await task.run()).kind, 'merged');
-  assert.deepEqual(task.calls, [
-    'original',
-    'check:1',
-    'direction',
-    'correction',
-    'check:0',
-    'original',
-    'delivery',
-  ]);
+  assert.deepEqual(task.calls, ['original', 'check:1', 'original', 'check:0', 'delivery']);
 });
 
-test('a correction that still fails its required check blocks before resumption', async (t) => {
+test('a completed reply cannot hide a check failure observed during its activation', async (t) => {
+  const task = new StewardFixture(t, mkdtempSync(join(tmpdir(), 'arcnexus-observed-failure-')))
+    .task;
+  t.after(() => task.close());
+  const log = task.store('failed-check.log', 'error TS1005: Caller must correct this finding');
+  t.mock.method(task, 'activate', async () => {
+    task.note({
+      check: {
+        id: 'owner-tests',
+        status: 37,
+        log,
+        command: 'fixture',
+        args: [],
+        cwd: '.',
+        durationMs: 0,
+      },
+      scope: { owner: 'owner', activity: 'implementation', expected: 'pass' },
+    });
+    return { kind: 'completed', edits: [], checks: [] };
+  });
+  const result = await steward(
+    agent,
+    task,
+    milestone('original'),
+    'implementation',
+    new AbortController().signal,
+  );
+  assert.equal(result.kind, 'repair');
+  assert.match('reason' in result ? result.reason : '', /exited 37.*expected pass/);
+});
+
+test('an unchanged local check failure holds without another Director call', async (t) => {
   const task = new CheckTask(t, false);
   const result = await task.run();
   assert.equal(result.kind, 'blocked');
   assert.match(result.reason, /owner-tests.*1/);
-  assert.deepEqual(task.calls, ['original', 'check:1', 'direction', 'correction', 'check:1']);
+  assert.deepEqual(task.calls, ['original', 'check:1', 'original', 'check:1']);
 });
 
 test('a malformed steward reply is repaired in the same step before checked effects', async (t) => {
-  const task = nativeTask(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-repair-')));
+  const task = new StewardFixture(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-repair-'))).task;
   const file = join(task.worktree!, 'fixture.txt');
   const replacement = { path: 'fixture.txt', expected: null, content: 'corrected' };
   const transcript = task.store('invalid-codex.jsonl', 'retained malformed reply');
@@ -204,7 +223,7 @@ test('a malformed steward reply is repaired in the same step before checked effe
       const repair = (context.assignment as { responseRepair?: string }).responseRepair;
       if (!repair) return { completed: { kind: 'completed', edits: [replacement], checks: [] } };
       assert.match(repair, /response\.kind/);
-      assert(context.evidence?.includes(transcript));
+      assert(contextEvidence(task, context).includes(transcript));
       return { kind: 'completed', edits: [replacement], checks: [] };
     },
   );
@@ -223,7 +242,7 @@ test('a malformed steward reply is repaired in the same step before checked effe
 });
 
 test('a second malformed reply blocks the step and keeps both transcripts', async (t) => {
-  const task = nativeTask(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-repair-')));
+  const task = new StewardFixture(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-repair-'))).task;
   const replies = t.mock.method(task, 'activate', async () => {
     task.store('codex.jsonl', 'retained malformed reply');
     return { kind: 'completed', edits: [], checks: [{ id: 'forbidden', expected: 'pass' }] };
@@ -238,12 +257,13 @@ test('a second malformed reply blocks the step and keeps both transcripts', asyn
   assert.equal(outcome.kind, 'blocked');
   assert.match(outcome.reason, /response\.checks\[0\]\.id: forbidden is unavailable/);
   assert.equal(replies.mock.callCount(), 2);
-  assert.equal(outcome.evidence.length, 2);
+  assert.equal(outcome.evidence.filter((path) => path.endsWith('-codex.jsonl')).length, 2);
   task.close();
 });
 
 test('a refused ownership request returns the captured owner to the same steward', async (t) => {
-  const task = nativeTask(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-ownership-')));
+  const task = new StewardFixture(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-ownership-')))
+    .task;
   const file = join(task.worktree!, 'other.txt');
   const edit = { path: 'other.txt', expected: null, content: 'forbidden' };
   const replies = t.mock.method(
@@ -265,7 +285,7 @@ test('a refused ownership request returns the captured owner to the same steward
     task,
     milestone('repair'),
     'implementation',
-    AbortSignal.timeout(5000),
+    new AbortController().signal,
   );
   assert.equal(outcome.kind, 'supplier');
   assert.equal(outcome.owner, 'other');
@@ -301,7 +321,7 @@ function recordSupplierAnswer(task: HostTask, answer: string) {
 }
 
 test('the requesting steward gets the complete recorded supplier answer', async (t) => {
-  const task = nativeTask(t, mkdtempSync(join(tmpdir(), 'arcnexus-supplier-answer-')));
+  const task = new StewardFixture(t, mkdtempSync(join(tmpdir(), 'arcnexus-supplier-answer-'))).task;
   t.after(() => task.close());
   const answer = '  Use the approved interface.\n\nKeep the captured revision.  ';
   recordSupplierAnswer(task, answer);
@@ -325,13 +345,14 @@ test('the requesting steward gets the complete recorded supplier answer', async 
     task,
     milestone('requester'),
     'implementation',
-    AbortSignal.timeout(5000),
+    new AbortController().signal,
   );
   assert.equal(outcome.kind, 'completed');
 });
 
 test('the steward can substitute exact text without copying the rest of the file', async (t) => {
-  const task = nativeTask(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-transform-')));
+  const task = new StewardFixture(t, mkdtempSync(join(tmpdir(), 'arcnexus-steward-transform-')))
+    .task;
   const file = join(task.worktree!, 'fixture.txt');
   const original = 'prefix buggy suffix';
   writeFileSync(file, original);
@@ -383,7 +404,7 @@ class StaleEditScenario {
 
 test('a stale digest is corrected without applying earlier edits in the rejected reply', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-steward-stale-digest-'));
-  const task = nativeTask(t, root);
+  const task = new StewardFixture(t, root).task;
   const file = join(root, 'fixture.txt');
   writeFileSync(file, 'initial');
   const replies = t.mock.method(
@@ -397,10 +418,49 @@ test('a stale digest is corrected without applying earlier edits in the rejected
     task,
     milestone('stale-edit'),
     'implementation',
-    AbortSignal.timeout(2000),
+    new AbortController().signal,
   );
   assert.equal(outcome.kind, 'completed');
   assert.equal(replies.mock.callCount(), 2);
   assert.equal(readFileSync(file, 'utf8'), 'repaired');
   task.close();
+});
+
+test('distinct local check failures repair in the original milestone without Direction', async (t) => {
+  const task = new CheckTask(t, 'progress');
+  const result = await task.run();
+  assert.equal(result.kind, 'merged', JSON.stringify(result));
+  assert.deepEqual(task.calls, [
+    'original',
+    'check:1',
+    'original',
+    'check:1',
+    'original',
+    'check:0',
+    'delivery',
+  ]);
+});
+
+test('failure identity ignores process paths and TAP numbering while retaining the actual diagnostic', (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'arcnexus-check-diagnostic-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const first = join(root, 'first.log');
+  const repeat = join(root, 'repeat.log');
+  const fresh = join(root, 'fresh.log');
+  writeFileSync(first, 'not ok 3 - Reviewer parity\n  duration_ms: 12\n  error: assertion failed');
+  writeFileSync(repeat, 'not ok 8 - Reviewer parity\n  duration_ms: 35\n  error: assertion failed');
+  writeFileSync(fresh, '/state/runs/5/worktree/source.ts(12,3): error TS1005: Expected token');
+  assert.equal(checkFailureSignature(first), checkFailureSignature(repeat));
+  assert.notEqual(checkFailureSignature(first), checkFailureSignature(fresh));
+  writeFileSync(repeat, '/state/runs/9/worktree/source.ts(21,3): error TS1005: Expected token');
+  assert.equal(checkFailureSignature(fresh), checkFailureSignature(repeat));
+  writeFileSync(
+    first,
+    'not ok 3 - Reviewer parity\n  error: |-\n    assert(activity?.[1])\n  code: ERR_ASSERTION',
+  );
+  writeFileSync(
+    repeat,
+    'not ok 8 - Reviewer parity\n  error: |-\n    assert(actual.cwd)\n  code: ERR_ASSERTION',
+  );
+  assert.notEqual(checkFailureSignature(first), checkFailureSignature(repeat));
 });

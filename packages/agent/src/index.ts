@@ -17,6 +17,30 @@ export interface ActivationInput {
   task: TaskContext;
 }
 
+/** Identify invalid actor output that the calling activity can repair without replaying effects. */
+export class InvalidAgentResponse extends Error {
+  readonly identity: string;
+
+  /** Retain the exact diagnostic while preserving its finding through domain error causes. */
+  constructor(message: string, options?: ErrorOptions & { identity?: string }) {
+    super(message, options);
+    this.identity =
+      options?.identity ??
+      (options?.cause instanceof InvalidAgentResponse ? options.cause.identity : message);
+  }
+}
+
+/** Retain an unresolved actor finding as a durable hold rather than an unhandled execution failure. */
+export class AgentActivityHold extends Error {
+  /** Keep the exact diagnostic and immutable evidence available to the next invocation. */
+  constructor(
+    message: string,
+    readonly evidence: readonly string[],
+  ) {
+    super(message);
+  }
+}
+
 declare module 'cordis' {
   interface Context {
     agent: Agent;

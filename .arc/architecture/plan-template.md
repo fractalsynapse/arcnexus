@@ -45,9 +45,18 @@ attribution. Keep those delivery observations out of the criteria themselves.
 
 ## Changes and evidence
 
-A steward proposes dependencies or a revised approach. The director controls
-sequence and scope. Link accepted supplier work or place a supplier milestone
-before the dependent work. A genuine human gate names the question or external
-action. Record position, check outcomes and evidence through the host. Keep a
+A steward repairs ordinary operation, check and self-review findings within its
+accepted milestone. Identify the earliest applicable activity that needs change:
+documentation for intent, testing for assertions, or implementation for code.
+The host persists that rewind and reruns affected downstream work; completed
+receipts and unaffected evidence remain available. No correction milestone or
+Director call is needed for same-owner repair.
+
+The director controls initial sequencing and changes after explicit escalation or
+final independent rejection. Link accepted supplier work or place distinct
+supplier work before its dependent. Revisions preserve completed outcomes and
+original acceptance. Human approvals concern objectives, goals and architecture.
+Unresolved external prerequisites retain named holds without granting authority.
+Record position, check outcomes and evidence through the host. Keep a
 brief simplification ledger naming removals, reuse and any added responsibility
 with its demonstrated need. Retain failed observations and measure each milestone.

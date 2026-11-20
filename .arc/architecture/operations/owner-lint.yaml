@@ -1,0 +1,13 @@
+id: owner-lint
+kind: command
+tool: check
+category: lint
+command: npm
+args:
+- run
+- lint
+- --
+- context: owner
+cwd: .
+network: false
+applicability: owner-lint-files

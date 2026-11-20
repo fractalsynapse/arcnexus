@@ -1,3 +1,4 @@
+import type { VerifiedGoalRun } from '../../execution/src/index.js';
 import { team } from '../../team/src/index.js';
 import type { Capture } from '../../architecture/src/index.js';
 
@@ -41,6 +42,7 @@ export interface Rejection {
 }
 
 export interface StewardCheckFailure {
+  diagnostic?: string;
   activity: Exclude<PlanActivity, 'release'>;
   id: string;
   expected: 'pass' | 'fail';
@@ -66,11 +68,11 @@ export type Feedback =
   RevisionFeedback | { kind: 'plan-repair'; diagnostic: string; original?: RevisionFeedback };
 
 export interface StandingGoalEvidence {
-  readonly owner: string;
   readonly revision: string;
-  readonly status: number | null | 'not-applicable';
-  readonly log: string;
+  readonly source: Capture['source'];
   readonly recentChanges: readonly string[];
+  readonly run?: VerifiedGoalRun;
+  readonly requiresRun?: boolean;
 }
 
 export interface GoalAssessment {
@@ -229,4 +231,9 @@ export function scheduledSupplier(
 }
 
 export { direct, track } from './native.js';
-export { decodeDirectorResponse, DirectorResponseError } from './response.js';
+export {
+  decodeDirectorResponse,
+  decodeRevisionResponse,
+  DirectorResponseError,
+} from './response.js';
+export type { RevisionRequest } from './response.js';

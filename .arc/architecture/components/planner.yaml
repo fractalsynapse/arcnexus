@@ -1,0 +1,107 @@
+id: planner
+kind: plugin
+purpose: Maintain standing goals and preserve human objectives.
+objectives:
+- measure: Each active goal has observable measures and objective or project source links.
+constraints:
+- failure: A standing goal grants ownership or changes active inventory without human approval.
+owns:
+- packages/planner
+- .arc/goals
+- .arc/objectives
+activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+    - Find evidence relevant to proposed outcomes.
+    operations:
+    - read-file
+    - list-files
+    standards: []
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+    - Maintain goal and objective records with explicit source links.
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
+    standards: []
+  testing:
+    role: designer
+    profile: gpt-terra
+    instructions:
+    - Exercise mapping, approval and objective recovery.
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
+    - owner-format
+    - owner-lint
+    - repository-types
+    - repository-build
+    - owner-tests
+    standards: []
+    verification:
+    - owner-format
+    - owner-lint
+    - repository-types
+    - repository-build
+  implementation:
+    role: systems-engineer
+    profile: gpt-luna
+    instructions:
+    - Keep goal parsing, approval and persistence consistent.
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - checked-edit
+    - archive-research
+    - request-supplier
+    - owner-format
+    - owner-lint
+    - repository-types
+    - repository-build
+    - owner-tests
+    standards: []
+    verification:
+    - owner-format
+    - owner-lint
+    - repository-types
+    - repository-build
+    - owner-tests
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+    - Verify goal changes and objective text against approval evidence.
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
+    standards: []
+  planning:
+    role: planner
+    profile: gpt-sol
+    instructions:
+    - Map standing outcomes to captured project sources. Rate alignment and evidence independently.
+    - Use the human question tool for objective refinement when a decision is needed.
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    standards: []

@@ -1,38 +1,40 @@
-import { existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { appendFileSync, existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import type { Context } from 'cordis';
 import type { Agent, ActivationInput } from '../../agent/src/index.js';
-import type { Capture, Architecture, TaskContext } from '../../architecture/src/index.js';
-import type { Coordination, Journal } from '../../coordination/src/index.js';
-import { checkpoint, reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
+import type { ActivitySelection, Capture, TaskContext } from '../../architecture/src/index.js';
+import type { Journal, JournalEvent } from '../../coordination/src/index.js';
 import type { Candidate } from '../../verification/src/index.js';
-import type {
-  ActivityCheckpoint,
-  TaskEvent,
-  TaskInput,
-  TaskOutcome,
-  TaskSession,
-} from '../../workflow/src/index.js';
+import { reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
+import type { TaskEvent, TaskOutcome, TaskSession } from '../../workflow/src/index.js';
 import { GitHub } from '../../collaboration/src/index.js';
-import { activateActor } from './activation.js';
-import { usedResearch } from './research.js';
+import { activateActor, type ContextRefresh } from './activation.js';
+import { inboxIdentity, usedResearch } from './research.js';
 import { formatterPreview } from './formatter.js';
+import { recoverPrepared } from './prepared-recovery.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
-import { candidateDiff, git } from './git.js';
-import { preflight, type HostConfig } from './host-config.js';
-import { goalRound, stagingCapture } from './goals.js';
-import { check } from './check.js';
+import { git } from './git.js';
+import { applicationStorage, type HostConfig } from './host-config.js';
+import { runCheck } from './run-check.js';
 import { pendingStewardCheck, type StewardScope } from './steward-check.js';
 import {
   cleanCandidate,
-  ownerEvidenceDigest,
   ownerReviewObservations,
   type OwnerObservation,
 } from './review-observations.js';
 
-export type { CheckedEdit } from './edits.js';
+import { Execution } from './execution.js';
+import { Clarifications, type Clarification } from './clarifications.js';
+import { readToolFile } from './tool-files.js';
+import { approvedArchitecture } from './architecture-edits.js';
+
+export { Execution };
+export { type CheckedEdit, editFingerprint } from './edits.js';
+export { Clarifications };
+export { reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
+export { citesVerifiedRun, verifiedGoalRun, type VerifiedGoalRun } from './goal-evidence.js';
+export { applicationStorage } from './host-config.js';
 export { InvalidCodexResponse } from './codex.js';
 
 declare module 'cordis' {
@@ -41,98 +43,25 @@ declare module 'cordis' {
   }
 }
 
-/** Admit a clean project at its verified staging head before creating state. */
-export class Execution {
-  /** Use only trusted architecture, coordination and application storage. */
-  constructor(
-    private readonly architecture: Architecture,
-    private readonly coordination: Coordination,
-    private readonly storage: string,
-  ) {}
-
-  /** Resolve the binding and capture the repository before claiming the project lane. */
-  async admit(input: TaskInput, signal: AbortSignal) {
-    let config: ReturnType<typeof preflight>;
-    try {
-      signal.throwIfAborted();
-      const capture = this.architecture.capture(input.directory);
-      const selected = input.measureOwner ? stagingCapture(this.architecture, capture) : capture;
-      config = preflight(selected, this.storage, Boolean(input.measureOwner));
-    } catch (error) {
-      if (signal.aborted) throw signal.reason;
-      return invalid(error instanceof Error ? error.message : String(error));
-    }
-    const journal = this.coordination.admit(
-      config.capture.source.remote,
-      input.goal,
-      config.fresh,
-      input.scope,
-    );
-    if (!journal)
-      return invalid(`Task admission requires the current verified ${config.base} head`);
-    if ('activeGoal' in journal)
-      return invalid(`Active goal: ${journal.activeGoal} (run ${journal.run})`);
-    if (config.fresh && !journal.retained)
-      journal.record({ baseRevision: config.capture.source.revision });
-    return new HostTask(config, input.goal, journal);
-  }
-
-  /** Read the standing goal inventory and recover an interrupted round or start a new one. */
-  round(directory: string) {
-    return goalRound(this.architecture, this.coordination, directory);
-  }
-
-  /** Run a goal's declared owner measure on an isolated staging snapshot. */
-  measureGoal(session: TaskSession, owner: string, signal: AbortSignal) {
-    return hostTask(session).measureGoal(owner, signal);
-  }
-
-  /** Materialize the task branch at its recovered checkpoint before any steward activation. */
-  prepare(session: TaskSession, issue: string, signal: AbortSignal) {
-    return hostTask(session).setupWorkspace(issue, signal);
-  }
-
-  /** Publish checked bytes and record the cursor for the just-completed activation. */
-  checkpoint(session: TaskSession, activity: ActivityCheckpoint, signal: AbortSignal) {
-    return checkpoint(hostTask(session), activity, signal);
-  }
-
-  /** Index the approved working changes and bind the candidate to its Git tree. */
-  async assemble(session: TaskSession, signal: AbortSignal): Promise<Candidate> {
-    signal.throwIfAborted();
-    const task = hostTask(session);
-    if (!task.worktree) throw new Error('The plan produced no candidate worktree');
-    git(task.worktree, 'add', '-A', '--', '.');
-    const digest = git(task.worktree, 'write-tree');
-    if (digest === git(task.worktree, 'rev-parse', `${task.capture.source.revision}^{tree}`))
-      throw new Error('The plan produced no candidate changes');
-    const log = task.store(
-      'candidate.diff',
-      candidateDiff(task.worktree, task.capture.source.revision),
-    );
-    return {
-      digest,
-      evidence: [log],
-      ownerEvidenceDigest: ownerEvidenceDigest(task.ownerReviewChecks(), digest),
-    };
-  }
-}
-
 /** Carry the admitted authority and one worktree through the workflow. */
 export class HostTask implements TaskSession {
   ask?: TaskSession['ask'];
-  readonly capture: Capture;
+  capture: Capture;
   readonly evidence: string[] = [];
   worktree?: string;
   branch?: string;
   issue?: string;
+  timeline?: string;
   private sequence = 0;
+  private listener?: (event: JournalEvent) => void;
 
   /** Bind the session to a captured project and its already claimed journal. */
   constructor(
     readonly config: HostConfig,
     readonly goal: string,
-    private readonly journal: Journal,
+    readonly journal: Journal,
+    readonly parent?: HostTask,
+    readonly inbox?: { owner: string; question: string },
   ) {
     this.capture = config.capture;
     const prefix = this.evidenceDirectory() + '/';
@@ -144,6 +73,19 @@ export class HostTask implements TaskSession {
     );
   }
 
+  /** Resolve the exact approved guide from this child's actual architecture-phase ancestor. */
+  get guide() {
+    const id = this.parent
+      ?.observations<{ architectureDelivery?: string }>()
+      .findLast(({ architectureDelivery }) => architectureDelivery)?.architectureDelivery;
+    return id ? approvedArchitecture(this, id) : undefined;
+  }
+
+  /** Use the Director's accepted purpose for tracking while retaining the complete goal separately. */
+  get trackingTitle() {
+    return this.history().findLast((event) => 'plan' in event)?.plan.focus.purpose ?? this.goal;
+  }
+
   /** Read the prior attempt and its immutable worktree location. */
   retainedPublication() {
     const retained = this.journal.retained;
@@ -151,8 +93,34 @@ export class HostTask implements TaskSession {
   }
 
   /** Record a delivery intent or provider observation through the task journal. */
-  note(event: Record<string, unknown>) {
-    this.journal.record(event);
+  note(event: TaskEvent | Record<string, unknown>, detail?: unknown) {
+    const recorded = this.journal.record(event);
+    this.listener?.(detail === undefined ? recorded : { ...recorded, detail });
+  }
+
+  /** Subscribe the foreground observer to committed task observations. */
+  listen(observer: (event: JournalEvent) => void) {
+    if (!this.timeline) {
+      this.timeline = this.artifact('run-timeline.jsonl');
+      const records = this.journal.timeline().map((event) => JSON.stringify(event) + '\n');
+      writeFileSync(this.timeline, records.join(''), { mode: 0o600, flag: 'wx' });
+    }
+    const timeline = this.timeline;
+    this.listener = (event) => {
+      const { detail: _detail, ...recorded } = event;
+      appendFileSync(timeline, JSON.stringify(recorded) + '\n');
+      observer(event);
+    };
+  }
+
+  /** Read complete project source or a registered immutable artifact from the requested offset. */
+  readFile(path: string, offset = 0) {
+    return readToolFile(this, path, offset);
+  }
+
+  /** Identify the durable inbox of an actual captured actor without exposing a model-selected scope. */
+  inboxScope(selection: ActivitySelection, data: Omit<TaskContext, 'goal' | 'worktree'>) {
+    return inboxIdentity(this, selection, data);
   }
 
   /** Resolve a legacy publication's parent from the retained Git object. */
@@ -163,20 +131,56 @@ export class HostTask implements TaskSession {
 
   /** Record Workflow observations through Coordination. */
   record(event: TaskEvent) {
-    this.journal.record(event);
+    this.note(event);
   }
 
   /** Read journaled Workflow checkpoints, including previously published activities. */
   history(): readonly TaskEvent[] {
-    return this.observations();
+    const events = this.observations<TaskEvent & { plannerRefresh?: string }>();
+    return events.slice(events.findLastIndex((event) => event.plannerRefresh) + 1);
+  }
+
+  /** Ask a durable host approval question bound to its exact reviewed proposal and actor scope. */
+  async requestDecision(
+    selection: ActivitySelection,
+    proposal: string,
+    question: string,
+    signal: AbortSignal,
+  ) {
+    await new Clarifications(this, selection, signal).decide(
+      decisionContext(proposal),
+      question,
+      (answer) => /^(approve|skip)$/i.test(answer.trim()),
+    );
+    const receipt = this.decisionRecord(selection, proposal, question);
+    if (!receipt) throw new Error('The human decision has no retained host receipt');
+    return receipt;
+  }
+
+  /** Read only a host gate bound to this task, captured revision, actor, proposal and exact question. */
+  decisionRecord(selection: ActivitySelection, proposal: string, question: string) {
+    const scope = inboxIdentity(this, selection, decisionContext(proposal));
+    const gate = this.observations<{ clarification?: Clarification }>().findLast(
+      ({ clarification }) => clarification?.scope === scope && clarification.question === question,
+    )?.clarification;
+    if (
+      !gate ||
+      gate.answer === undefined ||
+      !gate.evidence ||
+      !this.evidence.includes(gate.evidence) ||
+      !existsSync(gate.evidence)
+    )
+      return;
+    return { scope, question, answer: gate.answer, evidence: gate.evidence };
   }
 
   /** Retain the terminal outcome and verified native evidence. */
   finish(outcome: TaskOutcome) {
-    this.journal.finish({
+    const event = this.journal.finish({
       ...outcome,
       evidence: [...new Set([...outcome.evidence, ...this.evidence])],
     });
+    this.listener?.(event);
   }
 
   /** Close the storage connection without removing retained source or evidence. */
@@ -199,24 +203,15 @@ export class HostTask implements TaskSession {
     return [...(this.journal.retained?.events ?? []), ...this.journal.events()] as T[];
   }
 
-  /** Measure the owner suite and let Direction decide whether the observed goal needs work. */
-  async measureGoal(owner: string, signal: AbortSignal) {
+  /** Materialize a read-only planning snapshot at the captured revision. */
+  planningWorkspace(signal: AbortSignal) {
+    signal.throwIfAborted();
     const { source } = this.capture;
     this.recoverMeasureWorkspace();
     const path = join(this.directory(), 'measure-worktree');
     this.note({ measureWorkspace: this.journal.run });
     git(source.root, 'worktree', 'add', '--detach', path, source.revision);
     this.worktree = path;
-    const { status, log } = await this.check('owner-tests', signal, { owner, activity: 'testing' });
-    const recentChanges = git(
-      source.root,
-      'log',
-      '--first-parent',
-      '--max-count=10',
-      '--format=%h %s',
-      source.revision,
-    ).split('\n');
-    return { owner, status, log, recentChanges, revision: source.revision };
   }
 
   /** Remove a detached measurement workspace left by an interrupted attempt. */
@@ -238,7 +233,6 @@ export class HostTask implements TaskSession {
     if (this.branch && this.worktree) return;
     if (!/^\d+$/.test(issue)) throw new Error('Invalid workspace issue');
     const base = this.capture.source.revision;
-    this.ensureCurrentBase();
     this.recoverMeasureWorkspace();
     this.branch = `${issue}-task`;
     this.issue = issue;
@@ -246,7 +240,9 @@ export class HostTask implements TaskSession {
       throw new Error('An existing pull request must match a retained accepting publication');
     const ref = `refs/heads/${this.branch}`;
     await reconcileCheckpoint(this, signal);
-    if (this.recoverWorkspace(base)) await reconcileCheckpoint(this, signal);
+    if (this.recoverWorkspace()) await reconcileCheckpoint(this, signal);
+    await recoverPrepared(this, signal);
+    await reconcileCheckpoint(this, signal);
     const { root } = this.capture.source;
     if (!git(root, 'for-each-ref', '--format=%(objectname)', ref))
       git(root, 'update-ref', ref, base, '0'.repeat(40));
@@ -258,24 +254,19 @@ export class HostTask implements TaskSession {
     this.worktree = worktree;
   }
 
-  /** Refuse to execute a retained engineering plan when staging moved to a different base. */
-  private ensureCurrentBase() {
-    const previous = this.observations<{ baseRevision?: string }>().find(
-      ({ baseRevision }) => baseRevision,
-    )?.baseRevision;
-    if (!this.config.fresh || (previous && previous !== this.capture.source.revision))
-      throw new Error('The retained engineering base differs from current staging');
-  }
-
   /** Preserve and remove an abandoned task-owned workspace before reconstructing it. */
-  private recoverWorkspace(base: string) {
+  private recoverWorkspace() {
     const previous = this.observations<{ workspace?: number; baseRevision?: string }>().findLast(
       ({ workspace }) => workspace !== undefined,
     );
     if (!previous?.workspace) return;
-    if (previous.baseRevision !== base) throw new Error('The retained workspace base changed');
     const path = join(this.location(previous.workspace), 'worktree');
     if (!existsSync(path)) return;
+    if (
+      !previous.baseRevision ||
+      git(path, 'merge-base', 'HEAD', previous.baseRevision) !== previous.baseRevision
+    )
+      throw new Error('The retained workspace base changed');
     if (git(path, 'branch', '--show-current') !== this.branch)
       throw new Error('The abandoned worktree belongs to a different branch');
     this.worktree = path;
@@ -375,8 +366,9 @@ export class HostTask implements TaskSession {
     selection: ActivationInput['selection'],
     data: Omit<TaskContext, 'goal' | 'worktree'>,
     signal: AbortSignal,
+    refresh?: ContextRefresh,
   ) {
-    return activateActor(this, agent, selection, data, signal);
+    return activateActor(this, agent, selection, data, signal, refresh);
   }
 
   /** Return the research evidence used by this captured actor activation. */
@@ -394,7 +386,7 @@ export class HostTask implements TaskSession {
     const observed = applyEdits(this.worktree, this.capture, owner, edits, (editIntent) =>
       this.note({ owner, activity, editIntent }),
     );
-    this.journal.record({ owner, activity, edits: observed });
+    this.note({ owner, activity, edits: observed });
     return observed;
   }
 
@@ -416,19 +408,7 @@ export class HostTask implements TaskSession {
 
   /** Run a declared check and record its real exit, duration and transcript. */
   async check(id: string, signal: AbortSignal, scope?: StewardScope) {
-    if (!this.worktree) throw new Error('No task worktree is available for checks');
-    const log = this.artifact(`${id}.log`);
-    const result = await check(
-      this.capture,
-      this.worktree,
-      this.config.common,
-      id,
-      scope?.owner,
-      log,
-      signal,
-    );
-    this.journal.record({ check: result, scope });
-    return result;
+    return runCheck(this, id, signal, scope);
   }
 
   /** Store an immutable artifact outside maintained source. */
@@ -475,14 +455,14 @@ export function hostTask(session: TaskSession): HostTask {
   return session;
 }
 
-/** Choose the default external application state directory. */
-export function applicationStorage() {
-  return resolve(process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state'), 'arcnexus');
-}
-
-/** Map unavailable project input to an SDK error without admitting a run. */
-function invalid(reason: string): Extract<TaskOutcome, { reason: string }> {
-  return { kind: 'invalid', reason, evidence: [] };
+/** Author the stable scope of host-owned approval gates independently of model-provided questions. */
+function decisionContext(proposal: string) {
+  return {
+    milestone: proposal,
+    assignment: 'Review exact proposed guide content',
+    acceptance: [],
+    evidence: [],
+  };
 }
 
 /** Mount the native host execution boundary with trusted storage. */
@@ -498,3 +478,5 @@ export const executionPlugin = {
 };
 
 export { steward } from './steward.js';
+
+export { approvedArchitecture } from './architecture-edits.js';

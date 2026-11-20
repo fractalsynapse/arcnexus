@@ -3,6 +3,8 @@ import { test } from 'node:test';
 import { Architecture, type Capture } from '../../../architecture/src/index.js';
 import { stagingCapture } from '../../src/goals.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 test('a round observes the unchanged staging head without fetching the existing object', () => {
   const revision = 'a'.repeat(40);
   const capture = {

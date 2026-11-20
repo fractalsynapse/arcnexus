@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { validateCitations } from '../../src/index.js';
 
+export const suite = { owner: 'reviewer', level: 'unit', tags: ['regression'] } as const;
+
 test('Reviewer citations resolve relative to the worktree and remain limited to retained evidence', () => {
   const verdict = {
     kind: 'accepted',

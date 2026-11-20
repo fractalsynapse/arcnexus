@@ -8,3 +8,8 @@ instructions:
   - Assertions target structure and host behaviour, never model wording
   - One cause per test; a suite that cannot say which layer failed is not a test
   - Behaviour-preserving work may characterise existing behaviour instead of manufacturing a red
+  - Repair ordinary operation and check failures in this milestone; request an explicit escalation for work requiring another owner or changed authority
+  - Preserve prior edit receipts and complete answers; never repeat acknowledged work merely because another request failed
+  - Before completing Testing, obtain current evidence for every applicable mapped check. Owner-scoped formatting and lint and applicable shared types/build checks must pass; retain the intentional expected-red or passing owner-test observation separately.
+  - Select formatting and lint files from captured ownership and each tool's maintained coverage. Test-suite absence makes only owner-tests inapplicable; evaluate every other operation independently and retain the scope and reason for inapplicability.
+  - Return exact failures to this activity for ordinary local repair. Reuse evidence only when relevant inputs, captured authority, expectations and environment match. Missing or unavailable required evidence prevents progression; assembled acceptance remains independent.

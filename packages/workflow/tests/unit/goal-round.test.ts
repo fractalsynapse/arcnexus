@@ -11,11 +11,12 @@ import {
   type WorkflowServices,
 } from '../../src/index.js';
 
+export const suite = { owner: 'workflow', level: 'unit', tags: ['regression'] } as const;
+
 const ids = ['checkpoint', 'ownership', 'inspect', 'tests', 'delivery'];
 const goals: StandingGoal[] = ids.map((id, index) => ({
   id,
   priority: index + 1,
-  owner: id,
   body: `# ${id}\nMeasure the current staging revision.\n`,
 }));
 const signal = new AbortController().signal;
@@ -63,7 +64,7 @@ class RoundScenario {
 
   /** Supply a host check result and choose whether green evidence hides a gap. */
   constructor(
-    private readonly status: StandingGoalEvidence['status'] = 0,
+    private readonly hasEvidence = true,
     private readonly greenGap = false,
   ) {}
 
@@ -71,11 +72,9 @@ class RoundScenario {
     execution: {
       round: () => ({ id: this.round, goals, finish: () => this.complete() }),
       admit: async (input) => this.admit(input),
-      measureGoal: async (_session, owner) => ({
-        owner,
+      observeGoal: (session) => ({
         revision: 'current-staging',
-        status: this.status,
-        log: `${owner}-tests.log`,
+        source: session.capture.source,
         recentChanges: ['a previous goal merged on staging'],
       }),
       assemble: async () => ({ digest: 'verified-candidate', evidence: [] }),
@@ -109,7 +108,7 @@ class RoundScenario {
 
   /** Retry the logical task with the durable assessment from its original attempt. */
   replay(history: readonly TaskEvent[]) {
-    const input = { directory: '.', goal: goals[0]!.body, measureOwner: 'checkpoint' };
+    const input = { directory: '.', goal: goals[0]!.body, standing: true };
     const services: WorkflowServices = {
       ...this.services,
       execution: {
@@ -125,15 +124,44 @@ class RoundScenario {
     return new Workflow(this.services).round('.', { progress() {} }, signal);
   }
 
+  /** Expose earlier terminal results while a later goal still holds the project lane. */
+  resumeWithHeldLane() {
+    const stored = {
+      kind: 'satisfied' as const,
+      commit: 'earlier-staging',
+      summary: 'Available from the same round.',
+      evidence: ['retained-goal.log'],
+    };
+    const services: WorkflowServices = {
+      ...this.services,
+      execution: {
+        ...this.services.execution,
+        round: () => ({
+          id: 1,
+          goals,
+          completed: (_goal: StandingGoal, scope: string) =>
+            ['round:1:checkpoint', 'round:1:ownership'].includes(scope) ? stored : undefined,
+          finish: () => this.complete(),
+        }),
+        admit: async (input) => {
+          if (['round:1:checkpoint', 'round:1:ownership'].includes(input.scope ?? ''))
+            return { kind: 'invalid', reason: 'Active goal: inspect', evidence: [] };
+          return this.admit(input);
+        },
+      },
+    };
+    return new Workflow(services).round('.', { progress() {} }, signal);
+  }
+
   /** Open engineering work on a green measure only when a concrete gap was observed. */
   private assess(session: TaskSession, measured?: StandingGoalEvidence) {
     assert(measured);
-    assert.equal(measured.status, this.status);
     assert.equal(measured.revision, 'current-staging');
     assert.deepEqual(measured.recentChanges, ['a previous goal merged on staging']);
-    assert.equal(session.goal, goals.find((goal) => goal.owner === measured.owner)?.body);
-    this.assessments.push(measured.owner);
-    if (this.greenGap && measured.owner === 'checkpoint') return { kind: 'plan', plan: gapPlan };
+    const goal = goals.find(({ body }) => body === session.goal);
+    assert(goal);
+    this.assessments.push(goal.id);
+    if (this.greenGap && goal.id === 'checkpoint') return { kind: 'plan', plan: gapPlan };
     return this.noWork(measured);
   }
 
@@ -143,7 +171,9 @@ class RoundScenario {
     return {
       kind: 'satisfied',
       summary: 'The requirements and measure hold',
-      evidence: [measured.log],
+      evidence: this.hasEvidence
+        ? [{ path: 'fixture.ts', quote: 'Observable requirement covered' }]
+        : [],
     };
   }
 
@@ -156,6 +186,7 @@ class RoundScenario {
   private admit(input: TaskInput): TaskSession {
     this.admissions.push(input);
     const capture = {
+      source: { paths: ['fixture.ts'], read: () => 'Observable requirement covered' },
       components: {
         checkpoint: { id: 'checkpoint', owns: [], activities: { testing: { profile: 'profile' } } },
       },
@@ -185,7 +216,7 @@ test('the Director assesses all five goals afresh in priority order on each of t
 });
 
 test('a green suite can lead to engineering work when the Director sees a coverage gap', async () => {
-  const fixture = new RoundScenario(0, true);
+  const fixture = new RoundScenario(true, true);
   const round = await fixture.run();
   assert(round.completed);
   assert.equal(round.goals[0]?.outcome.kind, 'merged');
@@ -193,18 +224,14 @@ test('a green suite can lead to engineering work when the Director sees a covera
   assert.deepEqual(fixture.assessments, ids);
 });
 
-test('failed and unavailable measures go to Direction but cannot be declared satisfied', async () => {
-  for (const status of [1, 'not-applicable', null] as const) {
-    const fixture = new RoundScenario(status);
-    const round = await fixture.run();
-    assert(!round.completed);
-    assert.equal(round.goals[0]?.outcome.kind, 'failed');
-    assert.deepEqual(fixture.assessments, ['checkpoint']);
-    assert.deepEqual(fixture.repairs, [
-      `Cannot satisfy a standing goal with owner check status ${status}`,
-    ]);
-    assert.deepEqual(fixture.activations, []);
-  }
+test('missing evidence triggers repair and cannot satisfy a standing goal', async () => {
+  const fixture = new RoundScenario(false);
+  const round = await fixture.run();
+  assert(!round.completed);
+  assert.equal(round.goals[0]?.outcome.kind, 'blocked');
+  assert.deepEqual(fixture.assessments, ['checkpoint']);
+  assert.deepEqual(fixture.repairs, ['A standing goal assessment needs captured evidence']);
+  assert.deepEqual(fixture.activations, []);
 });
 
 test('an interrupted round reuses a recorded Director assessment for its completed goal', async () => {
@@ -217,4 +244,54 @@ test('an interrupted round reuses a recorded Director assessment for its complet
   };
   assert.deepEqual(await fixture.replay([{ assessment }]), assessment);
   assert.deepEqual(fixture.assessments, []);
+});
+
+test('an interrupted round reuses its completed check-only plan and assessment', async () => {
+  const fixture = new RoundScenario();
+  const assessment = {
+    kind: 'satisfied' as const,
+    commit: 'current-staging',
+    summary: 'Independent review accepted checks on the unchanged staging tree.',
+    evidence: ['checkpoint-tests.log'],
+  };
+  assert.deepEqual(await fixture.replay([{ plan: gapPlan }, { assessment }]), assessment);
+  assert.deepEqual(fixture.activations, []);
+});
+
+test('a retained self-linked supplier resumes the same steward without replanning', async () => {
+  const fixture = new RoundScenario();
+  const id = gapPlan.milestones[0]!.id;
+  const outcome = await fixture.replay([
+    { plan: gapPlan },
+    {
+      activation: {
+        milestone: id,
+        owner: 'checkpoint',
+        index: 1,
+        step: 'testing',
+        outcome: {
+          kind: 'supplier',
+          owner: 'checkpoint',
+          milestone: id,
+          reason: 'The earlier runtime acknowledged a self-link',
+          evidence: ['retained-refusal'],
+        },
+      },
+    },
+  ]);
+  assert.equal(outcome.kind, 'merged');
+  assert.deepEqual(fixture.activations, [id]);
+});
+
+test('a standing round resumes the held later goal without admitting completed earlier goals', async () => {
+  const fixture = new RoundScenario();
+  const round = await fixture.resumeWithHeldLane();
+  assert(round.completed);
+  assert.equal(round.goals.length, 5);
+  assert.deepEqual(round.goals[0]?.outcome.evidence, ['retained-goal.log']);
+  assert.deepEqual(fixture.assessments, ['inspect', 'tests', 'delivery']);
+  assert.deepEqual(
+    fixture.admissions.map(({ scope }) => scope),
+    ['round:1:inspect', 'round:1:tests', 'round:1:delivery'],
+  );
 });

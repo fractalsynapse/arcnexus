@@ -1,5 +1,6 @@
 import { accessSync, constants, existsSync, lstatSync, readFileSync, realpathSync } from 'node:fs';
-import { isAbsolute, join } from 'node:path';
+import { homedir } from 'node:os';
+import { isAbsolute, join, resolve } from 'node:path';
 import { parse } from 'yaml';
 import type { Capture } from '../../architecture/src/index.js';
 import { GitHub } from '../../collaboration/src/index.js';
@@ -58,10 +59,18 @@ function binding(file: string | undefined, common: string) {
   return executable;
 }
 
+/** Match guidance files that native harness discovery can consume. */
+export function isNativeGuidance(path: string) {
+  return /(?:^|\/)(?:AGENTS(?:\.override)?\.md|\.agents\/skills\/)/.test(path);
+}
+
+/** Match target configuration that cannot override the trusted harness binding. */
+export function isTargetCodexConfig(path: string) {
+  return /(?:^|\/)\.codex\/config\.toml$/.test(path);
+}
+
 /** Keep native Codex discovery pinned to the approved input files during activation. */
 export function verifyNativeGuidance(capture: Capture, worktree: string) {
-  const isGuidance = (path: string) =>
-    /(?:^|\/)(?:AGENTS(?:\.override)?\.md|\.agents\/skills\/)/.test(path);
   const listed = git(
     worktree,
     'ls-files',
@@ -70,13 +79,10 @@ export function verifyNativeGuidance(capture: Capture, worktree: string) {
     '--exclude-standard',
     '-z',
   ).split('\0');
-  if (
-    existsSync(join(worktree, '.codex', 'config.toml')) ||
-    listed.some((path) => /(?:^|\/)\.codex\/config\.toml$/.test(path))
-  )
+  if (existsSync(join(worktree, '.codex', 'config.toml')) || listed.some(isTargetCodexConfig))
     throw new Error('Target Codex configuration is outside the captured harness binding');
-  const approved = new Set(capture.source.paths.filter(isGuidance));
-  for (const path of new Set([...listed.filter(isGuidance), ...approved])) {
+  const approved = new Set(capture.source.paths.filter(isNativeGuidance));
+  for (const path of new Set([...listed.filter(isNativeGuidance), ...approved])) {
     const absolute = join(worktree, path);
     if (
       !approved.has(path) ||
@@ -85,4 +91,9 @@ export function verifyNativeGuidance(capture: Capture, worktree: string) {
     )
       throw new Error(`Captured project guidance differs from the native discovery view: ${path}`);
   }
+}
+
+/** Choose the default external application state directory. */
+export function applicationStorage() {
+  return resolve(process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state'), 'arcnexus');
 }

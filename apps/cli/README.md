@@ -137,16 +137,11 @@ the committed reports.
 
 Run `arcnexus task run` without a goal to evaluate the project's captured
 [goal inventory](../../.arc/goals/). Markdown frontmatter supplies the numeric
-priority and the component whose declared owner suite measures the goal.
-Requirements and success measures remain in the Markdown body. Lower priorities
-run first, with stable file IDs breaking ties. Each goal verifies the current
-staging head and reuses the local Git object when available.
-The Director assesses the full authored goal against current staging, recent
-changes and the owner-test evidence. The Director can plan work even with a
-passing suite. The host attaches its actual owner check log to the Director's
-explicit assessment. If the suite passes and the Director records that no work is
-warranted, the round records the assessment and continues. Engineering work
-uses the normal task loop and stops the round if it cannot complete.
+priority. Requirements and observed measures are in the Markdown body. Lower
+priorities run first, with stable file IDs breaking ties. An interrupted round
+keeps its original goal inventory. The Director evaluates each goal on the
+current staging revision, citing captured evidence or planning the steward work
+and checks needed to establish the outcome.
 
 Direction opens or reuses the issue after the plan is accepted. Execution
 prepares the issue branch and private worktree before the first steward and
@@ -157,3 +152,51 @@ verified checkpoint survive worktree removal.
 
 Resumed activities can read earlier evidence for the same task. The host
 provides self-review a diff against the captured staging base.
+
+## Map goals and record objectives
+
+Use `arcnexus task plan` to rate all standing goals for project alignment and
+evidence. The report links findings to the captured revision. Use
+`arcnexus task plan "<objective>"` to submit and preserve the exact text. If the
+Planner needs clarification, answer at the terminal or rerun the exact
+submission to continue.
+
+To refine a previous objective, begin the submitted text with
+`Refines <full objective record ID>` on its own line. The record ID is the
+filename without the `.md` extension. The new submission retains the original
+objective identity and links to the preceding record. An unresolved objective
+can be recorded while its goal mapping stays open.
+
+Planner reports source alignment and revision-bound run observations in its
+mapping. Goal files express requirements and success measures. Observed checks,
+review and staging delivery stay in the task journal and its protected artifacts.
+
+The gateway displays the exact proposed goal changes for approval. Reply
+`approve` to authorize the shown bytes, or `skip` to keep the current inventory.
+The submitted objective can be recorded in either case. Approved Markdown
+changes pass through checked edits, candidate checks, independent review and
+verified staging integration. Use `--json` for the structured result and artifact
+locations.
+
+## Assess architecture
+
+`arcnexus architecture update` assesses approved objectives and goals, current
+architecture and implementation, and retained execution findings. Add a quoted
+feedback argument to focus that assessment. The command uses the captured
+`project.architect` activity and the same optional research and human-question
+path as other agents. `--json` retains the normal structured output convention.
+
+A justified no-change result records its source citations. A proposed batch
+shows its purpose, consequences, prerequisite outcomes, exact baseline and full
+diff, including derived registry changes. Enter `approve` or `skip` at the durable
+human gate, followed by a line containing only a period. Noninteractive execution
+reports a pending decision; rerunning resumes its exact retained proposal.
+
+After approval, the ordinary Director and steward workflow handles prerequisites.
+The host applies only the approved guide bytes to the same candidate before
+assembled verification, independent review and staging delivery. Model checked
+edits retain their protected-source refusals. Changed intent, bytes or baselines
+require renewed approval. See the [Architecture application](../../packages/architecture/README.md).
+
+The outer `refine` lifecycle and its consecutive live acceptance remain tracked
+separately in [the refinement work](https://github.com/fractalsynapse/arcnexus/issues/615).

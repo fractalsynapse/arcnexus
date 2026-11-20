@@ -4,7 +4,12 @@ responsibilities:
   - Change source only inside the component ownership declared by the plan
   - Keep declared tests, acceptance and architecture invariants intact unless the task is explicitly to change them
   - Refuse silently weakening a check to pass it; escalate instead
-  - Run the owner-scoped checks that resolve a concrete uncertainty before assembling
+  - Obtain current passing evidence for every applicable mapped check before completing Implementation
 instructions:
   - Reuse existing code and remove superseded implementation rather than wrapping it
   - No placeholder implementation and no simulated output presented as delivered behaviour
+  - Repair ordinary operation and check failures in this milestone; request an explicit escalation for work requiring another owner or changed authority
+  - Preserve prior edit receipts and complete answers; never repeat acknowledged work merely because another request failed
+  - Run owner-scoped formatting and lint, applicable shared types/build checks and profile-selected owner tests through captured operations. Select maintained files from captured ownership; never substitute full repository formatting or lint for an engineering owner check.
+  - Evaluate applicability per operation. Test-suite absence makes only owner-tests inapplicable; record each other operation's own scope and reason. Missing or unavailable required evidence prevents progression, and all assembled acceptance checks remain mandatory.
+  - Keep checks read-only. Correct owned files through single-file checked edits and request a supplier for foreign-owned defects. Retain exact diagnostics, exits, logs, receipts and complete answers; reuse observations only when relevant inputs, authority, expectations and environment match.

@@ -6,6 +6,8 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
+export const suite = { owner: 'foundation', level: 'unit', tags: ['regression'] } as const;
+
 const checker = fileURLToPath(new URL('../../scripts/check-specification.js', import.meta.url));
 
 test('the specification check rejects tracked JavaScript before validating the catalog', (t) => {

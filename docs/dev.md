@@ -1,13 +1,19 @@
 # Development direction
 
+The current [efficiency foundation checklist](plans/efficiency-foundation.md)
+tracks the proposed architecture reload, activity prompt/operation rewrite and
+complete live timeline, including continuous time, token and profile-cost analysis.
+Its exact contract amendment is approved and applied; implementation and live
+acceptance of the complete batch remain outstanding.
+
 Start with the [charter](charter.md), the [first delivery and qualification](plans/self-development-mvp.md),
-and the [interface registry](interface/registry.yaml). The runtime is being rebuilt.
-The contracts state the target behavior and the tests that establish it.
+and the [interface registry](interface/registry.yaml). The contracts distinguish accepted target behavior from implementation and
+record the tests that establish it.
 
 The catalog distinguishes project, app and plugin ownership. The CLI app owns
 its composition and terminal adapter in [apps/cli](../apps/cli/README.md).
 The [Commands SDK](../packages/commands/contract.md) provides shared structured
-inspect and task operations for the CLI and future MCP and OpenAPI adapters.
+inspection, execution and goal-planning operations for the CLI and future MCP and OpenAPI adapters.
 Reusable Cordis plugins belong in `packages/<plugin>/`. A plugin owns its public
 entry and contract beside its source and tests. Keep plugin documentation and
 scripts there when the plugin alone uses them. Keep root `docs/` and `scripts/`
@@ -26,6 +32,18 @@ the [Agent loop](../packages/agent/contract.md). [Reviewer](../packages/reviewer
 derives lessons from that loop and owns `.arc/learning/`. The
 [Workflow proposal](../packages/workflow/contract.md) maps the agent activity
 diagram to the existing task, verification and delivery boundaries.
+
+[Planner](../packages/planner/contract.md) maintains standing goals and human
+objective records. Explore the current mapping with `arcnexus task plan` or
+submit a human objective to guide it. Review proposed goal edits before delivery.
+Bare `arcnexus task run` evaluates the reviewed inventory in priority order.
+`arcnexus architecture update [<feedback>]` assesses architecture and proposes
+exact changes for approval. Required implementation is delivered within Architect
+through the ordinary task lifecycle before Run captures the accepted model.
+`arcnexus refine [--rounds <N>]` runs Plan, Architect and every approved goal,
+defaulting to one round. The existing journal retains approval pauses and phase
+positions; each new round incorporates prior results. These commands are target
+capabilities until their contract scenarios and live qualification are verified.
 
 [Manager](../packages/manager/contract.md) maintains agent directives.
 [Release](../packages/release/contract.md) maintains repository workflows, ignores

@@ -48,11 +48,7 @@ export function applyEdits(
     const path = authorize(root, capture, owner, edit.path);
     if (paths.has(path)) throw new Error(`Duplicate checked edit: ${edit.path}`);
     paths.add(path);
-    const previous = safeRead(path);
-    const before = previous === undefined ? null : digest(previous);
-    if (before !== edit.expected) throw new StaleCheckedEdit(edit.path, before);
-    if (typeof edit.content !== 'string' && edit.content !== null)
-      throw new Error(`Invalid replacement content: ${edit.path}`);
+    const before = validateInput(path, edit);
     return { path, edit, before };
   });
   const observed = validated.map(({ edit, before }) => ({
@@ -80,12 +76,19 @@ export function checkedInput(
 
 /** Enforce unique ownership and reject lock changes and file aliases. */
 function authorize(root: string, capture: Capture, owner: string, path: string) {
-  const segments = pathSegments(path);
+  pathSegments(path);
   if (
     capture.project.contractRegistry === path ||
     capture.contracts.some((entry) => entry.stage === 'locked' && entry.file === path)
   )
     throw new Error(`Locked contract or registry: ${path}`);
+  if (
+    path.startsWith('.arc/architecture/') ||
+    path === capture.project.planTemplate ||
+    capture.contracts.some((entry) => entry.file === path) ||
+    Object.values(capture.standards ?? {}).some((entry) => entry.document === path)
+  )
+    throw new Error(`Captured architecture requires an exact human-approved proposal: ${path}`);
   const found = team.ownerFor(Object.values(capture.components), path);
   if (found.kind !== 'owned' || found.owner.id !== owner) {
     const owners = found.kind === 'collision' ? found.owners : found.owner ? [found.owner] : [];
@@ -94,6 +97,12 @@ function authorize(root: string, capture: Capture, owner: string, path: string) 
       owners.map(({ id }) => id),
     );
   }
+  return checkedPath(root, path);
+}
+
+/** Resolve one safe repository path without exposing ownership delegation to model tools. */
+function checkedPath(root: string, path: string) {
+  const segments = pathSegments(path);
   let current = root;
   for (const segment of segments) {
     current = join(current, segment);
@@ -166,4 +175,28 @@ function replace(path: string, content: string | null) {
 /** Compute the identity of checked file bytes. */
 function digest(bytes: string | Buffer) {
   return createHash('sha256').update(bytes).digest('hex');
+}
+
+/** Read actual safe file bytes for a host-verified protected proposal and its checkpoint. */
+export function protectedFingerprint(root: string, path: string) {
+  const bytes = safeRead(checkedPath(root, path));
+  return bytes === undefined ? null : digest(bytes);
+}
+
+/** Apply a single host-authorized proposal file with the same alias, preimage and atomic-write rules. */
+export function replaceProtected(root: string, edit: CheckedEdit, beforeWrite: () => void) {
+  const path = checkedPath(root, edit.path);
+  validateInput(path, edit);
+  beforeWrite();
+  replace(path, edit.content);
+}
+
+/** Validate a replacement once against its actual preimage before either write path can mutate source. */
+function validateInput(path: string, edit: CheckedEdit) {
+  const previous = safeRead(path);
+  const before = previous === undefined ? null : digest(previous);
+  if (before !== edit.expected) throw new StaleCheckedEdit(edit.path, before);
+  if (typeof edit.content !== 'string' && edit.content !== null)
+    throw new Error(`Invalid replacement content: ${edit.path}`);
+  return before;
 }

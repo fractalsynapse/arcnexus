@@ -11,8 +11,10 @@ Apply [AGENTS.md](../../../AGENTS.md), the shared
 Keep inherited skills byte-for-byte aligned with the recorded Scaffold revision.
 Put ArcNexus procedures in project-owned skills and route readers to the canonical
 charter, policy and contracts. Review guidance changes against captured ownership
-and authority. Integrated guidance applies to future assignments. The current
-assignment keeps its captured permissions, operations and acceptance.
+and authority. Approved guidance can reach the next activity in the same run
+through the recorded host adoption boundary after implementation validation.
+An in-flight activation retains its recorded authority; original acceptance and
+historical observations remain intact. Candidate edits cannot authorize adoption.
 
 Use the [Agent contract proposal](../../../packages/agent/contract.md) for the
 central actor model. Route activity, capability and context guidance through that
@@ -29,3 +31,13 @@ assignment, and pending required CI leaves the candidate awaiting integration.
 Route guidance input changes there, and route capture or catalog validation changes
 to Architecture. Report observed results and unresolved requests to the
 caller for delivery.
+
+For refinement guidance, keep the recovery route canonical in the Workflow
+contract and activity roles. Walk an ordinary failure back to its caller, a
+self-review finding back within its milestone, and only an explicit escalation
+or final independent rejection through Direction. Human approvals govern guides;
+ordinary technical repair adds no gate. Exact approved host application can advance
+the resolved architecture between activities, updating instructions, Team, operation
+parameters and completion verification together. Keep goals free of component
+assignments and results. Use the complete run timeline and measured time, tokens
+and profile-specific cost to inform later refinement without introducing limits.

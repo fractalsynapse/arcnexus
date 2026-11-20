@@ -33,3 +33,20 @@ host enforcement, hosted CI and live acceptance separately.
 The first build defers the broader CLI surface, workdays, the simulation provider,
 production release, external plugin management, and service gateways. The
 [CLI app contract](../../apps/cli/contract.md) defines the first operator commands.
+
+## Continuous refinement acceptance
+
+The self-healing batch adds Plan → Architect → Run through the existing workflow.
+Qualify with `arcnexus refine --rounds 3` on the production composition. Every
+round must assess objectives/goals and architecture, then invoke the Director for
+every approved priority-ordered goal. Across the streak demonstrate an actual
+approved guide improvement, a useful staged implementation and later consumption
+of prior findings. No-change assessments are valid and artificial churn is not.
+
+Handled caller-level failures and steward-local rewinds are part of successful
+execution. Objective, goal and architecture approval pauses resume the same round.
+Operator state repair, bypassed checks and uncontrolled aborts break the streak;
+an execution-path correction starts a fresh streak. Verify deliberate interruption
+and negative cases separately before the uninterrupted acceptance streak. Retain
+phase assessments, approvals, repair routes, Direction calls/request sizes, runtime
+identities and staging commits in the existing external evidence store.

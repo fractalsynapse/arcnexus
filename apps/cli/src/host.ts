@@ -4,9 +4,11 @@ import { direct, track } from '../../../packages/direction/src/index.js';
 import { integrate, resume } from '../../../packages/delivery/src/index.js';
 import {
   applicationStorage,
+  hostTask,
   executionPlugin,
   steward,
 } from '../../../packages/execution/src/index.js';
+import { plannerPlugin } from '../../../packages/planner/src/index.js';
 import { verify } from '../../../packages/verification/src/index.js';
 import { workflowPlugin, type WorkflowServices } from '../../../packages/workflow/src/index.js';
 
@@ -14,6 +16,7 @@ import { workflowPlugin, type WorkflowServices } from '../../../packages/workflo
 export async function mountTaskHost(context: Context) {
   await context.use(coordinationPlugin(applicationStorage()));
   await context.use(executionPlugin);
+  await context.use(plannerPlugin);
   await context.use(workflowPlugin(services(context)));
 }
 
@@ -21,6 +24,11 @@ export async function mountTaskHost(context: Context) {
 function services(context: Context): WorkflowServices {
   return {
     execution: context.execution,
+    architecture: {
+      propose: (session, feedback, signal) =>
+        context.architecture.propose(context.agent, hostTask(session), feedback, signal),
+    },
+    planner: context.planner,
     direction: {
       track,
       plan: (session, signal, standing) => direct(context.agent, session, signal, { standing }),

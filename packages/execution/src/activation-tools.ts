@@ -8,12 +8,13 @@ import {
 import { archiveResearch } from './research-archive.js';
 import { saveCheckpoint } from './checkpoint.js';
 import { InvalidCodexResponse } from './codex.js';
-import type { ActivityCheckpoint } from '../../workflow/src/index.js';
+import { selfLinkedSupplier, type ActivityCheckpoint } from '../../workflow/src/index.js';
 import { materializeEdits } from './formatter.js';
 import type { HostTask } from './index.js';
-import { inboxIdentity } from './research.js';
+import { inboxIdentity, researchFields } from './research.js';
 import { decodeEdit } from './steward-response.js';
 import { listToolDirectory, readToolFile } from './tool-files.js';
+import { repairCheckExpectation, type StewardScope } from './steward-check.js';
 
 type Tool = Pick<AgentInspection['request']['options']['tools'][number], 'name' | 'handler'>;
 type Evidence = {
@@ -26,12 +27,13 @@ type RequestEvidence = {
   clarification?: { scope: string; question: string };
   researchRequest?: { inbox: string; question: string; decision: string };
   activation?: ActivityCheckpoint;
+  projectReply?: { scope: string };
 };
 
 /** Dispatch captured project tools and keep final model output free of implicit actions. */
 export class ActivationTools {
-  private readonly checks = new Map<string, string>();
   private readonly scope: string;
+  private readonly milestone?: string;
   private handoff?: Request;
 
   /** Return whether a valid operation already requested a sequential handoff. */
@@ -47,20 +49,22 @@ export class ActivationTools {
     private readonly signal: AbortSignal,
   ) {
     this.scope = inboxIdentity(task, selection, input);
-    this.handoff = this.pendingRequest(input.milestone);
+    this.milestone = (input.milestone as { id?: string } | undefined)?.id;
+    this.handoff = this.pendingRequest();
   }
 
   /** Continue an acknowledged request if interruption occurred before its workflow recorded it. */
-  private pendingRequest(milestone: unknown) {
+  private pendingRequest() {
     const events = this.task.observations<RequestEvidence>();
     const index = events.findLastIndex(
       ({ projectRequest }) => projectRequest?.scope === this.scope,
     );
     const request = events[index]?.projectRequest;
-    if (!request) return;
+    if (!request || selfLinkedSupplier(request, this.milestone)) return;
     const handled = events
       .slice(index + 1)
-      .some(({ clarification, researchRequest, activation }) => {
+      .some(({ clarification, researchRequest, activation, projectReply }) => {
+        if (projectReply?.scope === this.scope) return true;
         if (request.kind === 'question')
           return clarification?.scope === this.scope && clarification.question === request.question;
         if (request.kind === 'research')
@@ -69,10 +73,9 @@ export class ActivationTools {
             researchRequest.question === request.question &&
             researchRequest.decision === request.decision
           );
-        const position = milestone as { id?: string } | undefined;
         return (
           !!activation &&
-          activation.milestone === position?.id &&
+          activation.milestone === this.milestone &&
           activation.step === this.selection.activity &&
           activation.outcome.kind === 'supplier'
         );
@@ -95,15 +98,33 @@ export class ActivationTools {
       case 'archive':
         return this.archive(String(args.id));
       case 'check':
-        this.checks.set(tool.name, String(args.expected));
-        return { queued: tool.name, expected: args.expected };
+        return this.check(tool.name, args.expected as 'pass' | 'fail');
       default:
         return this.request(tool.handler, args);
     }
   }
 
+  /** Preserve unresolved expectations before executing another request for the same operation. */
+  private check(id: string, expected: 'pass' | 'fail') {
+    const activity =
+      this.task.capture.components[this.selection.component]?.activities[this.selection.activity];
+    if (expected !== 'pass' && activity?.verification?.includes(id))
+      throw new Error(`Operation ${id} requires pass for declared activity verification`);
+    const scope: StewardScope = {
+      owner: this.selection.component,
+      activity: this.selection.activity as StewardScope['activity'],
+      expected,
+    };
+    repairCheckExpectation(this.task, id, scope);
+    return this.task.check(id, this.signal, scope);
+  }
+
   /** Keep special actors and research read-only even if a capture is misconfigured. */
   private assertAuthority(tool: Tool) {
+    if (this.task.inbox && ['edit', 'archive'].includes(tool.handler))
+      throw new Error(
+        'An inbox contribution is read-only; request explicit implementation through escalation',
+      );
     if (!['edit', 'archive', 'check', 'supplier'].includes(tool.handler)) return;
     const { director, verifier } = this.task.capture.project;
     const { component, activity } = this.selection;
@@ -117,6 +138,11 @@ export class ActivationTools {
   /** Apply one proposed edit exactly once and checkpoint before returning its receipt. */
   private async edit(tool: Tool, args: Record<string, unknown>) {
     const proposal = decodeEdit(args);
+    const root = this.task.capture.project.knowledgeRoot ?? '.arc';
+    if (
+      [`${root}/goals/`, `${root}/objectives/`].some((prefix) => proposal.path.startsWith(prefix))
+    )
+      throw new Error('Objectives and goals require the exact Planner approval route');
     const id = createHash('sha256')
       .update(JSON.stringify([this.scope, tool.name, proposal]))
       .digest('hex');
@@ -157,7 +183,12 @@ export class ActivationTools {
     for (const value of Object.values(args))
       if (typeof value !== 'string' || !value.trim())
         throw new Error(`Empty ${kind} request field`);
-    this.handoff = { ...args, kind };
+    const request = { ...args, ...(kind === 'research' ? researchFields(args) : {}), kind };
+    if (selfLinkedSupplier(request, this.milestone))
+      throw new Error(
+        `Supplier milestone ${this.milestone} is your current milestone. Continue this activity or link a distinct contribution.`,
+      );
+    this.handoff = request;
     this.task.note({ projectRequest: { scope: this.scope, ...this.handoff } });
     return {
       recorded: kind,
@@ -172,19 +203,22 @@ export class ActivationTools {
     if (['research', 'question', 'supplier'].includes(String(reply.kind)))
       throw new InvalidCodexResponse(`Use the mapped MCP tool for ${String(reply.kind)} requests`);
     if (reply.kind !== 'completed') return reply;
-    if (
-      ['edits', 'checks', 'archiveResearch'].some((key) => {
-        const value = (reply as Record<string, unknown>)[key];
-        return value !== undefined && (!Array.isArray(value) || value.length > 0);
-      })
-    )
+    if (this.hasDirectOperations(reply as Record<string, unknown>))
       throw new InvalidCodexResponse(
         'Use mapped MCP tools for edits, checks and research archival',
       );
     return {
       ...reply,
       edits: [],
-      checks: [...this.checks].map(([id, expected]) => ({ id, expected })),
+      checks: [],
     };
+  }
+
+  /** Refuse requested effects in model output; successful tool calls are already recorded. */
+  private hasDirectOperations(reply: Record<string, unknown>) {
+    return ['edits', 'checks', 'archiveResearch'].some((key) => {
+      const value = reply[key];
+      return value !== undefined && (!Array.isArray(value) || value.length > 0);
+    });
   }
 }

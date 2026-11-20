@@ -7,6 +7,7 @@ import type { HostTask } from './index.js';
 
 interface Event {
   editIntent?: unknown;
+  architectureWrite?: unknown;
   edits?: unknown;
   check?: CheckResult;
   scope?: StewardScope;
@@ -26,12 +27,14 @@ export function ownerReviewObservations(
   candidate?: OwnerObservation['candidate'],
   operations?: Capture['operations'],
 ): OwnerObservation[] {
-  const lastEdit = events.findLastIndex(({ editIntent, edits }) => editIntent || edits);
+  const lastEdit = events.findLastIndex(
+    ({ editIntent, edits, architectureWrite }) => editIntent || edits || architectureWrite,
+  );
   const unique = new Map<string, OwnerObservation>();
   for (const [index, { check, scope }] of events.entries()) {
     if (!check || !scope) continue;
     const afterLastEdit = index > lastEdit;
-    const key = JSON.stringify([scope, check.id, check.status, afterLastEdit]);
+    const key = JSON.stringify([scope, check.id, check.status, check.diagnostic, afterLastEdit]);
     const operation = operations?.[check.id];
     const source = candidate && afterLastEdit && operation ? { candidate, operation } : {};
     unique.delete(key);
@@ -51,6 +54,8 @@ export function ownerEvidenceDigest(observations: readonly OwnerObservation[], t
         check.command,
         check.args,
         check.status,
+        check.diagnostic,
+        check.selection,
         candidate,
         operation,
       ]),

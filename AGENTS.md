@@ -9,14 +9,20 @@ architecture-directed self-development through the host CLI.
 The architect owns project intent, boundaries and contract changes. Before editing,
 check the request against the applicable locked clauses. If they conflict, name
 the clause and consequence, propose a resolution, and wait for the architect.
-Approval can authorize a named editor to apply the change on a review branch.
-Product runs refuse writes to locks and their registry.
+Approval can authorize a named editor or the trusted host to apply the exact
+reviewed change on an issue branch. Agent checked-edit tools refuse locks and
+their registry. Host application requires the recorded human approval and matching
+baseline. After validating required implementation and available handlers, the
+trusted host can adopt the approved resolved architecture between activities in
+the same run. Revalidate pending work and affected evidence together; preserve
+original acceptance and the authority identity of historical activations.
 
 The [catalog](.arc/architecture/project.yaml) names the sole owner for every path.
 Change only the accountable owner's scope. Use another plugin through its public
 entry and request its contribution through the director when necessary. Candidate
-edits cannot widen the active task's authority, change its checks or rewrite its
-acceptance. Generic product code consumes the target project's guidance as data
+edits cannot authorize changes to the task's authority, checks or acceptance.
+Only recorded approved architecture adoption updates subsequent instructions,
+ownership, operations and verification together. Generic product code consumes the target project's guidance as data
 and keeps ArcNexus-specific release rules in this repository.
 
 ## Working style
@@ -27,6 +33,13 @@ and keeps ArcNexus-specific release rules in this repository.
 - Use the least code that satisfies the accepted outcome. Define each responsibility,
   service shape and command once. Reuse its definition directly. Omit boilerplate,
   duplicate implementations and compatibility machinery for the previous runtime.
+- NEVER EVER create or introduce a quantitative limit without the human architect's
+  express permission. Every implemented limit must have an entry in the
+  [accepted-limits log](.arc/architecture/accepted-limits.md) citing that approval.
+  If approval is absent from the log, the limit MUST NOT be implemented. This also
+  applies to defaults, temporary safeguards, retry ceilings, timeouts, content and
+  collection caps, and truncation. Let the harness govern its capacity. Agents may
+  record the human's actual approval; they cannot approve limits or infer permission.
 - Author all maintained code in strict TypeScript, including tests, fixtures and
   build and CI tooling. Follow the class and helper rules in the
   [TypeScript standard](docs/foundation/typescript-standard.md).
@@ -60,17 +73,39 @@ The CLI app owns terminal behavior and delegates through the
 ## Direction and evidence
 
 The director generates the sequence from the [plan template](.arc/architecture/plan-template.md).
-Each milestone has one accountable owner and stable acceptance criteria. Link
+Each milestone has one accountable owner and stable acceptance criteria. Ordinary
+tool, check and self-review failures return to the caller or earliest affected
+activity within that milestone. Persist the rewind and preserve completed edit
+receipts, complete answers and unaffected evidence. Direction engages initially,
+on explicit escalation and after final independent rejection. Link
 already accepted supplier work, or place required supplier work before the dependent
-milestone. Escalate a decision that needs different authority. The host validates
-authority and persists plan and learning records. Keep bulk logs and transcripts
-outside source and preserve failed observations.
+milestone. Escalate a decision that needs different authority. Human approval concerns
+objectives, goals and architecture. Routine repairs, plan sequencing and authorized
+staging delivery add no approval gates. External prerequisites remain named holds.
+The host validates
+authority and persists plan and learning records. Stream and retain complete
+exposed harness and host observations through the existing journal/evidence path.
+Continuously measure time, reported tokens and attributable cost overall and per
+execution profile; use those findings in later assessments. Keep bulk logs and
+transcripts outside source and preserve failed observations.
 
 Follow the [qualification plan](docs/plans/self-development-mvp.md) for executable
 changes and the self-development gate. Deterministic tests, actual host confinement,
 CI and live inference are distinct evidence. Report gaps. Use existing evidence
 when candidate, criteria and environment still match. During bootstrap, use the
-repository delivery workflow until the real CLI can carry a change.
+repository delivery workflow for a named missing capability, then demonstrate
+that capability through the platform and use it for subsequent work.
+
+Refinement runs Plan, Architect and all approved priority-ordered goals. Each round
+reassesses the guides and implementation using prior results. Goals contain
+outcomes and success measures without component owners or execution results.
+Architecture proposals require an exact human-approved diff. Deliver prerequisites
+inside Architect through the normal task workflow before Run captures the new
+accepted model. Approval pauses and interruptions retain the same round cursor.
+Qualify with three consecutive live rounds showing useful guide and implementation
+refinement and subsequent use of prior evidence. Justified no change is valid;
+operator repair, bypassed checks and uncontrolled aborts break the streak. Changes
+to the execution path restart qualification. Main and releases remain separate.
 
 ## Repository delivery
 

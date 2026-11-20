@@ -1,11 +1,16 @@
-import type { Capture } from '../../architecture/src/index.js';
+import type { StandingGoal } from '../../planner/src/inventory.js';
+import type { ArchitectureDecision, Capture } from '../../architecture/src/index.js';
+import { AgentActivityHold } from '../../agent/src/index.js';
+import type { JournalEvent, RunMeasurements } from '../../coordination/src/index.js';
 import type {
   DirectionResult,
   Feedback,
   Milestone,
   Plan,
   PlanActivity,
+  Rejection,
   StandingGoalEvidence,
+  StewardCheckFailure,
 } from '../../direction/src/index.js';
 import type { Candidate, Verdict } from '../../verification/src/index.js';
 
@@ -13,7 +18,11 @@ export interface TaskInput {
   directory: string;
   goal: string;
   scope?: string;
-  measureOwner?: string;
+  standing?: boolean;
+  planning?: 'exploration' | 'objective';
+  architecture?: boolean;
+  guide?: string;
+  inbox?: { owner: string; question: string };
 }
 
 export interface Observation {
@@ -24,11 +33,14 @@ export interface Observation {
 
 export interface TaskObserver {
   progress(observation: Observation): void;
+  event?(event: JournalEvent): void;
+  measurements?(measurements: ReturnType<RunMeasurements['snapshot']>): void;
   answer?(question: string, signal: AbortSignal): Promise<string | undefined>;
 }
 
 export type TaskOutcome =
   | { kind: 'merged'; commit: string; evidence: readonly string[] }
+  | { kind: 'planned'; commit: string; summary: string; evidence: readonly string[] }
   | { kind: 'satisfied'; commit: string; summary: string; evidence: readonly string[] }
   | {
       kind: 'invalid' | 'blocked' | 'failed' | 'cancelled';
@@ -38,26 +50,37 @@ export type TaskOutcome =
 
 export type TaskEvent =
   | Observation
+  | { invocation: { startedAt: string } }
   | { plan: Plan; supplier?: SupplierLink }
-  | { position: { completed: number; activities: Readonly<Record<string, number>> } }
+  | {
+      position: { completed: number; activities: Readonly<Record<string, number>> };
+      repair?: ActivityRepair;
+    }
   | { candidate: Candidate; verdict: Verdict }
   | { feedback: Feedback }
   | { activation: ActivityCheckpoint }
-  | { assessment: Extract<TaskOutcome, { kind: 'satisfied' }> };
+  | { assessment: Extract<TaskOutcome, { kind: 'satisfied' | 'planned' }> };
 
 export interface TaskSession {
   readonly capture: Capture;
   readonly goal: string;
+  readonly evidence?: readonly string[];
   record(event: TaskEvent): void;
   finish(outcome: TaskOutcome): void;
   close(): void;
   cleanup?(): void;
   history?(): readonly TaskEvent[];
   ask?: TaskObserver['answer'];
+  listen?(observer: NonNullable<TaskObserver['event']>): void;
 }
 
 /** Hold the current task position while the requested human answer is unavailable. */
-export class ClarificationRequired extends Error {}
+export class ClarificationRequired extends AgentActivityHold {
+  /** Carry the immutable question artifact into the blocked task outcome. */
+  constructor(message: string, evidence: readonly string[]) {
+    super(message, evidence);
+  }
+}
 
 export type Interrupted = Extract<TaskOutcome, { reason: string }>;
 
@@ -75,17 +98,47 @@ export function interruptedRun(error: unknown, signal: AbortSignal, evidence?: r
   const reason = error instanceof Error ? error.message : String(error);
   const kind = signal.aborted
     ? 'cancelled'
-    : error instanceof ClarificationRequired
+    : error instanceof AgentActivityHold
       ? 'blocked'
       : 'failed';
-  return stopped(kind, reason, evidence);
+  const refs =
+    error instanceof AgentActivityHold
+      ? [...new Set([...(evidence ?? []), ...error.evidence])]
+      : evidence;
+  return stopped(kind, reason, refs);
 }
 
 export type ActivityOutcome =
   | { kind: 'completed'; evidence: readonly string[]; answer?: string }
+  | {
+      kind: 'repair';
+      activity: Exclude<PlanActivity, 'release' | 'review'>;
+      reason: string;
+      evidence: readonly string[];
+      input?: string;
+      failedCheck?: StewardCheckFailure;
+    }
   | Omit<Extract<Feedback, { kind: 'supplier' }>, 'requester'>
   | Extract<DirectionResult, { kind: 'question' }>
-  | { kind: 'blocked'; reason: string; evidence: readonly string[] };
+  | {
+      kind: 'blocked';
+      reason: string;
+      evidence: readonly string[];
+      failedCheck?: StewardCheckFailure;
+    };
+
+/** Identify an explicit link to the requester while preserving host-generated check corrections. */
+export function selfLinkedSupplier(
+  request: { kind: string; milestone?: unknown; failedCheck?: unknown },
+  requester?: string,
+) {
+  return (
+    request.kind === 'supplier' &&
+    !request.failedCheck &&
+    requester === request.milestone &&
+    requester !== undefined
+  );
+}
 
 export interface SupplierLink {
   milestone: string;
@@ -100,18 +153,22 @@ export interface ActivityCheckpoint {
   outcome: ActivityOutcome;
 }
 
-export interface StandingGoal {
-  id: string;
-  priority: number;
-  owner: string;
-  body: string;
+export interface ActivityRepair {
+  milestone: string;
+  activity: string;
+  reason: string;
+  input?: string;
+  evidence: readonly string[];
 }
 
 export interface GoalRound {
   id: number;
   goals: readonly StandingGoal[];
+  completed?(goal: StandingGoal, scope: string): CompletedGoalOutcome | undefined;
   finish(): void;
 }
+
+export type CompletedGoalOutcome = Extract<TaskOutcome, { kind: 'merged' | 'satisfied' }>;
 
 export interface RoundOutcome {
   kind: 'round';
@@ -121,13 +178,17 @@ export interface RoundOutcome {
 }
 
 export interface WorkflowServices {
+  architecture?: {
+    propose(
+      session: TaskSession,
+      feedback: string | undefined,
+      signal: AbortSignal,
+    ): Promise<ArchitectureDecision>;
+  };
   execution: {
     round?(directory: string): GoalRound;
-    measureGoal?(
-      session: TaskSession,
-      owner: string,
-      signal: AbortSignal,
-    ): Promise<StandingGoalEvidence>;
+    applyGuide?(session: TaskSession, id: string, signal: AbortSignal): Promise<void>;
+    observeGoal?(session: TaskSession, signal: AbortSignal): StandingGoalEvidence;
     prepare?(session: TaskSession, issue: string, signal: AbortSignal): Promise<void>;
     checkpoint?(
       session: TaskSession,
@@ -137,8 +198,23 @@ export interface WorkflowServices {
     admit(
       input: TaskInput,
       signal: AbortSignal,
+      parent?: TaskSession,
     ): Promise<TaskSession | Extract<TaskOutcome, { reason: string }>>;
-    assemble(session: TaskSession, signal: AbortSignal): Promise<Candidate>;
+    assemble(
+      session: TaskSession,
+      signal: AbortSignal,
+      allowUnchanged?: boolean,
+    ): Promise<Candidate>;
+  };
+  planner?: {
+    propose(
+      session: TaskSession,
+      mode: NonNullable<TaskInput['planning']>,
+      progress: TaskObserver['progress'],
+      signal: AbortSignal,
+      findings?: readonly Rejection[],
+    ): Promise<Plan | Extract<TaskOutcome, { kind: 'planned' }>>;
+    apply(session: TaskSession, signal: AbortSignal): Promise<ActivityOutcome>;
   };
   direction: {
     track?(session: TaskSession, signal: AbortSignal): Promise<string>;

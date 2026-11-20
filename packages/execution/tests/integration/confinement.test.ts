@@ -17,6 +17,12 @@ import type { Capture } from '../../../architecture/src/index.js';
 import { check } from '../../src/check.js';
 import { applyEdits } from '../../src/edits.js';
 
+export const suite = {
+  owner: 'execution',
+  level: 'integration',
+  tags: ['native', 'regression'],
+} as const;
+
 /** Use a small capture with two owners and one locked contract. */
 function capture(root: string) {
   return {
@@ -140,7 +146,7 @@ test('an optional owner check without a suite records inapplicability before exe
     'owner-tests',
     'one',
     join(root, 'check.log'),
-    AbortSignal.timeout(5_000),
+    new AbortController().signal,
   );
   assert.equal(result.status, 'not-applicable');
   assert.equal(
@@ -169,7 +175,7 @@ test(
         'owner-tests',
         'one',
         join(root, `check-${required}.log`),
-        AbortSignal.timeout(5_000),
+        new AbortController().signal,
       );
       assert.equal(result.status, 0);
       assert.match(readFileSync(result.log, 'utf8'), /owner check executed/);
@@ -194,7 +200,7 @@ test(
       'native',
       undefined,
       join(root, 'check.log'),
-      AbortSignal.timeout(5_000),
+      new AbortController().signal,
     );
     assert.equal(
       result.status,

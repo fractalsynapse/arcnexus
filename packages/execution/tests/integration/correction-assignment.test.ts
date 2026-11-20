@@ -4,6 +4,8 @@ import type { Milestone, Plan, RevisionFeedback } from '../../../direction/src/i
 import type { TaskEvent } from '../../../workflow/src/index.js';
 import { citedAssemblyChecks, correctionFinding } from '../../src/correction.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 const original: Milestone = { id: 'original', owner: 'execution', criteria: [], steps: [] };
 const correction = { ...original, id: 'correction' };
 const nested = { ...correction, id: 'nested' };

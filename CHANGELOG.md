@@ -2,6 +2,114 @@
 
 ## [Unreleased]
 
+### Added
+
+- Use the same read-only formatting and lint commands for repository and owner scopes, with Git/Team selection, complete scope records and real tool configuration inside confinement (#615, #638).
+
+- Select built test suites by declared tags and levels through the shared runner, with explicit native-test opt-in and literal metadata validation before execution; align existing suite metadata with catalog ownership (#615).
+
+- Adopt exact approved architecture at the existing workspace/checkpoint boundaries once mapped handlers and commands are available; retain the original engineering base, accepted plan, answers and historical authority across restart (#615).
+
+- Resolve reusable operation parameters from declared defaults, component configuration and selected activity bindings; enforce declared passing activity checks through the existing steward repair path (#615).
+
+- Stream persisted host/provider observations through the task observer and human/JSONL CLI, retain exact requests and complete readable run timelines, and derive live elapsed-time and reported-token accounting per execution profile without inventing missing usage or pricing (#615).
+
+- Document the efficiency foundation checklist, detailed prompt-authoring practices and proposed contract amendment for approved in-run architecture adoption, reusable activity checks, live events and continuous profile-aware time/token/cost optimization (#615).
+
+- Discover other components through definition source references and optional authored summaries in the shared inspect and activation request, while preserving the acting component’s complete purpose and selected activity instructions (#615).
+
+- Assess architecture with `architecture update`, retain exact human approval in the existing journal, and deliver prerequisite work and protected guide bytes through the normal task workflow (#631).
+
+- Retain one project writer across nested sequential task sessions and recover their interrupted journals together (#628).
+
+- Map standing goals and preserve human objectives with `arcnexus task plan`.
+- Assess owner-free goals using evidence from the captured staging revision (#587).
+
+### Fixed
+
+- Preserve the complete originating local-repair finding and its evidence from the canonical journal alongside later repair diagnostics in activity requests, retaining exact text and avoiding duplicate findings for a single rewind (#660).
+
+- Recover secured checkpoints across compatible staging changes with Git's three-way merge and current ownership/activity validation, preserving real conflict diagnostics instead of rejecting every overlapping path (#615).
+
+- Refresh elapsed measurements on ongoing observations and mark terminated unfinished activations with unknown duration, preserving reported usage and avoiding historical live stopwatches (#662).
+
+- Keep the readable run timeline in canonical journal form, referencing complete raw artifacts while streaming full details, so reading it cannot embed its payload back into itself (#663).
+
+- Remove unapproved request, research, Planner, citation, history and evidence-read caps, Git/CI timeouts, logging and warning-count overrides, and provider retry ceilings; require logged express human approval for quantitative limits. Reject inline lint configuration through an error rule without a warning-count gate (#658, #659).
+
+- Expose earlier applicable repair targets to every steward activity so invalid fixtures return from Implementation to Testing, while redundant model self-repairs stay with their caller (#656, #657).
+
+- Expose verified parent-checkpoint source after an acknowledged deletion through the existing mapped read refusal, enabling owned checked restoration without operator edits (#655).
+
+- Index retained steward evidence instead of replaying every artifact reference; preserve current diagnostics, complete answers and explicit activation parity across handoffs (#650).
+
+- Return unavailable activity repair targets to the caller before Workflow progression, using the shared target validator (#653).
+
+- Preserve established Testing red after a mistaken passing prediction, requiring matching actual diagnostics and unchanged milestone authority (#652).
+
+- Preserve completed activity and initial red evidence across local rewinds; repair mistaken expected-fail predictions after actual passes, preserving required-pass failures and a required current check (#651).
+
+- Verify candidates with their locked dependency tree in the existing networkless confinement; retain prerequisite failures without counting them as expected failing tests (#649).
+
+- Refresh steward check diagnostics after research and clarification handoffs while preserving complete answers and the original check expectation.
+
+- Give Architect a compact prior-finding index linked to complete retained observations; keep expected human approval pauses out of technical failure findings.
+
+- Link pending reusable research to its readable retained report before archival so later activities can retrieve the complete findings.
+
+- Return successive invalid Planner, Reviewer and research-report responses to their calling activities, preserving approvals, candidate checks and citation-only decisions. Repeated unchanged findings retain a hold or optional research unavailability.
+
+- Enable optional research with its approved read-only MCP tools while refusing effectful or unresolved research mappings (#645).
+
+- Require JSON Architect replies explicitly and compare actor response findings independently of changing transcript paths, preserving exact diagnostics and checked progress (#637).
+
+- Retain an empty transcript for silent native operations so their actual observations remain readable and reusable (#644).
+
+- Reuse the latest failed check for unchanged validated inputs instead of launching it again; preserve its failure and rerun after input changes (#643).
+
+- Refresh same-caller reply repair context from the latest check observations instead of directing later corrections at resolved failures (#642).
+
+- Render MCP source reads literally with exact structured fields and explain full-content repair when refusing empty replacement anchors (#641).
+
+- Give approved Architect prerequisite agents the implementation and delivery purpose while retaining the original task lookup and checkpoints (#639).
+
+- Keep distinct Director response errors in the same repair loop and restore immutable pending-milestone ownership and acceptance from host state (#632).
+
+- Reject empty, whitespace-only and decorative-star-only TypeScript documentation headers on classes, constructors, concrete methods and abstract methods; explanatory prose quality remains an independent review concern (#620).
+
+- Return mapped check results directly to their caller, preserve unresolved expectations, reuse proven unchanged observations, and distinguish completed rewind targets before steward progression (#625).
+
+- Keep completed work out of native Director revision prompts and responses while retaining the accepted plan and validation in the host (#617).
+
+- Recognize checked supplier contributions when resuming a caller's failed check, so a remaining defect can be repaired locally without premature holding (#621).
+
+- Return unsupported steward capability blocks to the caller for investigation, preserving checked edits and stopping unchanged rephrased assertions (#618).
+
+- Retain the original review criterion when a supplier contribution has its own local measures (#611).
+
+- Repair ordinary steward checks and self-review findings within the original milestone, preserving checkpoints and resuming the earliest affected activity without Director replanning (#615).
+
+- Resume the interrupted goal in a standing round using the earlier goals’ recorded results (#609).
+
+- Keep a steward active when its supplier request points to its own milestone (#607).
+
+- Preserve an authorized queued check when a steward mentions it in its response (#594).
+
+- Recover a secured, unpublished task checkpoint over disjoint staging changes under the same captured authority (#604).
+
+- Clarify the checked-edit path when an editing steward is correcting a rejected candidate (#594).
+- Reuse an independently reviewed check-only result when a standing round resumes (#594).
+
+- Retry a temporary GitHub server error while observing a publication or its checks (#594).
+- Recover when a steward mistakenly waits for an owner check that it already queued (#594).
+
+- Feed revision-bound run observations back into goal planning, and preserve objective refinement and Planner recovery across repeated turns (#594).
+
+- Include the retained question evidence when an activity pauses for a human answer (#587).
+
+- Repair an invalid Reviewer evidence citation in the same assessment,
+  preserving the candidate, criteria and captured check results (#579).
+
 ## [0.3.0]
 
 ### Added
@@ -173,7 +281,7 @@
 - **The reserved workday surface refuses instead of pretending** (#449 C2, gateway GW-11):
   `workday start|stop|status` now exits 2 reporting that the self-directed loop is reserved for a
   future surface on the same plan machinery, and `pause|resume` report that one lane per project
-  refuses while busy. The suites that had used those verbs as their way of *looking at* state observe
+  refuses while busy. The suites that had used those verbs as their way of _looking at_ state observe
   the delivered surfaces instead, or assert the refusal; `platform-execution.test.ts`'s startup probe
   no longer treats a reserved command as an entry point that can reach catalog loading, which is why it
   could not see the architecture refusal it was claiming to check.

@@ -4,6 +4,8 @@ import type { CheckResult } from '../../src/check.js';
 import { ownerEvidenceDigest, ownerReviewObservations } from '../../src/review-observations.js';
 import type { StewardScope } from '../../src/steward-check.js';
 
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
 /** Model recorded native observations around the last candidate edit. */
 class ReviewObservationsScenario {
   /** Preserve an earlier failed check without presenting it as current evidence. */
@@ -41,3 +43,23 @@ class ReviewObservationsScenario {
 
 test('independent review receives exact owner check results with edit freshness', () =>
   ReviewObservationsScenario.run());
+
+test('protected architecture writes invalidate earlier owner-check freshness', () => {
+  const check: CheckResult = {
+    id: 'owner-tests',
+    status: 0,
+    log: 'before.log',
+    command: 'npm',
+    args: ['test'],
+    cwd: '/repo',
+    durationMs: 1,
+  };
+  const scope: StewardScope = { owner: 'execution', activity: 'testing' };
+  const events = [
+    { check, scope },
+    { architectureWrite: { path: '.arc/architecture/operations/check.yaml' } },
+  ];
+  const observations = ownerReviewObservations(events, { tree: 'changed-tree', base: 'base' }, {});
+  assert.equal(observations[0]?.afterLastEdit, false);
+  assert.equal(observations[0]?.candidate, undefined);
+});

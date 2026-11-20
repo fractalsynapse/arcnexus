@@ -1,0 +1,134 @@
+{
+  "status": "proposed; not applied; no renewed approval asserted",
+  "baseline": "a9103ba77d1fc0ee49442acee103e5ea42f9d9cc",
+  "proposalId": "bfb07a44246854a1a9b00532d775a8850768f903ab23acf95fa915f07a52d10c",
+  "patchSha256": "324a2b2988e35e18aab3747ffc87af57ae4824403f7e1580de1a179d7f18ba4a",
+  "supersedes": "303689eed95a3874ed0da695718d9280ec3e88328d87ada30268dbec40984a64",
+  "files": [
+    {
+      "path": ".arc/architecture/components/agent.yaml",
+      "before": "50c2ab13cb4b87f69ef2f851dd92935e5b3274e999bf1b25e1dea4ca64ca9e82",
+      "after": "700702e6d5a46c393c62bec8ffb25286cc56e14f5d3e2dd830e2222802735d67"
+    },
+    {
+      "path": ".arc/architecture/components/architecture.yaml",
+      "before": "175264512e5006d9b094fae11b3bf33fc9f4b119fd2891275ad7c6dced1683a6",
+      "after": "f098b80245964685da52c583521366036ec19b3b1aa688533c379b26e3f119ec"
+    },
+    {
+      "path": ".arc/architecture/components/cli-app.yaml",
+      "before": "42c9c52f3a6c9e3cb49457e677b93c3d1151491969955221bdea74636ceb11fd",
+      "after": "f45dddc1bda1bceffaf1dc267bdfef9a9a6773d40bb0d9130d16435157610546"
+    },
+    {
+      "path": ".arc/architecture/components/collaboration.yaml",
+      "before": "3dcd0ea125be8472a21b9a603ed8b280b89ee8e214a9e95ba161bb8fe7538300",
+      "after": "c9fb67697860e41666ada996863f5eec21d1da880f3448443d055af7f1d55e85"
+    },
+    {
+      "path": ".arc/architecture/components/commands.yaml",
+      "before": "a42d9e46c0ce0b907ad522f240ff5df4ef48b0468633d20186a58dec7df61098",
+      "after": "9eabc2f13cfea963995d75f92a9d3cfe32358a174457b3d7768678bc66a27ebe"
+    },
+    {
+      "path": ".arc/architecture/components/coordination.yaml",
+      "before": "a64e221220dee9ababfbc903303fd5d8c397639594259c4a2d95a35eb0e45d51",
+      "after": "2de7499a132e1dfddf97354b98cf39005e49308eaec6a85ae30b2b9d37395f2a"
+    },
+    {
+      "path": ".arc/architecture/components/delivery.yaml",
+      "before": "d5248658b1f5de039457a2548d7b96b2e06e308d1634e87262964444c9c4f20d",
+      "after": "d943c27f6ed22a862d3a7426616a3ac2c5e67e79a40fd036e735852a6800b41e"
+    },
+    {
+      "path": ".arc/architecture/components/direction.yaml",
+      "before": "0ec764d40309862f5b83e5985c6260120a2d339413e0c170a1bc6006bbad9b2f",
+      "after": "60e61e0a320ee7a5d6c255cb8ee89fedbcce56d2704edae4bc6cbc15168a57a2"
+    },
+    {
+      "path": ".arc/architecture/components/execution.yaml",
+      "before": "7391455b51ef4d2b5be8e041b900f464119c662ceff7a69fc51a23309ee3788a",
+      "after": "bca80963172faa0984e923a442c60ecb627067e3efeda0bab00776cdc8c86eff"
+    },
+    {
+      "path": ".arc/architecture/components/foundation.yaml",
+      "before": "ad4ecc6b75457bf3a5db54dcb105f2c6ac9af11b4edfccf368fdc70fc9c2e556",
+      "after": "de1b5509b2cbbde396e50de8416e4fa6d816457061fd2debef639e25e5c6487e"
+    },
+    {
+      "path": ".arc/architecture/components/manager.yaml",
+      "before": "0458c4a951c2647263ccaafd66e17cad0afb540009212fbb953bcccc41faabb1",
+      "after": "3777df2a57311e39e85163d72e2eb7024854951d833050a84c8f1682e0fc8207"
+    },
+    {
+      "path": ".arc/architecture/components/planner.yaml",
+      "before": "87e2f2d3649a7761dce18fb9cabf60b261b331ee6ed5b788f2f1db02b2d03670",
+      "after": "4f6422dbf1aa171a0e3ee157f4cff805d081f376baca39a78bce6305afac8b24"
+    },
+    {
+      "path": ".arc/architecture/components/project.yaml",
+      "before": "b26b648c0e0eb0d959a15a284b20819445abb2575a653ca030533caba16e1d6d",
+      "after": "28d0b5d9cc73d526b925098e5a42842cddb87632c72e1c46e1479543174e8aa5"
+    },
+    {
+      "path": ".arc/architecture/components/release.yaml",
+      "before": "eb3a69facbf1983b448c248d53ce7f1067085272dc86288fad4ac816bb633159",
+      "after": "ab01456247b5ab33a93487e54ea6cef78ef9357dead5267896c3766435efe9f2"
+    },
+    {
+      "path": ".arc/architecture/components/reviewer.yaml",
+      "before": "ec1227ac74bbf6fa4edb594dca4d3af07f1b569bbf9bf96db316f6e05d40f9a5",
+      "after": "247aa57baa9b5ff7fb23394c443baf71ab7db8d7f5fc032e052eba7d98325aa4"
+    },
+    {
+      "path": ".arc/architecture/components/team.yaml",
+      "before": "7dc70bb9d63957ac7761938a0208c180e0220a8d1d8e6ecaece2852f57252602",
+      "after": "4a3068ba08b842073f2ca916e79fa7950867f4033d221fd58a32be06d1c44483"
+    },
+    {
+      "path": ".arc/architecture/components/verification.yaml",
+      "before": "a485b37fc6fda906eea9832958f5362a8cdac774575c53cb52cc2b360d4e02a0",
+      "after": "278f25485809d549ccfd984c74e70dc1bd2222cf8ca25e71d4cd62dcd32538a9"
+    },
+    {
+      "path": ".arc/architecture/components/workflow.yaml",
+      "before": "0717775643e56fffb7ab1e1c370de3f2229560254e02339dd0e7998177936bb1",
+      "after": "3c240e2b310c88ba8e5457ce001402490cd1edc542ceaff4ff4038050953b5cd"
+    },
+    {
+      "path": ".arc/architecture/operations/owner-format.yaml",
+      "before": null,
+      "after": "95d3940506aa1df45939d0eae2be3b5e27f8c9755ea11602bd1159116f9b7fbd"
+    },
+    {
+      "path": ".arc/architecture/operations/owner-lint.yaml",
+      "before": null,
+      "after": "6af3bc054e8d883e2ddd26e21fd6d696fc1f70f44681bb21c52ca244e6ff5f72"
+    },
+    {
+      "path": ".arc/architecture/operations/owner-tests.yaml",
+      "before": "3b4de461b990faa0ca7537f013479d529d72cad7dd744e6a2f2573e799c06a2a",
+      "after": "c38af5c85afd2d709eb4692432e6e4d12c5eb80e6c2906e3f6bca1114992ba1f"
+    },
+    {
+      "path": ".arc/architecture/operations/repository-build.yaml",
+      "before": "7e8ca01cc46bb0f71151bcae075bc84d748b9f986b0cd47509e4c2bf325c567e",
+      "after": "5ed6e7e2896a035d7b0d28e06141293547ec0b801f2abb2d36b6b3222e0cb9ab"
+    },
+    {
+      "path": ".arc/architecture/operations/repository-types.yaml",
+      "before": "2dec4a0cc8c0511bcc0fb121f1408fa3343516da63b3fedee136dc3c8b7329ad",
+      "after": "6befe8628968854cff50f70da8c07caf38e2af0d1196e9ee5a78b83260f15fc3"
+    },
+    {
+      "path": ".arc/architecture/roles/designer.yaml",
+      "before": "d800998b12d41bf24474df996cfd48921eaf3782eb21c34d7a29ed7834b6b7cf",
+      "after": "d2a194543ad0b8ba8cfd2b5a73edc76bdab1287e5d457fbec01a5fee80d152ca"
+    },
+    {
+      "path": ".arc/architecture/roles/systems-engineer.yaml",
+      "before": "37c0bbdcc6c7309bfe949bc0faa5409d60661bddccdb159fe8070eef043983e8",
+      "after": "f4be2c05335342baeb31f97957a732390121e77abc81fcc7f3115243b1466e4b"
+    }
+  ]
+}

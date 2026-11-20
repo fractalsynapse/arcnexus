@@ -16,6 +16,7 @@ interface PublicationActions {
   >;
   worktree: string;
   goal: string;
+  title?: string;
   validateLocal(): void;
   record(event: Record<string, unknown>): void;
 }
@@ -64,7 +65,7 @@ async function open(publication: Publication, actions: PublicationActions) {
   return provider.pull(
     target,
     branch,
-    `chore: ${goal.trim().split('\n')[0]!} (#${issue})`,
+    `chore: ${(actions.title ?? goal).trim().split('\n')[0]!} (#${issue})`,
     `Part of #${issue}.\n\nVerified candidate: ${head}\n\n${goal}`,
   );
 }

@@ -1,5 +1,6 @@
 import { parse } from 'yaml';
 import type { Capture } from './catalog.js';
+import { operationID } from './operation.js';
 
 /** Resolve the component's research archive under the captured knowledge root. */
 export function researchDirectory(capture: Capture, component: string) {
@@ -9,7 +10,18 @@ export function researchDirectory(capture: Capture, component: string) {
 /** Research is selectable only when the component declares a read-only model activity. */
 export function canResearch(capture: Capture, component: string) {
   const research = capture.components[component]?.activities.research;
-  return !!research?.profile && !research.executor && research.operations?.length === 0;
+  return (
+    !!research?.profile &&
+    !research.executor &&
+    !!research.operations?.every((binding) => {
+      const operation = capture.operations?.[operationID(binding)];
+      return (
+        !!operation &&
+        operation.command === undefined &&
+        ['read', 'list'].includes(operation.tool ?? '')
+      );
+    })
+  );
 }
 
 /** Derive a compact component index from the summaries committed with the reports. */
@@ -25,7 +37,7 @@ export function researchIndex(capture: Capture, component: string) {
     (left, right) =>
       right.consulted.localeCompare(left.consulted) || left.path.localeCompare(right.path),
   );
-  return { directory, total: reports.length, recent: reports.slice(0, 8) };
+  return { directory, total: reports.length, recent: reports };
 }
 
 /** Read only the report's index fields and skip files with malformed metadata. */
@@ -45,8 +57,8 @@ function reportSummary(markdown: string) {
       /^\d{4}-\d{2}-\d{2}$/.test(data.consulted)
     )
       return {
-        question: data.question.slice(0, 500),
-        summary: data.summary.slice(0, 600),
+        question: data.question,
+        summary: data.summary,
         consulted: data.consulted,
       };
   } catch {

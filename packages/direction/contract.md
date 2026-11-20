@@ -20,11 +20,25 @@ director decides sequencing and preserves the original acceptance and authority.
 
 A missing component or a conflict with a locked clause becomes a proposal and a
 named architectural gate. Clarifications requiring external authority become
-foreground human questions. Corrections use the same milestone sequence.
+foreground objective, goal or architecture questions. Ordinary technical uncertainty
+uses the requesting activity, its research inbox or an owning supplier. Corrections
+within accepted work retain its milestone and acceptance.
 The director cannot edit source, grant authority, accept its own plan or integrate
 a candidate. An engineering task closes after verified staging integration. A standing goal
 can be evaluated again in a later round. The workday and
 production directives are deferred. One independent verdict covers the assembled goal.
+
+Direction engages for initial planning, an explicit activity escalation requiring
+sequencing or different responsibility, and final independent rejection. Ordinary
+operation failures and same-owner activity repair do not invoke Direction. The
+host retains the canonical accepted plan and completed outcomes. At a revision
+boundary the Director receives the previous plan, completed position, current
+finding and relevant evidence references. Its response changes pending work; the
+host preserves completed outcomes and original acceptance identities. The host alone
+can adopt a human-approved architecture update at a recorded activity boundary;
+Direction cannot change authority through a plan revision.
+Malformed revision output returns to the same Director call with the exact
+validation finding, without discarding the existing accepted plan.
 
 ## Acceptance scenarios
 
@@ -36,10 +50,10 @@ production directives are deferred. One independent verdict covers the assembled
 | DI-4 | A milestone whose work spans two owners is refused at validation with both owners named. |
 | DI-5 | A request linking to existing accepted work reuses that milestone's owner and acceptance; a second implementation of the same contract is never planned. |
 | DI-6 | A request from an owner whose supplier milestone is later in the order resequences the supplier ahead of it; no dependency graph, admission check or cycle detection is consulted. |
-| DI-7 | A failed step produces a correction milestone for the same owner with a stated diagnosis; no new state, retry counter or recovery path appears. |
+| DI-7 | A failed ordinary tool, check or self-review returns to the accountable activity or an earlier applicable activity in the same milestone. No Director call or correction milestone is added. An explicit escalation or final independent rejection invokes Direction. |
 | DI-8 | A goal that conflicts with a locked contract yields a change-request gate naming the contract id and clause, and no milestone touching that path is admitted. |
 | DI-9 | Direction cannot write the registry or any locked contract file; the checked-edit refusal is observed, not merely asserted in the prompt. |
-| DI-11 | Director input uses the bounded context from Architecture Model and names what was withheld. |
+| DI-11 | Director input uses the selected activity context from Architecture, names referenced inputs, and makes complete definitions and relevant run evidence readable without application-imposed size caps. |
 | DI-12 | Removing a prohibition paragraph that the host enforces leaves every scenario passing; removing an enforced check fails one. |
 | DI-13 | A human clarification records its requesting actor and position. The original activity receives the complete recorded answer on continuation, including after restart without a duplicate prompt. |
 | DI-14 | The plan render after `revise` differs from the previous render only in the fields the observation changed, so plan evolution is reviewable as a diff. |
@@ -48,6 +62,7 @@ production directives are deferred. One independent verdict covers the assembled
 | DI-17 | A verified staging goal closes after the configured checks and review are observed and the provider reports its merge identity. The host can integrate once gates are satisfied. |
 | DI-19 | The first build refuses a component-scoped workday directive with a stated reason. |
 | DI-20 | The director selects a supplier from a Team view. An unowned resource or ownership collision is reported with affected resources and owners instead of guessing a recipient. A supplier request grants no write authority. |
+| DI-21 | A revision consumes the retained plan and complete relevant finding and proposes changes to pending work. The host rejects changes that remove completed outcomes, alter original acceptance or grant authority. A recorded human-approved model adoption can update subsequent activity capabilities in the same run. |
 
 ## Deferred
 

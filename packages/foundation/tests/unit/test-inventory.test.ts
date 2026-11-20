@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { registerSuite, testInventory } from '../../src/index.js';
 
+export const suite = { owner: 'foundation', level: 'unit', tags: ['regression'] } as const;
+
 test('test selection uses catalog ownership across the built app and package trees', () => {
   const all = testInventory();
   assert(all.some(({ owner }) => owner === 'cli-app'));

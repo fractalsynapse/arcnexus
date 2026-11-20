@@ -1,3 +1,4 @@
+import { InvalidAgentResponse } from '../../agent/src/index.js';
 import { createHash } from 'node:crypto';
 import { stringify } from 'yaml';
 import {
@@ -9,7 +10,8 @@ import {
 import type { HostTask } from './index.js';
 import { InvalidCodexResponse } from './codex.js';
 
-type InboxTask = Pick<HostTask, 'capture' | 'taskID' | 'note' | 'observations' | 'store'>;
+type InboxTask = Pick<HostTask, 'capture' | 'taskID' | 'note' | 'observations' | 'store'> &
+  Partial<Pick<HostTask, 'config'>>;
 type Assignment = Omit<TaskContext, 'goal' | 'worktree'>;
 type Invoke = (selection: ActivitySelection, assignment: Assignment) => Promise<unknown>;
 
@@ -90,27 +92,39 @@ export class ResearchInbox {
   private async research(component: string, request: Request, data: Assignment) {
     let report: ReturnType<typeof decodeReport>;
     try {
-      const response = await this.invoke(
-        { component, activity: 'research' },
-        {
-          ...data,
-          assignment: {
-            question: request.question,
-            decision: request.decision,
-            requestedBy: request.requestedBy,
-            candidate: object(data.assignment)?.candidate,
-            instructions:
-              'Return exactly one JSON object matching the research report schema. Start with { and end with }. Use no Markdown headings, code fences, or explanation outside the object. Cite sources you actually consulted.',
-          },
-        },
-      );
-      this.signal.throwIfAborted();
-      report = decodeReport(response);
+      report = await this.generateReport(component, request, data);
     } catch (error) {
       this.signal.throwIfAborted();
       return this.unavailable(component, request, error);
     }
     return this.retain(component, request, report);
+  }
+
+  /** Return exact report findings to Research while preserving its original read-only question. */
+  private async generateReport(component: string, request: Request, data: Assignment) {
+    const seen = new Set<string>();
+    let diagnostic: string | undefined;
+    while (true) {
+      this.signal.throwIfAborted();
+      try {
+        const response = await this.invoke(
+          { component, activity: 'research' },
+          researchInput(request, data, diagnostic),
+        );
+        this.signal.throwIfAborted();
+        return decodeReport(response);
+      } catch (error) {
+        this.signal.throwIfAborted();
+        if (!(error instanceof InvalidAgentResponse)) throw error;
+        if (seen.has(error.identity))
+          throw new Error(`Research repeated an unchanged finding: ${error.message}`, {
+            cause: error,
+          });
+        seen.add(error.identity);
+        diagnostic = error.message;
+        this.task.note({ researchResponseRepair: { request: request.id, diagnostic } });
+      }
+    }
   }
 
   /** Keep an unavailable result readable without terminating the requesting task. */
@@ -150,6 +164,22 @@ ${diagnostic}
   }
 }
 
+/** Preserve the full research direction and return malformed-response diagnostics to its caller. */
+function researchInput(request: Request, data: Assignment, diagnostic?: string): Assignment {
+  return {
+    ...data,
+    assignment: {
+      question: request.question,
+      decision: request.decision,
+      requestedBy: request.requestedBy,
+      candidate: object(data.assignment)?.candidate,
+      diagnostic,
+      instructions:
+        'Return exactly one JSON object matching the research report schema. Start with { and end with }. Use no Markdown headings, code fences, or explanation outside the object. Provide the detail needed to answer the complete research direction and cite sources you actually consulted. Preserve complete findings, applicability, sources and unresolved questions. Repair malformed responses while retaining the original question and decision.',
+    },
+  };
+}
+
 /** List the exact reports attached to this candidate's assessment. */
 export function usedResearch(task: InboxTask, selection: ActivitySelection, data: Assignment) {
   const id = inboxIdentity(task, selection, data);
@@ -186,11 +216,17 @@ export function verificationContext(
   };
 }
 
-/** Preserve a request's identity for the same captured activation after retry. */
+/** Preserve caller answers across approved in-run adoption; exact host gates also bind their proposal baseline. */
 export function inboxIdentity(task: InboxTask, selection: ActivitySelection, data: Assignment) {
+  const intent =
+    selection.component === 'planner' &&
+    selection.activity === 'planning' &&
+    object(data.assignment)?.mode === 'human objective';
   return identity([
     task.taskID,
-    task.capture.source.revision,
+    intent
+      ? 'human objective'
+      : (task.config?.capture.source.revision ?? task.capture.source.revision),
     selection.component,
     selection.activity,
     data.milestone,
@@ -208,9 +244,16 @@ function researchRequest(
 ): Request | undefined {
   const reply = object(value);
   if (reply?.kind !== 'research') return;
-  const question = required(reply.question, 'question', 500);
-  const decision = required(reply.decision, 'decision', 500);
+  const { question, decision } = researchFields(reply);
   return { id: identity([inbox, question, decision]), inbox, requestedBy, question, decision };
+}
+
+/** Validate required research fields without restricting the amount of useful direction. */
+export function researchFields(value: Record<string, unknown>) {
+  return {
+    question: required(value.question, 'question'),
+    decision: required(value.decision, 'decision'),
+  };
 }
 
 /** Preserve the requesting assignment and attach the recorded research evidence by reference. */
@@ -236,30 +279,33 @@ function withResults(data: Assignment, results: readonly ResearchResult[]): Assi
 
 /** Validate the researcher's structured synthesis before writing a report. */
 function decodeReport(value: unknown) {
-  const reply = object(value);
-  if (reply?.kind !== 'research-report') throw new Error('Expected a research-report response');
-  if (!Array.isArray(reply.sources) || !reply.sources.length || reply.sources.length > 12)
-    throw new Error('Research needs between one and twelve source references');
-  if (!Array.isArray(reply.unresolved) || reply.unresolved.length > 12)
-    throw new Error('Research unresolved points must be a short array');
-  if (typeof reply.reusable !== 'boolean') throw new Error('Research reusable must be boolean');
-  return {
-    summary: required(reply.summary, 'summary', 600),
-    findings: required(reply.findings, 'findings', 8000),
-    sources: reply.sources.map(source),
-    applicability: required(reply.applicability, 'applicability', 1000),
-    unresolved: reply.unresolved.map((item) => required(item, 'unresolved', 500)),
-    reusable: reply.reusable,
-  };
+  try {
+    const reply = object(value);
+    if (reply?.kind !== 'research-report') throw new Error('Expected a research-report response');
+    if (!Array.isArray(reply.sources)) throw new Error('Research sources must be an array');
+    if (!Array.isArray(reply.unresolved))
+      throw new Error('Research unresolved points must be an array');
+    if (typeof reply.reusable !== 'boolean') throw new Error('Research reusable must be boolean');
+    return {
+      summary: required(reply.summary, 'summary'),
+      findings: required(reply.findings, 'findings'),
+      sources: reply.sources.map(source),
+      applicability: required(reply.applicability, 'applicability'),
+      unresolved: reply.unresolved.map((item) => required(item, 'unresolved')),
+      reusable: reply.reusable,
+    };
+  } catch (error) {
+    throw new InvalidAgentResponse((error as Error).message, { cause: error });
+  }
 }
 
 /** Preserve public source URLs and their role in the synthesis. */
 function source(value: unknown) {
   const entry = object(value);
-  const url = new URL(required(entry?.url, 'source URL', 2048));
+  const url = new URL(required(entry?.url, 'source URL'));
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password)
     throw new Error('Research source must be a public HTTP or HTTPS URL');
-  return { url: url.href, note: required(entry?.note, 'source note', 500) };
+  return { url: url.href, note: required(entry?.note, 'source note') };
 }
 
 /** Render a readable report whose frontmatter supplies its index entry. */
@@ -295,11 +341,11 @@ function object(value: unknown) {
     return value as Record<string, unknown>;
 }
 
-/** Require a bounded nonempty field in a request or report. */
-function required(value: unknown, field: string, max: number) {
-  if (typeof value !== 'string' || !value.trim() || value.length > max)
-    throw new Error(`Invalid research ${field}`);
-  return value.trim();
+/** Require meaningful text while preserving complete requests and research findings. */
+function required(value: unknown, field: string) {
+  if (typeof value !== 'string' || !value.trim())
+    throw new Error(`Invalid research ${field}: expected nonempty text`);
+  return value;
 }
 
 /** Bind report identity to its task activation and normalized request. */

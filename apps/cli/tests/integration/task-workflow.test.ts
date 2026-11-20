@@ -18,7 +18,16 @@ import {
 } from '../../../../packages/workflow/src/index.js';
 import { projectFixture } from '../fixtures/project.js';
 
+export const suite = { owner: 'cli-app', level: 'integration', tags: ['regression'] } as const;
+
 const cli = fileURLToPath(new URL('../../src/index.js', import.meta.url));
+
+test('task plan validates explicit input before admission and does not fall back to task run', () => {
+  const cli = fileURLToPath(new URL('../../src/index.js', import.meta.url));
+  const result = spawnSync(process.execPath, [cli, 'task', 'plan', ' '], { encoding: 'utf8' });
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /Usage: arcnexus task plan/);
+});
 
 test('GW-2: task run validates the goal before task admission', () => {
   for (const args of [[''], ['goal', 'extra']]) {
@@ -231,7 +240,7 @@ test('CMD-1, WFL-1 and WFL-2: rejected work returns to Direction before staging 
   const result = await context.commands.runTask(
     { directory: root, goal: 'Fix the fixture' },
     observer,
-    AbortSignal.timeout(5_000),
+    new AbortController().signal,
   );
   assert.deepEqual(calls, [
     'director',
@@ -258,7 +267,7 @@ test('an invalid Director plan is repaired in one task before any steward or del
   const result = await context.commands.runTask(
     { directory: root, goal: 'Fix the fixture' },
     { progress() {} },
-    AbortSignal.timeout(5_000),
+    new AbortController().signal,
   );
   assert.equal(result.kind, 'merged');
   assert.deepEqual(calls.slice(0, 3), ['director', 'director:repair', 'steward:initial/testing']);
@@ -273,15 +282,18 @@ test('an invalid Director plan is repaired in one task before any steward or del
   assert.deepEqual(events.at(-1), { outcome: result });
 });
 
-test('a second invalid Director plan fails with its diagnostic before activating a steward', async (t) => {
+test('an unchanged invalid Director plan holds with its diagnostic before activating a steward', async (t) => {
   const { context, root, calls } = await mountedWorkflow(t, false, 'always');
   const result = await context.commands.runTask(
     { directory: root, goal: 'Fix the fixture' },
     { progress() {} },
-    AbortSignal.timeout(5_000),
+    new AbortController().signal,
   );
-  assert.equal(result.kind, 'failed');
-  assert.equal(result.reason, planDiagnostic);
+  assert.equal(result.kind, 'blocked');
+  assert.equal(
+    result.reason,
+    `Director repeated an unchanged validation finding: ${planDiagnostic}`,
+  );
   assert.deepEqual(calls, ['director', 'director:repair', 'close']);
 });
 
@@ -290,9 +302,9 @@ test('WFL-2: a revision must schedule work against every rejected criterion', as
   const result = await context.commands.runTask(
     { directory: root, goal: 'Fix the fixture' },
     { progress() {} },
-    AbortSignal.timeout(5_000),
+    new AbortController().signal,
   );
-  assert.equal(result.kind, 'failed');
+  assert.equal(result.kind, 'blocked');
   assert.match(result.reason, /did not schedule a correction for covers-goal/);
   assert(!calls.includes('delivery'));
   assert.deepEqual(events.at(-1), { outcome: result });
@@ -327,7 +339,7 @@ test('WFL-3 and CO-2: a second goal is refused while the SQLite lane is held', a
   const result = await context.commands.runTask(
     { directory: root, goal: 'Second goal' },
     { progress() {} },
-    AbortSignal.timeout(5_000),
+    new AbortController().signal,
   );
   assert.deepEqual(result, { kind: 'invalid', reason: 'Active goal: Existing goal', evidence: [] });
   assert.deepEqual(existing.events(), []);

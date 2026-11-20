@@ -13,6 +13,20 @@ owns:
 - docs/interface
 - .arc/research/architecture
 activities:
+  updating:
+    role: architect
+    profile: gpt-sol
+    instructions:
+    - Assess approved objectives and goals, current architecture and implementation, and relevant prior execution findings.
+    - Return a justified no-change assessment or one exact proposal with purpose, consequences and required implementation outcomes.
+    - Preserve captured authority. Only the trusted host may apply the exact human-approved protected diff.
+    operations:
+    - read-file
+    - list-files
+    - ask-question
+    - request-research
+    - request-supplier
+    standards: []
   research:
     role: researcher
     profile: gpt-astra
@@ -49,9 +63,18 @@ activities:
     - checked-edit
     - archive-research
     - request-supplier
+    - owner-format
+    - owner-lint
+    - repository-types
+    - repository-build
     - owner-tests
     standards:
     - readable-typescript
+    verification:
+    - owner-format
+    - owner-lint
+    - repository-types
+    - repository-build
   implementation:
     role: systems-engineer
     profile: gpt-luna
@@ -65,9 +88,19 @@ activities:
     - checked-edit
     - archive-research
     - request-supplier
+    - owner-format
+    - owner-lint
+    - repository-types
+    - repository-build
     - owner-tests
     standards:
     - readable-typescript
+    verification:
+    - owner-format
+    - owner-lint
+    - repository-types
+    - repository-build
+    - owner-tests
   review:
     role: self-reviewer
     profile: gpt-sol

@@ -1,0 +1,13 @@
+id: owner-format
+kind: command
+tool: check
+category: lint
+command: npm
+args:
+- run
+- format:check
+- --
+- context: owner
+cwd: .
+network: false
+applicability: owner-format-files

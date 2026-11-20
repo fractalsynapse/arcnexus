@@ -22,11 +22,8 @@ function parseOutputOption(args: string[]) {
 async function main(args: string[]) {
   const { positionals, json } = parseOutputOption(args);
   const [command, component, activity, ...extra] = positionals;
-  if (command === 'task') {
-    if (component !== 'run' || (activity !== undefined && !activity.trim()) || extra.length)
-      throw new Error('Usage: arcnexus task run ["<goal>"]');
-    return runTask(await mountCommands(true), activity, json);
-  }
+  if (command === 'task' || command === 'architecture')
+    return runCommand(command, component, activity, extra, json);
   if (command !== 'inspect')
     throw new Error(`Command unavailable in this build: ${command ?? '<missing>'}`);
   if (
@@ -71,4 +68,29 @@ try {
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
   process.exitCode = 2;
+}
+
+/** Validate engineering command arguments before mounting the foreground production host. */
+async function runCommand(
+  command: string,
+  component: string | undefined,
+  activity: string | undefined,
+  extra: string[],
+  json: boolean,
+) {
+  if (command === 'architecture') {
+    if (component !== 'update' || extra.length || (activity !== undefined && !activity.trim()))
+      throw new Error('Usage: arcnexus architecture update ["<feedback>"]');
+    return runTask(await mountCommands(true), activity, json, 'update');
+  }
+  if (command === 'task') {
+    const usage = component === 'plan' ? 'plan ["<objective>"]' : 'run ["<goal>"]';
+    if (
+      (component !== 'run' && component !== 'plan') ||
+      (activity !== undefined && !activity.trim()) ||
+      extra.length
+    )
+      throw new Error(`Usage: arcnexus task ${usage}`);
+    return runTask(await mountCommands(true), activity, json, component);
+  }
 }

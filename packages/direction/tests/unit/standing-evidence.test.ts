@@ -2,23 +2,43 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { decodeDirectorResponse, type StandingGoalEvidence } from '../../src/index.js';
 
+export const suite = { owner: 'direction', level: 'unit', tags: ['regression'] } as const;
+
+const quote = 'A substantive observed effect.';
+const path = 'packages/delivery/src/index.ts';
 const observation: StandingGoalEvidence = {
-  owner: 'delivery',
   revision: 'staging-head',
-  status: 0,
-  log: '/state/current-owner-tests.log',
+  source: {
+    root: '.',
+    revision: 'staging-head',
+    remote: 'https://example.com/test/test.git',
+    paths: [path, '.arc/goals/fixture.md'],
+    read: () => quote,
+  },
   recentChanges: [],
 };
 
-test('a substantive Director assessment retains the host check instead of model paths', () => {
+test('a standing goal assessment requires evidence verified against the evaluated revision', () => {
   const reply = {
     kind: 'satisfied',
-    summary: 'The retained owner measure and current source cover the goal.',
-    evidence: [observation.log, 'packages/delivery/src/index.ts'],
+    summary: 'The captured source demonstrates the goal.',
+    evidence: [{ path, quote }],
   };
-  const result = { ...reply, evidence: [observation.log] };
-  assert.deepEqual(decodeDirectorResponse(reply, observation), result);
-  assert.deepEqual(decodeDirectorResponse({ ...reply, evidence: undefined }, observation), result);
-  assert.throws(() => decodeDirectorResponse(reply, { ...observation, status: 1 }), /status 1/);
-  assert.throws(() => decodeDirectorResponse({ ...reply, summary: ' ' }, observation), /summary/);
+  assert.deepEqual(decodeDirectorResponse(reply, observation), {
+    ...reply,
+    evidence: [`staging-head:${path} · ${quote}`],
+  });
+  assert.throws(
+    () => decodeDirectorResponse({ ...reply, evidence: [] }, observation),
+    /captured evidence/,
+  );
+  for (const entry of [
+    { path: 'absent.ts', quote },
+    { path, quote: 'This excerpt is fabricated.' },
+    { path: '.arc/goals/fixture.md', quote },
+  ])
+    assert.throws(
+      () => decodeDirectorResponse({ ...reply, evidence: [entry] }, observation),
+      /absent|does not match|authored goal/,
+    );
 });
