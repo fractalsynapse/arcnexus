@@ -75,6 +75,18 @@ function definitions() {
   };
 }
 
+/** Provide a staging configuration for the isolated Git fixture. */
+function delivery() {
+  return {
+    baseBranch: 'staging',
+    protectedBranch: 'main',
+    workBranch: '<issue>-<description>',
+    provider: 'collaboration',
+    owner: 'work',
+    requiredGates: ['CI'],
+  };
+}
+
 /** Declare one steward and two distinct bound actors with their roles. */
 function actors() {
   const components = [
