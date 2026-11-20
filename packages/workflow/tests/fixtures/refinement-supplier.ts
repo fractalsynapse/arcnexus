@@ -12,7 +12,10 @@ export class RefinementSupplier {
 
   /** Keep native supplier attempts distinguishable from the outer Planner observations. */
   constructor(revision: string) {
-    this.provider = new RefinementPlanner(revision, true, { component: 'supplier', activity: 'implementation' });
+    this.provider = new RefinementPlanner(revision, true, {
+      component: 'supplier',
+      activity: 'implementation',
+    });
     this.provider.attempts = 10;
   }
 
@@ -21,9 +24,23 @@ export class RefinementSupplier {
     services.architecture!.propose = async (session) => {
       planner.observe(session);
       this.architectTasks.add(hostTask(session).taskID);
-      if (!hostTask(session).observations<{ projectReply?: unknown }>().some((event) => event.projectReply))
-        return { kind: 'supplier', scope: 'assessment', owner: 'supplier', question: 'Explain the nested finding completely', evidence: [] };
-      return { kind: 'no-change', summary: 'Architect consumed the complete supplier answer', evidence: [] };
+      if (
+        !hostTask(session)
+          .observations<{ projectReply?: unknown }>()
+          .some((event) => event.projectReply)
+      )
+        return {
+          kind: 'supplier',
+          scope: 'assessment',
+          owner: 'supplier',
+          question: 'Explain the nested finding completely',
+          evidence: [],
+        };
+      return {
+        kind: 'no-change',
+        summary: 'Architect consumed the complete supplier answer',
+        evidence: [],
+      };
     };
     const planGoal = services.direction.plan;
     services.direction.plan = async (session, signal, standing) => {
@@ -31,11 +48,14 @@ export class RefinementSupplier {
       this.childTasks.add(hostTask(session).taskID);
       return supplierPlan();
     };
-    services.agent.execute = (session, _milestone, _activity, signal) => this.answer(session, signal);
+    services.agent.execute = (session, _milestone, _activity, signal) =>
+      this.answer(session, signal);
     services.execution.checkpoint = async (session, activation) => session.record({ activation });
     services.verification.assess = async (_session, plan, candidate) => ({
-      kind: 'accepted', candidate: candidate.digest,
-      criteria: plan.milestones.flatMap(({ criteria }) => criteria.map(({ id }) => id)), evidence: [],
+      kind: 'accepted',
+      candidate: candidate.digest,
+      criteria: plan.milestones.flatMap(({ criteria }) => criteria.map(({ id }) => id)),
+      evidence: [],
     });
   }
 
@@ -50,16 +70,35 @@ export class RefinementSupplier {
 
 /** Supply a valid Director plan for the accountable supplier's read-only answer. */
 function supplierPlan() {
-  return { kind: 'plan', plan: {
-    focus: { purpose: 'Answer Architect', objectives: ['Retain the complete answer'], constraints: ['Read only'] },
-    milestones: [{
-      id: 'answer', owner: 'supplier', criteria: [{ id: 'answer', description: 'Complete answer' }],
-      steps: activities.map((activity) => ({
-        activity,
-        ...(activity === 'implementation'
-          ? { checklist: [{ id: 'answer', criteria: ['answer'], expected: 'Return the full finding and answer' }] }
-          : { checklist: [], inapplicable: 'Read-only answer fixture' }),
-      })),
-    }],
-  }};
+  return {
+    kind: 'plan',
+    plan: {
+      focus: {
+        purpose: 'Answer Architect',
+        objectives: ['Retain the complete answer'],
+        constraints: ['Read only'],
+      },
+      milestones: [
+        {
+          id: 'answer',
+          owner: 'supplier',
+          criteria: [{ id: 'answer', description: 'Complete answer' }],
+          steps: activities.map((activity) => ({
+            activity,
+            ...(activity === 'implementation'
+              ? {
+                  checklist: [
+                    {
+                      id: 'answer',
+                      criteria: ['answer'],
+                      expected: 'Return the full finding and answer',
+                    },
+                  ],
+                }
+              : { checklist: [], inapplicable: 'Read-only answer fixture' }),
+          })),
+        },
+      ],
+    },
+  };
 }
