@@ -5,7 +5,6 @@ import {
   copyFileSync,
   mkdirSync,
   mkdtempSync,
-  readFileSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -22,7 +21,6 @@ import { Execution } from '../../../execution/src/index.js';
 import {
   Workflow,
   type TaskObserver,
-  type TaskSession,
   type WorkflowServices,
 } from '../../src/index.js';
 
