@@ -7,7 +7,7 @@ import { teamPlugin } from '../../../packages/team/src/index.js';
 import { workflowPlugin } from '../../../packages/workflow/src/index.js';
 import { runTask } from './task.js';
 
-/** Read the global output flag before dispatching. Reject ambiguous flag placement. */
+/** Read the global output flag before dispatching and reject ambiguous placement. */
 function parseOutputOption(args: string[]) {
   const flag = '--json';
   const index = args.indexOf(flag);
@@ -18,12 +18,16 @@ function parseOutputOption(args: string[]) {
   return { positionals: index === 0 ? args.slice(1) : args.slice(0, -1), json: true };
 }
 
-/** Validate the command and print its result using the requested output format. */
+/** Validate a terminal request before mounting services or admitting work. */
 async function main(args: string[]) {
   const { positionals, json } = parseOutputOption(args);
   const [command, component, activity, ...extra] = positionals;
   if (command === 'task' || command === 'architecture')
     return runCommand(command, component, activity, extra, json);
+  if (command === 'refine') {
+    const rounds = parseRounds(positionals.slice(1));
+    return runTask(await mountCommands(true), undefined, json, 'refine', rounds);
+  }
   if (command !== 'inspect')
     throw new Error(`Command unavailable in this build: ${command ?? '<missing>'}`);
   if (
@@ -38,6 +42,21 @@ async function main(args: string[]) {
   const commands = await mountCommands();
   const result = commands.inspect({ component, activity, directory: process.cwd() });
   console.log(json ? JSON.stringify(result, null, 2) : renderInspection(result));
+}
+
+/** Accept one positive decimal round count without imposing a resource ceiling. */
+function parseRounds(args: string[]) {
+  if (
+    args.length !== 0 &&
+    (args.length !== 2 || args[0] !== '--rounds' || !/^[0-9]+$/.test(args[1]))
+  ) {
+    throw new Error('Usage: arcnexus refine [--rounds <N>]');
+  }
+  if (args.length === 0) return 1;
+  const rounds = Number(args[1]);
+  if (!Number.isInteger(rounds) || rounds < 1)
+    throw new Error('Usage: arcnexus refine [--rounds <N>]');
+  return rounds;
 }
 
 /** Compose the trusted CLI services for either command. */
