@@ -100,7 +100,7 @@ test('completed refinement reports reach real prepared assessments across invoca
   const first = new Observations();
   const result = await fixture
     .reopen()
-    .refine(fixture.root, 2, first, new AbortController().signal);
+    .refine(fixture.root, '2', first, new AbortController().signal);
   assert.equal(result.kind, 'planned', JSON.stringify(result));
   assert.equal(first.rounds.length, 2);
   const prior = first.rounds[0]!;
@@ -110,7 +110,7 @@ test('completed refinement reports reach real prepared assessments across invoca
   const next = new Observations();
   const resumed = await fixture
     .reopen()
-    .refine(fixture.root, 1, next, new AbortController().signal);
+    .refine(fixture.root, '1', next, new AbortController().signal);
   assert.equal(resumed.kind, 'planned', JSON.stringify(resumed));
   assert.notEqual(next.rounds[0]!.invocation, prior.invocation);
   assertConsumption(next, prior);
