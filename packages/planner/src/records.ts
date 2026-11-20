@@ -69,13 +69,22 @@ function renderRating(rating: Proposal['ratings'][number], source: Capture['sour
     `## ${rating.id} · alignment ${rating.alignment} · evidence ${rating.evidence}`,
     rating.reason,
     ...rating.sources.map((citation) => renderCitation('Source', citation, source)),
-    ...(rating.run
-      ? [
-          `- Verified run · ${rating.run.pull ? `[${rating.run.id}](${rating.run.pull})` : rating.run.id} at \`${rating.run.revision}\``,
-        ]
-      : []),
+    ...(rating.run ? [renderVerifiedRun(rating.run)] : []),
     ...rating.observations.map((citation) => renderCitation('Evidence', citation, source)),
   ].join('\n\n');
+}
+
+/** Identify the selected evidence without implying support from other observations in its run. */
+function renderVerifiedRun(run: NonNullable<Proposal['ratings'][number]['run']>) {
+  const { selection } = run;
+  const observed =
+    'operation' in selection
+      ? `Check · operation \`${selection.operation}\``
+      : 'criterion' in selection
+        ? `Independent review · criterion \`${selection.criterion}\``
+        : `Delivery · ${run.pull}`;
+  const identity = run.pull ? `[${run.id}](${run.pull})` : run.id;
+  return `- ${observed} · Verified run ${identity} at \`${run.revision}\``;
 }
 
 /** Preserve provenance and human wording separately from the Planner's interpretation. */
