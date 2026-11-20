@@ -36,7 +36,7 @@ import { stewardProgress } from './steward-progress.js';
 import { retainedTesting } from './testing-rewind.js';
 import { establishedTestingRed } from './testing-red.js';
 import { retainedEvidence } from './context-evidence.js';
-import { retainStewardHold, type StewardOutcome } from './hold-context.js';
+import { retainStewardHold, reviewedReplyInput, type StewardOutcome } from './hold-context.js';
 import { checkedCorrectionProgress } from './hold-progress.js';
 import { operationID } from '../../architecture/src/index.js';
 
@@ -151,14 +151,14 @@ async function requestSteward(
     } catch (error) {
       if (!repairableReply(error)) throw error;
       signal.throwIfAborted();
-      if (seen.has(replyRepairIdentity(error, task)))
+      if (seen.has(replyRepairIdentity(error, task, milestone, scope)))
         return {
           kind: 'blocked',
           reason: `Steward reply repair failed: ${error.message}`,
           evidence: [],
         };
       diagnostic = error.message;
-      seen.add(replyRepairIdentity(error, task));
+      seen.add(replyRepairIdentity(error, task, milestone, scope));
       recordReplyRepair(task, scope, error);
     }
   }
@@ -181,9 +181,11 @@ function recordReplyRepair(task: HostTask, scope: StewardScope, error: Error) {
 }
 
 /** Match a rejected reply class against checked progress rather than repeated prose. */
-function replyRepairIdentity(error: Error, task: HostTask) {
+function replyRepairIdentity(error: Error, task: HostTask, milestone: Milestone, scope: StewardScope) {
   const finding = error instanceof InvalidAgentResponse ? error.identity : error.message;
-  return JSON.stringify([finding, stewardReplyInput(task.observations())]);
+  const input = correctionFinding(task.history(), milestone)?.kind === 'rejection'
+    ? reviewedReplyInput(task, milestone, scope) : stewardReplyInput(task.observations());
+  return JSON.stringify([finding, input]);
 }
 
 /** Restrict retries to rejected replies with no checked edits applied. */
