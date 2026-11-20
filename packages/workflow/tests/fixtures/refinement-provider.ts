@@ -11,7 +11,9 @@ class RefinementProvider {
   /** Ask once, then expose a distinct complete finding and explicit provider usage. */
   async run() {
     const input = JSON.parse(readFileSync(0, 'utf8')) as Input;
-    if (!input.clarifications?.length) {
+    if (
+      !input.clarifications?.some(({ question }) => question === 'Complete answer ' + input.attempt)
+    ) {
       await this.question(input.attempt);
       this.emit({ type: 'item.completed', item: { type: 'agent_message', text: '{}' } });
       return;
