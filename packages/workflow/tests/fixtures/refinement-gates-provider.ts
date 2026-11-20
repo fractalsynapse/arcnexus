@@ -22,24 +22,7 @@ class RefinementGateProvider {
   /** Propose exact goal removal and a template change; Direction still assesses the retained goal. */
   private reply() {
     const citation = { path: 'baseline', quote: 'durable evidence' };
-    if (this.component === 'planner')
-      return {
-        summary: 'Propose removing the baseline goal for human review.',
-        ratings: [
-          {
-            id: 'baseline',
-            alignment: 'strong',
-            evidence: 'unverified',
-            reason: 'The baseline is covered.',
-            sources: [citation],
-            observations: [],
-          },
-        ],
-        comparison: ['The single goal covers the baseline without overlap.'],
-        changes: [{ id: 'baseline', content: null }],
-        links: [],
-        sources: [citation],
-      };
+    if (this.component === 'planner') return goalProposal();
     if (this.component === 'architecture')
       return {
         kind: 'proposal',
