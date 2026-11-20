@@ -28,7 +28,7 @@ class StreamScenario {
     );
     const withToolResult = capturedResult.replace(
       "this.emit({ type: 'item.completed', item: { type: 'agent_message', text: '{}' } });",
-      "this.emit({ type: 'item.completed', item: { type: 'mcp_tool_call', id: 'question-tool', result: toolResult } });\n      this.emit({ type: 'item.completed', item: { type: 'agent_message', text: '{}' } });",
+      "this.emit({ type: 'item.completed', item: { type: 'mcp_tool_call', id: 'read-tool', result: toolResult } });\n      this.respond(consumption);",
     );
     assert.notEqual(withToolResult, noGate);
     writeFileSync(executable, withToolResult);
