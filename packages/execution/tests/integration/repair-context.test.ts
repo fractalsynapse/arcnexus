@@ -8,6 +8,7 @@ import { Architecture, type TaskContext } from '../../../architecture/src/index.
 import { activities, type Milestone } from '../../../direction/src/index.js';
 import { steward } from '../../src/index.js';
 import { StewardFixture } from '../fixtures/steward.js';
+import { TestingRewindFixture, rewindMilestone } from '../fixtures/testing-rewind.js';
 
 export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
 
