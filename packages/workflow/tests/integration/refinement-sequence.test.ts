@@ -265,8 +265,15 @@ test('an interrupted Run retains its captured goals and the next round captures 
   assert.equal(interrupted, true);
   await refine.call(workflow, f.root, 2, { progress() {} }, new AbortController().signal);
   assert.deepEqual(calls, [
-    'Plan', 'Architect', 'First goal', 'Second goal', 'Second goal',
-    'Plan', 'Architect', 'First goal', 'Updated goal',
+    'Plan',
+    'Architect',
+    'First goal',
+    'Second goal',
+    'Second goal',
+    'Plan',
+    'Architect',
+    'First goal',
+    'Updated goal',
   ]);
 });
 
