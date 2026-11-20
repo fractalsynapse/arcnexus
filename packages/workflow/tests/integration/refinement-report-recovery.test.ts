@@ -411,6 +411,11 @@ function assertNestedRounds(
   assert.match(results[0]!.native, /Provider finding attempt 12/);
   assert.doesNotMatch(results[1]!.native, /Provider finding attempt 1[12]/);
   assert.match(results[1]!.native, /Provider finding attempt 13/);
+  assertNestedTerminals(results);
+}
+
+/** Require every nested attempt outcome and the complete Architect answer in each report. */
+function assertNestedTerminals(results: ReturnType<typeof reconcileRounds>) {
   for (const result of results) {
     assert.match(result.report, /All details and the final conclusion remain verbatim/);
     assert.match(result.report, /Architect consumed the complete supplier answer/);
