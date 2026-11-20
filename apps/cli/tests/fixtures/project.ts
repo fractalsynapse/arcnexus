@@ -71,6 +71,11 @@ function definitions() {
   };
 }
 
+/** Declare the fixture's proposed public interface. */
+function contract() {
+  return { id: 'fixture/work', owner: 'work', stage: 'proposed', file: 'work/contract.md' };
+}
+
 /** Provide a staging configuration for the isolated Git fixture. */
 function delivery() {
   return {
