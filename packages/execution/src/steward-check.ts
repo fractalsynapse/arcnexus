@@ -119,7 +119,9 @@ export function correctionMadeProgress(
   return recorded
     .slice(observed + 1)
     .some(({ edits }) =>
-      edits?.some(({ path, before, after }) => before !== after && (!paths || paths.includes(path))),
+      edits?.some(
+        ({ path, before, after }) => before !== after && (!paths || paths.includes(path)),
+      ),
     );
 }
 
