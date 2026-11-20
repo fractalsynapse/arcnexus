@@ -1,0 +1,367 @@
+# Workflow component purpose
+
+## One understandable lifecycle from intent to observed delivery
+
+Workflow owns the ordered application lifecycle that turns an accepted goal into
+useful engineering work, independent assessment and observed staging delivery.
+It also composes goal planning, architecture assessment and standing-goal execution
+into continuous refinement. Its consumers submit structured input and receive
+typed observations and outcomes through the Commands SDK. The CLI is a transport
+adapter for that service, and future gateways should use the same lifecycle
+instead of building their own agent loop.
+
+The component exists to make the seams between Agents reliable. Direction chooses
+the plan, component stewards perform their explicitly selected activities, Execution
+enforces effects, Verification obtains the final independent verdict and Delivery
+observes publication. Workflow orders those responsibilities and handles their
+domain outcomes. A collection of correct plugins can still fail as an application
+if the requester resumes before its supplier, a completed child is replayed after
+interruption or an ordinary local failure unnecessarily reconstructs the plan.
+Those sequencing relationships are this component's central responsibility.
+
+Agent and Team remain the runtime conceptual model. Workflow manages scoped
+Agents and their activities using the captured team and accepted plan. It does
+not replace them with a private hierarchy of workers or maintain an alternative
+component catalog. Every activation uses the selected actor, explicit activity,
+approved profile, instructions and capabilities. The current host architecture
+is sequential, so a person should be able to follow who acts next and why without
+reasoning about concurrent peers or a separate dependency scheduler.
+
+The useful outcome is a recoverable trace from goal to delivery. It should show
+the initial Director assessment, accepted milestones, relevant activity results,
+local repairs, complete inbox answers, independent acceptance and actual staging
+effect. Each step has an accountable service and durable evidence. Optimistic
+progress narration is not a terminal result, and an activity's completion claim
+is not an independent verdict. Workflow must preserve those distinctions while
+making the overall process easy to inspect and resume.
+
+## Application entry points share the same path
+
+A single-goal run admits a task, invokes the Director, prepares the accepted
+engineering sequence and advances applicable activities. After the owner
+contributions are assembled, Verification checks and reviews the candidate.
+An accepting verdict permits Delivery to perform the authorized staging effect.
+The host records the observed outcome and cleans task-owned resources after
+securing acknowledged work. These responsibilities must remain connected through
+their public interfaces rather than duplicated inside a command handler.
+
+Goal planning uses the same admission, progress, cancellation, clarification and
+delivery foundations. Planner evaluates a human objective or explores the captured
+project and goal inventory. A justified read-only assessment can finish without
+a source change. Proposed objective or goal edits retain their exact approval
+and use normal checked changes, independent review and delivery. Workflow handles
+the lifecycle; it does not rewrite Planner's domain assessment or hide a changed
+guide behind an implementation repair.
+
+Architecture update likewise uses the existing lifecycle. Architect assesses
+approved direction and prior observations, returns no change or a reviewable
+exact proposal, and waits for the human decision when needed. Prerequisite
+implementation occurs inside that phase through the normal Director/steward
+workflow. Approved protected application and validation precede accepted delivery,
+and the following Run phase captures the resulting accepted architecture. There
+is no separate architecture-development scheduler or privileged model edit path.
+
+Continuous refinement composes Plan, Architect and every approved priority-ordered
+goal, then records the round and repeats for the requested invocation. Every
+round invokes Planner and Architect; every captured goal invokes Direction even
+when current measures pass. Passing tests are evidence for analysis, not permission
+to skip an Agent's assessment. A useful no-change conclusion is valid, while
+artificial changes made only to produce visible activity are wasteful.
+
+Standalone task, planning and architecture commands remain useful alongside that
+outer cycle. Their differences concern requested application outcomes, not
+alternative lifecycle implementations. Share the existing observer, admission,
+session, cleanup and terminal handling. A gateway should not need special recovery
+code to obtain the same behavior, and a simulated provider should not silently
+exercise a different application path from the production composition.
+
+## Accepted plans and milestone progression
+
+Direction authors the initial plan from the goal, actual team and plan template.
+The host retains that accepted plan as canonical state. Each milestone has an
+accountable owner, stable acceptance and applicable activity checklists. Workflow
+executes those activities in order and persists the position. The steward
+discovers the necessary owned resources. A milestone is not a per-file permission
+list, and the caller supplies an outcome rather than a prescribed team size.
+
+Documentation defines changed intent; Testing establishes meaningful assertions
+and fixtures; Implementation makes the smallest correct change; self-review
+assesses the contribution. The integration Step records later host observations
+for the assembled candidate. It does not require each steward to publish its own
+PR or obtain GitHub evidence before completing engineering. Keep the single
+candidate and independently reviewed staging delivery across the whole goal.
+
+An activity can be explicitly inapplicable with a valid reason in the accepted
+plan. Missing declared activities remain unavailable. Workflow must distinguish
+that deliberate plan decision from a runtime that silently skips work because
+a handler, test suite or profile is missing. The host validates selected activities
+and required verification before progression, while Execution reports actual
+operation applicability and results. A model cannot satisfy an unresolved
+obligation by omitting it from a completed reply.
+
+Completion is specific to the current activity. Testing can complete after a
+valid intended-red observation and its other required passing checks; future
+Implementation will make the behavior pass. Demanding successful end-to-end
+behavior before leaving Testing creates a circular dependency on the next Step.
+Likewise, a steward's self-review completion does not assert that the later
+independent Reviewer or staging checks have already accepted the candidate.
+Preserve these temporal meanings in both prompts and host progression.
+
+The plan is generated, not hand-authored as an operator workaround. At legitimate
+revision boundaries, Direction receives the previous accepted plan, completed
+position, exact current finding and readable evidence. The host validates changes
+to pending work and preserves completed outcomes, owners and original acceptance
+identities. Ordinary response repair does not discard the plan. Candidate edits,
+revised prose or model-generated metadata cannot grant a different architecture.
+
+## Local recovery stays close to its cause
+
+Mapped tool refusals and operation failures return to the calling activity through
+Execution with their exact diagnostics and retained successful receipts. Workflow
+does not engage Direction for every schema error, stale hash, lint failure or
+owned test defect. The caller can inspect the actual result and correct its
+request or owned work while retaining the same milestone. That direct path saves
+context reconstruction and preserves the actor best placed to understand the
+immediate cause.
+
+Some findings require an earlier activity within the same milestone. Documentation
+can correct unclear intent, Testing can correct an assertion or realistic fixture,
+and Implementation can correct product behavior found during self-review. Workflow
+validates the available applicable target and records the rewind before activation.
+It reruns the affected downstream work and checks, retaining unaffected evidence.
+The repair cannot change ownership, acceptance or grants, and it does not create
+a new milestone merely to wrap a local failure.
+
+Preserve the complete originating finding as later diagnostics appear. A test
+fixture correction may expose a TypeScript error, and that repair may expose a
+formatting issue. The latest diagnostic matters, but it must not erase the
+original public behavior still needing proof. Retain successful edit receipts,
+complete answers, prior completion and current unresolved check expectations.
+An already completed repair target should not be requested again simply because
+the original activity resumed.
+
+Meaningful progress determines whether another correction is justified. Compare
+the finding with relevant checked inputs and actual new observations. A different
+assertion after a real edit can be useful progress. Repeating unchanged work or
+rephrasing the same unsupported claim is not. Preserve an actionable hold or
+explicit escalation when the current responsibility cannot resolve the issue.
+Do not substitute arbitrary retry counts, timeouts, token budgets or automatic
+profile changes for correct diagnosis.
+
+The host should also distinguish an invalid actor response from a valid domain
+rejection. Malformed JSON or an invalid citation returns to that same actor with
+the exact error. A steward's valid local repair follows the local route. A final
+independent verdict rejecting criteria reaches Direction. Conflating those cases
+either wastes an entire plan revision on a response typo or weakens independent
+assessment by treating a substantive rejection as formatting repair.
+
+## Escalation and supplier sequencing
+
+Direction engages initially, for explicit work requiring another owner or changed
+scope, and after final independent rejection. An escalation identifies the actual
+contribution or decision needed and its relationship to existing acceptance. Team
+supplies the owner facts. Direction links accepted work or places the necessary
+supplier contribution before the dependent activity. The requester retains its
+owner and original criteria; its request does not grant foreign file access.
+
+Workflow must resume the requester only when the required contribution or answer
+is actually available. An acknowledgment is not a completed implementation, and
+an issue link is not the full answer to an architectural question. The original
+caller receives the complete recorded supplier reply and current relevant evidence.
+Checked edits completed before the handoff remain successful and should not be
+written again. Accepted work should not be duplicated under a new milestone name.
+
+An apparent supplier dependency can be a stage-ordering error. A Testing Agent
+may ask its own component to supply the implementation scheduled immediately
+after its valid red. That is ordinary accepted work, not a distinct foreign
+prerequisite. The activity should finish its valid test contribution and let the
+normal Step advance. Similarly, lower-level contract tests need not wait for a
+finished higher-level consumer when an explicit public fixture can establish
+their local boundary and assembled integration will prove the collaboration.
+
+A real missing owner or conflict with locked authority requires an architectural
+proposal and named high-level decision. Ordinary owned engineering choices,
+formatting corrections and plan sequencing do not. Keep human gates concerned
+with objectives, goals and architecture. Actual unavailable external prerequisites
+remain named observable holds. A model assertion that an API is missing must
+be investigated through the available public interfaces rather than accepted as
+proof that the task should terminate.
+
+Final independent rejection supplies criterion-linked integration findings.
+Direction can revise remaining work to address those deficiencies while retaining
+the original accepted outcomes. Workflow executes the revised sequence and
+obtains a new applicable independent assessment before publication. It must not
+reuse a verdict for a different candidate or treat the same unchanged tree and
+evidence as a fresh acceptance simply because a new activation began.
+
+## One project writer and durable positions
+
+Coordination owns the existing project writer, journal and durable records.
+Workflow holds the foreground invocation's writer while sequential phase and goal
+sessions share that ownership as ordinary children. A child finishing cannot
+release the ancestor's admission. A competing foreground invocation must not
+enter between phase transitions. Reuse that mechanism rather than introducing
+a second scheduler, lock database, queue or global process state.
+
+Persist meaningful positions and effects in the existing journal. An activity
+rewind, accepted plan revision, completed phase, pending proposal and goal outcome
+must be recoverable from retained observations. Do not maintain a competing
+authoritative cursor in a convenience wrapper or telemetry projection. Derived
+reports can summarize records, but restart must reconcile to the canonical state
+and actual external effects. Historical observations remain available even after
+the task's active worktree has been removed.
+
+Child completion and parent acknowledgment are different commit moments. A process
+can stop after a child records success but before its parent records the phase
+transition. Restart should observe that successful child and advance the same
+logical phase without repeating the assessment or delivery. A synthetic test that
+only sets the parent cursor cannot prove this window. Use the real journal/session
+boundary and observe the retained outcome before replay.
+
+Continuous refinement retains its requested total, round and phase positions,
+captured goal inventory and completed goal outcomes. Retrying the same unfinished
+invocation resumes its first unfinished position. A changed requested total must
+not silently reinterpret that retained invocation. A fully completed invocation
+can start a fresh subsequent cycle with new identities. Standalone goal rounds
+and refinement inventories must remain distinct uses of the same storage so one
+cannot consume another's unfinished record.
+
+The Run phase captures approved goals after Plan and Architect finish. That exact
+inventory remains stable during an interrupted Run; the next fresh round can
+capture newly accepted goals. Priority order is explicit and ties are stable.
+Every captured goal still receives Direction assessment, including when an earlier
+round found it satisfied. Current measures can be incomplete, implementation can
+change through another goal and the goal's full requirements can reveal work
+beyond what a passing test covers.
+
+## Guide decisions and architecture adoption
+
+Planner proposals preserve the human's exact objective and present reviewable
+objective/goal changes. Architect proposals preserve purpose, consequences,
+baseline, exact bytes and prerequisite outcomes. Workflow retains those decisions
+through the same clarification and journal path. An absent answer is pending;
+an unknown reply is not approval. Decline preserves accepted authority and the
+original submitted intent. Changed guide bytes require the appropriate review,
+while ordinary implementation correction within approved intent adds no gate.
+
+Architect prerequisites use the normal task lifecycle inside that phase. Their
+owners implement actual support, the host applies exact approved protected bytes
+and validation establishes that the resulting declarations have available handlers.
+The combined candidate still needs applicable checks and independent assessment.
+Workflow must not start the subsequent Run merely because the proposal was
+approved or a declaration looked plausible. Accepted delivery and availability
+are real observations with their own identities.
+
+Approved architecture can reach the next activity within the same logical run.
+The host finishes or cancels an in-flight activation, validates the applied model
+and required implementation, revalidates pending work and affected evidence and
+records adoption. Context, Team, grants, parameters and completion verification
+advance together. Historical activations retain their actual authority and
+profile. Candidate instructions cannot authorize this transition themselves.
+
+A validated updated runtime can also be adopted at a safe boundary, with its
+actual identity recorded and retained work revalidated. The objective is guided
+self-development, not keeping an obsolete supervisor frozen forever. Reuse the
+existing trusted composition and lifecycle. A new executable declaration does
+not load arbitrary host plugins, and a candidate cannot replace the application's
+composition to approve its own changes. No additional runtime-upgrade framework
+is implied by this safe adoption capability.
+
+## Cancellation, publication and honest terminal results
+
+Cancellation propagates through the shared lifecycle and signal to the provider
+and managed operations. Execution stops descendants and secures acknowledged
+work before cleanup. Workflow records the actual cancelled or failed position
+and retains complete observations. It must not emit an unqualified success and
+hide a cleanup failure afterward. A new attempt reconstructs a fresh task-owned
+worktree from retained checkpoints, while preserving answers and acknowledged
+effects that already occurred.
+
+Delivery owns uncertain publication. If a push, PR request, CI observation or
+merge response is interrupted, the responsible path observes the existing effect
+before retrying. Workflow retains the issue, branch, candidate and PR relationship;
+it does not create a new goal to avoid ambiguity. A publication-discovered
+engineering defect returns to the accountable steward, then affected verification
+is refreshed before publication continues. Delivery never edits its accepted
+candidate as a shortcut.
+
+Terminal outcomes have domain meaning. A verified single-goal staging merge is
+different from a justified no-change planning assessment, a satisfied standing
+goal, a durable pending approval or a cancelled activation. The CLI maps those
+typed results to documented exits and JSONL; Workflow should not encode terminal
+semantics in human progress strings. Record the result once and keep its evidence
+available for restart, later assessments and repository housekeeping.
+
+Main integration and production release are separate from ordinary task delivery.
+The task path ends at its configured verified staging effect. A maintainer's
+authorized repository operation does not silently broaden the generic runtime's
+release capability. Preserve that boundary in goals, criteria and reports so a
+steward is never asked to prove a future production release before completing its
+owned implementation. The product's authority comes from accepted architecture,
+not an incidental tool's ability to call a forge API.
+
+## Observability and learning across rounds
+
+Stream the same ordered host and provider observations through the shared
+observer while work happens. Preserve complete native messages, tool calls,
+results, errors and usage in the established evidence path, with references in
+the canonical timeline. Human and JSONL gateways should reveal the current actor,
+activity, operation and outcome without becoming separate orchestration paths.
+An Agent can read authorized current and prior observations to avoid repeating
+questions, edits or unchanged checks.
+
+Derive measurements from those events rather than adding another metrics store.
+Record actual runtime and architectural identities, selected profiles and their
+resolved provider settings. Keep wall time distinct from inclusive nested activity
+and operation durations. Provider usage fields retain their subset semantics;
+unreported usage remains unknown. Monetary estimates need a verified billing
+basis. Measurements do not create a budget, retry ceiling, report cap or automatic
+profile substitution.
+
+Each completed round supplies its findings and relevant measurement references
+to the next Planner and Architect assessments, and goal Direction assessments
+receive applicable context. A no-change result should explain why no useful
+refinement is needed. A proposed correction should identify the observed problem,
+expected improvement and later evidence. Do not write results into the standing
+goals or turn learning records into immediate authority. The approved guides and
+the journal have different roles.
+
+## Verification and the measure of a simpler loop
+
+Public regressions should exercise sequencing and recovery with explicit domain
+responses and real state where correctness depends on it. Use actual SQLite/Git
+boundaries for writer retention, child terminal recovery, inventory identity and
+checkpoint behavior. Controlled providers establish deterministic transitions;
+native confinement and live inference remain separate categories. An intended
+negative assertion is valid verification, while an unexplained infrastructure
+abort or skipped native case is not a clean execution success.
+
+Representative cases include a supplier before its requester resumes, a nested
+local rewind retaining its original finding, distinct check failures corrected
+inside the milestone, a final rejection preserving stable criteria and a pending
+approval resumed without duplicate assessment. Refinement adds interrupted phases,
+stable captured inventory, fresh later rounds and actual consumption of earlier
+findings. Assert the public outcomes and observed effects rather than mirroring
+private helper structure or constructing a fixture that omits fields production
+actually reads.
+
+The final live measure is the approved consecutive refinement streak, with all
+phases and every captured goal assessed, useful approved guide improvement and
+staged implementation, and later use of prior findings. Local repairs and approval
+pauses can remain inside that lifecycle. Operator state repair, bypassed checks,
+uncontrolled aborts and execution-path changes have their declared consequences
+for qualification. Preserve history honestly instead of counting an assisted
+attempt as clean after the fact.
+
+Workflow succeeds when that complete trace is understandable and recoverable
+through fewer mechanisms. Reuse the existing session lifecycle, journal, request
+builder and plugin services; remove superseded queues, duplicate cursors and
+alternate recovery paths. A simple loop can still handle real engineering failure
+because it returns to the responsible caller, retains what worked and invokes
+broader planning only when responsibility or final integration actually requires
+it. That is the foundation for continuous self-development under human direction.
+
+The retained report should let a reader follow phase assessments, guide decisions,
+goal outcomes, repair routes, checks, issues, PRs and delivered commits back to
+their actual events. A report that cannot explain a transition leaves the seam
+unproved even when its final summary says success.

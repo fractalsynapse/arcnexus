@@ -1,0 +1,362 @@
+# Team component purpose
+
+## A coherent collection of accountable Agents
+
+Team represents the collection of Agents that can contribute under an approved
+project architecture. It gives callers a deterministic view of component stewards,
+their explicitly declared activities and their eligibility for the current work.
+It also resolves which component owns a resource and identifies missing or
+conflicting ownership. This makes the Agent model composable: an individual actor
+has a scoped purpose and capabilities, while Team explains how that actor relates
+to the available contributors and maintained project resources.
+
+The component exists because a multi-agent system needs a common answer to who
+can help and who is accountable. If Direction builds one roster, checked edits
+use a different ownership heuristic and test selection maintains another owner
+list, the platform can plan work that its executor refuses or verify a different
+scope from the one a steward changed. Team supplies the shared resolution service.
+The architecture catalog remains the authored source; Team makes its facts usable
+without creating another catalog or mutable registry.
+
+A useful team view supports work over time. The Director can select accountable
+owners for an initial plan and later identify a supplier for an explicit request.
+A steward can discover the component responsible for a public interface. Host
+services can validate an edit or quality scope. Architecture can report unmanaged
+or multiply owned maintained files before accepting a model. These consumers need
+consistent results even when they ask different filtered questions about the same
+captured membership.
+
+Team's first responsibility is truthful resolution, including uncomfortable
+answers. An unowned path, ownership collision or unavailable owner is a finding
+to preserve, not an invitation to choose whichever steward happens to be visible.
+The caller can then route a guide decision or required contribution through the
+existing lifecycle. A system that always returns some convenient owner may look
+productive while silently damaging accountability. A precise finding is more
+useful because it names the architectural gap that must actually be addressed.
+
+## Membership comes from accepted architecture
+
+Each captured component provides its identity, owned roots and explicit activity
+map. A team member represents the steward capable of maintaining that component;
+it can be eligible without currently running. Its available activities matter:
+a component lacking the requested activity cannot satisfy that selection merely
+because another component has a similar role. Team must preserve the difference
+between an authored activity, a role name and a provider session that happens
+to be active.
+
+Architecture resolves the approved catalog and validates its references. Team
+consumes those captured definitions. A role can provide standing procedure but
+does not own files. A provider profile supplies execution settings but does not
+create a team member. A goal contains desired outcomes and measures, while
+Direction selects owners when evaluating it. Keeping those concepts separate
+allows a durable goal to remain relevant after component responsibilities evolve.
+
+Explicit activity maps are important to discovery. Research, documentation,
+testing, implementation and self-review can share recognizable activity names
+without sharing permissions. Director planning, Planner planning, Architect
+updating and independent assessment have their own explicit mappings. Host-only
+release cannot be offered as a model activity just because it appears in a
+component definition. A query for an executable model activity must respect the
+mapping rather than treating every declared key as interchangeable.
+
+The team view is derived for the caller's recorded scope and position. It is
+not a second persistent inventory. A later task position can make a component
+eligible or unavailable while leaving ownership unchanged. A host-approved model
+adoption can provide a new captured catalog at an activity boundary. Historical
+queries and effects remain associated with their actual authority. Team should
+not mutate previously captured definitions or make an in-flight actor inherit
+new ownership because candidate YAML was edited.
+
+## Roster queries and deterministic order
+
+The public list operation filters the captured member collection by the caller's
+stated requirements, such as a component, required activity or eligible set. It
+then applies the supplied priorities and stable component identity for ties.
+Matching input must produce matching order. This order helps Direction construct
+a comprehensible sequential plan and lets tests or humans explain why a component
+appeared in a particular position. It must not depend on incidental insertion
+order or a provider's preferred team size.
+
+Priority is an ordering input, not a permission or an ownership override. A
+high-priority component cannot claim another component's resource. Filtering the
+roster to eligible contributors also cannot hide a conflicting owner. Keep the
+selection question separate from the accountability question. Callers may ask
+which Agents can act now, but the resource's actual owners still come from the
+complete captured map.
+
+Stable identity provides the default tie behavior. The same component should not
+appear under duplicate aliases with different permissions, and repeated list
+calls should not mutate the source definitions. A filtered view can be empty;
+that is a real result to interpret. Do not fill it with a guessed steward,
+silently fall back to another activity or introduce a hidden default team.
+Direction is responsible for choosing real contributions from the truthful view.
+
+The API should stay useful to future gateways and host services. A CLI, MCP or
+OpenAPI adapter can expose a team query through shared application services when
+that surface is implemented. Team itself does not parse terminal arguments or
+render a transport-specific response. Likewise, the current Agent's compact
+component index is a discoverability view built from Team facts, not evidence
+that a model can invoke an undeclared team-management tool. Runtime APIs and
+mapped model operations remain distinct interfaces.
+
+## Ownership resolution preserves every relevant owner
+
+Resource ownership is resolved against the complete captured set of owned roots.
+The service distinguishes an owned path, an unavailable owning steward, a path
+with no owner and a collision containing the affected owners. Consumers can then
+make their own domain decision: an edit refuses foreign ownership, Architecture
+rejects invalid coverage, or Direction asks for an appropriate contribution.
+They must not independently reinterpret the map to obtain a more convenient answer.
+
+Path boundaries are meaningful. Owning a directory includes its descendants and
+the root itself, but a neighboring name with the same prefix is not a child.
+The maintained regression for a path such as `src-next/file` beside an owned
+`src` root captures this distinction. A plain string-prefix check can accidentally
+grant neighboring scope. Use the canonical Team result everywhere that resource
+accountability matters, and preserve tests that exercise the public boundary.
+
+Overlapping declarations expose collisions rather than a longest-prefix winner.
+Choosing the deepest visible root would silently hide another owner's declared
+responsibility and make capture, checked editing and quality selection disagree.
+The finding should retain the actual affected resource and component identities.
+Filtering eligibility or requesting only a particular component cannot convert
+that collision into unique ownership. Architectural repair must resolve the
+underlying declarations before an effect relies on them.
+
+Unavailable ownership is different from absence. A resource may have a unique
+owner whose Agent cannot act at the current position or lacks the requested
+activity. That fact can guide a valid plan revision, architectural proposal or
+named prerequisite. Treating it as unowned loses useful accountability; treating
+it as available grants a capability the current team does not have. The result
+must allow the caller to explain both who owns the resource and why the intended
+action cannot currently proceed.
+
+An ownership answer also has an authority identity. It belongs to the captured
+catalog used for that lookup. A candidate cannot change its own permission by
+editing a component file and asking Team again outside the approved adoption
+boundary. During accepted in-run evolution, the host revalidates pending work,
+retained checkpoints and affected checks against the new model together. Team
+provides the actual ownership comparison; whole-file YAML equality is a poor
+substitute because unrelated instruction or profile changes can leave ownership
+unchanged.
+
+## Maintained coverage and architectural feedback
+
+Coverage validation applies the same ownership resolver to an explicit inventory
+of maintained resources. It reports paths with no owner or multiple owners and
+identifies the relevant components. Architecture can use this on a proposed
+catalog before admission, while admission can enforce it for accepted work. A
+coverage report does not grant authority, admit a task or create a steward. It
+is a deterministic observation about the supplied declarations and inventory.
+
+The inventory must represent the resources whose maintenance is being claimed.
+Generated output, ignored dependencies and retained application evidence have
+different lifecycles from authored project source. Their classification belongs
+to the project's declared tooling and architecture rather than a private Team
+guess. Keep inventory discovery at its responsible boundary and feed Team the
+actual paths. Duplicating filesystem traversal or special-case owner rules here
+would make the same resource resolve differently across consumers.
+
+Coverage findings should guide the smallest legitimate correction. An unmanaged
+maintained file may need an existing owner's root corrected or a genuinely new
+responsibility proposed. A collision may reveal that two components own work
+that changes together and should have a clearer boundary. The model must present
+that architectural choice through the proper guide route. Team should not repair
+the catalog, merge owners, suppress findings or invent a new component as a side
+effect of validation.
+
+Fixtures need equally explicit ownership. Generic tests supply their own member
+definitions and paths, including deliberately overlapping or absent coverage
+when those are the expected cases. They should not depend on the live ArcNexus
+catalog or a developer's current tree. A test that filters to a single eligible
+member and then asserts unique ownership can accidentally miss the collision
+that the public contract requires it to report. Compare the full semantic result,
+not merely a convenient component ID.
+
+## Direction and cross-component cooperation
+
+Direction uses Team to discover accountable contributors and order a plan. The
+goal itself remains independent of component ownership. A Director can examine
+the captured team, relevant public contracts and implementation, then select the
+owner whose responsibility must change. The plan carries that accountability and
+stable criteria. Team does not choose the goal, prescribe a fixed team or require
+every steward to participate simply because the task mentions a shared standard.
+
+A supplier request identifies concrete required work or an answer. The requesting
+Agent can use the compact component index and readable definitions to locate
+the owner, then submit the mapped request through Direction. Direction links
+accepted work or places a real contribution before the dependent activity. Team
+does not run that member, open another worktree or establish a parallel queue.
+Its role is to give the sequencing decision accurate membership and ownership
+information.
+
+Requests must preserve the original assignment's meaning. Linking accepted work
+for the same contribution retains its owner and acceptance. A distinct supplier
+contribution gets its own accountable scope. Conversational agreement is not a
+required contribution when a public interface already authorizes ordinary use.
+A self-linked request for an actor's own current work should not force another
+steward activation merely to acknowledge that work remains unfinished. Direction
+and the caller's local repair path handle those distinctions using the canonical
+plan.
+
+Dependency cycles are a planning problem to clarify with concrete contributions.
+Team can identify the real owners of the lower-level service and its higher-level
+consumer, but it should not construct an alternate dependency scheduler. A host
+admission interface can be tested against an explicit contract-shaped fixture
+before a complete orchestration consumer exists. The assembled integration later
+proves their collaboration. The team view enables that sequencing without making
+every fixture question into peer negotiation or a new ownership layer.
+
+Complete answers matter after delegation. An Agent that asked another owner a
+technical question needs the actual reply, not merely a link to a team member
+or issue. The inbox and journal preserve that content, and the original actor
+resumes with current evidence and its own unchanged authority. Team's identification
+of the supplier is only one part of that trace. Its tests should avoid claiming
+that ownership lookup alone establishes successful end-to-end delegation.
+
+## Host consumers and consistent enforcement
+
+Execution uses captured ownership when applying checked edits and validating
+retained work. An attempted foreign write returns a precise refusal to the
+caller while preserving earlier successful receipts. Team does not itself mutate
+source or decide whether a protected contract may be edited. Those checks remain
+at the effect boundary, using Team's resource result alongside the applicable
+activity and protected-source rules. A roster selection never becomes an edit
+permission on its own.
+
+Quality tooling can use the same ownership facts to select an owner's applicable
+maintained files. That selection still respects the formatter's or linter's actual
+coverage. An owner with no suite or no applicable formatting files is a valid
+case when recorded honestly. Team should not equate an empty test selection with
+no ownership, and a quality command should not run another owner's executable
+configuration merely because discovery happened before filtering. The service
+provides the accountability facts; the check retains its own scope and result.
+
+Architecture uses Team for coverage and coherent model resolution. A role or
+instruction update can change what an actor should do while leaving ownership
+unchanged. A real ownership change requires renewed validation of affected
+pending work and retained edits at the host's approved adoption boundary. Compare
+the canonical decisions for actual resources rather than treating any catalog
+byte change as a new owner. Keep historical effects tied to the model that
+authorized them.
+
+Verification and Reviewer use accountability when explaining deficiencies in an
+assembled candidate. A rejected criterion should identify responsible work so
+Direction can sequence correction, but the verdict does not alter the ownership
+map. Reviewer cannot make itself the owner of a defect to edit the candidate.
+Likewise, Delivery cannot widen scope during publication. Consistent Team facts
+make these boundaries easier to explain and prevent responsibility from changing
+merely because the workflow reached a different phase.
+
+## Simplicity, state and evolution
+
+Team should remain a small deterministic service over supplied captured data.
+It does not need a separate persistent member registry, mutable global eligibility
+cache, peer mailbox or scheduling loop. Coordination owns durable observations
+and positions; Architecture owns the catalog; Workflow owns execution. A query
+can be computed again from the same inputs without losing information. That
+property makes restart and testing straightforward and avoids another state
+reconciliation problem.
+
+Deterministic transforms can stay pure helpers or cohesive service methods with
+clear responsibilities. Changes should preserve readable TypeScript and public
+module boundaries. An implementation shortcut that embeds owner names or special
+repository paths will fail as the catalog evolves or the product targets another
+project. Generic code should consume supplied components and inventory, while
+ArcNexus-specific responsibilities remain authored project data.
+
+Future team queries can add demonstrated filtering or ordering needs without
+changing the authority model. A new query might use a recorded task position or
+an approved priority policy. It still derives membership from the same catalog,
+keeps ownership independent of eligibility and returns truthful findings. A new
+gateway consumes that service through its application layer. Add the smallest
+public capability that serves a real consumer rather than building a general
+team-management framework in anticipation of hypothetical organizations.
+
+If the platform later introduces concurrency or distributed execution, the
+architecture must explicitly direct the new lifecycle and its authority. Team
+can remain the membership and accountability view; it need not pre-build locks,
+capacity quotas or work assignment machinery today. The current sequential host
+model is already sufficient to develop useful self-directed applications. Keep
+the conceptual seam clean so future replacement is possible without imposing
+today's speculative complexity on every caller.
+
+## Characteristic failure cases
+
+Shadow catalogs are a recurring risk. A caller may cache component names from a
+previous run, derive owners from directory conventions or filter away a conflicting
+member before lookup. The resulting plan or permission can disagree with the
+captured architecture. Trace the input definitions and actual Team result before
+adding another heuristic. The cheapest correction is often to use the existing
+public resolver consistently and remove the duplicate policy.
+
+Path classification errors can be subtle. Prefix neighbors, overlapping roots,
+the owned root itself and nested resources should all have explicit public
+assertions. Do not fix a failure by hardcoding one escaped path; correct the
+boundary semantics and retain representative cases. A native filesystem alias
+or unsafe traversal is an additional Execution boundary, not permission for Team
+to normalize arbitrary input into a different resource with more convenient
+ownership. Keep identities exact across those layers.
+
+Eligibility can conceal accountability if consumers use a filtered roster as
+the ownership universe. A uniquely owned but unavailable resource becomes
+apparently unowned; a collision becomes apparently unique. Assert both cases
+through `ownerFor` and coverage under filtered queries. Preserve all actual
+owners in the finding. This is especially important when a Director chooses a
+subset of the team for one goal, because the unused stewards still own their
+resources.
+
+Another failure is accidental scheduling inside discovery. Opening an issue,
+activating a model or writing a membership record during a read query makes
+inspection and validation effectful. Team's answers should remain observations
+until the responsible application service acts. Tests should observe source
+immutability and repeatability, while production wiring should show that a team
+query does not become a hidden agent activation. Keep claims about live delegation
+separate from deterministic roster evidence.
+
+## Measures that demonstrate useful accountability
+
+For example, suppose two captured components both declare a maintained directory,
+but only one is eligible for the current activity. Listing the eligible team can
+correctly return that one component. Looking up a file in the directory must
+still return the collision with both declared owners. Coverage of the same file
+must report the same conflict. The caller then has a concrete architectural
+finding instead of an apparently valid edit grant. This scenario should remain
+true if the caller changes its priorities or asks from a later task position.
+It demonstrates why filtered participation and complete ownership are separate
+questions that share one service rather than competing interpretations.
+An explicit empty eligible set is also meaningful input. It can make every
+owning steward unavailable while preserving the same complete ownership findings.
+
+Success means that matching captured inputs yield the same eligible roster and
+order, every maintained resource has an explainable ownership result, and all
+consumers agree on those facts. A Director can find the actual supplier, an
+unavailable owner is reported honestly, a collision remains visible under
+filtering and an owned edit uses the same accountability map as validation.
+These are observable properties, not a claim that a team exists because a
+configuration file contains component names.
+
+The useful integration measure is a goal whose selected Agents cooperate through
+the normal sequential lifecycle. Direction chooses real owners; a foreign request
+is sequenced; the supplier's complete answer returns; the original actor retains
+its permissions and successful work; Verification assesses the combined result.
+Team supplies the facts throughout that trace. A passing isolated sorting test
+supports ordering only and cannot replace the assembled or live proof of those
+other boundaries.
+
+Use actual incidents to refine the service and its instructions. If a neighboring
+path was misclassified, add the cheapest public boundary regression. If a task
+planned an absent activity, inspect validation and the caller's use of the roster.
+If ownership changed during recovery, retain both model identities and the affected
+resources. Record measured consequences such as redundant handoffs, refusals,
+Direction calls and elapsed effort in execution or learning records. Do not put
+those results into the durable goal or make them a second authored owner map.
+
+Team's contribution to efficiency is often the work it prevents. Accurate
+discovery avoids sending a question to the wrong steward, duplicating a supplier
+milestone or forcing a component to attempt a foreign edit. Preserve detailed
+purpose and activity guidance where they help those choices. Measure useful
+outcomes and the selected profiles' actual time and usage without adding arbitrary
+team-size, request, retry or resource limits. The end state is a collection of
+scoped Agents whose responsibilities can evolve under human guidance while
+remaining easy for humans and other Agents to locate and trust.

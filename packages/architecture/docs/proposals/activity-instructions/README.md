@@ -50,29 +50,21 @@ architecture-owned guidance in this batch, so current proposal, adoption and
 checked-edit protection continue to cover every instruction source. Do not invent
 another authority store or allow candidate files to become instructions.
 
-## Separate operating instructions from observations
+## Preserve the single request string
 
-The shared request builder must expose the complete approved operating instructions
-separately from the changing task input. The provider places those instructions in
-its supported developer-instruction channel; it receives the goal, assignment,
-acceptance, answers, findings and evidence as task data. Role and activity guidance
-cannot be demoted to an incidental heading in a user message. Conversely, a log or
-research report cannot promote itself into standing policy.
+The architect explicitly accepts the existing single-string request format. Keep
+that transport and the shared inspect/activation builder. This batch does not add
+request channels or amend the CLI parity contract to split `request.input`.
+The purpose and selected activity procedure are the Agent's operating prompt;
+source labels distinguish those instructions from the goal, assignment and
+observed evidence within the complete string. Codex still discovers AGENTS.md and
+skills normally. A longer well-written activity procedure is the correction;
+a new transport or provider lifecycle is not a prerequisite.
 
-Inspection must display both complete channels with distinct source labels and
-the same placeholders and invocation options as activation. Structured inspection
-must contain exactly the request the adapter consumes. Actual subprocess evidence
-must verify both channels, the selected profile, mapped tools and working directory
-for the Director, a steward and the independent Reviewer. Keep Codex's normal
-AGENTS.md and skill discovery. Do not replace its base instructions or add a
-parallel SDK/provider lifecycle merely to obtain a new field.
-
-This requires an exact amendment to the current CLI request parity wording before
-changing locked bytes: GW-26 currently equates the entire rendered prompt with
-`request.input`. Architecture and Execution must describe the same new channels,
-and the registry must retain stages and prior history. Prepare that complete diff
-through the existing proposal/registry builder. Approval of this work record does
-not approve unseen contract bytes.
+Author all component purposes and all explicit activity procedures, then stop for
+the architect's review and feedback. Do not start another live test, activate the
+new catalog or treat review drafts as authority before that review. The retained
+run may finish under its existing guidance.
 
 ## Decisions drawn from real failures
 
@@ -125,7 +117,7 @@ real native/provider checks where declared. A paragraph grants no tool.
 
 Before changing request behavior, establish focused deterministic failures for
 complete source expansion, missing/unsafe references, explicit empty lists,
-selection isolation, approved-source protection, channel parity and actual adapter
+selection isolation, approved-source protection, single-string parity and actual adapter
 arguments/stdin. Reuse the unique actual-subprocess fixtures retained in draft
 [PR #601](https://github.com/fractalsynapse/arcnexus/pull/601), updating them to the
 current contracts and TypeScript standard rather than discarding their coverage.
