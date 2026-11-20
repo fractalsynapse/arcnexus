@@ -15,8 +15,15 @@ export class RunObserver implements TaskObserver {
     return observer instanceof RunObserver ? observer : new RunObserver(observer);
   }
 
-  /** Persist foreground entry time once admission succeeds, including time spent preparing admission. */
+  /** Bind each session's questions and retain the original foreground entry time. */
   admittedSession(session: TaskSession) {
+    session.ask = (question, signal) => {
+      const prompt = { phase: 'question' as const, message: question };
+      session.record(prompt);
+      if (!session.listen) this.progress(prompt);
+      signal.throwIfAborted();
+      return this.answer(question, signal);
+    };
     if (this.admitted) return;
     this.admitted = true;
     session.record({ invocation: { startedAt: this.startedAt } });

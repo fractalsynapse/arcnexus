@@ -38,7 +38,13 @@ function assessmentInput(
   checks: unknown,
 ) {
   return {
-    assignment: { ...responseShape(candidate, checks), ownerChecks: task.ownerReviewChecks() },
+    assignment: {
+      ...responseShape(candidate, checks),
+      ownerChecks: task.ownerReviewChecks(),
+      publicationFailure: task
+        .observations<{ publicationCheckFailure?: unknown }>()
+        .findLast((event) => event.publicationCheckFailure)?.publicationCheckFailure,
+    },
     milestone: plan.milestones,
     acceptance: plan.milestones.flatMap(({ owner, criteria }) =>
       criteria.map((criterion) => ({ owner, ...criterion })),
@@ -171,7 +177,7 @@ function reviewPosition(verdict: CitedVerdict) {
 function responseShape(candidate: Candidate, checks: unknown) {
   return {
     instructions:
-      'Read the candidate diff and trusted check evidence to assess the engineering criteria and engineering goal. The ownerChecks field contains exact host operations and statuses. An observation with a candidate tree and captured operation binds to that checkpoint. Compare its tree with the candidate being reviewed. Owner checks run in a networkless overlay. Observations before the last edit remain historical. The host observes GitHub checks, configured PR review, and the staging merge after independent acceptance. Treat those Release items as future delivery observations. Use ask-question if human clarification is required. Once the assessment is complete, return one JSON verdict without code fences. Evidence includes complete retained-task-evidence index files and current artifact paths. Read an index to discover the original references, read the relevant complete artifacts, and cite their exact retained paths.',
+      'Read the candidate diff and trusted check evidence to assess the engineering criteria and engineering goal. The ownerChecks field contains exact host operations and statuses. An observation with a candidate tree and captured operation binds to that checkpoint. Compare its tree with the candidate being reviewed. Owner checks run in a networkless overlay. Observations before the last edit remain historical. The host observes GitHub checks, configured PR review, and the staging merge after independent acceptance. Unperformed Release gates remain future delivery observations. When publicationFailure is present, read its complete evidence and assess whether the actual reported engineering defect remains in the current candidate; reject its affected criteria and name the accountable owner. Preserve historical failure evidence after a correction. Use ask-question if human clarification is required. Once the assessment is complete, return one JSON verdict without code fences. Evidence includes complete retained-task-evidence index files and current artifact paths. Read an index to discover the original references, read the relevant complete artifacts, and cite their exact retained paths.',
     candidate: candidate.digest,
     ownerEvidenceDigest: candidate.ownerEvidenceDigest,
     diagnostic: undefined as string | undefined,

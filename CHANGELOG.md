@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Return failed hosted checks with their complete provider logs to independent assessment and accountable repair, retaining checkpoints and the existing staging PR across restarts (#687).
+
 ### Added
 
 - Teach discriminating public-boundary testing, evidence-reference fixtures and owner-consistent supplier requests, and make every Architect update assess component purpose and activity instruction effectiveness against objectives, goals and run findings (#678).

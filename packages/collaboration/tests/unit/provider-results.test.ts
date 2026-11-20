@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test, { type TestContext } from 'node:test';
-import { GitHub } from '../../src/index.js';
+import { GitHub, GitHubCheckFailure } from '../../src/index.js';
 
 export const suite = { owner: 'collaboration', level: 'unit', tags: ['delivery'] } as const;
 
@@ -14,10 +14,13 @@ class ProviderResults {
 
   /** Retain actual command inputs and supply explicit provider-page fixtures. */
   constructor(t: TestContext, result: (args: string[]) => string) {
-    const transport = this.provider as unknown as { command(args: string[]): Promise<string> };
-    t.mock.method(transport, 'command', async (args: string[]) => {
+    const transport = this.provider as unknown as {
+      command(args: string[], complete?: boolean): Promise<string>;
+    };
+    t.mock.method(transport, 'command', async (args: string[], complete = false) => {
       this.calls.push(args);
-      return result(args);
+      const output = result(args);
+      return complete ? output : output.trim();
     });
   }
 }
@@ -40,4 +43,33 @@ test('issue recovery examines every provider page before deciding an issue is ab
       : JSON.stringify(first),
   );
   assert.equal(await scenario.provider.findIssue(task, 'b'.repeat(64)), '207');
+});
+
+test('a failed pinned check carries the complete provider job log without trimming', async (t) => {
+  const log = '\nComplete provider log\n  actual assertion failure\nfinal conclusion\n\n';
+  const check = {
+    name: 'Repository checks',
+    status: 'COMPLETED',
+    conclusion: 'FAILURE',
+    detailsUrl: 'https://github.com/example/project/actions/runs/7/job/42',
+  };
+  const scenario = new ProviderResults(t, (args) =>
+    args[0] === 'api'
+      ? log
+      : JSON.stringify({
+          state: 'OPEN',
+          headRefOid: 'head',
+          baseRefName: 'staging',
+          statusCheckRollup: [check],
+        }),
+  );
+  await assert.rejects(scenario.provider.verify('pull', 'head', 'staging'), (error) => {
+    assert.ok(error instanceof GitHubCheckFailure);
+    assert.equal(error.pr, 'pull');
+    assert.equal(error.head, 'head');
+    assert.deepEqual(error.check, check);
+    assert.equal(error.log, log);
+    return true;
+  });
+  assert.deepEqual(scenario.calls[1], ['api', 'repos/example/project/actions/jobs/42/logs']);
 });
