@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { parse } from 'yaml';
 import type { JournalEvent } from '../../../coordination/src/index.js';
 import type { CompletedRefinementRound, TaskObserver } from '../../../workflow/src/index.js';
 import { RoundConsumptionFixture } from '../fixtures/round-consumption.js';
@@ -69,7 +70,13 @@ function consumptionGaps(observed: Observations, prior: CompletedRefinementRound
     assert.ok(attempts.length, 'real ' + actor + ' provider must run');
     for (const [index, attempt] of attempts.entries()) {
       const consumed = attempt.consumption.find(({ report }) => report === prior.report);
-      if (!consumed) {
+      const task = parse(
+        attempt.input.split('\n\n## Activity')[0]!.slice(attempt.input.indexOf('\n\nassignment:') + 2),
+      );
+      const advertised = task.assignment.completedRounds?.some(
+        (round: CompletedRefinementRound) => round.report === prior.report,
+      );
+      if (!consumed || !advertised) {
         missing.push(actor + ' attempt ' + index + ' omits completed round ' + prior.round);
         continue;
       }
@@ -114,7 +121,7 @@ function originatingMessages(attempt: Consumption, consumed: Consumption['consum
         createHash('sha256').update(record.item.text).digest('hex') === sha256,
     );
     assert.ok(message, 'the consumed identity resolves to the complete originating message');
-    return message.item.text as string;
+    return JSON.parse(message.item.text).summary as string;
   });
 }
 
