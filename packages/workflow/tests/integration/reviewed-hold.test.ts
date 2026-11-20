@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { type Plan, type RevisionRequest } from '../../../direction/src/index.js';
+import type { TaskObserver } from '../../src/index.js';
 import { type HoldContext } from '../../../execution/src/index.js';
 import { correction } from '../../../execution/tests/fixtures/reviewed-hold.js';
 import { gateAnswer, gateQuestion, ReviewedWorkflow } from '../fixtures/reviewed-hold.js';
@@ -195,14 +196,7 @@ function holdFeedback(held: HoldContext) {
 test('interruption after a secured split contribution reuses it before the successor and original review', async (t) => {
   const f = new ReviewedWorkflow(t, 'split');
   await f.prepare();
-  const stopped = await f.run({
-    progress() {},
-    event(event) {
-      const text = JSON.stringify(event);
-      if (text.includes('"activation":') && text.includes('"milestone":"part-a"'))
-        throw new Error('Interrupt after the first contribution was retained');
-    },
-  });
+  const stopped = await f.run(interruptFirstContribution());
   assert.equal(
     stopped.kind,
     'failed',
@@ -226,3 +220,12 @@ test('interruption after a secured split contribution reuses it before the succe
     'Delivery',
   ]);
 });
+
+/** Interrupt only after the real journal commits the successful contribution activation. */
+function interruptFirstContribution(): TaskObserver {
+  return { progress() {}, event(event) {
+    const observation = event.observation as { activation?: { milestone: string } };
+    if (observation.activation?.milestone === 'part-a')
+      throw new Error('Interrupt after the first contribution was retained');
+  } };
+}
