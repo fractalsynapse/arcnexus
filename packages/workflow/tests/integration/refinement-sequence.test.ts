@@ -128,15 +128,22 @@ test('a completed round exposes its report and originating evidence to the obser
   assert.ok(Array.isArray(round.evidence) && round.evidence.length > 0);
 });
 
+/** Read completed-round payloads from the public journal event envelope. */
+function completedRounds(events: readonly unknown[]) {
+  return events.flatMap((event) => {
+    if (typeof event !== 'object' || event === null) return [];
+    const observation = Reflect.get(event, 'observation');
+    if (typeof observation !== 'object' || observation === null) return [];
+    const round = Reflect.get(observation, 'completedRound');
+    return typeof round === 'object' && round !== null ? [round as Record<string, unknown>] : [];
+  });
+}
+
 /** Require completed invocations to retain distinct public identities. */
 function assertFreshInvocations(events: unknown[]) {
-  const rounds = events.filter(
-    (event) => typeof event === 'object' && event !== null && 'completedRound' in event,
-  );
+  const rounds = completedRounds(events);
   assert.equal(rounds.length, 2);
-  const identities = rounds.map((event) =>
-    Reflect.get(Reflect.get(event as object, 'completedRound'), 'invocation'),
-  );
+  const identities = rounds.map((round) => round.invocation);
   assert.ok(identities[0]);
   assert.notEqual(identities[0], identities[1], 'completed invocations have distinct identities');
 }
