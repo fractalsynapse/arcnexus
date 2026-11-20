@@ -116,6 +116,9 @@ test('child history includes canonical descendants across retries and excludes o
   assert(immediate.some((value) => JSON.stringify(value).includes('architect first finding')));
   assert(!immediate.some((value) => JSON.stringify(value).includes('supplier first finding')));
   const expected = uniqueOrdered(fixture.expected);
+  const query = fixture.root as unknown as Partial<DescendantJournal>;
+  assert.equal(typeof query.childTimeline, 'function', 'public descendant timeline is available');
+  assert.deepEqual(query.childTimeline!(phaseGoal, phaseScope), expected);
   fixture.root.finish({ kind: 'refined' });
   fixture.root.close();
   const unrelated = fixture.store.admit(remote, 'Unrelated root');
