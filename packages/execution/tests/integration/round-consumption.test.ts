@@ -9,11 +9,18 @@ export const suite = { owner: 'execution', level: 'integration', tags: ['regress
 
 /** Retain complete native diagnostics in the assertion log before temporary storage is removed. */
 function diagnostic(outcome: { evidence: readonly string[] }) {
-  return JSON.stringify(outcome) + '\n' + outcome.evidence.filter((path) =>
-    path.endsWith('codex.stderr.log')).map((path) => readFileSync(path, 'utf8')).join('\n');
+  return (
+    JSON.stringify(outcome) +
+    '\n' +
+    outcome.evidence
+      .filter((path) => path.endsWith('codex.stderr.log'))
+      .map((path) => readFileSync(path, 'utf8'))
+      .join('\n')
+  );
 }
 
-const answer = 'Preserve accepted intent exactly.\nThe complete second line and final conclusion survive.';
+const answer =
+  'Preserve accepted intent exactly.\nThe complete second line and final conclusion survive.';
 
 interface Consumption {
   component: string;
@@ -30,7 +37,9 @@ class Observations implements TaskObserver {
   readonly consumers: Consumption[] = [];
 
   /** Return the same complete human answer through the normal durable clarification gate. */
-  async answer() { return answer; }
+  async answer() {
+    return answer;
+  }
 
   /** Accept ordinary phase progress while canonical frames remain the evidence source. */
   progress() {}
@@ -84,27 +93,32 @@ function assertOrigins(
 test('EX-REF-ROUND-CONSUMPTION: real refinement feeds each next-round and fresh-invocation actor', async (t) => {
   const fixture = new RoundConsumptionFixture(t);
   const observed = new Observations();
-  const outcome = await fixture.reopen().refine(fixture.root, 2, observed,
-    new AbortController().signal);
+  const outcome = await fixture
+    .reopen()
+    .refine(fixture.root, 2, observed, new AbortController().signal);
   assert.equal(outcome.kind, 'planned', diagnostic(outcome));
   assert.equal(observed.rounds.length, 2, 'both rounds are produced by the public Workflow');
   const first = observed.rounds[0]!;
   const fresh = new Observations();
-  const next = await fixture.reopen().refine(fixture.root, 1, fresh,
-    new AbortController().signal);
+  const next = await fixture.reopen().refine(fixture.root, 1, fresh, new AbortController().signal);
   assert.equal(next.kind, 'planned', JSON.stringify(next));
   assert.notEqual(fresh.rounds[0]!.invocation, first.invocation);
-  assert.deepEqual({
-    nextRound: consumptionGaps(secondRound(observed), first),
-    freshInvocation: consumptionGaps(fresh, first),
-  }, { nextRound: [], freshInvocation: [] }, 'all prepared assessments must consume prior rounds');
+  assert.deepEqual(
+    {
+      nextRound: consumptionGaps(secondRound(observed), first),
+      freshInvocation: consumptionGaps(fresh, first),
+    },
+    { nextRound: [], freshInvocation: [] },
+    'all prepared assessments must consume prior rounds',
+  );
 });
 
 /** Select provider attempts by their actual journal position relative to the completed marker. */
 function secondRound(observed: Observations) {
   const later = new Observations();
   const completion = observed.events.findIndex(({ observation }) =>
-    Boolean((observation as Record<string, unknown>).completedRound));
+    Boolean((observation as Record<string, unknown>).completedRound),
+  );
   for (const frame of observed.events.slice(completion + 1)) {
     const detail = frame.detail as { event?: Consumption & { type?: string } } | undefined;
     if (detail?.event?.type === 'fixture.consumption') later.consumers.push(detail.event);
@@ -128,15 +142,19 @@ test('EX-REF-ROUND-RECOVERY: interrupted real assessment retains prior rounds an
   assert.equal(original.rounds.length, 1);
   const executable = fixture.install('replacement-v2');
   const resumed = new Observations();
-  const outcome = await fixture.reopen().refine(fixture.root, 2, resumed,
-    new AbortController().signal);
+  const outcome = await fixture
+    .reopen()
+    .refine(fixture.root, 2, resumed, new AbortController().signal);
   assert.equal(outcome.kind, 'planned', diagnostic(outcome));
   assert.equal(resumed.rounds.length, 1);
   assert.equal(resumed.rounds[0]!.invocation, original.rounds[0]!.invocation);
   assert.ok(resumed.consumers.every((consumer) => consumer.executable === executable));
   assertRecovery(original, resumed, fixture);
-  assert.deepEqual(consumptionGaps(resumed, original.rounds[0]!), [],
-    'resumed assessments must consume the original completed round');
+  assert.deepEqual(
+    consumptionGaps(resumed, original.rounds[0]!),
+    [],
+    'resumed assessments must consume the original completed round',
+  );
 });
 
 /** Keep historical identity and the durable answer while admitting the replacement executable. */
@@ -145,8 +163,8 @@ function assertRecovery(
   resumed: Observations,
   fixture: RoundConsumptionFixture,
 ) {
-  const starts = (events: JournalEvent[]) => events.filter(({ observation }) =>
-    Boolean((observation as Record<string, any>).nativeStarted));
+  const starts = (events: JournalEvent[]) =>
+    events.filter(({ observation }) => Boolean((observation as Record<string, any>).nativeStarted));
   const interrupted = starts(original.events).at(-1)!;
   const continued = starts(resumed.events)[0]!;
   assert.equal(continued.taskID, interrupted.taskID, 'the logical assessment survives reopening');
@@ -157,8 +175,13 @@ function assertRecovery(
   assert.equal(current.profile, old.profile, 'no automatic profile substitution');
   const historical = original.consumers.at(-1)!;
   assert.ok(historical.executable.endsWith('original-provider.mjs'));
-  assert.ok(resumed.consumers[0]!.input.includes('complete second line and final conclusion survive.'));
-  assert.equal(resumed.consumers.filter(({ component }) => component === 'planner').length, 1,
-    'the resumed Planner uses its complete answer without asking it again');
+  assert.ok(
+    resumed.consumers[0]!.input.includes('complete second line and final conclusion survive.'),
+  );
+  assert.equal(
+    resumed.consumers.filter(({ component }) => component === 'planner').length,
+    1,
+    'the resumed Planner uses its complete answer without asking it again',
+  );
   assert.equal(fixture.git('status', '--porcelain'), '', 'observation never edits accepted goals');
 }
