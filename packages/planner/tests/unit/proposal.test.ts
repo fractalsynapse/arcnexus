@@ -181,7 +181,12 @@ function observedProposal(selection: Selection, run: VerifiedGoalRun = verifiedR
   const proposed = {
     ...reply,
     ratings: [
-      { ...reply.ratings[0], evidence: 'demonstrated', run: { run: verifiedRun.id, ...selection } },
+      {
+        ...reply.ratings[0],
+        evidence: 'demonstrated',
+        reason: 'The selected observation supports the measure.',
+        run: { run: verifiedRun.id, ...selection },
+      },
     ],
   };
   return decodeProposal(proposed, capture, [id], false, run);
@@ -217,12 +222,14 @@ for (const { selection, category, observed } of selections) {
   test(`mapping report traces selected ${Object.keys(selection)[0]} to its verified run`, () => {
     const { capture } = new ProposalScenario();
     const proposal = observedProposal(selection);
-    const report = reportProposal(proposal, capture.source, []);
+    const report = reportProposal(proposal, capture.source, []).split(`## ${id} ·`)[1]!.split('\n## ')[0]!;
     assert(report.includes(verifiedRun.id), 'the verified run identity survives');
     assert(report.includes(`\`${verifiedRun.revision}\``), 'the evaluated revision survives');
     assert(report.includes('- Source ·'), 'accepted direction stays labelled as source');
     assert(report.includes(source.quote), 'the captured source quote survives');
     assert.match(report, category, 'the selected evidence category is explicit');
+    for (const other of selections.filter((entry) => entry.category !== category))
+      assert.doesNotMatch(report, other.category, 'other evidence categories are not claimed');
     assert(report.includes(observed), 'the exact selected observation is explicit');
     assert(!report.includes('owner-format'), 'an unselected check is not substituted');
     assert(!report.includes('approval-preserved'), 'an unselected criterion is not substituted');
