@@ -51,7 +51,7 @@ function authority(root: string, directory: string, revision: string) {
     source: {
       root,
       revision,
-      remote: 'https://example.invalid/project.git',
+      remote: 'https://github.com/fixture/project.git',
       paths: Object.keys(bodies),
       read: (path: string) => bodies[path],
     },
