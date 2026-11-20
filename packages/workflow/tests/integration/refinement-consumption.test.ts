@@ -154,9 +154,11 @@ test('later assessments receive the actual completed round in their prepared con
   const prior = rounds[0]!;
   for (const context of contexts.slice(4)) {
     const prepared = JSON.stringify(context);
-    assert.ok(prepared.includes(String(prior.report)), 'prepared assessment references prior report');
+    assert.ok(
+      prepared.includes(String(prior.report)),
+      'prepared assessment references prior report',
+    );
     for (const finding of prior.findings as string[])
       assert.ok(prepared.includes(finding), 'prepared assessment retains each originating finding');
   }
 });
-
