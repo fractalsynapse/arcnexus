@@ -235,6 +235,22 @@ test('retrying the same total resumes the interrupted invocation', async (t) => 
 
 
 
+/** Stop once the successful child terminal observation is durably forwarded. */
+function interruptAfterPlannedTerminal(): TaskObserver {
+  return {
+    progress() {},
+    event(event) {
+      const observation = Reflect.get(event, 'observation');
+      const outcome =
+        typeof observation === 'object' && observation !== null
+          ? Reflect.get(observation, 'outcome')
+          : undefined;
+      if (typeof outcome === 'object' && outcome?.kind === 'planned')
+        throw new Error('Interrupt after child terminal commit');
+    },
+  };
+}
+
 test('a committed child outcome is reused after parent acknowledgment is interrupted', async (t) => {
   const f = fixture(t);
   const services = providers(f, []);
@@ -247,37 +263,23 @@ test('a committed child outcome is reused after parent acknowledgment is interru
   });
   const workflow = new Workflow(services);
   const refine = Reflect.get(workflow, 'refine') as Refinement;
-  let interrupted = false;
-  const initial = {
-    progress() {},
-    event(event: unknown) {
-      const observation =
-        typeof event === 'object' && event !== null ? Reflect.get(event, 'observation') : undefined;
-      const outcome =
-        typeof observation === 'object' && observation !== null
-          ? Reflect.get(observation, 'outcome')
-          : undefined;
-      if (!interrupted && typeof outcome === 'object' && outcome?.kind === 'planned') {
-        interrupted = true;
-        throw new Error('Interrupt after child terminal commit');
-      }
-    },
-  };
-  await refine.call(workflow, f.root, 1, initial, new AbortController().signal);
-  assert.equal(interrupted, true);
-  const events: unknown[] = [];
-  await refine.call(
-    workflow,
-    f.root,
-    1,
-    { progress() {}, event: (event) => events.push(event) },
-    new AbortController().signal,
+  const first = await refine.call(
+    workflow, f.root, 1, interruptAfterPlannedTerminal(), new AbortController().signal,
   );
+  assert.equal(Reflect.get(first as object, 'kind'), 'failed');
+  const events: unknown[] = [];
+  await refine.call(workflow, f.root, 1, {
+    progress() {},
+    event: (event) => events.push(event),
+  }, new AbortController().signal);
   assert.equal(assessments, 1, 'the successful Planner child was not assessed again');
   const round = completedRounds(events)[0]!;
   const report = readFileSync(Reflect.get(round, 'report') as string, 'utf8');
   assert.match(report, /Plan origin finding 1/);
   assert.match(report, /Reused completed child outcome for refine:/);
+  assert.match(report, /"summary":"The measured goal holds"/);
+  assert.match(report, /"assessment":\\{"kind":"satisfied"/);
+  assert.ok((Reflect.get(round, 'findings') as unknown[]).length >= 4);
 });
 
 test('a competing foreground task is refused while the refinement phase runs', async (t) => {
