@@ -433,43 +433,38 @@ test('an interrupted Run retains its captured goals and the next round captures 
   assert.deepEqual(calls, refreshedOrder);
 });
 
+/** Return a valid exploration proposal through the real Planner decoder. */
+function explorationProposal() {
+  const rating = (id: string) => ({
+    id,
+    alignment: 'strong',
+    evidence: 'unverified',
+    reason: 'The captured goal remains relevant',
+    sources: [{ path: `.arc/goals/${id}.md`, quote: id === 'first' ? 'First goal' : 'Second goal' }],
+    observations: [],
+  });
+  return {
+    summary: 'Distinct retained exploration finding',
+    ratings: [rating('first'), rating('second')],
+    comparison: ['No conflicting coverage'],
+    changes: [],
+    links: [],
+    sources: [],
+  };
+}
+
 test('each round invokes the real Planner in project-exploration mode', async (t) => {
   const f = fixture(t);
   const services = providers(f, []);
   const modes: unknown[] = [];
-  t.mock.method(
-    HostTask.prototype,
-    'activate',
-    async function (_agent: Agent, _selection: unknown, data: TaskContext) {
-      const assignment = data.assignment as { mode: string };
-      modes.push(assignment.mode);
-      return {
-        summary: 'Distinct retained exploration finding',
-        ratings: [
-          {
-            id: 'first',
-            alignment: 'strong',
-            evidence: 'unverified',
-            reason: 'The captured goal remains relevant',
-            sources: [{ path: '.arc/goals/first.md', quote: 'First goal' }],
-            observations: [],
-          },
-          {
-            id: 'second',
-            alignment: 'strong',
-            evidence: 'unverified',
-            reason: 'The captured goal remains relevant',
-            sources: [{ path: '.arc/goals/second.md', quote: 'Second goal' }],
-            observations: [],
-          },
-        ],
-        comparison: ['No conflicting coverage'],
-        changes: [],
-        links: [],
-        sources: [],
-      };
-    },
-  );
+  t.mock.method(HostTask.prototype, 'activate', async function (
+    _agent: Agent,
+    _selection: unknown,
+    data: TaskContext,
+  ) {
+    modes.push((data.assignment as { mode: string }).mode);
+    return explorationProposal();
+  });
   services.planner = new Planner({} as Agent);
   const workflow = new Workflow(services);
   const refine = Reflect.get(workflow, 'refine') as Refinement;
