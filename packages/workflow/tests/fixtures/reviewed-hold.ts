@@ -39,7 +39,7 @@ import {
   type WorkflowServices,
 } from '../../src/index.js';
 
-export type Scenario = 'split' | 'repeat' | 'progress' | 'human' | 'external';
+export type Scenario = 'split' | 'repeat' | 'diagnostic' | 'progress' | 'human' | 'external';
 export const gateQuestion = 'Approve the corrected schema architecture?';
 export const gateAnswer =
   'Approve schema A.\n\nKeep the original criterion and captured ownership.';
