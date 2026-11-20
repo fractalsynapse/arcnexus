@@ -33,7 +33,6 @@ class RoundConsumer {
       this.completions.set(completion.invocation + ':' + completion.round, completion);
       await this.discover(completion.report);
     }
-    for (const path of this.task.evidence) await this.discover(path);
     const consumption = await this.consume();
     this.emit({
       type: 'fixture.consumption',
