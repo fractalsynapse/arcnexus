@@ -414,7 +414,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Validate the public project information and executable guidance obligations relevant to the milestone. Use explicit fixtures for generic document/contract checks and the real repository only where self-development acceptance explicitly calls for it. Check referenced canonical files, declared ownership, stages and the distinction between approved guides and generated plans or learning.
@@ -443,7 +443,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Implement the accepted project-owned outcome through its existing documents or public package surface, preserving the charter and development direction as the canonical high-level guides. Do not put runtime orchestration, tracking-provider effects, release commands or another owner's private implementation into Project because its scope appears broad.

@@ -179,7 +179,7 @@ activities:
     standards: [agent-operating-protocol]
   testing:
     role: designer
-    profile: gpt-terra
+    profile: gpt-sol
     instructions:
       - |
         Exercise the workflow or release-infrastructure obligation at its actual public boundary. Validate workflow syntax, pinned action references, trigger/permission behavior, shared TypeScript/build/quality checks and refusal of tracked JavaScript where affected. Use explicit fixture workflows or the actual checked-in configuration as appropriate; a regex matching one job name cannot prove that a required check executes.
@@ -210,7 +210,7 @@ activities:
       - repository-build
   implementation:
     role: systems-engineer
-    profile: gpt-luna
+    profile: gpt-sol
     instructions:
       - |
         Implement the authorized workflow, ignore, changelog or release-documentation change within Release's ownership. Reuse Foundation's shared toolchain and checks instead of duplicating build/type/quality logic in each workflow. Pin external actions according to accepted project policy and preserve the actual trigger, permissions and required check names relied on by delivery.
