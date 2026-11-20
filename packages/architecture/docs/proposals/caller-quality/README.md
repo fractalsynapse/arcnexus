@@ -1,8 +1,9 @@
 # Caller and Testing instruction correction
 
-Status: proposed for exact human review in
-[#678](https://github.com/fractalsynapse/arcnexus/issues/678). Active guidance,
-locked contracts and the registry remain unchanged.
+Status: the architect approved this exact batch and delegated application in
+[the recorded human decision](https://github.com/fractalsynapse/arcnexus/issues/678#issuecomment-7042218618).
+Before and after digests were verified during application. Locked contracts and
+the registry remain unchanged. Engineering checks and live results are separate.
 
 - [Exact guidance diff](guidance.patch), SHA-256
   `25a53ca4e47f3fea054a2a109fff5446381f56ec84076d10010ed5e763c78e8e`.

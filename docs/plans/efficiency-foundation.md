@@ -754,7 +754,8 @@ batch is [caller-quality](../../packages/architecture/docs/proposals/caller-qual
 Testing must reject plausible wrong behavior, fixture responses must reference
 complete original artifacts instead of recursively copying them, and every Architect
 update must assess purpose/activity effectiveness against objectives, goals and
-run findings. Active guides await exact human approval. Live resumption and the
+run findings. The architect approved exact patch `25a53ca4e47f`; its guide bytes were applied
+with verified before/after digests. Live resumption and the
 three-round production qualification remain outstanding.
 
 
@@ -768,3 +769,11 @@ integration. The final assembled native-enabled run passed all 437 tests with no
 failures or skips. Formatting, lint, strict TypeScript and specification/ownership/
 contract/link/skill checks passed. These are local engineering observations;
 current-head CI, staging delivery and live #668 resumption remain separate.
+
+
+The architect also requested comparison of the next updated run with attempt 106.
+Retain the original checkpoint, actor outputs, review findings, repair routes,
+request sizes and profile-specific time/token measurements before resumption.
+Compare actual subsequent output and progress, not only passing counts. The host
+validation correction and guidance both change; resumed pending work differs from
+the prior full attempt, so aggregate differences do not isolate prompt causality.

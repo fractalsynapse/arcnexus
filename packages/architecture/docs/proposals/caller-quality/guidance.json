@@ -1,7 +1,7 @@
 {
   "baseline": "c5655fb42b1d270d2f3870f6a7602c3044e53f64",
   "patchSHA256": "25a53ca4e47f3fea054a2a109fff5446381f56ec84076d10010ed5e763c78e8e",
-  "status": "proposed; awaiting exact human approval before application",
+  "status": "human approved exact patch; applied with verified baseline and resulting digests",
   "changes": [
     {
       "path": ".arc/architecture/roles/designer.yaml",
@@ -23,5 +23,6 @@
       "beforeSHA256": "c08a55f36c3073d8ee020c140e828f9d7a85a69f891d1fb9335d85cccaab5030",
       "afterSHA256": "e5435047cf64413b40b631926c6f53f61f1ecf4d67f7e3d5ee6b46b874a34db2"
     }
-  ]
+  ],
+  "approval": "https://github.com/fractalsynapse/arcnexus/issues/678#issuecomment-7042218618"
 }

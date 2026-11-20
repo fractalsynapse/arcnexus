@@ -360,6 +360,18 @@ purpose: |
   and unverified monetary cost remain unknown. Measurement does not authorize
   budgets, automatic profile changes or content limits.
 
+  The component purposes and activity instructions are executable operating guidance
+  for the team's Agents, and assessing their effectiveness is a standing Architecture
+  responsibility. Compare what the accepted objectives and goals require with what
+  the actual requests told each actor to do and what the run shows it did. Repeated
+  shallow tests, invalid supplier links and wasteful evidence fixtures are reasons
+  to inspect the responsible purpose, activity, shared role and standard together.
+  Distinguish a missing or misleading instruction from an ignored adequate one, an
+  unavailable operation and a missing host invariant. Improve the canonical source
+  with a concrete decision procedure or relevant example and propose enforcement
+  when correctness cannot depend on agent compliance. Preserve complete evidence
+  and assess the next run's behavior before claiming an instruction fixed the problem.
+
   Later assessments should consume previous round findings and evaluate whether
   an accepted change improved real behavior. Compare useful delivery, local repair,
   fixture validity, redundant checks, request sizes and elapsed effort. Record
@@ -386,6 +398,12 @@ activities:
     instructions:
       - |
         Assess the accepted objectives and goals against the current integrated architecture, implementation and retained execution findings. An explicit feedback argument focuses this assessment; its absence requires general alignment, not an invented new objective. Read the current components, roles, operations, standards, contracts and registry together. Follow actual failure evidence to the responsible boundary before proposing another mechanism.
+
+        Treat component purposes and activity instructions as assessment inputs on every architecture update, including general alignment without feedback. Compare them with approved objectives, success measures, current implementation and the complete relevant run findings. Use the captured catalog to locate each component and its activities, then follow observed failures and inefficient handoffs to the full selected purpose, procedure, role, standard, operation schema and actual activation request. General alignment must consider guidance quality alongside structural and operation alignment; focused feedback selects the relevant behavior without hiding an observed conflicting guide. Do not assume that passing format/types checks or a long prompt proves an agent knew how to meet the outcome.
+
+        For a missed test obligation, identify the weak assertion or fixture and what the original Testing instructions failed to make actionable. For an invalid supplier request, compare the request with the accepted milestone owner and determine whether caller feedback, clearer instructions and host validation are each needed. For recursive fixture growth, trace which observation was copied into a later response and preserve the original artifact through references rather than deleting or truncating evidence. Examine enough of the complete relevant timeline to distinguish an instruction defect, a fixture implementation defect, an ignored adequate instruction and an unavailable capability. Do not guess causality from the profile name, add quantitative limits or automatically change profiles.
+
+        Propose the smallest coherent improvement at its canonical source: component-specific purpose or activity for local decisions, shared role or standard for shared method, and host behavior for an invariant that must hold despite a mistaken response. Explain the observed pattern, desired decision and a discriminating regression or later live observation that would test the improvement. Keep transient run results in the assessment and learning records rather than in durable purpose text. Preserve adequate instructions and justified no-change outcomes; do not rewrite everything merely because a new assessment ran. Later assessments must inspect whether prior accepted instruction changes improved outcomes, repair routes and measured effort, and retain uncertainty when code or profile changes prevent attribution.
 
         Return either a justified no-change assessment or one reviewable architecture batch in the host-supplied response schema. State purpose, consequences, exact changed content and any prerequisite implementation. Distinguish an instruction correction, an operation parameter or verification mapping, a capability implementation and a locked obligation. A new declaration does not install its handler. Preserve ownership, original acceptance and the active activation's authority while allowing recorded host adoption between activities.
 
