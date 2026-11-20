@@ -26,7 +26,10 @@ function fixture(t: TestContext) {
   git('add', '.');
   git('commit', '-m', 'baseline');
   git('remote', 'add', 'origin', root);
-  writeFileSync(join(root, '.git', 'bindings.yaml'), `schemaVersion: 1\ntools:\n  codex: ${process.execPath}\n`);
+  writeFileSync(
+    join(root, '.git', 'bindings.yaml'),
+    `schemaVersion: 1\ntools:\n  codex: ${process.execPath}\n`,
+  );
   const capture = authority(root, git('rev-parse', 'HEAD'));
   const architecture = { capture: () => capture } as unknown as Architecture;
   const storage = join(directory, 'state');
@@ -54,7 +57,12 @@ function authority(root: string, revision: string): Capture {
 test('refinement root resumes unfinished identity and starts fresh after completion', async (t) => {
   const { root, execution } = fixture(t);
   const signal = new AbortController().signal;
-  const input = { directory: root, goal: 'Continuous refinement', scope: 'refine', refinement: true };
+  const input = {
+    directory: root,
+    goal: 'Continuous refinement',
+    scope: 'refine',
+    refinement: true,
+  };
   const first = await execution.admit(input, signal);
   assert(first instanceof HostTask);
   first.finish({ kind: 'cancelled', reason: 'interrupted', evidence: [] });
@@ -74,12 +82,21 @@ test('refinement root resumes unfinished identity and starts fresh after complet
 test('sequential children share the refinement writer while competing roots are refused', async (t) => {
   const { root, execution } = fixture(t);
   const signal = new AbortController().signal;
-  const input = { directory: root, goal: 'Continuous refinement', scope: 'refine', refinement: true };
+  const input = {
+    directory: root,
+    goal: 'Continuous refinement',
+    scope: 'refine',
+    refinement: true,
+  };
   const parent = await execution.admit(input, signal);
   assert(parent instanceof HostTask);
   t.after(() => parent.close());
   for (const phase of ['Plan', 'Architect', 'Goal']) {
-    const child = await execution.admit({ directory: root, goal: phase, scope: phase }, signal, parent);
+    const child = await execution.admit(
+      { directory: root, goal: phase, scope: phase },
+      signal,
+      parent,
+    );
     assert(child instanceof HostTask);
     const competing = await execution.admit({ directory: root, goal: 'Competing task' }, signal);
     assert(!(competing instanceof HostTask));
