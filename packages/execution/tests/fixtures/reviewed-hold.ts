@@ -75,7 +75,16 @@ export class ReviewedHoldFixture {
     private readonly relevance?: 'arguments' | 'selection',
   ) {
     this.milestone = relevance
-      ? JSON.parse(JSON.stringify(correction).replace('Repair fixture.txt', 'Repair reviewed behavior'))
+      ? {
+          ...correction,
+          steps: correction.steps.map((step) => ({
+            ...step,
+            checklist: step.checklist.map((item) => ({
+              ...item,
+              expected: 'Repair reviewed behavior',
+            })),
+          })),
+        }
       : correction;
     mkdirSync(this.root);
     this.source();
@@ -97,7 +106,9 @@ export class ReviewedHoldFixture {
         {
           owner: 'owner',
           criterion: 'original-criterion',
-          reason: this.relevance ? 'Reviewed context A is lost' : 'fixture.txt loses reviewed context A',
+          reason: this.relevance
+            ? 'Reviewed context A is lost'
+            : 'fixture.txt loses reviewed context A',
           evidence: [report],
         },
         {
@@ -292,7 +303,13 @@ export class ReviewedHoldFixture {
 
   /** Produce a host hold through the public Execution steward boundary, never a model blocked claim. */
   run(): Promise<ActivityOutcome> {
-    return steward(new Agent(new Architecture()), this.task, this.milestone, 'implementation', signal);
+    return steward(
+      new Agent(new Architecture()),
+      this.task,
+      this.milestone,
+      'implementation',
+      signal,
+    );
   }
 
   /** Reopen durable state and reconstruct a clean worktree from the same secured checkpoint. */
