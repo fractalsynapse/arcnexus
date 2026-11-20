@@ -341,7 +341,26 @@ function completedChild(
   const frames = hostTask(parent).journal.childEvents(goal, scope) as Record<string, unknown>[];
   const terminal = frames.findLast((event) => 'outcome' in event)?.outcome as
     TaskOutcome | undefined;
-  return terminal && kinds.includes(terminal.kind) ? terminal : undefined;
+  if (!terminal || !kinds.includes(terminal.kind)) return undefined;
+  parent.record({
+    phase: 'planning',
+    message: `Reused completed child outcome for ${scope}: ${terminal.kind}`,
+    evidence: terminal.evidence,
+  });
+  return terminal;
+}
+
+/** Select durable recovery observations without copying assessment content. */
+function recoveryObservations(events: readonly unknown[]) {
+  return events.filter(
+    (event) =>
+      typeof event === 'object' &&
+      event !== null &&
+      'phase' in event &&
+      Reflect.get(event, 'phase') === 'planning' &&
+      typeof Reflect.get(event, 'message') === 'string' &&
+      Reflect.get(event, 'message').startsWith('Reused completed child outcome for '),
+  );
 }
 
 /** Distinguish successful assessments from pending or failed task outcomes. */
