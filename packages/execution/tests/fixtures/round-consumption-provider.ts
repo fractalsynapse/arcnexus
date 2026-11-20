@@ -95,22 +95,6 @@ class RoundConsumer {
     });
   }
 
-  /** Discover markers and their registered origins without inventing a completed-round record. */
-  private async visit(value: any): Promise<void> {
-    if (!value || typeof value !== 'object') return;
-    if (value.completedRound) {
-      const round = value.completedRound as Completion;
-      this.completions.set(round.invocation + ':' + round.round, round);
-      await this.discover(round.report);
-    }
-    if (Array.isArray(value.references))
-      for (const path of value.references)
-        if (typeof path === 'string' && !path.endsWith('-mcp-observation.json'))
-          await this.discover(path);
-    for (const entry of Object.values(value))
-      if (typeof entry === 'object') await this.visit(entry);
-  }
-
   /** Cite exact originating identities, measurements, findings and full human answers. */
   private async consume() {
     const consumed: unknown[] = [];
