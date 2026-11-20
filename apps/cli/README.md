@@ -319,8 +319,8 @@ handoff through the SDK into the retained invocation, including adjacent totals
 above JavaScript's safe-integer range and a decimal beyond its finite number
 range. They need only reach a deliberate durable pending phase to observe the
 requested total; executing that many rounds is unnecessary. Invalid argument
-cases must prove exit 2, empty stdout and no admission. Process-level cancellation and pending-input cases must demonstrate
-the shared SDK path and documented exits; retry must preserve the unfinished
+cases must prove exit 2, empty stdout and no admission. Process-level cancellation
+and pending-input cases must demonstrate the shared SDK path and documented exits; retry must preserve the unfinished
 position rather than replay completed work. Existing task/publication regressions
 cover preserved machinery. Controlled fixtures establish deterministic behavior,
 not live model acceptance or actual GitHub delivery.
