@@ -161,6 +161,31 @@ test('an interrupted invocation refuses a changed round total before reassessmen
   assert.deepEqual(calls, before, 'a changed total must not restart assessment');
 });
 
+test('retrying the same total resumes the interrupted invocation', async (t) => {
+  const f = fixture(t);
+  const calls: string[] = [];
+  const scenario = interruptProviders(f, calls, 'Architect');
+  const workflow = new Workflow(scenario.services);
+  const refine = Reflect.get(workflow, 'refine') as Refinement;
+  assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
+  await refine
+    .call(workflow, f.root, 2, { progress() {} }, scenario.controller.signal)
+    .catch(() => {});
+  assert.equal(scenario.interrupted(), true);
+  await refine.call(workflow, f.root, 2, { progress() {} }, new AbortController().signal);
+  assert.deepEqual(calls, [
+    'Plan',
+    'Architect',
+    'Architect',
+    'First goal',
+    'Second goal',
+    'Plan',
+    'Architect',
+    'First goal',
+    'Second goal',
+  ]);
+});
+
 test('a competing foreground task is refused while the refinement phase runs', async (t) => {
   const f = fixture(t);
   const services = providers(f, []);
