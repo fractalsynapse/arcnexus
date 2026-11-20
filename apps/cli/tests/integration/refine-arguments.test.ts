@@ -39,7 +39,11 @@ test('GW-29: refinement accepts default and positive rounds with either JSON pla
   ]) {
     const result = scenario.run(args);
     assert.equal(result.error, undefined, args.join(' '));
-    assert.doesNotMatch(result.stderr, /Command unavailable|Usage: arcnexus refine/, args.join(' '));
+    assert.doesNotMatch(
+      result.stderr,
+      /Command unavailable|Usage: arcnexus refine/,
+      args.join(' '),
+    );
   }
 });
 
