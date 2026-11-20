@@ -310,7 +310,9 @@ function retainedFrames(parent: TaskSession, goal: string, scope: string): Journ
   const records = host.journal.childEvents(goal, scope) as Record<string, unknown>[];
   const path = records
     .map((record) => record.artifact)
-    .find((item): item is string => typeof item === 'string' && item.endsWith('run-timeline.jsonl'));
+    .find(
+      (item): item is string => typeof item === 'string' && item.endsWith('run-timeline.jsonl'),
+    );
   if (!path) throw new Error('Missing retained timeline for refinement child: ' + scope);
   return host
     .readFile(path)
