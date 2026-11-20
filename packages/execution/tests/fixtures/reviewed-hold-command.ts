@@ -11,7 +11,11 @@ function main() {
     return;
   }
   const input = readFileSync('fixture.txt', 'utf8');
-  console.error('Error: rejected criterion still fails\nRelevant input: ' + input);
+  console.error(
+    process.argv[3] === 'stable'
+      ? 'Error: reviewed behavior still fails'
+      : 'Error: rejected criterion still fails\nRelevant input: ' + input,
+  );
   process.exitCode = 37;
 }
 
