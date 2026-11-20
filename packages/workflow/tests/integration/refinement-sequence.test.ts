@@ -442,9 +442,10 @@ test('each round invokes the real Planner in project-exploration mode', async (t
     };
   });
   services.planner = new Planner({} as Agent);
-  const refine = Reflect.get(new Workflow(services), 'refine') as Refinement;
+  const workflow = new Workflow(services);
+  const refine = Reflect.get(workflow, 'refine') as Refinement;
   await refine.call(
-    new Workflow(services),
+    workflow,
     f.root,
     2,
     { progress() {} },
