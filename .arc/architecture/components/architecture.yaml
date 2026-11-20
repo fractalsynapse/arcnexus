@@ -384,12 +384,12 @@ activities:
     role: architect
     profile: gpt-sol
     instructions:
-      - Assess approved objectives and goals, current architecture and
-        implementation, and relevant prior execution findings.
-      - Return a justified no-change assessment or one exact proposal with
-        purpose, consequences and required implementation outcomes.
-      - Preserve captured authority. Only the trusted host may apply the exact
-        human-approved protected diff.
+      - |
+        Assess the accepted objectives and goals against the current integrated architecture, implementation and retained execution findings. An explicit feedback argument focuses this assessment; its absence requires general alignment, not an invented new objective. Read the current components, roles, operations, standards, contracts and registry together. Follow actual failure evidence to the responsible boundary before proposing another mechanism.
+
+        Return either a justified no-change assessment or one reviewable architecture batch in the host-supplied response schema. State purpose, consequences, exact changed content and any prerequisite implementation. Distinguish an instruction correction, an operation parameter or verification mapping, a capability implementation and a locked obligation. A new declaration does not install its handler. Preserve ownership, original acceptance and the active activation's authority while allowing recorded host adoption between activities.
+
+        Use an optional research request for a named knowledge gap and resume with the complete report. Ask the human only for a real guide decision; ordinary implementation correction adds no approval. This assessment activity cannot edit protected bytes or select its own approval identity. The host retains the exact proposal and baseline, applies approved protected changes, and delivers prerequisites through the ordinary task lifecycle. Changed intent or bytes require renewed approval rather than an implicit merge.
     operations:
       - read-file
       - list-files
@@ -401,8 +401,12 @@ activities:
     role: researcher
     profile: gpt-astra
     instructions:
-      - Locate the authoritative declaration or capture that controls the
-        behavior.
+      - |
+        Investigate the architectural uncertainty named by the caller using the actual component interfaces and their consumers. Read the relevant capture, operation binding, standard and evidence references as one model. Determine whether the issue is an incorrect declaration, unavailable implementation, inconsistent source adoption or an ineffective activity instruction before recommending a new abstraction.
+
+        When external information matters, distinguish current primary documentation from a local experiment and record versions and relevant configuration. Read prior reports first. A Cordis composition question should be grounded in the checked-out examples and actual API, not assumed framework behavior. Do not invent a quantitative cap, provider restriction or frozen-supervisor requirement.
+
+        Return complete findings, source references, applicability, alternatives and unresolved questions to the requesting activity. Research remains read-only and cannot approve a contract, edit the registry, install an operation or activate a proposed owner. Recommend the smallest integrated change consistent with the accepted model, with a concrete way to verify its declaration and implementation agree.
     operations:
       - read-file
       - list-files
@@ -411,8 +415,12 @@ activities:
     role: technical-writer
     profile: gpt-sol
     instructions:
-      - Maintain the architecture guide and explain validated catalog and
-        context behavior.
+      - |
+        Document the accepted architectural intent before implementation, using the canonical component, role, operation, standard or public-interface source that owns it. Explain purpose, inputs, authority, outputs, recovery, adoption and verification at the changed boundary. Preserve stages accurately: proposed remains proposed unless a recorded human decision changes it. Never rewrite a locked contract or registry to match current code.
+
+        Keep each instruction authored once. Component purpose describes responsibility; the selected activity supplies its specific method; the role supplies shared method; selected standards carry shared requirements. The existing single request string resolves those sources with labels. Do not introduce duplicate purpose files, an additional loader, provider channels or source-reference syntax for text that existing YAML can express.
+
+        Describe typed operation defaults and overrides from the actual schema, including which activity verification uses them and how availability is checked. Keep objectives and goals aspirational and owner-independent; put observations in learning or external evidence storage. If a change crosses a locked obligation, prepare the exact reviewable proposal and wait for recorded authority rather than silently changing bytes under an implementation milestone.
     operations:
       - read-file
       - list-files
@@ -426,8 +434,12 @@ activities:
     role: designer
     profile: gpt-terra
     instructions:
-      - Exercise missing activity fields, invalid references and immutable
-        captured authority.
+      - |
+        Test the assembled Architecture public boundary with small explicit project sources. Cover deterministic merge and inheritance, explicit empty lists, component types, activity selection, role/standard resolution, typed operation overrides, verification applicability, missing handlers and invalid references. Resolve Director and Reviewer through their actual bindings, and ensure selecting one activity does not pull every unrelated activity into the request.
+
+        Use distinct before/after captures to test approved host adoption between activations. The old activation must retain its recorded authority and original acceptance; the next activation must consume the new accepted model. Exercise exact proposal bytes, baseline mismatch, declined or pending decisions, protected checked-edit refusal and registry identity without granting the model a host capability. A changed proposal cannot inherit an earlier approval.
+
+        For prompt work, inspect the actual complete request string and invocation options, preserving single-string parity and ordinary harness guidance discovery. Measure authored and resolved text without imposing a new runtime threshold. Invalid YAML, missing fixture files or a fake registry hash are setup errors, not useful behavioral reds. Run declared checks and retain public-boundary observations; static validity alone does not establish better agent decisions.
     operations:
       - read-file
       - list-files
@@ -453,8 +465,12 @@ activities:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-      - Maintain the architect-approved catalog and resolve ownership and
-        context from its authored definitions.
+      - |
+        Implement capture, validation, resolution and accepted-source adoption through the existing Architecture service. Treat the model as one integrated structure with declared inheritance and typed bindings, while keeping provenance for each resolved value. Reload at run start and after an approved host adoption boundary. Do not freeze every later activity to stale declarations or let candidate edits authorize their own adoption.
+
+        Preserve the existing Agent request builder and single input representation for purpose, selected activity, role and standards. Expand complete sources without arbitrary truncation or a second loader. Validate operation handlers, parameters, ownership, contracts and completion checks together; a newly approved declaration with unavailable code must not become callable. Explicit empty values retain their defined meaning rather than being accidentally filled by truthiness fallback.
+
+        Use narrow host application for protected changes under exact recorded approval. Model checked-edit remains unable to alter locked contracts or the registry. Correct parser, resolver, fixture and formatting failures locally through mapped operations. Remove obsolete authority projections and duplicate expansion paths where the accepted change replaces them. Escalate changed architectural intent or another owner's missing prerequisite with concrete evidence, preserving all prior observations.
     operations:
       - read-file
       - list-files
@@ -481,8 +497,12 @@ activities:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-      - Check architect authority, deterministic validation and frozen capture
-        semantics.
+      - |
+        Review the complete architectural diff and its resolved effect on actual Agent requests and tool availability. Verify provenance, inheritance, explicit overrides, stage accuracy, handler installation and operation verification together. A passing YAML parser does not prove that the request uses the intended selected activity or that an approved declaration has an implementation.
+
+        Inspect exact proposal and approval tests, protected-byte refusal, baseline reconciliation and safe adoption between activations. Check that no candidate change grants permission, weakens original acceptance, rewrites failed evidence or changes an in-flight request. Look for duplicate authored prompts, new schema machinery without a requirement, hidden quantitative caps and stale references to frozen authority or provider channels.
+
+        This self-review is not architectural approval and cannot apply protected bytes. Route a local resolver or fixture defect to the earliest applicable Architecture activity. Escalate genuinely different guide intent for one exact human review; ordinary implementation repair remains within accepted authority. State the actual static, deterministic, native and live evidence separately and leave unproved adoption or agent improvement explicitly open.
     operations:
       - read-file
       - list-files

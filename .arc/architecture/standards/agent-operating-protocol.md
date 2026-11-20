@@ -393,6 +393,31 @@ checked effects, cancellation, evidence honesty and independent verification.
 
 ## Return the result that actually occurred
 
+When a correction concerns a test or fixture you own, repair it in the current
+Implementation activity if the earlier Testing activity is inapplicable or absent
+from the available rewind targets. Test files are not reserved for a different
+activation merely because their names contain `test`. Read the actual public
+record shape, correct the assertion or setup without weakening its intended
+behavior, run the relevant mapped check and continue the accepted contribution.
+A request to rewind to the activity already running does not perform that work
+and is not a valid substitute for an available local edit.
+
+Before requesting another supplier contribution, compare its outcome with your
+current assignment and the accepted pending work. If the requested result is
+your own later Implementation Step, complete the valid present Step and allow
+the sequential lifecycle to advance. A missing method may be the expected red
+for a new capability; it is not automatically a missing supplier. Conversely,
+when another owner truly must add a public behavior, identify that behavior and
+the blocked acceptance clearly. This distinction prevents circular handoffs
+without replacing real assembled integration with a permanently mocked result.
+
+After a local repair, evaluate the original finding as well as the newest error.
+A green check obtained by reverting the attempted correction leaves the original
+acceptance unresolved. Report the attempted change, observed failure and retained
+current state honestly, then use the available owned path to finish the correction.
+Do not turn inability to choose a valid rewind into a claim that the component's
+ordinary implementation work is impossible.
+
 Before completion, compare the current accepted checklist with actual work and
 applicable checks. Resolve required-pass failures and unanswered dependencies;
 preserve intended red and deliberate negative cases as distinct evidence. Avoid

@@ -14,8 +14,12 @@ activities:
     role: researcher
     profile: gpt-astra
     instructions:
-      - Resolve the verified candidate identity and the provider observation
-        needed to deliver it.
+      - |
+        Investigate the actual publication or reconciliation question using the accepted candidate, engineering base, independent verdict and retained provider observations. Distinguish issue identity, checkpoint branch, proposed PR head, verified candidate digest, merge commit and current staging head. A matching branch name alone does not establish that the candidate was accepted or merged.
+
+        Read complete existing publication evidence before recommending a retry. Determine whether the effect is uncertain, still pending, definitively absent, already complete or exposing an engineering defect. Consult current primary provider documentation only for a named uncertain behavior and record the relevant native configuration. Do not treat an unavailable observation as proof no PR exists.
+
+        Return complete findings, sources, applicability and the next authorized observation. Research does not publish, merge, edit the candidate or accept work. Recommend reuse of the retained issue and PR identity rather than a fresh publication path. Staging delivery remains distinct from production release.
     operations:
       - read-file
       - list-files
@@ -24,7 +28,12 @@ activities:
     role: technical-writer
     profile: gpt-sol
     instructions:
-      - State the staging gates and failure behavior at the delivery boundary.
+      - |
+        Document the accepted candidate-publication boundary using the actual production assembled record. Explain the engineering base retained as publication parent, the accepted architecture source, candidate digest, independent verdict and final verified head. Show why these identities differ and why an assignment-shaped fixture cannot prove the production record is handled correctly.
+
+        Describe one staging PR, actual CI and configured review observation, expected-head merge and storage of the returned merge identity. A checkpoint push is not candidate acceptance. Pending checks remain pending; an unavailable external prerequisite is a named hold. Uncertain effects are observed before retry, preserving the existing issue and PR. A publication-discovered defect returns to accountable engineering repair with affected checks and independent review refreshed.
+
+        Keep implementation, verification and delivery responsibility separate without creating another status store. Delivery cannot edit or accept its own candidate, approve a PR, bypass checks or merge main. Document current behavior and evidence links honestly, and keep release and simulation capabilities deferred.
     operations:
       - read-file
       - list-files
@@ -38,8 +47,12 @@ activities:
     role: designer
     profile: gpt-terra
     instructions:
-      - Exercise a wrong candidate, changed upstream state, pending checks and
-        recorded merge.
+      - |
+        Construct the Delivery regression from the actual production assembled candidate shape, including retained engineering base, architecture identity, candidate digest and accepting verdict. Assert the real publication parent rather than supplying an assignment-shaped shortcut. Cover missing or mismatched verdict, unauthorized scope, changed head and refusal of candidate mutation.
+
+        Use an isolated provider to model one PR, pending CI/review, unavailable prerequisites, a successful verified-head merge and an uncertain push/PR/merge response. Reopen retained state and observe the existing effect before retry; assert one issue/PR and one recorded merge identity. A repeated invocation of an already merged candidate must report the retained fact, not publish again.
+
+        Exercise publication-discovered engineering failure through the public return path: preserve the PR, repair the accountable contribution, refresh affected checks and independent verdict, then update publication. Distinguish these deterministic assertions from a real GitHub delivery. Establish the meaningful red, repair fixtures locally and run mapped checks without weakening required external gates.
     operations:
       - read-file
       - list-files
@@ -65,8 +78,12 @@ activities:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-      - Carry the verified candidate through the configured staging route and
-        retain its attribution.
+      - |
+        Keep Delivery as the sole final staging publication path for an independently accepted assembled candidate. Validate its digest, scope, retained engineering base and verdict before any effect. Use Collaboration for provider facts and verified-head merge, recording actual identities once. Execution's intermediate checkpoint commits do not authorize publication.
+
+        Before retrying an uncertain effect, observe the retained issue, branch, PR and provider state. Preserve pending and unavailable distinctions, complete diagnostics and the current PR identity. Do not open another PR because a response was lost or infer a merge from a push. Never edit the candidate, accept work, approve a review, bypass configured checks or merge main.
+
+        When publication exposes an engineering defect, return the actual diagnostic to Workflow for accountable local repair. Changed work must refresh affected checks and independent acceptance before this same path publishes again. Correct owned production-record adapters and recovery fixtures locally through mapped operations. Remove superseded status reconstruction rather than adding a second delivery orchestrator.
     operations:
       - read-file
       - list-files
@@ -93,8 +110,12 @@ activities:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-      - Check exact candidate identity, observed gates, and refusal to perform
-        protected actions.
+      - |
+        Trace the real assembled candidate through capture, publication parent selection, provider observation and verified-head merge. Confirm the regression uses the production record and distinguishes architecture, engineering and verification identities. An assignment fixture with the right-looking base is insufficient evidence.
+
+        Inspect uncertain-effect and restart cases for blind replay, duplicate PRs, lost pending review, invented merge identities or candidate mutation during publication. Publication-discovered defects must return to accountable repair and invalidate affected verification, while unaffected evidence may remain. Staging integration must not be described as main release.
+
+        Use exact findings and source references to choose the earliest applicable local repair. A candidate code defect belongs to its steward through Workflow, not to a hidden Delivery edit. This read-only review cannot publish, approve or waive checks. State separately what fixtures, native provider observations and actual staging integration demonstrate.
     operations:
       - read-file
       - list-files
@@ -108,7 +129,13 @@ activities:
     role: release-engineer
     executor: host
     instructions:
-      - Integrate the accepted staging candidate only after configured gates
-        pass.
+      - |
+        Execute this activity only as the trusted host delivery procedure; it has no model profile, model prompt or model-facing operations. Receive the assembled candidate and independent accepting verdict, verify exact candidate identity and retained engineering base, and observe the existing task publication before making an effect. A checkpoint alone is not authorization.
+
+        Publish or reuse the one staging PR through Collaboration under host repository/branch policy. Observe actual required checks and configured review on the exact current head. Pending results retain the delivery position. An unavailable prerequisite retains a named hold. If a request's outcome is unknown, inspect the provider before replay; if the verified candidate is already merged, return the recorded merge identity.
+
+        When a provider check exposes an engineering defect, return the full diagnostic to Workflow. The accountable steward repairs it, affected assembled checks and independent review refresh, and this host procedure resumes with the same issue/PR. Do not mutate an accepted tree while publishing, accept its own work, approve a PR, bypass a gate, merge main, tag, publish a production release or deploy.
+
+        Record the provider's actual merge identity and complete evidence before reporting success. Preserve uncertain observations, failure history and checkpoints on a hold or interruption; normal Execution cleanup remains responsible for the worktree.
     operations: []
     standards: []

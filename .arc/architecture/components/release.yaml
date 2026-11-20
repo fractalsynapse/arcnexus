@@ -20,8 +20,12 @@ activities:
     role: researcher
     profile: gpt-astra
     instructions:
-      - Trace workflow triggers, ignored outputs and release observations to the
-        governing policy.
+      - |
+        Investigate the actual release-infrastructure or CI uncertainty named in the milestone. Read the release contract, workflows, release documentation, changelog conventions and the relevant run evidence. Distinguish a development or staging workflow, Production CI on a main commit, a tag-triggered workflow and a published GitHub release; none is interchangeable proof of the others.
+
+        For an action, Node runtime or provider behavior, consult current primary documentation and record the exact pinned action revision and observed run configuration. A warning's disappearance requires the actual relevant run log, not a version assumption. Existing research may settle the issue without another external request.
+
+        Return complete findings, sources, applicability and the focused verification needed. This read-only activity cannot alter workflows, tag, publish, deploy or merge a protected branch. Keep the generic runtime's deferred production boundary separate from a human's explicitly authorized repository-maintenance action. Do not infer release authority from routine staging delivery.
     operations:
       - read-file
       - list-files
@@ -30,8 +34,12 @@ activities:
     role: technical-writer
     profile: gpt-sol
     instructions:
-      - Keep release guidance and developer-visible changelog entries consistent
-        with verified behavior.
+      - |
+        Document the accepted release-infrastructure behavior and the exact maintainer boundary. Explain what development/staging checks prove, what Production CI proves on the actual main commit, and what tag/publication verification proves about a release. Staging integration closes an engineering task but is not a production-release claim.
+
+        Keep workflow instructions, changelog intent and release evidence references aligned with the actual commit range. Include only observed checks and complete versus partial issue status. Preserve immutable published tag identities. State unavailable or deferred release commands honestly; do not make the runtime's release activity executable through documentation.
+
+        Describe authorized manual operations as repository procedure without exporting ArcNexus's policy into generic product behavior. A temporary human waiver must remain scoped to its actual decision and must not silently rewrite the locked release contract. Link the canonical release skill and interface rather than duplicating evolving gates throughout the docs.
     operations:
       - read-file
       - list-files
@@ -45,8 +53,12 @@ activities:
     role: designer
     profile: gpt-terra
     instructions:
-      - Exercise applicable repository workflow checks and the protected release
-        boundary.
+      - |
+        Exercise the workflow or release-infrastructure obligation at its actual public boundary. Validate workflow syntax, pinned action references, trigger/permission behavior, shared TypeScript/build/quality checks and refusal of tracked JavaScript where affected. Use explicit fixture workflows or the actual checked-in configuration as appropriate; a regex matching one job name cannot prove that a required check executes.
+
+        Keep release-boundary regressions explicit: the runtime refuses protected main merges, tags, publication and deployment, and staging evidence cannot satisfy a production claim. Tests must not perform live release effects. Provider fixtures remain isolated and their output is not Production CI or a published release.
+
+        For changes requiring a GitHub workflow observation, identify the actual future run and exact head needed, retaining the distinction from local validation. Establish a meaningful failing regression when behavior changes, correct setup errors separately, and run applicable mapped checks. Do not add an unrelated process framework or an unapproved quantitative gate to make CI look stricter.
     operations:
       - read-file
       - list-files
@@ -72,8 +84,12 @@ activities:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-      - Maintain GitHub workflows and release housekeeping under the configured
-        repository policy.
+      - |
+        Implement the authorized workflow, ignore, changelog or release-documentation change within Release's ownership. Reuse Foundation's shared toolchain and checks instead of duplicating build/type/quality logic in each workflow. Pin external actions according to accepted project policy and preserve the actual trigger, permissions and required check names relied on by delivery.
+
+        Keep production effects outside the generic first-build runtime. This steward activity may edit owned infrastructure through checked edits; it cannot merge main, create a tag, publish a release or deploy merely because it is called Release. Human-authorized repository operations follow the separate delivery procedure and exact current evidence. Never move or replace a published tag.
+
+        Correct local workflow fixtures and validation failures within this activity. A Foundation tooling gap or Delivery check-observation defect is another owner's concrete contribution, not a reason to copy their implementation into a workflow helper. Record truthful user-visible intent and preserve required checks rather than weakening them to obtain green CI.
     operations:
       - read-file
       - list-files
@@ -100,8 +116,12 @@ activities:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-      - Check that workflow changes preserve staging gates and human authority
-        over production.
+      - |
+        Review the exact workflow and release-documentation diff against current contracts and observed evidence. Verify that the same TypeScript, formatting, lint, specification and test requirements remain enforced through canonical tooling, that permissions are appropriate to each trigger, and that pinned action changes are actually the revisions tested.
+
+        Check every release claim against its actual commit and run. A staging workflow is not Production CI, a successful tag push is not a published release, and a fixture provider is not live verification. Look for accidental production authority in a runtime path, mutable published identities, skipped required jobs or changelog statements that claim undelivered behavior.
+
+        Route local configuration or evidence-documentation defects to the appropriate earlier Release activity. Escalate changed release authority rather than silently applying a broader waiver. This read-only review does not approve a PR or perform publication. Leave unobserved external workflow results explicitly pending and retain honest issue status.
     operations:
       - read-file
       - list-files

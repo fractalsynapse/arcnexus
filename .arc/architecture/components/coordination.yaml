@@ -380,8 +380,12 @@ activities:
     role: researcher
     profile: gpt-astra
     instructions:
-      - Identify the durable fact and its existing writer before proposing a
-        storage change.
+      - |
+        Investigate the actual durability, admission or recovery ambiguity in the retained journal. Read the Coordination public interface, schema and writer ownership, then follow the relevant Workflow or Execution caller. Distinguish a task identity, refinement sequence, round, phase, activation, event sequence, approval and external effect; a convenient shared string is not proof they are interchangeable.
+
+        For an interrupted history, read complete event artifacts and checkpoints rather than a clipped tail or the latest in-memory collector. Identify the precise persistence boundary and which acknowledged effect exists before the crash. Do not perform manual database repair or discard failed observations to create a clean narrative. Existing reports may already explain the storage behavior.
+
+        Return a complete report with the durable facts, source references and a public reopen scenario that would prove the correction. Research does not acquire a project writer, mutate rows, replay a provider effect or create a new recovery store. Recommend reuse of the existing database and ownership path rather than another scheduler or sidecar cursor.
     operations:
       - read-file
       - list-files
@@ -390,8 +394,12 @@ activities:
     role: technical-writer
     profile: gpt-sol
     instructions:
-      - Describe the state, evidence identity and derived views in the
-        coordination contract.
+      - |
+        Describe the existing store's authoritative identities and transitions for the accepted outcome. Explain which host component writes each record and how a foreground refinement writer is shared by sequential phase and task sessions without nested competing admission. Separate retained facts from derived views; reports must not become a second source of task or approval truth.
+
+        Document crash boundaries in concrete terms: proposal retained before a question, answer recorded before resumption, edit acknowledged after its checkpoint, child completion stored before parent advancement, and external effect uncertainty reconciled before replay. Preserve issue, branch, PR, answer and activity identities across attempts. A run that is held or failed remains so in historical evidence even after later recovery succeeds.
+
+        Use actual schema and public operation names, linking Workflow's lifecycle and Execution's filesystem responsibilities. Keep generated databases, transcripts and indexes outside source. Do not introduce paging requirements, arbitrary event-size ceilings, retry budgets or automatic historical rewriting. State the applicable validation and migration behavior rather than claiming a schema declaration alone proves restart safety.
     operations:
       - read-file
       - list-files
@@ -405,8 +413,12 @@ activities:
     role: designer
     profile: gpt-terra
     instructions:
-      - Exercise stale writes, abrupt exit and retained position using the real
-        record shape.
+      - |
+        Exercise the real Coordination persistence boundary with explicit temporary database and project identities. Close and reopen the store around the operation being tested; an in-memory fake cannot establish crash recovery or writer release. Test one project writer across sequential refinement/phase/task sessions, rejection of a competing writer, and safe cleanup without deleting retained facts.
+
+        Build distinct attempts with separate findings, complete answers, usage, terminal outcomes and event sequences. Assert that recovery sees all applicable history, neither only the first timeline nor only the resumed observer. Cover a successful child retained before the parent cursor advances, a pending exact proposal and approval, an acknowledged checkpoint, and uncertain provider state. Distinguish duplicate replay from a recorded reuse observation.
+
+        Use the actual typed public records and test retention of historical failures. Do not let a repeated generic summary satisfy an assertion that claims complete finding reuse. Establish the meaningful red, repair fixture/schema setup errors locally and run applicable mapped checks. Never mutate the real retained task database as a test convenience.
     operations:
       - read-file
       - list-files
@@ -432,8 +444,12 @@ activities:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-      - Persist facts through one authoritative writer and derive other views
-        from them.
+      - |
+        Extend the existing Coordination database and public writer operations only for the accepted durability requirement. Keep one canonical sequence of retained events and identities; derive reports from it rather than maintaining a competing mutable projection. Share the admitted foreground writer with sequential children through the existing ownership seam, and release it through normal cleanup.
+
+        Persist position and acknowledged effects before returning the receipt that allows a caller to continue. Reopen must reconstruct pending decisions, completed children, answers and checkpoint identities without inventing success or replaying effects blindly. Preserve historical records and distinguish source attempt from resumed attempt. Deduplicate only by the actual stable event identity; never discard different findings because their summaries match.
+
+        Use transactions and validation at the existing boundaries rather than adding a new scheduler, lock file or recovery framework. Correct owned tests, schema adapters and fixtures locally, including during Implementation when no earlier Testing target exists. A consumer's sequencing defect belongs to that owner; request the concrete public contribution instead of embedding Workflow policy in the store. Keep all generated state in application storage outside the repository.
     operations:
       - read-file
       - list-files
@@ -460,8 +476,12 @@ activities:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-      - Check idempotency, terminal outcomes and preservation of observed
-        failure evidence.
+      - |
+        Trace every new durable field to its authoritative writer and every read to the actual retained record. Look for duplicate state stores, parent/child admission contention, completion acknowledged before persistence and a report built solely from the current process. Inspect real close/reopen assertions, including the child-complete parent-interrupted interval and multiple attempts with distinct evidence.
+
+        Verify that approval binds exact proposal and baseline, acknowledged edits and answers are reused, historical failed evidence remains intact, and uncertain remote effects are observed before replay by the responsible caller. A passing memory-only fixture or a test that repeats the same No change sentence does not prove restart completeness.
+
+        Route local storage, transaction or test defects to the earliest available Coordination activity with the exact finding. Escalate a changed ownership or public durability requirement instead of repairing another owner's private lifecycle here. This read-only activity cannot patch production rows, clear a held task or create a replacement record to make qualification pass. Report the observed durability proof and its remaining limits honestly.
     operations:
       - read-file
       - list-files

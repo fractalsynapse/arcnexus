@@ -396,8 +396,12 @@ activities:
     role: researcher
     profile: gpt-astra
     instructions:
-      - Locate the shared owner selection or build decision before changing
-        tooling.
+      - |
+        Investigate the shared technical-strategy or toolchain uncertainty in the selected milestone. Read Foundation's public contract, actual build/quality/test entry points and the consumer that encountered the problem. Foundation owns broad reusable standards and tooling, not continuous reinspection of every dependency whenever another steward activates.
+
+        For a test-selection issue, trace literal owner/level/tag metadata and declared typed selectors to the actual built suite before execution. For a dependency or environment issue, distinguish a shared toolchain capability from Execution's candidate preparation. Consult primary tool documentation only for a named uncertain behavior, recording versions and configuration rather than inferring a universal limitation.
+
+        Return the complete report with the concrete failure, relevant source and a focused public check. Do not run checks or change root configuration from this read-only research activity. Recommend reuse of existing operations and parameter overrides; avoid a second test framework, mandatory owner-suite assumption, repository-wide mutation or invented quantitative gate.
     operations:
       - read-file
       - list-files
@@ -406,7 +410,12 @@ activities:
     role: technical-writer
     profile: gpt-sol
     instructions:
-      - Describe observable command behavior and generated output boundaries.
+      - |
+        Document the accepted shared build, TypeScript, formatting, lint and test strategy at its canonical Foundation source. Explain which operations are owner-scoped, which are assembled checks, and how literal test metadata and typed selectors determine applicable suites. A component with no suite remains valid; it still needs applicable formatting, lint, types/build and mandatory assembled verification.
+
+        Describe actual commands, parameters, defaults and refusal behavior without duplicating runtime orchestration in tooling docs. Owner checks are read-only and never reformat files. Fixes use explicit captured owned paths through authorized edits. Distinguish repository source preparation from runtime candidate dependency preparation and link Execution's responsibility instead of making Foundation a per-run dependency concierge.
+
+        Keep the readable class-based TypeScript standard and approved code-size rules intact. Do not add new thresholds, retry budgets or output clipping. State the measurable benefit of a shared change and which consumers need no changes, with evidence expectations appropriate to toolchain behavior rather than a ceremonial full-suite run after every small edit.
     operations:
       - read-file
       - list-files
@@ -420,8 +429,12 @@ activities:
     role: designer
     profile: gpt-terra
     instructions:
-      - Exercise owner selection, missing checks and reproducible toolchain
-        inputs.
+      - |
+        Exercise reusable tooling through its public entry points with small explicit project fixtures. Cover workspace app/package builds, strict TypeScript rejection of tracked JavaScript, readable class/method checks, owner-scoped formatting and lint, metadata discovery, selector validation and refusal before importing an unselected suite. Validate literal owner/level/tag records using actual source shapes.
+
+        Include a component without tests and show that suite selection reports inapplicability while applicable format/lint/types/build and assembled requirements remain. Check scope boundaries: similarly named owner paths, test fixtures outside the writable scope and an attempted repository-wide fix must not become authorized by an owner check. A check invocation must not mutate source.
+
+        Use real tool subprocesses where result/exit semantics are the obligation and controlled fixtures for selection logic. Avoid a graph of higher-level implementation dependencies just to test a shared utility. Establish the relevant behavioral red, repair fixture failures separately and run only applicable mapped checks until the coherent batch is ready for assembly.
     operations:
       - read-file
       - list-files
@@ -447,8 +460,12 @@ activities:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-      - Keep a shared command path with owner-scoped tests and declared
-        generated outputs.
+      - |
+        Implement the accepted reusable tooling capability once in Foundation and expose it through the existing operation/test entry points. Keep strict class-based TypeScript, literal metadata and typed parameters. Resolve selectors before importing suites, preserve complete diagnostics and real exit status, and treat no applicable suite differently from a failed check.
+
+        Respect captured ownership for lint/format scope. Host checks remain read-only; do not execute repository-wide fixes to make an owner milestone pass. Reuse the declared operation defaults and activity overrides rather than hardcoding component names or creating one wrapper per owner. A tool unavailable in the candidate environment is an Execution preparation concern unless a genuine shared build capability is missing.
+
+        Correct owned fixtures and tests alongside the tooling. Do not make Foundation a permanent gate that rechecks every dependency for every activation or add another test runner to bypass the existing one. Keep required assembled checks intact and remove superseded tooling when the accepted capability replaces it. Preserve actual command/version evidence for native failures.
     operations:
       - read-file
       - list-files
@@ -475,7 +492,12 @@ activities:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-      - Check parity between human, steward and CI invocations.
+      - |
+        Review the change as shared strategy rather than a one-task special case. Check app/package coverage, strict TypeScript, declared parameter reuse, literal test metadata, applicability and owner-scoped quality checks. Look for hardcoded production component lists, a second runner, broad formatting writes or a test import occurring before selector validation.
+
+        Inspect real exit/diagnostic assertions and components without suites. No-suite handling must not suppress types/build, format/lint or assembled checks. A passing tool fixture is not a real harness or staging demonstration. Confirm that candidate preparation and lifecycle decisions remain with Execution and Workflow instead of accumulating in Foundation.
+
+        Return a concrete local finding to Documentation, Testing or Implementation as available. Changed approved standards or new quantitative restrictions require explicit human architecture, not a lint workaround. This self-review does not run repository fixes, modify another owner or approve delivery. Identify reuse, removed machinery and actual evidence without inventing a reduction simply to satisfy a ledger.
     operations:
       - read-file
       - list-files

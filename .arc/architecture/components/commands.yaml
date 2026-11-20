@@ -397,8 +397,12 @@ activities:
     role: researcher
     profile: gpt-astra
     instructions:
-      - Identify the structured input and outcome required by the current app
-        adapter.
+      - |
+        Trace the shared application call relevant to the assignment, starting at the Commands contract and actual in-process consumer. Identify the request, observer, question callback, cancellation signal and typed outcome that a gateway needs. Distinguish reusable application semantics from parsing, terminal formatting and Workflow's execution lifecycle. The research question should name a real ambiguity rather than assume that an HTTP, MCP or SDK framework is required.
+
+        Read existing tests and component reports before requesting external information. For an integration claim, identify the public producer and consumer and the actual data passed between them; a private helper signature is not the SDK contract. Compare how inspection, task execution, planning, architecture assessment and refinement use the same project services without hardcoding the CLI.
+
+        Return the complete answer and relevant source paths through the research response. Local reads do not authorize invocation, task admission, provider effects or code changes. Recommend the smallest public-boundary regression that would settle the uncertain behavior, and identify any missing downstream capability without designing an alternate orchestrator inside Commands.
     operations:
       - read-file
       - list-files
@@ -407,7 +411,12 @@ activities:
     role: technical-writer
     profile: gpt-sol
     instructions:
-      - Specify the shared operations and structured results in the SDK contract.
+      - |
+        Describe the transport-neutral SDK behavior for the accepted outcome: arguments, validation before admission, structured observations, asynchronous questions, cancellation and terminal result. Use actual exported types and public methods rather than a CLI command string as the interface. Explain which plugin performs the lifecycle so future gateways can reuse the same application behavior without translating a terminal transcript.
+
+        For inspect, document the selected component/activity and the same complete request builder used by activation. For long operations, explain the observer sequence and result identities, including pending decisions and resumable holds. A no-change assessment is a legitimate typed outcome when supported by analysis; it is not a fabricated staging merge. Do not prescribe stdout, JSONL punctuation, exit codes or terminal approval input in the SDK.
+
+        Keep workflow routing and durable state rules at their canonical owners, linking the relevant contracts. Document any new application capability before implementation and preserve the distinction between an approved declaration and an installed handler. An SDK method that throws unavailable cannot be advertised as production end-to-end support merely because the CLI parser recognizes its name.
     operations:
       - read-file
       - list-files
@@ -421,8 +430,12 @@ activities:
     role: designer
     profile: gpt-terra
     instructions:
-      - Exercise inspection, task outcomes and cancellation through the
-        in-process SDK.
+      - |
+        Write class-based scenarios against the public Commands service with explicit application dependencies. Exercise an in-process caller without a terminal so the test would fail if parsing, stdout or process exit leaked into the SDK. Assert actual structured inputs delivered to the responsible plugin, ordered observer records, complete question/answer forwarding, cancellation and the terminal outcome.
+
+        For request inspection, compare complete input and invocation options from the shared builder instead of matching a few prompt words. For task, planning, architecture and refinement, include success, durable pending decision, named unavailable prerequisite and downstream diagnostic. Preserve identities on resumption; do not let the SDK reconstruct a second goal or approval record while formatting a result.
+
+        Use injected services to isolate command dispatch, then identify assembled proof needed for the real plugin composition. Mocking Workflow completion cannot prove Workflow execution. Keep fixtures faithful to current public types and avoid importing another owner's private test utilities. Establish the behavioral red for the new SDK obligation and run applicable formatting, lint, type and build operations; an absent owner suite does not justify skipping the other declared checks.
     operations:
       - read-file
       - list-files
@@ -448,8 +461,12 @@ activities:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-      - Delegate to the canonical Agent and task services through
-        transport-neutral operations.
+      - |
+        Expose the accepted application behavior through the existing Commands public service and trusted dependency injection. Normalize transport-independent inputs once, delegate lifecycle work to the responsible plugin, and return its typed observations and result without a parallel state machine. Preserve the same service for the CLI and future MCP or OpenAPI gateways. Do not introduce terminal parsing, process-wide output, Git commands or provider credentials in this package.
+
+        Use the shared Agent/Architecture builder for inspect and pass the selected component/activity explicitly. Forward complete questions and answers, the cancellation signal, observer events and failure diagnostics. Durable phase, task and approval identity belongs to Coordination through Workflow; Commands must not create its own cursor or approval interpretation. Do not turn a missing result into a success or a downstream pending state into an immediate retry loop.
+
+        Correct local adapter types and tests in the same activity using the mapped checks. If the downstream service lacks an agreed capability, request that owner's concrete contribution instead of implementing it privately or exposing a fake method. Remove superseded command paths when replacing them so all gateways enter one application lifecycle.
     operations:
       - read-file
       - list-files
@@ -476,8 +493,12 @@ activities:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-      - Check that adapters can use the SDK without terminal input, argv or
-        exit-code semantics.
+      - |
+        Review the public call graph from an in-process Commands client to each responsible plugin. Verify that the SDK remains usable without stdin, stdout, process exit or a CLI parser, and that the real app composition installs the same handlers used by the tests. An exported type or mocked callback alone does not establish an available capability.
+
+        Compare the complete inspect request, observation order, question delivery, cancellation and terminal result against the public contracts. Look for stripped diagnostics, duplicate admission, invented no-change evidence, a second approval store or a hidden task loop in command dispatch. Pending work must retain its identity through the actual lifecycle rather than through a gateway-specific retry.
+
+        Route a local SDK or fixture defect to the appropriate available earlier activity, retaining the exact finding. Escalate only a genuinely missing contribution or changed architectural scope. This self-review cannot accept an assembled candidate, edit another plugin or launch a live task. State which public behavior the evidence proves and what remains for assembled or native verification.
     operations:
       - read-file
       - list-files

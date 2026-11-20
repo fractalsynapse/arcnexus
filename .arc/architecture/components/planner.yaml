@@ -378,7 +378,12 @@ activities:
     role: researcher
     profile: gpt-astra
     instructions:
-      - Find evidence relevant to proposed outcomes.
+      - |
+        Investigate a specific uncertainty in objective formation, goal comparison or exploratory mapping. Read the approved charter and development direction, existing objectives and goals, and the relevant implementation and findings. Distinguish a human's desired outcome from a model's suggested interpretation, and distinguish a durable success measure from an observed test result.
+
+        Research should identify a useful missing capability, conflict, ambiguity or measure rather than manufacture new goals to keep a round busy. Consider whether multiple existing goals express the same aspiration and whether a proposed goal would remain valid if components were reorganized. Source observations belong in the report, not embedded as results in the goal.
+
+        Return the complete report through the supplied research response. This activity is read-only and does not persist objectives, edit goal files, approve an inventory or assign owners. Respect the available archive and ownership mappings; an unavailable Planner research archive is an architectural mapping gap to report, not permission to write another component's directory. Existing local knowledge may settle the issue without external access.
     operations:
       - read-file
       - list-files
@@ -387,7 +392,12 @@ activities:
     role: technical-writer
     profile: gpt-sol
     instructions:
-      - Maintain goal and objective records with explicit source links.
+      - |
+        Document the two goal-planning strategies and their shared approval lifecycle. Explicit task plan records the original human objective and may clarify it; bare task plan explores the accepted project direction and current implementation. Both compare existing goals, propose concrete aspirations with measurable success, and preserve a no-change assessment as a real analytical outcome. Do not imply that every exploration invents a human objective.
+
+        Show the actual objective, goal and Planner response formats. Keep goals independent of ownership and free of results, logs or evidence. Explain priority ordering, relationships, proposed removals and how the next round consumes earlier findings without copying those findings into durable aspirations. Clarification is a dialog with retained full answers, not an automatic substitute for human approval.
+
+        Document exact proposal/baseline approval and pending-decision resumption, linking Workflow and Coordination for lifecycle mechanics. State the real operation mapping and any unavailable research archive rather than promising an unimplemented path. Use examples from explicit fixtures or clearly labeled proposals; do not quietly create or replace approved project goals while documenting the planner.
     operations:
       - read-file
       - list-files
@@ -401,7 +411,12 @@ activities:
     role: designer
     profile: gpt-terra
     instructions:
-      - Exercise mapping, approval and objective recovery.
+      - |
+        Test the real Planner service with explicit charter, development, objective and goal fixtures. Exercise exploration without a human objective, explicit objective capture with verbatim original text, clarification and full answer reuse, conflict comparison, priority changes, deletion, no-change and malformed response repair. Assert the actual raw Planner fields instead of a fabricated kind discriminator.
+
+        Include an exploration regression that fails if an internal refinement description is saved as a human objective. Reopen retained state and confirm a completed assessment is reused only for its actual identity, while a new round still invokes Planner. Use distinct prior and resumed findings so an unchanged generic summary cannot satisfy evidence-consumption assertions.
+
+        Validate exact proposed bytes, approval baseline, declined/pending decisions and refusal to apply unapproved guides. Inspect resulting goals for owner assignments and results masquerading as success measures. A fake Planner.propose proves its consumer, not Planner mode selection or persistence; use the real service for those obligations with an isolated controlled actor. Establish the meaningful red and mapped checks without demanding the later Implementation already pass.
     operations:
       - read-file
       - list-files
@@ -425,7 +440,12 @@ activities:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-      - Keep goal parsing, approval and persistence consistent.
+      - |
+        Implement objective and goal assessment through the existing Planner public service and Workflow lane. Select exploration when there is no real human objective and objective mode only for the submitted human text. Preserve the original submission, full clarification answers and the exact proposal identity. Do not synthesize an objective from an internal phase prompt merely to reuse a convenient API.
+
+        Parse and validate the actual Planner response, returning exact errors to the same activity. Keep ratings, comparisons, source relationships and changes complete. Goals remain aspirations and success measures without owners or results. Pending or declined proposals cannot leak edits into the active inventory; exact approval and verified delivery precede adoption.
+
+        Reuse Coordination for durable position and answers and the existing normal task workflow for implementation/delivery. Correct owned fixtures, mode selection and persistence tests locally, including when earlier Testing is unavailable. Do not add another planner scheduler, approval database or direct protected-write path. If a missing operation or archive root is needed, propose the concrete architecture mapping rather than granting it in prose.
     operations:
       - read-file
       - list-files
@@ -450,7 +470,12 @@ activities:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-      - Verify goal changes and objective text against approval evidence.
+      - |
+        Inspect both real mode selection and the resulting approved inventory proposal. Verify that exploration does not create a synthetic human objective, explicit submissions retain their original text, goals stay owner-free and aspirational, and comparison genuinely considers every captured goal. Read the complete proposed content and source relationships rather than accepting a summary alone.
+
+        Review exact approval, baseline, clarification resumption and retained-state tests. A mocked Planner method cannot establish that the real service chose exploration, persisted the right objective identity or resumed the same proposal. Distinct findings, answers and round observations must remain distinguishable; generic repeated No change text does not prove learning.
+
+        This self-review cannot approve an inventory or edit goals. Return a concrete local finding to an applicable earlier Planner activity, or escalate genuinely changed human direction. Missing research operation/archive mappings remain explicit gaps until approved. Report what deterministic tests prove and leave actual planning usefulness and continuous live refinement for authorized acceptance after the human reviews this rewrite.
     operations:
       - read-file
       - list-files
@@ -462,10 +487,14 @@ activities:
     role: planner
     profile: gpt-sol
     instructions:
-      - Map standing outcomes to captured project sources. Rate alignment and
-        evidence independently.
-      - Use the human question tool for objective refinement when a decision is
-        needed.
+      - |
+        Assess the supplied human objective in objective mode, or map the captured project in exploration mode when no objective was submitted. Read the charter, development direction, approved objective index, complete goal inventory, actual implementation and relevant prior round findings. A synthetic internal phase description is not human input and must never be persisted as an objective.
+
+        Compare and rate existing goals against direction and implementation, identifying conflicts, overlap, missing measures and useful omissions. Goals contain aspirations and abstract or concrete success measures, with no component owners, prescribed team, execution results or evidence fields. Preserve the human's original submitted words separately from proposed refinements. Explain the relationship between every proposed objective and its goals, including removals and unresolved ambiguity.
+
+        Return the exact host-supplied Planner response shape with summary, ratings, comparison, changes, links and sources. Use complete content for proposed files and the defined deletion representation; do not add a guessed kind discriminator. A justified no-change assessment still analyzes the actual inventory. Ask a focused clarification when human intent is needed, retaining the complete answer across restart.
+
+        This activity cannot write guide files directly or approve them. The host retains the exact proposal and baseline for human approval and delivers accepted changes through the ordinary workflow. Use only mapped operations: if optional research is not exposed here, do not pretend it is available or call another profile through an unapproved path.
     operations:
       - read-file
       - list-files

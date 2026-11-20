@@ -376,8 +376,12 @@ activities:
     role: researcher
     profile: gpt-astra
     instructions:
-      - Trace membership and resource ownership back to the captured catalog and
-        task position.
+      - |
+        Investigate the actual Agent registry, selection or ownership question in the assignment. Read Team's public interface and the captured component records, then trace the caller that asks for prioritized stewards or an owner of a resource. Distinguish component identity, agent binding, activity availability and file ownership; one cannot substitute for another.
+
+        For a collision or unmanaged path, inspect literal roots, normalization and boundary cases rather than assuming the first prefix wins. Consider nested directories, similarly named siblings, absolute versus project-relative inputs and resources outside the project. Existing component knowledge and source may settle the issue without external research. Do not infer team membership from a fixed expected steward count.
+
+        Return complete findings and the concrete public scenario that would demonstrate the correction. This read-only activity does not create a component, assign a goal an owner, alter captured ownership or run another agent. A gap requiring a new owner is architectural work for Direction to propose, not a research-side registry mutation.
     operations:
       - read-file
       - list-files
@@ -386,8 +390,12 @@ activities:
     role: technical-writer
     profile: gpt-sol
     instructions:
-      - Document roster filters, stable ordering and distinct ownership findings
-        in the Team contract.
+      - |
+        Describe Team as the canonical collection and discovery interface for agents, not a second component catalog maintained beside Architecture. Show how a captured component produces the available steward, special actor bindings, selectable activities and ownership decisions needed by Direction, Workflow and Execution. Keep goal text independent of those identities so changes in layout do not invalidate aspirations.
+
+        Document deterministic prioritization and filtering using actual supported inputs. Explain collision and unmanaged-resource findings with source references, including what a caller must do when no owner or several owners match. Broad read access is not write authority. A Team answer cannot grant another steward's files through an inbox request or override a checked-edit refusal.
+
+        Link source definitions and public consumers rather than copying the whole catalog into documentation. Clarify when a newly approved component becomes available: its handler, mappings and validation must be installed and adopted, not merely declared in a plan. Preserve the current sequential model and do not add parallel scheduling or a new team-state database.
     operations:
       - read-file
       - list-files
@@ -401,8 +409,12 @@ activities:
     role: designer
     profile: gpt-terra
     instructions:
-      - Exercise the same roster under filters, tied priority, absent owners and
-        collisions.
+      - |
+        Exercise the Team public interface using explicit, small component catalogs rather than the real repository's fixed roster. Include project, app and plugin records, Director and Reviewer bindings, missing activity mappings, deterministic filtered order, and legitimate components without a test suite. Adding or renaming a fixture component should not require updating a hardcoded expected production team.
+
+        Test ownership boundaries with exact files, nested roots, sibling prefixes, normalization, unmanaged resources and overlapping declarations. Assert a clear refusal or collision rather than silently choosing an owner. Verify that the same Team decision reaches consumers and that a request from one steward does not authorize edits for another.
+
+        Cover accepted source adoption with distinct before/after identities while preserving an in-flight activation's recorded scope. Use actual catalog record shapes and public constructors; a fabricated map that omits source identity cannot prove captured ownership. Establish the focused failing assertion, repair fixture/setup errors locally, and run mapped checks without treating test-suite absence as absence of verification.
     operations:
       - read-file
       - list-files
@@ -428,8 +440,12 @@ activities:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-      - Derive roster and ownership answers from the captured model and recorded
-        position.
+      - |
+        Keep Team as the single public seam for steward discovery, filtering, ordering and ownership. Derive its records from the accepted Architecture capture and reuse the Agent bindings rather than rebuilding a separate catalog inside a caller. Return source identity and meaningful diagnostics so Direction and checked-edit confinement agree on who can perform the work.
+
+        Normalize and validate resource paths before ownership selection, preserving directory boundaries and rejecting ambiguity or unmanaged writes. Do not silently widen to Project, select an arbitrary collision winner or read an inbox sender as permission. Components are not an enum of today's repository names; support valid project, app and plugin definitions through the declared interface.
+
+        Make local code and fixture corrections through checked edits and the mapped operations. A missing component or changed ownership root requires approved architecture, not a fallback branch. Adoption may rebuild Team for a later activation at the host boundary while the active request retains its original scope. Remove redundant discovery in owned code and request concrete migrations from other owners when their private callers must change.
     operations:
       - read-file
       - list-files
@@ -456,8 +472,12 @@ activities:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-      - Verify that views and supplier requests preserve ownership and leave
-        scheduling to Direction.
+      - |
+        Trace registry and ownership decisions through the actual consumers. Confirm that Team is authoritative for available agents and resource attribution, that no second caller-side catalog has survived, and that selection does not depend on a fixed number of stewards. Inspect collision tests and path handling for similar-prefix roots and an unmanaged file; successful selection alone does not prove refusal safety.
+
+        Check Director/Reviewer bindings and declared activities against the capture, including adoption between activations without retroactively widening an active agent. Goals must remain owner-free, and a supplier request must not confer the supplier's ownership on its caller. A declared component whose handler is unavailable cannot be returned as executable merely because it has a name.
+
+        Use exact source and evidence references in any finding. A local normalization or fixture defect belongs to an earlier Team activity; a genuinely missing owner or changed boundary is explicit architectural escalation. Do not edit the catalog or approve a new component during self-review. Retain the original acceptance and evidence whose inputs remain applicable.
     operations:
       - read-file
       - list-files

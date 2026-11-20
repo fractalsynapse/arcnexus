@@ -353,8 +353,12 @@ activities:
     role: researcher
     profile: gpt-astra
     instructions:
-      - Identify which host boundary governs the workspace, activation or
-        operation.
+      - |
+        Investigate the actual provider, worktree, operation or checkpoint uncertainty named by the caller. Read the public Execution interface, real request builder output, mapped operation binding and retained native artifacts. Identify the exact executable, version, arguments, working directory, environment and observed result; a failed experiment proves that configuration, not a universal provider limitation.
+
+        For a recovery question, locate the acknowledged edit receipt, checkpoint and remote branch before suggesting a replay. Read complete messages, tool calls/results and diagnostics rather than a clipped excerpt. Distinguish Codex's own execution behavior from an ArcNexus-imposed policy; do not invent token, report-size, timeout or retry limits.
+
+        Return the complete report with source references, applicability and the smallest native scenario that resolves the uncertainty. Research remains read-only and cannot spawn a harness, mutate a worktree, invoke raw tools or publish a checkpoint from this activity's local read mapping. Report missing declared native/provider observations as a concrete operation gap rather than an invitation to run an untracked workaround.
     operations:
       - read-file
       - list-files
@@ -363,7 +367,12 @@ activities:
     role: technical-writer
     profile: gpt-sol
     instructions:
-      - Specify the observed execution, refusal and cancellation behavior.
+      - |
+        Document the production Execution path as observed and authorized: trusted provider composition, exact single-string Agent request, activity-scoped local MCP, prepared candidate environment, checked edits, operation checks, checkpoint publication and cleanup. Distinguish the engineering base, accepted architecture source, candidate tree and verification checkout; they serve different purposes and cannot be substituted in a fixture.
+
+        Describe complete tool diagnostics and successful receipts returning to the caller. Explain ownership refusal without losing earlier acknowledged files, answer reuse, crash reconciliation and reconstruction from retained checkpoints. Execution owns branch and worktree setup before stewards begin; the issue identity comes from Direction through Collaboration. A checkpoint push is durable progress, not final candidate acceptance or staging delivery.
+
+        Keep provider web access at the execution-provider policy boundary. Explain actual native/provider operations and evidence, including versions and unavailable prerequisites, without adding unapproved caps or arbitrary timeouts. Link Workflow for recovery routing and Delivery for final publication. A documented subprocess or SDK surface is not proof that the production composition uses it; name the relevant native verification.
     operations:
       - read-file
       - list-files
@@ -377,8 +386,12 @@ activities:
     role: designer
     profile: gpt-terra
     instructions:
-      - Exercise checked edits, stale hashes, host confinement and descendant
-        cancellation.
+      - |
+        Build public-boundary scenarios for the production Execution wiring using explicit temporary projects, real record shapes and isolated provider composition. Cover worktree/branch preparation before activation, candidate dependency availability, actual request input/options, local MCP capability mapping, ownership refusal, one-file checkpoint acknowledgment, full answer delivery and cleanup after success, hold, cancellation or crash.
+
+        A real subprocess scenario is required for claims about arguments/stdin, harness messages, signals, process cleanup or provider invocation. Record executable version, request, results and diagnostics through the declared evidence path. Do not substitute a fake provider transcript for a live model claim; use controlled adapters only for the deterministic property they exercise.
+
+        Crash after the edit is acknowledged but before normal cleanup, then reopen and observe the retained checkpoint and abandoned worktree before deciding the next action. Assert no duplicate write, answer or PR. Use the actual assembled record, not an assignment-shaped object that hides the engineering base. A fixture or unavailable tool failure is setup feedback to repair locally; a relevant assertion red can legitimately precede later Implementation. Run mapped checks and retain exact observations.
     operations:
       - read-file
       - list-files
@@ -962,8 +975,12 @@ activities:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-      - Check that inspection, activation and refusal use the same captured
-        identity and scope.
+      - |
+        Review the real execution boundary rather than a simulated happy path alone. Inspect the production app wiring, actual provider request representation, activity-scoped MCP tools, checked-edit receipts, candidate preparation, checkpoint pushes and worktree cleanup. Verify that allowed web access is provider policy and that no raw shell or unapproved native tool becomes available through a fallback.
+
+        Read the native regression artifacts for actual versions, commands, environment, messages/results and failures. Test fakes must be isolated from live credentials and honestly labeled. Look for assignment-shaped assembly fixtures, lost original findings, repeated acknowledged edits, incomplete answers, arbitrary request/output limits and reports that turn unknown usage into zero.
+
+        Route an owned provider, fixture or confinement defect to the earliest applicable local activity, preserving successful edits and prior evidence. If no earlier Testing target exists, Implementation can repair its owned tests in place rather than request an impossible self-rewind. This read-only review cannot launch checks, edit a candidate, approve a PR or waive assembled verification. A successful checkpoint remains distinct from independent acceptance and staging integration.
     operations:
       - read-file
       - list-files

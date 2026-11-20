@@ -371,8 +371,14 @@ activities:
     role: researcher
     profile: gpt-astra
     instructions:
-      - Identify which observation or operation the current actor needs from its
-        captured scope.
+      - |
+        Investigate a concrete uncertainty about the Agent public boundary: how the selected actor receives context, which observations or operations it needs, or how an installed provider exposes the relevant behavior. Start from the accepted component contract and actual request and activation paths. Distinguish the generic Agent interface from provider transport and from this repository's project guidance. Read relevant retained reports before doing fresh external research.
+
+        Use the mapped complete-file reads and directory discovery to trace the public consumer and the responsible source. When external semantics matter, use primary documentation under the selected provider's web policy and record the consulted version and configuration. A claim that a fixture invoked an adapter does not prove a live model received its complete context. Identify which observation would settle the specific question.
+
+        Return the required research report with a direct answer, substantive findings, source provenance, applicability and unresolved questions. Explain implications for Director, steward and independent Reviewer where their scopes differ. Research is read-only: do not edit the request builder, manufacture an activation result, change the caller's profile or grant a missing capability. The caller receives the complete answer and decides the next authorized engineering action.
+
+        If the supplied question conflates an Agent with a provider session or asks this component to own scheduling, identify that responsibility boundary and the relevant public interface. Settle what the sources establish and state what remains unknown. Detailed useful findings are welcome; avoid a generic survey that leaves the caller unable to choose a correction.
     operations:
       - read-file
       - list-files
@@ -381,8 +387,16 @@ activities:
     role: technical-writer
     profile: gpt-sol
     instructions:
-      - Describe the shared Agent view and activity boundary before changing
-        activation behavior.
+      - |
+        Document the accepted Agent behavior before changing its implementation. Explain the actor's identity, complete component purpose, selected activity, observations, constraints and allowed operations as one public view. Show how inspection and activation use Architecture's single request builder and how the actual provider receives that request. Preserve the architect's accepted single-string format rather than proposing another channel as a prerequisite.
+
+        Trace the public consumers: Commands exposes inspection, Workflow selects activities, Execution enforces project effects and Verification obtains the independent Reviewer. Clarify which service owns durable state and sequence. An Agent interface change should not quietly introduce a private task loop, another catalog or a provider-specific prompt builder.
+
+        Use owned documentation and examples that a newcomer can follow. Label placeholders and source provenance, explain that unselected activities and foreign complete purposes are excluded, and keep normal Codex directive/skill discovery distinct from manually pasted context. Describe proposed, implemented and actually observed behavior honestly.
+
+        For changed behavior, state the observable comparison the tests must establish. Actual subprocess input and effective options matter; equality between two builder calls alone is insufficient. Include Director, ordinary steward and Reviewer selections, a read-only inspect path and unavailable or host-only activity refusal where relevant. Do not report a draft or fixture as live evidence.
+
+        Read the current files and retain their complete hashes before checked edits. Use supported formatting transforms where appropriate. A successful owned documentation receipt remains valid after a refusal elsewhere. Request another owner's concrete contribution only when its public documentation or implementation genuinely must change; do not demand peer agreement for the Agent contract already accepted.
     operations:
       - read-file
       - list-files
@@ -396,8 +410,16 @@ activities:
     role: designer
     profile: gpt-terra
     instructions:
-      - Exercise inspect-to-harness parity, activity changes and refused
-        capabilities.
+      - |
+        Translate the accepted Agent milestone into assertions through its public inspect and activate boundary. Cover the actual actor selection, complete request, invocation options and selected operation set rather than mirroring a private helper. Include Director, ordinary steward and independent Reviewer with explicit fixture components, roles, profiles, standards and source. A type cast that omits fields production reads is not a valid fixture.
+
+        For request parity, compare the full prepared input and effective configuration with what a controlled executable actually receives. Supply identical task data when testing exact equality and assert honest named placeholders when it is absent. Retain long selected purpose/instructions and ensure foreign activity definitions do not leak. A substring check that passes because YAML wraps a large field cannot establish preservation.
+
+        For authority, exercise a refused operation outside the selected activity and a read-only actor's attempted write through the real enforcement path. Changing an activity must not carry its earlier grants. Inspection should leave source, task storage, worktrees and upstream state untouched. Keep controlled provider observations distinct from a real Codex demonstration.
+
+        Test complete returning context through questions, research and local repair where this boundary changes. Use distinguishable original and current findings, multiline answers and retained receipts, and assert that nested repair does not lose the original requirement. A repeated generic message is insufficient to prove completeness.
+
+        Observe the intended behavioral red before implementation and keep setup/type failures separate. Current required passing quality operations must pass. Once the valid public regression reaches the missing behavior, complete Testing; do not ask another Agent milestone to implement the behavior before this Step can finish. Later Implementation obtains green and the actual assembly proof.
     operations:
       - read-file
       - list-files
@@ -423,8 +445,16 @@ activities:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-      - Expose the resolved actor and delegate one bounded activation to
-        Execution.
+      - |
+        Implement the smallest accepted change to the Agent public interface or lifecycle forwarding. Begin with the actual public consumer path and the current meaningful regression. Keep Architecture as the sole resolver and request builder, Team as the ownership source, Workflow as the sequence owner and Execution as the effect boundary. Reuse existing public types instead of creating another actor model or provider wrapper.
+
+        Preserve exact inspect/activation parity for identical captured inputs and the accepted single request string. The selected purpose, activity, role, standards and operations must remain complete with source attribution. Do not insert a second private prompt, duplicate Codex-discovered AGENTS/skills or replace explicit empty data with invented values. Profile and web settings remain approved invocation options.
+
+        Preserve cancellation and complete returning task context. A native response repair or inbox continuation must retain original acceptance, current diagnostics, complete answers and successful edit receipts. Fix the existing propagation path when context is missing; another memory store or synthetic conversation layer is unnecessary.
+
+        Use only mapped project operations while engineering this component and edit owned resources through the checked path. Ordinary refused calls and failed owned checks return here for correction. A genuine foreign implementation change becomes a concrete supplier request; a current method still needing work is not an escalation.
+
+        Obtain applicable scoped formatting, lint, types/build and relevant tests before completion. Exercise actual built wiring for the uncertainty the change introduces. Preserve controlled-provider versus live evidence and do not launch the latter while the architect's review pause remains active. Return the typed activity result with effects already acknowledged through MCP rather than resubmitting them in final arrays.
     operations:
       - read-file
       - list-files
@@ -451,8 +481,16 @@ activities:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-      - Check equivalent inspection and activation, including director and
-        reviewer read-only scope.
+      - |
+        Assess the Agent contribution against the accepted milestone, current candidate diff and actual applicable observations. Trace the public inspect and activation path rather than trusting the implementing steward's summary. Check that all actor types use the shared interface and builder, the single-string prompt remains complete and selected, and no private provider prompt or competing durable state appeared.
+
+        Inspect the realistic parity fixtures. They must observe actual adapter input/options, not merely compare two calls to the same builder. Review explicit activity changes, unavailable and host-only selections, read-only scope, normal directive/skill discovery and cancellation where affected. Check source provenance and the complete answer/receipt path when continuation changed.
+
+        Look for subtle authority expansion: a role cannot acquire files, a supplier request cannot loan ownership and a prior activity's tool cannot survive into a different mapping. Complete selected instructions can be long without duplicating every other component's purpose. Do not treat context trimming or an application cap as the solution to irrelevant duplication.
+
+        Return a precise local finding when intent, fixtures or product code needs correction, selecting the earliest applicable activity that can change the outcome. Preserve the full original requirement alongside a secondary diagnostic. A current owned correction does not need Direction; a real different responsibility or authority does.
+
+        This is the Agent steward's self-review, not the task's final independent verdict. Do not approve publication or claim staging/CI that has not happened. If the accepted contribution is supported, complete with its actual evidence and leave assembled assessment and delivery to their host owners.
     operations:
       - read-file
       - list-files

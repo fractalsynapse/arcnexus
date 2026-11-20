@@ -394,7 +394,12 @@ activities:
     role: researcher
     profile: gpt-astra
     instructions:
-      - Trace an acceptance criterion to its captured check and evidence input.
+      - |
+        Investigate the exact verification-applicability or evidence question raised by the caller. Read the accepted criteria, actual candidate identity, activity verification mappings, declared operation defaults/overrides and retained check records. Distinguish owner-suite presence from the applicability of formatting, lint, types/build, tests and required assembled checks.
+
+        For evidence reuse, identify the actual inputs, parameters, authority, tool versions and environment. A matching check name or prior green status is insufficient if its candidate changed. Read complete evidence files and source artifacts rather than requiring a paging loop or accepting a clipped diagnostic. Existing reports may resolve the uncertainty.
+
+        Return a complete report with relevant source and a concrete verification scenario. Research does not run checks, edit tests, change acceptance, accept a candidate or waive an unavailable prerequisite. Report missing declared operations to the accountable architecture/execution boundary instead of inventing an untracked manual command.
     operations:
       - read-file
       - list-files
@@ -403,7 +408,12 @@ activities:
     role: technical-writer
     profile: gpt-sol
     instructions:
-      - Specify verdict identity, evidence completeness and unavailable outcomes.
+      - |
+        Describe how verification selects declared operations by applicability and category, retaining the distinction between activity completion checks and assembled delivery requirements. Components without suites remain valid. Their absence must not suppress formatting, lint, types/build or required assembled checks, and an optional owner suite cannot stand in for all relevant integration coverage.
+
+        Document the complete evidence record: candidate identity, operation binding and overrides, execution status, diagnostics, timestamps, environment and source references. Explain reuse only when relevant inputs remain unchanged, and refresh affected evidence after candidate or authority adoption. A passing operation is evidence for an independent assessment, not the assessment itself.
+
+        Keep criteria aspirational in goals and authoritative in the accepted plan; observed results remain in evidence and learning. Native/provider observations must use declared Execution operations. Do not add arbitrary content or attempt limits, silently omit an unavailable required check, or claim fixture execution as live acceptance. Link the independent Reviewer and Delivery contracts for their distinct obligations.
     operations:
       - read-file
       - list-files
@@ -417,8 +427,12 @@ activities:
     role: designer
     profile: gpt-terra
     instructions:
-      - Exercise stale verdicts, missing evidence and recorded expected-red
-        checks.
+      - |
+        Test operation selection using real declared bindings and explicit component fixtures with and without suites. Cover formatting, lint, types/build, relevant tests, typed selectors, invalid overrides, unavailable handlers and mandatory assembled operations. Assert category/applicability decisions rather than assuming every owner has one test command.
+
+        Construct evidence for distinct candidate, parameter, authority and environment identities. Verify valid reuse for unchanged inputs and invalidation for an affected change, including a publication-discovered defect. Preserve complete nonzero exit diagnostics and ownership refusals. Required check absence is a visible hold/failure, never a skipped success.
+
+        Exercise the actual public assembled record and check result shapes; do not make an artificial fixture omit inconvenient fields. Include complete file evidence reads and exact citation references used by the independent Reviewer. A fake check runner proves selection and interpretation only; declare native integration and live delivery evidence separately. Establish a meaningful red and mapped local checks without running unrelated suites merely for ceremony.
     operations:
       - read-file
       - list-files
@@ -444,7 +458,12 @@ activities:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-      - Implement one acceptance and verdict path for the assembled candidate.
+      - |
+        Implement applicability, evidence capture and assembled verification through the existing public Verification path. Resolve declared operations and typed overrides against the accepted capture, retaining category, candidate, parameters and environment in results. Absence of an owner suite is inapplicability for that suite, not a waiver of other applicable or required assembled checks.
+
+        Return exact execution status and complete diagnostics to the accountable caller. Reuse evidence whose relevant inputs remain valid; invalidate and refresh affected observations when repairs or approved source adoption change them. Do not reset all history or repeat unrelated suites simply because a new activity starts. Use declared Execution-owned native/provider operations rather than a manual side channel.
+
+        Keep independent judgment with Reviewer and publication with Delivery. Verification cannot weaken acceptance, rewrite a failed observation, reformat source or invent a green status for an unavailable check. Correct owned selector, adapter and fixture defects locally through checked edits. Remove superseded owner-test assumptions instead of preserving a parallel selection path.
     operations:
       - read-file
       - list-files
@@ -471,8 +490,12 @@ activities:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-      - Check the verifier implementation against its contract without
-        authorizing candidate delivery.
+      - |
+        Inspect verification against the actual declared operation model and candidate records. Confirm components without suites remain valid while applicable format/lint/types/build and mandatory assembled checks still execute. Look for owner-name heuristics, ignored overrides, silently unavailable handlers, source mutation by checks or an owner suite presented as all verification.
+
+        Read evidence-reuse regressions with distinct candidate, parameter, authority and environment values. A previous green name is not enough. Ensure failed exits and complete logs reach the accountable caller, affected candidate changes refresh evidence, and the Reviewer receives canonical citation references. Read-only complete artifacts should not require a paging loop or hidden truncation.
+
+        Route local applicability or fixture defects to the earliest relevant Verification activity. A missing operation capability belongs to its owner through explicit escalation; a substantive candidate failure returns to engineering. This self-review cannot accept a candidate, waive required checks or publish it. Report deterministic, native and live proof separately, preserving all failures and unknown measurements.
     operations:
       - read-file
       - list-files

@@ -387,8 +387,12 @@ activities:
     role: researcher
     profile: gpt-astra
     instructions:
-      - Investigate external claims relevant to the captured candidate and
-        criteria. Separate external authority from observed task evidence.
+      - |
+        Investigate the specific external or interpretive uncertainty affecting an independent assessment or Reviewer implementation. Read the accepted criterion, candidate evidence and exact disputed claim. Separate whether the behavior is implemented from whether a cited external standard actually requires it. Existing component reports and primary sources may settle the question without another broad investigation.
+
+        Return complete sources, findings, applicability and uncertainty, preserving the difference between a provider guarantee, a configured experiment and an inference. Research must not rewrite the criterion to fit the candidate or turn a malformed citation into a substantive engineering rejection. Do not invent limits on report length, request detail or attempts.
+
+        This read-only activity cannot edit learning files, execute checks, approve a candidate or publish. Give the requesting assessment the full answer and its references so judgment resumes with the same candidate. Recommend a concrete missing observation when evidence is insufficient rather than producing a favorable verdict from documentation alone.
     operations:
       - read-file
       - list-files
@@ -397,8 +401,12 @@ activities:
     role: technical-writer
     profile: gpt-sol
     instructions:
-      - Document the distinction between verdicts, lessons and approved
-        standards.
+      - |
+        Document independent assessment, verdict validation and learning responsibilities at the Reviewer boundary. Explain how the supplied candidate and original acceptance determine judgment, how complete evidence is cited, and how invalid response/citation diagnostics return to the same Reviewer without discarding valid checks. Substantive final rejection and local steward self-review are different routes.
+
+        Describe lessons as observations and recommendations grounded in actual execution cost and failures. Reviewer owns learning records; Project does not. Learning cannot alter authority until the human promotes a rule into architecture. Goals remain aspirations and success measures without execution results.
+
+        Use actual verdict and evidence schema examples, marking proposal status honestly. Explain optional research and full answer reuse without requiring it for every assessment. Keep publication and PR approval with their authorized boundaries and avoid wording that makes an independent model verdict a GitHub review approval. Link Workflow and Verification instead of duplicating their state machines.
     operations:
       - read-file
       - list-files
@@ -412,8 +420,12 @@ activities:
     role: designer
     profile: gpt-terra
     instructions:
-      - Exercise independent review, rejected criteria and evidence-linked
-        lessons.
+      - |
+        Exercise the real Reviewer response and citation validation path with actual candidate and evidence record shapes. Cover accepted and rejected criteria, missing or wrong evidence references, malformed verdicts, and repair of a citation error in the same assessment. Assert that a response-only repair retains candidate identity and unaffected checks rather than replanning or rebuilding.
+
+        Use distinct rejected findings to verify the final-rejection route to Direction, while ordinary steward tool or self-review failures stay local. Cover optional research with a complete returned answer and a no-research assessment that still completes. Evidence fixtures must name real canonical references and include negative cases, not arbitrary strings accepted only by a fake.
+
+        Test learning derivation separately from authority: observations may be archived, but cannot grant permission or weaken acceptance. Controlled actor responses prove validation and routing; they do not establish live judgment quality. Establish the meaningful red, repair setup mistakes locally and run mapped checks without changing original acceptance to make the assertion pass.
     operations:
       - read-file
       - list-files
@@ -439,8 +451,12 @@ activities:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-      - Return the projected verdict and lesson records through the shared Agent
-        interface.
+      - |
+        Implement assessment request construction, verdict validation and learned-observation handling through the existing Reviewer service. Use the actual assembled candidate, original criteria and complete applicable evidence. Preserve independent read-only judgment and the exact canonical citation scheme; do not infer a favorable verdict from a passing test summary.
+
+        Return malformed response and citation errors to the calling Reviewer with the precise diagnostic, retaining candidate and check identity. Route a substantive final rejection through Workflow to Direction, not through a duplicate plan builder. Optional research resumes the same assessment with its complete report and answer. Native evidence, controlled fixtures and live observations remain distinguishable.
+
+        Archive lessons in the existing Reviewer-owned learning path without turning them into active architecture or goal results. Correct owned validation and fixture defects locally through checked edits and mapped checks. Do not add publication powers, PR approval or candidate edits to the final Reviewer to simplify a failing test. Remove superseded response-repair paths when replacing them.
     operations:
       - read-file
       - list-files
@@ -467,7 +483,12 @@ activities:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-      - Check the plugin change without issuing the task’s independent verdict.
+      - |
+        Review the Reviewer implementation as a steward's self-review, distinct from the product's final independent assessment. Inspect actual request inputs, candidate/criterion identities, verdict parsing, citation validation, response repair and final rejection routing. A fixture that accepts arbitrary evidence ids cannot prove correct citation behavior.
+
+        Verify that malformed Reviewer output stays with that caller, preserving candidate and applicable checks, while substantive rejected criteria reach Direction unchanged. Optional research must deliver the full answer and remain optional. Learning must retain actual observations without granting new authority or embedding results into goals.
+
+        This read-only activity cannot issue the final verdict for its own implementation, approve a PR or publish the candidate. Route local code or fixture defects to the appropriate earlier Reviewer activity; escalate only genuine cross-owner or changed-guide work. State separately what tests establish about routing and what later live evaluation must establish about judgment quality.
     operations:
       - read-file
       - list-files
@@ -481,9 +502,14 @@ activities:
     role: reviewer
     profile: gpt-sol
     instructions:
-      - Bind the verdict to the assembled-candidate digest.
-      - Return any transferable lesson with the execution evidence that supports
-        it.
+      - |
+        Act as the final independent Reviewer for the actual assembled candidate, original accepted criteria and supplied complete evidence. Read the changed public behavior and relevant implementation, not merely the steward's summary. Distinguish a passing operation from proof of the required outcome, and distinguish local deterministic, native/provider, staging and production claims.
+
+        Use the exact verdict and citation schema supplied by the host. Cite canonical candidate and evidence identities that actually exist. If a citation or response is malformed, repair that response in the same assessment while retaining the candidate and checks; do not reject engineering merely to escape a formatting error. A substantive rejected criterion returns to Direction with its precise finding and evidence so remaining work can be revised without weakening acceptance.
+
+        Ask for optional research through the mapped request only when a named external uncertainty affects judgment. Resume with the complete report and answer; research is not mandatory and cannot substitute for direct candidate evidence. Preserve observations when the source changes, evaluating only evidence applicable to this candidate.
+
+        This assessment is read-only and independent: no candidate edits, check execution, PR approval or publication. Derive reusable lessons from actual findings in the appropriate learning path, not results embedded in goals. A no-change candidate still needs the supplied acceptance to be assessed, and unavailable evidence cannot be invented as success.
     operations:
       - read-file
       - list-files

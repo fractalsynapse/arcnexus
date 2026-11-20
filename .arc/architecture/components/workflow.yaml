@@ -382,7 +382,14 @@ activities:
     role: researcher
     profile: gpt-astra
     instructions:
-      - Trace the handoff to the component that owns the decision.
+      - |
+        Investigate the exact lifecycle question the caller needs to answer: phase sequence, local repair route, parent/child session ownership, durable continuation or application evidence. Read the current Workflow public contract and relevant services before proposing a new mechanism. Trace the actual caller and retained observation rather than assuming a method name implies behavior.
+
+        Identify which plugin owns each seam. Direction authors pending sequence; Coordination retains writer and position; Execution enforces effects and reconstructs workspaces; Verification and Reviewer establish independent acceptance; Delivery reconciles publication. A useful answer explains how those existing services can accomplish the outcome with less duplicate state.
+
+        For fixture questions, distinguish exported public helpers, local test examples and proposed scenarios that still need implementation. State the actual service mode and response shapes. A fake Planner returning no change cannot prove real Planner reassessment, and a shared message cannot prove complete history across attempts. Name the genuine SQLite/Git boundary and the observable interruption window.
+
+        Return a source-linked complete report with the direct decision, applicability and remaining uncertainty. Optional external research can clarify provider semantics under its approved policy, but this activity does not edit code or author a new scheduler. Do not recommend a new framework when a valid local test, existing child session or canonical journal read settles the question.
     operations:
       - read-file
       - list-files
@@ -391,8 +398,16 @@ activities:
     role: technical-writer
     profile: gpt-sol
     instructions:
-      - Record task handoffs, feedback and terminal behavior in the Workflow
-        contract.
+      - |
+        Describe the accepted lifecycle before changing Workflow behavior. Show the transport-neutral call from Commands through admission, Direction, steward activities, assembled Verification and observed Delivery. Distinguish the broader Plan → Architect → every approved goal refinement cycle from the activities inside a milestone. Use the actual public services and keep the source of durable position explicit.
+
+        State local recovery routes precisely. Tool and owned check failures stay with their caller; self-review rewinds within the same milestone to an applicable earlier activity; genuine foreign work or changed scope reaches Direction; final independent rejection revises remaining work. Complete answers and acknowledged effects survive each route. Avoid wording that makes every failure replan the goal.
+
+        Explain parent-held admission, exact pending decisions, captured inventory and completed-child recovery across attempts. A report must derive retained findings and usage from durable observations, not only current observer memory or the first old timeline. Internal Plan descriptions request exploration rather than creating synthetic human objectives that suppress later analysis.
+
+        Make the planned regressions and temporal expectations clear. Testing establishes a valid red before future Implementation; assembled integration later proves the actual service collaboration. Do not demand a completed workflow as a prerequisite to its own test or require a steward to prove future GitHub delivery. Record proposed versus demonstrated behavior honestly.
+
+        Use owned documentation and checked edits, retaining actual hashes and receipts. Update canonical explanations instead of adding another competing loop diagram or status vocabulary. A cross-owner source change needs its concrete contribution; no agreement ritual or extra human gate is required for ordinary accepted Workflow implementation.
     operations:
       - read-file
       - list-files
@@ -406,8 +421,16 @@ activities:
     role: designer
     profile: gpt-terra
     instructions:
-      - Exercise ordered activity execution, correction and interruption through
-        the public task boundary.
+      - |
+        Exercise the public Workflow lifecycle with realistic service responses and actual durable state where correctness depends on it. Cover ordered Agent activities, supplier-before-requester behavior, local rewinds, final rejection and retained acceptance. For refinement, cover Plan, Architect and every captured goal, fresh repeated assessment, exact pending proposals, inventory stability and restart at the first unfinished position.
+
+        Build the minimal valid fixture before judging product behavior. Supply real project source and SQLite/Git sessions, explicit goal data and valid actor response shapes. Controlled services can establish sequence, but cannot prove the actual Planner's objective/exploration behavior. Add the real-Planner regression when testing that every round reassesses without persisting an internal description as a human objective.
+
+        Make pre-interruption and resumed observations distinguishable. Use different findings, complete multiline answers, profile usage, checks and outcomes, then assert all are present exactly under their durable identities. Reopen retained state and exercise child success before parent acknowledgment. Assert no duplicate assessment or PR and a durable reuse observation in the report. A common no-change string cannot prove complete all-attempt reconstruction or sequence deduplication.
+
+        Use current public record shapes. Do not invent completed-round fields and call the resulting fake a production handoff. Establish the lower-level seam with an explicit contract fixture and reserve genuine producer/consumer proof for the actual implemented lifecycle. A real foreign public interface can be requested, but Testing does not need the future workflow to pass before its intended-red assertion is complete.
+
+        Observe the meaningful red and required current passing quality checks, then complete this Step so Implementation can make the behavior pass. Do not request a separate same-owner Implementation supplier just because downstream assertions cannot pass yet. Fix malformed fixtures locally, retain unexpected diagnostics separately and preserve the original criterion through later correction.
     operations:
       - read-file
       - list-files
@@ -433,8 +456,18 @@ activities:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-      - Advance the recorded sequence through the existing Agent, Execution and
-        Coordination services.
+      - |
+        Implement the canonical Workflow path with the least necessary state and code. Reuse the existing invocation lifecycle, session/journal, observer, Agent request builder and owning services. Put sequencing here rather than in Commands or a gateway. Remove superseded queue, cursor or recovery projections instead of creating a parallel refinement engine.
+
+        Use the accepted plan and durable activity position. Ordinary operation and self-review findings repair within the milestone; explicit foreign responsibility and final independent rejection reach Direction. Preserve original criteria, successful receipts and complete answers. A prior completion and a current rewind are distinct facts; rerun only affected downstream work.
+
+        For refinement, request project exploration when no human objective was supplied. An internal phase description must not become an objective-mode submission that real Planner later treats as already recorded. Execute every captured approved goal in priority order with Direction assessment even when current measures pass. Retain the exact inventory during interrupted Run and capture a fresh one for the next round.
+
+        Build round findings, answers, usage and outcomes from complete durable originating observations across attempts. Current observer frames omit earlier work, and the first timeline stops before later continuations. Preserve origin, deduplicate actual sequence identities, scope measurements to the relevant round and record when a successful child outcome is reused after interrupted parent acknowledgment.
+
+        When self-review requests realistic regressions, write the owned tests and fixtures through this activity's checked operations if no earlier applicable Testing target exists. Do not return repair/implementation to obtain another activation or declare the missing earlier Step a blocker. Continue the actual correction with the latest diagnostic, including real-Planner behavior and distinguishable resumed observations.
+
+        Obtain affected public tests and required passing owner quality checks. Preserve declared authority, pending approvals, cancellation and publication reconciliation. The separate live qualification remains paused until the architect reviews D; controlled fixture success is not live evidence. Return completion only when the assigned contribution and requested regressions are actually supported.
     operations:
       - read-file
       - list-files
@@ -461,8 +494,16 @@ activities:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-      - Check that Workflow respects captured authority and delegates sequence
-        decisions and acceptance.
+      - |
+        Review the actual Workflow diff and observations against the original accepted outcomes. Trace admission, parent writer, selected activities, local repair, supplier return, independent verdict and publication through their owning services. Look for another scheduler, duplicate cursor, hidden command-side loop or cached catalog that prevents approved next-activity evolution.
+
+        Inspect refinement Plan semantics through the real Planner, not an unconditional propose stub. The absence of a human objective must mean exploration, and every round must assess again. Verify captured goal ordering and inventory lifetime rather than inferring them from a final requested count.
+
+        Audit recovery reports across the real interrupted boundary. They must include distinct earlier and resumed findings, complete answers, profile usage and terminal outcomes from durable history. Selecting only the first timeline or current in-memory frames is incomplete. Reused successful children need a durable observation and must not trigger another assessment, edit or PR.
+
+        Read the actual regression assertions. A shared no-change message cannot establish completeness, and a type cast cannot supply missing production fields. Demand the precise public observation whose absence would let a wrong implementation pass. Keep required quality results current and retain meaningful red versus infrastructure failure honestly.
+
+        Return the earliest applicable local repair with the full original finding and exact current deficiency. An Implementation-only contribution can repair its owned regression without inventing an unavailable Testing rewind; make that responsibility explicit in the finding. This is self-review, not final independent acceptance or staging delivery. Complete only the supported contribution and leave the assembled verdict to Verification.
     operations:
       - read-file
       - list-files

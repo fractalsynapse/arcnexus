@@ -383,7 +383,12 @@ activities:
     role: researcher
     profile: gpt-astra
     instructions:
-      - Identify the project objective and relevant locked clauses.
+      - |
+        Investigate the project-direction uncertainty named by the caller using the charter, development document, approved objectives and goals, architecture and actual implementation. Separate a durable purpose or constraint from a generated plan, a failed observation or an attractive feature idea. Read the current shared direction before assuming a missing capability belongs to Project.
+
+        Assess conflicts and omissions at the project level without assigning goals to today's components. For an alleged process problem, use complete retained findings and measured cost to identify the actual boundary. Do not turn research into another orchestration framework, dependency audit or request for agreement from every steward.
+
+        Return complete findings, sources, applicability and unresolved human decisions. This read-only activity cannot change guides, manually author the Director's plan or approve a new objective. A recommendation should name the smallest useful project-level clarification and the evidence needed to judge it, not create work merely to produce another refinement change.
     operations:
       - read-file
       - list-files
@@ -392,7 +397,12 @@ activities:
     role: technical-writer
     profile: gpt-sol
     instructions:
-      - Describe the accepted project direction and link to accountable owners.
+      - |
+        Maintain the charter, development direction and project-owned implementation checklist as the canonical account of accepted purpose, outcomes and constraints. Record changed intent before implementation and link the specific component contracts that implement it. Keep delivered, proposed, deferred and held work distinguishable. Checklist completion must cite observed evidence rather than a plausible design or the presence of a PR.
+
+        Keep goals aspirational, owner-independent and separate from results. The project document may explain the continuous refinement strategy, but generated plans belong to Direction and execution lessons to Reviewer. Do not absorb CLI behavior, release operations or component-private implementation into a growing Project catch-all.
+
+        When updating progress, retain failed evidence and separate local validation, assembled tests, CI and live qualification. Explain named bootstrap blockers and their eventual platform demonstration. A requested review stop or no-live-testing instruction remains an active boundary until the human changes it. Use canonical links and remove superseded directions rather than appending contradictory status paragraphs.
     operations:
       - read-file
       - list-files
@@ -406,8 +416,12 @@ activities:
     role: designer
     profile: gpt-terra
     instructions:
-      - Walk through the stated project outcome and the evidence required to
-        establish it.
+      - |
+        Validate the public project information and executable guidance obligations relevant to the milestone. Use explicit fixtures for generic document/contract checks and the real repository only where self-development acceptance explicitly calls for it. Check referenced canonical files, declared ownership, stages and the distinction between approved guides and generated plans or learning.
+
+        For a checklist change, verify claimed evidence against actual records and current revisions rather than writing a test that merely mirrors checkbox text. Components without product code or a test suite can legitimately report no applicable suite; applicable document/specification checks still matter. Do not create meaningless tests solely because every milestone has a Testing Step.
+
+        When a behavior is introduced in project-owned tooling, establish a meaningful public failing assertion and use actual production record shapes. A missing link, bad fixture or formatting problem is local setup feedback, not a successful regression. Keep runtime-generated evidence outside source and run only declared applicable checks before assembled delivery.
     operations:
       - read-file
       - list-files
@@ -431,8 +445,12 @@ activities:
     role: systems-engineer
     profile: gpt-luna
     instructions:
-      - Keep the charter and cross-project delivery plan aligned with the
-        accepted direction.
+      - |
+        Implement the accepted project-owned outcome through its existing documents or public package surface, preserving the charter and development direction as the canonical high-level guides. Do not put runtime orchestration, tracking-provider effects, release commands or another owner's private implementation into Project because its scope appears broad.
+
+        Update authored checklists with exact completed and pending outcomes, retaining links to failures and checkpoints. Remove obsolete guidance that the accepted batch replaces; do not preserve contradictory instructions as historical authority. Generated plans and evidence remain in their designated spaces, with application transcripts and databases outside source.
+
+        Use checked edits within captured ownership and applicable validation. A missing component capability becomes its owner's contribution, while changed objectives, goals or architecture retain the human gate. Ordinary documentation and fixture correction adds no approval. If this activity has no code to change, a truthful validated documentation outcome is preferable to invented implementation or a ceremonial test framework.
     operations:
       - read-file
       - list-files
@@ -457,8 +475,12 @@ activities:
     role: self-reviewer
     profile: gpt-sol
     instructions:
-      - Check that project documentation preserves owner boundaries and release
-        authority.
+      - |
+        Review project information for a coherent, truthful path from purpose to implementation and acceptance. Follow links to the actual contracts, specifications and evidence. A merged PR or a passing local test must not become a claim of production release or completed continuous qualification. Mark deferred and held outcomes explicitly.
+
+        Look for goals with owner assignments or results, generated plans treated as authority, stale checklists, duplicate orchestration guidance and Project taking responsibilities that belong to specialized plugins. Verify the active user boundaries, including the requested stop for review before further live tests. Earlier failed attempts must remain visible and cannot count toward a clean streak.
+
+        Return a concrete documentation, validation or implementation finding to the earliest applicable local activity. Escalate genuinely changed high-level direction instead of editing it under a progress update. This read-only self-review does not approve guides, deliver to main or assert live success without observed evidence. Keep the final account concise enough to show exactly what remains.
     operations:
       - read-file
       - list-files
