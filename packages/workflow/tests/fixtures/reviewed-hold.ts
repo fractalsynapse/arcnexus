@@ -66,7 +66,14 @@ export class ReviewedWorkflow {
     this.fixture = new ReviewedHoldFixture(t, scenario === 'external', 'arguments');
     const task = this.fixture.task;
     const prior = task.history().findLast((event) => 'plan' in event)!.plan!;
-    task.record({ plan: { ...prior, milestones: [...prior.milestones.slice(1), correction] } });
+    const completed = prior.milestones.slice(1).map((milestone) => ({
+      ...milestone,
+      steps: milestone.steps.map((step) => ({
+        ...step,
+        checklist: step.checklist.map((item) => ({ ...item, criteria: milestone.criteria.map((criterion) => criterion.id) })),
+      })),
+    }));
+    task.record({ plan: { ...prior, milestones: [...completed, correction] } });
     task.record({ position: { completed: 2, activities: { [correction.id]: 2 } } });
     this.services = this.providers();
     t.after(() => {
