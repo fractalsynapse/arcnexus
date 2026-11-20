@@ -43,6 +43,7 @@ interface Definition {
 
 export interface Component extends Definition {
   purpose: string;
+  summary?: string;
   constraints?: unknown[];
   owns: string[];
   activities: Record<string, Activity>;
