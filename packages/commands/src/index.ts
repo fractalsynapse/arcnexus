@@ -52,6 +52,8 @@ export const commandsPlugin = {
         context.workflow.run(input, observer, signal),
       runRound: (directory, observer, signal) =>
         context.workflow.round(directory, observer, signal),
+      refine: (directory, rounds, observer, signal) =>
+        context.workflow.refine(directory, rounds, observer, signal),
     });
   },
 };
