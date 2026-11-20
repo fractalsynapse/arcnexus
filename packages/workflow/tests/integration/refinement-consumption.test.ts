@@ -50,6 +50,7 @@ function authority(root: string, directory: string, revision: string) {
       paths: Object.keys(bodies),
       read: (path: string) => bodies[path],
     },
+    components: {},
     project: {
       knowledgeRoot: '.arc',
       delivery: { baseBranch: 'staging', protectedBranch: 'main' },
