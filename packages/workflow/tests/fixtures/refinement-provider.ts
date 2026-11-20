@@ -37,13 +37,18 @@ class RefinementProvider {
     const url = JSON.parse(setting.split('url=')[1]!.split(',required=')[0]!) as string;
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+      headers: {
+        'content-type': 'application/json',
+        accept: 'application/json, text/event-stream',
+      },
       body: JSON.stringify({
-        jsonrpc: '2.0', id: 1, method: 'tools/call',
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
         params: { name: 'ask-question', arguments: { question: 'Complete answer ' + attempt } },
       }),
     });
-    const result = await response.json() as { error?: unknown; result?: { isError?: boolean } };
+    const result = (await response.json()) as { error?: unknown; result?: { isError?: boolean } };
     if (!response.ok || result.error || result.result?.isError)
       throw new Error('Question refused: ' + JSON.stringify(result));
   }
