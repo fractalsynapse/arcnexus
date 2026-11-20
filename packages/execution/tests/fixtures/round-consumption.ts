@@ -40,7 +40,7 @@ export class RoundConsumptionFixture {
     }
     this.git('add', '.');
     this.git('commit', '-m', 'Explicit accepted refinement fixture');
-    symlinkSync(fileURLToPath(new URL('../../../../node_modules', import.meta.url)),
+    symlinkSync(fileURLToPath(new URL('../../../../../node_modules', import.meta.url)),
       join(this.root, '.git', 'node_modules'), 'dir');
     this.install('original');
   }
