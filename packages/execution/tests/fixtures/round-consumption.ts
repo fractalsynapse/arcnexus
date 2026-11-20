@@ -51,13 +51,12 @@ export class RoundConsumptionFixture {
   /** Resolve the same public plugin services afresh over the existing SQLite/Git state. */
   reopen() {
     const agent = new Agent(this.architecture);
-    const execution = new Execution(
-      this.architecture,
-      new Coordination(this.storage),
-      this.storage,
-    );
     return new Workflow({
-      execution,
+      execution: new Execution(
+        this.architecture,
+        new Coordination(this.storage),
+        this.storage,
+      ),
       planner: new Planner(agent),
       architecture: {
         propose: (session, feedback, signal) =>
