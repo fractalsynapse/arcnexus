@@ -4,6 +4,13 @@ Execution activates scoped stewards, applies checked edits and supervises declar
 operations in one task worktree. Its public obligations are in the
 [locked contract](contract.md).
 
+## Inspection and activation parity
+
+The [inspection parity intent](docs/inspection-parity.md) records the exact request,
+activity-scoped tool and provider-policy comparisons required for the shared Agent
+path. It links existing CLI coverage and distinguishes source review, controlled
+subprocess observations and live harness evidence.
+
 ## Refinement handoffs
 
 The [refinement execution intent](docs/refinement.md) describes shared-writer
