@@ -149,7 +149,7 @@ function authorityPath(capture: Capture, path: string) {
 }
 
 /** Revalidate the accepted pending activities and actual checked owners without reconstructing the plan. */
-function validateRetainedWork(task: HostTask, capture: Capture) {
+export function validateRetainedWork(task: HostTask, capture: Capture) {
   const events = task.history();
   const plan = events.findLast((event) => 'plan' in event)?.plan as Plan | undefined;
   const position = events.findLast((event) => 'position' in event)?.position;

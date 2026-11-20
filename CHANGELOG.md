@@ -25,6 +25,8 @@
 
 ### Fixed
 
+- Recover secured checkpoints across compatible staging changes with Git's three-way merge and current ownership/activity validation, preserving real conflict diagnostics instead of rejecting every overlapping path (#615).
+
 - Refresh elapsed measurements on ongoing observations and mark terminated unfinished activations with unknown duration, preserving reported usage and avoiding historical live stopwatches (#662).
 
 - Keep the readable run timeline in canonical journal form, referencing complete raw artifacts while streaming full details, so reading it cannot embed its payload back into itself (#663).

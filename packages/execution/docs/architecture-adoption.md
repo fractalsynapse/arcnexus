@@ -36,6 +36,16 @@ identifies the runtime actually executing. A future runtime update still require
 its validated safe boundary. Missing code or handlers cannot be made usable by
 approving declarations alone.
 
+When staging advances between attempts, recovery uses the admitted current
+architecture to validate retained checked owners and pending activities. It merges
+the secured checkpoint with staging through Git's ordinary three-way merge.
+Independent changes within one file are compatible; textual conflicts retain the
+checkpoint and exact merge diagnostic. A whole-file architecture or guidance
+change is not itself a conflict. A changed owner or unavailable pending activity
+still prevents resumption, and changed candidate inputs require fresh verification.
+Exact protected proposals keep their original baseline and require reconciliation
+and renewed approval when that baseline changes.
+
 See the [Architecture contract](../../architecture/contract.md),
 [Execution contract](../contract.md),
 [operation configuration](../../architecture/docs/operations.md) and
