@@ -215,19 +215,25 @@ export class ReviewedHoldFixture {
   private recordReview() {
     const original = { ...correction, id: 'original' };
     const digest = git(this.root, 'rev-parse', 'HEAD^{tree}');
-    const plan: Plan = { focus, milestones: [original] };
+    const foreign = { ...original, id: 'foreign', owner: 'other',
+      criteria: [{ id: 'foreign-criterion', description: 'Preserve the external schema' }] };
+    const plan: Plan = { focus, milestones: [original, foreign] };
     this.task.record({ plan });
     this.task.record({
       candidate: { digest, evidence: [] },
       verdict: { kind: 'rejected', candidate: digest, findings: this.rejection.findings },
     });
     this.task.record({ feedback: this.rejection });
-    this.task.record({ plan: { focus, milestones: [correction, original] } });
+    this.task.record({ plan: { focus, milestones: [correction, ...plan.milestones] } });
     this.task.record({ position: { completed: 0, activities: { [correction.id]: 2 } } });
   }
 
   /** Prepare the real issue branch and record one full answered clarification through its host API. */
   async prepare() {
+    this.task.store('controlled-runtime.json', JSON.stringify({
+      executable: process.execPath, version: process.version,
+      boundary: 'Real subprocess in outer Testing sandbox; controlled HostTask.check seam',
+    }));
     await this.task.setupWorkspace('699', signal);
     this.task.ask = async () => answer;
     await new Clarifications(this.task, selection, signal).decide(
