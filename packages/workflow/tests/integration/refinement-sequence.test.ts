@@ -26,7 +26,10 @@ function fixture(t: TestContext) {
   git('add', '.');
   git('commit', '-m', 'baseline');
   git('remote', 'add', 'origin', root);
-  writeFileSync(join(root, '.git', 'bindings.yaml'), `schemaVersion: 1\ntools:\n  codex: ${process.execPath}\n`);
+  writeFileSync(
+    join(root, '.git', 'bindings.yaml'),
+    `schemaVersion: 1\ntools:\n  codex: ${process.execPath}\n`,
+  );
   return authority(root, directory, git('rev-parse', 'HEAD'));
 }
 
@@ -38,7 +41,13 @@ function authority(root: string, directory: string, revision: string) {
     baseline: 'measured evidence\n',
   };
   const capture = {
-    source: { root, revision, remote: 'https://example.invalid/project.git', paths: Object.keys(bodies), read: (path: string) => bodies[path] },
+    source: {
+      root,
+      revision,
+      remote: 'https://example.invalid/project.git',
+      paths: Object.keys(bodies),
+      read: (path: string) => bodies[path],
+    },
     project: {
       knowledgeRoot: '.arc',
       delivery: { baseBranch: 'staging', protectedBranch: 'main' },
@@ -77,12 +86,15 @@ function providers(f: ReturnType<typeof fixture>, calls: string[]) {
       plan: async (session: { goal: string }) => {
         calls.push(session.goal.trim());
         return {
-          kind: 'satisfied', summary: 'The measured goal holds',
+          kind: 'satisfied',
+          summary: 'The measured goal holds',
           evidence: [{ path: 'baseline', quote: 'measured evidence' }],
         };
       },
     },
-    agent: {}, verification: {}, delivery: {},
+    agent: {},
+    verification: {},
+    delivery: {},
   } as unknown as WorkflowServices;
 }
 
@@ -91,12 +103,21 @@ test('two refinement rounds assess Plan, Architect and every approved goal in or
   const calls: string[] = [];
   const workflow = new Workflow(providers(f, calls));
   const refine = Reflect.get(workflow, 'refine') as (
-    directory: string, rounds: number, observer: TaskObserver, signal: AbortSignal,
+    directory: string,
+    rounds: number,
+    observer: TaskObserver,
+    signal: AbortSignal,
   ) => Promise<unknown>;
   assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
   await refine.call(workflow, f.root, 2, { progress() {} }, new AbortController().signal);
   assert.deepEqual(calls, [
-    'Plan', 'Architect', 'First goal', 'Second goal',
-    'Plan', 'Architect', 'First goal', 'Second goal',
+    'Plan',
+    'Architect',
+    'First goal',
+    'Second goal',
+    'Plan',
+    'Architect',
+    'First goal',
+    'Second goal',
   ]);
 });
