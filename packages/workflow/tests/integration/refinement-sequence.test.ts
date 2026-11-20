@@ -130,6 +130,7 @@ test('an interrupted invocation refuses a changed round total before reassessmen
   const calls: string[] = [];
   const services = providers(f, calls);
   const controller = new AbortController();
+  assert.ok(services.planner);
   services.planner.propose = async () => {
     calls.push('Plan');
     controller.abort();
@@ -146,7 +147,8 @@ test('an interrupted invocation refuses a changed round total before reassessmen
   assert.equal(typeof refine, 'function', 'Workflow exposes the refinement boundary');
   await refine.call(workflow, f.root, 2, { progress() {} }, controller.signal).catch(() => {});
   const before = [...calls];
-  await refine.call(workflow, f.root, 3, { progress() {} }, new AbortController().signal)
+  await refine
+    .call(workflow, f.root, 3, { progress() {} }, new AbortController().signal)
     .catch(() => {});
   assert.deepEqual(calls, before, 'a changed total must not restart assessment');
 });
