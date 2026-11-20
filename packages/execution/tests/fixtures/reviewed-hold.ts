@@ -167,11 +167,12 @@ export class ReviewedHoldFixture {
         const check = this.dependencyPrerequisite
           ? await runCheck(task, id, abort, scope)
           : await this.command(task, id, abort);
-        task.note({
-          check,
-          scope,
-          checkInput: textDigest(readFileSync(join(task.worktree!, 'fixture.txt'), 'utf8')),
-        });
+        if (!this.dependencyPrerequisite)
+          task.note({
+            check,
+            scope,
+            checkInput: textDigest(readFileSync(join(task.worktree!, 'fixture.txt'), 'utf8')),
+          });
         this.checks.push(check);
         return check;
       },
