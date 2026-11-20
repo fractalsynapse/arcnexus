@@ -59,12 +59,16 @@ function phase(root: Journal, suffix: string) {
   session.record(observation);
   session.finish({ kind: 'planned' });
   assert(root.childEvents('Plan', 'round:1:plan').includes(observation) === false);
-  assert(root.childEvents('Plan', 'round:1:plan').some((event) =>
-    JSON.stringify(event).includes(observation.answer.replaceAll('\n', '\\n')),
-  ));
-  assert(root.childTimeline('Plan', 'round:1:plan').some((event) =>
-    JSON.stringify(event.observation).includes(observation.finding),
-  ));
+  assert(
+    root
+      .childEvents('Plan', 'round:1:plan')
+      .some((event) => JSON.stringify(event).includes(observation.answer.replaceAll('\n', '\\n'))),
+  );
+  assert(
+    root
+      .childTimeline('Plan', 'round:1:plan')
+      .some((event) => JSON.stringify(event.observation).includes(observation.finding)),
+  );
 }
 
 /** Populate two completed rounds across reopened attempts. */
