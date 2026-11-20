@@ -14,10 +14,7 @@ export function goalRound(
   directory: string,
   namespace = 'task',
 ): GoalRound {
-  const local = architecture.capture(directory);
-  if (!local.project.delivery?.baseBranch && !goalInventory(local).length)
-    throw new Error('No standing goals in the captured project inventory');
-  const capture = stagingCapture(architecture, local);
+  const capture = stagingCapture(architecture, architecture.capture(directory));
   const remote = capture.source.remote;
   const { id, inventory } = coordination.round(
     remote,
