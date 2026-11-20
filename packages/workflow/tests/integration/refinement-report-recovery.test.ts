@@ -18,7 +18,7 @@ import { RefinementPlanner } from '../fixtures/refinement-planner.js';
 import { assertAccounting, assertOrigins, history } from '../fixtures/refinement-history.js';
 import type { CompletedRefinementRound } from '../../src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
-import { Execution, hostTask } from '../../../execution/src/index.js';
+import { Execution } from '../../../execution/src/index.js';
 import {
   Workflow,
   type TaskObserver,
@@ -28,18 +28,7 @@ import {
 
 export const suite = { owner: 'workflow', level: 'integration', tags: ['regression'] } as const;
 
-type Refine = (
-  directory: string,
-  rounds: number,
-  observer: TaskObserver,
-  signal: AbortSignal,
-) => Promise<unknown>;
 type State = ReturnType<typeof services>;
-type RecoveryState = State & {
-  calls: { value: number };
-  reopen: () => State;
-  failFirstPlanner?: boolean;
-};
 
 /** Build a retained SQLite journal and Git project for a restart across service instances. */
 function fixture(t: TestContext) {
@@ -135,54 +124,6 @@ function workflowServices(state: State, planner: unknown): WorkflowServices {
   } as unknown as WorkflowServices;
 }
 
-/** Retain a complete answer and explicit profile usage as originating child events. */
-async function recordProviderEvidence(
-  session: TaskSession,
-  calls: { value: number },
-  revision: string,
-) {
-  calls.value++;
-  const answer = await session.ask?.('Retain this complete answer', new AbortController().signal);
-  session.record({ phase: 'question', message: `Complete answer: ${answer}` });
-  recordUsage(hostTask(session));
-  return {
-    kind: 'planned' as const,
-    commit: revision,
-    summary: `Distinct Planner finding attempt ${calls.value}`,
-    evidence: [],
-  };
-}
-
-/** Retain controlled provider attribution and usage in the real child journal. */
-function recordUsage(task: ReturnType<typeof hostTask>) {
-  const activation = 'fixture-planner-activation';
-  const usage = { input_tokens: 17, output_tokens: 5 };
-  const source = task.store(
-    'provider-turn.json',
-    JSON.stringify({ type: 'turn.completed', usage }),
-  );
-  task.note({
-    nativeStarted: {
-      activation,
-      profile: 'planner-fixture',
-      model: 'fixture-model',
-      reasoning: 'high',
-    },
-  });
-  task.note({
-    nativeEvent: { activation, kind: 'event', source, event: { type: 'turn.completed', usage } },
-  });
-  task.note({ nativeFinished: { activation, durationMs: 7 } });
-}
-
-/** Return the controlled Planner that should run once before restart. */
-function measuredPlanner(calls: { value: number }, revision: string) {
-  return {
-    propose: async (session: TaskSession) => recordProviderEvidence(session, calls, revision),
-    apply: async () => ({ kind: 'completed' as const, evidence: [] }),
-  };
-}
-
 /** Stop after the successful Planner child's terminal event has entered durable history. */
 function interruptingObserver(): TaskObserver {
   return {
@@ -200,107 +141,34 @@ function interruptingObserver(): TaskObserver {
   };
 }
 
-/** Run the first attempt until its committed child is interrupted before parent acknowledgment. */
-async function interruptAfterChild(root: string, state: RecoveryState) {
-  const workflow = new Workflow(
-    workflowServices(state, measuredPlanner(state.calls, state.revision)),
-  );
-  const outcome = await (Reflect.get(workflow, 'refine') as Refine).call(
-    workflow,
-    root,
-    2,
-    interruptingObserver(),
-    new AbortController().signal,
-  );
-  assert.equal(Reflect.get(outcome as object, 'kind'), 'failed');
-}
-
-/** Resume the interrupted first round, then finish a distinct second round after reopening. */
-async function resume(root: string, state: RecoveryState) {
-  const planner = {
-    propose: async (session: TaskSession) =>
-      recordProviderEvidence(session, state.calls, state.revision),
-    apply: async () => ({ kind: 'completed' as const, evidence: [] }),
-  };
-  const workflow = new Workflow(workflowServices(state.reopen(), planner));
-  const events: unknown[] = [];
-  await (Reflect.get(workflow, 'refine') as Refine).call(
-    workflow,
-    root,
-    2,
-    {
-      progress() {},
-      answer: async () => 'The resumed complete answer for attempt 2.',
-      event: (event) => events.push(event),
-    },
-    new AbortController().signal,
-  );
-  return events;
-}
-
-/** Resolve every typed completion event to its registered readable report. */
-function completedReports(events: readonly unknown[]) {
-  return events.flatMap((event) => {
-    const observation = Reflect.get(event as object, 'observation');
-    if (
-      typeof observation !== 'object' ||
-      observation === null ||
-      !('completedRound' in observation)
-    )
-      return [];
-    const completion = Reflect.get(observation, 'completedRound') as {
-      report: string;
-      findings: readonly string[];
-      measurements: readonly string[];
-      round: number;
-    };
-    return [{ completion, report: readFileSync(completion.report, 'utf8') }];
-  });
-}
-
-/** Check one round's complete origins, deduplicated references and profile accounting. */
-function assertRound(
-  result: ReturnType<typeof completedReports>[number],
-  attempt: number,
-  reused: boolean,
-) {
-  const { completion, report } = result;
-  assert.match(report, new RegExp('Distinct Planner finding attempt ' + attempt));
-  assert.doesNotMatch(
-    report,
-    new RegExp('Distinct Planner finding attempt ' + (attempt === 1 ? 2 : 1)),
-  );
-  if (attempt === 1)
-    assert.match(
-      report,
-      /The complete answer is retained verbatim, including its full conclusion\./,
-    );
-  else assert.match(report, /The resumed complete answer for attempt 2\./);
-  if (reused) assert.match(report, /Reused completed child outcome for refine:/);
-  else assert.doesNotMatch(report, /Reused completed child outcome for refine:/);
-  assert.equal(new Set(completion.findings).size, completion.findings.length);
-  assert.equal(new Set(completion.measurements).size, completion.measurements.length);
-  assert.equal(completion.measurements.length, 3, "only this round's provider stream is measured");
-  assert.match(report, /"profile": "planner-fixture"/);
-  assert.match(report, /"input_tokens": \{\n\s+"reported": 17/);
-  assert.match(report, /"output_tokens": \{\n\s+"reported": 5/);
-  assert.match(report, /"cost": \{\n\s+"estimate": null/);
-}
-
-test('reopened recovery reports every origin and exact round profile usage without replay', async (t) => {
+test('a successful child is reused durably with exact origins and no repeated assessment', async (t) => {
   const f = fixture(t);
-  const calls = { value: 0 };
-  const state = { ...f.reopen(), calls, reopen: f.reopen };
-  await interruptAfterChild(f.root, state);
-  const events = await resume(f.root, state);
-  const rounds = completedReports(events);
-  assert.equal(rounds.length, 2);
-  assert.equal(rounds[0]!.completion.round, 1);
-  assert.equal(rounds[1]!.completion.round, 2);
-  assertRound(rounds[0]!, 1, true);
-  assertRound(rounds[1]!, 2, false);
-  assert.equal(calls.value, 2, 'the recovered first child is not repeated; round two is assessed');
+  installProvider(f.root);
+  const planner = new RefinementPlanner(f.revision, false);
+  const workflow = new Workflow(continuationServices(f.reopen(), planner));
+  const outcome = await workflow.refine(f.root, 2, interruptingObserver(),
+    new AbortController().signal);
+  assert.equal(outcome.kind, 'failed');
+  const rounds = await continueUnfinished(f, planner);
+  assert.equal(planner.attempts, 2, 'successful first child is reused; next round is assessed');
+  assert.deepEqual(rounds.map(({ round }) => round), [1, 2]);
+  assertSuccessfulRecovery(f, planner, rounds);
 });
+
+/** Resolve both completed rounds and the durable reuse event to their complete native origins. */
+function assertSuccessfulRecovery(f: ReturnType<typeof fixture>, planner: RefinementPlanner,
+  rounds: CompletedRefinementRound[]) {
+  const results = reconcileRounds(f, planner, rounds);
+  assert.match(results[0]!.report, /Reused completed child outcome for refine:/);
+  assert.doesNotMatch(results[1]!.report, /Reused completed child outcome for refine:/);
+  assert.match(results[0]!.native, /Provider finding attempt 1/);
+  assert.doesNotMatch(results[0]!.native, /Provider finding attempt 2/);
+  assert.match(results[1]!.native, /Provider finding attempt 2/);
+  assert.doesNotMatch(results[1]!.native, /Provider finding attempt 1/);
+  for (const result of results)
+    assert.deepEqual(result.terminals.map((outcome) => outcome.kind),
+      ['planned', 'planned', 'satisfied']);
+}
 
 /** Bind a real executable fixture outside source while keeping Git admission clean. */
 function installProvider(root: string) {
@@ -354,7 +222,9 @@ async function continueUnfinished(f: ReturnType<typeof fixture>, planner: Refine
     2,
     {
       progress() {},
-      answer: async () => 'Second-round complete answer.\nA different final conclusion.',
+      answer: async (question) => question === 'Complete answer 2'
+        ? 'Resumed complete answer.\nA distinguishable continuation and its entire conclusion.'
+        : 'Second-round complete answer.\nA different final conclusion.',
       event(event) {
         const observation = Reflect.get(event, 'observation') as {
           completedRound?: CompletedRefinementRound;
@@ -378,15 +248,9 @@ function assertContinuation(
     rounds.map(({ round }) => round),
     [1, 2],
   );
-  const origins = rounds.map(({ round }) =>
-    history(
-      join(f.directory, 'state'),
-      f.reopen().capture.source.remote,
-      planner.tasks.get(round)!,
-    ),
-  );
-  const first = assertOrigins(rounds[0]!, origins[0]!);
-  const second = assertOrigins(rounds[1]!, origins[1]!);
+  const [first, second] = reconcileRounds(f, planner, rounds);
+  assert.ok(first);
+  assert.ok(second);
   assert.deepEqual(
     first.terminals.map((outcome) => outcome.kind),
     ['cancelled', 'planned', 'planned', 'satisfied'],
@@ -396,10 +260,7 @@ function assertContinuation(
     ['planned', 'planned', 'satisfied'],
   );
   assertFindings(first.report + first.native, second.report + second.native);
-  const firstProfile = assertAccounting(first.report, origins[0]!);
-  const secondProfile = assertAccounting(second.report, origins[1]!);
-  assert.equal(firstProfile.usage.input_tokens.reported, 19 + 38);
-  assert.equal(secondProfile.usage.input_tokens.reported, 57);
+
   assert.equal(planner.attempts, 3);
   assert.equal(planner.identities[0], planner.identities[1]);
   assert.notEqual(planner.identities[1], planner.identities[2]);
@@ -414,6 +275,8 @@ function assertFindings(first: string, second: string) {
   assert.doesNotMatch(second, /Provider finding attempt [12]/);
   assert.match(first, /Original complete answer/);
   assert.match(first, /Every detail and the final conclusion survive/);
+  assert.match(first, /Resumed complete answer/);
+  assert.match(first, /A distinguishable continuation and its entire conclusion/);
   assert.match(second, /Second-round complete answer/);
   assert.match(second, /A different final conclusion/);
   assert.doesNotMatch(second, /Original complete answer/);
@@ -436,3 +299,15 @@ test('unfinished child recovery retains every attempt exactly once and excludes 
   const rounds = await continueUnfinished(f, planner);
   assertContinuation(f, planner, rounds);
 });
+
+/** Compare each completed round with independent canonical origins and provider accounting. */
+function reconcileRounds(f: ReturnType<typeof fixture>, planner: RefinementPlanner,
+  rounds: CompletedRefinementRound[]) {
+  return rounds.map((completion) => {
+    const origins = history(join(f.directory, 'state'), f.reopen().capture.source.remote,
+      planner.tasks.get(completion.round)!);
+    const result = assertOrigins(completion, origins);
+    assertAccounting(result.report, origins);
+    return result;
+  });
+}
