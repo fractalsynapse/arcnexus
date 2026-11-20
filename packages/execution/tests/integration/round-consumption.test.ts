@@ -123,7 +123,8 @@ function originatingMessages(attempt: Consumption, consumed: Consumption['consum
         createHash('sha256').update(record.item.text).digest('hex') === sha256,
     );
     assert.ok(message, 'the consumed identity resolves to the complete originating message');
-    return JSON.parse(message.item.text).summary as string;
+    const reply = JSON.parse(message.item.text);
+    return typeof reply.summary === 'string' ? reply.summary : '';
   });
 }
 
