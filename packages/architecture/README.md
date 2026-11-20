@@ -42,6 +42,63 @@ repairs in one readable artifact derived from the append-only journal.
 Expected human decision pauses are preserved as gates, rather than classified
 as technical failures. Referencing the artifact adds no scheduler or separate knowledge store.
 
+## Complete ownership diagnostics
+
+Implementation intent for `validateCapture`: Architecture maintainers and admission
+callers must be able to identify every ownership defect in a captured inventory
+from one refusal. This correction implements the existing locked
+[Architecture obligations](contract.md#acceptance-scenarios), especially ARC-3
+(path coverage), ARC-4 (conflicting component IDs), ARC-7 (capture stability),
+ARC-16 (deterministic findings) and ARC-23 (unambiguous ownership).
+The [project contract](../../docs/interface/arcnexus-project.md#obligations)
+requires exactly one owner for each tracked maintained path.
+
+The public input is a `Capture`: its component definitions supply declared owned
+roots, and `capture.source.paths` supplies the captured maintained inventory.
+Use [Team's public service](../team/src/index.ts) to obtain the complete captured
+roster and its coverage results. Preserve Team's ownership decisions rather than
+introducing another root matcher, fallback owner or authored ownership map.
+The [Team contract](../team/contract.md#team) remains proposed; its roster,
+resource lookup and coverage views describe the shared boundary.
+
+At this intent stage, `validateCapture` already requests Team coverage but throws
+on the first finding, reporting only its kind and path. The intended correction
+must retain every uncovered-path and collision finding in the ownership refusal.
+Each uncovered resource names its path; each collision names its path and all
+conflicting component IDs. Multiple defective paths must remain visible together,
+including when both kinds occur in the same inventory. Ownership validation must
+use the full captured roster: a component, activity or eligibility filter used to
+select a steward cannot conceal another owner's claim or turn a collision into
+unique ownership. A uniquely owned inventory passes the ownership portion of
+validation and proceeds to the existing activity and binding validation.
+
+For unchanged captured inputs, repeated validation must produce identical
+ownership diagnostics. Preserve deterministic inventory and component ordering
+without sorting or otherwise mutating captured definitions or source paths in
+place. Eligibility can affect whether a steward is available; it cannot change
+the captured ownership decision. Supplier selection continues through Team and
+Direction under locked
+[DI-20](../direction/contract.md#acceptance-scenarios).
+A supplier request grants no edit capability, as also required by locked
+[EX-3](../execution/contract.md#acceptance-scenarios).
+
+A caller uses the complete refusal to locate the responsible declarations and
+resources. Correct ownership declarations through the approved architecture
+route, then validate a fresh capture; a diagnostic cannot grant authority or
+change the existing snapshot. This ordinary documentation records the diagnostic
+correction before behavior changes. It does not amend a lock or adopt new
+architectural authority.
+
+Public regressions must exercise `validateCapture` through Architecture's public
+entry with realistic Capture data: a uniquely owned inventory, multiple uncovered
+paths, multiple collisions with every conflicting ID, and a mixed invalid
+inventory. Retain an intended failing assertion for omitted owners and subsequent
+findings before implementation. Repeated calls must compare complete diagnostics
+and establish that captured inputs remain unchanged. Preserve Team's existing
+filtering, ordering and repeated-lookup coverage. Current passing regressions and
+applicable Architecture quality evidence belong to later engineering activities;
+assembled independent assessment and delivery remain host responsibilities.
+
 ## Component discovery (#615)
 
 The source-linked index delivered through [PR #664](https://github.com/fractalsynapse/arcnexus/pull/664) follows the

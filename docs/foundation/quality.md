@@ -53,6 +53,49 @@ tool's actual configuration. It records the complete selected scope and never
 fixes source. See the [owner quality path](../../packages/foundation/docs/owner-quality.md)
 for confinement, independent applicability and conservative evidence reuse.
 
+## Specification ownership diagnostics
+
+For maintainers correcting a catalog, `npm run check:specification` is the shared
+working-copy specification check. Its entry is
+[check-specification.ts](../../packages/foundation/scripts/check-specification.ts);
+it reads the tracked Git inventory and authored catalog. The intended ownership
+diagnostic correction below is recorded before implementation; executable
+regressions must establish the behavior before it is described as demonstrated.
+
+Every tracked maintained path must have exactly one owner under the
+[project contract](../interface/arcnexus-project.md). Use
+[Team's coverage view](../../packages/team/contract.md) over the complete catalog
+and inventory to report every uncovered path and every collision. Each collision
+diagnostic identifies the affected path and all conflicting component IDs.
+Invalid ownership makes the command fail with a nonzero exit; stopping at the
+first path or reporting only an owner count does not provide complete findings.
+Representative uniquely owned specifications continue through the existing
+TypeScript, activity, contract, link and skill validation.
+
+Ownership findings remain independent of roster eligibility or activity filters:
+excluding a steward cannot conceal its conflicting ownership or make an owned
+path unowned. Team remains the shared source for eligible stewards, supplier
+discovery and ownership; the checker introduces no separate ownership map or
+fallback owner. A supplier request grants no edit capability. An unchanged
+catalog and inventory produce identical ownership diagnostics on repeated calls,
+with stable path ordering and stable component-ID ordering within collisions.
+
+This check reads maintained source without repairing or formatting it. Its
+optional existing CI applicability output is separate from source mutation.
+Acceptance requires subprocess scenarios through the real command with explicit
+tracked Git/catalog fixtures: unique ownership passes; mixed uncovered and
+colliding paths fail and report every finding and conflicting ID. Repeated invalid
+runs must retain identical ownership diagnostics and unchanged maintained bytes.
+Preserve coverage of the other specification validations and obtain applicable
+Foundation quality observations for the implemented candidate.
+
+The measurable benefit is complete actionable ownership feedback in one failed
+invocation, rather than discovering additional affected paths through successive
+repairs. Human and CI callers keep the existing entry and invocation; Team
+consumers need no interface changes. This correction changes reporting, while
+catalog authority, owner boundaries and supplier permissions stay governed by
+their existing contracts.
+
 ## ESLint rule regressions
 
 For rejected input, assert both the rule ID and message ID. For valid input,

@@ -32,8 +32,8 @@ class SpecificationCheck {
     }
     const project = readMapping<Capture['project']>(join(catalogRoot, 'project.yaml'));
     const components = this.catalog<Component>('components');
+    this.checkOwnership(components);
     for (const path of this.paths) {
-      assert.equal(this.ownersFor(path, components).length, 1, `Expected one owner: ${path}`);
       if (path.endsWith('.md')) this.checkMarkdown(path);
     }
     this.checkActivities(components);
@@ -59,6 +59,19 @@ class SpecificationCheck {
       index.set(entry.id, entry);
     }
     return index;
+  }
+
+  /** Refuse all Team coverage findings together, with stable path and conflicting-ID ordering. */
+  private checkOwnership(components: ReadonlyMap<string, Component>): void {
+    const findings = team.validateCoverage(Array.from(components.values()), [...this.paths].sort());
+    if (!findings.length) return;
+
+    const diagnostics = findings.map((finding) => {
+      const owners = finding.kind === 'collision' ? finding.owners.map(({ id }) => id).sort() : [];
+      const detail = owners.length ? ` (${owners.join(', ')})` : '';
+      return `Specification ownership ${finding.kind}: ${finding.path}${detail}`;
+    });
+    throw new Error(diagnostics.join('\n'));
   }
 
   /** Resolve all owners of a tracked path so callers can detect collisions and gaps. */
