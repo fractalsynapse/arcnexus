@@ -169,7 +169,9 @@ function assertTerminalRecords(records: Array<Record<string, any>>): void {
     ),
   );
   assert.equal(records.filter((record) => record.type === 'result').length, 1);
-  assert.equal(records.at(-1).outcome.kind, 'planned');
+  const terminal = records.at(-1);
+  assert.ok(terminal);
+  assert.equal(terminal.outcome.kind, 'planned');
 }
 
 /** Validate streamed output from a complete production CLI invocation. */
