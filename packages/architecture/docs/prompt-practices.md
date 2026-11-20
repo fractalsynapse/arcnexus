@@ -209,8 +209,13 @@ and owner-free aspirational goals, proposing exact guide changes and consuming p
 results without putting results into the goals themselves.
 
 Architecture's updating assesses approved direction, implementation and observed
-problems, proposes exact changes where needed, and identifies prerequisite code and
-operation availability. It cannot approve itself. The approved model can advance
+problems, including component purposes and activity instructions on every assessment.
+Compare guidance with actual activation requests and behavior against objectives,
+goals and complete relevant run findings. Locate the earliest wrong decision and
+separate inadequate instructions, ignored adequate guidance, faulty fixtures,
+missing operations and absent host enforcement. Propose concrete guidance at the
+canonical activity, role or standard, together with code enforcement where needed,
+and identify prerequisite implementation and operation availability. It cannot approve itself. The approved model can advance
 within a run through the host's recorded adoption boundary after validation.
 
 Reviewer's assessment binds an independent verdict to the assembled candidate,
@@ -242,6 +247,24 @@ Compare useful completed outcomes and repair routes before and after prompt chan
 Retain complete transcripts and the exact prompt/model identity to explain a result.
 Subsequent Plan and Architect assessments must use these observations. Do not add
 numeric work limits or an automated prompt-length rejection rule during evaluation.
+
+## Evaluate Testing instructions against escaped defects
+
+Ask what plausible incorrect implementation could still satisfy each proposed
+assertion. Check values and event identities, durable history across distinct
+attempts, real plugin composition, observations before completion and cancellation
+during execution when those claims belong to acceptance. A parser-only test cannot
+prove production streaming, and absence of an error message cannot prove exact
+input propagation. Use the observed missed case to improve the responsible method;
+do not replace a component-specific activity with another generic exhortation.
+
+Construct fixture responses from explicit authored data and references to retained
+source observations. Never recursively embed read-file bodies, prior assignment
+evidence or transcripts into subsequent fixture messages. Keep complete originals
+readable in canonical artifacts and assert correct reference consumption. This avoids
+manufactured feedback growth without imposing limits or truncating real information.
+Record the regression and later live outcome separately: better prose and valid
+YAML establish authoring, not proof that an agent followed the new instructions.
 
 ## Primary references
 

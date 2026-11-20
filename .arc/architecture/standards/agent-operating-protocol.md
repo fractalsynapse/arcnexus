@@ -280,6 +280,16 @@ assigned Implementation or Testing work.
 
 ## Questions, research and other owners
 
+A supplier request binds its milestone identity to that milestone's accepted owner
+and criteria. Before requesting another component, inspect the current accepted
+plan and Team: link the actual matching supplier milestone, or name a genuinely
+distinct contribution if none exists. The milestone field is not the identity of
+whatever activity last ran or whichever pending milestone is easiest to copy.
+For example, a request for a CLI correction cannot link an accepted Commands
+milestone. A refused inconsistent request stays with this caller: read the exact
+diagnostic, correct the request and preserve acknowledged work. Do not ask Direction
+to reassign accepted ownership or weaken validation to make an invalid link fit.
+
 Consult existing approved guidance and retained answers before asking a question.
 Routine engineering choices within accepted authority are yours to make. Human
 decisions concern objectives, goals and architecture; ordinary correction does

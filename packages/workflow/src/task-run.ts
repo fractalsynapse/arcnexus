@@ -13,8 +13,8 @@ import {
   type StandingGoalEvidence,
 } from '../../direction/src/index.js';
 import { validateVerdict, type Candidate, type Verdict } from '../../verification/src/index.js';
-import { activityRepair, replayableActivity } from './activity-repair.js';
-import { assembleCandidate } from './assembly.js';
+import { activityRepair, replayableActivity, supplierRequestRepair } from './activity-repair.js';
+import { assembleCandidate, reviewKey } from './assembly.js';
 import { stopped, type Interrupted } from './services.js';
 import type {
   ActivityCheckpoint,
@@ -335,6 +335,11 @@ export class TaskRun {
   /** Advance completion, persist local repair, or sequence an explicit escalation. */
   private async applyActivity(activation: ActivityCheckpoint) {
     const { milestone, index, step, outcome } = activation;
+    const rejected = supplierRequestRepair(this.plan!, activation);
+    if (rejected) {
+      this.report(rejected);
+      return;
+    }
     if (outcome.kind === 'repair') return this.repair(activation);
     if (outcome.kind === 'blocked') {
       return stopped('blocked', outcome.reason, outcome.evidence);
@@ -491,9 +496,4 @@ export class TaskRun {
       ...(repair ? { repair } : {}),
     });
   }
-}
-
-/** Keep rejections scoped to the exact tree and material evidence reviewed. */
-function reviewKey(candidate: Candidate) {
-  return `${candidate.digest}:${candidate.ownerEvidenceDigest ?? ''}`;
 }

@@ -4,6 +4,8 @@
 
 ### Added
 
+- Teach discriminating public-boundary testing, evidence-reference fixtures and owner-consistent supplier requests, and make every Architect update assess component purpose and activity instruction effectiveness against objectives, goals and run findings (#678).
+
 - Expand all component purposes and activity operating procedures through the existing single-string builder, retain shared instructions once, and apply the architect-approved Workflow Implementation profile selection of `gpt-sol` (#672, #669).
 
 - Use the same read-only formatting and lint commands for repository and owner scopes, with Git/Team selection, complete scope records and real tool configuration inside confinement (#615, #638).
@@ -28,6 +30,8 @@
 - Assess owner-free goals using evidence from the captured staging revision (#587).
 
 ### Fixed
+
+- Refuse supplier requests that link another owner’s accepted milestone, return exact diagnostics to the caller, and resume retained invalid handoffs without Director replanning or discarded checkpoints (#678).
 
 - Keep new research and clarification answers in caller-repair input identity, preserve holds for unchanged replies, and apply the approved Execution Testing `gpt-sol` profile trial (#675).
 

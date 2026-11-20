@@ -1,5 +1,11 @@
-import type { TaskEvent } from '../../workflow/src/index.js';
-import type { Milestone } from '../../direction/src/index.js';
+import type { ActivityCheckpoint, TaskEvent } from '../../workflow/src/index.js';
+import { supplierLinkDiagnostic, type Milestone } from '../../direction/src/index.js';
+import type { HostTask } from './index.js';
+
+interface SupplierObservation {
+  projectRequest?: { scope: string; kind: string; milestone?: unknown; owner?: unknown };
+  activation?: ActivityCheckpoint;
+}
 
 /** Deliver complete recorded supplier replies to the milestone that requested them. */
 export function supplierContext(events: readonly TaskEvent[], milestone: string) {
@@ -43,4 +49,35 @@ export function supplierAnswerRequired(
       event.activation.outcome.kind === 'completed' &&
       event.activation.outcome.answer,
   );
+}
+
+/** Return a legacy rejected handoff to its original caller without rewriting journal history. */
+export function retainedSupplierRepair(task: HostTask, milestone: Milestone, activity: string) {
+  const scope = task.inboxScope(
+    { component: milestone.owner, activity },
+    {
+      milestone: {
+        id: milestone.id,
+        step: milestone.steps.find((step) => step.activity === activity),
+      },
+      acceptance: milestone.criteria,
+    },
+  );
+  const latest = task
+    .observations<SupplierObservation>()
+    .findLast(
+      ({ projectRequest, activation }) =>
+        projectRequest?.scope === scope ||
+        (activation?.milestone === milestone.id && activation.step === activity),
+    );
+  const request = latest?.projectRequest ?? latest?.activation?.outcome;
+  if (!request) return {};
+  const diagnostic = supplierLinkDiagnostic(
+    task.history().findLast((event) => 'plan' in event)?.plan,
+    {
+      ...request,
+      requester: milestone.id,
+    },
+  );
+  return diagnostic ? { responseRepair: diagnostic } : {};
 }
