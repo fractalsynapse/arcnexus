@@ -308,17 +308,23 @@ export class RefinementRun {
 function retainedFrames(parent: TaskSession, goal: string, scope: string): JournalEvent[] {
   const host = hostTask(parent);
   const records = host.journal.childEvents(goal, scope) as Record<string, unknown>[];
-  const path = records
+  const paths = records
     .map((record) => record.artifact)
-    .find(
+    .filter(
       (item): item is string => typeof item === 'string' && item.endsWith('run-timeline.jsonl'),
     );
-  if (!path) throw new Error('Missing retained timeline for refinement child: ' + scope);
-  return host
-    .readFile(path)
-    .text.split('\n')
-    .filter(Boolean)
-    .map((line) => JSON.parse(line) as JournalEvent);
+  if (paths.length === 0)
+    throw new Error('Missing retained timeline for refinement child: ' + scope);
+  const frames = paths.flatMap((path) =>
+    host
+      .readFile(path)
+      .text.split('\n')
+      .filter(Boolean)
+      .map((line) => JSON.parse(line) as JournalEvent),
+  );
+  return [...new Map(frames.map((frame) => [frame.sequence, frame])).values()].sort(
+    (left, right) => Number(left.sequence) - Number(right.sequence),
+  );
 }
 
 /** Accept only the terminal kinds that mean the child position actually completed. */
