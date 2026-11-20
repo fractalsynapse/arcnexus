@@ -5,7 +5,15 @@ category: integration-test
 command: npm
 args:
 - test
+- --
 - context: owner
+- parameter: selectors
 cwd: .
 network: false
 applicability: owner-test-suites
+parameters:
+  selectors:
+    type: array
+    items:
+      type: string
+    default: []

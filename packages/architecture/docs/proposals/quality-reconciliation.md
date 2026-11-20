@@ -1,6 +1,9 @@
 # Reconcile the retained owner-quality batch
 
-Status: proposed, not applied. The existing efficiency amendment `cb6a431032a9`
+Status: approved by the architect in Codex chat and applied exactly under delegated
+authority. The original review manifest and patch remain unchanged; the genuine
+approval receipt is retained outside source as `638-quality-reconciliation-approval.json`.
+The existing efficiency amendment `cb6a431032a9`
 is approved and delivered through [PR #640](https://github.com/fractalsynapse/arcnexus/pull/640).
 This is the subsequent owner-quality guide decision, not another request to
 approve that amendment.
@@ -46,7 +49,7 @@ Architecture's [locked contract](../../contract.md) requires reconciliation and 
 newly reviewable proposal when the baseline changes. The new explicit verification
 and selector bytes also need exact guide approval. The original approval cannot be
 silently rebound to these bytes or baseline. Review and delegation apply to the
-exact batch identified above; source remains unchanged while it is pending.
+exact batch identified above. All resulting guide digests match the reviewed manifest.
 
 Prerequisite implementation must be verified before these declarations are used.
 Deliver the reduced capability and approved guides coherently through the existing
