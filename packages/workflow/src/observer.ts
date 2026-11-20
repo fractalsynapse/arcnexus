@@ -5,6 +5,7 @@ import type { Observation, TaskObserver, TaskSession } from './services.js';
 export class RunObserver implements TaskObserver {
   private readonly projection = new RunMeasurements();
   private readonly startedAt = new Date().toISOString();
+  private readonly frames: JournalEvent[] = [];
   private admitted = false;
 
   /** Retain the caller's output and question handlers without a separate event store. */
