@@ -37,7 +37,7 @@ export class RefinementPlanner {
     this.identities.push(hostTask(session).taskID);
     const agent = new Agent({
       request: (_capture: unknown, _selection: unknown, task: TaskContext) =>
-        providerView(session, task),
+        providerView(session, task, this.selection),
     } as unknown as Architecture);
     const reply = (await hostTask(session).activate(
       agent,
