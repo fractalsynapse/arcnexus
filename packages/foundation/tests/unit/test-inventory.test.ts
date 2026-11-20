@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, globSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test, { type TestContext } from 'node:test';
@@ -106,15 +106,15 @@ console.log(JSON.stringify(testInventory(${JSON.stringify(owner)})));
 
 test('every current built owner selects exactly its inventory subset with unchanged emitted paths', () => {
   const all = testInventory();
+  assert.deepEqual(
+    all.map(({ file }) => file),
+    globSync('dist/{apps,packages}/*/tests/**/*.test.js').sort(),
+  );
   assert(all.some(({ owner }) => owner === 'cli-app'));
   assert(all.some(({ owner }) => owner === 'foundation'));
   for (const owner of new Set(all.map((entry) => entry.owner))) {
     const expected = all.filter((entry) => entry.owner === owner);
     assert.deepEqual(testInventory(owner), expected);
-    assert.deepEqual(
-      testInventory(owner).map((entry) => entry.file),
-      expected.map((entry) => entry.file),
-    );
     assert(expected.every(({ file }) => file.startsWith('dist/') && file.endsWith('.test.js')));
   }
   assert.throws(() => testInventory('missing'), /Unknown test owner/);
