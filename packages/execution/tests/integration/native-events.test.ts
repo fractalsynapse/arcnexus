@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { chmodSync, copyFileSync, mkdtempSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
@@ -26,11 +26,13 @@ class NativeScenario {
     this.task = new StewardFixture(t, root).task;
     t.after(() => this.task.close());
     const executable = join(root, 'provider.mjs');
-    copyFileSync(
+    const fixture = readFileSync(
       fileURLToPath(new URL('../fixtures/provider-events.js', import.meta.url)),
-      executable,
+      'utf8',
     );
-    chmodSync(executable, 0o700);
+    writeFileSync(executable, fixture.replace(/^#![^\n]*/, `#!${process.execPath}`), {
+      mode: 0o700,
+    });
     Object.assign(this.task.capture.source, { paths: [] });
     Object.assign(this.task.config, { executable });
     this.task.listen((event) => {
