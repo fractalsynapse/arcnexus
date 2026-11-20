@@ -151,7 +151,7 @@ export class RefinementRun {
     const input: TaskInput = {
       directory: this.parent.capture.source.root,
       goal: 'Assess objectives and standing goals',
-      planning: 'objective',
+      planning: 'exploration',
       scope: this.scope(invocation, round, 'plan'),
     };
     return this.phaseOutcome(input);
