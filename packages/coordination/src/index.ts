@@ -332,7 +332,8 @@ export class Coordination {
         parent_id INTEGER REFERENCES runs(id)
       ) STRICT;
       CREATE TABLE IF NOT EXISTS rounds (
-        id INTEGER PRIMARY KEY, inventory TEXT NOT NULL, finished INTEGER NOT NULL DEFAULT 0
+        id INTEGER PRIMARY KEY, inventory TEXT NOT NULL, finished INTEGER NOT NULL DEFAULT 0,
+        namespace TEXT NOT NULL DEFAULT 'task'
       ) STRICT;
       CREATE TABLE IF NOT EXISTS events (
         id INTEGER PRIMARY KEY, run INTEGER NOT NULL REFERENCES runs(id), content TEXT NOT NULL,
