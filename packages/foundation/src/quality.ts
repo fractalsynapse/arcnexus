@@ -48,7 +48,10 @@ export class Quality {
     );
     const members = this.components();
     assert(!owner || members.some(({ id }) => id === owner), `Unknown quality owner: ${owner}`);
-    const applicable = await this.applicable(operation);
+    const candidates = this.inventory().filter(
+      (path) => !owner || team.owners(members, path).some(({ id }) => id === owner),
+    );
+    const applicable = await this.applicable(operation, candidates);
     const files = applicable.filter((path) => {
       const resolved = team.ownerFor(members, path);
       assert(resolved.kind === 'owned', `Invalid quality ownership (${resolved.kind}): ${path}`);
@@ -104,12 +107,12 @@ export class Quality {
   }
 
   /** Evaluate candidate tool configuration here, inside confinement for a host-initiated check. */
-  private async applicable(operation: QualityOperation) {
+  private async applicable(operation: QualityOperation, candidates: readonly string[]) {
     const files: string[] = [];
     const eslint =
       operation === 'lint' ? new (await import('eslint')).ESLint({ cwd: this.root }) : undefined;
     const prettier = operation === 'format:check' ? await import('prettier') : undefined;
-    for (const path of this.inventory()) {
+    for (const path of candidates) {
       if (eslint && (await eslint.isPathIgnored(resolve(this.root, path)))) continue;
       if (
         prettier &&

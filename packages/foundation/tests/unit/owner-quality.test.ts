@@ -104,3 +104,13 @@ test('shared quality execution reports a real formatting defect and leaves sourc
   scenario.write('packages/alpha/src/main.ts', 'export const alpha = { enabled: true };\n');
   assert.equal(await quality.run('format:check', 'alpha'), 0);
 });
+
+test('an owner lint selection does not evaluate another plugin configuration', async (context) => {
+  const scenario = new QualityScenario(context);
+  scenario.write(
+    'packages/beta/eslint.config.mjs',
+    "throw new Error('Foreign plugin configuration evaluated');\nexport default [];\n",
+  );
+  const selected = await scenario.quality().select('lint', 'alpha');
+  assert.deepEqual(selected.files, ['packages/alpha/src/main.ts']);
+});
