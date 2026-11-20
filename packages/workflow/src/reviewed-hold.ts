@@ -1,4 +1,4 @@
-import type { HoldContext } from '../../execution/src/index.js';
+import { editFingerprint, HostTask, type HoldContext } from '../../execution/src/index.js';
 import type { RevisionFeedback } from '../../direction/src/index.js';
 import {
   stopped,
