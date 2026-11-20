@@ -304,6 +304,21 @@ export class RefinementRun {
   }
 }
 
+/** Read complete timeline records for one retained child task scope. */
+function retainedFrames(parent: TaskSession, goal: string, scope: string): JournalEvent[] {
+  const host = hostTask(parent);
+  const records = host.journal.childEvents(goal, scope) as Record<string, unknown>[];
+  const path = records
+    .map((record) => record.artifact)
+    .find((item): item is string => typeof item === 'string' && item.endsWith('run-timeline.jsonl'));
+  if (!path) throw new Error('Missing retained timeline for refinement child: ' + scope);
+  return host
+    .readFile(path)
+    .text.split('\\n')
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as JournalEvent);
+}
+
 /** Accept only the terminal kinds that mean the child position actually completed. */
 function completedChild(
   parent: TaskSession,
