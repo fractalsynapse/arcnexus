@@ -395,7 +395,7 @@ function assertContinuation(
     second.terminals.map((outcome) => outcome.kind),
     ['planned', 'planned', 'satisfied'],
   );
-  assertFindings(first.report, second.report);
+  assertFindings(first.report + first.native, second.report + second.native);
   const firstProfile = assertAccounting(first.report, origins[0]!);
   const secondProfile = assertAccounting(second.report, origins[1]!);
   assert.equal(firstProfile.usage.input_tokens.reported, 19 + 38);
