@@ -1,15 +1,17 @@
-import { chmodSync, copyFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /** Bind a real executable fixture outside source while keeping Git admission clean. */
 export function installProvider(root: string) {
   const executable = join(root, '.git', 'refinement-provider.mjs');
-  copyFileSync(
+  const source = readFileSync(
     fileURLToPath(new URL('../fixtures/refinement-provider.js', import.meta.url)),
-    executable,
+    'utf8',
   );
-  chmodSync(executable, 0o700);
+  writeFileSync(executable, source.replace(/^#![^\n]*/, '#!' + process.execPath), {
+    mode: 0o700,
+  });
   writeFileSync(
     join(root, '.git', 'bindings.yaml'),
     'schemaVersion: 1\ntools:\n  codex: ' + executable + '\n',
